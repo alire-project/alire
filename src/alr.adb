@@ -1,6 +1,7 @@
+with Alire.Commands;
+
 procedure Alr is
 
 begin
-   --  Insert code here.
-   null;
+   Alire.Commands.Execute;
 end Alr;
