@@ -1,16 +1,26 @@
-package Alire.Commands with Preelaborate is
+with GNAT.Command_Line;
+
+package Alire.Commands is
    
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
    
-   type Command is interface;
-   --  A type that ensures all commands provide the required information
+   type Command is limited interface;
+   
+   procedure Execute (Cmd : in out Command) is abstract;
+   
+   procedure Setup_Switches (Cmd    : in out Command; 
+                             Config : in out Gnat.Command_Line.Command_Line_Configuration) is abstract;
    
    function Short_Description (Cmd : Command) return String is abstract;
-   --  Returns a one-liner about what Cmd does
    
-   procedure Print_Usage (Cmd : Command) is abstract;
+private 
    
-   procedure Execute (Cmd : Command) is abstract;
+   -- Declared here so it is available to the help metacommand
+   
+   type Names is (Help, 
+                  Version);     
+   
+   procedure Display_Usage (Name : Names);
    
 end Alire.Commands;

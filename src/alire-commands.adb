@@ -1,26 +1,60 @@
+with Ada.Command_Line;
+with Ada.Characters.Handling;
+with Ada.Characters.Latin_1;
+with Ada.Text_IO;
 
- with Ada.Command_Line;
+with Alire.Commands.Help_Impl;
+with Alire.Commands.Reserved;
 
 package body Alire.Commands is
 
-   Usage_Error : exception;
+   -- Forward declarations
+
+   Cmd_Help     : aliased Help_Impl.Command;
+   Cmd_Reserved : aliased Reserved.Command;
+
+   Dispatch_Table : constant array (Names) of access Command'Class :=
+                      (Help    => Cmd_Help'Access,
+                       Version => Cmd_Reserved'Access);
+
+   Config : GNAT.Command_Line.Command_Line_Configuration;
+   --  Configuration for the current run. Global to the package so its kept in the special "help" case
 
    -------------------
-   -- Unimplemented --
+   -- Display_Usage --
    -------------------
 
-   procedure Unimplemented is
+   procedure Display_Usage (Config : GNAT.Command_Line.Command_Line_Configuration) is
+      use Ada.Text_IO;
+      Tab : Character renames Ada.Characters.Latin_1.HT;
    begin
-      raise Usage_Error with "The requested action is not implemeted";
-   end Unimplemented;
+      GNAT.Command_Line.Display_Help (Config);
 
-   type Action_Names is (Get, Version);
+      New_Line;
 
-   type Action_Executer is access procedure;
+      Put_Line ("Valid commands: ");
+      New_Line;
+      for Cmd in Names'Range loop
+         Put (Tab);
+         Put (Ada.Characters.Handling.To_Lower (Names'Image (Cmd)));
+         Put (Tab);
+         Put (Dispatch_Table (Cmd).Short_Description);
+         New_Line;
+      end loop;
 
-   The_Actions : constant array (Action_Names) of Action_Executer :=
-                   (Get     => Unimplemented'Access,
-                    Version => Unimplemented'Access);
+      New_Line;
+      Put_Line("Use ""alr help [command]"" for more information about a command.");
+   end Display_Usage;
+
+   -------------------
+   -- Display_Usage --
+   -------------------
+
+   procedure Display_Usage (Name : Names) is
+   begin
+      Dispatch_Table (Name).Setup_Switches (Config);
+      GNAT.Command_Line.Display_Help (Config);
+   end Display_Usage;
 
    -------------
    -- Execute --
@@ -28,19 +62,33 @@ package body Alire.Commands is
 
    procedure Execute is
       use Ada.Command_Line;
-      Action : Action_Names;
+      use Ada.Text_IO;
+      use Gnat.Command_Line;
+
+      Name   : Names;
+
    begin
+      Set_Usage (Config, "command [switches] [arguments]",
+                 Help => "Ada Library Repository manager (alr)");
+
+      Define_Switch (Config, "-h", "--help", "Shows this help");
+      --  Shouldn't be necessary but works around a bug in <=GPL 2017 when no switches are defined
+
       if Argument_Count < 1 then
-         raise Usage_Error with "Insufficient arguments"; -- TODO: nicer output
+         Display_Usage (Config);
+         return;
       else
          begin
-            Action := Action_Names'Value (Argument (1));
+            Name := Names'Value (Argument (1));
          exception
             when Constraint_Error =>
-               raise Usage_Error with "Unrecognized option: " & Argument (1);
+               Put_Line ("Unrecognized command: " & Argument (1));
+               New_Line;
+               Display_Usage(Config);
+               return;
          end;
 
-         The_Actions(Action).all;
+         Dispatch_Table (Name).Execute;
       end if;
    end Execute;
 
