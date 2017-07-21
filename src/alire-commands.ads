@@ -7,12 +7,17 @@ package Alire.Commands is
    
    type Command is limited interface;
    
+   procedure Display_Help_Details (Cmd : Command) is null;
+   
    procedure Execute (Cmd : in out Command) is abstract;
    
    procedure Setup_Switches (Cmd    : in out Command; 
                              Config : in out GNAT.Command_Line.Command_Line_Configuration) is abstract;
    
    function Short_Description (Cmd : Command) return String is abstract;
+   
+   function Usage_One_Liner (Cmd : Command) return String is abstract;
+   --  Should return the part after "alr command "
    
 private 
    

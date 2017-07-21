@@ -52,12 +52,14 @@ package body Alire.Commands is
       Config : Command_Line_Configuration;
    begin
       Set_Usage (Config,
-                 To_Lower (Name'Img & " [switches] [arguments]"), -- Should probably be overriden by every command Setup_Switches
-                 Help => "Command help: " & To_Lower (Name'Img));
+                 To_Lower (Name'Img) & " " & Dispatch_Table (Name).Usage_One_Liner,
+                 Help => "Help for " & To_Lower (Name'Img));
 
       Dispatch_Table (Name).Setup_Switches (Config);
 
       Display_Help_Workaround (Config);
+
+      Dispatch_Table (Name).Display_Help_Details;
    end Display_Usage;
 
    ----------------------------

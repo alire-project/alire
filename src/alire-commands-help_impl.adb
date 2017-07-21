@@ -3,6 +3,16 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Alire.Commands.Help_Impl is
 
+   --------------------------
+   -- Display_Help_Details --
+   --------------------------
+
+   overriding procedure Display_Help_Details (Cmd : Command) is
+      pragma Unreferenced (Cmd);
+   begin
+      Display_Valid_Commands;
+   end Display_Help_Details;
+
    -------------
    -- Execute --
    -------------
@@ -16,10 +26,6 @@ package body Alire.Commands.Help_Impl is
          begin
             Name := Commands.Names'Value (Ada.Command_Line.Argument (2));
             Display_Usage (Name);
-
-            if Name = Help then
-               Display_Valid_Commands;
-            end if;
          exception
             when others =>
                Put_Line ("Unrecognized help topic: " & Ada.Command_Line.Argument (2));
@@ -31,18 +37,5 @@ package body Alire.Commands.Help_Impl is
          Display_Valid_Commands;
       end if;
    end Execute;
-
-   --------------------
-   -- Setup_Switches --
-   --------------------
-
-   overriding procedure Setup_Switches
-     (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
-   is
-      pragma Unreferenced (Cmd);
-   begin
-      GNAT.Command_Line.Set_Usage (Config, "help [command]");
-   end Setup_Switches;
 
 end Alire.Commands.Help_Impl;
