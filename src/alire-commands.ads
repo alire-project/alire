@@ -15,15 +15,17 @@ package Alire.Commands is
                              Config : in out GNAT.Command_Line.Command_Line_Configuration) is abstract;
    
    function Short_Description (Cmd : Command) return String is abstract;
+   --  One-liner displayed in the main help after the command name
    
    function Usage_One_Liner (Cmd : Command) return String is abstract;
-   --  Should return the part after "alr command "
+   --  The part after "alr command "
    
 private 
    
    -- Declared here so they are available to the help metacommand child package   
    
-   type Names is (Help, 
+   type Names is (Get,
+                  Help, 
                   Version);     
    
    procedure Display_Usage (Name : Names);

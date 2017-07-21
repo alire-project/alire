@@ -15,7 +15,7 @@ package body Alire.Commands is
 
    Dispatch_Table : constant array (Names) of access Command'Class :=
                       (Help    => Cmd_Help'Access,
-                       Version => Cmd_Reserved'Access);
+                       others  => Cmd_Reserved'Access);
 
    procedure Display_Help_Workaround (Config : GNAT.Command_Line.Command_Line_Configuration) is
    begin
