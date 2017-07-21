@@ -9,7 +9,7 @@ project Alire is
    end Binder;
 
    package Compiler is
-      for Switches ("ada") use ("-gnatwa", "-O2", "-g", "-gnatf", "-gnato", "-fstack-check", "-gnat12", "-gnata");
+      for Switches ("ada") use ("-gnatwa", "-O2", "-g", "-gnatf", "-gnato", "-fstack-check", "-gnat12", "-gnata", "-gnatyaAhBfiIkloOprtx");
    end Compiler;
 
    package Builder is
