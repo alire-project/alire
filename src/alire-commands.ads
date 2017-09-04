@@ -26,6 +26,7 @@ private
    
    type Names is (Get,
                   Help, 
+                  Update,
                   Version);     
    
    procedure Display_Usage (Name : Names);

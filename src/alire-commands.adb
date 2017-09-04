@@ -5,6 +5,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.Commands.Help_Impl;
 with Alire.Commands.Reserved;
+with Alire.Commands.Update_Impl;
+with Alire.OS;
 
 package body Alire.Commands is
 
@@ -12,9 +14,11 @@ package body Alire.Commands is
 
    Cmd_Help     : aliased Help_Impl.Command;
    Cmd_Reserved : aliased Reserved.Command;
+   Cmd_Update   : aliased Update_Impl.Command;
 
    Dispatch_Table : constant array (Names) of access Command'Class :=
                       (Help    => Cmd_Help'Access,
+                       Update  => Cmd_Update'Access,
                        others  => Cmd_Reserved'Access);
 
    procedure Display_Help_Workaround (Config : GNAT.Command_Line.Command_Line_Configuration) is
@@ -102,6 +106,8 @@ package body Alire.Commands is
                Display_Usage;
                return;
          end;
+
+         OS.Create_Config_Folder;
 
          Execute_Command (Name);
       end if;
