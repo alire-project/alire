@@ -1,0 +1,41 @@
+BOOTSTRAP
+    $ curl -sSf https://static.rust-lang.org/rustup.sh | sh
+
+COMMANDS for 1.0
+
+new: 
+    Prepares a new project. 
+    Depends on manifest.
+    --bin if it has a main
+
+    metadata:
+        name:string 
+        version:semverstr 
+        authors:strarray
+
+build:
+    update: dependencies
+    fetch: dependencies
+    compile: the project
+
+run:
+    build:
+    execute:
+
+update:
+    Fetchs most up-to-date compatible versions
+
+ALIRE EXTRAS
+
+gps: Launch GPS with a crafted aggregate project file
+
+DESIGN GUIDELINES
+
+- No new formats: all pure Ada.
+- Don't touch network if not needed.
+    
+COMMANDS for 2.0
+
+test:
+
+Other improvements: version locking
