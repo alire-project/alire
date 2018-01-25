@@ -1,3 +1,9 @@
+DESIGN PRINCIPLES:
+    Minimal user hassle => Provide a library/app name to build => Alire must contain a map [Name -> Repo]
+    Don't force pollution of maintainer code => no extra information/tags for alire
+        => Submissions to alire must be merge requests of the relevant information
+    Also, alire must be able to understand origins that are uncatalogued (giving the URL/PATH) for developers working on their own libraries, prior to official incorporation
+
 BOOTSTRAP
     $ curl -sSf https://static.rust-lang.org/rustup.sh | sh
 
