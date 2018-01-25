@@ -1,3 +1,0 @@
-[submodule "deps/armc"]
-	path = deps/armc
-	url = git@github.com:mosteo/armc.git
