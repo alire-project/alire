@@ -1,6 +1,7 @@
-with "semver.gpr";
+with "alire.gpr";
+with "semantic_versioning.gpr";
 
-project Alire is
+project Alr is
 
    for Source_Dirs use ("src", "src/os_linux");
    for Object_Dir use "obj";
@@ -26,5 +27,4 @@ project Alire is
       for Vcs_Kind use "Git";
    end Ide;
 
-end Alire;
-
+end Alr;
