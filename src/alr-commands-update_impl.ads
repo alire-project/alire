@@ -1,4 +1,4 @@
-package Alire.Commands.Update_Impl is
+package Alr.Commands.Update_Impl is
 
    type Command is new Commands.Command with null record;
 
@@ -14,4 +14,4 @@ package Alire.Commands.Update_Impl is
 
    overriding function Usage_One_Liner (Cmd : Command) return String is ("");
 
-end Alire.Commands.Update_Impl;
+end Alr.Commands.Update_Impl;

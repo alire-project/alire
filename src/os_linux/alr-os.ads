@@ -1,4 +1,4 @@
-package Alire.OS is
+package Alr.OS is
 
    function Alire_Folder return String;
    --  $XDG_CONFIG_HOME/alire
@@ -11,4 +11,4 @@ package Alire.OS is
 
    procedure Create_Config_Folder;
 
-end Alire.OS;
+end Alr.OS;

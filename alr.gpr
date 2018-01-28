@@ -5,19 +5,20 @@ project Alr is
 
    for Source_Dirs use ("src", "src/os_linux");
    for Object_Dir use "obj";
-   for Main use ("alr.adb");
-
-   package Binder is
-      for Switches ("ada") use ("-Es");
-   end Binder;
+   for Main use ("alr-main.adb");
 
    package Compiler is
-      for Switches ("ada") use ("-gnatwa", "-O2", "-g", "-gnatf", "-gnato", "-fstack-check", "-gnat12", "-gnata", "-gnatyaAhBfiIkloOprtx");
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
    end Compiler;
 
    package Builder is
       for Switches ("ada") use ("-s", "-j0", "-g");
+      for Executable ("alr-main.adb") use "alr";
    end Builder;
+
+   package Binder is
+      for Switches ("ada") use ("-Es");
+   end Binder;
 
    package Linker is
       for Switches ("ada") use ("-g");

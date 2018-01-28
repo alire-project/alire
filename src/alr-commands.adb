@@ -3,12 +3,12 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.Text_IO; use Ada.Text_IO;
 
-with Alire.Commands.Help_Impl;
-with Alire.Commands.Reserved;
-with Alire.Commands.Update_Impl;
-with Alire.OS;
+with Alr.Commands.Help_Impl;
+with Alr.Commands.Reserved;
+with Alr.Commands.Update_Impl;
+with Alr.OS;
 
-package body Alire.Commands is
+package body Alr.Commands is
 
    use GNAT.Command_Line;
 
@@ -136,4 +136,4 @@ package body Alire.Commands is
       end;
    end Execute_Command;
 
-end Alire.Commands;
+end Alr.Commands;

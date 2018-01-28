@@ -1,11 +1,11 @@
 with GNAT.OS_Lib;
 
-with Alire.Defaults;
-with Alire.Git;
-with Alire.OS;
-with Alire.OS_Lib;
+with Alr.Defaults;
+with Alr.Git;
+with Alr.OS;
+with Alr.OS_Lib;
 
-package body Alire.Commands.Update_Impl is
+package body Alr.Commands.Update_Impl is
 
    -------------
    -- Execute --
@@ -24,4 +24,4 @@ package body Alire.Commands.Update_Impl is
       OS_Lib.GPR_Rebuild (OS.Alire_Source_Folder);
    end Execute;
 
-end Alire.Commands.Update_Impl;
+end Alr.Commands.Update_Impl;

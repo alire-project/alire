@@ -1,4 +1,4 @@
-package Alire.OS_Lib is
+package Alr.OS_Lib is
 
    -- Things that are OS dependant but already abstracted by GNAT, so not platform-specific
    -- Platform-specific things are in Alire.OS
@@ -22,4 +22,4 @@ package Alire.OS_Lib is
                     Arg3    : String := "");
    --  As the function, but raises exception if exit code was <> 0
 
-end Alire.OS_Lib;
+end Alr.OS_Lib;

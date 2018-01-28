@@ -1,6 +1,6 @@
-with Alire.OS_Lib; use Alire.OS_Lib;
+with Alr.OS_Lib; use Alr.OS_Lib;
 
-package body Alire.Git is
+package body Alr.Git is
 
    -----------
    -- Clone --
@@ -20,4 +20,4 @@ package body Alire.Git is
       Spawn (Command ("git"), "pull", Folder);
    end Pull;
 
-end Alire.Git;
+end Alr.Git;

@@ -1,0 +1,7 @@
+aggregate project Alr_Env is
+
+   for Project_Path use ("deps/alire", "deps/alire/deps/semver");
+
+   for Project_Files use ("alr.gpr");
+
+end Alr_Env;

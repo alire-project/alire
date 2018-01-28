@@ -1,7 +1,7 @@
 with Ada.Directories;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-package body Alire.OS is
+package body Alr.OS is
 
    Separator : Character renames GNAT.OS_Lib.Directory_Separator;
 
@@ -63,4 +63,4 @@ package body Alire.OS is
       end if;
    end Getenv;
 
-end Alire.OS;
+end Alr.OS;

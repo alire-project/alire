@@ -1,4 +1,4 @@
-package Alire.Commands.Reserved is
+package Alr.Commands.Reserved is
 
    type Command is new Commands.Command with null record;
    
@@ -12,4 +12,4 @@ package Alire.Commands.Reserved is
    
    overriding function Usage_One_Liner (Cmd : Command) return String is ("");
 
-end Alire.Commands.Reserved;
+end Alr.Commands.Reserved;

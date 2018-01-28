@@ -1,7 +1,7 @@
 with Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Alire.Commands.Help_Impl is
+package body Alr.Commands.Help_Impl is
 
    --------------------------
    -- Display_Help_Details --
@@ -38,4 +38,4 @@ package body Alire.Commands.Help_Impl is
       end if;
    end Execute;
 
-end Alire.Commands.Help_Impl;
+end Alr.Commands.Help_Impl;

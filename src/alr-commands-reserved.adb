@@ -1,6 +1,6 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Alire.Commands.Reserved is
+package body Alr.Commands.Reserved is
 
    -------------
    -- Execute --
@@ -12,4 +12,4 @@ package body Alire.Commands.Reserved is
       Put_Line ("This command is reserved for future use.");
    end Execute;
 
-end Alire.Commands.Reserved;
+end Alr.Commands.Reserved;

@@ -2,7 +2,7 @@ with Ada.Directories;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-package body Alire.OS_Lib is
+package body Alr.OS_Lib is
 
    -------------
    -- Command --
@@ -85,4 +85,4 @@ package body Alire.OS_Lib is
       end if;
    end Spawn;
 
-end Alire.OS_Lib;
+end Alr.OS_Lib;

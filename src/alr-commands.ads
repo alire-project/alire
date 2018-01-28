@@ -1,6 +1,6 @@
 with GNAT.Command_Line;
 
-package Alire.Commands is
+package Alr.Commands is
    
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
@@ -36,4 +36,4 @@ private
    procedure Execute_Command (Name : Names);
    -- Execute a command with the externally given command line
    
-end Alire.Commands;
+end Alr.Commands;

@@ -1,4 +1,4 @@
-package Alire.Commands.Help_Impl is
+package Alr.Commands.Help_Impl is
 
    type Command is new Commands.Command with null record;
    
@@ -15,4 +15,4 @@ package Alire.Commands.Help_Impl is
    
    overriding function Usage_One_Liner (Cmd : Command) return String is ("command");
 
-end Alire.Commands.Help_Impl;
+end Alr.Commands.Help_Impl;
