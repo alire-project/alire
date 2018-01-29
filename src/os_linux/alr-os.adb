@@ -11,7 +11,7 @@ package body Alr.OS is
    -- Alire_Folder --
    ------------------
 
-   function Alire_Folder return String is
+   function Base_Folder return String is
      (Config_Folder & Separator & "alire");
 
    -------------------------
@@ -19,7 +19,14 @@ package body Alr.OS is
    -------------------------
 
    function Alire_Source_Folder return String is
-      (Alire_Folder & Separator & "alire");
+     (Base_Folder & Separator & "alr");
+
+   -------------------------
+   -- Index_Source_Folder --
+   -------------------------
+
+   function Index_Source_Folder return String is
+      (Base_Folder & Separator & "alire");
 
    -------------------
    -- Config_Folder --
@@ -28,24 +35,24 @@ package body Alr.OS is
    function Config_Folder return String is
    begin
       return Getenv ("XDG_CONFIG_HOME",
-                     Getenv ("HOME") & Separator & ".config");
+                     Default => Getenv ("HOME") & Separator & ".config");
    end Config_Folder;
 
    --------------------------
    -- Create_Config_Folder --
    --------------------------
 
-   procedure Create_Config_Folder is
+   procedure Create_Base_Folder is
       use Ada.Directories;
    begin
       if not Is_Directory (Config_Folder) then
          Create_Directory (Config_Folder);
       end if;
 
-      if not Is_Directory (Alire_Folder) then
-         Create_Directory (Alire_Folder);
+      if not Is_Directory (Base_Folder) then
+         Create_Directory (Base_Folder);
       end if;
-   end Create_Config_Folder;
+   end Create_Base_Folder;
 
    ------------
    -- Getenv --

@@ -10,6 +10,6 @@ package Alr.Commands.Reserved is
    overriding function Short_Description (Cmd : Command) return String is
      ("Reserved for future use");
    
-   overriding function Usage_One_Liner (Cmd : Command) return String is ("");
+   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
 end Alr.Commands.Reserved;

@@ -9,7 +9,7 @@ BOOTSTRAP
 
 COMMANDS for 1.0
 
-build:
+* build:
     upgrade:
     compile:
 
@@ -32,16 +32,16 @@ get:
     clone repo of the given project
     --build to then build it
 
-lock:
-    overwrite project-alire.ads with current exact dependencies
-
-new: 
+init: (new is reserved word in Ada, better avoid)
     Prepares a new project with given name in name folder
     --bin or --lib mandatory
     generates skeleton files:
         project.gpr
         project-alire.ads
     generate:
+
+lock:
+    overwrite project-alire.ads with current exact dependencies
 
 run:
     compile:
@@ -52,25 +52,10 @@ search:
     -v: show versions
 
 update:
-    Gets latest alire index
+    Gets latest alire index & alr app (--full --alr --index)
     upgrade:
 
 upgrade:
     Recompute dependencies from project-alire.ads
     fetch: every newest dependency
     generate:
-
-ALIRE EXTRAS
-
-gps: Launch GPS with a crafted aggregate project file
-
-DESIGN GUIDELINES
-
-- No new formats: all pure Ada.
-- Don't touch network if not needed.
-    
-COMMANDS for 2.0
-
-test:
-
-Other improvements: version locking

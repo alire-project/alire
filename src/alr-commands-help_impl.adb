@@ -34,7 +34,7 @@ package body Alr.Commands.Help_Impl is
          end;
       else
          Display_Usage (Help);
-         Display_Valid_Commands;
+         --  Display_Valid_Commands;
       end if;
    end Execute;
 

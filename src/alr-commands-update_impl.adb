@@ -18,7 +18,7 @@ package body Alr.Commands.Update_Impl is
       if Is_Directory (OS.Alire_Source_Folder) then
          Git.Pull (OS.Alire_Source_Folder);
       else
-         Git.Clone (Defaults.Repository, OS.Alire_Source_Folder);
+         Git.Clone (Defaults.Alr_Repository, OS.Alire_Source_Folder);
       end if;
 
       OS_Lib.GPR_Rebuild (OS.Alire_Source_Folder);
