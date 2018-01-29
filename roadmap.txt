@@ -9,27 +9,56 @@ BOOTSTRAP
 
 COMMANDS for 1.0
 
-new: 
-    Prepares a new project. 
-    Depends on manifest.
-    --bin if it has a main
-
-    metadata:
-        name:string 
-        version:semverstr 
-        authors:strarray
-
 build:
-    update: dependencies
-    fetch: dependencies
-    compile: the project
+    upgrade:
+    compile:
+
+clean:
+    gprclean with alire agg project
+
+compile: 
+    Launch gprbuild as-is
+
+execute:
+    look for executable named as project
+        If one: report path and launch
+        If none/more: error
+
+generate:
+    create gpr aggregate project for building, using info in the project-alire.ads file
+    named project_alirebuild.gpr
+
+get:
+    clone repo of the given project
+    --build to then build it
+
+lock:
+    overwrite project-alire.ads with current exact dependencies
+
+new: 
+    Prepares a new project with given name in name folder
+    --bin or --lib mandatory
+    generates skeleton files:
+        project.gpr
+        project-alire.ads
+    generate:
 
 run:
-    build:
+    compile:
     execute:
 
+search: 
+    list libraries with a substring in their name
+    -v: show versions
+
 update:
-    Fetchs most up-to-date compatible versions
+    Gets latest alire index
+    upgrade:
+
+upgrade:
+    Recompute dependencies from project-alire.ads
+    fetch: every newest dependency
+    generate:
 
 ALIRE EXTRAS
 
