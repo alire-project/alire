@@ -2,6 +2,9 @@ with GNAT.Command_Line;
 
 package Alr.Commands is
    
+   Command_Failed : exception;
+   --  Signals "normal" command completion with failure (i.e., no need to print stack trace).
+   
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
    
@@ -10,6 +13,7 @@ package Alr.Commands is
    procedure Display_Help_Details (Cmd : Command) is null;
    
    procedure Execute (Cmd : in out Command) is abstract;
+   --  May raise Command_Failed
    
    procedure Setup_Switches (Cmd    : in out Command; 
                              Config : in out GNAT.Command_Line.Command_Line_Configuration) is null;
@@ -46,5 +50,10 @@ private
    
    procedure Execute_By_Name (Name : Names);
    -- Execute a command with the externally given command line
+   
+   function Last_Argument return String;
+   --  Returns the last command-line argument, unless...
+   --  If it begins with "-" (it's a switch) or there aren't at least three arguments,
+   --    raise Wrong_Command_Arguments
    
 end Alr.Commands;

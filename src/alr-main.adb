@@ -1,4 +1,5 @@
 with Alr.Commands;
+with Alr.Index;
 
 with GNAT.Exception_Traces;
 

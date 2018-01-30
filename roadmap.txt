@@ -4,10 +4,17 @@ DESIGN PRINCIPLES:
         => Submissions to alire must be merge requests of the relevant information
     Also, alire must be able to understand origins that are uncatalogued (giving the URL/PATH) for developers working on their own libraries, prior to official incorporation
 
+Search path of project-alire.ads file, in order:
+    In current folder
+    In any immediate subfolder
+
 BOOTSTRAP
     $ curl -sSf https://static.rust-lang.org/rustup.sh | sh
 
 COMMANDS for 1.0
+
+Legend:
+* implemented
 
 * build:
     upgrade:

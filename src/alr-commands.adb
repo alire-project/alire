@@ -5,25 +5,39 @@ with Ada.Text_IO; use Ada.Text_IO;
 --  To add a command: update the dispatch table below
 
 with Alr.Commands.Build_Impl;
+with Alr.Commands.Get_Impl;
 with Alr.Commands.Help_Impl;
 with Alr.Commands.Reserved;
 with Alr.Commands.Update_Impl;
 with Alr.OS;
 
+with GNAT.OS_Lib;
+
 package body Alr.Commands is
+
+   Wrong_Command_Arguments : exception;
 
    use GNAT.Command_Line;
 
-   Cmd_Build    : aliased Build_Impl.Command;
-   Cmd_Help     : aliased Help_Impl.Command;
-   Cmd_Reserved : aliased Reserved.Command;
-   Cmd_Update   : aliased Update_Impl.Command;
-
    Dispatch_Table : constant array (Names) of access Command'Class :=
-                      (Build   => Cmd_Build'Access,
-                       Help    => Cmd_Help'Access,
-                       Update  => Cmd_Update'Access,
-                       others  => Cmd_Reserved'Access);
+                      (Build   => new Build_Impl.Command,
+                       Get     => new Get_Impl.Command,
+                       Help    => new Help_Impl.Command,
+                       Update  => new Update_Impl.Command,
+                       others  => new Reserved.Command);
+
+   -------------
+   -- Bailout --
+   -------------
+
+   procedure Bailout (Code : Integer := 0) is
+   begin
+      GNAT.OS_Lib.OS_Exit (Code);
+   end Bailout;
+
+   -----------------------------
+   -- Display_Help_Workaround --
+   -----------------------------
 
    procedure Display_Help_Workaround (Config : GNAT.Command_Line.Command_Line_Configuration) is
    begin
@@ -61,7 +75,7 @@ package body Alr.Commands is
       Config : Command_Line_Configuration;
    begin
       Set_Usage (Config,
-                 To_Lower (Name'Img) & " " & Dispatch_Table (Name).Usage_Custom_Parameters,
+                 To_Lower (Name'Img) & " [options] " & Dispatch_Table (Name).Usage_Custom_Parameters,
                  Help => "Help for " & To_Lower (Name'Img));
 
       Dispatch_Table (Name).Setup_Switches (Config);
@@ -127,7 +141,7 @@ package body Alr.Commands is
                Put_Line ("Unrecognized command: " & Argument (1));
                New_Line;
                Display_Usage;
-               return;
+               Bailout (1);
          end;
 
          OS.Create_Base_Folder;
@@ -156,8 +170,33 @@ package body Alr.Commands is
       exception
          when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
             --  Getopt has already displayed some help
-            null;
+            Bailout (1);
+
+         when Wrong_Command_Arguments =>
+            Display_Usage (Name);
+            Bailout (1);
+
+         when Command_Failed =>
+            Bailout (1);
       end;
    end Execute_By_Name;
+
+   -------------------
+   -- Last_Argument --
+   -------------------
+
+   function Last_Argument return String is
+      use Ada.Command_Line;
+   begin
+      if Argument_Count < 2 then
+         raise Wrong_Command_Arguments;
+      else
+         return Last : constant String := Argument (Argument_Count) do
+            if Last (Last'First) = '-' then
+               raise Wrong_Command_Arguments;
+            end if;
+         end return;
+      end if;
+   end Last_Argument;
 
 end Alr.Commands;
