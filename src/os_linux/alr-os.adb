@@ -1,32 +1,21 @@
-with Ada.Directories;
+with Alire.Os_Lib;
+
+with Ada.Directories; use Ada.Directories;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.OS is
 
-   Separator : Character renames GNAT.OS_Lib.Directory_Separator;
-
    function Getenv (Var : String; Default : String := "") return String;
 
    ------------------
-   -- Alire_Folder --
+   -- Cache_Folder --
    ------------------
 
-   function Base_Folder return String is
-     (Config_Folder & Separator & "alire");
-
-   -------------------------
-   -- Alire_Source_Folder --
-   -------------------------
-
-   function Alire_Source_Folder return String is
-     (Base_Folder & Separator & "alr");
-
-   -------------------------
-   -- Index_Source_Folder --
-   -------------------------
-
-   function Index_Source_Folder return String is
-      (Base_Folder & Separator & "alire");
+   function Cache_Folder return String is
+   begin
+      return Getenv ("XDG_CACHE_HOME",
+                     Default => Compose (Compose (Getenv ("HOME"), ".cache"), "alire"));
+   end Cache_Folder;
 
    -------------------
    -- Config_Folder --
@@ -35,24 +24,26 @@ package body Alr.OS is
    function Config_Folder return String is
    begin
       return Getenv ("XDG_CONFIG_HOME",
-                     Default => Getenv ("HOME") & Separator & ".config");
+                     Default => Compose (Compose (Getenv ("HOME"), ".config"), "alire"));
    end Config_Folder;
+
+   ---------------------
+   -- Projects_Folder --
+   ---------------------
+
+   function Projects_Folder return String is
+   begin
+      return Compose (Cache_Folder, "projects");
+   end Projects_Folder;
 
    --------------------------
    -- Create_Config_Folder --
    --------------------------
 
-   procedure Create_Base_Folder is
-      use Ada.Directories;
+   procedure Create_Folder (Path : String) is
    begin
-      if not Is_Directory (Config_Folder) then
-         Create_Directory (Config_Folder);
-      end if;
-
-      if not Is_Directory (Base_Folder) then
-         Create_Directory (Base_Folder);
-      end if;
-   end Create_Base_Folder;
+      Alire.OS_Lib.Spawn ("mkdir", "-p " & Path);
+   end Create_Folder;
 
    ------------
    -- Getenv --

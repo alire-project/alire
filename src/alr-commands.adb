@@ -35,6 +35,17 @@ package body Alr.Commands is
       GNAT.OS_Lib.OS_Exit (Code);
    end Bailout;
 
+   --------------------------
+   -- Create_Alire_Folders --
+   --------------------------
+
+   procedure Create_Alire_Folders is
+   begin
+      OS.Create_Folder (OS.Config_Folder);
+      OS.Create_Folder (OS.Cache_Folder);
+      OS.Create_Folder (OS.Projects_Folder);
+   end Create_Alire_Folders;
+
    -----------------------------
    -- Display_Help_Workaround --
    -----------------------------
@@ -144,7 +155,7 @@ package body Alr.Commands is
                Bailout (1);
          end;
 
-         OS.Create_Base_Folder;
+         Create_Alire_Folders;
 
          Execute_By_Name (Name);
       end if;
