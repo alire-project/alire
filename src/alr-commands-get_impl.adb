@@ -52,6 +52,7 @@ package body Alr.Commands.Get_Impl is
          begin
             if Index_File = "" then
                Templates.Generate_Project_Alire (Needed, Main_Project);
+               Templates.Generate_Gpr (Needed, Main_Project);
             end if;
          end;
       exception

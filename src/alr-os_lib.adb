@@ -9,7 +9,14 @@ package body Alr.OS_Lib is
    ----------------
 
    function Alire_File (Project : Alire.Project_Name) return String is
-      (Project & "-alire.ads");
+     (Project & "-alire.ads");
+
+   ----------------
+   -- Build_File --
+   ----------------
+
+   function Build_File (Project : Alire.Project_Name) return String is
+     (Project & "_alrbuild.gpr");
 
    -----------------------
    -- Locate_Index_File --

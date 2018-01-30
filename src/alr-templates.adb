@@ -1,5 +1,6 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alr.OS;
 with Alr.OS_Lib;
 
 with Semantic_Versioning;
@@ -8,16 +9,67 @@ package body Alr.Templates is
 
    package Semver renames Semantic_Versioning;
 
+   Tab_1 : constant String (1 .. 3) := (others => ' ');
+   Tab_2 : constant String := Tab_1 & Tab_1;
+   Tab_3 : constant String := Tab_2 & Tab_1;
+
+   Q    : constant Character := '"';
+
+   ------------------
+   -- Generate_Gpr --
+   ------------------
+
+   procedure Generate_Gpr (Instance : Alire.Index.Instance;
+                           Root     : Alire.Releases.Release)
+   is
+      File     : File_Type;
+      Filename : constant String := OS_Lib.Build_File (Root.Project);
+      Prjname  : constant String := Filename (Filename'First .. Filename'Last - 4);
+
+      First    : Boolean := True;
+
+      use Alr.OS_Lib;
+
+   begin
+      Create (File, Out_File, Filename);
+
+      Put_Line (File, "aggregate project " & Prjname & " is");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "for Project_Files use (" & Q & Root.Project & ".gpr" & Q & ");");
+      New_Line (File);
+
+      Put (File, Tab_1 & "for Project_Path use (");
+      for Rel of Instance loop
+         if First then
+            New_Line (File);
+            First := False;
+         else
+            Put_Line (File, ",");
+         end if;
+         if Rel.Project = Root.Project then
+            Put (File, Tab_2 & """.""");
+         else
+            Put (File, Tab_2 & """" & OS.Projects_Folder + Rel.Unique_Folder & """");
+         end if;
+      end loop;
+      Put_Line (File, ");");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "for external (""ALIRE"") use ""True"";");
+      New_Line (File);
+
+      Put_Line (File, "end " & Prjname & ";");
+   end Generate_Gpr;
+
+   ----------------------------
+   -- Generate_Project_Alire --
+   ----------------------------
+
    procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
                                      Root     : Alire.Releases.Release)
    is
       File : File_Type;
-
-      Tab_1 : constant String (1 .. 3) := (others => ' ');
-      Tab_2 : constant String := Tab_1 & Tab_1;
-      Tab_3 : constant String := Tab_2 & Tab_1;
-
-      Q    : constant String (1 .. 1) := (1 => '"');
    begin
       if Instance.Contains (Root.Project) then
          declare

@@ -1,0 +1,16 @@
+Aggregate project Project_Alrbuild is
+
+   for Project_Path use (
+                         "deps/alire",
+                         "deps/alire/deps/semver"
+                        );
+
+   for Project_Files use ("project.gpr");
+
+   for external ("ALIRE") use "True";
+
+   package Builder is
+      for Global_Compilation_Switches ("Ada") use ("-p");
+   end Builder;
+
+end Project_Alrbuild;

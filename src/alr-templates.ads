@@ -3,6 +3,10 @@ with Alire.Releases;
 
 package Alr.Templates is
 
+   procedure Generate_Gpr (Instance : Alire.Index.Instance;
+                           Root     : Alire.Releases.Release);
+   --  Generate the aggregate project file for path setup
+
    procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
                                      Root     : Alire.Releases.Release);
    --  Generate the dependencies file
