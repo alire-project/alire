@@ -12,5 +12,9 @@ package Alr.Commands.Build_Impl is
       ("Upgrades and compiles current project.");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
+   
+   
+   procedure Build is null;
+   --  Externally call it
 
 end Alr.Commands.Build_Impl;

@@ -1,9 +1,14 @@
 with Ada.Directories;
 
 with Alire.Depends;
-with Alire.Index.Query;
+with Alire.Index;
+with Alire.Os_Lib;
+with Alire.Query;
 
+with Alr.Commands.Build_Impl;
 with Alr.OS;
+with Alr.OS_Lib;
+with Alr.Templates;
 
 with Semantic_Versioning;
 
@@ -21,9 +26,9 @@ package body Alr.Commands.Get_Impl is
       Project : constant Alire.Project_Name := Last_Argument;
 
       Needed  : constant Alire.Index.Instance :=
-                 Alire.Index.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any));
+                 Alire.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any));
    begin
-      if not Alire.Index.Query.Exists (Project) then
+      if not Alire.Query.Exists (Project) then
          Log ("ERROR: project [" & Project & "] does not exist in the catalog.");
          raise Command_Failed;
       end if;
@@ -34,8 +39,21 @@ package body Alr.Commands.Get_Impl is
       end if;
 
       --  Check out requested project under current directory
+      declare
+         Main_Project : constant Alire.Index.Release := Needed.Element (Project);
       begin
-         Needed.Element (Project).Checkout (Parent_Folder => Current_Directory);
+         Main_Project.Checkout (Parent_Folder => Current_Directory);
+
+         --  And generate its dependency file, if it does not exist
+         declare
+            use Alire.OS_Lib;
+            Guard      : Folder_Guard := Enter_Folder (Main_Project.Unique_Folder) with Unreferenced;
+            Index_File : constant String := Alr.OS_Lib.Locate_Index_File (Project);
+         begin
+            if Index_File = "" then
+               Templates.Generate_Project_Alire (Needed, Main_Project);
+            end if;
+         end;
       exception
          when Alire.File_Error =>
             --  We'll presume it's already there and OK
@@ -57,7 +75,12 @@ package body Alr.Commands.Get_Impl is
 
       --  Launch build if requested
       if Cmd.Build then
-         null;
+         declare
+            use Alire.OS_Lib;
+            Guard : Folder_Guard := Enter_Folder (Needed.Element (Project).Unique_Folder) with Unreferenced;
+         begin
+            Build_Impl.Build;
+         end;
       end if;
    end Execute;
 

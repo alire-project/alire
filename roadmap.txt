@@ -35,8 +35,9 @@ generate:
     create gpr aggregate project for building, using info in the project-alire.ads file
     named project_alirebuild.gpr
 
-get:
+* get:
     clone repo of the given project
+    if project-alire.ads does not exist, generate it
     --build to then build it
 
 init: (new is reserved word in Ada, better avoid)

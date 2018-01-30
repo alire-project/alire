@@ -1,17 +1,47 @@
-with Alire.OS_Lib;
+with Ada.Directories;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.OS_Lib;
 
 package body Alr.OS_Lib is
 
-   -----------------
-   -- GPR_Rebuild --
-   -----------------
+   ----------------
+   -- Alire_File --
+   ----------------
 
-   procedure GPR_Rebuild (Folder : String) is
+   function Alire_File (Project : Alire.Project_Name) return String is
+      (Project & "-alire.ads");
+
+   -----------------------
+   -- Locate_Index_File --
+   -----------------------
+
+   function Locate_Index_File (Project : Alire.Project_Name) return String is
+      use Ada.Directories;
+      use Gnat.OS_Lib;
    begin
-      Ada.Directories.Set_Directory (Folder);
-      Alire.OS_Lib.Spawn ("gprbuild", "");
-   end GPR_Rebuild;
+      if Is_Regular_File (Alire_File (Project)) then
+         return Alire_File (Project);
+      else
+         --  Check subfolders
+         declare
+            Search : Search_Type;
+            Folder : Directory_Entry_Type;
+         begin
+            Start_Search (Search, Current_Directory, "", (Directory => True, others => False));
+            while More_Entries (Search) loop
+               Get_Next_Entry (Search, Folder);
+               if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
+                  if Is_Regular_File (Compose (Full_Name (Folder), Alire_File (Project))) then
+                     End_Search (Search);
+                     return Compose (Full_Name (Folder), Alire_File (Project));
+                  end if;
+               end if;
+            end loop;
+            End_Search (Search);
+         end;
+      end if;
+
+      return "";
+   end Locate_Index_File;
 
 end Alr.OS_Lib;
