@@ -16,7 +16,11 @@ package Alr.Project is
    --  unless the hash already matches. In this case, we know the project file is
    --  missing the Set_Root_Project call
    
-   use all type Alire.Licenses;
+   procedure Check_Valid
+     with Post => (not Current.Is_Empty or else raise Command_Failed);
+   --  Graceful check that Current contains what it should.
+   
+   function Unknown return Alire.Licenses renames Alire.Unknown;
    
    subtype Release is Alire.Releases.Release;
       

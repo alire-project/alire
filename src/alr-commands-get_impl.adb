@@ -5,10 +5,9 @@ with Alire.Index;
 with Alire.Os_Lib;
 with Alire.Query;
 
+with Alr.Checkout;
 with Alr.Commands.Build_Impl;
 with Alr.OS;
-with Alr.OS_Lib;
-with Alr.Templates;
 
 with Semantic_Versioning;
 
@@ -38,41 +37,13 @@ package body Alr.Commands.Get_Impl is
          raise Command_Failed;
       end if;
 
+      Checkout.Working_Copy (Needed.Element (Project),
+                             Needed,
+                             Current_Directory);
       --  Check out requested project under current directory
-      declare
-         Main_Project : constant Alire.Index.Release := Needed.Element (Project);
-      begin
-         Main_Project.Checkout (Parent_Folder => Current_Directory);
-
-         --  And generate its dependency file, if it does not exist
-         declare
-            use Alire.OS_Lib;
-            Guard      : Folder_Guard := Enter_Folder (Main_Project.Unique_Folder) with Unreferenced;
-            Index_File : constant String := Alr.OS_Lib.Locate_Index_File (Project);
-         begin
-            if Index_File = "" then
-               Templates.Generate_Project_Alire (Needed, Main_Project);
-               Templates.Generate_Gpr (Needed, Main_Project);
-            end if;
-         end;
-      exception
-         when Alire.File_Error =>
-            --  We'll presume it's already there and OK
-            Log ("Skipping checkout for already available " & Needed.Element (Project).Milestone_Image);
-      end;
 
       --  Check out rest of dependencies
-      for Rel of Needed loop
-         if Rel.Project /= Project then
-            begin
-               Rel.Checkout (Parent_Folder => Alr.OS.Projects_Folder);
-            exception
-               when Alire.File_Error =>
-                  --  We'll presume it's already there and OK
-                  Log ("Skipping checkout for already available " & Rel.Milestone_Image);
-            end;
-         end if;
-      end loop;
+      Checkout.To_Folder (Needed, OS.Projects_Folder, But => Project);
 
       --  Launch build if requested
       if Cmd.Build then
@@ -80,7 +51,7 @@ package body Alr.Commands.Get_Impl is
             use Alire.OS_Lib;
             Guard : Folder_Guard := Enter_Folder (Needed.Element (Project).Unique_Folder) with Unreferenced;
          begin
-            Build_Impl.Build;
+            Build_Impl.Execute;
          end;
       end if;
    end Execute;

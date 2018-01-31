@@ -1,4 +1,6 @@
-package Alr.Session with Preelaborate is
+--  with Hello_Alr; -- Only in real in-project builds
+
+package Alr.Session is
    
    --  This file is used to determine the current working session (active project)
    --  This is only a placeholder; the actual file is generated for each build

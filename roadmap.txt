@@ -59,12 +59,12 @@ search:
     list libraries with a substring in their name
     -v: show versions
 
-update:
+* update:
     Gets latest alire index & alr app (--full --alr --index)
     if no options or --deps
         upgrade:
 
-upgrade:
+* upgrade:
     Recompute dependencies from project-alire.ads
     fetch: every newest dependency
     generate:

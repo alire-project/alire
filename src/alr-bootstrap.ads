@@ -27,6 +27,18 @@ package Alr.Bootstrap is
    --  Check if there is a project file within reach.
    --  If it is, and its hash differs from ours, rebuild.
    
+   procedure Check_Rebuild_Respawn
+     with Post => (Running_In_Session or else raise Command_Failed);
+   --  The whole shebang for project-oriented commands: 
+   --    Check within project
+   --    Rebuild if outdated
+   --    Respawn if rebuilt
+   --  Will raise if not within session
+   --  FIXME: some kind of infinite respawning prevention should be implemented here
+   
+   function Running_In_Project return Boolean
+     with Pre => Running_In_Session;
+   
    function Running_In_Session return Boolean;
    --  Says if there is a project file within reach
    
@@ -34,7 +46,7 @@ package Alr.Bootstrap is
      with Pre => Running_In_Session;
    --  Says if our internal session hash matches the one we are in
    
-   procedure Rebuild (Project_File : String := "");
+   procedure Rebuild (Alr_File : String := "");
    
    procedure Rebuild_With_Current_Project;
    --  Rebuild, using a single project if in scope
@@ -45,7 +57,7 @@ package Alr.Bootstrap is
 private
    
    function Running_In_Session return Boolean is
-     (OS_Lib.Locate_Any_Index_File /= "");
+     (OS_Lib.Locate_Any_GPR_File > 0 and then OS_Lib.Locate_Any_Index_File /= "");
    
    function Session_Is_Current return Boolean is
      (Session.Hash = Utils.Hash_File (OS_Lib.Locate_Any_Index_File));   

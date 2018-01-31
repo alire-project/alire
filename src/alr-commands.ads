@@ -2,9 +2,6 @@ with GNAT.Command_Line;
 
 package Alr.Commands is
    
-   Command_Failed : exception;
-   --  Signals "normal" command completion with failure (i.e., no need to print stack trace).
-   
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
    

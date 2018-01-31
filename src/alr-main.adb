@@ -4,11 +4,11 @@ with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.Index;
 
-with GNAT.Exception_Traces;
+-- with GNAT.Exception_Traces;
 
 procedure Alr.Main is
 begin
-   GNAT.Exception_Traces.Trace_On (GNAT.Exception_Traces.Unhandled_Raise);
+--   GNAT.Exception_Traces.Trace_On (GNAT.Exception_Traces.Unhandled_Raise);
 
    Bootstrap.Check_If_Rolling_And_Respawn;
 

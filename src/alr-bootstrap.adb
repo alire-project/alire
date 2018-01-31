@@ -1,9 +1,14 @@
+with Ada.Directories;
+
 with Alire.OS_Lib;
 
+with Alr.Project;
 with Alr.Rolling;
 with Alr.Templates;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+
+with System.Multiprocessors;
 
 package body Alr.Bootstrap is
 
@@ -52,27 +57,52 @@ package body Alr.Bootstrap is
       end if;
    end Check_If_Project_Outdated_And_Rebuild;
 
+   ---------------------------
+   -- Check_Rebuild_Respawn --
+   ---------------------------
+
+   procedure Check_Rebuild_Respawn is
+   begin
+      if not Running_In_Session then
+         Log ("Could not find alr session, stopping now");
+         raise Command_Failed;
+      end if;
+
+      if not Session_Is_Current then
+         Rebuild (OS_Lib.Locate_Any_Index_File);
+         Respawn_With_Canonical;
+      end if;
+
+      if not Running_In_Project then
+         raise Command_Failed;
+      end if;
+   end Check_Rebuild_Respawn;
+
    -------------
    -- Rebuild --
    -------------
 
-   procedure Rebuild (Project_File : String := "") is
+   procedure Rebuild (Alr_File : String := "") is
+      use Ada.Directories;
+
       Folder_To_Index : constant String :=
                           Alr_Src_Folder / "deps" / "alire" / "index";
    begin
       Log ("Generating index for " & Folder_To_Index);
       Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
 
-      if Project_File /= "" then
-         Log ("Generating session for " & Project_File);
-         Templates.Generate_Session (OS.Session_Folder, Project_File);
+      if Alr_File /= "" then
+         Log ("Generating session for " & Alr_File);
+         Templates.Generate_Session (OS.Session_Folder, Alr_File);
+         Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
       end if;
 
       Alire.OS_Lib.Spawn
         ("gprbuild",
-         "-p -XROLLING=True -XSELFBUILD=True " &
-           "-XSESSION=" & (if Project_File /= "" then OS.Session_Folder
-                                                 else Alr_Src_Folder / "src" / "default_session") & " " &
+         "-p -g -m -j" & Utils.Trim (System.Multiprocessors.Number_Of_CPUs'Img) & " " &
+           "-XROLLING=True -XSELFBUILD=True " &
+           "-XSESSION=" & (if Alr_File /= "" then OS.Session_Folder
+                                             else Alr_Src_Folder / "src" / "default_session") & " " &
          "-P" & (Alr_Src_Folder / "alr_env.gpr"));
    end Rebuild;
 
@@ -88,5 +118,33 @@ package body Alr.Bootstrap is
          Rebuild;
       end if;
    end Rebuild_With_Current_Project;
+
+   ------------------------
+   -- Running_In_Project --
+   ------------------------
+
+   function Running_In_Project return Boolean is
+   begin
+      if not Running_In_Session then
+         return False;
+      end if;
+
+      if Project.Current.Is_Empty then
+         Log ("No internal root project, cannot verify external");
+         return False;
+      end if;
+
+      declare
+         Gpr : constant Alire.Project_Name :=
+                 Project.Current.Element.Project & "_alr.ads";
+      begin
+         if Is_Regular_File (Gpr) then
+            return True;
+         else
+            Log ("Project file " & Utils.Quote (Gpr) & " not in current folder");
+            return False;
+         end if;
+      end;
+   end Running_In_Project;
 
 end Alr.Bootstrap;

@@ -1,6 +1,7 @@
 with Alire.OS_Lib; use Alire.OS_Lib;
 
 with Alr.Bootstrap;
+with Alr.Commands.Upgrade_Impl;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -82,12 +83,16 @@ package body Alr.Commands.Update_Impl is
          Update_Alr;
       end if;
 
-      if (Cmd.Alr or else Cmd.Index) and not Cmd.Project then
+      if Cmd.Alr or else Cmd.Index then
          Bootstrap.Rebuild_With_Current_Project;
       end if;
 
       if Cmd.Project then
-         raise Program_Error;
+         if Cmd.Alr or else Cmd.Index then
+            Bootstrap.Respawn_With_Canonical ("upgrade");
+         else
+            Upgrade_Impl.Execute;
+         end if;
       end if;
    end Execute;
 

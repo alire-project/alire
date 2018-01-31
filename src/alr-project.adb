@@ -1,6 +1,33 @@
-with Alr.Session;
+with Alire.Repositories.Local;
+
+with Alr.OS_Lib;
+with Alr.Utils;
 
 package body Alr.Project is
+
+   -----------------
+   -- Check_Valid --
+   -----------------
+
+   procedure Check_Valid is
+   begin
+      if Current.Is_Empty then
+         Log ("No root project defined despite session being current, check project_alr.ads file");
+         raise Command_Failed;
+      end if;
+
+      if OS_Lib.Locate_Index_File (Current.Element.Project) = "" then
+         if OS_Lib.Locate_Any_Index_File /= "" then
+            Log ("Session/Project mismatch:");
+            Log ("Root project is " & Utils.Quote (Current.Element.Project));
+            Log ("Session file is " & Utils.Quote (OS_Lib.Locate_Any_Index_File));
+         else
+            Log ("Could not find a valid session file");
+         end if;
+
+         raise Command_Failed;
+      end if;
+   end Check_Valid;
 
    ----------------------
    -- Set_Root_Project --
@@ -12,12 +39,16 @@ package body Alr.Project is
                               License    : Alire.Licenses := Unknown)
                               return Release
    is
-      Rel : constant Release := Alire.Index.Register_Local (Project,
+      pragma Unreferenced (License);
+
+      Rel : constant Release := Alire.Releases.New_Release (Project,
                                                             Version,
-                                                            Depends_On,
-                                                            License);
+                                                            Alire.Repositories.Local.Repo,
+                                                            "filesystem",
+                                                            Depends_On);
    begin
-      Alr.Session.Current_Project.Replace_Element (Rel);
+      Log ("Root project is " & Rel.Milestone_Image);
+      Alr.Project.Current.Replace_Element (Rel);
 
       return Rel;
    end Set_Root_Project;

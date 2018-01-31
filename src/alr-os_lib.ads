@@ -14,6 +14,10 @@ package Alr.OS_Lib is
    --  If found, returns it with relative path (usable for opening).
    --  If not it returns the empty string
 
+   function Locate_Any_GPR_File return Natural;
+   --  Says if there's any *.gpr file in folder (making the cwd a plausible alr project)
+   --  No problem if then is not, because the session will not build
+
    function Locate_Any_Index_File return String;
    --  Looks for any "*_alr.ads" file within reach as above
    --  Empty string if none or more than one

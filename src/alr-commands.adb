@@ -10,6 +10,7 @@ with Alr.Commands.Get_Impl;
 with Alr.Commands.Help_Impl;
 with Alr.Commands.Reserved;
 with Alr.Commands.Update_Impl;
+with Alr.Commands.Upgrade_Impl;
 with Alr.Devel;
 with Alr.OS;
 
@@ -27,6 +28,7 @@ package body Alr.Commands is
                        Get     => new Get_Impl.Command,
                        Help    => new Help_Impl.Command,
                        Update  => new Update_Impl.Command,
+                       Upgrade => new Upgrade_Impl.Command,
                        others  => new Reserved.Command);
 
    Log_Verbose : aliased Boolean := False;
