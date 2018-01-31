@@ -20,7 +20,7 @@ project Alr is
    -- This extra folder will contain the working root release, and the full index elaboration package
    case Selfbuild is
       when "True" => 
-         for Source_Dirs use Alr'Source_Dirs & (External ("ALR_SESSION", ""));
+         for Source_Dirs use Alr'Source_Dirs & (External ("SESSION", ""));
       when "False" =>
          for Source_Dirs use Alr'Source_Dirs & ("src/default_session");
    end case;

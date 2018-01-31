@@ -2,6 +2,7 @@ with Alire.OS_Lib;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
 with Alr.Rolling;
+with Alr.Templates;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -33,9 +34,12 @@ package body Alr.Bootstrap is
 
    procedure Rebuild_Stand_Alone is
    begin
+      Templates.Generate_Index (OS.Session_Folder, Alr_Src_Folder + "index");
+
       Alire.OS_Lib.Spawn
         ("gprbuild",
-         "-p -XROLLING=True -XSELFBUILD=True -P" & (Alr_Src_Folder + "alr_env.gpr"));
+         "-p -XROLLING=True -XSELFBUILD=True -XSESSION=" & OS.Session_Folder &
+         "-P" & (Alr_Src_Folder + "alr_env.gpr"));
    end Rebuild_Stand_Alone;
 
 end Alr.Bootstrap;

@@ -35,7 +35,7 @@ package body Alr.Templates is
    -- Generate_Index --
    --------------------
 
-   procedure Generate_Index (Path_Prefix, Index_Folder : String) is
+   procedure Generate_Index (Session_Path, Index_Folder : String) is
       File     : File_Type;
       Filename : constant String := "alr-index.ads";
 
@@ -52,7 +52,10 @@ package body Alr.Templates is
       end Add_Entry;
 
    begin
-      Create (File, Out_File, Path_Prefix + Filename);
+      Create (File, Out_File, Session_Path + Filename);
+
+      Put_Line (File, "pragma Warnings (Off);");
+      New_Line (File);
 
       Search (Index_Folder,
               "alire-index-*.ads",

@@ -42,7 +42,9 @@ package body Alr.OS is
    --------------------
 
    function Session_Folder return String is
-      Path : constant String := Compose (Compose (Cache_Folder, "sessions"), Current_Directory);
+      Path : constant String := Compose (Compose (Cache_Folder, "sessions"), "common");
+      --  FIXME: right now there are no sessions, only this one for everything
+      --  Might not be a problem if alr is rebuild whenever run within an alire project
    begin
       Create_Folder (Path);
       return Path;

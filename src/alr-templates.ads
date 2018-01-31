@@ -3,7 +3,7 @@ with Alire.Releases;
 
 package Alr.Templates is
 
-   procedure Generate_Index (Path_Prefix, Index_Folder : String);
+   procedure Generate_Index (Session_Path, Index_Folder : String);
    --  Generates alr-index.ads that with-es all available alire-index-*.ads releases
 
    procedure Generate_Gpr (Instance : Alire.Index.Instance;
