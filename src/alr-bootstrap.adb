@@ -34,6 +34,7 @@ package body Alr.Bootstrap is
 
    procedure Rebuild_Stand_Alone is
    begin
+      Log ("Generating index for " & Alr_Src_Folder + "index");
       Templates.Generate_Index (OS.Session_Folder, Alr_Src_Folder + "index");
 
       Alire.OS_Lib.Spawn
