@@ -12,7 +12,8 @@ begin
 
    Bootstrap.Check_If_Rolling_And_Respawn;
 
-   Log ("There are" & Alire.Index.Releases.Length'Image & " projects available.");
+   Log ("There are" & Alire.Index.Releases.Length'Image & " projects available");
+   Log ("");
 
    Alr.Commands.Execute;
 end Alr.Main;

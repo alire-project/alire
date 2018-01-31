@@ -5,10 +5,12 @@ with Ada.Text_IO; use Ada.Text_IO;
 --  To add a command: update the dispatch table below
 
 with Alr.Commands.Build_Impl;
+with Alr.Commands.Dev_Impl;
 with Alr.Commands.Get_Impl;
 with Alr.Commands.Help_Impl;
 with Alr.Commands.Reserved;
 with Alr.Commands.Update_Impl;
+with Alr.Devel;
 with Alr.OS;
 
 with GNAT.OS_Lib;
@@ -21,6 +23,7 @@ package body Alr.Commands is
 
    Dispatch_Table : constant array (Names) of access Command'Class :=
                       (Build   => new Build_Impl.Command,
+                       Dev     => new Dev_Impl.Command,
                        Get     => new Get_Impl.Command,
                        Help    => new Help_Impl.Command,
                        Update  => new Update_Impl.Command,
@@ -143,14 +146,16 @@ package body Alr.Commands is
       Put_Line ("Valid commands: ");
       New_Line;
       for Cmd in Names'Range loop
-         Put (Tab);
+         if Cmd /= Dev or else Alr.Devel.Enabled then
+            Put (Tab);
 
-         Pad := (others => ' ');
-         Pad (Pad'First .. Pad'First + Cmd'Image'Length - 1) := To_Lower (Cmd'Image);
-         Put (Pad);
+            Pad := (others => ' ');
+            Pad (Pad'First .. Pad'First + Cmd'Image'Length - 1) := To_Lower (Cmd'Image);
+            Put (Pad);
 
-         Put (Dispatch_Table (Cmd).Short_Description);
-         New_Line;
+            Put (Dispatch_Table (Cmd).Short_Description);
+            New_Line;
+         end if;
       end loop;
    end Display_Valid_Commands;
 

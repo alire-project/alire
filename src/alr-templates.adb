@@ -3,6 +3,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alr.OS;
 with Alr.OS_Lib;
+with Alr.Utils;
 
 with Semantic_Versioning;
 
@@ -48,7 +49,8 @@ package body Alr.Templates is
 
       procedure Add_Entry (Found : Directory_Entry_Type) is
       begin
-         Put_Line (File, "with Alire.Index." & Project (Simple_Name (Found)) & ";");
+         Put_Line (File, "with Alire.Index." &
+                     Utils.To_Mixed_Case (Project (Simple_Name (Found))) & ";");
       end Add_Entry;
 
    begin
@@ -77,7 +79,7 @@ package body Alr.Templates is
    is
       File     : File_Type;
       Filename : constant String := OS_Lib.Build_File (Root.Project);
-      Prjname  : constant String := Filename (Filename'First .. Filename'Last - 4);
+      Prjname  : constant String := Utils.To_Mixed_Case (Filename (Filename'First .. Filename'Last - 4));
 
       First    : Boolean := True;
 
@@ -136,9 +138,12 @@ package body Alr.Templates is
 
       Create (File, Out_File, OS_Lib.Alire_File (Root.Project));
 
-      Put_Line (File, "package Alire.Index." & Root.Project & " is");
+      Put_Line (File, "with Alr.Project; use Alr.Project;");
       New_Line (File);
-      Put_Line (File, Tab_1 & "working_Release : constant Release := Register_Local (");
+
+      Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Project) & "_Alr is");
+      New_Line (File);
+      Put_Line (File, Tab_1 & "Working_Release : constant Release := Set_Root_Project (");
       Put_Line (File, Tab_1 & Tab_1 & Q & Root.Project & Q & ",");
       Put_Line (File, Tab_1 & Tab_1 & "V (" & Q & Semver.Image (Root.Version) & Q & "),");
       Put      (File, Tab_1 & Tab_1 & "License => Unknown");
@@ -170,9 +175,32 @@ package body Alr.Templates is
       end if;
 
       New_Line (File);
-      Put_Line (File, "end Alire.Index." & Root.Project & ";");
+      Put_Line (File, "end " & Utils.To_Mixed_Case (Root.Project) & "_Alr;");
 
       Close (File);
    end Generate_Project_Alire;
+
+   ----------------------
+   -- Generate_Session --
+   ----------------------
+
+   procedure Generate_Session (Session_Path, Alire_File : String) is
+      use Alr.OS_Lib;
+
+      File : File_Type;
+      Hash : constant String := Utils.Hash_File (Alire_File);
+   begin
+      Create (File, Out_File, Session_Path / "alr-session.ads");
+
+      Put_Line (File, "package Alr.Session with Preelaborate is");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "Hash : constant String := """ & Hash & """;");
+      New_Line (File);
+
+      Put_Line (File, "end Alr.Session;");
+
+      Close (File);
+   end Generate_Session;
 
 end Alr.Templates;

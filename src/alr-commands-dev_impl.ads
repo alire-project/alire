@@ -1,4 +1,4 @@
-package Alr.Commands.Get_Impl is
+package Alr.Commands.Dev_Impl is
 
    type Command is new Commands.Command with private;
 
@@ -9,14 +9,14 @@ package Alr.Commands.Get_Impl is
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-      ("Fetches and optionally builds a project");
+      ("Developer helpers");
 
-   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("<project name>");
-   
+   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
+
 private
    
    type Command is new Commands.Command with record
-      Build : aliased Boolean := False;
+      Locate_Alr : aliased Boolean := False;
    end record;
-
-end Alr.Commands.Get_Impl;
+   
+end Alr.Commands.Dev_Impl;

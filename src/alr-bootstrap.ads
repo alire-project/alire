@@ -5,6 +5,8 @@ with Alire;
 with Alr.Defaults;
 with Alr.OS;
 with Alr.OS_Lib; use Alr.OS_Lib;
+with Alr.Session;
+with Alr.Utils;
 
 package Alr.Bootstrap is
 
@@ -16,8 +18,32 @@ package Alr.Bootstrap is
    Alr_Src_Folder : constant String := OS.Config_Folder / "alr";      
    
    procedure Check_If_Rolling_And_Respawn;
+   --  Determines if we are using a rolling release.
+   --  If not, and one is available, respawn.
    
-   procedure Rebuild_Stand_Alone;
+   procedure Check_If_Project_Outdated_And_Rebuild;
+   --  Check if there is a project file within reach.
+   --  If it is, and its hash differs from ours, rebuild.
+   
+   function Running_In_Session return Boolean;
+   --  Says if there is a project file within reach
+   
+   function Session_Is_Current return Boolean
+     with Pre => Running_In_Session;
+   --  Says if our internal session hash matches the one we are in
+   
+   procedure Rebuild (Project_File : String := "");
+   
+private
+   
+   function Running_In_Session return Boolean is
+     (OS_Lib.Locate_Any_Index_File /= "");
+   
+   function Session_Is_Current return Boolean is
+     (Session.Hash = Utils.Hash_File (OS_Lib.Locate_Any_Index_File));   
+   
+   --  If no project is given the default session is used. 
+   --  Otherwise, session file is generated and used
    
 --     Semver : constant Release := 
 --                Register_Git 

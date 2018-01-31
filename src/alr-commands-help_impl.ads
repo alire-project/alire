@@ -11,7 +11,7 @@ package Alr.Commands.Help_Impl is
                              Config : in out GNAT.Command_Line.Command_Line_Configuration) is null;
    
    overriding function Short_Description (Cmd : Command) return String is 
-     ("Shows hopefully helpful information.");
+     ("Shows hopefully helpful information");
    
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("command");
 

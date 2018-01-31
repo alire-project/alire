@@ -15,4 +15,7 @@ package Alr.Templates is
    --  Generate the dependencies file
    --  If root /= "" then its dependency is skipped (to not depend on itself)
 
+   procedure Generate_Session (Session_Path, Alire_File : String);
+   --  Generate the alr-session.ads file for current project file
+
 end Alr.Templates;

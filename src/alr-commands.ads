@@ -32,6 +32,7 @@ private
    type Names is (Build,
                   Clean,
                   Compile,
+                  Dev,
                   Execute,
                   Generate,
                   Get,
@@ -42,7 +43,7 @@ private
                   Search,
                   Update,
                   Upgrade,
-                  Version);     
+                  Version);
    
    procedure Display_Usage (Name : Names);
    
