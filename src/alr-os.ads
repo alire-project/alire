@@ -9,6 +9,9 @@ package Alr.OS is
    function Cache_Folder return String;
    --  ${XDG_CACHE_HOME:-.cache}/alire
 
+   function Devel_Folder return String;
+   --  Developer working folder, to avoid the commit -> push -> pull cycle
+
    function Projects_Folder return String;
    --  $CACHE_FOLDER/projects
 

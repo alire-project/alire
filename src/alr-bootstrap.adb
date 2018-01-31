@@ -1,8 +1,5 @@
-with Ada.Directories;
-
 with Alire.OS_Lib;
 
-with Alr.Devel;
 with Alr.Rolling;
 with Alr.Templates;
 
@@ -60,12 +57,8 @@ package body Alr.Bootstrap is
    -------------
 
    procedure Rebuild (Project_File : String := "") is
-      Source_Folder   : constant String :=
-                          (if Devel.Enabled and then Is_Regular_File ("alr_env.gpr")
-                           then Ada.Directories.Current_Directory
-                           else Alr_Src_Folder);
       Folder_To_Index : constant String :=
-                          Source_Folder / "deps" / "alire" / "index";
+                          Alr_Src_Folder / "deps" / "alire" / "index";
    begin
       Log ("Generating index for " & Folder_To_Index);
       Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
@@ -79,8 +72,8 @@ package body Alr.Bootstrap is
         ("gprbuild",
          "-p -XROLLING=True -XSELFBUILD=True " &
            "-XSESSION=" & (if Project_File /= "" then OS.Session_Folder
-                                                 else Source_Folder / "src" / "default_session") & " " &
-         "-P" & (Source_Folder / "alr_env.gpr"));
+                                                 else Alr_Src_Folder / "src" / "default_session") & " " &
+         "-P" & (Alr_Src_Folder / "alr_env.gpr"));
    end Rebuild;
 
    ----------------------------------

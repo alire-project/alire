@@ -26,6 +26,12 @@ package body Alr.OS is
                      Default => Getenv ("HOME") / ".config" / "alire");
    end Config_Folder;
 
+   ------------------
+   -- Devel_Folder --
+   ------------------
+
+   function Devel_Folder return String is
+      (Getenv ("HOME") / "local" / "alr");
    ---------------------
    -- Projects_Folder --
    ---------------------
