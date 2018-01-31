@@ -13,12 +13,12 @@ package body Alr.Bootstrap is
    ----------------------------------
 
    procedure Check_If_Rolling_And_Respawn is
-      Alr_Exec : constant String := Alr_Src_Folder + "obj" + "alr";
+      Alr_Exec : constant String := Alr_Src_Folder / "obj" / "alr";
    begin
       if Rolling.Enabled then
-         Log ("alr up-to-date.");
+         Log ("alr up to date.");
       else
-         if Is_Executable_File (Alr_Src_Folder + "obj" + "alr") then
+         if Is_Executable_File (Alr_Src_Folder / "obj" / "alr") then
             Log ("...");
             OS_Exit (Alire.OS_Lib.Spawn (Alr_Exec, Current_Command_Line));
             -- NOTE: THIS IS THE END OF EXECUTION OF THE OUTDATED alr
@@ -33,14 +33,16 @@ package body Alr.Bootstrap is
    -------------------------
 
    procedure Rebuild_Stand_Alone is
+      Folder_To_Index : constant String :=
+                       Alr_Src_Folder / "deps" / "alire" / "index";
    begin
-      Log ("Generating index for " & Alr_Src_Folder + "index");
-      Templates.Generate_Index (OS.Session_Folder, Alr_Src_Folder + "index");
+      Log ("Generating index for " & Folder_To_Index);
+      Templates.Generate_Index (OS.Session_Folder, Alr_Src_Folder / "index");
 
       Alire.OS_Lib.Spawn
         ("gprbuild",
          "-p -XROLLING=True -XSELFBUILD=True -XSESSION=" & OS.Session_Folder &
-         "-P" & (Alr_Src_Folder + "alr_env.gpr"));
+         "-P" & (Alr_Src_Folder / "alr_env.gpr"));
    end Rebuild_Stand_Alone;
 
 end Alr.Bootstrap;

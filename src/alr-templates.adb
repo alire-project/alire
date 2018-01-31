@@ -52,7 +52,7 @@ package body Alr.Templates is
       end Add_Entry;
 
    begin
-      Create (File, Out_File, Session_Path + Filename);
+      Create (File, Out_File, Session_Path / Filename);
 
       Put_Line (File, "pragma Warnings (Off);");
       New_Line (File);
@@ -104,7 +104,7 @@ package body Alr.Templates is
          if Rel.Project = Root.Project then
             Put (File, Tab_2 & """.""");
          else
-            Put (File, Tab_2 & """" & OS.Projects_Folder + Rel.Unique_Folder & """");
+            Put (File, Tab_2 & """" & OS.Projects_Folder / Rel.Unique_Folder & """");
          end if;
       end loop;
       Put_Line (File, ");");

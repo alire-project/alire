@@ -18,7 +18,7 @@ package Alr.OS_Lib is
 
    function Current_Command_Line return String;
 
-   function "+" (L, R : String) return String is
+   function "/" (L, R : String) return String is
      (Ada.Directories.Compose (L, R));
    --  Shorthand for path composition
 
