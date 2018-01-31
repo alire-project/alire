@@ -34,6 +34,12 @@ package Alr.Bootstrap is
    
    procedure Rebuild (Project_File : String := "");
    
+   procedure Rebuild_With_Current_Project;
+   --  Rebuild, using a single project if in scope
+   
+   procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line);
+   --  Relaunchs with same command line but using the canonically built executable
+   
 private
    
    function Running_In_Session return Boolean is

@@ -83,7 +83,7 @@ package body Alr.Commands.Update_Impl is
       end if;
 
       if (Cmd.Alr or else Cmd.Index) and not Cmd.Project then
-         Bootstrap.Rebuild;
+         Bootstrap.Rebuild_With_Current_Project;
       end if;
 
       if Cmd.Project then

@@ -17,6 +17,7 @@ private
    
    type Command is new Commands.Command with record
       Locate_Alr : aliased Boolean := False;
+      Respawn    : aliased Boolean := False;
    end record;
    
 end Alr.Commands.Dev_Impl;
