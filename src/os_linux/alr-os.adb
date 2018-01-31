@@ -1,6 +1,7 @@
+with Ada.Directories; use Ada.Directories;
+
 with Alire.Os_Lib;
 
-with Ada.Directories; use Ada.Directories;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.OS is
@@ -35,6 +36,17 @@ package body Alr.OS is
    begin
       return Compose (Cache_Folder, "projects");
    end Projects_Folder;
+
+   --------------------
+   -- Session_Folder --
+   --------------------
+
+   function Session_Folder return String is
+      Path : constant String := Compose (Compose (Cache_Folder, "sessions"), Current_Directory);
+   begin
+      Create_Folder (Path);
+      return Path;
+   end Session_Folder;
 
    --------------------------
    -- Create_Config_Folder --

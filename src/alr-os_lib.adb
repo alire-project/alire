@@ -1,4 +1,4 @@
-with Ada.Directories;
+with Ada.Command_Line;
 
 with GNAT.OS_Lib;
 
@@ -50,5 +50,25 @@ package body Alr.OS_Lib is
 
       return "";
    end Locate_Index_File;
+
+   --------------------------
+   -- Current_Command_Line --
+   --------------------------
+
+   function Current_Command_Line return String is
+      use Ada.Command_Line;
+
+      function Append (Arg : Positive) return String is
+      begin
+         if Arg > Argument_Count then
+            return "";
+         else
+            return Argument (Arg) & " " & Append (Arg + 1);
+         end if;
+      end Append;
+
+   begin
+      return Append (1);
+   end Current_Command_Line;
 
 end Alr.OS_Lib;

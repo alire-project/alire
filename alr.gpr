@@ -7,6 +7,31 @@ project Alr is
    for Object_Dir use "obj";
    for Main use ("alr-main.adb");
 
+   type Boolean is ("False", "True");
+   
+   Selfbuild : Boolean := External ("SELFBUILD", "False");
+   --  Used to enable the use of the current session
+   
+   Rolling   : Boolean := external ("ROLLING",   "False");
+   --  Used to mark that the executable comes from the config updated folder,
+   --    and not from some other deployment
+
+   -- In case of self compilation:
+   -- This extra folder will contain the working root release, and the full index elaboration package
+   case Selfbuild is
+      when "True" => 
+         for Source_Dirs use Alr'Source_Dirs & (External ("ALR_SESSION", ""));
+      when "False" =>
+         for Source_Dirs use Alr'Source_Dirs & ("src/default_session");
+   end case;
+   
+   case Rolling is
+      when "True" => 
+         for Source_Dirs use Alr'Source_Dirs & ("src/rolling_yes");
+      when "False" =>
+         for Source_Dirs use Alr'Source_Dirs & ("src/rolling_no");
+   end case;
+
    package Compiler is
       for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
    end Compiler;

@@ -168,7 +168,7 @@ package body Alr.Commands is
    procedure Execute_By_Name (Name : Names) is
       Config : Command_Line_Configuration;
    begin
-      Define_Switch (Config, "-fake", "--fakefakefake", "Will never be shown");
+      Define_Switch (Config, "-h", "--help", "Show this hopefully helpful help.");
       --  A lie to avoid the aforementioned bug
 
       --  Fill switches and execute

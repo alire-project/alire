@@ -1,15 +1,126 @@
+with Ada.Directories; use Ada.Directories;
+
+with Alire.OS_Lib;
+
+with Alr.Bootstrap;
+
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package body Alr.Commands.Update_Impl is
+
+   procedure Checkout_If_Needed is
+   begin
+      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+         Alire.OS_Lib.Spawn ("git",
+                             "clone --recurse-submodules " &
+                               "-b " & Bootstrap.Alr_Branch & " " &
+                               String (Bootstrap.Alr_Repo) & " " &
+                               Bootstrap.Alr_Src_Folder);
+      end if;
+   end Checkout_If_Needed;
+
+   ----------------
+   -- Update_Alr --
+   ----------------
+
+   procedure Update_Alr is
+   begin
+      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+         Checkout_If_Needed;
+      else
+         declare
+            use Alire.OS_Lib;
+            Guard : constant Folder_Guard :=
+                      Enter_Folder (Bootstrap.Alr_Src_Folder)
+              with Unreferenced;
+         begin
+            Alire.OS_Lib.Spawn ("git",
+                                "pull --recurse-submodules=yes");
+         end;
+      end if;
+
+      Bootstrap.Rebuild_Stand_Alone;
+   end Update_Alr;
+
+   ------------------
+   -- Update_Index --
+   ------------------
+
+   procedure Update_Index is
+   begin
+      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+         Checkout_If_Needed;
+      else
+         declare
+            use Alire.OS_Lib;
+            Guard : constant Folder_Guard :=
+                      Enter_Folder (Bootstrap.Alr_Src_Folder)
+              with Unreferenced;
+         begin
+            Alire.OS_Lib.Spawn ("git",
+                                "submodule update --recursive " &
+                                Compose ("deps", "alire"));
+         end;
+      end if;
+   end Update_Index;
 
    -------------
    -- Execute --
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
    begin
-      raise Program_Error;
+      if not (Cmd.Alr or else Cmd.Index or else Cmd.Project) then
+         Cmd.Full := True;
+      end if;
 
---      OS_Lib.GPR_Rebuild (OS.Alire_Source_Folder);
+      if Cmd.Full then
+         Cmd.Alr     := True;
+         Cmd.Index   := True;
+         Cmd.Project := True;
+      end if;
+
+      if Cmd.Index then
+         Update_Index;
+      end if;
+
+      if Cmd.Alr then
+         Update_Alr;
+      end if;
+
+      if Cmd.Project then
+         raise Program_Error;
+      end if;
    end Execute;
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+   begin
+      GNAT.Command_Line.Define_Switch
+        (Config,
+         Cmd.Alr'Access,
+         "", "--alr", "Update alr executable.");
+
+      GNAT.Command_Line.Define_Switch
+        (Config,
+         Cmd.Index'Access,
+         "", "--index", "Update projects database.");
+
+      GNAT.Command_Line.Define_Switch
+        (Config,
+         Cmd.Project'Access,
+         "", "--deps", "Update working project dependencies, if necessary.");
+
+      GNAT.Command_Line.Define_Switch
+        (Config,
+         Cmd.Full'Access,
+         "", "--full", "(Default) Update everything.");
+   end Setup_Switches;
 
 end Alr.Commands.Update_Impl;

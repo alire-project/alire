@@ -1,5 +1,14 @@
 package body Alr.Commands.Build_Impl is
 
+   -----------
+   -- Build --
+   -----------
+
+   procedure Build is
+   begin
+      raise Program_Error;
+   end Build;
+
    -------------
    -- Execute --
    -------------
@@ -7,8 +16,7 @@ package body Alr.Commands.Build_Impl is
    procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
    begin
-      Commands.Execute_By_Name (Commands.Upgrade);
-      Commands.Execute_By_Name (Commands.Compile);
+      Build;
    end Execute;
 
 end Alr.Commands.Build_Impl;

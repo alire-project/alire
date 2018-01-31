@@ -14,7 +14,7 @@ package Alr.Commands.Build_Impl is
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
    
    
-   procedure Build is null;
+   procedure Build;
    --  Externally call it
 
 end Alr.Commands.Build_Impl;

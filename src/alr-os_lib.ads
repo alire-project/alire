@@ -15,6 +15,9 @@ package Alr.OS_Lib is
    --  If found, returns it with relative path (usable for opening).
    --  If not it returns the empty string
 
+
+   function Current_Command_Line return String;
+
    function "+" (L, R : String) return String is
      (Ada.Directories.Compose (L, R));
    --  Shorthand for path composition

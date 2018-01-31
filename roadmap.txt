@@ -16,7 +16,7 @@ COMMANDS for 1.0
 Legend:
 * implemented
 
-* build:
+build:
     upgrade:
     compile:
 
@@ -61,7 +61,8 @@ search:
 
 update:
     Gets latest alire index & alr app (--full --alr --index)
-    upgrade:
+    if no options or --deps
+        upgrade:
 
 upgrade:
     Recompute dependencies from project-alire.ads

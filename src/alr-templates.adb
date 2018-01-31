@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alr.OS;
@@ -14,6 +15,56 @@ package body Alr.Templates is
    Tab_3 : constant String := Tab_2 & Tab_1;
 
    Q    : constant Character := '"';
+
+   -------------
+   -- Project --
+   -------------
+
+   function Project (Filename : String) return String is
+   begin
+      for I in reverse Filename'Range loop
+         if Filename (I) = '-' then
+            return Filename (I + 1 .. Filename'Last - 4);
+         end if;
+      end loop;
+
+      raise Program_Error with "Malformed index filename: " & Filename;
+   end Project;
+
+   --------------------
+   -- Generate_Index --
+   --------------------
+
+   procedure Generate_Index (Path_Prefix, Index_Folder : String) is
+      File     : File_Type;
+      Filename : constant String := "alr-index.ads";
+
+      use Ada.Directories;
+      use Alr.OS_Lib;
+
+      ---------------
+      -- Add_Entry --
+      ---------------
+
+      procedure Add_Entry (Found : Directory_Entry_Type) is
+      begin
+         Put_Line (File, "with Alire.Index." & Project (Simple_Name (Found)) & ";");
+      end Add_Entry;
+
+   begin
+      Create (File, Out_File, Path_Prefix + Filename);
+
+      Search (Index_Folder,
+              "alire-index-*.ads",
+              (Ordinary_File => True, others => False),
+              Add_Entry'Access);
+      New_Line;
+
+      Put_Line (File, "package Alr.Index is");
+      Put_Line (File, "end Alr.Index;");
+
+      Close (File);
+   end Generate_Index;
 
    ------------------
    -- Generate_Gpr --
