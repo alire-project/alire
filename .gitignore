@@ -2,7 +2,8 @@
 
 *.cgpr
 *.db
-*.swp
 *.xml
+
+.*sw?
 
 obj
