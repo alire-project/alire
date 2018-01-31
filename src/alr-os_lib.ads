@@ -1,6 +1,5 @@
-with Ada.Directories;
-
 with Alire;
+with Alire.OS_Lib;
 
 package Alr.OS_Lib is
 
@@ -18,8 +17,7 @@ package Alr.OS_Lib is
 
    function Current_Command_Line return String;
 
-   function "/" (L, R : String) return String is
-     (Ada.Directories.Compose (L, R));
+   function "/" (L, R : String) return String renames Alire.OS_Lib."/";
    --  Shorthand for path composition
 
 end Alr.OS_Lib;

@@ -55,13 +55,12 @@ package body Alr.Templates is
       Create (File, Out_File, Session_Path / Filename);
 
       Put_Line (File, "pragma Warnings (Off);");
-      New_Line (File);
 
       Search (Index_Folder,
               "alire-index-*.ads",
               (Ordinary_File => True, others => False),
               Add_Entry'Access);
-      New_Line;
+      New_Line (File);
 
       Put_Line (File, "package Alr.Index is");
       Put_Line (File, "end Alr.Index;");

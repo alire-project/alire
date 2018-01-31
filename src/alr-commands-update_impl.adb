@@ -1,6 +1,4 @@
-with Ada.Directories; use Ada.Directories;
-
-with Alire.OS_Lib;
+with Alire.OS_Lib; use Alire.OS_Lib;
 
 with Alr.Bootstrap;
 
@@ -29,7 +27,6 @@ package body Alr.Commands.Update_Impl is
          Checkout_If_Needed;
       else
          declare
-            use Alire.OS_Lib;
             Guard : constant Folder_Guard :=
                       Enter_Folder (Bootstrap.Alr_Src_Folder)
               with Unreferenced;
@@ -38,8 +35,6 @@ package body Alr.Commands.Update_Impl is
                                 "pull --recurse-submodules=yes");
          end;
       end if;
-
-      Bootstrap.Rebuild_Stand_Alone;
    end Update_Alr;
 
    ------------------
@@ -52,14 +47,13 @@ package body Alr.Commands.Update_Impl is
          Checkout_If_Needed;
       else
          declare
-            use Alire.OS_Lib;
             Guard : constant Folder_Guard :=
                       Enter_Folder (Bootstrap.Alr_Src_Folder)
               with Unreferenced;
          begin
             Alire.OS_Lib.Spawn ("git",
                                 "submodule update --recursive " &
-                                Compose ("deps", "alire"));
+                                "deps" / "alire");
          end;
       end if;
    end Update_Index;
@@ -86,6 +80,10 @@ package body Alr.Commands.Update_Impl is
 
       if Cmd.Alr then
          Update_Alr;
+      end if;
+
+      if (Cmd.Alr or else Cmd.Index) and not Cmd.Project then
+         Bootstrap.Rebuild_Stand_Alone;
       end if;
 
       if Cmd.Project then

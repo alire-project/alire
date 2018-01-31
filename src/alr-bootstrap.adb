@@ -1,6 +1,8 @@
+with Ada.Directories;
+
 with Alire.OS_Lib;
 
-with Alr.OS_Lib; use Alr.OS_Lib;
+with Alr.Devel;
 with Alr.Rolling;
 with Alr.Templates;
 
@@ -33,16 +35,18 @@ package body Alr.Bootstrap is
    -------------------------
 
    procedure Rebuild_Stand_Alone is
+      Source_Folder   : constant String :=
+                          (if Devel.Enabled then Ada.Directories.Current_Directory else Alr_Src_Folder);
       Folder_To_Index : constant String :=
-                       Alr_Src_Folder / "deps" / "alire" / "index";
+                          Source_Folder / "deps" / "alire" / "index";
    begin
       Log ("Generating index for " & Folder_To_Index);
-      Templates.Generate_Index (OS.Session_Folder, Alr_Src_Folder / "index");
+      Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
 
       Alire.OS_Lib.Spawn
         ("gprbuild",
-         "-p -XROLLING=True -XSELFBUILD=True -XSESSION=" & OS.Session_Folder &
-         "-P" & (Alr_Src_Folder / "alr_env.gpr"));
+         "-p -XROLLING=True -XSELFBUILD=True -XSESSION=" & OS.Session_Folder & " " &
+         "-P" & (Source_Folder / "alr_env.gpr"));
    end Rebuild_Stand_Alone;
 
 end Alr.Bootstrap;

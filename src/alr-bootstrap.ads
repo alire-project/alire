@@ -1,11 +1,10 @@
-with Ada.Directories; use Ada.Directories;
-
 with Alire;
 
 --  with Alire.Index; use Alire.Index;
 
 with Alr.Defaults;
 with Alr.OS;
+with Alr.OS_Lib; use Alr.OS_Lib;
 
 package Alr.Bootstrap is
 
@@ -14,7 +13,7 @@ package Alr.Bootstrap is
    Alr_Branch : constant String    := "master";
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
 
-   Alr_Src_Folder : constant String := Compose (OS.Config_Folder, "alr");      
+   Alr_Src_Folder : constant String := OS.Config_Folder / "alr";      
    
    procedure Check_If_Rolling_And_Respawn;
    

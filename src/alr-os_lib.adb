@@ -1,4 +1,5 @@
 with Ada.Command_Line;
+with Ada.Directories;
 
 with GNAT.OS_Lib;
 
@@ -38,9 +39,9 @@ package body Alr.OS_Lib is
             while More_Entries (Search) loop
                Get_Next_Entry (Search, Folder);
                if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
-                  if Is_Regular_File (Compose (Full_Name (Folder), Alire_File (Project))) then
+                  if Is_Regular_File (Full_Name (Folder) / Alire_File (Project)) then
                      End_Search (Search);
-                     return Compose (Full_Name (Folder), Alire_File (Project));
+                     Return Full_Name (Folder) / Alire_File (Project);
                   end if;
                end if;
             end loop;

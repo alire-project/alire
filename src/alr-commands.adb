@@ -26,6 +26,26 @@ package body Alr.Commands is
                        Update  => new Update_Impl.Command,
                        others  => new Reserved.Command);
 
+   Log_Verbose : aliased Boolean := False;
+   Log_Debug   : aliased Boolean := False;
+
+   -------------------------
+   -- Set_Global_Switches --
+   -------------------------
+
+   procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
+   begin
+      Define_Switch (Config,
+                     Log_Verbose'Access,
+                     "-v",
+                     Help => "Be more verbose.");
+
+      Define_Switch (Config,
+                     Log_Debug'Access,
+                     "-d",
+                     Help => "Be even more verbose (implies -v).");
+   end Set_Global_Switches;
+
    -------------
    -- Bailout --
    -------------
@@ -88,6 +108,8 @@ package body Alr.Commands is
       Set_Usage (Config,
                  To_Lower (Name'Img) & " [options] " & Dispatch_Table (Name).Usage_Custom_Parameters,
                  Help => "Help for " & To_Lower (Name'Img));
+
+      Set_Global_Switches (Config);
 
       Dispatch_Table (Name).Setup_Switches (Config);
 
@@ -168,13 +190,21 @@ package body Alr.Commands is
    procedure Execute_By_Name (Name : Names) is
       Config : Command_Line_Configuration;
    begin
+      Set_Global_Switches (Config);
+
       Define_Switch (Config, "-h", "--help", "Show this hopefully helpful help.");
       --  A lie to avoid the aforementioned bug
 
       --  Fill switches and execute
       Dispatch_Table (Name).Setup_Switches (Config);
       begin
-         Getopt (Config); -- Merely checks switches
+         Getopt (Config); -- Parses command line switches
+
+         if Log_Debug then
+            Alire.Verbosity := Debug;
+         elsif Log_Verbose then
+            Alire.Verbosity := Verbose;
+         end if;
 
          Put_Line (To_Lower (Name'Image) & ":");
          Dispatch_Table (Name).Execute;

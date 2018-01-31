@@ -1,7 +1,9 @@
-with GNAT.IO; -- For debugging purposes, FIXME getting rid of it and using some proper Trace lib
+with Alire;
 
 package Alr with Preelaborate is
 
-   procedure Log (S : String) renames GNAT.IO.Put_Line;
+   use all type Alire.Verbosities;
+
+   procedure Log (S : String; Level : Alire.Verbosities := Terse) renames Alire.Log;
 
 end Alr;
