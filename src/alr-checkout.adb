@@ -1,10 +1,36 @@
 with Alire;
 with Alire.OS_Lib;
+with Alire.Query;
 
 with Alr.OS_Lib;
 with Alr.Templates;
 
 package body Alr.Checkout is
+
+   --------------------------
+   -- Generate_GPR_Builder --
+   --------------------------
+
+   procedure Generate_GPR_Builder (Root : Alire.Index.Release) is
+      Success : Boolean;
+      Needed  : constant Alire.Index.Instance := Alire.Query.Resolve (Root.Depends, Success);
+   begin
+      if Success then
+         Generate_GPR_Builder (Needed, Root);
+      else
+         raise Command_Failed;
+      end if;
+   end Generate_GPR_Builder;
+
+   --------------------------
+   -- Generate_GPR_Builder --
+   --------------------------
+
+   procedure Generate_GPR_Builder (Depends : Alire.Index.Instance; Root : Alire.Index.Release) is
+      --  Guard not required, will have been called by the caller to obtain the dependencies
+   begin
+      Templates.Generate_Gpr (Depends, Root);
+   end Generate_GPR_Builder;
 
    ---------------
    -- To_Folder --

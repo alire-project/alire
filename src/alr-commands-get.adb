@@ -24,16 +24,17 @@ package body Alr.Commands.Get is
 
       Project : constant Alire.Project_Name := Last_Argument;
 
+      Success : Boolean;
       Needed  : constant Alire.Index.Instance :=
-                 Alire.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any));
+                 Alire.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any), Success);
    begin
       if not Alire.Query.Exists (Project) then
-         Log ("ERROR: project [" & Project & "] does not exist in the catalog.");
+         Log ("Project [" & Project & "] does not exist in the catalog.");
          raise Command_Failed;
       end if;
 
-      if Needed.Is_Empty then
-         Log ("ERROR: could not resolve dependencies.");
+      if not Success then
+         Log ("Failed: could not resolve dependencies.");
          raise Command_Failed;
       end if;
 

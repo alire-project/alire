@@ -137,7 +137,7 @@ package body Alr.Bootstrap is
 
       declare
          Gpr : constant Alire.Project_Name :=
-                 Project.Current.Element.Project & "_alr.ads";
+                 OS_Lib.Project_File (Project.Current.Element.Project);
       begin
          if Is_Regular_File (Gpr) then
             return True;

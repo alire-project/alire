@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Repositories.Local;
 
 with Alr.Utils;
@@ -27,6 +29,25 @@ package body Alr.Project is
          raise Command_Failed;
       end if;
    end Check_Valid;
+
+   ----------------
+   -- Enter_Root --
+   ----------------
+
+   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return Alire.OS_Lib.Folder_Guard is
+      Root_Folder : constant String := OS_Lib.Locate_Above_Project_Folder (Prj);
+   begin
+      if Root_Folder /= "" then
+         if Root_Folder /= OS_Lib.Current_Folder then
+            Log ("Using project folder " & Utils.Quote (Root_Folder));
+         end if;
+
+         return Alire.OS_Lib.Enter_Folder (Root_Folder);
+      else
+         Log ("Root folder for project not found", Debug);
+         raise Ada.Directories.Use_Error;
+      end if;
+   end Enter_Root;
 
    ----------------------
    -- Set_Root_Project --

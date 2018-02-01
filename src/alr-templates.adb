@@ -33,6 +33,16 @@ package body Alr.Templates is
    end Project;
 
    --------------------
+   -- Manual_Warning --
+   --------------------
+
+   procedure Manual_Warning (File : File_Type) is
+   begin
+      Put_Line (File, Tab_1 & "--  This is an automatically generated file. DO NOT EDIT MANUALLY!");
+      New_Line (File);
+   end Manual_Warning;
+
+   --------------------
    -- Generate_Index --
    --------------------
 
@@ -55,6 +65,8 @@ package body Alr.Templates is
 
    begin
       Create (File, Out_File, Session_Path / Filename);
+
+      Manual_Warning (File);
 
       Put_Line (File, "pragma Warnings (Off);");
 
@@ -91,6 +103,8 @@ package body Alr.Templates is
       Put_Line (File, "aggregate project " & Prjname & " is");
       New_Line (File);
 
+      Manual_Warning (File);
+
       Put_Line (File, Tab_1 & "for Project_Files use (" & Q & Root.Project & ".gpr" & Q & ");");
       New_Line (File);
 
@@ -115,6 +129,8 @@ package body Alr.Templates is
       New_Line (File);
 
       Put_Line (File, "end " & Prjname & ";");
+
+      Close (File);
    end Generate_Gpr;
 
    ----------------------------
@@ -200,6 +216,9 @@ package body Alr.Templates is
       New_Line (File);
 
       Put_Line (File, "package Alr.Session is");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "--  This is a generated file. DO NOT EDIT MANUALLY!");
       New_Line (File);
 
       Put_Line (File, Tab_1 & "Hash : constant String := """ & Hash & """;");

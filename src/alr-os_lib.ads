@@ -1,7 +1,13 @@
+with Ada.Directories;
+
 with Alire;
 with Alire.OS_Lib;
 
+with Alr.Utils;
+
 package Alr.OS_Lib is
+
+   function Current_Folder return String renames Ada.Directories.Current_Directory;
 
    function Alire_File (Project : Alire.Project_Name) return String;
    --  File with dependencies (project_alr.ads)
@@ -9,18 +15,29 @@ package Alr.OS_Lib is
    function Build_File (Project : Alire.Project_Name) return String;
    --  Aggregate project file (project_alr.gpr)
 
+   function Project_File (Project : Alire.Project_Name) return String;
+   --  Project native project file (project.gpr)
+
+   function Locate_File_Under (Folder : String; Name : String; Max_Depth : Natural := 0) return Utils.String_Vector;
+   --  Recursively search for a file
+   --  Depth 0 means given folder only
+   --  Returns all instances found
+
    function Locate_Index_File (Project : Alire.Project_Name) return String;
    --  Looks for a "project_alr.ads" file in the current or immediately below folders
    --  If found, returns it with relative path (usable for opening).
    --  If not it returns the empty string
 
    function Locate_Any_GPR_File return Natural;
-   --  Says if there's any *.gpr file in folder (making the cwd a plausible alr project)
-   --  No problem if then is not, because the session will not build
+   --  Says if there's any *.gpr file in folder or direct children (making the cwd a plausible alr project)
 
    function Locate_Any_Index_File return String;
    --  Looks for any "*_alr.ads" file within reach as above
    --  Empty string if none or more than one
+
+   function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String;
+   --  Looks from current folder upwards until finding project.gpr
+   --  "" if not found
 
    function Current_Command_Line return String;
 

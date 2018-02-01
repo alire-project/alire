@@ -1,11 +1,17 @@
+with Alire.Index;
 with Alire.OS_Lib; use Alire.OS_Lib;
+with Alire.Query;
 
 with Alr.Bootstrap;
-with Alr.Commands.Upgrade;
+with Alr.Checkout;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Commands.Update is
+
+   ------------------------
+   -- Checkout_If_Needed --
+   ------------------------
 
    procedure Checkout_If_Needed is
    begin
@@ -17,6 +23,26 @@ package body Alr.Commands.Update is
                                Bootstrap.Alr_Src_Folder);
       end if;
    end Checkout_If_Needed;
+
+   -------------
+   -- Upgrade --
+   -------------
+
+   procedure Upgrade is
+      --  The part concerning only to the project
+      Guard   : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+   begin
+      Requires_Project;
+
+      declare
+         Success : Boolean;
+         Needed  : constant Alire.Index.Instance :=
+                     Alire.Query.Resolve (Project.Current.Element.Depends, Success);
+      begin
+         Checkout.To_Folder (Needed);
+         Checkout.Generate_GPR_Builder (Needed, Project.Current.Element);
+      end;
+   end Upgrade;
 
    ----------------
    -- Update_Alr --
@@ -89,11 +115,13 @@ package body Alr.Commands.Update is
 
       if Cmd.Project then
          if Cmd.Alr or else Cmd.Index then
-            Bootstrap.Respawn_With_Canonical ("upgrade");
+            Bootstrap.Respawn_With_Canonical ("update --deps");
          else
-            Upgrade.Execute;
+            Upgrade;
          end if;
       end if;
+
+
    end Execute;
 
    --------------------

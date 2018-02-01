@@ -1,6 +1,7 @@
 with Alire.Containers;
 with Alire.Depends;
 with Alire.Index; use Alire.Index;
+with Alire.OS_Lib;
 with Alire.Releases;
 
 with Alr.OS_Lib;
@@ -22,13 +23,17 @@ package Alr.Project is
      with Post => (not Current.Is_Empty or else raise Command_Failed);
    --  Graceful check that Current contains what it should.
    
-   function GPR_File return String
+   function GPR_File (Prj : Alire.Project_Name := Current.Element.Project) return String
      with Pre => (not Current.Is_Empty);
    --  The actual project root file (not the _alrbuild one!)
    
-   function GPR_Alr_File return String
+   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Element.Project) return String
      with Pre => (not Current.Is_Empty);
    --  The alr environment project file (project_alr.gpr)
+   
+   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return Alire.OS_Lib.Folder_Guard
+     with Pre => (not Current.Is_Empty);
+   --  Enters the root folder if not already there   
    
    function Unknown return Alire.Licenses renames Alire.Unknown;
    
@@ -63,8 +68,10 @@ package Alr.Project is
 
 private
    
-   function GPR_File return String is (Current.Constant_Reference.Project & ".gpr");
+   function GPR_File (Prj : Alire.Project_Name := Current.Element.Project) return String is 
+     (Prj & ".gpr");
    
-   function GPR_Alr_File return String is (OS_Lib.Build_File (Current.Constant_Reference.Project));
+   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Element.Project) return String is 
+     (OS_Lib.Build_File (Prj));
    
 end Alr.Project;

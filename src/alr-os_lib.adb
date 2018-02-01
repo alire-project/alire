@@ -1,8 +1,5 @@
 with Ada.Command_Line;
 with Ada.Containers;
-with Ada.Directories;
-
-with Alr.Utils;
 
 with GNAT.OS_Lib;
 
@@ -23,6 +20,49 @@ package body Alr.OS_Lib is
 
    function Build_File (Project : Alire.Project_Name) return String is
      (Project & "_alr.gpr");
+
+   ------------------
+   -- Project_File --
+   ------------------
+
+   function Project_File (Project : Alire.Project_Name) return String is
+     (Project & ".gpr");
+
+   -----------------------
+   -- Locate_File_Under --
+   -----------------------
+
+   function Locate_File_Under (Folder : String; Name : String; Max_Depth : Natural := 0) return Utils.String_Vector is
+      Found : Utils.String_Vector;
+
+      procedure Locate (Folder : String; Current_Depth : Natural; Max_Depth : Natural) is
+         use Ada.Directories;
+         Search : Search_Type;
+      begin
+         Start_Search (Search, Folder, "", Filter => (Ordinary_File => True, Directory => True, others => False));
+
+         while More_Entries (Search) loop
+            declare
+               Current : Directory_Entry_Type;
+            begin
+               Get_Next_Entry (Search, Current);
+               if Kind (Current) = Directory then
+                  if Simple_Name (Current) /= "." and then Simple_Name (Current) /= ".." and then Current_Depth < Max_Depth then
+                     Locate (Folder / Simple_Name (Current), Current_Depth + 1, Max_Depth);
+                  end if;
+               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Name then
+                  Found.Append (Folder / Name);
+               end if;
+            end;
+         end loop;
+
+         End_Search (Search);
+      end Locate;
+
+   begin
+      Locate (Folder, 0, Max_Depth);
+      return Found;
+   end Locate_File_Under;
 
    -----------------------
    -- Locate_Index_File --
@@ -146,6 +186,28 @@ package body Alr.OS_Lib is
 
       return Natural (Candidates.Length);
    end Locate_Any_GPR_File;
+
+   ---------------------------
+   -- Locate_Project_Folder --
+   ---------------------------
+
+   function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String is
+      use Ada.Directories;
+      use GNAT.OS_Lib;
+
+      Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Current_Directory) with Unreferenced;
+   begin
+      loop
+         if Is_Regular_File (Project_File (Project)) and then Locate_Index_File (Project) /= "" then
+            return Current_Folder;
+         else
+            Set_Directory (Containing_Directory (Current_Directory));
+         end if;
+      end loop;
+   exception
+      when Use_Error =>
+         return ""; -- There's no containing folder (hence we're at root)
+   end Locate_Above_Project_Folder;
 
    --------------------------
    -- Current_Command_Line --

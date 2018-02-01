@@ -9,8 +9,10 @@ package body Alr.Commands.Clean is
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
       use Alire.OS_Lib;
+
+      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
-      Ensure_Valid_Project;
+      Requires_Project;
 
       Alire.OS_Lib.Spawn ("gprclean", "-r -P " & Project.GPR_Alr_File);
    end Execute;

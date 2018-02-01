@@ -8,5 +8,8 @@ package Alr.Commands.Compile is
      ("GPRbuild current project");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");  
+   
+   
+   procedure Execute;
 
 end Alr.Commands.Compile;

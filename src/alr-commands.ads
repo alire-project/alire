@@ -1,5 +1,9 @@
 with GNAT.Command_Line;
 
+private with Alire.OS_Lib;
+
+with Alr.Bootstrap;
+
 pragma Warnings (Off);
 private with Alr.Project;
 pragma Warnings (On);
@@ -27,10 +31,14 @@ package Alr.Commands is
    --  The part after "alr command "
    --  That is, the ones not managed by Gnat.Command_Line
    
-   procedure Ensure_Valid_Project;
+   procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it
    --  May trigger recompilation and respawn. In that case, it doesn't return to the caller, but respawns.
    --  If it returns, then we are running the updated alr executable for the current session+project
+   
+   procedure Requires_Buildfile
+     with Pre => Bootstrap.Running_In_Project;
+   --  Ensures that the build file is up to date
    
 private 
    
@@ -40,8 +48,6 @@ private
                       Cmd_Clean,
                       Cmd_Compile,
                       Cmd_Dev,
-                      Cmd_Execute,
-                      Cmd_Generate,
                       Cmd_Get,
                       Cmd_Help,
                       Cmd_Init,
@@ -49,7 +55,6 @@ private
                       Cmd_Run,
                       Cmd_Search,
                       Cmd_Update,
-                      Cmd_Upgrade,
                       Cmd_Version);
    --  The Cmd_ prefix allows the use of the proper name in child packages which otherwise cause conflict
    --  It is a bit ugly but also it makes clear when we are using this enumeration
@@ -67,5 +72,15 @@ private
    --  Returns the last command-line argument, unless...
    --  If it begins with "-" (it's a switch) or there aren't at least three arguments,
    --    raise Wrong_Command_Arguments
+   
+   --  Other conveniences for commands:
+   
+   subtype Folder_Guard is Alire.OS_Lib.Folder_Guard;
+   
+   function Enter_Project_Folder return Folder_Guard;
+   --  If we have a compiled-in project, attempt to find its root above us
+   --  Does nothing if we don't have a project, or if the root is not found 
+   --  In contrast, the one in project raises if not found
+   
    
 end Alr.Commands;
