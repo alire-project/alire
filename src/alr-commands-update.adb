@@ -1,11 +1,11 @@
 with Alire.OS_Lib; use Alire.OS_Lib;
 
 with Alr.Bootstrap;
-with Alr.Commands.Upgrade_Impl;
+with Alr.Commands.Upgrade;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-package body Alr.Commands.Update_Impl is
+package body Alr.Commands.Update is
 
    procedure Checkout_If_Needed is
    begin
@@ -91,7 +91,7 @@ package body Alr.Commands.Update_Impl is
          if Cmd.Alr or else Cmd.Index then
             Bootstrap.Respawn_With_Canonical ("upgrade");
          else
-            Upgrade_Impl.Execute;
+            Upgrade.Execute;
          end if;
       end if;
    end Execute;
@@ -126,4 +126,4 @@ package body Alr.Commands.Update_Impl is
          "", "--full", "(Default) Update everything.");
    end Setup_Switches;
 
-end Alr.Commands.Update_Impl;
+end Alr.Commands.Update;

@@ -1,4 +1,4 @@
-package Alr.Commands.Update_impl is
+package Alr.Commands.Update is
 
    type Command is new Commands.Command with private;
 
@@ -23,4 +23,4 @@ private
       Full : aliased Boolean := False;
    end record;
 
-end Alr.Commands.Update_impl;
+end Alr.Commands.Update;

@@ -1,6 +1,8 @@
 with GNAT.Command_Line;
 
-private with Alr.Project; pragma Unreferenced (Alr.Project);
+pragma Warnings (Off);
+private with Alr.Project;
+pragma Warnings (On);
 --  With it here so it's available to all child command packages
 
 package Alr.Commands is
@@ -34,29 +36,31 @@ private
    
    -- Declared here so they are available to the help metacommand child package   
    
-   type Names is (Cmd_Build,
-                  Cmd_Clean,
-                  Cmd_Compile,
-                  Cmd_Dev,
-                  Cmd_Execute,
-                  Cmd_Generate,
-                  Cmd_Get,
-                  Cmd_Help,
-                  Cmd_Init,
-                  Cmd_Lock,
-                  Cmd_Run,
-                  Cmd_Search,
-                  Cmd_Update,
-                  Cmd_Upgrade,
-                  Cmd_Version);
+   type Cmd_Names is (Cmd_Build,
+                      Cmd_Clean,
+                      Cmd_Compile,
+                      Cmd_Dev,
+                      Cmd_Execute,
+                      Cmd_Generate,
+                      Cmd_Get,
+                      Cmd_Help,
+                      Cmd_Init,
+                      Cmd_Lock,
+                      Cmd_Run,
+                      Cmd_Search,
+                      Cmd_Update,
+                      Cmd_Upgrade,
+                      Cmd_Version);
    --  The Cmd_ prefix allows the use of the proper name in child packages which otherwise cause conflict
    --  It is a bit ugly but also it makes clear when we are using this enumeration
    
-   procedure Display_Usage (Name : Names);
+   function Image (N : Cmd_Names) return String;
+   
+   procedure Display_Usage (Cmd : Cmd_Names);
    
    procedure Display_Valid_Commands;
    
-   procedure Execute_By_Name (Name : Names);
+   procedure Execute_By_Name (Cmd : Cmd_Names);
    -- Execute a command with the externally given command line
    
    function Last_Argument return String;

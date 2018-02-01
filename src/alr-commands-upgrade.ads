@@ -1,4 +1,4 @@
-package Alr.Commands.Upgrade_Impl is
+package Alr.Commands.Upgrade is
 
    type Command is new Commands.Command with null record;
 
@@ -13,4 +13,4 @@ package Alr.Commands.Upgrade_Impl is
    procedure Execute;
    --  Externally call it 
 
-end Alr.Commands.Upgrade_Impl;
+end Alr.Commands.Upgrade;

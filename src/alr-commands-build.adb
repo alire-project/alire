@@ -1,4 +1,4 @@
-package body Alr.Commands.Build_Impl is
+package body Alr.Commands.Build is
 
    -------------
    -- Execute --
@@ -19,4 +19,4 @@ package body Alr.Commands.Build_Impl is
       Execute;
    end Execute;
 
-end Alr.Commands.Build_Impl;
+end Alr.Commands.Build;

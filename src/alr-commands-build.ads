@@ -1,4 +1,4 @@
-package Alr.Commands.Build_Impl is
+package Alr.Commands.Build is
 
    type Command is new Commands.Command with null record;
 
@@ -13,4 +13,4 @@ package Alr.Commands.Build_Impl is
    procedure Execute;
    --  Externally call it
 
-end Alr.Commands.Build_Impl;
+end Alr.Commands.Build;

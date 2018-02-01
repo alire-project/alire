@@ -6,12 +6,12 @@ with Alire.Os_Lib;
 with Alire.Query;
 
 with Alr.Checkout;
-with Alr.Commands.Build_Impl;
+with Alr.Commands.Build;
 with Alr.OS;
 
 with Semantic_Versioning;
 
-package body Alr.Commands.Get_Impl is
+package body Alr.Commands.Get is
 
    package Semver renames Semantic_Versioning;
 
@@ -51,7 +51,7 @@ package body Alr.Commands.Get_Impl is
             use Alire.OS_Lib;
             Guard : Folder_Guard := Enter_Folder (Needed.Element (Project).Unique_Folder) with Unreferenced;
          begin
-            Build_Impl.Execute;
+            Build.Execute;
          end;
       end if;
    end Execute;
@@ -71,4 +71,4 @@ package body Alr.Commands.Get_Impl is
                      "", "--build", "Build after download.");
    end Setup_Switches;
 
-end Alr.Commands.Get_Impl;
+end Alr.Commands.Get;

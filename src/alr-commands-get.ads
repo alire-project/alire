@@ -1,4 +1,4 @@
-package Alr.Commands.Get_Impl is
+package Alr.Commands.Get is
 
    type Command is new Commands.Command with private;
 
@@ -19,4 +19,4 @@ private
       Build : aliased Boolean := False;
    end record;
 
-end Alr.Commands.Get_Impl;
+end Alr.Commands.Get;

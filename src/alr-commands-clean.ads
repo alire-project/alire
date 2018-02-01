@@ -1,4 +1,4 @@
-package Alr.Commands.Clean_Impl is
+package Alr.Commands.Clean is
 
    type Command is new Commands.Command with null record;
 
@@ -9,4 +9,4 @@ package Alr.Commands.Clean_Impl is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is (""); 
 
-end Alr.Commands.Clean_Impl;
+end Alr.Commands.Clean;

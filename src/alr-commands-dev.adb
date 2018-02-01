@@ -1,7 +1,7 @@
 with Alr.Bootstrap;
 with Alr.OS_Lib;
 
-package body Alr.Commands.Dev_Impl is
+package body Alr.Commands.Dev is
 
    -------------
    -- Execute --
@@ -48,4 +48,4 @@ package body Alr.Commands.Dev_Impl is
                      "Just self-compile.");
    end Setup_Switches;
 
-end Alr.Commands.Dev_Impl;
+end Alr.Commands.Dev;

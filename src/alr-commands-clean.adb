@@ -1,8 +1,6 @@
 with Alire.OS_Lib;
 
-with Alr.Project;
-
-package body Alr.Commands.Clean_Impl is
+package body Alr.Commands.Clean is
 
    -------------
    -- Execute --
@@ -17,4 +15,4 @@ package body Alr.Commands.Clean_Impl is
       Alire.OS_Lib.Spawn ("gprclean", "-r -P " & Project.GPR_Alr_File);
    end Execute;
 
-end Alr.Commands.Clean_Impl;
+end Alr.Commands.Clean;

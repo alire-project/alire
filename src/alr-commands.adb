@@ -5,17 +5,16 @@ with Ada.Text_IO; use Ada.Text_IO;
 --  To add a command: update the dispatch table below
 
 with Alr.Bootstrap;
-with Alr.Commands.Build_Impl;
-with Alr.Commands.Clean_Impl;
-with Alr.Commands.Dev_Impl;
-with Alr.Commands.Get_Impl;
-with Alr.Commands.Help_Impl;
+with Alr.Commands.Build;
+with Alr.Commands.Clean;
+with Alr.Commands.Dev;
+with Alr.Commands.Get;
+with Alr.Commands.Help;
 with Alr.Commands.Reserved;
-with Alr.Commands.Update_Impl;
-with Alr.Commands.Upgrade_Impl;
+with Alr.Commands.Update;
+with Alr.Commands.Upgrade;
 with Alr.Devel;
 with Alr.OS;
-with Alr.Project;
 
 with GNAT.OS_Lib;
 
@@ -25,18 +24,28 @@ package body Alr.Commands is
 
    use GNAT.Command_Line;
 
-   Dispatch_Table : constant array (Names) of access Command'Class :=
-                      (Build   => new Build_Impl.Command,
-                       Clean   => new Clean_Impl.Command,
-                       Dev     => new Dev_Impl.Command,
-                       Get     => new Get_Impl.Command,
-                       Help    => new Help_Impl.Command,
-                       Update  => new Update_Impl.Command,
-                       Upgrade => new Upgrade_Impl.Command,
-                       others  => new Reserved.Command);
+   Dispatch_Table : constant array (Cmd_Names) of access Command'Class :=
+                      (Cmd_Build   => new Build.Command,
+                       Cmd_Clean   => new Clean.Command,
+                       Cmd_Dev     => new Dev.Command,
+                       Cmd_Get     => new Get.Command,
+                       Cmd_Help    => new Help.Command,
+                       Cmd_Update  => new Update.Command,
+                       Cmd_Upgrade => new Upgrade.Command,
+                       others      => new Reserved.Command);
 
    Log_Verbose : aliased Boolean := False;
    Log_Debug   : aliased Boolean := False;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (N : Cmd_Names) return String is
+      Pre : constant String := To_Lower (N'Img);
+   begin
+      return Pre (Pre'First + 4 .. Pre'Last);
+   end Image;
 
    -------------------------
    -- Set_Global_Switches --
@@ -111,20 +120,20 @@ package body Alr.Commands is
    -- Display_Usage --
    -------------------
 
-   procedure Display_Usage (Name : Names) is
+   procedure Display_Usage (Cmd : Cmd_Names) is
       Config : Command_Line_Configuration;
    begin
       Set_Usage (Config,
-                 To_Lower (Name'Img) & " [options] " & Dispatch_Table (Name).Usage_Custom_Parameters,
-                 Help => "Help for " & To_Lower (Name'Img));
+                 Image (Cmd) & " [options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
+                 Help => "Help for " & Image (Cmd));
 
       Set_Global_Switches (Config);
 
-      Dispatch_Table (Name).Setup_Switches (Config);
+      Dispatch_Table (Cmd).Setup_Switches (Config);
 
       Display_Help_Workaround (Config);
 
-      Dispatch_Table (Name).Display_Help_Details;
+      Dispatch_Table (Cmd).Display_Help_Details;
    end Display_Usage;
 
    ------------------
@@ -134,8 +143,8 @@ package body Alr.Commands is
    function Longest_Name return Positive is
    begin
       return Max : Positive := 1 do
-         for Cmd in Names'Range loop
-            Max := Positive'Max (Max, Cmd'Image'Length);
+         for Cmd in Cmd_Names'Range loop
+            Max := Positive'Max (Max, Image (Cmd)'Length);
          end loop;
       end return;
    end Longest_Name;
@@ -151,12 +160,12 @@ package body Alr.Commands is
    begin
       Put_Line ("Valid commands: ");
       New_Line;
-      for Cmd in Names'Range loop
-         if Cmd /= Dev or else Alr.Devel.Enabled then
+      for Cmd in Cmd_Names'Range loop
+         if Cmd /= Cmd_Dev or else Alr.Devel.Enabled then
             Put (Tab);
 
             Pad := (others => ' ');
-            Pad (Pad'First .. Pad'First + Cmd'Image'Length - 1) := To_Lower (Cmd'Image);
+            Pad (Pad'First .. Pad'First + Image (Cmd)'Length - 1) := Image (Cmd);
             Put (Pad);
 
             Put (Dispatch_Table (Cmd).Short_Description);
@@ -182,14 +191,16 @@ package body Alr.Commands is
    procedure Execute is
       use Ada.Command_Line;
 
-      Name : Names;
+      Cmd : Cmd_Names;
    begin
       if Argument_Count < 1 or else Argument (1) = "-h" or else Argument (1) = "--help" then
          Display_Usage;
          return;
       else
+         declare
+            Pre_Cmd : constant String := Argument (1);
          begin
-            Name := Names'Value (Argument (1));
+            Cmd := Cmd_Names'Value (Pre_Cmd (Pre_Cmd'First + 4 .. Pre_Cmd'Last));
          exception
             when Constraint_Error =>
                Put_Line ("Unrecognized command: " & Argument (1));
@@ -200,7 +211,7 @@ package body Alr.Commands is
 
          Create_Alire_Folders;
 
-         Execute_By_Name (Name);
+         Execute_By_Name (Cmd);
       end if;
    end Execute;
 
@@ -208,7 +219,7 @@ package body Alr.Commands is
    -- Execute_Command --
    ---------------------
 
-   procedure Execute_By_Name (Name : Names) is
+   procedure Execute_By_Name (Cmd : Cmd_Names) is
       Config : Command_Line_Configuration;
    begin
       Set_Global_Switches (Config);
@@ -217,7 +228,7 @@ package body Alr.Commands is
       --  A lie to avoid the aforementioned bug
 
       --  Fill switches and execute
-      Dispatch_Table (Name).Setup_Switches (Config);
+      Dispatch_Table (Cmd).Setup_Switches (Config);
       begin
          Getopt (Config); -- Parses command line switches
 
@@ -227,15 +238,15 @@ package body Alr.Commands is
             Alire.Verbosity := Verbose;
          end if;
 
-         Put_Line (To_Lower (Name'Image) & ":");
-         Dispatch_Table (Name).Execute;
+         Put_Line (Image (Cmd) & ":");
+         Dispatch_Table (Cmd).Execute;
       exception
          when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
             --  Getopt has already displayed some help
             Bailout (1);
 
          when Wrong_Command_Arguments =>
-            Display_Usage (Name);
+            Display_Usage (Cmd);
             Bailout (1);
 
          when Command_Failed =>

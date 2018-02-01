@@ -1,4 +1,4 @@
-package Alr.Commands.Dev_Impl is
+package Alr.Commands.Dev is
 
    type Command is new Commands.Command with private;
 
@@ -21,4 +21,4 @@ private
       Self_Compile : aliased Boolean := False;
    end record;
    
-end Alr.Commands.Dev_Impl;
+end Alr.Commands.Dev;

@@ -1,4 +1,4 @@
-package Alr.Commands.Help_Impl is
+package Alr.Commands.Help is
 
    type Command is new Commands.Command with null record;
    
@@ -15,4 +15,4 @@ package Alr.Commands.Help_Impl is
    
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("command");
 
-end Alr.Commands.Help_Impl;
+end Alr.Commands.Help;

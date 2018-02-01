@@ -1,7 +1,7 @@
 with Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Alr.Commands.Help_Impl is
+package body Alr.Commands.Help is
 
    --------------------------
    -- Display_Help_Details --
@@ -20,11 +20,11 @@ package body Alr.Commands.Help_Impl is
    overriding procedure Execute (Cmd : in out Command)
    is
       pragma Unreferenced (Cmd);
-      Name : Commands.Names;
+      Name : Commands.Cmd_Names;
    begin
       if Ada.Command_Line.Argument_Count = 2 then
          begin
-            Name := Commands.Names'Value (Ada.Command_Line.Argument (2));
+            Name := Commands.Cmd_Names'Value (Ada.Command_Line.Argument (2));
             Display_Usage (Name);
          exception
             when others =>
@@ -33,9 +33,9 @@ package body Alr.Commands.Help_Impl is
                Display_Valid_Commands;
          end;
       else
-         Display_Usage (Help);
+         Display_Usage (Cmd_Help);
          --  Display_Valid_Commands;
       end if;
    end Execute;
 
-end Alr.Commands.Help_Impl;
+end Alr.Commands.Help;

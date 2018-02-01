@@ -4,7 +4,7 @@ with Alire.Query;
 with Alr.Checkout;
 with Alr.Project;
 
-package body Alr.Commands.Upgrade_Impl is
+package body Alr.Commands.Upgrade is
 
    -------------
    -- Execute --
@@ -31,4 +31,4 @@ package body Alr.Commands.Upgrade_Impl is
       end;
    end Execute;
 
-end Alr.Commands.Upgrade_Impl;
+end Alr.Commands.Upgrade;
