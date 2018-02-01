@@ -16,55 +16,44 @@ COMMANDS for 1.0
 Legend:
 * implemented
 
-build:
+build: requires (project)
     upgrade:
     compile:
 
-* clean:
+* clean: requires (project)
     gprclean with alire agg project
 
-compile: 
+* compile: requires (project, buildfile)
+    generate (if needed)
     Launch gprbuild as-is
 
-execute:
-    look for executable named as project
-        If one: report path and launch
-        If none/more: error
-
-generate:
-    create gpr aggregate project for building, using info in the project-alire.ads file
-    named project_alirebuild.gpr
-
-* get:
+* get: 
     clone repo of the given project
     if project-alire.ads does not exist, generate it
-    --build to then build it
+    generate:
+    build: (if --build)
 
-init: (new is reserved word in Ada, better avoid)
+init: 
     Prepares a new project with given name in name folder
     --bin or --lib mandatory
-    generates skeleton files:
+    generates skeleton files (unless --no-skel):
         project.gpr
         project-alire.ads
     generate:
 
-lock:
+lock: requires (project)
     overwrite project-alire.ads with current exact dependencies
 
-run:
+* run: requires (project)
     compile:
-    execute:
+    launch if only one executable found
 
 search: 
     list libraries with a substring in their name
     -v: show versions
 
 * update:
-    Gets latest alire index & alr app (--full --alr --index)
-    if no options or --deps
-        upgrade:
-
-* upgrade:
+    Gets latest index & alr app (--full --alr --index)
     Recompute dependencies from project-alire.ads
     fetch: every newest dependency
-    generate:
+    generate GPR file
