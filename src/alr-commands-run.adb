@@ -31,6 +31,8 @@ package body Alr.Commands.Run is
                Log (Candid);
             end loop;
          else
+            Log ("Launching " & Candidates.First_Element);
+            Log ("...");
             Alire.OS_Lib.Spawn (Candidates.First_Element, Cmd.Args.all);
          end if;
       end;

@@ -6,7 +6,7 @@ with Alire.Os_Lib;
 with Alire.Query;
 
 with Alr.Checkout;
-with Alr.Commands.Build;
+with Alr.Commands.Compile;
 with Alr.OS;
 
 with Semantic_Versioning;
@@ -47,12 +47,12 @@ package body Alr.Commands.Get is
       Checkout.To_Folder (Needed, OS.Projects_Folder, But => Project);
 
       --  Launch build if requested
-      if Cmd.Build then
+      if Cmd.Compile then
          declare
             use Alire.OS_Lib;
             Guard : Folder_Guard := Enter_Folder (Needed.Element (Project).Unique_Folder) with Unreferenced;
          begin
-            Build.Execute;
+            Compile.Execute;
          end;
       end if;
    end Execute;
@@ -68,8 +68,8 @@ package body Alr.Commands.Get is
       use GNAT.Command_Line;
    begin
       Define_Switch (Config,
-                     Cmd.Build'Access,
-                     "", "--build", "Build after download.");
+                     Cmd.Compile'Access,
+                     "-c", "--compile", "Compile after download.");
    end Setup_Switches;
 
 end Alr.Commands.Get;

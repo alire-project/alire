@@ -9,6 +9,20 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Commands.Update is
 
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute (From_Build : Boolean; Offline : Boolean) is
+      Cmd : Command;
+   begin
+      Cmd.From_Build := From_Build;
+      Cmd.Offline    := Offline;
+
+      Cmd.Execute;
+   end Execute;
+
+
    ------------------------
    -- Checkout_If_Needed --
    ------------------------
@@ -91,37 +105,19 @@ package body Alr.Commands.Update is
 
    overriding procedure Execute (Cmd : in out Command) is
    begin
-      if not (Cmd.Alr or else Cmd.Index or else Cmd.Project) then
-         Cmd.Full := True;
-      end if;
-
-      if Cmd.Full then
-         Cmd.Alr     := True;
-         Cmd.Index   := True;
-         Cmd.Project := True;
-      end if;
-
-      if Cmd.Index then
+      if Cmd.Offline then
+         Upgrade;
+      else
          Update_Index;
-      end if;
-
-      if Cmd.Alr then
          Update_Alr;
-      end if;
-
-      if Cmd.Alr or else Cmd.Index then
          Bootstrap.Rebuild_With_Current_Project;
-      end if;
 
-      if Cmd.Project then
-         if Cmd.Alr or else Cmd.Index then
-            Bootstrap.Respawn_With_Canonical ("update --deps");
+         if Cmd.From_Build then
+            Bootstrap.Respawn_With_Canonical ("build --offline " & Current_Global_Switches);
          else
-            Upgrade;
+            Bootstrap.Respawn_With_Canonical ("update --offline " & Current_Global_Switches);
          end if;
       end if;
-
-
    end Execute;
 
    --------------------
@@ -135,23 +131,9 @@ package body Alr.Commands.Update is
    begin
       GNAT.Command_Line.Define_Switch
         (Config,
-         Cmd.Alr'Access,
-         "", "--alr", "Update alr executable.");
+         Cmd.Offline'Access,
+         "-o", "--offline", "Skip remote update check and just recompute dependencies");
 
-      GNAT.Command_Line.Define_Switch
-        (Config,
-         Cmd.Index'Access,
-         "", "--index", "Update projects database.");
-
-      GNAT.Command_Line.Define_Switch
-        (Config,
-         Cmd.Project'Access,
-         "", "--deps", "Update working project dependencies, if necessary.");
-
-      GNAT.Command_Line.Define_Switch
-        (Config,
-         Cmd.Full'Access,
-         "", "--full", "(Default) Update everything.");
    end Setup_Switches;
 
 end Alr.Commands.Update;

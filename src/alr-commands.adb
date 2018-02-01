@@ -16,6 +16,7 @@ with Alr.Commands.Update;
 with Alr.Devel;
 with Alr.OS;
 with Alr.OS_Lib;
+with Alr.Utils;
 
 with GNAT.OS_Lib;
 
@@ -67,6 +68,16 @@ package body Alr.Commands is
                      "-d",
                      Help => "Be even more verbose (implies -v).");
    end Set_Global_Switches;
+
+   -----------------------------
+   -- Current_Global_Switches --
+   -----------------------------
+
+   function Current_Global_Switches return String is
+   begin
+      return Utils.Trim ((if Log_Debug then "-d " else "") &
+                         (if Log_Verbose then "-v " else ""));
+   end Current_Global_Switches;
 
    -------------
    -- Bailout --

@@ -16,7 +16,7 @@ COMMANDS for 1.0
 Legend:
 * implemented
 
-build: requires (project)
+* build: requires (project)
     upgrade:
     compile:
 
@@ -53,7 +53,7 @@ search:
     -v: show versions
 
 * update:
-    Gets latest index & alr app (--full --alr --index)
+    Gets latest index & alr app (not --offline)
     Recompute dependencies from project-alire.ads
     fetch: every newest dependency
     generate GPR file

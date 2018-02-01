@@ -98,6 +98,8 @@ package body Alr.Templates is
       use Alr.OS_Lib;
 
    begin
+      Log ("Generating GPR for " & Root.Milestone_Image & " with" & Instance.Length'Img & " dependencies", Verbose);
+
       Create (File, Out_File, Filename);
 
       Put_Line (File, "aggregate project " & Prjname & " is");

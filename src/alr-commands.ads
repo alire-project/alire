@@ -82,5 +82,9 @@ private
    --  Does nothing if we don't have a project, or if the root is not found 
    --  In contrast, the one in project raises if not found
    
+   function Current_Global_Switches return String;
+   --  Returns the in use global switches (-d -v)
+   --  Useful e.g. to pass along on respawning a custom command
+   
    
 end Alr.Commands;

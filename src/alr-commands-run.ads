@@ -19,7 +19,7 @@ private
    
    type Command is new Commands.Command with record
       Args       : aliased GNAT.Strings.String_Access;
-      No_Compile : aliased Boolean := False;
+      No_Compile : aliased Boolean := False;      
    end record; 
 
 end Alr.Commands.Run;

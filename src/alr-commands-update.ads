@@ -13,14 +13,15 @@ package Alr.Commands.Update is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");   
    
+   
+   procedure Execute (From_Build : Boolean; Offline : Boolean); -- with full options
+   --  From_Build is used to signal that we're expected to proceed to compile, if respawned
+   
 private 
    
    type Command is new Commands.Command with record
-      Alr,
-      Index,
-      Project : aliased Boolean := False;
-      
-      Full : aliased Boolean := False;
+      Offline    : aliased Boolean := False;
+      From_Build :         Boolean := False;
    end record;
 
 end Alr.Commands.Update;
