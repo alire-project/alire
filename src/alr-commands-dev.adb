@@ -16,6 +16,10 @@ package body Alr.Commands.Dev_Impl is
       if Cmd.Respawn then
          Bootstrap.Respawn_With_Canonical ("");
       end if;
+
+      if Cmd.Self_Compile then
+         Bootstrap.Rebuild_With_Current_Project;
+      end if;
    end Execute;
 
    --------------------
@@ -26,16 +30,22 @@ package body Alr.Commands.Dev_Impl is
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is
+      use GNAT.Command_Line;
    begin
-      GNAT.Command_Line.Define_Switch (Config,
-                                       Cmd.Locate_Alr'Access,
-                                       "-l", "--locate",
-                                       "Tries to locate a project file in scope");
+      Define_Switch (Config,
+                     Cmd.Locate_Alr'Access,
+                     "-l", "--locate",
+                     "Tries to locate a project file in scope");
 
-      GNAT.Command_Line.Define_Switch (Config,
-                                       Cmd.Respawn'Access,
-                                       "-r", "--respawn",
-                                       "Tries to respawn using rebuilt alr");
+      Define_Switch (Config,
+                     Cmd.Respawn'Access,
+                     "-r", "--respawn",
+                     "Tries to respawn using rebuilt alr");
+
+      Define_Switch (Config,
+                     Cmd.Self_Compile'Access,
+                     "", "--self",
+                     "Just self-compile.");
    end Setup_Switches;
 
 end Alr.Commands.Dev_Impl;

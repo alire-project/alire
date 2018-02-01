@@ -1,10 +1,13 @@
 with Ada.Directories;
 
+with Alire.Index;
 with Alire.OS_Lib;
 
 with Alr.Project;
 with Alr.Rolling;
+with Alr.Session;
 with Alr.Templates;
+with Alr.Utils;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -19,7 +22,7 @@ package body Alr.Bootstrap is
    ----------------------------
 
    procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line) is
-   begin
+    begin
       if Is_Executable_File (Alr_Exec) then
          Log ("...");
          OS_Exit (Alire.OS_Lib.Spawn (Alr_Exec, Command_Line));
@@ -35,9 +38,7 @@ package body Alr.Bootstrap is
 
    procedure Check_If_Rolling_And_Respawn is
    begin
-      if Rolling.Enabled then
-         Log ("alr up to date (session: " & Session.Hash & ")");
-      else
+      if not Rolling.Enabled then
          if Is_Executable_File (Alr_Exec) then
             Respawn_With_Canonical;
          else
@@ -146,5 +147,35 @@ package body Alr.Bootstrap is
          end if;
       end;
    end Running_In_Project;
+
+   ------------------------
+   -- Running_In_Session --
+   ------------------------
+
+   function Running_In_Session return Boolean is
+     (OS_Lib.Locate_Any_GPR_File > 0 and then OS_Lib.Locate_Any_Index_File /= "");
+
+   ------------------------
+   -- Session_Is_Current --
+   ------------------------
+
+   function Session_Is_Current return Boolean is
+     (Session.Hash = Utils.Hash_File (OS_Lib.Locate_Any_Index_File));
+
+   -----------------
+   -- Status_Line --
+   -----------------
+
+   function Status_Line return String is
+   begin
+      return
+           (if Rolling.Enabled then "rolling" else "bootstrap") & "-" &
+           (if Devel.Enabled then "devel" else "release") &
+           " [" &
+           (if Running_In_Session
+            then (if Session_Is_Current then "project:" & Project.Current.Element.Milestone_Image else "outdated")
+            else "no session") & "] (" &
+            Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)";
+   end Status_Line;
 
 end Alr.Bootstrap;

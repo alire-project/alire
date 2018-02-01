@@ -16,8 +16,9 @@ package Alr.Commands.Dev_Impl is
 private
    
    type Command is new Commands.Command with record
-      Locate_Alr : aliased Boolean := False;
-      Respawn    : aliased Boolean := False;
+      Locate_Alr   : aliased Boolean := False;
+      Respawn      : aliased Boolean := False;
+      Self_Compile : aliased Boolean := False;
    end record;
    
 end Alr.Commands.Dev_Impl;

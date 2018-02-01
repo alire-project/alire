@@ -4,8 +4,6 @@ with Alr.Defaults;
 with Alr.Devel;
 with Alr.OS;
 with Alr.OS_Lib; use Alr.OS_Lib;
-with Alr.Session;
-with Alr.Utils;
 
 package Alr.Bootstrap is
 
@@ -54,13 +52,10 @@ package Alr.Bootstrap is
    procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line);
    --  Relaunchs with same command line but using the canonically built executable
    
-private
+   function Status_Line return String;
+   --  One-liner reporting most interesting information
    
-   function Running_In_Session return Boolean is
-     (OS_Lib.Locate_Any_GPR_File > 0 and then OS_Lib.Locate_Any_Index_File /= "");
-   
-   function Session_Is_Current return Boolean is
-     (Session.Hash = Utils.Hash_File (OS_Lib.Locate_Any_Index_File));   
+private   
    
    --  If no project is given the default session is used. 
    --  Otherwise, session file is generated and used

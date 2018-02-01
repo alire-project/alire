@@ -4,7 +4,9 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 --  To add a command: update the dispatch table below
 
+with Alr.Bootstrap;
 with Alr.Commands.Build_Impl;
+with Alr.Commands.Clean_Impl;
 with Alr.Commands.Dev_Impl;
 with Alr.Commands.Get_Impl;
 with Alr.Commands.Help_Impl;
@@ -13,6 +15,7 @@ with Alr.Commands.Update_Impl;
 with Alr.Commands.Upgrade_Impl;
 with Alr.Devel;
 with Alr.OS;
+with Alr.Project;
 
 with GNAT.OS_Lib;
 
@@ -24,6 +27,7 @@ package body Alr.Commands is
 
    Dispatch_Table : constant array (Names) of access Command'Class :=
                       (Build   => new Build_Impl.Command,
+                       Clean   => new Clean_Impl.Command,
                        Dev     => new Dev_Impl.Command,
                        Get     => new Get_Impl.Command,
                        Help    => new Help_Impl.Command,
@@ -160,6 +164,16 @@ package body Alr.Commands is
          end if;
       end loop;
    end Display_Valid_Commands;
+
+   --------------------------
+   -- Ensure_Valid_Project --
+   --------------------------
+
+   procedure Ensure_Valid_Project is
+   begin
+      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
+      Project.Check_Valid;             -- Might raise Command_Failed
+   end Ensure_Valid_Project;
 
    -------------
    -- Execute --

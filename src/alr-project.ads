@@ -3,6 +3,8 @@ with Alire.Depends;
 with Alire.Index; use Alire.Index;
 with Alire.Releases;
 
+with Alr.OS_Lib;
+
 with Semantic_Versioning;
 
 package Alr.Project is
@@ -19,6 +21,14 @@ package Alr.Project is
    procedure Check_Valid
      with Post => (not Current.Is_Empty or else raise Command_Failed);
    --  Graceful check that Current contains what it should.
+   
+   function GPR_File return String
+     with Pre => (not Current.Is_Empty);
+   --  The actual project root file (not the _alrbuild one!)
+   
+   function GPR_Alr_File return String
+     with Pre => (not Current.Is_Empty);
+   --  The alr environment project file (project_alr.gpr)
    
    function Unknown return Alire.Licenses renames Alire.Unknown;
    
@@ -50,5 +60,11 @@ package Alr.Project is
    function More_Than (P : Project_Name; V : Version) return Dependencies renames Alire.Index.More_Than;
    function Exactly   (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Exactly ;
    function Except    (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Except;
+
+private
+   
+   function GPR_File return String is (Current.Constant_Reference.Project & ".gpr");
+   
+   function GPR_Alr_File return String is (OS_Lib.Build_File (Current.Constant_Reference.Project));
    
 end Alr.Project;

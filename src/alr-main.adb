@@ -1,8 +1,8 @@
-with Alire.Index;
-
 with Alr.Bootstrap;
 with Alr.Commands;
-with Alr.Index;
+
+with Alr.Index; pragma Elaborate_All (Alr.Index);
+--  Force inclusion of all indexed releases
 
 -- with GNAT.Exception_Traces;
 
@@ -12,7 +12,7 @@ begin
 
    Bootstrap.Check_If_Rolling_And_Respawn;
 
-   Log ("There are" & Alire.Index.Releases.Length'Image & " projects available");
+   Log ("alr " & Bootstrap.Status_Line);
    Log ("");
 
    Alr.Commands.Execute;

@@ -1,5 +1,8 @@
 with GNAT.Command_Line;
 
+private with Alr.Project; pragma Unreferenced (Alr.Project);
+--  With it here so it's available to all child command packages
+
 package Alr.Commands is
    
    procedure Execute;
@@ -22,25 +25,32 @@ package Alr.Commands is
    --  The part after "alr command "
    --  That is, the ones not managed by Gnat.Command_Line
    
+   procedure Ensure_Valid_Project;
+   --  Checks and performs session is up to date, and that the project matches to continue with it
+   --  May trigger recompilation and respawn. In that case, it doesn't return to the caller, but respawns.
+   --  If it returns, then we are running the updated alr executable for the current session+project
+   
 private 
    
    -- Declared here so they are available to the help metacommand child package   
    
-   type Names is (Build,
-                  Clean,
-                  Compile,
-                  Dev,
-                  Execute,
-                  Generate,
-                  Get,
-                  Help,
-                  Init,
-                  Lock,
-                  Run,
-                  Search,
-                  Update,
-                  Upgrade,
-                  Version);
+   type Names is (Cmd_Build,
+                  Cmd_Clean,
+                  Cmd_Compile,
+                  Cmd_Dev,
+                  Cmd_Execute,
+                  Cmd_Generate,
+                  Cmd_Get,
+                  Cmd_Help,
+                  Cmd_Init,
+                  Cmd_Lock,
+                  Cmd_Run,
+                  Cmd_Search,
+                  Cmd_Update,
+                  Cmd_Upgrade,
+                  Cmd_Version);
+   --  The Cmd_ prefix allows the use of the proper name in child packages which otherwise cause conflict
+   --  It is a bit ugly but also it makes clear when we are using this enumeration
    
    procedure Display_Usage (Name : Names);
    

@@ -20,7 +20,7 @@ build:
     upgrade:
     compile:
 
-clean:
+* clean:
     gprclean with alire agg project
 
 compile: 

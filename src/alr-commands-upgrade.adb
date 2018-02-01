@@ -1,7 +1,6 @@
 with Alire.Index;
 with Alire.Query;
 
-with Alr.Bootstrap;
 with Alr.Checkout;
 with Alr.Project;
 
@@ -23,8 +22,7 @@ package body Alr.Commands.Upgrade_Impl is
 
    procedure Execute is
    begin
-      Bootstrap.Check_Rebuild_Respawn;
-      Project.Check_Valid;
+      Ensure_Valid_Project;
 
       declare
          Needed  : constant Alire.Index.Instance := Alire.Query.Resolve (Project.Current.Element.Depends);

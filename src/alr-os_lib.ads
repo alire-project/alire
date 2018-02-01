@@ -7,7 +7,7 @@ package Alr.OS_Lib is
    --  File with dependencies (project_alr.ads)
 
    function Build_File (Project : Alire.Project_Name) return String;
-   --  Aggregate project file with proper paths
+   --  Aggregate project file (project_alr.gpr)
 
    function Locate_Index_File (Project : Alire.Project_Name) return String;
    --  Looks for a "project_alr.ads" file in the current or immediately below folders

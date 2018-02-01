@@ -22,7 +22,7 @@ package body Alr.OS_Lib is
    ----------------
 
    function Build_File (Project : Alire.Project_Name) return String is
-     (Project & "_alrbuild.gpr");
+     (Project & "_alr.gpr");
 
    -----------------------
    -- Locate_Index_File --

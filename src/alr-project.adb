@@ -19,7 +19,7 @@ package body Alr.Project is
       if OS_Lib.Locate_Index_File (Current.Element.Project) = "" then
          if OS_Lib.Locate_Any_Index_File /= "" then
             Log ("Session/Project mismatch:");
-            Log ("Root project is " & Utils.Quote (Current.Element.Project));
+            Log ("Root project is " & Utils.Quote (Current.Element.Milestone_Image));
             Log ("Session file is " & Utils.Quote (OS_Lib.Locate_Any_Index_File));
          else
             Log ("Could not find a valid session file");
@@ -47,7 +47,6 @@ package body Alr.Project is
                                                             "filesystem",
                                                             Depends_On);
    begin
-      Log ("Root project is " & Rel.Milestone_Image);
       Alr.Project.Current.Replace_Element (Rel);
 
       return Rel;
