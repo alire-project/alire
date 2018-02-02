@@ -140,7 +140,8 @@ package body Alr.Templates is
    ----------------------------
 
    procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
-                                     Root     : Alire.Releases.Release)
+                                     Root     : Alire.Releases.Release;
+                                     Filename : String := "")
    is
       File : File_Type;
    begin
@@ -154,7 +155,8 @@ package body Alr.Templates is
          end;
       end if;
 
-      Create (File, Out_File, OS_Lib.Alire_File (Root.Project));
+      Create (File, Out_File, (if Filename /= "" then Filename
+                                                 else OS_Lib.Alire_File (Root.Project)));
 
       Put_Line (File, "with Alr.Project; use Alr.Project;");
       New_Line (File);

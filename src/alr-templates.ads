@@ -11,9 +11,11 @@ package Alr.Templates is
    --  Generate the aggregate project file for path setup
 
    procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
-                                     Root     : Alire.Releases.Release);
+                                     Root     : Alire.Releases.Release;
+                                     Filename : String := "");
    --  Generate the dependencies file
    --  If root /= "" then its dependency is skipped (to not depend on itself)
+   --  File can be a full path + filename, otherwise Current_Folder / Alr_Index_File is used
 
    procedure Generate_Session (Session_Path, Alire_File : String);
    --  Generate the alr-session.ads file for current project file
