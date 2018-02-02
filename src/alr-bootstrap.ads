@@ -58,6 +58,7 @@ package Alr.Bootstrap is
    function Status_Line return String;
    --  One-liner reporting most interesting information
    
+   Alr_Bootstrap_Release  : constant Alire.Index.Release;
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies;
    Alr_Minimal_Instance   : constant Alire.Index.Instance;
    
@@ -78,21 +79,23 @@ private
    Alire_Bootstrap : constant Release :=
              Register_Git 
                 ("alire",
-                 V ("0.1.0-alpha"),
+                 V ("0.2.0-alpha"),
                  Defaults.Index_Repository,
-                 "8265beffb43380a6aa6bf7733bf177f9f03ad55c",
+                 "cbbf5ff93e177756b3869bd6faff77da53edaf7d",
                  Depends_On => At_Least_Within_Major (Semver_Bootstrap));
    
    Alr_Bootstrap : constant Release :=
              Register_Git 
                ("alr",
-                V ("0.1.0-alpha"),
+                V ("0.2.0-alpha"),
                 Defaults.Alr_Repository,
-                "2742ae25e757321ba86bbf83b502c39e2dad28c9",
+                "47cac9b0f739bc180f6bcb6492fe16907e5580e1",
                 Depends_On => At_Least_Within_Major (Alire_Bootstrap));   
 
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
    Alr_Minimal_Instance   : constant Alire.Index.Instance := 
                               Alire.Containers.To_Map (Alr_Bootstrap);
+
+   Alr_Bootstrap_Release  : constant Release := Alr_Bootstrap;   
    
 end Alr.Bootstrap;

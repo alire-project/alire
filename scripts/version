@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo alr compiled from `git remote get-url origin` `git branch -q | cut -f2 -d' '; git show -q | head -1 | cut -f2 -d' '`
