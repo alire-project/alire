@@ -7,10 +7,10 @@ package body Alr.Commands.Build is
    -- Execute --
    -------------
 
-   procedure Execute (Offline : Boolean) is
+   procedure Execute (Online : Boolean) is
    begin
       Update.Execute (From_Build => True,
-                      Offline    => Offline);
+                      Online    => Online);
       Compile.Execute;
    end Execute;
 
@@ -20,7 +20,7 @@ package body Alr.Commands.Build is
 
    procedure Execute (Cmd : in out Command) is
    begin
-      Execute (Cmd.Offline);
+      Execute (Cmd.Online);
    end Execute;
 
    --------------------
@@ -34,8 +34,8 @@ package body Alr.Commands.Build is
    begin
       GNAT.Command_Line.Define_Switch
         (Config,
-         Cmd.Offline'Access,
-         "-o", "--offline", "Skip alr and index update from remote repository");
+         Cmd.Online'Access,
+         "-o", "--online", "Update from online catalog before compiling");
    end Setup_Switches;
 
 end Alr.Commands.Build;

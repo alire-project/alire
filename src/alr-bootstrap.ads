@@ -1,4 +1,6 @@
 with Alire;
+with Alire.Containers;
+with Alire.Index;
 
 with Alr.Defaults;
 with Alr.Devel;
@@ -56,32 +58,41 @@ package Alr.Bootstrap is
    function Status_Line return String;
    --  One-liner reporting most interesting information
    
-private   
+   Alr_Minimal_Dependency : constant Alire.Index.Dependencies;
+   Alr_Minimal_Instance   : constant Alire.Index.Instance;
    
-   --  If no project is given the default session is used. 
-   --  Otherwise, session file is generated and used
+private     
    
---     Semver : constant Release := 
---                Register_Git 
---                  ("semantic_versioning",
---                   V ("1.0.0"),
---                   Defaults.Semver_Repository,
---                   "4f9dd63960cb4040e3aa561019d79e6f9d5f5818");
---     
---     Alire : constant Release :=
---               Register_Git 
---                  ("alire",
---                   V ("0.1.0-alpha"),
---                   Defaults.Index_Repository,
---                   "8265beffb43380a6aa6bf7733bf177f9f03ad55c",
---                   Depends_On => At_Least_Within_Major (Semver));
---     
---     Alr : constant Release :=
---               Register_Git 
---                 ("alr",
---                  V ("0.1.0-alpha"),
---                  Defaults.Alr_Repository,
---                  "2742ae25e757321ba86bbf83b502c39e2dad28c9",
---                  Depends_On => At_Least_Within_Major (Alire));
+   use Alire.Index;         
 
+   --  Having these public releases enables its inclusion in newly generated projects, 
+   --  so their project_alr.ads file do really compiles
+   
+   Semver_Bootstrap : constant Release := 
+              Register_Git 
+                ("semantic_versioning",
+                 V ("1.0.0"),
+                 Defaults.Semver_Repository,
+                 "4f9dd63960cb4040e3aa561019d79e6f9d5f5818");
+   
+   Alire_Bootstrap : constant Release :=
+             Register_Git 
+                ("alire",
+                 V ("0.1.0-alpha"),
+                 Defaults.Index_Repository,
+                 "8265beffb43380a6aa6bf7733bf177f9f03ad55c",
+                 Depends_On => At_Least_Within_Major (Semver_Bootstrap));
+   
+   Alr_Bootstrap : constant Release :=
+             Register_Git 
+               ("alr",
+                V ("0.1.0-alpha"),
+                Defaults.Alr_Repository,
+                "2742ae25e757321ba86bbf83b502c39e2dad28c9",
+                Depends_On => At_Least_Within_Major (Alire_Bootstrap));   
+
+   Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
+   Alr_Minimal_Instance   : constant Alire.Index.Instance := 
+                              Alire.Containers.To_Map (Alr_Bootstrap);
+   
 end Alr.Bootstrap;

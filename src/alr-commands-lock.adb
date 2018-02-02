@@ -28,7 +28,10 @@ package body Alr.Commands.Lock is
          Log ("Backing up current dependency file to " & Index_File & ".old");
          Ada.Directories.Copy_File (Index_File, Index_File & ".old", "mode=overwrite");
 
-         Templates.Generate_Project_Alire (Deps, Project.Current.Element, Index_File);
+         Templates.Generate_Project_Alire (Deps,
+                                           Project.Current.Element,
+                                           Exact    => True,
+                                           Filename => Index_File);
       end;
    end Execute;
 

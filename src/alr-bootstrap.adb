@@ -1,6 +1,5 @@
 with Ada.Directories;
 
-with Alire.Index;
 with Alire.OS_Lib;
 
 with Alr.Project;

@@ -37,18 +37,17 @@ init:
     Prepares a new project with given name in name folder
     --bin or --lib mandatory
     generates skeleton files (unless --no-skel):
+        project.ad{s,b}
         project.gpr
-        project-alire.ads
-    generate:
 
-lock: requires (project)
+* lock: requires (project)
     overwrite project-alire.ads with current exact dependencies
 
 * run: requires (project)
     compile:
     launch if only one executable found
 
-search: 
+* search: 
     list libraries with a substring in their name
     -v: show versions
 

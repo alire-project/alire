@@ -7,6 +7,9 @@ package Alr.Templates.Project_Alire is
       V ("0.0.0"),
       License => Alire.Unknown,
       Depends_On => 
-         Exactly ("project", V ("1.0.0")));
+      Exactly ("project", V ("1.0.0")));
+   
+   --  The explicit dependency on alr is only needed if you want to compile this file.
+   --  Once you are satisfied with your own dependencies it can be safely removed.
       
 end Alr.Templates.Project_Alire;

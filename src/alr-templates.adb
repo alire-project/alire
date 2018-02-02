@@ -15,7 +15,7 @@ package body Alr.Templates is
    Tab_2 : constant String := Tab_1 & Tab_1;
    Tab_3 : constant String := Tab_2 & Tab_1;
 
-   Q    : constant Character := '"';
+   function Q (S : String) return String renames Utils.Quote;
 
    -------------
    -- Project --
@@ -107,7 +107,7 @@ package body Alr.Templates is
 
       Manual_Warning (File);
 
-      Put_Line (File, Tab_1 & "for Project_Files use (" & Q & Root.Project & ".gpr" & Q & ");");
+      Put_Line (File, Tab_1 & "for Project_Files use (" & Q (Root.Project & ".gpr") & ");");
       New_Line (File);
 
       Put (File, Tab_1 & "for Project_Path use (");
@@ -141,6 +141,7 @@ package body Alr.Templates is
 
    procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
                                      Root     : Alire.Releases.Release;
+                                     Exact    : Boolean := True;
                                      Filename : String := "")
    is
       File : File_Type;
@@ -164,8 +165,8 @@ package body Alr.Templates is
       Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Project) & "_Alr is");
       New_Line (File);
       Put_Line (File, Tab_1 & "Working_Release : constant Release := Set_Root_Project (");
-      Put_Line (File, Tab_1 & Tab_1 & Q & Root.Project & Q & ",");
-      Put_Line (File, Tab_1 & Tab_1 & "V (" & Q & Semver.Image (Root.Version) & Q & "),");
+      Put_Line (File, Tab_1 & Tab_1 & Q (Root.Project) & ",");
+      Put_Line (File, Tab_1 & Tab_1 & "V (" & Q (Semver.Image (Root.Version)) & "),");
       Put      (File, Tab_1 & Tab_1 & "License => Unknown");
 
       if Instance.Is_Empty then
@@ -185,16 +186,22 @@ package body Alr.Templates is
                   New_Line (File);
                end if;
                Put (File, Tab_3 &
-                      "Exactly (" & Q & Rel.Project & Q &
-                      ", V (" & Q & Semver.Image (Rel.Version) & Q & "))");
+                    (if Exact then "Exactly ("
+                              else "At_Least_Within_Major (") &
+                      Q (Rel.Project) &
+                      ", V (" & Q (Semver.Image (Rel.Version)) & "))");
                First := False;
             end loop;
          end;
 
          Put_Line (File, ");");
       end if;
-
       New_Line (File);
+
+      Put_Line (File, "   --  The explicit dependency on alr is only needed if you want to compile this file.");
+      Put_Line (File, "   --  Once you are satisfied with your own dependencies it can be safely removed.");
+      New_Line (File);
+
       Put_Line (File, "end " & Utils.To_Mixed_Case (Root.Project) & "_Alr;");
 
       Close (File);

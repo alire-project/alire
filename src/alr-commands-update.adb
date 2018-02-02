@@ -13,11 +13,11 @@ package body Alr.Commands.Update is
    -- Execute --
    -------------
 
-   procedure Execute (From_Build : Boolean; Offline : Boolean) is
+   procedure Execute (From_Build : Boolean; Online : Boolean) is
       Cmd : Command;
    begin
       Cmd.From_Build := From_Build;
-      Cmd.Offline    := Offline;
+      Cmd.Online     := Online;
 
       Cmd.Execute;
    end Execute;
@@ -105,18 +105,18 @@ package body Alr.Commands.Update is
 
    overriding procedure Execute (Cmd : in out Command) is
    begin
-      if Cmd.Offline then
-         Upgrade;
-      else
+      if Cmd.Online then
          Update_Index;
          Update_Alr;
          Bootstrap.Rebuild_With_Current_Project;
 
          if Cmd.From_Build then
-            Bootstrap.Respawn_With_Canonical ("build --offline " & Current_Global_Switches);
+            Bootstrap.Respawn_With_Canonical ("build" & Current_Global_Switches);
          else
-            Bootstrap.Respawn_With_Canonical ("update --offline " & Current_Global_Switches);
+            Bootstrap.Respawn_With_Canonical ("update " & Current_Global_Switches);
          end if;
+      else
+         Upgrade;
       end if;
    end Execute;
 
@@ -131,8 +131,8 @@ package body Alr.Commands.Update is
    begin
       GNAT.Command_Line.Define_Switch
         (Config,
-         Cmd.Offline'Access,
-         "-o", "--offline", "Skip remote update check and just recompute dependencies");
+         Cmd.Online'Access,
+         "-o", "--online", "Perform online catalog update before recomputing dependencies");
 
    end Setup_Switches;
 
