@@ -11,8 +11,6 @@ with Alr.Utils;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with System.Multiprocessors;
-
 package body Alr.Bootstrap is
 
    Alr_Exec : constant String := Alr_Src_Folder / "obj" / "alr";
@@ -100,7 +98,7 @@ package body Alr.Bootstrap is
 
       Alire.OS_Lib.Spawn
         ("gprbuild",
-         "-p -g -m -j" & Utils.Trim (System.Multiprocessors.Number_Of_CPUs'Img) & " " &
+         "-p -g -m -j0 " &
            "-XROLLING=True -XSELFBUILD=True " &
            "-XSESSION=" & (if Alr_File /= "" then OS.Session_Folder
                                              else Alr_Src_Folder / "src" / "default_session") & " " &

@@ -1,9 +1,5 @@
 with Alire.OS_Lib;
 
-with Alr.Utils;
-
-with System.Multiprocessors;
-
 package body Alr.Commands.Compile is
 
    -------------
@@ -28,8 +24,7 @@ package body Alr.Commands.Compile is
       Requires_Project;
       Requires_Buildfile;
 
-      Alire.OS_Lib.Spawn ("gprbuild", "-j" & Utils.Trim (System.Multiprocessors.Number_Of_CPUs'Img) &
-                                      " -p -P" & Project.GPR_Alr_File);
+      Alire.OS_Lib.Spawn ("gprbuild", "-j0 -p -P" & Project.GPR_Alr_File);
    end Execute;
 
 end Alr.Commands.Compile;

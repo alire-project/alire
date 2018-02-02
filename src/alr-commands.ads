@@ -11,6 +11,8 @@ pragma Warnings (On);
 
 package Alr.Commands is
    
+   Wrong_Command_Arguments : exception;
+   
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
    

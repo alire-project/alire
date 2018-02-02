@@ -12,6 +12,7 @@ with Alr.Commands.Get;
 with Alr.Commands.Help;
 with Alr.Commands.Reserved;
 with Alr.Commands.Run;
+with Alr.Commands.Search;
 with Alr.Commands.Update;
 with Alr.Devel;
 with Alr.OS;
@@ -21,8 +22,6 @@ with Alr.Utils;
 with GNAT.OS_Lib;
 
 package body Alr.Commands is
-
-   Wrong_Command_Arguments : exception;
 
    use GNAT.Command_Line;
 
@@ -36,6 +35,7 @@ package body Alr.Commands is
                        Cmd_Get      => new Get.Command,
                        Cmd_Help     => new Help.Command,
                        Cmd_Run      => new Run.Command,
+                       Cmd_Search   => new Search.Command,
                        Cmd_Update   => new Update.Command,
                        others       => new Reserved.Command);
 
@@ -120,7 +120,7 @@ package body Alr.Commands is
    procedure Display_Usage is
    begin
       Put_Line ("Ada Library Repository manager (alr)");
-      Put_Line ("Usage : alr command [switches] [arguments]");
+      Put_Line ("Usage : alr command [options] [arguments]");
 
       New_Line;
 
