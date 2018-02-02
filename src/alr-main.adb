@@ -12,7 +12,7 @@ begin
 
    Bootstrap.Check_If_Rolling_And_Respawn;
 
-   Log ("alr is " & Bootstrap.Status_Line);
+   Log ("alr build is " & Bootstrap.Status_Line);
 
    Alr.Commands.Execute;
 end Alr.Main;
