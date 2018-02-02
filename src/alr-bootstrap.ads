@@ -87,9 +87,9 @@ private
    Alr_Bootstrap : constant Release :=
              Register_Git 
                ("alr",
-                V ("0.2.0-alpha"),
+                V ("0.3.0"),
                 Defaults.Alr_Repository,
-                "10d770e622f31b600973b0818ea4c5d95af0714f",
+                "a29037f120abefbe88a17ed6ebefa249a814d5af",
                 Depends_On => At_Least_Within_Major (Alire_Bootstrap));   
 
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
