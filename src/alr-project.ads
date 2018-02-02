@@ -68,6 +68,13 @@ package Alr.Project is
    function More_Than (P : Project_Name; V : Version) return Dependencies renames Alire.Index.More_Than;
    function Exactly   (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Exactly ;
    function Except    (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Except;
+   
+   --  Operators, just in case they're used:
+   function "and" (VS1, VS2 : Semantic_Versioning.Version_Set) return Semantic_Versioning.Version_Set
+                   renames Semantic_Versioning."and";
+   
+   function "and" (Dep1, Dep2 : Dependencies) return Dependencies 
+                   renames Alire.Depends."and";
 
 private
    

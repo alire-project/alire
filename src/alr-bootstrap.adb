@@ -12,7 +12,7 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Bootstrap is
 
-   Alr_Exec : constant String := Alr_Src_Folder / "obj" / "alr";
+   Alr_Exec : constant String := Alr_Src_Folder / "bin" / "alr";
 
    ----------------------------
    -- Respawn_With_Canonical --
