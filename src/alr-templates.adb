@@ -199,6 +199,7 @@ package body Alr.Templates is
       New_Line (File);
 
       Put_Line (File, "   --  The explicit dependency on alr is only needed if you want to compile this file.");
+      Put_Line (File, "   --  To do so, include the ""alr.gpr"" project in your own project file.");
       Put_Line (File, "   --  Once you are satisfied with your own dependencies it can be safely removed.");
       New_Line (File);
 

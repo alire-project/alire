@@ -6,9 +6,20 @@ with GNAT.SHA1;
 
 package body Alr.Utils is
 
--------------------
--- To_Mixed_Case --
--------------------
+   -------------------
+   -- To_Lower_Case --
+   -------------------
+
+   function To_Lower_Case (S : String) return String is
+   begin
+      return SLC : String := S do
+         GNAT.Case_Util.To_Lower (SLC);
+      end return;
+   end To_Lower_Case;
+
+   -------------------
+   -- To_Mixed_Case --
+   -------------------
 
    function To_Mixed_Case (S : String) return String is
    begin
@@ -41,5 +52,21 @@ package body Alr.Utils is
 
       return GNAT.SHA1.Digest (Context);
    end Hash_File;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace (Text : String; Match : String; Subst : String) return String is
+      use Ada.Strings.Fixed;
+      First : Natural;
+   begin
+      First := Index (Text, Match);
+      if First = 0 then
+         return Text;
+      else
+         return Replace (Replace_Slice (Text, First, First + Match'Length - 1, Subst), Match, Subst);
+      end if;
+   end Replace;
 
 end Alr.Utils;

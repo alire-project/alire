@@ -86,11 +86,11 @@ package body Alr.Bootstrap is
       Folder_To_Index : constant String :=
                           Alr_Src_Folder / "deps" / "alire" / "index";
    begin
-      Log ("Generating index for " & Folder_To_Index);
+      Log ("Generating index for " & Folder_To_Index, Verbose);
       Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
 
       if Alr_File /= "" then
-         Log ("Generating session for " & Alr_File);
+         Log ("Generating session for " & Alr_File, Verbose);
          Templates.Generate_Session (OS.Session_Folder, Alr_File);
          Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
       end if;
@@ -168,10 +168,10 @@ package body Alr.Bootstrap is
       return
            (if Rolling.Enabled then "rolling" else "bootstrap") & "-" &
            (if Devel.Enabled then "devel" else "release") &
-           " [" &
+           " (" &
            (if Running_In_Session
             then (if Session_Is_Current then "project:" & Project.Current.Element.Milestone_Image else "outdated")
-            else "no session") & "] (" &
+            else "no session") & ") (" &
             Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)";
    end Status_Line;
 

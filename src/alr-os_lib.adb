@@ -229,4 +229,87 @@ package body Alr.OS_Lib is
       return Append (1);
    end Current_Command_Line;
 
+   ---------------------
+   -- Traverse_Folder --
+   ---------------------
+
+   procedure Traverse_Folder (Folder : String;
+                              Doing  : access procedure (Item : Ada.Directories.Directory_Entry_Type))
+   is
+      use Ada.Directories;
+   begin
+      Log ("Traversing folder: " & Folder, Debug);
+      Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Doing);
+   end Traverse_Folder;
+
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy (Src_Folder, Dst_Parent_Folder : String) is
+   begin
+      -- FIXME this is OS dependent and should be made independent (or moved to OS)
+      -- FIXME this is not robust with blanks in paths
+      Alire.OS_Lib.Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
+   end Copy;
+
+
+   ----------------
+   -- Sed_Folder --
+   ----------------
+
+   procedure Sed_Folder (Folder  : String;
+                         Pattern : String;
+                         Replace : String)
+   is
+
+      ------------
+      -- Rename --
+      ------------
+
+      procedure Rename (Item : Ada.Directories.Directory_Entry_Type) is
+         use Ada.Directories;
+         use Utils;
+      begin
+         if Simple_Name (Item) = "." or else Simple_Name (Item) = ".." then
+            return;
+         end if;
+
+         if Kind (Item) = Directory then
+            Traverse_Folder (Full_Name (Item), Rename'Access);
+         end if;
+
+         if Contains (Simple_Name (Item), Pattern) then
+            Log ("Filename match: " & Simple_Name (Item), Debug);
+            Rename (Full_Name (Item),
+                    Containing_Directory (Full_Name (Item)) / Utils.Replace (Simple_Name (Item), Pattern, Replace));
+         end if;
+      end Rename;
+
+   begin
+      -- FIXME this is OS dependent and should be made independent (or moved to OS)
+      --  File contents
+      declare
+         Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Folder) with Unreferenced;
+      begin
+         Log ("sed-ing project name in files...", Debug);
+         Alire.OS_Lib.Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
+      end;
+
+      --  This is not OS dependent
+      --  File names
+      Log ("sed-ing project in file names...", Debug);
+      Traverse_Folder (Folder, Rename'Access);
+   end Sed_Folder;
+
+   -------------------------------
+   -- File_Contains_Ignore_Case --
+   -------------------------------
+
+   function File_Contains_Ignore_Case (Filename, Word : String) return Boolean is
+   begin
+      --  FIXME: this is OS dependent, and it shouldn't be
+      return Alire.OS_Lib.Spawn ("grep", "-q " & Word & " " & Filename) = 0;
+   end File_Contains_Ignore_Case;
+
 end Alr.OS_Lib;

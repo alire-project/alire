@@ -49,7 +49,7 @@ package body Alr.Checkout is
                when Alire.File_Error =>
                   --  We'll presume it's already there and OK
                   --  FIXME find out for real, or offer option to squash old one
-                  Log ("Skipping checkout for already available " & R.Milestone_Image);
+                  Log ("Skipping checkout for already available " & R.Milestone_Image, Verbose);
             end;
          end if;
       end loop;

@@ -23,6 +23,9 @@ package Alr.Project is
      with Post => (not Current.Is_Empty or else raise Command_Failed);
    --  Graceful check that Current contains what it should.
    
+   function Name return String
+     with Pre => (not Current.Is_Empty);
+   
    function GPR_File (Prj : Alire.Project_Name := Current.Element.Project) return String
      with Pre => (not Current.Is_Empty);
    --  The actual project root file (not the _alrbuild one!)
@@ -67,6 +70,8 @@ package Alr.Project is
    function Except    (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Except;
 
 private
+   
+   function Name return String is (Current.Constant_Reference.Project);
    
    function GPR_File (Prj : Alire.Project_Name := Current.Element.Project) return String is 
      (Prj & ".gpr");

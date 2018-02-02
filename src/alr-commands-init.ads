@@ -18,7 +18,8 @@ private
    type Command is new Commands.Command with record
       Bin, 
       Lib,
-      No_Skel : aliased Boolean := False;
+      No_Skel,
+      Build : aliased Boolean := False;
    end record; 
 
 end Alr.Commands.Init;

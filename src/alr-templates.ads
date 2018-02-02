@@ -22,4 +22,11 @@ package Alr.Templates is
    procedure Generate_Session (Session_Path, Alire_File : String);
    --  Generate the alr-session.ads file for current project file
 
+   Sed_Pattern : constant String;
+
+private
+
+   Sed_Pattern : constant String := "PROJECT_SKEL";
+   --  In Caps so its proper use in lowercase or Mixed Case is ensured
+
 end Alr.Templates;

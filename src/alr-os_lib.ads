@@ -7,7 +7,17 @@ with Alr.Utils;
 
 package Alr.OS_Lib is
 
+   --  GENERAL COMMAND LINE
+
    function Current_Folder return String renames Ada.Directories.Current_Directory;
+
+   function Current_Command_Line return String;
+
+   function "/" (L, R : String) return String renames Alire.OS_Lib."/";
+   --  Shorthand for path composition
+
+
+   --  ALIRE FILE RELATED
 
    function Alire_File (Project : Alire.Project_Name) return String;
    --  File with dependencies (project_alr.ads)
@@ -39,9 +49,26 @@ package Alr.OS_Lib is
    --  Looks from current folder upwards until finding project.gpr
    --  "" if not found
 
-   function Current_Command_Line return String;
 
-   function "/" (L, R : String) return String renames Alire.OS_Lib."/";
-   --  Shorthand for path composition
+   --  FOLDER MANAGEMENT
+
+   procedure Traverse_Folder (Folder : String;
+                              Doing  : access procedure (Item : Ada.Directories.Directory_Entry_Type));
+
+   procedure Copy (Src_Folder, Dst_Parent_Folder : String);
+   --  Copies a folder and its contents to within another location
+   --  That is, equivalent to cp -r src dst
+
+   procedure Sed_Folder (Folder  : String;
+                         Pattern : String;
+                         Replace : String);
+   --  Replace, in both file names and contents, Pattern by Replace
+   --  Case sensitive!
+
+
+   --  UGLY HACKS
+
+   function File_Contains_Ignore_Case (Filename, Word : String) return Boolean
+     with Pre => (for all C of Word => C /= ' ');
 
 end Alr.OS_Lib;

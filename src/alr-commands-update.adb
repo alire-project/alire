@@ -53,6 +53,10 @@ package body Alr.Commands.Update is
          Needed  : constant Alire.Index.Instance :=
                      Alire.Query.Resolve (Project.Current.Element.Depends, Success);
       begin
+         if not Success then
+            Log ("Update failed");
+            raise Command_Failed;
+         end if;
          Checkout.To_Folder (Needed);
          Checkout.Generate_GPR_Builder (Needed, Project.Current.Element);
       end;
@@ -106,6 +110,7 @@ package body Alr.Commands.Update is
    overriding procedure Execute (Cmd : in out Command) is
    begin
       if Cmd.Online then
+         Log ("Checking remote repositories:");
          Update_Index;
          Update_Alr;
          Bootstrap.Rebuild_With_Current_Project;

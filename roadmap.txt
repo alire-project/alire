@@ -33,7 +33,7 @@ Legend:
     generate:
     build: (if --build)
 
-init: 
+* init: 
     Prepares a new project with given name in name folder
     --bin or --lib mandatory
     generates skeleton files (unless --no-skel):
