@@ -17,7 +17,7 @@ package body Alr.Commands.Search is
       use Ada.Command_Line;
       use Ada.Strings.Fixed;
 
-      Pattern : constant String := Last_Argument;
+      Pattern : constant String := Argument (Argument_Count);
       Found   : Natural := 0;
    begin
       if Argument_Count = 1 then -- no search term

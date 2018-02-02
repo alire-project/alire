@@ -79,15 +79,15 @@ private
    Alire_Bootstrap : constant Release :=
              Register_Git 
                 ("alire",
-                 V ("0.3.0"),
+                 V ("0.3.1"),
                  Defaults.Index_Repository,
-                 "5ddb905aee854f687403bb2ca6fb6c6e0d4ce746",
+                 "e6953d95ccdac7e28134d4ab9d2fb28080f7a96d",
                  Depends_On => At_Least_Within_Major (Semver_Bootstrap));
    
    Alr_Bootstrap : constant Release :=
              Register_Git 
                ("alr",
-                V ("0.3.0"),
+                V ("0.3.1"),
                 Defaults.Alr_Repository,
                 "77f077ee469c1e93b814a3f15f1e3e21a100a393",
                 Depends_On => At_Least_Within_Major (Alire_Bootstrap));   
