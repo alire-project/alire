@@ -13,10 +13,6 @@ package Alr.Commands.Build is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
    
-   
-   procedure Execute (Online : Boolean);
-   --  Externally call it
-   
 private
    
    type Command is new Commands.Command with record

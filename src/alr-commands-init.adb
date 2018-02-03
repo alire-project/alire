@@ -7,7 +7,6 @@ with Alire.Releases;
 with Alire.Repositories.Local;
 
 with Alr.Bootstrap;
-with Alr.Commands.Build;
 with Alr.OS_Lib;
 with Alr.Templates;
 with Alr.Utils;
@@ -87,16 +86,15 @@ package body Alr.Commands.Init is
       --  Create and enter folder for generation, if it didn't happen already
       if Bootstrap.Running_In_Session then
          if Bootstrap.Session_Is_Current and then Name = Project.Name then
-            Log ("Already in working copy, skipping checkout");
+            Log ("Already in working copy, skipping initialization");
          else
             Log ("Cannot initialize a project inside another alr project, stopping.");
             raise Command_Failed;
          end if;
       else
          Generate (Cmd);
+         Log ("Project initialization completed");
       end if;
-
-      Log ("Project initialization completed");
 
       if Cmd.Build then
          declare
@@ -104,8 +102,6 @@ package body Alr.Commands.Init is
          begin
             Alire.OS_Lib.Spawn ("alr", "build " & Current_Global_Switches);
          end;
-      else
-         Log ("You may now enter its folder and issue ""alr build""");
       end if;
    end Execute;
 
