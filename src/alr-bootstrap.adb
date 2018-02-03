@@ -95,13 +95,22 @@ package body Alr.Bootstrap is
          Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
       end if;
 
-      Alire.OS_Lib.Spawn
+      if Alire.OS_Lib.Spawn
         ("gprbuild",
          "-p -g -m -j0 " &
            "-XROLLING=True -XSELFBUILD=True " &
            "-XSESSION=" & (if Alr_File /= "" then OS.Session_Folder
                                              else Alr_Src_Folder / "src" / "default_session") & " " &
-         "-P" & (Alr_Src_Folder / "alr_env.gpr"));
+           "-P" & (Alr_Src_Folder / "alr_env.gpr")) /= 0
+      then
+         if Alr_File = "" then
+            Log ("alr self-build failed. Since you are not inside an alr project,");
+            Log ("the error is likely in alr itself. Please report your issue to the developers.");
+         else
+            Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
+            Log ("The dependency file in use is: " & Alr_File);
+         end if;
+      end if;
    end Rebuild;
 
    ----------------------------------
