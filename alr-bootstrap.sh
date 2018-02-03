@@ -84,7 +84,7 @@ Compilation successful. Please enter a writable folder in which
 the alr executable will be installed, preferably in your path.
 Do not use substitutions like ~ or '$HOME':
 
-Enter folder:
+Enter installation folder:
 EOF
     while [[ "${bin_folder:-}" == "" ]]; do
         read bin_folder
