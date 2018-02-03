@@ -26,7 +26,9 @@ package body Alr.Commands.Get is
 
       Success : Boolean;
       Needed  : constant Alire.Index.Instance :=
-                 Alire.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any), Success);
+                  Alire.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any), Success);
+
+      Must_Enter : Boolean;
    begin
       if not Alire.Query.Exists (Project) then
          Log ("Project [" & Project & "] does not exist in the catalog.");
@@ -46,7 +48,9 @@ package body Alr.Commands.Get is
             Log ("Cannot get a project inside another alr session, stopping.");
             raise Command_Failed;
          end if;
+         Must_Enter := False;
       else
+         Must_Enter := True;
          Checkout.Working_Copy (Needed.Element (Project),
                                 Needed,
                                 Current_Directory);
@@ -60,7 +64,10 @@ package body Alr.Commands.Get is
       if Cmd.Compile then
          declare
             use Alire.OS_Lib;
-            Guard : Folder_Guard := Enter_Folder (Needed.Element (Project).Unique_Folder) with Unreferenced;
+            Guard : Folder_Guard :=
+                      (if Must_Enter
+                       then Enter_Folder (Needed.Element (Project).Unique_Folder)
+                       else Stay_In_Current_Folder) with Unreferenced;
          begin
             Compile.Execute;
          end;

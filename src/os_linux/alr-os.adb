@@ -1,8 +1,10 @@
-with Interfaces.C;
+with Ada.Directories;
 
 with Alire.Os_Lib; use Alire.OS_Lib;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+
+with Interfaces.C;
 
 package body Alr.OS is
 
@@ -52,7 +54,9 @@ package body Alr.OS is
       --  FIXME: right now there are no sessions, only this one for everything
       --  Might not be a problem if alr is rebuild whenever run within an alire project
    begin
-      Create_Folder (Path);
+      if not Ada.Directories.Exists (Path) then
+         Create_Folder (Path);
+      end if;
       return Path;
    end Session_Folder;
 
