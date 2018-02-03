@@ -16,29 +16,13 @@ with Semantic_Versioning; use Semantic_Versioning;
 
 package body Alr.Commands.Init is
 
-   -------------
-   -- Execute --
-   -------------
+   --------------
+   -- Generate --
+   --------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   procedure Generate (Cmd : Command) is
       Name : constant String := Last_Argument;
    begin
-      if not (Cmd.Bin or Cmd.Lib) then
-         Log ("Please provide either --bin or --lib");
-         raise Command_Failed;
-      end if;
-
-      if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
-         Log ("The project name is invalid, as it is used internally by alr; please choose another name");
-         raise Command_Failed;
-      end if;
-
-      if Ada.Directories.Exists (Name) then
-         Log ("Folder " & Utils.Quote (Name) & " already exists, not proceeding.");
-         raise Command_Failed;
-      end if;
-
-      --  Create and enter folder for generation
       if Cmd.No_Skel then
          Ada.Directories.Create_Directory (Name);
       else
@@ -75,14 +59,49 @@ package body Alr.Commands.Init is
 
          Templates.Generate_Project_Alire (Bootstrap.Alr_Minimal_Instance, New_Release, Exact => False);
          Templates.Generate_Gpr (Depends, New_Release);
-
-         Log ("Project initialization completed");
-         if Cmd.Build then
-            Commands.Build.Execute (Online => False);
-         else
-            Log ("You may now enter its folder and issue ""alr build""");
-         end if;
       end;
+   end Generate;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute (Cmd : in out Command) is
+      Name : constant String := Last_Argument;
+   begin
+      if not (Cmd.Bin or Cmd.Lib) then
+         Log ("Please provide either --bin or --lib");
+         raise Command_Failed;
+      end if;
+
+      if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
+         Log ("The project name is invalid, as it is used internally by alr; please choose another name");
+         raise Command_Failed;
+      end if;
+
+      if Ada.Directories.Exists (Name) then
+         Log ("Folder " & Utils.Quote (Name) & " already exists, not proceeding.");
+         raise Command_Failed;
+      end if;
+
+      --  Create and enter folder for generation, if it didn't happen already
+      if Bootstrap.Running_In_Session then
+         if Bootstrap.Session_Is_Current then
+            Log ("Already in working copy, skipping checkout");
+         else
+            Log ("Cannot initialize a project inside another alr project, stopping.");
+            raise Command_Failed;
+         end if;
+      else
+         Generate (Cmd);
+      end if;
+
+      Log ("Project initialization completed");
+      if Cmd.Build then
+         Commands.Build.Execute (Online => False);
+      else
+         Log ("You may now enter its folder and issue ""alr build""");
+      end if;
    end Execute;
 
    --------------------

@@ -67,7 +67,7 @@ package body Alr.Bootstrap is
    procedure Check_Rebuild_Respawn is
    begin
       if not Running_In_Session then
-         Log ("Could not find alr session, stopping now");
+         Log ("Could not find alr session, stopping now", Verbose);
          raise Command_Failed;
       end if;
 
