@@ -40,7 +40,9 @@ package body Alr.Commands.Compile is
                   Log ("No executable found after compilation (might be too deep)", Verbose);
                when others =>
                   for Exe of Execs loop
-                     Log ("Executable found at " & Utils.Quote ("(project root)/" & Execs.First_Element));
+                     Log ("Executable found at " &
+                            Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
+                                                        "/./", "/")));
                   end loop;
                end case;
             end;

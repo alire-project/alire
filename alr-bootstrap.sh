@@ -82,7 +82,7 @@ function do_install() {
 
 Compilation successful. Please enter a writable folder in which
 the alr executable will be installed, preferably in your path.
-Do not use substitutions like ~ or '$HOME':
+Do not use substitutions like ~ or \$HOME:
 
 Enter installation folder:
 EOF
