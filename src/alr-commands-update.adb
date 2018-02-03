@@ -76,8 +76,8 @@ package body Alr.Commands.Update is
                       Enter_Folder (Bootstrap.Alr_Src_Folder)
               with Unreferenced;
          begin
-            Alire.OS_Lib.Spawn ("git",
-                                "pull --recurse-submodules=yes");
+            Alire.OS_Lib.Spawn ("git", "pull --recurse-submodules=yes");
+            Alire.OS_Lib.Spawn ("git", "submodule update --recursive --remote");
          end;
       end if;
    end Update_Alr;

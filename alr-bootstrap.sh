@@ -69,6 +69,9 @@ function fetch_and_compile() {
     
     echo Cloning alr sources...
     git clone --recurse-submodules -b $repo_branch $repo_url $alire_src
+    pushd $alire_src
+    git submodule update --recursive --remote
+    popd
     
     echo Compiling...
     gprbuild -j0 -p -XROLLING=True -XSELFBUILD=False -P $alire_src/alr_env.gpr
