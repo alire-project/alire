@@ -1,3 +1,4 @@
 [submodule "deps/alire"]
 	path = deps/alire
-	url = git@bitbucket.org:aleteolabs/alire.git
+	url = https://bitbucket.org/aleteolabs/alire.git
+	branch = master
