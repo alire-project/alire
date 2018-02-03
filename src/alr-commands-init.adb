@@ -97,8 +97,13 @@ package body Alr.Commands.Init is
       end if;
 
       Log ("Project initialization completed");
+
       if Cmd.Build then
-         Commands.Build.Execute (Online => False);
+         declare
+            Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Name) with Unreferenced;
+         begin
+            Alire.OS_Lib.Spawn ("alr", "build " & Current_Global_Switches);
+         end;
       else
          Log ("You may now enter its folder and issue ""alr build""");
       end if;
