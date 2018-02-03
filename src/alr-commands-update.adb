@@ -59,6 +59,7 @@ package body Alr.Commands.Update is
          end if;
          Checkout.To_Folder (Needed);
          Checkout.Generate_GPR_Builder (Needed, Project.Current.Element);
+         Log ("Update completed");
       end;
    end Upgrade;
 
@@ -121,7 +122,11 @@ package body Alr.Commands.Update is
             Bootstrap.Respawn_With_Canonical ("update " & Current_Global_Switches);
          end if;
       else
-         Upgrade;
+         if Bootstrap.Running_In_Session then
+            Upgrade;
+         else
+            Log ("Update completed");
+         end if;
       end if;
    end Execute;
 
