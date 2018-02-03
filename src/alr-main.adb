@@ -1,6 +1,5 @@
 with Alr.Bootstrap;
 with Alr.Commands;
-with Alr.Os;
 
 with Alr.Index; pragma Elaborate_All (Alr.Index);
 --  Force inclusion of all indexed releases

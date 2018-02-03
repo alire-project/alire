@@ -39,7 +39,7 @@ package Alr.OS_Lib is
    --  If not it returns the empty string
 
    function Locate_Any_GPR_File return Natural;
-   --  Says if there's any *.gpr file in folder or direct children (making the cwd a plausible alr project)
+   --  Says if there's any *.gpr file in current folder (making the cwd a plausible alr project)
 
    function Locate_Any_Index_File return String;
    --  Looks for any "*_alr.ads" file within reach as above

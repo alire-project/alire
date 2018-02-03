@@ -38,10 +38,20 @@ package body Alr.Commands.Get is
          raise Command_Failed;
       end if;
 
-      Checkout.Working_Copy (Needed.Element (Project),
-                             Needed,
-                             Current_Directory);
-      --  Check out requested project under current directory
+      --  Check if we are already in the fresh copy (may happen after respawning)
+      if Bootstrap.Running_In_Session then
+         if Bootstrap.Session_Is_Current then
+            Log ("Already in working copy, skipping checkout");
+         else
+            Log ("Cannot get a project inside another alr session, stopping.");
+            raise Command_Failed;
+         end if;
+      else
+         Checkout.Working_Copy (Needed.Element (Project),
+                                Needed,
+                                Current_Directory);
+         --  Check out requested project under current directory
+      end if;
 
       --  Check out rest of dependencies
       Checkout.To_Folder (Needed, OS.Projects_Folder, But => Project);
