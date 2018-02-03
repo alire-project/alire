@@ -22,4 +22,7 @@ package Alr.OS is
    procedure Create_Folder (Path : String);
    --  Must be able to create the full path even if more that one level is new
 
+   function Own_Executable return String;
+   --  Returns full path to own executable (not argv[0] but the real, effective path)
+
 end Alr.OS;

@@ -1,3 +1,5 @@
+with Interfaces.C;
+
 with Alire.Os_Lib; use Alire.OS_Lib;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -78,5 +80,24 @@ package body Alr.OS is
          return Env;
       end if;
    end Getenv;
+
+   --------------------
+   -- Own_Executable --
+   --------------------
+
+   function Own_Executable return String is
+      -- (int buflen, char *buffer, int *len)
+      use Interfaces;
+      use type C.Size_T;
+
+      Buffer : C.Char_Array (1 .. 1024);
+      Used   : C.size_t;
+      procedure Own_Exec_C (Buflen : C.size_t; Buffer : out C.char_array; Len : out C.size_t);
+      pragma Import (C, Own_Exec_C, "own_exec");
+
+   begin
+      Own_Exec_C (Buffer'Length, Buffer, Used);
+      return C.To_Ada (Buffer (Buffer'First .. Buffer'First + Used - 1), Trim_Nul => False);
+   end Own_Executable;
 
 end Alr.OS;

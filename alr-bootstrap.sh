@@ -74,7 +74,7 @@ function fetch_and_compile() {
     popd
     
     echo Compiling...
-    gprbuild -j0 -p -XROLLING=True -XSELFBUILD=False -P $alire_src/alr_env.gpr
+    gprbuild -j0 -p -XSELFBUILD=False -P $alire_src/alr_env.gpr
 }
 
 function do_install() {

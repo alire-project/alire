@@ -3,7 +3,6 @@ with Ada.Directories;
 with Alire.OS_Lib;
 
 with Alr.Project;
-with Alr.Rolling;
 with Alr.Session;
 with Alr.Templates;
 with Alr.Utils;
@@ -13,6 +12,12 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 package body Alr.Bootstrap is
 
    Alr_Exec : constant String := Alr_Src_Folder / "bin" / "alr";
+
+   ----------------
+   -- Is_Rolling --
+   ----------------
+
+   function Is_Rolling return Boolean is (OS.Own_Executable = Alr_Exec);
 
    ----------------------------
    -- Respawn_With_Canonical --
@@ -35,7 +40,7 @@ package body Alr.Bootstrap is
 
    procedure Check_If_Rolling_And_Respawn is
    begin
-      if not Rolling.Enabled then
+      if not Is_Rolling then
          if Is_Executable_File (Alr_Exec) then
             Respawn_With_Canonical;
          else
@@ -98,7 +103,7 @@ package body Alr.Bootstrap is
       if Alire.OS_Lib.Spawn
         ("gprbuild",
          "-p -g -m -j0 " &
-           "-XROLLING=True -XSELFBUILD=True " &
+           "-XSELFBUILD=True " &
            "-XSESSION=" & (if Alr_File /= "" then OS.Session_Folder
                                              else Alr_Src_Folder / "src" / "default_session") & " " &
            "-P" & (Alr_Src_Folder / "alr_env.gpr")) /= 0
@@ -175,7 +180,7 @@ package body Alr.Bootstrap is
    function Status_Line return String is
    begin
       return
-           (if Rolling.Enabled then "rolling" else "bootstrap") & "-" &
+           (if Is_Rolling then "rolling" else "bootstrap") & "-" &
            (if Devel.Enabled then "devel" else "release") &
            " (" &
            (if Running_In_Session
