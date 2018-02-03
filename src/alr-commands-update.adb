@@ -125,11 +125,7 @@ package body Alr.Commands.Update is
          if Bootstrap.Running_In_Session then
             Upgrade;
          else
-            if Cmd.From_Build then
-               Log ("Build complete");
-            else
-               Log ("Nothing to update");
-            end if;
+            Log ("Done");
          end if;
       end if;
    end Execute;
