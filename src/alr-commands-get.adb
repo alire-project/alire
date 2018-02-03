@@ -22,16 +22,16 @@ package body Alr.Commands.Get is
    procedure Execute (Cmd : in out Command) is
       use Ada.Directories;
 
-      Project : constant Alire.Project_Name := Last_Argument;
+      Name : constant Alire.Project_Name := Last_Argument;
 
       Success : Boolean;
       Needed  : constant Alire.Index.Instance :=
-                  Alire.Query.Resolve (Alire.Depends.New_Dependency (Project, Semver.Any), Success);
+                  Alire.Query.Resolve (Alire.Depends.New_Dependency (Name, Semver.Any), Success);
 
       Must_Enter : Boolean;
    begin
-      if not Alire.Query.Exists (Project) then
-         Log ("Project [" & Project & "] does not exist in the catalog.");
+      if not Alire.Query.Exists (Name) then
+         Log ("Project [" & Name & "] does not exist in the catalog.");
          raise Command_Failed;
       end if;
 
@@ -42,7 +42,7 @@ package body Alr.Commands.Get is
 
       --  Check if we are already in the fresh copy (may happen after respawning)
       if Bootstrap.Running_In_Session then
-         if Bootstrap.Session_Is_Current then
+         if Bootstrap.Session_Is_Current and then Name = Project.Name then
             Log ("Already in working copy, skipping checkout");
          else
             Log ("Cannot get a project inside another alr session, stopping.");
@@ -51,14 +51,14 @@ package body Alr.Commands.Get is
          Must_Enter := False;
       else
          Must_Enter := True;
-         Checkout.Working_Copy (Needed.Element (Project),
+         Checkout.Working_Copy (Needed.Element (Name),
                                 Needed,
                                 Current_Directory);
          --  Check out requested project under current directory
       end if;
 
       --  Check out rest of dependencies
-      Checkout.To_Folder (Needed, OS.Projects_Folder, But => Project);
+      Checkout.To_Folder (Needed, OS.Projects_Folder, But => Name);
 
       --  Launch build if requested
       if Cmd.Compile then
@@ -66,7 +66,7 @@ package body Alr.Commands.Get is
             use Alire.OS_Lib;
             Guard : Folder_Guard :=
                       (if Must_Enter
-                       then Enter_Folder (Needed.Element (Project).Unique_Folder)
+                       then Enter_Folder (Needed.Element (Name).Unique_Folder)
                        else Stay_In_Current_Folder) with Unreferenced;
          begin
             Compile.Execute;
