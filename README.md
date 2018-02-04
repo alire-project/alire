@@ -7,9 +7,14 @@ Alire has been tested on the stock GNAT compiler of Debian testing and Ubuntu 17
 Alire is known _not_ to work in current Debian 9 stable or any earlier versions of Ubuntu.
 
 ## Installation ##
-Enter as a regular user the following command:
+Copy, paste and execute in a terminal as a regular user the following command:
 
     curl https://bitbucket.org/aleteolabs/alr/raw/master/install/alr-bootstrap.sh -o ./alr-bootstrap.sh && bash ./alr-bootstrap.sh && rm -f ./alr-bootstrap.sh || echo Installation failed
+
+Or clone the repository and launch the installation script:
+1. ```git clone https://bitbucket.org/aleteolabs/alr.git
+2. ```cd alr```
+3. ```bash install/alr-bootstrap.sh```
     
 ## First steps ##
 First, create or enter into some folder where you don't mind that new folders are created by the ```alr``` tool
