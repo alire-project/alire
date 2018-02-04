@@ -44,7 +44,7 @@ package body Alr.Bootstrap is
          if Is_Executable_File (Alr_Exec) then
             Respawn_With_Canonical;
          else
-            Log ("alr executable may be out of date, consider running ""alr update --alr""");
+            Log ("alr executable may be out of date, consider running ""alr update""");
          end if;
       end if;
    end Check_If_Rolling_And_Respawn;

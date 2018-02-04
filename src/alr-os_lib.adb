@@ -252,7 +252,8 @@ package body Alr.OS_Lib is
    begin
       Log ("Traversing folder: " & Folder, Debug);
 
-      Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Go_Down'Access);
+      Search (Folder, "", (Directory => True, Ordinary_File => True, others => False),
+              Go_Down'Access);
    end Traverse_Folder;
 
    ----------
