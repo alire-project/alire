@@ -14,7 +14,7 @@ Copy, paste and execute in a terminal as a regular user the following command:
 
 Or, alternatively, clone the repository and launch the installation script:
 
-1. ```git clone https://bitbucket.org/aleteolabs/alr.git
+1. ```git clone https://bitbucket.org/aleteolabs/alr.git```
 2. ```cd alr```
 3. ```bash install/alr-bootstrap.sh```
     
