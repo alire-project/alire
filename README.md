@@ -53,7 +53,7 @@ If you need to add dependencies you must edit the file and then issue one of:
 As a shorthand, you can also use `alr build` to both update and compile in a single command.
 
 ### Finding available projects ###
-For now there's a basic search functionality in alire to search the catalog:
+There's a search command in alr to look for projects in the catalog:
 
 * `alr search <substring>` will look for `substring` in project names.
 * `alr search --list` will list the whole catalog.
