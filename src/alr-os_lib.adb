@@ -241,20 +241,18 @@ package body Alr.OS_Lib is
 
       procedure Go_Down (Item : Directory_Entry_Type) is
       begin
-         Doing (Item);
-         if Kind (Item) = Directory then
-            Traverse_Folder (Folder / Simple_Name (Item), Doing, Recurse);
+         if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
+            Doing (Item);
+            if Recurse and then Kind (Item) = Directory then
+               Traverse_Folder (Folder / Simple_Name (Item), Doing, Recurse);
+            end if;
          end if;
       end Go_Down;
 
    begin
       Log ("Traversing folder: " & Folder, Debug);
 
-      if Recurse then
-         Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Go_Down'Access);
-      else
-         Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Doing);
-      end if;
+      Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Go_Down'Access);
    end Traverse_Folder;
 
    ----------
