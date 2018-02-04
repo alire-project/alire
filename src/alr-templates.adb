@@ -58,9 +58,20 @@ package body Alr.Templates is
       ---------------
 
       procedure Add_Entry (Found : Directory_Entry_Type) is
+         Name : constant String := Utils.To_Lower_Case (Simple_Name (Found));
       begin
-         Put_Line (File, "with Alire.Index." &
-                     Utils.To_Mixed_Case (Project (Simple_Name (Found))) & ";");
+         if Kind (Found) = Ordinary_File then
+            if Name'Length >= String'("alire-index-X.ads")'Length and then
+              Name (Name'Last - 3 .. Name'Last) = ".ads" and then
+              Name (Name'First .. Name'First + String'("alire-index-")'Length - 1) = "alire-index-"
+            then
+               Log ("Indexing " & Full_Name (Found), Debug);
+               Put_Line (File, "with Alire.Index." &
+                           Utils.To_Mixed_Case (Project (Simple_Name (Found))) & ";");
+            else
+               Log ("Unexpected file in index folder: " & Full_Name (Found));
+            end if;
+         end if;
       end Add_Entry;
 
    begin
@@ -70,10 +81,13 @@ package body Alr.Templates is
 
       Put_Line (File, "pragma Warnings (Off);");
 
-      Search (Index_Folder,
-              "alire-index-*.ads",
-              (Ordinary_File => True, others => False),
-              Add_Entry'Access);
+      OS_Lib.Traverse_Folder (Index_Folder, Add_Entry'Access, Recurse => True);
+
+--        Search (Index_Folder,
+--                "alire-index-*.ads",
+--                (Ordinary_File => True, Directory => True, others => False),
+--                Add_Entry'Access);
+
       New_Line (File);
 
       Put_Line (File, "package Alr.Index is");

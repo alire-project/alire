@@ -234,12 +234,27 @@ package body Alr.OS_Lib is
    ---------------------
 
    procedure Traverse_Folder (Folder : String;
-                              Doing  : access procedure (Item : Ada.Directories.Directory_Entry_Type))
+                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type);
+                              Recurse : Boolean := False)
    is
       use Ada.Directories;
+
+      procedure Go_Down (Item : Directory_Entry_Type) is
+      begin
+         Doing (Item);
+         if Kind (Item) = Directory then
+            Traverse_Folder (Folder / Simple_Name (Item), Doing, Recurse);
+         end if;
+      end Go_Down;
+
    begin
       Log ("Traversing folder: " & Folder, Debug);
-      Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Doing);
+
+      if Recurse then
+         Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Go_Down'Access);
+      else
+         Search (Folder, "", (Directory => True, Ordinary_File => True, others => False), Doing);
+      end if;
    end Traverse_Folder;
 
    ----------

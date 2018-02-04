@@ -52,8 +52,11 @@ package Alr.OS_Lib is
 
    --  FOLDER MANAGEMENT
 
-   procedure Traverse_Folder (Folder : String;
-                              Doing  : access procedure (Item : Ada.Directories.Directory_Entry_Type));
+   procedure Traverse_Folder (Folder  : String;
+                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type);
+                              Recurse : Boolean := False);
+   --  Traverse all items in a folder, optionally recursively
+   --  If recursively, the directory entry is passed before entering it
 
    procedure Copy (Src_Folder, Dst_Parent_Folder : String);
    --  Copies a folder and its contents to within another location
