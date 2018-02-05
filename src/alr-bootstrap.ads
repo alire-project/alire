@@ -89,7 +89,7 @@ private
                ("alr",
                 V ("0.4.0"),
                 Defaults.Alr_Repository,
-                "27696c97d089951da8973c31e0ab7f58913513a7",
+                "146fe156caf0c74978dd7db07585159da0432359",
                 Depends_On => At_Least_Within_Major (Alire_Bootstrap));
 
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
