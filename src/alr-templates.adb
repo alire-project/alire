@@ -180,8 +180,7 @@ package body Alr.Templates is
       New_Line (File);
       Put_Line (File, Tab_1 & "Working_Release : constant Release := Set_Root_Project (");
       Put_Line (File, Tab_1 & Tab_1 & Q (Root.Project) & ",");
-      Put_Line (File, Tab_1 & Tab_1 & "V (" & Q (Semver.Image (Root.Version)) & "),");
-      Put      (File, Tab_1 & Tab_1 & "License => Unknown");
+      Put      (File, Tab_1 & Tab_1 & "V (" & Q (Semver.Image (Root.Version)) & "),");
 
       if Instance.Is_Empty then
          Put_Line (File, ");");
