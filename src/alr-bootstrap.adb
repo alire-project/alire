@@ -91,6 +91,19 @@ package body Alr.Bootstrap is
       Folder_To_Index : constant String :=
                           Alr_Src_Folder / "deps" / "alire" / "index";
    begin
+      --  It seems .ali files aren't enough to detect changed files under a second,
+      --  So we get rid of previous ones
+      OS_Lib.Delete_File (Alr_Src_Folder / "bin" / "alr");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
+      if Alr_File /= "" then
+         OS_Lib.Delete_File (Alr_Src_Folder / "obj" /
+                               Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
+      end if;
+
+      --  This could be an alternative if we don't want to delete the current exec
+      Log ("About to recompile...", Debug);
+      --  delay 1.0;
+
       Log ("Generating index for " & Folder_To_Index, Verbose);
       Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
 
@@ -103,11 +116,12 @@ package body Alr.Bootstrap is
       if Alire.OS_Lib.Spawn
         ("gprbuild",
          "-p -g -m -j0 " &
-           "-XSELFBUILD=True " &
-           "-XSESSION=" & (if Alr_File /= "" then OS.Session_Folder
+           "-XALR_SELFBUILD=True " &
+           "-XALR_SESSION=" & (if Alr_File /= "" then OS.Session_Folder
                                              else Alr_Src_Folder / "src" / "default_session") & " " &
            "-P" & (Alr_Src_Folder / "alr_env.gpr")) /= 0
       then
+         -- Compilation failed
          if Alr_File = "" then
             Log ("alr self-build failed. Since you are not inside an alr project,");
             Log ("the error is likely in alr itself. Please report your issue to the developers.");

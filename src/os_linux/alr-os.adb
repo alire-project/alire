@@ -35,7 +35,15 @@ package body Alr.OS is
    ------------------
 
    function Devel_Folder return String is
-      (Getenv ("HOME") / "local" / "alr");
+     (Getenv ("HOME") / "local" / "alr");
+
+   --------------------
+   -- Devel_Telltale --
+   --------------------
+
+   function Devel_Telltale return String is
+     (Config_Folder / "enable-devel");
+
    ---------------------
    -- Projects_Folder --
    ---------------------

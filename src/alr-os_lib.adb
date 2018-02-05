@@ -260,12 +260,22 @@ package body Alr.OS_Lib is
    -- Copy --
    ----------
 
-   procedure Copy (Src_Folder, Dst_Parent_Folder : String) is
+   procedure Copy_File (Src_Folder, Dst_Parent_Folder : String) is
    begin
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       -- FIXME this is not robust with blanks in paths
       Alire.OS_Lib.Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
-   end Copy;
+   end Copy_File;
+
+   procedure Delete_File (Name : String) is
+   begin
+      if GNAT.OS_Lib.Is_Regular_File (Name) then
+         Log ("Deleting file: " & Name, Debug);
+         Ada.Directories.Delete_File (Name);
+      else
+         Log ("Skipping deletion of non-existent file: " & Name, Debug);
+      end if;
+   end Delete_File;
 
 
    ----------------

@@ -28,9 +28,9 @@ package body Alr.Commands.Init is
          declare
             use OS_Lib;
          begin
-            OS_Lib.Copy (Bootstrap.Alr_Src_Folder / "templates" / "projects" /
+            OS_Lib.Copy_File (Bootstrap.Alr_Src_Folder / "templates" / "projects" /
                          	(if Cmd.Bin then "bin" else "lib"),
-                         Name);
+                              Name);
          end;
 
          OS_Lib.Sed_Folder (Name,

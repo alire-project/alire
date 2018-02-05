@@ -12,6 +12,10 @@ package Alr.OS is
    function Devel_Folder return String;
    --  Developer working folder, to avoid the commit -> push -> pull cycle
 
+   function Devel_Telltale return String;
+   --  A file that if exists puts alr in devel mode (alternate building folder)
+   --  Config_Folder/enable-devel
+
    function Projects_Folder return String;
    --  $CACHE_FOLDER/projects
 

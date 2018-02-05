@@ -195,6 +195,23 @@ package body Alr.Commands is
       end loop;
    end Display_Valid_Commands;
 
+   ----------------------------
+   -- Early_Switch_Detection --
+   ----------------------------
+
+   procedure Early_Switch_Detection is
+      use Ada.Command_Line;
+   begin
+      for I in 1 .. Argument_Count loop
+         if Argument (I) = "-d" then
+            Alire.Verbosity := Alire.Debug;
+            return;
+         elsif Argument (I) = "-v" then
+            Alire.Verbosity := Alire.Verbose;
+         end if;
+      end loop;
+   end Early_Switch_Detection;
+
    --------------------------
    -- Enter_Project_Folder --
    --------------------------
@@ -282,6 +299,7 @@ package body Alr.Commands is
       begin
          Getopt (Config); -- Parses command line switches
 
+         --  Not really needed anymore since done in Early Detection
          if Log_Debug then
             Alire.Verbosity := Debug;
          elsif Log_Verbose then

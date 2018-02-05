@@ -58,9 +58,12 @@ package Alr.OS_Lib is
    --  Traverse all items in a folder, optionally recursively
    --  If recursively, the directory entry is passed before entering it
 
-   procedure Copy (Src_Folder, Dst_Parent_Folder : String);
+   procedure Copy_File (Src_Folder, Dst_Parent_Folder : String);
    --  Copies a folder and its contents to within another location
    --  That is, equivalent to cp -r src dst
+
+   procedure Delete_File (Name : String);
+   --  Don't fail if not existing, unlike the one in Directories
 
    procedure Sed_Folder (Folder  : String;
                          Pattern : String;

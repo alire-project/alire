@@ -8,6 +8,8 @@ with Alr.Index; pragma Elaborate_All (Alr.Index);
 
 procedure Alr.Main is
 begin
+   Commands.Early_Switch_Detection;
+
    Bootstrap.Check_If_Rolling_And_Respawn;
 
    Log ("alr build is " & Bootstrap.Status_Line);
