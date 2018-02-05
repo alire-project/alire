@@ -24,7 +24,7 @@ package body Alr.Commands.Help is
    begin
       if Ada.Command_Line.Argument_Count = 2 then
          begin
-            Name := Commands.Cmd_Names'Value (Ada.Command_Line.Argument (2));
+            Name := Commands.Cmd_Names'Value ("cmd_" & Ada.Command_Line.Argument (2));
             Display_Usage (Name);
          exception
             when others =>
