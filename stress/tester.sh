@@ -16,9 +16,8 @@ for i in `seq 1 $1`; do
 
     pushd x$(($i % 2)) 
     pwd
-    ( /usr/bin/time -f %e alr dev -d --self ) 2>> "$result" | tee -a "$trace"
+    ( /usr/bin/time -f %e alr dev -v --self ) 2>> "$result" | tee -a "$trace"
     popd
-    sleep 0.5s
 done
 
 echo DONE
