@@ -94,7 +94,10 @@ package body Alr.Bootstrap is
       --  It seems .ali files aren't enough to detect changed files under a second,
       --  So we get rid of previous ones
       OS_Lib.Delete_File (Alr_Src_Folder / "bin" / "alr");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.ali");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
+
       if Alr_File /= "" then
          OS_Lib.Delete_File (Alr_Src_Folder / "obj" /
                                Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
@@ -178,7 +181,8 @@ package body Alr.Bootstrap is
    ------------------------
 
    function Running_In_Session return Boolean is
-     (OS_Lib.Locate_Any_GPR_File > 0 and then OS_Lib.Locate_Any_Index_File /= "");
+     (OS_Lib.Locate_Any_GPR_File > 0 and Then
+      OS_Lib.Locate_Any_Index_File /= "");
 
    ------------------------
    -- Session_Is_Current --
