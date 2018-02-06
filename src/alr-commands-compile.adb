@@ -49,6 +49,7 @@ package body Alr.Commands.Compile is
          end if;
       else
          Log ("alr detected a compilation failure");
+         raise Command_Failed;
       end if;
    end Execute;
 

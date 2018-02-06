@@ -1,3 +1,5 @@
+with "alr.gpr"; -- Needed to be able to compile the metadata file
+
 project Project_Skel is
 
    for Library_Name use "Project_Skel";
@@ -18,10 +20,6 @@ project Project_Skel is
    package Binder is
       for Switches ("ada") use ("-Es");
    end Binder;
-
-   package Linker is
-      for Switches ("ada") use ("-g");
-   end Linker;
 
 end Project_Skel;
 

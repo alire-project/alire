@@ -17,6 +17,7 @@ read
 
 workspace=/tmp/alrtest
 
+rm -rf ~/.cache/alire
 rm -rf $workspace
 mkdir $workspace
 pushd $workspace
