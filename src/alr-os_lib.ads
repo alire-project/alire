@@ -7,6 +7,10 @@ with Alr.Utils;
 
 package Alr.OS_Lib is
 
+   --  OS portable functions
+
+   procedure Bailout (Code : Integer := 0);
+
    --  GENERAL COMMAND LINE
 
    function Current_Folder return String renames Ada.Directories.Current_Directory;

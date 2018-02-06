@@ -3,7 +3,6 @@ with Alire.Containers;
 with Alire.Index;
 
 with Alr.Defaults;
-with Alr.OS_Lib; use Alr.OS_Lib;
 
 package Alr.Bootstrap is
 
@@ -38,10 +37,6 @@ package Alr.Bootstrap is
 
    procedure Rebuild_With_Current_Project;
    --  Rebuild, using a single project if in scope
-
-   procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line);
-   --  Relaunchs with same command line but using the canonically built executable
-   --  FIXME: move here the keeping of global switches, now in Commands, so clients haven't to remember to do it
 
    function Status_Line return String;
    --  One-liner reporting most interesting information

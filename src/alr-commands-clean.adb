@@ -1,4 +1,4 @@
-with Alire.OS_Lib;
+with Alr.Spawn;
 
 package body Alr.Commands.Clean is
 
@@ -14,7 +14,7 @@ package body Alr.Commands.Clean is
    begin
       Requires_Project;
 
-      Alire.OS_Lib.Spawn ("gprclean", "-r -P " & Project.GPR_Alr_File);
+      Spawn.Command ("gprclean", "-r -P " & Project.GPR_Alr_File);
    end Execute;
 
 end Alr.Commands.Clean;

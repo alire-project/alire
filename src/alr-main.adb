@@ -16,7 +16,7 @@ begin
 
    Log ("alr build is " & Bootstrap.Status_Line);
    if Devel.Enabled then
-      Log ("alr exec is " & OS.Own_Executable);
+      Log ("alr running from " & OS.Own_Executable);
    end if;
 
    Alr.Commands.Execute;

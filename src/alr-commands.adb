@@ -75,24 +75,15 @@ package body Alr.Commands is
                      Help => "Be even more verbose (implies -v).");
    end Set_Global_Switches;
 
-   -----------------------------
-   -- Current_Global_Switches --
-   -----------------------------
+   ---------------------
+   -- Global_Switches --
+   ---------------------
 
-   function Current_Global_Switches return String is
+   function Global_Switches return String is
    begin
       return Utils.Trim ((if Log_Debug then "-d " else "") &
                          (if Log_Verbose then "-v " else ""));
-   end Current_Global_Switches;
-
-   -------------
-   -- Bailout --
-   -------------
-
-   procedure Bailout (Code : Integer := 0) is
-   begin
-      GNAT.OS_Lib.OS_Exit (Code);
-   end Bailout;
+   end Global_Switches;
 
    --------------------------
    -- Create_Alire_Folders --
@@ -273,7 +264,7 @@ package body Alr.Commands is
                Put_Line ("Unrecognized command: " & Argument (1));
                New_Line;
                Display_Usage;
-               Bailout (1);
+               OS_Lib.Bailout (1);
          end;
 
          Create_Alire_Folders;
@@ -311,14 +302,14 @@ package body Alr.Commands is
       exception
          when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
             --  Getopt has already displayed some help
-            Bailout (1);
+            OS_Lib.Bailout (1);
 
          when Wrong_Command_Arguments =>
             Display_Usage (Cmd);
-            Bailout (1);
+            OS_Lib.Bailout (1);
 
          when Command_Failed =>
-            Bailout (1);
+            OS_Lib.Bailout (1);
       end;
    end Execute_By_Name;
 

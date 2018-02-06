@@ -1,12 +1,12 @@
 with Ada.Directories;
 
-with Alire.OS_Lib;
-
 with Alr.Devel;
 with Alr.Hardcoded;
 with Alr.OS;
+with Alr.OS_Lib;
 with Alr.Project;
 with Alr.Session;
+with Alr.Spawn;
 with Alr.Templates;
 with Alr.Utils;
 
@@ -14,29 +14,12 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Bootstrap is
 
-   Alr_Src_Folder : String renames Hardcoded.Alr_Src_Folder;
-   Alr_Exe_File   : String renames Hardcoded.Alr_Exe_File;
-
    ----------------
    -- Is_Rolling --
    ----------------
 
-   function Is_Rolling return Boolean is (OS.Own_Executable = Alr_Exe_File);
-
-   ----------------------------
-   -- Respawn_With_Canonical --
-   ----------------------------
-
-   procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line) is
-    begin
-      if Is_Executable_File (Alr_Exe_File) then
-         Log ("...");
-         OS_Exit (Alire.OS_Lib.Spawn (Alr_Exe_File, Command_Line));
-         -- NOTE: THIS IS THE END OF EXECUTION OF THE CALLING alr
-      else
-         Log ("alr executable not found at " & Alr_Exe_File & ", not respawning");
-      end if;
-   end Respawn_With_Canonical;
+   function Is_Rolling return Boolean is
+     (OS.Own_Executable = Hardcoded.Alr_Exe_File);
 
    ----------------------------------
    -- Check_If_Rolling_And_Respawn --
@@ -45,10 +28,11 @@ package body Alr.Bootstrap is
    procedure Check_If_Rolling_And_Respawn is
    begin
       if not Is_Rolling then
-         if Is_Executable_File (Alr_Exe_File) then
-            Respawn_With_Canonical;
+         Log ("Alr exe is: " & Hardcoded.Alr_Exe_File);
+         if Is_Executable_File (Hardcoded.Alr_Exe_File) then
+            Spawn.Updated_Alr_Without_Return;
          else
-            Log ("alr executable may be out of date, consider running ""alr update""");
+            Log ("alr executable may be out of date, consider running ""alr update --online""");
          end if;
       end if;
    end Check_If_Rolling_And_Respawn;
@@ -77,7 +61,7 @@ package body Alr.Bootstrap is
 
       if not Session_Is_Current then
          Rebuild (OS_Lib.Locate_Any_Index_File);
-         Respawn_With_Canonical;
+         Spawn.Updated_Alr_Without_Return;
       end if;
 
       if not Running_In_Project then
@@ -91,6 +75,8 @@ package body Alr.Bootstrap is
 
    procedure Rebuild (Alr_File : String := "") is
       use Ada.Directories;
+      use Hardcoded;
+      use OS_Lib.Paths;
 
       Folder_To_Index : constant String :=
                           Alr_Src_Folder / "deps" / "alire" / "index";
@@ -120,23 +106,23 @@ package body Alr.Bootstrap is
          Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
       end if;
 
-      if Alire.OS_Lib.Spawn
-        ("gprbuild",
-         "-p -g -m -j0 " &
-           "-XALR_SELFBUILD=True " &
-           "-XALR_SESSION=" & (if Alr_File /= "" then OS.Session_Folder
-                                             else Alr_Src_Folder / "src" / "default_session") & " " &
-           "-P" & (Alr_Src_Folder / "alr_env.gpr")) /= 0
-      then
-         -- Compilation failed
-         if Alr_File = "" then
-            Log ("alr self-build failed. Since you are not inside an alr project,");
-            Log ("the error is likely in alr itself. Please report your issue to the developers.");
-         else
-            Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
-            Log ("The dependency file in use is: " & Alr_File);
-         end if;
-      end if;
+      begin
+         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File,
+                         (if Alr_File /= ""
+                          then OS.Session_Folder
+                          else Hardcoded.Alr_Default_Session_Folder));
+      exception
+         when others =>
+            -- Compilation failed
+            if Alr_File = "" then
+               Log ("alr self-build failed. Since you are not inside an alr project,");
+               Log ("the error is likely in alr itself. Please report your issue to the developers.");
+            else
+               Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
+               Log ("The dependency file in use is: " & Alr_File);
+            end if;
+            raise Command_Failed;
+      end;
    end Rebuild;
 
    ----------------------------------
@@ -146,7 +132,7 @@ package body Alr.Bootstrap is
    procedure Rebuild_With_Current_Project is
    begin
       if Running_In_Session then
-         Rebuild (Locate_Any_Index_File);
+         Rebuild (Os_Lib.Locate_Any_Index_File);
       else
          Rebuild;
       end if;

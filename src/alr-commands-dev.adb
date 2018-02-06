@@ -1,5 +1,6 @@
 with Alr.Bootstrap;
 with Alr.OS_Lib;
+with Alr.Spawn;
 
 package body Alr.Commands.Dev is
 
@@ -14,7 +15,7 @@ package body Alr.Commands.Dev is
       end if;
 
       if Cmd.Respawn then
-         Bootstrap.Respawn_With_Canonical ("");
+         Spawn.Updated_Alr_Without_Return;
       end if;
 
       if Cmd.Self_Compile then

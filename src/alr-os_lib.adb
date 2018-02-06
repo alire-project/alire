@@ -1,6 +1,8 @@
 with Ada.Command_Line;
 with Ada.Containers;
 
+with Alr.Spawn;
+
 with GNAT.OS_Lib;
 
 package body Alr.OS_Lib is
@@ -27,6 +29,16 @@ package body Alr.OS_Lib is
 
    function Project_File (Project : Alire.Project_Name) return String is
      (Project & ".gpr");
+
+
+   -------------
+   -- Bailout --
+   -------------
+
+   procedure Bailout (Code : Integer := 0) is
+   begin
+      GNAT.OS_Lib.OS_Exit (Code);
+   end Bailout;
 
    -----------------------
    -- Locate_File_Under --
@@ -256,15 +268,15 @@ package body Alr.OS_Lib is
               Go_Down'Access);
    end Traverse_Folder;
 
-   ----------
-   -- Copy --
-   ----------
+   ---------------
+   -- Copy_File --
+   ---------------
 
    procedure Copy_File (Src_Folder, Dst_Parent_Folder : String) is
    begin
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       -- FIXME this is not robust with blanks in paths
-      Alire.OS_Lib.Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
+      Spawn.Command ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
    end Copy_File;
 
    procedure Delete_File (Name : String) is
@@ -317,7 +329,7 @@ package body Alr.OS_Lib is
          Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
-         Alire.OS_Lib.Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
+         Spawn.Command ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
       end;
 
       --  This is not OS dependent
@@ -333,7 +345,11 @@ package body Alr.OS_Lib is
    function File_Contains_Ignore_Case (Filename, Word : String) return Boolean is
    begin
       --  FIXME: this is OS dependent, and it shouldn't be
-      return Alire.OS_Lib.Spawn ("grep", "-q " & Word & " " & Filename) = 0;
+      Spawn.Command ("grep", "-q " & Word & " " & Filename);
+      return True;
+   exception
+      when Command_Failed =>
+         return False;
    end File_Contains_Ignore_Case;
 
 end Alr.OS_Lib;

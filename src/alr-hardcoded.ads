@@ -1,8 +1,9 @@
 with Alr.Defaults;
 
+private with Alire.Os_Lib;
+
 private with Alr.Devel;
 private with Alr.OS;
-private with Alr.OS_Lib;
 
 package Alr.Hardcoded is
 
@@ -11,7 +12,12 @@ package Alr.Hardcoded is
    Alr_Branch : constant String    := "master";
    --  Branch used to self-upgrade
 
+   Alr_Default_Session_Folder : constant String;
+
    Alr_Exe_File : constant String;
+
+   Alr_Gpr_File : constant String;
+   --  Note to self: this is the _env one that works with git submodules
 
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository checked out for self-upgrade
@@ -28,13 +34,17 @@ package Alr.Hardcoded is
 
 private
 
-   use OS_Lib.Paths;
+   use Alire.OS_Lib;
 
    Alr_Src_Folder : constant String := (if Devel.Enabled
                                         then OS.Devel_Folder
                                         else OS.Config_Folder / "alr");
 
+   Alr_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
+
    Alr_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
+
+   Alr_Gpr_File : constant String := Alr_Src_Folder / "alr_env.gpr";
 
    Scripts_Version : constant String := Alr_Src_Folder / "scripts" / "version";
 

@@ -45,9 +45,13 @@ package Alr.Commands is
      with Pre => Bootstrap.Running_In_Project;
    --  Ensures that the build file is up to date
 
-private
+   --  This is exported only to be reachable from Spawn, but there's no reason to use it from commands
 
-   -- Declared here so they are available to the help metacommand child package
+   function Global_Switches return String;
+   --  Returns the in use global switches (-d -v)
+   --  Useful e.g. to pass along on respawning a custom command
+
+   -- Declared here so they are available to the help metacommand child package and Spawn
 
    type Cmd_Names is (Cmd_Build,
                       Cmd_Clean,
@@ -65,6 +69,8 @@ private
    --  It is a bit ugly but also it makes clear when we are using this enumeration
 
    function Image (N : Cmd_Names) return String;
+
+private
 
    procedure Display_Usage (Cmd : Cmd_Names);
 
@@ -86,10 +92,5 @@ private
    --  If we have a compiled-in project, attempt to find its root above us
    --  Does nothing if we don't have a project, or if the root is not found
    --  In contrast, the one in project raises if not found
-
-   function Current_Global_Switches return String;
-   --  Returns the in use global switches (-d -v)
-   --  Useful e.g. to pass along on respawning a custom command
-
 
 end Alr.Commands;

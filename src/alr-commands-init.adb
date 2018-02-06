@@ -9,6 +9,7 @@ with Alire.Repositories.Local;
 with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Spawn;
 with Alr.Templates;
 with Alr.Utils;
 
@@ -47,7 +48,7 @@ package body Alr.Commands.Init is
          Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Name) with Unreferenced;
 
          New_Release : constant Alire.Releases.Release :=
-                          Alire.Releases.New_Release (Name, V ("0.0.0"),
+                          Alire.Releases.New_Release (Name, V ("0.0.0-alr_working_copy"),
                                                       Alire.Repositories.Local.Repo,
                                                       Alire.Repositories.Local.Local_Id,
                                                       Depends_On => Bootstrap.Alr_Minimal_Dependency);
@@ -102,7 +103,7 @@ package body Alr.Commands.Init is
          declare
             Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Name) with Unreferenced;
          begin
-            Alire.OS_Lib.Spawn ("alr", "build " & Current_Global_Switches);
+            Spawn.Alr (Cmd_Build);
          end;
       end if;
    end Execute;
