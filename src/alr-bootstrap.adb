@@ -2,6 +2,9 @@ with Ada.Directories;
 
 with Alire.OS_Lib;
 
+with Alr.Devel;
+with Alr.Hardcoded;
+with Alr.OS;
 with Alr.Project;
 with Alr.Session;
 with Alr.Templates;
@@ -11,13 +14,14 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Bootstrap is
 
-   Alr_Exec : constant String := Alr_Src_Folder / "bin" / "alr";
+   Alr_Src_Folder : String renames Hardcoded.Alr_Src_Folder;
+   Alr_Exe_File   : String renames Hardcoded.Alr_Exe_File;
 
    ----------------
    -- Is_Rolling --
    ----------------
 
-   function Is_Rolling return Boolean is (OS.Own_Executable = Alr_Exec);
+   function Is_Rolling return Boolean is (OS.Own_Executable = Alr_Exe_File);
 
    ----------------------------
    -- Respawn_With_Canonical --
@@ -25,12 +29,12 @@ package body Alr.Bootstrap is
 
    procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line) is
     begin
-      if Is_Executable_File (Alr_Exec) then
+      if Is_Executable_File (Alr_Exe_File) then
          Log ("...");
-         OS_Exit (Alire.OS_Lib.Spawn (Alr_Exec, Command_Line));
+         OS_Exit (Alire.OS_Lib.Spawn (Alr_Exe_File, Command_Line));
          -- NOTE: THIS IS THE END OF EXECUTION OF THE CALLING alr
       else
-         Log ("alr executable not found at " & Alr_Exec & ", not respawning");
+         Log ("alr executable not found at " & Alr_Exe_File & ", not respawning");
       end if;
    end Respawn_With_Canonical;
 
@@ -41,7 +45,7 @@ package body Alr.Bootstrap is
    procedure Check_If_Rolling_And_Respawn is
    begin
       if not Is_Rolling then
-         if Is_Executable_File (Alr_Exec) then
+         if Is_Executable_File (Alr_Exe_File) then
             Respawn_With_Canonical;
          else
             Log ("alr executable may be out of date, consider running ""alr update""");

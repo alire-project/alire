@@ -7,6 +7,7 @@ with Alire.Releases;
 with Alire.Repositories.Local;
 
 with Alr.Bootstrap;
+with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Templates;
 with Alr.Utils;
@@ -28,8 +29,9 @@ package body Alr.Commands.Init is
          declare
             use OS_Lib;
          begin
-            OS_Lib.Copy_File (Bootstrap.Alr_Src_Folder / "templates" / "projects" /
-                         	(if Cmd.Bin then "bin" else "lib"),
+            OS_Lib.Copy_File ((if Cmd.Bin
+                               then Hardcoded.Templates_Bin_Folder
+                               else Hardcoded.Templates_Lib_Folder),
                               Name);
          end;
 

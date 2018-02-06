@@ -3,21 +3,9 @@ with Alire.Containers;
 with Alire.Index;
 
 with Alr.Defaults;
-with Alr.Devel;
-with Alr.OS;
 with Alr.OS_Lib; use Alr.OS_Lib;
 
 package Alr.Bootstrap is
-
-   --  Declarations to enable self-compilation
-
-   Alr_Branch : constant String    := "master";
-   Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
-
-   Alr_Src_Folder : constant String :=
-                      (if Devel.Enabled
-                       then OS.Devel_Folder
-                       else OS.Config_Folder / "alr");
 
    procedure Check_If_Rolling_And_Respawn;
    --  Determines if we are using a rolling release.

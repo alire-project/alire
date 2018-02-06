@@ -4,6 +4,7 @@ with Alire.Query;
 
 with Alr.Bootstrap;
 with Alr.Checkout;
+with Alr.Hardcoded;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -29,12 +30,12 @@ package body Alr.Commands.Update is
 
    procedure Checkout_If_Needed is
    begin
-      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
          Alire.OS_Lib.Spawn ("git",
                              "clone --recurse-submodules " &
-                               "-b " & Bootstrap.Alr_Branch & " " &
-                               String (Bootstrap.Alr_Repo) & " " &
-                               Bootstrap.Alr_Src_Folder);
+                               "-b " & Hardcoded.Alr_Branch & " " &
+                               String (Hardcoded.Alr_Repo) & " " &
+                               Hardcoded.Alr_Src_Folder);
       end if;
    end Checkout_If_Needed;
 
@@ -69,12 +70,12 @@ package body Alr.Commands.Update is
 
    procedure Update_Alr is
    begin
-      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
          Checkout_If_Needed;
       else
          declare
             Guard : constant Folder_Guard :=
-                      Enter_Folder (Bootstrap.Alr_Src_Folder)
+                      Enter_Folder (Hardcoded.Alr_Src_Folder)
               with Unreferenced;
          begin
             Alire.OS_Lib.Spawn ("git", "pull --recurse-submodules=yes");
@@ -89,12 +90,12 @@ package body Alr.Commands.Update is
 
    procedure Update_Index is
    begin
-      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
          Checkout_If_Needed;
       else
          declare
             Guard : constant Folder_Guard :=
-                      Enter_Folder (Bootstrap.Alr_Src_Folder)
+                      Enter_Folder (Hardcoded.Alr_Src_Folder)
               with Unreferenced;
          begin
             Alire.OS_Lib.Spawn ("git",

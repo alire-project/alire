@@ -16,6 +16,9 @@ package Alr.OS_Lib is
    function "/" (L, R : String) return String renames Alire.OS_Lib."/";
    --  Shorthand for path composition
 
+   package Paths is
+      function "/" (L, R : String) return String renames Alire.OS_Lib."/";
+   end Paths;
 
    --  ALIRE FILE RELATED
 

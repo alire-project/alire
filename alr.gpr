@@ -1,5 +1,5 @@
-with "alire.gpr";
-with "semantic_versioning.gpr";
+with "alire";
+with "semantic_versioning";
 
 project Alr is
 
