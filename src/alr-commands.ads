@@ -1,8 +1,8 @@
 with GNAT.Command_Line;
 
-private with Alire.OS_Lib;
-
 with Alr.Bootstrap;
+
+private with Alire.OS_Lib;
 
 pragma Warnings (Off);
 private with Alr.Project;

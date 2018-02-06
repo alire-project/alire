@@ -32,6 +32,17 @@ package Alr.Hardcoded is
 
    Templates_Lib_Folder : constant String;
 
+   --  Functions that return hardcoded-derived files
+
+   function Alire_File (Project : Alire.Project_Name) return String;
+   --  File with dependencies (project_alr.ads)
+
+   function Build_File (Project : Alire.Project_Name) return String;
+   --  Aggregate project file (project_alr.gpr)
+
+   function Project_File (Project : Alire.Project_Name) return String;
+   --  Project native project file (project.gpr)
+
 private
 
    use Alire.OS_Lib;
@@ -51,5 +62,20 @@ private
    Templates_Bin_Folder : constant String := Alr_Src_Folder / "templates" / "projects" / "bin";
 
    Templates_Lib_Folder : constant String := Alr_Src_Folder / "templates" / "projects" / "lib";
+
+   --  Function bodies
+
+   ----------------
+   -- Alire_File --
+   ----------------
+
+   function Alire_File (Project : Alire.Project_Name) return String is
+     (Project & "_alr.ads");
+
+   function Build_File (Project : Alire.Project_Name) return String is
+     (Project & "_alr.gpr");
+
+   function Project_File (Project : Alire.Project_Name) return String is
+     (Project & ".gpr");
 
 end Alr.Hardcoded;

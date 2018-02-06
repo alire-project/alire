@@ -4,7 +4,7 @@ with Alire.Index; use Alire.Index;
 with Alire.OS_Lib;
 with Alire.Releases;
 
-with Alr.OS_Lib;
+private with Alr.Hardcoded;
 
 with Semantic_Versioning;
 
@@ -83,6 +83,6 @@ private
      (Prj & ".gpr");
 
    function GPR_Alr_File (Prj : Alire.Project_Name := Current.Element.Project) return String is
-     (OS_Lib.Build_File (Prj));
+     (Hardcoded.Build_File (Prj));
 
 end Alr.Project;

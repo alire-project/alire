@@ -1,35 +1,15 @@
 with Ada.Command_Line;
 with Ada.Containers;
 
-with Alr.Spawn;
+with Alire.Os_Lib; use Alire.OS_Lib;
+
+with Alr.Hardcoded;
 
 with GNAT.OS_Lib;
 
 package body Alr.OS_Lib is
 
    use type Ada.Containers.Count_Type;
-
-   ----------------
-   -- Alire_File --
-   ----------------
-
-   function Alire_File (Project : Alire.Project_Name) return String is
-     (Project & "_alr.ads");
-
-   ----------------
-   -- Build_File --
-   ----------------
-
-   function Build_File (Project : Alire.Project_Name) return String is
-     (Project & "_alr.gpr");
-
-   ------------------
-   -- Project_File --
-   ------------------
-
-   function Project_File (Project : Alire.Project_Name) return String is
-     (Project & ".gpr");
-
 
    -------------
    -- Bailout --
@@ -86,8 +66,8 @@ package body Alr.OS_Lib is
 
       Candidates : Utils.String_Vector;
    begin
-      if Is_Regular_File (Alire_File (Project)) then
-         Candidates.Append (Alire_File (Project));
+      if Is_Regular_File (Hardcoded.Alire_File (Project)) then
+         Candidates.Append (Hardcoded.Alire_File (Project));
       end if;
 
       --  Check subfolders
@@ -101,8 +81,8 @@ package body Alr.OS_Lib is
             Get_Next_Entry (Search, Folder);
 
             if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
-               if Is_Regular_File (Full_Name (Folder) / Alire_File (Project)) then
-                  Candidates.Append (Full_Name (Folder) / Alire_File (Project));
+               if Is_Regular_File (Full_Name (Folder) / Hardcoded.Alire_File (Project)) then
+                  Candidates.Append (Full_Name (Folder) / Hardcoded.Alire_File (Project));
                end if;
             end if;
          end loop;
@@ -111,7 +91,7 @@ package body Alr.OS_Lib is
       end;
 
       if Candidates.Length > 1 then
-         Log ("Warning: more than one " & Alire_File (Project) & " in scope.");
+         Log ("Warning: more than one " & Hardcoded.Alire_File (Project) & " in scope.");
          for C of Candidates loop
             Log (C);
          end loop;
@@ -210,7 +190,7 @@ package body Alr.OS_Lib is
       Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Current_Directory) with Unreferenced;
    begin
       loop
-         if Is_Regular_File (Project_File (Project)) and then Locate_Index_File (Project) /= "" then
+         if Is_Regular_File (Hardcoded.Project_File (Project)) and then Locate_Index_File (Project) /= "" then
             return Current_Folder;
          else
             Set_Directory (Containing_Directory (Current_Directory));
@@ -276,7 +256,7 @@ package body Alr.OS_Lib is
    begin
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       -- FIXME this is not robust with blanks in paths
-      Spawn.Command ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
+      Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
    end Copy_File;
 
    procedure Delete_File (Name : String) is
@@ -329,7 +309,7 @@ package body Alr.OS_Lib is
          Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
-         Spawn.Command ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
+         Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
       end;
 
       --  This is not OS dependent
@@ -345,8 +325,8 @@ package body Alr.OS_Lib is
    function File_Contains_Ignore_Case (Filename, Word : String) return Boolean is
    begin
       --  FIXME: this is OS dependent, and it shouldn't be
-      Spawn.Command ("grep", "-q " & Word & " " & Filename);
-      return True;
+      return Spawn ("grep", "-q " & Word & " " & Filename) = 0;
+--      return True;
    exception
       when Command_Failed =>
          return False;

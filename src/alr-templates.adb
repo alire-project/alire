@@ -1,6 +1,7 @@
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alr.Hardcoded;
 with Alr.OS;
 with Alr.OS_Lib;
 with Alr.Utils;
@@ -104,7 +105,7 @@ package body Alr.Templates is
                            Root     : Alire.Releases.Release)
    is
       File     : File_Type;
-      Filename : constant String := OS_Lib.Build_File (Root.Project);
+      Filename : constant String := Hardcoded.Build_File (Root.Project);
       Prjname  : constant String := Utils.To_Mixed_Case (Filename (Filename'First .. Filename'Last - 4));
 
       First    : Boolean := True;
@@ -171,7 +172,7 @@ package body Alr.Templates is
       end if;
 
       Create (File, Out_File, (if Filename /= "" then Filename
-                                                 else OS_Lib.Alire_File (Root.Project)));
+                                                 else Hardcoded.Alire_File (Root.Project)));
 
       Put_Line (File, "with Alr.Project; use Alr.Project;");
       New_Line (File);

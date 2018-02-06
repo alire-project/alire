@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Repositories.Local;
 
+with Alr.OS_Lib;
 with Alr.Utils;
 
 package body Alr.Project is

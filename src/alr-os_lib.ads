@@ -26,15 +26,6 @@ package Alr.OS_Lib is
 
    --  ALIRE FILE RELATED
 
-   function Alire_File (Project : Alire.Project_Name) return String;
-   --  File with dependencies (project_alr.ads)
-
-   function Build_File (Project : Alire.Project_Name) return String;
-   --  Aggregate project file (project_alr.gpr)
-
-   function Project_File (Project : Alire.Project_Name) return String;
-   --  Project native project file (project.gpr)
-
    function Locate_File_Under (Folder : String; Name : String; Max_Depth : Natural := 0) return Utils.String_Vector;
    --  Recursively search for a file
    --  Depth 0 means given folder only

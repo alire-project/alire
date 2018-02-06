@@ -18,6 +18,7 @@ with Alr.Commands.Search;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Devel;
+with Alr.Hardcoded;
 with Alr.OS;
 with Alr.OS_Lib;
 with Alr.Utils;
@@ -229,7 +230,7 @@ package body Alr.Commands is
    procedure Requires_Buildfile is
       Guard : constant Alire.OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
    begin
-      if not GNAT.OS_Lib.Is_Regular_File (Alr.OS_Lib.Build_File (Project.Current.Element.Project)) then
+      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Current.Element.Project)) then
          Checkout.Generate_GPR_Builder (Project.Current.Element);
       end if;
    end Requires_Buildfile;

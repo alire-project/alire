@@ -28,7 +28,6 @@ package body Alr.Bootstrap is
    procedure Check_If_Rolling_And_Respawn is
    begin
       if not Is_Rolling then
-         Log ("Alr exe is: " & Hardcoded.Alr_Exe_File);
          if Is_Executable_File (Hardcoded.Alr_Exe_File) then
             Spawn.Updated_Alr_Without_Return;
          else
@@ -155,7 +154,7 @@ package body Alr.Bootstrap is
 
       declare
          Gpr : constant Alire.Project_Name :=
-                 OS_Lib.Project_File (Project.Current.Element.Project);
+                 Hardcoded.Project_File (Project.Current.Element.Project);
       begin
          if Is_Regular_File (Gpr) then
             return True;
