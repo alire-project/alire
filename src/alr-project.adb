@@ -55,12 +55,9 @@ package body Alr.Project is
 
    function Set_Root_Project (Project    : Alire.Project_Name;
                               Version    : Semantic_Versioning.Version;
-                              Depends_On : Alire.Depends.Dependencies := Alire.Depends.Nothing;
-                              License    : Alire.Licenses := Unknown)
+                              Depends_On : Alire.Depends.Dependencies := Alire.Depends.Nothing)
                               return Release
    is
-      pragma Unreferenced (License);
-
       Rel : constant Release := Alire.Releases.New_Release (Project,
                                                             Version,
                                                             Alire.Repositories.Local.Repo,

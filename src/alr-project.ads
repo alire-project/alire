@@ -38,14 +38,11 @@ package Alr.Project is
      with Pre => (not Current.Is_Empty);
    --  Enters the root folder if not already there
 
-   function Unknown return Alire.Licenses renames Alire.Unknown;
-
    subtype Release is Alire.Releases.Release;
 
    function Set_Root_Project (Project    : Alire.Project_Name;
                               Version    : Semantic_Versioning.Version;
-                              Depends_On : Alire.Depends.Dependencies := Alire.Depends.Nothing;
-                              License    : Alire.Licenses := Unknown)
+                              Depends_On : Alire.Depends.Dependencies := Alire.Depends.Nothing)
                               return Release;
    --  This function must be called in the working project alire file.
    --  Otherwise alr does not know what's the current project, and its version and dependencies

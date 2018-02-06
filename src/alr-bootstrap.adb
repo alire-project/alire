@@ -202,8 +202,8 @@ package body Alr.Bootstrap is
            (if Devel.Enabled then "devel" else "release") &
            " (" &
            (if Running_In_Session
-            then (if Session_Is_Current then "project:" & Project.Current.Element.Milestone_Image else "outdated")
-            else "no session") & ") (" &
+            then (if Session_Is_Current then Project.Current.Element.Milestone_Image else "outdated")
+            else "no project") & ") (" &
             Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)";
    end Status_Line;
 
