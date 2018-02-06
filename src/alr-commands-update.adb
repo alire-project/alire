@@ -78,7 +78,7 @@ package body Alr.Commands.Update is
               with Unreferenced;
          begin
             Alire.OS_Lib.Spawn ("git", "pull --recurse-submodules=yes");
-            Alire.OS_Lib.Spawn ("git", "submodule update --recursive --remote");
+            Alire.OS_Lib.Spawn ("git", "submodule update --recursive");
          end;
       end if;
    end Update_Alr;
@@ -98,8 +98,7 @@ package body Alr.Commands.Update is
               with Unreferenced;
          begin
             Alire.OS_Lib.Spawn ("git",
-                                "submodule update --recursive --remote " &
-                                "deps" / "alire");
+                                "submodule update --recursive " & "deps" / "alire");
          end;
       end if;
    end Update_Index;
