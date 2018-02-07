@@ -34,11 +34,14 @@ package body Alr.Spawn is
    ---------
 
    procedure Alr (Cmd : Commands.Cmd_Names; Args : String := "") is
+      Extra_Switches : constant String :=
+                         (if Args = OS_Lib.Current_Command_Line
+                          then ""
+                          else Commands.Global_Switches);
    begin
       if Is_Executable_File (Hardcoded.Alr_Exe_File) then
          Command (Hardcoded.Alr_Exe_File,
-                  Commands.Image (Cmd) & " " &
-                    Commands.Global_Switches & " " & Args);
+                  Commands.Image (Cmd) & " " & Extra_Switches & " " & Args);
       else
          Warn_Outdated;
          raise Command_Failed;
@@ -73,10 +76,13 @@ package body Alr.Spawn is
    -- Command --
    -------------
 
-   procedure Command (Cmd : String; Args : String := ""; Quiet : Boolean := Commands.Is_Quiet) is
+   procedure Command (Cmd                 : String;
+                      Args                : String := "";
+                      Understands_Verbose : Boolean := False) is
    begin
       if Alire.OS_Lib.Spawn (Cmd,
-                             (if Quiet then "-q " & Args else Args)) /= 0
+                             Args,
+                             Understands_Verbose) /= 0
       then
          raise Command_Failed;
       end if;
@@ -86,9 +92,8 @@ package body Alr.Spawn is
    -- Gprbuild --
    --------------
 
-   procedure Gprbuild (Project_File : String;
-                       Session_File : String := "";
-                       Output       : Gpr_Output := (if Commands.Is_Quiet then Quiet else Raw))
+   procedure Gprbuild (Project_File        : String;
+                       Session_File        : String := "")
    is
       Selfbuild : constant String :=
                     (if Session_File /= ""
@@ -98,7 +103,7 @@ package body Alr.Spawn is
       Command ("gprbuild",
                Selfbuild &
                "-j0 -m -p -P " & Project_File,
-               Quiet => (if Output = Quiet then True else False));
+               Understands_Verbose => True);
    end Gprbuild;
 
 end Alr.Spawn;
