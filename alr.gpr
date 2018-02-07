@@ -26,8 +26,8 @@ project Alr is
    for Languages use ("Ada", "C");
 
    package Compiler is
-      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
-      for Switches ("c") use ("-g", "-O2", "-Wall");
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf", "-fPIC");
+      for Switches ("c") use ("-g", "-O2", "-Wall", "-fPIC");
    end Compiler;
 
    package Builder is

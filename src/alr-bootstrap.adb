@@ -54,7 +54,7 @@ package body Alr.Bootstrap is
    procedure Check_Rebuild_Respawn is
    begin
       if not Running_In_Session then
-         Log ("Could not find alr session, stopping now", Verbose);
+         Log ("Could not find alr session, stopping now", Warning);
          raise Command_Failed;
       end if;
 
@@ -96,11 +96,11 @@ package body Alr.Bootstrap is
       Log ("About to recompile...", Debug);
       --  delay 1.0;
 
-      Log ("Generating index for " & Folder_To_Index, Verbose);
+      Log ("Generating index for " & Folder_To_Index, Detail);
       Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
 
       if Alr_File /= "" then
-         Log ("Generating session for " & Alr_File, Verbose);
+         Log ("Generating session for " & Alr_File, Detail);
          Templates.Generate_Session (OS.Session_Folder, Alr_File);
          Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
       end if;

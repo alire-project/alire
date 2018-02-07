@@ -113,7 +113,7 @@ package body Alr.Templates is
       use Alr.OS_Lib;
 
    begin
-      Log ("Generating GPR for " & Root.Milestone_Image & " with" & Instance.Length'Img & " dependencies", Verbose);
+      Log ("Generating GPR for " & Root.Milestone_Image & " with" & Instance.Length'Img & " dependencies", Detail);
 
       Create (File, Out_File, Filename);
 

@@ -22,7 +22,7 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      Name : constant String := Last_Argument;
+      Name : constant String := Last_Non_Switch_Argument;
    begin
       if Cmd.No_Skel then
          Ada.Directories.Create_Directory (Name);
@@ -69,7 +69,7 @@ package body Alr.Commands.Init is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      Name : constant String := Last_Argument;
+      Name : constant String := Last_Non_Switch_Argument;
    begin
       if not (Cmd.Bin or Cmd.Lib) then
          Log ("Please provide either --bin or --lib");

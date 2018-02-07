@@ -25,6 +25,8 @@ with Alr.Utils;
 
 with GNAT.OS_Lib;
 
+with Simple_Logging;
+
 package body Alr.Commands is
 
    use GNAT.Command_Line;
@@ -46,8 +48,9 @@ package body Alr.Commands is
                        Cmd_Version  => new Version.Command,
                        others       => new Reserved.Command);
 
-   Log_Verbose : aliased Boolean := False;
-   Log_Debug   : aliased Boolean := False;
+   Log_Quiet  : aliased Boolean := False;
+   Log_Detail : aliased Boolean := False;
+   Log_Debug  : aliased Boolean := False;
 
    -----------
    -- Image --
@@ -59,6 +62,12 @@ package body Alr.Commands is
       return Pre (Pre'First + 4 .. Pre'Last);
    end Image;
 
+   --------------
+   -- Is_Quiet --
+   --------------
+
+   function Is_Quiet return Boolean is (Log_Quiet);
+
    -------------------------
    -- Set_Global_Switches --
    -------------------------
@@ -66,14 +75,18 @@ package body Alr.Commands is
    procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
    begin
       Define_Switch (Config,
-                     Log_Verbose'Access,
+                     Log_Quiet'Access,
+                     "-q",
+                     Help => "Limit output to errors");
+      Define_Switch (Config,
+                     Log_Detail'Access,
                      "-v",
-                     Help => "Be more verbose.");
+                     Help => "Be more verbose");
 
       Define_Switch (Config,
                      Log_Debug'Access,
                      "-d",
-                     Help => "Be even more verbose (implies -v).");
+                     Help => "Be even more verbose (including debug messages)");
    end Set_Global_Switches;
 
    ---------------------
@@ -83,7 +96,7 @@ package body Alr.Commands is
    function Global_Switches return String is
    begin
       return Utils.Trim ((if Log_Debug then "-d " else "") &
-                         (if Log_Verbose then "-v " else ""));
+                         (if Log_Detail then "-v " else ""));
    end Global_Switches;
 
    --------------------------
@@ -193,15 +206,24 @@ package body Alr.Commands is
 
    procedure Early_Switch_Detection is
       use Ada.Command_Line;
+      Found : Natural := 0;
    begin
       for I in 1 .. Argument_Count loop
          if Argument (I) = "-d" then
-            Alire.Verbosity := Alire.Debug;
-            return;
+            Simple_Logging.Level := Debug;
+            Found := Found + 1;
          elsif Argument (I) = "-v" then
-            Alire.Verbosity := Alire.Verbose;
+            Simple_Logging.Level := Detail;
+            Found := Found + 1;
+         elsif Argument (I) = "-q" then
+            Simple_Logging.Level := Warning;
+            Found := Found + 1;
          end if;
       end loop;
+
+      if Found > 1 then
+         Log ("Option -d, -q and -v are mutually exclusive, defaulting to normal verbosity", Warning);
+      end if;
    end Early_Switch_Detection;
 
    --------------------------
@@ -252,20 +274,34 @@ package body Alr.Commands is
    procedure Execute is
       use Ada.Command_Line;
 
-      Cmd : Cmd_Names;
+      Cmd   : Cmd_Names;
+      Pos : Natural;
    begin
       if Argument_Count < 1 or else Argument (1) = "-h" or else Argument (1) = "--help" then
          Display_Usage;
          return;
       else
+         Pos := 1; -- Points to first possible command argument
+         loop
+            exit when Pos > Argument_Count or else
+              (Argument (Pos) (Argument (Pos)'first)) /= '-';
+            Pos := Pos + 1;
+         end loop;
+
+         if Pos > Argument_Count then
+            Log ("No command given", Error);
+            Display_Usage;
+            return;
+         end if;
+
          begin
-            Cmd := Cmd_Names'Value ("cmd_" & Argument (1));
+            Cmd := Cmd_Names'Value ("cmd_" & Argument (Pos));
          exception
             when Constraint_Error =>
-               Put_Line ("Unrecognized command: " & Argument (1));
+               Log ("Unrecognized command: " & Argument (Pos), Error);
                New_Line;
                Display_Usage;
-               OS_Lib.Bailout (1);
+               OS_Lib.Bailout (Pos);
          end;
 
          Create_Alire_Folders;
@@ -281,24 +317,16 @@ package body Alr.Commands is
    procedure Execute_By_Name (Cmd : Cmd_Names) is
       Config : Command_Line_Configuration;
    begin
-      Set_Global_Switches (Config);
-
       Define_Switch (Config, "-h", "--help", "Show this hopefully helpful help.");
-      --  A lie to avoid the aforementioned bug
+
+      Set_Global_Switches (Config);
 
       --  Fill switches and execute
       Dispatch_Table (Cmd).Setup_Switches (Config);
       begin
          Getopt (Config); -- Parses command line switches
 
-         --  Not really needed anymore since done in Early Detection
-         if Log_Debug then
-            Alire.Verbosity := Debug;
-         elsif Log_Verbose then
-            Alire.Verbosity := Verbose;
-         end if;
-
-         Put_Line (Image (Cmd) & ":");
+         Log (Image (Cmd) & ":");
          Dispatch_Table (Cmd).Execute;
       exception
          when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
@@ -314,22 +342,38 @@ package body Alr.Commands is
       end;
    end Execute_By_Name;
 
-   -------------------
-   -- Last_Argument --
-   -------------------
+   ------------------------------
+   -- Last_Non_Switch_Argument --
+   ------------------------------
 
-   function Last_Argument return String is
+   function Last_Non_Switch_Argument return String is
       use Ada.Command_Line;
+      First, Second : Natural := 0; -- Positions of first and second non-switch arguments
+
+      function Is_Switch (S : String) return Boolean is (S'Length /= 0 and then S (S'First) = '-');
    begin
       if Argument_Count < 2 then
          raise Wrong_Command_Arguments;
       else
-         return Last : constant String := Argument (Argument_Count) do
-            if Last (Last'First) = '-' then
-               raise Wrong_Command_Arguments;
+         for I in 1 .. Argument_Count loop
+            if not Is_Switch (Argument (I)) then
+               if First = 0 then
+                  First := I;
+               elsif Second = 0 then
+                  Second := I;
+               else
+                  --  Too many arguments
+                  raise Wrong_Command_Arguments with "At least 3 non-switch arguments found";
+               end if;
             end if;
-         end return;
+         end loop;
+
+         if Second > 0 then
+            return Argument (Second);
+         else
+            raise Wrong_Command_Arguments with "Missing 2nd non-switch argument";
+         end if;
       end if;
-   end Last_Argument;
+   end Last_Non_Switch_Argument;
 
 end Alr.Commands;

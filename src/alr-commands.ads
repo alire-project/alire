@@ -48,8 +48,11 @@ package Alr.Commands is
    --  This is exported only to be reachable from Spawn, but there's no reason to use it from commands
 
    function Global_Switches return String;
-   --  Returns the in use global switches (-d -v)
+   --  Returns the in use global switches (-d -q -v)
    --  Useful e.g. to pass along on respawning a custom command
+
+   function Is_Quiet return Boolean;
+   --  Says if -q was in the command line
 
    -- Declared here so they are available to the help metacommand child package and Spawn
 
@@ -79,7 +82,7 @@ private
    procedure Execute_By_Name (Cmd : Cmd_Names);
    -- Execute a command with the externally given command line
 
-   function Last_Argument return String;
+   function Last_Non_Switch_Argument return String;
    --  Returns the last command-line argument, unless...
    --  If it begins with "-" (it's a switch) or there aren't at least three arguments,
    --    raise Wrong_Command_Arguments

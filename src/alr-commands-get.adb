@@ -22,7 +22,7 @@ package body Alr.Commands.Get is
    procedure Execute (Cmd : in out Command) is
       use Ada.Directories;
 
-      Name : constant Alire.Project_Name := Last_Argument;
+      Name : constant Alire.Project_Name := Last_Non_Switch_Argument;
 
       Success : Boolean;
       Needed  : constant Alire.Index.Instance :=

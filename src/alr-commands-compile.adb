@@ -37,7 +37,7 @@ package body Alr.Commands.Compile is
             begin
                case Execs.Length is
                   when 0 =>
-                     Log ("No executable found after compilation (might be too deep)", Verbose);
+                     Log ("No executable found after compilation (might be too deep)", Detail);
                   when others =>
                      for Exe of Execs loop
                         Log ("Executable found at " &

@@ -17,7 +17,6 @@ package body Alr.Commands.Search is
       use Ada.Command_Line;
       use Ada.Strings.Fixed;
 
-      Pattern : constant String := Argument (Argument_Count);
       Found   : Natural := 0;
    begin
       if Argument_Count = 1 then -- no search term
@@ -25,27 +24,37 @@ package body Alr.Commands.Search is
          raise Wrong_Command_Arguments;
       end if;
 
-      if Cmd.List and then Pattern /= "--list" then
+      if Cmd.List and then Argument (Argument_Count) /= "--list" then
          Log ("Listing is incompatible with searching");
          raise Wrong_Command_Arguments;
       end if;
 
-      if not Cmd.List and then Pattern = "" then
+      if not Cmd.List and then Argument (Argument_Count) = "" then
          Cmd.List := True;
       end if;
 
       --  End of option verification, start of search
 
-      if not Cmd.List then
-         Log ("Searching " & Utils.Quote (Pattern) & "...");
-      end if;
-
-      for R of Alire.Index.Releases loop
-         if Cmd.List or else Count (R.Project, Pattern) > 0 then
-            Found := Found + 1;
+      if Cmd.List then
+         for R of Alire.Index.Releases loop
             Log (R.Project & " " & Semantic_Versioning.Image (R.Version));
-         end if;
-      end loop;
+         end loop;
+      else
+         declare
+            Pattern : constant String := Last_Non_Switch_Argument;
+         begin
+            if not Cmd.List then
+               Log ("Searching " & Utils.Quote (Pattern) & "...", Detail);
+            end if;
+
+            for R of Alire.Index.Releases loop
+               if Count (R.Project, Pattern) > 0 then
+                  Found := Found + 1;
+                  Log (R.Project & " " & Semantic_Versioning.Image (R.Version));
+               end if;
+            end loop;
+         end;
+      end if;
 
       if Found = 0 then
          Log ("Search term not found");

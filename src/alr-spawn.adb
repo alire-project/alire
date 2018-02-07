@@ -73,7 +73,7 @@ package body Alr.Spawn is
    -- Command --
    -------------
 
-   procedure Command (Cmd : String; Args : String := ""; Quiet : Boolean := False) is
+   procedure Command (Cmd : String; Args : String := ""; Quiet : Boolean := Commands.Is_Quiet) is
    begin
       if Alire.OS_Lib.Spawn (Cmd,
                              (if Quiet then "-q " & Args else Args)) /= 0
@@ -88,7 +88,7 @@ package body Alr.Spawn is
 
    procedure Gprbuild (Project_File : String;
                        Session_File : String := "";
-                       Output       : Gpr_Output := Raw)
+                       Output       : Gpr_Output := (if Commands.Is_Quiet then Quiet else Raw))
    is
       Selfbuild : constant String :=
                     (if Session_File /= ""
