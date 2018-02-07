@@ -130,6 +130,7 @@ package body Alr.Commands is
 
    procedure Display_Usage is
    begin
+      New_Line;
       Put_Line ("Ada Library Repository manager (alr)");
       Put_Line ("Usage : alr command [options] [arguments]");
 

@@ -5,6 +5,7 @@ with Alire.Os_Lib; use Alire.OS_Lib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with Interfaces.C;
+with Interfaces.C.Strings;
 
 package body Alr.OS is
 
@@ -103,13 +104,24 @@ package body Alr.OS is
       use Interfaces;
       use type C.Size_T;
 
-      Buffer : C.Char_Array (1 .. 1024);
-      Used   : C.size_t;
-      procedure Own_Exec_C (Buflen : C.size_t; Buffer : out C.char_array; Len : out C.size_t);
-      pragma Import (C, Own_Exec_C, "own_exec");
+      --------------
+      -- Readlink --
+      --------------
 
+      function Readlink (Path   : C.Strings.chars_ptr;
+                         Buffer : out C.Char_Array;
+                         Buflen :     C.size_t) return C.size_t;
+      pragma Import (C, Readlink, "readlink");
+
+      Buffer : aliased C.Char_Array (1 .. 1024);
+      Used   : C.size_t;
+
+      Link : aliased C.Char_Array := C.To_C (Linux_Self_Exec);
    begin
-      Own_Exec_C (Buffer'Length, Buffer, Used);
+      Used := Readlink (C.Strings.To_Chars_Ptr (Link'Unchecked_Access),
+                        Buffer,
+                        Buffer'Length);
+
       return C.To_Ada (Buffer (Buffer'First .. Buffer'First + Used - 1), Trim_Nul => False);
    end Own_Executable;
 

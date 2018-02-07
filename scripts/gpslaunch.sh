@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gps -P ../alr_env.gpr &
+gps -P `dirname $0`/../alr_env.gpr &

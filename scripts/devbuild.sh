@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gprbuild -p -P ../alr_env.gpr
+gprbuild -p -P `dirname $0`/../alr_env.gpr

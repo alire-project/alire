@@ -29,4 +29,8 @@ package Alr.OS is
    function Own_Executable return String;
    --  Returns full path to own executable (not argv[0] but the real, effective path)
 
+private
+
+   Linux_Self_Exec : constant String := "/proc/self/exe";
+
 end Alr.OS;
