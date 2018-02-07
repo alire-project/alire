@@ -1,0 +1,1 @@
+Check libadalang as alternative to recompilation
