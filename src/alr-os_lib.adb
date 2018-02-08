@@ -256,7 +256,7 @@ package body Alr.OS_Lib is
    begin
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       -- FIXME this is not robust with blanks in paths
-      Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
+      Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder, Force_Quiet => True);
    end Copy_File;
 
    procedure Delete_File (Name : String) is
@@ -309,7 +309,8 @@ package body Alr.OS_Lib is
          Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
-         Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
+         Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;",
+                Force_Quiet => True);
       end;
 
       --  This is not OS dependent
