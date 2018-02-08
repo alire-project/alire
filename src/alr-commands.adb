@@ -339,6 +339,7 @@ package body Alr.Commands is
             OS_Lib.Bailout (1);
 
          when Command_Failed =>
+            Log ("alr command was not completed", Warning);
             OS_Lib.Bailout (1);
       end;
    end Execute_By_Name;

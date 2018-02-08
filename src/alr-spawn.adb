@@ -57,7 +57,7 @@ package body Alr.Spawn is
       if Is_Executable_File (Hardcoded.Alr_Exe_File) then
          Log ("...");
          begin
-            Spawn.Command (Hardcoded.Alr_Exe_File, OS_Lib.Current_Command_Line);
+            Alire.OS_Lib.Spawn_Bypass (Hardcoded.Alr_Exe_File, OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);
             raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
          exception

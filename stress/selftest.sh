@@ -6,14 +6,31 @@ set -o nounset
 trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
 trap 'echo "Interrupted" >&2 ; exit 1' INT
 
-if [[ "${1:-release}" == "devel" ]]; then
-    echo Testing DEVEL version, press enter
+mkdir -p ~/.config/alire
+
+version=${1:-release}
+
+if [[ "$version" == "working" ]]; then
+    echo Testing WORKING version, press enter
     touch ~/.config/alire/enable-devel
-else
+    read
+elif [[ "$version" == "release" ]]; then
     echo Testing RELEASE version, press enter
     rm -f ~/.config/alire/enable-devel
+    read
+else
+    # Let's presume it's a testing branch:
+    echo About to test branch $version as release candidate, press enter
+    read
+    rm -rf ~/.config/alire
+    mkdir -p ~/.config/alire
+    git clone --recurse-submodules -n https://bitbucket.org/aleteolabs/alr ~/.config/alire/alr
+    pushd ~/.config/alire/alr
+    git checkout $version
+    git submodule update --init --recursive
+    gprbuild -p -P alr_env
+    popd
 fi
-read
 
 workspace=/tmp/alrtest
 
