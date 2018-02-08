@@ -3,7 +3,6 @@ with Alire.OS_Lib;
 with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS;
-with Alr.Spawn;
 
 package body Alr.Commands.Version is
 
@@ -22,7 +21,7 @@ package body Alr.Commands.Version is
          Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
            with Unreferenced;
       begin
-         Spawn.Command (Hardcoded.Scripts_Version);
+         Alire.OS_Lib.Spawn_Bypass (Hardcoded.Scripts_Version);
       end;
 
       Log ("alr internal bootstrap version is " & Bootstrap.Alr_Bootstrap_Release.Image &
