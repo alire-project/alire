@@ -325,7 +325,7 @@ package body Alr.OS_Lib is
    function File_Contains_Ignore_Case (Filename, Word : String) return Boolean is
    begin
       --  FIXME: this is OS dependent, and it shouldn't be
-      return Spawn ("grep", "-q " & Word & " " & Filename) = 0;
+      return Spawn ("grep", "-q " & Word & " " & Filename, Force_Quiet => True) = 0;
 --      return True;
    exception
       when Command_Failed =>

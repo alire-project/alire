@@ -75,7 +75,7 @@ package body Alr.OS is
 
    procedure Create_Folder (Path : String) is
    begin
-      Alire.OS_Lib.Spawn ("mkdir", "-p " & Path);
+      Alire.OS_Lib.Spawn ("mkdir", "-p " & Path, Force_Quiet => True);
       --  FIXME not portable
    end Create_Folder;
 

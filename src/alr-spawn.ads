@@ -16,7 +16,8 @@ package Alr.Spawn is
 
    procedure Command (Cmd  : String;
                       Args : String := "";
-                      Understands_Verbose : Boolean := False);
+                      Understands_Verbose : Boolean := False;
+                      Force_Quiet         : Boolean := False);
    --  Adds -v if understands in Debug log level
 
    procedure Gprbuild (Project_File : String;

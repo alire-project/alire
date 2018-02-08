@@ -78,11 +78,13 @@ package body Alr.Spawn is
 
    procedure Command (Cmd                 : String;
                       Args                : String := "";
-                      Understands_Verbose : Boolean := False) is
+                      Understands_Verbose : Boolean := False;
+                      Force_Quiet         : Boolean := False) is
    begin
       if Alire.OS_Lib.Spawn (Cmd,
                              Args,
-                             Understands_Verbose) /= 0
+                             Understands_Verbose,
+                             Force_Quiet) /= 0
       then
          raise Command_Failed;
       end if;
