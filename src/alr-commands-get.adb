@@ -24,10 +24,6 @@ package body Alr.Commands.Get is
 
       Name : constant Alire.Project_Name := Last_Argument;
 
-      Success : Boolean;
-      Needed  : constant Alire.Index.Instance :=
-                  Alire.Query.Resolve (Alire.Depends.New_Dependency (Name, Semver.Any), Success);
-
       Must_Enter : Boolean;
    begin
       if not Alire.Query.Exists (Name) then
@@ -35,43 +31,49 @@ package body Alr.Commands.Get is
          raise Command_Failed;
       end if;
 
-      if not Success then
-         Log ("Failed: could not resolve dependencies.");
-         raise Command_Failed;
-      end if;
-
-      --  Check if we are already in the fresh copy (may happen after respawning)
-      if Bootstrap.Running_In_Session then
-         if Bootstrap.Session_Is_Current and then Name = Project.Name then
-            Log ("Already in working copy, skipping checkout");
-         else
-            Log ("Cannot get a project inside another alr session, stopping.");
+      declare
+         Success : Boolean;
+         Needed  : constant Alire.Index.Instance :=
+                     Alire.Query.Resolve (Alire.Depends.New_Dependency (Name, Semver.Any), Success);
+      begin
+         if not Success then
+            Log ("Failed: could not resolve dependencies.");
             raise Command_Failed;
          end if;
-         Must_Enter := False;
-      else
-         Must_Enter := True;
-         Checkout.Working_Copy (Needed.Element (Name),
-                                Needed,
-                                Current_Directory);
-         --  Check out requested project under current directory
-      end if;
 
-      --  Check out rest of dependencies
-      Checkout.To_Folder (Needed, OS.Projects_Folder, But => Name);
+         --  Check if we are already in the fresh copy (may happen after respawning)
+         if Bootstrap.Running_In_Session then
+            if Bootstrap.Session_Is_Current and then Name = Project.Name then
+               Log ("Already in working copy, skipping checkout");
+            else
+               Log ("Cannot get a project inside another alr session, stopping.");
+               raise Command_Failed;
+            end if;
+            Must_Enter := False;
+         else
+            Must_Enter := True;
+            Checkout.Working_Copy (Needed.Element (Name),
+                                   Needed,
+                                   Current_Directory);
+            --  Check out requested project under current directory
+         end if;
 
-      --  Launch build if requested
-      if Cmd.Compile then
-         declare
-            use Alire.OS_Lib;
-            Guard : Folder_Guard :=
-                      (if Must_Enter
-                       then Enter_Folder (Needed.Element (Name).Unique_Folder)
-                       else Stay_In_Current_Folder) with Unreferenced;
-         begin
-            Compile.Execute;
-         end;
-      end if;
+         --  Check out rest of dependencies
+         Checkout.To_Folder (Needed, OS.Projects_Folder, But => Name);
+
+         --  Launch build if requested
+         if Cmd.Compile then
+            declare
+               use Alire.OS_Lib;
+               Guard : Folder_Guard :=
+                         (if Must_Enter
+                          then Enter_Folder (Needed.Element (Name).Unique_Folder)
+                          else Stay_In_Current_Folder) with Unreferenced;
+            begin
+               Compile.Execute;
+            end;
+         end if;
+      end;
    end Execute;
 
    --------------------
