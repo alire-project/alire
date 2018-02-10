@@ -11,4 +11,6 @@ package Alr with Preelaborate is
 
    procedure Log (S : String; Level : Simple_Logging.Levels := Info) renames Simple_Logging.Log;
 
+   package Trace renames Simple_Logging;
+
 end Alr;
