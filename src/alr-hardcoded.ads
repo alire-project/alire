@@ -26,6 +26,12 @@ package Alr.Hardcoded is
    --  when Devel.Enabled => User_Folder/local/alr
    --                else => Config_Folder/alire/alr
 
+   Native_Package_List : constant String;
+   --  File containing detected Ada packages in the system package manager
+   --  session_folder/packages.txt
+
+   Scripts_Apt_Detect : constant String;
+
    Scripts_Version : constant String;
 
    Templates_Bin_Folder : constant String;
@@ -56,6 +62,10 @@ private
    Alr_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
 
    Alr_Gpr_File : constant String := Alr_Src_Folder / "alr_env.gpr";
+
+   Native_Package_List : constant String := OS.Session_Folder / "packages.txt";
+
+   Scripts_Apt_Detect : constant String := Alr_Src_Folder / "scripts" / "aptdetect";
 
    Scripts_Version : constant String := Alr_Src_Folder / "scripts" / "version";
 

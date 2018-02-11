@@ -5,6 +5,7 @@ with Alire.Query;
 with Alr.Bootstrap;
 with Alr.Checkout;
 with Alr.Hardcoded;
+with Alr.Native;
 with Alr.Spawn;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -91,6 +92,11 @@ package body Alr.Commands.Update is
 
    overriding procedure Execute (Cmd : in out Command) is
    begin
+      if Cmd.Native then
+         Native.Autodetect;
+         Native.Add_To_Index;
+      end if;
+
       if Cmd.Online then
          Log ("Checking remote repositories:");
          Update_Alr;
@@ -124,6 +130,10 @@ package body Alr.Commands.Update is
          Cmd.Online'Access,
          "-o", "--online", "Perform online catalog update before recomputing dependencies");
 
+      GNAT.Command_Line.Define_Switch
+        (Config,
+         Cmd.Native'Access,
+         "", "--use-native", "Autodetect native platform packages and add them to catalog");
    end Setup_Switches;
 
 end Alr.Commands.Update;

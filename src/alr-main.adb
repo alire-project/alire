@@ -1,6 +1,7 @@
 with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.Devel;
+with Alr.Native;
 with Alr.OS;
 
 with Alr.Index; pragma Elaborate_All (Alr.Index);
@@ -19,5 +20,7 @@ begin
       Log ("alr running from " & OS.Own_Executable);
    end if;
 
-   Alr.Commands.Execute;
+   Native.Add_To_Index;
+
+   Commands.Execute;
 end Alr.Main;

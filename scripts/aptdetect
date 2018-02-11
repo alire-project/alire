@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+#apt-file update
+
+apt-file -N --regexp search '/usr/share/ada/adainclude/.+\.gpr$' | 
+while read line; do
+    package=`echo $line | cut -f1 -d:`
+    gpr=`echo $line | cut -f2 -d' '`
+    target=`echo $package | sed 's/^lib//' | sed -r 's/[0-9]+.*//' | sed 's/-/_/g'`
+
+    # echo $package $target
+    if echo $gpr | grep -q ${target}.gpr; then
+        version=`apt-cache show $package | grep Version | cut -f2 -d' '`
+        echo $package $target $version
+    else
+        :
+        #echo $package $gpr discarded
+    fi
+done
