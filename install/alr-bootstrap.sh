@@ -68,9 +68,9 @@ function fetch_and_compile() {
     mkdir -p $alire_folder
     
     echo Cloning alr sources...
-    git clone --recurse-submodules -b $repo_branch $repo_url $alire_src
+    git clone -b $repo_branch $repo_url $alire_src
     pushd $alire_src
-    git submodule update --recursive --remote
+    git submodule update --init --recursive
     popd
     
     echo Compiling...

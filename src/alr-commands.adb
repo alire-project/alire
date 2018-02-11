@@ -313,10 +313,10 @@ package body Alr.Commands is
 
          begin
             Execute_By_Name (Cmd);
-            Log ("alr " & Argument (Pos) & " done.", Info);
+            Log ("alr " & Argument (Pos) & " done", Info);
          exception
             when Command_Failed =>
-               Log ("alr " & Argument (Pos) & " was not completed.", Warning);
+               Log ("alr " & Argument (Pos) & " was not completed", Warning);
                OS_Lib.Bailout (1);
          end;
       end if;
