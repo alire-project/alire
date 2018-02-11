@@ -92,7 +92,7 @@ package body Alr.Checkout is
    exception
       when Alire.File_Error =>
          --  We'll presume it's already there and OK
-         Log ("Skipping checkout for already available " & Root.Milestone_Image);
+         Log ("Skipping checkout for already available " & Root.Milestone_Image, Detail);
    end Working_Copy;
 
 end Alr.Checkout;

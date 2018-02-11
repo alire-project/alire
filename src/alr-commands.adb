@@ -19,6 +19,7 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Devel;
 with Alr.Hardcoded;
+with Alr.Native;
 with Alr.OS;
 with Alr.OS_Lib;
 with Alr.Utils;
@@ -74,6 +75,9 @@ package body Alr.Commands is
 
    procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
    begin
+      Define_Switch (Config,
+                     Use_Native'Access,
+                     "-n", "--use-native", "Use autodetected native packages in dependency resolution");
       Define_Switch (Config,
                      Log_Quiet'Access,
                      "-q",
@@ -307,7 +311,14 @@ package body Alr.Commands is
 
          Create_Alire_Folders;
 
-         Execute_By_Name (Cmd);
+         begin
+            Execute_By_Name (Cmd);
+            Log ("alr " & Argument (Pos) & " done.", Info);
+         exception
+            when Command_Failed =>
+               Log ("alr " & Argument (Pos) & " was not completed.", Warning);
+               OS_Lib.Bailout (1);
+         end;
       end if;
    end Execute;
 
@@ -327,6 +338,12 @@ package body Alr.Commands is
       begin
          Getopt (Config); -- Parses command line switches
 
+         if Use_Native then
+            Trace.Detail ("Native packages enabled.");
+            Native.Autodetect;
+            Native.Add_To_Index;
+         end if;
+
          Log (Image (Cmd) & ":");
          Dispatch_Table (Cmd).Execute;
       exception
@@ -336,10 +353,6 @@ package body Alr.Commands is
 
          when Wrong_Command_Arguments =>
             Display_Usage (Cmd);
-            OS_Lib.Bailout (1);
-
-         when Command_Failed =>
-            Log ("alr command was not completed", Warning);
             OS_Lib.Bailout (1);
       end;
    end Execute_By_Name;

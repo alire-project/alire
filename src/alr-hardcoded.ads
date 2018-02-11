@@ -63,7 +63,7 @@ private
 
    Alr_Gpr_File : constant String := Alr_Src_Folder / "alr_env.gpr";
 
-   Native_Package_List : constant String := OS.Config_Folder / "packages.txt";
+   Native_Package_List : constant String := OS.Config_Folder / "native_packages.txt";
 
    Scripts_Apt_Detect : constant String := Alr_Src_Folder / "scripts" / "aptdetect";
 

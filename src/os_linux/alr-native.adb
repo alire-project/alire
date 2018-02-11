@@ -3,7 +3,9 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
 with Alire.Index;
+with Alire.OS_Lib;
 with Alire.Repositories.Apt;
+
 with Alr.Hardcoded;
 
 with GNAT.OS_Lib;
@@ -12,7 +14,18 @@ with Semantic_Versioning;
 
 package body Alr.Native is
 
-   procedure Autodetect (Force : Boolean := False) is null;
+   ----------------
+   -- Autodetect --
+   ----------------
+
+   procedure Autodetect (Force : Boolean := False) is
+   begin
+      if Force or else not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Native_Package_List) then
+         Trace.Info ("Detecting native Ada packages in platform, please wait...");
+         Alire.OS_Lib.Spawn_And_Redirect (Hardcoded.Native_Package_List,
+                                          Hardcoded.Scripts_Apt_Detect);
+      end if;
+   end Autodetect;
 
    ------------------
    -- Add_To_Index --
@@ -53,9 +66,13 @@ package body Alr.Native is
                                                  Pkg,
                                                  Native => True) with Unreferenced;
                   begin
-                     null;
---                       Trace.Debug ("Native release registered: " & R.Milestone_Image &
---                                      " found in package " & Pkg);
+                     null;--
+                  exception
+                     when others =>
+                        Trace.Debug ("Exception attempting to index native package:" &
+                                       Prj &
+                                       " found in package " & Pkg &
+                                       " with version " & Ver);
                   end;
                else
                   Trace.Warning ("Bad line in native package list: " & Line);

@@ -75,6 +75,9 @@ package Alr.Commands is
 
 private
 
+   Use_Native : aliased Boolean := False;
+   --  This flag signals that platform native packages are to be considered
+
    procedure Display_Usage (Cmd : Cmd_Names);
 
    procedure Display_Valid_Commands;

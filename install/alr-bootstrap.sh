@@ -2,7 +2,7 @@
 
 # DEFINITIONS SECTION
 
-repo_branch=master
+repo_branch=${1:-master}
 repo_url=https://git@bitbucket.org/aleteolabs/alr.git
 
 required_tools="git id"
@@ -126,7 +126,7 @@ function install_linux() {
     
     fetch_and_compile
     do_install
-    
+
     echo ' '
     echo Installation complete, enter "'alr'" to start using it.
 }

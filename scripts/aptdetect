@@ -13,7 +13,7 @@ while read line; do
 
     # echo $package $target
     if echo $gpr | grep -q ${target}.gpr; then
-        version=`apt-cache show $package | grep Version | cut -f2 -d' '`
+        version=`apt-cache policy $package | grep Candidate | awk '{print $2}'`
         echo $package $target $version
     else
         :

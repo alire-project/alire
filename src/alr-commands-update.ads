@@ -22,7 +22,6 @@ package Alr.Commands.Update is
 private
 
    type Command is new Commands.Command with record
-      Native     : aliased Boolean := False;
       Online     : aliased Boolean := False;
       From_Build :         Boolean := False;
    end record;

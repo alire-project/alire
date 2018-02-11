@@ -1,1 +1,2 @@
 2018-02-08: Captured output of spawned commands
+2018-02-11: Native packages as valid dependencies
