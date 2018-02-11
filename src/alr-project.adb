@@ -63,7 +63,8 @@ package body Alr.Project is
                                                             Version,
                                                             Alire.Repositories.Local.Repo,
                                                             "filesystem",
-                                                            Depends_On);
+                                                            Depends_On,
+                                                            Native => False);
    begin
       Alr.Project.Current.Replace_Element (Rel);
 

@@ -40,6 +40,7 @@ package body Alr.Native is
                Second_Space : constant Natural := Ada.Strings.Fixed.Index (Line, " ", First_Space + 1);
             begin
                if Second_Space > 0 then
+                  -- Trace.Debug ("Parsing version " & Line (Second_Space + 1 .. Line'Last));
                   declare
                      Prj : constant String := Line (First_Space + 1 .. Second_Space - 1);
                      Pkg : constant String := Line (Line'First .. First_Space - 1);
@@ -49,10 +50,12 @@ package body Alr.Native is
                            Alire.Index.Register (Prj,
                                                  Semver.Relaxed (Ver),
                                                  Alire.Repositories.Apt.Repo,
-                                                 Pkg);
+                                                 Pkg,
+                                                 Native => True) with Unreferenced;
                   begin
-                     Trace.Debug ("Native release registered: " & R.Milestone_Image &
-                                    " found in package " & Pkg);
+                     null;
+--                       Trace.Debug ("Native release registered: " & R.Milestone_Image &
+--                                      " found in package " & Pkg);
                   end;
                else
                   Trace.Warning ("Bad line in native package list: " & Line);

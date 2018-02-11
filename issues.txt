@@ -2,3 +2,4 @@ Check libadalang as alternative to recompilation
 Hierarchical tree of version restrictions
 Generalized properties for Alire database
 Alire.Platform for compiler/OS restrictions
+Separate Repository location from checkout into Alire/Alr

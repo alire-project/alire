@@ -76,7 +76,7 @@ package body Alr.Checkout is
       R.Checkout (Parent_Folder);
 
       --  And generate its working files, if they do not exist
-      if Generate_Files then
+      if Generate_Files and then not R.Is_Native then
          declare
             use Alire.OS_Lib;
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
