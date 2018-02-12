@@ -1,0 +1,48 @@
+V "GNAT Lib v2017"
+A -O2
+A -gnatA
+A -gnatVa
+A -gnatwa
+A -g
+A -gnata
+A -gnat12
+A -gnato
+A -fstack-check=specific
+A -mtune=generic
+A -march=x86-64
+P ZX
+
+RN
+RV NO_IMPLEMENTATION_PRAGMAS
+RV SPARK_05
+
+U condtrees%s		condtrees.ads		342622d0 NE OO PR PK GE
+W ada%s			ada.ads			ada.ali
+W ada.containers%s	a-contai.ads		a-contai.ali
+W ada.containers.indefinite_multiway_trees%s
+
+D ada.ads		20170516105951 76789da1 ada%s
+D a-contai.ads		20170516105950 61e5e089 ada.containers%s
+D a-conhel.ads		20170516105951 20298884 ada.containers.helpers%s
+D a-cimutr.ads		20170516105951 65373c77 ada.containers.indefinite_multiway_trees%s
+D a-finali.ads		20170516105954 bf4f806b ada.finalization%s
+D a-iteint.ads		20170516105952 7c7305e9 ada.iterator_interfaces%s
+D a-stream.ads		20170516105952 119b8fb3 ada.streams%s
+D condtrees.ads		20180212100034 51111ea7 condtrees%s
+D system.ads		20170516105953 6326c08a system%s
+D s-atocou.ads		20170516105956 b45c2d8d system.atomic_counters%s
+D s-finroo.ads		20170516105954 4ff27390 system.finalization_root%s
+X 1 ada.ads
+16K9*Ada 20e8 8|1r14
+X 2 a-contai.ads
+16K13*Containers 24e19 8|1r18
+X 4 a-cimutr.ads
+45k24*Indefinite_Multiway_Trees 456e45 8|1w29
+X 8 condtrees.ads
+4+9 Value 6r44
+5+9 Condition 6r29
+6V18 Check{boolean} 6>25 6>40
+6*25 C{5+9}
+6*40 V{4+9}
+7k9*Condtrees 4z9 5z9 6z18 9l5 9e14
+

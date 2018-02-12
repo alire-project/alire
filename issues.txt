@@ -1,5 +1,18 @@
-Check libadalang as alternative to recompilation
+Short term
+==========
+Project descriptions
+"Native" property
+OS/Compiler properties
+
+Medium term
+===========
 Hierarchical tree of version restrictions
 Generalized properties for Alire database
 Alire.Platform for compiler/OS restrictions
-Separate Repository location from checkout into Alire/Alr
+Separate repository representation (in alire) from checkout (in alr)
+    At the same time, unify Repo+Id in single entity at release creation
+Demo dependencies with expression trees
+
+Long term if ever
+=================
+Use libadalang instead of self-compiling

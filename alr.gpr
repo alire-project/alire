@@ -1,4 +1,5 @@
 with "alire";
+with "condtrees";
 with "semantic_versioning";
 
 project Alr is

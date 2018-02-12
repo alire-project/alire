@@ -1,6 +1,7 @@
 aggregate project Alr_Env is
 
    for Project_Path use ("deps/alire", 
+                         "deps/condtrees",
                          "deps/alire/deps/semver",
                          "deps/alire/deps/simple_logging");
 

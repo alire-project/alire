@@ -1,0 +1,14 @@
+aggregate project Condtrees_Alr is
+
+   --  This is an automatically generated file. DO NOT EDIT MANUALLY!
+
+   for Project_Files use ("condtrees.gpr");
+
+   for Project_Path use (
+      "/home/jano/.cache/alire/projects/alire_0.4.0_da62fcae",
+      "/home/jano/.cache/alire/projects/alr_0.4.0_146fe156",
+      "/home/jano/.cache/alire/projects/semantic_versioning_1.0.0_4f9dd639");
+
+   for external ("ALIRE") use "True";
+
+end Condtrees_Alr;
