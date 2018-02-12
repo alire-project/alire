@@ -18,17 +18,20 @@ package Condtrees with Preelaborate is
    function Leaf (C : Condition) return Tree;
    function "+"  (C : Condition) return Tree renames Leaf;
 
-   function "and" (L, R : Tree) return Tree;
+   function "and" (L, R : Tree) return Tree
+     with Pre => L /= Empty_Tree and then R /= Empty_Tree;
    function "and" (L : Tree; R : Condition) return Tree is (L and Leaf (R));
    function "and" (L : Condition; R : Tree) return Tree is (Leaf (L) and R);
    function "and" (L : Condition; R : Condition) return Tree is (Leaf (L) and Leaf (R));
 
-   function "or"  (L, R : Tree) return Tree;
+   function "or"  (L, R : Tree) return Tree
+     with Pre => L /= Empty_Tree and then R /= Empty_Tree;
    function "or"  (L : Tree; R : Condition) return Tree is (L or  Leaf (R));
    function "or"  (L : Condition; R : Tree) return Tree is (Leaf (L) or R);
    function "or"  (L : Condition; R : Condition) return Tree is (Leaf (L) or  Leaf (R));
 
-   function "not" (T : Tree) return Tree;
+   function "not" (T : Tree) return Tree
+     with Pre => T /= Empty_Tree;
    function "not" (C : Condition) return Tree is (not Leaf (C));
 
    --  Tree evaluation

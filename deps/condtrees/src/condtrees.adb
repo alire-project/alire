@@ -1,4 +1,4 @@
-with Ada.Containers;
+with Ada.Containers; use Ada.Containers;
 
 with GNAT.IO;
 
@@ -12,9 +12,38 @@ package body Condtrees is
    begin
       return T : Tree do
          T.Append_Child (T.Root, Node'(Leaf, Conditions.To_Holder (C)));
-         pragma Assert (Trees.Has_Element (Trees.First_Child (T.Root)));
       end return;
    end Leaf;
+
+   -----------------
+   -- Merge_Under --
+   -----------------
+
+   function Merge_Under (N : Node; L, R : Tree := Empty_Tree) return Tree is
+      use Trees;
+   begin
+      return T : Tree do
+         T.Append_Child (Parent => T.Root, New_Item => N);
+
+         declare
+            Op : constant Cursor := First_Child (T.Root);
+         begin
+            pragma Assert (Element (Op) = N);
+
+            if L /= Empty_Tree then
+               T.Copy_Subtree (Parent => Op,
+                               Before => No_Element,
+                               Source => First_Child (L.Root));
+            end if;
+
+            if R /= Empty_Tree then
+               T.Copy_Subtree (Parent => Op,
+                               Before => No_Element,
+                               Source => First_Child (R.Root));
+            end if;
+         end;
+      end return;
+   end Merge_Under;
 
    -----------
    -- "and" --
@@ -22,16 +51,7 @@ package body Condtrees is
 
    function "and" (L, R : Tree) return Tree is
    begin
-      return T : Tree do
-         T.Append_Child (T.Root, Node'(Kind => And_Node));
-         pragma Assert (Trees.Has_Element (Trees.First_Child (T.Root)));
-
-         T.Append_Child (Trees.First_Child (T.Root),
-                         Trees.First_Child_Element (L.Root));
-
-         T.Append_Child (Trees.First_Child (T.Root),
-                         Trees.First_Child_Element (R.Root));
-      end return;
+      return Merge_Under (Node'(Kind => And_Node), L, R);
    end "and";
 
    ----------
@@ -40,16 +60,7 @@ package body Condtrees is
 
    function "or" (L, R : Tree) return Tree is
    begin
-      return T : Tree do
-         T.Append_Child (T.Root, Node'(Kind => Or_Node));
-         pragma Assert (Trees.Has_Element (Trees.First_Child (T.Root)));
-
-         T.Append_Child (Trees.First_Child (T.Root),
-                         Trees.First_Child_Element (L.Root));
-
-         T.Append_Child (Trees.First_Child (T.Root),
-                         Trees.First_Child_Element (R.Root));
-      end return;
+      return Merge_Under (Node'(Kind => Or_Node), L, R);
    end "or";
 
    -----------
@@ -57,18 +68,9 @@ package body Condtrees is
    -----------
 
    function "not" (T : Tree) return Tree is
-      use Ada.Containers;
       use Trees;
    begin
-      return New_T : Tree do
-         New_T.Append_Child (New_T.Root, Node'(Kind => Not_Node));
-         pragma Assert (Trees.Has_Element (Trees.First_Child (New_T.Root)));
-
-         New_T.Append_Child (Trees.First_Child (New_T.Root),
-                             Trees.First_Child_Element (T.Root));
-         pragma Assert (Trees.Child_Count (New_T.Root) = 2);
-         pragma Assert (Trees.Depth (New_T.Root) = 2);
-      end return;
+      return Merge_Under (Node'(Kind => Not_Node), T);
    end "not";
 
    -----------
@@ -102,6 +104,7 @@ package body Condtrees is
 
    procedure Print_Skeleton (T : Tree) is
       use GNAT.IO;
+      use Trees;
 
       function Image (C : Trees.Cursor) return String is
          N : constant Node := Trees.Element (C);
