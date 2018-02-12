@@ -56,7 +56,7 @@ package body Alr.Commands.Init is
                                                       Requisites => Alire.Index.No_Requisites,
                                                       Native => False);
          Success : Boolean;
-         Depends : constant Alire.Index.Instance := Alire.Query.Resolve (New_Release.Depends, Success);
+         Depends : constant Alire.Query.Instance := Alire.Query.Resolve (New_Release.Depends, Success);
       begin
          if not Success then
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";

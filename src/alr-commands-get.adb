@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire.Depends;
-with Alire.Index;
 with Alire.Os_Lib;
 with Alire.Query;
 
@@ -25,7 +24,7 @@ package body Alr.Commands.Get is
       Name : constant Alire.Project_Name := Last_Non_Switch_Argument;
 
       Success : Boolean;
-      Needed  : constant Alire.Index.Instance :=
+      Needed  : constant Alire.Query.Instance :=
                   Alire.Query.Resolve (Alire.Depends.New_Dependency (Name, Semver.Any), Success);
 
       Must_Enter : Boolean;

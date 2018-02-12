@@ -1,4 +1,3 @@
-with Alire.Index;
 with Alire.OS_Lib; use Alire.OS_Lib;
 with Alire.Query;
 
@@ -52,7 +51,7 @@ package body Alr.Commands.Update is
 
       declare
          Success : Boolean;
-         Needed  : constant Alire.Index.Instance :=
+         Needed  : constant Alire.Query.Instance :=
                      Alire.Query.Resolve (Project.Current.Element.Depends, Success);
       begin
          if not Success then

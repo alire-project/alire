@@ -1,6 +1,7 @@
 with Alire;
 with Alire.Containers;
 with Alire.Index;
+with Alire.Query;
 
 with Alr.Defaults;
 
@@ -43,7 +44,7 @@ package Alr.Bootstrap is
 
    Alr_Bootstrap_Release  : constant Alire.Index.Release;
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies;
-   Alr_Minimal_Instance   : constant Alire.Index.Instance;
+   Alr_Minimal_Instance   : constant Alire.Query.Instance;
 
 private
 
@@ -76,7 +77,7 @@ private
                 Depends_On => At_Least_Within_Major (Alire_Bootstrap));
 
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
-   Alr_Minimal_Instance   : constant Alire.Index.Instance :=
+   Alr_Minimal_Instance   : constant Alire.Query.Instance :=
                               Alire.Containers.To_Map (Alr_Bootstrap);
 
    Alr_Bootstrap_Release  : constant Release := Alr_Bootstrap;

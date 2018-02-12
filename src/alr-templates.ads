@@ -1,4 +1,4 @@
-with Alire.Index;
+with Alire.Query;
 with Alire.Releases;
 
 package Alr.Templates is
@@ -6,11 +6,11 @@ package Alr.Templates is
    procedure Generate_Index (Session_Path, Index_Folder : String);
    --  Generates alr-index.ads that with-es all available alire-index-*.ads releases
 
-   procedure Generate_Gpr (Instance : Alire.Index.Instance;
+   procedure Generate_Gpr (Instance : Alire.Query.Instance;
                            Root     : Alire.Releases.Release);
    --  Generate the aggregate project file for path setup
 
-   procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
+   procedure Generate_Project_Alire (Instance : Alire.Query.Instance;
                                      Root     : Alire.Releases.Release;
                                      Exact    : Boolean := True;
                                      Filename : String  := "");

@@ -101,7 +101,7 @@ package body Alr.Templates is
    -- Generate_Gpr --
    ------------------
 
-   procedure Generate_Gpr (Instance : Alire.Index.Instance;
+   procedure Generate_Gpr (Instance : Alire.Query.Instance;
                            Root     : Alire.Releases.Release)
    is
       File     : File_Type;
@@ -154,7 +154,7 @@ package body Alr.Templates is
    -- Generate_Project_Alire --
    ----------------------------
 
-   procedure Generate_Project_Alire (Instance : Alire.Index.Instance;
+   procedure Generate_Project_Alire (Instance : Alire.Query.Instance;
                                      Root     : Alire.Releases.Release;
                                      Exact    : Boolean := True;
                                      Filename : String := "")
@@ -163,7 +163,7 @@ package body Alr.Templates is
    begin
       if Instance.Contains (Root.Project) then
          declare
-            Pruned_Instance : Alire.Index.Instance := Instance;
+            Pruned_Instance : Alire.Query.Instance := Instance;
          begin
             Pruned_Instance.Delete (Root.Project);
             Generate_Project_Alire (Pruned_Instance, Root);

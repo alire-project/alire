@@ -13,9 +13,6 @@ package Alr.Commands is
 
    Wrong_Command_Arguments : exception;
 
-   procedure Early_Switch_Detection;
-   --  Manual check to enable debug logs before starting parsing the command-line for real
-
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
 

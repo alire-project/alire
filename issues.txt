@@ -3,6 +3,8 @@ Short term
 Project descriptions
 "Native" property
 OS/Compiler properties
+Rename lock to pin
+Early switches with proper Getopt
 
 Medium term
 ===========

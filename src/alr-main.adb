@@ -1,17 +1,15 @@
+with Alr.Early; pragma Elaborate_All (Alr.Early);
+--  First one for early logging setup
+
 with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.Devel;
 with Alr.OS;
 
-with Alr.Index; pragma Elaborate_All (Alr.Index);
---  Force inclusion of all indexed releases
-
--- with GNAT.Exception_Traces;
+with Alr.Index;
 
 procedure Alr.Main is
 begin
-   Commands.Early_Switch_Detection;
-
    Bootstrap.Check_If_Rolling_And_Respawn;
 
    Log ("alr build is " & Bootstrap.Status_Line);

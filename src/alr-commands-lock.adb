@@ -3,7 +3,6 @@ with Ada.Directories; use Ada.Directories;
 with Alr.OS_Lib;
 with Alr.Templates;
 
-with Alire.Index;
 with Alire.Query;
 
 package body Alr.Commands.Lock is
@@ -22,7 +21,7 @@ package body Alr.Commands.Lock is
       declare
          Index_File : constant String := Alr.OS_Lib.Locate_Index_File (Project.Current.Element.Project);
          Success    :          Boolean;
-         Deps       : constant Alire.Index.Instance :=
+         Deps       : constant Alire.Query.Instance :=
                         Alire.Query.Resolve (Project.Current.Element.Depends, Success);
       begin
          Log ("Backing up current dependency file to " & Index_File & ".old");
