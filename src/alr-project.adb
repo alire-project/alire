@@ -64,6 +64,8 @@ package body Alr.Project is
                                                             Alire.Repositories.Local.Repo,
                                                             "filesystem",
                                                             Depends_On,
+                                                            Properties => Alire.Index.Default_Properties,
+                                                            Requisites => Alire.Index.No_Requisites,
                                                             Native => False);
    begin
       Alr.Project.Current.Replace_Element (Rel);

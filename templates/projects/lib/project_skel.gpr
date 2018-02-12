@@ -1,4 +1,4 @@
-with "alr.gpr"; -- Needed to be able to compile the metadata file
+with "alire.gpr"; -- Needed to be able to compile the metadata file
 
 project Project_Skel is
 

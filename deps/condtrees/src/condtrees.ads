@@ -9,7 +9,7 @@ package Condtrees with Preelaborate is
 
    --  A package to represent trees of logical expressions
 
-   type Tree is private;
+   type Tree is tagged private;
 
    Empty_Tree : constant Tree;
 
@@ -19,16 +19,29 @@ package Condtrees with Preelaborate is
    function "+"  (C : Condition) return Tree renames Leaf;
 
    function "and" (L, R : Tree) return Tree;
-   function "or"  (L, R : Tree) return Tree;
-   function "not" (T    : Tree) return Tree;
-
    function "and" (L : Tree; R : Condition) return Tree is (L and Leaf (R));
+   function "and" (L : Condition; R : Tree) return Tree is (Leaf (L) and R);
+   function "and" (L : Condition; R : Condition) return Tree is (Leaf (L) and Leaf (R));
+
+   function "or"  (L, R : Tree) return Tree;
    function "or"  (L : Tree; R : Condition) return Tree is (L or  Leaf (R));
+   function "or"  (L : Condition; R : Tree) return Tree is (Leaf (L) or R);
+   function "or"  (L : Condition; R : Condition) return Tree is (Leaf (L) or  Leaf (R));
+
+   function "not" (T : Tree) return Tree;
    function "not" (C : Condition) return Tree is (not Leaf (C));
 
    --  Tree evaluation
 
    function Check (T : Tree; V : Value) return Boolean;
+
+   --  Access
+
+   function Is_Empty (T : Tree) return Boolean;
+
+   --  Debugging
+
+   procedure Print_Skeleton (T : Tree);
 
 private
 
@@ -51,5 +64,7 @@ private
    type Tree is new Trees.Tree with null record;
 
    Empty_Tree : constant Tree := (Trees.Empty_Tree with null record);
+
+   function Is_Empty (T : Tree) return Boolean is (Trees.Is_Empty (Trees.Tree (T)));
 
 end Condtrees;

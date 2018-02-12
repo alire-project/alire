@@ -13,36 +13,181 @@ A -march=x86-64
 P ZX
 
 RN
+RV NO_NESTED_FINALIZATION
+RV NO_RECURSION
+RV NO_STANDARD_STORAGE_POOLS
 RV NO_IMPLEMENTATION_PRAGMAS
 RV SPARK_05
 
-U condtrees%s		condtrees.ads		342622d0 NE OO PR PK GE
+U condtrees%b		condtrees.adb		846129c0 NE OO PK GE
 W ada%s			ada.ads			ada.ali
 W ada.containers%s	a-contai.ads		a-contai.ali
+W gnat%s		gnat.ads		gnat.ali
+W gnat.io%s		g-io.adb		g-io.ali
+
+U condtrees%s		condtrees.ads		63cc776b BN NE OO PR PK GE
+W ada%s			ada.ads			ada.ali
+W ada.containers%s	a-contai.ads		a-contai.ali
+Z ada.containers.helpers%s  a-conhel.adb	a-conhel.ali
+W ada.containers.indefinite_holders%s
 W ada.containers.indefinite_multiway_trees%s
+Z ada.finalization%s	a-finali.ads		a-finali.ali
+Z ada.iterator_interfaces%s
+W ada.streams%s		a-stream.adb		a-stream.ali
+W ada.tags%s		a-tags.adb		a-tags.ali
+Z ada.unchecked_deallocation%s
+Z system%s		system.ads		system.ali
+Z system.atomic_counters%s  s-atocou.adb	s-atocou.ali
 
 D ada.ads		20170516105951 76789da1 ada%s
 D a-contai.ads		20170516105950 61e5e089 ada.containers%s
 D a-conhel.ads		20170516105951 20298884 ada.containers.helpers%s
+D a-conhel.adb		20170516105955 9cc5095b ada.containers.helpers%b
+D a-coinho.ads		20170516105955 4c5ae072 ada.containers.indefinite_holders%s
+D a-coinho.adb		20170516105952 781bc75f ada.containers.indefinite_holders%b
 D a-cimutr.ads		20170516105951 65373c77 ada.containers.indefinite_multiway_trees%s
+D a-cimutr.adb		20170516105954 fb3d042e ada.containers.indefinite_multiway_trees%b
+D a-except.ads		20170516105953 291912d5 ada.exceptions%s
 D a-finali.ads		20170516105954 bf4f806b ada.finalization%s
 D a-iteint.ads		20170516105952 7c7305e9 ada.iterator_interfaces%s
 D a-stream.ads		20170516105952 119b8fb3 ada.streams%s
-D condtrees.ads		20180212100034 51111ea7 condtrees%s
+D a-tags.ads		20170516105955 d3a89129 ada.tags%s
+D a-unccon.ads		20170516105954 31484697 ada.unchecked_conversion%s
+D a-uncdea.ads		20170516105954 f15a5ed1 ada.unchecked_deallocation%s
+D condtrees.ads		20180212162851 4aa1ab6e condtrees%s
+D condtrees.adb		20180212170053 30285895 condtrees%b
+D gnat.ads		20170516105956 fd2ad2f1 gnat%s
+D g-io.ads		20170516105950 9f0d3ab2 gnat.io%s
 D system.ads		20170516105953 6326c08a system%s
 D s-atocou.ads		20170516105956 b45c2d8d system.atomic_counters%s
+D s-exctab.ads		20170516105954 54135002 system.exception_table%s
 D s-finroo.ads		20170516105954 4ff27390 system.finalization_root%s
+D s-parame.ads		20170516105955 7e2a0d7f system.parameters%s
+D s-soflin.ads		20170516105951 14e1eb6c system.soft_links%s
+D s-stache.ads		20170516105955 a37c21ec system.stack_checking%s
+D s-stalib.ads		20170516105955 09bd3940 system.standard_library%s
+D s-stoele.ads		20170516105956 2dc34a04 system.storage_elements%s
+D s-traent.ads		20170516105950 005bf670 system.traceback_entries%s
 X 1 ada.ads
-16K9*Ada 20e8 8|1r14
+16K9*Ada 20e8 16|1r14 2r14 50r26 51r30 62r25 17|1r6 60r11
 X 2 a-contai.ads
-16K13*Containers 24e19 8|1r18
-X 4 a-cimutr.ads
-45k24*Indefinite_Multiway_Trees 456e45 8|1w29
-X 8 condtrees.ads
-4+9 Value 6r44
-5+9 Condition 6r29
-6V18 Check{boolean} 6>25 6>40
-6*25 C{5+9}
-6*40 V{4+9}
-7k9*Condtrees 4z9 5z9 6z18 9l5 9e14
+16K13*Containers 24e19 16|1r18 2r18 50r30 51r34 62r29 17|1w10 60r15
+20I9*Count_Type<integer>
+X 5 a-coinho.ads
+44k24*Indefinite_Holders 192e38 16|1w29 50r41 51r45
+49R9 Holder<10|43R9> 16|56r36[51]
+56V13 To_Holder{49R9[16|51]} 17|14s57[16|51]
+62V13 Element{16|6+9} 17|85s42[16|51]
+X 7 a-cimutr.ads
+45k24*Indefinite_Multiway_Trees 456e45 16|2w29 62r40
+50R9 Tree<10|43R9> 16|64r27[62] 68r74[62]
+58R9 Cursor 17|80r33[16|62] 106r33[16|62]
+61r4 Empty_Tree{50R9[16|62]} 16|66r41[62]
+64V13 Has_Element{boolean} 17|15s31[16|62] 27s31[16|62] 45s31[16|62] 65s31[16|62]
+75V13 Is_Empty{boolean} 16|68s58[62]
+81V13 Depth{2|20I9} 17|70s31[16|62]
+87V13 Root{58R9[16|62]} 17|14s28[16|62] 15s65[16|62] 26s28[16|62] 27s65[16|62]
+. 29s47[16|62] 30s55[16|62] 32s47[16|62] 33s55[16|62] 44s28[16|62] 45s65[16|62]
+. 47s47[16|62] 48s55[16|62] 50s47[16|62] 51s55[16|62] 64s36[16|62] 65s69[16|62]
+. 67s55[16|62] 68s59[16|62] 69s50[16|62] 70s44[16|62] 96s42[16|62] 125s48[16|62]
+91V13 Element{16|53R9} 17|81s37[16|62] 107s37[16|62]
+202V13 Child_Count{2|20I9} 17|69s31[16|62]
+227U14 Append_Child 17|14s12[16|62] 26s12[16|62] 29s12[16|62] 32s12[16|62]
+. 44s12[16|62] 47s12[16|62] 50s12[16|62] 64s16[16|62] 67s16[16|62]
+271V13 First_Child{58R9[16|62]} 17|15s50[16|62] 27s50[16|62] 29s32[16|62]
+. 32s32[16|62] 45s50[16|62] 47s32[16|62] 50s32[16|62] 65s50[16|62] 67s36[16|62]
+. 87s36[16|62] 89s36[16|62] 91s40[16|62] 96s27[16|62] 113s42[16|62] 115s42[16|62]
+. 117s46[16|62] 125s33[16|62]
+273V13 First_Child_Element{16|53R9} 17|30s32[16|62] 33s32[16|62] 48s32[16|62]
+. 51s32[16|62] 68s36[16|62]
+275V13 Last_Child{58R9[16|62]} 17|87s75[16|62] 89s74[16|62] 113s84[16|62]
+. 115s83[16|62]
+X 11 a-iteint.ads
+24h9 Forward_Iterator
+X 16 condtrees.ads
+5+9 Value 7r44 36r34 50r61 17|78r34
+6+9 Condition 7r29 18r23 19r23 22r34 23r24 24r24 24r39 27r34 28r24 29r24
+. 29r39 32r24 51r65 17|11r23
+7V18 Check{boolean} 7>25 7>40 17|85s23
+7*25 C{6+9}
+7*40 V{5+9}
+8k9*Condtrees 5z9 6z9 7z18 48E9 70l5 70e14 17|5b14 129l5 129t14
+12R9*Tree<7|50R9[62]> 10|46P14 16|14r26 18p13 18r41 19r41 21p14 21r27 21r40
+. 22p14 22r24 22r52 23p14 23r39 23r52 24p14 24r57 26p14 26r27 26r40 27p14
+. 27r24 27r52 28p14 28r39 28r52 29p14 29r57 31p14 31r24 31r37 32p14 32r42
+. 36p13 36r24 40P13 40r27 44p14 44r34 64c9 64e48 66r26 68r27 17|11r41 13r18
+. 23r27 23r40 25r18 41r26 41r39 43r18 59r24 59r37 63r22 78r24 103r34
+14r4*Empty_Tree{12R9} 66c4
+18V13*Leaf{12R9} 18>19 19r54 22s67 23s61 24s66 24s79 27s67 28s61 29s66 29s79
+. 32s55 17|11b13 17l8 17t12
+18*19 C{6+9} 17|11b19 14r68
+19V14*"+"=19:54{12R9}
+19*19 C{6+9}
+21V14*"and"{12R9} 21>20 21>23 22s63 23s70 24s75 17|23b14 35l9 35t13
+21r20 L{12R9} 17|23b20 30r53
+21r23 R{12R9} 17|23b23 33r53
+22V14*"and"{12R9} 22>20 22>30
+22r20 L{12R9} 22r61
+22*30 R{6+9} 22r73
+23V14*"and"{12R9} 23>20 23>35
+23*20 L{6+9} 23r67
+23r35 R{12R9} 23r74
+24V14*"and"{12R9} 24>20 24>35
+24*20 L{6+9} 24r72
+24*35 R{6+9} 24r85
+26V14*"or"{12R9} 26>20 26>23 27s63 28s70 29s75 17|41b14 53l9 53t12
+26r20 L{12R9} 17|41b19 48r53
+26r23 R{12R9} 17|41b22 51r53
+27V14*"or"{12R9} 27>20 27>30
+27r20 L{12R9} 27r61
+27*30 R{6+9} 27r73
+28V14*"or"{12R9} 28>20 28>35
+28*20 L{6+9} 28r67
+28r35 R{12R9} 28r73
+29V14*"or"{12R9} 29>20 29>35
+29*20 L{6+9} 29r72
+29*35 R{6+9} 29r85
+31V14*"not"{12R9} 31>20 32s51 17|59b14 72l9 72t13
+31r20 T{12R9} 17|59b20 68r57
+32V14*"not"{12R9} 32>20
+32*20 C{6+9} 32r61
+36V13*Check{boolean} 36>20 36>30 17|78b13 97l8 97t13
+36r20 T{12R9} 17|78b20 96r40
+36*30 V{5+9} 17|78b30 85r51
+40V13*Is_Empty{boolean}<7|75p13> 40>23 68b13 17|122s12
+40r23 T{12R9} 68r80
+44U14*Print_Skeleton 44>30 17|103b14 127l8 127t22
+44r30 T{12R9} 17|103b30 122r10 125r46
+48E9 Node_Kinds 48e58 53r22
+48n24 Leaf{48E9} 55r15 17|14r40 84r18 110r18
+48n30 And_Node{48E9} 17|26r48 86r18 112r18
+48n40 Or_Node{48E9} 17|44r48 88r18 114r18
+48n49 Not_Node{48E9} 17|64r56 90r18 116r18
+50K12 Values[5|44]
+51K12 Conditions[5|44] 56r25 17|14r46
+53R9 Node 53d15 60e14 62r67 17|14r34 26r34 44r34 64r42 81r23 107r23
+53e15 Kind{48E9} 54r12 17|26m40 44m40 64m48 83r17 109r17
+56r13 Condition{5|49R9[51]} 17|85r32
+62K12 Trees[7|45] 64r21 66r35 68r52 68r68 17|15r25 15r44 27r25 27r44 29r26
+. 30r26 32r26 33r26 45r25 45r44 47r26 48r26 50r26 51r26 61r11 65r25 65r44
+. 67r30 68r30 69r25 70r25 80r27 81r31 87r30 87r69 89r30 89r68 91r34 96r21
+. 106r27 107r31 113r36 113r78 115r36 115r77 117r40 125r27
+X 17 condtrees.adb
+13r14 T{16|12R9} 14m10 14r10 14r26 15r63
+25r14 T{16|12R9} 26m10 26r10 26r26 27r63 29m10 29r10 29r45 32m10 32r10 32r45
+43r14 T{16|12R9} 44m10 44r10 44r26 45r63 47m10 47r10 47r45 50m10 50r10 50r45
+63r14 New_T{16|12R9} 64m10 64r10 64r30 65r63 67m10 67r10 67r49 69r44 70r38
+80V16 Check{boolean} 80b16 80>23 87s23 87s62 89s23 89s61 91s27 93l11 93t16
+. 96s14
+80r23 C{7|58R9[16|62]} 81r46 87r49 87r87 89r49 89r86 91r53
+81r10 N{16|53R9} 83r15 85r30
+106V16 Image{string} 106b16 106>23 113s29 113s71 115s29 115s70 117s33 119l11
+. 119t16 125s20
+106r23 C{7|58R9[16|62]} 107r46 113r55 113r96 115r55 115r95 117r59
+107r10 N{16|53R9} 109r15
+X 18 gnat.ads
+34K9*GNAT 17|3r6 104r11 18|37e9
+X 19 g-io.ads
+41K14*IO 17|3w11 104r16 19|91e12
+72U14*Put_Line 17|123s10 125s10
 

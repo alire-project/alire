@@ -52,6 +52,8 @@ package body Alr.Commands.Init is
                                                       Alire.Repositories.Local.Repo,
                                                       Alire.Repositories.Local.Local_Id,
                                                       Depends_On => Bootstrap.Alr_Minimal_Dependency,
+                                                      Properties => Alire.Index.Default_Properties,
+                                                      Requisites => Alire.Index.No_Requisites,
                                                       Native => False);
          Success : Boolean;
          Depends : constant Alire.Index.Instance := Alire.Query.Resolve (New_Release.Depends, Success);
