@@ -1,5 +1,4 @@
-with Alr.Early; pragma Elaborate_All (Alr.Early);
---  First one for early logging setup
+with Alire_Early_Elaboration; pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alr.Bootstrap;
 with Alr.Commands;

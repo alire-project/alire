@@ -3,6 +3,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alire_Early_Elaboration;
+
 with Alr.Checkout;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -47,9 +49,9 @@ package body Alr.Commands is
                        Cmd_Version  => new Version.Command,
                        others       => new Reserved.Command);
 
-   Log_Quiet  : aliased Boolean := False;
-   Log_Detail : aliased Boolean := False;
-   Log_Debug  : aliased Boolean := False;
+   Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
+   Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
+   Log_Debug  : Boolean renames Alire_Early_Elaboration.Switch_D;
 
    -----------
    -- Image --
@@ -97,8 +99,9 @@ package body Alr.Commands is
 
    function Global_Switches return String is
    begin
-      return Utils.Trim ((if Log_Debug then "-d " else "") &
-                         (if Log_Detail then "-v " else ""));
+      return Utils.Trim ((if Log_Debug  then "-d " else "") &
+                         (if Log_Detail then "-v " else "") &
+                         (if Log_Quiet  then "-q " else ""));
    end Global_Switches;
 
    --------------------------

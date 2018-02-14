@@ -1,19 +1,14 @@
-Short term
-==========
+Features
+========
 Project descriptions
-"Native" property
-OS/Compiler properties
-Rename lock to pin
-Early switches with proper Getopt
-
-Medium term
-===========
 Hierarchical tree of version restrictions
-Generalized properties for Alire database
-Alire.Platform for compiler/OS restrictions
+Version restrictions in command-line for alr get
+
+Fixes/refactorings
+==================
+Rename lock to pin
 Separate repository representation (in alire) from checkout (in alr)
     At the same time, unify Repo+Id in single entity at release creation
-Demo dependencies with expression trees
 
 Long term if ever
 =================
