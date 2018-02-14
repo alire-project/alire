@@ -49,6 +49,7 @@ package Alr.Bootstrap is
 private
 
    use Alire.Index;
+   use all type Alire.Index.Dependencies;
 
    --  Having these public releases enables its inclusion in newly generated projects,
    --  so their project_alr.ads file do really compiles
@@ -57,24 +58,39 @@ private
               Register_Git
                 ("semantic_versioning",
                  V ("1.0.0"),
+                 "Semantic Versioning for Ada",
                  Defaults.Semver_Repository,
                  "4f9dd63960cb4040e3aa561019d79e6f9d5f5818");
+
+   Simple_Logging_Bootstrap : constant Release :=
+                        Register_Git
+                          ("simple_logging",
+                           V ("1.0.0"),
+                           "Basic logging to console",
+                           Defaults.Simple_Logging_Repo,
+                           "77896e4a9d0539a63e6bfb657ab955656c2e3c0f");
 
    Alire_Bootstrap : constant Release :=
              Register_Git
                 ("alire",
                  V ("0.4.0"),
+                 "Alire catalog of Ada libraries",
                  Defaults.Index_Repository,
                  "da62fcaec8eab9ac6847140ab9e48f6d2acb5c07",
-                 Depends_On => At_Least_Within_Major (Semver_Bootstrap));
+                 Depends_On =>
+                   At_Least_Within_Major (Semver_Bootstrap)  and
+                   At_Least_Within_Major (Simple_Logging_Bootstrap));
 
    Alr_Bootstrap : constant Release :=
              Register_Git
                ("alr",
                 V ("0.4.0"),
+                "Alire tool to interact with the catalog",
                 Defaults.Alr_Repository,
                 "146fe156caf0c74978dd7db07585159da0432359",
-                Depends_On => At_Least_Within_Major (Alire_Bootstrap));
+                Depends_On =>
+                  At_Least_Within_Major (Alire_Bootstrap) and
+                  At_Least_Within_Major (Simple_Logging_Bootstrap));
 
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
    Alr_Minimal_Instance   : constant Alire.Query.Instance :=

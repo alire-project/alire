@@ -2,6 +2,7 @@ with Ada.Command_Line;
 with Ada.Strings.Fixed;
 
 with Alire.Index;
+with Alire.Releases;
 
 with Alr.Utils;
 
@@ -18,6 +19,16 @@ package body Alr.Commands.Search is
       use Ada.Strings.Fixed;
 
       Found   : Natural := 0;
+
+      ------------------
+      -- List_Release --
+      ------------------
+
+      procedure List_Release (R : Alire.Releases.Release) is
+      begin
+         Trace.Always (R.Project & ASCII.HT & Semantic_Versioning.Image (R.Version) & ASCII.HT & R.Description);
+      end List_Release;
+
    begin
       if Argument_Count = 1 then -- no search term
          Log ("Please provide a search term, or use --list to show all available releases");
@@ -36,8 +47,9 @@ package body Alr.Commands.Search is
       --  End of option verification, start of search
 
       if Cmd.List then
+         Found := Natural (Alire.Index.Releases.Length);
          for R of Alire.Index.Releases loop
-            Log (R.Project & " " & Semantic_Versioning.Image (R.Version));
+            List_Release (R);
          end loop;
       else
          declare
@@ -50,7 +62,7 @@ package body Alr.Commands.Search is
             for R of Alire.Index.Releases loop
                if Count (R.Project, Pattern) > 0 then
                   Found := Found + 1;
-                  Log (R.Project & " " & Semantic_Versioning.Image (R.Version));
+                  List_Release (R);
                end if;
             end loop;
          end;

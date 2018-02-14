@@ -5,7 +5,7 @@ set -o nounset
 
 #apt-file update
 
-apt-file -N --regexp search '/usr/share/ada/adainclude/.+\.gpr$' | 
+apt-file --regexp search '/usr/share/ada/adainclude/.+\.gpr$' | 
 while read line; do
     package=`echo $line | cut -f1 -d:`
     gpr=`echo $line | cut -f2 -d' '`
@@ -14,7 +14,8 @@ while read line; do
     # echo $package $target
     if echo $gpr | grep -q ${target}.gpr; then
         version=`apt-cache policy $package | grep Candidate | awk '{print $2}'`
-        echo $package $target $version
+        descr=`apt-cache show $package | grep 'Description-..:' | cut -f2- -d' '`
+        echo $package $target $version $descr
     else
         :
         #echo $package $gpr discarded

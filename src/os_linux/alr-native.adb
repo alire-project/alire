@@ -47,21 +47,27 @@ package body Alr.Native is
             declare
                Line : constant String := Get_Line (File);
 
-               -- Fields are: package project version
+               -- Fields are: package project version [description]
 
                First_Space  : constant Natural := Ada.Strings.Fixed.Index (Line, " ");
                Second_Space : constant Natural := Ada.Strings.Fixed.Index (Line, " ", First_Space + 1);
+               Third_Space  : constant Natural := Ada.Strings.Fixed.Index (Line, " ", Second_Space + 1);
             begin
                if Second_Space > 0 then
                   -- Trace.Debug ("Parsing version " & Line (Second_Space + 1 .. Line'Last));
                   declare
-                     Prj : constant String := Line (First_Space + 1 .. Second_Space - 1);
                      Pkg : constant String := Line (Line'First .. First_Space - 1);
-                     Ver : constant String := Line (Second_Space + 1 .. Line'Last);
+                     Prj : constant String := Line (First_Space + 1 .. Second_Space - 1);
+                     Ver : constant String := Line (Second_Space + 1 ..
+                                                    (if Third_Space > 0 then Third_Space - 1 else Line'Last));
+                     Dsc : constant String := (if Third_Space > 0
+                                               then Line (Third_Space + 1 .. Line'Last)
+                                               else "No description");
 
-                     R : constant Alire.Index.Release :=
+                     R : constant Alire.Index.Release := -- Clamp down too long descriptions
                            Alire.Index.Register (Prj,
                                                  Semver.Relaxed (Ver),
+                                                 Dsc (Dsc'First .. Dsc'First - 1 + Integer'Min (Alire.Max_Description_Length, Dsc'Length)),
                                                  Alire.Repositories.Apt.Repo,
                                                  Pkg,
                                                  Native => True) with Unreferenced;

@@ -48,13 +48,15 @@ package body Alr.Commands.Init is
          Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Name) with Unreferenced;
 
          New_Release : constant Alire.Releases.Release :=
-                          Alire.Releases.New_Release (Name, V ("0.0.0-alr_working_copy"),
-                                                      Alire.Repositories.Local.Repo,
-                                                      Alire.Repositories.Local.Local_Id,
-                                                      Depends_On => Bootstrap.Alr_Minimal_Dependency,
-                                                      Properties => Alire.Index.Default_Properties,
-                                                      Requisites => Alire.Index.No_Requisites,
-                                                      Native => False);
+                         Alire.Releases.New_Release (Name,
+                                                     "No description",
+                                                     V ("0.0.0-alr_working_copy"),
+                                                     Alire.Repositories.Local.Repo,
+                                                     Alire.Repositories.Local.Local_Id,
+                                                     Depends_On => Bootstrap.Alr_Minimal_Dependency,
+                                                     Properties => Alire.Index.Default_Properties,
+                                                     Requisites => Alire.Index.No_Requisites,
+                                                     Native     => False);
          Success : Boolean;
          Depends : constant Alire.Query.Instance := Alire.Query.Resolve (New_Release.Depends, Success);
       begin

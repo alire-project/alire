@@ -60,6 +60,7 @@ package body Alr.Project is
                               return Release
    is
       Rel : constant Release := Alire.Releases.New_Release (Project,
+                                                            "working copy of " & Project, -- FIXME might be too long
                                                             Version,
                                                             Alire.Repositories.Local.Repo,
                                                             "filesystem",
