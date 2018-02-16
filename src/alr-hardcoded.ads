@@ -1,3 +1,5 @@
+with Alire;
+
 with Alr.Defaults;
 
 private with Alire.Os_Lib;

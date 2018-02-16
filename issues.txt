@@ -1,14 +1,14 @@
 Features
 ========
-Hierarchical tree of version restrictions
 Version restrictions in command-line for alr get
-Force explicit arguments in all releases??? (could be ugly?)
+Force explicit arguments in all releases??? (could be ugly? but nicer?)
 
 Fixes/refactorings
 ==================
 Rename lock to pin
 Separate repository representation (in alire) from checkout (in alr)
     At the same time, unify Repo+Id in single entity at release creation
+move Alr.Project to Alire.Project, so user projects depend on Alire only and not Alr
 
 Long term if ever
 =================

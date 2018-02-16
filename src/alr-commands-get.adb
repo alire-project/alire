@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Depends;
+with Alire.Dependencies.Vectors;
 with Alire.Os_Lib;
 with Alire.Query;
 
@@ -25,7 +25,7 @@ package body Alr.Commands.Get is
 
       Success : Boolean;
       Needed  : constant Alire.Query.Instance :=
-                  Alire.Query.Resolve (Alire.Depends.New_Dependency (Name, Semver.Any), Success);
+                  Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Semver.Any), Success);
 
       Must_Enter : Boolean;
    begin

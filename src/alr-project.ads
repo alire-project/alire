@@ -1,5 +1,4 @@
 with Alire.Containers;
-with Alire.Depends;
 with Alire.Index; use Alire.Index;
 with Alire.OS_Lib;
 with Alire.Releases;
@@ -42,7 +41,7 @@ package Alr.Project is
 
    function Set_Root_Project (Project    : Alire.Project_Name;
                               Version    : Semantic_Versioning.Version;
-                              Depends_On : Alire.Depends.Dependencies := Alire.Depends.Nothing)
+                              Depends_On : Alire.Index.Dependencies := Alire.Index.No_Dependencies)
                               return Release;
    --  This function must be called in the working project alire file.
    --  Otherwise alr does not know what's the current project, and its version and dependencies
@@ -55,9 +54,10 @@ package Alr.Project is
                renames Semantic_Versioning.New_Version;
 
    subtype Project_Name is Alire.Project_Name;
-   subtype Dependencies is Alire.Depends.Dependencies;
+   subtype Dependencies is Alire.Index.Dependencies;
 
-   function At_Least_Within_Major (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Least_Within_Major;
+   function At_Least_Within_Major (P : Project_Name; V : Version) return Dependencies
+                                   renames Alire.Index.At_Least_Within_Major;
 
    function At_Least  (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Least;
    function At_Most   (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Most;
@@ -70,10 +70,7 @@ package Alr.Project is
    function "and" (VS1, VS2 : Semantic_Versioning.Version_Set) return Semantic_Versioning.Version_Set
                    renames Semantic_Versioning."and";
 
-   function "and" (Dep1, Dep2 : Dependencies) return Dependencies
-                   renames Alire.Depends."and";
-
-   function Nothing return Dependencies renames Alire.Depends.Nothing;
+   use all type Dependencies;
 
 private
 

@@ -1,5 +1,3 @@
-with Alire;
-
 with Simple_Logging;
 
 package Alr with Preelaborate is
