@@ -1,6 +1,5 @@
 Features
 ========
-Project descriptions
 Hierarchical tree of version restrictions
 Version restrictions in command-line for alr get
 Force explicit arguments in all releases??? (could be ugly?)
