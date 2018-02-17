@@ -78,8 +78,8 @@ private
                  Defaults.Index_Repository,
                  "da62fcaec8eab9ac6847140ab9e48f6d2acb5c07",
                  Depends_On =>
-                   At_Least_Within_Major (Semver_Bootstrap)  and
-                   At_Least_Within_Major (Simple_Logging_Bootstrap));
+                   Within_Major (Semver_Bootstrap)  and
+                   Within_Major (Simple_Logging_Bootstrap));
 
    Alr_Bootstrap : constant Release :=
              Register_Git
@@ -89,8 +89,8 @@ private
                 Defaults.Alr_Repository,
                 "146fe156caf0c74978dd7db07585159da0432359",
                 Depends_On =>
-                  At_Least_Within_Major (Alire_Bootstrap) and
-                  At_Least_Within_Major (Simple_Logging_Bootstrap));
+                  Within_Major (Alire_Bootstrap) and
+                  Within_Major (Simple_Logging_Bootstrap));
 
    Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
    Alr_Minimal_Instance   : constant Alire.Query.Instance :=

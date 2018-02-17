@@ -56,8 +56,8 @@ package Alr.Project is
    subtype Project_Name is Alire.Project_Name;
    subtype Dependencies is Alire.Index.Dependencies;
 
-   function At_Least_Within_Major (P : Project_Name; V : Version) return Dependencies
-                                   renames Alire.Index.At_Least_Within_Major;
+   function Within_Major (P : Project_Name; V : Version) return Dependencies
+                                   renames Alire.Index.Within_Major;
 
    function At_Least  (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Least;
    function At_Most   (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Most;

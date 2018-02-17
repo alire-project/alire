@@ -1,4 +1,7 @@
 with Ada.Directories;
+with Ada.Strings;
+with Ada.Strings.Fixed;
+with Ada.Strings.Maps;
 
 with Alire.Dependencies.Vectors;
 with Alire.Os_Lib;
@@ -20,22 +23,53 @@ package body Alr.Commands.Get is
 
    procedure Execute (Cmd : in out Command) is
       use Ada.Directories;
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+      use Ada.Strings.Maps;
 
-      Name : constant Alire.Project_Name := Last_Non_Switch_Argument;
+      --  Requested project with optional restriction
+      Request : constant String := Last_Non_Switch_Argument;
+
+      --  Locate and identify the version operator
+      Op_Pos  : constant Natural := Index (Request, To_Set ("=^~"), Inside);
+
+      --  Ready to separate name from version, and operator if existing
+      Name    : constant Alire.Project_Name := (if Op_Pos > Request'First
+                                                then Request (Request'First .. Op_Pos - 1)
+                                                else Request);
+
+      Op      : constant Character := (if Op_Pos > Request'First
+                                       then Request (Op_Pos)
+                                       else ASCII.NUL);
+
+      V       : constant Semver.Version := (if Op_Pos > Request'First
+                                            then Semver.Relaxed (Request (Op_Pos + 1 .. Request'Last))
+                                            else Semver.V ("0.0.0"));
+
+      Versions : constant Semver.Version_Set := (case Op is
+                                           when ASCII.NUL => Semver.Any,
+                                           when '='       => Semver.Exactly (V),
+                                           when '^'       => Semver.Within_Major (V),
+                                           when '~'       => Semver.Within_Minor (V),
+                                           when others    => raise Wrong_Command_Arguments with "Unrecognized version operator: " & Op);
 
       Success : Boolean;
       Needed  : constant Alire.Query.Instance :=
-                  Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Semver.Any), Success);
+                  Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions), Success);
 
       Must_Enter : Boolean;
    begin
       if not Alire.Query.Exists (Name) then
-         Log ("Project [" & Name & "] does not exist in the catalog.");
+         Trace.Info ("Project [" & Name & "] does not exist in the catalog.");
          raise Command_Failed;
       end if;
 
       if not Success then
-         Log ("Failed: could not resolve dependencies.");
+         Trace.Warning ("Failed: could not resolve dependencies.");
+         Trace.Warning ("Requested project was " & Name &
+                        (if Op /= ASCII.NUL
+                           then " with version " & Semver.Image (Versions)
+                           else " with most recent version"));
          raise Command_Failed;
       end if;
 
