@@ -10,9 +10,15 @@ with Alr.Spawn;
 with Alr.Templates;
 with Alr.Utils;
 
+with GNAT.Ctrl_C;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Bootstrap is
+
+   use OS_Lib.Paths;
+
+   Executable      : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr";
+   Executable_Bak  : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr-prev";
 
    ----------------
    -- Is_Rolling --
@@ -68,6 +74,21 @@ package body Alr.Bootstrap is
       end if;
    end Check_Rebuild_Respawn;
 
+   -----------------
+   -- Interrupted --
+   -----------------
+
+   Was_Interrupted : Boolean := False with Atomic;
+
+   procedure Interrupted is
+   begin
+      Was_Interrupted := True;
+      Trace.Always (" Interrupted by user");
+      -- No need to recover the old alr executable here if we were mid-compilation,
+      -- because control is returned to the parent process (ourselves) after killing gprbuild
+      -- and we will detect it in the return code.
+   end Interrupted;
+
    -------------
    -- Rebuild --
    -------------
@@ -75,14 +96,19 @@ package body Alr.Bootstrap is
    procedure Rebuild (Alr_File : String := "") is
       use Ada.Directories;
       use Hardcoded;
-      use OS_Lib.Paths;
 
-      Folder_To_Index : constant String :=
-                          Alr_Src_Folder / "deps" / "alire" / "index";
+      Folder_To_Index : constant String := Alr_Src_Folder / "deps" / "alire" / "index";
    begin
       --  It seems .ali files aren't enough to detect changed files under a second,
       --  So we get rid of previous ones
-      OS_Lib.Delete_File (Alr_Src_Folder / "bin" / "alr");
+      if Exists (Executable) then
+         if Exists (Executable_Bak) then
+            Delete_File (Executable_Bak);
+         end if;
+         Rename (Executable, Executable_Bak);
+      end if;
+
+
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.ali");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
@@ -106,6 +132,7 @@ package body Alr.Bootstrap is
       end if;
 
       begin
+         Was_Interrupted := False;
          Spawn.Gprbuild (Hardcoded.Alr_Gpr_File,
                          (if Alr_File /= ""
                           then OS.Session_Folder
@@ -113,13 +140,24 @@ package body Alr.Bootstrap is
       exception
          when others =>
             -- Compilation failed
-            if Alr_File = "" then
-               Log ("alr self-build failed. Since you are not inside an alr project,");
-               Log ("the error is likely in alr itself. Please report your issue to the developers.");
-            else
-               Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
-               Log ("The dependency file in use is: " & Alr_File);
+            if not Was_Interrupted then
+               if Alr_File = "" then
+                  Log ("alr self-build failed. Since you are not inside an alr project,");
+                  Log ("the error is likely in alr itself. Please report your issue to the developers.");
+               else
+                  Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
+                  Log ("The dependency file in use is: " & Alr_File);
+               end if;
             end if;
+
+            --  Attempt to leave the previous alr exec in its place
+            if Exists (Executable_Bak) and then
+              (not Exists (Executable) or else not Is_Executable_File (Executable))
+            then
+               Trace.Debug ("Restoring alr from backup");
+               Copy_File (Executable_Bak, Executable, "mode=overwrite,preserve=all_attributes");
+            end if;
+
             raise Command_Failed;
       end;
    end Rebuild;
@@ -196,4 +234,6 @@ package body Alr.Bootstrap is
             Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)";
    end Status_Line;
 
+begin
+   GNAT.Ctrl_C.Install_Handler (Interrupted'Access);
 end Alr.Bootstrap;
