@@ -1,7 +1,6 @@
 Features
 ========
 Ensure that "=" for versions works for any build string
-Version restrictions in command-line for alr get
 Force explicit arguments in all releases??? (could be ugly? but nicer?)
 
 Fixes/refactorings
