@@ -57,15 +57,15 @@ private
    Semver_Bootstrap : constant Release :=
               Register_Git
                 ("semantic_versioning",
-                 V ("1.0.0"),
+                 V ("0.1.0"),
                  "Semantic Versioning for Ada",
                  Defaults.Semver_Repository,
-                 "4f9dd63960cb4040e3aa561019d79e6f9d5f5818");
+                 "9f35b00a31861ea96085ee553fb6335d74831f5c");
 
    Simple_Logging_Bootstrap : constant Release :=
                         Register_Git
                           ("simple_logging",
-                           V ("1.0.0"),
+                           V ("0.1.0"),
                            "Basic logging to console",
                            Defaults.Simple_Logging_Repo,
                            "77896e4a9d0539a63e6bfb657ab955656c2e3c0f");

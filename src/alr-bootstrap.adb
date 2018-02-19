@@ -191,7 +191,7 @@ package body Alr.Bootstrap is
       end if;
 
       declare
-         Gpr : constant Alire.Project_Name :=
+         Gpr : constant String :=
                  Hardcoded.Project_File (Project.Current.Element.Project);
       begin
          if Is_Regular_File (Gpr) then

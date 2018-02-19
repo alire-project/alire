@@ -5,7 +5,7 @@ with Alr.Templates;
 
 with Alire.Query;
 
-package body Alr.Commands.Lock is
+package body Alr.Commands.Pin is
 
    -------------
    -- Execute --
@@ -34,4 +34,4 @@ package body Alr.Commands.Lock is
       end;
    end Execute;
 
-end Alr.Commands.Lock;
+end Alr.Commands.Pin;

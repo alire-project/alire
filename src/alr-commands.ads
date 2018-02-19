@@ -60,7 +60,7 @@ package Alr.Commands is
                       Cmd_Get,
                       Cmd_Help,
                       Cmd_Init,
-                      Cmd_Lock,
+                      Cmd_Pin,
                       Cmd_Run,
                       Cmd_Search,
                       Cmd_Update,

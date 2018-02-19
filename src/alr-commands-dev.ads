@@ -4,7 +4,7 @@ package Alr.Commands.Dev is
 
    overriding procedure Execute (Cmd : in out Command);
 
-   overriding procedure Setup_Switches 
+   overriding procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
@@ -14,11 +14,12 @@ package Alr.Commands.Dev is
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
 private
-   
+
    type Command is new Commands.Command with record
       Locate_Alr   : aliased Boolean := False;
+      Raise_Except : aliased Boolean := False;
       Respawn      : aliased Boolean := False;
       Self_Compile : aliased Boolean := False;
    end record;
-   
+
 end Alr.Commands.Dev;

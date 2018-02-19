@@ -1,5 +1,4 @@
 with "alire";
-with "condtrees";
 with "semantic_versioning";
 
 project Alr is
@@ -19,7 +18,6 @@ project Alr is
    case Selfbuild is
       when "True" =>
          for Source_Dirs use Alr'Source_Dirs & (External ("ALR_SESSION", ""));
-         --  Used to ensure a fresh binary every time due to ali limitations
       when "False" =>
          for Source_Dirs use Alr'Source_Dirs & ("src/default_session");
    end case;
@@ -37,7 +35,7 @@ project Alr is
    end Builder;
 
    package Binder is
-      for Switches ("ada") use ("-Es");
+      for Switches ("ada") use ("-Es", "-g");
    end Binder;
 
    package Linker is

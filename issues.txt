@@ -1,11 +1,12 @@
 Features
 ========
-Ensure that "=" for versions works for any build string
 Force explicit arguments in all releases??? (could be ugly? but nicer?)
+Specify main gpr file?
+Test framework (report with OS/Compiler, build success for all libs)
+Maintainer property
 
 Fixes/refactorings
 ==================
-Integrate condtrees in Alire (since it's not used in semver)
 Rename lock to pin
 Separate repository representation (in alire) from checkout (in alr)
     At the same time, unify Repo+Id in single entity at release creation
@@ -14,3 +15,7 @@ move Alr.Project to Alire.Project, so user projects depend on Alire only and not
 Long term if ever
 =================
 Use libadalang instead of self-compiling
+
+Discarded
+=========
+SAL alire lib? No, because it still requires a list of files to depend on.

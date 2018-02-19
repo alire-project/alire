@@ -13,7 +13,7 @@ with Alr.Commands.Dev;
 with Alr.Commands.Get;
 with Alr.Commands.Help;
 with Alr.Commands.Init;
-with Alr.Commands.Lock;
+with Alr.Commands.Pin;
 with Alr.Commands.Reserved;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
@@ -42,7 +42,7 @@ package body Alr.Commands is
                        Cmd_Get      => new Get.Command,
                        Cmd_Help     => new Help.Command,
                        Cmd_Init     => new Init.Command,
-                       Cmd_Lock     => new Lock.Command,
+                       Cmd_Pin      => new Pin.Command,
                        Cmd_Run      => new Run.Command,
                        Cmd_Search   => new Search.Command,
                        Cmd_Update   => new Update.Command,
