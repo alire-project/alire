@@ -65,6 +65,7 @@ package body Alr.Bootstrap is
       end if;
 
       if not Session_Is_Current then
+         Trace.Debug ("About to rebuild with new session");
          Rebuild (OS_Lib.Locate_Any_Index_File);
          Spawn.Updated_Alr_Without_Return;
       end if;
@@ -78,15 +79,18 @@ package body Alr.Bootstrap is
    -- Interrupted --
    -----------------
 
-   Was_Interrupted : Boolean := False with Atomic;
-
    procedure Interrupted is
+      use Ada.Directories;
    begin
-      Was_Interrupted := True;
       Trace.Always (" Interrupted by user");
-      -- No need to recover the old alr executable here if we were mid-compilation,
-      -- because control is returned to the parent process (ourselves) after killing gprbuild
-      -- and we will detect it in the return code.
+
+      --  Attempt to leave the previous alr exec in its place
+      if Exists (Executable_Bak) and then
+        (not Exists (Executable) or else not Is_Executable_File (Executable))
+      then
+         Trace.Debug ("Restoring alr from backup");
+         Copy_File (Executable_Bak, Executable, "mode=overwrite,preserve=all_attributes");
+      end if;
    end Interrupted;
 
    -------------
@@ -132,7 +136,6 @@ package body Alr.Bootstrap is
       end if;
 
       begin
-         Was_Interrupted := False;
          Spawn.Gprbuild (Hardcoded.Alr_Gpr_File,
                          (if Alr_File /= ""
                           then OS.Session_Folder
@@ -140,22 +143,12 @@ package body Alr.Bootstrap is
       exception
          when others =>
             -- Compilation failed
-            if not Was_Interrupted then
-               if Alr_File = "" then
-                  Log ("alr self-build failed. Since you are not inside an alr project,");
-                  Log ("the error is likely in alr itself. Please report your issue to the developers.");
-               else
-                  Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
-                  Log ("The dependency file in use is: " & Alr_File);
-               end if;
-            end if;
-
-            --  Attempt to leave the previous alr exec in its place
-            if Exists (Executable_Bak) and then
-              (not Exists (Executable) or else not Is_Executable_File (Executable))
-            then
-               Trace.Debug ("Restoring alr from backup");
-               Copy_File (Executable_Bak, Executable, "mode=overwrite,preserve=all_attributes");
+            if Alr_File = "" then
+               Log ("alr self-build failed. Since you are not inside an alr project,");
+               Log ("the error is likely in alr itself. Please report your issue to the developers.");
+            else
+               Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
+               Log ("The dependency file in use is: " & Alr_File);
             end if;
 
             raise Command_Failed;

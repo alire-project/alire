@@ -18,7 +18,7 @@ package body Alr.Origins is
    exception
       when others =>
          Trace.Error ("Installation of native package " & From.Id & " failed");
-         raise;
+         raise Command_Failed;
    end Apt;
 
    ----------
@@ -47,6 +47,10 @@ package body Alr.Origins is
          Alire.OS_Lib.Spawn ("git", "reset --hard -q " & From.Id);
          Set_Directory (Parent);
       end;
+   exception
+      when others =>
+         --  Trace.Error ("Checkout of " & From.Id & " from " & From.URL & " failed");
+         raise Command_Failed;
    end Git;
 
    use all type Alire.Origins.Kinds;

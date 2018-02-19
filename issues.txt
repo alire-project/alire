@@ -3,9 +3,11 @@ Features
 Test framework (report with OS/Compiler, build success for all libs)
 Maintainer property? General properties? Named properties?
 Force re-fetch
+Self-test of native detection
 
 Fixes/refactorings
 ==================
+Check that Alire is not spawning anything anymore, and move to alr
 Separate repository representation (in alire) from checkout (in alr)
     At the same time, unify Repo+Id in single entity at release creation
 

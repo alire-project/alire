@@ -49,7 +49,7 @@ package body Alr.Commands.Compile is
          end if;
       exception
          when Command_Failed =>
-            Log ("alr detected a compilation failure");
+            Trace.Warning ("alr detected a compilation failure");
             raise;
       end;
    end Execute;

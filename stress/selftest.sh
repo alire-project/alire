@@ -87,12 +87,12 @@ rm -rf xxx
 alr init --lib -b xxx
 rm -rf xxx
 
-# LOCK
-echo LOCK
+# PIN 
+echo PIN 
 alr init --bin xxx
 cd xxx
-grep -q -i At_Least xxx_alr.ads
-alr lock
+grep -q -i Within xxx_alr.ads
+alr pin
 grep -q -i Exactly xxx_alr.ads
 cd ..
 rm -rf xxx
@@ -102,7 +102,7 @@ echo RUN
 alr get hello
 cd hello*
 # Next should fail since there's no exec, hence not failing the test
-alr run -n >/dev/null && { echo FAIL ; exit 1; } || echo Run without exec PASSED
+alr run -s >/dev/null && { echo FAIL ; exit 1; } || echo Run without exec PASSED
 alr run | grep -q -i hello
 cd ..
 rm -rf hello*

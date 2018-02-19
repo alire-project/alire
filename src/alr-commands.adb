@@ -1,6 +1,5 @@
 with Ada.Command_Line;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
@@ -211,18 +210,16 @@ package body Alr.Commands is
    --------------------------
 
    function Enter_Project_Folder return Folder_Guard is
-      use Ada.Directories;
    begin
       if Project.Current.Is_Empty then
          Log ("Not entering project folder, no valid project", Debug);
-         return Alire.OS_Lib.Enter_Folder (Current_Directory);
+         return Alire.OS_Lib.Stay_In_Current_Folder;
+      elsif not Bootstrap.Running_In_Session or else not Bootstrap.Session_Is_Current then
+         Trace.Debug ("Not entering project folder, outdated session");
+         return Alire.OS_Lib.Stay_In_Current_Folder;
       else
          return Project.Enter_Root;
       end if;
-   exception
-      when Ada.Directories.Use_Error =>
-         Log ("Not entering project folder, no project file found for current project", Debug);
-         return Alire.OS_Lib.Enter_Folder (Current_Directory);
    end Enter_Project_Folder;
 
    ------------------------
@@ -290,9 +287,13 @@ package body Alr.Commands is
             Execute_By_Name (Cmd);
             Log ("alr " & Argument (Pos) & " done", Info);
          exception
-            when Command_Failed =>
+            when others =>
                Log ("alr " & Argument (Pos) & " was not completed", Warning);
-               OS_Lib.Bailout (1);
+               if Alire.Log_Level = Debug then
+                  raise;
+               else
+                  OS_Lib.Bailout (1);
+               end if;
          end;
       end if;
    end Execute;

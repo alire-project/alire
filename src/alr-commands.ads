@@ -94,6 +94,5 @@ private
    function Enter_Project_Folder return Folder_Guard;
    --  If we have a compiled-in project, attempt to find its root above us
    --  Does nothing if we don't have a project, or if the root is not found
-   --  In contrast, the one in project raises if not found
 
 end Alr.Commands;

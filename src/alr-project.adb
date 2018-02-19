@@ -1,5 +1,3 @@
-with Ada.Directories;
-
 with Alr.OS_Lib;
 with Alr.Utils;
 
@@ -43,8 +41,8 @@ package body Alr.Project is
 
          return Alire.OS_Lib.Enter_Folder (Root_Folder);
       else
-         Log ("Root folder for project not found", Debug);
-         raise Ada.Directories.Use_Error;
+         Log ("Root folder for project not found", Warning);
+         return Alire.OS_Lib.Stay_In_Current_Folder;
       end if;
    end Enter_Root;
 
