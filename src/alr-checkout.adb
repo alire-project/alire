@@ -1,10 +1,35 @@
+with Ada.Directories;
+
 with Alire;
 with Alire.OS_Lib;
+with Alire.Releases;
 
+with Alr.Origins;
 with Alr.OS_Lib;
 with Alr.Templates;
 
 package body Alr.Checkout is
+
+   --------------
+   -- Checkout --
+   --------------
+
+   procedure Checkout (R             : Alire.Releases.Release;
+                       Parent_Folder : String;
+                       Was_There     : out Boolean)
+   is
+      use Alr.OS_Lib.Paths;
+      Folder : constant String := Parent_Folder / R.Unique_Folder;
+   begin
+      if Ada.Directories.Exists (Folder) then
+         Was_There := True;
+         Trace.Detail ("Skipping checkout of already available " & R.Milestone_Image);
+      else
+         Was_There := False;
+         Trace.Detail ("About to check out " & R.Milestone_Image);
+         Alr.Origins.Fetch (R.Origin, Folder);
+      end if;
+   end Checkout;
 
    --------------------------
    -- Generate_GPR_Builder --
@@ -39,17 +64,11 @@ package body Alr.Checkout is
                         Parent   : String := OS.Projects_Folder;
                         But      : Alire.Project_Name := "")
    is
+      Was_There : Boolean;
    begin
       for R of Projects loop
          if R.Project /= But then
-            begin
-               R.Checkout (Parent_Folder => Parent);
-            exception
-               when Alire.File_Error =>
-                  --  We'll presume it's already there and OK
-                  --  FIXME find out for real, or offer option to squash old one
-                  Log ("Skipping checkout for already available " & R.Milestone_Image, Detail);
-            end;
+            Checkout (R, Parent, Was_There);
          end if;
       end loop;
    end To_Folder;
@@ -67,12 +86,13 @@ package body Alr.Checkout is
    is
       Project : constant Alire.Project_Name := R.Project;
       Root    : Alire.Index.Release renames R;
+      Was_There : Boolean;
    begin
       if If_Conflict /= Skip then
          raise Program_Error with "Unimplemented";
       end if;
 
-      R.Checkout (Parent_Folder);
+      Checkout (R, Parent_Folder, Was_There);
 
       --  And generate its working files, if they do not exist
       if Generate_Files and then not R.Is_Native then
@@ -88,10 +108,6 @@ package body Alr.Checkout is
             Templates.Generate_Gpr (Deps, Root);
          end;
       end if;
-   exception
-      when Alire.File_Error =>
-         --  We'll presume it's already there and OK
-         Log ("Skipping checkout for already available " & Root.Milestone_Image, Detail);
    end Working_Copy;
 
 end Alr.Checkout;

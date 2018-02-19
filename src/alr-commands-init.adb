@@ -1,10 +1,10 @@
 with Ada.Directories;
 
 with Alire.Index;
+with Alire.Origins;
 with Alire.OS_Lib;
 with Alire.Query;
 with Alire.Releases;
-with Alire.Repositories.Local;
 
 with Alr.Bootstrap;
 with Alr.Hardcoded;
@@ -51,8 +51,7 @@ package body Alr.Commands.Init is
                          Alire.Releases.New_Release (Name,
                                                      "No description",
                                                      V ("0.0.0-alr_working_copy"),
-                                                     Alire.Repositories.Local.Repo,
-                                                     Alire.Repositories.Local.Local_Id,
+                                                     Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
                                                      Depends_On => Bootstrap.Alire_Minimal_Dependency,
                                                      Properties => Alire.Index.Default_Properties,
                                                      Requisites => Alire.Index.No_Requisites,

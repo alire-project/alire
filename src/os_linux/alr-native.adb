@@ -3,8 +3,8 @@ with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
 with Alire.Index;
+with Alire.Origins;
 with Alire.OS_Lib;
-with Alire.Repositories.Apt;
 
 with Alr.Hardcoded;
 
@@ -68,8 +68,7 @@ package body Alr.Native is
                            Alire.Index.Register (Prj,
                                                  Semver.Relaxed (Ver),
                                                  Dsc (Dsc'First .. Dsc'First - 1 + Integer'Min (Alire.Max_Description_Length, Dsc'Length)),
-                                                 Alire.Repositories.Apt.Repo,
-                                                 Pkg,
+                                                 Alire.Origins.New_Local_Apt (Pkg),
                                                  Native => True) with Unreferenced;
                   begin
                      null;--

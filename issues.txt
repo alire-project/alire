@@ -2,6 +2,7 @@ Features
 ========
 Test framework (report with OS/Compiler, build success for all libs)
 Maintainer property? General properties? Named properties?
+Force re-fetch
 
 Fixes/refactorings
 ==================
