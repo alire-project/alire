@@ -1,17 +1,16 @@
 Features
 ========
-Specify main gpr file?
 Test framework (report with OS/Compiler, build success for all libs)
-Maintainer property
+Maintainer property? General properties? Named properties?
 
 Fixes/refactorings
 ==================
 Separate repository representation (in alire) from checkout (in alr)
     At the same time, unify Repo+Id in single entity at release creation
-move Alr.Project to Alire.Project, so user projects depend on Alire only and not Alr
 
 Long term if ever
 =================
+Specify main gpr file? Only useful for executables, since libs may have many
 Use libadalang instead of self-compiling
 
 Discarded
