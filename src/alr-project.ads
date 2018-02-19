@@ -1,22 +1,15 @@
 with Alire.Containers;
-with Alire.Index; use Alire.Index;
 with Alire.OS_Lib;
 with Alire.Releases;
+with Alire.Root_Project;
 
 private with Alr.Hardcoded;
 
-with Semantic_Versioning;
-
 package Alr.Project is
 
-   --  Only file needed from the project alr file (project_alr.ads).
-   --  Besides the important Set_Root_Project, unfortunately it renames most of Alire.Index to
-   --  make it directly visible in project_alr.ads
+   --  Facilities to work with the current project, stored in Alire.Root_Project
 
-   Current : Alire.Containers.Release_H;
-   --  Root dependency (the working project). If Is_Empty we know we must recompile,
-   --  unless the hash already matches. In this case, we know the project file is
-   --  missing the Set_Root_Project call
+   Current : Alire.Containers.Release_H renames Alire.Root_Project.Current;
 
    procedure Check_Valid
      with Post => (not Current.Is_Empty or else raise Command_Failed);
@@ -36,41 +29,6 @@ package Alr.Project is
    function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return Alire.OS_Lib.Folder_Guard
      with Pre => (not Current.Is_Empty);
    --  Enters the root folder if not already there
-
-   subtype Release is Alire.Releases.Release;
-
-   function Set_Root_Project (Project    : Alire.Project_Name;
-                              Version    : Semantic_Versioning.Version;
-                              Depends_On : Alire.Index.Dependencies := Alire.Index.No_Dependencies)
-                              return Release;
-   --  This function must be called in the working project alire file.
-   --  Otherwise alr does not know what's the current project, and its version and dependencies
-   --  It could be manually parsed from the file, but that's precisely what we want to avoid
-   --  The returned Release is the same; this is just a trick to be able to use it in an spec file.
-
-   --  Visibility:
-
-   function V (Semantic_Version : String) return Semantic_Versioning.Version
-               renames Semantic_Versioning.New_Version;
-
-   subtype Project_Name is Alire.Project_Name;
-   subtype Dependencies is Alire.Index.Dependencies;
-
-   function Within_Major (P : Project_Name; V : Version) return Dependencies
-                                   renames Alire.Index.Within_Major;
-
-   function At_Least  (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Least;
-   function At_Most   (P : Project_Name; V : Version) return Dependencies renames Alire.Index.At_Most;
-   function Less_Than (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Less_Than;
-   function More_Than (P : Project_Name; V : Version) return Dependencies renames Alire.Index.More_Than;
-   function Exactly   (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Exactly ;
-   function Except    (P : Project_Name; V : Version) return Dependencies renames Alire.Index.Except;
-
-   --  Operators, just in case they're used:
-   function "and" (VS1, VS2 : Semantic_Versioning.Version_Set) return Semantic_Versioning.Version_Set
-                   renames Semantic_Versioning."and";
-
-   use all type Dependencies;
 
 private
 

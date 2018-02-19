@@ -1,6 +1,5 @@
 with Alire.OS_Lib;
 
-with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS;
 
@@ -33,9 +32,6 @@ package body Alr.Commands.Version is
       begin
          Alire.OS_Lib.Spawn_Bypass (Hardcoded.Scripts_Version);
       end;
-
-      Log ("alr internal bootstrap version is " & Bootstrap.Alr_Bootstrap_Release.Image &
-             " from " & Bootstrap.Alr_Bootstrap_Release.Repo_Image, Always);
    end Execute;
 
 end Alr.Commands.Version;

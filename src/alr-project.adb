@@ -1,7 +1,5 @@
 with Ada.Directories;
 
-with Alire.Repositories.Local;
-
 with Alr.OS_Lib;
 with Alr.Utils;
 
@@ -49,29 +47,5 @@ package body Alr.Project is
          raise Ada.Directories.Use_Error;
       end if;
    end Enter_Root;
-
-   ----------------------
-   -- Set_Root_Project --
-   ----------------------
-
-   function Set_Root_Project (Project    : Alire.Project_Name;
-                              Version    : Semantic_Versioning.Version;
-                              Depends_On : Alire.Index.Dependencies := Alire.Index.No_Dependencies)
-                              return Release
-   is
-      Rel : constant Release := Alire.Releases.New_Release (Project,
-                                                            "working copy of " & Project, -- FIXME might be too long
-                                                            Version,
-                                                            Alire.Repositories.Local.Repo,
-                                                            "filesystem",
-                                                            Depends_On,
-                                                            Properties => Alire.Index.Default_Properties,
-                                                            Requisites => Alire.Index.No_Requisites,
-                                                            Native => False);
-   begin
-      Alr.Project.Current.Replace_Element (Rel);
-
-      return Rel;
-   end Set_Root_Project;
 
 end Alr.Project;

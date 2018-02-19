@@ -3,7 +3,7 @@ with Alire.Containers;
 with Alire.Index;
 with Alire.Query;
 
-with Alr.Defaults;
+private with Alire.Index.Alire;
 
 package Alr.Bootstrap is
 
@@ -42,60 +42,14 @@ package Alr.Bootstrap is
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
-   Alr_Bootstrap_Release  : constant Alire.Index.Release;
-   Alr_Minimal_Dependency : constant Alire.Index.Dependencies;
-   Alr_Minimal_Instance   : constant Alire.Query.Instance;
+   Alire_Minimal_Dependency : constant Alire.Index.Dependencies;
+   Alire_Minimal_Instance   : constant Alire.Query.Instance;
 
 private
 
-   use Alire.Index;
-   use all type Alire.Index.Dependencies;
-
-   --  Having these public releases enables its inclusion in newly generated projects,
-   --  so their project_alr.ads file do really compiles
-
-   Semver_Bootstrap : constant Release :=
-              Register_Git
-                ("semantic_versioning",
-                 V ("0.1.0"),
-                 "Semantic Versioning for Ada",
-                 Defaults.Semver_Repository,
-                 "9f35b00a31861ea96085ee553fb6335d74831f5c");
-
-   Simple_Logging_Bootstrap : constant Release :=
-                        Register_Git
-                          ("simple_logging",
-                           V ("0.1.0"),
-                           "Basic logging to console",
-                           Defaults.Simple_Logging_Repo,
-                           "77896e4a9d0539a63e6bfb657ab955656c2e3c0f");
-
-   Alire_Bootstrap : constant Release :=
-             Register_Git
-                ("alire",
-                 V ("0.4.0"),
-                 "Alire catalog of Ada libraries",
-                 Defaults.Index_Repository,
-                 "da62fcaec8eab9ac6847140ab9e48f6d2acb5c07",
-                 Depends_On =>
-                   Within_Major (Semver_Bootstrap)  and
-                   Within_Major (Simple_Logging_Bootstrap));
-
-   Alr_Bootstrap : constant Release :=
-             Register_Git
-               ("alr",
-                V ("0.4.0"),
-                "Alire tool to interact with the catalog",
-                Defaults.Alr_Repository,
-                "146fe156caf0c74978dd7db07585159da0432359",
-                Depends_On =>
-                  Within_Major (Alire_Bootstrap) and
-                  Within_Major (Simple_Logging_Bootstrap));
-
-   Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
-   Alr_Minimal_Instance   : constant Alire.Query.Instance :=
-                              Alire.Containers.To_Map (Alr_Bootstrap);
-
-   Alr_Bootstrap_Release  : constant Release := Alr_Bootstrap;
+   Alire_Minimal_Dependency : constant Alire.Index.Dependencies :=
+                                Alire.Index.At_Least (Alire.Index.Alire.Latest);
+   Alire_Minimal_Instance   : constant Alire.Query.Instance :=
+                                Alire.Containers.To_Map (Alire.Index.Alire.Latest);
 
 end Alr.Bootstrap;

@@ -174,7 +174,7 @@ package body Alr.Templates is
       Create (File, Out_File, (if Filename /= "" then Filename
                                                  else Hardcoded.Alire_File (Root.Project)));
 
-      Put_Line (File, "with Alr.Project; use Alr.Project;");
+      Put_Line (File, "with Alire.Project; use Alire.Project;");
       New_Line (File);
 
       Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Project) & "_Alr is");
@@ -199,7 +199,7 @@ package body Alr.Templates is
                end if;
                Put (File, Tab_3 &
                     (if Exact then "Exactly ("
-                              else "At_Least_Within_Major (") &
+                              else "Within_Major (") &
                       Q (Rel.Project) &
                       ", V (" & Q (Semver.Image (Rel.Version)) & "))");
                First := False;

@@ -5,7 +5,7 @@ package Alr.Commands.Pin is
    overriding procedure Execute (Cmd : in out Command);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("Lock dependency versions");
+     ("Pin dependencies to exact versions");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 

@@ -53,7 +53,7 @@ package body Alr.Commands.Init is
                                                      V ("0.0.0-alr_working_copy"),
                                                      Alire.Repositories.Local.Repo,
                                                      Alire.Repositories.Local.Local_Id,
-                                                     Depends_On => Bootstrap.Alr_Minimal_Dependency,
+                                                     Depends_On => Bootstrap.Alire_Minimal_Dependency,
                                                      Properties => Alire.Index.Default_Properties,
                                                      Requisites => Alire.Index.No_Requisites,
                                                      Native     => False);
@@ -64,7 +64,7 @@ package body Alr.Commands.Init is
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";
          end if;
 
-         Templates.Generate_Project_Alire (Bootstrap.Alr_Minimal_Instance, New_Release, Exact => False);
+         Templates.Generate_Project_Alire (Bootstrap.Alire_Minimal_Instance, New_Release, Exact => False);
          Templates.Generate_Gpr (Depends, New_Release);
       end;
    end Generate;
