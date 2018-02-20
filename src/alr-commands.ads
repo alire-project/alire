@@ -12,10 +12,19 @@ package Alr.Commands is
 
    Wrong_Command_Arguments : exception;
 
+   -------------
+   -- Execute --
+   -------------
+
    procedure Execute;
    --  Entry point into alr, will parse the command line and proceed as needed
 
+   -------------
+   -- Command --
+   -------------
+
    type Command is limited interface;
+   --  This type encapsulates configuration and execution of a specific command
 
    procedure Display_Help_Details (Cmd : Command) is null;
 
@@ -31,6 +40,13 @@ package Alr.Commands is
    function Usage_Custom_Parameters (Cmd : Command) return String is abstract;
    --  The part after "alr command "
    --  That is, the ones not managed by Gnat.Command_Line
+
+   -----------------------------------------
+   -- Supporting subprograms for commands --
+   -----------------------------------------
+
+   procedure Requires_No_Bootstrap;
+   --  Ensures that alr has self-built at least once and thus it may contain an updated index
 
    procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it
@@ -57,7 +73,6 @@ package Alr.Commands is
                       Cmd_Compile,
                       Cmd_Dev,
                       Cmd_Get,
-                      Cmd_Help,
                       Cmd_Init,
                       Cmd_Pin,
                       Cmd_Run,

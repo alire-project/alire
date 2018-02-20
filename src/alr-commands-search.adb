@@ -30,6 +30,8 @@ package body Alr.Commands.Search is
       end List_Release;
 
    begin
+      Requires_No_Bootstrap;
+
       if Argument_Count = 1 then -- no search term
          Log ("Please provide a search term, or use --list to show all available releases");
          raise Wrong_Command_Arguments;

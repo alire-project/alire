@@ -11,7 +11,6 @@ with Alr.Commands.Clean;
 with Alr.Commands.Compile;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
-with Alr.Commands.Help;
 with Alr.Commands.Init;
 with Alr.Commands.Pin;
 with Alr.Commands.Reserved;
@@ -39,7 +38,6 @@ package body Alr.Commands is
                        Cmd_Compile  => new Compile.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
-                       Cmd_Help     => new Help.Command,
                        Cmd_Init     => new Init.Command,
                        Cmd_Pin      => new Pin.Command,
                        Cmd_Run      => new Run.Command,
@@ -51,6 +49,8 @@ package body Alr.Commands is
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
    Log_Debug  : Boolean renames Alire_Early_Elaboration.Switch_D;
+
+   Help_Switch : aliased Boolean := False;
 
    -----------
    -- Image --
@@ -74,6 +74,9 @@ package body Alr.Commands is
 
    procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
    begin
+      Define_Switch (Config,
+                     Help_Switch'Access,
+                     "-h", "--help", "Display general or command-specific help");
       Define_Switch (Config,
                      Use_Native'Access,
                      "-n", "--use-native", "Use autodetected native packages in dependency resolution");
@@ -103,6 +106,28 @@ package body Alr.Commands is
                          (if Log_Quiet  then "-q " else ""));
    end Global_Switches;
 
+   ---------------------------
+   -- Check_If_Command_Help --
+   ---------------------------
+
+   procedure Check_If_Command_Help (Cmd : Cmd_Names) is
+      Help_Requested : Boolean := False;
+   begin
+      Initialize_Option_Scan;
+      loop
+         case Getopt ("* h") is
+            when ASCII.NUL => exit;
+            when 'h' => Help_Requested := True;
+            when others => null;
+         end case;
+      end loop;
+
+      if Help_Requested then
+         Display_Usage (Cmd);
+         OS_Lib.Bailout (0);
+      end if;
+   end Check_If_Command_Help;
+
    --------------------------
    -- Create_Alire_Folders --
    --------------------------
@@ -114,20 +139,6 @@ package body Alr.Commands is
       OS.Create_Folder (OS.Projects_Folder);
    end Create_Alire_Folders;
 
-   -----------------------------
-   -- Display_Help_Workaround --
-   -----------------------------
-
-   procedure Display_Help_Workaround (Config : GNAT.Command_Line.Command_Line_Configuration) is
-   begin
-      GNAT.Command_Line.Display_Help (Config);
-   exception
-      when Storage_Error =>
-         -- Workaround for bug up to GNAT 2017
-         -- Probably not great, but at this point we are exiting anyway
-         null;
-   end Display_Help_Workaround;
-
    -------------------
    -- Display_Usage --
    -------------------
@@ -136,14 +147,14 @@ package body Alr.Commands is
    begin
       New_Line;
       Put_Line ("Ada Library Repository manager (alr)");
-      Put_Line ("Usage : alr command [options] [arguments]");
+      Put_Line ("Usage : alr command [switches] [arguments]");
 
       New_Line;
 
       Display_Valid_Commands;
 
       New_Line;
-      Put_Line ("Use ""alr help [command]"" for more information about a command.");
+      Put_Line ("Use ""alr <command> -h"" for more information about a command.");
       New_Line;
    end Display_Usage;
 
@@ -152,19 +163,37 @@ package body Alr.Commands is
    -------------------
 
    procedure Display_Usage (Cmd : Cmd_Names) is
-      Config : Command_Line_Configuration;
+      Config  : Command_Line_Configuration;
+      Canary1 : Command_Line_Configuration;
+      Canary2 : Command_Line_Configuration;
    begin
       Set_Usage (Config,
                  Image (Cmd) & " [options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
-                 Help => "Help for " & Image (Cmd));
+                 Help => " ");
 
+      -- Ugly hack that goes by GNAT
+      Define_Switch (Config, "Global options:", "", "", "", "");
+      Define_Switch (Config, " ");
       Set_Global_Switches (Config);
 
-      Dispatch_Table (Cmd).Setup_Switches (Config);
+      Set_Global_Switches (Canary1); -- For comparison
+      Set_Global_Switches (Canary2); -- For comparison
+      Dispatch_Table (Cmd).Setup_Switches (Canary1);
 
-      Display_Help_Workaround (Config);
+      if Get_Switches (Canary1) /= Get_Switches (Canary2) then
+         -- Ugly hack that goes by GNAT
+         Define_Switch (Config, " ");
+         Define_Switch (Config, "Options specific to " & Image (Cmd) & ":", "", "", "", "");
+         Define_Switch (Config, " ");
+
+         Dispatch_Table (Cmd).Setup_Switches (Config);
+      end if;
+
+      GNAT.Command_Line.Display_Help (Config);
 
       Dispatch_Table (Cmd).Display_Help_Details;
+
+      New_Line;
    end Display_Usage;
 
    ------------------
@@ -234,6 +263,19 @@ package body Alr.Commands is
       end if;
    end Requires_Buildfile;
 
+   ---------------------------
+   -- Requires_No_Bootstrap --
+   ---------------------------
+
+   procedure Requires_No_Bootstrap is
+   begin
+      if Bootstrap.Is_Bootstrap then
+         Trace.Detail ("Rebuilding catalog...");
+         Bootstrap.Rebuild_With_Current_Project;
+         Bootstrap.Check_If_Rolling_And_Respawn;
+      end if;
+   end Requires_No_Bootstrap;
+
    ----------------------
    -- Requires_Project --
    ----------------------
@@ -285,10 +327,10 @@ package body Alr.Commands is
 
          begin
             Execute_By_Name (Cmd);
-            Log ("alr " & Argument (Pos) & " done", Info);
+            Log ("alr " & Argument (Pos) & " done", Detail);
          exception
             when Child_Failed | Command_Failed =>
-               Log ("alr " & Argument (Pos) & " was not completed", Warning);
+               Log ("alr " & Argument (Pos) & " unsuccessful", Warning);
                if Alire.Log_Level = Debug then
                   raise;
                else
@@ -303,15 +345,19 @@ package body Alr.Commands is
    ---------------------
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
-      Config : Command_Line_Configuration;
+      Global_Config, Command_Config, Config : Command_Line_Configuration;
    begin
-      Define_Switch (Config, "-h", "--help", "Show this hopefully helpful help.");
-
       Set_Global_Switches (Config);
+      Set_Global_Switches (Global_Config);
 
-      --  Fill switches and execute
       Dispatch_Table (Cmd).Setup_Switches (Config);
+      Dispatch_Table (Cmd).Setup_Switches (Command_Config);
+
+      --  We do a pre-look for -h to avoid the pre-defined output of procedure Getopt
+      Check_If_Command_Help (Cmd); -- Might not return
+
       begin
+         Initialize_Option_Scan;
          Getopt (Config); -- Parses command line switches
 
          if Use_Native then
@@ -320,7 +366,7 @@ package body Alr.Commands is
             Native.Add_To_Index;
          end if;
 
-         Log (Image (Cmd) & ":");
+         Log (Image (Cmd) & ":", Detail);
          Dispatch_Table (Cmd).Execute;
       exception
          when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>

@@ -2,8 +2,10 @@ with Ada.Directories;
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
+with Ada.Text_IO;
 
 with Alire.Dependencies.Vectors;
+with Alire.Index;
 with Alire.Query;
 
 with Alr.Checkout;
@@ -16,41 +18,60 @@ package body Alr.Commands.Get is
 
    package Semver renames Semantic_Versioning;
 
-   -------------
-   -- Execute --
-   -------------
+   overriding procedure Display_Help_Details (Cmd : Command) is
+      pragma Unreferenced (Cmd);
+      use Ada.Text_IO;
+   begin
+      New_Line;
+      Put_Line (" project=version" & ASCII.HT & "Get exact version");
+      Put_Line (" project^version" & ASCII.HT & "Get newest major-compatible version");
+      Put_Line (" project~version" & ASCII.HT & "Get newest minor-compatible version");
+   end Display_Help_Details;
 
-   procedure Execute (Cmd : in out Command) is
-      use Ada.Directories;
-      use Ada.Strings;
-      use Ada.Strings.Fixed;
-      use Ada.Strings.Maps;
+   ------------
+   -- Report --
+   ------------
 
-      --  Requested project with optional restriction
-      Request : constant String := Last_Non_Switch_Argument;
+   procedure Report (Name : Alire.Project_Name; Versions : Semver.Version_Set) is
+   begin
+      declare
+         Success : Boolean;
+         Release : constant Alire.Index.Release  := Alire.Query.Find (Name, Versions);
+         Needed  : Alire.Query.Instance :=
+                     Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions), Success);
 
-      --  Locate and identify the version operator
-      Op_Pos  : constant Natural := Index (Request, To_Set ("=^~"), Inside);
+         use Ada.Text_IO;
+      begin
+         New_Line;
+         Release.Print;
 
-      --  Ready to separate name from version, and operator if existing
-      Name    : constant Alire.Project_Name := (if Op_Pos > Request'First
-                                                then Request (Request'First .. Op_Pos - 1)
-                                                else Request);
+         if Needed.Contains (Name) then
+            Needed.Delete (Name);
+         end if;
 
-      Op      : constant Character := (if Op_Pos > Request'First
-                                       then Request (Op_Pos)
-                                       else ASCII.NUL);
+         if Success then
+            if not Needed.Is_Empty then
+               Put_Line ("Dependency solution:");
 
-      V       : constant Semver.Version := (if Op_Pos > Request'First
-                                            then Semver.Relaxed (Request (Op_Pos + 1 .. Request'Last))
-                                            else Semver.V ("0.0.0"));
+               for Rel of Needed loop
+                  Put_Line ("   " & Rel.Milestone_Image);
+               end loop;
+            end if;
+         else
+            Put_Line ("Dependencies cannot be met");
+         end if;
+         end;
+   exception
+      when Alire.Query_Unsuccessful =>
+         Trace.Info ("Not found: " & Alire.Query.Dependency_Image (Name, Versions));
+   end Report;
 
-      Versions : constant Semver.Version_Set := (case Op is
-                                           when ASCII.NUL => Semver.Any,
-                                           when '='       => Semver.Exactly (V),
-                                           when '^'       => Semver.Within_Major (V),
-                                           when '~'       => Semver.Within_Minor (V),
-                                           when others    => raise Wrong_Command_Arguments with "Unrecognized version operator: " & Op);
+   --------------
+   -- Retrieve --
+   --------------
+
+   procedure Retrieve (Cmd : Command; Name : Alire.Project_Name; Versions : Semver.Version_Set) is
+      use all type Semver.Version_Set;
 
       Success : Boolean;
       Needed  : constant Alire.Query.Instance :=
@@ -65,10 +86,7 @@ package body Alr.Commands.Get is
 
       if not Success then
          Trace.Warning ("Failed: could not resolve dependencies.");
-         Trace.Warning ("Requested project was " & Name &
-                        (if Op /= ASCII.NUL
-                           then " with version " & Semver.Image (Versions)
-                           else " with most recent version"));
+         Trace.Warning ("Requested project was " & Alire.Query.Dependency_Image (Name, Versions));
          raise Command_Failed;
       end if;
 
@@ -85,7 +103,7 @@ package body Alr.Commands.Get is
          Must_Enter := True;
          Checkout.Working_Copy (Needed.Element (Name),
                                 Needed,
-                                Current_Directory);
+                                Ada.Directories.Current_Directory);
          --  Check out requested project under current directory
       end if;
 
@@ -104,6 +122,59 @@ package body Alr.Commands.Get is
             Compile.Execute;
          end;
       end if;
+   end Retrieve;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute (Cmd : in out Command) is
+   begin
+      Requires_No_Bootstrap;
+
+      declare
+         use Ada.Directories;
+         use Ada.Strings;
+         use Ada.Strings.Fixed;
+         use Ada.Strings.Maps;
+
+         --  Requested project with optional restriction
+         Request : constant String := Last_Non_Switch_Argument;
+
+         --  Locate and identify the version operator
+         Op_Pos  : constant Natural := Index (Request, To_Set ("=^~"), Inside);
+
+         --  Ready to separate name from version, and operator if existing
+         Name    : constant Alire.Project_Name := (if Op_Pos > Request'First
+                                                   then Request (Request'First .. Op_Pos - 1)
+                                                   else Request);
+
+         Op      : constant Character := (if Op_Pos > Request'First
+                                          then Request (Op_Pos)
+                                          else ASCII.NUL);
+
+         V       : constant Semver.Version := (if Op_Pos > Request'First
+                                               then Semver.Relaxed (Request (Op_Pos + 1 .. Request'Last))
+                                               else Semver.V ("0.0.0"));
+
+         Versions : constant Semver.Version_Set := (case Op is
+                                                       when ASCII.NUL => Semver.Any,
+                                                       when '='       => Semver.Exactly (V),
+                                                       when '^'       => Semver.Within_Major (V),
+                                                       when '~'       => Semver.Within_Minor (V),
+                                                       when others    => raise Wrong_Command_Arguments with "Unrecognized version operator: " & Op);
+      begin
+         if Cmd.Info and Cmd.Compile then
+            Trace.Error ("Only one of --compile and --info allowed");
+            raise Command_Failed;
+         end if;
+
+         if Cmd.Info then
+            Report (Name, Versions);
+         else
+            Retrieve (Cmd, Name, Versions);
+         end if;
+      end;
    end Execute;
 
    --------------------
@@ -118,7 +189,11 @@ package body Alr.Commands.Get is
    begin
       Define_Switch (Config,
                      Cmd.Compile'Access,
-                     "-c", "--compile", "Compile after download.");
+                     "-c", "--compile", "Compile after download");
+
+      Define_Switch (Config,
+                     Cmd.Info'Access,
+                     "-i", "--info", "Show info instead of retrieving");
    end Setup_Switches;
 
 end Alr.Commands.Get;

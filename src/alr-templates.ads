@@ -19,8 +19,12 @@ package Alr.Templates is
    --  File can be a full path + filename, otherwise Current_Folder / Alr_Index_File is used
    --  If exact use "Exactly" dependencies, otherwise use "At_Least_Within_Major"
 
-   procedure Generate_Session (Session_Path, Alire_File : String);
+   procedure Generate_Session (Session_Path : String;
+                               Alire_File   : String := "");
    --  Generate the alr-session.ads file for current project file
+   --  If no alr file, an empty hash will be used so this will be an outdated or stand-alone executable
+   --  This is needed when, for example, searching or getting projects: we are outside any project but
+   --    need the full index.
 
    Sed_Pattern : constant String;
 

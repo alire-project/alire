@@ -14,7 +14,7 @@ package Alr.Hardcoded is
    Alr_Branch : constant String    := "master";
    --  Branch used to self-upgrade
 
-   Alr_Default_Session_Folder : constant String;
+--   Alr_Default_Session_Folder : constant String;
 
    Alr_Exe_File : constant String;
 
@@ -27,6 +27,9 @@ package Alr.Hardcoded is
    Alr_Src_Folder : constant String;
    --  when Devel.Enabled => User_Folder/local/alr
    --                else => Config_Folder/alire/alr
+
+   Bootstrap_Hash : constant String;
+   --  Hash used to denote a manually-compiled, no-session build
 
    Native_Package_List : constant String;
    --  File containing detected Ada packages in the system package manager
@@ -59,11 +62,13 @@ private
                                         then OS.Devel_Folder
                                         else OS.Config_Folder / "alr");
 
-   Alr_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
+--   Alr_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
 
    Alr_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
 
    Alr_Gpr_File : constant String := Alr_Src_Folder / "alr_env.gpr";
+
+   Bootstrap_Hash : constant String := "bootstrap";
 
    Native_Package_List : constant String := OS.Config_Folder / "native_packages.txt";
 

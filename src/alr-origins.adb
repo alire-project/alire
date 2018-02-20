@@ -40,28 +40,38 @@ package body Alr.Origins is
       Trace.Info ("Checking out: " & From.URL);
       Spawn.Command ("git", "clone -n -q --progress " & From.URL & " " & Folder,
                      Summary => "repository fetched");
-
       declare
-         use Ada.Directories;
-         Parent : constant String := Current_Directory;
+         Guard : constant OS_Lib.Folder_Guard := Os_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
-         Set_Directory (Folder);
          Spawn.Command ("git", "reset --hard -q " & From.Id,
-                        Summary => "files checked out");
-         Set_Directory (Parent);
+                        Summary => "commit checked out");
       end;
    exception
       when others =>
-         --  Trace.Error ("Checkout of " & From.Id & " from " & From.URL & " failed");
          raise Command_Failed;
    end Git;
+
+   --------
+   -- Hg --
+   --------
+
+   procedure Hg (From : Alire.Origins.Origin; Folder : String) is
+   begin
+      Trace.Info ("Checking out: " & From.URL);
+      Spawn.Command ("hg", "clone -v -y -u " & From.Id & " " & From.URL & " " & Folder,
+                     Summary => "commit checked out");
+   exception
+      when others =>
+         raise Command_Failed;
+   end Hg;
 
    use all type Alire.Origins.Kinds;
 
    Fetchers : constant array (Alire.Origins.Kinds) of Fetcher :=
                 (Filesystem => Fail'Access,
                  Git        => Git'Access,
-                 Local_Apt  => Apt'Access);
+                 Hg         => Hg'Access,
+                 Apt        => Apt'Access);
 
    -----------
    -- Fetch --

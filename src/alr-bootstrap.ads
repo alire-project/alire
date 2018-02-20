@@ -24,6 +24,10 @@ package Alr.Bootstrap is
    --  Will raise if not within session
    --  FIXME: some kind of infinite respawning prevention should be implemented here
 
+   function Is_Bootstrap return Boolean;
+   --  Says if this exec has been manually compiled with the dev session
+   --  I.e., it has never self-recompiled and has only minimal index (important for search, get...)
+
    function Running_In_Project return Boolean
      with Pre => Running_In_Session;
 

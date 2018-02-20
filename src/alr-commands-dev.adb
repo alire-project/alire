@@ -39,7 +39,7 @@ package body Alr.Commands.Dev is
    begin
       Define_Switch (Config,
                      Cmd.Locate_Alr'Access,
-                     "-l", "--locate",
+                     "--locate",
                      "Tries to locate a project file in scope");
 
       Define_Switch (Config,
@@ -54,7 +54,7 @@ package body Alr.Commands.Dev is
 
       Define_Switch (Config,
                      Cmd.Self_Compile'Access,
-                     "", "--self",
+                     "", "--compile",
                      "Just self-compile.");
    end Setup_Switches;
 

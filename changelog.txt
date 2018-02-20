@@ -1,3 +1,5 @@
+2018-02-20: get --info
+2018-02-20: Named properties (Labels); e.g.: Maintainer, Website
 2018-02-18: Recovery from backup executable if compilation interrupted
 2018-02-14: Properties with arbitrary logical expressions
 2018-02-11: Native packages as valid dependencies

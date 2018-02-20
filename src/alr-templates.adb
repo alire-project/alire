@@ -224,20 +224,23 @@ package body Alr.Templates is
    -- Generate_Session --
    ----------------------
 
-   procedure Generate_Session (Session_Path, Alire_File : String) is
+   procedure Generate_Session (Session_Path : String;
+                               Alire_File   : String := "") is
       use Ada.Directories;
       use Alr.OS_Lib;
 
       File : File_Type;
-      Hash : constant String := Utils.Hash_File (Alire_File);
+      Hash : constant String := (if Alire_File /= "" then Utils.Hash_File (Alire_File) else "no-alr-file");
    begin
       Create (File, Out_File, Session_Path / "alr-session.ads");
 
       Put_Line (File, "pragma Warnings (Off);");
 
       --  Depend on the project alr file that does the root registration
-      Put_Line (File, "with " & Utils.To_Mixed_Case (Base_Name (Alire_File)) & ";");
-      New_Line (File);
+      if Alire_File /= "" then
+         Put_Line (File, "with " & Utils.To_Mixed_Case (Base_Name (Alire_File)) & ";");
+         New_Line (File);
+      end if;
 
       Put_Line (File, "package Alr.Session is");
       New_Line (File);

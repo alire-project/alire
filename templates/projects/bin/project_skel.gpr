@@ -1,4 +1,4 @@
-with "alire.gpr"; --  Uncomment this line to be able to compile the metadata Project_Skel_alr.ads file
+with "alire"; --  Uncomment this line to be able to compile the metadata Project_Skel_alr.ads file
 
 project Project_Skel is
 

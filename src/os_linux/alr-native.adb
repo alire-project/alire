@@ -68,7 +68,7 @@ package body Alr.Native is
                            Alire.Index.Register (Prj,
                                                  Semver.Relaxed (Ver),
                                                  Dsc (Dsc'First .. Dsc'First - 1 + Integer'Min (Alire.Max_Description_Length, Dsc'Length)),
-                                                 Alire.Origins.New_Local_Apt (Pkg),
+                                                 Alire.Origins.New_Apt (Pkg),
                                                  Native => True) with Unreferenced;
                   begin
                      null;--

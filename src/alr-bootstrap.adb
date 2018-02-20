@@ -141,16 +141,17 @@ package body Alr.Bootstrap is
       Templates.Generate_Full_Index (OS.Session_Folder, Folder_To_Index);
 
       if Alr_File /= "" then
-         Log ("Generating session for " & Alr_File, Detail);
-         Templates.Generate_Session (OS.Session_Folder, Alr_File);
          Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
+
+         Log ("Generating session for " & Alr_File, Detail);
+      else
+         Log ("Generating non-project session", Detail);
       end if;
 
+      Templates.Generate_Session (OS.Session_Folder, Alr_File);
+
       begin
-         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File,
-                         (if Alr_File /= ""
-                          then OS.Session_Folder
-                          else Hardcoded.Alr_Default_Session_Folder));
+         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File, OS.Session_Folder);
       exception
          when others =>
             -- Compilation failed
@@ -217,6 +218,17 @@ package body Alr.Bootstrap is
      (Files.Locate_Any_GPR_File > 0 and Then
       Files.Locate_Any_Index_File /= "");
 
+   ------------------
+   -- Is_Bootstrap --
+   ------------------
+
+   function Is_Bootstrap return Boolean is
+   begin
+      pragma Warnings (Off);
+      return Session.Hash = Hardcoded.Bootstrap_Hash;
+      pragma Warnings (On);
+   end Is_Bootstrap;
+
    ------------------------
    -- Session_Is_Current --
    ------------------------
@@ -231,13 +243,14 @@ package body Alr.Bootstrap is
    function Status_Line return String is
    begin
       return
-           (if Is_Rolling then "rolling" else "bootstrap") & "-" &
-           (if Devel.Enabled then "devel" else "release") &
-           " (" &
-           (if Running_In_Session
-            then (if Session_Is_Current then Project.Current.Element.Milestone_Image else "outdated")
-            else "no project") & ") (" &
-            Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)";
+        (if Is_Rolling then "rolling" else "bootstrap") & "-" &
+      (if Devel.Enabled then "devel" else "release") &
+        " (" &
+      (if Running_In_Session
+       then (if Session_Is_Current then Project.Current.Element.Milestone_Image else "outdated")
+       else "no project") & ") (" &
+        Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)" &
+      (if Is_Bootstrap then " (B)" else "");
    end Status_Line;
 
 begin

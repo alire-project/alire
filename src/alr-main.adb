@@ -11,7 +11,7 @@ procedure Alr.Main is
 begin
    Bootstrap.Check_If_Rolling_And_Respawn;
 
-   Log ("alr build is " & Bootstrap.Status_Line);
+   Log ("alr build is " & Bootstrap.Status_Line, Detail);
    if Devel.Enabled then
       Log ("alr running from " & OS.Own_Executable);
    end if;

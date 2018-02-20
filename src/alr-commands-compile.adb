@@ -48,7 +48,7 @@ package body Alr.Commands.Compile is
          end if;
       exception
          when Command_Failed =>
-            Trace.Warning ("alr detected a compilation failure");
+            Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");
             raise;
       end;
    end Execute;

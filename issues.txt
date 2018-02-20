@@ -1,17 +1,22 @@
+Bugs
+====
+Locate project when in tree
+
 Features
 ========
-Mercurial
 Test framework (report with OS/Compiler, build success for all libs)
-Maintainer property? General properties? Named properties?
-Force re-fetch
 Self-test of native detection
 Dependency resolution policies: newest vs oldest (useful for testing?)
+Licenses
+Search by property
+Image of Requisites
 
 Fixes/refactorings
 ==================
 
 Long term if ever
 =================
+Force re-fetch
 Proper unit testing
 Specify main gpr file? Only useful for executables, since libs may have many
 Use libadalang instead of self-compiling
