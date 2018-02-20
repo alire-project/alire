@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alr.OS_Lib;
+with Alr.Spawn;
 
 package body Alr.Origins is
 
@@ -37,14 +38,16 @@ package body Alr.Origins is
    procedure Git (From : Alire.Origins.Origin; Folder : String) is
    begin
       Trace.Info ("Checking out: " & From.URL);
-      OS_Lib.Spawn ("git", "clone -n -q --progress " & From.URL & " " & Folder);
+      Spawn.Command ("git", "clone -n -q --progress " & From.URL & " " & Folder,
+                     Summary => "repository fetched");
 
       declare
          use Ada.Directories;
          Parent : constant String := Current_Directory;
       begin
          Set_Directory (Folder);
-         OS_Lib.Spawn ("git", "reset --hard -q " & From.Id);
+         Spawn.Command ("git", "reset --hard -q " & From.Id,
+                        Summary => "files checked out");
          Set_Directory (Parent);
       end;
    exception

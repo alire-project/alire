@@ -21,6 +21,22 @@ package body Alr.Bootstrap is
    Executable      : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr";
    Executable_Bak  : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr-prev";
 
+   -----------------------------
+   -- Attempt_Backup_Recovery --
+   -----------------------------
+
+   procedure Attempt_Backup_Recovery is
+      use Ada.Directories;
+   begin
+      --  Attempt to leave the previous alr exec in its place
+      if Exists (Executable_Bak) and then
+        (not Exists (Executable) or else not Is_Executable_File (Executable))
+      then
+         Trace.Debug ("Restoring alr from backup");
+         Copy_File (Executable_Bak, Executable, "mode=overwrite,preserve=all_attributes");
+      end if;
+   end Attempt_Backup_Recovery;
+
    ----------------
    -- Is_Rolling --
    ----------------
@@ -85,13 +101,7 @@ package body Alr.Bootstrap is
    begin
       Trace.Always (" Interrupted by user");
 
-      --  Attempt to leave the previous alr exec in its place
-      if Exists (Executable_Bak) and then
-        (not Exists (Executable) or else not Is_Executable_File (Executable))
-      then
-         Trace.Debug ("Restoring alr from backup");
-         Copy_File (Executable_Bak, Executable, "mode=overwrite,preserve=all_attributes");
-      end if;
+      Attempt_Backup_Recovery;
    end Interrupted;
 
    -------------
@@ -151,6 +161,8 @@ package body Alr.Bootstrap is
                Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
                Log ("The dependency file in use is: " & Alr_File);
             end if;
+
+            Attempt_Backup_Recovery;
 
             raise Command_Failed;
       end;

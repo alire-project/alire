@@ -13,7 +13,8 @@ package body Alr.Commands.Clean is
    begin
       Requires_Project;
 
-      Spawn.Command ("gprclean", "-r -P " & Project.GPR_Alr_File);
+      Spawn.Command ("gprclean", "-r -P " & Project.GPR_Alr_File,
+                    Summary => "build files cleaned");
    end Execute;
 
 end Alr.Commands.Clean;

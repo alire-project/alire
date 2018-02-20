@@ -1,16 +1,18 @@
 Features
 ========
-Summary of spawned process
+Mercurial
 Test framework (report with OS/Compiler, build success for all libs)
 Maintainer property? General properties? Named properties?
 Force re-fetch
 Self-test of native detection
+Dependency resolution policies: newest vs oldest (useful for testing?)
 
 Fixes/refactorings
 ==================
 
 Long term if ever
 =================
+Proper unit testing
 Specify main gpr file? Only useful for executables, since libs may have many
 Use libadalang instead of self-compiling
 

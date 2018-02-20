@@ -1,6 +1,7 @@
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Project;
+with Alr.Utils;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -77,12 +78,14 @@ package body Alr.Spawn is
    procedure Command (Cmd                 : String;
                       Args                : String := "";
                       Understands_Verbose : Boolean := False;
-                      Force_Quiet         : Boolean := False) is
+                      Force_Quiet         : Boolean := False;
+                      Summary             : String  := "") is
    begin
       if OS_Lib.Spawn (Cmd,
                        Args,
                        Understands_Verbose,
-                       Force_Quiet) /= 0
+                       Force_Quiet,
+                       Summary) /= 0
       then
          raise Command_Failed;
       end if;
@@ -99,11 +102,17 @@ package body Alr.Spawn is
                     (if Session_File /= ""
                      then "-XALR_SESSION=" & Session_File & " -XALR_SELFBUILD=True "
                      else "");
+      Summary   : constant String :=
+                    (if Utils.Contains (Project_File, "alr_env") then
+                       (if Session_File /= "" then "metadata compiled" else "alr updated")
+                     else
+                        "project compiled");
    begin
       Command ("gprbuild",
                Selfbuild &
                "-j0 -m -p -P " & Project_File,
-               Understands_Verbose => True);
+               Understands_Verbose => True,
+               Summary => Summary);
    end Gprbuild;
 
 end Alr.Spawn;

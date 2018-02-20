@@ -34,7 +34,8 @@ package body Alr.Commands.Update is
                         "clone --recurse-submodules " &
                           "-b " & Hardcoded.Alr_Branch & " " &
                           String (Hardcoded.Alr_Repo) & " " &
-                          Hardcoded.Alr_Src_Folder);
+                          Hardcoded.Alr_Src_Folder,
+                       Summary => "repository cloned");
       end if;
    end Checkout_If_Needed;
 
@@ -76,8 +77,10 @@ package body Alr.Commands.Update is
             Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
               with Unreferenced;
          begin
-            Spawn.Command ("git", "pull --recurse-submodules=yes");
-            Spawn.Command ("git", "submodule update --recursive");
+            Spawn.Command ("git", "pull",
+                          Summary => "main project updated");
+            Spawn.Command ("git", "submodule update --init --recursive",
+                          Summary => "dependencies updated");
          end;
       end if;
    end Update_Alr;

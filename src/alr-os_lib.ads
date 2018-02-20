@@ -9,14 +9,16 @@ package Alr.OS_Lib is
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False) return Integer;
+                   Force_Quiet         : Boolean := False;
+                   Summary             : String  := "") return Integer;
    --  If Understands, an extra -v will be passed on Debug log levels
    --  If Force_Quiet and not in Debug level, output will be entirely muted (stdout & stderr)
 
    procedure Spawn (Command             : String;
                     Arguments           : String := "";
                     Understands_Verbose : Boolean := False;
-                    Force_Quiet         : Boolean := False);
+                    Force_Quiet         : Boolean := False;
+                    Summary             : String  := "");
    --  Raises CHILD_FAILED if exit code /= 0
 
    procedure Spawn_Raw (Command : String; Arguments : String := "");

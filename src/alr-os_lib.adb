@@ -180,8 +180,9 @@ package body Alr.OS_Lib is
    -- Spawn_With_Progress --
    -------------------------
 
-   function Spawn_With_Progress (Command      : String;
-                                 Arguments    : String) return Integer
+   function Spawn_With_Progress (Command   : String;
+                                 Arguments : String;
+                                 Summary   : String  := "") return Integer
    is
       use Ada.Strings.Unbounded;
       use Ada.Text_IO;
@@ -259,8 +260,9 @@ package body Alr.OS_Lib is
             Line : constant String :=
                      Ada.Characters.Latin_1.CR & Simple_Command &
             (if Code = 0
-             then " completed"
-             else " ended with error (exit code" & Code'Img & ")");
+             then " completed " & (if Summary /= "" then "[" & Summary & "]" else "")
+             else " ended with error (exit code" & Code'Img & ") " &
+                     (if Summary /= "" then "[NOT " & Summary & "]" else ""));
          begin
             Max_Len := Natural'Max (Max_Len, Simple_Command'length + 2); -- If there weren't any output
             Put_Line (Line & String'(1 .. Max_Len - Line'Length => ' '));
@@ -275,7 +277,8 @@ package body Alr.OS_Lib is
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False) return Integer
+                   Force_Quiet         : Boolean := False;
+                   Summary             : String  := "") return Integer
    is
       Extra : constant String := (if Understands_Verbose then "-v " else "");
       File  : File_Descriptor;
@@ -304,7 +307,7 @@ package body Alr.OS_Lib is
             Free (Name);
          end return;
       elsif Alire.Log_Level = Info then
-         return Spawn_With_Progress (Command, Arguments);
+         return Spawn_With_Progress (Command, Arguments, Summary);
       elsif Alire.Log_Level = Detail then -- All lines, without -v
          return
            (Spawn (Locate_In_Path (Command),
@@ -323,9 +326,10 @@ package body Alr.OS_Lib is
    procedure Spawn (Command             : String;
                     Arguments           : String := "";
                     Understands_Verbose : Boolean := False;
-                    Force_Quiet         : Boolean := False)
+                    Force_Quiet         : Boolean := False;
+                    Summary             : String  := "")
    is
-      Code : constant Integer := Spawn (Command, Arguments, Understands_Verbose, Force_Quiet);
+      Code : constant Integer := Spawn (Command, Arguments, Understands_Verbose, Force_Quiet, Summary);
    begin
       if Code /= 0 then
          raise Child_Failed with "Exit code:" & Code'Img;

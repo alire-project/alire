@@ -33,7 +33,8 @@ package body Alr.Commands.Run is
          else
             Log ("Launching " & Candidates.First_Element);
             Log ("...");
-            Spawn.Command (Candidates.First_Element, Cmd.Args.all);
+            Spawn.Command (Candidates.First_Element, Cmd.Args.all,
+                           Summary => "project main executed");
          end if;
       end;
    end Execute;
