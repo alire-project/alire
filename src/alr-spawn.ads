@@ -22,6 +22,6 @@ package Alr.Spawn is
 
    procedure Gprbuild (Project_File : String;
                        Session_File : String := "");
-   --  Builds a progress file
+   --  Builds a project file, with optional alr metadata file
 
 end Alr.Spawn;

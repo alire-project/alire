@@ -1,6 +1,6 @@
 with Ada.Directories; use Ada.Directories;
 
-with Alr.OS_Lib;
+with Alr.Files;
 with Alr.Templates;
 
 with Alire.Query;
@@ -19,7 +19,7 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Index_File : constant String := Alr.OS_Lib.Locate_Index_File (Project.Current.Element.Project);
+         Index_File : constant String := Files.Locate_Index_File (Project.Current.Element.Project);
          Success    :          Boolean;
          Deps       : constant Alire.Query.Instance :=
                         Alire.Query.Resolve (Project.Current.Element.Depends, Success);
@@ -27,10 +27,10 @@ package body Alr.Commands.Pin is
          Log ("Backing up current dependency file to " & Index_File & ".old");
          Ada.Directories.Copy_File (Index_File, Index_File & ".old", "mode=overwrite");
 
-         Templates.Generate_Project_Alire (Deps,
-                                           Project.Current.Element,
-                                           Exact    => True,
-                                           Filename => Index_File);
+         Templates.Generate_Prj_Alr (Deps,
+                                     Project.Current.Element,
+                                     Exact    => True,
+                                     Filename => Index_File);
       end;
    end Execute;
 

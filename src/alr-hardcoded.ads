@@ -2,7 +2,7 @@ with Alire;
 
 with Alr.Defaults;
 
-private with Alire.Os_Lib;
+private with Ada.Directories;
 
 private with Alr.Devel;
 private with Alr.OS;
@@ -53,7 +53,7 @@ package Alr.Hardcoded is
 
 private
 
-   use Alire.OS_Lib;
+   function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
 
    Alr_Src_Folder : constant String := (if Devel.Enabled
                                         then OS.Devel_Folder

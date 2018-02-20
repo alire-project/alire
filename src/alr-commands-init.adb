@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Index;
 with Alire.Origins;
-with Alire.OS_Lib;
 with Alire.Query;
 with Alire.Releases;
 
@@ -45,7 +44,7 @@ package body Alr.Commands.Init is
       end if;
 
       declare
-         Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Name) with Unreferenced;
+         Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Name) with Unreferenced;
 
          New_Release : constant Alire.Releases.Release :=
                          Alire.Releases.New_Release (Name,
@@ -63,8 +62,8 @@ package body Alr.Commands.Init is
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";
          end if;
 
-         Templates.Generate_Project_Alire (Bootstrap.Alire_Minimal_Instance, New_Release, Exact => False);
-         Templates.Generate_Gpr (Depends, New_Release);
+         Templates.Generate_Prj_Alr (Bootstrap.Alire_Minimal_Instance, New_Release, Exact => False);
+         Templates.Generate_Agg_Gpr (Depends, New_Release);
       end;
    end Generate;
 
@@ -105,7 +104,7 @@ package body Alr.Commands.Init is
 
       if Cmd.Build then
          declare
-            Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Name) with Unreferenced;
+            Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Name) with Unreferenced;
          begin
             Spawn.Alr (Cmd_Build);
          end;

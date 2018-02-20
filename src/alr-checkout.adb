@@ -1,9 +1,9 @@
 with Ada.Directories;
 
 with Alire;
-with Alire.OS_Lib;
 with Alire.Releases;
 
+with Alr.Files;
 with Alr.Origins;
 with Alr.OS_Lib;
 with Alr.Templates;
@@ -53,7 +53,7 @@ package body Alr.Checkout is
    procedure Generate_GPR_Builder (Depends : Alire.Query.Instance; Root : Alire.Index.Release) is
       --  Guard not required, will have been called by the caller to obtain the dependencies
    begin
-      Templates.Generate_Gpr (Depends, Root);
+      Templates.Generate_Agg_Gpr (Depends, Root);
    end Generate_GPR_Builder;
 
    ---------------
@@ -97,15 +97,15 @@ package body Alr.Checkout is
       --  And generate its working files, if they do not exist
       if Generate_Files and then not R.Is_Native then
          declare
-            use Alire.OS_Lib;
+            use OS_Lib;
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
-            Index_File : constant String := Alr.OS_Lib.Locate_Index_File (Project);
+            Index_File : constant String := Files.Locate_Index_File (Project);
          begin
             if Index_File = "" then
-               Templates.Generate_Project_Alire (Deps, Root);
+               Templates.Generate_Prj_Alr (Deps, Root);
             end if;
 
-            Templates.Generate_Gpr (Deps, Root);
+            Templates.Generate_Agg_Gpr (Deps, Root);
          end;
       end if;
    end Working_Copy;

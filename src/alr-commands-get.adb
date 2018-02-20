@@ -4,7 +4,6 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 
 with Alire.Dependencies.Vectors;
-with Alire.Os_Lib;
 with Alire.Query;
 
 with Alr.Checkout;
@@ -96,7 +95,7 @@ package body Alr.Commands.Get is
       --  Launch build if requested
       if Cmd.Compile then
          declare
-            use Alire.OS_Lib;
+            use OS_Lib;
             Guard : Folder_Guard :=
                       (if Must_Enter
                        then Enter_Folder (Needed.Element (Name).Unique_Folder)

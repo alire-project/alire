@@ -8,7 +8,6 @@ package body Alr.Commands.Clean is
 
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
-      use Alire.OS_Lib;
 
       Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin

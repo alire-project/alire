@@ -4,9 +4,9 @@ with Ada.Text_IO;
 
 with Alire.Index;
 with Alire.Origins;
-with Alire.OS_Lib;
 
 with Alr.Hardcoded;
+with Alr.OS_Lib;
 
 with GNAT.OS_Lib;
 
@@ -22,8 +22,8 @@ package body Alr.Native is
    begin
       if Force or else not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Native_Package_List) then
          Trace.Info ("Detecting native Ada packages in platform, please wait...");
-         Alire.OS_Lib.Spawn_And_Redirect (Hardcoded.Native_Package_List,
-                                          Hardcoded.Scripts_Apt_Detect);
+         OS_Lib.Spawn_And_Redirect (Hardcoded.Native_Package_List,
+                                    Hardcoded.Scripts_Apt_Detect);
       end if;
    end Autodetect;
 

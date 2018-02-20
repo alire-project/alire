@@ -1,5 +1,3 @@
-with Alire.OS_Lib;
-
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Project;
@@ -57,7 +55,7 @@ package body Alr.Spawn is
       if Is_Executable_File (Hardcoded.Alr_Exe_File) then
          Log ("...");
          begin
-            Alire.OS_Lib.Spawn_Bypass (Hardcoded.Alr_Exe_File, OS_Lib.Current_Command_Line);
+            OS_Lib.Spawn_Raw (Hardcoded.Alr_Exe_File, OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);
             raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
          exception
@@ -81,10 +79,10 @@ package body Alr.Spawn is
                       Understands_Verbose : Boolean := False;
                       Force_Quiet         : Boolean := False) is
    begin
-      if Alire.OS_Lib.Spawn (Cmd,
-                             Args,
-                             Understands_Verbose,
-                             Force_Quiet) /= 0
+      if OS_Lib.Spawn (Cmd,
+                       Args,
+                       Understands_Verbose,
+                       Force_Quiet) /= 0
       then
          raise Command_Failed;
       end if;

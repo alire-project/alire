@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Os_Lib; use Alire.OS_Lib;
+with Alr.OS_Lib;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -8,6 +8,8 @@ with Interfaces.C;
 with Interfaces.C.Strings;
 
 package body Alr.OS is
+
+   use Alr.OS_Lib.Paths;
 
    function Getenv (Var : String; Default : String := "") return String;
 
@@ -75,7 +77,7 @@ package body Alr.OS is
 
    procedure Create_Folder (Path : String) is
    begin
-      Alire.OS_Lib.Spawn ("mkdir", "-p " & Path, Force_Quiet => True);
+      OS_Lib.Spawn ("mkdir", "-p " & Path, Force_Quiet => True);
       --  FIXME not portable
    end Create_Folder;
 

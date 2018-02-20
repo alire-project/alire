@@ -1,5 +1,3 @@
-with Alire.OS_Lib;
-
 with Alr.Hardcoded;
 with Alr.OS;
 
@@ -27,10 +25,10 @@ package body Alr.Commands.Version is
 
       -- FIXME this is OS dependent
       declare
-         Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
+         Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
            with Unreferenced;
       begin
-         Alire.OS_Lib.Spawn_Bypass (Hardcoded.Scripts_Version);
+         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Version);
       end;
    end Execute;
 

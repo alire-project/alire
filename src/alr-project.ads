@@ -1,7 +1,8 @@
 with Alire.Containers;
-with Alire.OS_Lib;
 with Alire.Releases;
 with Alire.Root_Project;
+
+with Alr.OS_Lib;
 
 private with Alr.Hardcoded;
 
@@ -26,7 +27,7 @@ package Alr.Project is
      with Pre => (not Current.Is_Empty);
    --  The alr environment project file (project_alr.gpr)
 
-   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return Alire.OS_Lib.Folder_Guard
+   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return OS_Lib.Folder_Guard
      with Pre => (not Current.Is_Empty);
    --  Enters the root folder if not already there
 

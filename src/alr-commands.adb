@@ -2,6 +2,7 @@ with Ada.Command_Line;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alire;
 with Alire_Early_Elaboration;
 
 with Alr.Checkout;
@@ -22,7 +23,6 @@ with Alr.Devel;
 with Alr.Hardcoded;
 with Alr.Native;
 with Alr.OS;
-with Alr.OS_Lib;
 with Alr.Utils;
 
 with GNAT.OS_Lib;
@@ -213,10 +213,10 @@ package body Alr.Commands is
    begin
       if Project.Current.Is_Empty then
          Log ("Not entering project folder, no valid project", Debug);
-         return Alire.OS_Lib.Stay_In_Current_Folder;
+         return OS_Lib.Stay_In_Current_Folder;
       elsif not Bootstrap.Running_In_Session or else not Bootstrap.Session_Is_Current then
          Trace.Debug ("Not entering project folder, outdated session");
-         return Alire.OS_Lib.Stay_In_Current_Folder;
+         return OS_Lib.Stay_In_Current_Folder;
       else
          return Project.Enter_Root;
       end if;
@@ -227,7 +227,7 @@ package body Alr.Commands is
    ------------------------
 
    procedure Requires_Buildfile is
-      Guard : constant Alire.OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
+      Guard : constant OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
    begin
       if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Current.Element.Project)) then
          Checkout.Generate_GPR_Builder (Project.Current.Element);
@@ -287,7 +287,7 @@ package body Alr.Commands is
             Execute_By_Name (Cmd);
             Log ("alr " & Argument (Pos) & " done", Info);
          exception
-            when others =>
+            when Child_Failed | Command_Failed =>
                Log ("alr " & Argument (Pos) & " was not completed", Warning);
                if Alire.Log_Level = Debug then
                   raise;

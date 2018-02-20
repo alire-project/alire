@@ -1,4 +1,3 @@
-with Alire.OS_Lib; use Alire.OS_Lib;
 with Alire.Query;
 
 with Alr.Bootstrap;
@@ -74,8 +73,7 @@ package body Alr.Commands.Update is
          Checkout_If_Needed;
       else
          declare
-            Guard : constant Folder_Guard :=
-                      Enter_Folder (Hardcoded.Alr_Src_Folder)
+            Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
               with Unreferenced;
          begin
             Spawn.Command ("git", "pull --recurse-submodules=yes");

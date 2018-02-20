@@ -2,6 +2,9 @@ with Simple_Logging;
 
 package Alr with Preelaborate is
 
+   Child_Failed   : exception;
+   --  Used to notify that a subprocess completed with non-zero error
+
    Command_Failed : exception;
    --  Signals "normal" command completion with failure (i.e., no need to print stack trace).
 

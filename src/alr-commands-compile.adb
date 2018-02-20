@@ -1,3 +1,4 @@
+with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Spawn;
 with Alr.Utils;
@@ -19,8 +20,6 @@ package body Alr.Commands.Compile is
    -------------
 
    procedure Execute is
-      use Alire.OS_Lib;
-
       Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       Requires_Project;
@@ -32,7 +31,7 @@ package body Alr.Commands.Compile is
             Log ("Compilation finished without errors");
          else
             declare
-               Execs : constant Utils.String_Vector := Os_Lib.Locate_File_Under (".", Project.Name, 2);
+               Execs : constant Utils.String_Vector := Files.Locate_File_Under (".", Project.Name, 2);
                --  FIXME: extension in non-linux platforms!
             begin
                case Execs.Length is

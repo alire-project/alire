@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alr.Devel;
+with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS;
 with Alr.OS_Lib;
@@ -49,7 +50,7 @@ package body Alr.Bootstrap is
    procedure Check_If_Project_Outdated_And_Rebuild is
    begin
       if Running_In_Session and then not Session_Is_Current then
-         Rebuild (OS_Lib.Locate_Any_Index_File);
+         Rebuild (Files.Locate_Any_Index_File);
       end if;
    end Check_If_Project_Outdated_And_Rebuild;
 
@@ -66,7 +67,7 @@ package body Alr.Bootstrap is
 
       if not Session_Is_Current then
          Trace.Debug ("About to rebuild with new session");
-         Rebuild (OS_Lib.Locate_Any_Index_File);
+         Rebuild (Files.Locate_Any_Index_File);
          Spawn.Updated_Alr_Without_Return;
       end if;
 
@@ -127,7 +128,7 @@ package body Alr.Bootstrap is
       --  delay 1.0;
 
       Log ("Generating index for " & Folder_To_Index, Detail);
-      Templates.Generate_Index (OS.Session_Folder, Folder_To_Index);
+      Templates.Generate_Full_Index (OS.Session_Folder, Folder_To_Index);
 
       if Alr_File /= "" then
          Log ("Generating session for " & Alr_File, Detail);
@@ -162,7 +163,7 @@ package body Alr.Bootstrap is
    procedure Rebuild_With_Current_Project is
    begin
       if Running_In_Session then
-         Rebuild (Os_Lib.Locate_Any_Index_File);
+         Rebuild (Files.Locate_Any_Index_File);
       else
          Rebuild;
       end if;
@@ -201,15 +202,15 @@ package body Alr.Bootstrap is
    ------------------------
 
    function Running_In_Session return Boolean is
-     (OS_Lib.Locate_Any_GPR_File > 0 and Then
-      OS_Lib.Locate_Any_Index_File /= "");
+     (Files.Locate_Any_GPR_File > 0 and Then
+      Files.Locate_Any_Index_File /= "");
 
    ------------------------
    -- Session_Is_Current --
    ------------------------
 
    function Session_Is_Current return Boolean is
-     (Session.Hash = Utils.Hash_File (OS_Lib.Locate_Any_Index_File));
+     (Session.Hash = Utils.Hash_File (Files.Locate_Any_Index_File));
 
    -----------------
    -- Status_Line --

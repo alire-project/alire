@@ -1,4 +1,5 @@
 with Alr.Commands.Compile;
+with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Spawn;
 with Alr.Utils;
@@ -16,7 +17,7 @@ package body Alr.Commands.Run is
 
       declare
          Name       : constant String := Project.Current.Element.Project;
-         Candidates : constant Utils.String_Vector := OS_Lib.Locate_File_Under (OS_Lib.Current_Folder,
+         Candidates : constant Utils.String_Vector := Files.Locate_File_Under (OS_Lib.Current_Folder,
                                                                                 Name, -- FIXME: extensions in other platforms!
                                                                                 Max_Depth => 2);
          --  We look at most in something like ./build/configuration

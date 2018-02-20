@@ -2,8 +2,7 @@ with GNAT.Command_Line;
 
 with Alr.Bootstrap;
 
-private with Alire.OS_Lib;
-
+private with Alr.OS_Lib;
 pragma Warnings (Off);
 private with Alr.Project;
 pragma Warnings (On);
@@ -89,7 +88,7 @@ private
 
    --  Other conveniences for commands:
 
-   subtype Folder_Guard is Alire.OS_Lib.Folder_Guard;
+   subtype Folder_Guard is OS_Lib.Folder_Guard;
 
    function Enter_Project_Folder return Folder_Guard;
    --  If we have a compiled-in project, attempt to find its root above us

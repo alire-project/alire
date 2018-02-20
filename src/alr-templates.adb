@@ -47,7 +47,7 @@ package body Alr.Templates is
    -- Generate_Index --
    --------------------
 
-   procedure Generate_Index (Session_Path, Index_Folder : String) is
+   procedure Generate_Full_Index (Session_Path, Index_Folder : String) is
       File     : File_Type;
       Filename : constant String := "alr-index.ads";
 
@@ -95,13 +95,13 @@ package body Alr.Templates is
       Put_Line (File, "end Alr.Index;");
 
       Close (File);
-   end Generate_Index;
+   end Generate_Full_Index;
 
    ------------------
    -- Generate_Gpr --
    ------------------
 
-   procedure Generate_Gpr (Instance : Alire.Query.Instance;
+   procedure Generate_Agg_Gpr (Instance : Alire.Query.Instance;
                            Root     : Alire.Releases.Release)
    is
       File     : File_Type;
@@ -148,16 +148,16 @@ package body Alr.Templates is
       Put_Line (File, "end " & Prjname & ";");
 
       Close (File);
-   end Generate_Gpr;
+   end Generate_Agg_Gpr;
 
    ----------------------------
    -- Generate_Project_Alire --
    ----------------------------
 
-   procedure Generate_Project_Alire (Instance : Alire.Query.Instance;
-                                     Root     : Alire.Releases.Release;
-                                     Exact    : Boolean := True;
-                                     Filename : String := "")
+   procedure Generate_Prj_Alr (Instance : Alire.Query.Instance;
+                               Root     : Alire.Releases.Release;
+                               Exact    : Boolean := True;
+                               Filename : String := "")
    is
       File : File_Type;
    begin
@@ -166,7 +166,7 @@ package body Alr.Templates is
             Pruned_Instance : Alire.Query.Instance := Instance;
          begin
             Pruned_Instance.Delete (Root.Project);
-            Generate_Project_Alire (Pruned_Instance, Root);
+            Generate_Prj_Alr (Pruned_Instance, Root);
             return;
          end;
       end if;
@@ -218,7 +218,7 @@ package body Alr.Templates is
       Put_Line (File, "end " & Utils.To_Mixed_Case (Root.Project) & "_Alr;");
 
       Close (File);
-   end Generate_Project_Alire;
+   end Generate_Prj_Alr;
 
    ----------------------
    -- Generate_Session --

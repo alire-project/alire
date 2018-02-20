@@ -1,13 +1,44 @@
 with Ada.Directories;
 
-with Alire;
-with Alire.OS_Lib;
-
-with Alr.Utils;
+private with Ada.Finalization;
 
 package Alr.OS_Lib is
 
-   --  OS portable functions
+   --  Process spawning
+
+   function Spawn (Command             : String;
+                   Arguments           : String := "";
+                   Understands_Verbose : Boolean := False;
+                   Force_Quiet         : Boolean := False) return Integer;
+   --  If Understands, an extra -v will be passed on Debug log levels
+   --  If Force_Quiet and not in Debug level, output will be entirely muted (stdout & stderr)
+
+   procedure Spawn (Command             : String;
+                    Arguments           : String := "";
+                    Understands_Verbose : Boolean := False;
+                    Force_Quiet         : Boolean := False);
+   --  Raises CHILD_FAILED if exit code /= 0
+
+   procedure Spawn_Raw (Command : String; Arguments : String := "");
+   --  Direct launch, without any shenanigangs on output, for example for respawning the canonical version
+   --  Raises CHILD_FAILED if exit code /= 0
+
+   procedure Spawn_And_Redirect (Out_File   : String;
+                                 Command    : String;
+                                 Arguments  : String := "";
+                                 Err_To_Out : Boolean := False);
+   --  Redirects output to file
+   --  Raises CHILD_FAILED if exit code /= 0
+
+   type Folder_Guard (<>) is limited private;
+   --  use this type in conjunction with Enter_Folder to ensure that
+   --  the CWD is modified and restored when creating/destroying the Folder_Guard
+
+   function Enter_Folder (Path : String) return Folder_Guard;
+
+   function Stay_In_Current_Folder return Folder_Guard;
+
+   --  OS PORTABLE FUNCTIONS
 
    procedure Bailout (Code : Integer := 0);
 
@@ -17,35 +48,14 @@ package Alr.OS_Lib is
 
    function Current_Command_Line return String;
 
-   function "/" (L, R : String) return String renames Alire.OS_Lib."/";
+   --  PATH BUILDING
+
+   function "/" (L, R : String) return String;
    --  Shorthand for path composition
 
    package Paths is
-      function "/" (L, R : String) return String renames Alire.OS_Lib."/";
+      function "/" (L, R : String) return String renames Alr.OS_Lib."/";
    end Paths;
-
-   --  ALIRE FILE RELATED
-
-   function Locate_File_Under (Folder : String; Name : String; Max_Depth : Natural := 0) return Utils.String_Vector;
-   --  Recursively search for a file
-   --  Depth 0 means given folder only
-   --  Returns all instances found
-
-   function Locate_Index_File (Project : Alire.Project_Name) return String;
-   --  Looks for a "project_alr.ads" file in the current or immediately below folders
-   --  If found, returns it with relative path (usable for opening).
-   --  If not it returns the empty string
-
-   function Locate_Any_GPR_File return Natural;
-   --  Says if there's any *.gpr file in current folder (making the cwd a plausible alr project)
-
-   function Locate_Any_Index_File return String;
-   --  Looks for any "*_alr.ads" file within reach as above
-   --  Empty string if none or more than one
-
-   function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String;
-   --  Looks from current folder upwards until finding project.gpr
-   --  "" if not found
 
 
    --  FOLDER MANAGEMENT
@@ -69,10 +79,21 @@ package Alr.OS_Lib is
    --  Replace, in both file names and contents, Pattern by Replace
    --  Case sensitive!
 
-
    --  UGLY HACKS
 
    function File_Contains_Ignore_Case (Filename, Word : String) return Boolean
      with Pre => (for all C of Word => C /= ' ');
+
+private
+
+   type Folder_Guard (Original_Len : Natural) is new Ada.Finalization.Limited_Controlled with record
+      Original    : String (1 .. Original_Len);
+      Initialized : Boolean := False;
+   end record;
+
+   overriding procedure Finalize (This : in out Folder_Guard);
+
+   function "/" (L, R : String) return String is
+     (Ada.Directories.Compose (L, R));
 
 end Alr.OS_Lib;

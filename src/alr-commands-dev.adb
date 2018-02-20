@@ -1,5 +1,5 @@
 with Alr.Bootstrap;
-with Alr.OS_Lib;
+with Alr.Files;
 with Alr.Spawn;
 
 package body Alr.Commands.Dev is
@@ -11,7 +11,7 @@ package body Alr.Commands.Dev is
    overriding procedure Execute (Cmd : in out Command) is
    begin
       if Cmd.Locate_Alr then
-         Log ("Project file: " & OS_Lib.Locate_Any_Index_File);
+         Log ("Project file: " & Files.Locate_Any_Index_File);
       end if;
 
       if Cmd.Raise_Except then

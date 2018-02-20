@@ -1,4 +1,4 @@
-with Alr.OS_Lib;
+with Alr.Files;
 with Alr.Utils;
 
 package body Alr.Project is
@@ -14,11 +14,11 @@ package body Alr.Project is
          raise Command_Failed;
       end if;
 
-      if OS_Lib.Locate_Index_File (Current.Element.Project) = "" then
-         if OS_Lib.Locate_Any_Index_File /= "" then
+      if Files.Locate_Index_File (Current.Element.Project) = "" then
+         if Files.Locate_Any_Index_File /= "" then
             Log ("Session/Project mismatch:");
             Log ("Root project is " & Utils.Quote (Current.Element.Milestone_Image));
-            Log ("Session file is " & Utils.Quote (OS_Lib.Locate_Any_Index_File));
+            Log ("Session file is " & Utils.Quote (Files.Locate_Any_Index_File));
          else
             Log ("Could not find a valid session file");
          end if;
@@ -31,18 +31,18 @@ package body Alr.Project is
    -- Enter_Root --
    ----------------
 
-   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return Alire.OS_Lib.Folder_Guard is
-      Root_Folder : constant String := OS_Lib.Locate_Above_Project_Folder (Prj);
+   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return OS_Lib.Folder_Guard is
+      Root_Folder : constant String := Files.Locate_Above_Project_Folder (Prj);
    begin
       if Root_Folder /= "" then
          if Root_Folder /= OS_Lib.Current_Folder then
             Log ("Using project folder " & Utils.Quote (Root_Folder));
          end if;
 
-         return Alire.OS_Lib.Enter_Folder (Root_Folder);
+         return OS_Lib.Enter_Folder (Root_Folder);
       else
          Log ("Root folder for project not found", Warning);
-         return Alire.OS_Lib.Stay_In_Current_Folder;
+         return OS_Lib.Stay_In_Current_Folder;
       end if;
    end Enter_Root;
 

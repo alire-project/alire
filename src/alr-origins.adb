@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.OS_Lib;
+with Alr.OS_Lib;
 
 package body Alr.Origins is
 
@@ -14,7 +14,7 @@ package body Alr.Origins is
       pragma Unreferenced (Folder);
    begin
       Trace.Always ("sudo needed to install platform package " & From.Id);
-      Alire.OS_Lib.Spawn_Bypass ("sudo", "apt-get install -q -q -y " & From.Id);
+      OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " & From.Id);
    exception
       when others =>
          Trace.Error ("Installation of native package " & From.Id & " failed");
@@ -37,14 +37,14 @@ package body Alr.Origins is
    procedure Git (From : Alire.Origins.Origin; Folder : String) is
    begin
       Trace.Info ("Checking out: " & From.URL);
-      Alire.OS_Lib.Spawn ("git", "clone -n -q --progress " & From.URL & " " & Folder);
+      OS_Lib.Spawn ("git", "clone -n -q --progress " & From.URL & " " & Folder);
 
       declare
          use Ada.Directories;
          Parent : constant String := Current_Directory;
       begin
          Set_Directory (Folder);
-         Alire.OS_Lib.Spawn ("git", "reset --hard -q " & From.Id);
+         OS_Lib.Spawn ("git", "reset --hard -q " & From.Id);
          Set_Directory (Parent);
       end;
    exception
