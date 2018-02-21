@@ -52,6 +52,27 @@ package body Alr.Commands is
 
    Help_Switch : aliased Boolean := False;
 
+   --------------------
+   -- Fill_Arguments --
+   --------------------
+
+   procedure Fill_Arguments is
+      use GNAT.Command_Line;
+   begin
+      Trace.Always ("X");
+      loop
+         declare
+            Next : constant String := Get_Argument;
+         begin
+            Trace.Always ("=");
+            exit when Next = "";
+            Arguments.Append (Next);
+            Ada.Text_IO.Put_Line ("Arg: " & Next);
+         end;
+      end loop;
+      Trace.Always ("Y");
+   end Fill_Arguments;
+
    -----------
    -- Image --
    -----------
@@ -115,9 +136,9 @@ package body Alr.Commands is
    begin
       Initialize_Option_Scan;
       loop
-         case Getopt ("* h") is
+         case Getopt ("* h -help") is
             when ASCII.NUL => exit;
-            when 'h' => Help_Requested := True;
+            when 'h' | '-' => Help_Requested := True;
             when others => null;
          end case;
       end loop;
@@ -359,6 +380,8 @@ package body Alr.Commands is
       begin
          Initialize_Option_Scan;
          Getopt (Config); -- Parses command line switches
+
+         Fill_Arguments;
 
          if Use_Native then
             Trace.Detail ("Native packages enabled.");

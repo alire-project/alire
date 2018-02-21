@@ -8,6 +8,8 @@ private with Alr.Project;
 pragma Warnings (On);
 --  With it here so it's available to all child command packages
 
+private with Alr.Utils;
+
 package Alr.Commands is
 
    Wrong_Command_Arguments : exception;
@@ -77,6 +79,7 @@ package Alr.Commands is
                       Cmd_Pin,
                       Cmd_Run,
                       Cmd_Search,
+                      Cmd_Test,
                       Cmd_Update,
                       Cmd_Version);
    --  The Cmd_ prefix allows the use of the proper name in child packages which otherwise cause conflict
@@ -85,6 +88,8 @@ package Alr.Commands is
    function Image (N : Cmd_Names) return String;
 
 private
+
+   Arguments : Utils.String_Vector; -- For the benefit of commands
 
    Use_Native : aliased Boolean := False;
    --  This flag signals that platform native packages are to be considered

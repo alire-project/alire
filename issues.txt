@@ -10,6 +10,7 @@ Dependency resolution policies: newest vs oldest (useful for testing?)
 Licenses
 Search by property
 Image of Requisites
+Reduce verbosity on standard level
 
 Fixes/refactorings
 ==================
