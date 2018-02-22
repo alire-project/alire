@@ -43,7 +43,7 @@ package body Alr.Spawn is
                   Commands.Image (Cmd) & " " & Extra_Switches & " " & Args);
       else
          Warn_Outdated;
-         raise Command_Failed;
+         raise Child_Failed;
       end if;
    end Alr;
 
@@ -67,7 +67,7 @@ package body Alr.Spawn is
          -- NOTE: THIS IS THE END OF EXECUTION OF THE CALLING alr
       else
          Warn_Outdated;
-         raise Command_Failed;
+         raise Child_Failed;
       end if;
    end Updated_Alr_Without_Return;
 
@@ -87,7 +87,7 @@ package body Alr.Spawn is
                        Force_Quiet,
                        Summary) /= 0
       then
-         raise Command_Failed;
+         raise Child_Failed;
       end if;
    end Command;
 

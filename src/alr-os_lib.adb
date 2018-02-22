@@ -207,7 +207,9 @@ package body Alr.OS_Lib is
          end return;
       end Sanitize;
 
-      Indicator : constant String := "/-\|/-\|";
+--        Indicator : constant String := "/-\|/-\|";
+--        Indicator : constant String := "+x";
+      Indicator : constant String := ".oOo";
       type Indicator_Mod is mod Indicator'Length;
       Pos       : Indicator_Mod := 0;
 
@@ -234,11 +236,14 @@ package body Alr.OS_Lib is
             end if;
 
             declare
-               Progress : constant String :=
+               Full_Progress : constant String :=
                             Ada.Characters.Latin_1.CR &
                             Simple_Command & ": " &
                             Indicator (Integer (Pos) + 1) & " " &
-                            To_String (Last_Line);
+                                 To_String (Last_Line);
+               Progress      : constant String := Full_Progress (Full_Progress'First ..
+                                                                   Full_Progress'First - 1 +
+                                                                   Natural'Min (79, Full_Progress'Length));
             begin
                Max_Len := Natural'Max (Max_Len, Progress'Length);
                Put (Progress &

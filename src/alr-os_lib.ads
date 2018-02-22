@@ -67,6 +67,7 @@ package Alr.OS_Lib is
                               Recurse : Boolean := False);
    --  Traverse all items in a folder, optionally recursively
    --  If recursively, the directory entry is passed before entering it
+   --  "." and ".." are ignored
 
    procedure Copy_File (Src_Folder, Dst_Parent_Folder : String);
    --  Copies a folder and its contents to within another location

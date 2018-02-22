@@ -4,13 +4,11 @@ Locate project when in tree
 
 Features
 ========
-Test framework (report with OS/Compiler, build success for all libs)
 Self-test of native detection
 Dependency resolution policies: newest vs oldest (useful for testing?)
 Licenses
 Search by property
 Image of Requisites
-Reduce verbosity on standard level
 
 Fixes/refactorings
 ==================

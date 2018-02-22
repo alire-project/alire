@@ -2,12 +2,10 @@ with GNAT.Command_Line;
 
 with Alr.Bootstrap;
 
-private with Alr.OS_Lib;
-pragma Warnings (Off);
-private with Alr.Project;
-pragma Warnings (On);
---  With it here so it's available to all child command packages
+private with Ada.Text_IO;
 
+private with Alr.OS_Lib;
+pragma Warnings (Off); private with Alr.Project; pragma Warnings (On);
 private with Alr.Utils;
 
 package Alr.Commands is
@@ -70,6 +68,9 @@ package Alr.Commands is
 
    -- Declared here so they are available to the help metacommand child package and Spawn
 
+   procedure Print_Project_Version_Sets;
+   --  How to specify project version sets (to be used in specific command help)
+
    type Cmd_Names is (Cmd_Build,
                       Cmd_Clean,
                       Cmd_Compile,
@@ -98,7 +99,7 @@ private
    function Num_Arguments return Natural; -- Actual arguments besides the command
    function Argument (I : Positive) return String; -- May raise if not existing
 
-   --  Other switches
+   --  Other options
 
    Use_Native : aliased Boolean := False;
    --  This flag signals that platform native packages are to be considered
@@ -110,12 +111,17 @@ private
    procedure Execute_By_Name (Cmd : Cmd_Names);
    -- Execute a command with the externally given command line
 
-   --  Other conveniences for commands:
+   --  Folder guards conveniences for commands:
 
    subtype Folder_Guard is OS_Lib.Folder_Guard;
 
    function Enter_Project_Folder return Folder_Guard;
    --  If we have a compiled-in project, attempt to find its root above us
    --  Does nothing if we don't have a project, or if the root is not found
+
+   --  Common generalities
+
+   procedure New_Line (Spacing : Ada.Text_IO.Positive_Count := 1) renames Ada.Text_IO.New_Line;
+   procedure Put_Line (S : String) renames Ada.Text_IO.Put_Line;
 
 end Alr.Commands;

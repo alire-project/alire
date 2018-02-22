@@ -1,8 +1,4 @@
 with Ada.Directories;
-with Ada.Strings;
-with Ada.Strings.Fixed;
-with Ada.Strings.Maps;
-with Ada.Text_IO;
 
 with Alire.Dependencies.Vectors;
 with Alire.Index;
@@ -11,6 +7,7 @@ with Alire.Query;
 with Alr.Checkout;
 with Alr.Commands.Compile;
 with Alr.OS;
+with Alr.Parsers;
 
 with Semantic_Versioning;
 
@@ -20,12 +17,9 @@ package body Alr.Commands.Get is
 
    overriding procedure Display_Help_Details (Cmd : Command) is
       pragma Unreferenced (Cmd);
-      use Ada.Text_IO;
    begin
-      New_Line;
-      Put_Line (" project=version" & ASCII.HT & "Get exact version");
-      Put_Line (" project^version" & ASCII.HT & "Get newest major-compatible version");
-      Put_Line (" project~version" & ASCII.HT & "Get newest minor-compatible version");
+      Ada.Text_IO.New_Line;
+      Print_Project_Version_Sets;
    end Display_Help_Details;
 
    ------------
@@ -138,36 +132,7 @@ package body Alr.Commands.Get is
       end if;
 
       declare
-         use Ada.Directories;
-         use Ada.Strings;
-         use Ada.Strings.Fixed;
-         use Ada.Strings.Maps;
-
-         --  Requested project with optional restriction
-         Request : constant String := Argument (1);
-
-         --  Locate and identify the version operator
-         Op_Pos  : constant Natural := Index (Request, To_Set ("=^~"), Inside);
-
-         --  Ready to separate name from version, and operator if existing
-         Name    : constant Alire.Project_Name := (if Op_Pos > Request'First
-                                                   then Request (Request'First .. Op_Pos - 1)
-                                                   else Request);
-
-         Op      : constant Character := (if Op_Pos > Request'First
-                                          then Request (Op_Pos)
-                                          else ASCII.NUL);
-
-         V       : constant Semver.Version := (if Op_Pos > Request'First
-                                               then Semver.Relaxed (Request (Op_Pos + 1 .. Request'Last))
-                                               else Semver.V ("0.0.0"));
-
-         Versions : constant Semver.Version_Set := (case Op is
-                                                       when ASCII.NUL => Semver.Any,
-                                                       when '='       => Semver.Exactly (V),
-                                                       when '^'       => Semver.Within_Major (V),
-                                                       when '~'       => Semver.Within_Minor (V),
-                                                       when others    => raise Wrong_Command_Arguments with "Unrecognized version operator: " & Op);
+         Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (1));
       begin
          if Cmd.Info and Cmd.Compile then
             Trace.Error ("Only one of --compile and --info allowed");
@@ -175,9 +140,9 @@ package body Alr.Commands.Get is
          end if;
 
          if Cmd.Info then
-            Report (Name, Versions);
+            Report (Allowed.Project, Allowed.Versions);
          else
-            Retrieve (Cmd, Name, Versions);
+            Retrieve (Cmd, Allowed.Project, Allowed.Versions);
          end if;
       end;
    end Execute;

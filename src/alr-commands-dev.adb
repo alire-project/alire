@@ -39,7 +39,7 @@ package body Alr.Commands.Dev is
    begin
       Define_Switch (Config,
                      Cmd.Locate_Alr'Access,
-                     "--locate",
+                     "", "--locate",
                      "Tries to locate a project file in scope");
 
       Define_Switch (Config,

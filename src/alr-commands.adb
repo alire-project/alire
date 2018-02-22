@@ -15,6 +15,7 @@ with Alr.Commands.Pin;
 with Alr.Commands.Reserved;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
+with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Devel;
@@ -40,6 +41,7 @@ package body Alr.Commands is
                        Cmd_Pin      => new Pin.Command,
                        Cmd_Run      => new Run.Command,
                        Cmd_Search   => new Search.Command,
+                       Cmd_Test     => new Test.Command,
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
                        others       => new Reserved.Command);
@@ -126,7 +128,6 @@ package body Alr.Commands is
                      Log_Detail'Access,
                      "-v",
                      Help => "Be more verbose");
-
       Define_Switch (Config,
                      Log_Debug'Access,
                      "-d",
@@ -448,5 +449,19 @@ package body Alr.Commands is
 --          Display_Usage (Cmd);
          OS_Lib.Bailout (1);
    end Execute_By_Name;
+
+   --------------------------------
+   -- Print_Project_Version_Sets --
+   --------------------------------
+
+   procedure Print_Project_Version_Sets is
+   begin
+      Put_Line (" Project selection syntax");
+      New_Line;
+      Put_Line (" project        " & ASCII.HT & "Get newest version");
+      Put_Line (" project=version" & ASCII.HT & "Get exact version");
+      Put_Line (" project^version" & ASCII.HT & "Get newest major-compatible version");
+      Put_Line (" project~version" & ASCII.HT & "Get newest minor-compatible version");
+   end Print_Project_Version_Sets;
 
 end Alr.Commands;
