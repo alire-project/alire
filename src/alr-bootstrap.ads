@@ -52,8 +52,8 @@ package Alr.Bootstrap is
 private
 
    Alire_Minimal_Dependency : constant Alire.Index.Dependencies :=
-                                Alire.Index.At_Least (Alire.Index.Alire.Latest);
+                                Alire.Index.At_Least (Alire.Index.Alire.V_0_1);
    Alire_Minimal_Instance   : constant Alire.Query.Instance :=
-                                Alire.Containers.To_Map (Alire.Index.Alire.Latest);
+                                Alire.Containers.To_Map (Alire.Index.Alire.V_0_1);
 
 end Alr.Bootstrap;
