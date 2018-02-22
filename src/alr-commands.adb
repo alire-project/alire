@@ -1,4 +1,3 @@
-with Ada.Command_Line;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -22,7 +21,6 @@ with Alr.Devel;
 with Alr.Hardcoded;
 with Alr.Native;
 with Alr.OS;
-with Alr.Utils;
 
 with GNAT.OS_Lib;
 
@@ -52,27 +50,6 @@ package body Alr.Commands is
 
    Help_Switch : aliased Boolean := False;
 
-   --------------------
-   -- Fill_Arguments --
-   --------------------
-
-   procedure Fill_Arguments is
-      use GNAT.Command_Line;
-   begin
-      Trace.Always ("X");
-      loop
-         declare
-            Next : constant String := Get_Argument;
-         begin
-            Trace.Always ("=");
-            exit when Next = "";
-            Arguments.Append (Next);
-            Ada.Text_IO.Put_Line ("Arg: " & Next);
-         end;
-      end loop;
-      Trace.Always ("Y");
-   end Fill_Arguments;
-
    -----------
    -- Image --
    -----------
@@ -88,6 +65,46 @@ package body Alr.Commands is
    --------------
 
    function Is_Quiet return Boolean is (Log_Quiet);
+
+   ------------------
+   -- What_Command --
+   ------------------
+
+   function What_Command return Cmd_Names is
+   begin
+      return Cmd_Names'Value ("CMD_" & What_Command);
+   end What_Command;
+
+   ------------------
+   -- What_Command --
+   ------------------
+
+   function What_Command return String is
+   begin
+      if Raw_Arguments.Is_Empty then
+         raise Constraint_Error with "No command given";
+      else
+         return Raw_Arguments.First_Element;
+      end if;
+   end What_Command;
+
+   -------------------
+   -- Num_Arguments --
+   -------------------
+
+   function Num_Arguments return Natural is
+   begin
+      return Natural (Raw_Arguments.Length) - 1;
+   end Num_Arguments;
+
+   --------------
+   -- Argument --
+   --------------
+
+   function Argument (I : Positive) return String is
+   begin
+      return Raw_Arguments.Element (I + 1);
+   end Argument;
 
    -------------------------
    -- Set_Global_Switches --
@@ -124,30 +141,9 @@ package body Alr.Commands is
    begin
       return Utils.Trim ((if Log_Debug  then "-d " else "") &
                          (if Log_Detail then "-v " else "") &
-                         (if Log_Quiet  then "-q " else ""));
+                         (if Log_Quiet  then "-q " else "") &
+                         (if Use_Native then "-n " else ""));
    end Global_Switches;
-
-   ---------------------------
-   -- Check_If_Command_Help --
-   ---------------------------
-
-   procedure Check_If_Command_Help (Cmd : Cmd_Names) is
-      Help_Requested : Boolean := False;
-   begin
-      Initialize_Option_Scan;
-      loop
-         case Getopt ("* h -help") is
-            when ASCII.NUL => exit;
-            when 'h' | '-' => Help_Requested := True;
-            when others => null;
-         end case;
-      end loop;
-
-      if Help_Requested then
-         Display_Usage (Cmd);
-         OS_Lib.Bailout (0);
-      end if;
-   end Check_If_Command_Help;
 
    --------------------------
    -- Create_Alire_Folders --
@@ -168,14 +164,14 @@ package body Alr.Commands is
    begin
       New_Line;
       Put_Line ("Ada Library Repository manager (alr)");
-      Put_Line ("Usage : alr command [switches] [arguments]");
+      Put_Line ("Usage : alr [global options] command [command options] [arguments]");
 
       New_Line;
 
       Display_Valid_Commands;
 
       New_Line;
-      Put_Line ("Use ""alr <command> -h"" for more information about a command.");
+      Put_Line ("Use ""alr help <command>"" for more information about a command.");
       New_Line;
    end Display_Usage;
 
@@ -189,7 +185,8 @@ package body Alr.Commands is
       Canary2 : Command_Line_Configuration;
    begin
       Set_Usage (Config,
-                 Image (Cmd) & " [options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
+                 "[global options] " &
+                   Image (Cmd) & " [command options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
                  Help => " ");
 
       -- Ugly hack that goes by GNAT
@@ -215,6 +212,19 @@ package body Alr.Commands is
       Dispatch_Table (Cmd).Display_Help_Details;
 
       New_Line;
+   end Display_Usage;
+
+   -------------------
+   -- Display_Usage --
+   -------------------
+
+   procedure Display_Usage (Cmd : String) is
+   begin
+      Display_Usage (Cmd_Names'Value ("cmd_" & Cmd));
+   exception
+      when Constraint_Error =>
+         Trace.Error ("Unrecognized help topic: " & Cmd);
+         OS_Lib.Bailout (1);
    end Display_Usage;
 
    ------------------
@@ -307,58 +317,115 @@ package body Alr.Commands is
       Project.Check_Valid;             -- Might raise Command_Failed
    end Requires_Project;
 
+   --------------------
+   -- Fill_Arguments --
+   --------------------
+
+   procedure Fill_Arguments (Switch    : String;
+                             Parameter : String;
+                             Section   : String)
+   is
+   -- For some reason, Get_Argument is not working
+   -- This allows capturing any unknown switch under the wildcard class as an argument
+      pragma Unreferenced (Parameter, Section);
+   begin
+      Raw_Arguments.Append (Switch);
+      Trace.Debug ("Argument: " & Switch);
+   end Fill_Arguments;
+
+   ------------------------
+   -- Parse_Command_Line --
+   ------------------------
+
+   procedure Parse_Command_Line is
+   --  Once this procedure returns, the command, arguments and switches will be ready for use
+   --  Otherwise, appropriate help is shown and it does not return
+
+      Global_Config  : Command_Line_Configuration;
+      Command_Config : Command_Line_Configuration;
+   begin
+      Set_Usage (Global_Config,
+                 "[global options] <command> [command options] [arguments]",
+                 Help => " ");
+
+      Set_Global_Switches (Global_Config);
+      Define_Switch (Global_Config, "*"); -- To avoid erroring on command-specific switches
+      Initialize_Option_Scan;
+      Getopt (Global_Config, Callback => Fill_Arguments'Access);
+
+      --  At this point the command and all unknown switches are in Raw_Arguments
+
+      if Raw_Arguments.Is_Empty then
+         Trace.Error ("No command given");
+         Display_Usage;
+         OS_Lib.Bailout (1);
+      elsif Raw_Arguments.First_Element = "help" then
+         if Num_Arguments >= 1 then
+            Display_Usage (Argument (1));
+            Os_Lib.Bailout (0);
+         else
+            Trace.Error ("Please specific a help topic");
+            OS_Lib.Bailout (1);
+         end if;
+      end if;
+
+      declare
+         Cmd : constant Cmd_Names := What_Command; -- Might raise if invalid, if so we are done
+      begin
+         Raw_Arguments := Utils.String_Vectors.Empty_Vector; -- Reinitialize arguments
+         Set_Global_Switches (Command_Config);
+         Dispatch_Table (Cmd).Setup_Switches (Command_Config); -- Specific to command
+
+         --  Validate command + global configuration:
+         Initialize_Option_Scan;
+         Getopt (Command_Config);
+
+         --  If OK, retrieve all arguments with the final, command-specific proper configuration
+         Define_Switch (Command_Config, "*");
+         Getopt (Command_Config, Callback => Fill_Arguments'Access);
+         Getopt (Command_Config);
+      end;
+
+      -- At this point everything should be OK
+
+   exception
+      when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
+         --  Getopt has already displayed some help
+         Ada.Text_IO.New_Line;
+         Ada.Text_IO.Put_Line ("Use ""alr help <command>"" for specific command help");
+         OS_Lib.Bailout (1);
+      when Constraint_Error =>
+         if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
+            Log ("Unrecognized global option: " & Raw_Arguments (1), Error);
+         else
+            Log ("Unrecognized command: " & Raw_Arguments (1), Error);
+         end if;
+         Display_Usage;
+         OS_Lib.Bailout (1);
+   end Parse_Command_Line;
+
    -------------
    -- Execute --
    -------------
 
    procedure Execute is
-      use Ada.Command_Line;
-
-      Cmd   : Cmd_Names;
-      Pos : Natural;
    begin
-      if Argument_Count < 1 or else Argument (1) = "-h" or else Argument (1) = "--help" then
-         Display_Usage;
-         return;
-      else
-         Pos := 1; -- Points to first possible command argument
-         loop
-            exit when Pos > Argument_Count or else
-              (Argument (Pos) (Argument (Pos)'first)) /= '-';
-            Pos := Pos + 1;
-         end loop;
+      Parse_Command_Line;
 
-         if Pos > Argument_Count then
-            Log ("No command given", Error);
-            Display_Usage;
-            return;
-         end if;
+      Create_Alire_Folders;
 
-         begin
-            Cmd := Cmd_Names'Value ("cmd_" & Argument (Pos));
-         exception
-            when Constraint_Error =>
-               Log ("Unrecognized command: " & Argument (Pos), Error);
-               New_Line;
-               Display_Usage;
-               OS_Lib.Bailout (Pos);
-         end;
-
-         Create_Alire_Folders;
-
-         begin
-            Execute_By_Name (Cmd);
-            Log ("alr " & Argument (Pos) & " done", Detail);
-         exception
-            when Child_Failed | Command_Failed =>
-               Log ("alr " & Argument (Pos) & " unsuccessful", Warning);
-               if Alire.Log_Level = Debug then
-                  raise;
-               else
-                  OS_Lib.Bailout (1);
-               end if;
-         end;
-      end if;
+      begin
+         Execute_By_Name (What_Command);
+         Log ("alr " & What_Command & " done", Detail);
+      exception
+         when Child_Failed | Command_Failed =>
+            Log ("alr " & What_Command & " unsuccessful", Warning);
+            if Alire.Log_Level = Debug then
+               raise;
+            else
+               OS_Lib.Bailout (1);
+            end if;
+      end;
    end Execute;
 
    ---------------------
@@ -366,74 +433,20 @@ package body Alr.Commands is
    ---------------------
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
-      Global_Config, Command_Config, Config : Command_Line_Configuration;
    begin
-      Set_Global_Switches (Config);
-      Set_Global_Switches (Global_Config);
-
-      Dispatch_Table (Cmd).Setup_Switches (Config);
-      Dispatch_Table (Cmd).Setup_Switches (Command_Config);
-
-      --  We do a pre-look for -h to avoid the pre-defined output of procedure Getopt
-      Check_If_Command_Help (Cmd); -- Might not return
-
-      begin
-         Initialize_Option_Scan;
-         Getopt (Config); -- Parses command line switches
-
-         Fill_Arguments;
-
-         if Use_Native then
-            Trace.Detail ("Native packages enabled.");
-            Native.Autodetect;
-            Native.Add_To_Index;
-         end if;
-
-         Log (Image (Cmd) & ":", Detail);
-         Dispatch_Table (Cmd).Execute;
-      exception
-         when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
-            --  Getopt has already displayed some help
-            OS_Lib.Bailout (1);
-
-         when Wrong_Command_Arguments =>
-            Display_Usage (Cmd);
-            OS_Lib.Bailout (1);
-      end;
-   end Execute_By_Name;
-
-   ------------------------------
-   -- Last_Non_Switch_Argument --
-   ------------------------------
-
-   function Last_Non_Switch_Argument return String is
-      use Ada.Command_Line;
-      First, Second : Natural := 0; -- Positions of first and second non-switch arguments
-
-      function Is_Switch (S : String) return Boolean is (S'Length /= 0 and then S (S'First) = '-');
-   begin
-      if Argument_Count < 2 then
-         raise Wrong_Command_Arguments;
-      else
-         for I in 1 .. Argument_Count loop
-            if not Is_Switch (Argument (I)) then
-               if First = 0 then
-                  First := I;
-               elsif Second = 0 then
-                  Second := I;
-               else
-                  --  Too many arguments
-                  raise Wrong_Command_Arguments with "At least 3 non-switch arguments found";
-               end if;
-            end if;
-         end loop;
-
-         if Second > 0 then
-            return Argument (Second);
-         else
-            raise Wrong_Command_Arguments with "Missing 2nd non-switch argument";
-         end if;
+      if Use_Native then
+         Trace.Detail ("Native packages enabled.");
+         Native.Autodetect;
+         Native.Add_To_Index;
       end if;
-   end Last_Non_Switch_Argument;
+
+      Log (Image (Cmd) & ":", Detail);
+      Dispatch_Table (Cmd).Execute;
+
+   exception
+      when Wrong_Command_Arguments =>
+--          Display_Usage (Cmd);
+         OS_Lib.Bailout (1);
+   end Execute_By_Name;
 
 end Alr.Commands;

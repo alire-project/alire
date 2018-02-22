@@ -89,7 +89,16 @@ package Alr.Commands is
 
 private
 
-   Arguments : Utils.String_Vector; -- For the benefit of commands
+   --  Facilities for command/argument identification. These are available to commands.
+
+   Raw_Arguments : Utils.String_Vector; -- Raw arguments, first one is the command
+
+   function What_Command return String;
+   function What_Command return Cmd_Names;
+   function Num_Arguments return Natural; -- Actual arguments besides the command
+   function Argument (I : Positive) return String; -- May raise if not existing
+
+   --  Other switches
 
    Use_Native : aliased Boolean := False;
    --  This flag signals that platform native packages are to be considered
@@ -100,11 +109,6 @@ private
 
    procedure Execute_By_Name (Cmd : Cmd_Names);
    -- Execute a command with the externally given command line
-
-   function Last_Non_Switch_Argument return String;
-   --  Returns the last command-line argument, unless...
-   --  If it begins with "-" (it's a switch) or there aren't at least three arguments,
-   --    raise Wrong_Command_Arguments
 
    --  Other conveniences for commands:
 

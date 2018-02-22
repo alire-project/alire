@@ -132,6 +132,11 @@ package body Alr.Commands.Get is
    begin
       Requires_No_Bootstrap;
 
+      if Num_Arguments /= 1 then
+         Trace.Error ("No project requested");
+         raise Wrong_Command_Arguments with "One project to get expected";
+      end if;
+
       declare
          use Ada.Directories;
          use Ada.Strings;
@@ -139,7 +144,7 @@ package body Alr.Commands.Get is
          use Ada.Strings.Maps;
 
          --  Requested project with optional restriction
-         Request : constant String := Last_Non_Switch_Argument;
+         Request : constant String := Argument (1);
 
          --  Locate and identify the version operator
          Op_Pos  : constant Natural := Index (Request, To_Set ("=^~"), Inside);

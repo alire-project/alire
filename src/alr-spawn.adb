@@ -54,7 +54,7 @@ package body Alr.Spawn is
    procedure Updated_Alr_Without_Return is
    begin
       if Is_Executable_File (Hardcoded.Alr_Exe_File) then
-         Log ("...");
+         Trace.Detail ("...");
          begin
             OS_Lib.Spawn_Raw (Hardcoded.Alr_Exe_File, OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);

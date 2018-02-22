@@ -21,7 +21,7 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      Name : constant String := Last_Non_Switch_Argument;
+      Name : constant String := Argument (1);
    begin
       if Cmd.No_Skel then
          Ada.Directories.Create_Directory (Name);
@@ -72,43 +72,54 @@ package body Alr.Commands.Init is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      Name : constant String := Last_Non_Switch_Argument;
    begin
+      if Num_Arguments /= 1 then
+         Trace.Error ("No project name given");
+         raise Wrong_Command_Arguments;
+      end if;
+
       if not (Cmd.Bin or Cmd.Lib) then
          Log ("Please provide either --bin or --lib");
          raise Command_Failed;
       end if;
 
-      if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
-         Log ("The project name is invalid, as it is used internally by alr; please choose another name");
-         raise Command_Failed;
-      end if;
+      --  Validation finished
 
-      if Ada.Directories.Exists (Name) then
-         Log ("Folder " & Utils.Quote (Name) & " already exists, not proceeding.");
-         raise Command_Failed;
-      end if;
+      declare
+         Name : constant String := Argument (1);
+      begin
 
-      --  Create and enter folder for generation, if it didn't happen already
-      if Bootstrap.Running_In_Session then
-         if Bootstrap.Session_Is_Current and then Name = Project.Name then
-            Log ("Already in working copy, skipping initialization");
-         else
-            Log ("Cannot initialize a project inside another alr project, stopping.");
+         if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
+            Log ("The project name is invalid, as it is used internally by alr; please choose another name");
             raise Command_Failed;
          end if;
-      else
-         Generate (Cmd);
-         Log ("Project initialization completed");
-      end if;
 
-      if Cmd.Build then
-         declare
-            Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Name) with Unreferenced;
-         begin
-            Spawn.Alr (Cmd_Build);
-         end;
-      end if;
+         if Ada.Directories.Exists (Name) then
+            Log ("Folder " & Utils.Quote (Name) & " already exists, not proceeding.");
+            raise Command_Failed;
+         end if;
+
+         --  Create and enter folder for generation, if it didn't happen already
+         if Bootstrap.Running_In_Session then
+            if Bootstrap.Session_Is_Current and then Name = Project.Name then
+               Log ("Already in working copy, skipping initialization");
+            else
+               Log ("Cannot initialize a project inside another alr project, stopping.");
+               raise Command_Failed;
+            end if;
+         else
+            Generate (Cmd);
+            Log ("Project initialization completed");
+         end if;
+
+         if Cmd.Build then
+            declare
+               Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Name) with Unreferenced;
+            begin
+               Spawn.Alr (Cmd_Build);
+            end;
+         end if;
+      end;
    end Execute;
 
    --------------------

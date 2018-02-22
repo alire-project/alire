@@ -1,4 +1,3 @@
-with Ada.Command_Line;
 with Ada.Strings.Fixed;
 
 with Alire.Index;
@@ -15,7 +14,6 @@ package body Alr.Commands.Search is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      use Ada.Command_Line;
       use Ada.Strings.Fixed;
 
       Found   : Natural := 0;
@@ -32,18 +30,14 @@ package body Alr.Commands.Search is
    begin
       Requires_No_Bootstrap;
 
-      if Argument_Count = 1 then -- no search term
-         Log ("Please provide a search term, or use --list to show all available releases");
+      if Num_Arguments = 0 and then not Cmd.List then -- no search term, nor --list
+         Trace.Error ("Please provide a search term, or use --list to show all available releases");
          raise Wrong_Command_Arguments;
       end if;
 
-      if Cmd.List and then Argument (Argument_Count) /= "--list" then
-         Log ("Listing is incompatible with searching");
+      if Cmd.List and then Num_Arguments /= 0 then
+         Trace.Error ("Listing is incompatible with searching");
          raise Wrong_Command_Arguments;
-      end if;
-
-      if not Cmd.List and then Argument (Argument_Count) = "" then
-         Cmd.List := True;
       end if;
 
       --  End of option verification, start of search
@@ -55,7 +49,7 @@ package body Alr.Commands.Search is
          end loop;
       else
          declare
-            Pattern : constant String := Last_Non_Switch_Argument;
+            Pattern : constant String := Argument (1);
          begin
             if not Cmd.List then
                Log ("Searching " & Utils.Quote (Pattern) & "...", Detail);
