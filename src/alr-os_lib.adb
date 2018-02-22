@@ -248,6 +248,7 @@ package body Alr.OS_Lib is
                Max_Len := Natural'Max (Max_Len, Progress'Length);
                Put (Progress &
                       String'(1 .. Max_Len - Progress'Length => ' ')); -- Wipe remainder of old lines
+               Flush;
                Pos := Pos + 1;
             end;
 
@@ -262,15 +263,17 @@ package body Alr.OS_Lib is
          Close (Pid, Code);
 
          declare
-            Line : constant String :=
-                     Ada.Characters.Latin_1.CR & Simple_Command &
-            (if Code = 0
-             then " completed " & (if Summary /= "" then "[" & Summary & "]" else "")
-             else " ended with error (exit code" & Code'Img & ") " &
-                     (if Summary /= "" then "[NOT " & Summary & "]" else ""));
+--              Line : constant String :=
+--                       Ada.Characters.Latin_1.CR & Simple_Command &
+--              (if Code = 0
+--               then " completed " & (if Summary /= "" then "[" & Summary & "]" else "")
+--               else " ended with error (exit code" & Code'Img & ") " &
+--                       (if Summary /= "" then "[NOT " & Summary & "]" else ""));
+            Line : constant String := "";
          begin
             Max_Len := Natural'Max (Max_Len, Simple_Command'length + 2); -- If there weren't any output
-            Put_Line (Line & String'(1 .. Max_Len - Line'Length => ' '));
+            Put (ASCII.CR & String'(1 .. Max_Len - Line'Length => ' ') & ASCII.CR);
+            Flush;
          end;
       end return;
    end Spawn_With_Progress;

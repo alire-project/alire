@@ -83,7 +83,8 @@ package body Alr.Commands.Test is
 
       Trace.Info ("PASSED:" & Passed'Img &
                     " FAILED:" & Failed'Img &
-                    " SKIPPED:" & Skipped'Img);
+                    " SKIPPED:" & Skipped'Img &
+                    " Done");
    end Do_Test;
 
    -------------
