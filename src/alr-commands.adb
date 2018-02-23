@@ -19,6 +19,7 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Devel;
+with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Native;
 with Alr.OS;
@@ -272,12 +273,21 @@ package body Alr.Commands is
 
    function Enter_Project_Folder return Folder_Guard is
    begin
-      if Project.Current.Is_Empty then
-         Log ("Not entering project folder, no valid project", Debug);
-         return OS_Lib.Stay_In_Current_Folder;
-      elsif not Bootstrap.Running_In_Session or else not Bootstrap.Session_Is_Current then
-         Trace.Debug ("Not entering project folder, outdated session");
-         return OS_Lib.Stay_In_Current_Folder;
+      if Project.Current.Is_Empty or Else
+        not Bootstrap.Running_In_Session or Else
+        not Bootstrap.Session_Is_Current then
+         --  Best guess
+         declare
+            Candidate_Folder : constant String := Files.Locate_Above_Candidate_Project_Folder;
+         begin
+            if Candidate_Folder /= "" then
+               Trace.Detail ("Using candidate project root: " & Candidate_Folder);
+               return OS_Lib.Enter_Folder (Candidate_Folder);
+            else
+               Trace.Debug ("Not entering project folder, no valid project root found");
+               return OS_Lib.Stay_In_Current_Folder;
+            end if;
+         end;
       else
          return Project.Enter_Root;
       end if;

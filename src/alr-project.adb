@@ -32,11 +32,12 @@ package body Alr.Project is
    ----------------
 
    function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return OS_Lib.Folder_Guard is
-      Root_Folder : constant String := Files.Locate_Above_Project_Folder (Prj);
+      Start_Folder : constant String := OS_Lib.Current_Folder;
+      Root_Folder  : constant String := Files.Locate_Above_Project_Folder (Prj);
    begin
       if Root_Folder /= "" then
-         if Root_Folder /= OS_Lib.Current_Folder then
-            Log ("Using project folder " & Utils.Quote (Root_Folder));
+         if Root_Folder /= Start_Folder then
+            Trace.Detail ("Using project folder " & Utils.Quote (Root_Folder));
          end if;
 
          return OS_Lib.Enter_Folder (Root_Folder);

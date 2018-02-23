@@ -171,6 +171,31 @@ package body Alr.Files is
       return Natural (Candidates.Length);
    end Locate_Any_GPR_File;
 
+   -------------------------------------------
+   -- Locate_Above_Candidate_Project_Folder --
+   -------------------------------------------
+
+   function Locate_Above_Candidate_Project_Folder return String is
+      use Ada.Directories;
+      use Alr.OS_Lib;
+      use GNAT.OS_Lib;
+
+      Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
+   begin
+      Trace.Debug ("Starting root search at " & Current_Folder);
+      loop
+         if Locate_Any_GPR_File > 0 and then Locate_Any_Index_File /= "" then
+            return Current_Folder;
+         else
+            Set_Directory (Containing_Directory (Current_Directory));
+            Trace.Debug ("Going up to " & Current_Folder);
+         end if;
+      end loop;
+   exception
+      when Use_Error =>
+         return ""; -- There's no containing folder (hence we're at root)
+   end Locate_Above_Candidate_Project_Folder;
+
    ---------------------------
    -- Locate_Project_Folder --
    ---------------------------

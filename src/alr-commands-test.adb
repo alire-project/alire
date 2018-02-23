@@ -113,7 +113,7 @@ package body Alr.Commands.Test is
          begin
             null; -- Just check that no exception is raised
          end;
-                           end loop;
+      end loop;
 
       --  Check in empty folder!
       if Cmd.Cont then
@@ -122,8 +122,12 @@ package body Alr.Commands.Test is
          Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      if Test_All then
-         Trace.Detail ("Testing all releases");
+      if Test_All Then
+         if Cmd.Full then
+            Trace.Detail ("Testing all releases");
+         else
+            Trace.Always ("No releases specified; use --full to test'em all!");
+         end if;
       end if;
 
       --  Pre-find candidates to not have duplicate tests if overlapping requested
@@ -166,7 +170,12 @@ package body Alr.Commands.Test is
       Define_Switch (Config,
                      Cmd.Cont'Access,
                      Long_Switch => "--continue",
-                     Help => "Skip compilation of releases already in folder");
+                     Help        => "Skip compilation of releases already in folder");
+
+      Define_Switch (Config,
+                     Cmd.Full'Access,
+                     Long_Switch => "--full",
+                     Help        => "Select all releases");
 
       Define_Switch (Config,
                      Cmd.Jobs'Access,

@@ -22,11 +22,16 @@ package Alr.Files is
    --  Says if there's any *.gpr file in current folder (making the cwd a plausible alr project)
 
    function Locate_Any_Index_File return String;
-   --  Looks for any "*_alr.ads" file within reach as above
+   --  Looks for any "*_alr.ads" file within reach in cwd or immediate children
    --  Empty string if none or more than one
+
+   function Locate_Above_Candidate_Project_Folder return String;
+   --  Looks in current folder and upwards until finding a folder with .gpr files and an alr metafile in sight
+   --  Returns its path if found, "" otherwise
 
    function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String;
    --  Looks from current folder upwards until finding project.gpr
+   --  Returns path to folder containing project file
    --  "" if not found
 
 end Alr.Files;

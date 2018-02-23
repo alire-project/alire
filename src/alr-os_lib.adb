@@ -389,14 +389,14 @@ package body Alr.OS_Lib is
       Current : constant String := Ada.Directories.Current_Directory;
    begin
       return Guard : Folder_Guard (Current'Length) do
-         if Path /= Current then
-            Guard.Original := Current;
+         Guard.Original := Current; -- Always store, we must have been asked to ensure return to current folder!
+         Guard.Initialized := True;
+
+         if Path /= Current then -- Changing folder
             Log ("Entering folder: " & Path, Debug);
             Ada.Directories.Set_Directory (Path);
-            Guard.Initialized := True;
-         else
+         else -- Ensuring stay
             Log ("Staying at folder: " & Ada.Directories.Current_Directory, Debug);
-            Guard.Initialized := False;
          end if;
       end return;
    end Enter_Folder;
@@ -408,7 +408,7 @@ package body Alr.OS_Lib is
    function Stay_In_Current_Folder return Folder_Guard is
    begin
       return Guard : Folder_Guard (0) do
-         Log ("Staying in current folder", Debug);
+         Log ("Staying in current folder: " & Current_Folder, Debug);
          Guard.Initialized := False;
       end return;
    end Stay_In_Current_Folder;

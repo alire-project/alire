@@ -1,5 +1,10 @@
+with Alr.Bootstrap;
+with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS;
+with Alr.OS_Lib;
+with Alr.Project;
+with Alr.Session;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -15,6 +20,34 @@ package body Alr.Commands.Version is
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
    begin
+      if Project.Current.Is_Empty then
+         Trace.Always ("alr internal project is empty");
+      else
+         Trace.Always ("alr internal project is " & Project.Current.Element.Milestone.Image);
+      end if;
+
+      Trace.Always ("alr session hash is " & Session.Hash);
+
+      declare
+         Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+      begin
+         Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
+         Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
+         if Bootstrap.Running_In_Session then
+            if Bootstrap.Session_Is_Current then
+               Trace.Always ("alr internal session hash matches that of " & Files.Locate_Any_Index_File);
+            else
+               if Project.Current.Is_Empty then
+                  Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Any_Index_File);
+               else
+                  Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Any_Index_File);
+               end if;
+            end if;
+         else
+            Trace.Always ("alr is not running in a session");
+         end if;
+      end;
+
       Log ("alr executable launched from " & OS.Own_Executable, Always);
       Log ("alr rolling source folder is " & Hardcoded.Alr_Src_Folder, Always);
 

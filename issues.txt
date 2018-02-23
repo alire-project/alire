@@ -1,9 +1,11 @@
 Bugs
 ====
-Locate project when in tree
 
 Features
 ========
+Mains as properties
+Test explicit mains
+Run with main
 Self-test of native detection
 Dependency resolution policies: newest vs oldest (useful for testing?)
 Licenses
