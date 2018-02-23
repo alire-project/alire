@@ -102,6 +102,7 @@ package body Alr.Bootstrap is
       Trace.Always (" Interrupted by user");
 
       Attempt_Backup_Recovery;
+      OS_Lib.Bailout (1);
    end Interrupted;
 
    -------------

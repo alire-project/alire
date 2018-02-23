@@ -115,6 +115,12 @@ package body Alr.Commands.Test is
          end;
       end loop;
 
+      --  Validate exclusive options
+      if Cmd.Full and then Num_Arguments /= 0 then
+         Trace.Always ("Either use --full or specify project names, but not both");
+         raise Command_Failed;
+      end if;
+
       --  Check in empty folder!
       if Cmd.Cont then
          Trace.Detail ("Resuming test");
@@ -122,11 +128,12 @@ package body Alr.Commands.Test is
          Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      if Test_All Then
+      if Test_All then
          if Cmd.Full then
             Trace.Detail ("Testing all releases");
          else
             Trace.Always ("No releases specified; use --full to test'em all!");
+            raise Command_Failed;
          end if;
       end if;
 
