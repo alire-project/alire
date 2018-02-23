@@ -1,8 +1,6 @@
 private with Ada.Strings;
 private with Ada.Strings.Fixed;
 
-with Ada.Containers.Indefinite_Vectors;
-
 with Alire.Utils;
 
 package Alr.Utils is
@@ -25,8 +23,8 @@ package Alr.Utils is
 
    --  General containers
 
-   package String_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, String);
-   subtype String_Vector is String_Vectors.Vector;
+   package String_Vectors renames Alire.Utils.String_Vectors;
+   subtype String_Vector is Alire.Utils.String_Vector;
 
 private
 

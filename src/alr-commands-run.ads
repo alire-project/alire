@@ -6,20 +6,21 @@ package Alr.Commands.Run is
 
    overriding procedure Execute (Cmd : in out Command);
 
-   overriding procedure Setup_Switches 
+   overriding procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-      ("Launch the current project executable");
+      ("Launch a project executable");
 
-   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("[extra arguments for executable]");
+   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("[executable]");
 
 private
-   
+
    type Command is new Commands.Command with record
       Args       : aliased GNAT.Strings.String_Access;
-      No_Compile : aliased Boolean := False;      
-   end record; 
+      List       : aliased Boolean := False;
+      No_Compile : aliased Boolean := False;
+   end record;
 
 end Alr.Commands.Run;
