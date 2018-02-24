@@ -19,7 +19,7 @@ package body Alr.Spawn is
 
       Log ("You can try the following action to recover:");
 
-      if Project.Current.Is_Empty then
+      if Project.Is_Empty then
          Log ("No project is known to this alr instance.");
          Log ("Please run 'alr update -o' outside any alr project.");
       else

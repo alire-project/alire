@@ -36,10 +36,10 @@ package body Alr.Commands.Compile is
             begin
                case Execs.Length is
                   when 0 =>
-                     Log ("No executable found after compilation (might be too deep)", Detail);
+                     Log ("No executable found after compilation (might be too deep or have non-standard name)", Detail);
                   when others =>
                      for Exe of Execs loop
-                        Log ("Executable found at " &
+                        Trace.Info ("Executable found at " &
                                Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
                                "/./", "/")));
                      end loop;

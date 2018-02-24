@@ -19,18 +19,23 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Index_File : constant String := Files.Locate_Index_File (Project.Current.Element.Project);
+         Index_File : constant String := Files.Locate_Index_File (Project.Name);
          Success    :          Boolean;
          Deps       : constant Alire.Query.Instance :=
-                        Alire.Query.Resolve (Project.Current.Element.Depends, Success);
+                        Alire.Query.Resolve (Project.Current.Depends, Success);
       begin
-         Log ("Backing up current dependency file to " & Index_File & ".old");
-         Ada.Directories.Copy_File (Index_File, Index_File & ".old", "mode=overwrite");
+         if Success then
+            Log ("Backing up current dependency file to " & Index_File & ".old");
+            Ada.Directories.Copy_File (Index_File, Index_File & ".old", "mode=overwrite");
 
-         Templates.Generate_Prj_Alr (Deps,
-                                     Project.Current.Element,
-                                     Exact    => True,
-                                     Filename => Index_File);
+            Templates.Generate_Prj_Alr (Deps,
+                                        Project.Current,
+                                        Exact    => True,
+                                        Filename => Index_File);
+         else
+            Trace.Warning ("Could not resolve dependencies");
+            raise Command_Failed;
+         end if;
       end;
    end Execute;
 

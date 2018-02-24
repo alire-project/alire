@@ -1,11 +1,12 @@
 Bugs
 ====
+run without verbosities for spawned prc
 
 Features
 ========
-Mains as properties
+Use Platform executable name
+Ensure that gnatmake/gprbuild are in path
 Test explicit mains
-Run with main
 Self-test of native detection
 Dependency resolution policies: newest vs oldest (useful for testing?)
 Licenses

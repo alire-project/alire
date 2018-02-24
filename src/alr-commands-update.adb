@@ -52,14 +52,14 @@ package body Alr.Commands.Update is
       declare
          Success : Boolean;
          Needed  : constant Alire.Query.Instance :=
-                     Alire.Query.Resolve (Project.Current.Element.Depends, Success);
+                     Alire.Query.Resolve (Project.Current.Depends, Success);
       begin
          if not Success then
             Log ("Update failed");
             raise Command_Failed;
          end if;
          Checkout.To_Folder (Needed);
-         Checkout.Generate_GPR_Builder (Needed, Project.Current.Element);
+         Checkout.Generate_GPR_Builder (Needed, Project.Current);
          Log ("Update completed");
       end;
    end Upgrade;

@@ -1,4 +1,3 @@
-with Alire.Containers;
 with Alire.Releases;
 with Alire.Root_Project;
 
@@ -10,35 +9,39 @@ package Alr.Project is
 
    --  Facilities to work with the current project, stored in Alire.Root_Project
 
-   Current : Alire.Containers.Release_H renames Alire.Root_Project.Current;
+   function Current return Alire.Releases.Release renames Alire.Root_Project.Current;
+
+   function Is_Empty return Boolean;
 
    procedure Check_Valid
-     with Post => (not Current.Is_Empty or else raise Command_Failed);
+     with Post => (not Is_Empty or else raise Command_Failed);
    --  Graceful check that Current contains what it should.
 
    function Name return String
-     with Pre => (not Current.Is_Empty);
+     with Pre => (not Is_Empty);
 
-   function GPR_File (Prj : Alire.Project_Name := Current.Element.Project) return String
-     with Pre => (not Current.Is_Empty);
+   function GPR_File (Prj : Alire.Project_Name := Current.Project) return String
+     with Pre => (not Is_Empty);
    --  The actual project root file (not the _alrbuild one!)
 
-   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Element.Project) return String
-     with Pre => (not Current.Is_Empty);
+   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Project) return String
+     with Pre => (not Is_Empty);
    --  The alr environment project file (project_alr.gpr)
 
-   function Enter_Root (Prj : Alire.Project_Name := Current.Element.Project) return OS_Lib.Folder_Guard
-     with Pre => (not Current.Is_Empty);
+   function Enter_Root (Prj : Alire.Project_Name := Current.Project) return OS_Lib.Folder_Guard
+     with Pre => (not Is_Empty);
    --  Enters the root folder if not already there
 
 private
 
-   function Name return String is (Current.Constant_Reference.Project);
+   function Is_Empty return Boolean is (not Alire.Root_Project.Is_Set);
 
-   function GPR_File (Prj : Alire.Project_Name := Current.Element.Project) return String is
+   function Name return String is (Current.Project);
+
+   function GPR_File (Prj : Alire.Project_Name := Current.Project) return String is
      (Prj & ".gpr");
 
-   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Element.Project) return String is
+   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Project) return String is
      (Hardcoded.Build_File (Prj));
 
 end Alr.Project;

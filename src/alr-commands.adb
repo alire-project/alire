@@ -273,7 +273,7 @@ package body Alr.Commands is
 
    function Enter_Project_Folder return Folder_Guard is
    begin
-      if Project.Current.Is_Empty or Else
+      if Project.Is_Empty or Else
         not Bootstrap.Running_In_Session or Else
         not Bootstrap.Session_Is_Current then
          --  Best guess
@@ -300,8 +300,8 @@ package body Alr.Commands is
    procedure Requires_Buildfile is
       Guard : constant OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
    begin
-      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Current.Element.Project)) then
-         Checkout.Generate_GPR_Builder (Project.Current.Element);
+      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Current.Project)) then
+         Checkout.Generate_GPR_Builder (Project.Current);
       end if;
    end Requires_Buildfile;
 

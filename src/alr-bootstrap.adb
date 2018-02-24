@@ -193,14 +193,14 @@ package body Alr.Bootstrap is
          return False;
       end if;
 
-      if Project.Current.Is_Empty then
+      if Project.Is_Empty then
          Log ("No internal root project, cannot verify external");
          return False;
       end if;
 
       declare
          Gpr : constant String :=
-                 Hardcoded.Project_File (Project.Current.Element.Project);
+                 Hardcoded.Project_File (Project.Current.Project);
       begin
          if Is_Regular_File (Gpr) then
             return True;
@@ -248,7 +248,7 @@ package body Alr.Bootstrap is
       (if Devel.Enabled then "devel" else "release") &
         " (" &
       (if Running_In_Session
-       then (if Session_Is_Current then Project.Current.Element.Milestone_Image else "outdated")
+       then (if Session_Is_Current then Project.Current.Milestone_Image else "outdated")
        else "no project") & ") (" &
         Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)" &
       (if Is_Bootstrap then " (B)" else "");

@@ -1,10 +1,37 @@
+
 with Alr.Commands.Compile;
 with Alr.Files;
 with Alr.OS_Lib;
-with Alr.Spawn;
+with Alr.Query;
 with Alr.Utils;
 
 package body Alr.Commands.Run is
+
+------------------
+-- Check_Report --
+------------------
+
+   procedure Check_Report (Exe_Name : String) is
+      use Ada.Text_IO;
+
+      Found_At : constant Utils.String_Vector :=
+                   Files.Locate_File_Under (OS_Lib.Current_Folder, Exe_Name, Max_Depth => 2);
+   begin
+      Put ("   " & Exe_Name);
+      case Found_At.Length is
+         when 0 => Put_Line (" (not found)");
+         when 1 => Put_Line (" (found at " & Found_At.First_Element & ")");
+         when others =>
+            New_Line;
+            for Bin of Found_At loop
+               Put_Line ("      (found at " & Found_At.First_Element & ")");
+            end loop;
+      end case;
+   end Check_Report;
+
+   -------------
+   -- Execute --
+   -------------
 
    overriding procedure Execute (Cmd : in out Command) is
       use type GNAT.Strings.String_Access;
@@ -17,19 +44,28 @@ package body Alr.Commands.Run is
       if Cmd.List and then
         (Num_Arguments /= 0 or else (Cmd.Args /= null and then Cmd.Args.all /= "")) then
          Put_Line ("Listing is incompatible with execution");
-         raise Command_Failed;
+         raise Wrong_Command_Arguments;
+      end if;
+
+      if not Cmd.List and then Num_Arguments > 1 then
+         Put_Line ("Too many arguments");
+         raise Wrong_Command_Arguments;
       end if;
 
       declare
-         Name       : constant String := Project.Current.Element.Project;
-         Candidates : Constant Utils.String_Vector := Files.Locate_File_Under (OS_Lib.Current_Folder,
-                                                                                Name, -- FIXME: extensions in other platforms!
-                                                                               Max_Depth => 2);
+         Candidates : constant Utils.String_Vector := Files.Locate_File_Under
+           (OS_Lib.Current_Folder,
+            Project.Name, -- FIXME: extensions in other platforms!
+            Max_Depth => 2);
          --  We look at most in something like ./build/configuration
 
-         Declared   : constant Utils.String_Vector := Project.Current.Element.Executables;
+         Declared   : constant Utils.String_Vector :=
+                        (if Query.Exists (Project.Name, Project.Current.Version)
+                         then Query.Find (Project.Name, Project.Current.Version).Executables
+                         else Project.Current.Executables);
+         use Ada.Text_Io;
       begin
-         --  Listing
+         --  LISTING  --
          if Cmd.List then
             if Declared.Is_Empty then
                Put_Line ("Project " & Project.Name & " does not explicitly declares to build any executable");
@@ -37,33 +73,56 @@ package body Alr.Commands.Run is
                   Put_Line ("No built executable has been automatically found either by alr");
                else
                   Put_Line ("However, the following executables have been autodetected:");
-                  for Candid of Candidates loop
-                     Put_line ("   " & Candid);
-                  end loop;
+                  Check_Report (Project.Name);
+               end if;
+            else
+               Put_Line ("Project " & Project.Name & " builds these executables:");
+               for Exe of Declared loop
+                  Check_Report (Exe);
+               end loop;
+
+               --  Default one:
+               if not Declared.Contains (Project.Name) and then not Candidates.Is_Empty then
+                  Put_Line ("In addition, the following default-named executables have been detected:");
+                  Check_Report (Project.Name);
                end if;
             end if;
+
+            --  LISTING EARLY RETURN
             return;
          end if;
 
---  Execution
+         --  COMPILATION  --
          if not Cmd.No_Compile then
             Compile.Execute;
          end if;
 
-         if Candidates.Is_Empty then
-            Log ("Executable " & Utils.Quote (Name) & " not found");
-            raise Command_Failed;
-         elsif Natural (Candidates.Length) > 1 then
-            Log ("Too many candidates found:");
-            for Candid of Candidates loop
-               Log (Candid);
-            end loop;
-         else
-            Log ("Launching " & Candidates.First_Element);
-            Log ("...");
-            Spawn.Command (Candidates.First_Element, Cmd.Args.all,
-                           Summary => "project main executed");
-         end if;
+         --  EXECUTION  --
+         declare
+            Target      : constant String := (if Num_Arguments = 1 then Argument (1) else Project.Name);
+            Target_Exes : constant Utils.String_Vector := Files.Locate_File_Under
+              (OS_Lib.Current_Folder,
+               Target,
+               Max_Depth => 2);
+         begin
+            if Target /= Project.Name and then not Declared.Contains (Target) then
+               Trace.Warning ("Requested executable is not in project declared list");
+            end if;
+
+            if Target_Exes.Is_Empty then
+               Log ("Executable " & Utils.Quote (Target) & " not found");
+               raise Command_Failed;
+            elsif Natural (Target_Exes.Length) > 1 then
+               Log ("Too many candidates found:");
+               for Candid of Target_Exes loop
+                  Log (Candid);
+               end loop;
+            else
+               Log ("Launching " & Target_Exes.First_Element);
+               Log ("...");
+               OS_Lib.Spawn_Raw (Target_Exes.First_Element, Cmd.Args.all);
+            end if;
+         end;
       end;
    end Execute;
 
@@ -79,7 +138,8 @@ package body Alr.Commands.Run is
       GNAT.Command_Line.Define_Switch
         (Config,
          Cmd.Args'Access,
-         "-a", "--args", "Arguments to pass through (quote them if more than one)");
+         "-a:", "--args=", "Arguments to pass through (quote them if more than one)",
+         Argument => "ARGS");
 
       GNAT.Command_Line.Define_Switch
         (Config,

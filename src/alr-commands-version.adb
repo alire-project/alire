@@ -20,10 +20,10 @@ package body Alr.Commands.Version is
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
    begin
-      if Project.Current.Is_Empty then
+      if Project.Is_Empty then
          Trace.Always ("alr internal project is empty");
       else
-         Trace.Always ("alr internal project is " & Project.Current.Element.Milestone.Image);
+         Trace.Always ("alr internal project is " & Project.Current.Milestone.Image);
       end if;
 
       Trace.Always ("alr session hash is " & Session.Hash);
@@ -37,7 +37,7 @@ package body Alr.Commands.Version is
             if Bootstrap.Session_Is_Current then
                Trace.Always ("alr internal session hash matches that of " & Files.Locate_Any_Index_File);
             else
-               if Project.Current.Is_Empty then
+               if Project.Is_Empty then
                   Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Any_Index_File);
                else
                   Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Any_Index_File);
