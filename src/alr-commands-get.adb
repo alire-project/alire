@@ -6,7 +6,7 @@ with Alire.Query;
 
 with Alr.Checkout;
 with Alr.Commands.Compile;
-with Alr.OS;
+with Alr.Hardcoded;
 with Alr.Parsers;
 
 with Semantic_Versioning;
@@ -102,7 +102,7 @@ package body Alr.Commands.Get is
       end if;
 
       --  Check out rest of dependencies
-      Checkout.To_Folder (Needed, OS.Projects_Folder, But => Name);
+      Checkout.To_Folder (Needed, Hardcoded.Projects_Folder, But => Name);
 
       --  Launch build if requested
       if Cmd.Compile then

@@ -38,13 +38,11 @@ package body Alr.Origins is
    procedure Git (From : Alire.Origins.Origin; Folder : String) is
    begin
       Trace.Info ("Checking out: " & From.URL);
-      Spawn.Command ("git", "clone -n -q --progress " & From.URL & " " & Folder,
-                     Summary => "repository fetched");
+      Spawn.Command ("git", "clone -n -q --progress " & From.URL & " " & Folder);
       declare
          Guard : constant OS_Lib.Folder_Guard := Os_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
-         Spawn.Command ("git", "reset --hard -q " & From.Id,
-                        Summary => "commit checked out");
+         Spawn.Command ("git", "reset --hard -q " & From.Id);
       end;
    exception
       when others =>
@@ -58,8 +56,7 @@ package body Alr.Origins is
    procedure Hg (From : Alire.Origins.Origin; Folder : String) is
    begin
       Trace.Info ("Checking out: " & From.URL);
-      Spawn.Command ("hg", "clone -v -y -u " & From.Id & " " & From.URL & " " & Folder,
-                     Summary => "commit checked out");
+      Spawn.Command ("hg", "clone -v -y -u " & From.Id & " " & From.URL & " " & Folder);
    exception
       when others =>
          raise Command_Failed;

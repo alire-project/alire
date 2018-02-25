@@ -8,8 +8,6 @@ with Ada.Text_IO;
 
 with Alire;
 
-with Alr.Utils;
-
 with GNAT.Expect;
 with GNAT.OS_Lib;
 
@@ -84,6 +82,10 @@ package body Alr.OS_Lib is
       Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder, Force_Quiet => True);
    end Copy_File;
 
+   -----------------
+   -- Delete_File --
+   -----------------
+
    procedure Delete_File (Name : String) is
    begin
       if GNAT.OS_Lib.Is_Regular_File (Name) then
@@ -94,6 +96,23 @@ package body Alr.OS_Lib is
       end if;
    end Delete_File;
 
+   ------------
+   -- Getenv --
+   ------------
+
+   function Getenv (Var : String; Default : String := "") return String is
+      use GNAT.OS_Lib;
+
+      Env_Access : String_Access := GNAT.OS_Lib.Getenv (Var);
+      Env        : constant String := Env_Access.all;
+   begin
+      Free (Env_Access);
+      if Env = "" then
+         return Default;
+      else
+         return Env;
+      end if;
+   end Getenv;
 
    ----------------
    -- Sed_Folder --
@@ -181,8 +200,7 @@ package body Alr.OS_Lib is
    -------------------------
 
    function Spawn_With_Progress (Command   : String;
-                                 Arguments : String;
-                                 Summary   : String  := "") return Integer
+                                 Arguments : String) return Integer
    is
       use Ada.Strings.Unbounded;
       use Ada.Text_IO;
@@ -285,8 +303,7 @@ package body Alr.OS_Lib is
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False;
-                   Summary             : String  := "") return Integer
+                   Force_Quiet         : Boolean := False) return Integer
    is
       Extra : constant String := (if Understands_Verbose then "-v " else "");
       File  : File_Descriptor;
@@ -315,7 +332,7 @@ package body Alr.OS_Lib is
             Free (Name);
          end return;
       elsif Alire.Log_Level = Info then
-         return Spawn_With_Progress (Command, Arguments, Summary);
+         return Spawn_With_Progress (Command, Arguments);
       elsif Alire.Log_Level = Detail then -- All lines, without -v
          return
            (Spawn (Locate_In_Path (Command),
@@ -334,15 +351,62 @@ package body Alr.OS_Lib is
    procedure Spawn (Command             : String;
                     Arguments           : String := "";
                     Understands_Verbose : Boolean := False;
-                    Force_Quiet         : Boolean := False;
-                    Summary             : String  := "")
+                    Force_Quiet         : Boolean := False)
    is
-      Code : constant Integer := Spawn (Command, Arguments, Understands_Verbose, Force_Quiet, Summary);
+      Code : constant Integer := Spawn (Command, Arguments, Understands_Verbose, Force_Quiet);
    begin
       if Code /= 0 then
          raise Child_Failed with "Exit code:" & Code'Img;
       end if;
    end Spawn;
+
+   -----------------------
+   -- Spawn_And_Capture --
+   -----------------------
+
+   function Spawn_And_Capture (Command    : String;
+                               Arguments  : String := "";
+                               Err_To_Out : Boolean := False) return Utils.String_Vector
+   is
+      File  : File_Descriptor;
+      Name  : String_Access;
+      Ok    : Boolean;
+
+      use Ada.Text_IO;
+      Output : File_Type;
+
+      -------------
+      -- Cleanup --
+      -------------
+
+      procedure Cleanup is
+      begin
+         Delete_File (Name.all, Ok);
+         Free (Name);
+      end Cleanup;
+
+   begin
+      Create_Temp_Output_File (File, Name);
+      Close (File);
+
+      begin
+         Spawn_And_Redirect (Name.all, Command, Arguments, Err_To_Out);
+      exception
+         when others =>
+            Cleanup;
+            raise Child_Failed;
+      end;
+
+      --  Parse
+      return Lines : Utils.String_Vector do
+         Open (Output, In_File, Name.all);
+         while not End_Of_File (Output) loop
+            Lines.Append (Get_Line (Output));
+         end loop;
+
+         Cleanup;
+      end return;
+   end Spawn_And_Capture;
 
    ------------------------
    -- Spawn_And_Redirect --

@@ -63,6 +63,8 @@ package body Alr.Commands.Version is
       begin
          OS_Lib.Spawn_Raw (Hardcoded.Scripts_Version);
       end;
+
+      Trace.Always ("OS fingerprint is: " & OS.OS_Fingerprint);
    end Execute;
 
 end Alr.Commands.Version;

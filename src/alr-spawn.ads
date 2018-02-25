@@ -17,8 +17,7 @@ package Alr.Spawn is
    procedure Command (Cmd  : String;
                       Args : String := "";
                       Understands_Verbose : Boolean := False;
-                      Force_Quiet         : Boolean := False;
-                      Summary             : String  := "");
+                      Force_Quiet         : Boolean := False);
    --  Adds -v if understands in Debug log level
    --  Summary is shown after process successful end, if Log_Level = Info
 

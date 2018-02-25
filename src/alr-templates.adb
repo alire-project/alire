@@ -2,7 +2,6 @@ with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alr.Hardcoded;
-with Alr.OS;
 with Alr.OS_Lib;
 with Alr.Utils;
 
@@ -136,7 +135,7 @@ package body Alr.Templates is
          if Rel.Project = Root.Project then
             Put (File, Tab_2 & """.""");
          else
-            Put (File, Tab_2 & """" & OS.Projects_Folder / Rel.Unique_Folder & """");
+            Put (File, Tab_2 & """" & Hardcoded.Projects_Folder / Rel.Unique_Folder & """");
          end if;
       end loop;
       Put_Line (File, ");");

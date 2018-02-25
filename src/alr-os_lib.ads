@@ -2,27 +2,37 @@ with Ada.Directories;
 
 private with Ada.Finalization;
 
+with Alr.Utils;
+
 package Alr.OS_Lib is
+
+   --  Environment
+
+   function Getenv (Var : String; Default : String := "") return String;
 
    --  Process spawning
 
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False;
-                   Summary             : String  := "") return Integer;
+                   Force_Quiet         : Boolean := False) return Integer;
    --  If Understands, an extra -v will be passed on Debug log levels
    --  If Force_Quiet and not in Debug level, output will be entirely muted (stdout & stderr)
 
    procedure Spawn (Command             : String;
                     Arguments           : String := "";
                     Understands_Verbose : Boolean := False;
-                    Force_Quiet         : Boolean := False;
-                    Summary             : String  := "");
+                    Force_Quiet         : Boolean := False);
    --  Raises CHILD_FAILED if exit code /= 0
 
    procedure Spawn_Raw (Command : String; Arguments : String := "");
    --  Direct launch, without any shenanigangs on output, for example for respawning the canonical version
+   --  Raises CHILD_FAILED if exit code /= 0
+
+   function Spawn_And_Capture (Command    : String;
+                               Arguments  : String := "";
+                               Err_To_Out : Boolean := False) return Utils.String_Vector;
+   --  Returns output as vector of strings
    --  Raises CHILD_FAILED if exit code /= 0
 
    procedure Spawn_And_Redirect (Out_File   : String;

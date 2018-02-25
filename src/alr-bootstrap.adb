@@ -1,11 +1,11 @@
 with Ada.Directories;
 
-with Alr.Devel;
+with Alr.Commands.Update;
 with Alr.Files;
 with Alr.Hardcoded;
-with Alr.OS;
 with Alr.OS_Lib;
 with Alr.Project;
+with Alr.Self;
 with Alr.Session;
 with Alr.Spawn;
 with Alr.Templates;
@@ -37,21 +37,14 @@ package body Alr.Bootstrap is
       end if;
    end Attempt_Backup_Recovery;
 
-   ----------------
-   -- Is_Rolling --
-   ----------------
-
-   function Is_Rolling return Boolean is
-     (OS.Own_Executable = Hardcoded.Alr_Exe_File);
-
    ----------------------------------
    -- Check_If_Rolling_And_Respawn --
    ----------------------------------
 
    procedure Check_If_Rolling_And_Respawn is
    begin
-      if not Is_Rolling then
-         if Is_Executable_File (Hardcoded.Alr_Exe_File) then
+      if not Self.Is_Rolling then
+         if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
             Spawn.Updated_Alr_Without_Return;
          else
             Log ("alr executable may be out of date, consider running ""alr update --online""");
@@ -115,6 +108,14 @@ package body Alr.Bootstrap is
 
       Folder_To_Index : constant String := Alr_Src_Folder / "deps" / "alire" / "index";
    begin
+      --  Before rebuilding we need the sources to exist!
+      --  Note that the first time we run after developer build, alr considers itself a release build
+      --  and won't change into a devel build until self-compiled once.
+      if not Exists (Alr_Src_Folder) then
+         Trace.Detail ("Checking out alr sources...");
+         Commands.Update.Update_Alr;
+      end if;
+
       --  It seems .ali files aren't enough to detect changed files under a second,
       --  So we get rid of previous ones
       if Exists (Executable) then
@@ -130,29 +131,53 @@ package body Alr.Bootstrap is
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
 
       if Alr_File /= "" then
-         OS_Lib.Delete_File (Alr_Src_Folder / "obj" /
-                               Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
+         OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
       end if;
 
       --  This could be an alternative if we don't want to delete the current exec
       Log ("About to recompile...", Debug);
       --  delay 1.0;
 
-      Log ("Generating index for " & Folder_To_Index, Detail);
-      Templates.Generate_Full_Index (OS.Session_Folder, Folder_To_Index);
+      --  CONFIG FILE
+      --  We copy it anyway. If building without SELFBUILD (e.g. developer build)
+      --  the default one will be used but no conflict can happen anyway
+--        declare
+--           Config_Found : constant Boolean :=
+--                            Exists (OS.Config_Folder / Hardcoded.Alr_Conf_File);
+--           Origin : constant String :=
+--                      (if Config_Found
+--                       then OS.Config_Folder                         / Hardcoded.Alr_Conf_File
+--                       else Hardcoded.Alr_Src_Default_Session_Folder / Hardcoded.Alr_Conf_File);
+--        begin
+--           Trace.Detail ((if Config_Found
+--                         then "Found config file"
+--                         else "Config file not found") & ", copying " &
+--                           Origin &
+--                           " -> " &
+--                           Hardcoded.Session_Folder / Hardcoded.Alr_Conf_File);
+--           Copy_File (Origin,
+--                      Hardcoded.Session_Folder / Hardcoded.Alr_Conf_File,
+--                      "mode=overwrite");
+--        end;
 
+      --  INDEX FILE
+      Log ("Generating index for " & Folder_To_Index, Detail);
+      Templates.Generate_Full_Index (Hardcoded.Session_Folder, Folder_To_Index);
+
+      --  METADATA FILE
       if Alr_File /= "" then
-         Copy_File (Alr_File, OS.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
+         Copy_File (Alr_File, Hardcoded.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
 
          Log ("Generating session for " & Alr_File, Detail);
       else
          Log ("Generating non-project session", Detail);
       end if;
 
-      Templates.Generate_Session (OS.Session_Folder, Alr_File);
+      --  SESSION FILE
+      Templates.Generate_Session (Hardcoded.Session_Folder, Alr_File);
 
       begin
-         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File, OS.Session_Folder);
+         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File, Hardcoded.Session_Folder);
       exception
          when others =>
             -- Compilation failed
@@ -219,17 +244,6 @@ package body Alr.Bootstrap is
      (Files.Locate_Any_GPR_File > 0 and Then
       Files.Locate_Any_Index_File /= "");
 
-   ------------------
-   -- Is_Bootstrap --
-   ------------------
-
-   function Is_Bootstrap return Boolean is
-   begin
-      pragma Warnings (Off);
-      return Session.Hash = Hardcoded.Bootstrap_Hash;
-      pragma Warnings (On);
-   end Is_Bootstrap;
-
    ------------------------
    -- Session_Is_Current --
    ------------------------
@@ -244,14 +258,14 @@ package body Alr.Bootstrap is
    function Status_Line return String is
    begin
       return
-        (if Is_Rolling then "rolling" else "bootstrap") & "-" &
-      (if Devel.Enabled then "devel" else "release") &
+        (if Self.Is_Rolling then "rolling" else "bootstrap") & "-" &
+        (if not Self.Is_Canonical then "devel" else "release") &
         " (" &
-      (if Running_In_Session
-       then (if Session_Is_Current then Project.Current.Milestone_Image else "outdated")
-       else "no project") & ") (" &
+        (if Running_In_Session
+         then (if Session_Is_Current then Project.Current.Milestone_Image else "outdated")
+         else "no project") & ") (" &
         Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)" &
-      (if Is_Bootstrap then " (B)" else "");
+        (if Self.Is_Bootstrap then " (minimal index)" else "");
    end Status_Line;
 
 begin

@@ -1,8 +1,5 @@
-with Ada.Directories;
-
 with Alr.OS_Lib;
-
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Alr.Utils;
 
 with Interfaces.C;
 with Interfaces.C.Strings;
@@ -11,16 +8,14 @@ package body Alr.OS is
 
    use Alr.OS_Lib.Paths;
 
-   function Getenv (Var : String; Default : String := "") return String;
-
    ------------------
    -- Cache_Folder --
    ------------------
 
    function Cache_Folder return String is
    begin
-      return Getenv ("XDG_CACHE_HOME",
-                     Default => Getenv ("HOME") / ".cache" / "alire");
+      return OS_Lib.Getenv ("XDG_CACHE_HOME",
+                            Default => OS_Lib.Getenv ("HOME") / ".cache" / "alire");
    end Cache_Folder;
 
    -------------------
@@ -29,47 +24,9 @@ package body Alr.OS is
 
    function Config_Folder return String is
    begin
-      return Getenv ("XDG_CONFIG_HOME",
-                     Default => Getenv ("HOME") / ".config" / "alire");
+      return OS_Lib.Getenv ("XDG_CONFIG_HOME",
+                            Default => OS_Lib.Getenv ("HOME") / ".config" / "alire");
    end Config_Folder;
-
-   ------------------
-   -- Devel_Folder --
-   ------------------
-
-   function Devel_Folder return String is
-     (Getenv ("HOME") / "local" / "alr");
-
-   --------------------
-   -- Devel_Telltale --
-   --------------------
-
-   function Devel_Telltale return String is
-     (Config_Folder / "enable-devel");
-
-   ---------------------
-   -- Projects_Folder --
-   ---------------------
-
-   function Projects_Folder return String is
-   begin
-      return Cache_Folder / "projects";
-   end Projects_Folder;
-
-   --------------------
-   -- Session_Folder --
-   --------------------
-
-   function Session_Folder return String is
-      Path : constant String := Cache_Folder / "sessions" / "common";
-      --  FIXME: right now there are no sessions, only this one for everything
-      --  Might not be a problem if alr is rebuild whenever run within an alire project
-   begin
-      if not Ada.Directories.Exists (Path) then
-         Create_Folder (Path);
-      end if;
-      return Path;
-   end Session_Folder;
 
    --------------------------
    -- Create_Config_Folder --
@@ -81,21 +38,16 @@ package body Alr.OS is
       --  FIXME not portable
    end Create_Folder;
 
-   ------------
-   -- Getenv --
-   ------------
+   --------------------
+   -- Os_Fingerprint --
+   --------------------
 
-   function Getenv (Var : String; Default : String := "") return String is
-      Env_Access : String_Access := GNAT.OS_Lib.Getenv (Var);
-      Env        : constant String := Env_Access.all;
+   function Os_Fingerprint return String is
+      Lines : constant Utils.String_Vector :=
+                OS_Lib.Spawn_And_Capture ("lsb_release", "-d");
    begin
-      Free (Env_Access);
-      if Env = "" then
-         return Default;
-      else
-         return Env;
-      end if;
-   end Getenv;
+      return Lines.First_Element;
+   end Os_Fingerprint;
 
    --------------------
    -- Own_Executable --

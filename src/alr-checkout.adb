@@ -61,7 +61,7 @@ package body Alr.Checkout is
    ---------------
 
    procedure To_Folder (Projects : Alire.Query.Instance;
-                        Parent   : String := OS.Projects_Folder;
+                        Parent   : String := Hardcoded.Projects_Folder;
                         But      : Alire.Project_Name := "")
    is
       Was_There : Boolean;

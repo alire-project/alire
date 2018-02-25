@@ -6,6 +6,8 @@ with Alire.Containers;
 with Alire.Index;
 with Alire.Operating_Systems;
 
+with Alr.Files;
+with Alr.OS;
 with Alr.Parsers;
 with Alr.Spawn;
 with Alr.Utils;
@@ -17,6 +19,20 @@ with Semantic_Versioning;
 package body Alr.Commands.Test is
 
    package Semver renames Semantic_Versioning;
+
+   function Check_Executables (R : Alire.Index.Release) return Boolean is
+   begin
+      for Exe of R.Executables loop
+         if Files.Locate_File_Under (Folder    => R.Unique_Folder,
+                                     Name      => Exe,
+                                     Max_Depth => 2).Is_Empty then
+            Trace.Error ("Declared executable not found after compilation: " & Exe);
+            return False;
+         end if;
+      end loop;
+
+      return True;
+   end Check_Executables;
 
    --------------------------
    -- Display_Help_Details --
@@ -49,6 +65,8 @@ package body Alr.Commands.Test is
                 Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch))) &
                 ".txt");
 
+      Put_Line (File, "os-fingerprint:" & OS.OS_Fingerprint);
+
       for R of Releases loop
          Trace.Info ("PASSED:" & Passed'Img &
                        " FAILED:" & Failed'Img &
@@ -63,8 +81,13 @@ package body Alr.Commands.Test is
             begin
                Spawn.Command ("alr", "get --compile " & R.Milestone_Image,
                               Understands_Verbose => True,
-                              Force_Quiet         => Is_Quiet,
-                              Summary             => "Successfully compiled: " & R.Milestone_Image);
+                              Force_Quiet         => Is_Quiet);
+
+               --  Check declared executables in place
+               if not Check_Executables (R) then
+                  raise Child_Failed;
+               end if;
+
                Passed := Passed + 1;
                Put_Line (File, "passed:" & R.Milestone_Image);
             exception

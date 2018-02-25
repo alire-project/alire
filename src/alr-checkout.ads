@@ -1,7 +1,7 @@
 with Alire.Index;
 with Alire.Query;
 
-with Alr.OS;
+with Alr.Hardcoded;
 
 package Alr.Checkout is
 
@@ -22,7 +22,7 @@ package Alr.Checkout is
    --  A working copy might not have alr and gpr files, that will be generated if needed
 
    procedure To_Folder (Projects : Alire.Query.Instance;
-                        Parent   : String := OS.Projects_Folder;
+                        Parent   : String := Hardcoded.Projects_Folder;
                         But      : Alire.Project_Name := "");
    --  Retrieves all releases into a folder, typically the main cache
    --  One project in the solution (typically the root project itself) can be ignored

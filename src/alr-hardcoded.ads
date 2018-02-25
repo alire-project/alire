@@ -1,22 +1,23 @@
 with Alire;
 
 with Alr.Defaults;
+with Alr.Self;
 
 private with Ada.Directories;
 
-private with Alr.Devel;
 private with Alr.OS;
 
 package Alr.Hardcoded is
 
    --  Paths and Files and such that are hardcoded
+   --  Also, "hardcoded" paths that are relative to the detected src folder,
+   ---   which could be other than the hardcoded canonical one (in devel builds or custom installs)
 
    Alr_Branch : constant String    := "master";
    --  Branch used to self-upgrade
 
---   Alr_Default_Session_Folder : constant String;
-
-   Alr_Exe_File : constant String;
+   Alr_Canonical_Folder : String renames Self.Canonical_Folder;
+   --  Sources when normally installed
 
    Alr_Gpr_File : constant String;
    --  Note to self: this is the _env one that works with git submodules
@@ -24,12 +25,16 @@ package Alr.Hardcoded is
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository checked out for self-upgrade
 
-   Alr_Src_Folder : constant String;
-   --  when Devel.Enabled => User_Folder/local/alr
-   --                else => Config_Folder/alire/alr
+   Alr_Rolling_Exe_File : constant String;
+   --  Name of the rolling executable, "alr", with source path, for the detected src folder
+   --  Might not exist yet!
 
-   Bootstrap_Hash : constant String;
-   --  Hash used to denote a manually-compiled, no-session build
+   Alr_Src_Default_Session_Folder : constant String;
+   --  Folder for files that are only used if no session-supplied ones exist
+
+   Alr_Src_Folder : constant String;
+   --  Folder containing sources for rebuild
+   --  Either the one for the exe being run, if it could be detected, or the canonical one otherwise
 
    Native_Package_List : constant String;
    --  File containing detected Ada packages in the system package manager
@@ -54,21 +59,27 @@ package Alr.Hardcoded is
    function Project_File (Project : Alire.Project_Name) return String;
    --  Project native project file (project.gpr)
 
+   function Projects_Folder return String;
+   --  $CACHE_FOLDER/projects
+
+   function Session_Folder return String;
+   --  $CACHE_FOLDER/sessions/<pwd>
+   --  Also creates it (once it is asked for, it's presumed to be about to be sued)
+
 private
 
    function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
+   function Parent (Folder : String) return String renames Ada.Directories.Containing_Directory;
 
-   Alr_Src_Folder : constant String := (if Devel.Enabled
-                                        then OS.Devel_Folder
-                                        else OS.Config_Folder / "alr");
+   Alr_Src_Folder : constant String := Self.Src_Folder;
 
---   Alr_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
+   Alr_Src_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
 
-   Alr_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
+--     Alr_Conf_File  : constant String := "alr-config.ads";
 
-   Alr_Gpr_File : constant String := Alr_Src_Folder / "alr_env.gpr";
+   Alr_Gpr_File         : constant String := Alr_Src_Folder / "alr_env.gpr";
 
-   Bootstrap_Hash : constant String := "bootstrap";
+   Alr_Rolling_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
 
    Native_Package_List : constant String := OS.Config_Folder / "native_packages.txt";
 
@@ -82,17 +93,19 @@ private
 
    --  Function bodies
 
-   ----------------
-   -- Alire_File --
-   ----------------
-
    function Alire_File (Project : Alire.Project_Name) return String is
      (Project & "_alr.ads");
+
+   function Alr_Is_Canonical return Boolean is
+      (OS.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
 
    function Build_File (Project : Alire.Project_Name) return String is
      (Project & "_alr.gpr");
 
    function Project_File (Project : Alire.Project_Name) return String is
      (Project & ".gpr");
+
+   function Projects_Folder return String is
+     (OS.Cache_Folder / "projects");
 
 end Alr.Hardcoded;

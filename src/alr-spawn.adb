@@ -1,7 +1,6 @@
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Project;
-with Alr.Utils;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -38,8 +37,8 @@ package body Alr.Spawn is
                           then ""
                           else Commands.Global_Switches);
    begin
-      if Is_Executable_File (Hardcoded.Alr_Exe_File) then
-         Command (Hardcoded.Alr_Exe_File,
+      if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
+         Command (Hardcoded.Alr_Rolling_Exe_File,
                   Commands.Image (Cmd) & " " & Extra_Switches & " " & Args);
       else
          Warn_Outdated;
@@ -53,10 +52,10 @@ package body Alr.Spawn is
 
    procedure Updated_Alr_Without_Return is
    begin
-      if Is_Executable_File (Hardcoded.Alr_Exe_File) then
+      if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
          Trace.Detail ("...");
          begin
-            OS_Lib.Spawn_Raw (Hardcoded.Alr_Exe_File, OS_Lib.Current_Command_Line);
+            OS_Lib.Spawn_Raw (Hardcoded.Alr_Rolling_Exe_File, OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);
             raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
          exception
@@ -78,14 +77,12 @@ package body Alr.Spawn is
    procedure Command (Cmd                 : String;
                       Args                : String := "";
                       Understands_Verbose : Boolean := False;
-                      Force_Quiet         : Boolean := False;
-                      Summary             : String  := "") is
+                      Force_Quiet         : Boolean := False) is
    begin
       if OS_Lib.Spawn (Cmd,
                        Args,
                        Understands_Verbose,
-                       Force_Quiet,
-                       Summary) /= 0
+                       Force_Quiet) /= 0
       then
          raise Child_Failed;
       end if;
@@ -102,17 +99,11 @@ package body Alr.Spawn is
                     (if Session_File /= ""
                      then "-XALR_SESSION=" & Session_File & " -XALR_SELFBUILD=True "
                      else "");
-      Summary   : constant String :=
-                    (if Utils.Contains (Project_File, "alr_env") then
-                       (if Session_File /= "" then "metadata compiled" else "alr updated")
-                     else
-                        "project compiled");
    begin
       Command ("gprbuild",
                Selfbuild &
                "-j0 -m -p -P " & Project_File,
-               Understands_Verbose => True,
-               Summary => Summary);
+               Understands_Verbose => True);
    end Gprbuild;
 
 end Alr.Spawn;

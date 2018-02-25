@@ -19,6 +19,9 @@ package Alr.Commands.Update is
    --  From_Build is used to signal that we're expected to proceed to compile, if respawned
    --  If Online, remote repositories will be fetched and a recompilation of alr will be triggered
 
+   procedure Update_Alr;
+   --  Deploy/Update alr sources if not there or outdated
+
 private
 
    type Command is new Commands.Command with record

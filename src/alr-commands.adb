@@ -18,11 +18,11 @@ with Alr.Commands.Search;
 with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
-with Alr.Devel;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Native;
 with Alr.OS;
+with Alr.Self;
 
 with GNAT.OS_Lib;
 
@@ -155,7 +155,7 @@ package body Alr.Commands is
    begin
       OS.Create_Folder (OS.Config_Folder);
       OS.Create_Folder (OS.Cache_Folder);
-      OS.Create_Folder (OS.Projects_Folder);
+      OS.Create_Folder (Hardcoded.Projects_Folder);
    end Create_Alire_Folders;
 
    -------------------
@@ -254,7 +254,7 @@ package body Alr.Commands is
       Put_Line ("Valid commands: ");
       New_Line;
       for Cmd in Cmd_Names'Range loop
-         if Cmd /= Cmd_Dev or else Alr.Devel.Enabled then
+         if Cmd /= Cmd_Dev or else not Self.Is_Canonical then
             Put (Tab);
 
             Pad := (others => ' ');
@@ -311,7 +311,7 @@ package body Alr.Commands is
 
    procedure Requires_No_Bootstrap is
    begin
-      if Bootstrap.Is_Bootstrap then
+      if Self.Is_Bootstrap then
          Trace.Detail ("Rebuilding catalog...");
          Bootstrap.Rebuild_With_Current_Project;
          Bootstrap.Check_If_Rolling_And_Respawn;

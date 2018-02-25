@@ -31,11 +31,10 @@ package body Alr.Commands.Update is
    begin
       if not Is_Directory (Hardcoded.Alr_Src_Folder) then
          Spawn.Command ("git",
-                        "clone --recurse-submodules " &
+                        "clone " &
                           "-b " & Hardcoded.Alr_Branch & " " &
                           String (Hardcoded.Alr_Repo) & " " &
-                          Hardcoded.Alr_Src_Folder,
-                       Summary => "repository cloned");
+                          Hardcoded.Alr_Src_Folder);
       end if;
    end Checkout_If_Needed;
 
@@ -77,10 +76,8 @@ package body Alr.Commands.Update is
             Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
               with Unreferenced;
          begin
-            Spawn.Command ("git", "pull",
-                          Summary => "main project updated");
-            Spawn.Command ("git", "submodule update --init --recursive",
-                          Summary => "dependencies updated");
+            Spawn.Command ("git", "pull");
+            Spawn.Command ("git", "submodule update --init --recursive");
          end;
       end if;
    end Update_Alr;
