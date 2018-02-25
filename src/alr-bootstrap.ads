@@ -7,6 +7,9 @@ private with Alire.Index.Alire;
 
 package Alr.Bootstrap is
 
+   procedure Check_Ada_Tools;
+   --  Check gprbuild/gnatmake are within reach
+
    procedure Check_If_Rolling_And_Respawn;
    --  Determines if we are using a rolling release.
    --  If not, and one is available, respawn.

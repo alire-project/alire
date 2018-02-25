@@ -9,6 +9,7 @@ with Alr.Index;
 
 procedure Alr.Main is
 begin
+   Bootstrap.Check_Ada_Tools;
    Bootstrap.Check_If_Rolling_And_Respawn;
 
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);

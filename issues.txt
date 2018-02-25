@@ -3,8 +3,6 @@ Bugs
 
 Features
 ========
-Ensure that gnatmake/gprbuild are in path
-Self-test of native detection
 Dependency resolution policies: newest vs oldest (useful for testing?)
 Licenses
 Search by property

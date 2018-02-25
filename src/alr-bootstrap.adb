@@ -37,6 +37,20 @@ package body Alr.Bootstrap is
       end if;
    end Attempt_Backup_Recovery;
 
+   ---------------------
+   -- Check_Ada_Tools --
+   ---------------------
+
+   procedure Check_Ada_Tools is
+      --  FIXME mini-leak (once per run)
+   begin
+      if Locate_Exec_On_Path ("gprbuild") = null or else
+        Locate_Exec_On_Path ("gnatmake") = null then
+         Trace.Error ("Ada compiler not detected, alr cannot proceed");
+         OS_Lib.Bailout (1);
+      end if;
+   end Check_Ada_Tools;
+
    ----------------------------------
    -- Check_If_Rolling_And_Respawn --
    ----------------------------------
