@@ -1,3 +1,5 @@
+with Ada.Containers;
+
 with Alire.OS_Lib;
 
 with Alr.Commands.Compile;
@@ -100,9 +102,13 @@ package body Alr.Commands.Run is
 
          --  EXECUTION  --
          declare
+            use all type Ada.Containers.Count_Type;
             Proto_Target : constant String := (if Num_Arguments = 1
                                               then Argument (1)
-                                               else Project.Current.Default_Executable);
+                                               else
+                                                 (if Declared.Length = 1
+                                                  then Declared.First_Element
+                                                  else Project.Current.Default_Executable));
 
             Target : constant String :=
                        (if Alire.OS_Lib.Exe_Suffix /= "" and Then
@@ -121,16 +127,16 @@ package body Alr.Commands.Run is
             end if;
 
             if Target_Exes.Is_Empty then
-               Log ("Executable " & Utils.Quote (Target) & " not found");
+               Trace.Warning ("Executable " & Utils.Quote (Target) & " not found");
                raise Command_Failed;
             elsif Natural (Target_Exes.Length) > 1 then
-               Log ("Too many candidates found:");
+               Trace.Warning ("Too many candidates found:");
                for Candid of Target_Exes loop
                   Log (Candid);
                end loop;
             else
-               Log ("Launching " & Target_Exes.First_Element);
-               Log ("...");
+               Trace.Detail ("Launching " & Target_Exes.First_Element);
+               Trace.Detail ("...");
                OS_Lib.Spawn_Raw (Target_Exes.First_Element, Cmd.Args.all);
             end if;
          end;
