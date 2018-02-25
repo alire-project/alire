@@ -1,3 +1,4 @@
+2018-02-25: licenses as properties
 2018-02-22: alr test command
 2018-02-20: get --info
 2018-02-20: Named properties (Labels); e.g.: Maintainer, Website

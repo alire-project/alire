@@ -4,7 +4,6 @@ Bugs
 Features
 ========
 Dependency resolution policies: newest vs oldest (useful for testing?)
-Licenses
 Search by property
 Image of Requisites
 
@@ -13,6 +12,7 @@ Fixes/refactorings
 
 Long term if ever
 =================
+License compatibilities/permissions/restrictions/!!!
 Force re-fetch
 Proper unit testing
 Specify main gpr file? Only useful for executables, since libs may have many

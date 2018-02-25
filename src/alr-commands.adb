@@ -23,6 +23,7 @@ with Alr.Hardcoded;
 with Alr.Native;
 with Alr.OS;
 with Alr.Self;
+with Alr.Spawn;
 
 with GNAT.OS_Lib;
 
@@ -314,7 +315,7 @@ package body Alr.Commands is
       if Self.Is_Bootstrap then
          Trace.Detail ("Rebuilding catalog...");
          Bootstrap.Rebuild_With_Current_Project;
-         Bootstrap.Check_If_Rolling_And_Respawn;
+         Spawn.Updated_Alr_Without_Return;
       end if;
    end Requires_No_Bootstrap;
 
