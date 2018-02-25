@@ -29,10 +29,10 @@ package body Alr.Commands.Init is
          declare
             use OS_Lib;
          begin
-            OS_Lib.Copy_File ((if Cmd.Bin
-                               then Hardcoded.Templates_Bin_Folder
-                               else Hardcoded.Templates_Lib_Folder),
-                              Name);
+            OS_Lib.Copy_Folder ((if Cmd.Bin
+                                then Hardcoded.Templates_Bin_Folder
+                                else Hardcoded.Templates_Lib_Folder),
+                                Name);
          end;
 
          OS_Lib.Sed_Folder (Name,

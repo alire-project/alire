@@ -1,3 +1,5 @@
+with Alr.OS_Lib;
+
 package body Alr.Hardcoded is
 
    --------------------
@@ -7,10 +9,10 @@ package body Alr.Hardcoded is
    function Session_Folder return String is
       Path : constant String := OS.Cache_Folder / "sessions" / "common";
       --  FIXME: right now there are no sessions, only this one for everything
-      --  Might not be a problem if alr is rebuild whenever run within an alire project
+      --  Not a problem as long as alr remains an interactive, single-user tool
    begin
       if not Ada.Directories.Exists (Path) then
-         OS.Create_Folder (Path);
+         OS_Lib.Create_Folder (Path);
       end if;
       return Path;
    end Session_Folder;

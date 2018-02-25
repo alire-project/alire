@@ -31,8 +31,8 @@ package body Alr.Commands.Compile is
             Log ("Compilation finished without errors");
          else
             declare
-               Execs : constant Utils.String_Vector := Files.Locate_File_Under (".", Project.Name, 2);
-               --  FIXME: extension in non-linux platforms!
+               Execs : constant Utils.String_Vector :=
+                         Files.Locate_File_Under (".", Project.Current.Default_Executable, 2);
             begin
                case Execs.Length is
                   when 0 =>

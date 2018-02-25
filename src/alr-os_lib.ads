@@ -8,6 +8,9 @@ package Alr.OS_Lib is
 
    --  Environment
 
+   procedure Create_Folder (Path : String);
+   --  Able to create full given path, permissions permitting
+
    function Getenv (Var : String; Default : String := "") return String;
 
    --  Process spawning
@@ -79,7 +82,7 @@ package Alr.OS_Lib is
    --  If recursively, the directory entry is passed before entering it
    --  "." and ".." are ignored
 
-   procedure Copy_File (Src_Folder, Dst_Parent_Folder : String);
+   procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String);
    --  Copies a folder and its contents to within another location
    --  That is, equivalent to cp -r src dst
 

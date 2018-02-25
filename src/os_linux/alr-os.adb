@@ -28,16 +28,6 @@ package body Alr.OS is
                             Default => OS_Lib.Getenv ("HOME") / ".config" / "alire");
    end Config_Folder;
 
-   --------------------------
-   -- Create_Config_Folder --
-   --------------------------
-
-   procedure Create_Folder (Path : String) is
-   begin
-      OS_Lib.Spawn ("mkdir", "-p " & Path, Force_Quiet => True);
-      --  FIXME not portable
-   end Create_Folder;
-
    --------------------
    -- Os_Fingerprint --
    --------------------

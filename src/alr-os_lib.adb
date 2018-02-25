@@ -24,6 +24,33 @@ package body Alr.OS_Lib is
       GNAT.OS_Lib.OS_Exit (Code);
    end Bailout;
 
+   -------------------
+   -- Create_Folder --
+   -------------------
+
+   procedure Create_Folder (Path : String) is
+
+      procedure Create_Parent (Path : String) is
+         use Ada.Directories;
+      begin
+         if Exists (Path) then
+            return;
+         else
+            begin
+               Create_Parent (Containing_Directory (Path));
+            exception
+               when Use_Error =>
+                  null; -- We reached root at worst, and start digging down...
+            end;
+
+            Create_Directory (Path); -- Parent must exist at this point
+         end if;
+      end Create_Parent;
+
+   begin
+      Create_Parent (Path);
+   end Create_Folder;
+
    --------------------------
    -- Current_Command_Line --
    --------------------------
@@ -71,16 +98,16 @@ package body Alr.OS_Lib is
               Go_Down'Access);
    end Traverse_Folder;
 
-   ---------------
-   -- Copy_File --
-   ---------------
+   -----------------
+   -- Copy_Folder --
+   -----------------
 
-   procedure Copy_File (Src_Folder, Dst_Parent_Folder : String) is
+   procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String) is
    begin
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       -- FIXME this is not robust with blanks in paths
-      Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder, Force_Quiet => True);
-   end Copy_File;
+      Spawn ("cp", "-r " & Src_Folder & " " & Dst_Parent_Folder, Force_Quiet => True);
+   end Copy_Folder;
 
    -----------------
    -- Delete_File --
@@ -486,7 +513,6 @@ package body Alr.OS_Lib is
       if This.Initialized then
          Log ("Going back to folder: " & This.Original, Debug);
          Ada.Directories.Set_Directory (This.Original);
-         --  FIXME: what if this throws?
       end if;
    end Finalize;
 

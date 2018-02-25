@@ -3,9 +3,7 @@ Bugs
 
 Features
 ========
-Use Platform executable ext (in GNAT.OS_Lib)
 Ensure that gnatmake/gprbuild are in path
-Test explicit mains
 Self-test of native detection
 Dependency resolution policies: newest vs oldest (useful for testing?)
 Licenses

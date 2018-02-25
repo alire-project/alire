@@ -153,9 +153,9 @@ package body Alr.Commands is
 
    procedure Create_Alire_Folders is
    begin
-      OS.Create_Folder (OS.Config_Folder);
-      OS.Create_Folder (OS.Cache_Folder);
-      OS.Create_Folder (Hardcoded.Projects_Folder);
+      OS_Lib.Create_Folder (OS.Config_Folder);
+      OS_Lib.Create_Folder (OS.Cache_Folder);
+      OS_Lib.Create_Folder (Hardcoded.Projects_Folder);
    end Create_Alire_Folders;
 
    -------------------

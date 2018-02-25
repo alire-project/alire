@@ -1,3 +1,4 @@
+with Alire.OS_Lib;
 
 with Alr.Commands.Compile;
 with Alr.Files;
@@ -55,7 +56,7 @@ package body Alr.Commands.Run is
       declare
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
            (OS_Lib.Current_Folder,
-            Project.Name, -- FIXME: extensions in other platforms!
+            Project.Current.Default_Executable,
             Max_Depth => 2);
          --  We look at most in something like ./build/configuration
 
@@ -73,7 +74,7 @@ package body Alr.Commands.Run is
                   Put_Line ("No built executable has been automatically found either by alr");
                else
                   Put_Line ("However, the following executables have been autodetected:");
-                  Check_Report (Project.Name);
+                  Check_Report (Project.Current.Default_Executable);
                end if;
             else
                Put_Line ("Project " & Project.Name & " builds these executables:");
@@ -82,9 +83,9 @@ package body Alr.Commands.Run is
                end loop;
 
                --  Default one:
-               if not Declared.Contains (Project.Name) and then not Candidates.Is_Empty then
+               if not Declared.Contains (Project.Current.Default_Executable) and then not Candidates.Is_Empty then
                   Put_Line ("In addition, the following default-named executables have been detected:");
-                  Check_Report (Project.Name);
+                  Check_Report (Project.Current.Default_Executable);
                end if;
             end if;
 
@@ -99,11 +100,21 @@ package body Alr.Commands.Run is
 
          --  EXECUTION  --
          declare
-            Target      : constant String := (if Num_Arguments = 1 then Argument (1) else Project.Name);
-            Target_Exes : constant Utils.String_Vector := Files.Locate_File_Under
-              (OS_Lib.Current_Folder,
-               Target,
-               Max_Depth => 2);
+            Proto_Target : constant String := (if Num_Arguments = 1
+                                              then Argument (1)
+                                               else Project.Current.Default_Executable);
+
+            Target : constant String :=
+                       (if Alire.OS_Lib.Exe_Suffix /= "" and Then
+                                   not Utils.Contains (Proto_Target, Alire.OS_Lib.Exe_Suffix)
+                        then Proto_Target & Alire.OS_Lib.Exe_Suffix
+                        else Proto_Target);
+
+            Target_Exes : constant Utils.String_Vector :=
+                            Files.Locate_File_Under
+                              (OS_Lib.Current_Folder,
+                               Target,
+                               Max_Depth => 2);
          begin
             if Target /= Project.Name and then not Declared.Contains (Target) then
                Trace.Warning ("Requested executable is not in project declared list");
