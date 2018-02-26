@@ -8,6 +8,8 @@ with Alr.Utils;
 
 with Semantic_Versioning;
 
+with Table_IO;
+
 package body Alr.Commands.Search is
 
    -------------
@@ -19,6 +21,8 @@ package body Alr.Commands.Search is
 
       Found   : Natural := 0;
 
+      Tab : Table_IO.Table;
+
       ------------------
       -- List_Release --
       ------------------
@@ -27,9 +31,10 @@ package body Alr.Commands.Search is
       begin
          if Cmd.Prop.all = "" or else R.Property_Contains (Cmd.Prop.all) then
             Found := Found + 1;
-            Trace.Always (R.Project & ASCII.HT &
-                            Semantic_Versioning.Image (R.Version) & ASCII.HT &
-                            R.Description);
+            Tab.New_Row;
+            Tab.Append (R.Project);
+            Tab.Append (Semantic_Versioning.Image (R.Version));
+            Tab.Append (R.Description);
          end if;
       end List_Release;
 
@@ -84,6 +89,8 @@ package body Alr.Commands.Search is
 
       if Found = 0 then
          Log ("No hits");
+      else
+         Tab.Print (Separator => "  ");
       end if;
    end Execute;
 
