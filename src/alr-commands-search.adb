@@ -1,5 +1,6 @@
 with Ada.Strings.Fixed;
 
+with Alire.Containers;
 with Alire.Index;
 with Alire.Releases;
 
@@ -24,15 +25,26 @@ package body Alr.Commands.Search is
 
       procedure List_Release (R : Alire.Releases.Release) is
       begin
-         Trace.Always (R.Project & ASCII.HT & Semantic_Versioning.Image (R.Version) & ASCII.HT & R.Description);
+         if Cmd.Prop.all = "" or else R.Property_Contains (Cmd.Prop.all) then
+            Found := Found + 1;
+            Trace.Always (R.Project & ASCII.HT &
+                            Semantic_Versioning.Image (R.Version) & ASCII.HT &
+                            R.Description);
+         end if;
       end List_Release;
 
+      use Alire.Containers.Release_Sets;
    begin
       Requires_No_Bootstrap;
 
-      if Num_Arguments = 0 and then not Cmd.List then -- no search term, nor --list
-         Trace.Error ("Please provide a search term, or use --list to show all available releases");
+      if Num_Arguments = 0 and then not Cmd.List and then Cmd.Prop.all = "" then
+         -- no search term, nor --list, nor --prop
+         Trace.Error ("Please provide a search term, --property, or use --list to show all available releases");
          raise Wrong_Command_Arguments;
+      end if;
+
+      if Num_Arguments = 0 and then Cmd.Prop.all /= "" then
+         Cmd.List := True;
       end if;
 
       if Cmd.List and then Num_Arguments /= 0 then
@@ -43,9 +55,12 @@ package body Alr.Commands.Search is
       --  End of option verification, start of search
 
       if Cmd.List then
-         Found := Natural (Alire.Index.Releases.Length);
-         for R of Alire.Index.Releases loop
-            List_Release (R);
+         for I in Alire.Index.Releases.Iterate loop
+            if Cmd.Full or else I = Alire.Index.Releases.Last or else
+              Alire.Index.Releases (I).Project /= Alire.Index.Releases (Next (I)).Project
+            then
+               List_Release (Alire.Index.Releases (I));
+            end if;
          end loop;
       else
          declare
@@ -55,17 +70,20 @@ package body Alr.Commands.Search is
                Log ("Searching " & Utils.Quote (Pattern) & "...", Detail);
             end if;
 
-            for R of Alire.Index.Releases loop
-               if Count (R.Project, Pattern) > 0 then
-                  Found := Found + 1;
-                  List_Release (R);
+            for I in Alire.Index.Releases.Iterate loop
+               if Count (Alire.Index.Releases (I).Project, Pattern) > 0 then
+                  if Cmd.Full or else I = Alire.Index.Releases.Last or else
+                    Alire.Index.Releases (I).Project /= Alire.Index.Releases (Next (I)).Project
+                  then
+                     List_Release (Alire.Index.Releases (I));
+                  end if;
                end if;
             end loop;
          end;
       end if;
 
       if Found = 0 then
-         Log ("Search term not found");
+         Log ("No hits");
       end if;
    end Execute;
 
@@ -75,11 +93,21 @@ package body Alr.Commands.Search is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch (Config,
+                     Cmd.Full'Access,
+                     "", "--full",
+                     "Show all versions of a project (newest only otherwise)");
 
       Define_Switch (Config,
                      Cmd.List'Access,
                      "", "--list",
                      "List all available releases");
+
+      Define_Switch (Config,
+                     Cmd.Prop'Access,
+                     "", "--property=",
+                     "Search TEXT in property values",
+                     Argument => "TEXT");
    end Setup_Switches;
 
 end Alr.Commands.Search;

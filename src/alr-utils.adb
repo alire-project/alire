@@ -6,17 +6,6 @@ with GNAT.SHA1;
 
 package body Alr.Utils is
 
-   -------------------
-   -- To_Lower_Case --
-   -------------------
-
-   function To_Lower_Case (S : String) return String is
-   begin
-      return SLC : String := S do
-         GNAT.Case_Util.To_Lower (SLC);
-      end return;
-   end To_Lower_Case;
-
    ---------------
    -- Hash_File --
    ---------------

@@ -7,10 +7,10 @@ package Alr.Utils is
 
    --  Miscellaneous utilities
 
-   function To_Lower_Case (S : String) return String;
+   function To_Lower_Case (S : String) return String renames Alire.Utils.To_Lower_Case;
    function To_Mixed_Case (S : String) return String renames Alire.Utils.To_Mixed_Case;
 
-   function Contains (Text : String; Sub : String) return Boolean;
+   function Contains (Text : String; Sub : String) return Boolean renames Alire.Utils.Contains;
 
    function Quote (S : String) return String;
 
@@ -32,8 +32,5 @@ private
 
    function Trim (S : String) return String is
      (Ada.Strings.Fixed.Trim (S, Ada.Strings.Both));
-
-   function Contains (Text : String; Sub : String) return Boolean is
-      (Ada.Strings.Fixed.Count (Text, Sub) > 0);
 
 end Alr.Utils;

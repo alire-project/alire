@@ -3,7 +3,6 @@ Bugs
 
 Features
 ========
-Search by property
 Image of Requisites
 Windows port
 
