@@ -52,7 +52,9 @@ package body Alr.Commands is
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
    Log_Debug  : Boolean renames Alire_Early_Elaboration.Switch_D;
 
-   Help_Switch : aliased Boolean := False;
+   Help_Switch   : aliased Boolean := False;
+
+   Prefer_Oldest : aliased Boolean := False;
 
    -----------
    -- Image --
@@ -134,6 +136,11 @@ package body Alr.Commands is
                      Log_Debug'Access,
                      "-d",
                      Help => "Be even more verbose (including debug messages)");
+
+      Define_Switch (Config,
+                     Prefer_Oldest'Access,
+                     Long_Switch => "--prefer-oldest",
+                     Help => "Prefer oldest versions instead of newest when resolving dependencies");
    end Set_Global_Switches;
 
    ---------------------
@@ -145,7 +152,8 @@ package body Alr.Commands is
       return Utils.Trim ((if Log_Debug  then "-d " else "") &
                          (if Log_Detail then "-v " else "") &
                          (if Log_Quiet  then "-q " else "") &
-                         (if Use_Native then "-n " else ""));
+                         (if Use_Native then "-n " else "") &
+                         (if Prefer_Oldest then "--prefer-oldest" else ""));
    end Global_Switches;
 
    --------------------------
@@ -293,6 +301,13 @@ package body Alr.Commands is
          return Project.Enter_Root;
       end if;
    end Enter_Project_Folder;
+
+   ------------------
+   -- Query_Policy --
+   ------------------
+
+   function Query_Policy return Alire.Query.Policies is
+      (if Prefer_Oldest then Alire.Query.Oldest else Alire.Query.Newest);
 
    ------------------------
    -- Requires_Buildfile --
@@ -467,12 +482,12 @@ package body Alr.Commands is
 
    procedure Print_Project_Version_Sets is
    begin
-      Put_Line (" Project selection syntax");
+      Put_Line (" Project selection syntax (policy applies within the allowed version subsets)");
       New_Line;
-      Put_Line (" project        " & ASCII.HT & "Get newest version");
+      Put_Line (" project        " & ASCII.HT & "Get any version");
       Put_Line (" project=version" & ASCII.HT & "Get exact version");
-      Put_Line (" project^version" & ASCII.HT & "Get newest major-compatible version");
-      Put_Line (" project~version" & ASCII.HT & "Get newest minor-compatible version");
+      Put_Line (" project^version" & ASCII.HT & "Get a major-compatible version");
+      Put_Line (" project~version" & ASCII.HT & "Get a minor-compatible version");
    end Print_Project_Version_Sets;
 
 end Alr.Commands;

@@ -30,9 +30,10 @@ package body Alr.Commands.Get is
    begin
       declare
          Success : Boolean;
-         Release : constant Alire.Index.Release  := Alire.Query.Find (Name, Versions);
+         Release : constant Alire.Index.Release  := Alire.Query.Find (Name, Versions, Query_Policy);
          Needed  : Alire.Query.Instance :=
-                     Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions), Success);
+                     Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
+                                          Success, Query_Policy);
 
          use Ada.Text_IO;
       begin
@@ -69,7 +70,8 @@ package body Alr.Commands.Get is
 
       Success : Boolean;
       Needed  : constant Alire.Query.Instance :=
-                  Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions), Success);
+                  Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
+                                       Success, Query_Policy);
 
       Must_Enter : Boolean;
    begin

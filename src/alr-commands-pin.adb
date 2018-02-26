@@ -22,7 +22,7 @@ package body Alr.Commands.Pin is
          Index_File : constant String := Files.Locate_Index_File (Project.Name);
          Success    :          Boolean;
          Deps       : constant Alire.Query.Instance :=
-                        Alire.Query.Resolve (Project.Current.Depends, Success);
+                        Alire.Query.Resolve (Project.Current.Depends, Success, Query_Policy);
       begin
          if Success then
             Log ("Backing up current dependency file to " & Index_File & ".old");

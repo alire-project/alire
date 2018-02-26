@@ -5,7 +5,7 @@
 repo_branch=${1:-master}
 repo_url=https://git@bitbucket.org/aleteolabs/alr.git
 
-required_tools="git id"
+required_tools="git hg id"
 required_compiler="gprbuild gnatmake gnatls"
 
 alire_folder=${XDG_CONFIG_HOME:-$HOME/.config}/alire

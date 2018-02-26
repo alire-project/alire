@@ -60,6 +60,7 @@ package body Alr.Commands.Test is
    begin
       Create (File, Out_File,
               "alr_report_" &
+                Utils.To_Lower_Case (Query_Policy'Img) & "_" &
                 Alire.Operating_Systems.Current'Img & "_" &
                 Alire.Compilers.Compiler'Img & "_" &
                 Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch))) &

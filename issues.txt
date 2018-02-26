@@ -3,9 +3,9 @@ Bugs
 
 Features
 ========
-Dependency resolution policies: newest vs oldest (useful for testing?)
 Search by property
 Image of Requisites
+Windows port
 
 Fixes/refactorings
 ==================
