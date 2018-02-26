@@ -357,7 +357,6 @@ package body Alr.Commands is
       pragma Unreferenced (Parameter, Section);
    begin
       Raw_Arguments.Append (Switch);
-      Trace.Debug ("Argument: " & Switch);
    end Fill_Arguments;
 
    ------------------------
