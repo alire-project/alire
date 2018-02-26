@@ -497,12 +497,15 @@ package body Alr.OS_Lib is
    ----------------------------
 
    function Stay_In_Current_Folder return Folder_Guard is
-   begin
-      return Guard : Folder_Guard (0) do
-         Log ("Staying in current folder: " & Current_Folder, Debug);
-         Guard.Initialized := False;
-      end return;
-   end Stay_In_Current_Folder;
+     (Enter_Folder (Current_Folder));
+
+   --  Below code sometimes raised on Finalize (Initialized was true but Original was garbage (?)
+--     begin
+--        return Guard : Folder_Guard (0) do
+--           Log ("Staying in current folder: " & Current_Folder, Debug);
+--           Guard.Initialized := False;
+--        end return;
+--     end Stay_In_Current_Folder;
 
    --------------
    -- Finalize --

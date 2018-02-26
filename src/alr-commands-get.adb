@@ -89,9 +89,9 @@ package body Alr.Commands.Get is
       --  Check if we are already in the fresh copy (may happen after respawning)
       if Bootstrap.Running_In_Session then
          if Bootstrap.Session_Is_Current and then Name = Project.Name then
-            Log ("Already in working copy, skipping checkout");
+            Trace.Detail ("Already in working copy, skipping checkout");
          else
-            Log ("Cannot get a project inside another alr session, stopping.");
+            Trace.Error ("Cannot get a project inside another alr session, stopping.");
             raise Command_Failed;
          end if;
          Must_Enter := False;

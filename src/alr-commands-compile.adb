@@ -1,5 +1,4 @@
 with Alr.Files;
-with Alr.OS_Lib;
 with Alr.Spawn;
 with Alr.Utils;
 
@@ -26,26 +25,23 @@ package body Alr.Commands.Compile is
       Requires_Buildfile;
 
       begin
-         Spawn.Gprbuild (Project.GPR_Alr_File);
-         if OS_Lib.File_Contains_Ignore_Case (Project.GPR_File, "Library_Name") then
-            Log ("Compilation finished without errors");
-         else
-            declare
-               Execs : constant Utils.String_Vector :=
-                         Files.Locate_File_Under (".", Project.Current.Default_Executable, 2);
-            begin
-               case Execs.Length is
-                  when 0 =>
-                     Log ("No executable found after compilation (might be too deep or have non-standard name)", Detail);
-                  when others =>
-                     for Exe of Execs loop
-                        Trace.Info ("Executable found at " &
-                               Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
-                               "/./", "/")));
-                     end loop;
-               end case;
-            end;
-         end if;
+         Spawn.Gprbuild (Project.Build_File);
+         Trace.Info ("Compilation finished without errors");
+         declare
+            Execs : constant Utils.String_Vector :=
+                      Files.Locate_File_Under (".", Project.Current.Default_Executable, 2);
+         begin
+            case Execs.Length is
+               when 0 =>
+                  Log ("No executable found after compilation (library project or undeclared non-standard name)", Detail);
+               when others =>
+                  for Exe of Execs loop
+                     Trace.Info ("Executable found at " &
+                                   Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
+                                   "/./", "/")));
+                  end loop;
+            end case;
+         end;
       exception
          when Command_Failed =>
             Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");

@@ -56,9 +56,6 @@ package Alr.Hardcoded is
    function Build_File (Project : Alire.Project_Name) return String;
    --  Aggregate project file (project_alr.gpr)
 
-   function Project_File (Project : Alire.Project_Name) return String;
-   --  Project native project file (project.gpr)
-
    function Projects_Folder return String;
    --  $CACHE_FOLDER/projects
 
@@ -101,9 +98,6 @@ private
 
    function Build_File (Project : Alire.Project_Name) return String is
      (Project & "_alr.gpr");
-
-   function Project_File (Project : Alire.Project_Name) return String is
-     (Project & ".gpr");
 
    function Projects_Folder return String is
      (OS.Cache_Folder / "projects");

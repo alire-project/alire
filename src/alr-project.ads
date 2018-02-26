@@ -20,11 +20,7 @@ package Alr.Project is
    function Name return String
      with Pre => (not Is_Empty);
 
-   function GPR_File (Prj : Alire.Project_Name := Current.Project) return String
-     with Pre => (not Is_Empty);
-   --  The actual project root file (not the _alrbuild one!)
-
-   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Project) return String
+   function Build_File (Prj : Alire.Project_Name := Current.Project) return String
      with Pre => (not Is_Empty);
    --  The alr environment project file (project_alr.gpr)
 
@@ -38,10 +34,7 @@ private
 
    function Name return String is (Current.Project);
 
-   function GPR_File (Prj : Alire.Project_Name := Current.Project) return String is
-     (Prj & ".gpr");
-
-   function GPR_Alr_File (Prj : Alire.Project_Name := Current.Project) return String is
+   function Build_File (Prj : Alire.Project_Name := Current.Project) return String is
      (Hardcoded.Build_File (Prj));
 
 end Alr.Project;

@@ -34,7 +34,7 @@ package body Alr.Files is
                   if Simple_Name (Current) /= "." and then Simple_Name (Current) /= ".." and then Current_Depth < Max_Depth then
                      Locate (Folder / Simple_Name (Current), Current_Depth + 1, Max_Depth);
                   end if;
-               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Name then
+               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Simple_Name (Name) then
                   Found.Append (Folder / Name);
                end if;
             end;
@@ -208,7 +208,7 @@ package body Alr.Files is
       Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
    begin
       loop
-         if Is_Regular_File (Hardcoded.Project_File (Project)) and then Locate_Index_File (Project) /= "" then
+         if Is_Regular_File (Hardcoded.Build_File (Project)) and then Locate_Index_File (Project) /= "" then
             return Current_Folder;
          else
             Set_Directory (Containing_Directory (Current_Directory));

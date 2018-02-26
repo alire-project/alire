@@ -120,6 +120,8 @@ private
 
    subtype Folder_Guard is OS_Lib.Folder_Guard;
 
+   function Enter_Folder (Path : String) return Folder_Guard renames OS_Lib.Enter_Folder;
+
    function Enter_Project_Folder return Folder_Guard;
    --  If we have a compiled-in project, attempt to find its root above us
    --  Does nothing if we don't have a project, or if the root is not found

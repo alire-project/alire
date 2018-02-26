@@ -3,7 +3,7 @@ Bugs
 
 Features
 ========
-Image of Requisites
+Search properly tabulated
 Windows port
 
 Fixes/refactorings
@@ -11,6 +11,7 @@ Fixes/refactorings
 
 Long term if ever
 =================
+Image of Requisites
 License compatibilities/permissions/restrictions/!!!
 Force re-fetch
 Proper unit testing

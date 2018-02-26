@@ -103,6 +103,8 @@ package body Alr.Templates is
    procedure Generate_Agg_Gpr (Instance : Alire.Query.Instance;
                            Root     : Alire.Releases.Release)
    is
+      use all type Utils.String_Vectors.Cursor;
+
       File     : File_Type;
       Filename : constant String := Hardcoded.Build_File (Root.Project);
       Prjname  : constant String := Utils.To_Mixed_Case (Filename (Filename'First .. Filename'Last - 4));
@@ -110,6 +112,8 @@ package body Alr.Templates is
       First    : Boolean := True;
 
       use Alr.OS_Lib;
+
+      GPR_Files : constant Utils.String_Vector := Root.GPR_Files;
 
    begin
       Log ("Generating GPR for " & Root.Milestone_Image & " with" & Instance.Length'Img & " dependencies", Detail);
@@ -121,7 +125,14 @@ package body Alr.Templates is
 
       Manual_Warning (File);
 
-      Put_Line (File, Tab_1 & "for Project_Files use (" & Q (Root.Project & ".gpr") & ");");
+      Put_Line (File, Tab_1 & "for Project_Files use (");
+      for I in GPR_Files.Iterate loop
+         Put (File, Tab_2 & Q (GPR_Files (I)));
+         if I /= GPR_Files.Last then
+            Put_line (File, ", ");
+         end if;
+      end loop;
+      Put_Line (File, Tab_2 & ");");
       New_Line (File);
 
       Put (File, Tab_1 & "for Project_Path use (");

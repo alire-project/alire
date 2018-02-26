@@ -241,21 +241,22 @@ package body Alr.Bootstrap is
       end if;
 
       if Project.Is_Empty then
-         Log ("No internal root project, cannot verify external");
+         Trace.Debug ("No internal root project, cannot verify external");
          return False;
       end if;
 
       declare
-         Gpr : constant String :=
-                 Hardcoded.Project_File (Project.Current.Project);
+         Gprs : constant Utils.String_Vector := Project.Current.GPR_Files;
       begin
-         if Is_Regular_File (Gpr) then
-            return True;
-         else
-            Log ("Project file " & Utils.Quote (Gpr) & " not in current folder");
-            return False;
-         end if;
+         for Gpr of Gprs loop
+            if not Is_Regular_File (Gpr) then
+               Trace.Debug ("Project file " & Utils.Quote (Gpr) & " not found");
+               return False;
+            end if;
+         end loop;
       end;
+
+      return True;
    end Running_In_Project;
 
    ------------------------
