@@ -3,7 +3,6 @@ Bugs
 
 Features
 ========
-Search properly tabulated
 Windows port
 
 Fixes/refactorings
