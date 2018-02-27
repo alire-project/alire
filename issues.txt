@@ -1,11 +1,19 @@
 Bugs
 ====
-Diagnose current failure, given what's required
-Bugcase/understand limited build-in-place + exception
 
 Features
 ========
+Configuration variables for gprbuild
+    In index
+    In compile
+
 Windows port
+
+Library inclusions
+==================
+Simple_Components
+https://en.wikibooks.org/wiki/Ada_Programming/Libraries
+http://www.adaic.org/ada-resources/tools-libraries/
 
 Fixes/refactorings
 ==================

@@ -10,17 +10,17 @@ package body Alr.Project is
    procedure Check_Valid is
    begin
       if Is_Empty then
-         Log ("No root project defined despite session being current, check project_alr.ads file");
+         Trace.Error ("No root project defined despite session being current, check project_alr.ads file");
          raise Command_Failed;
       end if;
 
       if Files.Locate_Index_File (Current.Project) = "" then
          if Files.Locate_Any_Index_File /= "" then
-            Log ("Session/Project mismatch:");
-            Log ("Root project is " & Utils.Quote (Current.Milestone_Image));
-            Log ("Session file is " & Utils.Quote (Files.Locate_Any_Index_File));
+            Trace.Error ("Session/Project mismatch:");
+            Trace.Error ("Root project is " & Utils.Quote (Current.Milestone_Image));
+            Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Any_Index_File));
          else
-            Log ("Could not find a valid session file");
+            Trace.Error ("Could not find a valid session file");
          end if;
 
          raise Command_Failed;

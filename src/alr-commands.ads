@@ -57,7 +57,7 @@ package Alr.Commands is
 
    procedure Requires_Buildfile
      with Pre => Bootstrap.Running_In_Project;
-   --  Ensures that the build file is up to date
+   --  Ensures that the build file exists, and if not generates one from dependencies
 
    --  This is exported only to be reachable from Spawn, but there's no reason to use it from commands
 
