@@ -23,7 +23,9 @@ package body Alr.Commands.Init is
    procedure Generate (Cmd : Command) is
       Name : constant String := Argument (1);
    begin
-      if Cmd.No_Skel then
+      if Cmd.In_Place then
+         null; -- do nothing
+      elsif Cmd.No_Skel then
          Ada.Directories.Create_Directory (Name);
       else
          declare
@@ -44,17 +46,21 @@ package body Alr.Commands.Init is
       end if;
 
       declare
-         Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Name) with Unreferenced;
+         Guard : constant Folder_Guard :=
+                   (if Cmd.In_Place
+                    then Os_Lib.Stay_In_Current_Folder
+                    else OS_Lib.Enter_Folder (Name)) with Unreferenced;
 
          New_Release : constant Alire.Releases.Release :=
-                         Alire.Releases.New_Release (Name,
-                                                     "No description",
-                                                     V ("0.0.0-alr_working_copy"),
-                                                     Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
-                                                     Depends_On => Bootstrap.Alire_Minimal_Dependency,
-                                                     Properties => Alire.Index.Default_Properties,
-                                                     Requisites => Alire.Index.No_Requisites,
-                                                     Native     => False);
+                         Alire.Releases.New_Release
+                           (Name,
+                            "No description",
+                            V ("0.0.0-alr_working_copy"),
+                            Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
+                            Depends_On => Bootstrap.Alire_Minimal_Dependency,
+                            Properties => Alire.Index.Default_Properties,
+                            Requisites => Alire.Index.No_Requisites,
+                            Native     => False);
          Success     : Boolean;
          Depends     : constant Alire.Query.Instance := Alire.Query.Resolve (New_Release.Depends,
                                                                              Success, Query_Policy);
@@ -84,41 +90,36 @@ package body Alr.Commands.Init is
          raise Command_Failed;
       end if;
 
+      if Cmd.In_Place then
+         Cmd.No_Skel := True;
+      end if;
+
       --  Validation finished
 
       declare
          Name : constant String := Argument (1);
       begin
-
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
             Log ("The project name is invalid, as it is used internally by alr; please choose another name");
             raise Command_Failed;
          end if;
 
-         if Ada.Directories.Exists (Name) then
+         if not Cmd.In_Place and then Ada.Directories.Exists (Name) then
             Log ("Folder " & Utils.Quote (Name) & " already exists, not proceeding.");
             raise Command_Failed;
          end if;
 
          --  Create and enter folder for generation, if it didn't happen already
-         if Bootstrap.Running_In_Session then
+         if not Cmd.In_Place and then Bootstrap.Running_In_Session then
             if Bootstrap.Session_Is_Current and then Name = Project.Name then
-               Log ("Already in working copy, skipping initialization");
+               Trace.Info ("Already in working copy, skipping initialization");
             else
-               Log ("Cannot initialize a project inside another alr project, stopping.");
+               Trace.Error ("Cannot initialize a project inside another alr project, stopping.");
                raise Command_Failed;
             end if;
          else
             Generate (Cmd);
-            Log ("Project initialization completed");
-         end if;
-
-         if Cmd.Build then
-            declare
-               Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Name) with Unreferenced;
-            begin
-               Spawn.Alr (Cmd_Build);
-            end;
+            Log ("Initialization completed");
          end if;
       end;
    end Execute;
@@ -144,9 +145,9 @@ package body Alr.Commands.Init is
                      "New project is a library");
 
       Define_Switch (Config,
-                     Cmd.Build'Access,
-                     "-b", "--build",
-                     "Enter project and build it after initialization");
+                     Cmd.In_Place'Access,
+                     "", "--in-place",
+                     "Create alr files in current folder (implies --no-skel)");
 
       Define_Switch (Config,
                      Cmd.No_Skel'Access,

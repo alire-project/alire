@@ -11,15 +11,15 @@ package Alr.Commands.Init is
    overriding function Short_Description (Cmd : Command) return String is
       ("Creates a new project with alr metadata, or generate metadata");
 
-   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("<project name>");
+   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("{--bin|--lib} <project name>");
 
 private
 
    type Command is new Commands.Command with record
       Bin,
       Lib,
-      No_Skel,
-      Build : aliased Boolean := False;
+      In_Place,
+      No_Skel : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Init;

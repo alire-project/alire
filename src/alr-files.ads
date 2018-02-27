@@ -34,4 +34,7 @@ package Alr.Files is
    --  Returns path to folder containing project file
    --  "" if not found
 
+   procedure Backup_If_Existing (File : String);
+   --  If File exists, move to file.prev
+
 end Alr.Files;

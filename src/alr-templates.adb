@@ -1,6 +1,7 @@
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Utils;
@@ -118,6 +119,8 @@ package body Alr.Templates is
    begin
       Log ("Generating GPR for " & Root.Milestone_Image & " with" & Instance.Length'Img & " dependencies", Detail);
 
+      Files.Backup_If_Existing (Filename);
+
       Create (File, Out_File, Filename);
 
       Put_Line (File, "aggregate project " & Prjname & " is");
@@ -170,6 +173,9 @@ package body Alr.Templates is
                                Filename : String := "")
    is
       File : File_Type;
+      Name : constant String := (if Filename /= ""
+                                 then Filename
+                                 else Hardcoded.Alire_File (Root.Project));
    begin
       if Instance.Contains (Root.Project) then
          declare
@@ -181,8 +187,9 @@ package body Alr.Templates is
          end;
       end if;
 
-      Create (File, Out_File, (if Filename /= "" then Filename
-                                                 else Hardcoded.Alire_File (Root.Project)));
+      Files.Backup_If_Existing (Name);
+
+      Create (File, Out_File, Name);
 
       Put_Line (File, "with Alire.Project; use Alire.Project;");
       New_Line (File);
