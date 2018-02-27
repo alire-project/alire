@@ -10,9 +10,9 @@ with Alr.Utils;
 
 package body Alr.Commands.Run is
 
-------------------
--- Check_Report --
-------------------
+   ------------------
+   -- Check_Report --
+   ------------------
 
    procedure Check_Report (Exe_Name : String) is
       use Ada.Text_IO;

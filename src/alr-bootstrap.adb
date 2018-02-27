@@ -210,6 +210,8 @@ package body Alr.Bootstrap is
                Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
                Log ("The dependency file in use is: " & Alr_File);
             end if;
+            Trace.Info ("");
+            Trace.Info ("Re-run with -v or -d for details");
 
             Attempt_Backup_Recovery;
 
@@ -237,6 +239,7 @@ package body Alr.Bootstrap is
    function Running_In_Project return Boolean is
    begin
       if not Running_In_Session then
+         Trace.Debug ("No session, rebuild needed before being in project");
          return False;
       end if;
 
@@ -245,12 +248,13 @@ package body Alr.Bootstrap is
          return False;
       end if;
 
+      --  Is this check really necessary?
       declare
          Gprs : constant Utils.String_Vector := Project.Current.GPR_Files;
       begin
          for Gpr of Gprs loop
             if not Is_Regular_File (Gpr) then
-               Trace.Debug ("Project file " & Utils.Quote (Gpr) & " not found");
+               Trace.Warning ("Project file " & Utils.Quote (Gpr) & " not found");
                return False;
             end if;
          end loop;

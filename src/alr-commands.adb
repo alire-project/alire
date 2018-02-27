@@ -18,6 +18,7 @@ with Alr.Commands.Search;
 with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
+with Alr.Exceptions;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Native;
@@ -300,6 +301,10 @@ package body Alr.Commands is
       else
          return Project.Enter_Root;
       end if;
+   exception
+      when E : others =>
+         Exceptions.Report ("Commands.Enter_Project_Folder: Could not find a project folder", E);
+         return OS_Lib.Stay_In_Current_Folder;
    end Enter_Project_Folder;
 
    ------------------

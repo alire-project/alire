@@ -1,5 +1,9 @@
 Bugs
 ====
+Requires_Project will fail if no _alr.gpr file present
+    A way of generating simple alr+gpr metadata in current folder is needed (init with another option)
+Diagnose current failure, given what's required
+Bugcase for limited build-in-place + exception
 
 Features
 ========

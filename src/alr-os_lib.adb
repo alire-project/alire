@@ -2,6 +2,7 @@ with Ada.Characters;
 with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Containers;
+with Ada.Exceptions;
 with Ada.Strings;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
@@ -481,14 +482,15 @@ package body Alr.OS_Lib is
    begin
       return Guard : Folder_Guard (Current'Length) do
          Guard.Original := Current; -- Always store, we must have been asked to ensure return to current folder!
-         Guard.Initialized := True;
 
          if Path /= Current then -- Changing folder
             Log ("Entering folder: " & Path, Debug);
             Ada.Directories.Set_Directory (Path);
          else -- Ensuring stay
-            Log ("Staying at folder: " & Ada.Directories.Current_Directory, Debug);
+            Log ("Staying at folder: " & Current, Debug);
          end if;
+
+         Guard.Initialized := True;
       end return;
    end Enter_Folder;
 
@@ -512,11 +514,22 @@ package body Alr.OS_Lib is
    --------------
 
    overriding procedure Finalize (This : in out Folder_Guard) is
+      use Ada.Exceptions;
    begin
       if This.Initialized then
          Log ("Going back to folder: " & This.Original, Debug);
          Ada.Directories.Set_Directory (This.Original);
+      else
+         Trace.Debug ("Uninitialized guard (!)");
       end if;
+   exception
+      when E : others =>
+         Trace.Debug ("FG.Finalize: unexpected exception: " &
+                        Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
+                        Exception_Information (E));
+         Trace.Debug ("FG.Original_Len:" & This.Original_Len'Img);
+         --           Trace.Debug ("FG.Original    :" & This.Original);
+         --  If object is thrashed, the previous line will raise Storage_Error
    end Finalize;
 
 end Alr.OS_Lib;

@@ -150,7 +150,7 @@ package body Alr.Commands.Init is
 
       Define_Switch (Config,
                      Cmd.No_Skel'Access,
-                     "-n", "--no-skel",
+                     "", "--no-skel",
                      "Do not generate non-alire skeleton files");
    end Setup_Switches;
 

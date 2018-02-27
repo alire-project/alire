@@ -103,8 +103,8 @@ package Alr.OS_Lib is
 private
 
    type Folder_Guard (Original_Len : Natural) is new Ada.Finalization.Limited_Controlled with record
-      Original    : String (1 .. Original_Len);
       Initialized : Boolean := False;
+      Original    : String (1 .. Original_Len);
    end record;
 
    overriding procedure Finalize (This : in out Folder_Guard);

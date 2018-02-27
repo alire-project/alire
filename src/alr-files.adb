@@ -117,6 +117,9 @@ package body Alr.Files is
          end Check;
       begin
          Search (Folder, "*_alr.ads", (Ordinary_File => True, others => False), Check'Access);
+      exception
+         when Use_Error =>
+            Trace.Debug ("Unreadable file/folder during search: " & Folder);
       end Search_In;
 
       ------------------
@@ -138,9 +141,10 @@ package body Alr.Files is
       Search (Current_Directory, "", (Directory => True, others => False), Check_Folder'Access);
 
       if Candidates.Length > 1 then
-         Log ("Warning: more than one alr project file in scope.");
+         --  Not necessarily a bad thing. Will happen e.g. when on the parent folder of many alr projects
+         Trace.Debug ("Looking for alr metadata file: more than one alr project file in scope.");
          for C of Candidates loop
-            Log (C);
+            Trace.Debug (C);
          end loop;
       end if;
 
