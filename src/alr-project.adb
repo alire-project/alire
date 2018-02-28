@@ -17,7 +17,7 @@ package body Alr.Project is
       if Files.Locate_Index_File (Current.Project) = "" then
          if Files.Locate_Any_Index_File /= "" then
             Trace.Error ("Session/Project mismatch:");
-            Trace.Error ("Root project is " & Utils.Quote (Current.Milestone_Image));
+            Trace.Error ("Root project is " & Utils.Quote (Current.Milestone.Image));
             Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Any_Index_File));
          else
             Trace.Error ("Could not find a valid session file");

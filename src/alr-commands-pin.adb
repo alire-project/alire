@@ -25,9 +25,6 @@ package body Alr.Commands.Pin is
                         Alire.Query.Resolve (Project.Current.Depends, Success, Query_Policy);
       begin
          if Success then
-            Log ("Backing up current dependency file to " & Index_File & ".old");
-            Ada.Directories.Copy_File (Index_File, Index_File & ".old", "mode=overwrite");
-
             Templates.Generate_Prj_Alr (Deps,
                                         Project.Current,
                                         Exact    => True,

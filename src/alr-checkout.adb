@@ -24,10 +24,10 @@ package body Alr.Checkout is
    begin
       if Ada.Directories.Exists (Folder) then
          Was_There := True;
-         Trace.Detail ("Skipping checkout of already available " & R.Milestone_Image);
+         Trace.Detail ("Skipping checkout of already available " & R.Milestone.Image);
       else
          Was_There := False;
-         Trace.Detail ("About to check out " & R.Milestone_Image);
+         Trace.Detail ("About to check out " & R.Milestone.Image);
          Alr.Origins.Fetch (R.Origin, Folder);
       end if;
    end Checkout;
@@ -97,7 +97,7 @@ package body Alr.Checkout is
       Checkout (R, Parent_Folder, Was_There);
 
       --  And generate its working files, if they do not exist
-      if Generate_Files and then not R.Is_Native then
+      if Generate_Files then -- FIXME we'll have to check here once native packages are in place again
          declare
             use OS_Lib;
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;

@@ -12,11 +12,15 @@ version=${1:-release}
 
 if [[ "$version" == "working" ]]; then
     echo Testing WORKING version, press enter
-    touch ~/.config/alire/enable-devel
+    pushd ~/opt/bin
+    ln -sf ~/local/alr/bin/alr
+    popd
     read
 elif [[ "$version" == "release" ]]; then
     echo Testing RELEASE version, press enter
-    rm -f ~/.config/alire/enable-devel
+    pushd ~/opt/bin
+    ln -sf ~/.config/alire/alr/bin/alr
+    popd
     read
 else
     # Let's presume it's a testing branch:
@@ -29,6 +33,9 @@ else
     git checkout $version
     git submodule update --init --recursive
     gprbuild -p -P alr_env
+    popd
+    pushd ~/opt/bin
+    ln -sf ~/.config/alire/alr/bin/alr
     popd
 fi
 
@@ -82,10 +89,10 @@ alr init --bin xxx
 rm -rf xxx
 alr init --lib xxx
 rm -rf xxx
-alr init --bin -b xxx
-rm -rf xxx
-alr init --lib -b xxx
-rm -rf xxx
+#alr init --bin -b xxx
+#rm -rf xxx
+#alr init --lib -b xxx
+#rm -rf xxx
 
 # PIN 
 echo PIN 

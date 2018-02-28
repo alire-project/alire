@@ -59,7 +59,7 @@ package body Alr.Commands.Init is
                             Depends_On => Bootstrap.Alire_Minimal_Dependency,
                             Properties => Alire.Index.Default_Properties,
                             Requisites => Alire.Index.No_Requisites,
-                            Native     => False);
+                            Available  => Alire.Index.No_Requisites);
          Success     : Boolean;
          Depends     : constant Alire.Query.Instance := Alire.Query.Resolve (New_Release.Depends,
                                                                              Success, Query_Policy);

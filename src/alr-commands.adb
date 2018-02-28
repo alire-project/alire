@@ -124,17 +124,21 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Help_Switch'Access,
                      "-h", "--help", "Display general or command-specific help");
-      Define_Switch (Config,
-                     Use_Native'Access,
-                     "-n", "--use-native", "Use autodetected native packages in dependency resolution");
+
+--        Define_Switch (Config,
+--                       Use_Native'Access,
+--                       "-n", "--use-native", "Use autodetected native packages in dependency resolution");
+--
       Define_Switch (Config,
                      Log_Quiet'Access,
                      "-q",
                      Help => "Limit output to errors");
+
       Define_Switch (Config,
                      Log_Detail'Access,
                      "-v",
                      Help => "Be more verbose");
+
       Define_Switch (Config,
                      Log_Debug'Access,
                      "-d",

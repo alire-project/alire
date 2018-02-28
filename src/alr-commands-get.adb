@@ -49,7 +49,7 @@ package body Alr.Commands.Get is
                Put_Line ("Dependency solution:");
 
                for Rel of Needed loop
-                  Put_Line ("   " & Rel.Milestone_Image);
+                  Put_Line ("   " & Rel.Milestone.Image);
                end loop;
             end if;
          else

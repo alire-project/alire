@@ -117,7 +117,7 @@ package body Alr.Templates is
       GPR_Files : constant Utils.String_Vector := Root.GPR_Files;
 
    begin
-      Log ("Generating GPR for " & Root.Milestone_Image & " with" & Instance.Length'Img & " dependencies", Detail);
+      Log ("Generating GPR for " & Root.Milestone.Image & " with" & Instance.Length'Img & " dependencies", Detail);
 
       Files.Backup_If_Existing (Filename);
 

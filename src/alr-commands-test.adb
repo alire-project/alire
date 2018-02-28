@@ -1,10 +1,8 @@
 with Ada.Calendar;
 with Ada.Directories;
 
-with Alire.Compilers;
 with Alire.Containers;
 with Alire.Index;
-with Alire.Operating_Systems;
 
 with Alr.Files;
 with Alr.OS;
@@ -61,8 +59,6 @@ package body Alr.Commands.Test is
       Create (File, Out_File,
               "alr_report_" &
                 Utils.To_Lower_Case (Query_Policy'Img) & "_" &
-                Alire.Operating_Systems.Current'Img & "_" &
-                Alire.Compilers.Compiler'Img & "_" &
                 Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch))) &
                 ".txt");
 
@@ -73,14 +69,14 @@ package body Alr.Commands.Test is
                        " FAILED:" & Failed'Img &
                        " SKIPPED:" & Skipped'Img &
                        " CURRENT:" & Integer'(Tested + 1)'Img & "/" &
-                       Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone_Image);
+                       Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
          if Ada.Directories.Exists (R.Unique_Folder) then
             Skipped := Skipped + 1;
-            Trace.Detail ("Skipping already tested " & R.Milestone_Image);
+            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
-               Spawn.Command ("alr", "get --compile " & R.Milestone_Image,
+               Spawn.Command ("alr", "get --compile " & R.Milestone.Image,
                               Understands_Verbose => True,
                               Force_Quiet         => Is_Quiet);
 
@@ -90,12 +86,12 @@ package body Alr.Commands.Test is
                end if;
 
                Passed := Passed + 1;
-               Put_Line (File, "passed:" & R.Milestone_Image);
+               Put_Line (File, "passed:" & R.Milestone.Image);
             exception
                when Child_Failed =>
                   Failed := Failed + 1;
-                  Put_Line (File, "FAILED:" & R.Milestone_Image);
-                  Trace.Warning ("Compilation failed for " & R.Milestone_Image);
+                  Put_Line (File, "FAILED:" & R.Milestone.Image);
+                  Trace.Warning ("Compilation failed for " & R.Milestone.Image);
             end;
          end if;
 

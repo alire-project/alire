@@ -289,7 +289,7 @@ package body Alr.Bootstrap is
         (if not Self.Is_Canonical then "devel" else "release") &
         " (" &
         (if Running_In_Session
-         then (if Session_Is_Current then Project.Current.Milestone_Image else "outdated")
+         then (if Session_Is_Current then Project.Current.Milestone.Image else "outdated")
          else "no project") & ") (" &
         Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)" &
         (if Self.Is_Bootstrap then " (minimal index)" else "");
