@@ -3,10 +3,6 @@ Bugs
 
 Features
 ========
-Native packages proper
-    Possibilities in Alire
-    Checks in Alr
-
 Windows port
 
 Library inclusions

@@ -1,5 +1,7 @@
 with Alire.Platforms;
+with Alire.Properties;
 
+private with Alire.Properties.Platform;
 private with Alr.Utils;
 private with GNAT.Compiler_Version;
 
@@ -27,7 +29,16 @@ package Alr.OS is
 
    function Fingerprint return String;
 
+   function Properties return Alire.Properties.Vector;
+
 private
+
+   use all type Alire.Properties.Vector;
+   package Platprop renames Alire.Properties.Platform;
+   function Properties return Alire.Properties.Vector is
+         (Platprop.Compiler_Is (Compiler) and
+          Platprop.Distribution_Is (Distribution) and
+          Platprop.System_Is (Operating_System));
 
    package Comp is new GNAT.Compiler_Version;
 

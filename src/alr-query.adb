@@ -1,6 +1,8 @@
 with Alire.Dependencies;
 with Alire.Utils;
 
+with Alr.Checkout;
+
 package body Alr.Query is
 
    package Semver renames Semantic_Versioning;
@@ -106,7 +108,7 @@ package body Alr.Query is
    is
       --  FIXME: since this is depth-first, Frozen can be passed in-out and updated on the spot,
       --  thus saving copies. Probably the same applies to Unresolved.
-      Dep    : constant Alire.Dependencies.Dependency :=
+      Dep : constant Alire.Dependencies.Dependency :=
                  (if Unresolved.Is_Empty
                   then Alire.Dependencies.New_Dependency ("fake", Semver.Any)
                   else Unresolved.First_Element);
@@ -121,7 +123,10 @@ package body Alr.Query is
 
       function Check (R : Release) return Instance is
       begin
-         if Dep.Project = R.Project and then Semver.Satisfies (R.Version, Dep.Versions) then
+         if Dep.Project = R.Project and Then
+            Semver.Satisfies (R.Version, Dep.Versions) and then
+            Checkout.Available_Currently (R)
+         then
             declare
                New_Frozen : Instance           := Frozen;
                New_Remain : Index.Dependencies := Remain;
@@ -212,7 +217,7 @@ package body Alr.Query is
                                                Success)
       do
          if not Success then
-            Log ("Dependency resolution failed");
+            Trace.Debug ("Dependency resolution failed");
          end if;
       end return;
    end Resolve;

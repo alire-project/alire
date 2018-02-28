@@ -520,7 +520,7 @@ package body Alr.Commands is
          Log ("alr " & What_Command & " done", Detail);
       exception
          when Child_Failed | Command_Failed =>
-            Log ("alr " & What_Command & " unsuccessful", Warning);
+            Trace.Error ("alr " & What_Command & " unsuccessful");
             if Alire.Log_Level = Debug then
                raise;
             else

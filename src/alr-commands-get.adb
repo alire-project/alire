@@ -84,8 +84,7 @@ package body Alr.Commands.Get is
       end if;
 
       if not Success then
-         Trace.Warning ("Failed: could not resolve dependencies.");
-         Trace.Warning ("Requested project was " & Query.Dependency_Image (Name, Versions));
+         Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
          raise Command_Failed;
       end if;
 
