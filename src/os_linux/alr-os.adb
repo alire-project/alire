@@ -1,5 +1,4 @@
 with Alr.OS_Lib;
-with Alr.Utils;
 
 with Interfaces.C;
 with Interfaces.C.Strings;
@@ -28,16 +27,32 @@ package body Alr.OS is
                             Default => OS_Lib.Getenv ("HOME") / ".config" / "alire");
    end Config_Folder;
 
-   --------------------
-   -- Os_Fingerprint --
-   --------------------
+   ------------------
+   -- Distribution --
+   ------------------
 
-   function Os_Fingerprint return String is
-      Lines : constant Utils.String_Vector :=
-                OS_Lib.Spawn_And_Capture ("lsb_release", "-d");
+   function Distribution return Alire.Platforms.Distributions is
+      use all type Alire.Platforms.Distributions;
+      Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-cs");
    begin
-      return Lines.First_Element;
-   end Os_Fingerprint;
+      for Known in Alire.Platforms.Distributions'Range loop
+         for Line of Release loop
+            if Contains (To_Lower_Case (Known'Img), Line) then
+               return Known;
+            end if;
+         end loop;
+      end loop;
+
+      Trace.Debug ("Found unsupported distro: " & Release (1));
+
+      return Unsupported;
+   end Distribution;
+
+   ----------------------
+   -- Operating_System --
+   ----------------------
+
+   function Operating_System return Alire.Platforms.Operating_Systems is (Alire.Platforms.GNU_Linux);
 
    --------------------
    -- Own_Executable --

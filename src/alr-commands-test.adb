@@ -62,7 +62,7 @@ package body Alr.Commands.Test is
                 Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch))) &
                 ".txt");
 
-      Put_Line (File, "os-fingerprint:" & OS.OS_Fingerprint);
+      Put_Line (File, "os-fingerprint:" & OS.Fingerprint);
 
       for R of Releases loop
          Trace.Info ("PASSED:" & Passed'Img &

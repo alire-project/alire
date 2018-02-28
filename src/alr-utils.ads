@@ -26,6 +26,9 @@ package Alr.Utils is
    package String_Vectors renames Alire.Utils.String_Vectors;
    subtype String_Vector is Alire.Utils.String_Vector;
 
+   function Contains (V : String_Vector; Subst : String) return Boolean;
+   --  Any of the strings contains it
+
 private
 
    function Quote (S : String) return String is ("""" & S & """");
