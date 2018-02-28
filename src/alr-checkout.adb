@@ -38,8 +38,9 @@ package body Alr.Checkout is
 
    procedure Generate_GPR_Builder (Root : Alire.Index.Release) is
       Success : Boolean;
-      Needed  : constant Alire.Query.Instance := Alire.Query.Resolve (Root.Depends, Success,
-                                                                      Commands.Query_Policy);
+      Needed  : constant Query.Instance := Query.Resolve (Root.Depends,
+                                                          Success,
+                                                          Commands.Query_Policy);
    begin
       if Success then
          Generate_GPR_Builder (Needed, Root);
@@ -52,7 +53,7 @@ package body Alr.Checkout is
    -- Generate_GPR_Builder --
    --------------------------
 
-   procedure Generate_GPR_Builder (Depends : Alire.Query.Instance; Root : Alire.Index.Release) is
+   procedure Generate_GPR_Builder (Depends : Query.Instance; Root : Alire.Index.Release) is
       --  Guard not required, will have been called by the caller to obtain the dependencies
    begin
       Templates.Generate_Agg_Gpr (Depends, Root);
@@ -62,7 +63,7 @@ package body Alr.Checkout is
    -- To_Folder --
    ---------------
 
-   procedure To_Folder (Projects : Alire.Query.Instance;
+   procedure To_Folder (Projects : Query.Instance;
                         Parent   : String := Hardcoded.Projects_Folder;
                         But      : Alire.Project_Name := "")
    is
@@ -80,7 +81,7 @@ package body Alr.Checkout is
    ------------------
 
    procedure Working_Copy (R              : Alire.Index.Release;
-                           Deps           : Alire.Query.Instance;
+                           Deps           : Query.Instance;
                            Parent_Folder  : String;
                            Generate_Files : Boolean := True;
                            If_Conflict    : Policies := Skip)

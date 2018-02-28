@@ -2,13 +2,13 @@ with Ada.Directories;
 
 with Alire.Dependencies.Vectors;
 with Alire.Index;
-with Alire.Query;
 
 with Alr.Checkout;
 with Alr.Commands.Compile;
 with Alr.Hardcoded;
 with Alr.Origins;
 with Alr.Parsers;
+with Alr.Query;
 
 with Semantic_Versioning;
 
@@ -31,10 +31,11 @@ package body Alr.Commands.Get is
    begin
       declare
          Success : Boolean;
-         Release : constant Alire.Index.Release  := Alire.Query.Find (Name, Versions, Query_Policy);
-         Needed  : Alire.Query.Instance :=
-                     Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
-                                          Success, Query_Policy);
+         Release : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
+         Needed  : Query.Instance :=
+                     Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
+                                    Success,
+                                    Query_Policy);
 
          use Ada.Text_IO;
       begin
@@ -59,7 +60,7 @@ package body Alr.Commands.Get is
          end;
    exception
       when Alire.Query_Unsuccessful =>
-         Trace.Info ("Not found: " & Alire.Query.Dependency_Image (Name, Versions));
+         Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
    end Report;
 
    --------------
@@ -70,26 +71,27 @@ package body Alr.Commands.Get is
       use all type Semver.Version_Set;
 
       Success : Boolean;
-      Needed  : constant Alire.Query.Instance :=
-                  Alire.Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
-                                       Success, Query_Policy);
+      Needed  : constant Query.Instance :=
+                  Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
+                                 Success,
+                                 Query_Policy);
 
       Must_Enter : Boolean;
    begin
-      if not Alire.Query.Exists (Name) then
+      if not Query.Exists (Name) then
          Trace.Info ("Project [" & Name & "] does not exist in the catalog.");
          raise Command_Failed;
       end if;
 
       if not Success then
          Trace.Warning ("Failed: could not resolve dependencies.");
-         Trace.Warning ("Requested project was " & Alire.Query.Dependency_Image (Name, Versions));
+         Trace.Warning ("Requested project was " & Query.Dependency_Image (Name, Versions));
          raise Command_Failed;
       end if;
 
       --  Check if it's native first
       declare
-         R : constant Alire.Index.Release := Alire.Query.Find (Name, Versions, Query_Policy);
+         R : constant Alire.Index.Release := Query.Find (Name, Versions, Query_Policy);
       begin
          --  If dependencies succeeded then the release is available!
          if R.Origin.Is_Native then

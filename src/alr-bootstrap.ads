@@ -1,7 +1,8 @@
 with Alire;
 with Alire.Containers;
 with Alire.Index;
-with Alire.Query;
+
+with Alr.Query;
 
 private with Alire.Index.Alire;
 
@@ -46,13 +47,13 @@ package Alr.Bootstrap is
    --  One-liner reporting most interesting information
 
    Alire_Minimal_Dependency : constant Alire.Index.Dependencies;
-   Alire_Minimal_Instance   : constant Alire.Query.Instance;
+   Alire_Minimal_Instance   : constant Query.Instance;
 
 private
 
    Alire_Minimal_Dependency : constant Alire.Index.Dependencies :=
                                 Alire.Index.At_Least (Alire.Index.Alire.V_0_1);
-   Alire_Minimal_Instance   : constant Alire.Query.Instance :=
+   Alire_Minimal_Instance   : constant Query.Instance :=
                                 Alire.Containers.To_Map (Alire.Index.Alire.V_0_1);
 
 end Alr.Bootstrap;

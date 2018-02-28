@@ -1,16 +1,17 @@
-with Alire.Query;
 with Alire.Releases;
+
+with Alr.Query;
 
 package Alr.Templates is
 
    procedure Generate_Full_Index (Session_Path, Index_Folder : String);
    --  Generates alr-index.ads that with-es all available alire-index-*.ads releases
 
-   procedure Generate_Agg_Gpr (Instance : Alire.Query.Instance;
+   procedure Generate_Agg_Gpr (Instance : Query.Instance;
                                Root     : Alire.Releases.Release);
    --  Generate the aggregate project file for path setup
 
-   procedure Generate_Prj_Alr (Instance : Alire.Query.Instance;
+   procedure Generate_Prj_Alr (Instance : Query.Instance;
                                Root     : Alire.Releases.Release;
                                Exact    : Boolean := True;
                                Filename : String  := "");

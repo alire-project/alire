@@ -101,8 +101,8 @@ package body Alr.Templates is
    -- Generate_Gpr --
    ------------------
 
-   procedure Generate_Agg_Gpr (Instance : Alire.Query.Instance;
-                           Root     : Alire.Releases.Release)
+   procedure Generate_Agg_Gpr (Instance : Query.Instance;
+                               Root     : Alire.Releases.Release)
    is
       use all type Utils.String_Vectors.Cursor;
 
@@ -167,7 +167,7 @@ package body Alr.Templates is
    -- Generate_Project_Alire --
    ----------------------------
 
-   procedure Generate_Prj_Alr (Instance : Alire.Query.Instance;
+   procedure Generate_Prj_Alr (Instance : Query.Instance;
                                Root     : Alire.Releases.Release;
                                Exact    : Boolean := True;
                                Filename : String := "")
@@ -179,7 +179,7 @@ package body Alr.Templates is
    begin
       if Instance.Contains (Root.Project) then
          declare
-            Pruned_Instance : Alire.Query.Instance := Instance;
+            Pruned_Instance : Query.Instance := Instance;
          begin
             Pruned_Instance.Delete (Root.Project);
             Generate_Prj_Alr (Pruned_Instance, Root);

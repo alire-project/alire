@@ -317,8 +317,8 @@ package body Alr.Commands is
    -- Query_Policy --
    ------------------
 
-   function Query_Policy return Alire.Query.Policies is
-      (if Prefer_Oldest then Alire.Query.Oldest else Alire.Query.Newest);
+   function Query_Policy return Query.Policies is
+      (if Prefer_Oldest then Query.Oldest else Query.Newest);
 
    -------------------------------
    -- Reportaise_Command_Failed --

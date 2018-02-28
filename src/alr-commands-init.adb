@@ -2,12 +2,12 @@ with Ada.Directories;
 
 with Alire.Index;
 with Alire.Origins;
-with Alire.Query;
 with Alire.Releases;
 
 with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Query;
 with Alr.Templates;
 with Alr.Utils;
 
@@ -61,8 +61,9 @@ package body Alr.Commands.Init is
                             Requisites => Alire.Index.No_Requisites,
                             Available  => Alire.Index.No_Requisites);
          Success     : Boolean;
-         Depends     : constant Alire.Query.Instance := Alire.Query.Resolve (New_Release.Depends,
-                                                                             Success, Query_Policy);
+         Depends     : constant Query.Instance := Query.Resolve (New_Release.Depends,
+                                                                 Success,
+                                                                 Query_Policy);
       begin
          if not Success then
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";

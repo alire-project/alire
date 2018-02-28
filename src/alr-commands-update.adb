@@ -1,8 +1,7 @@
-with Alire.Query;
-
 with Alr.Bootstrap;
 with Alr.Checkout;
 with Alr.Hardcoded;
+with Alr.Query;
 with Alr.Spawn;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -50,8 +49,9 @@ package body Alr.Commands.Update is
 
       declare
          Success : Boolean;
-         Needed  : constant Alire.Query.Instance :=
-                     Alire.Query.Resolve (Project.Current.Depends, Success, Query_Policy);
+         Needed  : constant Query.Instance := Query.Resolve (Project.Current.Depends,
+                                                             Success,
+                                                             Query_Policy);
       begin
          if not Success then
             Log ("Update failed");

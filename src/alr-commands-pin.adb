@@ -1,7 +1,6 @@
 with Alr.Files;
+with Alr.Query;
 with Alr.Templates;
-
-with Alire.Query;
 
 package body Alr.Commands.Pin is
 
@@ -19,8 +18,9 @@ package body Alr.Commands.Pin is
       declare
          Index_File : constant String := Files.Locate_Index_File (Project.Name);
          Success    :          Boolean;
-         Deps       : constant Alire.Query.Instance :=
-                        Alire.Query.Resolve (Project.Current.Depends, Success, Query_Policy);
+         Deps       : constant Query.Instance := Query.Resolve (Project.Current.Depends,
+                                                                Success,
+                                                                Query_Policy);
       begin
          if Success then
             Templates.Generate_Prj_Alr (Deps,
