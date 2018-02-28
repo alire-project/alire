@@ -1,4 +1,7 @@
+with Ada.Calendar;
 with Ada.Directories;
+
+with Alire_Early_Elaboration;
 
 with Alr.Commands.Update;
 with Alr.Files;
@@ -283,6 +286,8 @@ package body Alr.Bootstrap is
    -----------------
 
    function Status_Line return String is
+      use Ada.Calendar;
+      type Milliseconds is delta 0.001 range 0.0 .. 24.0 * 60.0 * 60.0;
    begin
       return
         (if Self.Is_Rolling then "rolling" else "bootstrap") & "-" &
@@ -292,7 +297,8 @@ package body Alr.Bootstrap is
          then (if Session_Is_Current then Project.Current.Milestone.Image else "outdated")
          else "no project") & ") (" &
         Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)" &
-        (if Self.Is_Bootstrap then " (minimal index)" else "");
+        (if Self.Is_Bootstrap then " (minimal index)" else "") &
+        ("(loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
    end Status_Line;
 
 begin

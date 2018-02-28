@@ -2,10 +2,41 @@ with Ada.Directories;
 
 with Alr.OS_Lib;
 with Alr.Spawn;
+with Alr.Utils;
+
+with GNAT.IO;
 
 package body Alr.Origins is
 
+   use all type Alire.Origins.Kinds;
+
    type Fetcher is access procedure (From : Alire.Origins.Origin; Folder : String);
+
+   ------------------------------
+   -- Already_Available_Native --
+   ------------------------------
+
+   function Already_Available_Native (Origin : Alire.Origins.Origin) return Boolean is
+      Output : Utils.String_Vector;
+   begin
+      case Origin.Kind is
+
+         when Apt =>
+            Output := OS_Lib.Spawn_And_Capture ("apt-cache", "policy " & origin.id);
+            for Line of Output loop
+               if Utils.Contains (Line, "Installed") and then not Utils.Contains (Line, "none") then
+                  return True;
+               end if;
+            end loop;
+
+         when others =>
+            raise Program_Error with "Shouldn't be used";
+      end case;
+
+      return False;
+   end Already_Available_Native;
+
+   Native_Proceed : Boolean := False;
 
    ---------
    -- Apt --
@@ -13,8 +44,23 @@ package body Alr.Origins is
 
    procedure Apt (From : Alire.Origins.Origin; Folder : String) is
       pragma Unreferenced (Folder);
+      use GNAT.IO;
+
+      Foo : String := "bar";
+      Bar : Integer;
    begin
-      Trace.Always ("sudo needed to install platform package " & From.Id);
+      if Already_Available_Native (From) then
+         Trace.Detail ("Package " & From.Id & " is already installed");
+      elsif not Native_Proceed then
+         New_Line;
+         Put_Line ("The native package " & From.Id & " is about to be installed using apt");
+         Put_Line ("This action requires sudo privileges and might impact your system installation");
+         New_Line;
+         Put_Line ("Press Enter to continue or Ctrl-C to abort");
+         Get_Line (Foo, Bar);
+         Native_Proceed := True;
+      end if;
+
       OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " & From.Id);
    exception
       when others =>
@@ -62,8 +108,6 @@ package body Alr.Origins is
          raise Command_Failed;
    end Hg;
 
-   use all type Alire.Origins.Kinds;
-
    Fetchers : constant array (Alire.Origins.Kinds) of Fetcher :=
                 (Filesystem => Fail'Access,
                  Git        => Git'Access,
@@ -86,5 +130,13 @@ package body Alr.Origins is
          raise;
    end Fetch;
 
+   ------------------
+   -- Fetch_Native --
+   ------------------
+
+   procedure Fetch_Native (From : Alire.Origins.Origin) is
+   begin
+      Fetch (From, "<platform native>");
+   end Fetch_Native;
 
 end Alr.Origins;

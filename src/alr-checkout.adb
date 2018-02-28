@@ -88,7 +88,7 @@ package body Alr.Checkout is
    is
       Project : constant Alire.Project_Name := R.Project;
       Root    : Alire.Index.Release renames R;
-      Was_There : Boolean;
+      Was_There : Boolean with Unreferenced;
    begin
       if If_Conflict /= Skip then
          raise Program_Error with "Unimplemented";

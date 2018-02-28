@@ -7,6 +7,7 @@ with Alire.Query;
 with Alr.Checkout;
 with Alr.Commands.Compile;
 with Alr.Hardcoded;
+with Alr.Origins;
 with Alr.Parsers;
 
 with Semantic_Versioning;
@@ -85,6 +86,17 @@ package body Alr.Commands.Get is
          Trace.Warning ("Requested project was " & Alire.Query.Dependency_Image (Name, Versions));
          raise Command_Failed;
       end if;
+
+      --  Check if it's native first
+      declare
+         R : constant Alire.Index.Release := Alire.Query.Find (Name, Versions, Query_Policy);
+      begin
+         --  If dependencies succeeded then the release is available!
+         if R.Origin.Is_Native then
+            Origins.Fetch_Native (R.Origin);
+            return; -- EARLY EXIT FOR NATIVE PACKAGE
+         end if;
+      end;
 
       --  Check if we are already in the fresh copy (may happen after respawning)
       if Bootstrap.Running_In_Session then

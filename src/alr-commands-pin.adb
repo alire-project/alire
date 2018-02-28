@@ -1,5 +1,3 @@
-with Ada.Directories; use Ada.Directories;
-
 with Alr.Files;
 with Alr.Templates;
 
@@ -30,7 +28,7 @@ package body Alr.Commands.Pin is
                                         Exact    => True,
                                         Filename => Index_File);
          else
-            Trace.Warning ("Could not resolve dependencies");
+            Trace.Error ("Could not resolve dependencies");
             raise Command_Failed;
          end if;
       end;

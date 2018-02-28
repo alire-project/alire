@@ -205,13 +205,12 @@ package body Alr.OS_Lib is
          return False;
    end File_Contains_Ignore_Case;
 
-   use GNAT.OS_Lib;
-
    --------------------
    -- Locate_In_Path --
    --------------------
 
    function Locate_In_Path (Name : String) return String is
+      use GNAT.OS_Lib;
       Target : String_Access := Locate_Exec_On_Path (Name);
    begin
       if Target /= null then
@@ -268,7 +267,7 @@ package body Alr.OS_Lib is
       Non_Blocking_Spawn
         (Pid,
          Command,
-         Argument_String_To_List (Arguments).all,
+         GNAT.OS_Lib.Argument_String_To_List (Arguments).all,
          Err_To_Out => True);
 
       loop
@@ -333,6 +332,7 @@ package body Alr.OS_Lib is
                    Understands_Verbose : Boolean := False;
                    Force_Quiet         : Boolean := False) return Integer
    is
+      use GNAT.OS_Lib;
       Extra : constant String := (if Understands_Verbose then "-v " else "");
       File  : File_Descriptor;
       Name  : String_Access;
@@ -396,6 +396,7 @@ package body Alr.OS_Lib is
                                Arguments  : String := "";
                                Err_To_Out : Boolean := False) return Utils.String_Vector
    is
+      use GNAT.OS_Lib;
       File  : File_Descriptor;
       Name  : String_Access;
       Ok    : Boolean;
@@ -445,9 +446,13 @@ package body Alr.OS_Lib is
                                  Arguments  : String := "";
                                  Err_To_Out : Boolean := False)
    is
+      use GNAT.OS_Lib;
       File : constant File_Descriptor := Create_File (Out_File, Text);
       Code : Integer;
    begin
+      Trace.Debug ("Spawning " & Command & " " & Arguments & " > " & Out_File &
+                   (if Err_To_Out then " 2>&1" else ""));
+
       Spawn (Locate_In_Path (Command),
              Argument_String_To_List (Arguments).all,
              File, Code, Err_To_Out);
@@ -465,9 +470,13 @@ package body Alr.OS_Lib is
    procedure Spawn_Raw (Command   : String;
                         Arguments : String := "")
    is
-      Code : constant Integer := Spawn (Locate_In_Path (Command),
-                                        Argument_String_To_List (Arguments).all);
+      Code : Integer;
    begin
+      Trace.Debug ("Spawning " & Command & " " & Arguments);
+
+      Code := GNAT.OS_Lib.Spawn (Locate_In_Path (Command),
+                                 GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
+
       if Code /= 0 then
          raise Child_Failed with "Exit code:" & Code'Image;
       end if;
