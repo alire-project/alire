@@ -3,9 +3,9 @@ Bugs
 
 Features
 ========
-Configuration variables for gprbuild
-    In index
-    In compile
+Native packages proper
+    Possibilities in Alire
+    Checks in Alr
 
 Windows port
 

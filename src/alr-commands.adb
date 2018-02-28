@@ -1,8 +1,10 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO; use Ada.Text_IO;
 
-with Alire;
+
 with Alire_Early_Elaboration;
+with Alire;
+with Alire.Utils;
 
 with Alr.Checkout;
 with Alr.Commands.Build;
@@ -314,6 +316,26 @@ package body Alr.Commands is
    function Query_Policy return Alire.Query.Policies is
       (if Prefer_Oldest then Alire.Query.Oldest else Alire.Query.Newest);
 
+   -------------------------------
+   -- Reportaise_Command_Failed --
+   -------------------------------
+
+   procedure Reportaise_Command_Failed (Message : String) is
+   begin
+      Trace.Error (Message);
+      raise Command_Failed with Message;
+   end Reportaise_Command_Failed;
+
+   --------------------------------
+   -- Reportaise_Wrong_Arguments --
+   --------------------------------
+
+   procedure Reportaise_Wrong_Arguments (Message : String) is
+   begin
+      Trace.Error (Message);
+      raise Wrong_Command_Arguments with Message;
+   end Reportaise_Wrong_Arguments;
+
    ------------------------
    -- Requires_Buildfile --
    ------------------------
@@ -353,15 +375,48 @@ package body Alr.Commands is
    -- Fill_Arguments --
    --------------------
 
+   Fill_For_Real : Boolean := False;
+
    procedure Fill_Arguments (Switch    : String;
                              Parameter : String;
                              Section   : String)
    is
    -- For some reason, Get_Argument is not working
    -- This allows capturing any unknown switch under the wildcard class as an argument
-      pragma Unreferenced (Parameter, Section);
+      pragma Unreferenced (Section);
    begin
-      Raw_Arguments.Append (Switch);
+      Trace.Never ("S: " & Switch & "; P: " & Parameter);
+
+      --  As of now, the only multiple switch that must be treated here is -X
+
+      if Switch (Switch'First) = '-' then
+         if Fill_For_Real then
+            if Switch (Switch'First + 1) = 'X' then
+               --  It's a -X
+               if Switch = "-X" and then Parameter = "" then
+                  Reportaise_Wrong_Arguments ("Space after -X not allowed");
+               else -- Real run
+                  declare
+                     use Alire.Utils;
+                     Var : constant String := Head (Parameter, '=');
+                     Val : constant String := Tail (Parameter, '=');
+                  begin
+                     if Var = "" or else Val = "" then
+                        Reportaise_Wrong_Arguments ("Malformed -X switch: " & Switch);
+                     else
+                        Scenario.Add_Argument (Var, Val);
+                     end if;
+                  end;
+               end if;
+            else
+               Reportaise_Wrong_Arguments ("Unrecognized switch: " & Switch);
+            end if;
+         else
+            null; -- We are only checking global command/switches, these switches are not yet interesting
+         end if;
+      else
+         Raw_Arguments.Append (Switch);
+      end if;
    end Fill_Arguments;
 
    ------------------------
@@ -408,13 +463,17 @@ package body Alr.Commands is
          Dispatch_Table (Cmd).Setup_Switches (Command_Config); -- Specific to command
 
          --  Validate command + global configuration:
+
+         Fill_For_Real := True;
+
          Initialize_Option_Scan;
          Getopt (Command_Config);
 
          --  If OK, retrieve all arguments with the final, command-specific proper configuration
          Define_Switch (Command_Config, "*");
+         Scenario := Alire.GPR.Empty_Scenario;
          Getopt (Command_Config, Callback => Fill_Arguments'Access);
-         Getopt (Command_Config);
+--           Getopt (Command_Config);
       end;
 
       -- At this point everything should be OK
@@ -433,6 +492,13 @@ package body Alr.Commands is
          end if;
          Display_Usage;
          OS_Lib.Bailout (1);
+      when Wrong_Command_Arguments =>
+         --  Raised in here, so no need to raise up unless in debug mode
+         if Log_Debug then
+            raise;
+         else
+            OS_Lib.Bailout (1);
+         end if;
    end Parse_Command_Line;
 
    -------------

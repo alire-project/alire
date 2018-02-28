@@ -6,6 +6,8 @@ with Alr.Bootstrap;
 
 private with Ada.Text_IO;
 
+private with Alire.GPR;
+
 private with Alr.OS_Lib;
 pragma Warnings (Off); private with Alr.Project; pragma Warnings (On);
 private with Alr.Utils;
@@ -97,12 +99,19 @@ private
 
    --  Facilities for command/argument identification. These are available to commands.
 
+   procedure Reportaise_Command_Failed  (Message : String);
+   procedure Reportaise_Wrong_Arguments (Message : String);
+   --  Report and Raise :P
+
    Raw_Arguments : Utils.String_Vector; -- Raw arguments, first one is the command
 
    function What_Command return String;
    function What_Command return Cmd_Names;
    function Num_Arguments return Natural; -- Actual arguments besides the command
    function Argument (I : Positive) return String; -- May raise if not existing
+
+   Scenario : Alire.GPR.Scenario;
+   --  This will be filled in during parsing of command line with any seen "-X" parameters
 
    --  Other options
 

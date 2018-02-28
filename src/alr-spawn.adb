@@ -93,7 +93,8 @@ package body Alr.Spawn is
    --------------
 
    procedure Gprbuild (Project_File        : String;
-                       Session_File        : String := "")
+                       Session_File        : String := "";
+                       Extra_Args          : String := "")
    is
       Selfbuild : constant String :=
                     (if Session_File /= ""
@@ -102,7 +103,9 @@ package body Alr.Spawn is
    begin
       Command ("gprbuild",
                Selfbuild &
-               "-j0 -m -p -P " & Project_File,
+                 "-j0 -m -p " &
+                 Extra_Args & (if Extra_Args /= "" then " " else "") &
+                 "-P " & Project_File,
                Understands_Verbose => True);
    end Gprbuild;
 

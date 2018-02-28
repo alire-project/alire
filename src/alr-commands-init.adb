@@ -8,7 +8,6 @@ with Alire.Releases;
 with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
-with Alr.Spawn;
 with Alr.Templates;
 with Alr.Utils;
 

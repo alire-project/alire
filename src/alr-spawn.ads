@@ -22,7 +22,8 @@ package Alr.Spawn is
    --  Summary is shown after process successful end, if Log_Level = Info
 
    procedure Gprbuild (Project_File : String;
-                       Session_File : String := "");
+                       Session_File : String := "";
+                       Extra_Args   : String := "");
    --  Builds a project file, with optional alr metadata file
 
 end Alr.Spawn;

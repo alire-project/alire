@@ -21,11 +21,15 @@ package body Alr.Commands.Compile is
    procedure Execute is
       Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
+      if not Scenario.Is_Empty then
+         Trace.Detail ("Requested scenario is " & Scenario.As_Command_Line);
+      end if;
+
       Requires_Project;
       Requires_Buildfile;
 
       begin
-         Spawn.Gprbuild (Project.Build_File);
+         Spawn.Gprbuild (Project.Build_File, Extra_Args => Scenario.As_Command_Line);
          Trace.Info ("Compilation finished without errors");
          declare
             Execs : constant Utils.String_Vector :=
@@ -48,5 +52,22 @@ package body Alr.Commands.Compile is
             raise;
       end;
    end Execute;
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+      pragma Unreferenced (Cmd);
+      use GNAT.Command_Line;
+   begin
+      Define_Switch (Config,
+                     "-X!",
+                     Help => "Scenario variable for gprbuild",
+                     Argument => "Var=Arg");
+   end Setup_Switches;
 
 end Alr.Commands.Compile;
