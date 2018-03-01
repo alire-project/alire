@@ -21,6 +21,7 @@ private
    type Command is new Commands.Command with record
       Compile : aliased Boolean := False;
       Info    : aliased Boolean := False;
+      Native  : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Get;

@@ -57,8 +57,7 @@ package body Alr.Commands.Init is
                             V ("0.0.0-alr_working_copy"),
                             Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
                             Depends_On => Bootstrap.Alire_Minimal_Dependency,
-                            Properties => Alire.Index.Default_Properties,
-                            Requisites => Alire.Index.No_Requisites,
+                            Properties => Alire.Index.No_Properties,
                             Available  => Alire.Index.No_Requisites);
          Success     : Boolean;
          Depends     : constant Query.Instance := Query.Resolve (New_Release.Depends,

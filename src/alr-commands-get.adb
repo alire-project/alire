@@ -7,6 +7,7 @@ with Alr.Checkout;
 with Alr.Commands.Compile;
 with Alr.Hardcoded;
 with Alr.Origins;
+with Alr.OS;
 with Alr.Parsers;
 with Alr.Query;
 
@@ -27,7 +28,7 @@ package body Alr.Commands.Get is
    -- Report --
    ------------
 
-   procedure Report (Name : Alire.Project_Name; Versions : Semver.Version_Set) is
+   procedure Report (Name : Alire.Project_Name; Versions : Semver.Version_Set; Native : Boolean) is
    begin
       declare
          Success : Boolean;
@@ -40,7 +41,12 @@ package body Alr.Commands.Get is
          use Ada.Text_IO;
       begin
          New_Line;
-         Release.Print;
+
+         if Native then
+            Release.Whenever (OS.Properties).Print;
+         else
+            Release.Print;
+         end if;
 
          if Needed.Contains (Name) then
             Needed.Delete (Name);
@@ -149,13 +155,18 @@ package body Alr.Commands.Get is
       declare
          Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (1));
       begin
-         if Cmd.Info and Cmd.Compile then
-            Trace.Error ("Only one of --compile and --info allowed");
+         --  Verify command-line
+         if Cmd.Info and then Cmd.Native then
+            Reportaise_Wrong_Arguments ("Only one of --info and --info-native allowed");
+         end if;
+
+         if (Cmd.Info or else Cmd.Native) and then Cmd.Compile then
+            Trace.Error ("Only one of --compile and --info[-native] allowed");
             raise Command_Failed;
          end if;
 
-         if Cmd.Info then
-            Report (Allowed.Project, Allowed.Versions);
+         if Cmd.Info or else Cmd.Native then
+            Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native);
          else
             Retrieve (Cmd, Allowed.Project, Allowed.Versions);
          end if;
@@ -179,6 +190,10 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Info'Access,
                      "-i", "--info", "Show info instead of retrieving");
+
+      Define_Switch (Config,
+                     Cmd.Native'Access,
+                     "", "--info-native", "Show info relevant to current platform");
    end Setup_Switches;
 
 end Alr.Commands.Get;

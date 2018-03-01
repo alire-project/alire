@@ -3,11 +3,9 @@ Bugs
 
 Features
 ========
-Make everything a property? (At least internally???)
+Take conditional properties into account in Executables and GPR projects
+Compilation scenarios (there's something already in Index)
 Conditional dependencies
-Conditional origins
-Conditional properties When (Blah).Then (Prop)
-Conditional compilation scenarios
 Fix mangled "interrupted" on ctrl-c in children
 Windows port
 
