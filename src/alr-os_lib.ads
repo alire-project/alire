@@ -57,6 +57,9 @@ package Alr.OS_Lib is
 
    procedure Bailout (Code : Integer := 0);
 
+   function Is_Older (This : String; Than : String) return Boolean;
+   --  Says if This file is older than Than
+
    --  GENERAL COMMAND LINE
 
    function Current_Folder return String renames Ada.Directories.Current_Directory;

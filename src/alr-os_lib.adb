@@ -205,6 +205,27 @@ package body Alr.OS_Lib is
          return False;
    end File_Contains_Ignore_Case;
 
+   --------------
+   -- Is_Older --
+   --------------
+
+   function Is_Older (This : String; Than : String) return Boolean is
+      use GNAT.OS_Lib;
+   begin
+      if Is_Regular_File (This) Then
+         if not Is_Regular_File (Than) then
+            return True;
+         elsif File_Time_Stamp (This) < File_Time_Stamp (Than) then
+            Trace.Debug (This & " is older than " & Than);
+            return True;
+         else
+            return False;
+         end if;
+      else
+         return False;
+      end if;
+   end Is_Older;
+
    --------------------
    -- Locate_In_Path --
    --------------------

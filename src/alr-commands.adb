@@ -348,7 +348,11 @@ package body Alr.Commands is
    procedure Requires_Buildfile is
       Guard : constant OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
    begin
-      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Current.Project)) then
+      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Name)) or else
+        OS_Lib.Is_Older (This => Hardcoded.Build_File (Project.Name),
+                         Than => Hardcoded.Alire_File (Project.Name))
+      then
+         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Build_File (Project.Name));
          Checkout.Generate_GPR_Builder (Project.Current);
       end if;
    end Requires_Buildfile;
