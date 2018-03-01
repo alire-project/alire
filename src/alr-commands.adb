@@ -128,7 +128,7 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Interactive.Not_Interactive'Access,
                      "-n", "--not-interactive",
-                     "Do not interact and assume default answers for all prompts");
+                     "Assume default answers for all user prompts");
 
       Define_Switch (Config,
                      Log_Quiet'Access,

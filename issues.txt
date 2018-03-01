@@ -3,6 +3,8 @@ Bugs
 
 Features
 ========
+If ads fresher than gpr => report failure in compile
+Fix mangled "interrupted" on ctrl-c in children
 Windows port
 
 Library inclusions
