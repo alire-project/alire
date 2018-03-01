@@ -3,8 +3,8 @@ with Ada.Directories;
 with Alire;
 with Alire.Releases;
 
-with Alr.Files;
 with Alr.Commands;
+with Alr.Files;
 with Alr.Origins;
 with Alr.OS_Lib;
 with Alr.Templates;

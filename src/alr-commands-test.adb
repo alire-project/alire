@@ -5,6 +5,7 @@ with Alire.Containers;
 with Alire.Index;
 
 with Alr.Files;
+with Alr.Interactive;
 with Alr.OS;
 with Alr.Parsers;
 with Alr.Spawn;
@@ -76,9 +77,7 @@ package body Alr.Commands.Test is
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
-               Spawn.Command ("alr", "get --compile " & R.Milestone.Image,
-                              Understands_Verbose => True,
-                              Force_Quiet         => Is_Quiet);
+               Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
 
                --  Check declared executables in place
                if not Check_Executables (R) then
@@ -123,8 +122,6 @@ package body Alr.Commands.Test is
 
       Candidates : Alire.Containers.Release_Sets.Set;
    begin
-      Requires_No_Bootstrap;
-
       --  Validate command line
       for I in 1 .. Num_Arguments loop
          declare
@@ -148,6 +145,10 @@ package body Alr.Commands.Test is
          Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
+      Requires_No_Bootstrap;
+      Interactive.Not_Interactive := True;
+
+      --  Start testing
       if Test_All then
          if Cmd.Full then
             Trace.Detail ("Testing all releases");

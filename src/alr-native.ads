@@ -1,5 +1,8 @@
 package Alr.Native is
 
+   --  DEPRECATED
+   --  Autodetection not in use
+
    --  Stuff related to platform native packages
 
    procedure Autodetect (Force : Boolean := False);

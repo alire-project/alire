@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alr.Interactive;
 with Alr.OS_Lib;
 with Alr.Spawn;
 with Alr.Utils;
@@ -45,9 +46,6 @@ package body Alr.Origins is
    procedure Apt (From : Alire.Origins.Origin; Folder : String) is
       pragma Unreferenced (Folder);
       use GNAT.IO;
-
-      Foo : String := "bar";
-      Bar : Integer;
    begin
       if Already_Available_Native (From) then
          Trace.Detail ("Package " & From.Id & " is already installed");
@@ -56,8 +54,7 @@ package body Alr.Origins is
          Put_Line ("The native package " & From.Id & " is about to be installed using apt");
          Put_Line ("This action requires sudo privileges and might impact your system installation");
          New_Line;
-         Put_Line ("Press Enter to continue or Ctrl-C to abort");
-         Get_Line (Foo, Bar);
+         Interactive.Enter_Or_Ctrl_C;
          Native_Proceed := True;
       end if;
 

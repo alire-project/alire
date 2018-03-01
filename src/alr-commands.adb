@@ -23,7 +23,7 @@ with Alr.Commands.Version;
 with Alr.Exceptions;
 with Alr.Files;
 with Alr.Hardcoded;
-with Alr.Native;
+with Alr.Interactive;
 with Alr.OS;
 with Alr.Self;
 with Alr.Spawn;
@@ -125,10 +125,11 @@ package body Alr.Commands is
                      Help_Switch'Access,
                      "-h", "--help", "Display general or command-specific help");
 
---        Define_Switch (Config,
---                       Use_Native'Access,
---                       "-n", "--use-native", "Use autodetected native packages in dependency resolution");
---
+      Define_Switch (Config,
+                     Interactive.Not_Interactive'Access,
+                     "-n", "--not-interactive",
+                     "Do not interact and assume default answers for all prompts");
+
       Define_Switch (Config,
                      Log_Quiet'Access,
                      "-q",
@@ -159,7 +160,7 @@ package body Alr.Commands is
       return Utils.Trim ((if Log_Debug  then "-d " else "") &
                          (if Log_Detail then "-v " else "") &
                          (if Log_Quiet  then "-q " else "") &
-                         (if Use_Native then "-n " else "") &
+                         (if Interactive.Not_Interactive then "-n " else "") &
                          (if Prefer_Oldest then "--prefer-oldest" else ""));
    end Global_Switches;
 
@@ -535,12 +536,6 @@ package body Alr.Commands is
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
    begin
-      if Use_Native then
-         Trace.Detail ("Native packages enabled.");
-         Native.Autodetect;
-         Native.Add_To_Index;
-      end if;
-
       Log (Image (Cmd) & ":", Detail);
       Dispatch_Table (Cmd).Execute;
 
