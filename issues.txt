@@ -3,7 +3,11 @@ Bugs
 
 Features
 ========
-If ads fresher than gpr => report failure in compile
+Make everything a property? (At least internally???)
+Conditional dependencies
+Conditional origins
+Conditional properties When (Blah).Then (Prop)
+Conditional compilation scenarios
 Fix mangled "interrupted" on ctrl-c in children
 Windows port
 

@@ -1,7 +1,10 @@
 with Ada.Directories;
 
+with Alire.Platforms;
+
 with Alr.Interactive;
 with Alr.OS_Lib;
+with Alr.OS;
 with Alr.Spawn;
 with Alr.Utils;
 
@@ -10,6 +13,7 @@ with GNAT.IO;
 package body Alr.Origins is
 
    use all type Alire.Origins.Kinds;
+   use all type Alire.Platforms.Package_Managers;
 
    type Fetcher is access procedure (From : Alire.Origins.Origin; Folder : String);
 
@@ -22,13 +26,18 @@ package body Alr.Origins is
    begin
       case Origin.Kind is
 
-         when Apt =>
-            Output := OS_Lib.Spawn_And_Capture ("apt-cache", "policy " & origin.id);
-            for Line of Output loop
-               if Utils.Contains (Line, "Installed") and then not Utils.Contains (Line, "none") then
-                  return True;
-               end if;
-            end loop;
+         when Native =>
+            case Alire.Platforms.Package_Manager (OS.Distribution) is
+               when Apt =>
+                  Output := OS_Lib.Spawn_And_Capture ("apt-cache", "policy " & Origin.Id);
+                  for Line of Output loop
+                     if Utils.Contains (Line, "Installed") and then not Utils.Contains (Line, "none") then
+                        return True;
+                     end if;
+                  end loop;
+               when others =>
+                  raise Program_Error with "Unsupported platform";
+            end case;
 
          when others =>
             raise Program_Error with "Shouldn't be used";
@@ -39,11 +48,11 @@ package body Alr.Origins is
 
    Native_Proceed : Boolean := False;
 
-   ---------
-   -- Apt --
-   ---------
+   ------------
+   -- Native --
+   ------------
 
-   procedure Apt (From : Alire.Origins.Origin; Folder : String) is
+   procedure Native (From : Alire.Origins.Origin; Folder : String) is
       pragma Unreferenced (Folder);
       use GNAT.IO;
    begin
@@ -58,12 +67,17 @@ package body Alr.Origins is
          Native_Proceed := True;
       end if;
 
-      OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " & From.Id);
+      case Alire.Platforms.Package_Manager (OS.Distribution) is
+         when Apt =>
+            OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " & From.Id);
+         when others =>
+            raise Program_Error with "Unsupported platform";
+      end case;
    exception
       when others =>
          Trace.Error ("Installation of native package " & From.Id & " failed");
          raise Command_Failed;
-   end Apt;
+   end Native;
 
    ----------
    -- Fail --
@@ -109,7 +123,7 @@ package body Alr.Origins is
                 (Filesystem => Fail'Access,
                  Git        => Git'Access,
                  Hg         => Hg'Access,
-                 Apt        => Apt'Access);
+                 Native     => Native'Access);
 
    -----------
    -- Fetch --
