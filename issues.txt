@@ -3,6 +3,7 @@ Bugs
 
 Features
 ========
+Autodetect package available by name (future-proof availability until changes)
 Take conditional properties into account in Executables and GPR projects
 Restore removed libs
 Compilation scenarios (there's something already in Index)
