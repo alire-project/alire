@@ -5,6 +5,7 @@ with Alire.OS_Lib;
 with Alr.Commands.Compile;
 with Alr.Files;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Utils;
 
@@ -64,8 +65,8 @@ package body Alr.Commands.Run is
 
          Declared   : constant Utils.String_Vector :=
                         (if Query.Exists (Project.Name, Project.Current.Version)
-                         then Query.Find (Project.Name, Project.Current.Version).Executables
-                         else Project.Current.Executables);
+                         then Query.Find (Project.Name, Project.Current.Version).Executables (Platform.Properties)
+                         else Project.Current.Executables (Platform.Properties));
          use Ada.Text_Io;
       begin
          --  LISTING  --

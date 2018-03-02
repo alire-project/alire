@@ -63,11 +63,11 @@ package body Alr.Commands.Search is
       --  End of option verification, start of search
 
       if Cmd.List then
-         for I in Alire.Index.Releases.Iterate loop
-            if Cmd.Full or else I = Alire.Index.Releases.Last or else
-              Alire.Index.Releases (I).Project /= Alire.Index.Releases (Next (I)).Project
+         for I in Alire.Index.Catalog.Iterate loop
+            if Cmd.Full or else I = Alire.Index.Catalog.Last or else
+              Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
             then
-               List_Release (Alire.Index.Releases (I));
+               List_Release (Alire.Index.Catalog (I));
             end if;
          end loop;
       else
@@ -78,12 +78,12 @@ package body Alr.Commands.Search is
                Log ("Searching " & Utils.Quote (Pattern) & "...", Detail);
             end if;
 
-            for I in Alire.Index.Releases.Iterate loop
-               if Count (Alire.Index.Releases (I).Project, Pattern) > 0 then
-                  if Cmd.Full or else I = Alire.Index.Releases.Last or else
-                    Alire.Index.Releases (I).Project /= Alire.Index.Releases (Next (I)).Project
+            for I in Alire.Index.Catalog.Iterate loop
+               if Count (Alire.Index.Catalog (I).Project, Pattern) > 0 then
+                  if Cmd.Full or else I = Alire.Index.Catalog.Last or else
+                    Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
                   then
-                     List_Release (Alire.Index.Releases (I));
+                     List_Release (Alire.Index.Catalog (I));
                   end if;
                end if;
             end loop;

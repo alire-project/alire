@@ -1,5 +1,6 @@
 with Alire.Containers;
-with Alire.Index; use Alire.Index;
+with Alire.Index;
+with Alire.Types;
 
 with Semantic_Versioning;
 
@@ -30,7 +31,7 @@ package Alr.Query is
                   Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
                   Policy  : Policies) return Release;
 
-   function Resolve (Deps    :     Index.Dependencies;
+   function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
                      Success : out Boolean;
                      Policy  :     Policies) return Instance;
 

@@ -8,6 +8,7 @@ with Alr.Files;
 with Alr.Interactive;
 with Alr.OS;
 with Alr.Parsers;
+with Alr.Platform;
 with Alr.Spawn;
 with Alr.Utils;
 
@@ -21,7 +22,7 @@ package body Alr.Commands.Test is
 
    function Check_Executables (R : Alire.Index.Release) return Boolean is
    begin
-      for Exe of R.Executables loop
+      for Exe of R.Executables (Platform.Properties) loop
          if Files.Locate_File_Under (Folder    => R.Unique_Folder,
                                      Name      => Exe,
                                      Max_Depth => 2).Is_Empty then
@@ -55,7 +56,7 @@ package body Alr.Commands.Test is
       Epoch : constant Time := Time_Of (1970, 1, 1);
       File  : File_Type;
 
-      Tested, Passed, Failed, Skipped : Natural := 0;
+      Tested, Passed, Failed, Skipped, Unavail : Natural := 0;
    begin
       Create (File, Out_File,
               "alr_report_" &
@@ -66,15 +67,19 @@ package body Alr.Commands.Test is
       Put_Line (File, "os-fingerprint:" & OS.Fingerprint);
 
       for R of Releases loop
-         Trace.Info ("PASSED:" & Passed'Img &
-                       " FAILED:" & Failed'Img &
-                       " SKIPPED:" & Skipped'Img &
-                       " CURRENT:" & Integer'(Tested + 1)'Img & "/" &
+         Trace.Info ("PASS:" & Passed'Img &
+                       " FAIL:" & Failed'Img &
+                       " SKIP:" & Skipped'Img &
+                       " UNAV:" & Unavail'Img &
+                       " CURR:" & Integer'(Tested + 1)'Img & "/" &
                        Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
          if Ada.Directories.Exists (R.Unique_Folder) then
             Skipped := Skipped + 1;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
+         elsif not R.Available.Check (Platform.Properties) then
+            Unavail := Unavail + 1;
+            Put_Line (File, "Unavai:" & R.Milestone.Image);
          else
             begin
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
@@ -100,9 +105,10 @@ package body Alr.Commands.Test is
 
       Close (File);
 
-      Trace.Info ("PASSED:" & Passed'Img &
-                    " FAILED:" & Failed'Img &
-                    " SKIPPED:" & Skipped'Img &
+      Trace.Info ("PASS:" & Passed'Img &
+                    " FAIL:" & Failed'Img &
+                    " SKIP:" & Skipped'Img &
+                    " UNAV:" & Unavail'Img &
                     " Done");
    end Do_Test;
 
@@ -159,7 +165,7 @@ package body Alr.Commands.Test is
       end if;
 
       --  Pre-find candidates to not have duplicate tests if overlapping requested
-      for R of Alire.Index.Releases loop
+      for R of Alire.Index.Catalog loop
          if Test_All then
             Candidates.Include (R);
          else

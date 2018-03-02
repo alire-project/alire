@@ -8,6 +8,7 @@ with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Project;
+with Alr.Platform;
 with Alr.Self;
 with Alr.Session;
 with Alr.Spawn;
@@ -253,7 +254,7 @@ package body Alr.Bootstrap is
 
       --  Is this check really necessary?
       declare
-         Gprs : constant Utils.String_Vector := Project.Current.GPR_Files;
+         Gprs : constant Utils.String_Vector := Project.Current.GPR_Files (Platform.Properties);
       begin
          for Gpr of Gprs loop
             if not Is_Regular_File (Gpr) then
@@ -296,7 +297,7 @@ package body Alr.Bootstrap is
         (if Running_In_Session
          then (if Session_Is_Current then Project.Current.Milestone.Image else "outdated")
          else "no project") & ") (" &
-        Utils.Trim (Alire.Index.Releases.Length'Img) & " releases indexed)" &
+        Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
         (if Self.Is_Bootstrap then " (minimal index)" else "") &
         ("(loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
    end Status_Line;

@@ -4,6 +4,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Utils;
 
 with Semantic_Versioning;
@@ -114,7 +115,7 @@ package body Alr.Templates is
 
       use Alr.OS_Lib;
 
-      GPR_Files : constant Utils.String_Vector := Root.GPR_Files;
+      GPR_Files : constant Utils.String_Vector := Root.GPR_Files (Platform.Properties);
 
    begin
       Log ("Generating GPR for " & Root.Milestone.Image & " with" & Instance.Length'Img & " dependencies", Detail);

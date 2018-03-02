@@ -1,7 +1,8 @@
-with Alire.Dependencies;
+with Alire.Dependencies.Vectors;
 with Alire.Utils;
 
 with Alr.Checkout;
+with Alr.Platform;
 
 package body Alr.Query is
 
@@ -31,7 +32,7 @@ package body Alr.Query is
    is
       use Semver;
    begin
-      for R of Releases loop
+      for R of Index.Catalog loop
          if R.Project = Project and then Satisfies (R.Version, Allowed) then
             return True;
          end if;
@@ -69,13 +70,13 @@ package body Alr.Query is
 
    begin
       if Policy = Newest then
-         for R of reverse Index.Releases loop
+         for R of reverse Index.Catalog loop
             if Check (R) then
                return R;
             end if;
          end loop;
       else
-         for R of Index.Releases loop
+         for R of Index.Catalog loop
             if Check (R) then
                return R;
             end if;
@@ -101,11 +102,13 @@ package body Alr.Query is
    -- Resolve --
    -------------
 
-   function Resolve (Unresolved :        Index.Dependencies;
+   function Resolve (Unresolved :        Alire.Dependencies.Vectors.Vector;
                      Frozen     :        Instance;
                      Policy     :        Policies;
                      Success    : in out Boolean) return Instance
    is
+      subtype Dependencies is Alire.Dependencies.Vectors.Vector;
+
       --  FIXME: since this is depth-first, Frozen can be passed in-out and updated on the spot,
       --  thus saving copies. Probably the same applies to Unresolved.
       Dep : constant Alire.Dependencies.Dependency :=
@@ -115,7 +118,7 @@ package body Alr.Query is
       --  The fake project will never be referenced, since the first check is that unresolved is empty
       --  we are done
 
-      Remain :          Index.Dependencies            := Unresolved;
+      Remain : Alire.Dependencies.Vectors.Vector := Unresolved;
 
       -----------
       -- Check --
@@ -128,13 +131,13 @@ package body Alr.Query is
             Checkout.Available_Currently (R)
          then
             declare
-               New_Frozen : Instance           := Frozen;
-               New_Remain : Index.Dependencies := Remain;
+               New_Frozen : Instance     := Frozen;
+               New_Remain : Dependencies := Remain;
 
                Solution   : Instance;
             begin
                New_Frozen.Insert (R.Project, R);
-               New_Remain.Append (R.Depends);
+               New_Remain.Append (R.Depends (Platform.Properties));
 
                Solution := Resolve (New_Remain, New_Frozen, Policy, Success);
 
@@ -170,7 +173,7 @@ package body Alr.Query is
          -- Need to check all versions for the first one...
          -- FIXME: complexity can be improved not visiting blindly all releases to match by project
          if Policy = Newest then
-            for R of reverse Index.Releases loop
+            for R of reverse Index.Catalog loop
                declare
                   Solution : constant Instance := Check (R);
                begin
@@ -180,7 +183,7 @@ package body Alr.Query is
                end;
             end loop;
          else
-            for R of Index.Releases loop
+            for R of Index.Catalog loop
                declare
                   Solution : constant Instance := Check (R);
                begin
@@ -200,7 +203,7 @@ package body Alr.Query is
    -- Resolve --
    -------------
 
-   function Resolve (Deps    :     Index.Dependencies;
+   function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
                      Success : out Boolean;
                      Policy  :     Policies) return Instance is
    begin

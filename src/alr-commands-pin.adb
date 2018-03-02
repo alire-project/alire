@@ -1,4 +1,5 @@
 with Alr.Files;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Templates;
 
@@ -18,7 +19,7 @@ package body Alr.Commands.Pin is
       declare
          Index_File : constant String := Files.Locate_Index_File (Project.Name);
          Success    :          Boolean;
-         Deps       : constant Query.Instance := Query.Resolve (Project.Current.Depends,
+         Deps       : constant Query.Instance := Query.Resolve (Project.Current.Depends (Platform.Properties),
                                                                 Success,
                                                                 Query_Policy);
       begin

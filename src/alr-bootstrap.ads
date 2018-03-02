@@ -46,12 +46,12 @@ package Alr.Bootstrap is
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
-   Alire_Minimal_Dependency : constant Alire.Index.Dependencies;
+   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies;
    Alire_Minimal_Instance   : constant Query.Instance;
 
 private
 
-   Alire_Minimal_Dependency : constant Alire.Index.Dependencies :=
+   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies :=
                                 Alire.Index.At_Least (Alire.Index.Alire.V_0_1);
    Alire_Minimal_Instance   : constant Query.Instance :=
                                 Alire.Containers.To_Map (Alire.Index.Alire.V_0_1);

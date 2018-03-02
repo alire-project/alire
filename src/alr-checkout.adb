@@ -7,6 +7,7 @@ with Alr.Commands;
 with Alr.Files;
 with Alr.Origins;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Templates;
 
 package body Alr.Checkout is
@@ -38,7 +39,7 @@ package body Alr.Checkout is
 
    procedure Generate_GPR_Builder (Root : Alire.Index.Release) is
       Success : Boolean;
-      Needed  : constant Query.Instance := Query.Resolve (Root.Depends,
+      Needed  : constant Query.Instance := Query.Resolve (Root.Depends (Platform.Properties),
                                                           Success,
                                                           Commands.Query_Policy);
    begin
