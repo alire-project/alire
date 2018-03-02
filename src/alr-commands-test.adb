@@ -79,7 +79,7 @@ package body Alr.Commands.Test is
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          elsif not R.Available.Check (Platform.Properties) then
             Unavail := Unavail + 1;
-            Put_Line (File, "Unavai:" & R.Milestone.Image);
+            Put_Line (File, "Unav:" & R.Milestone.Image);
          else
             begin
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
@@ -90,11 +90,11 @@ package body Alr.Commands.Test is
                end if;
 
                Passed := Passed + 1;
-               Put_Line (File, "passed:" & R.Milestone.Image);
+               Put_Line (File, "pass:" & R.Milestone.Image);
             exception
                when Child_Failed =>
                   Failed := Failed + 1;
-                  Put_Line (File, "FAILED:" & R.Milestone.Image);
+                  Put_Line (File, "FAIL:" & R.Milestone.Image);
                   Trace.Warning ("Compilation failed for " & R.Milestone.Image);
             end;
          end if;
