@@ -2,6 +2,7 @@ with Alire.Index;
 with Alire.Properties;
 
 with Alr.Hardcoded;
+with Alr.Origins;
 with Alr.OS;
 with Alr.Query;
 
@@ -12,6 +13,7 @@ package Alr.Checkout is
 
    function Available_Currently (R : Alire.Index.Release) return Boolean;
    --  The release knows the requisites on the platform; here we evaluate these against the current platform
+   --  Current checks include the "available" requisites and that the native package do exist
 
    type Policies is (Overwrite, Skip, Error);
    --  What to do when checking out to something that already exists
@@ -38,6 +40,8 @@ package Alr.Checkout is
 private
 
    function Available_Currently (R : Alire.Index.Release) return Boolean is
-      (R.Available.Check (Platform_Properties));
+     (R.Available.Check (Platform_Properties) and then
+          (if R.Origin.Is_Native
+           then Origins.Native_Package_Exists (R.Origin.Package_Name (OS.Distribution))));
 
 end Alr.Checkout;

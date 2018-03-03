@@ -1,6 +1,5 @@
 with Alire.Properties;
 
-with Alr.Bootstrap;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS;

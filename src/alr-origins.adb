@@ -29,7 +29,8 @@ package body Alr.Origins is
          when Native =>
             case Alire.Platforms.Package_Manager (OS.Distribution) is
                when Apt =>
-                  Output := OS_Lib.Spawn_And_Capture ("apt-cache", "policy " & Origin.Id);
+                  Output := OS_Lib.Spawn_And_Capture ("apt-cache", "policy " &
+                                                        Origin.Package_Name (OS.Distribution));
                   for Line of Output loop
                      if Utils.Contains (Line, "Installed") and then not Utils.Contains (Line, "none") then
                         return True;
@@ -46,6 +47,25 @@ package body Alr.Origins is
       return False;
    end Already_Available_Native;
 
+   ---------------------------
+   -- Native_Package_Exists --
+   ---------------------------
+
+   function Native_Package_Exists (Name : String) return Boolean is
+      Output : constant Utils.String_Vector :=
+                 OS_Lib.Spawn_And_Capture ("apt-cache", "-q policy " & Name);
+      use Utils;
+   begin
+      for Line of Output loop
+         if Contains (To_Lower_Case (Line), "candidate:") and then
+           not Contains (To_Lower_Case (Line), "none") then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Native_Package_Exists;
+
    Native_Proceed : Boolean := False;
 
    ------------
@@ -55,12 +75,14 @@ package body Alr.Origins is
    procedure Native (From : Alire.Origins.Origin; Folder : String) is
       pragma Unreferenced (Folder);
       use GNAT.IO;
+
+      Native_Name : constant String := From.Package_Name (OS.Distribution);
    begin
       if Already_Available_Native (From) then
-         Trace.Detail ("Package " & From.Id & " is already installed");
+         Trace.Detail ("Package " & Native_Name & " is already installed");
       elsif not Native_Proceed then
          New_Line;
-         Put_Line ("The native package " & From.Id & " is about to be installed using apt");
+         Put_Line ("The native package " & Native_Name & " is about to be installed using apt");
          Put_Line ("This action requires sudo privileges and might impact your system installation");
          New_Line;
          Interactive.Enter_Or_Ctrl_C;
@@ -69,13 +91,13 @@ package body Alr.Origins is
 
       case Alire.Platforms.Package_Manager (OS.Distribution) is
          when Apt =>
-            OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " & From.Id);
+            OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " & Native_Name);
          when others =>
             raise Program_Error with "Unsupported platform";
       end case;
    exception
       when others =>
-         Trace.Error ("Installation of native package " & From.Id & " failed");
+         Trace.Error ("Installation of native package " & Native_Name & " failed");
          raise Command_Failed;
    end Native;
 
@@ -99,7 +121,7 @@ package body Alr.Origins is
       declare
          Guard : constant OS_Lib.Folder_Guard := Os_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
-         Spawn.Command ("git", "reset --hard -q " & From.Id);
+         Spawn.Command ("git", "reset --hard -q " & From.Commit);
       end;
    exception
       when others =>
@@ -113,7 +135,7 @@ package body Alr.Origins is
    procedure Hg (From : Alire.Origins.Origin; Folder : String) is
    begin
       Trace.Info ("Checking out: " & From.URL);
-      Spawn.Command ("hg", "clone -v -y -u " & From.Id & " " & From.URL & " " & Folder);
+      Spawn.Command ("hg", "clone -v -y -u " & From.Commit & " " & From.URL & " " & Folder);
    exception
       when others =>
          raise Command_Failed;
@@ -134,10 +156,15 @@ package body Alr.Origins is
       Fetchers (From.Kind).all (From, Folder);
    exception
       when others =>
-         Trace.Error ("Deployment of " & From.Id & " from " & From.URL & " to " & Folder & " failed");
-         if Ada.Directories.Exists (Folder) then
-            Ada.Directories.Delete_Tree (Folder);
+         if From.Kind = Native then
+            Trace.Error ("Deployment of " & From.Package_Name (OS.Distribution) & " failed");
+         else
+            Trace.Error ("Deployment of " & From.Image & " to " & Folder & " failed");
+            if Ada.Directories.Exists (Folder) then
+               Ada.Directories.Delete_Tree (Folder);
+            end if;
          end if;
+
          raise;
    end Fetch;
 

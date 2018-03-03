@@ -5,7 +5,6 @@ with Alire.Releases;
 
 with Alr.Commands;
 with Alr.Files;
-with Alr.Origins;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Templates;

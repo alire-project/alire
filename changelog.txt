@@ -1,3 +1,4 @@
+2018-03-03: Native packages per distro with autodetection of availability
 2018-02-29: Conditional properties and their materialization
 2018-02-28: Declaration of scenario variables, native packages a-la OPAM
 2018-02-26: query policies, search by property
