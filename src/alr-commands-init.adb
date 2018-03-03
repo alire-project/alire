@@ -57,7 +57,7 @@ package body Alr.Commands.Init is
                             "No description",
                             V ("0.0.0-alr_working_copy"),
                             Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
-                            Depends_On => Bootstrap.Alire_Minimal_Dependency,
+                            Dependencies => Bootstrap.Alire_Minimal_Dependency,
                             Properties => Alire.Index.No_Properties,
                             Available  => Alire.Index.No_Requisites);
          Success     : Boolean;

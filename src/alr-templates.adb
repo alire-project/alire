@@ -202,9 +202,9 @@ package body Alr.Templates is
       Put_Line (File, Tab_1 & Tab_1 & "V (" & Q (Semver.Image (Root.Version)) & "),");
 
       if Instance.Is_Empty then
-         Put_Line (File, Tab_2 & "Depends_On => No_Dependencies);");
+         Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
       else
-         Put (File, Tab_2 & "Depends_On =>");
+         Put (File, Tab_2 & "Dependencies =>");
 
          declare
             First : Boolean := True;

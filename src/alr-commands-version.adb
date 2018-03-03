@@ -1,3 +1,5 @@
+with Alire.Properties;
+
 with Alr.Bootstrap;
 with Alr.Files;
 with Alr.Hardcoded;
@@ -65,6 +67,8 @@ package body Alr.Commands.Version is
       end;
 
       Trace.Always ("platform is: " & OS.Fingerprint);
+      Trace.Always ("platform properties: ");
+      Alire.Properties.Print (Prefix => "   ", V => OS.Properties);
    end Execute;
 
 end Alr.Commands.Version;

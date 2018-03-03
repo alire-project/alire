@@ -33,11 +33,11 @@ package body Alr.OS is
 
    function Distribution return Alire.Platforms.Distributions is
       use all type Alire.Platforms.Distributions;
-      Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-cs");
+      Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-is");
    begin
       for Known in Alire.Platforms.Distributions'Range loop
          for Line of Release loop
-            if Contains (To_Lower_Case (Known'Img), Line) then
+            if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line)) then
                return Known;
             end if;
          end loop;
@@ -53,6 +53,27 @@ package body Alr.OS is
    ----------------------
 
    function Operating_System return Alire.Platforms.Operating_Systems is (Alire.Platforms.GNU_Linux);
+
+   -------------
+   -- Version --
+   -------------
+
+   function Version return Alire.Platforms.Versions is
+      use all type Alire.Platforms.Versions;
+      Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-cs");
+   begin
+      for Known in Alire.Platforms.Versions'Range loop
+         for Line of Release loop
+            if Contains (To_Lower_Case (Known'Img), Line) then
+               return Known;
+            end if;
+         end loop;
+      end loop;
+
+      Trace.Debug ("Found unsupported version: " & Release (1));
+
+      return Unsupported;
+   end Version;
 
    --------------------
    -- Own_Executable --
