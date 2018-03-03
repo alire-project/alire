@@ -78,17 +78,6 @@ package body Alr.Bootstrap is
       end if;
    end Check_If_Rolling_And_Respawn;
 
-   -------------------------------------------
-   -- Check_If_Project_Outdated_And_Rebuild --
-   -------------------------------------------
-
-   procedure Check_If_Project_Outdated_And_Rebuild is
-   begin
-      if Running_In_Session and then not Session_Is_Current then
-         Rebuild (Files.Locate_Any_Index_File);
-      end if;
-   end Check_If_Project_Outdated_And_Rebuild;
-
    ---------------------------
    -- Check_Rebuild_Respawn --
    ---------------------------
@@ -245,9 +234,10 @@ package body Alr.Bootstrap is
       if not Running_In_Session then
          Trace.Debug ("No session, rebuild needed before being in project");
          return False;
-      end if;
-
-      if Project.Is_Empty then
+      elsif not Session_Is_Current then
+         Trace.Debug ("Session outdated, rebuild needed before being in project");
+         return False;
+      elsif Project.Is_Empty then
          Trace.Debug ("No internal root project, cannot verify external");
          return False;
       end if;
@@ -280,7 +270,29 @@ package body Alr.Bootstrap is
    ------------------------
 
    function Session_Is_Current return Boolean is
-     (Session.Hash = Utils.Hash_File (Files.Locate_Any_Index_File));
+     (Running_In_Session and Then
+      Session.Hash = Utils.Hash_File (Files.Locate_Any_Index_File));
+
+   -------------------
+   -- Session_State --
+   -------------------
+
+   function Session_State return Session_States is
+   begin
+      if Running_In_Session then
+         if Session_Is_Current then
+            if Running_In_Project then
+               return Valid;
+            else
+               return Erroneous;
+            end if;
+         else
+            return Outdated;
+         end if;
+      else
+         return Outside;
+      end if;
+   end Session_State;
 
    -----------------
    -- Status_Line --

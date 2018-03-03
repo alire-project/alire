@@ -8,6 +8,33 @@ private with Alire.Index.Alire;
 
 package Alr.Bootstrap is
 
+   ---------------------
+   --  SESSION STATE  --
+   ---------------------
+
+   type Session_States is
+     (Erroneous, -- Some bizarre situation
+      Outside,   -- not even in a project folder
+      Outdated,  -- Running in a project folder, but hashes do not match. Internal Project irrelevant.
+      Valid      -- In a session, with matching hash, hence our internal project must match too
+     );
+
+   function Session_State return Session_States;
+
+   function Running_In_Session return Boolean;
+   --  Being inside
+   --  Says if there is a project file within reach
+
+   function Session_Is_Current return Boolean;
+   --  If we are in a session, says if our internal session hash matches the one we are in
+
+   function Running_In_Project return Boolean;
+   --  Extra checks in a current session; failure means some unexpected situation for alire
+
+   -------------
+   --  OTHER  --
+   -------------
+
    procedure Check_Ada_Tools;
    --  Check gprbuild/gnatmake are within reach
 
@@ -15,28 +42,13 @@ package Alr.Bootstrap is
    --  Determines if we are using a rolling release.
    --  If not, and one is available, respawn.
 
-   procedure Check_If_Project_Outdated_And_Rebuild;
-   --  Check if there is a project file within reach.
-   --  If it is, and its hash differs from ours, rebuild.
-
-   procedure Check_Rebuild_Respawn
-     with Post => (Running_In_Session or else raise Command_Failed);
+   procedure Check_Rebuild_Respawn;
    --  The whole shebang for project-oriented commands:
    --    Check within project
    --    Rebuild if outdated
    --    Respawn if rebuilt
    --  Will raise if not within session
    --  FIXME: some kind of infinite respawning prevention should be implemented here
-
-   function Running_In_Project return Boolean
-     with Pre => Running_In_Session;
-
-   function Running_In_Session return Boolean;
-   --  Says if there is a project file within reach
-
-   function Session_Is_Current return Boolean
-     with Pre => Running_In_Session;
-   --  Says if our internal session hash matches the one we are in
 
    procedure Rebuild (Alr_File : String := "");
 

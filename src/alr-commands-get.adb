@@ -147,13 +147,32 @@ package body Alr.Commands.Get is
    begin
       Requires_No_Bootstrap;
 
-      if Num_Arguments /= 1 then
-         Trace.Error ("No project requested");
-         raise Wrong_Command_Arguments with "One project to get expected";
+      if Num_Arguments > 1 then
+         Reportaise_Wrong_Arguments ("Too many arguments");
+      end if;
+
+      if not Cmd.Info or else Cmd.Native then
+         --  What to get is required when not requesting info
+         if Num_Arguments /= 1 then
+            Trace.Error ("No project requested");
+            raise Wrong_Command_Arguments with "One project to get expected";
+         end if;
+      else -- asking for info, we could return the current project
+         --  We have internal data, but is valid?
+         if Num_Arguments = 0 and then not Bootstrap.Session_Is_Current then
+            if Bootstrap.Running_In_Project then
+               Bootstrap.Check_Rebuild_Respawn;
+            else
+               Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
+            end if;
+         end if;
       end if;
 
       declare
-         Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (1));
+         Allowed : constant Parsers.Allowed_Milestones :=
+                     (if Num_Arguments = 1
+                      then Parsers.Project_Versions (Argument (1))
+                      else Parsers.Project_Versions (Project.Current.Milestone.Image));
       begin
          --  Verify command-line
          if Cmd.Info and then Cmd.Native then
