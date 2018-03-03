@@ -110,8 +110,8 @@ package body Alr.Commands.Init is
          end if;
 
          --  Create and enter folder for generation, if it didn't happen already
-         if not Cmd.In_Place and then Bootstrap.Running_In_Session then
-            if Bootstrap.Session_Is_Current and then Name = Project.Name then
+         if not Cmd.In_Place and then Session_State >= Outdated then
+            if Session_State = Valid and then Name = Project.Name then
                Trace.Info ("Already in working copy, skipping initialization");
             else
                Trace.Error ("Cannot initialize a project inside another alr project, stopping.");

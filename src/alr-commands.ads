@@ -49,6 +49,9 @@ package Alr.Commands is
    -- Supporting subprograms for commands --
    -----------------------------------------
 
+   --  These are in order of exigence
+   use all type Bootstrap.Session_States;
+
    procedure Requires_No_Bootstrap;
    --  Ensures that alr has self-built at least once and thus it may contain an updated index
 
@@ -57,13 +60,15 @@ package Alr.Commands is
    --  May trigger recompilation and respawn. In that case, it doesn't return to the caller, but respawns.
    --  If it returns, then we are running the updated alr executable for the current session+project
 
-   procedure Requires_Buildfile
-     with Pre => Bootstrap.Running_In_Project;
+   procedure Requires_Buildfile;
    --  Ensures that the build file exists, and if not generates one from dependencies
 
-   --  This is exported only to be reachable from Spawn, but there's no reason to use it from commands
+   ---------------------------
+   --  command-line helpers --
+   ---------------------------
 
    function Global_Switches return String;
+   --  This is exported only to be reachable from Spawn, but there's no reason to use it from commands
    --  Returns the in use global switches (-d -q -v)
    --  Useful e.g. to pass along on respawning a custom command
 
@@ -97,8 +102,12 @@ package Alr.Commands is
 
 private
 
+   --  Visibility for some enums
+
    use all type Alire.Properties.Labeled.Labels;
-   --  Make the labels easier to use in commands
+
+   --  Session shortcut
+   function Session_State return Bootstrap.Session_States renames Bootstrap.Session_State;
 
    --  Facilities for command/argument identification. These are available to commands.
 

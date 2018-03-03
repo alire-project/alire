@@ -100,7 +100,7 @@ package body Alr.Commands.Update is
             Spawn.Alr (Cmd_Update);
          end if;
       else
-         if Bootstrap.Running_In_Session then
+         if Session_State >= Outdated then
             Upgrade;
          else
             Log ("Done");

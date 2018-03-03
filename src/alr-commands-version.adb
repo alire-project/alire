@@ -35,8 +35,9 @@ package body Alr.Commands.Version is
       begin
          Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
-         if Bootstrap.Running_In_Session then
-            if Bootstrap.Session_Is_Current then
+         Trace.Always ("alr session state is " & Session_State'Img);
+         if Session_State >= Outdated then
+            if Session_State = Valid then
                Trace.Always ("alr internal session hash matches that of " & Files.Locate_Any_Index_File);
             else
                if Project.Is_Empty then

@@ -290,9 +290,7 @@ package body Alr.Commands is
 
    function Enter_Project_Folder return Folder_Guard is
    begin
-      if Project.Is_Empty or Else
-        not Bootstrap.Running_In_Session or Else
-        not Bootstrap.Session_Is_Current then
+      if Session_State /= Valid then
          --  Best guess
          declare
             Candidate_Folder : constant String := Files.Locate_Above_Candidate_Project_Folder;
@@ -306,7 +304,7 @@ package body Alr.Commands is
             end if;
          end;
       else
-         return Project.Enter_Root;
+         return Project.Enter_Root; -- Suspicion: we are already there
       end if;
    exception
       when E : others =>
@@ -348,6 +346,10 @@ package body Alr.Commands is
    procedure Requires_Buildfile is
       Guard : constant OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
    begin
+      if Bootstrap.Session_State /= Valid then
+         Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
+      end if;
+
       if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Name)) or else
         OS_Lib.Is_Older (This => Hardcoded.Build_File (Project.Name),
                          Than => Hardcoded.Alire_File (Project.Name))

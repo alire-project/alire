@@ -14,22 +14,14 @@ package Alr.Bootstrap is
 
    type Session_States is
      (Erroneous, -- Some bizarre situation
-      Outside,   -- not even in a project folder
+      Outside,   -- not in a project root folder
       Outdated,  -- Running in a project folder, but hashes do not match. Internal Project irrelevant.
       Valid      -- In a session, with matching hash, hence our internal project must match too
+                 -- Also, when valid, we are in the project root!
      );
+   --  Order in this enum must be in increasing level of available information
 
    function Session_State return Session_States;
-
-   function Running_In_Session return Boolean;
-   --  Being inside
-   --  Says if there is a project file within reach
-
-   function Session_Is_Current return Boolean;
-   --  If we are in a session, says if our internal session hash matches the one we are in
-
-   function Running_In_Project return Boolean;
-   --  Extra checks in a current session; failure means some unexpected situation for alire
 
    -------------
    --  OTHER  --
@@ -67,5 +59,15 @@ private
                                 Alire.Index.At_Least (Alire.Index.Alire.V_0_1);
    Alire_Minimal_Instance   : constant Query.Instance :=
                                 Alire.Containers.To_Map (Alire.Index.Alire.V_0_1);
+
+   function Running_In_Session return Boolean;
+   --  Being inside
+   --  Says if there is a project file within reach
+
+   function Session_Is_Current return Boolean;
+   --  If we are in a session, says if our internal session hash matches the one we are in
+
+   function Running_In_Project return Boolean;
+   --  Extra checks in a current session; failure means some unexpected situation for alire
 
 end Alr.Bootstrap;

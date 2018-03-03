@@ -106,8 +106,8 @@ package body Alr.Commands.Get is
       end;
 
       --  Check if we are already in the fresh copy (may happen after respawning)
-      if Bootstrap.Running_In_Session then
-         if Bootstrap.Session_Is_Current and then Name = Project.Name then
+      if Session_State >= Outdated then
+         if Session_State = Valid and then Name = Project.Name then
             Trace.Detail ("Already in working copy, skipping checkout");
          else
             Trace.Error ("Cannot get a project inside another alr session, stopping.");
@@ -159,12 +159,15 @@ package body Alr.Commands.Get is
          end if;
       else -- asking for info, we could return the current project
          --  We have internal data, but is valid?
-         if Num_Arguments = 0 and then not Bootstrap.Session_Is_Current then
-            if Bootstrap.Running_In_Project then
-               Bootstrap.Check_Rebuild_Respawn;
-            else
-               Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
-            end if;
+         if Num_Arguments = 0 then
+            case Bootstrap.Session_State is
+               when Outdated =>
+                  Bootstrap.Check_Rebuild_Respawn;
+               when Valid =>
+                  null; -- Proceed
+               when others =>
+                  Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
+            end case;
          end if;
       end if;
 

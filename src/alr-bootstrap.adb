@@ -238,7 +238,7 @@ package body Alr.Bootstrap is
          Trace.Debug ("Session outdated, rebuild needed before being in project");
          return False;
       elsif Project.Is_Empty then
-         Trace.Debug ("No internal root project, cannot verify external");
+         Trace.Warning ("No internal root project, cannot verify external");
          return False;
       end if;
 
