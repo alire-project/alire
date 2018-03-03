@@ -74,12 +74,12 @@ package body Alr.Commands.Test is
                        " CURR:" & Integer'(Tested + 1)'Img & "/" &
                        Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
-         if Ada.Directories.Exists (R.Unique_Folder) then
-            Skipped := Skipped + 1;
-            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
-         elsif not R.Available.Check (Platform.Properties) then
+         if not R.Available.Check (Platform.Properties) then
             Unavail := Unavail + 1;
             Put_Line (File, "Unav:" & R.Milestone.Image);
+         elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) then
+            Skipped := Skipped + 1;
+            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
