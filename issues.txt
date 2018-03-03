@@ -3,10 +3,12 @@ Bugs
 
 Features
 ========
+get --info for current project if not one given
 Autodetect package available by name (future-proof availability until changes)
 Compilation scenarios (there's something already in Index)
 Fix mangled "interrupted" on ctrl-c in children
 Windows port
+alr init templating system beyond bin/lib (e.g. advanced scenarios)
 
 Library inclusions
 ==================

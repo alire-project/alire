@@ -103,7 +103,7 @@ package body Alr.Commands is
 
    function Num_Arguments return Natural is
    begin
-      return Natural (Raw_Arguments.Length) - 1;
+      return Raw_Arguments.Count - 1;
    end Num_Arguments;
 
    --------------
@@ -467,7 +467,7 @@ package body Alr.Commands is
       declare
          Cmd : constant Cmd_Names := What_Command; -- Might raise if invalid, if so we are done
       begin
-         Raw_Arguments := Utils.String_Vectors.Empty_Vector; -- Reinitialize arguments
+         Raw_Arguments := Alire.Utils.Empty_Vector; -- Reinitialize arguments
          Set_Global_Switches (Command_Config);
          Dispatch_Table (Cmd).Setup_Switches (Command_Config); -- Specific to command
 

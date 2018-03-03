@@ -6,6 +6,7 @@ with Alr.Query;
 private with Ada.Text_IO;
 
 private with Alire.GPR;
+private with Alire.Properties.Labeled;
 
 private with Alr.OS_Lib;
 pragma Warnings (Off); private with Alr.Project; pragma Warnings (On);
@@ -95,6 +96,9 @@ package Alr.Commands is
    function Image (N : Cmd_Names) return String;
 
 private
+
+   use all type Alire.Properties.Labeled.Labels;
+   --  Make the labels easier to use in commands
 
    --  Facilities for command/argument identification. These are available to commands.
 
