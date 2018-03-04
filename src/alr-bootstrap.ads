@@ -59,9 +59,9 @@ private
    --  During elaboration this will be updated accordingly
 
    Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies :=
-                                Alire.Index.At_Least (Alire.Index.Alire.V_0_1);
+                                Alire.Index.At_Least (Alire.Index.Alire.V_0_1_2);
    Alire_Minimal_Instance   : constant Query.Instance :=
-                                Alire.Containers.To_Map (Alire.Index.Alire.V_0_1);
+                                Alire.Containers.To_Map (Alire.Index.Alire.V_0_1_2);
 
    function Running_In_Session return Boolean;
    --  Being inside

@@ -7,8 +7,7 @@ Windows port
 
 Library inclusions
 ==================
-Simple_Components
-github by popularity?
+github by popularity: 66*
 https://en.wikibooks.org/wiki/Ada_Programming/Libraries
 http://www.adaic.org/ada-resources/tools-libraries/
 

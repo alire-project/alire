@@ -194,6 +194,8 @@ package body Alr.Query is
             end loop;
          end if;
 
+         Trace.Detail ("Unable to find release for dependency: " & Dep.Image);
+
          --  We found no milestone compatible with the first unresolved dependency...
          return Empty_Instance;
       end if;
