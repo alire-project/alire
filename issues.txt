@@ -3,7 +3,6 @@ Bugs
 
 Features
 ========
-Fix mangled "interrupted" on ctrl-c in children (using setenv/getenv, which is portable)
 Windows port
 
 Library inclusions

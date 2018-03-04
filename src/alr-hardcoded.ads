@@ -19,6 +19,9 @@ package Alr.Hardcoded is
    Alr_Canonical_Folder : String renames Self.Canonical_Folder;
    --  Sources when normally installed
 
+   Alr_Child_Flag : constant String;
+   --  Env var set when launching a child alr
+
    Alr_Gpr_File : constant String;
    --  Note to self: this is the _env one that works with git submodules
 
@@ -67,6 +70,8 @@ private
 
    function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
    function Parent (Folder : String) return String renames Ada.Directories.Containing_Directory;
+
+   Alr_Child_Flag : constant String := "ALR_CHILD";
 
    Alr_Src_Folder : constant String := Self.Src_Folder;
 

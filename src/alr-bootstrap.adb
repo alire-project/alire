@@ -107,7 +107,9 @@ package body Alr.Bootstrap is
    procedure Interrupted is
       use Ada.Directories;
    begin
-      Trace.Always (" Interrupted by user");
+      if not Is_Child then
+         Trace.Always (" Interrupted by user");
+      end if;
 
       Attempt_Backup_Recovery;
       OS_Lib.Bailout (1);
@@ -315,5 +317,10 @@ package body Alr.Bootstrap is
    end Status_Line;
 
 begin
+   if OS_Lib.Getenv (Hardcoded.Alr_Child_Flag) /= "" then
+      Is_Child := True;
+      Trace.Debug ("alr spawned as child");
+   end if;
+
    GNAT.Ctrl_C.Install_Handler (Interrupted'Access);
 end Alr.Bootstrap;

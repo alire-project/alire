@@ -55,6 +55,7 @@ package body Alr.Spawn is
       if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
          Trace.Detail ("...");
          begin
+            Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
             OS_Lib.Spawn_Raw (Hardcoded.Alr_Rolling_Exe_File, OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);
             raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
@@ -101,6 +102,7 @@ package body Alr.Spawn is
                      then "-XALR_SESSION=" & Session_File & " -XALR_SELFBUILD=True "
                      else "");
    begin
+      Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
       Command ("gprbuild",
                Selfbuild &
                  "-j0 -m -p " &

@@ -55,6 +55,9 @@ package Alr.Bootstrap is
 
 private
 
+   Is_Child : Boolean := False;
+   --  During elaboration this will be updated accordingly
+
    Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies :=
                                 Alire.Index.At_Least (Alire.Index.Alire.V_0_1);
    Alire_Minimal_Instance   : constant Query.Instance :=
