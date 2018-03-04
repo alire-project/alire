@@ -73,6 +73,7 @@ private
 
    function Fingerprint return String is
      (To_Mixed_Case (Operating_System'Img) & " " &
+        To_Mixed_Case (Word_Size'Img) & " " &
         To_Mixed_Case (Distribution'Img) & " " &
         To_Mixed_Case (Version'Img) & " " &
         Compiler'Img);

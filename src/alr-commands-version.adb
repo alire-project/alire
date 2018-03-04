@@ -20,6 +20,7 @@ package body Alr.Commands.Version is
 
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
+      use Ada.Text_IO;
    begin
       if Project.Is_Empty then
          Trace.Always ("alr internal project is empty");
@@ -66,9 +67,12 @@ package body Alr.Commands.Version is
          OS_Lib.Spawn_Raw (Hardcoded.Scripts_Version);
       end;
 
-      Trace.Always ("platform is: " & OS.Fingerprint);
-      Trace.Always ("platform properties: ");
-      Alire.Properties.Print (Prefix => "   ", V => OS.Properties);
+      Trace.Always ("platform fingerprint: " & OS.Fingerprint);
+      Put ("platform properties:");
+      for Prop of OS.Properties loop
+         Put (" " & Prop.Image);
+      end loop;
+      New_Line;
    end Execute;
 
 end Alr.Commands.Version;
