@@ -7,7 +7,6 @@ with Alr.Checkout;
 with Alr.Commands.Compile;
 with Alr.Hardcoded;
 with Alr.Origins;
-with Alr.OS;
 with Alr.Parsers;
 with Alr.Query;
 
@@ -43,7 +42,7 @@ package body Alr.Commands.Get is
          New_Line;
 
          if Native then
-            Release.Whenever (OS.Properties).Print;
+            Release.Whenever (Query.Platform_Properties).Print;
          else
             Release.Print;
          end if;

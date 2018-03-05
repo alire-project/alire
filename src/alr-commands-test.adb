@@ -8,7 +8,7 @@ with Alr.Files;
 with Alr.Interactive;
 with Alr.OS;
 with Alr.Parsers;
-with Alr.Platform;
+with Alr.Query;
 with Alr.Spawn;
 with Alr.Utils;
 
@@ -22,7 +22,7 @@ package body Alr.Commands.Test is
 
    function Check_Executables (R : Alire.Index.Release) return Boolean is
    begin
-      for Exe of R.Executables (Platform.Properties) loop
+      for Exe of R.Executables (Query.Platform_Properties) loop
          if Files.Locate_File_Under (Folder    => R.Unique_Folder,
                                      Name      => Exe,
                                      Max_Depth => 2).Is_Empty then
@@ -74,7 +74,7 @@ package body Alr.Commands.Test is
                        " CURR:" & Integer'(Tested + 1)'Img & "/" &
                        Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
-         if not R.Available.Check (Platform.Properties) then
+         if not R.Available.Check (Query.Platform_Properties) then
             Unavail := Unavail + 1;
             Put_Line (File, "Unav:" & R.Milestone.Image);
          elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) then

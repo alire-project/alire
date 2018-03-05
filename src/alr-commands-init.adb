@@ -7,7 +7,6 @@ with Alire.Releases;
 with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
-with Alr.Platform;
 with Alr.Query;
 with Alr.Templates;
 with Alr.Utils;
@@ -61,9 +60,10 @@ package body Alr.Commands.Init is
                             Properties => Alire.Index.No_Properties,
                             Available  => Alire.Index.No_Requisites);
          Success     : Boolean;
-         Depends     : constant Query.Instance := Query.Resolve (New_Release.Depends (Platform.Properties),
-                                                                 Success,
-                                                                 Query_Policy);
+         Depends     : constant Query.Instance :=
+                         Query.Resolve (New_Release.Depends (Query.Platform_Properties),
+                                        Success,
+                                        Query_Policy);
       begin
          if not Success then
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";

@@ -8,7 +8,6 @@ with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Project;
-with Alr.Platform;
 with Alr.Self;
 with Alr.Session;
 with Alr.Spawn;
@@ -246,7 +245,7 @@ package body Alr.Bootstrap is
 
       --  Is this check really necessary?
       declare
-         Gprs : constant Utils.String_Vector := Project.Current.GPR_Files (Platform.Properties);
+         Gprs : constant Utils.String_Vector := Project.Current.GPR_Files (Query.Platform_Properties);
       begin
          for Gpr of Gprs loop
             if not Is_Regular_File (Gpr) then

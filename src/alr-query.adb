@@ -1,8 +1,7 @@
 with Alire.Dependencies.Vectors;
 with Alire.Utils;
 
-with Alr.Checkout;
-with Alr.Platform;
+with Alr.Commands;
 
 package body Alr.Query is
 
@@ -86,6 +85,18 @@ package body Alr.Query is
       raise Query_Unsuccessful with "Release not found: " & Project;
    end Find;
 
+   -------------------
+   -- Is_Resolvable --
+   -------------------
+
+   function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean is
+      Success : Boolean := False;
+
+      Solution : constant Instance := Resolve (Deps, Success, Commands.Query_Policy) with Unreferenced;
+   begin
+      return Success;
+   end Is_Resolvable;
+
    --------------------
    -- Print_Solution --
    --------------------
@@ -128,7 +139,7 @@ package body Alr.Query is
       begin
          if Dep.Project = R.Project and Then
             Semver.Satisfies (R.Version, Dep.Versions) and then
-            Checkout.Available_Currently (R)
+            Is_Available (R)
          then
             declare
                New_Frozen : Instance     := Frozen;
@@ -137,7 +148,7 @@ package body Alr.Query is
                Solution   : Instance;
             begin
                New_Frozen.Insert (R.Project, R);
-               New_Remain.Append (R.Depends (Platform.Properties));
+               New_Remain.Append (R.Depends (Platform_Properties));
 
                Solution := Resolve (New_Remain, New_Frozen, Policy, Success);
 

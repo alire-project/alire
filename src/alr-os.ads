@@ -37,6 +37,9 @@ package Alr.OS is
    function Word_Size return Alire.Platforms.Word_Sizes;
 
    function Properties return Alire.Properties.Vector;
+   --  NOTE: these properties do not include the native availability checker!
+   --  So they shouldn't be directly used unless you know why.
+   --  Check instead Query.Platform_Properties
 
 private
 

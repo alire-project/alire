@@ -1,6 +1,6 @@
 with Alr.Files;
+with Alr.Query;
 with Alr.Spawn;
-with Alr.Platform;
 with Alr.Utils;
 
 package body Alr.Commands.Compile is
@@ -30,7 +30,7 @@ package body Alr.Commands.Compile is
       Requires_Project;
       Requires_Buildfile;
 
-      GPR_Extra := Project.Current.Labeled_Properties (Platform.Properties, GPR_Extra_Config);
+      GPR_Extra := Project.Current.Labeled_Properties (Query.Platform_Properties, GPR_Extra_Config);
       if not GPR_Extra.Is_Empty then
          Trace.Detail ("alr build config is " & GPR_Extra.Flatten);
       end if;

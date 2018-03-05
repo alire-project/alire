@@ -4,7 +4,7 @@ with Alire.Containers;
 with Alire.Index;
 with Alire.Releases;
 
-with Alr.Checkout;
+with Alr.Query;
 with Alr.Utils;
 
 with Semantic_Versioning;
@@ -36,7 +36,10 @@ package body Alr.Commands.Search is
             Tab.Append (R.Project);
             Tab.Append (Semantic_Versioning.Image (R.Version) &
                         (if R.Origin.Is_Native then " (native)" else "") &
-                        (if Checkout.Available_Currently (R) then "" else " (unavail)"));
+                        (if Query.Is_Available (R) then "" else " (unavail)") &
+                        (if not Query.Is_Resolvable (R.Depends (Query.Platform_Properties))
+                           then " (unresolv)" else "")
+                       );
             Tab.Append (R.Description);
          end if;
       end List_Release;

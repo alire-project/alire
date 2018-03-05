@@ -3,6 +3,8 @@ Bugs
 
 Features
 ========
+Chained conditional dependencies
+Check that "deps missing" in search works
 Windows port
 
 Library inclusions
