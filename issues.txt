@@ -3,13 +3,12 @@ Bugs
 
 Features
 ========
-Chained conditional dependencies
-Check that "deps missing" in search works
 Windows port
 
 Library inclusions
 ==================
 github by popularity: 66*
+all from AdaCore at github
 https://en.wikibooks.org/wiki/Ada_Programming/Libraries
 http://www.adaic.org/ada-resources/tools-libraries/
 
