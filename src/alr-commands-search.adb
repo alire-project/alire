@@ -30,7 +30,9 @@ package body Alr.Commands.Search is
 
       procedure List_Release (R : Alire.Releases.Release) is
       begin
-         if Cmd.Prop.all = "" or else R.Property_Contains (Cmd.Prop.all) then
+         if (Cmd.Prop.all = "" or else R.Property_Contains (Cmd.Prop.all)) and then
+            (Cmd.Native or else not R.Origin.Is_Native)
+         then
             Found := Found + 1;
             Tab.New_Row;
             Tab.Append (R.Project);
@@ -65,33 +67,38 @@ package body Alr.Commands.Search is
 
       --  End of option verification, start of search
 
-      if Cmd.List then
-         for I in Alire.Index.Catalog.Iterate loop
-            if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-              Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
-            then
-               List_Release (Alire.Index.Catalog (I));
-            end if;
-         end loop;
-      else
-         declare
-            Pattern : constant String := Argument (1);
-         begin
-            if not Cmd.List then
-               Log ("Searching " & Utils.Quote (Pattern) & "...", Detail);
-            end if;
-
+      declare
+         Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
+      begin
+         if Cmd.List then
+            Trace.Detail ("Searching...");
             for I in Alire.Index.Catalog.Iterate loop
-               if Count (Alire.Index.Catalog (I).Project, Pattern) > 0 then
-                  if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-                    Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
-                  then
-                     List_Release (Alire.Index.Catalog (I));
-                  end if;
+               if Cmd.Full or else I = Alire.Index.Catalog.Last or else
+                 Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+               then
+                  List_Release (Alire.Index.Catalog (I));
+                  Busy.Step;
                end if;
             end loop;
-         end;
-      end if;
+         else
+            declare
+               Pattern : constant String := Argument (1);
+            begin
+               Trace.Detail ("Searching " & Utils.Quote (Pattern) & "...");
+
+               for I in Alire.Index.Catalog.Iterate loop
+                  if Count (Alire.Index.Catalog (I).Project, Pattern) > 0 then
+                     if Cmd.Full or else I = Alire.Index.Catalog.Last or else
+                       Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+                     then
+                        List_Release (Alire.Index.Catalog (I));
+                     end if;
+                  end if;
+                  Busy.Step;
+               end loop;
+            end;
+         end if;
+      end;
 
       if Found = 0 then
          Log ("No hits");
@@ -115,6 +122,11 @@ package body Alr.Commands.Search is
                      Cmd.List'Access,
                      "", "--list",
                      "List all available releases");
+
+      Define_Switch (Config,
+                     Cmd.Native'Access,
+                     "", "--native",
+                     "Include platform-provided native packages in search");
 
       Define_Switch (Config,
                      Cmd.Prop'Access,

@@ -487,7 +487,20 @@ package body Alr.Commands is
 --           Getopt (Command_Config);
       end;
 
-      -- At this point everything should be OK
+      -- At this point everything should be parsed OK.
+
+      -- The simplistic early parser do not recognizes compressed switches, so let's recheck now:
+      declare
+         use Alire_Early_Elaboration;
+      begin
+         if Switch_D then
+            Alire.Log_Level := Simple_Logging.Debug;
+         elsif Switch_V then
+            Alire.Log_Level := Simple_Logging.Detail;
+         elsif Switch_Q then
+            Alire.Log_Level := Simple_Logging.Error;
+         end if;
+      end;
 
    exception
       when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>

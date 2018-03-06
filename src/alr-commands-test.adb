@@ -25,7 +25,7 @@ package body Alr.Commands.Test is
       for Exe of R.Executables (Query.Platform_Properties) loop
          if Files.Locate_File_Under (Folder    => R.Unique_Folder,
                                      Name      => Exe,
-                                     Max_Depth => 2).Is_Empty then
+                                     Max_Depth => Natural'Last).Is_Empty then
             Trace.Error ("Declared executable not found after compilation: " & Exe);
             return False;
          end if;

@@ -1,10 +1,15 @@
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
+
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Utils;
+
+with GNAT.OS_Lib;
 
 with Semantic_Versioning;
 
@@ -116,6 +121,7 @@ package body Alr.Templates is
 
       GPR_Files : constant Utils.String_Vector := Root.GPR_Files (Query.Platform_Properties);
 
+      All_Paths : Utils.String_Vector;
    begin
       Log ("Generating GPR for " & Root.Milestone.Image & " with" & Instance.Length'Img & " dependencies", Detail);
 
@@ -138,22 +144,38 @@ package body Alr.Templates is
       Put_Line (File, Tab_2 & ");");
       New_Line (File);
 
-      Put (File, Tab_1 & "for Project_Path use (");
-      for Rel of Instance loop
-         if First then
-            New_Line (File);
-            First := False;
-         else
-            Put_Line (File, ",");
-         end if;
-         if Rel.Project = Root.Project then
-            Put (File, Tab_2 & """.""");
-         else
-            Put (File, Tab_2 & """" & Hardcoded.Projects_Folder / Rel.Unique_Folder & """");
-         end if;
-      end loop;
-      Put_Line (File, ");");
-      New_Line (File);
+      if not Instance.Is_Empty then
+         --  This used to work when empty but some condition in openglada raises deep within gpr
+         Put (File, Tab_1 & "for Project_Path use (");
+
+         --  First obtain all paths and then output them
+         for Rel of Instance loop
+            if Rel.Project = Root.Project then
+               All_Paths.Append (".");
+            else
+               All_Paths.Append (Hardcoded.Projects_Folder / Rel.Unique_Folder);
+
+               for Path of Rel.Labeled_Properties (Platform.Properties, GPR_Path) loop
+                  All_Paths.Append (Hardcoded.Projects_Folder / Rel.Unique_Folder &
+                                      GNAT.OS_Lib.Directory_Separator & Path);
+                  --  Path won't be a simple name and / (compose) would complain
+               end loop;
+            end if;
+         end loop;
+
+         for Path of All_Paths loop
+            if First then
+               New_Line (File);
+               First := False;
+            else
+               Put_Line (File, ",");
+            end if;
+
+            Put (File, Tab_2 & Q (Path));
+         end loop;
+         Put_Line (File, ");");
+         New_Line (File);
+      end if;
 
       Put_Line (File, Tab_1 & "for external (""ALIRE"") use ""True"";");
       New_Line (File);

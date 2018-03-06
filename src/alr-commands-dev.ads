@@ -13,11 +13,16 @@ package Alr.Commands.Dev is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
+   --  Custom actions  --
+
+   procedure Regenerate;
+
 private
 
    type Command is new Commands.Command with record
       Locate_Alr   : aliased Boolean := False;
       Raise_Except : aliased Boolean := False;
+      Regenerate   : aliased Boolean := False;
       Respawn      : aliased Boolean := False;
       Self_Compile : aliased Boolean := False;
    end record;

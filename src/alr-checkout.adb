@@ -98,7 +98,7 @@ package body Alr.Checkout is
       Checkout (R, Parent_Folder, Was_There);
 
       --  And generate its working files, if they do not exist
-      if Generate_Files then -- FIXME we'll have to check here once native packages are in place again
+      if Generate_Files then
          declare
             use OS_Lib;
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;

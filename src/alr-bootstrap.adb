@@ -312,7 +312,7 @@ package body Alr.Bootstrap is
          else "no project") & ") (" &
         Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
         (if Self.Is_Bootstrap then " (minimal index)" else "") &
-        ("(loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
+        (" (loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
    end Status_Line;
 
 begin

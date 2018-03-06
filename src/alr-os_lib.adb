@@ -298,7 +298,7 @@ package body Alr.OS_Lib is
                     Timeout => 200);
 
             if Match >= 0 then
-               Last_Line := To_Unbounded_String (Sanitize (Expect_Out_Match (Pid)));
+               Last_Line := To_Unbounded_String (Utils.Crunch (Sanitize (Expect_Out_Match (Pid))));
             end if;
 
             declare

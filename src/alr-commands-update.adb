@@ -49,10 +49,10 @@ package body Alr.Commands.Update is
 
       declare
          Success : Boolean;
-         Needed  : constant Query.Instance := Query.Resolve (Project.Current.Depends
-                                                              (Query.Platform_Properties),
-                                                             Success,
-                                                             Query_Policy);
+         Needed  : constant Query.Instance :=
+                     Query.Resolve (Project.Current.Depends (Query.Platform_Properties),
+                                    Success,
+                                    Query_Policy);
       begin
          if not Success then
             Log ("Update failed");

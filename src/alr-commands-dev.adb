@@ -1,6 +1,9 @@
 with Alr.Bootstrap;
 with Alr.Files;
+with Alr.Project;
+with Alr.Query;
 with Alr.Spawn;
+with Alr.Templates;
 
 package body Alr.Commands.Dev is
 
@@ -18,6 +21,10 @@ package body Alr.Commands.Dev is
          raise Program_Error with "Raising forcibly";
       end if;
 
+      if Cmd.Regenerate then
+         Regenerate;
+      end if;
+
       if Cmd.Respawn then
          Spawn.Updated_Alr_Without_Return;
       end if;
@@ -26,6 +33,33 @@ package body Alr.Commands.Dev is
          Bootstrap.Rebuild_With_Current_Project;
       end if;
    end Execute;
+
+   ----------------
+   -- Regenerate --
+   ----------------
+
+   procedure Regenerate is
+   begin
+      Requires_Project;
+
+      declare
+         Guard : Folder_Guard := Enter_Project_Folder with Unreferenced;
+
+         Ok    : Boolean := False;
+         Deps  : constant Query.Instance :=
+                   Query.Resolve (Project.Current.Depends (Query.Platform_Properties),
+                                  Ok,
+                                  Query_Policy);
+      begin
+         if not Ok then
+            Reportaise_Command_Failed ("Could not resolve dependencies");
+         end if;
+
+         Templates.Generate_Prj_Alr (Deps, Project.Current);
+         Templates.Generate_Agg_Gpr (Deps, Project.Current);
+      end;
+   end Regenerate;
+
 
    --------------------
    -- Setup_Switches --
@@ -46,6 +80,11 @@ package body Alr.Commands.Dev is
                      Cmd.Raise_Except'Access,
                      "", "--raise",
                      "Raise an exception");
+
+      Define_Switch (Config,
+                     Cmd.Regenerate'Access,
+                     "", "--regen",
+                     "Regenerate alr/gpr meta files for current project");
 
       Define_Switch (Config,
                      Cmd.Respawn'Access,

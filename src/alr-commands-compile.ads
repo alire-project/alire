@@ -1,3 +1,5 @@
+with Alire.Index;
+
 package Alr.Commands.Compile is
 
    type Command is new Commands.Command with null record;
@@ -13,6 +15,13 @@ package Alr.Commands.Compile is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
+   --  Other actions  --
+
    procedure Execute;
+
+   function GPR_Extra_Arguments (R : Alire.Index.Release) return String;
+   --  Returns any extra params to pass to GPRbuild
+   --  Due to command-line given -X
+   --  Due to Release GPR_Config
 
 end Alr.Commands.Compile;
