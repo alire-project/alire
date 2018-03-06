@@ -1,4 +1,3 @@
-with Alr.Commands.Compile;
 with Alr.Project;
 with Alr.Spawn;
 
@@ -15,8 +14,7 @@ package body Alr.Commands.Clean is
    begin
       Requires_Project;
 
-      Spawn.Command ("gprclean", "-r -P " & Project.Build_File & " " &
-                       Compile.GPR_Extra_Arguments (Project.Current));
+      Spawn.Command ("gprclean", "-r -P " & Project.Build_File & " " & Scenario.As_Command_Line);
    end Execute;
 
 end Alr.Commands.Clean;

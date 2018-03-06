@@ -1,5 +1,4 @@
 with Alr.Files;
-with Alr.Query;
 with Alr.Spawn;
 with Alr.Utils;
 
@@ -27,7 +26,7 @@ package body Alr.Commands.Compile is
 
       begin
          Spawn.Gprbuild (Project.Build_File,
-                         Extra_Args => GPR_Extra_Arguments (Project.Current));
+                         Extra_Args => Scenario.As_Command_Line);
          Trace.Info ("Compilation finished without errors");
          declare
             Execs : constant Utils.String_Vector :=
@@ -50,25 +49,6 @@ package body Alr.Commands.Compile is
             raise;
       end;
    end Execute;
-
-   -------------------------
-   -- GPR_Extra_Arguments --
-   -------------------------
-
-   function GPR_Extra_Arguments (R : Alire.Index.Release) return String is
-      GPR_Extra : Utils.String_Vector;
-   begin
-      if not Scenario.Is_Empty then
-         Trace.Detail ("User requested scenario is " & Scenario.As_Command_Line);
-      end if;
-
-      GPR_Extra := R.Labeled_Properties (Query.Platform_Properties, GPR_Config);
-      if not GPR_Extra.Is_Empty then
-         Trace.Detail ("alr build config is " & GPR_Extra.Flatten);
-      end if;
-
-      return Scenario.As_Command_Line & " " & GPR_Extra.Flatten;
-   end GPR_Extra_Arguments;
 
    --------------------
    -- Setup_Switches --

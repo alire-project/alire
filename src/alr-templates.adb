@@ -1,7 +1,9 @@
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alire.GPR;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
+with Alire.Properties.Scenarios;
 
 with Alr.Files;
 with Alr.Hardcoded;
@@ -176,6 +178,27 @@ package body Alr.Templates is
          Put_Line (File, ");");
          New_Line (File);
       end if;
+
+      --  Externals
+      --  FIXME: what to do with duplicates? at a minimum research what gprbuild does (err, ignore...)
+      for Release of Instance loop
+         for Prop of Release.On_Platform_Properties (Platform.Properties) loop
+            if Prop in Alire.Properties.Scenarios.Property'Class then
+               declare
+                  use all type Alire.GPR.Variable_Kinds;
+                  Variable : constant Alire.GPR.Variable :=
+                               Alire.Properties.Scenarios.Property (Prop).Value;
+               begin
+                  if Variable.Kind = External then
+                     Put_Line (File,
+                               Tab_1 & "for External (" &
+                                 Q (Variable.Name) & ") use " & Q (Variable.External_Value) & ";");
+                  end if;
+               end;
+            end if;
+         end loop;
+      end loop;
+      New_Line;
 
       Put_Line (File, Tab_1 & "for external (""ALIRE"") use ""True"";");
       New_Line (File);
