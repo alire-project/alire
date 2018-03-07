@@ -4,8 +4,8 @@ Bugs
 Features
 ========
 Private/Public properties
-In alr test, check declared project_files exist at root or declared paths
 Windows port
+Platform checks with docker hub
 
 Library inclusions
 ==================

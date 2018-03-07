@@ -21,27 +21,35 @@ package body Alr.Commands.Test is
 
    package Semver renames Semantic_Versioning;
 
+   -----------------
+   -- Check_Files --
+   -----------------
+
    function Check_Files (R : Alire.Index.Release) return Boolean is
    begin
       --  Declared GPR files in include paths
-      for Gpr of R.Labeled_Properties (Query.Platform_Properties, GPR_File) loop
-         declare
-            use OS_Lib.Paths;
+      declare
+         Guard : constant Folder_Guard := Enter_Folder (R.Unique_Folder) with Unreferenced;
+      begin
+         for Gpr of R.Project_Files (Query.Platform_Properties) loop
+            declare
+               use OS_Lib.Paths;
 
-            Found : Boolean := OS_Lib.Is_Regular_File (Gpr); -- Directly in root folder
-         begin
-            for Path of R.Labeled_Properties (Query.Platform_Properties, GPR_Path) loop
-               exit when Found;
+               Found : Boolean := OS_Lib.Is_Regular_File (Gpr); -- Directly in root folder
+            begin
+               for Path of R.Labeled_Properties (Query.Platform_Properties, GPR_Path) loop
+                  exit when Found;
 
-               Found := OS_Lib.Is_Regular_File (Path / Gpr);
-            end loop;
+                  Found := OS_Lib.Is_Regular_File (Path / Gpr);
+               end loop;
 
-            if not Found then
-               Trace.Error ("Declared project file not found in project search paths: " & Gpr);
-               return False;
-            end if;
-         end;
-      end loop;
+               if not Found then
+                  Trace.Error ("Declared project file not found in project search paths: " & Gpr);
+                  return False;
+               end if;
+            end;
+         end loop;
+      end;
 
       --  Generated executables
       for Exe of R.Executables (Query.Platform_Properties) loop
@@ -71,7 +79,7 @@ package body Alr.Commands.Test is
    -- Do_Test --
    -------------
 
-   procedure Do_Test (Releases : Alire.Containers.Release_Sets.Set) is
+   procedure Do_Test (Cmd : Command; Releases : Alire.Containers.Release_Sets.Set) is
       use Ada.Calendar;
       use Ada.Text_Io;
 
@@ -99,7 +107,7 @@ package body Alr.Commands.Test is
          if not R.Available.Check (Query.Platform_Properties) then
             Unavail := Unavail + 1;
             Put_Line (File, "Unav:" & R.Milestone.Image);
-         elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) then
+         elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) and then not Cmd.Redo then
             Skipped := Skipped + 1;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
@@ -107,7 +115,7 @@ package body Alr.Commands.Test is
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
 
                --  Check declared gpr/executables in place
-               if not Check_Files (R) then
+               if not R.Origin.Is_Native and then Not Check_Files (R) then
                   raise Child_Failed;
                end if;
 
@@ -168,7 +176,9 @@ package body Alr.Commands.Test is
 
       --  Check in empty folder!
       if Cmd.Cont then
-         Trace.Detail ("Resuming test");
+         Trace.Detail ("Resuming tests");
+      elsif Cmd.Redo then
+         Trace.Detail ("Redoing tests");
       else
          Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
@@ -210,7 +220,7 @@ package body Alr.Commands.Test is
          Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
       end if;
 
-      Do_Test (Candidates);
+      Do_Test (Cmd, Candidates);
    end Execute;
 
    --------------------
@@ -231,14 +241,19 @@ package body Alr.Commands.Test is
       Define_Switch (Config,
                      Cmd.Full'Access,
                      Long_Switch => "--full",
-                     Help        => "Select all releases");
+                     Help        => "Select all releases for testing");
 
       Define_Switch (Config,
-                     Cmd.Jobs'Access,
-                     "-j:", "--jobs=",
-                     "Tests up to N jobs in parallel, or as many as processors if 0 (default)",
-                     Default => 0,
-                     Argument => "N");
+                     Cmd.Redo'Access,
+                     Long_Switch => "--redo",
+                     Help        => "Redo test for releases already in folder (implies --continue)");
+
+--        Define_Switch (Config,
+--                       Cmd.Jobs'Access,
+--                       "-j:", "--jobs=",
+--                       "Tests up to N jobs in parallel, or as many as processors if 0 (default)",
+--                       Default => 0,
+--                       Argument => "N");
    end Setup_Switches;
 
 end Alr.Commands.Test;

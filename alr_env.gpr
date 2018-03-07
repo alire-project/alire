@@ -1,10 +1,12 @@
 aggregate project Alr_Env is
 
-   for Project_Path use ("deps/alire", 
-                         "deps/condtrees",
+   for Project_Path use ("deps/alire",
                          "deps/alire/deps/semver",
                          "deps/alire/deps/simple_logging");
 
-   for Project_Files use ("alr.gpr");
+   for Project_Files use ("alr.gpr",
+                          "deps/alire/alire.gpr");
+   --  Including alire.gpr here ensures that all index files are compiled.
+   --  They won't be included in the bootstrap alr, but at least they're checked.
 
 end Alr_Env;
