@@ -7,7 +7,7 @@ package body Alr.Hardcoded is
    --------------------
 
    function Session_Folder return String is
-      Path : constant String := OS.Cache_Folder / "sessions" / "common";
+      Path : constant String := OS.Cache_Folder / "sessions" / OS.Compiler'Img / "common";
       --  FIXME: right now there are no sessions, only this one for everything
       --  Not a problem as long as alr remains an interactive, single-user tool
    begin

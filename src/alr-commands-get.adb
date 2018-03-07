@@ -27,7 +27,10 @@ package body Alr.Commands.Get is
    -- Report --
    ------------
 
-   procedure Report (Name : Alire.Project_Name; Versions : Semver.Version_Set; Native : Boolean) is
+   procedure Report (Name     : Alire.Project_Name;
+                     Versions : Semver.Version_Set;
+                     Native   : Boolean;
+                     Priv     : Boolean) is
    begin
       declare
          Success : Boolean;
@@ -42,9 +45,9 @@ package body Alr.Commands.Get is
          New_Line;
 
          if Native then
-            Release.Whenever (Query.Platform_Properties).Print;
+            Release.Whenever (Query.Platform_Properties).Print (Private_Too => Priv);
          else
-            Release.Print;
+            Release.Print (Private_Too => Priv);
          end if;
 
          if Needed.Contains (Name) then
@@ -187,7 +190,7 @@ package body Alr.Commands.Get is
          end if;
 
          if Cmd.Info or else Cmd.Native then
-            Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native);
+            Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native, Priv => Cmd.Priv);
          else
             Retrieve (Cmd, Allowed.Project, Allowed.Versions);
          end if;
@@ -215,6 +218,10 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Native'Access,
                      "", "--info-native", "Show info relevant to current platform");
+
+      Define_Switch (Config,
+                     Cmd.Priv'Access,
+                     "", "--private", "Show also private properties");
    end Setup_Switches;
 
 end Alr.Commands.Get;

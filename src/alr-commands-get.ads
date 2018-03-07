@@ -22,6 +22,7 @@ private
       Compile : aliased Boolean := False;
       Info    : aliased Boolean := False;
       Native  : aliased Boolean := False;
+      Priv    : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Get;

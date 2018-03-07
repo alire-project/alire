@@ -3,7 +3,6 @@ Bugs
 
 Features
 ========
-Private/Public properties
 Windows port
 Platform checks with docker hub
 

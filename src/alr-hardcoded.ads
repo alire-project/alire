@@ -105,6 +105,6 @@ private
      (Project & "_alr.gpr");
 
    function Projects_Folder return String is
-     (OS.Cache_Folder / "projects");
+     (OS.Cache_Folder / "projects" / OS.Compiler'Img);
 
 end Alr.Hardcoded;
