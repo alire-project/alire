@@ -7,6 +7,7 @@ with Alire.Index;
 with Alr.Files;
 with Alr.Interactive;
 with Alr.OS;
+with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Query;
 with Alr.Spawn;
@@ -20,8 +21,29 @@ package body Alr.Commands.Test is
 
    package Semver renames Semantic_Versioning;
 
-   function Check_Executables (R : Alire.Index.Release) return Boolean is
+   function Check_Files (R : Alire.Index.Release) return Boolean is
    begin
+      --  Declared GPR files in include paths
+      for Gpr of R.Labeled_Properties (Query.Platform_Properties, GPR_File) loop
+         declare
+            use OS_Lib.Paths;
+
+            Found : Boolean := OS_Lib.Is_Regular_File (Gpr); -- Directly in root folder
+         begin
+            for Path of R.Labeled_Properties (Query.Platform_Properties, GPR_Path) loop
+               exit when Found;
+
+               Found := OS_Lib.Is_Regular_File (Path / Gpr);
+            end loop;
+
+            if not Found then
+               Trace.Error ("Declared project file not found in project search paths: " & Gpr);
+               return False;
+            end if;
+         end;
+      end loop;
+
+      --  Generated executables
       for Exe of R.Executables (Query.Platform_Properties) loop
          if Files.Locate_File_Under (Folder    => R.Unique_Folder,
                                      Name      => Exe,
@@ -32,7 +54,7 @@ package body Alr.Commands.Test is
       end loop;
 
       return True;
-   end Check_Executables;
+   end Check_Files;
 
    --------------------------
    -- Display_Help_Details --
@@ -84,8 +106,8 @@ package body Alr.Commands.Test is
             begin
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
 
-               --  Check declared executables in place
-               if not Check_Executables (R) then
+               --  Check declared gpr/executables in place
+               if not Check_Files (R) then
                   raise Child_Failed;
                end if;
 

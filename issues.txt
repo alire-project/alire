@@ -3,7 +3,7 @@ Bugs
 
 Features
 ========
-Recursive retrieval of extra config at compile time
+Private/Public properties
 In alr test, check declared project_files exist at root or declared paths
 Windows port
 

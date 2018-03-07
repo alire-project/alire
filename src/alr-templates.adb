@@ -146,24 +146,27 @@ package body Alr.Templates is
       Put_Line (File, Tab_2 & ");");
       New_Line (File);
 
-      if not Instance.Is_Empty then
-         --  This used to work when empty but some condition in openglada raises deep within gpr
-         Put (File, Tab_1 & "for Project_Path use (");
+      --  First obtain all paths and then output them, if any needed
+      for Rel of Instance loop
+         if Rel.Project = Root.Project then
+            --  All_Paths.Append (".");
+            null; -- That's the first path in aggregate projects anyway
+         else
+            All_Paths.Append (Hardcoded.Projects_Folder / Rel.Unique_Folder);
+         end if;
 
-         --  First obtain all paths and then output them
-         for Rel of Instance loop
-            if Rel.Project = Root.Project then
-               All_Paths.Append (".");
-            else
-               All_Paths.Append (Hardcoded.Projects_Folder / Rel.Unique_Folder);
-
-               for Path of Rel.Labeled_Properties (Platform.Properties, GPR_Path) loop
-                  All_Paths.Append (Hardcoded.Projects_Folder / Rel.Unique_Folder &
-                                      GNAT.OS_Lib.Directory_Separator & Path);
-                  --  Path won't be a simple name and / (compose) would complain
-               end loop;
-            end if;
+         --  Add non-root extra project paths, always
+         for Path of Rel.Labeled_Properties (Platform.Properties, GPR_Path) loop
+            All_Paths.Append ((if Rel.Project = Root.Project
+                              then "."
+                              else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
+                                GNAT.OS_Lib.Directory_Separator & Path);
+            --  Path won't be a simple name and / (compose) would complain
          end loop;
+      end loop;
+
+      if not All_Paths.Is_Empty then
+         Put (File, Tab_1 & "for Project_Path use (");
 
          for Path of All_Paths loop
             if First then
@@ -175,6 +178,7 @@ package body Alr.Templates is
 
             Put (File, Tab_2 & Q (Path));
          end loop;
+
          Put_Line (File, ");");
          New_Line (File);
       end if;

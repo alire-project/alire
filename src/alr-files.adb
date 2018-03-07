@@ -207,7 +207,6 @@ package body Alr.Files is
    function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String is
       use Ada.Directories;
       use Alr.OS_Lib;
-      use GNAT.OS_Lib;
 
       Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
    begin

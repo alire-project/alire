@@ -10,7 +10,6 @@ with Ada.Text_IO;
 with Alire;
 
 with GNAT.Expect;
-with GNAT.OS_Lib;
 
 package body Alr.OS_Lib is
 

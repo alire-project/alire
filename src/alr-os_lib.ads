@@ -1,8 +1,9 @@
 with Ada.Directories;
-
-private with Ada.Finalization;
+with Ada.Finalization;
 
 with Alr.Utils;
+
+with GNAT.OS_Lib;
 
 package Alr.OS_Lib is
 
@@ -76,7 +77,9 @@ package Alr.OS_Lib is
    end Paths;
 
 
-   --  FOLDER MANAGEMENT
+   --  FILE / FOLDER MANAGEMENT
+
+   function Is_Regular_File (Path : String) return Boolean renames GNAT.OS_Lib.Is_Regular_File;
 
    procedure Traverse_Folder (Folder  : String;
                               Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type);
