@@ -143,7 +143,7 @@ package body Alr.Templates is
             Put_line (File, ", ");
          end if;
       end loop;
-      Put_Line (File, Tab_2 & ");");
+      Put_Line (File, ");");
       New_Line (File);
 
       --  First obtain all paths and then output them, if any needed

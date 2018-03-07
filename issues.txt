@@ -8,8 +8,7 @@ Platform checks with docker hub
 
 Library inclusions
 ==================
-github by popularity: 66*
-all from AdaCore at github
+github by popularity
 https://en.wikibooks.org/wiki/Ada_Programming/Libraries
 http://www.adaic.org/ada-resources/tools-libraries/
 
@@ -21,11 +20,3 @@ Long term if ever
 License compatibilities/permissions/restrictions/!!!
 Proper unit testing
 alr init templating system beyond bin/lib (e.g. advanced scenarios)
-Force re-fetch
-Use libadalang instead of self-compiling
-
-Discarded
-=========
-SAL alire lib? No, because it still requires a list of files to depend on.
-Force explicit arguments in all releases??? (could be ugly? but nicer?)
-    No, because there are no conflicting types anyway
