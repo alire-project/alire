@@ -104,7 +104,7 @@ package body Alr.Commands.Test is
                        " CURR:" & Integer'(Tested + 1)'Img & "/" &
                        Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
-         if not R.Available.Check (Query.Platform_Properties) then
+         if not Query.Is_Available (R) then
             Unavail := Unavail + 1;
             Put_Line (File, "Unav:" & R.Milestone.Image);
          elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) and then not Cmd.Redo then

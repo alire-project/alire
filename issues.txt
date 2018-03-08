@@ -3,13 +3,17 @@ Bugs
 
 Features
 ========
-Proper semantic versioning parser
 Simpler Requisite Trees (!!!)
+Address initial loading time
+Lighter Conditionals
+Move from Vectors to Lists
 Windows port
 Platform checks with docker hub
 
 Library inclusions
 ==================
+https://globe3d.sourceforge.io/
+https://azip.sourceforge.io/
 github by popularity
 https://en.wikibooks.org/wiki/Ada_Programming/Libraries
 http://www.adaic.org/ada-resources/tools-libraries/
