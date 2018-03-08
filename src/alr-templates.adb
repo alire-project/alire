@@ -157,11 +157,15 @@ package body Alr.Templates is
 
          --  Add non-root extra project paths, always
          for Path of Rel.Labeled_Properties (Platform.Properties, GPR_Path) loop
-            All_Paths.Append ((if Rel.Project = Root.Project
-                              then "."
-                              else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
-                                GNAT.OS_Lib.Directory_Separator & Path);
-            --  Path won't be a simple name and / (compose) would complain
+            if GNAT.OS_Lib.Is_Absolute_Path (Path) then
+               All_Paths.Append (Path);
+            else
+               All_Paths.Append ((if Rel.Project = Root.Project
+                                 then "."
+                                 else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
+                                   GNAT.OS_Lib.Directory_Separator & Path);
+               --  Path won't be a simple name and / (compose) would complain
+            end if;
          end loop;
       end loop;
 

@@ -3,6 +3,8 @@ Bugs
 
 Features
 ========
+Proper semantic versioning parser
+Simpler Requisite Trees (!!!)
 Windows port
 Platform checks with docker hub
 
