@@ -1,7 +1,7 @@
 with Alr.Files;
 with Alr.Utils;
 
-package body Alr.Release is
+package body Alr.Root_Release is
 
    -----------------
    -- Check_Valid --
@@ -31,7 +31,7 @@ package body Alr.Release is
    -- Enter_Root --
    ----------------
 
-   function Enter_Root (Prj : Alire.Project_Name := Current.Project) return OS_Lib.Folder_Guard is
+   function Enter_Root (Prj : Alire.Name_String := Current.Project) return OS_Lib.Folder_Guard is
       Start_Folder : constant String := OS_Lib.Current_Folder;
       Root_Folder  : constant String := Files.Locate_Above_Project_Folder (Prj);
    begin
@@ -47,4 +47,4 @@ package body Alr.Release is
       end if;
    end Enter_Root;
 
-end Alr.Release;
+end Alr.Root_Release;

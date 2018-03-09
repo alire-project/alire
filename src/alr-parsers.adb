@@ -19,7 +19,7 @@ package body Alr.Parsers is
       Op_Pos  : constant Natural := Index (Spec, To_Set ("=^~"), Inside);
 
       --  Ready to separate name from version, and operator if existing
-      Name    : constant Alire.Project_Name := (if Op_Pos > Spec'First
+      Name    : constant Alire.Name_String := (if Op_Pos > Spec'First
                                                 then Spec (Spec'First .. Op_Pos - 1)
                                                 else Spec);
 

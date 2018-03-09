@@ -230,11 +230,11 @@ package body Alr.Templates is
                                  then Filename
                                  else Hardcoded.Alire_File (Root.Project));
    begin
-      if Instance.Contains (Root.Project) then
+      if Instance.Contains (Root.Name) then
          declare
             Pruned_Instance : Query.Instance := Instance;
          begin
-            Pruned_Instance.Delete (Root.Project);
+            Pruned_Instance.Delete (Root.Name);
             Generate_Prj_Alr (Pruned_Instance, Root);
             return;
          end;
@@ -244,7 +244,8 @@ package body Alr.Templates is
 
       Create (File, Out_File, Name);
 
-      Put_Line (File, "with Alire.Project; use Alire.Project;");
+      Put_Line (File, "with Alire.Index;    use Alire.Index;");
+      Put_Line (File, "with Alire.Projects; use Alire.Projects;");
       New_Line (File);
 
       Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Project) & "_Alr is");
@@ -270,7 +271,7 @@ package body Alr.Templates is
                Put (File, Tab_3 &
                     (if Exact then "Exactly ("
                               else "Within_Major (") &
-                      Q (Rel.Project) &
+                      Utils.To_Mixed_Case (Rel.Project) &
                       ", V (" & Q (Semver.Image (Rel.Version)) & "))");
                First := False;
             end loop;

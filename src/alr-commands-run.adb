@@ -56,38 +56,39 @@ package body Alr.Commands.Run is
       end if;
 
       declare
+         Name       : constant String              := Root_Release.Project;
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
            (OS_Lib.Current_Folder,
-            Release.Current.Default_Executable,
+            Root_Release.Current.Default_Executable,
             Max_Depth => 2);
          --  We look at most in something like ./build/configuration
 
          Declared   : constant Utils.String_Vector :=
-                        (if Query.Exists (Release.Name, Release.Current.Version)
-                         then Query.Find (Release.Name, Release.Current.Version).Executables (Query.Platform_Properties)
-                         else Release.Current.Executables (Query.Platform_Properties));
+                        (if Query.Exists (Name, Root_Release.Current.Version)
+                         then Query.Find (Name, Root_Release.Current.Version).Executables (Query.Platform_Properties)
+                         else Root_Release.Current.Executables (Query.Platform_Properties));
          use Ada.Text_Io;
       begin
          --  LISTING  --
          if Cmd.List then
             if Declared.Is_Empty then
-               Put_Line ("Project " & Release.Name & " does not explicitly declares to build any executable");
+               Put_Line ("Project " & Name & " does not explicitly declares to build any executable");
                if Candidates.Is_Empty then
                   Put_Line ("No built executable has been automatically found either by alr");
                else
                   Put_Line ("However, the following executables have been autodetected:");
-                  Check_Report (Release.Current.Default_Executable);
+                  Check_Report (Root_Release.Current.Default_Executable);
                end if;
             else
-               Put_Line ("Project " & Release.Name & " builds these executables:");
+               Put_Line ("Project " & Name & " builds these executables:");
                for Exe of Declared loop
                   Check_Report (Exe);
                end loop;
 
                --  Default one:
-               if not Declared.Contains (Release.Current.Default_Executable) and then not Candidates.Is_Empty then
+               if not Declared.Contains (Root_Release.Current.Default_Executable) and then not Candidates.Is_Empty then
                   Put_Line ("In addition, the following default-named executables have been detected:");
-                  Check_Report (Release.Current.Default_Executable);
+                  Check_Report (Root_Release.Current.Default_Executable);
                end if;
             end if;
 
@@ -108,7 +109,7 @@ package body Alr.Commands.Run is
                                                else
                                                  (if Declared.Length = 1
                                                   then Declared.First_Element
-                                                  else Release.Current.Default_Executable));
+                                                  else Root_Release.Current.Default_Executable));
 
             Target : constant String :=
                        (if Alire.OS_Lib.Exe_Suffix /= "" and Then
@@ -122,7 +123,7 @@ package body Alr.Commands.Run is
                                Target,
                                Max_Depth => 2);
          begin
-            if Target /= Release.Name and then not Declared.Contains (Target) then
+            if Target /= Name and then not Declared.Contains (Target) then
                Trace.Warning ("Requested executable is not in project declared list");
             end if;
 

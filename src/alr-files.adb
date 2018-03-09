@@ -52,7 +52,7 @@ package body Alr.Files is
    -- Locate_Index_File --
    -----------------------
 
-   function Locate_Index_File (Project : Alire.Project_Name) return String is
+   function Locate_Index_File (Project : Alire.Name_String) return String is
       use Ada.Directories;
       use Gnat.OS_Lib;
 
@@ -204,7 +204,7 @@ package body Alr.Files is
    -- Locate_Project_Folder --
    ---------------------------
 
-   function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String is
+   function Locate_Above_Project_Folder (Project : Alire.Name_String) return String is
       use Ada.Directories;
       use Alr.OS_Lib;
 

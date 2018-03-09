@@ -65,7 +65,7 @@ package body Alr.Checkout is
 
    procedure To_Folder (Projects : Query.Instance;
                         Parent   : String := Hardcoded.Projects_Folder;
-                        But      : Alire.Project_Name := "")
+                        But      : Alire.Name_String := "")
    is
       Was_There : Boolean;
    begin
@@ -87,7 +87,7 @@ package body Alr.Checkout is
                            If_Conflict    : Policies := Skip)
      				--  FIXME policies not implemented
    is
-      Project : constant Alire.Project_Name := R.Project;
+      Project : constant Alire.Name_String := R.Project;
       Root    : Alire.Index.Release renames R;
       Was_There : Boolean with Unreferenced;
    begin

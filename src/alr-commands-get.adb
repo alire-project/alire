@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Dependencies.Vectors;
 with Alire.Index;
+with Alire.Projects;
 
 with Alr.Checkout;
 with Alr.Commands.Compile;
@@ -27,16 +28,16 @@ package body Alr.Commands.Get is
    -- Report --
    ------------
 
-   procedure Report (Name     : Alire.Project_Name;
+   procedure Report (Name     : Alire.Name_String;
                      Versions : Semver.Version_Set;
                      Native   : Boolean;
                      Priv     : Boolean) is
    begin
       declare
          Success : Boolean;
-         Release : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
+         Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
          Needed  : Query.Instance :=
-                     Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
+                     Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Name, Versions),
                                     Success,
                                     Query_Policy);
 
@@ -45,13 +46,13 @@ package body Alr.Commands.Get is
          New_Line;
 
          if Native then
-            Release.Whenever (Query.Platform_Properties).Print (Private_Too => Priv);
+            Rel.Whenever (Query.Platform_Properties).Print (Private_Too => Priv);
          else
-            Release.Print (Private_Too => Priv);
+            Rel.Print (Private_Too => Priv);
          end if;
 
-         if Needed.Contains (Name) then
-            Needed.Delete (Name);
+         if Needed.Contains (Rel.Name) then
+            Needed.Delete (Rel.Name);
          end if;
 
          if Success then
@@ -75,22 +76,18 @@ package body Alr.Commands.Get is
    -- Retrieve --
    --------------
 
-   procedure Retrieve (Cmd : Command; Name : Alire.Project_Name; Versions : Semver.Version_Set) is
+   procedure Retrieve (Cmd : Command; Name : Alire.Name_String; Versions : Semver.Version_Set) is
       use all type Semver.Version_Set;
 
       Success : Boolean;
+      Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
       Needed  : constant Query.Instance :=
-                  Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Name, Versions),
+                  Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Name, Versions),
                                  Success,
                                  Query_Policy);
 
       Must_Enter : Boolean;
    begin
-      if not Query.Exists (Name) then
-         Trace.Info ("Project [" & Name & "] does not exist in the catalog.");
-         raise Command_Failed;
-      end if;
-
       if not Success then
          Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
          raise Command_Failed;
@@ -109,7 +106,7 @@ package body Alr.Commands.Get is
 
       --  Check if we are already in the fresh copy (may happen after respawning)
       if Session_State >= Outdated then
-         if Session_State = Valid and then Name = Release.Name then
+         if Session_State = Valid and then Name = Root_Release.Project then
             Trace.Detail ("Already in working copy, skipping checkout");
          else
             Trace.Error ("Cannot get a project inside another alr session, stopping.");
@@ -118,7 +115,7 @@ package body Alr.Commands.Get is
          Must_Enter := False;
       else
          Must_Enter := True;
-         Checkout.Working_Copy (Needed.Element (Name),
+         Checkout.Working_Copy (Needed.Element (Rel.Name),
                                 Needed,
                                 Ada.Directories.Current_Directory);
          --  Check out requested project under current directory
@@ -133,12 +130,15 @@ package body Alr.Commands.Get is
             use OS_Lib;
             Guard : Folder_Guard :=
                       (if Must_Enter
-                       then Enter_Folder (Needed.Element (Name).Unique_Folder)
+                       then Enter_Folder (Rel.Unique_Folder)
                        else Stay_In_Current_Folder) with Unreferenced;
          begin
             Compile.Execute;
          end;
       end if;
+   exception
+      when Alire.Query_Unsuccessful =>
+         Trace.Info ("Release [" & Query.Dependency_Image (Name, Versions) & "] does not exist in the catalog.");
    end Retrieve;
 
    -------------
@@ -177,7 +177,7 @@ package body Alr.Commands.Get is
          Allowed : constant Parsers.Allowed_Milestones :=
                      (if Num_Arguments = 1
                       then Parsers.Project_Versions (Argument (1))
-                      else Parsers.Project_Versions (Release.Current.Milestone.Image));
+                      else Parsers.Project_Versions (Root_Release.Current.Milestone.Image));
       begin
          --  Verify command-line
          if Cmd.Info and then Cmd.Native then
@@ -194,6 +194,9 @@ package body Alr.Commands.Get is
          else
             Retrieve (Cmd, Allowed.Project, Allowed.Versions);
          end if;
+      exception
+         when Alire.Query_Unsuccessful =>
+            Trace.Info ("Project [" & Argument (1) & "] does not exist in the catalog.");
       end;
    end Execute;
 

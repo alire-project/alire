@@ -1,4 +1,5 @@
 with Alire.Dependencies.Vectors;
+with Alire.Projects;
 with Alire.Utils;
 
 with Alr.Commands;
@@ -7,13 +8,14 @@ package body Alr.Query is
 
    package Semver renames Semantic_Versioning;
 
+   use all type Alire.Projects.Names;
    use all type Semver.Version_Set;
 
    ----------------------
    -- Dependency_Image --
    ----------------------
 
-   function Dependency_Image (Project  : Project_Name;
+   function Dependency_Image (Project  : Name_String;
                               Versions : Semantic_Versioning.Version_Set;
                               Policy   : Policies := Newest) return String is
       (Project &
@@ -25,7 +27,7 @@ package body Alr.Query is
    -- Exists --
    ------------
 
-   function Exists (Project : Project_Name;
+   function Exists (Project : Name_String;
                     Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
                     return Boolean
    is
@@ -44,7 +46,7 @@ package body Alr.Query is
    -- Find --
    ----------
 
-   function Find (Project : Project_Name;
+   function Find (Project : Name_String;
                   Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
                   Policy  : Policies) return Release
    is
@@ -124,7 +126,7 @@ package body Alr.Query is
       --  thus saving copies. Probably the same applies to Unresolved.
       Dep : constant Alire.Dependencies.Dependency :=
                  (if Unresolved.Is_Empty
-                  then Alire.Dependencies.New_Dependency ("fake", Semver.Any)
+                  then Alire.Dependencies.New_Dependency (Projects.Alire_Reserved, Semver.Any)
                   else Unresolved.First_Element);
       --  The fake project will never be referenced, since the first check is that unresolved is empty
       --  we are done
@@ -137,7 +139,7 @@ package body Alr.Query is
 
       function Check (R : Release) return Instance is
       begin
-         if Dep.Project = R.Project and Then
+         if Dep.Project = R.Name and Then
             Semver.Satisfies (R.Version, Dep.Versions) and then
             Is_Available (R)
          then
@@ -147,7 +149,7 @@ package body Alr.Query is
 
                Solution   : Instance;
             begin
-               New_Frozen.Insert (R.Project, R);
+               New_Frozen.Insert (R.Name, R);
                New_Remain.Append (R.Depends (Platform_Properties));
 
                Solution := Resolve (New_Remain, New_Frozen, Policy, Success);

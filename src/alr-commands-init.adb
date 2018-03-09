@@ -52,11 +52,11 @@ package body Alr.Commands.Init is
 
          New_Release : constant Alire.Releases.Release :=
                          Alire.Releases.New_Release
-                           (Name,
-                            "No description",
-                            V ("0.0.0-alr_working_copy"),
+                           (Alire.Projects.Alire_Reserved,
+                            V ("0.0.0-working_copy_" & Name),
                             Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
-                            Dependencies => Bootstrap.Alire_Minimal_Dependency,
+                            Notes              => "Working copy of " & Name,
+                            Dependencies       => Bootstrap.Alire_Minimal_Dependency,
                             Properties         => Alire.Index.No_Properties,
                             Private_Properties => Alire.Index.No_Properties,
                             Available          => Alire.Index.No_Requisites);
@@ -112,7 +112,7 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen already
          if not Cmd.In_Place and then Session_State >= Outdated then
-            if Session_State = Valid and then Name = Release.Name then
+            if Session_State = Valid and then Name = Root_Release.Project then
                Trace.Info ("Already in working copy, skipping initialization");
             else
                Trace.Error ("Cannot initialize a project inside another alr project, stopping.");

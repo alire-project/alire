@@ -13,7 +13,7 @@ package Alr.Files is
    --  Depth 0 means given folder only
    --  Returns all instances found
 
-   function Locate_Index_File (Project : Alire.Project_Name) return String;
+   function Locate_Index_File (Project : Alire.Name_String) return String;
    --  Looks for a "project_alr.ads" file in the current or immediately below folders
    --  If found, returns it with relative path (usable for opening).
    --  If not it returns the empty string
@@ -29,7 +29,7 @@ package Alr.Files is
    --  Looks in current folder and upwards until finding a folder with .gpr files and an alr metafile in sight
    --  Returns its path if found, "" otherwise
 
-   function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String;
+   function Locate_Above_Project_Folder (Project : Alire.Name_String) return String;
    --  Looks from current folder upwards until finding project.gpr
    --  Returns path to folder containing project file
    --  "" if not found

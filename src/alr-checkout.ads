@@ -26,7 +26,7 @@ package Alr.Checkout is
 
    procedure To_Folder (Projects : Query.Instance;
                         Parent   : String := Hardcoded.Projects_Folder;
-                        But      : Alire.Project_Name := "");
+                        But      : Alire.Name_String := "");
    --  Retrieves all releases into a folder, typically the main cache
    --  One project in the solution (typically the root project itself) can be ignored
 

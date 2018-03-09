@@ -53,10 +53,10 @@ package Alr.Hardcoded is
 
    --  Functions that return hardcoded-derived files
 
-   function Alire_File (Project : Alire.Project_Name) return String;
+   function Alire_File (Project : Alire.Name_String) return String;
    --  File with dependencies (project_alr.ads)
 
-   function Build_File (Project : Alire.Project_Name) return String;
+   function Build_File (Project : Alire.Name_String) return String;
    --  Aggregate project file (project_alr.gpr)
 
    function Projects_Folder return String;
@@ -95,13 +95,13 @@ private
 
    --  Function bodies
 
-   function Alire_File (Project : Alire.Project_Name) return String is
+   function Alire_File (Project : Alire.Name_String) return String is
      (Project & "_alr.ads");
 
    function Alr_Is_Canonical return Boolean is
       (OS.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
 
-   function Build_File (Project : Alire.Project_Name) return String is
+   function Build_File (Project : Alire.Name_String) return String is
      (Project & "_alr.gpr");
 
    function Projects_Folder return String is
