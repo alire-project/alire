@@ -249,7 +249,7 @@ package body Alr.Templates is
 
       Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Project) & "_Alr is");
       New_Line (File);
-      Put_Line (File, Tab_1 & "Working_Release : constant Release := Set_Root_Project (");
+      Put_Line (File, Tab_1 & "Working_Release : constant Release := Set_Root_Release (");
       Put_Line (File, Tab_1 & Tab_1 & Q (Root.Project) & ",");
       Put_Line (File, Tab_1 & Tab_1 & "V (" & Q (Semver.Image (Root.Version)) & "),");
 
