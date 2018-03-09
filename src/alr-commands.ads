@@ -10,7 +10,7 @@ private with Alire.Projects; pragma Unreferenced (Alire.Projects);
 private with Alire.Properties.Labeled;
 
 private with Alr.OS_Lib;
-pragma Warnings (Off); private with Alr.Root_Release; pragma Warnings (On);
+pragma Warnings (Off); private with Alr.Root; pragma Warnings (On);
 private with Alr.Utils;
 
 package Alr.Commands is

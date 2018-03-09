@@ -1,7 +1,7 @@
 with Alr.Files;
 with Alr.Utils;
 
-package body Alr.Root_Release is
+package body Alr.Root is
 
    -----------------
    -- Check_Valid --
@@ -14,10 +14,10 @@ package body Alr.Root_Release is
          raise Command_Failed;
       end if;
 
-      if Files.Locate_Index_File (Current.Project) = "" then
+      if Files.Locate_Index_File (Image) = "" then
          if Files.Locate_Any_Index_File /= "" then
             Trace.Error ("Session/Project mismatch:");
-            Trace.Error ("Root project is " & Utils.Quote (Current.Milestone.Image));
+            Trace.Error ("Root project is " & Utils.Quote (Image));
             Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Any_Index_File));
          else
             Trace.Error ("Could not find a valid session file");
@@ -31,7 +31,7 @@ package body Alr.Root_Release is
    -- Enter_Root --
    ----------------
 
-   function Enter_Root (Prj : Alire.Name_String := Current.Project) return OS_Lib.Folder_Guard is
+   function Enter_Root (Prj : Alire.Name_String := Image) return OS_Lib.Folder_Guard is
       Start_Folder : constant String := OS_Lib.Current_Folder;
       Root_Folder  : constant String := Files.Locate_Above_Project_Folder (Prj);
    begin
@@ -47,4 +47,4 @@ package body Alr.Root_Release is
       end if;
    end Enter_Root;
 
-end Alr.Root_Release;
+end Alr.Root;

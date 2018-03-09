@@ -11,12 +11,6 @@ package Alr.Checkout is
    type Policies is (Overwrite, Skip, Error);
    --  What to do when checking out to something that already exists
 
-   procedure Generate_GPR_Builder (Root : Alire.Index.Release);
-   --  Resolves dependencies and generates builder file
-
-   procedure Generate_GPR_Builder (Depends : Query.Instance; Root : Alire.Index.Release);
-   --  Generates the project_alr.gpr for given dependencies (e.g. found by Upgrade)
-
    procedure Working_Copy (R              : Alire.Index.Release;
                            Deps           : Query.Instance;
                            Parent_Folder  : String;

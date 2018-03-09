@@ -106,7 +106,7 @@ package body Alr.Commands.Get is
 
       --  Check if we are already in the fresh copy (may happen after respawning)
       if Session_State >= Outdated then
-         if Session_State = Valid and then Name = Root_Release.Project then
+         if Session_State = Valid and then Name = Root.Current.Name then
             Trace.Detail ("Already in working copy, skipping checkout");
          else
             Trace.Error ("Cannot get a project inside another alr session, stopping.");
@@ -177,7 +177,10 @@ package body Alr.Commands.Get is
          Allowed : constant Parsers.Allowed_Milestones :=
                      (if Num_Arguments = 1
                       then Parsers.Project_Versions (Argument (1))
-                      else Parsers.Project_Versions (Root_Release.Current.Milestone.Image));
+                      else
+                        (if Root.Is_Released
+                         then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
+                         else Parsers.Project_Versions (Root.Current.Name)));
       begin
          --  Verify command-line
          if Cmd.Info and then Cmd.Native then

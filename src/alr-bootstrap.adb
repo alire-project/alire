@@ -7,7 +7,7 @@ with Alr.Commands.Update;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
-with Alr.Root_Release;
+with Alr.Root;
 with Alr.Self;
 with Alr.Session;
 with Alr.Spawn;
@@ -219,22 +219,23 @@ package body Alr.Bootstrap is
       elsif not Session_Is_Current then
          Trace.Debug ("Session outdated, rebuild needed before being in project");
          return False;
-      elsif Root_Release.Is_Empty then
+      elsif Root.Is_Empty then
          Trace.Warning ("No internal root project, cannot verify external");
          return False;
       end if;
 
-      --  Is this check really necessary?
-      declare
-         Gprs : constant Utils.String_Vector := Root_Release.Current.GPR_Files (Query.Platform_Properties);
-      begin
-         for Gpr of Gprs loop
-            if not Is_Regular_File (Gpr) then
-               Trace.Warning ("Project file " & Utils.Quote (Gpr) & " not found");
-               return False;
-            end if;
-         end loop;
-      end;
+      if Root.Is_Released then
+         declare
+            Gprs : constant Utils.String_Vector := Root.Current.Release.GPR_Files (Query.Platform_Properties);
+         begin
+            for Gpr of Gprs loop
+               if not Is_Regular_File (Gpr) then
+                  Trace.Warning ("Project file " & Utils.Quote (Gpr) & " not found");
+                  return False;
+               end if;
+            end loop;
+         end;
+      end if;
 
       return True;
    end Running_In_Project;
@@ -289,7 +290,13 @@ package body Alr.Bootstrap is
         (if not Self.Is_Canonical then "devel" else "release") &
         " (" &
         (if Running_In_Session
-         then (if Session_Is_Current then Root_Release.Current.Milestone.Image else "outdated")
+         then
+           (if Session_Is_Current
+            then
+              (if Root.Is_Released
+               then Root.Current.Release.Milestone.Image
+               else Root.Current.Name)
+            else "outdated")
          else "no project") & ") (" &
         Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
         (if Self.Is_Bootstrap then " (minimal index)" else "") &

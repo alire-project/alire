@@ -1,4 +1,4 @@
-with Alire.Releases;
+with Alire.Roots;
 
 with Alr.Query;
 
@@ -8,11 +8,14 @@ package Alr.Templates is
    --  Generates alr-index.ads that with-es all available alire-index-*.ads releases
 
    procedure Generate_Agg_Gpr (Instance : Query.Instance;
-                               Root     : Alire.Releases.Release);
-   --  Generate the aggregate project file for path setup
+                               Root     : Alire.Roots.Root);
+   --  Generate the aggregate project file with given resolved dependencies
+
+   procedure Generate_Agg_Gpr (Root : Alire.Roots.Root);
+   --  Generate the aggregate project file solving the dependencies of the given root
 
    procedure Generate_Prj_Alr (Instance : Query.Instance;
-                               Root     : Alire.Releases.Release;
+                               Root     : Alire.Roots.Root;
                                Exact    : Boolean := True;
                                Filename : String  := "");
    --  Generate the dependencies file (Name_Alr.ads)

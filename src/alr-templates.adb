@@ -5,6 +5,7 @@ with Alire.GPR;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
 
+with Alr.Commands;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
@@ -104,28 +105,52 @@ package body Alr.Templates is
       Close (File);
    end Generate_Full_Index;
 
+   ----------------------
+   -- Generate_Agg_Gpr --
+   ----------------------
+
+   procedure Generate_Agg_Gpr (Root : Alire.Roots.Root) is
+      Success : Boolean;
+      Needed  : constant Query.Instance :=
+                  Query.Resolve (Root.Dependencies.Evaluate (Query.Platform_Properties),
+                                 Success,
+                                 Commands.Query_Policy);
+   begin
+      if Success then
+         Generate_Agg_Gpr (Needed, Root);
+      else
+         raise Command_Failed;
+      end if;
+   end Generate_Agg_Gpr;
+
    ------------------
    -- Generate_Gpr --
    ------------------
 
    procedure Generate_Agg_Gpr (Instance : Query.Instance;
-                               Root     : Alire.Releases.Release)
+                               Root     : Alire.Roots.Root)
    is
       use all type Utils.String_Vectors.Cursor;
 
       File     : File_Type;
-      Filename : constant String := Hardcoded.Build_File (Root.Project);
+      Filename : constant String := Hardcoded.Build_File (Root.Name);
       Prjname  : constant String := Utils.To_Mixed_Case (Filename (Filename'First .. Filename'Last - 4));
 
       First    : Boolean := True;
 
       use Alr.OS_Lib;
 
-      GPR_Files : constant Utils.String_Vector := Root.GPR_Files (Query.Platform_Properties);
-
+      GPR_Files : Utils.String_Vector;
       All_Paths : Utils.String_Vector;
    begin
-      Log ("Generating GPR for " & Root.Milestone.Image & " with" & Instance.Length'Img & " dependencies", Detail);
+      if Root.Is_Released then
+         GPR_Files := Root.Release.GPR_Files (Query.Platform_Properties);
+         Log ("Generating GPR for release " & Root.Release.Milestone.Image &
+                " with" & Instance.Length'Img & " dependencies", Detail);
+      else
+         Log ("Generating GPR for unreleased project " & Root.Name & " with" &
+                Instance.Length'Img & " dependencies", Detail);
+      end if;
 
       Files.Backup_If_Existing (Filename);
 
@@ -148,7 +173,7 @@ package body Alr.Templates is
 
       --  First obtain all paths and then output them, if any needed
       for Rel of Instance loop
-         if Rel.Project = Root.Project then
+         if Rel.Project = Root.Name then
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
          else
@@ -160,7 +185,7 @@ package body Alr.Templates is
             if GNAT.OS_Lib.Is_Absolute_Path (Path) then
                All_Paths.Append (Path);
             else
-               All_Paths.Append ((if Rel.Project = Root.Project
+               All_Paths.Append ((if Rel.Project = Root.Name
                                  then "."
                                  else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
                                    GNAT.OS_Lib.Directory_Separator & Path);
@@ -221,20 +246,20 @@ package body Alr.Templates is
    ----------------------------
 
    procedure Generate_Prj_Alr (Instance : Query.Instance;
-                               Root     : Alire.Releases.Release;
+                               Root     : Alire.Roots.Root;
                                Exact    : Boolean := True;
                                Filename : String := "")
    is
       File : File_Type;
       Name : constant String := (if Filename /= ""
                                  then Filename
-                                 else Hardcoded.Alire_File (Root.Project));
+                                 else Hardcoded.Alire_File (Root.Name));
    begin
-      if Instance.Contains (Root.Name) then
+      if Root.Is_Released and then Instance.Contains (Root.Release.Name) then
          declare
             Pruned_Instance : Query.Instance := Instance;
          begin
-            Pruned_Instance.Delete (Root.Name);
+            Pruned_Instance.Delete (Root.Release.Name);
             Generate_Prj_Alr (Pruned_Instance, Root);
             return;
          end;
@@ -248,45 +273,52 @@ package body Alr.Templates is
       Put_Line (File, "with Alire.Projects; use Alire.Projects;");
       New_Line (File);
 
-      Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Project) & "_Alr is");
+      Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Name) & "_Alr is");
       New_Line (File);
-      Put_Line (File, Tab_1 & "Working_Release : constant Release := Set_Root_Release (");
-      Put_Line (File, Tab_1 & Tab_1 & Q (Root.Project) & ",");
-      Put_Line (File, Tab_1 & Tab_1 & "V (" & Q (Semver.Image (Root.Version)) & "),");
+      Put_Line (File, Tab_1 & "Current_Root : constant Root := Set_Root (");
 
-      if Instance.Is_Empty then
-         Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
+      if Root.Is_Released then
+         --  Typed name plus version
+         Put_Line (File, Tab_2 & Root.Name & ",");
+         Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Root.Release.Version)) & "));");
       else
-         Put (File, Tab_2 & "Dependencies =>");
+         --  Untyped name plus dependencies
+         Put_Line (File, Tab_2 & Q (Root.Name) & ",");
 
-         declare
-            First : Boolean := True;
-         begin
-            for Rel of Instance loop
-               if not First then
-                  Put_line (File, " and");
-               else
-                  New_Line (File);
-               end if;
-               Put (File, Tab_3 &
-                    (if Exact then "Exactly ("
-                              else "Within_Major (") &
-                      Utils.To_Mixed_Case (Rel.Project) &
-                      ", V (" & Q (Semver.Image (Rel.Version)) & "))");
-               First := False;
-            end loop;
-         end;
+         if Instance.Is_Empty then
+            Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
+         else
+            Put (File, Tab_2 & "Dependencies =>");
 
-         Put_Line (File, ");");
+            declare
+               First : Boolean := True;
+            begin
+               for Rel of Instance loop
+                  if not First then
+                     Put_line (File, " and");
+                  else
+                     New_Line (File);
+                  end if;
+                  Put (File, Tab_3 &
+                       (if Exact then "Exactly ("
+                          else "Within_Major (") &
+                         Utils.To_Mixed_Case (Rel.Project) &
+                         ", V (" & Q (Semver.Image (Rel.Version)) & "))");
+                  First := False;
+               end loop;
+            end;
+
+            Put_Line (File, ");");
+         end if;
       end if;
       New_Line (File);
 
       Put_Line (File, "   --  An explicit dependency on alr is only needed if you want to compile this file.");
-      Put_Line (File, "   --  To do so, include the ""alr.gpr"" project in your own project file.");
+      Put_Line (File, "   --  To do so, include the ""alire.gpr"" project in your own project file.");
       Put_Line (File, "   --  Once you are satisfied with your own dependencies it can be safely removed.");
       New_Line (File);
 
-      Put_Line (File, "end " & Utils.To_Mixed_Case (Root.Project) & "_Alr;");
+      Put_Line (File, "end " & Utils.To_Mixed_Case (Root.Name) & "_Alr;");
 
       Close (File);
    end Generate_Prj_Alr;

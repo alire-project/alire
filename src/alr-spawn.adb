@@ -1,6 +1,6 @@
 with Alr.Hardcoded;
 with Alr.OS_Lib;
-with Alr.Root_Release;
+with Alr.Root;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -18,12 +18,12 @@ package body Alr.Spawn is
 
       Log ("You can try the following action to recover:");
 
-      if Root_Release.Is_Empty then
+      if Root.Is_Empty then
          Log ("No project is known to this alr instance.");
          Log ("Please run 'alr update -o' outside any alr project.");
       else
-         Log ("The last used project was: " & Root_Release.Project);
-         Log ("Please check its metadata file: " & Hardcoded.Alire_File (Root_Release.Project));
+         Log ("The last used project was: " & Root.Image);
+         Log ("Please check its metadata file: " & Hardcoded.Alire_File (Root.Image));
       end if;
    end Warn_Outdated;
 

@@ -1,8 +1,8 @@
 with Ada.Directories;
 
-with Alire.Index;
 with Alire.Origins;
 with Alire.Releases;
+with Alire.Roots;
 
 with Alr.Bootstrap;
 with Alr.Hardcoded;
@@ -10,8 +10,6 @@ with Alr.OS_Lib;
 with Alr.Query;
 with Alr.Templates;
 with Alr.Utils;
-
-with Semantic_Versioning; use Semantic_Versioning;
 
 package body Alr.Commands.Init is
 
@@ -50,19 +48,14 @@ package body Alr.Commands.Init is
                     then Os_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name)) with Unreferenced;
 
-         New_Release : constant Alire.Releases.Release :=
-                         Alire.Releases.New_Release
-                           (Alire.Projects.Alire_Reserved,
-                            V ("0.0.0-working_copy_" & Name),
-                            Alire.Origins.New_Filesystem (Ada.Directories.Current_Directory),
-                            Notes              => "Working copy of " & Name,
-                            Dependencies       => Bootstrap.Alire_Minimal_Dependency,
-                            Properties         => Alire.Index.No_Properties,
-                            Private_Properties => Alire.Index.No_Properties,
-                            Available          => Alire.Index.No_Requisites);
+         New_Root : constant Alire.Roots.Root :=
+                         Alire.Roots.New_Root
+                           (Name,
+                            Bootstrap.Alire_Minimal_Dependency);
+
          Success     : Boolean;
          Depends     : constant Query.Instance :=
-                         Query.Resolve (New_Release.Depends (Query.Platform_Properties),
+                         Query.Resolve (New_Root.Dependencies.Evaluate (Query.Platform_Properties),
                                         Success,
                                         Query_Policy);
       begin
@@ -70,8 +63,8 @@ package body Alr.Commands.Init is
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";
          end if;
 
-         Templates.Generate_Prj_Alr (Bootstrap.Alire_Minimal_Instance, New_Release, Exact => False);
-         Templates.Generate_Agg_Gpr (Depends, New_Release);
+         Templates.Generate_Prj_Alr (Bootstrap.Alire_Minimal_Instance, New_Root, Exact => False);
+         Templates.Generate_Agg_Gpr (Depends, New_Root);
       end;
    end Generate;
 
@@ -112,7 +105,7 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen already
          if not Cmd.In_Place and then Session_State >= Outdated then
-            if Session_State = Valid and then Name = Root_Release.Project then
+            if Session_State = Valid and then Name = Root.Image then
                Trace.Info ("Already in working copy, skipping initialization");
             else
                Trace.Error ("Cannot initialize a project inside another alr project, stopping.");

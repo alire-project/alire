@@ -2,8 +2,8 @@ with Ada.Directories;
 
 with Alire;
 with Alire.Releases;
+with Alire.Roots;
 
-with Alr.Commands;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Origins;
@@ -31,33 +31,6 @@ package body Alr.Checkout is
          Alr.Origins.Fetch (R.Origin, Folder);
       end if;
    end Checkout;
-
-   --------------------------
-   -- Generate_GPR_Builder --
-   --------------------------
-
-   procedure Generate_GPR_Builder (Root : Alire.Index.Release) is
-      Success : Boolean;
-      Needed  : constant Query.Instance := Query.Resolve (Root.Depends (Query.Platform_Properties),
-                                                          Success,
-                                                          Commands.Query_Policy);
-   begin
-      if Success then
-         Generate_GPR_Builder (Needed, Root);
-      else
-         raise Command_Failed;
-      end if;
-   end Generate_GPR_Builder;
-
-   --------------------------
-   -- Generate_GPR_Builder --
-   --------------------------
-
-   procedure Generate_GPR_Builder (Depends : Query.Instance; Root : Alire.Index.Release) is
-      --  Guard not required, will have been called by the caller to obtain the dependencies
-   begin
-      Templates.Generate_Agg_Gpr (Depends, Root);
-   end Generate_GPR_Builder;
 
    ---------------
    -- To_Folder --
@@ -105,10 +78,10 @@ package body Alr.Checkout is
             Index_File : constant String := Files.Locate_Index_File (Project);
          begin
             if Index_File = "" then
-               Templates.Generate_Prj_Alr (Deps, Root);
+               Templates.Generate_Prj_Alr (Deps, Alire.Roots.New_Root (Root));
             end if;
 
-            Templates.Generate_Agg_Gpr (Deps, Root);
+            Templates.Generate_Agg_Gpr (Deps, Alire.Roots.New_Root (Root));
          end;
       end if;
    end Working_Copy;

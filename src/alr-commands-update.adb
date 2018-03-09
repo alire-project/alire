@@ -3,6 +3,7 @@ with Alr.Checkout;
 with Alr.Hardcoded;
 with Alr.Query;
 with Alr.Spawn;
+with Alr.Templates;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -50,7 +51,7 @@ package body Alr.Commands.Update is
       declare
          Success : Boolean;
          Needed  : constant Query.Instance :=
-                     Query.Resolve (Root_Release.Current.Depends (Query.Platform_Properties),
+                     Query.Resolve (Root.Current.Dependencies.Evaluate (Query.Platform_Properties),
                                     Success,
                                     Query_Policy);
       begin
@@ -59,7 +60,7 @@ package body Alr.Commands.Update is
             raise Command_Failed;
          end if;
          Checkout.To_Folder (Needed);
-         Checkout.Generate_GPR_Builder (Needed, Root_Release.Current);
+         Templates.Generate_Agg_Gpr (Needed, Root.Current);
          Log ("Update completed");
       end;
    end Upgrade;

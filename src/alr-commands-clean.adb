@@ -18,7 +18,7 @@ package body Alr.Commands.Clean is
 
       if Bootstrap.Session_State = Valid then
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " & Root_Release.Build_File & " " & Scenario.As_Command_Line);
+         Spawn.Command ("gprclean", "-r -P " & Root.Build_File & " " & Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then

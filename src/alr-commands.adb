@@ -6,7 +6,6 @@ with Alire_Early_Elaboration;
 with Alire;
 with Alire.Utils;
 
-with Alr.Checkout;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Compile;
@@ -28,6 +27,7 @@ with Alr.Interactive;
 with Alr.OS;
 with Alr.Self;
 with Alr.Spawn;
+with Alr.Templates;
 
 with GNAT.OS_Lib;
 
@@ -306,7 +306,7 @@ package body Alr.Commands is
             end if;
          end;
       else
-         return Root_Release.Enter_Root; -- Suspicion: we are already there
+         return Root.Enter_Root; -- Suspicion: we are already there
       end if;
    exception
       when E : others =>
@@ -346,8 +346,8 @@ package body Alr.Commands is
    ------------------------
 
    procedure Requires_Buildfile is
-      Guard : constant OS_Lib.Folder_Guard := Root_Release.Enter_Root with Unreferenced;
-      Name  : constant String := Root_Release.Project;
+      Guard : constant OS_Lib.Folder_Guard := Root.Enter_Root with Unreferenced;
+      Name  : constant String := Root.Image;
    begin
       if Bootstrap.Session_State /= Valid then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
@@ -358,7 +358,7 @@ package body Alr.Commands is
                          Than => Hardcoded.Alire_File (Name))
       then
          Trace.Detail ("Generating alr buildfile: " & Hardcoded.Build_File (Name));
-         Checkout.Generate_GPR_Builder (Root_Release.Current);
+         Templates.Generate_Agg_Gpr (Root.Current);
       end if;
    end Requires_Buildfile;
 
@@ -382,7 +382,7 @@ package body Alr.Commands is
    procedure Requires_Project is
    begin
       Bootstrap.Check_Rebuild_Respawn (Full_Index => False); -- Might respawn and not return
-      Root_Release.Check_Valid;                              -- Might raise Command_Failed
+      Root.Check_Valid;                              -- Might raise Command_Failed
    end Requires_Project;
 
    --------------------
