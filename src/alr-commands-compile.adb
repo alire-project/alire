@@ -25,12 +25,12 @@ package body Alr.Commands.Compile is
       Requires_Buildfile;
 
       begin
-         Spawn.Gprbuild (Project.Build_File,
+         Spawn.Gprbuild (Release.Build_File,
                          Extra_Args => Scenario.As_Command_Line);
          Trace.Info ("Compilation finished without errors");
          declare
             Execs : constant Utils.String_Vector :=
-                      Files.Locate_File_Under (".", Project.Current.Default_Executable, 2);
+                      Files.Locate_File_Under (".", Release.Current.Default_Executable, 2);
          begin
             case Execs.Count is
                when 0 =>

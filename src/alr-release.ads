@@ -1,15 +1,15 @@
 with Alire.Releases;
-with Alire.Root_Project;
+with Alire.Root_Release;
 
 with Alr.OS_Lib;
 
 private with Alr.Hardcoded;
 
-package Alr.Project is
+package Alr.Release is
 
    --  Facilities to work with the current project, stored in Alire.Root_Project
 
-   function Current return Alire.Releases.Release renames Alire.Root_Project.Current;
+   function Current return Alire.Releases.Release renames Alire.Root_Release.Current;
 
    function Is_Empty return Boolean;
 
@@ -30,11 +30,11 @@ package Alr.Project is
 
 private
 
-   function Is_Empty return Boolean is (not Alire.Root_Project.Is_Set);
+   function Is_Empty return Boolean is (not Alire.Root_Release.Is_Set);
 
    function Name return String is (Current.Project);
 
    function Build_File (Prj : Alire.Project_Name := Current.Project) return String is
      (Hardcoded.Build_File (Prj));
 
-end Alr.Project;
+end Alr.Release;

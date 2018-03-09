@@ -4,7 +4,6 @@ with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS;
 with Alr.OS_Lib;
-with Alr.Project;
 with Alr.Session;
 
 with GNAT.Compiler_Version;
@@ -22,10 +21,10 @@ package body Alr.Commands.Version is
       pragma Unreferenced (Cmd);
       use Ada.Text_IO;
    begin
-      if Project.Is_Empty then
+      if Release.Is_Empty then
          Trace.Always ("alr internal project is empty");
       else
-         Trace.Always ("alr internal project is " & Project.Current.Milestone.Image);
+         Trace.Always ("alr internal project is " & Release.Current.Milestone.Image);
       end if;
 
       Trace.Always ("alr session hash is " & Session.Hash);
@@ -40,7 +39,7 @@ package body Alr.Commands.Version is
             if Session_State = Valid then
                Trace.Always ("alr internal session hash matches that of " & Files.Locate_Any_Index_File);
             else
-               if Project.Is_Empty then
+               if Release.Is_Empty then
                   Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Any_Index_File);
                else
                   Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Any_Index_File);

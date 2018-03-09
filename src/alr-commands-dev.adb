@@ -1,6 +1,5 @@
 with Alr.Bootstrap;
 with Alr.Files;
-with Alr.Project;
 with Alr.Query;
 with Alr.Spawn;
 with Alr.Templates;
@@ -47,7 +46,7 @@ package body Alr.Commands.Dev is
 
          Ok    : Boolean := False;
          Deps  : constant Query.Instance :=
-                   Query.Resolve (Project.Current.Depends (Query.Platform_Properties),
+                   Query.Resolve (Release.Current.Depends (Query.Platform_Properties),
                                   Ok,
                                   Query_Policy);
       begin
@@ -55,8 +54,8 @@ package body Alr.Commands.Dev is
             Reportaise_Command_Failed ("Could not resolve dependencies");
          end if;
 
-         Templates.Generate_Prj_Alr (Deps, Project.Current);
-         Templates.Generate_Agg_Gpr (Deps, Project.Current);
+         Templates.Generate_Prj_Alr (Deps, Release.Current);
+         Templates.Generate_Agg_Gpr (Deps, Release.Current);
       end;
    end Regenerate;
 

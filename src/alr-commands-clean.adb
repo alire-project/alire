@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alr.Hardcoded;
-with Alr.Project;
 with Alr.Spawn;
 
 package body Alr.Commands.Clean is
@@ -19,7 +18,7 @@ package body Alr.Commands.Clean is
 
       if Bootstrap.Session_State = Valid then
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " & Project.Build_File & " " & Scenario.As_Command_Line);
+         Spawn.Command ("gprclean", "-r -P " & Release.Build_File & " " & Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then

@@ -306,7 +306,7 @@ package body Alr.Commands is
             end if;
          end;
       else
-         return Project.Enter_Root; -- Suspicion: we are already there
+         return Release.Enter_Root; -- Suspicion: we are already there
       end if;
    exception
       when E : others =>
@@ -346,18 +346,18 @@ package body Alr.Commands is
    ------------------------
 
    procedure Requires_Buildfile is
-      Guard : constant OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
+      Guard : constant OS_Lib.Folder_Guard := Release.Enter_Root with Unreferenced;
    begin
       if Bootstrap.Session_State /= Valid then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
       end if;
 
-      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Project.Name)) or else
-        OS_Lib.Is_Older (This => Hardcoded.Build_File (Project.Name),
-                         Than => Hardcoded.Alire_File (Project.Name))
+      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Release.Name)) or else
+        OS_Lib.Is_Older (This => Hardcoded.Build_File (Release.Name),
+                         Than => Hardcoded.Alire_File (Release.Name))
       then
-         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Build_File (Project.Name));
-         Checkout.Generate_GPR_Builder (Project.Current);
+         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Build_File (Release.Name));
+         Checkout.Generate_GPR_Builder (Release.Current);
       end if;
    end Requires_Buildfile;
 
@@ -381,7 +381,7 @@ package body Alr.Commands is
    procedure Requires_Project is
    begin
       Bootstrap.Check_Rebuild_Respawn (Full_Index => False); -- Might respawn and not return
-      Project.Check_Valid;                                   -- Might raise Command_Failed
+      Release.Check_Valid;                                   -- Might raise Command_Failed
    end Requires_Project;
 
    --------------------

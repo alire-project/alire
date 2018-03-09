@@ -9,7 +9,7 @@ private with Alire.GPR;
 private with Alire.Properties.Labeled;
 
 private with Alr.OS_Lib;
-pragma Warnings (Off); private with Alr.Project; pragma Warnings (On);
+pragma Warnings (Off); private with Alr.Release; pragma Warnings (On);
 private with Alr.Utils;
 
 package Alr.Commands is

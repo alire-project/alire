@@ -50,7 +50,7 @@ package body Alr.Commands.Update is
       declare
          Success : Boolean;
          Needed  : constant Query.Instance :=
-                     Query.Resolve (Project.Current.Depends (Query.Platform_Properties),
+                     Query.Resolve (Release.Current.Depends (Query.Platform_Properties),
                                     Success,
                                     Query_Policy);
       begin
@@ -59,7 +59,7 @@ package body Alr.Commands.Update is
             raise Command_Failed;
          end if;
          Checkout.To_Folder (Needed);
-         Checkout.Generate_GPR_Builder (Needed, Project.Current);
+         Checkout.Generate_GPR_Builder (Needed, Release.Current);
          Log ("Update completed");
       end;
    end Upgrade;

@@ -3,14 +3,10 @@ Bugs
 
 Features
 ========
-Enumerated Projects
-Description Function
-list command
 project => release
 current_project => current_release
 Windows port
-Lighter Conditionals
-Move from Vectors to Lists
+Move from Vectors to Lists (specially in conditionals)
 Platform checks with docker hub
 
 Library inclusions

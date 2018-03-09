@@ -1,7 +1,7 @@
 with Alr.Files;
 with Alr.Utils;
 
-package body Alr.Project is
+package body Alr.Release is
 
    -----------------
    -- Check_Valid --
@@ -47,4 +47,4 @@ package body Alr.Project is
       end if;
    end Enter_Root;
 
-end Alr.Project;
+end Alr.Release;

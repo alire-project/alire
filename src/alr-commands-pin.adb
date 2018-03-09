@@ -16,16 +16,16 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Index_File : constant String := Files.Locate_Index_File (Project.Name);
+         Index_File : constant String := Files.Locate_Index_File (Release.Name);
          Success    :          Boolean;
          Deps       : constant Query.Instance :=
-                        Query.Resolve (Project.Current.Depends (Query.Platform_Properties),
+                        Query.Resolve (Release.Current.Depends (Query.Platform_Properties),
                                        Success,
                                        Query_Policy);
       begin
          if Success then
             Templates.Generate_Prj_Alr (Deps,
-                                        Project.Current,
+                                        Release.Current,
                                         Exact    => True,
                                         Filename => Index_File);
          else
