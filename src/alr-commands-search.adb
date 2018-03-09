@@ -48,8 +48,6 @@ package body Alr.Commands.Search is
 
       use Alire.Containers.Release_Sets;
    begin
-      Requires_No_Bootstrap;
-
       if Num_Arguments = 0 and then not Cmd.List and then Cmd.Prop.all = "" then
          -- no search term, nor --list, nor --prop
          Trace.Error ("Please provide a search term, --property, or use --list to show all available releases");
@@ -66,6 +64,8 @@ package body Alr.Commands.Search is
       end if;
 
       --  End of option verification, start of search
+
+      Requires_Full_Index;
 
       declare
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");

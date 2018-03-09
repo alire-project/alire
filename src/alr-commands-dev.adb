@@ -30,7 +30,7 @@ package body Alr.Commands.Dev is
       end if;
 
       if Cmd.Self_Compile then
-         Bootstrap.Rebuild_With_Current_Project;
+         Bootstrap.Rebuild_With_Current_Project (Full_Index => False);
       end if;
    end Execute;
 

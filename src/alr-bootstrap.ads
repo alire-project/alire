@@ -34,7 +34,7 @@ package Alr.Bootstrap is
    --  Determines if we are using a rolling release.
    --  If not, and one is available, respawn.
 
-   procedure Check_Rebuild_Respawn;
+   procedure Check_Rebuild_Respawn (Full_Index : Boolean);
    --  The whole shebang for project-oriented commands:
    --    Check within project
    --    Rebuild if outdated
@@ -42,9 +42,12 @@ package Alr.Bootstrap is
    --  Will raise if not within session
    --  FIXME: some kind of infinite respawning prevention should be implemented here
 
-   procedure Rebuild (Alr_File : String := "");
+   procedure Rebuild (Full_Index : Boolean;
+                      Alr_File   : String := "");
+   --  The full index is required by some commands, but it causes longer load times, so
+   --  it is activated on demand
 
-   procedure Rebuild_With_Current_Project;
+   procedure Rebuild_With_Current_Project (Full_Index : Boolean);
    --  Rebuild, using a single project if in scope
 
    function Status_Line return String;

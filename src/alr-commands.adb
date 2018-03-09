@@ -13,6 +13,7 @@ with Alr.Commands.Compile;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
 with Alr.Commands.Init;
+with Alr.Commands.List;
 with Alr.Commands.Pin;
 with Alr.Commands.Reserved;
 with Alr.Commands.Run;
@@ -43,6 +44,7 @@ package body Alr.Commands is
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Init     => new Init.Command,
+                       Cmd_List     => new List.Command,
                        Cmd_Pin      => new Pin.Command,
                        Cmd_Run      => new Run.Command,
                        Cmd_Search   => new Search.Command,
@@ -360,17 +362,17 @@ package body Alr.Commands is
    end Requires_Buildfile;
 
    ---------------------------
-   -- Requires_No_Bootstrap --
+   -- Requires_Full_Index --
    ---------------------------
 
-   procedure Requires_No_Bootstrap is
+   procedure Requires_Full_Index is
    begin
       if Self.Is_Bootstrap then
          Trace.Detail ("Rebuilding catalog...");
-         Bootstrap.Rebuild_With_Current_Project;
+         Bootstrap.Rebuild_With_Current_Project (Full_Index => True);
          Spawn.Updated_Alr_Without_Return;
       end if;
-   end Requires_No_Bootstrap;
+   end Requires_Full_Index;
 
    ----------------------
    -- Requires_Project --
@@ -378,8 +380,8 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
-      Project.Check_Valid;             -- Might raise Command_Failed
+      Bootstrap.Check_Rebuild_Respawn (Full_Index => False); -- Might respawn and not return
+      Project.Check_Valid;                                   -- Might raise Command_Failed
    end Requires_Project;
 
    --------------------

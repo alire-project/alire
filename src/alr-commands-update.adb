@@ -92,7 +92,7 @@ package body Alr.Commands.Update is
       if Cmd.Online then
          Log ("Checking remote repositories:");
          Update_Alr;
-         Bootstrap.Rebuild_With_Current_Project;
+         Bootstrap.Rebuild_With_Current_Project (Full_Index => False);
 
          if Cmd.From_Build then
             Spawn.Alr (Cmd_Build);

@@ -52,8 +52,8 @@ package Alr.Commands is
    --  These are in order of exigence
    use all type Bootstrap.Session_States;
 
-   procedure Requires_No_Bootstrap;
-   --  Ensures that alr has self-built at least once and thus it may contain an updated index
+   procedure Requires_Full_Index;
+   --  Ensures that alr has self-built with a full index
 
    procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it
@@ -89,6 +89,7 @@ package Alr.Commands is
                       Cmd_Dev,
                       Cmd_Get,
                       Cmd_Init,
+                      Cmd_List,
                       Cmd_Pin,
                       Cmd_Run,
                       Cmd_Search,

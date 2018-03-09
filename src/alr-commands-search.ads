@@ -7,7 +7,7 @@ package Alr.Commands.Search is
    overriding procedure Execute (Cmd : in out Command);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("Search a string in release names");
+     ("Search a string in release names and properties");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("<search term>");
 

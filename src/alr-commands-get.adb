@@ -147,8 +147,6 @@ package body Alr.Commands.Get is
 
    procedure Execute (Cmd : in out Command) is
    begin
-      Requires_No_Bootstrap;
-
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
@@ -164,7 +162,7 @@ package body Alr.Commands.Get is
          if Num_Arguments = 0 then
             case Bootstrap.Session_State is
                when Outdated =>
-                  Bootstrap.Check_Rebuild_Respawn;
+                  Bootstrap.Check_Rebuild_Respawn (Full_Index => True);
                when Valid =>
                   null; -- Proceed
                when others =>
@@ -172,6 +170,8 @@ package body Alr.Commands.Get is
             end case;
          end if;
       end if;
+
+      Requires_Full_Index;
 
       declare
          Allowed : constant Parsers.Allowed_Milestones :=

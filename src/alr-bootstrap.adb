@@ -81,7 +81,7 @@ package body Alr.Bootstrap is
    -- Check_Rebuild_Respawn --
    ---------------------------
 
-   procedure Check_Rebuild_Respawn is
+   procedure Check_Rebuild_Respawn (Full_Index : Boolean) is
    begin
       if not Running_In_Session then
          Log ("Could not find alr session, stopping now", Warning);
@@ -90,7 +90,7 @@ package body Alr.Bootstrap is
 
       if not Session_Is_Current then
          Trace.Debug ("About to rebuild with new session");
-         Rebuild (Files.Locate_Any_Index_File);
+         Rebuild (Full_Index, Files.Locate_Any_Index_File);
          Spawn.Updated_Alr_Without_Return;
       end if;
 
@@ -118,7 +118,7 @@ package body Alr.Bootstrap is
    -- Rebuild --
    -------------
 
-   procedure Rebuild (Alr_File : String := "") is
+   procedure Rebuild (Full_Index : Boolean; Alr_File : String := "") is
       use Ada.Directories;
       use Hardcoded;
 
@@ -152,33 +152,14 @@ package body Alr.Bootstrap is
 
       --  This could be an alternative if we don't want to delete the current exec
       Log ("About to recompile...", Debug);
-      --  delay 1.0;
-
-      --  CONFIG FILE
-      --  We copy it anyway. If building without SELFBUILD (e.g. developer build)
-      --  the default one will be used but no conflict can happen anyway
---        declare
---           Config_Found : constant Boolean :=
---                            Exists (OS.Config_Folder / Hardcoded.Alr_Conf_File);
---           Origin : constant String :=
---                      (if Config_Found
---                       then OS.Config_Folder                         / Hardcoded.Alr_Conf_File
---                       else Hardcoded.Alr_Src_Default_Session_Folder / Hardcoded.Alr_Conf_File);
---        begin
---           Trace.Detail ((if Config_Found
---                         then "Found config file"
---                         else "Config file not found") & ", copying " &
---                           Origin &
---                           " -> " &
---                           Hardcoded.Session_Folder / Hardcoded.Alr_Conf_File);
---           Copy_File (Origin,
---                      Hardcoded.Session_Folder / Hardcoded.Alr_Conf_File,
---                      "mode=overwrite");
---        end;
 
       --  INDEX FILE
-      Log ("Generating index for " & Folder_To_Index, Detail);
-      Templates.Generate_Full_Index (Hardcoded.Session_Folder, Folder_To_Index);
+      if Full_Index then
+         Trace.Detail ("Generating index for " & Folder_To_Index);
+         Templates.Generate_Full_Index (Hardcoded.Session_Folder, Folder_To_Index);
+      else
+         Trace.Detail ("Using minimal index");
+      end if;
 
       --  METADATA FILE
       if Alr_File /= "" then
@@ -217,12 +198,12 @@ package body Alr.Bootstrap is
    -- Rebuild_With_Current_Project --
    ----------------------------------
 
-   procedure Rebuild_With_Current_Project is
+   procedure Rebuild_With_Current_Project (Full_Index : Boolean) is
    begin
       if Running_In_Session then
-         Rebuild (Files.Locate_Any_Index_File);
+         Rebuild (Full_Index, Files.Locate_Any_Index_File);
       else
-         Rebuild;
+         Rebuild (Full_Index);
       end if;
    end Rebuild_With_Current_Project;
 

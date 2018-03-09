@@ -9,6 +9,7 @@ with Alr.Interactive;
 with Alr.OS;
 with Alr.OS_Lib;
 with Alr.Parsers;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
 with Alr.Utils;
@@ -104,7 +105,7 @@ package body Alr.Commands.Test is
                        " CURR:" & Integer'(Tested + 1)'Img & "/" &
                        Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
-         if not Query.Is_Available (R) then
+         if not Query.Is_Available (R) or else not Query.Is_Resolvable (R.Depends (Platform.Properties)) then
             Unavail := Unavail + 1;
             Put_Line (File, "Unav:" & R.Milestone.Image);
          elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) and then not Cmd.Redo then
@@ -183,7 +184,7 @@ package body Alr.Commands.Test is
          Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      Requires_No_Bootstrap;
+      Requires_Full_Index;
       Interactive.Not_Interactive := True;
 
       --  Start testing
