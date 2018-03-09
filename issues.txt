@@ -3,11 +3,13 @@ Bugs
 
 Features
 ========
-Simpler Requisite Trees (!!!)
 Address initial loading time
+Enumerated Projects
+Description Function
+list command
+Windows port
 Lighter Conditionals
 Move from Vectors to Lists
-Windows port
 Platform checks with docker hub
 
 Library inclusions

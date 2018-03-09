@@ -7,6 +7,6 @@ aggregate project Alr_Env is
    for Project_Files use ("alr.gpr",
                           "deps/alire/alire.gpr");
    --  Including alire.gpr here ensures that all index files are compiled.
-   --  They won't be included in the bootstrap alr, but at least they're checked.
+   --  They won't be included in the bootstrap alr (nor we want).
 
 end Alr_Env;

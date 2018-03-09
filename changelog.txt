@@ -1,3 +1,4 @@
+2018-03-09: Better expression requisites
 2018-03-05: Chains of preferred dependencies
 2018-03-03: Native packages per distro with autodetection of availability
 2018-02-29: Conditional properties and their materialization
