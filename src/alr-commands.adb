@@ -368,7 +368,7 @@ package body Alr.Commands is
 
    procedure Requires_Full_Index is
    begin
-      if Self.Is_Bootstrap then
+      if not Self.Has_Full_Index then
          Trace.Detail ("Rebuilding catalog...");
          Bootstrap.Rebuild_With_Current_Project (Full_Index => True);
          Spawn.Updated_Alr_Without_Return;

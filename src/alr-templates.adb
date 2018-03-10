@@ -77,7 +77,7 @@ package body Alr.Templates is
                Log ("Indexing " & Full_Name (Found), Debug);
                Put_Line (File, "with Alire.Index." &
                            Utils.To_Mixed_Case (Project (Simple_Name (Found))) & ";");
-            else
+            elsif Name /= "alire-projects.ads" then
                Log ("Unexpected file in index folder: " & Full_Name (Found));
             end if;
          end if;
@@ -270,7 +270,7 @@ package body Alr.Templates is
       Create (File, Out_File, Name);
 
       Put_Line (File, "with Alire.Index;    use Alire.Index;");
-      Put_Line (File, "with Alire.Projects; use Alire.Projects;");
+      Put_Line (File, "with Alire.Projects;");
       New_Line (File);
 
       Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Name) & "_Alr is");
@@ -279,7 +279,7 @@ package body Alr.Templates is
 
       if Root.Is_Released then
          --  Typed name plus version
-         Put_Line (File, Tab_2 & Root.Name & ",");
+         Put_Line (File, Tab_2 & "Alire.Projects." & Root.Name & ",");
          Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Root.Release.Version)) & "));");
       else
          --  Untyped name plus dependencies
@@ -328,6 +328,7 @@ package body Alr.Templates is
    ----------------------
 
    procedure Generate_Session (Session_Path : String;
+                               Full_Index   : Boolean;
                                Alire_File   : String := "") is
       use Ada.Directories;
       use Alr.OS_Lib;
@@ -352,6 +353,9 @@ package body Alr.Templates is
       New_Line (File);
 
       Put_Line (File, Tab_1 & "Hash : constant String := """ & Hash & """;");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "Full_Index : constant Boolean := " & Full_Index'Img & ";");
       New_Line (File);
 
       Put_Line (File, "end Alr.Session;");

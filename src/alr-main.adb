@@ -12,9 +12,13 @@ begin
    Bootstrap.Check_Ada_Tools;
    Bootstrap.Check_If_Rolling_And_Respawn;
 
-   Trace.Detail ("alr build is " & Bootstrap.Status_Line);
-   if not Self.Is_Canonical then
+   if Self.Is_Canonical then
+      Trace.Detail ("alr build is " & Bootstrap.Status_Line);
+   else
+      --  If not canonical after respawn it must be development,
+      --    or something amiss so better report
       Trace.Info ("alr running from " & OS.Own_Executable);
+      Trace.Info ("alr build is " & Bootstrap.Status_Line);
    end if;
 
    Commands.Execute;

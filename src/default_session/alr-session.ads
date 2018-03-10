@@ -12,4 +12,8 @@ package Alr.Session is
    --  Special values: bootstrap for a manually compiled build
    --  Any other not a hash: default session compiled without project
 
+   Full_Index : constant Boolean := False;
+   --  Some commands require a full index and some others not.
+   --  We use this to separate bootstrap from index status
+
 end Alr.Session;

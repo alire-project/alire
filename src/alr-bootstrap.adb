@@ -141,7 +141,6 @@ package body Alr.Bootstrap is
          Rename (Executable, Executable_Bak);
       end if;
 
-
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.ali");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
@@ -150,8 +149,13 @@ package body Alr.Bootstrap is
          OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
       end if;
 
-      --  This could be an alternative if we don't want to delete the current exec
+      --  DELETE SESSION FOLDER TO ENSURE FRESH FILES
+      --  They are going to be generated, so any leftover is unintended!
+      Ada.Directories.Delete_Tree (Hardcoded.Session_Folder);
+
       Log ("About to recompile...", Debug);
+      --  This could be an alternative if we don't want to delete the current exec
+      --  delay 1.0;
 
       --  INDEX FILE
       if Full_Index then
@@ -159,6 +163,9 @@ package body Alr.Bootstrap is
          Templates.Generate_Full_Index (Hardcoded.Session_Folder, Folder_To_Index);
       else
          Trace.Detail ("Using minimal index");
+         Copy_File (Alr_Default_Index_File,
+                    Hardcoded.Session_Folder / Hardcoded.Alr_Index_File_Base_Name,
+                    "mode=overwrite");
       end if;
 
       --  METADATA FILE
@@ -171,7 +178,7 @@ package body Alr.Bootstrap is
       end if;
 
       --  SESSION FILE
-      Templates.Generate_Session (Hardcoded.Session_Folder, Alr_File);
+      Templates.Generate_Session (Hardcoded.Session_Folder, Full_Index, Alr_File);
 
       begin
          Spawn.Gprbuild (Hardcoded.Alr_Gpr_File, Hardcoded.Session_Folder);
@@ -286,7 +293,7 @@ package body Alr.Bootstrap is
       type Milliseconds is delta 0.001 range 0.0 .. 24.0 * 60.0 * 60.0;
    begin
       return
-        (if Self.Is_Rolling then "rolling" else "bootstrap") & "-" &
+        (if Self.Is_Rolling then "rolling" else "launcher") & "-" &
         (if not Self.Is_Canonical then "devel" else "release") &
         " (" &
         (if Running_In_Session
@@ -299,7 +306,8 @@ package body Alr.Bootstrap is
             else "outdated")
          else "no project") & ") (" &
         Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
-        (if Self.Is_Bootstrap then " (minimal index)" else "") &
+        (if Self.Is_Bootstrap then " (bootstrap)" else "") &
+        (if Self.Has_Full_Index then " (full index)" else " (minimal index)") &
         (" (loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
    end Status_Line;
 

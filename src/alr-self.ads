@@ -6,6 +6,9 @@ package Alr.Self is
 
    --  Functions relative to self-identification of the current executable
 
+   function Has_Full_Index return Boolean;
+   --  Index is complete (all found files at time of rebuild)
+
    function Is_Bootstrap return Boolean;
    --  Freshly compiled without full index
 

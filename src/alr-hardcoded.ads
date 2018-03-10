@@ -22,8 +22,14 @@ package Alr.Hardcoded is
    Alr_Child_Flag : constant String;
    --  Env var set when launching a child alr
 
+   Alr_Default_Index_File : constant String;
+   --  Minimal index to use when not fully indexing
+
    Alr_Gpr_File : constant String;
    --  Note to self: this is the _env one that works with git submodules
+
+   Alr_Index_File_Base_Name : constant String;
+   --  File containing the session index, name only
 
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository checked out for self-upgrade
@@ -77,9 +83,13 @@ private
 
    Alr_Src_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
 
+   Alr_Default_Index_File : constant String := Alr_Src_Default_Session_Folder / "alr-index.ads";
+
 --     Alr_Conf_File  : constant String := "alr-config.ads";
 
    Alr_Gpr_File         : constant String := Alr_Src_Folder / "alr_env.gpr";
+
+   Alr_Index_File_Base_Name : constant String := "alr-index.ads";
 
    Alr_Rolling_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
 

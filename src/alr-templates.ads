@@ -24,6 +24,7 @@ package Alr.Templates is
    --  If exact use "Exactly" dependencies, otherwise use "At_Least_Within_Major"
 
    procedure Generate_Session (Session_Path : String;
+                               Full_Index   : Boolean;
                                Alire_File   : String := "");
    --  Generate the alr-session.ads file for current project file
    --  If no alr file, an empty hash will be used so this will be an outdated or stand-alone executable

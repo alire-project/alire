@@ -6,6 +6,12 @@ package body Alr.Self is
 
    function Parent (Path : String) return String renames Ada.Directories.Containing_Directory;
 
+   --------------------
+   -- Has_Full_Index --
+   --------------------
+
+   function Has_Full_Index return Boolean is (Session.Full_Index);
+
    ------------------
    -- Is_Bootstrap --
    ------------------
