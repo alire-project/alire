@@ -4,7 +4,6 @@ Bugs
 Features
 ========
 Windows port
-Move from Vectors to Lists (specially in conditionals)
 Platform checks with docker hub
 
 Library inclusions
@@ -18,6 +17,7 @@ Fixes/refactorings
 
 Long term if ever
 =================
-License compatibilities/permissions/restrictions/!!!
 Proper unit testing
+License compatibilities/permissions/restrictions/!!!
 alr init templating system beyond bin/lib (e.g. advanced scenarios)
+Move from Vectors to Lists (specially in conditionals)
