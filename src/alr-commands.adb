@@ -20,6 +20,7 @@ with Alr.Commands.Search;
 with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
+with Alr.Commands.Withing;
 with Alr.Exceptions;
 with Alr.Files;
 with Alr.Hardcoded;
@@ -51,6 +52,7 @@ package body Alr.Commands is
                        Cmd_Test     => new Test.Command,
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
+                       Cmd_With     => new Withing.Command,
                        others       => new Reserved.Command);
 
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;

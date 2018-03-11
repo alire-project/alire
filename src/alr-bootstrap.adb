@@ -122,7 +122,7 @@ package body Alr.Bootstrap is
       use Ada.Directories;
       use Hardcoded;
 
-      Folder_To_Index : constant String := Alr_Src_Folder / "deps" / "alire" / "index";
+      Folder_To_Index : constant String := Hardcoded.Alr_Index_Folder_Absolute;
    begin
       --  Before rebuilding we need the sources to exist!
       --  Note that the first time we run after developer build, alr considers itself a release build

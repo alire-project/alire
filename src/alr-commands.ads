@@ -96,7 +96,8 @@ package Alr.Commands is
                       Cmd_Search,
                       Cmd_Test,
                       Cmd_Update,
-                      Cmd_Version);
+                      Cmd_Version,
+                      Cmd_With);
    --  The Cmd_ prefix allows the use of the proper name in child packages which otherwise cause conflict
    --  It is a bit ugly but also it makes clear when we are using this enumeration
 

@@ -13,9 +13,6 @@ package Alr.Hardcoded is
    --  Also, "hardcoded" paths that are relative to the detected src folder,
    ---   which could be other than the hardcoded canonical one (in devel builds or custom installs)
 
-   Alr_Branch : constant String    := "master";
-   --  Branch used to self-upgrade
-
    Alr_Canonical_Folder : String renames Self.Canonical_Folder;
    --  Sources when normally installed
 
@@ -30,6 +27,9 @@ package Alr.Hardcoded is
 
    Alr_Index_File_Base_Name : constant String;
    --  File containing the session index, name only
+
+   Alr_Index_Folder_Absolute : constant String;
+   --  Path to folder containing all release indexing specification files
 
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository checked out for self-upgrade
@@ -90,6 +90,8 @@ private
    Alr_Gpr_File         : constant String := Alr_Src_Folder / "alr_env.gpr";
 
    Alr_Index_File_Base_Name : constant String := "alr-index.ads";
+
+   Alr_Index_Folder_Absolute : constant String := Alr_Src_Folder / "deps" / "alire" / "index";
 
    Alr_Rolling_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
 
