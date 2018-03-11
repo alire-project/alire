@@ -4,6 +4,11 @@ with Alr.Query;
 
 package Alr.Templates is
 
+   type Generation_Scenarios is (Initial, Pinning, Unknown);
+   --  In initial generation we know the only dependency is on Alire itself
+   --  When pinning we are fixing to current resolved versions
+   --  Otherwise who knows
+
    procedure Generate_Full_Index (Session_Path, Index_Folder : String);
    --  Generates alr-index.ads that with-es all available alire-index-*.ads releases
 
@@ -16,7 +21,7 @@ package Alr.Templates is
 
    procedure Generate_Prj_Alr (Instance : Query.Instance;
                                Root     : Alire.Roots.Root;
-                               Exact    : Boolean := True;
+                               Scenario : Generation_Scenarios;
                                Filename : String  := "");
    --  Generate the dependencies file (Name_Alr.ads)
    --  If root /= "" then its dependency is skipped (to not depend on itself)

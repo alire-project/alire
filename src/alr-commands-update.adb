@@ -46,7 +46,9 @@ package body Alr.Commands.Update is
       --  The part concerning only to the project
       Guard   : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
-      Requires_Full_Index;
+      -- Requires_Full_Index;
+      -- Not anymore, thanks to explicit with requirements
+
       Requires_Project;
 
       declare

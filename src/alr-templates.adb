@@ -6,6 +6,7 @@ with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
 
 with Alr.Commands;
+with Alr.Commands.Withing;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
@@ -66,7 +67,8 @@ package body Alr.Templates is
       -- Add_Entry --
       ---------------
 
-      procedure Add_Entry (Found : Directory_Entry_Type) is
+      procedure Add_Entry (Found : Directory_Entry_Type; Stop : in out Boolean) is
+         pragma Unreferenced (Stop);
          Name : constant String := Utils.To_Lower_Case (Simple_Name (Found));
       begin
          if Kind (Found) = Ordinary_File then
@@ -148,6 +150,7 @@ package body Alr.Templates is
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else
+         GPR_Files.Append (Root.Name & ".gpr");
          Log ("Generating GPR for unreleased project " & Root.Name & " with" &
                 Instance.Length'Img & " dependencies", Detail);
       end if;
@@ -247,7 +250,7 @@ package body Alr.Templates is
 
    procedure Generate_Prj_Alr (Instance : Query.Instance;
                                Root     : Alire.Roots.Root;
-                               Exact    : Boolean := True;
+                               Scenario : Generation_Scenarios;
                                Filename : String := "")
    is
       File : File_Type;
@@ -260,7 +263,7 @@ package body Alr.Templates is
             Pruned_Instance : Query.Instance := Instance;
          begin
             Pruned_Instance.Delete (Root.Release.Name);
-            Generate_Prj_Alr (Pruned_Instance, Root);
+            Generate_Prj_Alr (Pruned_Instance, Root, Scenario, Filename);
             return;
          end;
       end if;
@@ -269,7 +272,20 @@ package body Alr.Templates is
 
       Create (File, Out_File, Name);
 
-      Put_Line (File, "with Alire.Index;    use Alire.Index;");
+      Put_Line (File, "with Alire.Index; use Alire.Index;");
+
+      if Root.Is_Released then
+         Put_Line (File, Commands.Withing.With_Line (Root.Release.Name));
+         --  Root dependency that will pull everything else in
+      elsif Scenario = Initial then
+         Put_Line (File, "with Alire.Index.Alire;");
+      else
+         -- Err on the safe side and pull in all dependencies
+         for R of Instance loop
+            Put_Line (File, Commands.Withing.With_Line (R.Name));
+         end loop;
+      end if;
+
       Put_Line (File, "with Alire.Projects;");
       New_Line (File);
 
@@ -277,38 +293,42 @@ package body Alr.Templates is
       New_Line (File);
       Put_Line (File, Tab_1 & "Current_Root : constant Root := Set_Root (");
 
-      if Root.Is_Released then
+      if Root.Is_Released and then Scenario /= Pinning then
          --  Typed name plus version
-         Put_Line (File, Tab_2 & "Alire.Projects." & Root.Name & ",");
+         Put_Line (File, Tab_2 & "Alire.Projects." & Utils.To_Mixed_Case (Root.Name) & ",");
          Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Root.Release.Version)) & "));");
       else
          --  Untyped name plus dependencies
          Put_Line (File, Tab_2 & Q (Root.Name) & ",");
 
-         if Instance.Is_Empty then
-            Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
+         if Scenario = Initial then
+            Put_Line (File, Tab_2 & "Dependencies => Within_Major (Alire.Index.Alire.V_Current));");
          else
-            Put (File, Tab_2 & "Dependencies =>");
+            if Instance.Is_Empty then
+               Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
+            else
+               Put (File, Tab_2 & "Dependencies =>");
 
-            declare
-               First : Boolean := True;
-            begin
-               for Rel of Instance loop
-                  if not First then
-                     Put_line (File, " and");
-                  else
-                     New_Line (File);
-                  end if;
-                  Put (File, Tab_3 &
-                       (if Exact then "Exactly ("
-                          else "Within_Major (") &
-                         Utils.To_Mixed_Case (Rel.Project) &
-                         ", V (" & Q (Semver.Image (Rel.Version)) & "))");
-                  First := False;
-               end loop;
-            end;
+               declare
+                  First : Boolean := True;
+               begin
+                  for Rel of Instance loop
+                     if not First then
+                        Put_Line (File, " and");
+                     else
+                        New_Line (File);
+                     end if;
+                     Put (File, Tab_3 &
+                          (if Scenario = Pinning then "Exactly ("
+                             else "Within_Major (") &
+                            "Alire.Projects." & Utils.To_Mixed_Case (Rel.Project) &
+                            ", V (" & Q (Semver.Image (Rel.Version)) & "))");
+                     First := False;
+                  end loop;
+               end;
 
-            Put_Line (File, ");");
+               Put_Line (File, ");");
+            end if;
          end if;
       end if;
       New_Line (File);

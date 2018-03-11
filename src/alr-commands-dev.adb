@@ -54,7 +54,7 @@ package body Alr.Commands.Dev is
             Reportaise_Command_Failed ("Could not resolve dependencies");
          end if;
 
-         Templates.Generate_Prj_Alr (Deps, Root.Current);
+         Templates.Generate_Prj_Alr (Deps, Root.Current, Templates.Unknown);
          Templates.Generate_Agg_Gpr (Deps, Root.Current);
       end;
    end Regenerate;

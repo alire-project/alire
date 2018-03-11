@@ -26,7 +26,7 @@ package body Alr.Commands.Pin is
          if Success then
             Templates.Generate_Prj_Alr (Deps,
                                         Root.Current,
-                                        Exact    => True,
+                                        Templates.Pinning	,
                                         Filename => Index_File);
          else
             Trace.Error ("Could not resolve dependencies");

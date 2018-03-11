@@ -63,7 +63,7 @@ package body Alr.Commands.Init is
             raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";
          end if;
 
-         Templates.Generate_Prj_Alr (Bootstrap.Alire_Minimal_Instance, New_Root, Exact => False);
+         Templates.Generate_Prj_Alr (Depends, New_Root, Templates.Initial);
          Templates.Generate_Agg_Gpr (Depends, New_Root);
       end;
    end Generate;

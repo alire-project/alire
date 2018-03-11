@@ -105,7 +105,7 @@ package body Alr.Spawn is
       Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
       Command ("gprbuild",
                Selfbuild &
-                 "-j0 -p " &
+                 "-gnatwU -j0 -p " & -- Supress warnings on unused (may happen in prj_alr.ads)
                  Extra_Args & (if Extra_Args /= "" then " " else "") &
                  "-P " & Project_File,
                Understands_Verbose => True);

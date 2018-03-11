@@ -19,6 +19,8 @@ Fixes/refactorings
 Long term if ever
 =================
 Proper unit testing
+Real reflection on index files with libadalang, 
+  so that dependencies are withed by release and not name
 License compatibilities/permissions/restrictions/!!!
 alr init templating system beyond bin/lib (e.g. advanced scenarios)
 Move from Vectors to Lists (specially in conditionals)

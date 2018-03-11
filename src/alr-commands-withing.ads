@@ -16,4 +16,7 @@ package Alr.Commands.Withing is
    --  contains its releases.
    --  This makes the implicit assumption that all releases are in a same file
 
+   function With_Line (Name : Alire.Projects.Names) return String;
+   --  The "with Alire.Index.Project;" full line
+
 end Alr.Commands.Withing;

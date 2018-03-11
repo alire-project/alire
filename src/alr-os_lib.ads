@@ -82,11 +82,14 @@ package Alr.OS_Lib is
    function Is_Regular_File (Path : String) return Boolean renames GNAT.OS_Lib.Is_Regular_File;
 
    procedure Traverse_Folder (Folder  : String;
-                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type);
+                              Doing   : access procedure
+                                (Item : Ada.Directories.Directory_Entry_Type;
+                                 Stop : in out Boolean);
                               Recurse : Boolean := False);
    --  Traverse all items in a folder, optionally recursively
    --  If recursively, the directory entry is passed before entering it
    --  "." and ".." are ignored
+   --  If Stop, stop
 
    procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String);
    --  Copies a folder and its contents to within another location

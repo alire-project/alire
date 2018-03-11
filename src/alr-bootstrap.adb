@@ -7,6 +7,7 @@ with Alr.Commands.Update;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Query;
 with Alr.Root;
 with Alr.Self;
 with Alr.Session;

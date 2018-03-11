@@ -150,8 +150,8 @@ package body Alr.Commands.Test is
    overriding procedure Execute (Cmd : in out Command) is
       Test_All : constant Boolean := Num_Arguments = 0;
 
-      procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type) is
-         pragma Unreferenced (Item);
+      procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type; Stop : in out Boolean) is
+         pragma Unreferenced (Item, Stop);
       begin
          Put_Line ("Current folder is not empty, testing aborted (use --continue to resume a partial test)");
          raise Command_Failed;

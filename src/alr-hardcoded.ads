@@ -13,6 +13,9 @@ package Alr.Hardcoded is
    --  Also, "hardcoded" paths that are relative to the detected src folder,
    ---   which could be other than the hardcoded canonical one (in devel builds or custom installs)
 
+   Alr_Branch : constant String := "master";
+   --  For initial checkouts
+
    Alr_Canonical_Folder : String renames Self.Canonical_Folder;
    --  Sources when normally installed
 

@@ -77,10 +77,12 @@ package body Alr.Checkout is
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
             Index_File : constant String := Files.Locate_Index_File (Project);
          begin
-            if Index_File = "" then
-               Templates.Generate_Prj_Alr (Deps, Alire.Roots.New_Root (Root));
+            if Index_File /= "" then
+               Trace.Detail ("Deleting in-source alr file: " & Index_File);
+               Ada.Directories.Delete_File (Index_File);
             end if;
 
+            Templates.Generate_Prj_Alr (Deps, Alire.Roots.New_Root (Root), Templates.Unknown);
             Templates.Generate_Agg_Gpr (Deps, Alire.Roots.New_Root (Root));
          end;
       end if;

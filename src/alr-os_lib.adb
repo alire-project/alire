@@ -76,15 +76,21 @@ package body Alr.OS_Lib is
    ---------------------
 
    procedure Traverse_Folder (Folder : String;
-                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type);
+                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type;
+                                                          Stop : in out Boolean);
                               Recurse : Boolean := False)
    is
       use Ada.Directories;
 
       procedure Go_Down (Item : Directory_Entry_Type) is
+         Stop : Boolean := False;
       begin
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
-            Doing (Item);
+            Doing (Item, Stop);
+            if Stop then
+               return;
+            end if;
+
             if Recurse and then Kind (Item) = Directory then
                Traverse_Folder (Folder / Simple_Name (Item), Doing, Recurse);
             end if;
@@ -154,7 +160,8 @@ package body Alr.OS_Lib is
       -- Rename --
       ------------
 
-      procedure Rename (Item : Ada.Directories.Directory_Entry_Type) is
+      procedure Rename (Item : Ada.Directories.Directory_Entry_Type; Stop : in out Boolean) is
+         pragma Unreferenced (Stop);
          use Ada.Directories;
          use Utils;
       begin
