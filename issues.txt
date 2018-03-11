@@ -3,7 +3,6 @@ Bugs
 
 Features
 ========
-Rethink the "intelligent index" thingy
 Windows port
 Platform checks with docker hub
 

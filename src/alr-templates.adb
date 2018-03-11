@@ -1,7 +1,10 @@
+with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.GPR;
+with Alire.Index;
+with Alire.Projects;           use all type Alire.Projects.Names;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
 
@@ -253,6 +256,10 @@ package body Alr.Templates is
                                Scenario : Generation_Scenarios;
                                Filename : String := "")
    is
+      package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
+
+      Includes : Sets.Set; -- To sort them and remove duplicates
+
       File : File_Type;
       Name : constant String := (if Filename /= ""
                                  then Filename
@@ -274,7 +281,7 @@ package body Alr.Templates is
 
       Put_Line (File, "with Alire.Index; use Alire.Index;");
 
-      if Root.Is_Released then
+      if Root.Is_Released and then Scenario /= Pinning then
          Put_Line (File, Commands.Withing.With_Line (Root.Release.Name));
          --  Root dependency that will pull everything else in
       elsif Scenario = Initial then
@@ -282,11 +289,13 @@ package body Alr.Templates is
       else
          -- Err on the safe side and pull in all dependencies
          for R of Instance loop
-            Put_Line (File, Commands.Withing.With_Line (R.Name));
+            Includes.Include (Commands.Withing.With_Line (R.Name));
+         end loop;
+
+         for Inc of Includes loop
+            Put_Line (File, Inc);
          end loop;
       end if;
-
-      Put_Line (File, "with Alire.Projects;");
       New_Line (File);
 
       Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Name) & "_Alr is");
@@ -295,14 +304,14 @@ package body Alr.Templates is
 
       if Root.Is_Released and then Scenario /= Pinning then
          --  Typed name plus version
-         Put_Line (File, Tab_2 & "Alire.Projects." & Utils.To_Mixed_Case (Root.Name) & ",");
+         Put_Line (File, Tab_2 & Alire.Index.Get (Root.Release.Name).Callable_String & ",");
          Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Root.Release.Version)) & "));");
       else
          --  Untyped name plus dependencies
          Put_Line (File, Tab_2 & Q (Root.Name) & ",");
 
          if Scenario = Initial then
-            Put_Line (File, Tab_2 & "Dependencies => Within_Major (Alire.Index.Alire.V_Current));");
+            Put_Line (File, Tab_2 & "Dependencies => Alire.Index.Alire.Project.Current);");
          else
             if Instance.Is_Empty then
                Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
@@ -319,10 +328,11 @@ package body Alr.Templates is
                         New_Line (File);
                      end if;
                      Put (File, Tab_3 &
-                          (if Scenario = Pinning then "Exactly ("
-                             else "Within_Major (") &
-                            "Alire.Projects." & Utils.To_Mixed_Case (Rel.Project) &
-                            ", V (" & Q (Semver.Image (Rel.Version)) & "))");
+                            Alire.Index.Get (Rel.Name).Callable_String &
+                            (if Scenario = Pinning
+                             then ".At_Version ("
+                             else ".Within_Major (") &
+                             Q (Semver.Image (Rel.Version)) & ")");
                      First := False;
                   end loop;
                end;
@@ -333,7 +343,7 @@ package body Alr.Templates is
       end if;
       New_Line (File);
 
-      Put_Line (File, "   --  An explicit dependency on alr is only needed if you want to compile this file.");
+      Put_Line (File, "   --  An explicit dependency on alire is only needed if you want to compile this file.");
       Put_Line (File, "   --  To do so, include the ""alire.gpr"" project in your own project file.");
       Put_Line (File, "   --  Once you are satisfied with your own dependencies it can be safely removed.");
       New_Line (File);

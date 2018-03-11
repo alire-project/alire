@@ -98,9 +98,9 @@ rm -rf xxx
 echo PIN 
 alr init --bin xxx
 cd xxx
-grep -q -i Within xxx_alr.ads
+grep -q -i Current xxx_alr.ads
 alr pin
-grep -q -i Exactly xxx_alr.ads
+grep -q -i At_Version xxx_alr.ads
 cd ..
 rm -rf xxx
 
