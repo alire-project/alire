@@ -39,23 +39,9 @@ package body Alr.Commands.Withing is
       use Ada.Directories;
       use Alire.Utils;
 
-      Nameimg : constant String := Image (Name);
+      Nameimg : constant String  := Image (Name);
 
-      Found : Unbounded_String := Null_Unbounded_String;
-      --  The project-specific part of the filename
-
-      Strict : Boolean := True;
-      --  First pass we look for the exact name,
-      --  second pass we look for a prefix
-
-      ------------
-      -- Verify --
-      ------------
-
-      function Verify (File : String) return Boolean is (True);
-      --  FIXME: use libadaland or a tokenizer or whatever to ensure that
-      --  a likely file indeed contains the declaration of a release for the
-      --  given project
+      Found   : Unbounded_String := Null_Unbounded_String;
 
       -------------
       -- Matches --
@@ -68,30 +54,14 @@ package body Alr.Commands.Withing is
             return;
          end if;
 
-         if Strict then
-            if Contains (Filename, "-" & Nameimg & ".ads") and then Verify (Full_Name (File)) then
-               Stop  := True;
-               Found := To_Unbounded_String (Nameimg);
-            end if;
-         else
-            if Contains (Filename, "alire-index-") and then Contains (Filename, ".ads") then
-               declare
-                  Project : constant String := Head (Tail (Tail (Filename, '-'), '-'), '.');
-               begin
-                  if Nameimg'Length > Project'Length and then
-                    Nameimg (Nameimg'First .. Nameimg'First + Project'Length - 1) = Project and then
-                    Verify (Full_Name (File))
-                  then
-                     --  It's a prefix, we'll take it (!)
-                     Stop := True;
-                     Found := To_Unbounded_String (Project);
-                  end if;
-               end;
-            end if;
+         if Contains (Filename, "-" & Nameimg & ".ads") then
+            Stop  := True;
+            Found := To_Unbounded_String (Nameimg);
          end if;
       end Matches;
 
       use OS_Lib.Paths;
+
    begin
       --  Dummy first attempt
       if Exists (Hardcoded.Alr_Index_Folder_Absolute / "alire-index-" & Nameimg & ".ads") then
@@ -107,17 +77,13 @@ package body Alr.Commands.Withing is
          return "Alire.Index." & Utils.To_Mixed_Case (To_String (Found));
       end if;
 
-      --  Look for a matching prefix
-      Strict := False;
-      OS_Lib.Traverse_Folder (Hardcoded.Alr_Index_Folder_Absolute,
-                              Matches'Access,
-                              Recurse => True);
-
-      if Found /= Null_Unbounded_String then
-         return "Alire.Index." & Utils.To_Mixed_Case (To_String (Found));
+      --  No evident file contains the project, so we may need the full catalog
+      if Alire.Index.Is_Currently_Indexed (Name) then
+         return "Alire.Index." & Alire.Index.Get (Name).Package_Name;
+      else
+         Requires_Full_Index;
+         raise Program_Error with ("Project not found despite index being complete: " & Nameimg);
       end if;
-
-      raise Constraint_Error with "Couldn't find index file for " & Nameimg;
    end Locate_Package;
 
    ---------------
