@@ -3,7 +3,7 @@
 # DEFINITIONS SECTION
 
 repo_branch=${1:-master}
-repo_url=https://git@bitbucket.org/aleteolabs/alr.git
+repo_url=https://github.com/alire-project/alr.git
 
 required_tools="git hg id"
 required_compiler="gprbuild gnatmake gnatls"
