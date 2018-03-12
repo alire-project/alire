@@ -1,23 +1,25 @@
+with Alire_Early_Elaboration; pragma Unreferenced (Alire_Early_Elaboration);
+
 with Alr.Bootstrap;
 with Alr.Commands;
-with Alr.Devel;
 with Alr.OS;
+with Alr.Self;
 
-with Alr.Index; pragma Elaborate_All (Alr.Index);
---  Force inclusion of all indexed releases
-
--- with GNAT.Exception_Traces;
+with Alr.Index;
 
 procedure Alr.Main is
 begin
-   Commands.Early_Switch_Detection;
-
+   Bootstrap.Check_Ada_Tools;
    Bootstrap.Check_If_Rolling_And_Respawn;
 
-   Log ("alr build is " & Bootstrap.Status_Line);
-   if Devel.Enabled then
-      Log ("alr exec is " & OS.Own_Executable);
+   if Self.Is_Canonical then
+      Trace.Detail ("alr build is " & Bootstrap.Status_Line);
+   else
+      --  If not canonical after respawn it must be development,
+      --    or something amiss so better report
+      Trace.Info ("alr running from " & OS.Own_Executable);
+      Trace.Info ("alr build is " & Bootstrap.Status_Line);
    end if;
 
-   Alr.Commands.Execute;
+   Commands.Execute;
 end Alr.Main;

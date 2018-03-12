@@ -1,213 +1,55 @@
+with Ada.Characters;
+with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Containers;
+with Ada.Exceptions;
+with Ada.Strings;
+with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
-with GNAT.OS_Lib;
+with Alire;
+
+with GNAT.Expect;
 
 package body Alr.OS_Lib is
 
    use type Ada.Containers.Count_Type;
 
-   ----------------
-   -- Alire_File --
-   ----------------
+   -------------
+   -- Bailout --
+   -------------
 
-   function Alire_File (Project : Alire.Project_Name) return String is
-     (Project & "_alr.ads");
+   procedure Bailout (Code : Integer := 0) is
+   begin
+      GNAT.OS_Lib.OS_Exit (Code);
+   end Bailout;
 
-   ----------------
-   -- Build_File --
-   ----------------
+   -------------------
+   -- Create_Folder --
+   -------------------
 
-   function Build_File (Project : Alire.Project_Name) return String is
-     (Project & "_alr.gpr");
+   procedure Create_Folder (Path : String) is
 
-   ------------------
-   -- Project_File --
-   ------------------
-
-   function Project_File (Project : Alire.Project_Name) return String is
-     (Project & ".gpr");
-
-   -----------------------
-   -- Locate_File_Under --
-   -----------------------
-
-   function Locate_File_Under (Folder : String; Name : String; Max_Depth : Natural := 0) return Utils.String_Vector is
-      Found : Utils.String_Vector;
-
-      procedure Locate (Folder : String; Current_Depth : Natural; Max_Depth : Natural) is
+      procedure Create_Parent (Path : String) is
          use Ada.Directories;
-         Search : Search_Type;
       begin
-         Start_Search (Search, Folder, "", Filter => (Ordinary_File => True, Directory => True, others => False));
-
-         while More_Entries (Search) loop
-            declare
-               Current : Directory_Entry_Type;
-            begin
-               Get_Next_Entry (Search, Current);
-               if Kind (Current) = Directory then
-                  if Simple_Name (Current) /= "." and then Simple_Name (Current) /= ".." and then Current_Depth < Max_Depth then
-                     Locate (Folder / Simple_Name (Current), Current_Depth + 1, Max_Depth);
-                  end if;
-               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Name then
-                  Found.Append (Folder / Name);
-               end if;
-            end;
-         end loop;
-
-         End_Search (Search);
-      end Locate;
-
-   begin
-      Locate (Folder, 0, Max_Depth);
-      return Found;
-   end Locate_File_Under;
-
-   -----------------------
-   -- Locate_Index_File --
-   -----------------------
-
-   function Locate_Index_File (Project : Alire.Project_Name) return String is
-      use Ada.Directories;
-      use Gnat.OS_Lib;
-
-      Candidates : Utils.String_Vector;
-   begin
-      if Is_Regular_File (Alire_File (Project)) then
-         Candidates.Append (Alire_File (Project));
-      end if;
-
-      --  Check subfolders
-      declare
-         Search : Search_Type;
-         Folder : Directory_Entry_Type;
-      begin
-         Start_Search (Search, Current_Directory, "", (Directory => True, others => False));
-
-         while More_Entries (Search) loop
-            Get_Next_Entry (Search, Folder);
-
-            if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
-               if Is_Regular_File (Full_Name (Folder) / Alire_File (Project)) then
-                  Candidates.Append (Full_Name (Folder) / Alire_File (Project));
-               end if;
-            end if;
-         end loop;
-
-         End_Search (Search);
-      end;
-
-      if Candidates.Length > 1 then
-         Log ("Warning: more than one " & Alire_File (Project) & " in scope.");
-         for C of Candidates loop
-            Log (C);
-         end loop;
-      end if;
-
-      if Candidates.Length = 1 then
-         return Candidates.First_Element;
-      else
-         return "";
-      end if;
-   end Locate_Index_File;
-
-   ---------------------------
-   -- Locate_Any_Index_File --
-   ---------------------------
-
-   function Locate_Any_Index_File return String is
-      use Ada.Directories;
-      use Gnat.OS_Lib;
-
-      Candidates : Utils.String_Vector;
-
-      ---------------
-      -- Search_In --
-      ---------------
-
-      procedure Search_In (Folder : String) is
-         procedure Check (File : Directory_Entry_Type) is
-         begin
-            Candidates.Append (Full_Name (File));
-         end Check;
-      begin
-         Search (Folder, "*_alr.ads", (Ordinary_File => True, others => False), Check'Access);
-      end Search_In;
-
-      ------------------
-      -- Check_Folder --
-      ------------------
-
-      procedure Check_Folder (Folder : Directory_Entry_Type) is
-      begin
-         if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
-            Search_In (Full_Name (Folder));
-         end if;
-      end Check_Folder;
-
-   begin
-      --  Regular files in current folder
-      Search_In (Current_Directory);
-
-      --  Find direct subfolders and look there
-      Search (Current_Directory, "", (Directory => True, others => False), Check_Folder'Access);
-
-      if Candidates.Length > 1 then
-         Log ("Warning: more than one alr project file in scope.");
-         for C of Candidates loop
-            Log (C);
-         end loop;
-      end if;
-
-      if Candidates.Length = 1 then
-         return Candidates.First_Element;
-      else
-         return "";
-      end if;
-   end Locate_Any_Index_File;
-
-   -------------------------
-   -- Locate_Any_GPR_File --
-   -------------------------
-
-   function Locate_Any_GPR_File return Natural is
-      use Ada.Directories;
-      use Gnat.OS_Lib;
-
-      Candidates : Utils.String_Vector;
-
-      procedure Check (File : Directory_Entry_Type) is
-      begin
-         Candidates.Append (Full_Name (File));
-      end Check;
-   begin
-      Search (Current_Directory, "*.gpr", (Ordinary_File => True, others => False), Check'Access);
-
-      return Natural (Candidates.Length);
-   end Locate_Any_GPR_File;
-
-   ---------------------------
-   -- Locate_Project_Folder --
-   ---------------------------
-
-   function Locate_Above_Project_Folder (Project : Alire.Project_Name) return String is
-      use Ada.Directories;
-      use GNAT.OS_Lib;
-
-      Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Current_Directory) with Unreferenced;
-   begin
-      loop
-         if Is_Regular_File (Project_File (Project)) and then Locate_Index_File (Project) /= "" then
-            return Current_Folder;
+         if Exists (Path) then
+            return;
          else
-            Set_Directory (Containing_Directory (Current_Directory));
+            begin
+               Create_Parent (Containing_Directory (Path));
+            exception
+               when Use_Error =>
+                  null; -- We reached root at worst, and start digging down...
+            end;
+
+            Create_Directory (Path); -- Parent must exist at this point
          end if;
-      end loop;
-   exception
-      when Use_Error =>
-         return ""; -- There's no containing folder (hence we're at root)
-   end Locate_Above_Project_Folder;
+      end Create_Parent;
+
+   begin
+      Create_Parent (Path);
+   end Create_Folder;
 
    --------------------------
    -- Current_Command_Line --
@@ -234,15 +76,21 @@ package body Alr.OS_Lib is
    ---------------------
 
    procedure Traverse_Folder (Folder : String;
-                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type);
+                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type;
+                                                          Stop : in out Boolean);
                               Recurse : Boolean := False)
    is
       use Ada.Directories;
 
       procedure Go_Down (Item : Directory_Entry_Type) is
+         Stop : Boolean := False;
       begin
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
-            Doing (Item);
+            Doing (Item, Stop);
+            if Stop then
+               return;
+            end if;
+
             if Recurse and then Kind (Item) = Directory then
                Traverse_Folder (Folder / Simple_Name (Item), Doing, Recurse);
             end if;
@@ -256,16 +104,20 @@ package body Alr.OS_Lib is
               Go_Down'Access);
    end Traverse_Folder;
 
-   ----------
-   -- Copy --
-   ----------
+   -----------------
+   -- Copy_Folder --
+   -----------------
 
-   procedure Copy_File (Src_Folder, Dst_Parent_Folder : String) is
+   procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String) is
    begin
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       -- FIXME this is not robust with blanks in paths
-      Alire.OS_Lib.Spawn ("cp", "-r " & Src_Folder& " " & Dst_Parent_Folder);
-   end Copy_File;
+      Spawn ("cp", "-r " & Src_Folder & " " & Dst_Parent_Folder, Force_Quiet => True);
+   end Copy_Folder;
+
+   -----------------
+   -- Delete_File --
+   -----------------
 
    procedure Delete_File (Name : String) is
    begin
@@ -277,6 +129,23 @@ package body Alr.OS_Lib is
       end if;
    end Delete_File;
 
+   ------------
+   -- Getenv --
+   ------------
+
+   function Getenv (Var : String; Default : String := "") return String is
+      use GNAT.OS_Lib;
+
+      Env_Access : String_Access := GNAT.OS_Lib.Getenv (Var);
+      Env        : constant String := Env_Access.all;
+   begin
+      Free (Env_Access);
+      if Env = "" then
+         return Default;
+      else
+         return Env;
+      end if;
+   end Getenv;
 
    ----------------
    -- Sed_Folder --
@@ -291,7 +160,8 @@ package body Alr.OS_Lib is
       -- Rename --
       ------------
 
-      procedure Rename (Item : Ada.Directories.Directory_Entry_Type) is
+      procedure Rename (Item : Ada.Directories.Directory_Entry_Type; Stop : in out Boolean) is
+         pragma Unreferenced (Stop);
          use Ada.Directories;
          use Utils;
       begin
@@ -314,10 +184,11 @@ package body Alr.OS_Lib is
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       --  File contents
       declare
-         Guard : constant Alire.OS_Lib.Folder_Guard := Alire.OS_Lib.Enter_Folder (Folder) with Unreferenced;
+         Guard : constant Folder_Guard := Enter_Folder (Folder) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
-         Alire.OS_Lib.Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;");
+         Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;",
+                Force_Quiet => True);
       end;
 
       --  This is not OS dependent
@@ -333,7 +204,368 @@ package body Alr.OS_Lib is
    function File_Contains_Ignore_Case (Filename, Word : String) return Boolean is
    begin
       --  FIXME: this is OS dependent, and it shouldn't be
-      return Alire.OS_Lib.Spawn ("grep", "-q " & Word & " " & Filename) = 0;
+      return Spawn ("grep", "-q " & Word & " " & Filename, Force_Quiet => True) = 0;
+--      return True;
+   exception
+      when Command_Failed =>
+         return False;
    end File_Contains_Ignore_Case;
+
+   --------------
+   -- Is_Older --
+   --------------
+
+   function Is_Older (This : String; Than : String) return Boolean is
+      use GNAT.OS_Lib;
+   begin
+      if Is_Regular_File (This) Then
+         if not Is_Regular_File (Than) then
+            return True;
+         elsif File_Time_Stamp (This) < File_Time_Stamp (Than) then
+            Trace.Debug (This & " is older than " & Than);
+            return True;
+         else
+            return False;
+         end if;
+      else
+         return False;
+      end if;
+   end Is_Older;
+
+   --------------------
+   -- Locate_In_Path --
+   --------------------
+
+   function Locate_In_Path (Name : String) return String is
+      use GNAT.OS_Lib;
+      Target : String_Access := Locate_Exec_On_Path (Name);
+   begin
+      if Target /= null then
+         return Result : constant String := Target.all do
+            Free (Target);
+         end return;
+      else
+         raise Program_Error with "Could not locate " & Name & " in $PATH";
+      end if;
+   end Locate_In_Path;
+
+   -------------------------
+   -- Spawn_With_Progress --
+   -------------------------
+
+   function Spawn_With_Progress (Command   : String;
+                                 Arguments : String) return Integer
+   is
+      use Ada.Strings.Unbounded;
+      use Ada.Text_IO;
+      use GNAT.Expect;
+
+      Simple_Command : constant String := Ada.Directories.Simple_Name (Command);
+
+      --------------
+      -- Sanitize --
+      --------------
+
+      function Sanitize (S : String) return String is -- Remove CR y LFs
+      begin
+         return Result : String := S do
+            for I in Result'Range loop
+               if Result (I) = Ada.Characters.Latin_1.CR then
+                  Result (I) := ' ';
+               elsif Result (I) = Ada.Characters.Latin_1.LF then
+                  Result (I) := ' ';
+               end if;
+            end loop;
+         end return;
+      end Sanitize;
+
+--        Indicator : constant String := "/-\|/-\|";
+--        Indicator : constant String := "+x";
+      Indicator : constant String := ".oOo";
+      type Indicator_Mod is mod Indicator'Length;
+      Pos       : Indicator_Mod := 0;
+
+      Pid : Process_Descriptor;
+
+      Match     : Expect_Match;
+      Last_Line : Unbounded_String;
+      Max_Len   : Natural := 0;
+   begin
+      Non_Blocking_Spawn
+        (Pid,
+         Command,
+         GNAT.OS_Lib.Argument_String_To_List (Arguments).all,
+         Err_To_Out => True);
+
+      loop
+         begin
+            Expect (Pid, Match,
+                    "([ \t\S]+)[ \n\r\f\v]", -- works for \n and \r in output (git vs gprbuild)
+                    Timeout => 200);
+
+            if Match >= 0 then
+               Last_Line := To_Unbounded_String (Utils.Crunch (Sanitize (Expect_Out_Match (Pid))));
+            end if;
+
+            declare
+               Full_Progress : constant String :=
+                            Ada.Characters.Latin_1.CR &
+                            Simple_Command & ": " &
+                            Indicator (Integer (Pos) + 1) & " " &
+                                 To_String (Last_Line);
+               Progress      : constant String := Full_Progress (Full_Progress'First ..
+                                                                   Full_Progress'First - 1 +
+                                                                   Natural'Min (79, Full_Progress'Length));
+            begin
+               Max_Len := Natural'Max (Max_Len, Progress'Length);
+               Put (Progress &
+                      String'(1 .. Max_Len - Progress'Length => ' ')); -- Wipe remainder of old lines
+               Flush;
+               Pos := Pos + 1;
+            end;
+
+         exception
+            when Process_Died =>
+               Log ("Spawned process died", Debug);
+               exit;
+         end;
+      end loop;
+
+      return Code : Integer do
+         Close (Pid, Code);
+
+         declare
+--              Line : constant String :=
+--                       Ada.Characters.Latin_1.CR & Simple_Command &
+--              (if Code = 0
+--               then " completed " & (if Summary /= "" then "[" & Summary & "]" else "")
+--               else " ended with error (exit code" & Code'Img & ") " &
+--                       (if Summary /= "" then "[NOT " & Summary & "]" else ""));
+            Line : constant String := "";
+         begin
+            Max_Len := Natural'Max (Max_Len, Simple_Command'length + 2); -- If there weren't any output
+            Put (ASCII.CR & String'(1 .. Max_Len - Line'Length => ' ') & ASCII.CR);
+            Flush;
+         end;
+      end return;
+   end Spawn_With_Progress;
+
+   -----------
+   -- Spawn --
+   -----------
+   -- FIXME: memory leaks
+   function Spawn (Command             : String;
+                   Arguments           : String := "";
+                   Understands_Verbose : Boolean := False;
+                   Force_Quiet         : Boolean := False) return Integer
+   is
+      use GNAT.OS_Lib;
+      Extra : constant String := (if Understands_Verbose then "-v " else "");
+      File  : File_Descriptor;
+      Name  : String_Access;
+      Ok    : Boolean;
+   begin
+      if Simple_Logging.Level = Debug then
+         Log ("Spawning: " & Command & " " & Extra & Arguments, Debug);
+      else
+         Log ("Spawning: " & Command & " " & Arguments, Debug);
+      end if;
+
+      if (Force_Quiet and then Alire.Log_Level /= Debug) or else Alire.Log_Level in Always | Error | Warning then
+         Create_Temp_Output_File (File, Name);
+         return Code : Integer do
+            Spawn
+              (Locate_In_Path (Command),
+               Argument_String_To_List (Arguments).all,
+               File,
+               Code,
+               Err_To_Out => False);
+            Delete_File (Name.all, Ok);
+            if not Ok then
+               Log ("Failed to delete tmp file: " & Name.all, Warning);
+            end if;
+            Free (Name);
+         end return;
+      elsif Alire.Log_Level = Info then
+         return Spawn_With_Progress (Command, Arguments);
+      elsif Alire.Log_Level = Detail then -- All lines, without -v
+         return
+           (Spawn (Locate_In_Path (Command),
+            Argument_String_To_List (Arguments).all));
+      else  -- Debug: all lines plus -v in commands
+         return
+           (Spawn (Locate_In_Path (Command),
+            Argument_String_To_List (Extra & Arguments).all));
+      end if;
+   end Spawn;
+
+   -----------
+   -- Spawn --
+   -----------
+
+   procedure Spawn (Command             : String;
+                    Arguments           : String := "";
+                    Understands_Verbose : Boolean := False;
+                    Force_Quiet         : Boolean := False)
+   is
+      Code : constant Integer := Spawn (Command, Arguments, Understands_Verbose, Force_Quiet);
+   begin
+      if Code /= 0 then
+         raise Child_Failed with "Exit code:" & Code'Img;
+      end if;
+   end Spawn;
+
+   -----------------------
+   -- Spawn_And_Capture --
+   -----------------------
+
+   function Spawn_And_Capture (Command    : String;
+                               Arguments  : String := "";
+                               Err_To_Out : Boolean := False) return Utils.String_Vector
+   is
+      use GNAT.OS_Lib;
+      File  : File_Descriptor;
+      Name  : String_Access;
+      Ok    : Boolean;
+
+      use Ada.Text_IO;
+      Output : File_Type;
+
+      -------------
+      -- Cleanup --
+      -------------
+
+      procedure Cleanup is
+      begin
+         Delete_File (Name.all, Ok);
+         Free (Name);
+      end Cleanup;
+
+   begin
+      Create_Temp_Output_File (File, Name);
+      Close (File);
+
+      begin
+         Spawn_And_Redirect (Name.all, Command, Arguments, Err_To_Out);
+      exception
+         when others =>
+            Cleanup;
+            raise Child_Failed;
+      end;
+
+      --  Parse
+      return Lines : Utils.String_Vector do
+         Open (Output, In_File, Name.all);
+         while not End_Of_File (Output) loop
+            Lines.Append (Get_Line (Output));
+         end loop;
+
+         Cleanup;
+      end return;
+   end Spawn_And_Capture;
+
+   ------------------------
+   -- Spawn_And_Redirect --
+   ------------------------
+
+   procedure Spawn_And_Redirect (Out_File   : String;
+                                 Command    : String;
+                                 Arguments  : String := "";
+                                 Err_To_Out : Boolean := False)
+   is
+      use GNAT.OS_Lib;
+      File : constant File_Descriptor := Create_File (Out_File, Text);
+      Code : Integer;
+   begin
+      Trace.Debug ("Spawning " & Command & " " & Arguments & " > " & Out_File &
+                   (if Err_To_Out then " 2>&1" else ""));
+
+      Spawn (Locate_In_Path (Command),
+             Argument_String_To_List (Arguments).all,
+             File, Code, Err_To_Out);
+      Close (File);
+
+      if Code /= 0 then
+         raise Child_Failed with "Exit code:" & Code'Img;
+      end if;
+   end Spawn_And_Redirect;
+
+   ------------------
+   -- Spawn_Bypass --
+   ------------------
+
+   procedure Spawn_Raw (Command   : String;
+                        Arguments : String := "")
+   is
+      Code : Integer;
+   begin
+      Trace.Debug ("Spawning " & Command & " " & Arguments);
+
+      Code := GNAT.OS_Lib.Spawn (Locate_In_Path (Command),
+                                 GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
+
+      if Code /= 0 then
+         raise Child_Failed with "Exit code:" & Code'Image;
+      end if;
+   end Spawn_Raw;
+
+   ------------------
+   -- Enter_Folder --
+   ------------------
+
+   function Enter_Folder (Path : String) return Folder_Guard is
+      Current : constant String := Ada.Directories.Current_Directory;
+   begin
+      return Guard : Folder_Guard (Current'Length) do
+         Guard.Original := Current; -- Always store, we must have been asked to ensure return to current folder!
+
+         if Path /= Current then -- Changing folder
+            Log ("Entering folder: " & Path, Debug);
+            Ada.Directories.Set_Directory (Path);
+         else -- Ensuring stay
+            Log ("Staying at folder: " & Current, Debug);
+         end if;
+
+         Guard.Initialized := True;
+      end return;
+   end Enter_Folder;
+
+   ----------------------------
+   -- Stay_In_Current_Folder --
+   ----------------------------
+
+   function Stay_In_Current_Folder return Folder_Guard is
+     (Enter_Folder (Current_Folder));
+
+   --  Below code sometimes raised on Finalize (Initialized was true but Original was garbage (?)
+--     begin
+--        return Guard : Folder_Guard (0) do
+--           Log ("Staying in current folder: " & Current_Folder, Debug);
+--           Guard.Initialized := False;
+--        end return;
+--     end Stay_In_Current_Folder;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Folder_Guard) is
+      use Ada.Exceptions;
+   begin
+      if This.Initialized then
+         Log ("Going back to folder: " & This.Original, Debug);
+         Ada.Directories.Set_Directory (This.Original);
+      else
+         Trace.Debug ("Uninitialized guard (!)");
+      end if;
+   exception
+      when E : others =>
+         Trace.Debug ("FG.Finalize: unexpected exception: " &
+                        Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
+                        Exception_Information (E));
+         Trace.Debug ("FG.Original_Len:" & This.Original_Len'Img);
+         --           Trace.Debug ("FG.Original    :" & This.Original);
+         --  If object is thrashed, the previous line will raise Storage_Error
+   end Finalize;
 
 end Alr.OS_Lib;

@@ -1,5 +1,5 @@
-with "alire.gpr";
-with "semantic_versioning.gpr";
+with "alire";
+with "semantic_versioning";
 
 project Alr is
 
@@ -18,16 +18,15 @@ project Alr is
    case Selfbuild is
       when "True" =>
          for Source_Dirs use Alr'Source_Dirs & (External ("ALR_SESSION", ""));
-         --  Used to ensure a fresh binary every time due to ali limitations
       when "False" =>
          for Source_Dirs use Alr'Source_Dirs & ("src/default_session");
    end case;
 
-   for Languages use ("Ada", "C");
+   for Languages use ("Ada");
 
    package Compiler is
-      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
-      for Switches ("c") use ("-g", "-O2", "-Wall");
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf", "-fPIC");
+      for Switches ("c") use ("-g", "-O2", "-Wall", "-fPIC");
    end Compiler;
 
    package Builder is
@@ -36,7 +35,7 @@ project Alr is
    end Builder;
 
    package Binder is
-      for Switches ("ada") use ("-Es");
+      for Switches ("ada") use ("-Es", "-g");
    end Binder;
 
    package Linker is

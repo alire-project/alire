@@ -1,0 +1,14 @@
+aggregate project TMPL_PROJECT_Alr is
+
+   --  This is an automatically generated file. DO NOT EDIT MANUALLY!
+
+   for Project_Files use ("TMPL_PROJECT.gpr");
+
+   for Project_Path use 
+   (
+    TMPL_DEPENDENCIES
+   );
+
+   for external ("ALIRE") use "True";
+
+end TMPL_PROJECT_Alr;

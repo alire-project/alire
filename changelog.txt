@@ -1,0 +1,14 @@
+2018-03-09: Better expression requisites
+2018-03-05: Chains of preferred dependencies
+2018-03-03: Native packages per distro with autodetection of availability
+2018-02-29: Conditional properties and their materialization
+2018-02-28: Declaration of scenario variables, native packages a-la OPAM
+2018-02-26: query policies, search by property
+2018-02-25: licenses as properties
+2018-02-22: alr test command
+2018-02-20: get --info
+2018-02-20: Named properties (Labels); e.g.: Maintainer, Website
+2018-02-18: Recovery from backup executable if compilation interrupted
+2018-02-14: Properties with arbitrary logical expressions
+2018-02-11: Native packages as valid dependencies
+2018-02-08: Captured output of spawned commands

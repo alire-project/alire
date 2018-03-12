@@ -1,6 +1,5 @@
-with Alire.OS_Lib;
-
-with Alr.OS_Lib;
+with Alr.Files;
+with Alr.Spawn;
 with Alr.Utils;
 
 package body Alr.Commands.Compile is
@@ -20,37 +19,52 @@ package body Alr.Commands.Compile is
    -------------
 
    procedure Execute is
-      use Alire.OS_Lib;
-
-      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+      Guard     : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       Requires_Project;
       Requires_Buildfile;
 
-      if Alire.OS_Lib.Spawn ("gprbuild", "-j0 -p -P " & Project.GPR_Alr_File) = 0 then
-         if OS_Lib.File_Contains_Ignore_Case (Project.GPR_File, "Library_Name") then
-            Log ("Compilation finished without errors");
-         else
-            declare
-               Execs : constant Utils.String_Vector := Os_Lib.Locate_File_Under (".", Project.Name, 2);
-               --  FIXME: extension in non-linux platforms!
-            begin
-               case Execs.Length is
+      begin
+         Spawn.Gprbuild (Root.Build_File,
+                         Extra_Args => Scenario.As_Command_Line);
+         Trace.Info ("Compilation finished successfully");
+         declare
+            Execs : constant Utils.String_Vector :=
+                      Files.Locate_File_Under (".", Root.Current.Default_Executable, 2);
+         begin
+            case Execs.Count is
                when 0 =>
-                  Log ("No executable found after compilation (might be too deep)", Verbose);
+                  Log ("No executable found after compilation (library project or undeclared non-standard name)", Detail);
                when others =>
                   for Exe of Execs loop
-                     Log ("Executable found at " &
-                            Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
-                                                        "/./", "/")));
+                     Trace.Info ("Executable found at " &
+                                   Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
+                                   "/./", "/")));
                   end loop;
-               end case;
-            end;
-         end if;
-      else
-         Log ("alr detected a compilation failure");
-         raise Command_Failed;
-      end if;
+            end case;
+         end;
+      exception
+         when Command_Failed =>
+            Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");
+            raise;
+      end;
    end Execute;
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+      pragma Unreferenced (Cmd);
+      use GNAT.Command_Line;
+   begin
+      Define_Switch (Config,
+                     "-X!",
+                     Help => "Scenario variable for gprbuild",
+                     Argument => "Var=Arg");
+   end Setup_Switches;
 
 end Alr.Commands.Compile;

@@ -1,10 +1,17 @@
-with Alire.OS_Lib;
+with Alire.Properties;
 
-with Alr.Bootstrap;
-with Alr.OS_Lib;
+with Alr.Files;
+with Alr.Hardcoded;
 with Alr.OS;
+with Alr.OS_Lib;
+with Alr.Session;
+
+with GNAT.Compiler_Version;
+with GNAT.Source_Info;
 
 package body Alr.Commands.Version is
+
+   package GNAT_Version is new GNAT.Compiler_Version;
 
    -------------
    -- Execute --
@@ -12,21 +19,62 @@ package body Alr.Commands.Version is
 
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
-      use Alr.OS_Lib;
+      use Ada.Text_IO;
    begin
-      Log ("alr executable launched from " & OS.Own_Executable);
-      Log ("alr rolling source folder is " & Bootstrap.Alr_Src_Folder);
+      if Root.Is_Empty then
+         Trace.Always ("alr root is empty");
+      else
+         Trace.Always ("alr root is " &
+                       (if Root.Is_Released
+                          then Root.Current.Release.Milestone.Image
+                          else Root.Image));
+      end if;
+
+      Trace.Always ("alr session hash is " & Session.Hash);
+
+      declare
+         Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+      begin
+         Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
+         Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
+         Trace.Always ("alr session state is " & Session_State'Img);
+         if Session_State >= Outdated then
+            if Session_State = Valid then
+               Trace.Always ("alr internal session hash matches that of " & Files.Locate_Any_Index_File);
+            else
+               if Root.Is_Empty then
+                  Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Any_Index_File);
+               else
+                  Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Any_Index_File);
+               end if;
+            end if;
+         else
+            Trace.Always ("alr is not running in a session");
+         end if;
+      end;
+
+      Log ("alr executable launched from " & OS.Own_Executable, Always);
+      Log ("alr rolling source folder is " & Hardcoded.Alr_Src_Folder, Always);
+
+      Log ("alr compiled on [" &
+             GNAT.Source_Info.Compilation_ISO_Date & " " &
+             GNAT.Source_Info.Compilation_Time & "] with GNAT version [" & GNAT_Version.Version & "]",
+           Always);
 
       -- FIXME this is OS dependent
       declare
-         Guard : constant Folder_Guard := Alire.OS_Lib.Enter_Folder (Bootstrap.Alr_Src_Folder)
+         Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
            with Unreferenced;
       begin
-         Alire.OS_Lib.Spawn (Bootstrap.Alr_Src_Folder / "scripts" / "version");
+         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Version);
       end;
 
-      Log ("alr internal bootstrap version is " & Bootstrap.Alr_Bootstrap_Release.Image &
-             " from " & Bootstrap.Alr_Bootstrap_Release.Repo_Image);
+      Trace.Always ("platform fingerprint: " & OS.Fingerprint);
+      Put ("platform properties:");
+      for Prop of OS.Properties loop
+         Put (" " & Prop.Image);
+      end loop;
+      New_Line;
    end Execute;
 
 end Alr.Commands.Version;

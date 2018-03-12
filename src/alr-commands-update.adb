@@ -1,9 +1,9 @@
-with Alire.Index;
-with Alire.OS_Lib; use Alire.OS_Lib;
-with Alire.Query;
-
 with Alr.Bootstrap;
 with Alr.Checkout;
+with Alr.Hardcoded;
+with Alr.Query;
+with Alr.Spawn;
+with Alr.Templates;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
@@ -29,12 +29,12 @@ package body Alr.Commands.Update is
 
    procedure Checkout_If_Needed is
    begin
-      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
-         Alire.OS_Lib.Spawn ("git",
-                             "clone --recurse-submodules " &
-                               "-b " & Bootstrap.Alr_Branch & " " &
-                               String (Bootstrap.Alr_Repo) & " " &
-                               Bootstrap.Alr_Src_Folder);
+      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
+         Spawn.Command ("git",
+                        "clone " &
+                          "-b " & Hardcoded.Alr_Branch & " " &
+                          String (Hardcoded.Alr_Repo) & " " &
+                          Hardcoded.Alr_Src_Folder);
       end if;
    end Checkout_If_Needed;
 
@@ -46,19 +46,24 @@ package body Alr.Commands.Update is
       --  The part concerning only to the project
       Guard   : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
+      -- Requires_Full_Index;
+      -- Not anymore, thanks to explicit with requirements
+
       Requires_Project;
 
       declare
          Success : Boolean;
-         Needed  : constant Alire.Index.Instance :=
-                     Alire.Query.Resolve (Project.Current.Element.Depends, Success);
+         Needed  : constant Query.Instance :=
+                     Query.Resolve (Root.Current.Dependencies.Evaluate (Query.Platform_Properties),
+                                    Success,
+                                    Query_Policy);
       begin
          if not Success then
             Log ("Update failed");
             raise Command_Failed;
          end if;
          Checkout.To_Folder (Needed);
-         Checkout.Generate_GPR_Builder (Needed, Project.Current.Element);
+         Templates.Generate_Agg_Gpr (Needed, Root.Current);
          Log ("Update completed");
       end;
    end Upgrade;
@@ -69,39 +74,18 @@ package body Alr.Commands.Update is
 
    procedure Update_Alr is
    begin
-      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
+      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
          Checkout_If_Needed;
       else
          declare
-            Guard : constant Folder_Guard :=
-                      Enter_Folder (Bootstrap.Alr_Src_Folder)
+            Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
               with Unreferenced;
          begin
-            Alire.OS_Lib.Spawn ("git", "pull --recurse-submodules=yes");
-            Alire.OS_Lib.Spawn ("git", "submodule update --recursive");
+            Spawn.Command ("git", "pull");
+            Spawn.Command ("git", "submodule update --init --recursive");
          end;
       end if;
    end Update_Alr;
-
-   ------------------
-   -- Update_Index --
-   ------------------
-
-   procedure Update_Index is
-   begin
-      if not Is_Directory (Bootstrap.Alr_Src_Folder) then
-         Checkout_If_Needed;
-      else
-         declare
-            Guard : constant Folder_Guard :=
-                      Enter_Folder (Bootstrap.Alr_Src_Folder)
-              with Unreferenced;
-         begin
-            Alire.OS_Lib.Spawn ("git",
-                                "submodule update --recursive " & "deps" / "alire");
-         end;
-      end if;
-   end Update_Index;
 
    -------------
    -- Execute --
@@ -111,17 +95,16 @@ package body Alr.Commands.Update is
    begin
       if Cmd.Online then
          Log ("Checking remote repositories:");
-         Update_Index;
          Update_Alr;
-         Bootstrap.Rebuild_With_Current_Project;
+         Bootstrap.Rebuild_With_Current_Project (Full_Index => False);
 
          if Cmd.From_Build then
-            Bootstrap.Respawn_With_Canonical ("build" & Current_Global_Switches);
+            Spawn.Alr (Cmd_Build);
          else
-            Bootstrap.Respawn_With_Canonical ("update " & Current_Global_Switches);
+            Spawn.Alr (Cmd_Update);
          end if;
       else
-         if Bootstrap.Running_In_Session then
+         if Session_State >= Outdated then
             Upgrade;
          else
             Log ("Done");
@@ -142,7 +125,6 @@ package body Alr.Commands.Update is
         (Config,
          Cmd.Online'Access,
          "-o", "--online", "Perform online catalog update before recomputing dependencies");
-
    end Setup_Switches;
 
 end Alr.Commands.Update;

@@ -1,34 +1,37 @@
 with Alire;
-with Alire.Containers;
 with Alire.Index;
 
-with Alr.Defaults;
-with Alr.Devel;
-with Alr.OS;
-with Alr.OS_Lib; use Alr.OS_Lib;
+private with Alire.Index.Alire;
 
 package Alr.Bootstrap is
 
-   --  Declarations to enable self-compilation
+   ---------------------
+   --  SESSION STATE  --
+   ---------------------
 
-   Alr_Branch : constant String    := "master";
-   Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
+   type Session_States is
+     (Erroneous, -- Some bizarre situation
+      Outside,   -- not in a project root folder
+      Outdated,  -- Running in a project folder, but hashes do not match. Internal Project irrelevant.
+      Valid      -- In a session, with matching hash, hence our internal project must match too
+                 -- Also, when valid, we are in the project root!
+     );
+   --  Order in this enum must be in increasing level of available information
 
-   Alr_Src_Folder : constant String :=
-                      (if Devel.Enabled
-                       then OS.Devel_Folder
-                       else OS.Config_Folder / "alr");
+   function Session_State return Session_States;
+
+   -------------
+   --  OTHER  --
+   -------------
+
+   procedure Check_Ada_Tools;
+   --  Check gprbuild/gnatmake are within reach
 
    procedure Check_If_Rolling_And_Respawn;
    --  Determines if we are using a rolling release.
    --  If not, and one is available, respawn.
 
-   procedure Check_If_Project_Outdated_And_Rebuild;
-   --  Check if there is a project file within reach.
-   --  If it is, and its hash differs from ours, rebuild.
-
-   procedure Check_Rebuild_Respawn
-     with Post => (Running_In_Session or else raise Command_Failed);
+   procedure Check_Rebuild_Respawn (Full_Index : Boolean);
    --  The whole shebang for project-oriented commands:
    --    Check within project
    --    Rebuild if outdated
@@ -36,66 +39,34 @@ package Alr.Bootstrap is
    --  Will raise if not within session
    --  FIXME: some kind of infinite respawning prevention should be implemented here
 
-   function Running_In_Project return Boolean
-     with Pre => Running_In_Session;
+   procedure Rebuild (Full_Index : Boolean;
+                      Alr_File   : String := "");
+   --  The full index is required by some commands, but it causes longer load times, so
+   --  it is activated on demand
 
-   function Running_In_Session return Boolean;
-   --  Says if there is a project file within reach
-
-   function Session_Is_Current return Boolean
-     with Pre => Running_In_Session;
-   --  Says if our internal session hash matches the one we are in
-
-   procedure Rebuild (Alr_File : String := "");
-
-   procedure Rebuild_With_Current_Project;
+   procedure Rebuild_With_Current_Project (Full_Index : Boolean);
    --  Rebuild, using a single project if in scope
-
-   procedure Respawn_With_Canonical (Command_Line : String := Current_Command_Line);
-   --  Relaunchs with same command line but using the canonically built executable
-   --  FIXME: move here the keeping of global switches, now in Commands, so clients haven't to remember to do it
 
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
-   Alr_Bootstrap_Release  : constant Alire.Index.Release;
-   Alr_Minimal_Dependency : constant Alire.Index.Dependencies;
-   Alr_Minimal_Instance   : constant Alire.Index.Instance;
+   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies;
 
 private
 
-   use Alire.Index;
+   Is_Child : Boolean := False;
+   --  During elaboration this will be updated accordingly
 
-   --  Having these public releases enables its inclusion in newly generated projects,
-   --  so their project_alr.ads file do really compiles
+   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies := Alire.Index.Alire.Project.Current;
 
-   Semver_Bootstrap : constant Release :=
-              Register_Git
-                ("semantic_versioning",
-                 V ("1.0.0"),
-                 Defaults.Semver_Repository,
-                 "4f9dd63960cb4040e3aa561019d79e6f9d5f5818");
+   function Running_In_Session return Boolean;
+   --  Being inside
+   --  Says if there is a project file within reach
 
-   Alire_Bootstrap : constant Release :=
-             Register_Git
-                ("alire",
-                 V ("0.4.0"),
-                 Defaults.Index_Repository,
-                 "da62fcaec8eab9ac6847140ab9e48f6d2acb5c07",
-                 Depends_On => At_Least_Within_Major (Semver_Bootstrap));
+   function Session_Is_Current return Boolean;
+   --  If we are in a session, says if our internal session hash matches the one we are in
 
-   Alr_Bootstrap : constant Release :=
-             Register_Git
-               ("alr",
-                V ("0.4.0"),
-                Defaults.Alr_Repository,
-                "146fe156caf0c74978dd7db07585159da0432359",
-                Depends_On => At_Least_Within_Major (Alire_Bootstrap));
-
-   Alr_Minimal_Dependency : constant Alire.Index.Dependencies := At_Least (Alr_Bootstrap);
-   Alr_Minimal_Instance   : constant Alire.Index.Instance :=
-                              Alire.Containers.To_Map (Alr_Bootstrap);
-
-   Alr_Bootstrap_Release  : constant Release := Alr_Bootstrap;
+   function Running_In_Project return Boolean;
+   --  Extra checks in a current session; failure means some unexpected situation for alire
 
 end Alr.Bootstrap;

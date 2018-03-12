@@ -2,10 +2,10 @@
 
 # DEFINITIONS SECTION
 
-repo_branch=master
-repo_url=https://git@bitbucket.org/aleteolabs/alr.git
+repo_branch=${1:-master}
+repo_url=https://github.com/alire-project/alr.git
 
-required_tools="git id"
+required_tools="git hg id"
 required_compiler="gprbuild gnatmake gnatls"
 
 alire_folder=${XDG_CONFIG_HOME:-$HOME/.config}/alire
@@ -68,9 +68,9 @@ function fetch_and_compile() {
     mkdir -p $alire_folder
     
     echo Cloning alr sources...
-    git clone --recurse-submodules -b $repo_branch $repo_url $alire_src
+    git clone -b $repo_branch $repo_url $alire_src
     pushd $alire_src
-    git submodule update --recursive --remote
+    git submodule update --init --recursive
     popd
     
     echo Compiling...
@@ -126,7 +126,7 @@ function install_linux() {
     
     fetch_and_compile
     do_install
-    
+
     echo ' '
     echo Installation complete, enter "'alr'" to start using it.
 }

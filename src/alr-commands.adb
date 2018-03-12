@@ -1,28 +1,38 @@
-with Ada.Command_Line;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
-with Alr.Checkout;
+
+with Alire_Early_Elaboration;
+with Alire;
+with Alire.Utils;
+
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Compile;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
-with Alr.Commands.Help;
 with Alr.Commands.Init;
-with Alr.Commands.Lock;
+with Alr.Commands.List;
+with Alr.Commands.Pin;
 with Alr.Commands.Reserved;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
+with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
-with Alr.Devel;
+with Alr.Commands.Withing;
+with Alr.Exceptions;
+with Alr.Files;
+with Alr.Hardcoded;
+with Alr.Interactive;
 with Alr.OS;
-with Alr.OS_Lib;
-with Alr.Utils;
+with Alr.Self;
+with Alr.Spawn;
+with Alr.Templates;
 
 with GNAT.OS_Lib;
+
+with Table_IO;
 
 package body Alr.Commands is
 
@@ -36,17 +46,24 @@ package body Alr.Commands is
                        Cmd_Compile  => new Compile.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
-                       Cmd_Help     => new Help.Command,
                        Cmd_Init     => new Init.Command,
-                       Cmd_Lock     => new Lock.Command,
+                       Cmd_List     => new List.Command,
+                       Cmd_Pin      => new Pin.Command,
                        Cmd_Run      => new Run.Command,
                        Cmd_Search   => new Search.Command,
+                       Cmd_Test     => new Test.Command,
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
+                       Cmd_With     => new Withing.Command,
                        others       => new Reserved.Command);
 
-   Log_Verbose : aliased Boolean := False;
-   Log_Debug   : aliased Boolean := False;
+   Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
+   Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
+   Log_Debug  : Boolean renames Alire_Early_Elaboration.Switch_D;
+
+   Help_Switch   : aliased Boolean := False;
+
+   Prefer_Oldest : aliased Boolean := False;
 
    -----------
    -- Image --
@@ -58,6 +75,52 @@ package body Alr.Commands is
       return Pre (Pre'First + 4 .. Pre'Last);
    end Image;
 
+   --------------
+   -- Is_Quiet --
+   --------------
+
+   function Is_Quiet return Boolean is (Log_Quiet);
+
+   ------------------
+   -- What_Command --
+   ------------------
+
+   function What_Command return Cmd_Names is
+   begin
+      return Cmd_Names'Value ("CMD_" & What_Command);
+   end What_Command;
+
+   ------------------
+   -- What_Command --
+   ------------------
+
+   function What_Command return String is
+   begin
+      if Raw_Arguments.Is_Empty then
+         raise Constraint_Error with "No command given";
+      else
+         return Raw_Arguments.First_Element;
+      end if;
+   end What_Command;
+
+   -------------------
+   -- Num_Arguments --
+   -------------------
+
+   function Num_Arguments return Natural is
+   begin
+      return Raw_Arguments.Count - 1;
+   end Num_Arguments;
+
+   --------------
+   -- Argument --
+   --------------
+
+   function Argument (I : Positive) return String is
+   begin
+      return Raw_Arguments.Element (I + 1);
+   end Argument;
+
    -------------------------
    -- Set_Global_Switches --
    -------------------------
@@ -65,34 +128,47 @@ package body Alr.Commands is
    procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
    begin
       Define_Switch (Config,
-                     Log_Verbose'Access,
+                     Help_Switch'Access,
+                     "-h", "--help", "Display general or command-specific help");
+
+      Define_Switch (Config,
+                     Interactive.Not_Interactive'Access,
+                     "-n", "--not-interactive",
+                     "Assume default answers for all user prompts");
+
+      Define_Switch (Config,
+                     Log_Quiet'Access,
+                     "-q",
+                     Help => "Limit output to errors");
+
+      Define_Switch (Config,
+                     Log_Detail'Access,
                      "-v",
-                     Help => "Be more verbose.");
+                     Help => "Be more verbose");
 
       Define_Switch (Config,
                      Log_Debug'Access,
                      "-d",
-                     Help => "Be even more verbose (implies -v).");
+                     Help => "Be even more verbose (including debug messages)");
+
+      Define_Switch (Config,
+                     Prefer_Oldest'Access,
+                     Long_Switch => "--prefer-oldest",
+                     Help => "Prefer oldest versions instead of newest when resolving dependencies");
    end Set_Global_Switches;
 
-   -----------------------------
-   -- Current_Global_Switches --
-   -----------------------------
+   ---------------------
+   -- Global_Switches --
+   ---------------------
 
-   function Current_Global_Switches return String is
+   function Global_Switches return String is
    begin
-      return Utils.Trim ((if Log_Debug then "-d " else "") &
-                         (if Log_Verbose then "-v " else ""));
-   end Current_Global_Switches;
-
-   -------------
-   -- Bailout --
-   -------------
-
-   procedure Bailout (Code : Integer := 0) is
-   begin
-      GNAT.OS_Lib.OS_Exit (Code);
-   end Bailout;
+      return Utils.Trim ((if Log_Debug  then "-d " else "") &
+                         (if Log_Detail then "-v " else "") &
+                         (if Log_Quiet  then "-q " else "") &
+                         (if Interactive.Not_Interactive then "-n " else "") &
+                         (if Prefer_Oldest then "--prefer-oldest" else ""));
+   end Global_Switches;
 
    --------------------------
    -- Create_Alire_Folders --
@@ -100,24 +176,10 @@ package body Alr.Commands is
 
    procedure Create_Alire_Folders is
    begin
-      OS.Create_Folder (OS.Config_Folder);
-      OS.Create_Folder (OS.Cache_Folder);
-      OS.Create_Folder (OS.Projects_Folder);
+      OS_Lib.Create_Folder (OS.Config_Folder);
+      OS_Lib.Create_Folder (OS.Cache_Folder);
+      OS_Lib.Create_Folder (Hardcoded.Projects_Folder);
    end Create_Alire_Folders;
-
-   -----------------------------
-   -- Display_Help_Workaround --
-   -----------------------------
-
-   procedure Display_Help_Workaround (Config : GNAT.Command_Line.Command_Line_Configuration) is
-   begin
-      GNAT.Command_Line.Display_Help (Config);
-   exception
-      when Storage_Error =>
-         -- Workaround for bug up to GNAT 2017
-         -- Probably not great, but at this point we are exiting anyway
-         null;
-   end Display_Help_Workaround;
 
    -------------------
    -- Display_Usage --
@@ -125,15 +187,16 @@ package body Alr.Commands is
 
    procedure Display_Usage is
    begin
+      New_Line;
       Put_Line ("Ada Library Repository manager (alr)");
-      Put_Line ("Usage : alr command [options] [arguments]");
+      Put_Line ("Usage : alr [global options] command [command options] [arguments]");
 
       New_Line;
 
       Display_Valid_Commands;
 
       New_Line;
-      Put_Line ("Use ""alr help [command]"" for more information about a command.");
+      Put_Line ("Use ""alr help <command>"" for more information about a command.");
       New_Line;
    end Display_Usage;
 
@@ -142,106 +205,162 @@ package body Alr.Commands is
    -------------------
 
    procedure Display_Usage (Cmd : Cmd_Names) is
-      Config : Command_Line_Configuration;
+      Config  : Command_Line_Configuration;
+      Canary1 : Command_Line_Configuration;
+      Canary2 : Command_Line_Configuration;
    begin
       Set_Usage (Config,
-                 Image (Cmd) & " [options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
-                 Help => "Help for " & Image (Cmd));
+                 "[global options] " &
+                   Image (Cmd) & " [command options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
+                 Help => " ");
 
+      -- Ugly hack that goes by GNAT
+      Define_Switch (Config, "Global options:", "", "", "", "");
+      Define_Switch (Config, " ");
       Set_Global_Switches (Config);
 
-      Dispatch_Table (Cmd).Setup_Switches (Config);
+      Set_Global_Switches (Canary1); -- For comparison
+      Set_Global_Switches (Canary2); -- For comparison
+      Dispatch_Table (Cmd).Setup_Switches (Canary1);
 
-      Display_Help_Workaround (Config);
+      if Get_Switches (Canary1) /= Get_Switches (Canary2) then
+         -- Ugly hack that goes by GNAT
+         Define_Switch (Config, " ");
+         Define_Switch (Config, "Options specific to " & Image (Cmd) & ":", "", "", "", "");
+         Define_Switch (Config, " ");
+
+         Dispatch_Table (Cmd).Setup_Switches (Config);
+      end if;
+
+      GNAT.Command_Line.Display_Help (Config);
 
       Dispatch_Table (Cmd).Display_Help_Details;
+
+      New_Line;
    end Display_Usage;
 
-   ------------------
-   -- Longest_Name --
-   ------------------
+   -------------------
+   -- Display_Usage --
+   -------------------
 
-   function Longest_Name return Positive is
+   procedure Display_Usage (Cmd : String) is
    begin
-      return Max : Positive := 1 do
-         for Cmd in Cmd_Names'Range loop
-            Max := Positive'Max (Max, Image (Cmd)'Length);
-         end loop;
-      end return;
-   end Longest_Name;
+      Display_Usage (Cmd_Names'Value ("cmd_" & Cmd));
+   exception
+      when Constraint_Error =>
+         Trace.Error ("Unrecognized help topic: " & Cmd);
+         OS_Lib.Bailout (1);
+   end Display_Usage;
 
    ----------------------------
    -- Display_Valid_Commands --
    ----------------------------
 
    procedure Display_Valid_Commands is
-      Tab : constant String (1 .. 8) := (others => ' ');
-      Max : constant Positive := Longest_Name + 1;
-      Pad : String (1 .. Max);
+      Tab   : constant String (1 .. 6) := (others => ' ');
+      Table : Table_IO.Table;
    begin
       Put_Line ("Valid commands: ");
       New_Line;
       for Cmd in Cmd_Names'Range loop
-         if Cmd /= Cmd_Dev or else Alr.Devel.Enabled then
-            Put (Tab);
-
-            Pad := (others => ' ');
-            Pad (Pad'First .. Pad'First + Image (Cmd)'Length - 1) := Image (Cmd);
-            Put (Pad);
-
-            Put (Dispatch_Table (Cmd).Short_Description);
-            New_Line;
+         if Cmd /= Cmd_Dev or else not Self.Is_Canonical then
+            Table.New_Row;
+            Table.Append (Tab);
+            Table.Append (Image (Cmd));
+            Table.Append (Dispatch_Table (Cmd).Short_Description);
          end if;
       end loop;
+      Table.Print (Separator => "  ");
    end Display_Valid_Commands;
-
-   ----------------------------
-   -- Early_Switch_Detection --
-   ----------------------------
-
-   procedure Early_Switch_Detection is
-      use Ada.Command_Line;
-   begin
-      for I in 1 .. Argument_Count loop
-         if Argument (I) = "-d" then
-            Alire.Verbosity := Alire.Debug;
-            return;
-         elsif Argument (I) = "-v" then
-            Alire.Verbosity := Alire.Verbose;
-         end if;
-      end loop;
-   end Early_Switch_Detection;
 
    --------------------------
    -- Enter_Project_Folder --
    --------------------------
 
    function Enter_Project_Folder return Folder_Guard is
-      use Ada.Directories;
    begin
-      if Project.Current.Is_Empty then
-         Log ("Not entering project folder, no valid project", Debug);
-         return Alire.OS_Lib.Enter_Folder (Current_Directory);
+      if Session_State /= Valid then
+         --  Best guess
+         declare
+            Candidate_Folder : constant String := Files.Locate_Above_Candidate_Project_Folder;
+         begin
+            if Candidate_Folder /= "" then
+               Trace.Detail ("Using candidate project root: " & Candidate_Folder);
+               return OS_Lib.Enter_Folder (Candidate_Folder);
+            else
+               Trace.Debug ("Not entering project folder, no valid project root found");
+               return OS_Lib.Stay_In_Current_Folder;
+            end if;
+         end;
       else
-         return Project.Enter_Root;
+         return Root.Enter_Root; -- Suspicion: we are already there
       end if;
    exception
-      when Ada.Directories.Use_Error =>
-         Log ("Not entering project folder, no project file found for current project", Debug);
-         return Alire.OS_Lib.Enter_Folder (Current_Directory);
+      when E : others =>
+         Exceptions.Report ("Commands.Enter_Project_Folder: Could not find a project folder", E);
+         return OS_Lib.Stay_In_Current_Folder;
    end Enter_Project_Folder;
+
+   ------------------
+   -- Query_Policy --
+   ------------------
+
+   function Query_Policy return Query.Policies is
+      (if Prefer_Oldest then Query.Oldest else Query.Newest);
+
+   -------------------------------
+   -- Reportaise_Command_Failed --
+   -------------------------------
+
+   procedure Reportaise_Command_Failed (Message : String) is
+   begin
+      Trace.Error (Message);
+      raise Command_Failed with Message;
+   end Reportaise_Command_Failed;
+
+   --------------------------------
+   -- Reportaise_Wrong_Arguments --
+   --------------------------------
+
+   procedure Reportaise_Wrong_Arguments (Message : String) is
+   begin
+      Trace.Error (Message);
+      raise Wrong_Command_Arguments with Message;
+   end Reportaise_Wrong_Arguments;
 
    ------------------------
    -- Requires_Buildfile --
    ------------------------
 
    procedure Requires_Buildfile is
-      Guard : constant Alire.OS_Lib.Folder_Guard := Project.Enter_Root with Unreferenced;
+      Guard : constant OS_Lib.Folder_Guard := Root.Enter_Root with Unreferenced;
+      Name  : constant String := Root.Image;
    begin
-      if not GNAT.OS_Lib.Is_Regular_File (Alr.OS_Lib.Build_File (Project.Current.Element.Project)) then
-         Checkout.Generate_GPR_Builder (Project.Current.Element);
+      if Bootstrap.Session_State /= Valid then
+         Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
+      end if;
+
+      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Name)) or else
+        OS_Lib.Is_Older (This => Hardcoded.Build_File (Name),
+                         Than => Hardcoded.Alire_File (Name))
+      then
+         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Build_File (Name));
+         Templates.Generate_Agg_Gpr (Root.Current);
       end if;
    end Requires_Buildfile;
+
+   ---------------------------
+   -- Requires_Full_Index --
+   ---------------------------
+
+   procedure Requires_Full_Index is
+   begin
+      if not Self.Has_Full_Index then
+         Trace.Detail ("Rebuilding catalog...");
+         Bootstrap.Rebuild_With_Current_Project (Full_Index => True);
+         Spawn.Updated_Alr_Without_Return;
+      end if;
+   end Requires_Full_Index;
 
    ----------------------
    -- Requires_Project --
@@ -249,37 +368,175 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
-      Project.Check_Valid;             -- Might raise Command_Failed
+      Bootstrap.Check_Rebuild_Respawn (Full_Index => False); -- Might respawn and not return
+      Root.Check_Valid;                              -- Might raise Command_Failed
    end Requires_Project;
+
+   --------------------
+   -- Fill_Arguments --
+   --------------------
+
+   Fill_For_Real : Boolean := False;
+
+   procedure Fill_Arguments (Switch    : String;
+                             Parameter : String;
+                             Section   : String)
+   is
+   -- For some reason, Get_Argument is not working
+   -- This allows capturing any unknown switch under the wildcard class as an argument
+      pragma Unreferenced (Section);
+   begin
+      Trace.Never ("S: " & Switch & "; P: " & Parameter);
+
+      --  As of now, the only multiple switch that must be treated here is -X
+
+      if Switch (Switch'First) = '-' then
+         if Fill_For_Real then
+            if Switch (Switch'First + 1) = 'X' then
+               --  It's a -X
+               if Switch = "-X" and then Parameter = "" then
+                  Reportaise_Wrong_Arguments ("Space after -X not allowed");
+               else -- Real run
+                  declare
+                     use Alire.Utils;
+                     Var : constant String := Head (Parameter, '=');
+                     Val : constant String := Tail (Parameter, '=');
+                  begin
+                     if Var = "" or else Val = "" then
+                        Reportaise_Wrong_Arguments ("Malformed -X switch: " & Switch);
+                     else
+                        Scenario.Add_Argument (Var, Val);
+                     end if;
+                  end;
+               end if;
+            else
+               Reportaise_Wrong_Arguments ("Unrecognized switch: " & Switch);
+            end if;
+         else
+            null; -- We are only checking global command/switches, these switches are not yet interesting
+         end if;
+      else
+         Raw_Arguments.Append (Switch);
+      end if;
+   end Fill_Arguments;
+
+   ------------------------
+   -- Parse_Command_Line --
+   ------------------------
+
+   procedure Parse_Command_Line is
+   --  Once this procedure returns, the command, arguments and switches will be ready for use
+   --  Otherwise, appropriate help is shown and it does not return
+
+      Global_Config  : Command_Line_Configuration;
+      Command_Config : Command_Line_Configuration;
+   begin
+      Set_Usage (Global_Config,
+                 "[global options] <command> [command options] [arguments]",
+                 Help => " ");
+
+      Set_Global_Switches (Global_Config);
+      Define_Switch (Global_Config, "*"); -- To avoid erroring on command-specific switches
+      Initialize_Option_Scan;
+      Getopt (Global_Config, Callback => Fill_Arguments'Access);
+
+      --  At this point the command and all unknown switches are in Raw_Arguments
+
+      if Raw_Arguments.Is_Empty then
+         Trace.Error ("No command given");
+         Display_Usage;
+         OS_Lib.Bailout (1);
+      elsif Raw_Arguments.First_Element = "help" then
+         if Num_Arguments >= 1 then
+            Display_Usage (Argument (1));
+            Os_Lib.Bailout (0);
+         else
+            Trace.Error ("Please specific a help topic");
+            OS_Lib.Bailout (1);
+         end if;
+      end if;
+
+      declare
+         Cmd : constant Cmd_Names := What_Command; -- Might raise if invalid, if so we are done
+      begin
+         Raw_Arguments := Alire.Utils.Empty_Vector; -- Reinitialize arguments
+         Set_Global_Switches (Command_Config);
+         Dispatch_Table (Cmd).Setup_Switches (Command_Config); -- Specific to command
+
+         --  Validate command + global configuration:
+
+         Fill_For_Real := True;
+
+         Initialize_Option_Scan;
+         Getopt (Command_Config);
+
+         --  If OK, retrieve all arguments with the final, command-specific proper configuration
+         Define_Switch (Command_Config, "*");
+         Scenario := Alire.GPR.Empty_Scenario;
+         Getopt (Command_Config, Callback => Fill_Arguments'Access);
+--           Getopt (Command_Config);
+      end;
+
+      -- At this point everything should be parsed OK.
+
+      -- The simplistic early parser do not recognizes compressed switches, so let's recheck now:
+      declare
+         use Alire_Early_Elaboration;
+      begin
+         if Switch_D then
+            Alire.Log_Level := Simple_Logging.Debug;
+         elsif Switch_V then
+            Alire.Log_Level := Simple_Logging.Detail;
+         elsif Switch_Q then
+            Alire.Log_Level := Simple_Logging.Error;
+         end if;
+      end;
+
+   exception
+      when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
+         --  Getopt has already displayed some help
+         Ada.Text_IO.New_Line;
+         Ada.Text_IO.Put_Line ("Use ""alr help <command>"" for specific command help");
+         OS_Lib.Bailout (1);
+      when Constraint_Error =>
+         if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
+            Log ("Unrecognized global option: " & Raw_Arguments (1), Error);
+         else
+            Log ("Unrecognized command: " & Raw_Arguments (1), Error);
+         end if;
+         Display_Usage;
+         OS_Lib.Bailout (1);
+      when Wrong_Command_Arguments =>
+         --  Raised in here, so no need to raise up unless in debug mode
+         if Log_Debug then
+            raise;
+         else
+            OS_Lib.Bailout (1);
+         end if;
+   end Parse_Command_Line;
 
    -------------
    -- Execute --
    -------------
 
    procedure Execute is
-      use Ada.Command_Line;
-
-      Cmd : Cmd_Names;
    begin
-      if Argument_Count < 1 or else Argument (1) = "-h" or else Argument (1) = "--help" then
-         Display_Usage;
-         return;
-      else
-         begin
-            Cmd := Cmd_Names'Value ("cmd_" & Argument (1));
-         exception
-            when Constraint_Error =>
-               Put_Line ("Unrecognized command: " & Argument (1));
-               New_Line;
-               Display_Usage;
-               Bailout (1);
-         end;
+      Parse_Command_Line;
 
-         Create_Alire_Folders;
+      Create_Alire_Folders;
 
-         Execute_By_Name (Cmd);
-      end if;
+      begin
+         Execute_By_Name (What_Command);
+         Log ("alr " & What_Command & " done", Detail);
+      exception
+         when Child_Failed | Command_Failed =>
+            Trace.Error ("alr " & What_Command & " unsuccessful");
+            if Alire.Log_Level = Debug then
+               raise;
+            else
+               OS_Lib.Bailout (1);
+            end if;
+      end;
    end Execute;
 
    ---------------------
@@ -287,57 +544,28 @@ package body Alr.Commands is
    ---------------------
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
-      Config : Command_Line_Configuration;
    begin
-      Set_Global_Switches (Config);
+      Log (Image (Cmd) & ":", Detail);
+      Dispatch_Table (Cmd).Execute;
 
-      Define_Switch (Config, "-h", "--help", "Show this hopefully helpful help.");
-      --  A lie to avoid the aforementioned bug
-
-      --  Fill switches and execute
-      Dispatch_Table (Cmd).Setup_Switches (Config);
-      begin
-         Getopt (Config); -- Parses command line switches
-
-         --  Not really needed anymore since done in Early Detection
-         if Log_Debug then
-            Alire.Verbosity := Debug;
-         elsif Log_Verbose then
-            Alire.Verbosity := Verbose;
-         end if;
-
-         Put_Line (Image (Cmd) & ":");
-         Dispatch_Table (Cmd).Execute;
-      exception
-         when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
-            --  Getopt has already displayed some help
-            Bailout (1);
-
-         when Wrong_Command_Arguments =>
-            Display_Usage (Cmd);
-            Bailout (1);
-
-         when Command_Failed =>
-            Bailout (1);
-      end;
+   exception
+      when Wrong_Command_Arguments =>
+--          Display_Usage (Cmd);
+         OS_Lib.Bailout (1);
    end Execute_By_Name;
 
-   -------------------
-   -- Last_Argument --
-   -------------------
+   --------------------------------
+   -- Print_Project_Version_Sets --
+   --------------------------------
 
-   function Last_Argument return String is
-      use Ada.Command_Line;
+   procedure Print_Project_Version_Sets is
    begin
-      if Argument_Count < 2 then
-         raise Wrong_Command_Arguments;
-      else
-         return Last : constant String := Argument (Argument_Count) do
-            if Last (Last'First) = '-' then
-               raise Wrong_Command_Arguments;
-            end if;
-         end return;
-      end if;
-   end Last_Argument;
+      Put_Line (" Project selection syntax (policy applies within the allowed version subsets)");
+      New_Line;
+      Put_Line (" project        " & ASCII.HT & "Get any version");
+      Put_Line (" project=version" & ASCII.HT & "Get exact version");
+      Put_Line (" project^version" & ASCII.HT & "Get a major-compatible version");
+      Put_Line (" project~version" & ASCII.HT & "Get a minor-compatible version");
+   end Print_Project_Version_Sets;
 
 end Alr.Commands;
