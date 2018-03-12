@@ -124,6 +124,8 @@ package body Alr.Bootstrap is
       use Hardcoded;
 
       Folder_To_Index : constant String := Hardcoded.Alr_Index_Folder_Absolute;
+
+      Actually_Full_Index : constant Boolean := Full_Index or else Self.Has_Full_Index;
    begin
       --  Before rebuilding we need the sources to exist!
       --  Note that the first time we run after developer build, alr considers itself a release build
@@ -158,8 +160,15 @@ package body Alr.Bootstrap is
       --  This could be an alternative if we don't want to delete the current exec
       --  delay 1.0;
 
+      if Actually_Full_Index and not Full_Index then
+         Trace.Debug ("Not downgrading index although requested");
+      end if;
+
       --  INDEX FILE
-      if Full_Index then
+      if Actually_Full_Index then
+         --  We don't want to downgrade the index if it is already full,
+         --    at least until there's clear evidence that loading times are a problem
+
          Trace.Detail ("Generating index for " & Folder_To_Index);
          Templates.Generate_Full_Index (Hardcoded.Session_Folder, Folder_To_Index);
       else
@@ -179,7 +188,7 @@ package body Alr.Bootstrap is
       end if;
 
       --  SESSION FILE
-      Templates.Generate_Session (Hardcoded.Session_Folder, Full_Index, Alr_File);
+      Templates.Generate_Session (Hardcoded.Session_Folder, Actually_Full_Index, Alr_File);
 
       begin
          Spawn.Gprbuild (Hardcoded.Alr_Gpr_File, Hardcoded.Session_Folder);

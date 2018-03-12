@@ -3,6 +3,8 @@ Bugs
 
 Features
 ========
+get --force
+test --latest | --full
 Windows port
 Platform checks with docker hub
 
