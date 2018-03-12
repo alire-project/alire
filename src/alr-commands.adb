@@ -32,6 +32,8 @@ with Alr.Templates;
 
 with GNAT.OS_Lib;
 
+with Table_IO;
+
 package body Alr.Commands is
 
    use GNAT.Command_Line;
@@ -250,42 +252,25 @@ package body Alr.Commands is
          OS_Lib.Bailout (1);
    end Display_Usage;
 
-   ------------------
-   -- Longest_Name --
-   ------------------
-
-   function Longest_Name return Positive is
-   begin
-      return Max : Positive := 1 do
-         for Cmd in Cmd_Names'Range loop
-            Max := Positive'Max (Max, Image (Cmd)'Length);
-         end loop;
-      end return;
-   end Longest_Name;
-
    ----------------------------
    -- Display_Valid_Commands --
    ----------------------------
 
    procedure Display_Valid_Commands is
-      Tab : constant String (1 .. 8) := (others => ' ');
-      Max : constant Positive := Longest_Name + 1;
-      Pad : String (1 .. Max);
+      Tab   : constant String (1 .. 6) := (others => ' ');
+      Table : Table_IO.Table;
    begin
       Put_Line ("Valid commands: ");
       New_Line;
       for Cmd in Cmd_Names'Range loop
          if Cmd /= Cmd_Dev or else not Self.Is_Canonical then
-            Put (Tab);
-
-            Pad := (others => ' ');
-            Pad (Pad'First .. Pad'First + Image (Cmd)'Length - 1) := Image (Cmd);
-            Put (Pad);
-
-            Put (Dispatch_Table (Cmd).Short_Description);
-            New_Line;
+            Table.New_Row;
+            Table.Append (Tab);
+            Table.Append (Image (Cmd));
+            Table.Append (Dispatch_Table (Cmd).Short_Description);
          end if;
       end loop;
+      Table.Print (Separator => "  ");
    end Display_Valid_Commands;
 
    --------------------------
