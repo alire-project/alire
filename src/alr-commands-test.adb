@@ -88,6 +88,8 @@ package body Alr.Commands.Test is
       File  : File_Type;
 
       Tested, Passed, Failed, Skipped, Unavail : Natural := 0;
+
+      Is_Available, Is_Resolvable : Boolean;
    begin
       Create (File, Out_File,
               "alr_report_" &
@@ -105,8 +107,14 @@ package body Alr.Commands.Test is
                        " CURR:" & Integer'(Tested + 1)'Img & "/" &
                        Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
-         if not Query.Is_Available (R) or else not Query.Is_Resolvable (R.Depends (Platform.Properties)) then
+         Is_Available  := Query.Is_Available (R);
+         Is_Resolvable := Query.Is_Resolvable (R.Depends (Platform.Properties));
+
+         if not Is_Available or else not Is_Resolvable then
             Unavail := Unavail + 1;
+            Trace.Detail ("Skipping: " & R.Milestone.Image &
+                          (if not Is_Available then " (unavailable)" else "") &
+                          (if not Is_Resolvable then " (unresolvable)" else ""));
             Put_Line (File, "Unav:" & R.Milestone.Image);
          elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) and then not Cmd.Redo then
             Skipped := Skipped + 1;
