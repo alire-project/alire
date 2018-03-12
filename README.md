@@ -75,6 +75,10 @@ There's also a search command which provides more details:
 * `alr search <substring>` will look for `substring` in project names.
 * `alr search --list` will list the whole catalog.
 
+Even more details are obtained with:
+
+* `alr get --info <project>`
+
 ### Further reading ###
 
 More comprehensive documentation is forthcoming, so stay tuned! You can check the draft paper in the `doc` folder for more details about `alr` internals in the meanwhile, or inspect index file to get an idea of how packages are indexed.
