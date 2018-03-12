@@ -1,5 +1,7 @@
 #!/bin/bash
 
+repo="https://github.com/alire-project/alr"
+
 set -o errexit
 set -o nounset
 
@@ -28,7 +30,7 @@ else
     read
     rm -rf ~/.config/alire
     mkdir -p ~/.config/alire
-    git clone --recurse-submodules -n https://bitbucket.org/aleteolabs/alr ~/.config/alire/alr
+    git clone --recurse-submodules -n $repo ~/.config/alire/alr
     pushd ~/.config/alire/alr
     git checkout $version
     git submodule update --init --recursive
