@@ -1,7 +1,7 @@
 # README #
 ALIRE: Ada LIbrary REpository.
 
-A catalog of ready-to-use Ada libraries plus a command-line tool (`alr`) to obtain, compile, and incorporate them into your own projects. It fulfills a similar role to Rust's `cargo` or OCaml's `opam`.
+A catalog of ready-to-use Ada libraries plus a command-line tool (`alr`) to obtain, compile, and incorporate them into your own projects. It aims to fulfill a similar role to Rust's `cargo` or OCaml's `opam`.
 
 ### Caveat emptor ###
 
