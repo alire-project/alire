@@ -78,8 +78,8 @@ package body Alr.Checkout is
             Index_File : constant String := Files.Locate_Index_File (Project);
          begin
             if Index_File /= "" then
-               Trace.Detail ("Deleting in-source alr file: " & Index_File);
-               Ada.Directories.Delete_File (Index_File);
+               Trace.Detail ("Renaming in-source alr file: " & Index_File);
+               Ada.Directories.Rename (Index_File, Index_File & ".orig");
             end if;
 
             Templates.Generate_Prj_Alr (Deps, Alire.Roots.New_Root (Root), Templates.Unknown);
