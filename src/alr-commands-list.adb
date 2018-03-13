@@ -29,18 +29,16 @@ package body Alr.Commands.List is
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
       begin
          for Name in Alire.Projects.Names loop
-            if Name /= Alire_Reserved then
-               if Num_Arguments = 0 or else
-                 Contains (To_Lower_Case (Name'Img), Search) or else
-                 Contains (To_Lower_Case (Alire.Projects.Description (Name)), Search)
-               then
-                  Found := Found + 1;
-                  Table.New_Row;
-                  Table.Append (To_Lower_Case (Name'Img));
-                  Table.Append (Alire.Projects.Description (Name));
-               end if;
-               Busy.Step;
+            if Num_Arguments = 0 or else
+              Contains (To_Lower_Case (Name'Img), Search) or else
+              Contains (To_Lower_Case (Alire.Projects.Description (Name)), Search)
+            then
+               Found := Found + 1;
+               Table.New_Row;
+               Table.Append (To_Lower_Case (Name'Img));
+               Table.Append (Alire.Projects.Description (Name));
             end if;
+            Busy.Step;
          end loop;
       end;
 

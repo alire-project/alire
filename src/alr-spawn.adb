@@ -12,7 +12,7 @@ package body Alr.Spawn is
 
    procedure Warn_Outdated is
    begin
-      Log ("Alr executable not found at canonical location.");
+      Log ("Alr executable not found at expected location.");
       Log ("This may happen if a self-compilation failed.");
       Log ("");
 
@@ -37,26 +37,26 @@ package body Alr.Spawn is
                           then ""
                           else Commands.Global_Switches);
    begin
-      if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
-         Command (Hardcoded.Alr_Rolling_Exe_File,
-                  Commands.Image (Cmd) & " " & Extra_Switches & " " & Args);
+      if Is_Executable_File (Hardcoded.Alr_Rolling_Exec) then
+         OS_Lib.Spawn_Raw (Hardcoded.Alr_Rolling_Exec,
+                           Commands.Image (Cmd) & " " & Extra_Switches & " " & Args);
       else
          Warn_Outdated;
          raise Child_Failed;
       end if;
    end Alr;
 
-   -----------------
-   -- Updated_Alr --
-   -----------------
+   --------------------------------
+   -- Session_Alr_Without_Return --
+   --------------------------------
 
-   procedure Updated_Alr_Without_Return is
+   procedure Session_Alr_Without_Return (Metafile : String) is
    begin
-      if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
-         Trace.Detail ("...");
+      if Is_Executable_File (Hardcoded.Alr_Session_Exec (Metafile)) then
+         Trace.Detail (":::");
          begin
             Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
-            OS_Lib.Spawn_Raw (Hardcoded.Alr_Rolling_Exe_File, OS_Lib.Current_Command_Line);
+            OS_Lib.Spawn_Raw (Hardcoded.Alr_Session_Exec (Metafile), OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);
             raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
          exception
@@ -67,6 +67,33 @@ package body Alr.Spawn is
          -- NOTE: THIS IS THE END OF EXECUTION OF THE CALLING alr
       else
          Warn_Outdated;
+         Trace.Debug ("Session executable not found");
+         raise Child_Failed;
+      end if;
+   end Session_Alr_Without_Return;
+
+   -----------------
+   -- Updated_Alr --
+   -----------------
+
+   procedure Updated_Alr_Without_Return is
+   begin
+      if Is_Executable_File (Hardcoded.Alr_Rolling_Exec) then
+         Trace.Detail ("...");
+         begin
+            Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
+            OS_Lib.Spawn_Raw (Hardcoded.Alr_Rolling_Exec, OS_Lib.Current_Command_Line);
+            Os_Lib.Bailout (0);
+            raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
+         exception
+            when others =>
+               OS_Lib.Bailout (1);
+               raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
+         end;
+         -- NOTE: THIS IS THE END OF EXECUTION OF THE CALLING alr
+      else
+         Warn_Outdated;
+         Trace.Debug ("Rolling executable not found");
          raise Child_Failed;
       end if;
    end Updated_Alr_Without_Return;
@@ -94,13 +121,17 @@ package body Alr.Spawn is
    --------------
 
    procedure Gprbuild (Project_File        : String;
-                       Session_File        : String := "";
+                       Session_Build       : Boolean;
+                       Session_Path        : String := "";
                        Extra_Args          : String := "")
    is
       Selfbuild : constant String :=
-                    (if Session_File /= ""
-                     then "-XALR_SESSION=" & Session_File & " -XALR_SELFBUILD=True "
-                     else "");
+                    (if Session_Path /= ""
+                     then "-XALR_SESSION=" & Session_Path & " -XALR_SELFBUILD=True "
+                     else "") &
+                    (if Session_Build
+                     then "-XALR_BIN=" & Session_Path
+                     else "-XALR_BIN=bin") & " ";
    begin
       Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
       Command ("gprbuild",

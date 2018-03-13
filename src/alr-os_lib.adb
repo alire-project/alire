@@ -288,8 +288,36 @@ package body Alr.OS_Lib is
       Pid : Process_Descriptor;
 
       Match     : Expect_Match;
-      Last_Line : Unbounded_String;
+
+      Line      : String (1 .. 79) := (others => ' ');
       Max_Len   : Natural := 0;
+
+      ----------------
+      -- Print_Line --
+      ----------------
+
+      procedure Print_Line (Text : String := "") is
+      --  When empty, just update progress and reprint previous line
+         Indicator_Only : constant String := Simple_Command & ": " & Indicator (Integer (Pos) + 1);
+         Current_Line   : constant String := Indicator_Only & " " & Text;
+         Capped_Line  : constant String :=
+                          Current_Line (Current_Line'First ..
+                                        Current_Line'First - 1 + Natural'Min (79, Current_Line'Length));
+      begin
+         if Text = "" then -- Keep previous output
+            Line (Indicator_Only'Range) := Indicator_Only;
+            Max_Len := Natural'Max (Max_Len, Indicator_Only'Length);
+         else -- Erase remainder
+            Line (Capped_Line'Range) := Capped_Line;
+            Line (Capped_Line'Last + 1 .. Line'Last) := (others => ' ');
+            Max_Len := Natural'Max (Max_Len, Capped_Line'Length);
+         end if;
+
+         Put (ASCII.CR & Line (1 .. Max_Len));
+         Flush;
+         Pos := Pos + 1;
+      end Print_Line;
+
    begin
       Non_Blocking_Spawn
         (Pid,
@@ -304,26 +332,10 @@ package body Alr.OS_Lib is
                     Timeout => 200);
 
             if Match >= 0 then
-               Last_Line := To_Unbounded_String (Utils.Crunch (Sanitize (Expect_Out_Match (Pid))));
+               Print_Line (Utils.Crunch (Sanitize (Expect_Out_Match (Pid))));
+            else
+               Print_Line;
             end if;
-
-            declare
-               Full_Progress : constant String :=
-                            Ada.Characters.Latin_1.CR &
-                            Simple_Command & ": " &
-                            Indicator (Integer (Pos) + 1) & " " &
-                                 To_String (Last_Line);
-               Progress      : constant String := Full_Progress (Full_Progress'First ..
-                                                                   Full_Progress'First - 1 +
-                                                                   Natural'Min (79, Full_Progress'Length));
-            begin
-               Max_Len := Natural'Max (Max_Len, Progress'Length);
-               Put (Progress &
-                      String'(1 .. Max_Len - Progress'Length => ' ')); -- Wipe remainder of old lines
-               Flush;
-               Pos := Pos + 1;
-            end;
-
          exception
             when Process_Died =>
                Log ("Spawned process died", Debug);
@@ -334,19 +346,8 @@ package body Alr.OS_Lib is
       return Code : Integer do
          Close (Pid, Code);
 
-         declare
---              Line : constant String :=
---                       Ada.Characters.Latin_1.CR & Simple_Command &
---              (if Code = 0
---               then " completed " & (if Summary /= "" then "[" & Summary & "]" else "")
---               else " ended with error (exit code" & Code'Img & ") " &
---                       (if Summary /= "" then "[NOT " & Summary & "]" else ""));
-            Line : constant String := "";
-         begin
-            Max_Len := Natural'Max (Max_Len, Simple_Command'length + 2); -- If there weren't any output
-            Put (ASCII.CR & String'(1 .. Max_Len - Line'Length => ' ') & ASCII.CR);
-            Flush;
-         end;
+         Put (ASCII.CR & String'(1 .. Max_Len => ' ') & ASCII.CR);
+         Flush;
       end return;
    end Spawn_With_Progress;
 

@@ -14,11 +14,11 @@ package body Alr.Root is
          raise Command_Failed;
       end if;
 
-      if Files.Locate_Index_File (Image) = "" then
-         if Files.Locate_Any_Index_File /= "" then
+      if Files.Locate_Given_Metadata_File (Image) = "" then
+         if Files.Locate_Metadata_File /= "" then
             Trace.Error ("Session/Project mismatch:");
             Trace.Error ("Root project is " & Utils.Quote (Image));
-            Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Any_Index_File));
+            Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Metadata_File));
          else
             Trace.Error ("Could not find a valid session file");
          end if;

@@ -49,10 +49,10 @@ package body Alr.Files is
    end Locate_File_Under;
 
    -----------------------
-   -- Locate_Index_File --
+   -- Locate_Given_Metadata_File --
    -----------------------
 
-   function Locate_Index_File (Project : Alire.Name_String) return String is
+   function Locate_Given_Metadata_File (Project : Alire.Name_String) return String is
       use Ada.Directories;
       use Gnat.OS_Lib;
 
@@ -94,13 +94,13 @@ package body Alr.Files is
       else
          return "";
       end if;
-   end Locate_Index_File;
+   end Locate_Given_Metadata_File;
 
    ---------------------------
-   -- Locate_Any_Index_File --
+   -- Locate_Metadata_File --
    ---------------------------
 
-   function Locate_Any_Index_File return String is
+   function Locate_Metadata_File return String is
       use Ada.Directories;
       use Gnat.OS_Lib;
 
@@ -153,7 +153,7 @@ package body Alr.Files is
       else
          return "";
       end if;
-   end Locate_Any_Index_File;
+   end Locate_Metadata_File;
 
    -------------------------
    -- Locate_Any_GPR_File --
@@ -188,7 +188,7 @@ package body Alr.Files is
    begin
       Trace.Debug ("Starting root search at " & Current_Folder);
       loop
-         if Locate_Any_GPR_File > 0 and then Locate_Any_Index_File /= "" then
+         if Locate_Any_GPR_File > 0 and then Locate_Metadata_File /= "" then
             return Current_Folder;
          else
             Set_Directory (Containing_Directory (Current_Directory));
@@ -211,7 +211,7 @@ package body Alr.Files is
       Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
    begin
       loop
-         if Is_Regular_File (Hardcoded.Build_File (Project)) and then Locate_Index_File (Project) /= "" then
+         if Is_Regular_File (Hardcoded.Build_File (Project)) and then Locate_Given_Metadata_File (Project) /= "" then
             return Current_Folder;
          else
             Set_Directory (Containing_Directory (Current_Directory));

@@ -31,21 +31,35 @@ package body Alr.OS is
    -- Distribution --
    ------------------
 
+   Cached_Distro : Alire.Platforms.Distributions;
+   Distro_Cached : Boolean := False;
+
    function Distribution return Alire.Platforms.Distributions is
-      use all type Alire.Platforms.Distributions;
-      Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-is");
    begin
-      for Known in Alire.Platforms.Distributions'Range loop
-         for Line of Release loop
-            if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line)) then
-               return Known;
-            end if;
-         end loop;
-      end loop;
+      if Distro_Cached then
+         return Cached_Distro;
+      else
+         declare
+            use all type Alire.Platforms.Distributions;
+            Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-is");
+         begin
+            for Known in Alire.Platforms.Distributions'Range loop
+               for Line of Release loop
+                  if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line)) then
+                     Cached_Distro := Known;
+                     Distro_Cached := True;
+                     return Known;
+                  end if;
+               end loop;
+            end loop;
 
-      Trace.Debug ("Found unsupported distro: " & Release (1));
+            Trace.Debug ("Found unsupported distro: " & Release (1));
 
-      return Unsupported;
+            Cached_Distro := Unsupported;
+            Distro_Cached := True;
+            return Unsupported;
+         end;
+      end if;
    end Distribution;
 
    ----------------------
@@ -58,21 +72,35 @@ package body Alr.OS is
    -- Version --
    -------------
 
+   Cached_Version : Alire.Platforms.Versions;
+   Version_Cached : Boolean := False;
+
    function Version return Alire.Platforms.Versions is
-      use all type Alire.Platforms.Versions;
-      Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-cs");
    begin
-      for Known in Alire.Platforms.Versions'Range loop
-         for Line of Release loop
-            if Contains (To_Lower_Case (Known'Img), Line) then
-               return Known;
-            end if;
-         end loop;
-      end loop;
+      if Version_Cached then
+         return Cached_Version;
+      else
+         declare
+            use all type Alire.Platforms.Versions;
+            Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-cs");
+         begin
+            for Known in Alire.Platforms.Versions'Range loop
+               for Line of Release loop
+                  if Contains (To_Lower_Case (Known'Img), Line) then
+                     Version_Cached := True;
+                     Cached_Version := Known;
+                     return Known;
+                  end if;
+               end loop;
+            end loop;
 
-      Trace.Debug ("Found unsupported version: " & Release (1));
+            Trace.Debug ("Found unsupported version: " & Release (1));
 
-      return Unsupported;
+            Version_Cached := True;
+            Cached_Version := Unsupported;
+            return Unsupported;
+         end;
+      end if;
    end Version;
 
    --------------------

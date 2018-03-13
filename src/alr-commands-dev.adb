@@ -13,7 +13,7 @@ package body Alr.Commands.Dev is
    overriding procedure Execute (Cmd : in out Command) is
    begin
       if Cmd.Locate_Alr then
-         Log ("Project file: " & Files.Locate_Any_Index_File);
+         Log ("Project file: " & Files.Locate_Metadata_File);
       end if;
 
       if Cmd.Raise_Except then
@@ -29,7 +29,7 @@ package body Alr.Commands.Dev is
       end if;
 
       if Cmd.Self_Compile then
-         Bootstrap.Rebuild_With_Current_Project (Full_Index => False);
+         Bootstrap.Rebuild (Files.Locate_Metadata_File);
       end if;
    end Execute;
 

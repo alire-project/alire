@@ -27,7 +27,7 @@ with Alr.Hardcoded;
 with Alr.Interactive;
 with Alr.OS;
 with Alr.Self;
-with Alr.Spawn;
+--  with Alr.Session;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
@@ -355,10 +355,12 @@ package body Alr.Commands is
 
    procedure Requires_Full_Index is
    begin
-      if not Self.Has_Full_Index then
-         Trace.Detail ("Rebuilding catalog...");
-         Bootstrap.Rebuild_With_Current_Project (Full_Index => True);
-         Spawn.Updated_Alr_Without_Return;
+      if Self.Is_Session then
+         Trace.Error ("A session build should not request the full index");
+         raise Program_Error with "A session build should not request the full index";
+      elsif not Self.Has_Full_Index then
+         --  Can happen only first time after installation/devel build
+         Bootstrap.Rebuild_Respawn;
       end if;
    end Requires_Full_Index;
 
@@ -368,8 +370,8 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Bootstrap.Check_Rebuild_Respawn (Full_Index => False); -- Might respawn and not return
-      Root.Check_Valid;                              -- Might raise Command_Failed
+      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
+      Root.Check_Valid;                -- Might raise Command_Failed
    end Requires_Project;
 
    --------------------

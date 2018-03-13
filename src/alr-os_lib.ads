@@ -79,7 +79,8 @@ package Alr.OS_Lib is
 
    --  FILE / FOLDER MANAGEMENT
 
-   function Is_Regular_File (Path : String) return Boolean renames GNAT.OS_Lib.Is_Regular_File;
+   function Is_Executable_File (Path : String) return Boolean renames GNAT.OS_Lib.Is_Executable_File;
+   function Is_Regular_File    (Path : String) return Boolean renames GNAT.OS_Lib.Is_Regular_File;
 
    procedure Traverse_Folder (Folder  : String;
                               Doing   : access procedure

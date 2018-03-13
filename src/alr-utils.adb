@@ -40,6 +40,12 @@ package body Alr.Utils is
       Src    : Natural := Text'First;
       Dst    : Natural := Result'First;
    begin
+      --  Trim initial spaces:
+      while Src <= Text'Last and then Text (Src) = ' ' loop
+         Src := Src + 1;
+      end loop;
+
+      --  Remove excess spaces:
       while Src <= Text'Last loop
          if Src = Text'First or else Text (Src) /= ' ' or else Text (Src - 1) /= ' ' then
             Result (Dst) := Text (Src);
@@ -90,6 +96,15 @@ package body Alr.Utils is
 
       return GNAT.SHA1.Digest (Context);
    end Hash_File;
+
+   -----------------
+   -- Hash_String --
+   -----------------
+
+   function Hash_String (Str : String) return String is
+   begin
+      return GNAT.SHA1.Digest (Str);
+   end Hash_String;
 
    -------------
    -- Replace --

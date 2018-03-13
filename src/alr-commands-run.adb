@@ -2,10 +2,10 @@ with Ada.Containers;
 
 with Alire.OS_Lib;
 
-with Alr.Commands.Compile;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Platform;
+with Alr.Spawn;
 with Alr.Utils;
 
 package body Alr.Commands.Run is
@@ -102,7 +102,7 @@ package body Alr.Commands.Run is
 
          --  COMPILATION  --
          if not Cmd.No_Compile then
-            Compile.Execute;
+            Spawn.Alr (Cmd_Compile);
          end if;
 
          --  EXECUTION  --

@@ -18,6 +18,11 @@ package Alr.Self is
    function Is_Rolling return Boolean;
    --  Our exe is from a src folder where it can be recompiled
 
+   function Is_Session return Boolean;
+   --  Our exe is specific for a project
+
+   function Matches_Session (Metafile : String) return Boolean;
+
    function Src_Folder return String;
    --  Check-out containing current executable, or the canonical path if it could not be located
 

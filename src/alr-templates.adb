@@ -59,10 +59,7 @@ package body Alr.Templates is
    -- Generate_Index --
    --------------------
 
-   procedure Generate_Full_Index (Session_Path, Index_Folder : String) is
-      File     : File_Type;
-      Filename : constant String := "alr-index.ads";
-
+   procedure Generate_Full_Index (File : in out Ada.Text_IO.File_Type; Index_Folder : String) is
       use Ada.Directories;
       use Alr.OS_Lib;
 
@@ -89,25 +86,8 @@ package body Alr.Templates is
       end Add_Entry;
 
    begin
-      Create (File, Out_File, Session_Path / Filename);
-
-      Manual_Warning (File);
-
-      Put_Line (File, "pragma Warnings (Off);");
-
       OS_Lib.Traverse_Folder (Index_Folder, Add_Entry'Access, Recurse => True);
-
---        Search (Index_Folder,
---                "alire-index-*.ads",
---                (Ordinary_File => True, Directory => True, others => False),
---                Add_Entry'Access);
-
       New_Line (File);
-
-      Put_Line (File, "package Alr.Index is");
-      Put_Line (File, "end Alr.Index;");
-
-      Close (File);
    end Generate_Full_Index;
 
    ----------------------
@@ -237,7 +217,7 @@ package body Alr.Templates is
             end if;
          end loop;
       end loop;
-      New_Line;
+      New_Line (File);
 
       Put_Line (File, Tab_1 & "for external (""ALIRE"") use ""True"";");
       New_Line (File);
@@ -369,6 +349,10 @@ package body Alr.Templates is
       Create (File, Out_File, Session_Path / "alr-session.ads");
 
       Put_Line (File, "pragma Warnings (Off);");
+      if Full_Index then
+         Generate_Full_Index (File, Hardcoded.Alr_Index_Folder_Absolute);
+         New_Line (File);
+      end if;
 
       --  Depend on the project alr file that does the root registration
       if Alire_File /= "" then
@@ -382,13 +366,33 @@ package body Alr.Templates is
       Put_Line (File, Tab_1 & "--  This is a generated file. DO NOT EDIT MANUALLY!");
       New_Line (File);
 
-      Put_Line (File, Tab_1 & "Hash : constant String := """ & Hash & """;");
+      Put_Line (File, Tab_1 & "Alr_Src_Folder : aliased String := """ & Hardcoded.Alr_Src_Folder & """ with Volatile;");
       New_Line (File);
 
-      Put_Line (File, Tab_1 & "Full_Index : constant Boolean := " & Full_Index'Img & ";");
+      Put_Line (File, Tab_1 & "Hash : aliased String := """ & Hash & """ with Volatile;");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "Full_Index : aliased Boolean := " & Full_Index'Img & " with Volatile;");
+      New_Line (File);
+
+      Put_Line (File, Tab_1 & "Session_Build : aliased Boolean := " & Boolean'(Alire_File /= "")'Img & " with Volatile;");
       New_Line (File);
 
       Put_Line (File, "end Alr.Session;");
+
+--        Alr_Src_Folder : constant String  := "";
+--        --  For alr instances that are session specific, we need a way to locate the src folder
+--        --    (just for the case where it is not the canonical one, that is: while developing)
+--
+--        Hash           : constant String := "bootstrap";
+--        --  In the curren per-session setup, this should always match unless the dependencies files has been
+--        --    tampered with in such a way that its timestamp has not been updated
+--
+--        Full_Index     : constant Boolean := False;
+--        --  Some commands require a full index and some others not.
+--        --  We use this to separate bootstrap from index status
+--
+--        Session_Build  : constant Boolean := False;
 
       Close (File);
    end Generate_Session;

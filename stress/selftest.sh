@@ -5,8 +5,8 @@ repo="https://github.com/alire-project/alr"
 set -o errexit
 set -o nounset
 
-trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
-trap 'echo "Interrupted" >&2 ; exit 1' INT
+trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2; ln -sf ~/local/alr/bin/alr;' ERR
+trap 'echo "Interrupted" >&2 ; exit 1; ln -sf ~/local/alr/bin/alr;' INT
 
 mkdir -p ~/.config/alire
 
@@ -124,11 +124,11 @@ alr search hell | grep -q -i hello
 # UPDATE
 echo UPDATE
 # outisde
-alr update --online | tee /dev/tty | grep -i -q Done
+alr update --online 
 # inside
 alr init --bin xxx
 cd xxx
-alr update | tee /dev/tty | grep -i -q completed
+alr update
 cd ..
 rm -rf xxx
 

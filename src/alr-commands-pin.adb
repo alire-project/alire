@@ -16,7 +16,7 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Index_File : constant String := Files.Locate_Index_File (Root.Image);
+         Index_File : constant String := Files.Locate_Given_Metadata_File (Root.Image);
          Success    :          Boolean;
          Deps       : constant Query.Instance :=
                         Query.Resolve (Root.Current.Dependencies.Evaluate (Query.Platform_Properties),

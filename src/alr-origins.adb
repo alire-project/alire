@@ -116,7 +116,7 @@ package body Alr.Origins is
 
    procedure Git (From : Alire.Origins.Origin; Folder : String) is
    begin
-      Trace.Info ("Checking out: " & From.URL);
+      Trace.Detail ("Checking out: " & From.URL);
       Spawn.Command ("git", "clone -n -q --progress " & From.URL & " " & Folder);
       declare
          Guard : constant OS_Lib.Folder_Guard := Os_Lib.Enter_Folder (Folder) with Unreferenced;
@@ -134,7 +134,7 @@ package body Alr.Origins is
 
    procedure Hg (From : Alire.Origins.Origin; Folder : String) is
    begin
-      Trace.Info ("Checking out: " & From.URL);
+      Trace.Detail ("Checking out: " & From.URL);
       Spawn.Command ("hg", "clone -v -y -u " & From.Commit & " " & From.URL & " " & Folder);
    exception
       when others =>

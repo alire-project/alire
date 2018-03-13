@@ -5,8 +5,6 @@ with Alr.Commands;
 with Alr.OS;
 with Alr.Self;
 
-with Alr.Index;
-
 procedure Alr.Main is
 begin
    Bootstrap.Check_Ada_Tools;

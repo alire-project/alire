@@ -126,7 +126,7 @@ package body Alr.Query is
       --  thus saving copies. Probably the same applies to Unresolved.
       Dep : constant Alire.Dependencies.Dependency :=
                  (if Unresolved.Is_Empty
-                  then Alire.Dependencies.New_Dependency (Projects.Alire_Reserved, Semver.Any)
+                  then Alire.Dependencies.New_Dependency (Projects.Alire, Semver.Any)
                   else Unresolved.First_Element);
       --  The fake project will never be referenced, since the first check is that unresolved is empty
       --  we are done

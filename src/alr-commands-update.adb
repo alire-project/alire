@@ -1,5 +1,6 @@
 with Alr.Bootstrap;
 with Alr.Checkout;
+with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Query;
 with Alr.Spawn;
@@ -8,20 +9,6 @@ with Alr.Templates;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Commands.Update is
-
-   -------------
-   -- Execute --
-   -------------
-
-   procedure Execute (From_Build : Boolean; Online : Boolean) is
-      Cmd : Command;
-   begin
-      Cmd.From_Build := From_Build;
-      Cmd.Online     := Online;
-
-      Cmd.Execute;
-   end Execute;
-
 
    ------------------------
    -- Checkout_If_Needed --
@@ -96,18 +83,23 @@ package body Alr.Commands.Update is
       if Cmd.Online then
          Log ("Checking remote repositories:");
          Update_Alr;
-         Bootstrap.Rebuild_With_Current_Project (Full_Index => False);
 
-         if Cmd.From_Build then
-            Spawn.Alr (Cmd_Build);
-         else
-            Spawn.Alr (Cmd_Update);
-         end if;
+         declare
+            Metafile : constant String := Files.Locate_Metadata_File;
+         begin
+            Bootstrap.Rebuild;     -- Update rolling alr
+            if Metafile /= "" then -- And this session one
+               Bootstrap.Rebuild (Metafile);
+            end if;
+         end;
+
+         --  And launch updated exec without online (or it would restart endlessly)
+         Spawn.Alr (Cmd_Update);
       else
-         if Session_State >= Outdated then
+         if Session_State >= Detached then
             Upgrade;
          else
-            Log ("Done");
+            Trace.Detail ("No project to upgrade");
          end if;
       end if;
    end Execute;

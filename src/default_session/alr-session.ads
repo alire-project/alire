@@ -1,19 +1,33 @@
---  with Hello_Alr; -- Only in real in-project builds
-
 package Alr.Session is
 
-   --  This file is used to determine the current working session (active project)
-   --  This is only a placeholder; the actual file is generated for each build
+   --  NOTE: ALIASED & VOLATILE IS NECESSARY TO AVOID OPTIMIZATIONS
+   --  Otherwise, the reuse of object code among alr builds can cause improper behavior
 
-   Hash : constant String := Bootstrap_Hash;
-   --  Hash of the project-alire.ads file.
-   --  If it does not match the one computed on the fly, it means we must recompile
+   --  Still, I'm seeing warnings about expressions being always true/false about these...
+   --  Not sure what's going on
 
-   --  Special values: bootstrap for a manually compiled build
-   --  Any other not a hash: default session compiled without project
+   --  Warning: withing this file will cause the dependent file to be recompiled in every rebuild
+   --  Try to minimize dependencies (currently Alr.Self isolates them all, so is the only file rebuilt)
 
-   Full_Index : constant Boolean := False;
+--  private -- To prevent use besides from Alr.Self
+
+   --  Making this private was ideal, but for some reason making Self a child of Session
+   --  causes gnat to recompile a lot of files every time, half of alr.
+   --  So it remains an open risk to remember: don't with Session but Self
+
+   Alr_Src_Folder : aliased String  := "" with Volatile;
+   --  For alr instances that are session specific, we need a way to locate the src folder
+   --    (just for the case where it is not the canonical one, that is: while developing)
+
+   Hash           : aliased String := "bootstrap" with Volatile;
+   --  In the curren per-session setup, this should always match unless the dependencies files has been
+   --    tampered with in such a way that its timestamp has not been updated
+
+   Full_Index     : aliased Boolean := False with Volatile;
    --  Some commands require a full index and some others not.
    --  We use this to separate bootstrap from index status
+
+   Session_Build  : aliased Boolean := False with Volatile;
+   --  True in session-specific builds
 
 end Alr.Session;

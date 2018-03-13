@@ -1,3 +1,5 @@
+with Ada.Text_IO;
+
 with Alire.Roots;
 
 with Alr.Query;
@@ -8,9 +10,6 @@ package Alr.Templates is
    --  In initial generation we know the only dependency is on Alire itself
    --  When pinning we are fixing to current resolved versions
    --  Otherwise who knows
-
-   procedure Generate_Full_Index (Session_Path, Index_Folder : String);
-   --  Generates alr-index.ads that with-es all available alire-index-*.ads releases
 
    procedure Generate_Agg_Gpr (Instance : Query.Instance;
                                Root     : Alire.Roots.Root);
@@ -39,6 +38,10 @@ package Alr.Templates is
    Sed_Pattern : constant String;
 
 private
+
+   procedure Generate_Full_Index (File : in out Ada.Text_IO.File_Type; Index_Folder : String);
+   --  Add with Alire.Index.* for all dependencies in the given already opened file
+
 
    Sed_Pattern : constant String := "PROJECT_SKEL";
    --  In Caps so its proper use in lowercase or Mixed Case is ensured

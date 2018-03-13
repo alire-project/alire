@@ -13,8 +13,4 @@ package Alr.Commands.Compile is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
-   --  Other actions  --
-
-   procedure Execute;
-
 end Alr.Commands.Compile;

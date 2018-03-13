@@ -37,7 +37,7 @@ package Alr.Hardcoded is
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository checked out for self-upgrade
 
-   Alr_Rolling_Exe_File : constant String;
+   Alr_Rolling_Exec : constant String;
    --  Name of the rolling executable, "alr", with source path, for the detected src folder
    --  Might not exist yet!
 
@@ -65,15 +65,22 @@ package Alr.Hardcoded is
    function Alire_File (Project : Alire.Name_String) return String;
    --  File with dependencies (project_alr.ads)
 
+   function Alr_Session_Exec (Metafile : String) return String;
+   --  The session-specific built alr
+
    function Build_File (Project : Alire.Name_String) return String;
    --  Aggregate project file (project_alr.gpr)
 
    function Projects_Folder return String;
    --  $CACHE_FOLDER/projects
 
-   function Session_Folder return String;
+   function Session_Folder (Metafile : String) return String;
    --  $CACHE_FOLDER/sessions/<pwd>
-   --  Also creates it (once it is asked for, it's presumed to be about to be sued)
+   --  Also creates it (once it is asked for, it's presumed to be about to be used)
+   --  Our anchor is the metadata file
+
+   function No_Session_Folder return String;
+   --  The "null" session folder for no-session rebuilds
 
 private
 
@@ -96,7 +103,7 @@ private
 
    Alr_Index_Folder_Absolute : constant String := Alr_Src_Folder / "deps" / "alire" / "index";
 
-   Alr_Rolling_Exe_File : constant String := Alr_Src_Folder / "bin" / "alr";
+   Alr_Rolling_Exec : constant String := Alr_Src_Folder / "bin" / "alr";
 
    Native_Package_List : constant String := OS.Config_Folder / "native_packages.txt";
 
@@ -114,10 +121,16 @@ private
      (Project & "_alr.ads");
 
    function Alr_Is_Canonical return Boolean is
-      (OS.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
+     (OS.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
+
+   function Alr_Session_Exec (Metafile : String) return String is
+     (Session_Folder (Metafile) / "alr");
 
    function Build_File (Project : Alire.Name_String) return String is
      (Project & "_alr.gpr");
+
+   function No_Session_Folder return String is
+      (OS.Cache_Folder / "sessions" / OS.Compiler'Img / "no_session");
 
    function Projects_Folder return String is
      (OS.Cache_Folder / "projects" / OS.Compiler'Img);

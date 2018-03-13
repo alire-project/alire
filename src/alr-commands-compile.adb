@@ -4,21 +4,11 @@ with Alr.Utils;
 
 package body Alr.Commands.Compile is
 
-   -------------
-   -- Execute --
-   -------------
+   ----------------
+   -- Do_Compile --
+   ----------------
 
-   overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
-   begin
-      Execute;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   procedure Execute is
+   procedure Do_Compile is
       Guard     : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       Requires_Project;
@@ -26,7 +16,8 @@ package body Alr.Commands.Compile is
 
       begin
          Spawn.Gprbuild (Root.Build_File,
-                         Extra_Args => Scenario.As_Command_Line);
+                         Session_Build => False,
+                         Extra_Args    => Scenario.As_Command_Line);
          Trace.Info ("Compilation finished successfully");
          declare
             Execs : constant Utils.String_Vector :=
@@ -48,6 +39,16 @@ package body Alr.Commands.Compile is
             Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");
             raise;
       end;
+   end Do_Compile;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute (Cmd : in out Command) is
+      pragma Unreferenced (Cmd);
+   begin
+      Do_Compile;
    end Execute;
 
    --------------------
