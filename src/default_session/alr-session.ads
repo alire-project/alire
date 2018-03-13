@@ -9,7 +9,11 @@ package Alr.Session is
    --  Warning: withing this file will cause the dependent file to be recompiled in every rebuild
    --  Try to minimize dependencies (currently Alr.Self isolates them all, so is the only file rebuilt)
 
-private -- To prevent use besides from Alr.Self
+--  private -- To prevent use besides from Alr.Self
+
+   --  Making this private was ideal, but for some reason making Self a child of Session
+   --  causes gnat to recompile a lot of files every time, half of alr.
+   --  So it remains an open risk to remember: don't with Session but Self
 
    Alr_Src_Folder : aliased String  := "" with Volatile;
    --  For alr instances that are session specific, we need a way to locate the src folder

@@ -1,8 +1,9 @@
 with Ada.Exceptions;
 
+with Alr.Session;
 with Alr.Utils;
 
-package body Alr.Session.Self is
+package body Alr.Self is
 
    function Parent (Path : String) return String renames Ada.Directories.Containing_Directory;
 
@@ -75,4 +76,4 @@ package body Alr.Session.Self is
       end if;
    end Src_Folder;
 
-end Alr.Session.Self;
+end Alr.Self;

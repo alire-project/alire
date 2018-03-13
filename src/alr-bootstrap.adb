@@ -220,8 +220,8 @@ package body Alr.Bootstrap is
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.ali");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.o");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session-self.ali");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session-self.o");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.ali");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.o");
 
