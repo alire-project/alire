@@ -7,6 +7,7 @@ with Alr.Commands.Update;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Root;
 with Alr.Self;
 with Alr.Spawn;
 with Alr.Templates;
@@ -78,13 +79,33 @@ package body Alr.Bootstrap is
 
    procedure Check_If_Rolling_And_Respawn is
    begin
+      if OS_Lib.Getenv (Hardcoded.Alr_Child_Flag) /= "" then
+         Is_Child := True;
+         Trace.Debug ("alr spawned as child");
+      end if;
+
+--        Trace.Debug ("SESSION: " & Self.Is_Session'Img);
+--        Trace.Debug ("ROLLING: " & Self.Is_Rolling'Img);
+--        Trace.Debug ("EMPTY  : " & Root.Is_Empty'Img);
+
+      --  Sanity checks (this happened prior to volatile session variables)
+      if not Self.Is_Session and then not Root.Is_Empty then
+         raise Program_Error with "Session set and root set shouldn't happen";
+      elsif Self.Is_Session and then Root.Is_Empty then
+         raise Program_Error with "Session set and root unset shouldn't happen";
+      end if;
+
       if Self.Is_Session then
-         null; -- OK, running specific build for current project
-      elsif not Self.Is_Rolling then
+         -- OK, running specific build for current project
+         Trace.Debug ("Initial respawn check: session build, proceeding");
+      elsif Self.Is_Rolling then
+         null;
+      else -- not session and not rolling
+         Trace.Debug ("Initial respawn check: launcher build (not rolling)");
          if Is_Executable_File (Hardcoded.Alr_Rolling_Exec) then
             Spawn.Updated_Alr_Without_Return;
          else
-            Log ("alr executable may be out of date, consider running ""alr update --online""");
+            Trace.Warning ("alr executable may be out of date, consider running ""alr update --online""");
          end if;
       end if;
    end Check_If_Rolling_And_Respawn;
@@ -192,12 +213,21 @@ package body Alr.Bootstrap is
          end if;
       end if;
 
+      --  Empirically determined: below second consecutive compilations will generate
+      --    corrupted binaries unless these are forced to be recreated:
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.ali");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.o");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.ali");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.o");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session-self.ali");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session-self.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.o");
 
       if Alr_File /= "" then
          OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
+         OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".o"));
       end if;
 
       --  DELETE SESSION FOLDER TO ENSURE FRESH FILES
@@ -311,10 +341,5 @@ package body Alr.Bootstrap is
    end Status_Line;
 
 begin
-   if OS_Lib.Getenv (Hardcoded.Alr_Child_Flag) /= "" then
-      Is_Child := True;
-      Trace.Debug ("alr spawned as child");
-   end if;
-
    GNAT.Ctrl_C.Install_Handler (Interrupted'Access);
 end Alr.Bootstrap;

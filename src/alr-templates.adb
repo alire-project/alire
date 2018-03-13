@@ -366,16 +366,16 @@ package body Alr.Templates is
       Put_Line (File, Tab_1 & "--  This is a generated file. DO NOT EDIT MANUALLY!");
       New_Line (File);
 
-      Put_Line (File, Tab_1 & "Alr_Src_Folder : constant String := """ & Hardcoded.Alr_Src_Folder & """;");
+      Put_Line (File, Tab_1 & "Alr_Src_Folder : aliased String := """ & Hardcoded.Alr_Src_Folder & """ with Volatile;");
       New_Line (File);
 
-      Put_Line (File, Tab_1 & "Hash : constant String := """ & Hash & """;");
+      Put_Line (File, Tab_1 & "Hash : aliased String := """ & Hash & """ with Volatile;");
       New_Line (File);
 
-      Put_Line (File, Tab_1 & "Full_Index : constant Boolean := " & Full_Index'Img & ";");
+      Put_Line (File, Tab_1 & "Full_Index : aliased Boolean := " & Full_Index'Img & " with Volatile;");
       New_Line (File);
 
-      Put_Line (File, Tab_1 & "Session_Build : constant Boolean := " & Boolean'(Alire_File /= "")'Img & ";");
+      Put_Line (File, Tab_1 & "Session_Build : aliased Boolean := " & Boolean'(Alire_File /= "")'Img & " with Volatile;");
       New_Line (File);
 
       Put_Line (File, "end Alr.Session;");

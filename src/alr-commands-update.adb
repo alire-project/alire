@@ -87,20 +87,19 @@ package body Alr.Commands.Update is
          declare
             Metafile : constant String := Files.Locate_Metadata_File;
          begin
-            if Metafile /= "" then
-               Bootstrap.Rebuild;
-               Bootstrap.Rebuild_Respawn (Metafile);
-            else
-               Bootstrap.Rebuild_Respawn;
+            Bootstrap.Rebuild;     -- Update rolling alr
+            if Metafile /= "" then -- And this session one
+               Bootstrap.Rebuild (Metafile);
             end if;
          end;
 
+         --  And launch updated exec without online (or it would restart endlessly)
          Spawn.Alr (Cmd_Update);
       else
          if Session_State >= Detached then
             Upgrade;
          else
-            Log ("Done");
+            Trace.Detail ("No project to upgrade");
          end if;
       end if;
    end Execute;

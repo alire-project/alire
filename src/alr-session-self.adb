@@ -1,9 +1,8 @@
 with Ada.Exceptions;
 
-with Alr.Session;
 with Alr.Utils;
 
-package body Alr.Self is
+package body Alr.Session.Self is
 
    function Parent (Path : String) return String renames Ada.Directories.Containing_Directory;
 
@@ -19,9 +18,7 @@ package body Alr.Self is
 
    function Is_Bootstrap return Boolean is
    begin
-      pragma Warnings (Off);
       return Session.Hash = Bootstrap_Hash;
-      pragma Warnings (On);
    end Is_Bootstrap;
 
    ------------------
@@ -78,4 +75,4 @@ package body Alr.Self is
       end if;
    end Src_Folder;
 
-end Alr.Self;
+end Alr.Session.Self;
