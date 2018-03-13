@@ -4,7 +4,7 @@ with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS;
 with Alr.OS_Lib;
-with Alr.Session;
+--  with Alr.Session;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -30,7 +30,7 @@ package body Alr.Commands.Version is
                           else Root.Image));
       end if;
 
-      Trace.Always ("alr session hash is " & Session.Hash);
+--        Trace.Always ("alr session hash is " & Session.Hash);
 
       declare
          Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
@@ -38,18 +38,20 @@ package body Alr.Commands.Version is
          Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
          Trace.Always ("alr session state is " & Session_State'Img);
-         if Session_State >= Outdated then
+
+         if Session_State >= Detached then
+            Trace.Always ("alr session folder is " & Hardcoded.Session_Folder (Files.Locate_Metadata_File));
             if Session_State = Valid then
-               Trace.Always ("alr internal session hash matches that of " & Files.Locate_Any_Index_File);
+               Trace.Always ("alr internal session hash matches that of " & Files.Locate_Metadata_File);
             else
                if Root.Is_Empty then
-                  Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Any_Index_File);
+                  Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Metadata_File);
                else
-                  Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Any_Index_File);
+                  Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Metadata_File);
                end if;
             end if;
          else
-            Trace.Always ("alr is not running in a session");
+            Trace.Always ("alr session folder is " & Hardcoded.No_Session_Folder);
          end if;
       end;
 

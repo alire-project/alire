@@ -7,10 +7,7 @@ with Alr.Commands.Update;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
-with Alr.Query;
-with Alr.Root;
 with Alr.Self;
-with Alr.Session;
 with Alr.Spawn;
 with Alr.Templates;
 with Alr.Utils;
@@ -24,6 +21,18 @@ package body Alr.Bootstrap is
 
    Executable      : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr";
    Executable_Bak  : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr-prev";
+
+   Cached_Metafile : access String;
+
+   function Metadata_File return String is
+   begin
+      if Cached_Metafile = null then
+         Cached_Metafile := new String'(Files.Locate_Metadata_File);
+         Trace.Detail ("Metadata file in use is: " & Cached_Metafile.all);
+      end if;
+
+      return Cached_Metafile.all;
+   end Metadata_File;
 
    -----------------------------
    -- Attempt_Backup_Recovery --
@@ -69,8 +78,10 @@ package body Alr.Bootstrap is
 
    procedure Check_If_Rolling_And_Respawn is
    begin
-      if not Self.Is_Rolling then
-         if Is_Executable_File (Hardcoded.Alr_Rolling_Exe_File) then
+      if Self.Is_Session then
+         null; -- OK, running specific build for current project
+      elsif not Self.Is_Rolling then
+         if Is_Executable_File (Hardcoded.Alr_Rolling_Exec) then
             Spawn.Updated_Alr_Without_Return;
          else
             Log ("alr executable may be out of date, consider running ""alr update --online""");
@@ -82,20 +93,53 @@ package body Alr.Bootstrap is
    -- Check_Rebuild_Respawn --
    ---------------------------
 
-   procedure Check_Rebuild_Respawn (Full_Index : Boolean) is
+   procedure Check_Rebuild_Respawn is
+      Metafile     : constant String  := Files.Locate_Metadata_File;
+      Must_Rebuild :          Boolean := False;
    begin
-      if not Running_In_Session then
-         Log ("Could not find alr session, stopping now", Warning);
-         raise Command_Failed;
+      case Session_State is
+         when Detached =>
+            Trace.Debug ("Running main alr seeing session file " & Metafile);
+            --  Proceed
+         when Valid    =>
+            Trace.Debug ("Already running session executable");
+            return;
+         when others   =>
+            Trace.Error ("Cannot find session, state is: " & Session_State'Img);
+            raise Command_Failed;
+      end case;
+
+      if not OS_Lib.Is_Executable_File (Hardcoded.Alr_Session_Exec (Metafile)) then
+         Trace.Debug ("Building first session-specific alr");
+         Must_Rebuild := True;
+      elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec (Metafile), Than => Metafile) then
+         Trace.Debug ("Rebuilding currently outdated session-specific alr");
+         Must_Rebuild := True;
+      elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec (Metafile), Than => Hardcoded.Alr_Rolling_Exec) then
+         Trace.Debug ("Rebuilding older session-specific alr than rolling alr");
+         Must_Rebuild := True;
       end if;
 
-      if not Session_Is_Current then
-         Trace.Debug ("About to rebuild with new session");
-         Rebuild (Full_Index, Files.Locate_Any_Index_File);
-         Spawn.Updated_Alr_Without_Return;
+      if Must_Rebuild then
+         --  We must rebuild and respawn
+         Trace.Debug ("About to rebuild with metadata: " & Metafile);
+         Rebuild_Respawn (Metafile);
+      else
+         --  No reason to rebuild, hence we must spawn from rolling alr to session alr:
+         Spawn.Session_Alr_Without_Return (Metafile);
+
+--           Trace.Error ("No reason to rebuild, yet session status is not valid!");
+--           Trace.Debug ("Target exec  : " & Hardcoded.Alr_Session_Exec (Metafile));
+--           Trace.Debug ("Metadata file: " & Metafile);
+--           Trace.Debug ("Meta_Is_Newer: " & Boolean'(not Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec (Metafile),
+--                                                                          Than => Metafile))'Img);
+--           Trace.Debug ("Roll_Is_Newer: " & Boolean'(not Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec (Metafile),
+--                                                                          Than => Hardcoded.Alr_Rolling_Exec))'Img);
+--           raise Program_Error;
       end if;
 
-      if not Running_In_Project then
+      --  Once here, everything must be all-right
+      if Session_State /= Valid then
          raise Command_Failed;
       end if;
    end Check_Rebuild_Respawn;
@@ -119,13 +163,15 @@ package body Alr.Bootstrap is
    -- Rebuild --
    -------------
 
-   procedure Rebuild (Full_Index : Boolean; Alr_File : String := "") is
+   procedure Rebuild (Alr_File : String := "") is
       use Ada.Directories;
       use Hardcoded;
 
       Folder_To_Index : constant String := Hardcoded.Alr_Index_Folder_Absolute;
-
-      Actually_Full_Index : constant Boolean := Full_Index or else Self.Has_Full_Index;
+      Full_Index      : constant Boolean := Alr_File = "";
+      Session_Folder  : constant String := (if Alr_File /= ""
+                                            then Hardcoded.Session_Folder (Alr_File)
+                                            else Hardcoded.No_Session_Folder);
    begin
       --  Before rebuilding we need the sources to exist!
       --  Note that the first time we run after developer build, alr considers itself a release build
@@ -137,11 +183,13 @@ package body Alr.Bootstrap is
 
       --  It seems .ali files aren't enough to detect changed files under a second,
       --  So we get rid of previous ones
-      if Exists (Executable) then
-         if Exists (Executable_Bak) then
-            Delete_File (Executable_Bak);
+      if Alr_File /= "" then
+         Os_Lib.Delete_File (Hardcoded.Alr_Session_Exec (Alr_File));
+      else -- rolling exec: we must try to preserve at least a fallback copy
+         if Exists (Executable) then
+            OS_Lib.Delete_File (Executable_Bak);
+            Rename (Executable, Executable_Bak);
          end if;
-         Rename (Executable, Executable_Bak);
       end if;
 
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
@@ -154,44 +202,37 @@ package body Alr.Bootstrap is
 
       --  DELETE SESSION FOLDER TO ENSURE FRESH FILES
       --  They are going to be generated, so any leftover is unintended!
-      Ada.Directories.Delete_Tree (Hardcoded.Session_Folder);
+      if Ada.Directories.Exists (Session_Folder) then
+         Ada.Directories.Delete_Tree (Session_Folder);
+      end if;
+      OS_Lib.Create_Folder (Session_Folder);
 
       Log ("About to recompile...", Debug);
       --  This could be an alternative if we don't want to delete the current exec
       --  delay 1.0;
 
-      if Actually_Full_Index and not Full_Index then
-         Trace.Debug ("Not downgrading index although requested");
-      end if;
-
       --  INDEX FILE
-      if Actually_Full_Index then
-         --  We don't want to downgrade the index if it is already full,
-         --    at least until there's clear evidence that loading times are a problem
-
+      if Full_Index then
          Trace.Detail ("Generating index for " & Folder_To_Index);
-         Templates.Generate_Full_Index (Hardcoded.Session_Folder, Folder_To_Index);
       else
          Trace.Detail ("Using minimal index");
-         Copy_File (Alr_Default_Index_File,
-                    Hardcoded.Session_Folder / Hardcoded.Alr_Index_File_Base_Name,
-                    "mode=overwrite");
       end if;
 
       --  METADATA FILE
       if Alr_File /= "" then
-         Copy_File (Alr_File, Hardcoded.Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
-
+         Copy_File (Alr_File, Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
          Log ("Generating session for " & Alr_File, Detail);
       else
          Log ("Generating non-project session", Detail);
       end if;
 
       --  SESSION FILE
-      Templates.Generate_Session (Hardcoded.Session_Folder, Actually_Full_Index, Alr_File);
+      Templates.Generate_Session (Session_Folder, Full_Index, Alr_File);
 
       begin
-         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File, Hardcoded.Session_Folder);
+         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File,
+                         Session_Build => Alr_File /= "",
+                         Session_Path  => Session_Folder);
       exception
          when others =>
             -- Compilation failed
@@ -211,67 +252,19 @@ package body Alr.Bootstrap is
       end;
    end Rebuild;
 
-   ----------------------------------
-   -- Rebuild_With_Current_Project --
-   ----------------------------------
+   ---------------------
+   -- Rebuild_Respawn --
+   ---------------------
 
-   procedure Rebuild_With_Current_Project (Full_Index : Boolean) is
+   procedure Rebuild_Respawn (Metafile : String := "") is
    begin
-      if Running_In_Session then
-         Rebuild (Full_Index, Files.Locate_Any_Index_File);
+      Rebuild (Metafile);
+      if Metafile /= "" then
+         Spawn.Session_Alr_Without_Return (Metafile);
       else
-         Rebuild (Full_Index);
+         Spawn.Updated_Alr_Without_Return;
       end if;
-   end Rebuild_With_Current_Project;
-
-   ------------------------
-   -- Running_In_Project --
-   ------------------------
-
-   function Running_In_Project return Boolean is
-   begin
-      if not Running_In_Session then
-         Trace.Debug ("No session, rebuild needed before being in project");
-         return False;
-      elsif not Session_Is_Current then
-         Trace.Debug ("Session outdated, rebuild needed before being in project");
-         return False;
-      elsif Root.Is_Empty then
-         Trace.Warning ("No internal root project, cannot verify external");
-         return False;
-      end if;
-
-      if Root.Is_Released then
-         declare
-            Gprs : constant Utils.String_Vector := Root.Current.Release.GPR_Files (Query.Platform_Properties);
-         begin
-            for Gpr of Gprs loop
-               if not Is_Regular_File (Gpr) then
-                  Trace.Warning ("Project file " & Utils.Quote (Gpr) & " not found");
-                  return False;
-               end if;
-            end loop;
-         end;
-      end if;
-
-      return True;
-   end Running_In_Project;
-
-   ------------------------
-   -- Running_In_Session --
-   ------------------------
-
-   function Running_In_Session return Boolean is
-     (Files.Locate_Any_GPR_File > 0 and Then
-      Files.Locate_Any_Index_File /= "");
-
-   ------------------------
-   -- Session_Is_Current --
-   ------------------------
-
-   function Session_Is_Current return Boolean is
-     (Running_In_Session and Then
-      Session.Hash = Utils.Hash_File (Files.Locate_Any_Index_File));
+   end Rebuild_Respawn;
 
    -------------------
    -- Session_State --
@@ -279,16 +272,14 @@ package body Alr.Bootstrap is
 
    function Session_State return Session_States is
    begin
-      if Running_In_Session then
-         if Session_Is_Current then
-            if Running_In_Project then
-               return Valid;
-            else
-               return Erroneous;
-            end if;
+      if Self.Is_Session then
+         if Self.Matches_Session (Files.Locate_Metadata_File) then
+            return Valid;
          else
-            return Outdated;
+            return Erroneous;
          end if;
+      elsif Files.Locate_Any_GPR_File > 0 and then Files.Locate_Metadata_File /= "" then
+         return Detached;
       else
          return Outside;
       end if;
@@ -303,18 +294,16 @@ package body Alr.Bootstrap is
       type Milliseconds is delta 0.001 range 0.0 .. 24.0 * 60.0 * 60.0;
    begin
       return
-        (if Self.Is_Rolling then "rolling" else "launcher") & "-" &
+        (if Self.Is_Session then "session" else
+           (if Self.Is_Rolling then "rolling" else "launcher")) & "-" &
         (if not Self.Is_Canonical then "devel" else "release") &
         " (" &
-        (if Running_In_Session
-         then
-           (if Session_Is_Current
-            then
-              (if Root.Is_Released
-               then Root.Current.Release.Milestone.Image
-               else Root.Current.Name)
-            else "outdated")
-         else "no project") & ") (" &
+        (case Session_State is
+            when Erroneous => "erroneous session state",
+            when Outside   => "no project",
+            when Detached  => "in project",
+            when Valid     => "session up to date") &
+         ") (" &
         Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
         (if Self.Is_Bootstrap then " (bootstrap)" else "") &
         (if Self.Has_Full_Index then " (full index)" else " (minimal index)") &

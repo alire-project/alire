@@ -13,12 +13,6 @@ package Alr.Commands.Update is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
-
-   procedure Execute (From_Build : Boolean;
-                      Online     : Boolean);
-   --  From_Build is used to signal that we're expected to proceed to compile, if respawned
-   --  If Online, remote repositories will be fetched and a recompilation of alr will be triggered
-
    procedure Update_Alr;
    --  Deploy/Update alr sources if not there or outdated
 
@@ -26,7 +20,6 @@ private
 
    type Command is new Commands.Command with record
       Online     : aliased Boolean := False;
-      From_Build :         Boolean := False;
    end record;
 
 end Alr.Commands.Update;

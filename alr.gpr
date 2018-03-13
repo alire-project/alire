@@ -5,7 +5,6 @@ project Alr is
 
    for Source_Dirs use ("src", "src/os_linux");
    for Object_Dir use "obj";
-   for Exec_Dir use "bin";
    for Main use ("alr-main.adb");
 
    type Boolean is ("False", "True");
@@ -17,8 +16,10 @@ project Alr is
    -- This extra folder will contain the working root release, and the full index elaboration package
    case Selfbuild is
       when "True" =>
+         for Exec_Dir use external ("ALR_BIN", "bin");
          for Source_Dirs use Alr'Source_Dirs & (External ("ALR_SESSION", ""));
       when "False" =>
+         for Exec_Dir use "bin";
          for Source_Dirs use Alr'Source_Dirs & ("src/default_session");
    end case;
 

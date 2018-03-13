@@ -12,13 +12,16 @@ package Alr.Bootstrap is
    type Session_States is
      (Erroneous, -- Some bizarre situation
       Outside,   -- not in a project root folder
-      Outdated,  -- Running in a project folder, but hashes do not match. Internal Project irrelevant.
-      Valid      -- In a session, with matching hash, hence our internal project must match too
+      Detached,  -- In project folder, but current executable is not a session-specific one
+      Valid      -- In a session, running from the session alr, hence our internal project must match too
                  -- Also, when valid, we are in the project root!
      );
    --  Order in this enum must be in increasing level of available information
 
    function Session_State return Session_States;
+
+   function Metadata_File return String with
+     Pre => Session_State = Valid;
 
    -------------
    --  OTHER  --
@@ -31,21 +34,19 @@ package Alr.Bootstrap is
    --  Determines if we are using a rolling release.
    --  If not, and one is available, respawn.
 
-   procedure Check_Rebuild_Respawn (Full_Index : Boolean);
+   procedure Check_Rebuild_Respawn;
    --  The whole shebang for project-oriented commands:
    --    Check within project
    --    Rebuild if outdated
    --    Respawn if rebuilt
    --  Will raise if not within session
-   --  FIXME: some kind of infinite respawning prevention should be implemented here
+   --  An outdated session-specific build should never be launched
 
-   procedure Rebuild (Full_Index : Boolean;
-                      Alr_File   : String := "");
-   --  The full index is required by some commands, but it causes longer load times, so
-   --  it is activated on demand
+   procedure Rebuild (Alr_File   : String := "");
+   --  If Alr_File is given this is a session-specific build
 
-   procedure Rebuild_With_Current_Project (Full_Index : Boolean);
-   --  Rebuild, using a single project if in scope
+   procedure Rebuild_Respawn (Metafile : String := "");
+   --  Forces a rebuild and respawns, with or without session
 
    function Status_Line return String;
    --  One-liner reporting most interesting information
@@ -58,15 +59,5 @@ private
    --  During elaboration this will be updated accordingly
 
    Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies := Alire.Index.Alire.Project.Current;
-
-   function Running_In_Session return Boolean;
-   --  Being inside
-   --  Says if there is a project file within reach
-
-   function Session_Is_Current return Boolean;
-   --  If we are in a session, says if our internal session hash matches the one we are in
-
-   function Running_In_Project return Boolean;
-   --  Extra checks in a current session; failure means some unexpected situation for alire
 
 end Alr.Bootstrap;

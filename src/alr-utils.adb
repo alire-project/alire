@@ -91,6 +91,15 @@ package body Alr.Utils is
       return GNAT.SHA1.Digest (Context);
    end Hash_File;
 
+   -----------------
+   -- Hash_String --
+   -----------------
+
+   function Hash_String (Str : String) return String is
+   begin
+      return GNAT.SHA1.Digest (Str);
+   end Hash_String;
+
    -------------
    -- Replace --
    -------------

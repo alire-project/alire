@@ -1,19 +1,21 @@
---  with Hello_Alr; -- Only in real in-project builds
-
 package Alr.Session is
 
-   --  This file is used to determine the current working session (active project)
-   --  This is only a placeholder; the actual file is generated for each build
+   --  Warning: withing this file will cause the dependent file to be recompiled in every rebuild
+   --  Try to minimize dependencies (currently Alr.Self isolates them all, so is the only file rebuilt)
 
-   Hash : constant String := Bootstrap_Hash;
-   --  Hash of the project-alire.ads file.
-   --  If it does not match the one computed on the fly, it means we must recompile
+   Alr_Src_Folder : constant String  := "" with Warnings => Off;
+   --  For alr instances that are session specific, we need a way to locate the src folder
+   --    (just for the case where it is not the canonical one, that is: while developing)
 
-   --  Special values: bootstrap for a manually compiled build
-   --  Any other not a hash: default session compiled without project
+   Hash           : constant String := "bootstrap";
+   --  In the curren per-session setup, this should always match unless the dependencies files has been
+   --    tampered with in such a way that its timestamp has not been updated
 
-   Full_Index : constant Boolean := False;
+   Full_Index     : constant Boolean := False;
    --  Some commands require a full index and some others not.
    --  We use this to separate bootstrap from index status
+
+   Session_Build  : constant Boolean := False;
+   --  True in session-specific builds
 
 end Alr.Session;

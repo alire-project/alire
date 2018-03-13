@@ -5,11 +5,11 @@ with Alire.Index;
 with Alire.Projects;
 
 with Alr.Checkout;
-with Alr.Commands.Compile;
 with Alr.Hardcoded;
 with Alr.Origins;
 with Alr.Parsers;
 with Alr.Query;
+with Alr.Spawn;
 
 with Semantic_Versioning;
 
@@ -85,8 +85,6 @@ package body Alr.Commands.Get is
                   Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Name, Versions),
                                  Success,
                                  Query_Policy);
-
-      Must_Enter : Boolean;
    begin
       if not Success then
          Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
@@ -105,21 +103,14 @@ package body Alr.Commands.Get is
       end;
 
       --  Check if we are already in the fresh copy (may happen after respawning)
-      if Session_State >= Outdated then
-         if Session_State = Valid and then Name = Root.Current.Name then
-            Trace.Detail ("Already in working copy, skipping checkout");
-         else
-            Trace.Error ("Cannot get a project inside another alr session, stopping.");
-            raise Command_Failed;
-         end if;
-         Must_Enter := False;
-      else
-         Must_Enter := True;
-         Checkout.Working_Copy (Needed.Element (Rel.Name),
-                                Needed,
-                                Ada.Directories.Current_Directory);
-         --  Check out requested project under current directory
+      if Session_State = Detached then
+         Reportaise_Command_Failed ("Cannot get a project inside another alr project, stopping.");
       end if;
+
+      Checkout.Working_Copy (Needed.Element (Rel.Name),
+                             Needed,
+                             Ada.Directories.Current_Directory);
+      --  Check out requested project under current directory
 
       --  Check out rest of dependencies
       Checkout.To_Folder (Needed, Hardcoded.Projects_Folder, But => Name);
@@ -128,12 +119,9 @@ package body Alr.Commands.Get is
       if Cmd.Compile then
          declare
             use OS_Lib;
-            Guard : Folder_Guard :=
-                      (if Must_Enter
-                       then Enter_Folder (Rel.Unique_Folder)
-                       else Stay_In_Current_Folder) with Unreferenced;
+            Guard : Folder_Guard := Enter_Folder (Rel.Unique_Folder) with Unreferenced;
          begin
-            Compile.Execute;
+            Spawn.Alr (Cmd_Compile);
          end;
       end if;
    exception
@@ -158,11 +146,11 @@ package body Alr.Commands.Get is
             raise Wrong_Command_Arguments with "One project to get expected";
          end if;
       else -- asking for info, we could return the current project
-         --  We have internal data, but is valid?
+         --  We have internal data, but is it valid?
          if Num_Arguments = 0 then
             case Bootstrap.Session_State is
-               when Outdated =>
-                  Bootstrap.Check_Rebuild_Respawn (Full_Index => True);
+               when Detached =>
+                  Bootstrap.Check_Rebuild_Respawn;
                when Valid =>
                   null; -- Proceed
                when others =>
@@ -170,8 +158,6 @@ package body Alr.Commands.Get is
             end case;
          end if;
       end if;
-
-      Requires_Full_Index;
 
       declare
          Allowed : constant Parsers.Allowed_Milestones :=
@@ -195,6 +181,7 @@ package body Alr.Commands.Get is
          if Cmd.Info or else Cmd.Native then
             Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native, Priv => Cmd.Priv);
          else
+            Requires_Full_Index;
             Retrieve (Cmd, Allowed.Project, Allowed.Versions);
          end if;
       exception

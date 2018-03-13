@@ -75,11 +75,12 @@ package body Alr.Checkout is
          declare
             use OS_Lib;
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
-            Index_File : constant String := Files.Locate_Index_File (Project);
+            Index_File : constant String := Files.Locate_Given_Metadata_File (Project);
          begin
             if Index_File /= "" then
                Trace.Detail ("Renaming in-source alr file: " & Index_File);
-               Ada.Directories.Rename (Index_File, Index_File & ".orig");
+               Ada.Directories.Copy_File (Index_File, Index_File & ".orig", "mode=overwrite");
+               Ada.Directories.Delete_File (Index_File);
             end if;
 
             Templates.Generate_Prj_Alr (Deps, Alire.Roots.New_Root (Root), Templates.Unknown);

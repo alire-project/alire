@@ -12,7 +12,7 @@ package body Alr.Commands.Clean is
    overriding procedure Execute (Cmd : in out Command) is
       Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
-      if not Cmd.Cache or else Bootstrap.Session_State >= Outdated then
+      if not Cmd.Cache or else Bootstrap.Session_State >= Detached then
          Requires_Project;
       end if;
 

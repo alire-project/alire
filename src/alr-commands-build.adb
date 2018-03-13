@@ -1,5 +1,4 @@
-with Alr.Commands.Compile;
-with Alr.Commands.Update;
+with Alr.Spawn;
 
 package body Alr.Commands.Build is
 
@@ -9,9 +8,8 @@ package body Alr.Commands.Build is
 
    procedure Execute (Online : Boolean) is
    begin
-      Update.Execute (From_Build => True,
-                      Online    => Online);
-      Compile.Execute;
+      Spawn.Alr (Cmd_Update, Args => (if Online then "--online" else ""));
+      Spawn.Alr (Cmd_Compile);
    end Execute;
 
    -------------

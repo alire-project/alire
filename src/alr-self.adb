@@ -1,6 +1,7 @@
 with Ada.Exceptions;
 
 with Alr.Session;
+with Alr.Utils;
 
 package body Alr.Self is
 
@@ -50,12 +51,31 @@ package body Alr.Self is
    end Is_Rolling;
 
    ----------------
+   -- Is_Session --
+   ----------------
+
+   function Is_Session return Boolean is (Session.Session_Build);
+
+   ---------------------
+   -- Matches_Session --
+   ---------------------
+
+   function Matches_Session (Metafile : String) return Boolean is
+      (Session.Hash = Utils.Hash_File (Metafile));
+
+   ----------------
    -- Src_Folder --
    ----------------
 
    function Src_Folder return String is
-     (if Is_Rolling
-      then Parent (Parent (OS.Own_Executable))
-      else Canonical_Folder);
+   begin
+      if Session.Alr_Src_Folder /= "" then
+         return Session.Alr_Src_Folder;
+      elsif Is_Rolling Then
+         return Parent (Parent (OS.Own_Executable));
+      else
+         return Canonical_Folder;
+      end if;
+   end Src_Folder;
 
 end Alr.Self;
