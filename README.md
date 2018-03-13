@@ -101,4 +101,4 @@ By default `alr` is quite terse and will hide the output of subprocesses, mostly
 
 ## Further reading ##
 
-More comprehensive documentation is forthcoming, so stay tuned! Meanwhile, you can check the draft paper in the `doc` folder for more details about `alr` internals, or inspect index files to get an idea of how projects are included into the catalog.
+More comprehensive documentation is forthcoming, so stay tuned! Meanwhile, you can check the [draft paper](https://github.com/alire-project/alr/blob/master/doc/2018-03.alr-draft.pdf) in the `doc` folder for more details about `alr` internals, or inspect [index files](https://github.com/alire-project/alire/tree/master/index) to get an idea of how projects are included into the catalog.
