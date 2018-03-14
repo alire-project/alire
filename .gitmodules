@@ -1,3 +1,3 @@
 [submodule "deps/alire"]
 	path = deps/alire
-	url = git@github.com:alire-project/alire.git
+	url = https://github.com/alire-project/alire.git
