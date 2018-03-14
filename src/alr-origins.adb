@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Hooks;
 with Alire.Platforms;
 
 with Alr.Interactive;
@@ -107,4 +108,9 @@ package body Alr.Origins is
          raise Command_Failed;
    end Install_Native;
 
+   function Native_Version (Orig : Alire.Origins.Origin) return String is
+      ("native");
+
+begin
+   Alire.Hooks.Version_Getter_Hook := Native_Version'Access;
 end Alr.Origins;
