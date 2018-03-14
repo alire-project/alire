@@ -3,8 +3,6 @@ with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Containers;
 with Ada.Exceptions;
-with Ada.Strings;
-with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with Alire;
@@ -256,7 +254,6 @@ package body Alr.OS_Lib is
    function Spawn_With_Progress (Command   : String;
                                  Arguments : String) return Integer
    is
-      use Ada.Strings.Unbounded;
       use Ada.Text_IO;
       use GNAT.Expect;
 
