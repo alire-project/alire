@@ -89,7 +89,7 @@ private
      (case System.Word_Size is
          when 32 => Alire.Platforms.Bits_32,
          when 64 => Alire.Platforms.Bits_64,
-         when others => Alire.Platforms.Unsupported);
+         when others => Alire.Platforms.Bits_Unknown);
 
    Linux_Self_Exec : constant String := "/proc/self/exe";
 

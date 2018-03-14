@@ -77,25 +77,45 @@ function fetch_and_compile() {
     gprbuild -j0 -p -XSELFBUILD=False -P $alire_src/alr_env.gpr
 }
 
+function check_folder_writable() {
+    if ! [ -d "$1" ]; then
+        echo $1 is not a folder!
+        return 1
+    elif !(touch "$1"/.alrfolder 2>/dev/null && rm -f "$1"/.alrfolder 2>/dev/null); then
+        echo $1 is not writable!
+        return 1
+    fi
+    return 0
+}
+
 function do_install() {
     cat <<EOF
 
 Compilation successful. Please enter a writable folder in which
 the alr executable will be installed, preferably in your path.
-Do not use substitutions like ~ or \$HOME:
 
-Enter installation folder:
 EOF
-    while [[ "${bin_folder:-}" == "" ]]; do
-        read bin_folder
+    
+    while :; do
+        echo Enter installation folder:
+        bin_folder=""
+        while [[ "${bin_folder:-}" == "" ]]; do
+            read bin_folder
+        done
+
+        bin_folder=`eval echo $bin_folder`
+        check_folder_writable "$bin_folder" || continue
+
+        echo ' '
+        echo Ready to install alr in $bin_folder
+        echo Press Y to proceed, any other key to entry another path, or Ctrl-C to stop now.
+        read -rsn1 proceed
+        [ "$proceed" = "y" ] && break
+        [ "$proceed" = "Y" ] && break
     done
     
     echo ' '
-    echo Ready to install alr in $bin_folder
-    echo Press enter to proceed or Ctrl-C to stop now.
-    read
-    
-    cp -fv $alire_bin $bin_folder/alr
+    cp -fv "$alire_bin" "$bin_folder"/alr
 }
 
 function saluton() {

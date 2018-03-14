@@ -55,9 +55,9 @@ package body Alr.OS is
 
             Trace.Debug ("Found unsupported distro: " & Release (1));
 
-            Cached_Distro := Unsupported;
+            Cached_Distro := Distro_Unknown;
             Distro_Cached := True;
-            return Unsupported;
+            return Distro_Unknown;
          end;
       end if;
    end Distribution;
@@ -97,8 +97,8 @@ package body Alr.OS is
             Trace.Debug ("Found unsupported version: " & Release (1));
 
             Version_Cached := True;
-            Cached_Version := Unsupported;
-            return Unsupported;
+            Cached_Version := Distro_Version_Unsupported;
+            return Distro_Version_Unsupported;
          end;
       end if;
    end Version;

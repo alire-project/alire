@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Platforms;
 
 with Alr.Interactive;
+with Alr.Origins.Git;
 with Alr.OS_Lib;
 with Alr.OS;
 with Alr.Spawn;
@@ -13,6 +14,22 @@ with GNAT.IO;
 package body Alr.Origins is
 
    use all type Alire.Origins.Kinds;
+
+   function New_Origin (From : Alire.Origins.Origin) return Origin'Class is
+   begin
+      case From.Kind is
+         when Alire.Origins.Git =>
+            declare
+               O : Alr.Origins.Git.Origin;
+            begin
+            O.Base := From;
+               return O;
+            end;
+         when others =>
+            raise Program_Error;
+      end case;
+   end New_Origin;
+
    use all type Alire.Platforms.Package_Managers;
 
    type Fetcher is access procedure (From : Alire.Origins.Origin; Folder : String);
@@ -110,24 +127,6 @@ package body Alr.Origins is
       raise Program_Error with "Should never be requested";
    end Fail;
 
-   ---------
-   -- Git --
-   ---------
-
-   procedure Git (From : Alire.Origins.Origin; Folder : String) is
-   begin
-      Trace.Detail ("Checking out: " & From.URL);
-      Spawn.Command ("git", "clone -n -q --progress " & From.URL & " " & Folder);
-      declare
-         Guard : constant OS_Lib.Folder_Guard := Os_Lib.Enter_Folder (Folder) with Unreferenced;
-      begin
-         Spawn.Command ("git", "reset --hard -q " & From.Commit);
-      end;
-   exception
-      when others =>
-         raise Command_Failed;
-   end Git;
-
    --------
    -- Hg --
    --------
@@ -143,9 +142,9 @@ package body Alr.Origins is
 
    Fetchers : constant array (Alire.Origins.Kinds) of Fetcher :=
                 (Filesystem => Fail'Access,
-                 Git        => Git'Access,
                  Hg         => Hg'Access,
-                 Native     => Native'Access);
+                 Native     => Native'Access,
+                 others     => null);
 
    -----------
    -- Fetch --
