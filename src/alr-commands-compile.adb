@@ -18,7 +18,7 @@ package body Alr.Commands.Compile is
          Spawn.Gprbuild (Root.Build_File,
                          Session_Build => False,
                          Extra_Args    => Scenario.As_Command_Line);
-         Trace.Info ("Compilation finished successfully");
+         Trace.Detail ("Compilation finished successfully");
          declare
             Execs : constant Utils.String_Vector :=
                       Files.Locate_File_Under (".", Root.Current.Default_Executable, 2);
