@@ -81,7 +81,7 @@ private
    function Is_Available (R : Alire.Index.Release) return Boolean is
      (R.Available.Check (Platform_Properties) and then
           (if R.Origin.Is_Native
-           then Origins.Native_Package_Exists (R.Origin.Package_Name (OS.Distribution))));
+           then Origins.New_Origin (R.Origin).Exists));
    --  R.Available requisites are checked against platform properties
    --  Then, if the origin is native, which implies conditional availability too, this is checked
    --  NOTE: this does not check that dependencies can be resolved!

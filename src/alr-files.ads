@@ -8,7 +8,7 @@ package Alr.Files is
 
    function Locate_File_Under (Folder    : String;
                                Name      : String;
-                               Max_Depth : Natural := 0) return Utils.String_Vector;
+                               Max_Depth : Natural := Natural'Last) return Utils.String_Vector;
    --  Recursively search for a file
    --  Depth 0 means given folder only
    --  Returns all instances found

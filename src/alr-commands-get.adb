@@ -97,8 +97,8 @@ package body Alr.Commands.Get is
       begin
          --  If dependencies succeeded then the release is available!
          if R.Origin.Is_Native then
-            Origins.Fetch_Native (R.Origin);
-            return; -- EARLY EXIT FOR NATIVE PACKAGE
+            Origins.Install_Native (R.Origin);
+            return;
          end if;
       end;
 

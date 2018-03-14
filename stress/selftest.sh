@@ -10,7 +10,7 @@ trap 'echo "Interrupted" >&2 ; exit 1; ln -sf ~/local/alr/bin/alr;' INT
 
 mkdir -p ~/.config/alire
 
-version=${1:-release}
+version=${1:-working}
 
 if [[ "$version" == "working" ]]; then
     echo Testing WORKING version, press enter

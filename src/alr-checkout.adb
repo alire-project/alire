@@ -27,8 +27,8 @@ package body Alr.Checkout is
          Trace.Detail ("Skipping checkout of already available " & R.Milestone.Image);
       else
          Was_There := False;
-         Trace.Detail ("About to check out " & R.Milestone.Image);
-         Alr.Origins.Fetch (R.Origin, Folder);
+         Trace.Detail ("About to deploy " & R.Milestone.Image);
+         Alr.Origins.Fetch_Or_Install (R.Origin, Folder);
       end if;
    end Checkout;
 

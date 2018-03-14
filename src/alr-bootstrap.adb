@@ -202,10 +202,6 @@ package body Alr.Bootstrap is
          Commands.Update.Update_Alr;
       end if;
 
-      --  It seems .ali files aren't enough to detect changed files under a second,
-      --  So we get rid of previous ones. The critical one is alr-session.ads,
-      --    removing its ali/o ensures proper recompilation of everything else.
-      --  prj_alr.ads is still doubt
       if Alr_File = "" then  -- rolling exec: we must try to preserve at least a fallback copy
          if Exists (Executable) then
             Copy_File (Executable, Executable_Bak, "mode=overwrite");
@@ -214,10 +210,13 @@ package body Alr.Bootstrap is
 
       --  Empirically determined: below second consecutive compilations will generate
       --    corrupted binaries unless these are forced to be rebuilt:
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
+      --  It is NOT enough to remove alr-session.{o,ali} only
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.o");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.o");
+      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.o");
       if Alr_File /= "" then
-         OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".ali"));
          OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".o"));
       end if;
 

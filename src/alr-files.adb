@@ -16,7 +16,9 @@ package body Alr.Files is
    -- Locate_File_Under --
    -----------------------
 
-   function Locate_File_Under (Folder : String; Name : String; Max_Depth : Natural := 0) return Utils.String_Vector is
+   function Locate_File_Under (Folder    : String;
+                               Name      : String;
+                               Max_Depth : Natural := Natural'Last) return Utils.String_Vector is
       Found : Utils.String_Vector;
 
       procedure Locate (Folder : String; Current_Depth : Natural; Max_Depth : Natural) is

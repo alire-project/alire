@@ -21,7 +21,7 @@ package body Alr.Commands.Compile is
          Trace.Detail ("Compilation finished successfully");
          declare
             Execs : constant Utils.String_Vector :=
-                      Files.Locate_File_Under (".", Root.Current.Default_Executable, 2);
+                      Files.Locate_File_Under (".", Root.Current.Default_Executable);
          begin
             case Execs.Count is
                when 0 =>
