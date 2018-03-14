@@ -18,6 +18,7 @@ package body Alr.Self is
    ------------------
 
    function Is_Bootstrap return Boolean is
+      pragma Warnings (Off); -- Once strings have different lenght, they generate an inconditional warning
    begin
       return Session.Hash = Bootstrap_Hash;
    end Is_Bootstrap;
@@ -66,6 +67,7 @@ package body Alr.Self is
    ----------------
 
    function Src_Folder return String is
+      pragma Warnings (Off); -- Once strings have different lenght, they generate an inconditional warning
    begin
       if Session.Alr_Src_Folder /= "" then
          return Session.Alr_Src_Folder;

@@ -203,25 +203,28 @@ package body Alr.Bootstrap is
       end if;
 
       --  It seems .ali files aren't enough to detect changed files under a second,
-      --  So we get rid of previous ones
+      --  So we get rid of previous ones. The critical one is alr-session.ads,
+      --    removing its ali/o ensures proper recompilation of everything else
       if Alr_File /= "" then
-         Os_Lib.Delete_File (Hardcoded.Alr_Session_Exec (Alr_File));
+         --           Os_Lib.Delete_File (Hardcoded.Alr_Session_Exec (Alr_File));
+         null;
       else -- rolling exec: we must try to preserve at least a fallback copy
          if Exists (Executable) then
-            OS_Lib.Delete_File (Executable_Bak);
-            Rename (Executable, Executable_Bak);
+--              OS_Lib.Delete_File (Executable_Bak);
+--              Rename (Executable, Executable_Bak);
+            Copy_File (Executable, Executable_Bak, "mode=overwrite");
          end if;
       end if;
 
       --  Empirically determined: below second consecutive compilations will generate
       --    corrupted binaries unless these are forced to be recreated:
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.ali");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.o");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.ali");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.o");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.ali");
-      OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.o");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.bexch");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.ali");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-main.o");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.ali");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.o");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.ali");
+--        OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.ali");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.o");
 

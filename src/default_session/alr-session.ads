@@ -1,33 +1,26 @@
 package Alr.Session is
 
-   --  NOTE: ALIASED & VOLATILE IS NECESSARY TO AVOID OPTIMIZATIONS
-   --  Otherwise, the reuse of object code among alr builds can cause improper behavior
-
-   --  Still, I'm seeing warnings about expressions being always true/false about these...
-   --  Not sure what's going on
-
    --  Warning: withing this file will cause the dependent file to be recompiled in every rebuild
    --  Try to minimize dependencies (currently Alr.Self isolates them all, so is the only file rebuilt)
 
 --  private -- To prevent use besides from Alr.Self
 
-   --  Making this private was ideal, but for some reason making Self a child of Session
-   --  causes gnat to recompile a lot of files every time, half of alr.
-   --  So it remains an open risk to remember: don't with Session but Self
+   --  Making this private was ideal, but that causes the recompilation of every file depending
+   --  on Alr.Session.Child, since it has visibility of the private part. So, in all, it's worse.
 
-   Alr_Src_Folder : aliased String  := "" with Volatile;
+   Alr_Src_Folder : constant String  := "";
    --  For alr instances that are session specific, we need a way to locate the src folder
    --    (just for the case where it is not the canonical one, that is: while developing)
 
-   Hash           : aliased String := "bootstrap" with Volatile;
+   Hash           : constant String := "bootstrap";
    --  In the curren per-session setup, this should always match unless the dependencies files has been
    --    tampered with in such a way that its timestamp has not been updated
 
-   Full_Index     : aliased Boolean := False with Volatile;
+   Full_Index     : constant Boolean := False;
    --  Some commands require a full index and some others not.
    --  We use this to separate bootstrap from index status
 
-   Session_Build  : aliased Boolean := False with Volatile;
+   Session_Build  : constant Boolean := False;
    --  True in session-specific builds
 
 end Alr.Session;
