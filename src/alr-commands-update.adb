@@ -2,6 +2,7 @@ with Alr.Bootstrap;
 with Alr.Checkout;
 with Alr.Files;
 with Alr.Hardcoded;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
 with Alr.Templates;
@@ -41,7 +42,7 @@ package body Alr.Commands.Update is
       declare
          Success : Boolean;
          Needed  : constant Query.Instance :=
-                     Query.Resolve (Root.Current.Dependencies.Evaluate (Query.Platform_Properties),
+                     Query.Resolve (Root.Current.Dependencies.Evaluate (Platform.Properties),
                                     Success,
                                     Query_Policy);
       begin

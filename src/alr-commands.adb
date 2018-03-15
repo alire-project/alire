@@ -25,7 +25,7 @@ with Alr.Exceptions;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Interactive;
-with Alr.OS;
+with Alr.Platforms.Current;
 with Alr.Self;
 --  with Alr.Session;
 with Alr.Templates;
@@ -176,8 +176,8 @@ package body Alr.Commands is
 
    procedure Create_Alire_Folders is
    begin
-      OS_Lib.Create_Folder (OS.Config_Folder);
-      OS_Lib.Create_Folder (OS.Cache_Folder);
+      OS_Lib.Create_Folder (Platforms.Current.Instance.Config_Folder);
+      OS_Lib.Create_Folder (Platforms.Current.Instance.Cache_Folder);
       OS_Lib.Create_Folder (Hardcoded.Projects_Folder);
    end Create_Alire_Folders;
 

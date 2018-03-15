@@ -1,4 +1,5 @@
 with Alr.Files;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Templates;
 
@@ -19,7 +20,7 @@ package body Alr.Commands.Pin is
          Index_File : constant String := Files.Locate_Given_Metadata_File (Root.Image);
          Success    :          Boolean;
          Deps       : constant Query.Instance :=
-                        Query.Resolve (Root.Current.Dependencies.Evaluate (Query.Platform_Properties),
+                        Query.Resolve (Root.Current.Dependencies.Evaluate (Platform.Properties),
                                        Success,
                                        Query_Policy);
       begin

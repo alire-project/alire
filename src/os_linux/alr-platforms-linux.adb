@@ -1,9 +1,10 @@
+with Alr.Origins;
 with Alr.OS_Lib;
 
 with Interfaces.C;
 with Interfaces.C.Strings;
 
-package body Alr.OS is
+package body Alr.Platforms.Linux is
 
    use Alr.OS_Lib.Paths;
 
@@ -11,21 +12,17 @@ package body Alr.OS is
    -- Cache_Folder --
    ------------------
 
-   function Cache_Folder return String is
-   begin
-      return OS_Lib.Getenv ("XDG_CACHE_HOME",
-                            Default => OS_Lib.Getenv ("HOME") / ".cache" / "alire");
-   end Cache_Folder;
+   function Cache_Folder (This : Linux_Variant) return String is
+     (OS_Lib.Getenv ("XDG_CACHE_HOME",
+                     Default => OS_Lib.Getenv ("HOME") / ".cache" / "alire"));
 
    -------------------
    -- Config_Folder --
    -------------------
 
-   function Config_Folder return String is
-   begin
-      return OS_Lib.Getenv ("XDG_CONFIG_HOME",
-                            Default => OS_Lib.Getenv ("HOME") / ".config" / "alire");
-   end Config_Folder;
+   function Config_Folder (This : Linux_Variant) return String is
+     (OS_Lib.Getenv ("XDG_CONFIG_HOME",
+                     Default => OS_Lib.Getenv ("HOME") / ".config" / "alire"));
 
    ------------------
    -- Distribution --
@@ -34,7 +31,8 @@ package body Alr.OS is
    Cached_Distro : Alire.Platforms.Distributions;
    Distro_Cached : Boolean := False;
 
-   function Distribution return Alire.Platforms.Distributions is
+   function Distribution (This : Linux_Variant) return Alire.Platforms.Distributions is
+      pragma Unreferenced (This);
    begin
       if Distro_Cached then
          return Cached_Distro;
@@ -62,20 +60,15 @@ package body Alr.OS is
       end if;
    end Distribution;
 
-   ----------------------
-   -- Operating_System --
-   ----------------------
-
-   function Operating_System return Alire.Platforms.Operating_Systems is (Alire.Platforms.GNU_Linux);
-
-   -------------
-   -- Version --
-   -------------
+   --------------------
+   -- Distro_Version --
+   --------------------
 
    Cached_Version : Alire.Platforms.Versions;
    Version_Cached : Boolean := False;
 
-   function Version return Alire.Platforms.Versions is
+   function Distro_Version (This : Linux_Variant) return Alire.Platforms.Versions is
+      pragma Unreferenced (This);
    begin
       if Version_Cached then
          return Cached_Version;
@@ -101,14 +94,22 @@ package body Alr.OS is
             return Distro_Version_Unsupported;
          end;
       end if;
-   end Version;
+   end Distro_Version;
+
+   ----------------------
+   -- Operating_System --
+   ----------------------
+
+   function Operating_System (This : Linux_Variant) return Alire.Platforms.Operating_Systems is
+      (Alire.Platforms.GNU_Linux);
 
    --------------------
    -- Own_Executable --
    --------------------
 
-   function Own_Executable return String is
-      -- (int buflen, char *buffer, int *len)
+   function Own_Executable (This : Linux_Variant) return String is
+      pragma Unreferenced (This);
+   -- (int buflen, char *buffer, int *len)
       use Interfaces;
       use type C.Size_T;
 
@@ -133,4 +134,11 @@ package body Alr.OS is
       return C.To_Ada (Buffer (Buffer'First .. Buffer'First + Used - 1), Trim_Nul => False);
    end Own_Executable;
 
-end Alr.OS;
+   ---------------------
+   -- Package_Version --
+   ---------------------
+
+   function Package_Version (This : Linux_Variant; Origin : Alire.Origins.Origin) return String is
+     (Alr.Origins.New_Origin (Origin).Native_Version);
+
+end Alr.Platforms.Linux;

@@ -6,10 +6,10 @@ with Alire.Index;
 
 with Alr.Files;
 with Alr.Interactive;
-with Alr.OS;
+with Alr.Commands.Version;
+with Alr.Platform;
 with Alr.OS_Lib;
 with Alr.Parsers;
-with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
 with Alr.Utils;
@@ -32,13 +32,13 @@ package body Alr.Commands.Test is
       declare
          Guard : constant Folder_Guard := Enter_Folder (R.Unique_Folder) with Unreferenced;
       begin
-         for Gpr of R.Project_Files (Query.Platform_Properties) loop
+         for Gpr of R.Project_Files (Platform.Properties) loop
             declare
                use OS_Lib.Paths;
 
                Found : Boolean := OS_Lib.Is_Regular_File (Gpr); -- Directly in root folder
             begin
-               for Path of R.Labeled_Properties (Query.Platform_Properties, GPR_Path) loop
+               for Path of R.Labeled_Properties (Platform.Properties, GPR_Path) loop
                   exit when Found;
 
                   Found := OS_Lib.Is_Regular_File (Path / Gpr);
@@ -53,7 +53,7 @@ package body Alr.Commands.Test is
       end;
 
       --  Generated executables
-      for Exe of R.Executables (Query.Platform_Properties) loop
+      for Exe of R.Executables (Platform.Properties) loop
          if Files.Locate_File_Under (Folder    => R.Unique_Folder,
                                      Name      => Exe,
                                      Max_Depth => Natural'Last).Is_Empty then
@@ -97,7 +97,7 @@ package body Alr.Commands.Test is
                 Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch))) &
                 ".txt");
 
-      Put_Line (File, "os-fingerprint:" & OS.Fingerprint);
+      Put_Line (File, "os-fingerprint:" & Version.Fingerprint);
 
       for R of Releases loop
          Trace.Info ("PASS:" & Passed'Img &

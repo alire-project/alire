@@ -97,7 +97,7 @@ package body Alr.Templates is
    procedure Generate_Agg_Gpr (Root : Alire.Roots.Root) is
       Success : Boolean;
       Needed  : constant Query.Instance :=
-                  Query.Resolve (Root.Dependencies.Evaluate (Query.Platform_Properties),
+                  Query.Resolve (Root.Dependencies.Evaluate (Platform.Properties),
                                  Success,
                                  Commands.Query_Policy);
    begin
@@ -129,7 +129,7 @@ package body Alr.Templates is
       All_Paths : Utils.String_Vector;
    begin
       if Root.Is_Released then
-         GPR_Files := Root.Release.GPR_Files (Query.Platform_Properties);
+         GPR_Files := Root.Release.GPR_Files (Platform.Properties);
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else

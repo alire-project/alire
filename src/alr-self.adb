@@ -28,7 +28,7 @@ package body Alr.Self is
    ------------------
 
    function Is_Canonical return Boolean is
-      (Is_Rolling and then Src_Folder = OS.Config_Folder / "alr");
+      (Is_Rolling and then Src_Folder = Platforms.Current.Instance.Config_Folder / "alr");
    --  Master check that says if we are running a canonically-built alr, or some other
 
    ----------------
@@ -39,8 +39,8 @@ package body Alr.Self is
       use Ada.Directories;
    begin
       return
-        Simple_Name (Parent (OS.Own_Executable)) = "bin" and then
-        Exists (Parent (Parent (OS.Own_Executable)) / "alr_env.gpr");
+        Simple_Name (Parent (Platforms.Current.Instance.Own_Executable)) = "bin" and then
+        Exists (Parent (Parent (Platforms.Current.Instance.Own_Executable)) / "alr_env.gpr");
    exception
       when E : others =>
          Trace.Debug ("Exception while trying to detect alr src folder: " &
@@ -72,7 +72,7 @@ package body Alr.Self is
       if Session.Alr_Src_Folder /= "" then
          return Session.Alr_Src_Folder;
       elsif Is_Rolling Then
-         return Parent (Parent (OS.Own_Executable));
+         return Parent (Parent (Platforms.Current.Instance.Own_Executable));
       else
          return Canonical_Folder;
       end if;

@@ -7,6 +7,7 @@ with Alire.Roots;
 with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Templates;
 with Alr.Utils;
@@ -55,7 +56,7 @@ package body Alr.Commands.Init is
 
          Success     : Boolean;
          Depends     : constant Query.Instance :=
-                         Query.Resolve (New_Root.Dependencies.Evaluate (Query.Platform_Properties),
+                         Query.Resolve (New_Root.Dependencies.Evaluate (Platform.Properties),
                                         Success,
                                         Query_Policy);
       begin

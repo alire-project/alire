@@ -1,13 +1,12 @@
 with Ada.Directories;
 
-with Alire.Hooks;
 with Alire.Platforms;
 
 with Alr.Interactive;
 with Alr.Origins.Apt;
 with Alr.Origins.Git;
 with Alr.Origins.Hg;
-with Alr.OS;
+with Alr.Platforms.Current;
 
 with GNAT.IO;
 
@@ -29,7 +28,7 @@ package body Alr.Origins is
             return Hg.Origin'(Origin'(Base => From) with null record);
 
          when Alire.Origins.Native =>
-            case Alire.Platforms.Package_Manager (OS.Distribution) is
+            case Alire.Platforms.Package_Manager (Platforms.Current.Instance.Distribution) is
                when Alire.Platforms.Apt =>
                   return Apt.Origin'(Origin'(Base => From) with null record);
 
@@ -79,7 +78,7 @@ package body Alr.Origins is
    procedure Install_Warning (From : Origin'Class) is
       use GNAT.IO;
 
-      Native_Name : constant String := From.Base.Package_Name (OS.Distribution);
+      Native_Name : constant String := From.Base.Package_Name (Platforms.Current.Instance.Distribution);
    begin
       if From.Already_Installed then
          Trace.Detail ("Package " & Native_Name & " is already installed");
@@ -104,17 +103,8 @@ package body Alr.Origins is
       Orig.Install;
    exception
       when others =>
-         Trace.Error ("Installation of " & From.Package_Name (OS.Distribution) & " failed");
+         Trace.Error ("Installation of " & From.Package_Name (Platforms.Current.Instance.Distribution) & " failed");
          raise Command_Failed;
    end Install_Native;
 
-   --------------------
-   -- Native_Version --
-   --------------------
-
-   function Native_Version (Orig : Alire.Origins.Origin) return String is
-      (New_Origin (Orig).Native_Version);
-
-begin
-   Alire.Hooks.Version_Getter := Native_Version'Access;
 end Alr.Origins;

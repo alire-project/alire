@@ -17,7 +17,8 @@ package body Alr.Hardcoded is
             use Ada.Directories;
 
             Base : constant String := Containing_Directory (Full_Name (Metafile));
-            Path : constant String := OS.Cache_Folder / "sessions" / OS.Compiler'Img /
+            Path : constant String := Platforms.Current.Instance.Cache_Folder / "sessions" /
+                                      Platforms.Compiler'Img /
                                       Utils.Hash_String (Base) & "_" & Base_Name (Metafile);
             --  FIXME: right now there are no sessions, only this one for everything
             --  Not a problem as long as alr remains an interactive, single-user tool

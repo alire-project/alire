@@ -1,11 +1,11 @@
+with Ada.Directories;
+
 with Alire;
 
 with Alr.Defaults;
+with Alr.Platforms;
+with Alr.Platforms.Current;
 with Alr.Self;
-
-private with Ada.Directories;
-
-private with Alr.OS;
 
 package Alr.Hardcoded is
 
@@ -16,7 +16,7 @@ package Alr.Hardcoded is
    Alr_Branch : constant String := "master";
    --  For initial checkouts
 
-   Alr_Canonical_Folder : String renames Self.Canonical_Folder;
+   function Alr_Canonical_Folder return String renames Self.Canonical_Folder;
    --  Sources when normally installed
 
    Alr_Child_Flag : constant String;
@@ -35,7 +35,7 @@ package Alr.Hardcoded is
    --  Path to folder containing all release indexing specification files
 
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
-   --  Repository checked out for self-upgrade
+   --  RepPlatforms.Currentitory checked out for self-upgrade
 
    Alr_Rolling_Exec : constant String;
    --  Name of the rolling executable, "alr", with source path, for the detected src folder
@@ -105,7 +105,7 @@ private
 
    Alr_Rolling_Exec : constant String := Alr_Src_Folder / "bin" / "alr";
 
-   Native_Package_List : constant String := OS.Config_Folder / "native_packages.txt";
+   Native_Package_List : constant String := Platforms.Current.Instance.Config_Folder / "native_packages.txt";
 
    Scripts_Apt_Detect : constant String := Alr_Src_Folder / "scripts" / "aptdetect";
 
@@ -121,7 +121,7 @@ private
      (Project & "_alr.ads");
 
    function Alr_Is_Canonical return Boolean is
-     (OS.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
+     (Platforms.Current.Instance.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
 
    function Alr_Session_Exec (Metafile : String) return String is
      (Session_Folder (Metafile) / "alr");
@@ -130,9 +130,9 @@ private
      (Project & "_alr.gpr");
 
    function No_Session_Folder return String is
-      (OS.Cache_Folder / "sessions" / OS.Compiler'Img / "no_session");
+      (Platforms.Current.Instance.Cache_Folder / "sessions" / Platforms.Compiler'Img / "no_session");
 
    function Projects_Folder return String is
-     (OS.Cache_Folder / "projects" / OS.Compiler'Img);
+     (Platforms.Current.Instance.Cache_Folder / "projects" / Platforms.Compiler'Img);
 
 end Alr.Hardcoded;

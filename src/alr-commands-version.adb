@@ -2,9 +2,7 @@ with Alire.Properties;
 
 with Alr.Files;
 with Alr.Hardcoded;
-with Alr.OS;
 with Alr.OS_Lib;
---  with Alr.Session;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -55,7 +53,7 @@ package body Alr.Commands.Version is
          end if;
       end;
 
-      Log ("alr executable launched from " & OS.Own_Executable, Always);
+      Log ("alr executable launched from " & Platforms.Current.Instance.Own_Executable, Always);
       Log ("alr rolling source folder is " & Hardcoded.Alr_Src_Folder, Always);
 
       Log ("alr compiled on [" &
@@ -71,9 +69,9 @@ package body Alr.Commands.Version is
          OS_Lib.Spawn_Raw (Hardcoded.Scripts_Version);
       end;
 
-      Trace.Always ("platform fingerprint: " & OS.Fingerprint);
+      Trace.Always ("platform fingerprint: " & Version.Fingerprint);
       Put ("platform properties:");
-      for Prop of OS.Properties loop
+      for Prop of Platforms.Basic_Properties loop
          Put (" " & Prop.Image);
       end loop;
       New_Line;

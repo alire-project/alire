@@ -1,5 +1,6 @@
 with Alr.Bootstrap;
 with Alr.Files;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
 with Alr.Templates;
@@ -46,7 +47,7 @@ package body Alr.Commands.Dev is
 
          Ok    : Boolean := False;
          Deps  : constant Query.Instance :=
-                   Query.Resolve (Root.Current.Dependencies.Evaluate (Query.Platform_Properties),
+                   Query.Resolve (Root.Current.Dependencies.Evaluate (Platform.Properties),
                                   Ok,
                                   Query_Policy);
       begin

@@ -8,6 +8,7 @@ with Alr.Checkout;
 with Alr.Hardcoded;
 with Alr.Origins;
 with Alr.Parsers;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
 
@@ -46,7 +47,7 @@ package body Alr.Commands.Get is
          New_Line;
 
          if Native then
-            Rel.Whenever (Query.Platform_Properties).Print (Private_Too => Priv);
+            Rel.Whenever (Platform.Properties).Print (Private_Too => Priv);
          else
             Rel.Print (Private_Too => Priv);
          end if;

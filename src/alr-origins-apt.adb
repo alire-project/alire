@@ -1,5 +1,5 @@
-with Alr.OS;
 with Alr.OS_Lib;
+with Alr.Platforms.Current;
 with Alr.Utils;
 
 package body Alr.Origins.Apt is
@@ -12,7 +12,7 @@ package body Alr.Origins.Apt is
       Output : Utils.String_Vector;
    begin
       Output := OS_Lib.Spawn_And_Capture ("apt-cache", "policy " &
-                                            This.Base.Package_Name (OS.Distribution));
+                                            This.Base.Package_Name (Platforms.Current.Instance.Distribution));
       for Line of Output loop
          if Utils.Contains (Line, "Installed") and then not Utils.Contains (Line, "none") then
             return True;
@@ -29,7 +29,7 @@ package body Alr.Origins.Apt is
    overriding function Exists (This : Origin) return Boolean is
       Output : constant Utils.String_Vector :=
                  OS_Lib.Spawn_And_Capture ("apt-cache", "-q policy " &
-                                                    This.Base.Package_Name (OS.Distribution));
+                                                    This.Base.Package_Name (Platforms.Current.Instance.Distribution));
       use Utils;
    begin
       for Line of Output loop
@@ -57,17 +57,17 @@ package body Alr.Origins.Apt is
 
    overriding procedure Install (This : Origin) is
    begin
-      OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " &  This.Base.Package_Name (OS.Distribution));
+      OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " &
+                                This.Base.Package_Name (Platforms.Current.Instance.Distribution));
    end Install;
 
    --------------------
    -- Native_Version --
    --------------------
 
-   overriding function Native_Version (This : Origin) return String is
+   function Native_Version (Name : String) return String is
       Output : constant Utils.String_Vector :=
-                 OS_Lib.Spawn_And_Capture ("apt-cache", "-q policy " &
-                                                    This.Base.Package_Name (OS.Distribution));
+                 OS_Lib.Spawn_And_Capture ("apt-cache", "-q policy " & Name);
       use Utils;
    begin
       for Line of Output loop
@@ -79,5 +79,12 @@ package body Alr.Origins.Apt is
 
       return "";
    end Native_Version;
+
+   --------------------
+   -- Native_Version --
+   --------------------
+
+   overriding function Native_Version (This : Origin) return String is
+      (Native_Version (This.Base.Package_Name (Platforms.Current.Instance.Distribution)));
 
 end Alr.Origins.Apt;

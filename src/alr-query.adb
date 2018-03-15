@@ -87,6 +87,15 @@ package body Alr.Query is
       raise Query_Unsuccessful with "Release not found: " & Project;
    end Find;
 
+   ------------------
+   -- Is_Available --
+   ------------------
+
+   function Is_Available (R : Alire.Index.Release) return Boolean is
+     (R.Available.Check (Platform_Properties) and then
+          (if R.Origin.Is_Native
+           then Origins.New_Origin (R.Origin).Exists));
+
    -------------------
    -- Is_Resolvable --
    -------------------

@@ -4,17 +4,14 @@ with Alire.Properties;
 with Alire.Properties.Dependencies;
 with Alire.Types;
 
-private with Alr.Origins;
-private with Alr.OS;
+with Alr.Origins;
+with Alr.Platforms;
 
 with Semantic_Versioning;
 
 package Alr.Query is
 
    type Policies is (Oldest, Newest);
-
-   Platform_Properties : constant Alire.Properties.Vector;
-   --  OS properties plus native resolvability checker
 
    use Alire;
 
@@ -50,6 +47,7 @@ package Alr.Query is
    function Is_Available (R : Alire.Index.Release) return Boolean;
    --  The release knows the requisites on the platform; here we evaluate these against the current platform
    --  Current checks include the "available" requisites and that the native package do exist
+   --  NOTE: it does not consider that dependencies can be resolved, only that it "could" be available
 
    -----------------------
    --  Advanced queries --
@@ -69,21 +67,16 @@ package Alr.Query is
                               Versions : Semantic_Versioning.Version_Set;
                               Policy   : Policies := Newest) return String;
 
+   function Platform_Properties return Alire.Properties.Vector;
+   --  This shouldn't be here but there's some circularity to break
+
 private
 
    use all type Alire.Properties.Vector;
 
-   Platform_Properties : constant Alire.Properties.Vector :=
-                  OS.Properties and
-                  Alire.Properties.Dependencies.New_Property (Query.Is_Resolvable'Access,
-                                                              OS.Properties);
-
-   function Is_Available (R : Alire.Index.Release) return Boolean is
-     (R.Available.Check (Platform_Properties) and then
-          (if R.Origin.Is_Native
-           then Origins.New_Origin (R.Origin).Exists));
-   --  R.Available requisites are checked against platform properties
-   --  Then, if the origin is native, which implies conditional availability too, this is checked
-   --  NOTE: this does not check that dependencies can be resolved!
+   function Platform_Properties return Alire.Properties.Vector is
+     (Platforms.Basic_Properties and
+        Alire.Properties.Dependencies.New_Property (Query.Is_Resolvable'Access,
+                                                    Platforms.Basic_Properties));
 
 end Alr.Query;

@@ -2,9 +2,8 @@ with Alire.Projects;
 with Alire.Root;
 with Alire.Roots;
 
+with Alr.Hardcoded;
 with Alr.OS_Lib;
-
-private with Alr.Hardcoded;
 
 package Alr.Root is
 

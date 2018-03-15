@@ -1,6 +1,6 @@
 private with Ada.Directories;
 
-private with Alr.OS;
+private with Alr.Platforms.Current;
 
 package Alr.Self is
 
@@ -28,14 +28,14 @@ package Alr.Self is
 
    --  Extra constants needed here to break circularities
 
-   Canonical_Folder : constant String;
+   function Canonical_Folder return String;
    --  Where alr sources are located when effectively deployed (not devel compiled)
 
 private
 
    function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
 
-   Canonical_Folder     : constant String := OS.Config_Folder / "alr";
+   function Canonical_Folder return String is (Platforms.Current.Instance.Config_Folder / "alr");
    --  Where alr sources are located when effectively deployed (not devel compiled)
 
 end Alr.Self;
