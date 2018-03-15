@@ -108,9 +108,13 @@ package body Alr.Origins is
          raise Command_Failed;
    end Install_Native;
 
+   --------------------
+   -- Native_Version --
+   --------------------
+
    function Native_Version (Orig : Alire.Origins.Origin) return String is
-      ("native");
+      (New_Origin (Orig).Native_Version);
 
 begin
-   Alire.Hooks.Version_Getter_Hook := Native_Version'Access;
+   Alire.Hooks.Version_Getter := Native_Version'Access;
 end Alr.Origins;

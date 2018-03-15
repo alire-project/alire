@@ -21,6 +21,10 @@ package Alr.Utils is
 
    function Replace (Text : String; Match : String; Subst : String) return String;
 
+   function Tail (Str : String; Separator : Character) return String renames Alire.Utils.Tail;
+   --  If Str contains Separator, the rhs is returned
+   --  Otherwise ""
+
    function Trim (S : String) return String;
 
    function Hash_File (Path : String) return String;

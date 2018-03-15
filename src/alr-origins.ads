@@ -51,6 +51,9 @@ package Alr.Origins is
 
    function Is_Native (This : Origin) return Boolean;
 
+   function Native_Version (This : Origin) return String is ("native")
+     with Pre'Class => This.Is_Native;
+
 private
 
    type Origin is tagged record

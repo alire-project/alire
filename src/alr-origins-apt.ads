@@ -10,4 +10,6 @@ package Alr.Origins.Apt is
 
    overriding procedure Install (This : Origin);
 
+   overriding function Native_Version (This : Origin) return String;
+
 end Alr.Origins.Apt;

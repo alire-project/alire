@@ -1,4 +1,4 @@
-with Alire_Early_Elaboration; pragma Unreferenced (Alire_Early_Elaboration);
+with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 
 with Alr.Bootstrap;
 with Alr.Commands;
