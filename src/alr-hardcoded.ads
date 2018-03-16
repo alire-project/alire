@@ -3,11 +3,13 @@ with Ada.Directories;
 with Alire;
 
 with Alr.Defaults;
+with Alr.Platform;
 with Alr.Platforms;
-with Alr.Platforms.Current;
 with Alr.Self;
 
 package Alr.Hardcoded is
+
+   --  NOTE: none of the functions in this spec can be used before elaboration is complete
 
    --  Paths and Files and such that are hardcoded
    --  Also, "hardcoded" paths that are relative to the detected src folder,
@@ -22,43 +24,41 @@ package Alr.Hardcoded is
    Alr_Child_Flag : constant String;
    --  Env var set when launching a child alr
 
-   Alr_Default_Index_File : constant String;
+   function Alr_Default_Index_File return String;
    --  Minimal index to use when not fully indexing
 
-   Alr_Gpr_File : constant String;
+   function Alr_Gpr_File return String;
    --  Note to self: this is the _env one that works with git submodules
 
    Alr_Index_File_Base_Name : constant String;
    --  File containing the session index, name only
 
-   Alr_Index_Folder_Absolute : constant String;
+   function Alr_Index_Folder_Absolute return String;
    --  Path to folder containing all release indexing specification files
 
    Alr_Repo   : constant Alire.URL := Defaults.Alr_Repository;
    --  RepPlatforms.Currentitory checked out for self-upgrade
 
-   Alr_Rolling_Exec : constant String;
+   function Alr_Rolling_Exec return String;
    --  Name of the rolling executable, "alr", with source path, for the detected src folder
    --  Might not exist yet!
 
-   Alr_Src_Default_Session_Folder : constant String;
+   function Alr_Src_Default_Session_Folder return String;
    --  Folder for files that are only used if no session-supplied ones exist
 
-   Alr_Src_Folder : constant String;
+   function Alr_Src_Folder return String;
    --  Folder containing sources for rebuild
    --  Either the one for the exe being run, if it could be detected, or the canonical one otherwise
 
-   Native_Package_List : constant String;
+   function Native_Package_List return String;
    --  File containing detected Ada packages in the system package manager
    --  session_folder/packages.txt
 
-   Scripts_Apt_Detect : constant String;
+   function Scripts_Version return String;
 
-   Scripts_Version : constant String;
+   function Templates_Bin_Folder return String;
 
-   Templates_Bin_Folder : constant String;
-
-   Templates_Lib_Folder : constant String;
+   function Templates_Lib_Folder return String;
 
    --  Functions that return hardcoded-derived files
 
@@ -84,55 +84,41 @@ package Alr.Hardcoded is
 
 private
 
-   function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
+   function "/"    (L, R : String)   return String is     (Ada.Directories.Compose (L, R));
    function Parent (Folder : String) return String renames Ada.Directories.Containing_Directory;
 
-   Alr_Child_Flag : constant String := "ALR_CHILD";
+   --  Constants
 
-   Alr_Src_Folder : constant String := Self.Src_Folder;
-
-   Alr_Src_Default_Session_Folder : constant String := Alr_Src_Folder / "src" / "default_session";
-
-   Alr_Default_Index_File : constant String := Alr_Src_Default_Session_Folder / "alr-index.ads";
-
---     Alr_Conf_File  : constant String := "alr-config.ads";
-
-   Alr_Gpr_File         : constant String := Alr_Src_Folder / "alr_env.gpr";
-
+   Alr_Child_Flag :           constant String := "ALR_CHILD";
    Alr_Index_File_Base_Name : constant String := "alr-index.ads";
 
-   Alr_Index_Folder_Absolute : constant String := Alr_Src_Folder / "deps" / "alire" / "index";
+   --  Pseudo-constants (due to elaboration finished requirement)
 
-   Alr_Rolling_Exec : constant String := Alr_Src_Folder / "bin" / "alr";
+   function Alr_Src_Folder                 return String renames Self.Src_Folder;
+   function Alr_Src_Default_Session_Folder return String is (Alr_Src_Folder / "src" / "default_session");
+   function Alr_Default_Index_File         return String is (Alr_Src_Default_Session_Folder / "alr-index.ads");
+   function Alr_Gpr_File                   return String is (Alr_Src_Folder / "alr_env.gpr");
+   function Alr_Index_Folder_Absolute      return String is (Alr_Src_Folder / "deps" / "alire" / "index");
+   function Alr_Rolling_Exec               return String is (Alr_Src_Folder / "bin" / "alr");
+   function Native_Package_List            return String is (Platform.Config_Folder / "native_packages.txt");
+   function No_Session_Folder              return String is (Platform.Cache_Folder / "sessions" / Platform.Compiler'Img / "no_session");
+   function Projects_Folder                return String is (Platform.Cache_Folder / "projects" / Platform.Compiler'Img);
+   function Scripts_Version                return String is (Alr_Src_Folder / "scripts" / "version");
+   function Templates_Bin_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "bin");
+   function Templates_Lib_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "lib");
 
-   Native_Package_List : constant String := Platforms.Current.Instance.Config_Folder / "native_packages.txt";
-
-   Scripts_Apt_Detect : constant String := Alr_Src_Folder / "scripts" / "aptdetect";
-
-   Scripts_Version : constant String := Alr_Src_Folder / "scripts" / "version";
-
-   Templates_Bin_Folder : constant String := Alr_Src_Folder / "templates" / "projects" / "bin";
-
-   Templates_Lib_Folder : constant String := Alr_Src_Folder / "templates" / "projects" / "lib";
-
-   --  Function bodies
+   --  Functions
 
    function Alire_File (Project : Alire.Name_String) return String is
      (Project & "_alr.ads");
 
    function Alr_Is_Canonical return Boolean is
-     (Platforms.Current.Instance.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
+     (Platform.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
 
    function Alr_Session_Exec (Metafile : String) return String is
      (Session_Folder (Metafile) / "alr");
 
    function Build_File (Project : Alire.Name_String) return String is
      (Project & "_alr.gpr");
-
-   function No_Session_Folder return String is
-      (Platforms.Current.Instance.Cache_Folder / "sessions" / Platforms.Compiler'Img / "no_session");
-
-   function Projects_Folder return String is
-     (Platforms.Current.Instance.Cache_Folder / "projects" / Platforms.Compiler'Img);
 
 end Alr.Hardcoded;

@@ -6,7 +6,7 @@ with Alr.Interactive;
 with Alr.Origins.Apt;
 with Alr.Origins.Git;
 with Alr.Origins.Hg;
-with Alr.Platforms.Current;
+with Alr.Platform;
 
 with GNAT.IO;
 
@@ -28,7 +28,7 @@ package body Alr.Origins is
             return Hg.Origin'(Origin'(Base => From) with null record);
 
          when Alire.Origins.Native =>
-            case Alire.Platforms.Package_Manager (Platforms.Current.Instance.Distribution) is
+            case Alire.Platforms.Package_Manager (Platform.Distribution) is
                when Alire.Platforms.Apt =>
                   return Apt.Origin'(Origin'(Base => From) with null record);
 
@@ -78,7 +78,7 @@ package body Alr.Origins is
    procedure Install_Warning (From : Origin'Class) is
       use GNAT.IO;
 
-      Native_Name : constant String := From.Base.Package_Name (Platforms.Current.Instance.Distribution);
+      Native_Name : constant String := From.Base.Package_Name (Platform.Distribution);
    begin
       if From.Already_Installed then
          Trace.Detail ("Package " & Native_Name & " is already installed");
@@ -103,7 +103,7 @@ package body Alr.Origins is
       Orig.Install;
    exception
       when others =>
-         Trace.Error ("Installation of " & From.Package_Name (Platforms.Current.Instance.Distribution) & " failed");
+         Trace.Error ("Installation of " & From.Package_Name (Platform.Distribution) & " failed");
          raise Command_Failed;
    end Install_Native;
 

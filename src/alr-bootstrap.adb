@@ -20,8 +20,8 @@ package body Alr.Bootstrap is
 
    use OS_Lib.Paths;
 
-   Executable      : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr";
-   Executable_Bak  : constant String := Hardcoded.Alr_Src_Folder / "bin" / "alr-prev";
+   function Executable     return String is (Hardcoded.Alr_Src_Folder / "bin" / "alr");
+   function Executable_Bak return String is (Hardcoded.Alr_Src_Folder / "bin" / "alr-prev");
 
    Cached_Metafile : access String;
 

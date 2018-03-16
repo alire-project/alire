@@ -1,6 +1,6 @@
 private with Ada.Directories;
 
-private with Alr.Platforms.Current;
+private with Alr.Platform;
 
 package Alr.Self is
 
@@ -35,7 +35,7 @@ private
 
    function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
 
-   function Canonical_Folder return String is (Platforms.Current.Instance.Config_Folder / "alr");
+   function Canonical_Folder return String is (Platform.Config_Folder / "alr");
    --  Where alr sources are located when effectively deployed (not devel compiled)
 
 end Alr.Self;

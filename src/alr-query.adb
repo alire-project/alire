@@ -3,6 +3,7 @@ with Alire.Projects;
 with Alire.Utils;
 
 with Alr.Commands;
+with Alr.Platform;
 
 package body Alr.Query is
 
@@ -92,7 +93,7 @@ package body Alr.Query is
    ------------------
 
    function Is_Available (R : Alire.Index.Release) return Boolean is
-     (R.Available.Check (Platform_Properties) and then
+     (R.Available.Check (Platform.Properties) and then
           (if R.Origin.Is_Native
            then Origins.New_Origin (R.Origin).Exists));
 
@@ -159,7 +160,7 @@ package body Alr.Query is
                Solution   : Instance;
             begin
                New_Frozen.Insert (R.Name, R);
-               New_Remain.Append (R.Depends (Platform_Properties));
+               New_Remain.Append (R.Depends (Platform.Properties));
 
                Solution := Resolve (New_Remain, New_Frozen, Policy, Success);
 

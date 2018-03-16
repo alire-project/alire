@@ -53,7 +53,7 @@ package body Alr.Commands.Version is
          end if;
       end;
 
-      Log ("alr executable launched from " & Platforms.Current.Instance.Own_Executable, Always);
+      Log ("alr executable launched from " & Platform.Own_Executable, Always);
       Log ("alr rolling source folder is " & Hardcoded.Alr_Src_Folder, Always);
 
       Log ("alr compiled on [" &
@@ -71,7 +71,7 @@ package body Alr.Commands.Version is
 
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);
       Put ("platform properties:");
-      for Prop of Platforms.Basic_Properties loop
+      for Prop of Platform.Properties loop
          Put (" " & Prop.Image);
       end loop;
       New_Line;

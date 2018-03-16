@@ -1,5 +1,6 @@
 with Alr.Origins;
 with Alr.OS_Lib;
+with Alr.Utils;
 
 with Interfaces.C;
 with Interfaces.C.Strings;
@@ -7,6 +8,7 @@ with Interfaces.C.Strings;
 package body Alr.Platforms.Linux is
 
    use Alr.OS_Lib.Paths;
+   use Alr.Utils;
 
    ------------------
    -- Cache_Folder --
@@ -95,13 +97,6 @@ package body Alr.Platforms.Linux is
          end;
       end if;
    end Distro_Version;
-
-   ----------------------
-   -- Operating_System --
-   ----------------------
-
-   function Operating_System (This : Linux_Variant) return Alire.Platforms.Operating_Systems is
-      (Alire.Platforms.GNU_Linux);
 
    --------------------
    -- Own_Executable --

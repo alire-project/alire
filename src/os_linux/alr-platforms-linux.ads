@@ -2,9 +2,9 @@ with Alire.Origins;
 
 package Alr.Platforms.Linux is
 
-   type Linux_Variant is new Supported_Platform with null record;
+   type Linux_Variant is new Supported with null record;
 
-   overriding function New_Platform return Linux_Variant is (Supported_Platform with null record);
+   overriding function New_Platform return Linux_Variant is (Supported with null record);
 
    -------------------
    --  Low level stuff
@@ -27,7 +27,8 @@ package Alr.Platforms.Linux is
 
    function Distro_Version (This : Linux_Variant) return Alire.Platforms.Versions;
 
-   function Operating_System (This : Linux_Variant) return Alire.Platforms.Operating_Systems;
+   function Operating_System (This : Linux_Variant) return Alire.Platforms.Operating_Systems is
+      (Alire.Platforms.GNU_Linux);
 
    function Package_Version (This : Linux_Variant; Origin : Alire.Origins.Origin) return String;
 

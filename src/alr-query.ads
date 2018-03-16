@@ -5,7 +5,6 @@ with Alire.Properties.Dependencies;
 with Alire.Types;
 
 with Alr.Origins;
-with Alr.Platforms;
 
 with Semantic_Versioning;
 
@@ -62,21 +61,8 @@ package Alr.Query is
 
    procedure Print_Solution (I : Instance);
 
-
    function Dependency_Image (Project  : Name_String;
                               Versions : Semantic_Versioning.Version_Set;
                               Policy   : Policies := Newest) return String;
-
-   function Platform_Properties return Alire.Properties.Vector;
-   --  This shouldn't be here but there's some circularity to break
-
-private
-
-   use all type Alire.Properties.Vector;
-
-   function Platform_Properties return Alire.Properties.Vector is
-     (Platforms.Basic_Properties and
-        Alire.Properties.Dependencies.New_Property (Query.Is_Resolvable'Access,
-                                                    Platforms.Basic_Properties));
 
 end Alr.Query;
