@@ -2,7 +2,6 @@ with Alire.Platforms;
 with Alire.Properties;
 
 with Alr.Platforms;
-with Alr.Utils;
 
 with GNAT.Compiler_Version;
 
@@ -43,8 +42,6 @@ private
 
    use all type Alire.Platforms.Compilers;
 
-   use Utils;
-
    package Comp is new GNAT.Compiler_Version;
 
    function Basic_Properties return Alire.Properties.Vector;
@@ -65,12 +62,6 @@ private
    ------------------
 
    function Cache_Folder return String is (Get.Cache_Folder);
-
-   --------------
-   -- Compiler --
-   --------------
-
-   function Compiler return Alire.Platforms.Compilers;
 
    -------------------
    -- Config_Folder --
