@@ -3,8 +3,6 @@ with Alire.Properties;
 
 with Alr.Platforms;
 
-with GNAT.Compiler_Version;
-
 with System;
 
 package Alr.Platform is
@@ -41,8 +39,6 @@ package Alr.Platform is
 private
 
    use all type Alire.Platforms.Compilers;
-
-   package Comp is new GNAT.Compiler_Version;
 
    function Basic_Properties return Alire.Properties.Vector;
 
