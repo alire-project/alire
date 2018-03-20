@@ -1,6 +1,4 @@
-with Alr.Files;
 with Alr.Spawn;
-with Alr.Utils;
 
 package body Alr.Commands.Compile is
 
@@ -19,21 +17,7 @@ package body Alr.Commands.Compile is
                          Session_Build => False,
                          Extra_Args    => Scenario.As_Command_Line);
          Trace.Detail ("Compilation finished successfully");
-         declare
-            Execs : constant Utils.String_Vector :=
-                      Files.Locate_File_Under (".", Root.Current.Default_Executable);
-         begin
-            case Execs.Count is
-               when 0 =>
-                  Log ("No executable found after compilation (library project or undeclared non-standard name)", Detail);
-               when others =>
-                  for Exe of Execs loop
-                     Trace.Info ("Executable found at " &
-                                   Utils.Quote (Utils.Replace ("(project)/" & Execs.First_Element,
-                                   "/./", "/")));
-                  end loop;
-            end case;
-         end;
+         Trace.Detail ("Use alr run --list to check available executables");
       exception
          when Command_Failed =>
             Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");

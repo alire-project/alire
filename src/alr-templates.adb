@@ -129,7 +129,7 @@ package body Alr.Templates is
       All_Paths : Utils.String_Vector;
    begin
       if Root.Is_Released then
-         GPR_Files := Root.Release.GPR_Files (Platform.Properties);
+         GPR_Files := Root.Release.Project_Files (Platform.Properties, With_Path => True);
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else
@@ -167,16 +167,12 @@ package body Alr.Templates is
          end if;
 
          --  Add non-root extra project paths, always
-         for Path of Rel.Labeled_Properties (Platform.Properties, GPR_Path) loop
-            if GNAT.OS_Lib.Is_Absolute_Path (Path) then
-               All_Paths.Append (Path);
-            else
-               All_Paths.Append ((if Rel.Project = Root.Name
-                                 then "."
-                                 else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
-                                   GNAT.OS_Lib.Directory_Separator & Path);
+         for Path of Rel.Project_Paths (Platform.Properties) loop
+            All_Paths.Append ((if Rel.Project = Root.Name
+                               then "."
+                               else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
+                                    GNAT.OS_Lib.Directory_Separator & Path);
                --  Path won't be a simple name and / (compose) would complain
-            end if;
          end loop;
       end loop;
 

@@ -32,23 +32,11 @@ package body Alr.Commands.Test is
       declare
          Guard : constant Folder_Guard := Enter_Folder (R.Unique_Folder) with Unreferenced;
       begin
-         for Gpr of R.Project_Files (Platform.Properties) loop
-            declare
-               use OS_Lib.Paths;
-
-               Found : Boolean := OS_Lib.Is_Regular_File (Gpr); -- Directly in root folder
-            begin
-               for Path of R.Labeled_Properties (Platform.Properties, GPR_Path) loop
-                  exit when Found;
-
-                  Found := OS_Lib.Is_Regular_File (Path / Gpr);
-               end loop;
-
-               if not Found then
-                  Trace.Error ("Declared project file not found in project search paths: " & Gpr);
-                  return False;
-               end if;
-            end;
+         for Gpr of R.Project_Files (Platform.Properties, With_Path => True) loop
+            if not OS_Lib.Is_Regular_File (Gpr) then
+               Trace.Error ("Declared project file not found: " & Gpr);
+               return False;
+            end if;
          end loop;
       end;
 
