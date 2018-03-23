@@ -19,7 +19,7 @@ package Alr.Utils is
 
    function Quote (S : String) return String;
 
-   function Replace (Text : String; Match : String; Subst : String) return String;
+   function Replace (Text : String; Match : String; Subst : String) return String renames Alire.Utils.Replace;
 
    function Head (Str : String; Separator : Character) return String renames Alire.Utils.Head;
 
