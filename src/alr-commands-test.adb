@@ -202,7 +202,7 @@ package body Alr.Commands.Test is
                declare
                   Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (I));
                begin
-                  if R.Project = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
+                  if R.Variant = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
                      Candidates.Include (R);
                   end if;
                end;

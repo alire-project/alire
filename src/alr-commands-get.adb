@@ -77,7 +77,7 @@ package body Alr.Commands.Get is
    -- Retrieve --
    --------------
 
-   procedure Retrieve (Cmd : Command; Name : Alire.Name_String; Versions : Semver.Version_Set) is
+   procedure Retrieve (Cmd : Command; Name : Alire.Designation_String; Versions : Semver.Version_Set) is
       use all type Semver.Version_Set;
 
       Success : Boolean;
@@ -114,7 +114,7 @@ package body Alr.Commands.Get is
       --  Check out requested project under current directory
 
       --  Check out rest of dependencies
-      Checkout.To_Folder (Needed, Hardcoded.Projects_Folder, But => Name);
+      Checkout.To_Folder (Needed.Excluding (Rel.Name), Hardcoded.Projects_Folder);
 
       --  Launch build if requested
       if Cmd.Compile then

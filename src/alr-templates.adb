@@ -159,7 +159,7 @@ package body Alr.Templates is
 
       --  First obtain all paths and then output them, if any needed
       for Rel of Instance loop
-         if Rel.Project = Root.Name then
+         if Rel.Name_Img = Root.Name then
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
          else
@@ -168,7 +168,7 @@ package body Alr.Templates is
 
          --  Add non-root extra project paths, always
          for Path of Rel.Project_Paths (Platform.Properties) loop
-            All_Paths.Append ((if Rel.Project = Root.Name
+            All_Paths.Append ((if Rel.Name_Img = Root.Name
                                then "."
                                else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
                                     GNAT.OS_Lib.Directory_Separator & Path);

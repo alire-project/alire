@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire;
-with Alire.Releases;
 with Alire.Roots;
 
 with Alr.Files;
@@ -37,15 +36,12 @@ package body Alr.Checkout is
    ---------------
 
    procedure To_Folder (Projects : Query.Instance;
-                        Parent   : String := Hardcoded.Projects_Folder;
-                        But      : Alire.Name_String := "")
+                        Parent   : String := Hardcoded.Projects_Folder)
    is
       Was_There : Boolean;
    begin
       for R of Projects loop
-         if R.Project /= But then
-            Checkout (R, Parent, Was_There);
-         end if;
+         Checkout (R, Parent, Was_There);
       end loop;
    end To_Folder;
 
@@ -60,7 +56,7 @@ package body Alr.Checkout is
                            If_Conflict    : Policies := Skip)
      				--  FIXME policies not implemented
    is
-      Project : constant Alire.Name_String := R.Project;
+      Project : constant Alire.Name_String := R.Name_Img;
       Root    : Alire.Index.Release renames R;
       Was_There : Boolean with Unreferenced;
    begin

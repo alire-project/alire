@@ -18,7 +18,7 @@ package Alr.Query is
    subtype Instance is Containers.Release_Map; -- A list of releases complying with a Solution
    subtype Release  is Index.Release;
 
-   Empty_Instance : constant Instance := Containers.Project_Release_Maps.Empty_Map;
+   Empty_Instance : constant Instance := (Containers.Project_Release_Maps.Empty_Map with null record);
 
    ---------------------
    --  Basic queries  --
@@ -35,7 +35,7 @@ package Alr.Query is
                     Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
                     return Boolean;
 
-   function Find (Project : Name_String;
+   function Find (Project : Designation_String;
                   Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
                   Policy  : Policies) return Release;
 

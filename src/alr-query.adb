@@ -28,14 +28,14 @@ package body Alr.Query is
    -- Exists --
    ------------
 
-   function Exists (Project : Name_String;
+   function Exists (Project : Designation_String;
                     Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
                     return Boolean
    is
       use Semver;
    begin
       for R of Index.Catalog loop
-         if R.Project = Project and then Satisfies (R.Version, Allowed) then
+         if R.Variant = Project and then Satisfies (R.Version, Allowed) then
             return True;
          end if;
       end loop;
@@ -59,7 +59,7 @@ package body Alr.Query is
 
       function Check (R : Index.Release) return Boolean is
       begin
-         if R.Project = Project then
+         if R.Variant = Project then
             if Satisfies (R.Version, Allowed) then
                return True;
             else
@@ -240,7 +240,7 @@ package body Alr.Query is
       end if;
 
       return I : constant Instance := Resolve (Deps,
-                                               Containers.Project_Release_Maps.Empty_Map,
+                                               Empty_Instance,
                                                Policy,
                                                Success)
       do

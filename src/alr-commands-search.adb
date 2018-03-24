@@ -36,7 +36,7 @@ package body Alr.Commands.Search is
          then
             Found := Found + 1;
             Tab.New_Row;
-            Tab.Append (R.Project);
+            Tab.Append (R.Variant);
             Tab.Append (Semantic_Versioning.Image (R.Version) &
                         (if R.Origin.Is_Native then " (native)" else "") &
                         (if Query.Is_Available (R) then "" else " (unavail)") &
@@ -44,6 +44,7 @@ package body Alr.Commands.Search is
                            then " (unresolv)" else "")
                        );
             Tab.Append (R.Description);
+            Tab.Append (R.Notes);
          end if;
       end List_Release;
 
@@ -68,6 +69,11 @@ package body Alr.Commands.Search is
 
       Requires_Full_Index;
 
+      Tab.Append ("NAME:VARIANT");
+      Tab.Append ("VERSION");
+      Tab.Append ("DESCRIPTION");
+      Tab.Append ("RELEASE NOTES");
+
       declare
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
       begin
@@ -75,7 +81,7 @@ package body Alr.Commands.Search is
             Trace.Detail ("Searching...");
             for I in Alire.Index.Catalog.Iterate loop
                if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-                 Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+                 Alire.Index.Catalog (I).Variant /= Alire.Index.Catalog (Next (I)).Variant
                then
                   List_Release (Alire.Index.Catalog (I));
                   Busy.Step;
@@ -88,9 +94,9 @@ package body Alr.Commands.Search is
                Trace.Detail ("Searching " & Utils.Quote (Pattern) & "...");
 
                for I in Alire.Index.Catalog.Iterate loop
-                  if Count (Alire.Index.Catalog (I).Project, Pattern) > 0 then
+                  if Count (Alire.Index.Catalog (I).Variant, Pattern) > 0 then
                      if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-                       Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+                       Alire.Index.Catalog (I).Variant /= Alire.Index.Catalog (Next (I)).Variant
                      then
                         List_Release (Alire.Index.Catalog (I));
                      end if;
