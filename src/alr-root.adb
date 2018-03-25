@@ -14,10 +14,10 @@ package body Alr.Root is
          raise Command_Failed;
       end if;
 
-      if Files.Locate_Given_Metadata_File (Image) = "" then
+      if Files.Locate_Given_Metadata_File (Project) = "" then
          if Files.Locate_Metadata_File /= "" then
             Trace.Error ("Session/Project mismatch:");
-            Trace.Error ("Root project is " & Utils.Quote (Image));
+            Trace.Error ("Root project is " & Utils.Quote (+Project));
             Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Metadata_File));
          else
             Trace.Error ("Could not find a valid session file");
@@ -31,7 +31,7 @@ package body Alr.Root is
    -- Enter_Root --
    ----------------
 
-   function Enter_Root (Prj : Alire.Name_String := Image) return OS_Lib.Folder_Guard is
+   function Enter_Root (Prj : Alire.Project := Project) return OS_Lib.Folder_Guard is
       Start_Folder : constant String := OS_Lib.Current_Folder;
       Root_Folder  : constant String := Files.Locate_Above_Project_Folder (Prj);
    begin

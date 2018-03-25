@@ -4,7 +4,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.GPR;
 with Alire.Index;
-with Alire.Projects;           use all type Alire.Projects.Names;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
 
@@ -118,7 +117,7 @@ package body Alr.Templates is
       use all type Utils.String_Vectors.Cursor;
 
       File     : File_Type;
-      Filename : constant String := Hardcoded.Build_File (Root.Name);
+      Filename : constant String := Hardcoded.Build_File (Root.Project);
       Prjname  : constant String := Utils.To_Mixed_Case (Filename (Filename'First .. Filename'Last - 4));
 
       First    : Boolean := True;
@@ -133,8 +132,8 @@ package body Alr.Templates is
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else
-         GPR_Files.Append (Root.Name & ".gpr");
-         Log ("Generating GPR for unreleased project " & Root.Name & " with" &
+         GPR_Files.Append ((+Root.Project) & ".gpr");
+         Log ("Generating GPR for unreleased project " & (+Root.Project) & " with" &
                 Instance.Length'Img & " dependencies", Detail);
       end if;
 
@@ -159,7 +158,7 @@ package body Alr.Templates is
 
       --  First obtain all paths and then output them, if any needed
       for Rel of Instance loop
-         if Rel.Name_Img = Root.Name then
+         if Rel.Project = Root.Project then
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
          else
@@ -168,7 +167,7 @@ package body Alr.Templates is
 
          --  Add non-root extra project paths, always
          for Path of Rel.Project_Paths (Platform.Properties) loop
-            All_Paths.Append ((if Rel.Name_Img = Root.Name
+            All_Paths.Append ((if Rel.Project = Root.Project
                                then "."
                                else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
                                     GNAT.OS_Lib.Directory_Separator & Path);
@@ -239,13 +238,15 @@ package body Alr.Templates is
       File : File_Type;
       Name : constant String := (if Filename /= ""
                                  then Filename
-                                 else Hardcoded.Alire_File (Root.Name));
+                                 else Hardcoded.Alire_File (Root.Project));
+
+      Pkg_Name : constant String := Name (Name'First .. Name'Last - 4);
    begin
-      if Root.Is_Released and then Instance.Contains (Root.Release.Name) then
+      if Root.Is_Released and then Instance.Contains (Root.Release.Project) then
          declare
             Pruned_Instance : Query.Instance := Instance;
          begin
-            Pruned_Instance.Delete (Root.Release.Name);
+            Pruned_Instance.Delete (Root.Release.Project);
             Generate_Prj_Alr (Pruned_Instance, Root, Scenario, Filename);
             return;
          end;
@@ -258,14 +259,14 @@ package body Alr.Templates is
       Put_Line (File, "with Alire.Index; use Alire.Index;");
 
       if Root.Is_Released and then Scenario /= Pinning then
-         Put_Line (File, Commands.Withing.With_Line (Root.Release.Name));
+         Put_Line (File, Commands.Withing.With_Line (Root.Release.Project));
          --  Root dependency that will pull everything else in
       elsif Scenario = Initial then
          Put_Line (File, "with Alire.Index.Alire;");
       else
          -- Err on the safe side and pull in all dependencies
          for R of Instance loop
-            Includes.Include (Commands.Withing.With_Line (R.Name));
+            Includes.Include (Commands.Withing.With_Line (R.Project));
          end loop;
 
          for Inc of Includes loop
@@ -274,17 +275,17 @@ package body Alr.Templates is
       end if;
       New_Line (File);
 
-      Put_Line (File, "package " & Utils.To_Mixed_Case (Root.Name) & "_Alr is");
+      Put_Line (File, "package " & Utils.To_Mixed_Case (Pkg_Name) & " is");
       New_Line (File);
       Put_Line (File, Tab_1 & "Current_Root : constant Root := Set_Root (");
 
       if Root.Is_Released and then Scenario /= Pinning then
          --  Typed name plus version
-         Put_Line (File, Tab_2 & Alire.Index.Get (Root.Release.Name).Callable_String & ",");
+         Put_Line (File, Tab_2 & Alire.Index.Get (Root.Release.Project).Ada_Identifier & ",");
          Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Root.Release.Version)) & "));");
       else
          --  Untyped name plus dependencies
-         Put_Line (File, Tab_2 & Q (Root.Name) & ",");
+         Put_Line (File, Tab_2 & Q (+Root.Project) & ",");
 
          if Scenario = Initial then
             Put_Line (File, Tab_2 & "Dependencies => Alire.Index.Alire.Project.Current);");
@@ -304,7 +305,7 @@ package body Alr.Templates is
                         New_Line (File);
                      end if;
                      Put (File, Tab_3 &
-                            Alire.Index.Get (Rel.Name).Callable_String &
+                            Alire.Index.Get (Rel.Project).Ada_Identifier &
                             (if Scenario = Pinning
                              then ".At_Version ("
                              else ".Within_Major (") &
@@ -324,7 +325,7 @@ package body Alr.Templates is
       Put_Line (File, "   --  Once you are satisfied with your own dependencies it can be safely removed.");
       New_Line (File);
 
-      Put_Line (File, "end " & Utils.To_Mixed_Case (Root.Name) & "_Alr;");
+      Put_Line (File, "end " & Utils.To_Mixed_Case (Pkg_Name) & ";");
 
       Close (File);
    end Generate_Prj_Alr;
@@ -375,20 +376,6 @@ package body Alr.Templates is
       New_Line (File);
 
       Put_Line (File, "end Alr.Session;");
-
---        Alr_Src_Folder : constant String  := "";
---        --  For alr instances that are session specific, we need a way to locate the src folder
---        --    (just for the case where it is not the canonical one, that is: while developing)
---
---        Hash           : constant String := "bootstrap";
---        --  In the curren per-session setup, this should always match unless the dependencies files has been
---        --    tampered with in such a way that its timestamp has not been updated
---
---        Full_Index     : constant Boolean := False;
---        --  Some commands require a full index and some others not.
---        --  We use this to separate bootstrap from index status
---
---        Session_Build  : constant Boolean := False;
 
       Close (File);
    end Generate_Session;

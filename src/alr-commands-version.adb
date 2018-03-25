@@ -25,7 +25,7 @@ package body Alr.Commands.Version is
          Trace.Always ("alr root is " &
                        (if Root.Is_Released
                           then Root.Current.Release.Milestone.Image
-                          else Root.Image));
+                          else +Root.Project));
       end if;
 
 --        Trace.Always ("alr session hash is " & Session.Hash);

@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Dependencies.Vectors;
 with Alire.Index;
-with Alire.Projects;
 
 with Alr.Checkout;
 with Alr.Hardcoded;
@@ -29,7 +28,7 @@ package body Alr.Commands.Get is
    -- Report --
    ------------
 
-   procedure Report (Name     : Alire.Name_String;
+   procedure Report (Name     : Alire.Project;
                      Versions : Semver.Version_Set;
                      Native   : Boolean;
                      Priv     : Boolean) is
@@ -38,7 +37,7 @@ package body Alr.Commands.Get is
          Success : Boolean;
          Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
          Needed  : Query.Instance :=
-                     Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Name, Versions),
+                     Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Project, Versions),
                                     Success,
                                     Query_Policy);
 
@@ -52,8 +51,8 @@ package body Alr.Commands.Get is
             Rel.Print (Private_Too => Priv);
          end if;
 
-         if Needed.Contains (Rel.Name) then
-            Needed.Delete (Rel.Name);
+         if Needed.Contains (Rel.Project) then
+            Needed.Delete (Rel.Project);
          end if;
 
          if Success then
@@ -77,13 +76,13 @@ package body Alr.Commands.Get is
    -- Retrieve --
    --------------
 
-   procedure Retrieve (Cmd : Command; Name : Alire.Designation_String; Versions : Semver.Version_Set) is
+   procedure Retrieve (Cmd : Command; Name : Alire.Project; Versions : Semver.Version_Set) is
       use all type Semver.Version_Set;
 
       Success : Boolean;
       Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
       Needed  : constant Query.Instance :=
-                  Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Name, Versions),
+                  Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Project, Versions),
                                  Success,
                                  Query_Policy);
    begin
@@ -108,13 +107,13 @@ package body Alr.Commands.Get is
          Reportaise_Command_Failed ("Cannot get a project inside another alr project, stopping.");
       end if;
 
-      Checkout.Working_Copy (Needed.Element (Rel.Name),
+      Checkout.Working_Copy (Needed.Element (Rel.Project),
                              Needed,
                              Ada.Directories.Current_Directory);
       --  Check out requested project under current directory
 
       --  Check out rest of dependencies
-      Checkout.To_Folder (Needed.Excluding (Rel.Name), Hardcoded.Projects_Folder);
+      Checkout.To_Folder (Needed.Excluding (Rel.Project), Hardcoded.Projects_Folder);
 
       --  Launch build if requested
       if Cmd.Compile then
@@ -167,7 +166,7 @@ package body Alr.Commands.Get is
                       else
                         (if Root.Is_Released
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
-                         else Parsers.Project_Versions (Root.Current.Name)));
+                         else Parsers.Project_Versions (+Root.Current.Project)));
       begin
          --  Verify command-line
          if Cmd.Info and then Cmd.Native then

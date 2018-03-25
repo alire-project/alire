@@ -51,7 +51,7 @@ package body Alr.Commands.Init is
 
          New_Root : constant Alire.Roots.Root :=
                          Alire.Roots.New_Root
-                           (Name,
+                           (+Name,
                             Bootstrap.Alire_Minimal_Dependency);
 
          Success     : Boolean;
@@ -106,7 +106,7 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen already
          if not Cmd.In_Place and then Session_State >= Detached then
-            if Session_State = Valid and then Name = Root.Image then
+            if Session_State = Valid and then Name = +Root.Project then
                Trace.Info ("Already in working copy, skipping initialization");
             else
                Trace.Error ("Cannot initialize a project inside another alr project, stopping.");

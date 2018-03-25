@@ -6,6 +6,7 @@ with Alr.Defaults;
 with Alr.Platform;
 with Alr.Platforms;
 with Alr.Self;
+with Alr.Utils;
 
 package Alr.Hardcoded is
 
@@ -62,13 +63,13 @@ package Alr.Hardcoded is
 
    --  Functions that return hardcoded-derived files
 
-   function Alire_File (Project : Alire.Name_String) return String;
+   function Alire_File (Project : Alire.Project) return String;
    --  File with dependencies (project_alr.ads)
 
    function Alr_Session_Exec (Metafile : String) return String;
    --  The session-specific built alr
 
-   function Build_File (Project : Alire.Name_String) return String;
+   function Build_File (Project : Alire.Project) return String;
    --  Aggregate project file (project_alr.gpr)
 
    function Projects_Folder return String;
@@ -109,8 +110,8 @@ private
 
    --  Functions
 
-   function Alire_File (Project : Alire.Name_String) return String is
-     (Project & "_alr.ads");
+   function Alire_File (Project : Alire.Project) return String is
+     (Utils.Head (+Project, Alire.Extension_Separator) & "_alr.ads");
 
    function Alr_Is_Canonical return Boolean is
      (Platform.Own_Executable = Alr_Canonical_Folder / "bin" / "alr");
@@ -118,7 +119,7 @@ private
    function Alr_Session_Exec (Metafile : String) return String is
      (Session_Folder (Metafile) / "alr");
 
-   function Build_File (Project : Alire.Name_String) return String is
-     (Project & "_alr.gpr");
+   function Build_File (Project : Alire.Project) return String is
+     (Utils.Head (+Project, Alire.Extension_Separator) & "_alr.gpr");
 
 end Alr.Hardcoded;

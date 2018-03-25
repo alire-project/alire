@@ -56,7 +56,7 @@ package body Alr.Checkout is
                            If_Conflict    : Policies := Skip)
      				--  FIXME policies not implemented
    is
-      Project : constant Alire.Name_String := R.Name_Img;
+      Project : constant Alire.Project := R.Project;
       Root    : Alire.Index.Release renames R;
       Was_There : Boolean with Unreferenced;
    begin

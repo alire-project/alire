@@ -22,8 +22,8 @@ package body Alr.Spawn is
          Log ("No project is known to this alr instance.");
          Log ("Please run 'alr update -o' outside any alr project.");
       else
-         Log ("The last used project was: " & Root.Image);
-         Log ("Please check its metadata file: " & Hardcoded.Alire_File (Root.Image));
+         Log ("The last used project was: " & (+Root.Project));
+         Log ("Please check its metadata file: " & Hardcoded.Alire_File (Root.Project));
       end if;
    end Warn_Outdated;
 

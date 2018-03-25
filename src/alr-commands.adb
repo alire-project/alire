@@ -334,7 +334,7 @@ package body Alr.Commands is
 
    procedure Requires_Buildfile is
       Guard : constant OS_Lib.Folder_Guard := Root.Enter_Root with Unreferenced;
-      Name  : constant String := Root.Image;
+      Name  : constant Alire.Project := Root.Project;
    begin
       if Bootstrap.Session_State /= Valid then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");

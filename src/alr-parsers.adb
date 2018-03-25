@@ -19,9 +19,9 @@ package body Alr.Parsers is
       Op_Pos  : constant Natural := Index (Spec, To_Set ("=^~"), Inside);
 
       --  Ready to separate name from version, and operator if existing
-      Name    : constant Alire.Designation_String := (if Op_Pos > Spec'First
-                                                then Spec (Spec'First .. Op_Pos - 1)
-                                                else Spec);
+      Name    : constant String := (if Op_Pos > Spec'First
+                                    then Spec (Spec'First .. Op_Pos - 1)
+                                    else Spec);
 
       Op      : constant Character := (if Op_Pos > Spec'First
                                        then Spec (Op_Pos)
@@ -38,7 +38,7 @@ package body Alr.Parsers is
                                                     when '~'       => Semver.Within_Minor (V),
                                                     when others    => raise Constraint_Error with "Unrecognized version operator: " & Op);
    begin
-      return (Name'Length, Name, Versions);
+      return (Name'Length, +Name, Versions);
    end Project_Versions;
 
 end Alr.Parsers;

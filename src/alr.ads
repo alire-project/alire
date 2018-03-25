@@ -1,3 +1,5 @@
+with Alire;
+
 with Simple_Logging;
 
 package Alr with Preelaborate is
@@ -11,6 +13,8 @@ package Alr with Preelaborate is
 
    Command_Failed : exception;
    --  Signals "normal" command completion with failure (i.e., no need to print stack trace).
+
+   use all type Alire.Project;
 
    use all type Simple_Logging.Levels;
 

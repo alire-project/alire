@@ -2,6 +2,7 @@ with Ada.Directories;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alire.Index;
+with Alire.Projects;
 with Alire.Utils;
 
 with Alr.Hardcoded;
@@ -20,8 +21,8 @@ package body Alr.Commands.Withing is
          Reportaise_Wrong_Arguments ("alr with requires exactly one project name");
       end if;
 
-      if Alire.Index.Exists (Argument (1)) then
-         Put_Line (With_Line (Alire.Index.Value (Argument (1))));
+      if Alire.Projects.Descriptions.Contains (Alire.Project (Argument (1))) then
+         Put_Line (With_Line (Alire.Project (Argument (1))));
       else
          Reportaise_Command_Failed ("Project [" & Argument (1) & "] is not in Alire catalog");
       end if;
@@ -34,12 +35,12 @@ package body Alr.Commands.Withing is
    -- Locate_Package --
    --------------------
 
-   function Locate_Package (Name : Alire.Projects.Names) return String is
+   function Locate_Package (Name : Alire.Project) return String is
 
       use Ada.Directories;
       use Alire.Utils;
 
-      Nameimg : constant String  := Image (Name);
+      Nameimg : constant String  := +Name;
 
       Found   : Unbounded_String := Null_Unbounded_String;
 
@@ -90,7 +91,7 @@ package body Alr.Commands.Withing is
    -- With_Line --
    ---------------
 
-   function With_Line (Name : Alire.Projects.Names) return String is
+   function With_Line (Name : Alire.Project) return String is
       ("with " & Locate_Package (Name) & ";");
 
 end Alr.Commands.Withing;

@@ -24,18 +24,18 @@ package Alr.Query is
    --  Basic queries  --
    --  Merely check the catalog
 
-   function Exists (Project : Name_String;
+   function Exists (Project : Alire.Project;
                     Version : Semantic_Versioning.Version)
                     return Boolean renames Alire.Index.Exists;
 
-   function Find (Project : Name_String;
+   function Find (Project : Alire.Project;
                   Version : Semantic_Versioning.Version) return Release renames Alire.Index.Find;
 
-   function Exists (Project : Name_String;
+   function Exists (Project : Alire.Project;
                     Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
                     return Boolean;
 
-   function Find (Project : Designation_String;
+   function Find (Project : Alire.Project;
                   Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
                   Policy  : Policies) return Release;
 
@@ -61,7 +61,7 @@ package Alr.Query is
 
    procedure Print_Solution (I : Instance);
 
-   function Dependency_Image (Project  : Name_String;
+   function Dependency_Image (Project  : Alire.Project;
                               Versions : Semantic_Versioning.Version_Set;
                               Policy   : Policies := Newest) return String;
 

@@ -78,6 +78,7 @@ package body Alr.Commands.Test is
       Tested, Passed, Failed, Skipped, Unavail : Natural := 0;
 
       Is_Available, Is_Resolvable : Boolean;
+      Skipping_Extensions : Boolean := False;
    begin
       Create (File, Out_File,
               "alr_report_" &
@@ -100,15 +101,30 @@ package body Alr.Commands.Test is
 
          if not Is_Available or else not Is_Resolvable then
             Unavail := Unavail + 1;
-            Trace.Detail ("Skipping: " & R.Milestone.Image &
+            Trace.Detail ("Unavailable: " & R.Milestone.Image &
                           (if not Is_Available then " (unavailable)" else "") &
                           (if not Is_Resolvable then " (unresolvable)" else ""));
             Put_Line (File, "Unav:" & R.Milestone.Image);
-         elsif not R.Origin.Is_Native and then Ada.Directories.Exists (R.Unique_Folder) and then not Cmd.Redo then
+         elsif not R.Origin.Is_Native and then
+           not R.Is_Extension and then
+           Ada.Directories.Exists (R.Unique_Folder) and then
+           not Cmd.Redo
+         then
             Skipped := Skipped + 1;
+            Skipping_Extensions := True;
+            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
+         elsif not R.Origin.Is_Native and Then
+           R.Is_Extension and then
+           Ada.Directories.Exists (R.Unique_Folder) and then
+           Skipping_Extensions
+         then
+            Skipped := Skipped + 1;
+            Skipping_Extensions := True;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
+               Skipping_Extensions := False;
+
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
 
                --  Check declared gpr/executables in place
@@ -202,7 +218,7 @@ package body Alr.Commands.Test is
                declare
                   Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (I));
                begin
-                  if R.Variant = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
+                  if R.Project = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
                      Candidates.Include (R);
                   end if;
                end;

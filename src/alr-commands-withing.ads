@@ -1,5 +1,3 @@
-with Alire.Projects;
-
 package Alr.Commands.Withing is
 
    --  With resolution in Alire relies on two assumptions:
@@ -16,11 +14,11 @@ package Alr.Commands.Withing is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("<project>");
 
-   function Locate_Package (Name : Alire.Projects.Names) return String;
+   function Locate_Package (Name : Alire.Project) return String;
    --  returns the package name for the project, based on the file that
    --  contains its releases.
 
-   function With_Line (Name : Alire.Projects.Names) return String;
+   function With_Line (Name : Alire.Project) return String;
    --  The "with Alire.Index.Project;" full line
 
 end Alr.Commands.Withing;

@@ -1,5 +1,4 @@
 with Alire.Dependencies.Vectors;
-with Alire.Projects;
 with Alire.Utils;
 
 with Alr.Commands;
@@ -9,17 +8,16 @@ package body Alr.Query is
 
    package Semver renames Semantic_Versioning;
 
-   use all type Alire.Projects.Names;
    use all type Semver.Version_Set;
 
    ----------------------
    -- Dependency_Image --
    ----------------------
 
-   function Dependency_Image (Project  : Name_String;
+   function Dependency_Image (Project  : Alire.Project;
                               Versions : Semantic_Versioning.Version_Set;
                               Policy   : Policies := Newest) return String is
-      (Project &
+      ((+Project) &
        (if Versions /= Semver.Any
         then " version " & Semver.Image (Versions)
         else " with " & Utils.To_Mixed_Case (Policy'Img) & " version"));
@@ -28,14 +26,14 @@ package body Alr.Query is
    -- Exists --
    ------------
 
-   function Exists (Project : Designation_String;
+   function Exists (Project : Alire.Project;
                     Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
                     return Boolean
    is
       use Semver;
    begin
       for R of Index.Catalog loop
-         if R.Variant = Project and then Satisfies (R.Version, Allowed) then
+         if R.Project = Project and then Satisfies (R.Version, Allowed) then
             return True;
          end if;
       end loop;
@@ -47,7 +45,7 @@ package body Alr.Query is
    -- Find --
    ----------
 
-   function Find (Project : Name_String;
+   function Find (Project : Alire.Project;
                   Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
                   Policy  : Policies) return Release
    is
@@ -59,7 +57,7 @@ package body Alr.Query is
 
       function Check (R : Index.Release) return Boolean is
       begin
-         if R.Variant = Project then
+         if R.Project = Project then
             if Satisfies (R.Version, Allowed) then
                return True;
             else
@@ -85,7 +83,7 @@ package body Alr.Query is
          end loop;
       end if;
 
-      raise Query_Unsuccessful with "Release not found: " & Project;
+      raise Query_Unsuccessful with "Release not found: " & (+Project);
    end Find;
 
    ------------------
@@ -136,7 +134,7 @@ package body Alr.Query is
       --  thus saving copies. Probably the same applies to Unresolved.
       Dep : constant Alire.Dependencies.Dependency :=
                  (if Unresolved.Is_Empty
-                  then Alire.Dependencies.New_Dependency (Projects.Alire, Semver.Any)
+                  then Alire.Dependencies.New_Dependency ("unavailable", Semver.Any)
                   else Unresolved.First_Element);
       --  The fake project will never be referenced, since the first check is that unresolved is empty
       --  we are done
@@ -149,7 +147,7 @@ package body Alr.Query is
 
       function Check (R : Release) return Instance is
       begin
-         if Dep.Project = R.Name and Then
+         if Dep.Project = R.Project and Then
             Semver.Satisfies (R.Version, Dep.Versions) and then
             Is_Available (R)
          then
@@ -159,7 +157,7 @@ package body Alr.Query is
 
                Solution   : Instance;
             begin
-               New_Frozen.Insert (R.Name, R);
+               New_Frozen.Insert (R.Project, R);
                New_Remain.Append (R.Depends (Platform.Properties));
 
                Solution := Resolve (New_Remain, New_Frozen, Policy, Success);

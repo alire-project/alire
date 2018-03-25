@@ -54,7 +54,7 @@ package body Alr.Files is
    -- Locate_Given_Metadata_File --
    -----------------------
 
-   function Locate_Given_Metadata_File (Project : Alire.Name_String) return String is
+   function Locate_Given_Metadata_File (Project : Alire.Project) return String is
       use Ada.Directories;
       use Gnat.OS_Lib;
 
@@ -206,7 +206,7 @@ package body Alr.Files is
    -- Locate_Project_Folder --
    ---------------------------
 
-   function Locate_Above_Project_Folder (Project : Alire.Name_String) return String is
+   function Locate_Above_Project_Folder (Project : Alire.Project) return String is
       use Ada.Directories;
       use Alr.OS_Lib;
 

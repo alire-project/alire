@@ -1,3 +1,5 @@
+with Alire.Containers;
+with Alire.Index;
 with Alire.Projects;
 
 with Alr.Utils;
@@ -25,18 +27,21 @@ package body Alr.Commands.List is
          Reportaise_Wrong_Arguments ("Too many search arguments");
       end if;
 
+      Requires_Full_Index;
+
       declare
+         use Alire.Containers.Project_Description_Maps;
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
       begin
-         for Name in Alire.Projects.Names loop
+         for I in Alire.Projects.Descriptions.Iterate loop
             if Num_Arguments = 0 or else
-              Contains (To_Lower_Case (Name'Img), Search) or else
-              Contains (To_Lower_Case (Alire.Projects.Description (Name)), Search)
+              Contains (To_Lower_Case (+Key (I)), Search) or else
+              Contains (To_Lower_Case (Element (I)), Search)
             then
                Found := Found + 1;
                Table.New_Row;
-               Table.Append (To_Lower_Case (Name'Img));
-               Table.Append (Alire.Projects.Description (Name));
+               Table.Append (To_Lower_Case (+Key (I)));
+               Table.Append (Element (I));
             end if;
             Busy.Step;
          end loop;

@@ -6,7 +6,6 @@ with Alr.Query;
 private with Ada.Text_IO;
 
 private with Alire.GPR;
-private with Alire.Projects; pragma Unreferenced (Alire.Projects);
 private with Alire.Properties.Labeled;
 
 private with Alr.OS_Lib;
@@ -107,7 +106,6 @@ private
 
    --  Visibility for some enums
 
-   use Alire.Projects;
    use all type Alire.Properties.Labeled.Labels;
 
    --  Session shortcut

@@ -56,7 +56,7 @@ package body Alr.Commands.Run is
       end if;
 
       declare
-         Name       : constant String              := Root.Image;
+         Name       : constant String              := +Root.Project;
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
            (OS_Lib.Current_Folder,
             Root.Current.Default_Executable,
