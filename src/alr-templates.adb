@@ -6,6 +6,7 @@ with Alire.GPR;
 with Alire.Index;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
+with Alire.Utils;
 
 with Alr.Commands;
 with Alr.Commands.Withing;
@@ -126,6 +127,7 @@ package body Alr.Templates is
 
       GPR_Files : Utils.String_Vector;
       All_Paths : Utils.String_Vector;
+      Sorted_Paths : Alire.Utils.String_Set;
    begin
       if Root.Is_Released then
          GPR_Files := Root.Release.Project_Files (Platform.Properties, With_Path => True);
@@ -175,10 +177,15 @@ package body Alr.Templates is
          end loop;
       end loop;
 
-      if not All_Paths.Is_Empty then
+      --  Sort and remove duplicates in paths (may come from extension projects)
+      for Path of All_Paths loop
+         Sorted_Paths.Include (Path);
+      end loop;
+
+      if not Sorted_Paths.Is_Empty then
          Put (File, Tab_1 & "for Project_Path use (");
 
-         for Path of All_Paths loop
+         for Path of Sorted_Paths loop
             if First then
                New_Line (File);
                First := False;
