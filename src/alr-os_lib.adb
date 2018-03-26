@@ -517,7 +517,7 @@ package body Alr.OS_Lib is
       return Guard : Folder_Guard (Current'Length) do
          Guard.Original := Current; -- Always store, we must have been asked to ensure return to current folder!
 
-         if Path /= Current then -- Changing folder
+         if Path /= Current and then Path /= "" then -- Changing folder
             Log ("Entering folder: " & Path, Debug);
             Ada.Directories.Set_Directory (Path);
          else -- Ensuring stay

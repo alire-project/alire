@@ -78,7 +78,7 @@ package body Alr.Commands.Search is
       Tab.Append ("NAME");
       Tab.Append ("VERSION");
       Tab.Append ("DESCRIPTION");
-      Tab.Append ("RELEASE NOTES");
+      Tab.Append ("NOTES");
 
       declare
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
@@ -114,7 +114,7 @@ package body Alr.Commands.Search is
       end;
 
       if Found = 0 then
-         Log ("No hits");
+         Log ("No hits              ");
       else
          Tab.Print (Separator => "  ");
       end if;

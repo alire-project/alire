@@ -1,8 +1,10 @@
 with Ada.Directories;
 
 with Alire;
+with Alire.Actions;
 with Alire.Roots;
 
+with Alr.Actions;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Origins;
@@ -18,6 +20,7 @@ package body Alr.Checkout is
                        Parent_Folder : String;
                        Was_There     : out Boolean)
    is
+      use all type Alire.Actions.Moments;
       use Alr.OS_Lib.Paths;
       Folder : constant String := Parent_Folder / R.Unique_Folder;
    begin
@@ -28,6 +31,15 @@ package body Alr.Checkout is
          Was_There := False;
          Trace.Detail ("About to deploy " & R.Milestone.Image);
          Alr.Origins.Fetch_Or_Install (R.Origin, Folder);
+
+         if Ada.Directories.Exists (Folder) then
+            declare
+               use OS_Lib;
+               Guard : constant Folder_Guard := Enter_Folder (Folder) with Unreferenced;
+            begin
+               Actions.Execute_Actions (R, Post_Fetch);
+            end;
+         end if;
       end if;
    end Checkout;
 

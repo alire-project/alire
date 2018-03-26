@@ -1,3 +1,6 @@
+with Alire.Actions;
+
+with Alr.Actions;
 with Alr.Spawn;
 
 package body Alr.Commands.Compile is
@@ -12,17 +15,30 @@ package body Alr.Commands.Compile is
       Requires_Project;
       Requires_Buildfile;
 
+      --  COMPILATION
       begin
          Spawn.Gprbuild (Root.Build_File,
                          Session_Build => False,
                          Extra_Args    => Scenario.As_Command_Line);
-         Trace.Detail ("Compilation finished successfully");
-         Trace.Detail ("Use alr run --list to check available executables");
       exception
-         when Command_Failed =>
+         when others =>
             Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");
             raise;
       end;
+
+      --  POST-COMPILE ACTIONS
+      if Root.Is_Released then
+         begin
+            Actions.Execute_Actions (Root.Current.Release, Alire.Actions.Post_Compile);
+         exception
+            when others =>
+               Trace.Warning ("A post-compile action failed, re-run with -v or -d for details");
+               raise;
+         end;
+      end if;
+
+      Trace.Detail ("Compilation finished successfully");
+      Trace.Detail ("Use alr run --list to check available executables");
    end Do_Compile;
 
    -------------
