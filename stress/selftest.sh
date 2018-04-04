@@ -18,6 +18,9 @@ if [[ "$version" == "working" ]]; then
     ln -sf ~/local/alr/bin/alr
     popd
     read
+elif [[ "$version" == "docker" ]]; then
+    echo Testing DOCKER version
+    export PATH+=:`pwd`/bin
 elif [[ "$version" == "release" ]]; then
     echo Testing RELEASE version, press enter
     pushd ~/opt/bin
