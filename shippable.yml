@@ -11,5 +11,5 @@ build:
         image_tag: gpl.2017.slim
         pull: true
     ci:
-        - git submodule update --recursive
+        - git submodule update --init --recursive
         - /opt/gnat/bin/gprbuild -p -P alr_env
