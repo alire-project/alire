@@ -11,7 +11,7 @@ build:
         image_tag: gpl.2017.slim
         pull: true
     ci:
-        - apt-get install git mercurial
+        - apt-get install -y mercurial
         - git submodule update --init --recursive
         - /opt/gnat/bin/gprbuild -p -P alr_env
         - bash stress/selftest.sh docker
