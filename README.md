@@ -1,4 +1,4 @@
-# ALR # [![Run Status](https://api.shippable.com/projects/5ac50b3494f2af07000852d9/badge?branch=master)](https://app.shippable.com/github/alire-project/alr)
+# ALR [![Run Status](https://api.shippable.com/projects/5ac50b3494f2af07000852d9/badge?branch=master)](https://app.shippable.com/github/alire-project/alr)
 ALIRE: Ada LIbrary REpository.
 
 A catalog of ready-to-use Ada libraries plus a command-line tool (`alr`) to obtain, compile, and incorporate them into your own projects. It aims to fulfill a similar role to Rust's `cargo` or OCaml's `opam`.
