@@ -28,6 +28,8 @@ package Alr.Query is
                     Version : Semantic_Versioning.Version)
                     return Boolean renames Alire.Index.Exists;
 
+   function Exists (Name : Alire.Project) return Boolean renames Alire.Index.Is_Currently_Indexed;
+
    function Find (Project : Alire.Project;
                   Version : Semantic_Versioning.Version) return Release renames Alire.Index.Find;
 
@@ -38,6 +40,10 @@ package Alr.Query is
    function Find (Project : Alire.Project;
                   Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
                   Policy  : Policies) return Release;
+
+   function Find (Project : String;
+                  Policy  : Policies) return Release;
+   --  Given a textual project+set (see Parsers), find the release if it exists
 
    ----------------------------------
    --  Platform individual queries --

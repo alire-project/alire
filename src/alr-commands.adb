@@ -9,6 +9,7 @@ with Alire.Utils;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Compile;
+with Alr.Commands.Depend;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
 with Alr.Commands.Init;
@@ -44,6 +45,7 @@ package body Alr.Commands is
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Compile  => new Compile.Command,
+                       Cmd_Depend   => new Depend.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Init     => new Init.Command,
@@ -564,10 +566,10 @@ package body Alr.Commands is
    begin
       Put_Line (" Project selection syntax (policy applies within the allowed version subsets)");
       New_Line;
-      Put_Line (" project        " & ASCII.HT & "Get any version");
-      Put_Line (" project=version" & ASCII.HT & "Get exact version");
-      Put_Line (" project^version" & ASCII.HT & "Get a major-compatible version");
-      Put_Line (" project~version" & ASCII.HT & "Get a minor-compatible version");
+      Put_Line (" project        " & ASCII.HT & "Newest/oldest version (according to policy)");
+      Put_Line (" project=version" & ASCII.HT & "Exact version");
+      Put_Line (" project^version" & ASCII.HT & "Major-compatible version");
+      Put_Line (" project~version" & ASCII.HT & "Minor-compatible version");
    end Print_Project_Version_Sets;
 
 end Alr.Commands;

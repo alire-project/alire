@@ -2,6 +2,7 @@ with Alire.Dependencies.Vectors;
 with Alire.Utils;
 
 with Alr.Commands;
+with Alr.Parsers;
 with Alr.Platform;
 
 package body Alr.Query is
@@ -84,6 +85,20 @@ package body Alr.Query is
       end if;
 
       raise Query_Unsuccessful with "Release not found: " & (+Project);
+   end Find;
+
+   ----------
+   -- Find --
+   ----------
+
+   function Find (Project : String;
+                  Policy  : Policies) return Release
+   is
+      Spec : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Project);
+   begin
+      return Find (Spec.Project,
+                   Spec.Versions,
+                   Policy);
    end Find;
 
    ------------------
