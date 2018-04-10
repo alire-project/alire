@@ -52,8 +52,9 @@ package Alr.Commands is
    --  These are in order of exigence
    use all type Bootstrap.Session_States;
 
-   procedure Requires_Full_Index;
+   procedure Requires_Full_Index (Even_In_Session : Boolean := False);
    --  Ensures that alr has self-built with a full index
+   --  Only depend should need the full index for a session build
 
    procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it

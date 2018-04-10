@@ -247,7 +247,9 @@ package body Alr.Templates is
                                  then Filename
                                  else Hardcoded.Alire_File (Root.Project));
 
-      Pkg_Name : constant String := Name (Name'First .. Name'Last - 4);
+      Simple_Name : constant String := Ada.Directories.Simple_Name (Name);
+
+      Pkg_Name : constant String := Simple_Name (Simple_Name'First .. Simple_Name'Last - 4);
    begin
       if Root.Is_Released and then Instance.Contains (Root.Release.Project) then
          declare

@@ -188,9 +188,17 @@ package body Alr.Bootstrap is
       use Ada.Directories;
       use Hardcoded;
 
-      Folder_To_Index : constant String := Hardcoded.Alr_Index_Folder_Absolute;
-      Full_Index      : constant Boolean := Alr_File = "";
-      Session_Folder  : constant String := (if Alr_File /= ""
+      Folder_To_Index : constant String  := Hardcoded.Alr_Index_Folder_Absolute;
+
+      Full_Index      : constant Boolean := True;
+      -- Alr_File = "";
+      --  We'll come back to the problem of slow full index when it proves to be a real issue
+      --  The original idea was that the non-session alr has the full index, session one hasn't
+      --  But alr depend needs it to do aditions.
+      --  A possible workaround could be to query the non-session alr from the session one.
+      --  Just keep that in mind.
+
+      Session_Folder  : constant String  := (if Alr_File /= ""
                                             then Hardcoded.Session_Folder (Alr_File)
                                             else Hardcoded.No_Session_Folder);
    begin

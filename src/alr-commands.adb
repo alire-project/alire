@@ -355,14 +355,19 @@ package body Alr.Commands is
    -- Requires_Full_Index --
    ---------------------------
 
-   procedure Requires_Full_Index is
+   procedure Requires_Full_Index (Even_In_Session : Boolean := False) is
+      --  This is pointless now that all rebuilds incorporate it, but...
    begin
-      if Self.Is_Session then
+      if Self.Is_Session and not Even_In_Session then
          Trace.Error ("A session build should not request the full index");
          raise Program_Error with "A session build should not request the full index";
       elsif not Self.Has_Full_Index then
-         --  Can happen only first time after installation/devel build
-         Bootstrap.Rebuild_Respawn;
+         --  Can happen only first time after installation/devel build, or with depend command
+         if Even_In_Session then
+            Bootstrap.Rebuild_Respawn (Files.Locate_Metadata_File);
+         else
+            Bootstrap.Rebuild_Respawn;
+         end if;
       end if;
    end Requires_Full_Index;
 
