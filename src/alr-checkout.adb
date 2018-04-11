@@ -5,7 +5,6 @@ with Alire.Actions;
 with Alire.Roots;
 
 with Alr.Actions;
-with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Origins;
 with Alr.Templates;
@@ -68,7 +67,6 @@ package body Alr.Checkout is
                            If_Conflict    : Policies := Skip)
      				--  FIXME policies not implemented
    is
-      Project : constant Alire.Project := R.Project;
       Root    : Alire.Index.Release renames R;
       Was_There : Boolean with Unreferenced;
    begin
@@ -83,7 +81,7 @@ package body Alr.Checkout is
          declare
             use OS_Lib;
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
-            Index_File : constant String := Files.Locate_Given_Metadata_File (Project);
+            Index_File : constant String := Hardcoded.Working_Deps_File;
          begin
             if Index_File /= "" then
                Trace.Detail ("Renaming in-source alr file: " & Index_File);

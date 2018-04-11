@@ -120,6 +120,6 @@ private
    overriding procedure Finalize (This : in out Folder_Guard);
 
    function "/" (L, R : String) return String is
-     (Ada.Directories.Compose (L, R));
+     (L & GNAT.OS_Lib.Directory_Separator & R);
 
 end Alr.OS_Lib;

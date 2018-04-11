@@ -65,12 +65,12 @@ package body Alr.Commands.Withing is
 
    begin
       --  Dummy first attempt
-      if Exists (Hardcoded.Alr_Index_Folder_Absolute / "alire-index-" & Nameimg & ".ads") then
+      if Exists (Hardcoded.Alr_Index_Folder / "alire-index-" & Nameimg & ".ads") then
          return "Alire.Index." & Utils.To_Mixed_Case (Nameimg);
       end if;
 
       --  Look for exact name in subfolders
-      OS_Lib.Traverse_Folder (Hardcoded.Alr_Index_Folder_Absolute,
+      OS_Lib.Traverse_Folder (Hardcoded.Alr_Index_Folder,
                               Matches'Access,
                               Recurse => True);
 

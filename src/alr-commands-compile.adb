@@ -1,6 +1,7 @@
 with Alire.Actions;
 
 with Alr.Actions;
+with Alr.Hardcoded;
 with Alr.Spawn;
 
 package body Alr.Commands.Compile is
@@ -17,7 +18,7 @@ package body Alr.Commands.Compile is
 
       --  COMPILATION
       begin
-         Spawn.Gprbuild (Root.Build_File,
+         Spawn.Gprbuild (Hardcoded.Working_Build_File,
                          Session_Build => False,
                          Extra_Args    => Scenario.As_Command_Line);
       exception

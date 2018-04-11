@@ -4,7 +4,6 @@ with Ada.Directories;
 with Alire_Early_Elaboration;
 
 with Alr.Commands.Update;
-with Alr.Files;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Root;
@@ -22,18 +21,6 @@ package body Alr.Bootstrap is
 
    function Executable     return String is (Hardcoded.Alr_Src_Folder / "bin" / "alr");
    function Executable_Bak return String is (Hardcoded.Alr_Src_Folder / "bin" / "alr-prev");
-
-   Cached_Metafile : access String;
-
-   function Metadata_File return String is
-   begin
-      if Cached_Metafile = null then
-         Cached_Metafile := new String'(Files.Locate_Metadata_File);
-         Trace.Detail ("Metadata file in use is: " & Cached_Metafile.all);
-      end if;
-
-      return Cached_Metafile.all;
-   end Metadata_File;
 
    -----------------------------
    -- Attempt_Backup_Recovery --
@@ -115,7 +102,7 @@ package body Alr.Bootstrap is
    ---------------------------
 
    procedure Check_Rebuild_Respawn is
-      Metafile     : constant String  := Files.Locate_Metadata_File;
+      Metafile     : constant String  := Hardcoded.Working_Deps_File;
       Must_Rebuild :          Boolean := False;
    begin
       case Session_State is
@@ -130,13 +117,13 @@ package body Alr.Bootstrap is
             raise Command_Failed;
       end case;
 
-      if not OS_Lib.Is_Executable_File (Hardcoded.Alr_Session_Exec (Metafile)) then
+      if not OS_Lib.Is_Executable_File (Hardcoded.Alr_Session_Exec) then
          Trace.Debug ("Building first session-specific alr");
          Must_Rebuild := True;
-      elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec (Metafile), Than => Metafile) then
+      elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec, Than => Metafile) then
          Trace.Debug ("Rebuilding currently outdated session-specific alr");
          Must_Rebuild := True;
-      elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec (Metafile), Than => Hardcoded.Alr_Rolling_Exec) then
+      elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec, Than => Hardcoded.Alr_Rolling_Exec) then
          Trace.Debug ("Rebuilding older session-specific alr than rolling alr");
          Must_Rebuild := True;
       end if;
@@ -144,10 +131,10 @@ package body Alr.Bootstrap is
       if Must_Rebuild then
          --  We must rebuild and respawn
          Trace.Debug ("About to rebuild with metadata: " & Metafile);
-         Rebuild_Respawn (Metafile);
+         Rebuild_Respawn (Session);
       else
          --  No reason to rebuild, hence we must spawn from rolling alr to session alr:
-         Spawn.Session_Alr_Without_Return (Metafile);
+         Spawn.Session_Alr_Without_Return;
 
 --           Trace.Error ("No reason to rebuild, yet session status is not valid!");
 --           Trace.Debug ("Target exec  : " & Hardcoded.Alr_Session_Exec (Metafile));
@@ -184,11 +171,11 @@ package body Alr.Bootstrap is
    -- Rebuild --
    -------------
 
-   procedure Rebuild (Alr_File : String := "") is
+   procedure Rebuild (Kind : Rebuild_Types) is
       use Ada.Directories;
       use Hardcoded;
 
-      Folder_To_Index : constant String  := Hardcoded.Alr_Index_Folder_Absolute;
+      Folder_To_Index : constant String  := Hardcoded.Alr_Index_Folder;
 
       Full_Index      : constant Boolean := True;
       -- Alr_File = "";
@@ -198,9 +185,9 @@ package body Alr.Bootstrap is
       --  A possible workaround could be to query the non-session alr from the session one.
       --  Just keep that in mind.
 
-      Session_Folder  : constant String  := (if Alr_File /= ""
-                                            then Hardcoded.Session_Folder (Alr_File)
-                                            else Hardcoded.No_Session_Folder);
+      Session_Folder  : constant String  := (case Kind is
+                                                when Session    => Hardcoded.Session_Folder,
+                                                when Standalone => Hardcoded.No_Session_Folder);
    begin
       --  Before rebuilding we need the sources to exist!
       --  Note that the first time we run after developer build, alr considers itself a release build
@@ -210,7 +197,7 @@ package body Alr.Bootstrap is
          Commands.Update.Update_Alr;
       end if;
 
-      if Alr_File = "" then  -- rolling exec: we must try to preserve at least a fallback copy
+      if Kind = Standalone then  -- rolling exec: we must try to preserve at least a fallback copy
          if Exists (Executable) then
             Copy_File (Executable, Executable_Bak, "mode=overwrite");
          end if;
@@ -224,8 +211,8 @@ package body Alr.Bootstrap is
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "b__alr-main.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-self.o");
       OS_Lib.Delete_File (Alr_Src_Folder / "obj" / "alr-session.o");
-      if Alr_File /= "" then
-         OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Alr_File), ".ads", ".o"));
+      if Kind = Session then
+         OS_Lib.Delete_File (Alr_Src_Folder / "obj" / Utils.Replace (Simple_Name (Hardcoded.Working_Deps_File), ".ads", ".o"));
       end if;
 
       --  DELETE SESSION FOLDER TO ENSURE FRESH FILES
@@ -245,30 +232,32 @@ package body Alr.Bootstrap is
       end if;
 
       --  METADATA FILE
-      if Alr_File /= "" then
-         Copy_File (Alr_File, Session_Folder / Simple_Name (Alr_File), "mode=overwrite");
-         Log ("Generating session for " & Alr_File, Detail);
+      if Kind = Session then
+         Copy_File (Hardcoded.Working_Deps_File,
+                    Session_Folder / Simple_Name (Hardcoded.Working_Deps_File), "mode=overwrite");
+         Log ("Generating session in " & Session_Folder, Detail);
       else
          Log ("Generating non-project session", Detail);
       end if;
 
       --  SESSION FILE
-      Templates.Generate_Session (Session_Folder, Full_Index, Alr_File);
+      Templates.Generate_Session (Session_Folder, Full_Index, Hardcoded.Working_Deps_File);
 
       begin
-         Spawn.Gprbuild (Hardcoded.Alr_Gpr_File,
-                         Session_Build => Alr_File /= "",
+         Spawn.Gprbuild (Hardcoded.Working_Build_File,
+                         Session_Build => Kind = Session,
                          Session_Path  => Session_Folder);
       exception
          when others =>
             -- Compilation failed
-            if Alr_File = "" then
-               Log ("alr self-build failed. Since you are not inside an alr project,");
-               Log ("the error is likely in alr itself. Please report your issue to the developers.");
-            else
-               Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
-               Log ("The dependency file in use is: " & Alr_File);
-            end if;
+            case Kind is
+               when Standalone =>
+                  Log ("alr self-build failed. Since you are not inside an alr project,");
+                  Log ("the error is likely in alr itself. Please report your issue to the developers.");
+               when Session =>
+                  Log ("alr self-build failed. Please verify the syntax in your project dependency file.");
+                  Log ("The dependency file in use is: " & ("." / Hardcoded.Working_Deps_File));
+            end case;
             Trace.Info ("");
             Trace.Info ("Re-run with -v or -d for details");
 
@@ -282,11 +271,11 @@ package body Alr.Bootstrap is
    -- Rebuild_Respawn --
    ---------------------
 
-   procedure Rebuild_Respawn (Metafile : String := "") is
+   procedure Rebuild_Respawn (Kind : Rebuild_Types) is
    begin
-      Rebuild (Metafile);
-      if Metafile /= "" then
-         Spawn.Session_Alr_Without_Return (Metafile);
+      Rebuild (Kind);
+      if Kind = Session then
+         Spawn.Session_Alr_Without_Return;
       else
          Spawn.Updated_Alr_Without_Return;
       end if;
@@ -299,12 +288,12 @@ package body Alr.Bootstrap is
    function Session_State return Session_States is
    begin
       if Self.Is_Session then
-         if Self.Matches_Session (Files.Locate_Metadata_File) then
+         if Self.Matches_Session (Hardcoded.Working_Deps_File) then
             return Valid;
          else
             return Erroneous;
          end if;
-      elsif Files.Locate_Any_GPR_File > 0 and then Files.Locate_Metadata_File /= "" then
+      elsif Is_Directory (Hardcoded.Alr_Working_Folder) and then Is_Regular_File (Hardcoded.Working_Deps_File) then
          return Detached;
       else
          return Outside;

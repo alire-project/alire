@@ -1,6 +1,5 @@
 with Alr.Bootstrap;
 with Alr.Checkout;
-with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Platform;
 with Alr.Query;
@@ -85,14 +84,11 @@ package body Alr.Commands.Update is
          Log ("Checking remote repositories:");
          Update_Alr;
 
-         declare
-            Metafile : constant String := Files.Locate_Metadata_File;
-         begin
-            Bootstrap.Rebuild;     -- Update rolling alr
-            if Metafile /= "" then -- And this session one
-               Bootstrap.Rebuild (Metafile);
-            end if;
-         end;
+         Bootstrap.Rebuild (Bootstrap.Standalone);     -- Update rolling alr
+
+         if Bootstrap.Session_State >= Detached then -- And this session one
+            Bootstrap.Rebuild (Bootstrap.Session);
+         end if;
 
          --  And launch updated exec without online (or it would restart endlessly)
          Spawn.Alr (Cmd_Update);

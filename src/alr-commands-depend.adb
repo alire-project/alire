@@ -8,7 +8,7 @@ with Alire.Index;
 with Alire.Releases;
 with Alire.Roots;
 
-with Alr.Files;
+with Alr.Hardcoded;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Root;
@@ -104,7 +104,7 @@ package body Alr.Commands.Depend is
             raise Program_Error with "Reached unresolvable situation despite previous checks";
             --  This really should be impossible, given that we checked each new dependency adition
          end if;
-         Templates.Generate_Prj_Alr (Needed, Root.Current, Templates.Unknown, Files.Locate_Metadata_File);
+         Templates.Generate_Prj_Alr (Needed, Root.Current, Templates.Unknown, Hardcoded.Working_Deps_File);
          Trace.Detail ("Regeneration finished, updating now");
       end;
 

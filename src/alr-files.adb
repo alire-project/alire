@@ -1,16 +1,17 @@
-with Ada.Containers;
-with Ada.Directories;
-
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 
-with GNAT.OS_Lib;
-
 package body Alr.Files is
 
-   use Ada.Containers;
+   use OS_Lib.Paths;
 
-   function "/" (L, R : String) return String is (Ada.Directories.Compose (L, R));
+   -------------------------
+   -- Is_Candidate_Folder --
+   -------------------------
+
+   function Is_Candidate_Folder (Folder : String := Ada.Directories.Current_Directory) return Boolean is
+     (Ada.Directories.Exists (Folder / Hardcoded.Alr_Working_Folder) and then
+      Ada.Directories.Exists (Folder / Hardcoded.Working_Deps_File));
 
    -----------------------
    -- Locate_File_Under --
@@ -50,120 +51,12 @@ package body Alr.Files is
       return Found;
    end Locate_File_Under;
 
-   -----------------------
-   -- Locate_Given_Metadata_File --
-   -----------------------
-
-   function Locate_Given_Metadata_File (Project : Alire.Project) return String is
-      use Ada.Directories;
-      use Gnat.OS_Lib;
-
-      Candidates : Utils.String_Vector;
-   begin
-      if Is_Regular_File (Hardcoded.Alire_File (Project)) then
-         Candidates.Append (Hardcoded.Alire_File (Project));
-      end if;
-
-      --  Check subfolders
-      declare
-         Search : Search_Type;
-         Folder : Directory_Entry_Type;
-      begin
-         Start_Search (Search, Current_Directory, "", (Directory => True, others => False));
-
-         while More_Entries (Search) loop
-            Get_Next_Entry (Search, Folder);
-
-            if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
-               if Is_Regular_File (Full_Name (Folder) / Hardcoded.Alire_File (Project)) then
-                  Candidates.Append (Full_Name (Folder) / Hardcoded.Alire_File (Project));
-               end if;
-            end if;
-         end loop;
-
-         End_Search (Search);
-      end;
-
-      if Candidates.Length > 1 then
-         Log ("Warning: more than one " & Hardcoded.Alire_File (Project) & " in scope.");
-         for C of Candidates loop
-            Log (C);
-         end loop;
-      end if;
-
-      if Candidates.Length = 1 then
-         return Candidates.First_Element;
-      else
-         return "";
-      end if;
-   end Locate_Given_Metadata_File;
-
-   ---------------------------
-   -- Locate_Metadata_File --
-   ---------------------------
-
-   function Locate_Metadata_File return String is
-      use Ada.Directories;
-      use Gnat.OS_Lib;
-
-      Candidates : Utils.String_Vector;
-
-      ---------------
-      -- Search_In --
-      ---------------
-
-      procedure Search_In (Folder : String) is
-         procedure Check (File : Directory_Entry_Type) is
-         begin
-            Candidates.Append (Full_Name (File));
-         end Check;
-      begin
-         Search (Folder, "*_alr.ads", (Ordinary_File => True, others => False), Check'Access);
-      exception
-         when Use_Error =>
-            Trace.Debug ("Unreadable file/folder during search: " & Folder);
-      end Search_In;
-
-      ------------------
-      -- Check_Folder --
-      ------------------
-
-      procedure Check_Folder (Folder : Directory_Entry_Type) is
-      begin
-         if Simple_Name (Folder) /= "." and then Simple_Name (Folder) /= ".." then
-            Search_In (Full_Name (Folder));
-         end if;
-      end Check_Folder;
-
-   begin
-      --  Regular files in current folder
-      Search_In (Current_Directory);
-
-      --  Find direct subfolders and look there
-      Search (Current_Directory, "", (Directory => True, others => False), Check_Folder'Access);
-
-      if Candidates.Length > 1 then
-         --  Not necessarily a bad thing. Will happen e.g. when on the parent folder of many alr projects
-         Trace.Debug ("Looking for alr metadata file: more than one alr project file in scope.");
-         for C of Candidates loop
-            Trace.Debug (C);
-         end loop;
-      end if;
-
-      if Candidates.Length = 1 then
-         return Candidates.First_Element;
-      else
-         return "";
-      end if;
-   end Locate_Metadata_File;
-
    -------------------------
    -- Locate_Any_GPR_File --
    -------------------------
 
    function Locate_Any_GPR_File return Natural is
       use Ada.Directories;
-      use Gnat.OS_Lib;
 
       Candidates : Utils.String_Vector;
 
@@ -177,46 +70,23 @@ package body Alr.Files is
       return Natural (Candidates.Length);
    end Locate_Any_GPR_File;
 
-   -------------------------------------------
-   -- Locate_Above_Candidate_Project_Folder --
-   -------------------------------------------
+   ---------------------------------
+   -- Locate_Above_Project_Folder --
+   ---------------------------------
 
-   function Locate_Above_Candidate_Project_Folder return String is
+   function Locate_Above_Project_Folder return String is
       use Ada.Directories;
       use Alr.OS_Lib;
-      use GNAT.OS_Lib;
 
       Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
    begin
       Trace.Debug ("Starting root search at " & Current_Folder);
       loop
-         if Locate_Any_GPR_File > 0 and then Locate_Metadata_File /= "" then
+         if Is_Candidate_Folder then
             return Current_Folder;
          else
-            Set_Directory (Containing_Directory (Current_Directory));
+            Set_Directory (Containing_Directory (Current_Folder));
             Trace.Debug ("Going up to " & Current_Folder);
-         end if;
-      end loop;
-   exception
-      when Use_Error =>
-         return ""; -- There's no containing folder (hence we're at root)
-   end Locate_Above_Candidate_Project_Folder;
-
-   ---------------------------
-   -- Locate_Project_Folder --
-   ---------------------------
-
-   function Locate_Above_Project_Folder (Project : Alire.Project) return String is
-      use Ada.Directories;
-      use Alr.OS_Lib;
-
-      Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
-   begin
-      loop
-         if Is_Regular_File (Hardcoded.Build_File (Project)) and then Locate_Given_Metadata_File (Project) /= "" then
-            return Current_Folder;
-         else
-            Set_Directory (Containing_Directory (Current_Directory));
          end if;
       end loop;
    exception

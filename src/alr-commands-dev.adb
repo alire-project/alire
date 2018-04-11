@@ -1,5 +1,4 @@
 with Alr.Bootstrap;
-with Alr.Files;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
@@ -13,10 +12,6 @@ package body Alr.Commands.Dev is
 
    overriding procedure Execute (Cmd : in out Command) is
    begin
-      if Cmd.Locate_Alr then
-         Log ("Project file: " & Files.Locate_Metadata_File);
-      end if;
-
       if Cmd.Raise_Except then
          raise Program_Error with "Raising forcibly";
       end if;
@@ -30,7 +25,11 @@ package body Alr.Commands.Dev is
       end if;
 
       if Cmd.Self_Compile then
-         Bootstrap.Rebuild (Files.Locate_Metadata_File);
+         if Bootstrap.Session_State >= Detached then
+            Bootstrap.Rebuild (Bootstrap.Session);
+         else
+            Bootstrap.Rebuild (Bootstrap.Standalone);
+         end if;
       end if;
    end Execute;
 
@@ -71,11 +70,6 @@ package body Alr.Commands.Dev is
    is
       use GNAT.Command_Line;
    begin
-      Define_Switch (Config,
-                     Cmd.Locate_Alr'Access,
-                     "", "--locate",
-                     "Tries to locate a project file in scope");
-
       Define_Switch (Config,
                      Cmd.Raise_Except'Access,
                      "", "--raise",

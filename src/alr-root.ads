@@ -1,7 +1,6 @@
 with Alire.Root;
 with Alire.Roots;
 
-with Alr.Hardcoded;
 with Alr.OS_Lib;
 
 package Alr.Root is
@@ -19,11 +18,7 @@ package Alr.Root is
    function Project return Alire.Project
      with Pre => not Is_Empty;
 
-   function Build_File (Prj : Alire.Project := Project) return String
-     with Pre => (not Is_Empty);
-   --  The alr environment project file (project_alr.gpr)
-
-   function Enter_Root (Prj : Alire.Project := Project) return OS_Lib.Folder_Guard
+   function Enter_Root return OS_Lib.Folder_Guard
      with Pre => (not Is_Empty);
    --  Enters the root folder if not already there
 
@@ -34,8 +29,5 @@ private
    function Is_Released return Boolean is (Current.Is_Released);
 
    function Project return Alire.Project is (Current.Project);
-
-   function Build_File (Prj : Alire.Project := Project) return String is
-     (Hardcoded.Build_File (Prj));
 
 end Alr.Root;

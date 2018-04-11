@@ -23,7 +23,7 @@ package body Alr.Spawn is
          Log ("Please run 'alr update -o' outside any alr project.");
       else
          Log ("The last used project was: " & (+Root.Project));
-         Log ("Please check its metadata file: " & Hardcoded.Alire_File (Root.Project));
+         Log ("Please check its metadata file: " & Hardcoded.Working_Deps_File);
       end if;
    end Warn_Outdated;
 
@@ -50,13 +50,13 @@ package body Alr.Spawn is
    -- Session_Alr_Without_Return --
    --------------------------------
 
-   procedure Session_Alr_Without_Return (Metafile : String) is
+   procedure Session_Alr_Without_Return is
    begin
-      if Is_Executable_File (Hardcoded.Alr_Session_Exec (Metafile)) then
+      if Is_Executable_File (Hardcoded.Alr_Session_Exec) then
          Trace.Detail (":::");
          begin
             Setenv (Hardcoded.Alr_Child_Flag, "TRUE");
-            OS_Lib.Spawn_Raw (Hardcoded.Alr_Session_Exec (Metafile), OS_Lib.Current_Command_Line);
+            OS_Lib.Spawn_Raw (Hardcoded.Alr_Session_Exec, OS_Lib.Current_Command_Line);
             Os_Lib.Bailout (0);
             raise Program_Error with "Unreachable"; -- Just to remove a warning on No_Return
          exception

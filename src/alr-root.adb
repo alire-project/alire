@@ -1,4 +1,7 @@
+with Ada.Directories;
+
 with Alr.Files;
+with Alr.Hardcoded;
 with Alr.Utils;
 
 package body Alr.Root is
@@ -8,22 +11,25 @@ package body Alr.Root is
    -----------------
 
    procedure Check_Valid is
+      use Ada.Directories;
    begin
       if Is_Empty then
          Trace.Error ("No root project defined despite session being current, check project_alr.ads file");
          raise Command_Failed;
       end if;
 
-      if Files.Locate_Given_Metadata_File (Project) = "" then
-         if Files.Locate_Metadata_File /= "" then
-            Trace.Error ("Session/Project mismatch:");
-            Trace.Error ("Root project is " & Utils.Quote (+Project));
-            Trace.Error ("Session file is " & Utils.Quote (Files.Locate_Metadata_File));
-         else
-            Trace.Error ("Could not find a valid session file");
-         end if;
-
-         raise Command_Failed;
+      if not Exists (Hardcoded.Alr_Working_Folder) then
+         Trace.Error ("alire subfolder not found");
+         raise Program_Error;
+      elsif Kind (Hardcoded.Alr_Working_Folder) /= Directory then
+         Trace.Error ("Expected alire folder but found a: " & Kind (Hardcoded.Alr_Working_Folder)'img);
+         raise Program_Error;
+      elsif not Exists (Hardcoded.Working_Deps_File) then
+         Trace.Error ("Dependency file not found in alire folder");
+         raise Program_Error;
+      elsif Kind (Hardcoded.Working_Deps_File) /= Ordinary_File then
+         Trace.Error ("Expected ordinary file but found a: " & Kind (Hardcoded.Working_Deps_File)'img);
+         raise Program_Error;
       end if;
    end Check_Valid;
 
@@ -31,9 +37,9 @@ package body Alr.Root is
    -- Enter_Root --
    ----------------
 
-   function Enter_Root (Prj : Alire.Project := Project) return OS_Lib.Folder_Guard is
+   function Enter_Root return OS_Lib.Folder_Guard is
       Start_Folder : constant String := OS_Lib.Current_Folder;
-      Root_Folder  : constant String := Files.Locate_Above_Project_Folder (Prj);
+      Root_Folder  : constant String := Files.Locate_Above_Project_Folder;
    begin
       if Root_Folder /= "" then
          if Root_Folder /= Start_Folder then

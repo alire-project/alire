@@ -38,16 +38,7 @@ package body Alr.Commands.Version is
          Trace.Always ("alr session state is " & Session_State'Img);
 
          if Session_State >= Detached then
-            Trace.Always ("alr session folder is " & Hardcoded.Session_Folder (Files.Locate_Metadata_File));
-            if Session_State = Valid then
-               Trace.Always ("alr internal session hash matches that of " & Files.Locate_Metadata_File);
-            else
-               if Root.Is_Empty then
-                  Trace.Always ("alr candidate metadata file in sight: " & Files.Locate_Metadata_File);
-               else
-                  Trace.Always ("alr metadata (unmatched hash) file in sight: " & Files.Locate_Metadata_File);
-               end if;
-            end if;
+            Trace.Always ("alr session folder is " & Hardcoded.Session_Folder);
          else
             Trace.Always ("alr session folder is " & Hardcoded.No_Session_Folder);
          end if;

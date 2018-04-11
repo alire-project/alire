@@ -5,6 +5,10 @@ private with Alire.Index.Alire;
 
 package Alr.Bootstrap is
 
+   type Rebuild_Types is (Standalone, Session);
+   --  Standalone: main alr that gets called first. If we are inside a session, the session one is called
+   --  Session: a session-specific alr with compiled-in project metadata
+
    ---------------------
    --  SESSION STATE  --
    ---------------------
@@ -19,9 +23,6 @@ package Alr.Bootstrap is
    --  Order in this enum must be in increasing level of available information
 
    function Session_State return Session_States;
-
-   function Metadata_File return String with
-     Pre => Session_State = Valid;
 
    -------------
    --  OTHER  --
@@ -42,10 +43,9 @@ package Alr.Bootstrap is
    --  Will raise if not within session
    --  An outdated session-specific build should never be launched
 
-   procedure Rebuild (Alr_File   : String := "");
-   --  If Alr_File is given this is a session-specific build
+   procedure Rebuild (Kind : Rebuild_Types);
 
-   procedure Rebuild_Respawn (Metafile : String := "");
+   procedure Rebuild_Respawn (Kind : Rebuild_Types);
    --  Forces a rebuild and respawns, with or without session
 
    function Status_Line return String;

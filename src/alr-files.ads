@@ -1,10 +1,15 @@
-with Alire;
+with Ada.Directories;
 
 with Alr.Utils;
 
 package Alr.Files is
 
    -- The files specific to alr/alire working, and related facilities
+
+   function Is_Candidate_Folder (Folder : String := Ada.Directories.Current_Directory) return Boolean;
+   --  Says if given folder could be an alire working copy:
+   --    Has an 'alire' folder
+   --    That contains an alire metadata ads file
 
    function Locate_File_Under (Folder    : String;
                                Name      : String;
@@ -13,26 +18,12 @@ package Alr.Files is
    --  Depth 0 means given folder only
    --  Returns all instances found
 
-   function Locate_Given_Metadata_File (Project : Alire.Project) return String;
-   --  Looks for a "project_alr.ads" file in the current or immediately below folders
-   --  If found, returns it with relative path (usable for opening).
-   --  If not it returns the empty string
-
    function Locate_Any_GPR_File return Natural;
    --  Says if there's any *.gpr file in current folder (making the cwd a plausible alr project)
 
-   function Locate_Metadata_File return String;
-   --  Looks for any "*_alr.ads" file within reach in cwd or immediate children
-   --  Empty string if none or more than one
-
-   function Locate_Above_Candidate_Project_Folder return String;
-   --  Looks in current folder and upwards until finding a folder with .gpr files and an alr metafile in sight
+   function Locate_Above_Project_Folder return String;
+   --  Looks in current folder and upwards until finding a passing Is_Candidate_Folder
    --  Returns its path if found, "" otherwise
-
-   function Locate_Above_Project_Folder (Project : Alire.Project) return String;
-   --  Looks from current folder upwards until finding project.gpr
-   --  Returns path to folder containing project file
-   --  "" if not found
 
    procedure Backup_If_Existing (File : String);
    --  If File exists, move to file.prev

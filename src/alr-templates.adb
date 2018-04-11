@@ -118,8 +118,8 @@ package body Alr.Templates is
       use all type Utils.String_Vectors.Cursor;
 
       File     : File_Type;
-      Filename : constant String := Hardcoded.Build_File (Root.Project);
-      Prjname  : constant String := Utils.To_Mixed_Case (Filename (Filename'First .. Filename'Last - 4));
+      Filename : constant String := Hardcoded.Working_Build_File;
+      Prjname  : constant String := Utils.To_Mixed_Case (Ada.Directories.Base_Name (Filename));
 
       First    : Boolean := True;
 
@@ -245,7 +245,7 @@ package body Alr.Templates is
       File : File_Type;
       Name : constant String := (if Filename /= ""
                                  then Filename
-                                 else Hardcoded.Alire_File (Root.Project));
+                                 else Hardcoded.Working_Deps_File);
 
       Simple_Name : constant String := Ada.Directories.Simple_Name (Name);
 
@@ -356,7 +356,7 @@ package body Alr.Templates is
 
       Put_Line (File, "pragma Warnings (Off);");
       if Full_Index then
-         Generate_Full_Index (File, Hardcoded.Alr_Index_Folder_Absolute);
+         Generate_Full_Index (File, Hardcoded.Alr_Index_Folder);
          New_Line (File);
       end if;
 

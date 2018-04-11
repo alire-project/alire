@@ -1,4 +1,3 @@
-with Alr.Files;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Templates;
@@ -17,7 +16,6 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Index_File : constant String := Files.Locate_Given_Metadata_File (Root.Project);
          Success    :          Boolean;
          Deps       : constant Query.Instance :=
                         Query.Resolve (Root.Current.Dependencies.Evaluate (Platform.Properties),
@@ -27,8 +25,7 @@ package body Alr.Commands.Pin is
          if Success then
             Templates.Generate_Prj_Alr (Deps,
                                         Root.Current,
-                                        Templates.Pinning,
-                                        Filename => Index_File);
+                                        Templates.Pinning);
          else
             Trace.Error ("Could not resolve dependencies");
             raise Command_Failed;

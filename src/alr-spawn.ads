@@ -9,7 +9,7 @@ package Alr.Spawn is
    --  Will append current global switches in addition to Args
    --  Will return after completion!
 
-   procedure Session_Alr_Without_Return (Metafile : String)
+   procedure Session_Alr_Without_Return
      with No_Return;
    --  Forwards execution to the session-specific alr
 

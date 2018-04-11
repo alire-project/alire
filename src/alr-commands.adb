@@ -22,7 +22,6 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
-with Alr.Exceptions;
 with Alr.Files;
 with Alr.Hardcoded;
 with Alr.Interactive;
@@ -284,7 +283,7 @@ package body Alr.Commands is
       if Session_State /= Valid then
          --  Best guess
          declare
-            Candidate_Folder : constant String := Files.Locate_Above_Candidate_Project_Folder;
+            Candidate_Folder : constant String := Files.Locate_Above_Project_Folder;
          begin
             if Candidate_Folder /= "" then
                Trace.Detail ("Using candidate project root: " & Candidate_Folder);
@@ -295,12 +294,8 @@ package body Alr.Commands is
             end if;
          end;
       else
-         return Root.Enter_Root; -- Suspicion: we are already there
-      end if;
-   exception
-      when E : others =>
-         Exceptions.Report ("Commands.Enter_Project_Folder: Could not find a project folder", E);
          return OS_Lib.Stay_In_Current_Folder;
+      end if;
    end Enter_Project_Folder;
 
    ------------------
@@ -336,17 +331,16 @@ package body Alr.Commands is
 
    procedure Requires_Buildfile is
       Guard : constant OS_Lib.Folder_Guard := Root.Enter_Root with Unreferenced;
-      Name  : constant Alire.Project := Root.Project;
    begin
       if Bootstrap.Session_State /= Valid then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
       end if;
 
-      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Build_File (Name)) or else
-        OS_Lib.Is_Older (This => Hardcoded.Build_File (Name),
-                         Than => Hardcoded.Alire_File (Name))
+      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Working_Build_File) or else
+        OS_Lib.Is_Older (This => Hardcoded.Working_Build_File,
+                         Than => Hardcoded.Working_Deps_File)
       then
-         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Build_File (Name));
+         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Working_Build_File);
          Templates.Generate_Agg_Gpr (Root.Current);
       end if;
    end Requires_Buildfile;
@@ -364,9 +358,9 @@ package body Alr.Commands is
       elsif not Self.Has_Full_Index then
          --  Can happen only first time after installation/devel build, or with depend command
          if Even_In_Session then
-            Bootstrap.Rebuild_Respawn (Files.Locate_Metadata_File);
+            Bootstrap.Rebuild_Respawn (Bootstrap.Session);
          else
-            Bootstrap.Rebuild_Respawn;
+            Bootstrap.Rebuild_Respawn (Bootstrap.Standalone);
          end if;
       end if;
    end Requires_Full_Index;
