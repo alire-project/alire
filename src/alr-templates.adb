@@ -16,8 +16,6 @@ with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Utils;
 
-with GNAT.OS_Lib;
-
 with Semantic_Versioning;
 
 package body Alr.Templates is
@@ -148,9 +146,13 @@ package body Alr.Templates is
 
       Manual_Warning (File);
 
+      --  Absolute paths in the following could be made relative.
+      --  That would allow moving working copies.
+      --  Not worth the hassle yet.
+
       Put_Line (File, Tab_1 & "for Project_Files use (");
       for I in GPR_Files.Iterate loop
-         Put (File, Tab_2 & Q (GPR_Files (I)));
+         Put (File, Tab_2 & Q (Ada.Directories.Full_Name (GPR_Files (I))));
          if I /= GPR_Files.Last then
             Put_line (File, ", ");
          end if;
@@ -171,9 +173,7 @@ package body Alr.Templates is
          for Path of Rel.Project_Paths (Platform.Properties) loop
             All_Paths.Append ((if Rel.Project = Root.Project
                                then "."
-                               else Hardcoded.Projects_Folder / Rel.Unique_Folder) &
-                                    GNAT.OS_Lib.Directory_Separator & Path);
-               --  Path won't be a simple name and / (compose) would complain
+                               else Hardcoded.Projects_Folder / Rel.Unique_Folder / Path));
          end loop;
       end loop;
 
@@ -193,7 +193,7 @@ package body Alr.Templates is
                Put_Line (File, ",");
             end if;
 
-            Put (File, Tab_2 & Q (Path));
+            Put (File, Tab_2 & Q (Ada.Directories.Full_Name (Path)));
          end loop;
 
          Put_Line (File, ");");
@@ -260,6 +260,9 @@ package body Alr.Templates is
             return;
          end;
       end if;
+
+      --  Ensure working folder exists (might not upon first get)
+      OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
 
       Files.Backup_If_Existing (Name);
 

@@ -63,17 +63,12 @@ package body Alr.Checkout is
    procedure Working_Copy (R              : Alire.Index.Release;
                            Deps           : Query.Instance;
                            Parent_Folder  : String;
-                           Generate_Files : Boolean := True;
-                           If_Conflict    : Policies := Skip)
+                           Generate_Files : Boolean := True)
      				--  FIXME policies not implemented
    is
       Root    : Alire.Index.Release renames R;
       Was_There : Boolean with Unreferenced;
    begin
-      if If_Conflict /= Skip then
-         raise Program_Error with "Unimplemented";
-      end if;
-
       Checkout (R, Parent_Folder, Was_There);
 
       --  And generate its working files, if they do not exist
@@ -83,7 +78,7 @@ package body Alr.Checkout is
             Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
             Index_File : constant String := Hardcoded.Working_Deps_File;
          begin
-            if Index_File /= "" then
+            if Is_Regular_File (Index_File) then
                Trace.Detail ("Renaming in-source alr file: " & Index_File);
                Ada.Directories.Copy_File (Index_File, Index_File & ".orig", "mode=overwrite");
                Ada.Directories.Delete_File (Index_File);

@@ -189,6 +189,7 @@ package body Alr.Bootstrap is
                                                 when Session    => Hardcoded.Session_Folder,
                                                 when Standalone => Hardcoded.No_Session_Folder);
    begin
+      Trace.Debug ("About to rebuild alr kind " & Kind'Img);
       --  Before rebuilding we need the sources to exist!
       --  Note that the first time we run after developer build, alr considers itself a release build
       --  and won't change into a devel build until self-compiled once.
@@ -241,12 +242,16 @@ package body Alr.Bootstrap is
       end if;
 
       --  SESSION FILE
-      Templates.Generate_Session (Session_Folder, Full_Index, Hardcoded.Working_Deps_File);
+      Templates.Generate_Session (Session_Folder,
+                                  Full_Index,
+                                  (case Kind is
+                                      when Session    => Hardcoded.Working_Deps_File,
+                                      when Standalone => ""));
 
       begin
-         Spawn.Gprbuild (Hardcoded.Working_Build_File,
+         Spawn.Gprbuild (Hardcoded.Alr_Selfbuild_Gpr_File,
                          Session_Build => Kind = Session,
-                         Session_Path  => Session_Folder);
+                         Session_Path  => Ada.Directories.Full_Name (Session_Folder));
       exception
          when others =>
             -- Compilation failed

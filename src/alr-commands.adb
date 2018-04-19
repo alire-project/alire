@@ -179,7 +179,6 @@ package body Alr.Commands is
    begin
       OS_Lib.Create_Folder (Platform.Config_Folder);
       OS_Lib.Create_Folder (Platform.Cache_Folder);
-      OS_Lib.Create_Folder (Hardcoded.Projects_Folder);
    end Create_Alire_Folders;
 
    -------------------

@@ -91,7 +91,7 @@ package Alr.Hardcoded is
    --  $ALR_WORKING_FOLDER/projects
 
    function Session_Folder return Relative_Path;
-   --  $ALR_WORKING_FOLDER/session
+   --  $ALR_WORKING_FOLDER/cache/session
    --  Also creates it (once it is asked for, it's presumed to be about to be used)
    --  Our anchor is the metadata file
 

@@ -4,7 +4,6 @@ with Alire.Dependencies.Vectors;
 with Alire.Index;
 
 with Alr.Checkout;
-with Alr.Hardcoded;
 with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
@@ -107,23 +106,22 @@ package body Alr.Commands.Get is
          Reportaise_Command_Failed ("Cannot get a project inside another alr project, stopping.");
       end if;
 
+      --  Check out requested project release under current directory
       Checkout.Working_Copy (Needed.Element (Rel.Project),
                              Needed,
                              Ada.Directories.Current_Directory);
-      --  Check out requested project under current directory
 
-      --  Check out rest of dependencies
-      Checkout.To_Folder (Needed.Excluding (Rel.Project), Hardcoded.Projects_Folder);
-
-      --  Launch build if requested
-      if Cmd.Compile then
-         declare
-            use OS_Lib;
-            Guard : Folder_Guard := Enter_Folder (Rel.Unique_Folder) with Unreferenced;
-         begin
-            Spawn.Alr (Cmd_Compile);
-         end;
-      end if;
+      --  Check out rest of dependencies and optionally compile
+      declare
+         use OS_Lib;
+         Guard : Folder_Guard := Enter_Folder (Rel.Unique_Folder) with Unreferenced;
+      begin
+         if Cmd.Compile then
+            Spawn.Alr (Cmd_Build);
+         else
+            Spawn.Alr (Cmd_Update);
+         end if;
+      end;
    exception
       when Alire.Query_Unsuccessful =>
          Trace.Info ("Release [" & Query.Dependency_Image (Name, Versions) & "] does not exist in the catalog.");
