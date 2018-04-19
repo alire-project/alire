@@ -126,6 +126,10 @@ package body Alr.Templates is
       GPR_Files : Utils.String_Vector;
       All_Paths : Utils.String_Vector;
       Sorted_Paths : Alire.Utils.String_Set;
+
+      Full_Instance : constant Query.Instance := (if Root.Is_Released
+                                                  then Instance.Including (Root.Release)
+                                                  else Instance);
    begin
       if Root.Is_Released then
          GPR_Files := Root.Release.Project_Files (Platform.Properties, With_Path => True);
@@ -202,14 +206,18 @@ package body Alr.Templates is
 
       --  Externals
       --  FIXME: what to do with duplicates? at a minimum research what gprbuild does (err, ignore...)
-      for Release of Instance loop
+      for Release of Full_Instance loop
+--           Put_Line ("REL: " & Release.Project_Str);
          for Prop of Release.On_Platform_Properties (Platform.Properties) loop
+--              Put_Line ("PROP: " & Prop.Image);
             if Prop in Alire.Properties.Scenarios.Property'Class then
+--                 Put_Line ("PROP is scenario");
                declare
                   use all type Alire.GPR.Variable_Kinds;
                   Variable : constant Alire.GPR.Variable :=
                                Alire.Properties.Scenarios.Property (Prop).Value;
                begin
+--                    Put_Line ("KIND: " & Variable.Kind'Img);
                   if Variable.Kind = External then
                      Put_Line (File,
                                Tab_1 & "for External (" &
