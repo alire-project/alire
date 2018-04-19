@@ -46,12 +46,11 @@ package body Alr.Commands.Update is
                                     Query_Policy);
       begin
          if not Success then
-            Log ("Update failed");
-            raise Command_Failed;
+            Reportaise_Command_Failed ("Update failed");
          end if;
          Checkout.To_Folder (Needed);
          Templates.Generate_Agg_Gpr (Needed, Root.Current);
-         Log ("Update completed");
+         Trace.Detail ("Update completed");
       end;
    end Upgrade;
 
