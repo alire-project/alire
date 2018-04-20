@@ -14,6 +14,9 @@ with Alr.Query;
 with Alr.Spawn;
 with Alr.Utils;
 
+with AUnit.Reporter.XML;
+with AUnit.Test_Results;
+
 with Gnat.Command_Line;
 
 with Semantic_Versioning;
@@ -78,7 +81,11 @@ package body Alr.Commands.Test is
       Tested, Passed, Failed, Skipped, Unavail : Natural := 0;
 
       Is_Available, Is_Resolvable : Boolean;
-      Skipping_Extensions : Boolean := False;
+      Skipping_Extensions         : Boolean := False;
+
+      --  Junit related
+      Jreporter                   : AUnit.Reporter.XML.XML_Reporter;
+      Jresults                    : AUnit.Test_Results.Result;
    begin
       Create (File, Out_File,
               "alr_report_" &
@@ -122,6 +129,8 @@ package body Alr.Commands.Test is
             Skipping_Extensions := True;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
+            declare
+               Start : constant Time := Clock;
             begin
                Skipping_Extensions := False;
 
@@ -134,6 +143,10 @@ package body Alr.Commands.Test is
 
                Passed := Passed + 1;
                Put_Line (File, "pass:" & R.Milestone.Image);
+
+               Jresults.Add_Success (new String'("release"),
+                                     new String'(R.Milestone.Image),
+                                     (Start, Clock));
             exception
                when Child_Failed =>
                   Failed := Failed + 1;
@@ -153,6 +166,11 @@ package body Alr.Commands.Test is
                     " SKIP:" & Skipped'Img &
                     " UNAV:" & Unavail'Img &
                     " Done");
+
+      --  JUnit output
+      --  DOING: redirect stdout with programs in text_io temporarily
+      Jreporter.Report (Jresults);
+
    end Do_Test;
 
    -------------

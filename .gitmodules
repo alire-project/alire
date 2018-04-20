@@ -1,3 +1,9 @@
 [submodule "deps/alire"]
 	path = deps/alire
 	url = https://github.com/alire-project/alire.git
+[submodule "deps/ahven"]
+	path = deps/ahven
+	url = ./deps/ahven
+[submodule "deps/aunit"]
+	path = deps/aunit
+	url = https://github.com/alire-project/libaunit.git

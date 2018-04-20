@@ -1,4 +1,5 @@
 with "alire";
+with "aunit";
 with "semantic_versioning";
 
 project Alr is
