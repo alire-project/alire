@@ -85,7 +85,7 @@ package body Alr.Commands.Get is
                                  Success,
                                  Query_Policy);
    begin
-      if not Success then
+      if not Success and then not Cmd.Only then
          Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
          raise Command_Failed;
       end if;
@@ -110,6 +110,11 @@ package body Alr.Commands.Get is
       Checkout.Working_Copy (Needed.Element (Rel.Project),
                              Needed,
                              Ada.Directories.Current_Directory);
+
+      if Cmd.Only then
+         Trace.Detail ("By your command, dependencies not resolved nor retrieved: compilation might fail");
+         return;
+      end if;
 
       --  Check out rest of dependencies and optionally compile
       declare
@@ -137,13 +142,18 @@ package body Alr.Commands.Get is
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if not Cmd.Info or else Cmd.Native then
+      if not (Cmd.Info or else Cmd.Native) then
          --  What to get is required when not requesting info
          if Num_Arguments /= 1 then
             Trace.Error ("No project requested");
             raise Wrong_Command_Arguments with "One project to get expected";
          end if;
-      else -- asking for info, we could return the current project
+      else
+         if Cmd.Only then
+            Reportaise_Wrong_Arguments ("--only cannot be used with --info[-native]");
+         end if;
+
+         -- asking for info, we could return the current project
          --  We have internal data, but is it valid?
          if Num_Arguments = 0 then
             case Bootstrap.Session_State is
@@ -176,6 +186,11 @@ package body Alr.Commands.Get is
             raise Command_Failed;
          end if;
 
+         if Cmd.Compile and Cmd.Only then
+            Reportaise_Wrong_Arguments ("--only is incompatible with --compile");
+         end if;
+
+         --  Execute
          if Cmd.Info or else Cmd.Native then
             Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native, Priv => Cmd.Priv);
          else
@@ -209,6 +224,10 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Native'Access,
                      "", "--info-native", "Show info relevant to current platform");
+
+      Define_Switch (Config,
+                     Cmd.Only'Access,
+                     "", "--only", "Retrieve requested project only, without dependencies");
 
       Define_Switch (Config,
                      Cmd.Priv'Access,

@@ -22,6 +22,7 @@ private
       Compile : aliased Boolean := False;
       Info    : aliased Boolean := False;
       Native  : aliased Boolean := False;
+      Only    : aliased Boolean := False;
       Priv    : aliased Boolean := False;
    end record;
 
