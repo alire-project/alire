@@ -188,6 +188,8 @@ package body Alr.Commands.Test is
       end Not_Empty;
 
       Candidates : Alire.Containers.Release_Sets.Set;
+
+      use Alire.Containers.Release_Sets;
    begin
       --  Validate command line
       for I in 1 .. Num_Arguments loop
@@ -220,7 +222,11 @@ package body Alr.Commands.Test is
       --  Start testing
       if Test_All then
          if Cmd.Full then
-            Trace.Detail ("Testing all releases");
+            if Cmd.Last then
+               Trace.Detail ("Testing newest release of every project");
+               else
+               Trace.Detail ("Testing all releases");
+            end if;
          else
             Trace.Always ("No releases specified; use --full to test'em all!");
             raise Command_Failed;
@@ -228,16 +234,28 @@ package body Alr.Commands.Test is
       end if;
 
       --  Pre-find candidates to not have duplicate tests if overlapping requested
-      for R of Alire.Index.Catalog loop
+      for I in Alire.Index.Catalog.Iterate loop
          if Test_All then
-            Candidates.Include (R);
+            if not Cmd.Last or else
+               I = Alire.Index.Catalog.Last or else
+              Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+            then
+               Candidates.Include (Alire.Index.Catalog (I));
+            end if;
          else
-            for I in 1 .. Num_Arguments loop
+            for J in 1 .. Num_Arguments loop
                declare
-                  Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (I));
+                  Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (J));
+                  R       :          Alire.Index.Release renames Alire.Index.Catalog (I);
                begin
                   if R.Project = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
-                     Candidates.Include (R);
+                     if not Cmd.Last or else
+                       I = Alire.Index.Catalog.Last or else
+                       R.Project /= Alire.Index.Catalog (Next (I)).Project or else
+                       not Semver.Satisfies (Alire.Index.Catalog (Next (I)).Version, Allowed.Versions)
+                     then
+                        Candidates.Include (R);
+                     end if;
                   end if;
                end;
             end loop;
@@ -273,6 +291,11 @@ package body Alr.Commands.Test is
                      Cmd.Full'Access,
                      Long_Switch => "--full",
                      Help        => "Select all releases for testing");
+
+      Define_Switch (Config,
+                     Cmd.Last'Access,
+                     Long_Switch => "--newest",
+                     Help        => "Select only newest releases for testing");
 
       Define_Switch (Config,
                      Cmd.Redo'Access,
