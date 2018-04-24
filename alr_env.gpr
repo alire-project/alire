@@ -3,8 +3,7 @@ aggregate project Alr_Env is
    for Project_Path use ("deps/alire",
                          "deps/alire/deps/armc",
                          "deps/alire/deps/semver",
-                         "deps/alire/deps/simple_logging",
-                         "deps/aunit");
+                         "deps/alire/deps/simple_logging");
 
    for Project_Files use ("alr.gpr",
                           "deps/alire/alire.gpr");

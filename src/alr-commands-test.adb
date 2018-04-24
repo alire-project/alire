@@ -17,7 +17,7 @@ with Alr.Utils;
 with AUnit.Reporter.XML;
 with AUnit.Test_Results;
 
-with Gnat.Command_Line;
+with GNAT.Command_Line;
 
 with Semantic_Versioning;
 
@@ -83,15 +83,16 @@ package body Alr.Commands.Test is
       Is_Available, Is_Resolvable : Boolean;
       Skipping_Extensions         : Boolean := False;
 
+      Report_Simplename           : constant String :=
+                                      "alr_report_" &
+                                      Utils.To_Lower_Case (Query_Policy'Img) & "_" &
+                                      Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch)));
+
       --  Junit related
       Jreporter                   : AUnit.Reporter.XML.XML_Reporter;
       Jresults                    : AUnit.Test_Results.Result;
    begin
-      Create (File, Out_File,
-              "alr_report_" &
-                Utils.To_Lower_Case (Query_Policy'Img) & "_" &
-                Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch))) &
-                ".txt");
+      Create (File, Out_File, Report_Simplename & ".txt");
 
       Put_Line (File, "os-fingerprint:" & Version.Fingerprint);
 
@@ -152,6 +153,13 @@ package body Alr.Commands.Test is
                   Failed := Failed + 1;
                   Put_Line (File, "FAIL:" & R.Milestone.Image);
                   Trace.Warning ("Compilation failed for " & R.Milestone.Image);
+
+                  Jresults.Add_Failure (new String'("release"),
+                                        new String'(R.Milestone.Image),
+                                        (new String'("release"),
+                                         new String'(R.Milestone.Image),
+                                         0),
+                                        (Start, Clock));
             end;
          end if;
 
@@ -168,8 +176,11 @@ package body Alr.Commands.Test is
                     " Done");
 
       --  JUnit output
-      --  DOING: redirect stdout with programs in text_io temporarily
+      Create (File, Out_File, Report_Simplename & ".xml");
+      Ada.Text_IO.Set_Output (File);
       Jreporter.Report (Jresults);
+      Ada.Text_IO.Set_Output (Ada.Text_IO.Standard_Output);
+      Close (File);
 
    end Do_Test;
 
