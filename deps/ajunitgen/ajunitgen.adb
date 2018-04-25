@@ -79,12 +79,42 @@ package body AJUnitGen is
                          "skipped" = S.Counters (Skip)));
 
          for T of S.Tests loop
-            Output_Element (File, "testcase",
-                            Content => "",
-                            Attrs   =>
-                              ("name" = T.Name,
-                               "classname" = T.Classname,
-                               "status" = T.Outcome'Img));
+            --  Element start
+            case T.Outcome is
+               when Pass =>
+                  Output_Element (File, "testcase",
+                                  Content => "",
+                                  Attrs   =>
+                                    ("name" = T.Name,
+                                     "classname" = T.Classname,
+                                     "status" = T.Outcome'Img));
+               when Others =>
+                  Start_Element (File, "testcase",
+                                 Attrs   =>
+                                   ("name" = T.Name,
+                                    "classname" = T.Classname,
+                                    "status" = T.Outcome'Img));
+            end case;
+
+            --  Element content
+            case T.Outcome is
+               when Pass =>
+                  null;
+               when Error =>
+                  Output_Element (File, "error", "");
+               when Fail =>
+                  Output_Element (File, "failure", "");
+               when Skip =>
+                  Output_Element (File, "skipped", "");
+            end case;
+
+            --  Element end
+            case T.Outcome is
+               when Pass =>
+                  null;
+               when others =>
+                  End_Element (File, "testcase");
+            end case;
          end loop;
 
          End_Element (File, "testsuite");

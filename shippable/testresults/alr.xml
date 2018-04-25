@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuites>
-   <testsuite name="releases" id="0" tests="5" errors="1" failures="1" skipped="1">
-      <testcase name="hello=1.0.0" status="PASS">
-      
-      </testcase>
-      <testcase name="hello=1.0.1" status="PASS">
+   <testsuite name="releases" id="0" tests="4" errors="1" failures="1" skipped="1">
+      <testcase name="libhello=1.0.0" status="PASS">
       
       </testcase>
       <testcase name="SKIP TEST" status="SKIP">
-      
+         <skipped>
+         
+         </skipped>
       </testcase>
       <testcase name="ERROR TEST" status="ERROR">
-      
+         <error>
+         
+         </error>
       </testcase>
       <testcase name="FAIL TEST" status="FAIL">
-      
+         <failure>
+         
+         </failure>
       </testcase>
    </testsuite>
 </testsuites>
