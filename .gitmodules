@@ -4,6 +4,6 @@
 [submodule "deps/ahven"]
 	path = deps/ahven
 	url = ./deps/ahven
-[submodule "deps/aunit"]
-	path = deps/aunit
-	url = https://github.com/alire-project/libaunit.git
+[submodule "deps/xmlezout"]
+	path = deps/xmlezout
+	url = https://github.com/alire-project/xmlezout.git
