@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite 
+	name="releases"
+	tests="1">
+
+	<testcase 
+		name="libhello=1.0.0"
+		classname="" />
+</testsuite>

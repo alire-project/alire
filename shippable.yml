@@ -11,13 +11,14 @@ build:
         image_tag: gpl.2017.slim
         pull: true
     ci:
-        - apt-get install -y lsb-release mercurial
-        - git submodule update --init --recursive
-        - /opt/gnat/bin/gprbuild -p -P alr_env
-        - bash stress/selftest.sh docker
-        - export PATH+=:`pwd`/bin
-        - mkdir reltest 
-        - mkdir -p shippable/testresults
-        - cd reltest 
-        - alr test --full
-        - cp *.xml ../shippable/testresults 
+        - echo Testing predefinded XML format
+          #- apt-get install -y lsb-release mercurial
+          #- git submodule update --init --recursive
+          #- /opt/gnat/bin/gprbuild -p -P alr_env
+          #- bash stress/selftest.sh docker
+          #- export PATH+=:`pwd`/bin
+          #- mkdir reltest 
+          #- mkdir -p shippable/testresults
+          #- cd reltest 
+          #- alr test --full
+          #- cp *.xml ../shippable/testresults 

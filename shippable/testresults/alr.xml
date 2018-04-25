@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<TestSuites>
+  <Statistics>
+    <Tests> 0</Tests>
+    <FailuresTotal> 0</FailuresTotal>
+    <Failures> 0</Failures>
+    <Errors> 0</Errors>
+  </Statistics>
+  <testcasesuite>
+    <Test elapsed=" 14. 259938 sec.">
+      <Name>release : ada_lua=0.0.0-5.3</Name>
+    </Test>
+    <Test elapsed=" 21. 472186 sec.">
+      <Name>release : adayaml=0.2.0</Name>
+    </Test>
+    <Test elapsed=" 26. 188127 sec.">
+      <Name>release : adayaml=0.3.0</Name>
+    </Test>
+    <Test elapsed=" 22. 985609 sec.">
+      <Name>release : adayaml.server=0.3.0</Name>
+    </Test>
+    <Test elapsed=" 38. 649052 sec.">
+      <Name>release : alire=0.1.2</Name>
+    </Test>
+    <Test elapsed=" 56. 691880 sec.">
+      <Name>release : alire=0.2.0</Name>
+    </Test>
+    <Test elapsed=" 45. 359805 sec.">
+      <Name>release : alr=0.1.2</Name>
+    </Test>
+    <Test elapsed=" 1min.  13.0 10849 sec.">
+      <Name>release : alr=0.2.0</Name>
+    </Test>
+    <Test elapsed=" 14. 385058 sec.">
+      <Name>release : apq=3.2.0</Name>
+    </Test>
+    <Test elapsed=" 14. 785522 sec.">
+      <Name>release : aunit=2017.0.0</Name>
+    </Test>
+    <Test elapsed=" 1min.  53. 624599 sec.">
+      <Name>release : globe_3d=20180111.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 694167 sec.">
+      <Name>release : glut=2.8.1-3</Name>
+    </Test>
+    <Test elapsed=" 11. 347963 sec.">
+      <Name>release : hangman=1.0.0</Name>
+    </Test>
+    <Test elapsed=" 11. 332409 sec.">
+      <Name>release : hello=1.0.0</Name>
+    </Test>
+    <Test elapsed=" 13. 563460 sec.">
+      <Name>release : hello=1.0.1</Name>
+    </Test>
+    <Test elapsed=" 2min.  24. 536362 sec.">
+      <Name>release : libadacrypt=0.8.7</Name>
+    </Test>
+    <Test elapsed=" 2. 646082 sec.">
+      <Name>release : libglfw3=3.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 817252 sec.">
+      <Name>release : libgnutls=3.5.8</Name>
+    </Test>
+    <Test elapsed=" 9. 118317 sec.">
+      <Name>release : libhello=1.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 879123 sec.">
+      <Name>release : liblua=5.3.0</Name>
+    </Test>
+    <Test elapsed=" 2. 711566 sec.">
+      <Name>release : libsdl2=2.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 703693 sec.">
+      <Name>release : libsdl2.image=2.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 768173 sec.">
+      <Name>release : libsdl2.ttf=2.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 634912 sec.">
+      <Name>release : libx11=2.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 587378 sec.">
+      <Name>release : make=0.0.0</Name>
+    </Test>
+    <Test elapsed=" 26. 131629 sec.">
+      <Name>release : mathpaqs=20180114.0.0</Name>
+    </Test>
+    <Test elapsed=" 34. 158423 sec.">
+      <Name>release : openglada=0.6.0</Name>
+    </Test>
+    <Test elapsed=" 16.0 74390 sec.">
+      <Name>release : pragmarc=2011.1995.0</Name>
+    </Test>
+    <Test elapsed=" 18. 528924 sec.">
+      <Name>release : pragmarc=2017.2007.0</Name>
+    </Test>
+    <Test elapsed=" 4min.  55. 987761 sec.">
+      <Name>release : rxada=0.1.0</Name>
+    </Test>
+    <Test elapsed=" 22. 401492 sec.">
+      <Name>release : sdlada=2.3.1</Name>
+    </Test>
+    <Test elapsed=" 16. 563230 sec.">
+      <Name>release : semantic_versioning=0.1.2</Name>
+    </Test>
+    <Test elapsed=" 19. 917521 sec.">
+      <Name>release : semantic_versioning=0.2.0</Name>
+    </Test>
+    <Test elapsed=" 19. 650190 sec.">
+      <Name>release : semantic_versioning=0.3.0</Name>
+    </Test>
+    <Test elapsed=" 44.0 12307 sec.">
+      <Name>release : simple_components.connections=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 8. 903701 sec.">
+      <Name>release : simple_components.connections.ntp=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 13. 596289 sec.">
+      <Name>release : simple_components.connections.secure=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 19. 662659 sec.">
+      <Name>release : simple_components.core=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 18.0 46558 sec.">
+      <Name>release : simple_components.odbc=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 10.0 18178 sec.">
+      <Name>release : simple_components.sqlite=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 10. 962162 sec.">
+      <Name>release : simple_components.strings_edit=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 9. 394480 sec.">
+      <Name>release : simple_components.tables=4.27.0</Name>
+    </Test>
+    <Test elapsed=" 9. 258225 sec.">
+      <Name>release : simple_logging=1.0.0</Name>
+    </Test>
+    <Test elapsed=" 2. 647115 sec.">
+      <Name>release : unixodbc=2.3.0</Name>
+    </Test>
+    <Test elapsed=" 29. 679167 sec.">
+      <Name>release : whitakers_words=2017.9.10</Name>
+    </Test>
+  </testcasesuite>
+  <FailedTests>
+  </FailedTests>
+</TestSuites>
