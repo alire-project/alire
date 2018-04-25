@@ -1,4 +1,4 @@
-with Ada. Exceptions;
+with Ada.Exceptions;
 
 package Alr.Exceptions with Preelaborate is
 

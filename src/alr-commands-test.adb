@@ -1,5 +1,6 @@
 with Ada.Calendar;
 with Ada.Directories;
+with Ada.Exceptions;
 
 with AJUnitGen;
 
@@ -116,7 +117,8 @@ package body Alr.Commands.Test is
             Jsuite.Add_Case
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
-                        AJUnitGen.Skip));
+                        AJUnitGen.Skip,
+                        "Unavailable", Version.Fingerprint));
          elsif not R.Origin.Is_Native and then
            not R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -129,7 +131,8 @@ package body Alr.Commands.Test is
             Jsuite.Add_Case
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
-                        AJUnitGen.Skip));
+                        AJUnitGen.Skip,
+                        "Already tested", Version.Fingerprint));
          elsif not R.Origin.Is_Native and Then
            R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -137,12 +140,13 @@ package body Alr.Commands.Test is
          then
             Skipped := Skipped + 1;
             Skipping_Extensions := True;
-            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
+            Trace.Detail ("Skipping already tested extension " & R.Milestone.Image);
 
             Jsuite.Add_Case
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
-                        AJUnitGen.Skip));
+                        AJUnitGen.Skip,
+                        "Already tested", Version.Fingerprint));
          else
             begin
                Skipping_Extensions := False;
@@ -150,7 +154,7 @@ package body Alr.Commands.Test is
                Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
 
                --  Check declared gpr/executables in place
-               if not R.Origin.Is_Native and then Not Check_Files (R) then
+               if not R.Origin.Is_Native and then not Check_Files (R) then
                   raise Child_Failed;
                end if;
 
@@ -167,7 +171,15 @@ package body Alr.Commands.Test is
                   Jsuite.Add_Case
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
-                        AJUnitGen.Fail));
+                        AJUnitGen.Fail,
+                       "Build failure", Version.Fingerprint));
+               when E : others =>
+                  Jsuite.Add_Case
+                    (AJUnitGen.New_Case
+                       (R.Milestone.Image,
+                        AJUnitGen.Error,
+                        "alr test unexpected error: " & Version.Fingerprint,
+                        Ada.Exceptions.Exception_Information (E)));
             end;
          end if;
 
@@ -192,12 +204,16 @@ package body Alr.Commands.Test is
       Jsuite.Add_Case
         (AJUnitGen.New_Case
            ("ERROR TEST",
-            AJUnitGen.Error));
+            AJUnitGen.Error,
+            "error msg",
+            "error output"));
 
       Jsuite.Add_Case
         (AJUnitGen.New_Case
            ("FAIL TEST",
-            AJUnitGen.Fail));
+            AJUnitGen.Fail,
+            "fail msg",
+            "fail output"));
 
       --  JUnit output
       Create (File, Out_File, Report_Simplename & ".xml");

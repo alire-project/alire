@@ -1,3 +1,4 @@
+with Ada.Exceptions;
 with McKae.XML.EZ_Out.Text_File;
 
 package body AJUnitGen is
@@ -37,13 +38,19 @@ package body AJUnitGen is
 
    function New_Case (Name      : String;
                       Outcome   : Outcomes := Pass;
-                      Classname : String   := "") return Test_Case is
+                      Classname : String   := "";
+                      Message   : String   := "";
+                      Output    : String   := "") return Test_Case is
    begin
       return (Name'Length,
               Classname'Length,
+              Message'Length,
+              Output'Length,
               Name,
               Outcome,
-              Classname);
+              Classname,
+              Message,
+              Output);
    end New_Case;
 
    -------------------
@@ -88,7 +95,7 @@ package body AJUnitGen is
                                     ("name" = T.Name,
                                      "classname" = T.Classname,
                                      "status" = T.Outcome'Img));
-               when Others =>
+               when others =>
                   Start_Element (File, "testcase",
                                  Attrs   =>
                                    ("name" = T.Name,
@@ -101,11 +108,11 @@ package body AJUnitGen is
                when Pass =>
                   null;
                when Error =>
-                  Output_Element (File, "error", "");
+                  Output_Element (File, "error", T.Output, "message" = T.Message);
                when Fail =>
-                  Output_Element (File, "failure", "");
+                  Output_Element (File, "failure", T.Output, "message" = T.Message);
                when Skip =>
-                  Output_Element (File, "skipped", "");
+                  Output_Element (File, "skipped", T.Output, "message" = T.Message);
             end case;
 
             --  Element end

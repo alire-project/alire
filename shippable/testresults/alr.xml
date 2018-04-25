@@ -9,14 +9,14 @@
          
          </skipped>
       </testcase>
-      <testcase name="ERROR TEST" status="ERROR">
-         <error message="error msg attr">
-         	Error child text	
+      <testcase name="ERROR TEST" classname="error msg" status="ERROR">
+         <error message="error output">
+         
          </error>
       </testcase>
-      <testcase name="FAIL TEST" status="FAIL">
-         <failure message="failure msg attr">
-         	Failure child text
+      <testcase name="FAIL TEST" classname="fail msg" status="FAIL">
+         <failure message="fail output">
+         
          </failure>
       </testcase>
    </testsuite>

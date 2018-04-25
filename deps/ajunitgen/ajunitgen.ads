@@ -24,7 +24,11 @@ package AJUnitGen is
    
    function New_Case (Name      : String;
                       Outcome   : Outcomes := Pass;
-                      Classname : String   := "") return Test_Case;
+                      Classname : String   := "";
+                      Message   : String   := "";
+                      Output    : String   := "") return Test_Case;
+   --  Message is a short attribute message on the reason of not PASS
+   --  Output is a multiline text child element (e.g. a trace)
    
    function To_Collection (Suite : Test_Suite) return Collection'Class;
    --  Collection containing a single suite
@@ -36,10 +40,15 @@ private
    
    type Outcome_Counters is array (Outcomes) of Natural;
    
-   type Test_Case (Name_Len, Class_Len : Natural) is record
-      Name : String (1 .. Name_Len);
-      Outcome : Outcomes;
+   type Test_Case (Name_Len, 
+                   Class_Len,
+                   Msg_Len,
+                   Out_Len : Natural) is record
+      Name      : String (1 .. Name_Len);
+      Outcome   : Outcomes;
       Classname : String (1 .. Class_Len);
+      Message   : String (1 .. Msg_Len);
+      Output    : String (1 .. Out_Len);
    end record;
    
    package Test_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists (Test_Case);
