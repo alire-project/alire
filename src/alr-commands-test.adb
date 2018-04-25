@@ -1,6 +1,8 @@
 with Ada.Calendar;
 with Ada.Directories;
 
+with AJUnitGen;
+
 with Alire.Containers;
 with Alire.Index;
 
@@ -13,9 +15,6 @@ with Alr.Parsers;
 with Alr.Query;
 with Alr.Spawn;
 with Alr.Utils;
-
-with AUnit.Reporter.XML;
-with AUnit.Test_Results;
 
 with GNAT.Command_Line;
 
@@ -73,7 +72,7 @@ package body Alr.Commands.Test is
 
    procedure Do_Test (Cmd : Command; Releases : Alire.Containers.Release_Sets.Set) is
       use Ada.Calendar;
-      use Ada.Text_Io;
+      use Ada.Text_IO;
 
       Epoch : constant Time := Time_Of (1970, 1, 1);
       File  : File_Type;
@@ -89,8 +88,8 @@ package body Alr.Commands.Test is
                                       Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch)));
 
       --  Junit related
-      Jreporter                   : AUnit.Reporter.XML.XML_Reporter;
-      Jresults                    : AUnit.Test_Results.Result;
+      Jsuite : AJUnitGen.Test_Suite := AJUnitGen.New_Suite ("releases");
+
    begin
       Create (File, Out_File, Report_Simplename & ".txt");
 
@@ -113,6 +112,11 @@ package body Alr.Commands.Test is
                           (if not Is_Available then " (unavailable)" else "") &
                           (if not Is_Resolvable then " (unresolvable)" else ""));
             Put_Line (File, "Unav:" & R.Milestone.Image);
+
+            Jsuite.Add_Case
+                    (AJUnitGen.New_Case
+                       (R.Milestone.Image,
+                        AJUnitGen.Skip));
          elsif not R.Origin.Is_Native and then
            not R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -121,6 +125,11 @@ package body Alr.Commands.Test is
             Skipped := Skipped + 1;
             Skipping_Extensions := True;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
+
+            Jsuite.Add_Case
+                    (AJUnitGen.New_Case
+                       (R.Milestone.Image,
+                        AJUnitGen.Skip));
          elsif not R.Origin.Is_Native and Then
            R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -129,9 +138,12 @@ package body Alr.Commands.Test is
             Skipped := Skipped + 1;
             Skipping_Extensions := True;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
+
+            Jsuite.Add_Case
+                    (AJUnitGen.New_Case
+                       (R.Milestone.Image,
+                        AJUnitGen.Skip));
          else
-            declare
-               Start : constant Time := Clock;
             begin
                Skipping_Extensions := False;
 
@@ -145,21 +157,17 @@ package body Alr.Commands.Test is
                Passed := Passed + 1;
                Put_Line (File, "pass:" & R.Milestone.Image);
 
-               Jresults.Add_Success (new String'("release"),
-                                     new String'(R.Milestone.Image),
-                                     (Start, Clock));
+               Jsuite.Add_Case (AJUnitGen.New_Case (R.Milestone.Image));
             exception
                when Child_Failed =>
                   Failed := Failed + 1;
                   Put_Line (File, "FAIL:" & R.Milestone.Image);
                   Trace.Warning ("Compilation failed for " & R.Milestone.Image);
 
-                  Jresults.Add_Failure (new String'("release"),
-                                        new String'(R.Milestone.Image),
-                                        (new String'("release"),
-                                         new String'(R.Milestone.Image),
-                                         0),
-                                        (Start, Clock));
+                  Jsuite.Add_Case
+                    (AJUnitGen.New_Case
+                       (R.Milestone.Image,
+                        AJUnitGen.Fail));
             end;
          end if;
 
@@ -175,11 +183,25 @@ package body Alr.Commands.Test is
                     " UNAV:" & Unavail'Img &
                     " Done");
 
+      -- testing
+      Jsuite.Add_Case
+                    (AJUnitGen.New_Case
+                       ("SKIP TEST",
+                        AJUnitGen.Skip));
+
+      Jsuite.Add_Case
+        (AJUnitGen.New_Case
+           ("ERROR TEST",
+            AJUnitGen.Error));
+
+      Jsuite.Add_Case
+        (AJUnitGen.New_Case
+           ("FAIL TEST",
+            AJUnitGen.Fail));
+
       --  JUnit output
       Create (File, Out_File, Report_Simplename & ".xml");
-      Ada.Text_IO.Set_Output (File);
-      Jreporter.Report (Jresults);
-      Ada.Text_IO.Set_Output (Ada.Text_IO.Standard_Output);
+      Jsuite.To_Collection.Write (File);
       Close (File);
 
    end Do_Test;
