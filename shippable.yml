@@ -12,13 +12,12 @@ build:
         pull: true
     ci:
         - echo Testing predefinded XML format
-          #- apt-get install -y lsb-release mercurial
-          #- git submodule update --init --recursive
-          #- /opt/gnat/bin/gprbuild -p -P alr_env
-          #- bash stress/selftest.sh docker
-          #- export PATH+=:`pwd`/bin
-          #- mkdir reltest 
-          #- mkdir -p shippable/testresults
-          #- cd reltest 
-          #- alr test --full
-          #- cp *.xml ../shippable/testresults 
+        - apt-get install -y lsb-release mercurial
+        - git submodule update --init --recursive
+        - /opt/gnat/bin/gprbuild -p -P alr_env
+        - bash stress/selftest.sh docker
+        - export PATH+=:`pwd`/bin
+        - mkdir reltest 
+        - cd reltest 
+        - alr test --full
+        - cp *.xml ../shippable/testresults 

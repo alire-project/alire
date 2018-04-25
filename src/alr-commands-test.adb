@@ -14,7 +14,6 @@ with Alr.Platform;
 with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Query;
-with Alr.Spawn;
 with Alr.Utils;
 
 with GNAT.Command_Line;
@@ -91,6 +90,9 @@ package body Alr.Commands.Test is
       --  Junit related
       Jsuite : AJUnitGen.Test_Suite := AJUnitGen.New_Suite ("releases");
 
+      Newline : constant String := ASCII.CR & ASCII.LF;
+
+      Start : Time;
    begin
       Create (File, Out_File, Report_Simplename & ".txt");
 
@@ -151,10 +153,15 @@ package body Alr.Commands.Test is
                         Message => "Already tested",
                         Output => Version.Fingerprint));
          else
+            declare
+               Output : Utils.String_Vector;
             begin
                Skipping_Extensions := False;
 
-               Spawn.Alr (Cmd_Get, "--compile " & R.Milestone.Image);
+               Start := Clock;
+               Output := OS_Lib.Spawn_And_Capture
+                 ("alr", "get --compile " & R.Milestone.Image,
+                  Err_To_Out => True);
 
                --  Check declared gpr/executables in place
                if not R.Origin.Is_Native and then not Check_Files (R) then
@@ -176,8 +183,9 @@ package body Alr.Commands.Test is
                        (R.Milestone.Image,
                         AJUnitGen.Fail,
                         Classname => "FAIL",
-                        Message => "Build failure",
-                        Output => Version.Fingerprint));
+                        Message   => "get --compile failure: " & Version.Fingerprint,
+                        Output    => Output.Flatten (Newline)));
+
                when E : others =>
                   Jsuite.Add_Case
                     (AJUnitGen.New_Case
@@ -185,8 +193,15 @@ package body Alr.Commands.Test is
                         AJUnitGen.Error,
                         Classname => "ERROR",
                         Message => "alr test unexpected error: " & Version.Fingerprint,
-                        Output => Ada.Exceptions.Exception_Information (E)));
+                        Output    =>
+                          "****** UNEXPECTED EXCEPTION FOLLOWS:" & Newline &
+                          Ada.Exceptions.Exception_Information (E) &
+                          Newline & Newline &
+                          "****** TRACE FOLLOWS:" & Newline &
+                          Output.Flatten (Newline)));
             end;
+            Trace.Info (R.Milestone.Image & " built in" &
+                          Duration'Image (Clock - Start) & "s");
          end if;
 
          Flush (File);
@@ -201,27 +216,27 @@ package body Alr.Commands.Test is
                     " UNAV:" & Unavail'Img &
                     " Done");
 
-      -- testing
-      Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       ("SKIP TEST",
-                        AJUnitGen.Skip));
-
-      Jsuite.Add_Case
-        (AJUnitGen.New_Case
-           ("ERROR TEST",
-            AJUnitGen.Error,
-            "ERROR",
-            "error msg",
-            "error output"));
-
-      Jsuite.Add_Case
-        (AJUnitGen.New_Case
-           ("FAIL TEST",
-            AJUnitGen.Fail,
-            "FAIL",
-            "fail msg",
-            "fail output"));
+--        testing
+--        Jsuite.Add_Case
+--                      (AJUnitGen.New_Case
+--                         ("SKIP TEST",
+--                          AJUnitGen.Skip));
+--
+--        Jsuite.Add_Case
+--          (AJUnitGen.New_Case
+--             ("ERROR TEST",
+--              AJUnitGen.Error,
+--              "ERROR",
+--              "error msg",
+--              "error output"));
+--
+--        Jsuite.Add_Case
+--          (AJUnitGen.New_Case
+--             ("FAIL TEST",
+--              AJUnitGen.Fail,
+--              "FAIL",
+--              "fail msg",
+--              "fail output"));
 
       --  JUnit output
       Create (File, Out_File, Report_Simplename & ".xml");

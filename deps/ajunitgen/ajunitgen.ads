@@ -27,6 +27,7 @@ package AJUnitGen is
                       Classname : String   := "";
                       Message   : String   := "";
                       Output    : String   := "") return Test_Case;
+   --  Classname is the code location failing
    --  Message is a short attribute message on the reason of not PASS
    --  Output is a multiline text child element (e.g. a trace)
    
