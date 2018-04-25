@@ -118,7 +118,8 @@ package body Alr.Commands.Test is
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
                         AJUnitGen.Skip,
-                        "Unavailable", Version.Fingerprint));
+                        Message => "Unavailable",
+                        Output => Version.Fingerprint));
          elsif not R.Origin.Is_Native and then
            not R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -132,7 +133,8 @@ package body Alr.Commands.Test is
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
                         AJUnitGen.Skip,
-                        "Already tested", Version.Fingerprint));
+                        Message => "Already tested",
+                        Output => Version.Fingerprint));
          elsif not R.Origin.Is_Native and Then
            R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -146,7 +148,8 @@ package body Alr.Commands.Test is
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
                         AJUnitGen.Skip,
-                        "Already tested", Version.Fingerprint));
+                        Message => "Already tested",
+                        Output => Version.Fingerprint));
          else
             begin
                Skipping_Extensions := False;
@@ -172,14 +175,17 @@ package body Alr.Commands.Test is
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
                         AJUnitGen.Fail,
-                       "Build failure", Version.Fingerprint));
+                        Classname => "FAIL",
+                        Message => "Build failure",
+                        Output => Version.Fingerprint));
                when E : others =>
                   Jsuite.Add_Case
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
                         AJUnitGen.Error,
-                        "alr test unexpected error: " & Version.Fingerprint,
-                        Ada.Exceptions.Exception_Information (E)));
+                        Classname => "ERROR",
+                        Message => "alr test unexpected error: " & Version.Fingerprint,
+                        Output => Ada.Exceptions.Exception_Information (E)));
             end;
          end if;
 
@@ -205,6 +211,7 @@ package body Alr.Commands.Test is
         (AJUnitGen.New_Case
            ("ERROR TEST",
             AJUnitGen.Error,
+            "ERROR",
             "error msg",
             "error output"));
 
@@ -212,6 +219,7 @@ package body Alr.Commands.Test is
         (AJUnitGen.New_Case
            ("FAIL TEST",
             AJUnitGen.Fail,
+            "FAIL",
             "fail msg",
             "fail output"));
 
