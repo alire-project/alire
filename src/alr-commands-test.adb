@@ -88,7 +88,8 @@ package body Alr.Commands.Test is
                                       Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch)));
 
       --  Junit related
-      Jsuite : AJUnitGen.Test_Suite := AJUnitGen.New_Suite ("releases");
+      Jsuite : AJUnitGen.Test_Suite :=
+                 AJUnitGen.New_Suite ("releases for " & Version.Fingerprint);
 
       Newline : constant String := ASCII.CR & ASCII.LF;
 
@@ -120,7 +121,8 @@ package body Alr.Commands.Test is
                     (AJUnitGen.New_Case
                        (R.Milestone.Image,
                         AJUnitGen.Skip,
-                        Message => "Unavailable",
+                        Message => "Available: "  & Is_Available'Img & "; " &
+                                   "Resolvable: " & Is_Resolvable'Img,
                         Output => Version.Fingerprint));
          elsif not R.Origin.Is_Native and then
            not R.Is_Extension and then
@@ -160,7 +162,7 @@ package body Alr.Commands.Test is
 
                Start := Clock;
                Output := OS_Lib.Spawn_And_Capture
-                 ("alr", "get --compile " & R.Milestone.Image,
+                 ("alr", "get --compile -d " & R.Milestone.Image,
                   Err_To_Out => True);
 
                --  Check declared gpr/executables in place
