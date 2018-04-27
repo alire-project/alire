@@ -3,7 +3,7 @@ language: none # ada
 branches:
     only:
         - master
-        - devel
+        - testing
 
 env:
     - IMAGE_NAME="mosteo/gnat-gpl-2017"
