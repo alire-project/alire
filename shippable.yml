@@ -5,9 +5,14 @@ branches:
         - master
         - devel
 
+env:
+    - IMAGE_NAME = "mosteo/gnat-gpl-2017"
+    - IMAGE_NAME = "mosteo/gnat-fsf-7.3"
+    - IMAGE_NAME = "mosteo/gnat-ubuntu-lts"
+
 build:
     pre_ci_boot:
-        image_name: mosteo/gnat-gpl-2017
+        image_name: $IMAGE_NAME
         image_tag: latest
         pull: true
     ci:
