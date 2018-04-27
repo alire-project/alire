@@ -5,18 +5,20 @@ branches:
         - master
         - devel
 
-build:
-    pre_ci_boot:
-        image_name: mosteo/gnat-gpl-2017
-        image_tag: latest
-        pull: true
-    ci:
-        - apt-get install -y lsb-release mercurial
-        - git submodule update --init --recursive
-        - /opt/gnat/bin/gprbuild -p -P alr_env
-        - bash stress/selftest.sh docker
-        - export PATH+=:`pwd`/bin
-        - mkdir reltest 
-        - cd reltest 
-        - alr test --full
-        - cp *.xml ../shippable/testresults 
+matrix:
+    include:
+        build:
+            pre_ci_boot:
+                image_name: mosteo/gnat-gpl-2017
+                image_tag: latest
+                pull: true
+            ci:
+                - apt-get install -y lsb-release mercurial
+                - git submodule update --init --recursive
+                - /opt/gnat/bin/gprbuild -p -P alr_env
+                - bash stress/selftest.sh docker
+                - export PATH+=:`pwd`/bin
+                - mkdir reltest 
+                - cd reltest 
+                - alr test --full
+                - cp *.xml ../shippable/testresults 
