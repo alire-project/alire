@@ -3,6 +3,8 @@ with Alire.Properties.Platform;
 with Alr.OS_Lib;
 with Alr.Utils;
 
+with Interfaces.C;
+
 with Semantic_Versioning;
 
 package body Alr.Platform is
@@ -19,7 +21,12 @@ package body Alr.Platform is
    ---------------
 
    function Am_I_Root return Boolean is
-      (Integer'Value (OS_Lib.Getenv ("UID", "-1")) = 0);
+      function GetEUID return Interfaces.C.Int with
+        Import, Convention => C, External_Name => "alr_geteuid";
+   begin
+      Trace.Debug ("UID=" & Utils.Trim (GetEUID'Img));
+      return Integer (GetEUID) = 0;
+   end Am_I_Root;
 
    ----------------------
    -- Basic_Properties --
