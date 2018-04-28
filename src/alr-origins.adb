@@ -99,7 +99,9 @@ package body Alr.Origins is
    procedure Install_Native (From : Alire.Origins.Origin) is
       Orig : constant Origin'Class := New_Origin (From);
    begin
-      if not Orig.Already_Installed then
+      if Orig.Already_Installed then
+         Trace.Detail (From.Package_Name (Platform.Distribution) & " already installed");
+      else
          Install_Warning (Orig);
          Orig.Install;
       end if;

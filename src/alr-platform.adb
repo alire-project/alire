@@ -19,7 +19,7 @@ package body Alr.Platform is
    ---------------
 
    function Am_I_Root return Boolean is
-      (OS_Lib.Getenv ("UID", "") = "0");
+      (Integer'Value (OS_Lib.Getenv ("UID", "-1")) = 0);
 
    ----------------------
    -- Basic_Properties --
