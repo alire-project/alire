@@ -16,7 +16,8 @@ begin
    Bootstrap.Check_If_Rolling_And_Respawn;
 
    if not Self.Is_Canonical then
-      Trace.Detail ("alr running from " & Platform.Own_Executable);
+      Trace.Detail ("alr running from " & Platform.Own_Executable &
+                      " as " & (if Platform.Am_I_Root then "ROOT" else "user"));
    end if;
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);
 

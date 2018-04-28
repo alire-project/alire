@@ -99,8 +99,10 @@ package body Alr.Origins is
    procedure Install_Native (From : Alire.Origins.Origin) is
       Orig : constant Origin'Class := New_Origin (From);
    begin
-      Install_Warning (Orig);
-      Orig.Install;
+      if not Orig.Already_Installed then
+         Install_Warning (Orig);
+         Orig.Install;
+      end if;
    exception
       when others =>
          Trace.Error ("Installation of " & From.Package_Name (Platform.Distribution) & " failed");
