@@ -37,7 +37,15 @@ package AJUnitGen is
    procedure Write (Col : Collection; File : Ada.Text_IO.File_Type);
    --  Write to an already open file
    
+   -- UTILS
+   
+   function Escape (S : String) return String;
+   --  Encodes an ASCII string for XML validity. 
+   --  Used internally but might be generally useful
+   
 private
+   
+   --  In truth Escape is not needed since XML EZ Out already escapes as needed
    
    type Outcome_Counters is array (Outcomes) of Natural;
    

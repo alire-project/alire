@@ -269,6 +269,12 @@ package body Alr.Templates is
          end;
       end if;
 
+      Trace.Detail ("Generating alr_deps.ads file for " &
+                    (if Root.Is_Released
+                       then Root.Release.Milestone.Image
+                       else "unreleased project " & (+Root.Project)) &
+                      " with" & Instance.Length'Img & " dependencies");
+
       --  Ensure working folder exists (might not upon first get)
       OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
 

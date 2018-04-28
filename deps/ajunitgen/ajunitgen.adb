@@ -1,4 +1,5 @@
-with Ada.Exceptions;
+with Ada.Strings.Unbounded;
+
 with McKae.XML.EZ_Out.Text_File;
 
 package body AJUnitGen is
@@ -130,5 +131,44 @@ package body AJUnitGen is
 
       End_Element (File, "testsuites");
    end Write;
+
+   Unsafe_Chars : constant array (Character) of Boolean :=
+                    ('&' | ''' | '"' | '<' | '>' => True,
+                     others                      => False);
+
+   Replacings : constant array (Character) of access String :=
+                  ('&'    => new String'("&amp;"),
+                   '''    => new String'("&apos;"),
+                   '"'    => new String'("&quot;"),
+                   '<'    => new String'("&lt;"),
+                   '>'    => new String'("&gt;"),
+                   others => new String'(""));
+
+   ------------
+   -- Escape --
+   ------------
+
+   function Escape (S : in String) return String is
+      use Ada.Strings.Unbounded;
+      package ASU renames Ada.Strings.Unbounded;
+
+
+      Aux : Unbounded_String := To_Unbounded_String (S);
+      Pos : Positive := 1;
+      Cur : Character;
+   begin
+      loop
+         exit when Pos > ASU.Length (Aux);
+
+         Cur := ASU.Element (Aux, Pos);
+         if Unsafe_Chars (Cur) then
+            ASU.Replace_Slice (Aux, Pos, Pos, Replacings (Cur).all);
+         end if;
+
+         Pos := Pos + 1;
+      end loop;
+
+      return To_String (Aux);
+   end Escape;
 
 end AJUnitGen;

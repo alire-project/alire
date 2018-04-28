@@ -123,6 +123,9 @@ package body Alr.Bootstrap is
       elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec, Than => Metafile) then
          Trace.Debug ("Rebuilding currently outdated session-specific alr");
          Must_Rebuild := True;
+      elsif not Self.Matches_Session (Metafile) then
+         Trace.Detail ("Rebuilding unmatching metadata session-specific alr");
+         Must_Rebuild := True;
       elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec, Than => Hardcoded.Alr_Rolling_Exec) then
          Trace.Debug ("Rebuilding older session-specific alr than rolling alr");
          Must_Rebuild := True;
