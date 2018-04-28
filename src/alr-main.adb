@@ -9,9 +9,10 @@ with Alr.Self;
 
 procedure Alr.Main is
 begin
+   Bootstrap.Check_Ada_Tools;
+
    Alr.Platform.Init (Alr.Platforms.Current.New_Platform);
 
-   Bootstrap.Check_Ada_Tools;
    Bootstrap.Check_If_Rolling_And_Respawn;
 
    if not Self.Is_Canonical then

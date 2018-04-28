@@ -33,11 +33,13 @@ package Alr.OS_Lib is
    --  Direct launch, without any shenanigangs on output, for example for respawning the canonical version
    --  Raises CHILD_FAILED if exit code /= 0
 
-   function Spawn_And_Capture (Command    : String;
-                               Arguments  : String := "";
-                               Err_To_Out : Boolean := False) return Utils.String_Vector;
+   procedure Spawn_And_Capture (Output     : in out Utils.String_Vector;
+                                Command    : String;
+                                Arguments  : String := "";
+                                Err_To_Out : Boolean := False);
    --  Returns output as vector of strings
    --  Raises CHILD_FAILED if exit code /= 0
+   --  Even if exception raised, Output will be filled-in
 
    procedure Spawn_And_Redirect (Out_File   : String;
                                  Command    : String;

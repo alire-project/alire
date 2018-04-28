@@ -38,8 +38,10 @@ package body Alr.Platform is
       use Utils;
 
       Year   : Natural;
-      Output : constant String_Vector := OS_Lib.Spawn_And_Capture ("gnat");
+      Output : String_Vector;
    begin
+      OS_Lib.Spawn_And_Capture (Output, "gnat");
+
       for Line of Output loop
          if Line'Length > 4 and then Line (Line'First .. Line'First + 3) = "GNAT" then
             declare

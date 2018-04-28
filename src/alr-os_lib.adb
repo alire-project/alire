@@ -417,9 +417,10 @@ package body Alr.OS_Lib is
    -- Spawn_And_Capture --
    -----------------------
 
-   function Spawn_And_Capture (Command    : String;
-                               Arguments  : String := "";
-                               Err_To_Out : Boolean := False) return Utils.String_Vector
+   procedure Spawn_And_Capture (Output     : in out Utils.String_Vector;
+                                Command    : String;
+                                Arguments  : String := "";
+                                Err_To_Out : Boolean := False)
    is
       use GNAT.OS_Lib;
       File  : File_Descriptor;
@@ -427,7 +428,8 @@ package body Alr.OS_Lib is
       Ok    : Boolean;
 
       use Ada.Text_IO;
-      Output : File_Type;
+
+      Outfile : File_Type;
 
       -------------
       -- Cleanup --
@@ -439,27 +441,32 @@ package body Alr.OS_Lib is
          Free (Name);
       end Cleanup;
 
+      -----------------
+      -- Read_Output --
+      -----------------
+
+      procedure Read_Output is
+      begin
+         Open (Outfile, In_File, Name.all);
+         while not End_Of_File (Outfile) loop
+            Output.Append (Get_Line (Outfile));
+         end loop;
+
+         Cleanup;
+      end Read_Output;
+
    begin
       Create_Temp_Output_File (File, Name);
       Close (File);
 
       begin
          Spawn_And_Redirect (Name.all, Command, Arguments, Err_To_Out);
+         Read_Output;
       exception
          when others =>
-            Cleanup;
+            Read_Output;
             raise Child_Failed;
       end;
-
-      --  Parse
-      return Lines : Utils.String_Vector do
-         Open (Output, In_File, Name.all);
-         while not End_Of_File (Output) loop
-            Lines.Append (Get_Line (Output));
-         end loop;
-
-         Cleanup;
-      end return;
    end Spawn_And_Capture;
 
    ------------------------

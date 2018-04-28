@@ -161,9 +161,13 @@ package body Alr.Commands.Test is
                Skipping_Extensions := False;
 
                Start := Clock;
-               Output := OS_Lib.Spawn_And_Capture
-                 ("alr", "get --compile -d " & R.Milestone.Image,
+
+               OS_Lib.Spawn_And_Capture
+                 (Output,
+                  "alr", "get --compile -d " & R.Milestone.Image,
                   Err_To_Out => True);
+
+               Trace.Detail (Output.Flatten (Newline));
 
                --  Check declared gpr/executables in place
                if not R.Origin.Is_Native and then not Check_Files (R) then
@@ -174,6 +178,7 @@ package body Alr.Commands.Test is
                Put_Line (File, "pass:" & R.Milestone.Image);
 
                Jsuite.Add_Case (AJUnitGen.New_Case (R.Milestone.Image));
+
             exception
                when Child_Failed =>
                   Failed := Failed + 1;

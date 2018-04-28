@@ -41,8 +41,9 @@ package body Alr.Platforms.Linux is
       else
          declare
             use all type Alire.Platforms.Distributions;
-            Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-is");
+            Release : String_Vector;
          begin
+            OS_Lib.Spawn_And_Capture (Release, "lsb_release", "-is");
             for Known in Alire.Platforms.Distributions'Range loop
                for Line of Release loop
                   if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line)) then
@@ -77,8 +78,9 @@ package body Alr.Platforms.Linux is
       else
          declare
             use all type Alire.Platforms.Versions;
-            Release : constant String_Vector := OS_Lib.Spawn_And_Capture ("lsb_release", "-cs");
+            Release : String_Vector;
          begin
+            OS_Lib.Spawn_And_Capture (Release, "lsb_release", "-cs");
             for Known in Alire.Platforms.Versions'Range loop
                for Line of Release loop
                   if Contains (To_Lower_Case (Known'Img), Line) then
@@ -92,8 +94,8 @@ package body Alr.Platforms.Linux is
             Trace.Debug ("Found unsupported version: " & Release (1));
 
             Version_Cached := True;
-            Cached_Version := Distro_Version_Unsupported;
-            return Distro_Version_Unsupported;
+            Cached_Version := Distro_Version_Unknown;
+            return Distro_Version_Unknown;
          end;
       end if;
    end Distro_Version;
