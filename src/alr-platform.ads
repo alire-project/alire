@@ -17,6 +17,8 @@ package Alr.Platform is
    ----------------------------------
    --  Portably detectable properties
 
+   function Am_I_Root return Boolean;
+
    function Compiler return Alire.Platforms.Compilers;
 
    function Word_Size return Alire.Platforms.Word_Sizes;

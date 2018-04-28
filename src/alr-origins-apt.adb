@@ -56,8 +56,10 @@ package body Alr.Origins.Apt is
    -------------
 
    overriding procedure Install (This : Origin) is
+      Cmd : constant String := (if Platform.Am_I_Root then "apt-get" else "sudo");
+      Sub : constant String := (if Platform.Am_I_Root then "" else "apt-get ");
    begin
-      OS_Lib.Spawn_Raw ("sudo", "apt-get install -q -q -y " &
+      OS_Lib.Spawn_Raw (Cmd, Sub & "install -q -q -y " &
                                 This.Base.Package_Name (Platform.Distribution));
    end Install;
 

@@ -14,6 +14,13 @@ package body Alr.Platform is
 
    Props    : access Alire.Properties.Vector;
 
+   ---------------
+   -- Am_I_Root --
+   ---------------
+
+   function Am_I_Root return Boolean is
+      (OS_Lib.Getenv ("UID", "") = "0");
+
    ----------------------
    -- Basic_Properties --
    ----------------------
