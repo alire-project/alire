@@ -91,7 +91,7 @@ package body Alr.Commands.Test is
       Jsuite : AJUnitGen.Test_Suite :=
                  AJUnitGen.New_Suite ("releases for " & Version.Fingerprint);
 
-      Newline : constant String := ASCII.CR & ASCII.LF;
+      Newline : constant String := "" & ASCII.LF;
 
       Start : Time;
    begin
