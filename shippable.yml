@@ -23,5 +23,5 @@ build:
         - export PATH+=:`pwd`/bin
         - mkdir reltest 
         - cd reltest 
-        - alr test --full --newest
+        - alr test --full
         - cp *.xml ../shippable/testresults 
