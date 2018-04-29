@@ -38,7 +38,15 @@ package body Alr.Parsers is
                                                     when '~'       => Semver.Within_Minor (V),
                                                     when others    => raise Constraint_Error with "Unrecognized version operator: " & Op);
    begin
-      return (Name'Length, +Name, Versions);
+      --  Previous return with copy caused double free on finalize of Versions???
+      return M : Allowed_Milestones (Name'Length) do
+         M.Project  := +Name;
+         M.Versions := Versions;
+      end return;
+   exception
+      when others =>
+         Trace.Error ("A project/version string was invalid");
+         raise Command_Failed;
    end Project_Versions;
 
 end Alr.Parsers;

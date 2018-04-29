@@ -1,4 +1,5 @@
 with Alire;
+with Alire.Types;
 
 with Simple_Logging;
 
@@ -21,6 +22,8 @@ package Alr with Preelaborate is
    procedure Log (S : String; Level : Simple_Logging.Levels := Info) renames Simple_Logging.Log;
 
    package Trace renames Simple_Logging;
+
+   package Types renames Alire.Types;
 
    --  Some hardcoded constants that help to break circularities
 

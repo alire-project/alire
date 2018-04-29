@@ -61,12 +61,10 @@ package body Alr.Checkout is
    ------------------
 
    procedure Working_Copy (R              : Alire.Index.Release;
-                           Deps           : Query.Instance;
                            Parent_Folder  : String;
                            Generate_Files : Boolean := True)
      				--  FIXME policies not implemented
    is
-      Root    : Alire.Index.Release renames R;
       Was_There : Boolean with Unreferenced;
    begin
       Checkout (R, Parent_Folder, Was_There);
@@ -75,7 +73,7 @@ package body Alr.Checkout is
       if Generate_Files then
          declare
             use OS_Lib;
-            Guard      : Folder_Guard    := Enter_Folder (Root.Unique_Folder) with Unreferenced;
+            Guard      : Folder_Guard    := Enter_Folder (R.Unique_Folder) with Unreferenced;
             Index_File : constant String := Hardcoded.Working_Deps_File;
          begin
             if Is_Regular_File (Index_File) then
@@ -84,8 +82,10 @@ package body Alr.Checkout is
                Ada.Directories.Delete_File (Index_File);
             end if;
 
-            Templates.Generate_Prj_Alr (Deps, Alire.Roots.New_Root (Root), Templates.Unknown);
-            Templates.Generate_Agg_Gpr (Deps, Alire.Roots.New_Root (Root));
+            Templates.Generate_Prj_Alr (Templates.Released,
+                                        R.Project,
+                                        R.Version);
+            Templates.Generate_Agg_Gpr (Alire.Roots.New_Root (R));
          end;
       end if;
    end Working_Copy;

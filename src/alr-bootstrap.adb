@@ -104,9 +104,10 @@ package body Alr.Bootstrap is
    procedure Check_Rebuild_Respawn is
       Metafile     : constant String  := Hardcoded.Working_Deps_File;
       Must_Rebuild :          Boolean := False;
+      State        : constant Session_States := Session_State;
    begin
-      case Session_State is
-         when Detached =>
+      case State is
+         when Outdated | Detached =>
             Trace.Debug ("Running main alr seeing session file " & Metafile);
             --  Proceed
          when Valid    =>
@@ -123,8 +124,8 @@ package body Alr.Bootstrap is
       elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec, Than => Metafile) then
          Trace.Debug ("Rebuilding currently outdated session-specific alr");
          Must_Rebuild := True;
-      elsif not Self.Matches_Session (Metafile) then
-         Trace.Detail ("Rebuilding unmatching metadata session-specific alr");
+      elsif State = Outdated then
+         Trace.Detail ("Rebuilding outdated session-specific alr");
          Must_Rebuild := True;
       elsif Os_Lib.Is_Older (This => Hardcoded.Alr_Session_Exec, Than => Hardcoded.Alr_Rolling_Exec) then
          Trace.Debug ("Rebuilding older session-specific alr than rolling alr");
@@ -299,7 +300,7 @@ package body Alr.Bootstrap is
          if Self.Matches_Session (Hardcoded.Working_Deps_File) then
             return Valid;
          else
-            return Erroneous;
+            return Outdated;
          end if;
       elsif Is_Directory (Hardcoded.Alr_Working_Folder) and then Is_Regular_File (Hardcoded.Working_Deps_File) then
          return Detached;
@@ -322,7 +323,7 @@ package body Alr.Bootstrap is
         (if not Self.Is_Canonical then "devel" else "release") &
         " (" &
         (case Session_State is
-            when Erroneous => "erroneous session state",
+            when Outdated  => "outdated session build",
             when Outside   => "no project",
             when Detached  => "in project",
             when Valid     => "session up to date") &

@@ -78,15 +78,12 @@ package body Alr.Commands.Get is
    procedure Retrieve (Cmd : Command; Name : Alire.Project; Versions : Semver.Version_Set) is
       use all type Semver.Version_Set;
 
-      Success : Boolean;
       Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
-      Needed  : constant Query.Instance :=
-                  Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Project, Versions),
-                                 Success,
-                                 Query_Policy);
    begin
-      if not Success and then not Cmd.Only then
+      if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties)) and then not Cmd.Only then
          Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
+         Trace.Error ("This may happen when requesting a project that requires native libraries, whiile using a GPL gnat");
+         Trace.Error ("In that case, try again with the native FSF gnat compiler");
          raise Command_Failed;
       end if;
 
@@ -107,9 +104,7 @@ package body Alr.Commands.Get is
       end if;
 
       --  Check out requested project release under current directory
-      Checkout.Working_Copy (Needed.Element (Rel.Project),
-                             Needed,
-                             Ada.Directories.Current_Directory);
+      Checkout.Working_Copy (Rel, Ada.Directories.Current_Directory);
 
       if Cmd.Only then
          Trace.Detail ("By your command, dependencies not resolved nor retrieved: compilation might fail");

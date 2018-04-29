@@ -1,4 +1,5 @@
 with Alire;
+with Alire.Dependencies.Vectors;
 with Alire.Index;
 
 private with Alire.Index.Alire;
@@ -14,8 +15,8 @@ package Alr.Bootstrap is
    ---------------------
 
    type Session_States is
-     (Erroneous, -- Some bizarre situation
-      Outside,   -- not in a project root folder
+     (Outside,   -- not in a project root folder
+      Outdated,  -- Internal hash does not match the metadata file in sight
       Detached,  -- In project folder, but current executable is not a session-specific one
       Valid      -- In a session, running from the session alr, hence our internal project must match too
                  -- Also, when valid, we are in the project root!
@@ -53,11 +54,15 @@ package Alr.Bootstrap is
 
    Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies;
 
+   function No_Dependencies return Types.Platform_Dependencies
+     renames Alire.Dependencies.Vectors.No_Dependencies;
+
 private
 
    Is_Child : Boolean := False;
    --  During elaboration this will be updated accordingly
 
-   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies := Alire.Index.Alire.Project.Current;
+   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies :=
+                                Alire.Index.Alire.Project.Current;
 
 end Alr.Bootstrap;

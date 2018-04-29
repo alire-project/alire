@@ -92,7 +92,7 @@ package body Alr.Commands.Update is
          --  And launch updated exec without online (or it would restart endlessly)
          Spawn.Alr (Cmd_Update);
       else
-         if Session_State >= Detached then
+         if Session_State >= Outdated then
             Upgrade;
          else
             Trace.Detail ("No project to upgrade");

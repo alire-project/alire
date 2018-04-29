@@ -1,12 +1,19 @@
 with Ada.Text_IO;
 
+with Alire.Dependencies.Vectors;
 with Alire.Roots;
 
 with Alr.Query;
 
+with Semantic_Versioning;
+
 package Alr.Templates is
 
-   type Generation_Scenarios is (Initial, Pinning, Unknown);
+   type Generation_Scenarios is
+     (Released,  -- Project is already released and packaged
+      Unreleased -- Project is a working copy, pinned or some other variation
+                 -- with explicit dependencies
+     );
    --  In initial generation we know the only dependency is on Alire itself
    --  When pinning we are fixing to current resolved versions
    --  Otherwise who knows
@@ -18,14 +25,13 @@ package Alr.Templates is
    procedure Generate_Agg_Gpr (Root : Alire.Roots.Root);
    --  Generate the aggregate project file solving the dependencies of the given root
 
-   procedure Generate_Prj_Alr (Instance : Query.Instance;
-                               Root     : Alire.Roots.Root;
-                               Scenario : Generation_Scenarios;
-                               Filename : String  := "");
-   --  Generate the dependencies file (Name_Alr.ads)
-   --  If root /= "" then its dependency is skipped (to not depend on itself)
-   --  File can be a full path + filename, otherwise Current_Folder / Alr_Index_File is used
-   --  If exact use "Exactly" dependencies, otherwise use "At_Least_Within_Major"
+   procedure Generate_Prj_Alr (Scenario : Generation_Scenarios;
+                               Project  : Alire.Project;
+                               Version  : Semantic_Versioning.Version :=
+                                 Semantic_Versioning.V ("0");
+                               Deps     : Alire.Dependencies.Vectors.Vector :=
+                                 Alire.Dependencies.Vectors.No_Dependencies);
+   --  Generate dependency file, either for a released or unreleased project
 
    procedure Generate_Session (Session_Path : String;
                                Full_Index   : Boolean;

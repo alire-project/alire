@@ -222,6 +222,9 @@ package body Alr.Commands.Test is
 
             Flush (File);
 
+            OS_Lib.Create_Folder (R.Unique_Folder / Hardcoded.Alr_Working_Folder);
+            --  Might not exist for native/failed/skipped
+
             Output.Write (R.Unique_Folder /
                             Hardcoded.Alr_Working_Folder /
                               "alr_test_" & Timestamp & ".log");
@@ -237,28 +240,6 @@ package body Alr.Commands.Test is
                     " SKIP:" & Skipped'Img &
                     " UNAV:" & Unavail'Img &
                     " Done");
-
---        testing
---        Jsuite.Add_Case
---                      (AJUnitGen.New_Case
---                         ("SKIP TEST",
---                          AJUnitGen.Skip));
---
---        Jsuite.Add_Case
---          (AJUnitGen.New_Case
---             ("ERROR TEST",
---              AJUnitGen.Error,
---              "ERROR",
---              "error msg",
---              "error output"));
---
---        Jsuite.Add_Case
---          (AJUnitGen.New_Case
---             ("FAIL TEST",
---              AJUnitGen.Fail,
---              "FAIL",
---              "fail msg",
---              "fail output"));
 
       --  JUnit output
       Create (File, Out_File, Report_Simplename & ".xml");

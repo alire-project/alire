@@ -10,7 +10,6 @@ private with Alire.Properties.Dependencies;
 package Alr.Checkout is
 
    procedure Working_Copy (R              : Alire.Index.Release;
-                           Deps           : Query.Instance;
                            Parent_Folder  : String;
                            Generate_Files : Boolean := True);
    --  A working copy might not have alr and gpr files, that will be generated if needed

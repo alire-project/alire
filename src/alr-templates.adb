@@ -4,10 +4,12 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.GPR;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
 with Alire.Utils;
 
+with Alr.Code;
 with Alr.Commands;
 with Alr.Commands.Withing;
 with Alr.Files;
@@ -15,8 +17,6 @@ with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Utils;
-
-with Semantic_Versioning;
 
 package body Alr.Templates is
 
@@ -241,107 +241,82 @@ package body Alr.Templates is
    -- Generate_Project_Alire --
    ----------------------------
 
-   procedure Generate_Prj_Alr (Instance : Query.Instance;
-                               Root     : Alire.Roots.Root;
-                               Scenario : Generation_Scenarios;
-                               Filename : String := "")
+   procedure Generate_Prj_Alr (Scenario : Generation_Scenarios;
+                               Project  : Alire.Project;
+                               Version  : Semantic_Versioning.Version :=
+                                 Semantic_Versioning.V ("0");
+                               Deps     : Alire.Dependencies.Vectors.Vector :=
+                                 Alire.Dependencies.Vectors.No_Dependencies)
    is
       package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 
       Includes : Sets.Set; -- To sort them and remove duplicates
 
       File : File_Type;
-      Name : constant String := (if Filename /= ""
-                                 then Filename
-                                 else Hardcoded.Working_Deps_File);
+      Name : constant String := Hardcoded.Working_Deps_File;
 
       Simple_Name : constant String := Ada.Directories.Simple_Name (Name);
 
       Pkg_Name : constant String := Simple_Name (Simple_Name'First .. Simple_Name'Last - 4);
    begin
-      if Root.Is_Released and then Instance.Contains (Root.Release.Project) then
-         declare
-            Pruned_Instance : Query.Instance := Instance;
-         begin
-            Pruned_Instance.Delete (Root.Release.Project);
-            Generate_Prj_Alr (Pruned_Instance, Root, Scenario, Filename);
-            return;
-         end;
-      end if;
-
       Trace.Detail ("Generating alr_deps.ads file for " &
-                    (if Root.Is_Released
-                       then Root.Release.Milestone.Image
-                       else "unreleased project " & (+Root.Project)) &
-                      " with" & Instance.Length'Img & " dependencies");
+                    (if Scenario = Released
+                       then Alire.Milestones.New_Milestone (Project, Version).Image
+                       else "unreleased project " & (+Project)) &
+                      " with" & Deps.Length'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
       OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
-
       Files.Backup_If_Existing (Name);
-
       Create (File, Out_File, Name);
 
-      Put_Line (File, "with Alire.Index; use Alire.Index;");
+      Put_Line (File, "--  Visibility of operators:");
+      Put_Line (File, "with Alire.Index;    use Alire.Index;");
+      Put_Line (File, "with Alire.Versions; use Alire.Versions.Expressions;");
 
-      if Root.Is_Released and then Scenario /= Pinning then
-         Put_Line (File, Commands.Withing.With_Line (Root.Release.Project));
-         --  Root dependency that will pull everything else in
-      elsif Scenario = Initial then
-         Put_Line (File, "with Alire.Index.Alire;");
+      --  With generation
+
+      if Scenario = Released then
+         Includes.Include (Commands.Withing.With_Line (Project));
       else
-         -- Err on the safe side and pull in all dependencies
-         for R of Instance loop
-            Includes.Include (Commands.Withing.With_Line (R.Project));
+         for Dep of Deps loop
+            Includes.Include (Commands.Withing.With_Line (Dep.Project));
          end loop;
+      end if;
 
+      if not Includes.Is_Empty then
+         New_Line (File);
+         Put_Line (File, "--  Dependencies:");
          for Inc of Includes loop
             Put_Line (File, Inc);
          end loop;
       end if;
+
       New_Line (File);
+
+      --  Spec generation
 
       Put_Line (File, "package " & Utils.To_Mixed_Case (Pkg_Name) & " is");
       New_Line (File);
       Put_Line (File, Tab_1 & "Current_Root : constant Root := Set_Root (");
 
-      if Root.Is_Released and then Scenario /= Pinning then
+      if Scenario = Released then
          --  Typed name plus version
-         Put_Line (File, Tab_2 & Alire.Index.Get (Root.Release.Project).Ada_Identifier & ",");
-         Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Root.Release.Version)) & "));");
+         Put_Line (File, Tab_2 & Alire.Index.Get (Project).Ada_Identifier & ",");
+         Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Version)) & "));");
       else
          --  Untyped name plus dependencies
-         Put_Line (File, Tab_2 & Q (+Root.Project) & ",");
+         Put_Line (File, Tab_2 & Q (+Project) & ",");
 
-         if Scenario = Initial then
-            Put_Line (File, Tab_2 & "Dependencies => Alire.Index.Alire.Project.Current);");
+         if Deps.Is_Empty then
+            Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
          else
-            if Instance.Is_Empty then
-               Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
-            else
-               Put (File, Tab_2 & "Dependencies =>");
+            Put_Line (File, Tab_2 & "Dependencies =>");
+            for Line of Code.Generate (Deps) loop
+               Put_Line (File, Tab_3 & Line);
+            end loop;
 
-               declare
-                  First : Boolean := True;
-               begin
-                  for Rel of Instance loop
-                     if not First then
-                        Put_Line (File, " and");
-                     else
-                        New_Line (File);
-                     end if;
-                     Put (File, Tab_3 &
-                            Alire.Index.Get (Rel.Project).Ada_Identifier &
-                            (if Scenario = Pinning
-                             then ".At_Version ("
-                             else ".Within_Major (") &
-                             Q (Semver.Image (Rel.Version)) & ")");
-                     First := False;
-                  end loop;
-               end;
-
-               Put_Line (File, ");");
-            end if;
+            Put_Line (File, Tab_1 & ");");
          end if;
       end if;
       New_Line (File);

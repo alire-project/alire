@@ -1,5 +1,3 @@
-with "alire"; -- Uncomment to be able to compile the metadata file
-
 project Project_Skel is
 
    for Library_Name use "Project_Skel";

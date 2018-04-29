@@ -1,3 +1,4 @@
+with Alire.Dependencies;
 with Alire.Index;
 
 with Semantic_Versioning;
@@ -28,7 +29,7 @@ package body Alr.Code is
    -- Generate --
    --------------
 
-   function Generate (Deps : Alire.Dependencies.Vector)
+   function Generate (Deps : Types.Platform_Dependencies)
                       return Utils.String_Vector
    is
       Result : Utils.String_Vector;

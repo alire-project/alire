@@ -4,11 +4,10 @@ with Alire.Origins;
 with Alire.Releases;
 with Alire.Roots;
 
-with Alr.Bootstrap;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
+with Alr.Parsers;
 with Alr.Platform;
-with Alr.Query;
 with Alr.Templates;
 with Alr.Utils;
 
@@ -19,7 +18,7 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      Name : constant String := Argument (1);
+      Name  : constant String := Argument (1);
    begin
       if Cmd.In_Place then
          null; -- do nothing
@@ -49,25 +48,16 @@ package body Alr.Commands.Init is
                     then Os_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name)) with Unreferenced;
 
-         New_Root : constant Alire.Roots.Root :=
-                         Alire.Roots.New_Root
-                           (+Name,
-                            Bootstrap.Alire_Minimal_Dependency);
-
-         Success     : Boolean;
-         Depends     : constant Query.Instance :=
-                         Query.Resolve (New_Root.Dependencies.Evaluate (Platform.Properties),
-                                        Success,
-                                        Query_Policy);
+         New_Root : constant Alire.Roots.Root := Alire.Roots.New_Root (+Name);
       begin
-         if not Success then
-            raise Program_Error with "Alr could not resolve its own dependency, this should never happen!";
-         end if;
-
          OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
 
-         Templates.Generate_Prj_Alr (Depends, New_Root, Templates.Initial);
-         Templates.Generate_Agg_Gpr (Depends, New_Root);
+         Templates.Generate_Prj_Alr
+           (Templates.Unreleased,
+            +Name,
+            Deps => New_Root.Dependencies.Evaluate (Platform.Properties));
+
+         Templates.Generate_Agg_Gpr (New_Root);
       end;
    end Generate;
 
@@ -95,6 +85,9 @@ package body Alr.Commands.Init is
 
       declare
          Name : constant String := Argument (1);
+         Check : constant Parsers.Allowed_Milestones :=
+                   Parsers.Project_Versions (Name)
+                   with Unreferenced;
       begin
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
             Log ("The project name is invalid, as it is used internally by alr; please choose another name");
@@ -116,7 +109,7 @@ package body Alr.Commands.Init is
             end if;
          else
             Generate (Cmd);
-            Log ("Initialization completed");
+            Trace.Detail ("Initialization completed");
          end if;
       end;
    end Execute;

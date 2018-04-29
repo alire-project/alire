@@ -4,11 +4,11 @@ with Ada.Strings.Maps;
 with Ada.Text_IO;
 
 with Alire.Conditional;
+with Alire.Dependencies;
 with Alire.Index;
 with Alire.Releases;
 with Alire.Roots;
 
-with Alr.Hardcoded;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Root;
@@ -93,18 +93,11 @@ package body Alr.Commands.Depend is
       --  Set, regenerate and update
       declare
          New_Root  : constant Alire.Roots.Root := Alire.Index.Set_Root (Root.Project, Deps) with Unreferenced;
-         Success   : Boolean;
-         Needed    : constant Query.Instance :=
-                       Query.Resolve (Deps.Evaluate (Platform.Properties),
-                                      Success,
-                                      Query_Policy);
+         Needed    : constant Types.Platform_Dependencies := Deps.Evaluate (Platform.Properties);
       begin
-         if not Success then
-            Trace.Error ("depend failed");
-            raise Program_Error with "Reached unresolvable situation despite previous checks";
-            --  This really should be impossible, given that we checked each new dependency adition
-         end if;
-         Templates.Generate_Prj_Alr (Needed, Root.Current, Templates.Unknown, Hardcoded.Working_Deps_File);
+         Templates.Generate_Prj_Alr (Templates.Unreleased,
+                                     Root.Project,
+                                     Deps => Needed);
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
@@ -257,8 +250,11 @@ package body Alr.Commands.Depend is
       elsif Cmd.Del then
          Del;
       else
+         Requires_Full_Index (Even_In_Session => True);
          From;
       end if;
+
+      Spawn.Alr (Cmd_Update);
    end Execute;
 
    --------------------
