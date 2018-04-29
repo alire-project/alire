@@ -21,6 +21,8 @@ package body Alr.Commands.Withing is
          Reportaise_Wrong_Arguments ("alr with requires exactly one project name");
       end if;
 
+      Requires_Full_Index;
+
       if Alire.Projects.Descriptions.Contains (Alire.Project (Argument (1))) then
          Put_Line (With_Line (Alire.Project (Argument (1))));
       else

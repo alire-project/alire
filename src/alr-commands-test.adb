@@ -10,6 +10,7 @@ with Alire.Index;
 with Alr.Files;
 with Alr.Interactive;
 with Alr.Commands.Version;
+with Alr.Hardcoded;
 with Alr.Platform;
 with Alr.OS_Lib;
 with Alr.Parsers;
@@ -73,6 +74,7 @@ package body Alr.Commands.Test is
    procedure Do_Test (Cmd : Command; Releases : Alire.Containers.Release_Sets.Set) is
       use Ada.Calendar;
       use Ada.Text_IO;
+      use OS_Lib.Paths;
 
       Epoch : constant Time := Time_Of (1970, 1, 1);
       File  : File_Type;
@@ -82,10 +84,16 @@ package body Alr.Commands.Test is
       Is_Available, Is_Resolvable : Boolean;
       Skipping_Extensions         : Boolean := False;
 
+      Timestamp                   : constant String :=
+                                      Utils.Trim
+                                        (Long_Long_Integer'Image
+                                           (Long_Long_Integer (Clock - Epoch)));
+
       Report_Simplename           : constant String :=
                                       "alr_report_" &
-                                      Utils.To_Lower_Case (Query_Policy'Img) & "_" &
-                                      Utils.Trim (Long_Long_Integer'Image (Long_Long_Integer (Clock - Epoch)));
+                                      Utils.To_Lower_Case (Query_Policy'Img) &
+                                      "_" &
+                                      Timestamp;
 
       --  Junit related
       Jsuite : AJUnitGen.Test_Suite :=
@@ -100,119 +108,126 @@ package body Alr.Commands.Test is
       Put_Line (File, "os-fingerprint:" & Version.Fingerprint);
 
       for R of Releases loop
-         Trace.Info ("PASS:" & Passed'Img &
-                       " FAIL:" & Failed'Img &
-                       " SKIP:" & Skipped'Img &
-                       " UNAV:" & Unavail'Img &
-                       " CURR:" & Integer'(Tested + 1)'Img & "/" &
-                       Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
+         declare
+            Output : Utils.String_Vector;
+         begin
+            Trace.Info ("PASS:" & Passed'Img &
+                          " FAIL:" & Failed'Img &
+                          " SKIP:" & Skipped'Img &
+                          " UNAV:" & Unavail'Img &
+                          " CURR:" & Integer'(Tested + 1)'Img & "/" &
+                          Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
 
-         Is_Available  := Query.Is_Available (R);
-         Is_Resolvable := Query.Is_Resolvable (R.Depends (Platform.Properties));
+            Is_Available  := Query.Is_Available (R);
+            Is_Resolvable := Query.Is_Resolvable (R.Depends (Platform.Properties));
 
-         if not Is_Available or else not Is_Resolvable then
-            Unavail := Unavail + 1;
-            Trace.Detail ("Unavailable: " & R.Milestone.Image &
-                          (if not Is_Available then " (unavailable)" else "") &
-                          (if not Is_Resolvable then " (unresolvable)" else ""));
-            Put_Line (File, "Unav:" & R.Milestone.Image);
+            if not Is_Available or else not Is_Resolvable then
+               Unavail := Unavail + 1;
+               Trace.Detail ("Unavailable: " & R.Milestone.Image &
+                             (if not Is_Available then " (unavailable)" else "") &
+                             (if not Is_Resolvable then " (unresolvable)" else ""));
+               Put_Line (File, "Unav:" & R.Milestone.Image);
 
-            Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Skip,
-                        Message => "Available: "  & Is_Available'Img & "; " &
-                                   "Resolvable: " & Is_Resolvable'Img,
-                        Output => Version.Fingerprint));
-         elsif not R.Origin.Is_Native and then
-           not R.Is_Extension and then
-           Ada.Directories.Exists (R.Unique_Folder) and then
-           not Cmd.Redo
-         then
-            Skipped := Skipped + 1;
-            Skipping_Extensions := True;
-            Trace.Detail ("Skipping already tested " & R.Milestone.Image);
+               Jsuite.Add_Case
+                 (AJUnitGen.New_Case
+                    (R.Milestone.Image,
+                     AJUnitGen.Skip,
+                     Message => "Available: "  & Is_Available'Img & "; " &
+                       "Resolvable: " & Is_Resolvable'Img,
+                     Output  => Version.Fingerprint));
+            elsif not R.Origin.Is_Native and then
+              not R.Is_Extension and then
+              Ada.Directories.Exists (R.Unique_Folder) and then
+              not Cmd.Redo
+            then
+               Skipped := Skipped + 1;
+               Skipping_Extensions := True;
+               Trace.Detail ("Skipping already tested " & R.Milestone.Image);
 
-            Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Skip,
-                        Message => "Already tested",
-                        Output => Version.Fingerprint));
-         elsif not R.Origin.Is_Native and Then
-           R.Is_Extension and then
-           Ada.Directories.Exists (R.Unique_Folder) and then
-           Skipping_Extensions
-         then
-            Skipped := Skipped + 1;
-            Skipping_Extensions := True;
-            Trace.Detail ("Skipping already tested extension " & R.Milestone.Image);
+               Jsuite.Add_Case
+                 (AJUnitGen.New_Case
+                    (R.Milestone.Image,
+                     AJUnitGen.Skip,
+                     Message => "Already tested",
+                     Output  => Version.Fingerprint));
+            elsif not R.Origin.Is_Native and then
+              R.Is_Extension and then
+              Ada.Directories.Exists (R.Unique_Folder) and then
+              Skipping_Extensions
+            then
+               Skipped := Skipped + 1;
+               Skipping_Extensions := True;
+               Trace.Detail ("Skipping already tested extension " & R.Milestone.Image);
 
-            Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Skip,
-                        Message => "Already tested",
-                        Output => Version.Fingerprint));
-         else
-            declare
-               Output : Utils.String_Vector;
-            begin
-               Skipping_Extensions := False;
+               Jsuite.Add_Case
+                 (AJUnitGen.New_Case
+                    (R.Milestone.Image,
+                     AJUnitGen.Skip,
+                     Message => "Already tested",
+                     Output  => Version.Fingerprint));
+            else
+               begin
+                  Skipping_Extensions := False;
 
-               Start := Clock;
+                  Start := Clock;
 
-               OS_Lib.Spawn_And_Capture
-                 (Output,
-                  "alr", "get --compile -d " & R.Milestone.Image,
-                  Err_To_Out => True);
+                  OS_Lib.Spawn_And_Capture
+                    (Output,
+                     "alr", "get --compile -d " & R.Milestone.Image,
+                     Err_To_Out => True);
 
-               Trace.Detail (Output.Flatten (Newline));
+                  Trace.Detail (Output.Flatten (Newline));
 
-               --  Check declared gpr/executables in place
-               if not R.Origin.Is_Native and then not Check_Files (R) then
-                  raise Child_Failed;
-               end if;
+                  --  Check declared gpr/executables in place
+                  if not R.Origin.Is_Native and then not Check_Files (R) then
+                     raise Child_Failed;
+                  end if;
 
-               Passed := Passed + 1;
-               Put_Line (File, "pass:" & R.Milestone.Image);
+                  Passed := Passed + 1;
+                  Put_Line (File, "pass:" & R.Milestone.Image);
 
-               Jsuite.Add_Case (AJUnitGen.New_Case (R.Milestone.Image));
+                  Jsuite.Add_Case (AJUnitGen.New_Case (R.Milestone.Image));
 
-            exception
-               when Child_Failed =>
-                  Failed := Failed + 1;
-                  Put_Line (File, "FAIL:" & R.Milestone.Image);
-                  Trace.Warning ("Compilation failed for " & R.Milestone.Image);
+               exception
+                  when Child_Failed =>
+                     Failed := Failed + 1;
+                     Put_Line (File, "FAIL:" & R.Milestone.Image);
+                     Trace.Warning ("Compilation failed for " & R.Milestone.Image);
 
-                  Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Fail,
-                        Classname => "FAIL",
-                        Message   => "get --compile failure: " & Version.Fingerprint,
-                        Output    => Output.Flatten (Newline)));
+                     Jsuite.Add_Case
+                       (AJUnitGen.New_Case
+                          (R.Milestone.Image,
+                           AJUnitGen.Fail,
+                           Classname => "FAIL",
+                           Message   => "get --compile failure: " & Version.Fingerprint,
+                           Output    => Output.Flatten (Newline)));
 
-               when E : others =>
-                  Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Error,
-                        Classname => "ERROR",
-                        Message => "alr test unexpected error: " & Version.Fingerprint,
-                        Output    =>
-                          "****** UNEXPECTED EXCEPTION FOLLOWS:" & Newline &
-                          Ada.Exceptions.Exception_Information (E) &
-                          Newline & Newline &
-                          "****** TRACE FOLLOWS:" & Newline &
-                          Output.Flatten (Newline)));
-            end;
-            Trace.Info (R.Milestone.Image & " built in" &
-                          Duration'Image (Clock - Start) & "s");
-         end if;
+                  when E : others =>
+                     Jsuite.Add_Case
+                       (AJUnitGen.New_Case
+                          (R.Milestone.Image,
+                           AJUnitGen.Error,
+                           Classname => "ERROR",
+                           Message   => "alr test unexpected error: " & Version.Fingerprint,
+                           Output    =>
+                              "****** UNEXPECTED EXCEPTION FOLLOWS:" & Newline &
+                              Ada.Exceptions.Exception_Information (E) &
+                             Newline & Newline &
+                             "****** TRACE FOLLOWS:" & Newline &
+                             Output.Flatten (Newline)));
+               end;
+               Trace.Info (R.Milestone.Image & " built in" &
+                             Duration'Image (Clock - Start) & "s");
+            end if;
 
-         Flush (File);
-         Tested := Tested + 1;
+            Flush (File);
+
+            Output.Write (R.Unique_Folder /
+                            Hardcoded.Alr_Working_Folder /
+                              "alr_test_" & Timestamp & ".log");
+
+            Tested := Tested + 1;
+         end;
       end loop;
 
       Close (File);
