@@ -6,6 +6,7 @@ with Alr.Bootstrap;
 with Alr.Code;
 with Alr.Parsers;
 with Alr.Platform;
+with Alr.Selftest;
 with Alr.Spawn;
 
 pragma Warnings (On);
@@ -46,6 +47,10 @@ package body Alr.Commands.Dev is
             Bootstrap.Rebuild (Bootstrap.Standalone);
          end if;
       end if;
+
+      if Cmd.Self_Test then
+         Selftest.Run;
+      end if;
    end Execute;
 
    --------------------
@@ -76,7 +81,12 @@ package body Alr.Commands.Dev is
       Define_Switch (Config,
                      Cmd.Self_Compile'Access,
                      "", "--compile",
-                     "Just self-compile.");
+                     "Just self-compile");
+
+      Define_Switch (Config,
+                     Cmd.Self_Test'Access,
+                     "", "--test",
+                     "Run self-tests");
    end Setup_Switches;
 
 end Alr.Commands.Dev;
