@@ -209,6 +209,17 @@ package body Alr.Commands.Depend is
       Replace_Current (Deps);
    end From;
 
+   ----------
+   -- List --
+   ----------
+
+   procedure List is
+   begin
+      for Dep of Root.Platform_Dependencies loop
+         Put_Line (Dep.Image);
+      end loop;
+   end List;
+
    --------------------------
    -- Display_Help_Details --
    --------------------------
@@ -228,8 +239,10 @@ package body Alr.Commands.Depend is
    begin
       Requires_Project;
 
+      --  No parameters: give current platform dependencies
       if not (Cmd.Add or else Cmd.Del or else Cmd.From) then
-         Reportaise_Wrong_Arguments ("Exactly one of --add, --del, --from is required");
+         List;
+         return;
       end if;
 
       if (Cmd.Add and Cmd.Del) or (Cmd.Add and Cmd.From) or (Cmd.Del and Cmd.From) then
