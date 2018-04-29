@@ -20,6 +20,7 @@ package Alr.Commands.Dev is
 private
 
    type Command is new Commands.Command with record
+      Custom       : aliased Boolean := False; -- Custom code to run instead
       Raise_Except : aliased Boolean := False;
       Regenerate   : aliased Boolean := False;
       Respawn      : aliased Boolean := False;

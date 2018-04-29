@@ -1,4 +1,7 @@
+with Alire.Index.Hello;
+
 with Alr.Bootstrap;
+with Alr.Code;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
@@ -6,12 +9,27 @@ with Alr.Templates;
 
 package body Alr.Commands.Dev is
 
+   ------------
+   -- Custom --
+   ------------
+
+   procedure Custom is
+   begin
+      Code.Generate
+        (Alire.Index.Hello.V_1_0_1.Depends
+           (Platform.Properties)).Write ("alrcodetest.txt");
+   end Custom;
+
    -------------
    -- Execute --
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
    begin
+      if Cmd.Custom then
+         Custom;
+      end if;
+
       if Cmd.Raise_Except then
          raise Program_Error with "Raising forcibly";
       end if;
@@ -70,6 +88,11 @@ package body Alr.Commands.Dev is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch (Config,
+                     Cmd.Custom'Access,
+                     "", "--custom",
+                     "Execute current custom code");
+
       Define_Switch (Config,
                      Cmd.Raise_Except'Access,
                      "", "--raise",
