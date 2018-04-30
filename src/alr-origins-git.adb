@@ -8,9 +8,13 @@ package body Alr.Origins.Git is
    -----------
 
    overriding procedure Fetch (This : Origin; Folder : String) is
+      Extra : constant String :=
+                (if Trace.Level > Trace.Info
+                 then "--progress "
+                 else "");
    begin
       Trace.Detail ("Checking out: " & This.Base.URL);
-      Spawn.Command ("git", "clone -n -q --progress " & This.Base.URL & " " & Folder);
+      Spawn.Command ("git", "clone -n -q " & Extra & This.Base.URL & " " & Folder);
       declare
          Guard : constant OS_Lib.Folder_Guard := Os_Lib.Enter_Folder (Folder) with Unreferenced;
       begin
