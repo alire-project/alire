@@ -1,3 +1,4 @@
+with Alr.Interactive;
 with Alr.OS_Lib;
 with Alr.Spawn;
 
@@ -9,9 +10,9 @@ package body Alr.Origins.Git is
 
    overriding procedure Fetch (This : Origin; Folder : String) is
       Extra : constant String :=
-                (if Trace.Level > Trace.Info
-                 then "--progress "
-                 else "");
+                (if Interactive.Not_Interactive
+                 then ""
+                 else "--progress ");
    begin
       Trace.Detail ("Checking out: " & This.Base.URL);
       Spawn.Command ("git", "clone -n -q " & Extra & This.Base.URL & " " & Folder);
