@@ -80,6 +80,7 @@ package body Alr.Commands.Test is
 
       Epoch : constant Time := Time_Of (1970, 1, 1);
       File  : File_Type;
+      Tab   : constant Character := ASCII.HT;
 
       Tested, Passed, Failed, Skipped, Unavail : Natural := 0;
 
@@ -125,7 +126,7 @@ package body Alr.Commands.Test is
 
             if not Is_Available or else not Is_Resolvable then
                Unavail := Unavail + 1;
-               Put_Line (" unavailable");
+               Put_Line (Tab & "unavailable");
                Trace.Detail ("Unavailable: " & R.Milestone.Image &
                              (if not Is_Available then " (unavailable)" else "") &
                              (if not Is_Resolvable then " (unresolvable)" else ""));
@@ -145,7 +146,7 @@ package body Alr.Commands.Test is
             then
                Skipped := Skipped + 1;
                Skipping_Extensions := True;
-               Put_Line (" skipped (folder exists)");
+               Put_Line (Tab & "skipped (folder exists)");
                Trace.Detail ("Skipping already tested " & R.Milestone.Image);
 
                Jsuite.Add_Case
@@ -161,7 +162,7 @@ package body Alr.Commands.Test is
             then
                Skipped := Skipped + 1;
                Skipping_Extensions := True;
-               Put_Line (" skipped (extension of existing folder)");
+               Put_Line (Tab & "skipped (extension of existing folder)");
                Trace.Detail ("Skipping already tested extension " & R.Milestone.Image);
 
                Jsuite.Add_Case
@@ -190,6 +191,7 @@ package body Alr.Commands.Test is
 
                   Passed := Passed + 1;
                   Put_Line (File, "pass:" & R.Milestone.Image);
+                  Put_Line (Tab & "tested in" & CS'Image (CS (Clock - Start)) & "s");
 
                   Jsuite.Add_Case (AJUnitGen.New_Case (R.Milestone.Image));
 
@@ -197,7 +199,7 @@ package body Alr.Commands.Test is
                   when Child_Failed =>
                      Failed := Failed + 1;
                      Put_Line (File, "FAIL:" & R.Milestone.Image);
-                     Put_Line (" FAILED");
+                     Put_Line (Tab & "FAILED");
                      Trace.Warning ("Compilation failed for " & R.Milestone.Image);
 
                      Jsuite.Add_Case
@@ -209,7 +211,7 @@ package body Alr.Commands.Test is
                            Output    => Output.Flatten (Newline)));
 
                   when E : others =>
-                     Put_Line (" ERRORED");
+                     Put_Line (Tab & "ERRORED");
                      Put_Line (File, "ERR :" & R.Milestone.Image);
                      Jsuite.Add_Case
                        (AJUnitGen.New_Case
@@ -224,7 +226,6 @@ package body Alr.Commands.Test is
                              "****** TRACE FOLLOWS:" & Newline &
                              Output.Flatten (Newline)));
                end;
-               Put_Line (" tested in" & CS'Image (CS (Clock - Start)) & "s");
             end if;
 
             Flush (File);
