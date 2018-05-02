@@ -4,6 +4,7 @@ with Ada.Directories;
 with Alire_Early_Elaboration;
 
 with Alr.Commands.Update;
+with Alr.Commands.Version;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Root;
@@ -321,6 +322,7 @@ package body Alr.Bootstrap is
         (if Self.Is_Session then "session" else
            (if Self.Is_Rolling then "rolling" else "launcher")) & "-" &
         (if not Self.Is_Canonical then "devel" else "release") &
+        " (" & Commands.Version.Git_Tag & ")" &
         " (" &
         (case Session_State is
             when Outdated  => "outdated session build",

@@ -1,4 +1,5 @@
 with Alire.Properties;
+with Alire.Utils;
 
 with Alr.Files;
 with Alr.Hardcoded;
@@ -25,6 +26,7 @@ package body Alr.Commands.Version is
       end if;
 
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
+      Trace.Always ("alr version (from git tag) is " & Git_Tag);
 
       if Root.Is_Empty then
          Trace.Always ("alr root is empty");
@@ -64,7 +66,7 @@ package body Alr.Commands.Version is
          Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
            with Unreferenced;
       begin
-         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Version);
+         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Git_Fingerprint);
       end;
 
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);
@@ -74,5 +76,28 @@ package body Alr.Commands.Version is
       end loop;
       New_Line;
    end Execute;
+
+   -------------
+   -- Git_Tag --
+   -------------
+
+   function Git_Tag return String is
+   begin
+      -- FIXME this should be migrated to compiled-in git
+      declare
+         Guard : constant Folder_Guard :=
+                   OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
+                   with Unreferenced;
+         Output : Utils.String_Vector;
+      begin
+         OS_Lib.Spawn_And_Capture (Output, "git", "describe --all --always");
+         return Alire.Utils.Split
+           (Utils.Trim (Output.Flatten),
+            '/',
+            Side => Alire.Utils.Tail,
+            From => Alire.Utils.Head,
+            Raises => False);
+      end;
+   end Git_Tag;
 
 end Alr.Commands.Version;

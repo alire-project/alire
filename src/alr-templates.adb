@@ -106,9 +106,9 @@ package body Alr.Templates is
       end if;
    end Generate_Agg_Gpr;
 
-   ------------------
-   -- Generate_Gpr --
-   ------------------
+   ----------------------
+   -- Generate_Agg_Gpr --
+   ----------------------
 
    procedure Generate_Agg_Gpr (Instance : Query.Instance;
                                Root     : Alire.Roots.Root)
@@ -156,7 +156,7 @@ package body Alr.Templates is
 
       Put_Line (File, Tab_1 & "for Project_Files use (");
       for I in GPR_Files.Iterate loop
-         Put (File, Tab_2 & Q (Ada.Directories.Full_Name (GPR_Files (I))));
+         Put (File, Tab_2 & Q (".." / GPR_Files (I)));
          if I /= GPR_Files.Last then
             Put_line (File, ", ");
          end if;
@@ -170,14 +170,14 @@ package body Alr.Templates is
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
          else
-            All_Paths.Append (Hardcoded.Projects_Folder / Rel.Unique_Folder);
+            All_Paths.Append (Hardcoded.Alr_Working_Deps_Path / Rel.Unique_Folder);
          end if;
 
          --  Add non-root extra project paths, always
          for Path of Rel.Project_Paths (Platform.Properties) loop
             All_Paths.Append ((if Rel.Project = Root.Project
-                               then "."
-                               else Hardcoded.Projects_Folder / Rel.Unique_Folder / Path));
+                               then ".."
+                               else Hardcoded.Alr_Working_Deps_Path / Rel.Unique_Folder / Path));
          end loop;
       end loop;
 
@@ -197,7 +197,7 @@ package body Alr.Templates is
                Put_Line (File, ",");
             end if;
 
-            Put (File, Tab_2 & Q (Ada.Directories.Full_Name (Path)));
+            Put (File, Tab_2 & Q (Path));
          end loop;
 
          Put_Line (File, ");");

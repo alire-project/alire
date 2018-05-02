@@ -70,7 +70,13 @@ package Alr.Hardcoded is
    Alr_Working_Folder : constant Relative_Path;
    --  Folder within a working project that will contain metadata/build files, 3rd-party projects, and session
 
-   function Scripts_Version return String;
+   Alr_Working_Cache_Folder : constant Relative_Path;
+   --  Folder inside the working folder with transient files (can be safely deleted)
+
+   Alr_Working_Deps_Path : constant Relative_Path;
+   --  Path from inside the working folder to dependency folders
+
+   function Scripts_Git_Fingerprint return String;
 
    function Templates_Bin_Folder return Absolute_Path;
 
@@ -107,6 +113,8 @@ private
 
    Alr_Child_Flag             : constant String := "ALR_CHILD";
    Alr_Working_Folder         : constant String := "alire";
+   Alr_Working_Cache_Folder   : constant Relative_Path := Alr_Working_Folder / "cache";
+   Alr_Working_Deps_Path : constant Relative_Path := "cache" / "projects";
 
    --  Pseudo-constants (due to elaboration finished requirement)
 
@@ -117,9 +125,9 @@ private
    function Alr_Index_Folder               return String is (Alr_Src_Folder / "deps" / "alire" / "index");
    function Alr_Rolling_Exec               return String is (Alr_Src_Folder / "bin" / "alr");
    function No_Session_Folder              return String is (Platform.Cache_Folder / "sessions" / Platform.Compiler'Img / "no_session");
-   function Projects_Folder                return String is (Alr_Working_Folder / "cache" / "projects");
-   function Scripts_Version                return String is (Alr_Src_Folder / "scripts" / "version");
-   function Session_Folder                 return String is (Alr_Working_Folder / "cache" / "session");
+   function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
+   function Scripts_Git_Fingerprint        return String is (Alr_Src_Folder / "scripts" / "git-fingerprint");
+   function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");
    function Templates_Bin_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "bin");
    function Templates_Lib_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "lib");
 

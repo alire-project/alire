@@ -11,6 +11,7 @@ required_compiler="gprbuild gnatmake gnatls"
 alire_folder=${XDG_CONFIG_HOME:-$HOME/.config}/alire
 alire_src=$alire_folder/alr
 alire_bin=$alire_src/bin/alr
+alire_version=unknown
 
 # ERROR MANAGEMENT
 
@@ -71,6 +72,7 @@ function fetch_and_compile() {
     git clone -b $repo_branch $repo_url $alire_src
     pushd $alire_src
     git submodule update --init --recursive
+    alire_version=`git describe --always --all | cut -f2 -d'/'`
     popd
     
     echo Compiling...
@@ -107,7 +109,7 @@ EOF
         check_folder_writable "$bin_folder" || continue
 
         echo ' '
-        echo Ready to install alr in $bin_folder
+        echo Ready to install alr $alire_version in $bin_folder
         echo Press Y to proceed, any other key to entry another path, or Ctrl-C to stop now.
         read -rsn1 proceed
         [ "$proceed" = "y" ] && break

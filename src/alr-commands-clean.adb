@@ -12,18 +12,29 @@ package body Alr.Commands.Clean is
    overriding procedure Execute (Cmd : in out Command) is
       Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
-      if not Cmd.Cache or else Bootstrap.Session_State >= Detached then
+      if not Cmd.Cache then
          Requires_Project;
-      end if;
 
-      if Bootstrap.Session_State = Valid then
          Trace.Detail ("Cleaning project and dependencies...");
          Spawn.Command ("gprclean", "-r -P " & Hardcoded.Working_Build_File & " " & Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then
-         Trace.Detail ("Deleting cache...");
-         Ada.Directories.Delete_Tree (Hardcoded.Projects_Folder);
+         if Bootstrap.Session_State >= Outdated then
+            if OS_Lib.Is_Folder (Hardcoded.Alr_Working_Cache_Folder) then
+               Trace.Detail ("Deleting working copy cache...");
+               Ada.Directories.Delete_Tree (Hardcoded.Alr_Working_Cache_Folder);
+            else
+               Trace.Warning ("Cache folder not present");
+            end if;
+         else
+            if OS_Lib.Is_Folder (Hardcoded.No_Session_Folder) then
+               Trace.Detail ("Deleting global cache...");
+               Ada.Directories.Delete_Tree (Hardcoded.No_Session_Folder);
+            else
+               Trace.Warning ("Global cache folder not present");
+            end if;
+         end if;
       end if;
    end Execute;
 
