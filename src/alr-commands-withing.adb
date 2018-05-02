@@ -42,7 +42,8 @@ package body Alr.Commands.Withing is
       use Ada.Directories;
       use Alire.Utils;
 
-      Nameimg : constant String  := +Name;
+      --  For now we require child projects to be in their father's file:
+      Nameimg : constant String  := Alire.Utils.Head (+Name, '.');
 
       Found   : Unbounded_String := Null_Unbounded_String;
 
