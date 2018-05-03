@@ -7,6 +7,6 @@
 [submodule "deps/xmlezout"]
 	path = deps/xmlezout
 	url = https://github.com/alire-project/xmlezout.git
-[submodule "ajunitgen"]
-	path = ajunitgen
+[submodule "deps/ajunitgen"]
+	path = deps/ajunitgen
 	url = https://github.com/mosteo/ajunitgen.git
