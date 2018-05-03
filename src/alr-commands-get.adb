@@ -185,11 +185,12 @@ package body Alr.Commands.Get is
             Reportaise_Wrong_Arguments ("--only is incompatible with --compile");
          end if;
 
+         Requires_Full_Index;
+
          --  Execute
          if Cmd.Info or else Cmd.Native then
             Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native, Priv => Cmd.Priv);
          else
-            Requires_Full_Index;
             Retrieve (Cmd, Allowed.Project, Allowed.Versions);
          end if;
       exception
