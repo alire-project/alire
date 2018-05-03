@@ -11,7 +11,6 @@ package body Alr.Commands.Compile is
    ----------------
 
    procedure Do_Compile is
-      Guard     : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       Requires_Project;
       Requires_Buildfile;

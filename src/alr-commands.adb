@@ -546,6 +546,8 @@ package body Alr.Commands is
    ---------------------
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
+      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+      --  If not in project no matter
    begin
       Log (Image (Cmd) & ":", Detail);
       Dispatch_Table (Cmd).Execute;

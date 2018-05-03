@@ -10,7 +10,6 @@ package body Alr.Commands.Clean is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       if not Cmd.Cache then
          Requires_Project;

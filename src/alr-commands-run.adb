@@ -38,8 +38,6 @@ package body Alr.Commands.Run is
 
    overriding procedure Execute (Cmd : in out Command) is
       use type GNAT.Strings.String_Access;
-
-      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       Requires_Project;
 

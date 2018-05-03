@@ -11,7 +11,6 @@ package body Alr.Commands.Pin is
    overriding procedure Execute (Cmd : in out Command)
    is
       pragma Unreferenced (Cmd);
-      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       Requires_Project;
 

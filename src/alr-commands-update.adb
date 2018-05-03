@@ -31,7 +31,6 @@ package body Alr.Commands.Update is
 
    procedure Upgrade is
       --  The part concerning only to the project
-      Guard   : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
    begin
       -- Requires_Full_Index;
       -- Not anymore, thanks to explicit with requirements
