@@ -2,6 +2,8 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alire.Conditional;
+with Alire.Dependencies.Vectors;
 with Alire.GPR;
 with Alire.Index;
 with Alire.Milestones;
@@ -245,9 +247,12 @@ package body Alr.Templates is
                                Project  : Alire.Project;
                                Version  : Semantic_Versioning.Version :=
                                  Semantic_Versioning.V ("0");
-                               Deps     : Alire.Dependencies.Vectors.Vector :=
-                                 Alire.Dependencies.Vectors.No_Dependencies)
+                               Deps     : Types.Platform_Dependencies :=
+                                 Types.No_Dependencies)
    is
+      function Enumerate is new Alire.Conditional.For_Dependencies.Enumerate
+        (Alire.Dependencies.Vectors.Vector, Alire.Dependencies.Vectors.Append);
+
       package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 
       Includes : Sets.Set; -- To sort them and remove duplicates
@@ -263,7 +268,7 @@ package body Alr.Templates is
                     (if Scenario = Released
                        then Alire.Milestones.New_Milestone (Project, Version).Image
                        else "unreleased project " & (+Project)) &
-                      " with" & Deps.Length'Img & " dependencies");
+                      " with" & Deps.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
       OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
@@ -279,7 +284,7 @@ package body Alr.Templates is
       if Scenario = Released then
          Includes.Include (Commands.Withing.With_Line (Project));
       else
-         for Dep of Deps loop
+         for Dep of Enumerate (Deps) loop
             Includes.Include (Commands.Withing.With_Line (Dep.Project));
          end loop;
       end if;
@@ -308,16 +313,11 @@ package body Alr.Templates is
          --  Untyped name plus dependencies
          Put_Line (File, Tab_2 & Q (+Project) & ",");
 
-         if Deps.Is_Empty then
-            Put_Line (File, Tab_2 & "Dependencies => No_Dependencies);");
-         else
-            Put_Line (File, Tab_2 & "Dependencies =>");
-            for Line of Code.Generate (Deps) loop
-               Put_Line (File, Tab_3 & Line);
-            end loop;
-
-            Put_Line (File, Tab_1 & ");");
-         end if;
+         Put_Line (File, Tab_2 & "Dependencies =>");
+         for Line of Code.Generate (Deps) loop
+            Put_Line (File, Tab_3 & Line);
+         end loop;
+         Put_Line (File, Tab_1 & ");");
       end if;
       New_Line (File);
 

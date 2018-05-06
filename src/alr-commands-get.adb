@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Dependencies.Vectors;
+with Alire.Conditional;
 with Alire.Index;
 
 with Alr.Checkout;
@@ -36,7 +36,7 @@ package body Alr.Commands.Get is
          Success : Boolean;
          Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
          Needed  : Query.Instance :=
-                     Query.Resolve (Alire.Dependencies.Vectors.New_Dependency (Rel.Project, Versions),
+                     Query.Resolve (Alire.Conditional.New_Dependency (Rel.Project, Versions),
                                     Success,
                                     Query_Policy);
 

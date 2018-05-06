@@ -1,6 +1,5 @@
 with Ada.Text_IO;
 
-with Alire.Dependencies.Vectors;
 with Alire.Roots;
 
 with Alr.Query;
@@ -29,8 +28,8 @@ package Alr.Templates is
                                Project  : Alire.Project;
                                Version  : Semantic_Versioning.Version :=
                                  Semantic_Versioning.V ("0");
-                               Deps     : Alire.Dependencies.Vectors.Vector :=
-                                 Alire.Dependencies.Vectors.No_Dependencies);
+                               Deps     : Types.Platform_Dependencies :=
+                                 Types.No_Dependencies);
    --  Generate dependency file, either for a released or unreleased project
 
    procedure Generate_Session (Session_Path : String;

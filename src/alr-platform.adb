@@ -113,7 +113,9 @@ package body Alr.Platform is
    -- Properties --
    ----------------
 
-   function Properties return Alire.Properties.Vector is (Props.all);
+   function Properties return Alire.Properties.Vector is
+      (Basic_Properties);
+      --       (Props.all);
 
    ---------
    -- Set --

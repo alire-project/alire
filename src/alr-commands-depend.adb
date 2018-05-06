@@ -69,13 +69,15 @@ package body Alr.Commands.Depend is
                   when Condition =>
                      Trace.Warning ("Skipping unsupported conditional dependency");
                   when Value => -- A value is a vector of dependencies!
-                     for E of Dep.Value loop
-                        if E.Project /= Requested.Project then
-                           Filtered := Filtered and Alire.Conditional.New_Dependency (E.Project, E.Versions);
-                        end if;
-                     end loop;
+                     if Dep.Value.Project /= Requested.Project then
+                        Filtered := Filtered and
+                          Alire.Conditional.New_Dependency
+                            (Dep.Value.Project, Dep.Value.Versions);
+                     end if;
                   when Vector =>
-                     raise Program_Error with "Shouldn't happen";
+                     for I in Dep.Iterate loop
+                        Check (Dep (I));
+                     end loop;
                end case;
             end Check;
          begin
@@ -215,9 +217,7 @@ package body Alr.Commands.Depend is
 
    procedure List is
    begin
-      for Dep of Root.Platform_Dependencies loop
-         Put_Line (Dep.Image);
-      end loop;
+      Root.Platform_Dependencies.Print;
    end List;
 
    --------------------------

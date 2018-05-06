@@ -1,7 +1,6 @@
 with Alire.Containers;
 with Alire.Index;
 with Alire.Properties;
-with Alire.Properties.Dependencies;
 with Alire.Types;
 
 with Alr.Origins;

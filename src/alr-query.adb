@@ -138,110 +138,110 @@ package body Alr.Query is
    -- Resolve --
    -------------
 
-   function Resolve (Unresolved :        Alire.Dependencies.Vectors.Vector;
+   function Resolve (Unresolved :        Types.Platform_Dependencies;
                      Frozen     :        Instance;
                      Policy     :        Policies;
                      Success    : in out Boolean) return Instance
-   is
-      subtype Dependencies is Alire.Dependencies.Vectors.Vector;
-
-      --  FIXME: since this is depth-first, Frozen can be passed in-out and updated on the spot,
-      --  thus saving copies. Probably the same applies to Unresolved.
-      Dep : constant Alire.Dependencies.Dependency :=
-                 (if Unresolved.Is_Empty
-                  then Alire.Dependencies.New_Dependency ("unavailable", Semver.Any)
-                  else Unresolved.First_Element);
-      --  The fake project will never be referenced, since the first check is that unresolved is empty
-      --  we are done
-
-      Remain : Alire.Dependencies.Vectors.Vector := Unresolved;
-
-      -----------
-      -- Check --
-      -----------
-
-      function Check (R : Release) return Instance is
-      begin
-         if Dep.Project = R.Project and Then
-            Semver.Satisfies (R.Version, Dep.Versions) and then
-            Is_Available (R)
-         then
-            declare
-               New_Frozen : Instance     := Frozen;
-               New_Remain : Dependencies := Remain;
-
-               Solution   : Instance;
-            begin
-               New_Frozen.Insert (R.Project, R);
-               New_Remain.Append (R.Depends (Platform.Properties));
-
-               Solution := Resolve (New_Remain, New_Frozen, Policy, Success);
-
-               if not Solution.Is_Empty then
-                  return Solution; -- Success!
-               end if;
-            end;
-         end if;
-
-         return Empty_Instance;
-      end Check;
-
-   begin
-
-      if Unresolved.Is_Empty then
-         Log ("Dependencies resolved", Detail);
-         Print_Solution (Frozen);
-         Success := True;
-         return Frozen;
-      end if;
-
-      Remain.Delete_First;
-
-      if Frozen.Contains (Dep.Project) then
-         if Semver.Satisfies (Frozen.Element (Dep.Project).Version, Dep.Versions) then
-            --  Dependency already met, simply go down...
-            return Resolve (Remain, Frozen, Policy, Success);
-         else
-            --  Failure because an already frozen version is incompatible
-            return Empty_Instance;
-         end if;
-      else
-         -- Need to check all versions for the first one...
-         -- FIXME: complexity can be improved not visiting blindly all releases to match by project
-         if Policy = Newest then
-            for R of reverse Index.Catalog loop
-               declare
-                  Solution : constant Instance := Check (R);
-               begin
-                  if not Solution.Is_Empty then
-                     return Solution;
-                  end if;
-               end;
-            end loop;
-         else
-            for R of Index.Catalog loop
-               declare
-                  Solution : constant Instance := Check (R);
-               begin
-                  if not Solution.Is_Empty then
-                     return Solution;
-                  end if;
-               end;
-            end loop;
-         end if;
-
-         Trace.Detail ("Unable to find release for dependency: " & Dep.Image);
-
-         --  We found no milestone compatible with the first unresolved dependency...
-         return Empty_Instance;
-      end if;
-   end Resolve;
+   is (Empty_Instance);
+--        subtype Dependencies is Alire.Dependencies.Vectors.Vector;
+--
+--        --  FIXME: since this is depth-first, Frozen can be passed in-out and updated on the spot,
+--        --  thus saving copies. Probably the same applies to Unresolved.
+--        Dep : constant Alire.Dependencies.Dependency :=
+--                   (if Unresolved.Is_Empty
+--                    then Alire.Dependencies.New_Dependency ("unavailable", Semver.Any)
+--                    else Unresolved.First_Element);
+--        --  The fake project will never be referenced, since the first check is that unresolved is empty
+--        --  we are done
+--
+--        Remain : Alire.Dependencies.Vectors.Vector := Unresolved;
+--
+--        -----------
+--        -- Check --
+--        -----------
+--
+--        function Check (R : Release) return Instance is
+--        begin
+--           if Dep.Project = R.Project and Then
+--              Semver.Satisfies (R.Version, Dep.Versions) and then
+--              Is_Available (R)
+--           then
+--              declare
+--                 New_Frozen : Instance     := Frozen;
+--                 New_Remain : Dependencies := Remain;
+--
+--                 Solution   : Instance;
+--              begin
+--                 New_Frozen.Insert (R.Project, R);
+--                 New_Remain.Append (R.Depends (Platform.Properties));
+--
+--                 Solution := Resolve (New_Remain, New_Frozen, Policy, Success);
+--
+--                 if not Solution.Is_Empty then
+--                    return Solution; -- Success!
+--                 end if;
+--              end;
+--           end if;
+--
+--           return Empty_Instance;
+--        end Check;
+--
+--     begin
+--
+--        if Unresolved.Is_Empty then
+--           Log ("Dependencies resolved", Detail);
+--           Print_Solution (Frozen);
+--           Success := True;
+--           return Frozen;
+--        end if;
+--
+--        Remain.Delete_First;
+--
+--        if Frozen.Contains (Dep.Project) then
+--           if Semver.Satisfies (Frozen.Element (Dep.Project).Version, Dep.Versions) then
+--              --  Dependency already met, simply go down...
+--              return Resolve (Remain, Frozen, Policy, Success);
+--           else
+--              --  Failure because an already frozen version is incompatible
+--              return Empty_Instance;
+--           end if;
+--        else
+--           -- Need to check all versions for the first one...
+--           -- FIXME: complexity can be improved not visiting blindly all releases to match by project
+--           if Policy = Newest then
+--              for R of reverse Index.Catalog loop
+--                 declare
+--                    Solution : constant Instance := Check (R);
+--                 begin
+--                    if not Solution.Is_Empty then
+--                       return Solution;
+--                    end if;
+--                 end;
+--              end loop;
+--           else
+--              for R of Index.Catalog loop
+--                 declare
+--                    Solution : constant Instance := Check (R);
+--                 begin
+--                    if not Solution.Is_Empty then
+--                       return Solution;
+--                    end if;
+--                 end;
+--              end loop;
+--           end if;
+--
+--           Trace.Detail ("Unable to find release for dependency: " & Dep.Image);
+--
+--           --  We found no milestone compatible with the first unresolved dependency...
+--           return Empty_Instance;
+--        end if;
+--     end Resolve;
 
    -------------
    -- Resolve --
    -------------
 
-   function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
+   function Resolve (Deps    :     Types.Platform_Dependencies;
                      Success : out Boolean;
                      Policy  :     Policies) return Instance is
    begin

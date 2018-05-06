@@ -1,5 +1,4 @@
 with Alire;
-with Alire.Dependencies.Vectors;
 with Alire.Index;
 
 private with Alire.Index.Alire;
@@ -55,7 +54,7 @@ package Alr.Bootstrap is
    Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies;
 
    function No_Dependencies return Types.Platform_Dependencies
-     renames Alire.Dependencies.Vectors.No_Dependencies;
+     renames Types.No_Dependencies;
 
 private
 

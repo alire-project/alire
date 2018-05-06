@@ -5,8 +5,6 @@ with Alire.Releases;
 with Alr.Hardcoded;
 with Alr.Query;
 
-private with Alire.Properties.Dependencies;
-
 package Alr.Checkout is
 
    procedure Working_Copy (R              : Alire.Index.Release;
