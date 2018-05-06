@@ -17,6 +17,13 @@ package Alr.Query is
    subtype Instance is Containers.Release_Map; -- A list of releases complying with a Solution
    subtype Release  is Index.Release;
 
+   type Solution (Valid : Boolean) is record
+      case Valid is
+         when True  => Releases : Instance;
+         when False => null;
+      end case;
+   end record;
+
    Empty_Instance : constant Instance := (Containers.Project_Release_Maps.Empty_Map with null record);
 
    ---------------------
@@ -56,8 +63,7 @@ package Alr.Query is
    --  They may need to travel the full catalog, with multiple individual availability checks
 
    function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
-                     Success : out Boolean;
-                     Policy  :     Policies) return Instance;
+                     Policy  :     Policies) return Solution;
 
    function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean;
    --  simplified call to Resolve, discarding result

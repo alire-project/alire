@@ -41,7 +41,7 @@ package Alr.Origins is
    function Exists (This : Origin) return Boolean is (False)
      with Pre'Class => This.Is_Native;
    --  Says if a native package exists in this system
-   --  Uneeded otherwise
+   --  Unneeded otherwise
 
    procedure Fetch (This : Origin; Folder : String) is null
      with Pre'Class => not This.Is_Native;

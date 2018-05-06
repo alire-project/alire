@@ -15,17 +15,14 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Success    :          Boolean;
-         Deps       : constant Query.Instance :=
-                        Query.Resolve
-                          (Root.Platform_Dependencies,
-                           Success,
-                           Query_Policy);
+         Deps : constant Query.Solution :=
+                  Query.Resolve (Root.Platform_Dependencies,
+                                 Query_Policy);
       begin
-         if Success then
+         if Deps.Valid then
             Templates.Generate_Prj_Alr (Templates.Unreleased,
                                         Root.Project,
-                                        Deps => Deps.To_Dependencies);
+                                        Deps => Deps.Releases.To_Dependencies);
             Spawn.Alr (Cmd_Update);
          else
             Trace.Error ("Could not resolve dependencies");

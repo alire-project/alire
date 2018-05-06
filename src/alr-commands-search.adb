@@ -43,12 +43,10 @@ package body Alr.Commands.Search is
             Found := Found + 1;
             Tab.New_Row;
             Tab.Append (+R.Project);
-            Tab.Append (Semantic_Versioning.Image (R.Version) &
-                        (if R.Origin.Is_Native then " (native)" else "") &
-                        (if Query.Is_Available (R) then "" else " (unavail)") &
-                        (if not Query.Is_Resolvable (R.Depends (Platform.Properties))
-                           then " (unresolv)" else "")
-                       );
+            Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
+                        (if Query.Is_Available (R) then " " else "U") &
+                        (if Query.Is_Resolvable (R.Depends (Platform.Properties)) then " " else "X"));
+            Tab.Append (Semantic_Versioning.Image (R.Version));
             Tab.Append (Alire.Projects.Descriptions (R.Project));
             Tab.Append (R.Notes);
          end if;
@@ -76,6 +74,7 @@ package body Alr.Commands.Search is
       Requires_Full_Index;
 
       Tab.Append ("NAME");
+      Tab.Append ("STATUS");
       Tab.Append ("VERSION");
       Tab.Append ("DESCRIPTION");
       Tab.Append ("NOTES");

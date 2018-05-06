@@ -38,17 +38,16 @@ package body Alr.Commands.Update is
       Requires_Project;
 
       declare
-         Success : Boolean;
-         Needed  : constant Query.Instance :=
-                     Query.Resolve (Root.Current.Dependencies.Evaluate (Platform.Properties),
-                                    Success,
-                                    Query_Policy);
+         Needed  : constant Query.Solution :=
+                     Query.Resolve
+                       (Root.Current.Dependencies.Evaluate (Platform.Properties),
+                        Query_Policy);
       begin
-         if not Success then
+         if not Needed.Valid then
             Reportaise_Command_Failed ("Update failed");
          end if;
-         Checkout.To_Folder (Needed);
-         Templates.Generate_Agg_Gpr (Needed, Root.Current);
+         Checkout.To_Folder (Needed.Releases);
+         Templates.Generate_Agg_Gpr (Needed.Releases, Root.Current);
          Trace.Detail ("Update completed");
       end;
    end Upgrade;

@@ -1,4 +1,4 @@
-with Alire.Dependencies.Vectors;
+with Alire.Conditional;
 with Alire.Utils;
 
 with Alr.Commands;
@@ -115,12 +115,7 @@ package body Alr.Query is
    -------------------
 
    function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean is
-      Success : Boolean := False;
-
-      Solution : constant Instance := Resolve (Deps, Success, Commands.Query_Policy) with Unreferenced;
-   begin
-      return Success;
-   end Is_Resolvable;
+      (Resolve (Deps, Commands.Query_Policy).Valid);
 
    --------------------
    -- Print_Solution --
@@ -138,126 +133,176 @@ package body Alr.Query is
    -- Resolve --
    -------------
 
-   function Resolve (Unresolved :        Types.Platform_Dependencies;
-                     Frozen     :        Instance;
-                     Policy     :        Policies;
-                     Success    : in out Boolean) return Instance
-   is (Empty_Instance);
---        subtype Dependencies is Alire.Dependencies.Vectors.Vector;
---
---        --  FIXME: since this is depth-first, Frozen can be passed in-out and updated on the spot,
---        --  thus saving copies. Probably the same applies to Unresolved.
---        Dep : constant Alire.Dependencies.Dependency :=
---                   (if Unresolved.Is_Empty
---                    then Alire.Dependencies.New_Dependency ("unavailable", Semver.Any)
---                    else Unresolved.First_Element);
---        --  The fake project will never be referenced, since the first check is that unresolved is empty
---        --  we are done
---
---        Remain : Alire.Dependencies.Vectors.Vector := Unresolved;
---
---        -----------
---        -- Check --
---        -----------
---
---        function Check (R : Release) return Instance is
---        begin
---           if Dep.Project = R.Project and Then
---              Semver.Satisfies (R.Version, Dep.Versions) and then
---              Is_Available (R)
---           then
---              declare
---                 New_Frozen : Instance     := Frozen;
---                 New_Remain : Dependencies := Remain;
---
---                 Solution   : Instance;
---              begin
---                 New_Frozen.Insert (R.Project, R);
---                 New_Remain.Append (R.Depends (Platform.Properties));
---
---                 Solution := Resolve (New_Remain, New_Frozen, Policy, Success);
---
---                 if not Solution.Is_Empty then
---                    return Solution; -- Success!
---                 end if;
---              end;
---           end if;
---
---           return Empty_Instance;
---        end Check;
---
---     begin
---
---        if Unresolved.Is_Empty then
---           Log ("Dependencies resolved", Detail);
---           Print_Solution (Frozen);
---           Success := True;
---           return Frozen;
---        end if;
---
---        Remain.Delete_First;
---
---        if Frozen.Contains (Dep.Project) then
---           if Semver.Satisfies (Frozen.Element (Dep.Project).Version, Dep.Versions) then
---              --  Dependency already met, simply go down...
---              return Resolve (Remain, Frozen, Policy, Success);
---           else
---              --  Failure because an already frozen version is incompatible
---              return Empty_Instance;
---           end if;
---        else
---           -- Need to check all versions for the first one...
---           -- FIXME: complexity can be improved not visiting blindly all releases to match by project
---           if Policy = Newest then
---              for R of reverse Index.Catalog loop
---                 declare
---                    Solution : constant Instance := Check (R);
---                 begin
---                    if not Solution.Is_Empty then
---                       return Solution;
---                    end if;
---                 end;
---              end loop;
---           else
---              for R of Index.Catalog loop
---                 declare
---                    Solution : constant Instance := Check (R);
---                 begin
---                    if not Solution.Is_Empty then
---                       return Solution;
---                    end if;
---                 end;
---              end loop;
---           end if;
---
---           Trace.Detail ("Unable to find release for dependency: " & Dep.Image);
---
---           --  We found no milestone compatible with the first unresolved dependency...
---           return Empty_Instance;
---        end if;
---     end Resolve;
+   function Resolve (Unresolved : Types.Platform_Dependencies;
+                     Frozen     : Instance;
+                     Policy     : Policies) return Solution
+   is
+
+      ----------------------
+      -- Solve_Dependency --
+      ----------------------
+
+      function Solve_Dependency (Dep : Types.Dependency) return Solution is
+
+         -----------
+         -- Check --
+         -----------
+
+         function Check (R : Release) return Solution is
+            use Alire.Containers;
+         begin
+            if Dep.Project = R.Project and then
+              Semver.Satisfies (R.Version, Dep.Versions) and then
+              Is_Available (R)
+            then
+               Trace.Debug ("SOLVER: frozen dependency: " & R.Milestone.Image &
+                              " that adds" & R.Depends (Platform.Properties).Leaf_Count'Img &
+                              " further dependencies");
+               declare
+                  Sol : constant Solution :=
+                          Resolve (R.Depends (Platform.Properties),
+                                   Frozen.Inserting (To_Map (R)),
+                                   Policy);
+               begin
+                  if Sol.Valid then
+                     Trace.Debug ("SOLVER: consolidated dependencies of: " & R.Milestone.Image);
+                     return (True,
+                             To_Map (R).Inserting (Sol.Releases));
+                  else
+                     Trace.Debug ("SOLVER: failed dependencies of: " & R.Milestone.Image);
+                     return (Valid => False);
+                  end if;
+               end;
+            else
+               return (Valid => False);
+            end if;
+         end Check;
+
+      begin
+         if Frozen.Contains (Dep.Project) then
+            if Semver.Satisfies (Frozen.Element (Dep.Project).Version, Dep.Versions) then
+               --  Dependency already met
+               return (True, Empty_Instance);
+            else
+               --  Failure because an already frozen version is incompatible
+               return (Valid => False);
+            end if;
+         else
+            -- FIXME: use Floor/Ceiling or cleverer data structure to not blindly visit all releases
+            if Policy = Newest then
+               for R of reverse Index.Catalog loop
+                  declare
+                     Sol : constant Solution := Check (R);
+                  begin
+                     if Sol.Valid then
+                        return Sol;
+                     end if;
+                  end;
+               end loop;
+            else
+               for R of Index.Catalog loop
+                  declare
+                     Sol : constant Solution := Check (R);
+                  begin
+                     if Sol.Valid then
+                        return Sol;
+                     end if;
+                  end;
+               end loop;
+            end if;
+         end if;
+
+         Trace.Detail ("Unable to find release for dependency: " & Dep.Image);
+         return (Valid => False);
+      end Solve_Dependency;
+
+      ----------------------
+      -- Solve_And_Vector --
+      ----------------------
+
+      function Solve_And_Vector (Unresolved : Types.Platform_Dependencies) return Solution is
+        New_Sol : Instance := Empty_Instance;
+      begin
+         for I in Unresolved.Iterate loop
+            declare
+               Sol : constant Solution := Resolve (Unresolved (I),
+                                                   Frozen.Inserting (New_Sol),
+                                                   Policy);
+            begin
+               if not Sol.Valid then
+                  return (Valid => False);
+               end if;
+
+               --  Merge whatever was solved underneath
+               New_Sol.Insert (Sol.Releases);
+            end;
+         end loop;
+
+         return (True, New_Sol);
+      end Solve_And_Vector;
+
+      ---------------------
+      -- Solve_Or_Vector --
+      ---------------------
+
+      function Solve_Or_Vector (Unresolved : Types.Platform_Dependencies) return Solution is
+      begin
+         for I in Unresolved.Iterate loop
+            declare
+               Sol : constant Solution := Resolve (Unresolved (I),
+                                                   Frozen,
+                                                   Policy);
+            begin
+               if Sol.Valid then
+                  return Sol;
+               end if;
+            end;
+         end loop;
+
+         return (Valid => False);
+      end Solve_Or_Vector;
+
+      use Alire.Conditional.For_Dependencies;
+
+   begin
+      if Unresolved.Is_Empty then
+         return (True, Empty_Instance);
+      end if;
+
+      case Unresolved.Kind is
+         when Value =>
+            return Solve_Dependency (Unresolved.Value);
+         when Vector =>
+            if Unresolved.Conjunction = Anded then
+               return Solve_And_Vector (Unresolved);
+            else
+               return Solve_Or_Vector (Unresolved);
+            end if;
+         when Condition =>
+            raise Program_Error
+              with "Requisites should be evaluated prior to Resolve";
+      end case;
+   end Resolve;
 
    -------------
    -- Resolve --
    -------------
 
-   function Resolve (Deps    :     Types.Platform_Dependencies;
-                     Success : out Boolean;
-                     Policy  :     Policies) return Instance is
+   function Resolve (Deps   : Types.Platform_Dependencies;
+                     Policy : Policies) return Solution is
    begin
-      Success := False;
-
       if Deps.Is_Empty then
-         Success := True;
-         return Empty_Instance;
+         return (True, Empty_Instance);
       end if;
 
-      return I : constant Instance := Resolve (Deps,
-                                               Empty_Instance,
-                                               Policy,
-                                               Success)
+      return Sol : constant Solution := Resolve (Deps,
+                                                 Empty_Instance,
+                                                 Policy)
       do
-         if not Success then
+         if Sol.Valid then
+            Trace.Debug ("Dependencies solved with" &
+                           Sol.Releases.Length'Img & " releases");
+         else
             Trace.Debug ("Dependency resolution failed");
          end if;
       end return;

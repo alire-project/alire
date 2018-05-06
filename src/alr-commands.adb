@@ -352,16 +352,20 @@ package body Alr.Commands is
       --  This is pointless now that all rebuilds incorporate it, but...
    begin
       if Self.Is_Session and not Even_In_Session then
-         Trace.Error ("A session build should not request the full index");
-         raise Program_Error with "A session build should not request the full index";
-      elsif not Self.Has_Full_Index then
+         Trace.Warning ("A session build should not request the full index");
+--           raise Program_Error with "A session build should not request the full index";
+      end if;
+
+      if not Self.Has_Full_Index then
          --  Can happen only first time after installation/devel build, or with depend command
+         Trace.Detail ("Upgrading standalone alr to full index");
          if Even_In_Session then
             Bootstrap.Rebuild_Respawn (Bootstrap.Session);
          else
             Bootstrap.Rebuild_Respawn (Bootstrap.Standalone);
          end if;
       end if;
+
    end Requires_Full_Index;
 
    ----------------------

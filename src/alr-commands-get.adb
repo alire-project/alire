@@ -33,11 +33,11 @@ package body Alr.Commands.Get is
                      Priv     : Boolean) is
    begin
       declare
-         Success : Boolean;
-         Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
-         Needed  : Query.Instance :=
-                     Query.Resolve (Alire.Conditional.New_Dependency (Rel.Project, Versions),
-                                    Success,
+         Rel     : constant Alire.Index.Release  :=
+                     Query.Find (Name, Versions, Query_Policy);
+         Needed  : Query.Solution :=
+                     Query.Resolve (Alire.Conditional.New_Dependency
+                                      (Name, Versions),
                                     Query_Policy);
 
          use Ada.Text_IO;
@@ -50,22 +50,23 @@ package body Alr.Commands.Get is
             Rel.Print (Private_Too => Priv);
          end if;
 
-         if Needed.Contains (Rel.Project) then
-            Needed.Delete (Rel.Project);
+         if Needed.Releases.Contains (Rel.Project) then
+            Needed.Releases.Delete (Rel.Project);
          end if;
 
-         if Success then
-            if not Needed.Is_Empty then
-               Put_Line ("Dependency solution:");
+         if Needed.Valid then
+            if not Needed.Releases.Is_Empty then
+               Put_Line ("Dependencies (solution):");
 
-               for Rel of Needed loop
+               for Rel of Needed.Releases loop
                   Put_Line ("   " & Rel.Milestone.Image);
                end loop;
             end if;
          else
             Put_Line ("Dependencies cannot be met");
          end if;
-         end;
+
+      end;
    exception
       when Alire.Query_Unsuccessful =>
          Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));

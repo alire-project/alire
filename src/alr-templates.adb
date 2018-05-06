@@ -3,7 +3,7 @@ with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.Conditional;
-with Alire.Dependencies.Vectors;
+with Alire.Containers;
 with Alire.GPR;
 with Alire.Index;
 with Alire.Milestones;
@@ -95,14 +95,13 @@ package body Alr.Templates is
    ----------------------
 
    procedure Generate_Agg_Gpr (Root : Alire.Roots.Root) is
-      Success : Boolean;
-      Needed  : constant Query.Instance :=
-                  Query.Resolve (Root.Dependencies.Evaluate (Platform.Properties),
-                                 Success,
-                                 Commands.Query_Policy);
+      Needed  : constant Query.Solution :=
+                  Query.Resolve
+                    (Root.Dependencies.Evaluate (Platform.Properties),
+                     Commands.Query_Policy);
    begin
-      if Success then
-         Generate_Agg_Gpr (Needed, Root);
+      if Needed.Valid then
+         Generate_Agg_Gpr (Needed.Releases, Root);
       else
          raise Command_Failed;
       end if;
@@ -251,7 +250,8 @@ package body Alr.Templates is
                                  Types.No_Dependencies)
    is
       function Enumerate is new Alire.Conditional.For_Dependencies.Enumerate
-        (Alire.Dependencies.Vectors.Vector, Alire.Dependencies.Vectors.Append);
+        (Alire.Containers.Dependency_Lists.List,
+         Alire.Containers.Dependency_Lists.Append);
 
       package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
 

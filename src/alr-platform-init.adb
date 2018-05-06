@@ -1,4 +1,4 @@
-with Alire.Platform;
+--  with Alire.Platform;
 --  with Alire.Properties.Dependencies;
 
 --  with Alr.Query;
@@ -6,7 +6,7 @@ with Alire.Platform;
 procedure Alr.Platform.Init (Current : Platforms.Supported'Class) is
    use all type Alire.Properties.Vector;
 begin
-   Alire.Platform.Set (Current);
+--     Alire.Platform.Set (Current);
    Alr.Platform.Set   (Current);
 
 --     Alr.Platform.Set_Propertes (Basic_Properties and

@@ -1,4 +1,4 @@
-with Alire.Platform;
+--  with Alire.Platform;
 with Alire.Platforms;
 with Alire.Properties;
 
@@ -11,7 +11,7 @@ package Alr.Platforms is
    --  Abstract class that encapsulates platform-specific code.
    --  Every supported platform must implement this class
 
-   type Supported is interface and Alire.Platform.Supported_Platform;
+   type Supported is interface;
 
    -------------------
    --  Low level stuff
