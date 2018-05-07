@@ -78,7 +78,7 @@ package body Alr.Files is
       use Ada.Directories;
       use Alr.OS_Lib;
 
-      Guard : constant Folder_Guard := Enter_Folder (Current_Directory) with Unreferenced;
+      Guard : Folder_Guard (Enter_Folder (Current_Directory)) with Unreferenced;
    begin
       Trace.Debug ("Starting root search at " & Current_Folder);
       loop

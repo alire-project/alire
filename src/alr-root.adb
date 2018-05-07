@@ -1,8 +1,6 @@
 with Ada.Directories;
 
-with Alr.Files;
 with Alr.Hardcoded;
-with Alr.Utils;
 
 package body Alr.Root is
 
@@ -32,25 +30,5 @@ package body Alr.Root is
          raise Program_Error;
       end if;
    end Check_Valid;
-
-   ----------------
-   -- Enter_Root --
-   ----------------
-
-   function Enter_Root return OS_Lib.Folder_Guard is
-      Start_Folder : constant String := OS_Lib.Current_Folder;
-      Root_Folder  : constant String := Files.Locate_Above_Project_Folder;
-   begin
-      if Root_Folder /= "" then
-         if Root_Folder /= Start_Folder then
-            Trace.Detail ("Using project folder " & Utils.Quote (Root_Folder));
-         end if;
-
-         return OS_Lib.Enter_Folder (Root_Folder);
-      else
-         Log ("Root folder for project not found", Warning);
-         return OS_Lib.Stay_In_Current_Folder;
-      end if;
-   end Enter_Root;
 
 end Alr.Root;

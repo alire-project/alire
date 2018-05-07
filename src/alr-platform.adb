@@ -44,7 +44,10 @@ package body Alr.Platform is
    -- Compiler --
    --------------
 
-   function Compiler return Alire.Platforms.Compilers is
+   Compiler_Cached       : Alire.Platforms.Compilers;
+   Compiler_Cached_Valid : Boolean := False;
+
+   function Compiler_Uncached return Alire.Platforms.Compilers is
       package Semver renames Semantic_Versioning;
       use all type Semver.Point;
       use Utils;
@@ -99,6 +102,17 @@ package body Alr.Platform is
 
       Trace.Debug ("Unexpected output from gnat");
       return GNAT_Unknown;
+   end Compiler_Uncached;
+
+   function Compiler return Alire.Platforms.Compilers is
+   begin
+      if Compiler_Cached_Valid then
+         return Compiler_Cached;
+      else
+         Compiler_Cached := Compiler_Uncached;
+         Compiler_Cached_Valid := True;
+         return Compiler_Cached;
+      end if;
    end Compiler;
 
    ---------

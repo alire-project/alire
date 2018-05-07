@@ -1,7 +1,6 @@
 with Alire.Root;
 with Alire.Roots;
 
-with Alr.OS_Lib;
 with Alr.Platform;
 
 package Alr.Root is
@@ -20,10 +19,6 @@ package Alr.Root is
 
    function Project return Alire.Project
      with Pre => not Is_Empty;
-
-   function Enter_Root return OS_Lib.Folder_Guard
-     with Pre => (not Is_Empty);
-   --  Enters the root folder if not already there
 
 private
 

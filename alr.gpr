@@ -38,7 +38,7 @@ project Alr is
    end Builder;
 
    package Binder is
-      for Switches ("ada") use ("-Es", "-g");
+      for Switches ("ada") use ("-Es", "-g", "-static");
    end Binder;
 
    package Linker is

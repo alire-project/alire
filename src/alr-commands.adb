@@ -277,7 +277,7 @@ package body Alr.Commands is
    -- Enter_Project_Folder --
    --------------------------
 
-   function Enter_Project_Folder return Folder_Guard is
+   function Enter_Project_Folder return OS_Lib.Destination is
    begin
       if Session_State /= Valid then
          --  Best guess
@@ -286,7 +286,7 @@ package body Alr.Commands is
          begin
             if Candidate_Folder /= "" then
                Trace.Detail ("Using candidate project root: " & Candidate_Folder);
-               return OS_Lib.Enter_Folder (Candidate_Folder);
+               return new String'(Candidate_Folder);
             else
                Trace.Debug ("Not entering project folder, no valid project root found");
                return OS_Lib.Stay_In_Current_Folder;
@@ -329,7 +329,7 @@ package body Alr.Commands is
    ------------------------
 
    procedure Requires_Buildfile is
-      Guard : constant OS_Lib.Folder_Guard := Root.Enter_Root with Unreferenced;
+      Guard : OS_Lib.Folder_Guard (Enter_Project_Folder) with Unreferenced;
    begin
       if Bootstrap.Session_State /= Valid then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
@@ -550,7 +550,7 @@ package body Alr.Commands is
    ---------------------
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
-      Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+      Guard : Folder_Guard (Enter_Project_Folder) with Unreferenced;
       --  If not in project no matter
    begin
       Log (Image (Cmd) & ":", Detail);

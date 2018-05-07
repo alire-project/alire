@@ -16,7 +16,7 @@ package body Alr.Actions is
    procedure Execute_Run (This : Run) is
       use OS_Lib;
       use Utils;
-      Guard : constant Folder_Guard := Enter_Folder (This.Working_Folder) with Unreferenced;
+      Guard : Folder_Guard (Enter_Folder (This.Working_Folder)) with Unreferenced;
    begin
       Alr.Spawn.Command (Head (This.Command_Line, ' '), Tail (This.Command_Line, ' '));
    end Execute_Run;

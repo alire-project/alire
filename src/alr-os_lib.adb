@@ -4,6 +4,7 @@ with Ada.Command_Line;
 with Ada.Containers;
 with Ada.Exceptions;
 with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 
 with Alire;
 
@@ -134,7 +135,7 @@ package body Alr.OS_Lib is
    function Getenv (Var : String; Default : String := "") return String is
       use GNAT.OS_Lib;
 
-      Env_Access : String_Access := GNAT.OS_Lib.Getenv (Var);
+      Env_Access : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Var);
       Env        : constant String := Env_Access.all;
    begin
       Free (Env_Access);
@@ -182,7 +183,7 @@ package body Alr.OS_Lib is
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       --  File contents
       declare
-         Guard : constant Folder_Guard := Enter_Folder (Folder) with Unreferenced;
+         Guard : Folder_Guard (Enter_Folder (Folder)) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
          Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;",
@@ -236,7 +237,7 @@ package body Alr.OS_Lib is
 
    function Locate_In_Path (Name : String) return String is
       use GNAT.OS_Lib;
-      Target : String_Access := Locate_Exec_On_Path (Name);
+      Target : GNAT.OS_Lib.String_Access := Locate_Exec_On_Path (Name);
    begin
       if Target /= null then
          return Result : constant String := Target.all do
@@ -360,7 +361,7 @@ package body Alr.OS_Lib is
       use GNAT.OS_Lib;
       Extra : constant String := (if Understands_Verbose then "-v " else "");
       File  : File_Descriptor;
-      Name  : String_Access;
+      Name  : GNAT.OS_Lib.String_Access;
       Ok    : Boolean;
    begin
       if Simple_Logging.Level = Debug then
@@ -424,7 +425,7 @@ package body Alr.OS_Lib is
    is
       use GNAT.OS_Lib;
       File  : File_Descriptor;
-      Name  : String_Access;
+      Name  : GNAT.OS_Lib.String_Access;
       Ok    : Boolean;
 
       use Ada.Text_IO;
@@ -514,37 +515,18 @@ package body Alr.OS_Lib is
       end if;
    end Spawn_Raw;
 
-   ------------------
-   -- Enter_Folder --
-   ------------------
+   ---------------
+   -- Initialie --
+   ---------------
 
-   function Enter_Folder (Path : String) return Folder_Guard is
-      Current : constant String := Ada.Directories.Current_Directory;
+   overriding procedure Initialize (This : in out Folder_Guard) is
    begin
-      if Path /= Current and then Path /= "" then -- Changing folder
-         Log ("Entering folder: " & Path, Debug);
-         Ada.Directories.Set_Directory (Path);
-      else -- Ensuring stay
-         Log ("Staying at folder: " & Current, Debug);
+      This.Original := To_Unbounded_String (Current_Folder);
+      if This.Enter /= null and then This.Enter.all /= Current_Folder and then This.Enter.all /= "" then
+         Trace.Debug ("Entering folder: " & This.Enter.all);
+         Ada.Directories.Set_Directory (This.Enter.all);
       end if;
-
-      return (Ada.Finalization.Limited_Controlled with Current'Length, True, Current);
-   end Enter_Folder;
-
-   ----------------------------
-   -- Stay_In_Current_Folder --
-   ----------------------------
-
-   function Stay_In_Current_Folder return Folder_Guard is
-     (Enter_Folder (Current_Folder));
-
-   --  Below code sometimes raised on Finalize (Initialized was true but Original was garbage (?)
---     begin
---        return Guard : Folder_Guard (0) do
---           Log ("Staying in current folder: " & Current_Folder, Debug);
---           Guard.Initialized := False;
---        end return;
---     end Stay_In_Current_Folder;
+   end Initialize;
 
    --------------
    -- Finalize --
@@ -552,21 +534,19 @@ package body Alr.OS_Lib is
 
    overriding procedure Finalize (This : in out Folder_Guard) is
       use Ada.Exceptions;
+      procedure Free is new Ada.Unchecked_Deallocation (String, Destination);
+      Freeable : Destination := This.Enter;
    begin
-      if This.Initialized then
-         Log ("Going back to folder: " & This.Original, Debug);
-         Ada.Directories.Set_Directory (This.Original);
-      else
-         Trace.Debug ("Uninitialized guard (!)");
+      if This.Enter /= null and then Current_Folder /= To_String (This.Original) then
+         Log ("Going back to folder: " & To_String (This.Original), Debug);
+         Ada.Directories.Set_Directory (To_String (This.Original));
       end if;
+      Free (Freeable);
    exception
       when E : others =>
          Trace.Debug ("FG.Finalize: unexpected exception: " &
                         Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
                         Exception_Information (E));
-         Trace.Debug ("FG.Original_Len:" & This.Original_Len'Img);
-         --           Trace.Debug ("FG.Original    :" & This.Original);
-         --  If object is thrashed, the previous line will raise Storage_Error
    end Finalize;
 
 end Alr.OS_Lib;

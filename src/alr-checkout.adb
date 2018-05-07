@@ -34,7 +34,7 @@ package body Alr.Checkout is
          if Ada.Directories.Exists (Folder) then
             declare
                use OS_Lib;
-               Guard : constant Folder_Guard := Enter_Folder (Folder) with Unreferenced;
+               Guard : Folder_Guard (Enter_Folder (Folder)) with Unreferenced;
             begin
                Actions.Execute_Actions (R, Post_Fetch);
             end;
@@ -73,7 +73,7 @@ package body Alr.Checkout is
       if Generate_Files then
          declare
             use OS_Lib;
-            Guard      : Folder_Guard    := Enter_Folder (R.Unique_Folder) with Unreferenced;
+            Guard      : Folder_Guard (Enter_Folder (R.Unique_Folder)) with Unreferenced;
             Index_File : constant String := Hardcoded.Working_Deps_File;
          begin
             if Is_Regular_File (Index_File) then

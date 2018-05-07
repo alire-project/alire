@@ -112,7 +112,7 @@ package body Alr.Commands.Get is
       --  Check out rest of dependencies and optionally compile
       declare
          use OS_Lib;
-         Guard : Folder_Guard := Enter_Folder (Rel.Unique_Folder) with Unreferenced;
+         Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder)) with Unreferenced;
       begin
          if Cmd.Compile then
             Spawn.Alr (Cmd_Build);

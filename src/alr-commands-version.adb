@@ -40,7 +40,7 @@ package body Alr.Commands.Version is
 --        Trace.Always ("alr session hash is " & Session.Hash);
 
       declare
-         Guard : constant Folder_Guard := Enter_Project_Folder with Unreferenced;
+         Guard : Folder_Guard (Enter_Project_Folder) with Unreferenced;
       begin
          Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
@@ -63,7 +63,7 @@ package body Alr.Commands.Version is
 
       -- FIXME this is OS dependent
       declare
-         Guard : constant Folder_Guard := OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
+         Guard : Folder_Guard (OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder))
            with Unreferenced;
       begin
          OS_Lib.Spawn_Raw (Hardcoded.Scripts_Git_Fingerprint);
@@ -85,8 +85,7 @@ package body Alr.Commands.Version is
    begin
       -- FIXME this should be migrated to compiled-in git
       declare
-         Guard : constant Folder_Guard :=
-                   OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder)
+         Guard : Folder_Guard (Enter_Folder (Hardcoded.Alr_Src_Folder))
                    with Unreferenced;
          Output : Utils.String_Vector;
       begin

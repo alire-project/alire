@@ -1,5 +1,6 @@
 with Ada.Directories;
 with Ada.Finalization;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alr.Utils;
 
@@ -48,13 +49,20 @@ package Alr.OS_Lib is
    --  Redirects output to file
    --  Raises CHILD_FAILED if exit code /= 0
 
-   type Folder_Guard (<>) is limited private;
+   type Destination is access String;
+   Stay : constant Destination := null;
+
+   type Folder_Guard (Enter : Destination := Stay) is limited private;
    --  use this type in conjunction with Enter_Folder to ensure that
    --  the CWD is modified and restored when creating/destroying the Folder_Guard
 
-   function Enter_Folder (Path : String) return Folder_Guard;
+   function Enter_Folder (Path : String) return Destination is
+      (new String'(Path));
 
-   function Stay_In_Current_Folder return Folder_Guard;
+   function Stay_In_Current_Folder return Destination is (Stay);
+   --  This whole mess of accesses and leaks is due to a bug in the
+   --    in-place initialization of limited
+
 
    --  OS PORTABLE FUNCTIONS
 
@@ -115,12 +123,12 @@ package Alr.OS_Lib is
 
 private
 
-   type Folder_Guard (Original_Len : Natural) is new Ada.Finalization.Limited_Controlled with record
-      Initialized : Boolean := False;
-      Original    : String (1 .. Original_Len);
+   type Folder_Guard (Enter : Destination := Stay) is new Ada.Finalization.Limited_Controlled with record
+      Original : Unbounded_String;
    end record;
 
-   overriding procedure Finalize (This : in out Folder_Guard);
+   overriding procedure Initialize (This : in out Folder_Guard);
+   overriding procedure Finalize   (This : in out Folder_Guard);
 
    function "/" (L, R : String) return String is
      (L & GNAT.OS_Lib.Directory_Separator & R);
