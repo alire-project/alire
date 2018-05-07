@@ -50,11 +50,11 @@ package body Alr.Commands.Get is
             Rel.Print (Private_Too => Priv);
          end if;
 
-         if Needed.Releases.Contains (Rel.Project) then
-            Needed.Releases.Delete (Rel.Project);
-         end if;
-
          if Needed.Valid then
+            if Needed.Releases.Contains (Rel.Project) then
+               Needed.Releases.Delete (Rel.Project);
+            end if;
+
             if not Needed.Releases.Is_Empty then
                Put_Line ("Dependencies (solution):");
 
