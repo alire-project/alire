@@ -521,18 +521,14 @@ package body Alr.OS_Lib is
    function Enter_Folder (Path : String) return Folder_Guard is
       Current : constant String := Ada.Directories.Current_Directory;
    begin
-      return Guard : Folder_Guard (Current'Length) do
-         Guard.Original := Current; -- Always store, we must have been asked to ensure return to current folder!
+      if Path /= Current and then Path /= "" then -- Changing folder
+         Log ("Entering folder: " & Path, Debug);
+         Ada.Directories.Set_Directory (Path);
+      else -- Ensuring stay
+         Log ("Staying at folder: " & Current, Debug);
+      end if;
 
-         if Path /= Current and then Path /= "" then -- Changing folder
-            Log ("Entering folder: " & Path, Debug);
-            Ada.Directories.Set_Directory (Path);
-         else -- Ensuring stay
-            Log ("Staying at folder: " & Current, Debug);
-         end if;
-
-         Guard.Initialized := True;
-      end return;
+      return (Ada.Finalization.Limited_Controlled with Current'Length, True, Current);
    end Enter_Folder;
 
    ----------------------------

@@ -126,7 +126,9 @@ package body Alr.Commands.Test is
 
             if not Is_Available or else not Is_Resolvable then
                Unavail := Unavail + 1;
-               Put_Line (Tab & "unavailable");
+               Put_Line (Tab &
+                         (if not Is_Available then "unavailable" else "") &
+                         (if not Is_Resolvable then "unresolvable" else ""));
                Trace.Detail ("Unavailable: " & R.Milestone.Image &
                              (if not Is_Available then " (unavailable)" else "") &
                              (if not Is_Resolvable then " (unresolvable)" else ""));
