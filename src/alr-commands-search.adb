@@ -5,6 +5,7 @@ with Alire.Index;
 with Alire.Projects;
 with Alire.Releases;
 
+with Alr.Origins;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Utils;
@@ -46,7 +47,11 @@ package body Alr.Commands.Search is
             Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
                         (if Query.Is_Available (R) then " " else "U") &
                         (if Query.Is_Resolvable (R.Depends (Platform.Properties)) then " " else "X"));
-            Tab.Append (Semantic_Versioning.Image (R.Version));
+            Tab.Append (Semantic_Versioning.Image
+                        (R.Version) &
+                        (if R.Origin.Is_Native
+                           then "+" & Origins.New_Origin (R.Origin).Native_Version
+                           else ""));
             Tab.Append (Alire.Projects.Descriptions (R.Project));
             Tab.Append (R.Notes);
          end if;

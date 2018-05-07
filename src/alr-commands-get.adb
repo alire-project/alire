@@ -63,6 +63,11 @@ package body Alr.Commands.Get is
             Put_Line ("Dependencies cannot be met");
          end if;
 
+         if Rel.Origin.Is_Native then
+            Put_Line ("Platform version: " &
+                        Origins.New_Origin (Rel.Origin).Native_Version);
+         end if;
+
       end;
    exception
       when Alire.Query_Unsuccessful =>
