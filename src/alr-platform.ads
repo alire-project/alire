@@ -12,7 +12,6 @@ package Alr.Platform is
 
    function Properties return Alire.Properties.Vector
      with Pre => Platform'Elaborated;
-   --  Full properties: portably detectable, non-portable, and availability checker
 
    ----------------------------------
    --  Portably detectable properties
@@ -42,11 +41,7 @@ private
 
    use all type Alire.Platforms.Compilers;
 
-   function Basic_Properties return Alire.Properties.Vector;
-
    procedure Set (P : Platforms.Supported'Class);
-
-   procedure Set_Propertes (P : Alire.Properties.Vector);
 
    ---------
    -- Get --

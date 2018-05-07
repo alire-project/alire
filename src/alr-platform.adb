@@ -14,8 +14,6 @@ package body Alr.Platform is
 
    Instance : access Platforms.Supported'Class;
 
-   Props    : access Alire.Properties.Vector;
-
    ---------------
    -- Am_I_Root --
    ---------------
@@ -35,7 +33,7 @@ package body Alr.Platform is
    package Platprop renames Alire.Properties.Platform;
    use all type Alire.Properties.Vector;
 
-   function Basic_Properties return Alire.Properties.Vector is
+   function Properties return Alire.Properties.Vector is
      (Platprop.Compiler_Is (Compiler) and
       Platprop.Distribution_Is (Distribution) and
       Platprop.System_Is (Operating_System) and
@@ -109,14 +107,6 @@ package body Alr.Platform is
 
    function Get return Platforms.Supported'Class is (Instance.all);
 
-   ----------------
-   -- Properties --
-   ----------------
-
-   function Properties return Alire.Properties.Vector is
-      (Basic_Properties);
-      --       (Props.all);
-
    ---------
    -- Set --
    ---------
@@ -125,14 +115,5 @@ package body Alr.Platform is
    begin
       Instance := new Platforms.Supported'Class'(P);
    end Set;
-
-   -------------------
-   -- Set_Propertes --
-   -------------------
-
-   procedure Set_Propertes (P : Alire.Properties.Vector) is
-   begin
-      Props := new Alire.Properties.Vector'(P);
-   end Set_Propertes;
 
 end Alr.Platform;

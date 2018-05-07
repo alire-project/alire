@@ -1,6 +1,5 @@
 with Ada.Directories;
 
-with Alire.Conditional;
 with Alire.Index;
 
 with Alr.Checkout;
@@ -36,9 +35,7 @@ package body Alr.Commands.Get is
          Rel     : constant Alire.Index.Release  :=
                      Query.Find (Name, Versions, Query_Policy);
          Needed  : Query.Solution :=
-                     Query.Resolve (Alire.Conditional.New_Dependency
-                                      (Name, Versions),
-                                    Query_Policy);
+                     Query.Resolve (Rel.This_Version, Query_Policy);
 
          use Ada.Text_IO;
       begin
@@ -83,7 +80,7 @@ package body Alr.Commands.Get is
    begin
       if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties)) and then not Cmd.Only then
          Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
-         Trace.Error ("This may happen when requesting a project that requires native libraries, whiile using a GPL gnat");
+         Trace.Error ("This may happen when requesting a project that requires native libraries, while using a GPL gnat");
          Trace.Error ("In that case, try again with the native FSF gnat compiler");
          raise Command_Failed;
       end if;

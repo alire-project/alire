@@ -1,3 +1,6 @@
+with Ada.Containers; use Ada.Containers;
+with Ada.Containers.Doubly_Linked_Lists;
+
 with Alire.Conditional;
 with Alire.Utils;
 
@@ -6,6 +9,11 @@ with Alr.Parsers;
 with Alr.Platform;
 
 package body Alr.Query is
+
+   package Instance_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Instance,
+      Alire.Containers."=");
+   type Instances is new Instance_Lists.List with null record;
 
    package Semver renames Semantic_Versioning;
 
@@ -129,183 +137,277 @@ package body Alr.Query is
       end loop;
    end Print_Solution;
 
-   -------------
-   -- Resolve --
-   -------------
+   ------------------------
+   -- Add_Dep_As_Release --
+   ------------------------
 
-   function Resolve (Unresolved : Types.Platform_Dependencies;
-                     Frozen     : Instance;
-                     Policy     : Policies) return Solution
+   procedure Add_Dep_Release (Sol   : in out Instance;
+                              Dep   :        Types.Dependency;
+                              Count :        Count_Type := 1)
    is
+      pragma Unreferenced (Count);
+      use Semantic_Versioning;
+   begin
+      if Length (Dep.Versions) /= 1 or else
+         Condition (Element (Dep.Versions, 1)) /= Exactly
+      then
+         raise Constraint_Error with "Materialization requires exact versions";
+      end if;
 
-      ----------------------
-      -- Solve_Dependency --
-      ----------------------
+      Sol.Insert (Dep.Project,
+                  Find (Dep.Project, Dep.Versions, Commands.Query_Policy));
+   end Add_Dep_Release;
 
-      function Solve_Dependency (Dep : Types.Dependency) return Solution is
+   function Materialize is new Alire.Conditional.For_Dependencies.Materialize
+     (Instance,
+      Add_Dep_Release);
 
-         -----------
-         -- Check --
-         -----------
+   -----------------
+   -- Is_Complete --
+   -----------------
 
-         function Check (R : Release) return Solution is
-            use Alire.Containers;
-         begin
-            if Dep.Project = R.Project and then
-              Semver.Satisfies (R.Version, Dep.Versions) and then
-              Is_Available (R)
-            then
-               Trace.Debug ("SOLVER: frozen dependency: " & R.Milestone.Image &
-                              " that adds" & R.Depends (Platform.Properties).Leaf_Count'Img &
-                              " further dependencies");
-               declare
-                  Sol : constant Solution :=
-                          Resolve (R.Depends (Platform.Properties),
-                                   Frozen.Inserting (To_Map (R)),
-                                   Policy);
-               begin
-                  if Sol.Valid then
-                     Trace.Debug ("SOLVER: consolidated dependencies of: " & R.Milestone.Image);
-                     return (True,
-                             To_Map (R).Inserting (Sol.Releases));
-                  else
-                     Trace.Debug ("SOLVER: failed dependencies of: " & R.Milestone.Image);
-                     return (Valid => False);
-                  end if;
-               end;
-            else
-               return (Valid => False);
-            end if;
-         end Check;
-
-      begin
-         if Frozen.Contains (Dep.Project) then
-            if Semver.Satisfies (Frozen.Element (Dep.Project).Version, Dep.Versions) then
-               --  Dependency already met
-               return (True, Empty_Instance);
-            else
-               --  Failure because an already frozen version is incompatible
-               return (Valid => False);
-            end if;
-         else
-            -- FIXME: use Floor/Ceiling or cleverer data structure to not blindly visit all releases
-            if Policy = Newest then
-               for R of reverse Index.Catalog loop
-                  declare
-                     Sol : constant Solution := Check (R);
-                  begin
-                     if Sol.Valid then
-                        return Sol;
-                     end if;
-                  end;
-               end loop;
-            else
-               for R of Index.Catalog loop
-                  declare
-                     Sol : constant Solution := Check (R);
-                  begin
-                     if Sol.Valid then
-                        return Sol;
-                     end if;
-                  end;
-               end loop;
-            end if;
-         end if;
-
-         Trace.Detail ("Unable to find release for dependency: " & Dep.Image);
-         return (Valid => False);
-      end Solve_Dependency;
-
-      ----------------------
-      -- Solve_And_Vector --
-      ----------------------
-
-      function Solve_And_Vector (Unresolved : Types.Platform_Dependencies) return Solution is
-        New_Sol : Instance := Empty_Instance;
-      begin
-         for I in Unresolved.Iterate loop
-            declare
-               Sol : constant Solution := Resolve (Unresolved (I),
-                                                   Frozen.Inserting (New_Sol),
-                                                   Policy);
-            begin
-               if not Sol.Valid then
-                  return (Valid => False);
-               end if;
-
-               --  Merge whatever was solved underneath
-               New_Sol.Insert (Sol.Releases);
-            end;
-         end loop;
-
-         return (True, New_Sol);
-      end Solve_And_Vector;
-
-      ---------------------
-      -- Solve_Or_Vector --
-      ---------------------
-
-      function Solve_Or_Vector (Unresolved : Types.Platform_Dependencies) return Solution is
-      begin
-         for I in Unresolved.Iterate loop
-            declare
-               Sol : constant Solution := Resolve (Unresolved (I),
-                                                   Frozen,
-                                                   Policy);
-            begin
-               if Sol.Valid then
-                  return Sol;
-               end if;
-            end;
-         end loop;
-
-         return (Valid => False);
-      end Solve_Or_Vector;
+   function Is_Complete (Deps : Types.Platform_Dependencies;
+                         Sol  : Instance)
+                         return Boolean is
 
       use Alire.Conditional.For_Dependencies;
 
+      -----------------
+      -- Check_Value --
+      -----------------
+
+      function Check_Value return Boolean is
+      begin
+         for R of Sol loop
+            if R.Satisfies (Deps.Value) then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Check_Value;
+
+      ----------------------
+      -- Check_And_Vector --
+      ----------------------
+
+      function Check_And_Vector return Boolean is
+      begin
+         for I in Deps.Iterate loop
+            if not Is_Complete (Deps (I), Sol) then
+               return False;
+            end if;
+         end loop;
+         return True;
+      end Check_And_Vector;
+
+      ---------------------
+      -- Check_Or_Vector --
+      ---------------------
+
+      function Check_Or_Vector return Boolean is
+      begin
+         for I in Deps.Iterate loop
+            if Is_Complete (Deps (I), Sol) then
+               return True;
+            end if;
+         end loop;
+         return False;
+      end Check_Or_Vector;
+
    begin
-      if Unresolved.Is_Empty then
-         return (True, Empty_Instance);
+      if Deps.Is_Empty then
+         return True;
       end if;
 
-      case Unresolved.Kind is
+      case Deps.Kind is
          when Value =>
-            return Solve_Dependency (Unresolved.Value);
+            return Check_Value;
+
          when Vector =>
-            if Unresolved.Conjunction = Anded then
-               return Solve_And_Vector (Unresolved);
+            if Deps.Conjunction = Anded then
+               return Check_And_Vector;
             else
-               return Solve_Or_Vector (Unresolved);
+               return Check_Or_Vector;
             end if;
+
          when Condition =>
             raise Program_Error
-              with "Requisites should be evaluated prior to Resolve";
+              with "Requisites should be already evaluated at this point";
       end case;
-   end Resolve;
+   end Is_Complete;
 
    -------------
    -- Resolve --
    -------------
 
    function Resolve (Deps   : Types.Platform_Dependencies;
-                     Policy : Policies) return Solution is
+                     Policy : Policies) return Solution
+   is
+      use Alire.Conditional.For_Dependencies;
+
+      Solutions : Instances;
+
+      --------------------
+      -- Check_Complete --
+      --------------------
+
+      procedure Check_Complete (Deps : Types.Platform_Dependencies;
+                                Sol  : Instance) is
+         -- Note: these Deps may include more than the ones requested to solve,
+         --   as indirect dependencies are progressively added
+      begin
+         if Is_Complete (Deps, Sol) then
+            Solutions.Append (Sol);
+            Trace.Debug ("SOLVER: solution FOUND for " & Deps.Image_One_Line);
+            Print_Solution (Sol);
+         end if;
+      end Check_Complete;
+
+      ------------
+      -- Expand --
+      ------------
+
+      procedure Expand (Expanded,   --  Nodes firmly in requisite tree
+                        Current,    --  Next node to consider
+                        Remaining : --  Nodes pending to be considered
+                                    Types.Platform_Dependencies;
+                        Frozen    : Instance)
+      is
+
+         ------------------
+         -- Expand_Value --
+         ------------------
+
+         procedure Expand_Value (Dep : Types.Dependency) is
+
+            -----------
+            -- Check --
+            -----------
+
+            procedure Check (R : Release) is
+               use Alire.Containers;
+            begin
+               if Dep.Project = R.Project then
+                  if Frozen.Contains (R.Project) then
+                     if Semver.Satisfies (R.Version, Dep.Versions) then
+                        --  Continue along this tree
+                        Expand (Expanded,
+                                Remaining,
+                                Empty,
+                                Frozen);
+                     else
+                        Trace.Debug ("SOLVER: discarding tree because of conflicting frozen release: " &
+                                       R.Milestone.Image & " does not satisfy " &
+                                       Dep.Image & " in tree " &
+                                       Conditional_Value'(Expanded and Current and Remaining).Image_One_Line);
+                     end if;
+                  elsif -- First time we see this project
+                    Semver.Satisfies (R.Version, Dep.Versions) and then
+                    Is_Available (R)
+                  then
+                     Trace.Debug ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
+                                    " to satisfy " & Dep.Image &
+                                    " adding" & R.Depends (Platform.Properties).Leaf_Count'Img &
+                                    " dependencies to tree " &
+                                    Conditional_Value'(Expanded and Current and Remaining and R.Depends (Platform.Properties)).Image_One_Line);
+
+                     Expand (Expanded and R.This_Version,
+                             Remaining and R.Depends (Platform.Properties),
+                             Empty,
+                             Frozen.Inserting (R));
+                  end if;
+               else
+                  null; -- Not even same project, this is related to the fixme below
+               end if;
+            end Check;
+
+         begin
+            if Frozen.Contains (Dep.Project) then
+               Check (Frozen (Dep.Project)); -- Cut search once a project is frozen
+            else
+               -- FIXME: use Floor/Ceiling or cleverer data structure to not blindly visit all releases
+               if Policy = Newest then
+                  for R of reverse Index.Catalog loop
+                     Check (R);
+                  end loop;
+               else
+                  for R of Index.Catalog loop
+                     Check (R);
+                  end loop;
+               end if;
+            end if;
+         end Expand_Value;
+
+         -----------------------
+         -- Expand_And_Vector --
+         -----------------------
+
+         procedure Expand_And_Vector is
+         begin
+            Expand (Expanded,
+                    Current.First_Child,
+                    Current.All_But_First_Children and Remaining,
+                    Frozen);
+         end Expand_And_Vector;
+
+         ----------------------
+         -- Expand_Or_Vector --
+         ----------------------
+
+         procedure Expand_Or_Vector is
+         begin
+            for I in Current.Iterate loop
+               Expand (Expanded, Current (I), Remaining, Frozen);
+            end loop;
+         end Expand_Or_Vector;
+
+      begin
+         if Current.Is_Empty then
+            if Remaining.Is_Empty then
+               Trace.Debug ("SOLVER: tree FULLY expanded as: " & Expanded.Image_One_Line);
+               Check_Complete (Deps, Materialize (Expanded, Platform.Properties));
+               return;
+            else
+               Expand (Expanded, Remaining, Empty, Frozen);
+            end if;
+         end if;
+
+         case Current.Kind is
+            when Value =>
+               Expand_Value (Current.Value);
+
+            when Vector =>
+               if Current.Conjunction = Anded then
+                  Expand_And_Vector;
+               else
+                  Expand_Or_Vector;
+               end if;
+
+            when Condition =>
+               raise Program_Error
+                 with "Requisites should be evaluated prior to Resolve";
+         end case;
+      end Expand;
+
    begin
       if Deps.Is_Empty then
          return (True, Empty_Instance);
       end if;
 
-      return Sol : constant Solution := Resolve (Deps,
-                                                 Empty_Instance,
-                                                 Policy)
-      do
-         if Sol.Valid then
-            Trace.Debug ("Dependencies solved with" &
-                           Sol.Releases.Length'Img & " releases");
-         else
-            Trace.Debug ("Dependency resolution failed");
-         end if;
-      end return;
+      Expand (Empty,
+              Deps,
+              Empty,
+              Empty_Instance);
+
+      if Solutions.Is_Empty then
+         Trace.Debug ("Dependency resolution failed");
+         return (Valid => False);
+      else
+         Trace.Debug ("Dependencies solvable in" & Solutions.Length'Img & " ways");
+         Trace.Debug ("Dependencies solved with" &
+                        Solutions.First_Element.Length'Img & " releases");
+         return (True, Solutions.First_Element);
+      end if;
    end Resolve;
 
 end Alr.Query;
