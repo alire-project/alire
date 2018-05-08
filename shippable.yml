@@ -19,8 +19,9 @@ build:
         - apt-get install -y lsb-release mercurial
         - git submodule update --init --recursive
         - gprbuild -p -P alr_env
-        - bash stress/selftest.sh docker
         - export PATH+=:`pwd`/bin
+        - alr search --list --native
+        - bash stress/selftest.sh docker
         - mkdir reltest selftest
         - cd selftest
         - alr dev --test
