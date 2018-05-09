@@ -16,16 +16,6 @@ build:
         image_tag: latest
         pull: true
     ci:
-        - apt-get install -y lsb-release mercurial
+        - apt-get install -y bash lsb-release mercurial
         - git submodule update --init --recursive
-        - gprbuild -p -P alr_env
-        - export PATH+=:`pwd`/bin
-        - alr search --list --native
-        - bash stress/selftest.sh docker
-        - mkdir reltest selftest
-        - cd selftest
-        - alr dev --test
-        - cp *.xml ../shippable/testresults
-        - cd ../reltest 
-        - alr test --full
-        - cp *.xml ../shippable/testresults 
+        - scripts/shiptest.sh
