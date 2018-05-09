@@ -9,7 +9,6 @@ with Alire.Utils;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Compile;
-with Alr.Commands.Depend;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
 with Alr.Commands.Init;
@@ -45,7 +44,6 @@ package body Alr.Commands is
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Compile  => new Compile.Command,
-                       Cmd_Depend   => new Depend.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Init     => new Init.Command,
