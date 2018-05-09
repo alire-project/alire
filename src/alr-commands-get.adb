@@ -15,64 +15,16 @@ package body Alr.Commands.Get is
 
    package Semver renames Semantic_Versioning;
 
+   --------------------------
+   -- Display_Help_Details --
+   --------------------------
+
    overriding procedure Display_Help_Details (Cmd : Command) is
       pragma Unreferenced (Cmd);
    begin
       Ada.Text_IO.New_Line;
       Print_Project_Version_Sets;
    end Display_Help_Details;
-
-   ------------
-   -- Report --
-   ------------
-
-   procedure Report (Name     : Alire.Project;
-                     Versions : Semver.Version_Set;
-                     Native   : Boolean;
-                     Priv     : Boolean) is
-   begin
-      declare
-         Rel     : constant Alire.Index.Release  :=
-                     Query.Find (Name, Versions, Query_Policy);
-         Needed  : Query.Solution :=
-                     Query.Resolve (Rel.This_Version, Query_Policy);
-
-         use Ada.Text_IO;
-      begin
-         New_Line;
-
-         if Native then
-            Rel.Whenever (Platform.Properties).Print (Private_Too => Priv);
-         else
-            Rel.Print (Private_Too => Priv);
-         end if;
-
-         if Needed.Valid then
-            if Needed.Releases.Contains (Rel.Project) then
-               Needed.Releases.Delete (Rel.Project);
-            end if;
-
-            if not Needed.Releases.Is_Empty then
-               Put_Line ("Dependencies (solution):");
-
-               for Rel of Needed.Releases loop
-                  Put_Line ("   " & Rel.Milestone.Image);
-               end loop;
-            end if;
-         else
-            Put_Line ("Dependencies cannot be met");
-         end if;
-
-         if Rel.Origin.Is_Native then
-            Put_Line ("Platform version: " &
-                        Origins.New_Origin (Rel.Origin).Native_Version);
-         end if;
-
-      end;
-   exception
-      when Alire.Query_Unsuccessful =>
-         Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
-   end Report;
 
    --------------
    -- Retrieve --
@@ -140,29 +92,9 @@ package body Alr.Commands.Get is
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if not (Cmd.Info or else Cmd.Native) then
-         --  What to get is required when not requesting info
-         if Num_Arguments /= 1 then
-            Trace.Error ("No project requested");
-            raise Wrong_Command_Arguments with "One project to get expected";
-         end if;
-      else
-         if Cmd.Only then
-            Reportaise_Wrong_Arguments ("--only cannot be used with --info[-native]");
-         end if;
-
-         -- asking for info, we could return the current project
-         --  We have internal data, but is it valid?
-         if Num_Arguments = 0 then
-            case Bootstrap.Session_State is
-               when Detached =>
-                  Bootstrap.Check_Rebuild_Respawn;
-               when Valid =>
-                  null; -- Proceed
-               when others =>
-                  Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
-            end case;
-         end if;
+      if Num_Arguments /= 1 then
+         Trace.Error ("No project requested");
+         raise Wrong_Command_Arguments with "One project to get expected";
       end if;
 
       declare
@@ -174,28 +106,13 @@ package body Alr.Commands.Get is
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
                          else Parsers.Project_Versions (+Root.Current.Project)));
       begin
-         --  Verify command-line
-         if Cmd.Info and then Cmd.Native then
-            Reportaise_Wrong_Arguments ("Only one of --info and --info-native allowed");
-         end if;
-
-         if (Cmd.Info or else Cmd.Native) and then Cmd.Compile then
-            Trace.Error ("Only one of --compile and --info[-native] allowed");
-            raise Command_Failed;
-         end if;
-
          if Cmd.Compile and Cmd.Only then
             Reportaise_Wrong_Arguments ("--only is incompatible with --compile");
          end if;
 
          Requires_Full_Index;
 
-         --  Execute
-         if Cmd.Info or else Cmd.Native then
-            Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native, Priv => Cmd.Priv);
-         else
-            Retrieve (Cmd, Allowed.Project, Allowed.Versions);
-         end if;
+         Retrieve (Cmd, Allowed.Project, Allowed.Versions);
       exception
          when Alire.Query_Unsuccessful =>
             Trace.Info ("Project [" & Argument (1) & "] does not exist in the catalog.");
@@ -217,20 +134,8 @@ package body Alr.Commands.Get is
                      "-c", "--compile", "Compile after download");
 
       Define_Switch (Config,
-                     Cmd.Info'Access,
-                     "-i", "--info", "Show info instead of retrieving");
-
-      Define_Switch (Config,
-                     Cmd.Native'Access,
-                     "", "--info-native", "Show info relevant to current platform");
-
-      Define_Switch (Config,
                      Cmd.Only'Access,
                      "", "--only", "Retrieve requested project only, without dependencies");
-
-      Define_Switch (Config,
-                     Cmd.Priv'Access,
-                     "", "--private", "Show also private properties");
    end Setup_Switches;
 
 end Alr.Commands.Get;

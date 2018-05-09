@@ -95,6 +95,7 @@ package Alr.Commands is
                       Cmd_Pin,
                       Cmd_Run,
                       Cmd_Search,
+                      Cmd_Show,
                       Cmd_Test,
                       Cmd_Update,
                       Cmd_Version,
