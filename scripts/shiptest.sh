@@ -11,9 +11,8 @@ if [ "$BRANCH" == "master" ]; then
     alr update --online
 else
     gprbuild -p -P alr_env
+    export PATH+=:`pwd`/bin
 fi 
-
-export PATH+=:`pwd`/bin
 
 alr search --list --native
 
