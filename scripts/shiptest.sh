@@ -7,7 +7,7 @@ set -o errexit
 set -o nounset
 
 if [ "$BRANCH" == "master" ]; then 
-    echo -e '\n/bin\ny' | ./install/alr_bootstrap.sh
+    echo -e '\n/bin\ny' | ./install/alr-bootstrap.sh
     alr update --online
 else
     gprbuild -p -P alr_env
