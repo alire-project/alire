@@ -299,7 +299,7 @@ package body Alr.Query is
                         Trace.Debug ("SOLVER: discarding tree because of conflicting frozen release: " &
                                        R.Milestone.Image & " does not satisfy " &
                                        Dep.Image & " in tree " &
-                                       Conditional_Value'(Expanded and Current and Remaining).Image_One_Line);
+                                       Tree'(Expanded and Current and Remaining).Image_One_Line);
                      end if;
                   elsif -- First time we see this project
                     Semver.Satisfies (R.Version, Dep.Versions) and then
@@ -309,7 +309,7 @@ package body Alr.Query is
                                     " to satisfy " & Dep.Image &
                                     " adding" & R.Depends (Platform.Properties).Leaf_Count'Img &
                                     " dependencies to tree " &
-                                    Conditional_Value'(Expanded and Current and Remaining and R.Depends (Platform.Properties)).Image_One_Line);
+                                    Tree'(Expanded and Current and Remaining and R.Depends (Platform.Properties)).Image_One_Line);
 
                      Expand (Expanded and R.This_Version,
                              Remaining and R.Depends (Platform.Properties),
