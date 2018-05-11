@@ -14,8 +14,8 @@ package Alr.Query is
    use Alire;
 
    --subtype Solution is Containers.Version_Map; -- A dependence-valid mapping of project -> version
-   subtype Instance is Containers.Release_Map; -- A list of releases complying with a Solution
-   subtype Release  is Index.Release;
+   subtype Instance is Containers.Release_Map;   -- A list of releases complying with a Solution
+   subtype Release  is Types.Release;
 
    type Solution (Valid : Boolean) is record
       case Valid is

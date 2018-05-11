@@ -1,4 +1,3 @@
-with Alire.Containers;
 with Alire.Index;
 with Alire.Projects;
 
@@ -30,7 +29,7 @@ package body Alr.Commands.List is
       Requires_Full_Index;
 
       declare
-         use Alire.Containers.Project_Description_Maps;
+         use Alire.Projects.Project_Description_Maps;
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
       begin
          for I in Alire.Projects.Descriptions.Iterate loop

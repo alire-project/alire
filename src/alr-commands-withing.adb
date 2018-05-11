@@ -313,7 +313,10 @@ package body Alr.Commands.Withing is
    begin
       Requires_Full_Index;
 
-      return "with Alire.Index." & Alire.Index.Get (Name).Package_Name & ";";
+      --  TODO: support actual separate child packages detecting their existence
+      return "with Alire.Index." &
+        Utils.Head (Alire.Index.Get (Name).Package_Name, '.') &
+        ";";
    end With_Line;
 
 end Alr.Commands.Withing;

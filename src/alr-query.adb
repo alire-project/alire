@@ -180,9 +180,13 @@ package body Alr.Query is
       begin
          for R of Sol loop
             if R.Satisfies (Deps.Value) then
-               return True;
+               Trace.Debug ("SOLVER:CHECK " & R.Milestone.Image & " satisfies " & Deps.Image_One_Line);
+               --  Check in turn that the release dependencies are satisfied too
+               return Is_Complete (R.Depends (Platform.Properties), Sol);
             end if;
          end loop;
+
+         Trace.Debug ("SOLVER:CHECK Solution fails to satisfy " & Deps.Image_One_Line);
          return False;
       end Check_Value;
 
@@ -296,17 +300,23 @@ package body Alr.Query is
                                 Empty,
                                 Frozen);
                      else
-                        Trace.Debug ("SOLVER: discarding tree because of conflicting frozen release: " &
+                        Trace.Debug ("SOLVER: discarding tree because of conflicting FROZEN release: " &
                                        R.Milestone.Image & " does not satisfy " &
                                        Dep.Image & " in tree " &
                                        Tree'(Expanded and Current and Remaining).Image_One_Line);
                      end if;
+                  elsif Frozen.Contains (R.Provides) then
+                     Trace.Debug ("SOLVER: discarding tree because of conflicting PROVIDES release: " &
+                                    R.Milestone.Image & " provides " & (+R.Provides) &
+                                    " already in tree " &
+                                    Tree'(Expanded and Current and Remaining).Image_One_Line);
                   elsif -- First time we see this project
                     Semver.Satisfies (R.Version, Dep.Versions) and then
                     Is_Available (R)
                   then
                      Trace.Debug ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                                     " to satisfy " & Dep.Image &
+                                    (if R.Project /= R.Provides then " also providing " & (+R.Provides) else "") &
                                     " adding" & R.Depends (Platform.Properties).Leaf_Count'Img &
                                     " dependencies to tree " &
                                     Tree'(Expanded and Current and Remaining and R.Depends (Platform.Properties)).Image_One_Line);
