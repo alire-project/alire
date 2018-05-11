@@ -103,7 +103,7 @@ rm -rf xxx
 echo PIN 
 alr init --bin xxx
 cd xxx
-alr depend --add libhello
+alr with libhello
 grep -q -i Current alire/alr_deps.ads
 alr pin
 grep -q -i '=' alire/alr_deps.ads
