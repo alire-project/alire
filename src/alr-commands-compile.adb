@@ -1,8 +1,15 @@
 with Alire.Actions;
+with Alire.Properties.Labeled;
 
 with Alr.Actions;
 with Alr.Hardcoded;
+with Alr.OS_Lib;
+with Alr.Platform;
+with Alr.Query;
+with Alr.Root;
 with Alr.Spawn;
+
+with GNAT.OS_Lib;
 
 package body Alr.Commands.Compile is
 
@@ -11,12 +18,37 @@ package body Alr.Commands.Compile is
    ----------------
 
    procedure Do_Compile is
+
+      ---------------
+      -- Add_Paths --
+      ---------------
+
+      procedure Add_Paths is
+         Sol : constant Query.Solution :=
+                 Query.Resolve (Root.Platform_Dependencies,
+                                Query_Policy);
+      begin
+         if Sol.Valid then
+            for R of Sol.Releases loop
+               for Path of R.Labeled_Properties (Platform.Properties, Alire.Properties.Labeled.Path) loop
+                  OS_Lib.Setenv ("PATH", Path & GNAT.OS_Lib.Path_Separator & OS_Lib.Getenv ("PATH"));
+               end loop;
+            end loop;
+         else
+            Reportaise_Command_Failed ("Could not resolve dependencies");
+         end if;
+      end Add_Paths;
+
    begin
       Requires_Project;
       Requires_Buildfile;
 
       --  COMPILATION
       begin
+         --  TODO: this is a costly operation that requires solving dependencies
+         --  Perhaps it will be necessary in the future to cache these in the session file
+         Add_Paths;
+
          Spawn.Gprbuild (Hardcoded.Working_Build_File,
                          Session_Build => False,
                          Extra_Args    => Scenario.As_Command_Line);

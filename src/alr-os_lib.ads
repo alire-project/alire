@@ -15,6 +15,8 @@ package Alr.OS_Lib is
 
    function Getenv (Var : String; Default : String := "") return String;
 
+   procedure Setenv (Var : String; Value : String) renames GNAT.OS_Lib.Setenv;
+
    --  Process spawning
 
    function Spawn (Command             : String;
