@@ -48,7 +48,7 @@ package body Alr.Bootstrap is
    begin
       if Locate_Exec_On_Path ("gprbuild") = null or else
         Locate_Exec_On_Path ("gnatmake") = null then
-         Trace.Error ("Ada compiler not detected, alr cannot proceed");
+         Trace.Error ("Ada tools not detected, alr cannot proceed");
          OS_Lib.Bailout (1);
       end if;
 
