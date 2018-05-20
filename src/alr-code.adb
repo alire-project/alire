@@ -2,6 +2,8 @@ with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Index;
 
+with Alr.Platform;
+
 with Semantic_Versioning;
 
 package body Alr.Code is
@@ -32,6 +34,48 @@ package body Alr.Code is
      ((if With_P then "(" else "") &
         """" & S & """" &
       (if With_P then ")" else ""));
+
+   --------------
+   -- Generate --
+   --------------
+
+   function Generate (R : Types.Release) return Utils.String_Vector is
+      Code : Utils.String_Vector;
+      Tab  : constant String := "   ";
+   begin
+      Code.Append ("New_Working_Release (");
+
+      Code.Append (Tab & "Project => " & Utils.Quote (+R.Project) & ",");
+
+      Code.Append (Tab & "Origin =>");
+      Code.Append (R.Origin.To_Code.Indent (Tab & Tab));
+
+      if not R.Dependencies.Is_Empty then
+         Code.Append (Tab & "Dependendies =>");
+         Code.Append (Generate (R.Dependencies (Platform.Properties))
+                        .Indent (Tab & Tab));
+      end if;
+
+      declare
+         use all type Utils.String_Vectors.Cursor;
+         P : constant Utils.String_Vector :=
+               R.Project_Files (Platform.Properties, With_Path => True);
+      begin
+         if not P.Is_Empty then
+            Code.Append (Tab & "Properties =>");
+            for I in P.Iterate loop
+               Code.Append (Tab & Tab & "Project_File " & Q (P (I)));
+               if I /= P.Last then
+                  Code.Append (Tab & Tab & "and");
+               end if;
+            end loop;
+         end if;
+      end;
+
+      Code.Append (")");
+
+      return Code;
+   end Generate;
 
    --------------
    -- Generate --

@@ -7,4 +7,6 @@ package Alr.Code is
    function Generate (Deps : Types.Platform_Dependencies) 
                       return Utils.String_Vector;
    
+   function Generate (R : Types.Release) return Utils.String_Vector;
+   
 end Alr.Code;
