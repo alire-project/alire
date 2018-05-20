@@ -8,6 +8,8 @@ with GNAT.OS_Lib;
 
 package Alr.OS_Lib is
 
+   Line_Separator : constant String;
+
    --  Environment
 
    procedure Create_Folder (Path : String);
@@ -124,6 +126,9 @@ package Alr.OS_Lib is
      with Pre => (for all C of Word => C /= ' ');
 
 private
+
+   Line_Separator : constant String := ASCII.LF & "";
+   --  This should be made OS independent
 
    type Folder_Guard (Enter : Destination := Stay) is new Ada.Finalization.Limited_Controlled with record
       Original : Unbounded_String;

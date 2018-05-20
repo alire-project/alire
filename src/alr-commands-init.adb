@@ -7,7 +7,6 @@ with Alire.Roots;
 with Alr.Hardcoded;
 with Alr.OS_Lib;
 with Alr.Parsers;
-with Alr.Platform;
 with Alr.Templates;
 with Alr.Utils;
 
@@ -47,17 +46,14 @@ package body Alr.Commands.Init is
                    (if Cmd.In_Place
                     then Os_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name))) with Unreferenced;
-
-         New_Root : constant Alire.Roots.Root := Alire.Roots.New_Root (+Name);
       begin
          OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
 
          Templates.Generate_Prj_Alr
            (Templates.Unreleased,
-            +Name,
-            Deps => New_Root.Dependencies.Evaluate (Platform.Properties));
+            Alire.Releases.New_Working_Release (+Name));
 
-         Templates.Generate_Agg_Gpr (New_Root);
+         Templates.Generate_Agg_Gpr (Alire.Roots.New_Root (+Name));
       end;
    end Generate;
 

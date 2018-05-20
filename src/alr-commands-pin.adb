@@ -20,9 +20,10 @@ package body Alr.Commands.Pin is
                                  Query_Policy);
       begin
          if Deps.Valid then
-            Templates.Generate_Prj_Alr (Templates.Unreleased,
-                                        Root.Project,
-                                        Deps => Deps.Releases.To_Dependencies);
+            Templates.Generate_Prj_Alr
+              (Templates.Unreleased,
+               Root.Current.Release.Replacing
+                 (Dependencies => Deps.Releases.To_Dependencies));
             Spawn.Alr (Cmd_Update);
          else
             Trace.Error ("Could not resolve dependencies");

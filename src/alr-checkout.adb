@@ -82,9 +82,7 @@ package body Alr.Checkout is
                Ada.Directories.Delete_File (Index_File);
             end if;
 
-            Templates.Generate_Prj_Alr (Templates.Released,
-                                        R.Project,
-                                        R.Version);
+            Templates.Generate_Prj_Alr (Templates.Released, R);
             Templates.Generate_Agg_Gpr (Alire.Roots.New_Root (R));
          end;
       end if;

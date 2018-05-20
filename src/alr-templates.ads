@@ -4,8 +4,6 @@ with Alire.Roots;
 
 with Alr.Query;
 
-with Semantic_Versioning;
-
 package Alr.Templates is
 
    type Generation_Scenarios is
@@ -25,11 +23,7 @@ package Alr.Templates is
    --  Generate the aggregate project file solving the dependencies of the given root
 
    procedure Generate_Prj_Alr (Scenario : Generation_Scenarios;
-                               Project  : Alire.Project;
-                               Version  : Semantic_Versioning.Version :=
-                                 Semantic_Versioning.V ("0");
-                               Deps     : Types.Platform_Dependencies :=
-                                 Types.No_Dependencies);
+                               Release  : Types.Release);
    --  Generate dependency file, either for a released or unreleased project
 
    procedure Generate_Session (Session_Path : String;

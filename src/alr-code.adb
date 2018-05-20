@@ -47,24 +47,26 @@ package body Alr.Code is
 
       Code.Append (Tab & "Project => " & Utils.Quote (+R.Project) & ",");
 
-      Code.Append (Tab & "Origin =>");
-      Code.Append (R.Origin.To_Code.Indent (Tab & Tab));
+--        Code.Append (Tab & "Origin =>");
+--        Code.Append (R.Origin.To_Code.Indent (Tab & Tab));
 
-      if not R.Dependencies.Is_Empty then
-         Code.Append (Tab & "Dependendies =>");
-         Code.Append (Generate (R.Dependencies (Platform.Properties))
-                        .Indent (Tab & Tab));
-      end if;
+      Code.Append (Tab & "Dependencies =>");
+      Code.Append (Generate (R.Dependencies (Platform.Properties))
+                   .Append_To_Last_Line (",")
+                   .Indent (Tab & Tab));
 
       declare
          use all type Utils.String_Vectors.Cursor;
          P : constant Utils.String_Vector :=
                R.Project_Files (Platform.Properties, With_Path => True);
       begin
-         if not P.Is_Empty then
+         if P.Is_Empty then
+            Code.Append (Tab & "Properties =>");
+            Code.Append (Tab & Tab & "No_Properties");
+         else
             Code.Append (Tab & "Properties =>");
             for I in P.Iterate loop
-               Code.Append (Tab & Tab & "Project_File " & Q (P (I)));
+               Code.Append (Tab & Tab & "Project_File (" & Q (P (I)) & ")");
                if I /= P.Last then
                   Code.Append (Tab & Tab & "and");
                end if;

@@ -20,13 +20,15 @@ with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Utils;
 
+with Semantic_Versioning;
+
 package body Alr.Templates is
 
    package Semver renames Semantic_Versioning;
 
    Tab_1 : constant String (1 .. 3) := (others => ' ');
    Tab_2 : constant String := Tab_1 & Tab_1;
-   Tab_3 : constant String := Tab_2 & Tab_1;
+--     Tab_3 : constant String := Tab_2 & Tab_1;
 
    function Q (S : String) return String renames Utils.Quote;
 
@@ -241,11 +243,7 @@ package body Alr.Templates is
    ----------------------------
 
    procedure Generate_Prj_Alr (Scenario : Generation_Scenarios;
-                               Project  : Alire.Project;
-                               Version  : Semantic_Versioning.Version :=
-                                 Semantic_Versioning.V ("0");
-                               Deps     : Types.Platform_Dependencies :=
-                                 Types.No_Dependencies)
+                               Release  : Types.Release)
    is
       function Enumerate is new Alire.Conditional.For_Dependencies.Enumerate
         (Alire.Containers.Dependency_Lists.List,
@@ -264,9 +262,9 @@ package body Alr.Templates is
    begin
       Trace.Detail ("Generating alr_deps.ads file for " &
                     (if Scenario = Released
-                       then Alire.Milestones.New_Milestone (Project, Version).Image
-                       else "unreleased project " & (+Project)) &
-                      " with" & Deps.Leaf_Count'Img & " dependencies");
+                       then Release.Milestone.Image
+                       else "unreleased project " & (+Release.Project)) &
+                      " with" & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
       OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
@@ -280,9 +278,9 @@ package body Alr.Templates is
       --  With generation
 
       if Scenario = Released then
-         Includes.Include (Commands.Withing.With_Line (Project));
+         Includes.Include (Commands.Withing.With_Line (Release.Project));
       else
-         for Dep of Enumerate (Deps) loop
+         for Dep of Enumerate (Release.Dependencies (Platform.Properties)) loop
             Includes.Include (Commands.Withing.With_Line (Dep.Project));
          end loop;
       end if;
@@ -305,17 +303,15 @@ package body Alr.Templates is
 
       if Scenario = Released then
          --  Typed name plus version
-         Put_Line (File, Tab_2 & Alire.Index.Get (Project).Ada_Identifier & ",");
-         Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Version)) & "));");
+         Put_Line (File, Tab_2 & Alire.Index.Get (Release.Project).Ada_Identifier & ",");
+         Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Release.Version)) & "));");
       else
-         --  Untyped name plus dependencies
-         Put_Line (File, Tab_2 & Q (+Project) & ",");
-
-         Put_Line (File, Tab_2 & "Dependencies =>");
-         for Line of Code.Generate (Deps) loop
-            Put_Line (File, Tab_3 & Line);
-         end loop;
-         Put_Line (File, Tab_1 & ");");
+         Put_Line (File,
+                   Code
+                   .Generate (Release)
+                   .Append_To_Last_Line (");")
+                   .Indent (Tab_2)
+                   .Flatten (Separator => OS_Lib.Line_Separator));
       end if;
       New_Line (File);
 

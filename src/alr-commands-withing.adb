@@ -8,6 +8,7 @@ with Alire.Index;
 with Alire.Roots;
 with Alire.Utils;
 
+with Alr.Exceptions;
 with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Platform;
@@ -77,8 +78,17 @@ package body Alr.Commands.Withing is
                      end loop;
                end case;
             end Check;
+
+            use all type Alire.Conditional.For_Dependencies.Kinds;
          begin
-            Deps.Iterate_Children (Check'Access);
+            case Deps.Kind is
+               when Vector =>
+                  Deps.Iterate_Children (Check'Access);
+               when Value =>
+                  Check (Deps);
+               when Condition =>
+                  raise Program_Error with "Should not happen";
+            end case;
          end;
       end return;
    end Del;
@@ -91,12 +101,13 @@ package body Alr.Commands.Withing is
    begin
       --  Set, regenerate and update
       declare
-         New_Root  : constant Alire.Roots.Root := Alire.Index.Set_Root (Root.Project, Deps) with Unreferenced;
-         Needed    : constant Types.Platform_Dependencies := Deps.Evaluate (Platform.Properties);
+         New_Root  : constant Alire.Roots.Root :=
+                       Alire.Index.Set_Root
+                         (Root.Current.Release.Replacing
+                            (Dependencies => Deps)) with Unreferenced;
       begin
          Templates.Generate_Prj_Alr (Templates.Unreleased,
-                                     Root.Project,
-                                     Deps => Needed);
+                                     Root.Current.Release);
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
@@ -280,7 +291,8 @@ package body Alr.Commands.Withing is
 
       Spawn.Alr (Cmd_Update);
    exception
-      when Constraint_Error =>
+      when E : Constraint_Error =>
+         Exceptions.Report ("In Withing.Execute:", E);
          Reportaise_Command_Failed ("Could not locate package containing releases of " & Argument (1));
    end Execute;
 
