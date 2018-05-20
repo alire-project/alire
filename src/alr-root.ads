@@ -2,6 +2,7 @@ with Alire.Root;
 with Alire.Roots;
 
 with Alr.Platform;
+with Alr.Query;
 
 package Alr.Root is
 
@@ -13,7 +14,8 @@ package Alr.Root is
      with Post => (not Is_Empty or else raise Command_Failed);
    --  Graceful check that Current contains what it should.
 
-   function Is_Released return Boolean;
+   function Is_Indexed return Boolean;
+   --  Says if it can be found in the index
 
    function Platform_Dependencies return Types.Platform_Dependencies;
 
@@ -24,7 +26,9 @@ private
 
    function Is_Empty return Boolean is (not Alire.Root.Is_Set);
 
-   function Is_Released return Boolean is (Current.Is_Released);
+   function Is_Indexed return Boolean is
+     (not Is_Empty and then
+      Query.Exists (Current.Project, Current.Version));
 
    function Platform_Dependencies return Types.Platform_Dependencies is
       (Current.Dependencies.Evaluate (Platform.Properties));

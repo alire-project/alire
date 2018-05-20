@@ -65,9 +65,8 @@ package body Alr.Commands.Run is
 
          use Ada.Text_Io;
       begin
-         if Root.Is_Released then
-            Declared := Root.Current.Release.Executables (Platform.Properties);
-         else
+         Declared := Root.Current.Executables (Platform.Properties);
+         if Declared.Is_Empty then
             Declared.Append (Root.Current.Default_Executable);
          end if;
 

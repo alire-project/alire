@@ -102,7 +102,7 @@ package body Alr.Commands.Get is
                      (if Num_Arguments = 1
                       then Parsers.Project_Versions (Argument (1))
                       else
-                        (if Root.Is_Released
+                        (if Root.Is_Indexed
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
                          else Parsers.Project_Versions (+Root.Current.Project)));
       begin

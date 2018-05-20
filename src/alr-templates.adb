@@ -128,19 +128,17 @@ package body Alr.Templates is
       All_Paths : Utils.String_Vector;
       Sorted_Paths : Alire.Utils.String_Set;
 
-      Full_Instance : constant Query.Instance := (if Root.Is_Released
-                                                  then Instance.Including (Root.Release)
-                                                  else Instance);
+      Full_Instance : constant Query.Instance := (Instance.Including (Root.Release));
    begin
-      if Root.Is_Released then
-         GPR_Files := Root.Release.Project_Files (Platform.Properties, With_Path => True);
+      if Query.Exists (Root.Project, Root.Version) then
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else
-         GPR_Files.Append ((+Root.Project) & ".gpr");
-         Log ("Generating GPR for unreleased project " & (+Root.Project) & " with" &
+         Log ("Generating GPR for unreleased project " & Root.Release.Milestone.Image & " with" &
                 Instance.Length'Img & " dependencies", Detail);
       end if;
+
+      GPR_Files := Root.Release.Project_Files (Platform.Properties, With_Path => True);
 
       Files.Backup_If_Existing (Filename);
 

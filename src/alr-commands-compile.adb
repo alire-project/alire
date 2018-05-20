@@ -59,15 +59,13 @@ package body Alr.Commands.Compile is
       end;
 
       --  POST-COMPILE ACTIONS
-      if Root.Is_Released then
          begin
-            Actions.Execute_Actions (Root.Current.Release, Alire.Actions.Post_Compile);
-         exception
-            when others =>
-               Trace.Warning ("A post-compile action failed, re-run with -v or -d for details");
-               raise;
-         end;
-      end if;
+         Actions.Execute_Actions (Root.Current.Release, Alire.Actions.Post_Compile);
+      exception
+         when others =>
+            Trace.Warning ("A post-compile action failed, re-run with -v or -d for details");
+            raise;
+      end;
 
       Trace.Detail ("Compilation finished successfully");
       Trace.Detail ("Use alr run --list to check available executables");

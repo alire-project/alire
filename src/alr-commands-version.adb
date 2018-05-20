@@ -31,10 +31,7 @@ package body Alr.Commands.Version is
       if Root.Is_Empty then
          Trace.Always ("alr root is empty");
       else
-         Trace.Always ("alr root is " &
-                       (if Root.Is_Released
-                          then Root.Current.Release.Milestone.Image
-                          else +Root.Project));
+         Trace.Always ("alr root is " & Root.Current.Milestone.Image);
       end if;
 
 --        Trace.Always ("alr session hash is " & Session.Hash);
