@@ -18,9 +18,8 @@ build:
     ci:
         - apt-get install -y bash lsb-release mercurial
         - git submodule update --init --recursive
-        - scripts/shiptest.sh
+#        - scripts/shiptest.sh
     on_success:
-        - cp -fv reltest/*.txt status/`basename $IMAGE_NAME`
-        - git add status
-        - git commit -m "Build results for `basename $IMAGE_NAME` [skip_ci]"
-        - git push origin $BRANCH
+        - scripts/shippost.sh
+    on_failure:
+        - scripts/shippost.sh
