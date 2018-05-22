@@ -9,4 +9,4 @@ fi
 
 git add status
 git commit -m "alr test results for $dst [skip_ci]"
-git push origin $BRANCH
+git push git@github.com:alire-project/alr.git $BRANCH
