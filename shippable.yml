@@ -7,8 +7,8 @@ branches:
 
 env:
     - IMAGE_NAME="mosteo/gnat-fsf-7.3"
-    - IMAGE_NAME="mosteo/gnat-gpl-2017"
-    - IMAGE_NAME="mosteo/gnat-ubuntu-lts"
+#    - IMAGE_NAME="mosteo/gnat-gpl-2017"
+#    - IMAGE_NAME="mosteo/gnat-ubuntu-lts"
 
 build:
     pre_ci_boot:
