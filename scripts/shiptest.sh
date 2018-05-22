@@ -23,5 +23,5 @@ cd selftest
 alr dev --test
 cp *.xml ../shippable/testresults
 cd ../reltest 
-alr test --full
+alr test hello # --full
 cp *.xml ../shippable/testresults 
