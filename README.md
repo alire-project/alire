@@ -17,7 +17,7 @@ To see available projects per platform/compiler, see the [status folder](status)
 
 Available for Debian testing / Ubuntu >=17.10
 
-To install, clone and gprbuild or see below instructions.
+To install: clone (with submodules) and gprbuild or see below instructions.
 
 ## Design principles ##
 
@@ -57,7 +57,7 @@ Run `alr --help` for global options about verbosity.
 Run `alr help <command>` for more details about a command.
 
 ### Downloading, compiling and running an executable project ###
-Obtaining an executable project already cataloged in Alire is straightforward. We'll demonstrate it with the `hello` project which is a plain "Hello, world!" application (or you can use the `hangman` project as a funnier alternative).
+Obtaining an executable project already cataloged in Alire is straightforward. We'll demonstrate it with the `hello` project which is a plain "Hello, world!" application (or you can use the `hangman` or `eagle_lander` projects as funnier alternatives).
 
 Follow these steps:
 
@@ -76,9 +76,20 @@ Alire allows you to initialize an empty GNAT binary or library project with ease
 4. Run it: `alr run`
 
 ## Dependencies and upgrading ##
-Alire keeps track of a project dependencies by compiling the file `myproj_alr.ads` file in the root folder of your project. You may check the one just created in the previous example.
+Alire keeps track of a project dependencies by compiling the file `./alire/alr_deps.ads` file of your project. You may check the one just created in the previous example.
 
-If you need to add dependencies you must edit the file (example in the works) and then issue one of:
+This file can be managed through `alr`:
+
+* `alr with project_name` adds a dependency. You can immediately 'with' its packages in your code.
+* `alr with --del project_name` removes a dependency.
+* `alr with --from yourproject.gpr` reads the given GPR file and adds dependencies specified in comments as alr invocations. For example:
+
+    ```Ada
+    with "xstrings"; -- alr with xstrings
+    project My_Project is
+    ```
+
+Alternatively you can edit the file (example in the works) and then issue one of:
 
 * `alr update`, which will fetch any additional dependencies in your project; or
 * `alr update --online`, which will previously update the Alire catalog to obtain newly available releases.
@@ -97,11 +108,11 @@ There's also a search command which provides more details:
 
 Even more details are obtained with:
 
-* `alr get --info <project>`
+* `alr show <project>`
 
 This last command will show generic information. To see the one that specifically applies to your platform:
 
-* `alr get --info --native <project>`
+* `alr show --native <project>`
 
 Also, adding `--private` will show further details irrelevant to users of the library, but important to `alr` packaging, if any.
 

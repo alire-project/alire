@@ -22,4 +22,3 @@ project Project_Skel is
    end Linker;
 
 end Project_Skel;
-
