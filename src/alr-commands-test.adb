@@ -132,7 +132,7 @@ package body Alr.Commands.Test is
                Trace.Detail ("Unavailable: " & R.Milestone.Image &
                              (if not Is_Available then " (unavailable)" else "") &
                              (if not Is_Resolvable then " (unresolvable)" else ""));
-               Put_Line (File, "Unav:" & R.Milestone.Image);
+               Put_Line (File, "UNAV:" & R.Milestone.Image);
 
                Jsuite.Add_Case
                  (AJUnitGen.New_Case
