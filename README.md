@@ -16,7 +16,9 @@ To see available projects per platform/compiler, see the [status folder](status)
 
 Available for Debian testing / Ubuntu >=17.10
 
-To install: `git clone --recursive` and `gprbuild -Palr_env` or see below instructions.
+To install run the following as user in a terminal, or see below for more details.
+
+    curl https://raw.githubusercontent.com/alire-project/alr/master/install/alr-bootstrap.sh -o ./alr-bootstrap.sh && bash ./alr-bootstrap.sh && rm -f ./alr-bootstrap.sh || echo Installation failed
 
 ## Design principles ##
 
