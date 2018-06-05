@@ -17,7 +17,7 @@ To see available projects per platform/compiler, see the [status folder](status)
 
 Available for Debian testing / Ubuntu >=17.10
 
-To install: clone (with submodules) and gprbuild or see below instructions.
+To install: `git clone --recursive` and `gprbuild -Palr_env` or see below instructions.
 
 ## Design principles ##
 
