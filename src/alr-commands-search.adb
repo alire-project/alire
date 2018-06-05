@@ -49,7 +49,7 @@ package body Alr.Commands.Search is
                         (if Query.Is_Resolvable (R.Depends (Platform.Properties)) then " " else "X"));
             Tab.Append (Semantic_Versioning.Image
                         (R.Version) &
-                        (if R.Origin.Is_Native
+                        (if R.Origin.Is_Native and then Origins.New_Origin (R.Origin).Native_Version /= ""
                            then "+" & Origins.New_Origin (R.Origin).Native_Version
                            else ""));
             Tab.Append (Alire.Projects.Descriptions (R.Project));
