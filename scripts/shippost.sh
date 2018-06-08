@@ -7,6 +7,7 @@ else
     echo "alr test failed to run in $dst" > status/$dst.txt
 fi
 
+git pull
 git add status
 git commit -m "alr test results for $dst [skip ci]"
 git push git@github.com:alire-project/alr.git $BRANCH
