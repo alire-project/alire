@@ -162,7 +162,6 @@ package body Alr.Bootstrap is
    -----------------
 
    procedure Interrupted is
-      use Ada.Directories;
    begin
       if not Is_Child then
          Trace.Always (" Interrupted by user");

@@ -10,7 +10,7 @@ project Project_Skel is
    end Builder;
 
    package Compiler is
-      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-O2", "-gnato", "-fstack-check", "-gnata", "-gnat12");
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-O2", "-gnato", "-fstack-check", "-gnata");
    end Compiler;
 
    package Binder is

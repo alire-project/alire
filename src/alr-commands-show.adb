@@ -33,8 +33,6 @@ package body Alr.Commands.Show is
                      Query.Find (Name, Versions, Query_Policy);
          Needed  : Query.Solution :=
                      Query.Resolve (Rel.This_Version, Query_Policy);
-
-         use Ada.Text_IO;
       begin
          New_Line;
 

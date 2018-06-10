@@ -15,7 +15,9 @@ package Alr with Preelaborate is
    Command_Failed : exception;
    --  Signals "normal" command completion with failure (i.e., no need to print stack trace).
 
+   pragma Warnings (Off);
    use all type Alire.Project;
+   pragma Warnings (On);
 
    use all type Simple_Logging.Levels;
 

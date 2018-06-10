@@ -63,7 +63,6 @@ package body Alr.Templates is
 
    procedure Generate_Full_Index (File : in out Ada.Text_IO.File_Type; Index_Folder : String) is
       use Ada.Directories;
-      use Alr.OS_Lib;
 
       ---------------
       -- Add_Entry --

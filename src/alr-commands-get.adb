@@ -31,8 +31,6 @@ package body Alr.Commands.Get is
    --------------
 
    procedure Retrieve (Cmd : Command; Name : Alire.Project; Versions : Semver.Version_Set) is
-      use all type Semver.Version_Set;
-
       Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
    begin
       if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties)) and then not Cmd.Only then
@@ -68,7 +66,6 @@ package body Alr.Commands.Get is
 
       --  Check out rest of dependencies and optionally compile
       declare
-         use OS_Lib;
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder)) with Unreferenced;
       begin
          if Cmd.Compile then
