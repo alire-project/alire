@@ -1,6 +1,7 @@
 aggregate project Alr_Env is
 
-   for Project_Path use ("deps/ajunitgen",
+   for Project_Path use ("deps/aaa",
+                         "deps/ajunitgen",
                          "deps/alire",
                          "deps/alire/deps/armc",
                          "deps/alire/deps/semver",

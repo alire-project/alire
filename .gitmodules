@@ -10,3 +10,6 @@
 [submodule "deps/ajunitgen"]
 	path = deps/ajunitgen
 	url = https://github.com/mosteo/ajunitgen.git
+[submodule "deps/aaa"]
+	path = deps/aaa
+	url = https://github.com/mosteo/aaa.git
