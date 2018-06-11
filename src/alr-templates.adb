@@ -165,7 +165,7 @@ package body Alr.Templates is
       New_Line (File);
 
       --  First obtain all paths and then output them, if any needed
-      for Rel of Instance loop
+      for Rel of Instance.Including (Root.Release) loop
          if Rel.Project = Root.Project then
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
@@ -177,7 +177,7 @@ package body Alr.Templates is
          for Path of Rel.Project_Paths (Platform.Properties) loop
             All_Paths.Append ((if Rel.Project = Root.Project
                                then ".."
-                               else Hardcoded.Alr_Working_Deps_Path / Rel.Unique_Folder / Path));
+                               else Hardcoded.Alr_Working_Deps_Path / Rel.Unique_Folder) / Path);
          end loop;
       end loop;
 
