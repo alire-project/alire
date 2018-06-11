@@ -1,9 +1,9 @@
+with AAA.Table_IO;
+
 with Alire.Index;
 with Alire.Projects;
 
 with Alr.Utils;
-
-with Table_IO;
 
 package body Alr.Commands.List is
 
@@ -15,7 +15,7 @@ package body Alr.Commands.List is
       pragma Unreferenced (Cmd);
       use Alr.Utils;
 
-      Table  : Table_IO.Table;
+      Table  : AAA.Table_IO.Table;
       Search : constant String :=
                  (if Num_Arguments = 1
                   then Utils.To_Lower_Case (Argument (1))
