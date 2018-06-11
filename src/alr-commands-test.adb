@@ -281,19 +281,71 @@ package body Alr.Commands.Test is
       Candidates : Alire.Containers.Release_Sets.Set;
 
       use Alire.Containers.Release_Sets;
+
+      ---------------------
+      -- Find_Candidates --
+      ---------------------
+
+      procedure Find_Candidates is
+      begin
+         for I in Alire.Index.Catalog.Iterate loop
+            if Test_All then
+               if not Cmd.Last or else
+                 I = Alire.Index.Catalog.Last or else
+                 Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+               then
+                  Candidates.Include (Alire.Index.Catalog (I));
+               end if;
+            else
+               for J in 1 .. Num_Arguments loop
+                  declare
+                     R       :          Alire.Index.Release renames Alire.Index.Catalog (I);
+                  begin
+                     if Cmd.Search then
+                        if Utils.Contains (+R.Project, Argument (J)) then
+                           if not Cmd.Last or else
+                             I = Alire.Index.Catalog.Last or else
+                             R.Project /= Alire.Index.Catalog (Next (I)).Project
+                           then
+                              Candidates.Include (R);
+                           end if;
+                        end if;
+                     else
+                        declare
+                           Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (J));
+                        begin
+                           if R.Project = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
+                              if not Cmd.Last or else
+                                I = Alire.Index.Catalog.Last or else
+                                R.Project /= Alire.Index.Catalog (Next (I)).Project or else
+                                not Semver.Satisfies (Alire.Index.Catalog (Next (I)).Version, Allowed.Versions)
+                              then
+                                 Candidates.Include (R);
+                              end if;
+                           end if;
+                        end;
+                     end if;
+                  end;
+               end loop;
+            end if;
+         end loop;
+      end Find_Candidates;
+
    begin
       --  Validate command line
-      for I in 1 .. Num_Arguments loop
-         declare
-            Cry_Me_A_River : constant Parsers.Allowed_Milestones :=
-                               Parsers.Project_Versions (Argument (I)) with Unreferenced;
-         begin
-            null; -- Just check that no exception is raised
-         end;
-      end loop;
+      if not Cmd.Search then
+         for I in 1 .. Num_Arguments loop
+            declare
+               Cry_Me_A_River : constant Parsers.Allowed_Milestones :=
+                                  Parsers.Project_Versions (Argument (I)) with Unreferenced;
+            begin
+               null; -- Just check that no exception is raised
+            end;
+         end loop;
+      end if;
 
       --  Validate exclusive options
-      if Cmd.Full and then Num_Arguments /= 0 then
+      if Cmd.Full and then (Num_Arguments /= 0 or else Cmd.Search) then
          Trace.Always ("Either use --full or specify project names, but not both");
          raise Command_Failed;
       end if;
@@ -325,33 +377,7 @@ package body Alr.Commands.Test is
       end if;
 
       --  Pre-find candidates to not have duplicate tests if overlapping requested
-      for I in Alire.Index.Catalog.Iterate loop
-         if Test_All then
-            if not Cmd.Last or else
-               I = Alire.Index.Catalog.Last or else
-              Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
-            then
-               Candidates.Include (Alire.Index.Catalog (I));
-            end if;
-         else
-            for J in 1 .. Num_Arguments loop
-               declare
-                  Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (J));
-                  R       :          Alire.Index.Release renames Alire.Index.Catalog (I);
-               begin
-                  if R.Project = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
-                     if not Cmd.Last or else
-                       I = Alire.Index.Catalog.Last or else
-                       R.Project /= Alire.Index.Catalog (Next (I)).Project or else
-                       not Semver.Satisfies (Alire.Index.Catalog (Next (I)).Version, Allowed.Versions)
-                     then
-                        Candidates.Include (R);
-                     end if;
-                  end if;
-               end;
-            end loop;
-         end if;
-      end loop;
+      Find_Candidates;
 
       if Candidates.Is_Empty then
          Trace.Info ("No releases for the requested projects");
@@ -392,6 +418,11 @@ package body Alr.Commands.Test is
                      Cmd.Redo'Access,
                      Long_Switch => "--redo",
                      Help        => "Redo test for releases already in folder (implies --continue)");
+
+      Define_Switch (Config,
+                     Cmd.Search'Access,
+                     Long_Switch => "--search",
+                     Help        => "Interpret arguments as substrings instead of exact project names");
 
 --        Define_Switch (Config,
 --                       Cmd.Jobs'Access,
