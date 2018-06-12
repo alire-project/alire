@@ -93,8 +93,10 @@ package body Alr.Dependency_Graphs is
       function B (Str : String) return String is ("[ " & Str & " ]");
 
       Source : Utils.String_Vector;
+
+      Filtered : constant Graph := This.Filtering_Unused (Instance);
    begin
-      for Dep of This loop
+      for Dep of Filtered loop
          Source.Append (B (Instance (+Dep.Dependent).Milestone.Image) &
                           " -> " &
                           B (Instance (+Dep.Dependee).Milestone.Image));
@@ -117,8 +119,10 @@ package body Alr.Dependency_Graphs is
                     Prefix   : String := "")
    is
       Table : AAA.Table_IO.Table;
+
+      Filtered : constant Graph := This.Filtering_Unused (Instance);
    begin
-      for Dep of This loop
+      for Dep of Filtered loop
          Table.Append (Prefix & Instance (+Dep.Dependent).Milestone.Image);
          Table.Append ("-->");
          Table.Append (Instance (+Dep.Dependee).Milestone.Image);
