@@ -2,6 +2,7 @@
 
 *.cgpr
 *.db
+*.db-???
 *.xml
 
 .*sw?

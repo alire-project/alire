@@ -9,7 +9,8 @@ package Alr.Checkout is
 
    procedure Working_Copy (R              : Alire.Index.Release;
                            Parent_Folder  : String;
-                           Generate_Files : Boolean := True);
+                           Generate_Files : Boolean := True;
+                           Perform_Actions: Boolean := True);
    --  A working copy might not have alr and gpr files, that will be generated if needed
 
    procedure To_Folder (Projects : Query.Instance;

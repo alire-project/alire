@@ -69,12 +69,14 @@ package body Alr.Platform is
                      if Year < 2017 then
                         return GNAT_GPL_Old;
                      else
-                        return GNAT_GPL_2017_Or_Newer;
+                        return GNAT_GPL_2017;
                      end if;
                   exception
                      when others => -- Somehow it doesn't follow the GPL XXXX (X) convention
                         return GNAT_GPL_Old;
                   end;
+               elsif Contains (Version, "community") then
+                  return GNAT_Community_2018;
                else
                   declare
                      V : Semver.Version;

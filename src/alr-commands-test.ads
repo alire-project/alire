@@ -18,10 +18,11 @@ package Alr.Commands.Test is
 private
 
    type Command is new Commands.Command with record
-      Cont : aliased Boolean := False;
-      Full : aliased Boolean := False;
-      Last : aliased Boolean := False;
-      Redo : aliased Boolean := False;
+      Cont   : aliased Boolean := False;
+      Full   : aliased Boolean := False;
+      Last   : aliased Boolean := False;
+      Redo   : aliased Boolean := False;
+      Search : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Test;

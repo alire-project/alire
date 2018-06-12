@@ -7,6 +7,7 @@ package Alr.Actions is
 
    procedure Execute (This : Alire.Actions.Action'Class);
 
-   procedure Execute_Actions (R : Alire.Releases.Release; Moment : Alire.Actions.Moments);
+   procedure Execute_Actions (R      : Alire.Releases.Release;
+                              Moment : Alire.Actions.Moments);
 
 end Alr.Actions;

@@ -1,7 +1,6 @@
 with Ada.Characters;
 with Ada.Characters.Latin_1;
 with Ada.Command_Line;
-with Ada.Containers;
 with Ada.Exceptions;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -11,8 +10,6 @@ with Alire;
 with GNAT.Expect;
 
 package body Alr.OS_Lib is
-
-   use type Ada.Containers.Count_Type;
 
    -------------
    -- Bailout --

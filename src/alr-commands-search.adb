@@ -1,3 +1,5 @@
+with AAA.Table_IO;
+
 with Ada.Strings.Fixed;
 
 with Alire.Containers;
@@ -12,8 +14,6 @@ with Alr.Utils;
 
 with Semantic_Versioning;
 
-with Table_IO;
-
 package body Alr.Commands.Search is
 
    -------------
@@ -25,7 +25,7 @@ package body Alr.Commands.Search is
 
       Found   : Natural := 0;
 
-      Tab : Table_IO.Table;
+      Tab : AAA.Table_IO.Table;
 
       ------------------
       -- List_Release --

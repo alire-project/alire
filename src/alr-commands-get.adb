@@ -1,7 +1,9 @@
 with Ada.Directories;
 
+with Alire.Actions;
 with Alire.Index;
 
+with Alr.Actions;
 with Alr.Checkout;
 with Alr.Origins;
 with Alr.Parsers;
@@ -31,8 +33,6 @@ package body Alr.Commands.Get is
    --------------
 
    procedure Retrieve (Cmd : Command; Name : Alire.Project; Versions : Semver.Version_Set) is
-      use all type Semver.Version_Set;
-
       Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
    begin
       if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties)) and then not Cmd.Only then
@@ -58,8 +58,11 @@ package body Alr.Commands.Get is
          Reportaise_Command_Failed ("Cannot get a project inside another alr project, stopping.");
       end if;
 
-      --  Check out requested project release under current directory
-      Checkout.Working_Copy (Rel, Ada.Directories.Current_Directory);
+      --  Check out requested project release under current directory,
+      --  but delay its post-fetch:
+      Checkout.Working_Copy (Rel,
+                             Ada.Directories.Current_Directory,
+                             Perform_Actions => False);
 
       if Cmd.Only then
          Trace.Detail ("By your command, dependencies not resolved nor retrieved: compilation might fail");
@@ -68,13 +71,16 @@ package body Alr.Commands.Get is
 
       --  Check out rest of dependencies and optionally compile
       declare
-         use OS_Lib;
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder)) with Unreferenced;
       begin
+         Spawn.Alr (Cmd_Update);
+
+         --  Execute the checked out release post_fetch actions, now that
+         --    dependencies are in place
+         Actions.Execute_Actions (Rel, Alire.Actions.Post_Fetch);
+
          if Cmd.Compile then
-            Spawn.Alr (Cmd_Build);
-         else
-            Spawn.Alr (Cmd_Update);
+            Spawn.Alr (Cmd_Compile);
          end if;
       end;
    exception

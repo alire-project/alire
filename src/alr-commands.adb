@@ -1,6 +1,7 @@
+with AAA.Table_IO;
+
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO; use Ada.Text_IO;
-
 
 with Alire_Early_Elaboration;
 with Alire;
@@ -31,8 +32,6 @@ with Alr.Self;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
-
-with Table_IO;
 
 package body Alr.Commands is
 
@@ -258,7 +257,7 @@ package body Alr.Commands is
 
    procedure Display_Valid_Commands is
       Tab   : constant String (1 .. 6) := (others => ' ');
-      Table : Table_IO.Table;
+      Table : AAA.Table_IO.Table;
    begin
       Put_Line ("Valid commands: ");
       New_Line;
@@ -352,7 +351,7 @@ package body Alr.Commands is
       --  This is pointless now that all rebuilds incorporate it, but...
    begin
       if Self.Is_Session and not Even_In_Session then
-         Trace.Warning ("A session build should not request the full index");
+         Trace.Debug ("A session build should not request the full index");
 --           raise Program_Error with "A session build should not request the full index";
       end if;
 

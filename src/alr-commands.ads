@@ -6,7 +6,6 @@ with Alr.Query;
 private with Ada.Text_IO;
 
 private with Alire.GPR;
-private with Alire.Properties.Labeled;
 
 private with Alr.OS_Lib;
 pragma Warnings (Off); private with Alr.Root; pragma Warnings (On);
@@ -106,10 +105,6 @@ package Alr.Commands is
    function Image (N : Cmd_Names) return String;
 
 private
-
-   --  Visibility for some enums
-
-   use all type Alire.Properties.Labeled.Labels;
 
    --  Session shortcut
    function Session_State return Bootstrap.Session_States renames Bootstrap.Session_State;

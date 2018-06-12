@@ -62,8 +62,6 @@ package body Alr.Commands.Run is
          --  We look at most in something like ./build/configuration
 
          Declared : Utils.String_Vector;
-
-         use Ada.Text_Io;
       begin
          Declared := Root.Current.Executables (Platform.Properties);
          if Declared.Is_Empty then
