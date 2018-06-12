@@ -104,7 +104,7 @@ package body Alr.Dependency_Graphs is
          Tmp : constant Utils.Temp_File.File := Utils.Temp_File.New_File;
       begin
          Source.Write (Tmp.Name, Separator => " ");
-         OS_Lib.Spawn_Raw ("graph-easy", Tmp.Name);
+         OS_Lib.Spawn_Raw ("graph-easy", "--as=boxart " & Tmp.Name);
       end;
    end Plot;
 
