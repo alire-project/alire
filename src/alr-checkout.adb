@@ -30,15 +30,16 @@ package body Alr.Checkout is
          Was_There := False;
          Trace.Detail ("About to deploy " & R.Milestone.Image);
          Alr.Origins.Fetch_Or_Install (R.Origin, Folder);
+      end if;
 
-         if Ada.Directories.Exists (Folder) then
-            declare
-               use OS_Lib;
-               Guard : Folder_Guard (Enter_Folder (Folder)) with Unreferenced;
-            begin
-               Actions.Execute_Actions (R, Post_Fetch);
-            end;
-         end if;
+      --  Actions must run always, in case this is a subproject with shared folder
+      if Ada.Directories.Exists (Folder) then
+         declare
+            use OS_Lib;
+            Guard : Folder_Guard (Enter_Folder (Folder)) with Unreferenced;
+         begin
+            Actions.Execute_Actions (R, Post_Fetch);
+         end;
       end if;
    end Checkout;
 
@@ -51,8 +52,16 @@ package body Alr.Checkout is
    is
       Was_There : Boolean;
    begin
-      for R of Projects loop
-         Checkout (R, Parent, Was_There);
+      --  Two passes: native packages are installed first in case they're a
+      --  tool needed by the non-native packages
+      for Pass in 1 .. 2 loop
+         for R of Projects loop
+            if (R.Origin.Is_Native and then Pass = 1) or else
+               (Pass = 2 and then not R.Origin.Is_Native)
+            then
+               Checkout (R, Parent, Was_There);
+            end if;
+         end loop;
       end loop;
    end To_Folder;
 

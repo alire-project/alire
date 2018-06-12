@@ -1,3 +1,6 @@
+with Alire.Index.Libgraph_Easy_Perl;
+
+with Alr.Dependency_Graphs;
 with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
@@ -25,42 +28,60 @@ package body Alr.Commands.Show is
 
    procedure Report (Name     : Alire.Project;
                      Versions : Semver.Version_Set;
-                     Native   : Boolean;
-                     Priv     : Boolean) is
+                     Cmd      : Command) is
    begin
       declare
          Rel     : constant Types.Release  :=
                      Query.Find (Name, Versions, Query_Policy);
-         Needed  : Query.Solution :=
-                     Query.Resolve (Rel.This_Version, Query_Policy);
       begin
          New_Line;
 
-         if Native then
-            Rel.Whenever (Platform.Properties).Print (Private_Too => Priv);
+         if Cmd.Native then
+            Rel.Whenever (Platform.Properties).Print (Private_Too => Cmd.Priv);
          else
-            Rel.Print (Private_Too => Priv);
-         end if;
-
-         if Needed.Valid then
-            if Needed.Releases.Contains (Rel.Project) then
-               Needed.Releases.Delete (Rel.Project);
-            end if;
-
-            if not Needed.Releases.Is_Empty then
-               Put_Line ("Dependencies (solution):");
-
-               for Rel of Needed.Releases loop
-                  Put_Line ("   " & Rel.Milestone.Image);
-               end loop;
-            end if;
-         else
-            Put_Line ("Dependencies cannot be met");
+            Rel.Print (Private_Too => Cmd.Priv);
          end if;
 
          if Rel.Origin.Is_Native then
             Put_Line ("Platform version: " &
                         Origins.New_Origin (Rel.Origin).Native_Version);
+         end if;
+
+         if Cmd.Solve then
+            declare
+               Needed  : Query.Solution :=
+                           Query.Resolve (Rel.This_Version, Query_Policy);
+               begin
+               if Needed.Valid then
+                  if Needed.Releases.Contains (Rel.Project) then
+                     Needed.Releases.Delete (Rel.Project);
+                  end if;
+
+                  if not Needed.Releases.Is_Empty then
+                     Put_Line ("Dependencies (solution):");
+                     for Rel of Needed.Releases loop
+                        Put_Line ("   " & Rel.Milestone.Image);
+                     end loop;
+
+                     Put_Line ("Dependencies (graph):");
+                     declare
+                        Graph : constant Dependency_Graphs.Graph :=
+                                  Dependency_Graphs
+                                    .From_Instance (Needed.Releases)
+                                    .Including (Rel);
+                     begin
+                        if Origins.New_Origin (Alire.Index.Libgraph_Easy_Perl.V_Rolling.Origin).Already_Installed then -- plot
+                           Graph.Plot (Needed.Releases.Including (Rel));
+                        else          -- textual
+                           Graph.Print (Needed.Releases.Including (Rel),
+                                        Prefix => "   ");
+                        end if;
+                     end;
+                  end if;
+               else
+                  Put_Line ("Dependencies cannot be met");
+               end if;
+            end;
          end if;
 
       end;
@@ -104,7 +125,7 @@ package body Alr.Commands.Show is
          Requires_Full_Index;
 
          --  Execute
-         Report (Allowed.Project, Allowed.Versions, Native => Cmd.Native, Priv => Cmd.Priv);
+         Report (Allowed.Project, Allowed.Versions, Cmd);
       exception
          when Alire.Query_Unsuccessful =>
             Trace.Info ("Project [" & Argument (1) & "] does not exist in the catalog.");
@@ -128,6 +149,10 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Priv'Access,
                      "", "--private", "Show also private properties");
+
+      Define_Switch (Config,
+                     Cmd.Solve'Access,
+                     "", "--solve", "Solve dependencies and report");
    end Setup_Switches;
 
 end Alr.Commands.Show;
