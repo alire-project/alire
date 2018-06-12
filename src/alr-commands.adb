@@ -351,7 +351,7 @@ package body Alr.Commands is
       --  This is pointless now that all rebuilds incorporate it, but...
    begin
       if Self.Is_Session and not Even_In_Session then
-         Trace.Warning ("A session build should not request the full index");
+         Trace.Debug ("A session build should not request the full index");
 --           raise Program_Error with "A session build should not request the full index";
       end if;
 
