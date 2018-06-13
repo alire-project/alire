@@ -1,6 +1,6 @@
 with Alr.Commands.Version;
 
-package body Alr.Testing.Text is
+package body Alr.Testing.Markdown is
 
    use Ada.Text_IO;
 
@@ -16,8 +16,8 @@ package body Alr.Testing.Text is
       pragma Unreferenced (Tests);
    begin
       This.File := new File_Type;
-      Create   (This.File.all, Out_File, Name & ".txt");
-      Put_Line (This.File.all, "os-fingerprint:" & Commands.Version.Fingerprint);
+      Create   (This.File.all, Out_File, Name & ".md");
+      Put_Line (This.File.all, "`os-fingerprint:" & Commands.Version.Fingerprint & "`");
    end Start_Run;
 
    -------------
@@ -43,6 +43,12 @@ package body Alr.Testing.Text is
       pragma Unreferenced (Log);
    begin
       Put_Line (This.File.all,
+                "`" &
+                (case Outcome is
+                      when Pass         => "![green](https://placehold.it/8/00aa00/000000?text=+)",
+                      when Error | Fail => "![red](https://placehold.it/8/ff0000/000000?text=+)",
+                      when others       => "![yellow](https://placehold.it/8/ffbb00/000000?text=+)") &
+                   " " &
                 (case Outcome is
                     when Error        => "ERR :",
                     when Fail         => "FAIL:",
@@ -51,9 +57,10 @@ package body Alr.Testing.Text is
                     when Unavailable  => "UNAV:",
                     when Unresolvable => "DEPS:") &
                    Rel.Milestone.Image &
-                   Tab & Tab & " in" & Elapsed'Img & " s");
+                  Tab & Tab & " in" & Elapsed'Img & " s" &
+               "`");
 
       Flush (This.File.all);
    end End_Test;
 
-end Alr.Testing.Text;
+end Alr.Testing.Markdown;

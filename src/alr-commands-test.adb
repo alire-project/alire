@@ -15,6 +15,7 @@ with Alr.Query;
 with Alr.Testing.Collections;
 with Alr.Testing.Console;
 with Alr.Testing.JUnit;
+with Alr.Testing.Markdown;
 with Alr.Testing.Text;
 with Alr.Utils;
 
@@ -167,6 +168,7 @@ package body Alr.Commands.Test is
    begin
       Reporters.Add (Testing.Console.New_Reporter);
       Reporters.Add (Testing.JUnit.New_Reporter);
+      Reporters.Add (Testing.Markdown.New_Reporter);
       Reporters.Add (Testing.Text.New_Reporter);
 
       Reporters.Start_Run ("alr_test_" & Timestamp,
