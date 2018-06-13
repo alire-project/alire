@@ -6,7 +6,7 @@ package body Alr.Testing.Markdown is
 
    use Ada.Text_IO;
 
-   function BT (S : String) return String is ("`" & S & "`");
+   function BT (S : String) return String is (S); -- ("`" & S & "`");
 
    ---------------
    -- Start_Run --
@@ -21,7 +21,8 @@ package body Alr.Testing.Markdown is
       Create   (This.File.all, Out_File, Name & ".md");
       Put_Line (This.File.all, "#### " & BT (Commands.Version.Fingerprint));
       New_Line (This.File.all);
-      Put_Line (This.File.all, "| Status | Project | Version | Build time (s) |");
+      Put_Line (This.File.all, "| Status | Project | Version | Build time |");
+      Put_Line (This.File.all, "| --- | --- | --- | --- |");
    end Start_Run;
 
    -------------
@@ -63,7 +64,7 @@ package body Alr.Testing.Markdown is
                      when Unresolvable => "DEPS") & " | " &
                   BT (+Rel.Milestone.Project) & " | " &
                   BT (Semantic_Versioning.Image (Rel.Milestone.Version)) & " | " &
-                  BT (CS (Elapsed)'Img) & " |");
+                  BT (CS (Elapsed)'Img) & " s |");
 
       Flush (This.File.all);
    end End_Test;
