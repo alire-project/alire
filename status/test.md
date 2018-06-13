@@ -1,7 +1,68 @@
-`os-fingerprint:Gnu_Linux Bits_64 Ubuntu Ubuntu_Bionic Gnat_Community_2018`
-`![green](https://placehold.it/8/00aa00/000000?text=+) pass:libx11=2.0.0		 in 0.220111000 s`
-`![red](https://placehold.it/8/ff0000/000000?text=+) FAIL:rxada=0.1.0		 in 10.919806000 s`
-`![green](https://placehold.it/8/00aa00/000000?text=+) pass:unixodbc=2.3.0		 in 0.222951000 s`
-`![green](https://placehold.it/8/00aa00/000000?text=+) pass:xml_ez_out=1.6.0		 in 3.066059000 s`
-`![green](https://placehold.it/8/00aa00/000000?text=+) pass:xmlada=18.2.0		 in 3.630272000 s`
-`![green](https://placehold.it/8/00aa00/000000?text=+) pass:xstrings=1.0.0		 in 2.842828000 s`
+#### `Gnu_Linux Bits_64 Ubuntu Ubuntu_Bionic Gnat_Community_2018`
+
+| Status | Project | Version | Build time (s) |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `aaa` | `1.0.0` | ` 6.31` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `ada_lua` | `0.0.0-5.3` | ` 4.66` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `adacurses` | `6.0.0` | ` 6.88` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `adayaml` | `0.3.0` | ` 10.76` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `adayaml.server` | `0.3.0` | ` 9.03` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `agpl` | `1.0.0` | ` 22.80` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `ajunitgen` | `1.0.0` | ` 7.25` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `alire` | `0.6.0` | ` 34.01` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `alr` | `0.6.0` | ` 33.18` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `apq` | `3.2.0` | ` 3.98` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `aunit` | `2017.0.0` | ` 3.92` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `c_strings` | `1.0.0` | ` 3.50` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `deepend` | `3.9.0` | ` 5.75` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `dl_ada` | `1.0.0` | ` 5.35` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `eagle_lander` | `1.0.0` | ` 8.57` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `globe_3d` | `20180111.0.0` | ` 27.55` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `glut` | `2.8.1-3` | ` 0.22` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `gnat` | `7.0.0` | ` 0.22` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `gnatcoll.slim` | `20180425.0.0` | ` 17.48` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `gnatcoll.strings` | `20180425.0.0` | ` 8.89` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `gtkada` | `17.0.0` | ` 0.37` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `hangman` | `1.0.0` | ` 4.00` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `hello` | `1.0.1` | ` 4.37` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `hungarian` | `1.0.0` | ` 3.50` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `libadacrypt` | `0.8.7` | ` 35.37` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libglfw3` | `3.0.0` | ` 0.55` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libgnutls` | `3.5.8` | ` 0.22` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libgraph_easy_perl` | `0.0.0-rolling` | ` 0.23` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libgsl` | `0.0.0` | ` 0.22` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libhello` | `1.0.0` | ` 6.66` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `liblua` | `5.3.0` | ` 0.24` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libsdl2` | `2.0.0` | ` 0.26` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libsdl2.image` | `2.0.0` | ` 0.28` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libsdl2.ttf` | `2.0.0` | ` 0.27` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `libx11` | `2.0.0` | ` 0.24` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `make` | `0.0.0` | ` 0.25` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `mathpaqs` | `20180327.0.0` | ` 4.96` |
+|![yellow](https://placehold.it/8/ffbb00/000000?text=+) `UNAV` | `ncursesada` | `6.1.20180127` | ` 0.20` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `openglada` | `0.6.0` | ` 7.39` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `pdf_out` | `1.0.0-RC4` | ` 6.50` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `png_io` | `4.6.0` | ` 7.80` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `pragmarc` | `2017.2007.0` | ` 4.11` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `rsfile` | `1.0.0` | ` 4.38` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `rxada` | `0.1.0` | ` 16.08` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `sdlada` | `2.3.1` | ` 9.85` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `semantic_versioning` | `0.3.2` | ` 8.15` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.connections` | `4.27.0` | ` 5.14` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.connections.ntp` | `4.27.0` | ` 3.21` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.connections.secure` | `4.27.0` | ` 4.11` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.core` | `4.27.0` | ` 3.02` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.odbc` | `4.27.0` | ` 3.55` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.sqlite` | `4.27.0` | ` 5.42` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.strings_edit` | `4.27.0` | ` 3.01` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `simple_components.tables` | `4.27.0` | ` 3.00` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `simple_logging` | `1.0.0` | ` 3.57` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `smart_pointers` | `20180216.0.0` | ` 3.67` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `steamsky` | `2.1.0-dev` | ` 27.38` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `templates_parser` | `18.2.0` | ` 23.03` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `unixodbc` | `2.3.0` | ` 0.53` |
+|![red](https://placehold.it/8/ff0000/000000?text=+) `FAIL` | `whitakers_words` | `2017.9.10` | ` 5.94` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `xml_ez_out` | `1.6.0` | ` 6.46` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `xmlada` | `18.2.0` | ` 18.19` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `xstrings` | `1.0.0` | ` 7.96` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `zlib` | `1.2.0` | ` 0.26` |
+|![green](https://placehold.it/8/00aa00/000000?text=+) `pass` | `zlib_ada` | `1.3.0` | ` 4.45` |
