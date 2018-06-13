@@ -15,7 +15,7 @@ with Alr.Commands.Get;
 with Alr.Commands.Init;
 with Alr.Commands.List;
 with Alr.Commands.Pin;
-with Alr.Commands.Reserved;
+--  with Alr.Commands.Reserved;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
@@ -54,8 +54,7 @@ package body Alr.Commands is
                        Cmd_Test     => new Test.Command,
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
-                       Cmd_With     => new Withing.Command,
-                       others       => new Reserved.Command);
+                       Cmd_With     => new Withing.Command);
 
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;

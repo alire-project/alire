@@ -86,7 +86,6 @@ package Alr.Commands is
    type Cmd_Names is (Cmd_Build,
                       Cmd_Clean,
                       Cmd_Compile,
-                      Cmd_Depend,
                       Cmd_Dev,
                       Cmd_Get,
                       Cmd_Init,

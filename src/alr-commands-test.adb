@@ -2,19 +2,20 @@ with Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;
 
-with AJUnitGen;
-
 with Alire.Containers;
 with Alire.Index;
 
 with Alr.Files;
 with Alr.Interactive;
-with Alr.Commands.Version;
 with Alr.Hardcoded;
 with Alr.Platform;
 with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Query;
+with Alr.Testing.Collections;
+with Alr.Testing.Console;
+with Alr.Testing.JUnit;
+with Alr.Testing.Text;
 with Alr.Utils;
 
 with GNAT.Command_Line;
@@ -73,16 +74,12 @@ package body Alr.Commands.Test is
 
    procedure Do_Test (Cmd : Command; Releases : Alire.Containers.Release_Sets.Set) is
       use Ada.Calendar;
-      use Ada.Text_IO;
       use OS_Lib.Paths;
 
-      type CS is delta 0.01 digits 6;
+      Reporters : Testing.Collections.Collection;
 
-      Epoch : constant Time := Time_Of (1970, 1, 1);
-      File  : File_Type;
-      Tab   : constant Character := ASCII.HT;
-
-      Tested, Passed, Failed, Skipped, Unavail : Natural := 0;
+      No_Log : constant Utils.String_Vector :=
+                 (Utils.String_Vectors.Empty_Vector with null record);
 
       Is_Available, Is_Resolvable : Boolean;
       Skipping_Extensions         : Boolean := False;
@@ -90,17 +87,7 @@ package body Alr.Commands.Test is
       Timestamp                   : constant String :=
                                       Utils.Trim
                                         (Long_Long_Integer'Image
-                                           (Long_Long_Integer (Clock - Epoch)));
-
-      Report_Simplename           : constant String :=
-                                      "alr_report_" &
-                                      Utils.To_Lower_Case (Query_Policy'Img) &
-                                      "_" &
-                                      Timestamp;
-
-      --  Junit related
-      Jsuite : AJUnitGen.Test_Suite :=
-                 AJUnitGen.New_Suite ("releases for " & Version.Fingerprint);
+                                           (Long_Long_Integer (Clock - Time_Of (1970, 1, 1))));
 
       Newline : constant String := "" & ASCII.LF;
 
@@ -112,70 +99,36 @@ package body Alr.Commands.Test is
          Output : Utils.String_Vector;
          Start  : Time;
       begin
-         Put ("PASS:" & Passed'Img &
-                " FAIL:" & Failed'Img &
-                " SKIP:" & Skipped'Img &
-                " UNAV:" & Unavail'Img &
-                " CURR:" & Integer'(Tested + 1)'Img & "/" &
-                Utils.Trim (Natural (Releases.Length)'Img) & " " & R.Milestone.Image);
+         Reporters.Start_Test (R);
+
+         Start := Clock;
 
          Is_Available  := Query.Is_Available (R);
          Is_Resolvable := Query.Is_Resolvable (R.Depends (Platform.Properties));
 
-         if not Is_Available or else not Is_Resolvable then
-            Unavail := Unavail + 1;
-            Put_Line (Tab &
-                      (if not Is_Available then "unavailable" else "") &
-                      (if not Is_Resolvable then "unresolvable" else ""));
-            Trace.Detail ("Unavailable: " & R.Milestone.Image &
-                          (if not Is_Available then " (unavailable)" else "") &
-                          (if not Is_Resolvable then " (unresolvable)" else ""));
-            Put_Line (File, "UNAV:" & R.Milestone.Image);
-
-            Jsuite.Add_Case
-              (AJUnitGen.New_Case
-                 (R.Milestone.Image,
-                  AJUnitGen.Skip,
-                  Message => "Available: "  & Is_Available'Img & "; " &
-                    "Resolvable: " & Is_Resolvable'Img,
-                  Output  => Version.Fingerprint));
+         if not Is_Available then
+            Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);
+         elsif not Is_Resolvable then
+            Reporters.End_Test (R, Testing.Unresolvable, Clock - Start, No_Log);
          elsif not R.Origin.Is_Native and then
            not R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
            not Cmd.Redo
          then
-            Skipped := Skipped + 1;
+            Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
             Skipping_Extensions := True;
-            Put_Line (Tab & "skipped (folder exists)");
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
-
-            Jsuite.Add_Case
-              (AJUnitGen.New_Case
-                 (R.Milestone.Image,
-                  AJUnitGen.Skip,
-                  Message => "Already tested",
-                  Output  => Version.Fingerprint));
          elsif not R.Origin.Is_Native and then
            R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
            Skipping_Extensions
          then
-            Skipped := Skipped + 1;
+            Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
             Skipping_Extensions := True;
-            Put_Line (Tab & "skipped (extension of existing folder)");
             Trace.Detail ("Skipping already tested extension " & R.Milestone.Image);
-
-            Jsuite.Add_Case
-              (AJUnitGen.New_Case
-                 (R.Milestone.Image,
-                  AJUnitGen.Skip,
-                  Message => "Already tested",
-                  Output  => Version.Fingerprint));
          else
             begin
                Skipping_Extensions := False;
-
-               Start := Clock;
 
                OS_Lib.Spawn_And_Capture
                  (Output,
@@ -189,79 +142,41 @@ package body Alr.Commands.Test is
                   raise Child_Failed;
                end if;
 
-               Passed := Passed + 1;
-               Put_Line (File, "pass:" & R.Milestone.Image);
-               Put_Line (Tab & "tested in" & CS'Image (CS (Clock - Start)) & "s");
-
-               Jsuite.Add_Case (AJUnitGen.New_Case (R.Milestone.Image));
+               Reporters.End_Test (R, Testing.Pass, Clock - Start, Output);
 
             exception
                when Child_Failed =>
-                  Failed := Failed + 1;
-                  Put_Line (File, "FAIL:" & R.Milestone.Image);
-                  Put_Line (Tab & "FAILED");
-                  Trace.Warning ("Compilation failed for " & R.Milestone.Image);
-
-                  Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Fail,
-                        Classname => "FAIL",
-                        Message   => "get --compile failure: " & Version.Fingerprint,
-                        Output    => Output.Flatten (Newline)));
+                  Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
 
                when E : others =>
-                  Put_Line (Tab & "ERRORED");
-                  Put_Line (File, "ERR :" & R.Milestone.Image);
-                  Jsuite.Add_Case
-                    (AJUnitGen.New_Case
-                       (R.Milestone.Image,
-                        AJUnitGen.Error,
-                        Classname => "ERROR",
-                        Message   => "alr test unexpected error: " & Version.Fingerprint,
-                        Output    =>
-                           "****** UNEXPECTED EXCEPTION FOLLOWS:" & Newline &
-                           Ada.Exceptions.Exception_Information (E) &
-                          Newline & Newline &
-                          "****** TRACE FOLLOWS:" & Newline &
-                          Output.Flatten (Newline)));
+                  Output.Prepend ("****** UNEXPECTED EXCEPTION FOLLOWS:");
+                  Output.Prepend (Ada.Exceptions.Exception_Information (E));
+                  Output.Prepend ("****** TRACE FOLLOWS:");
+
+                  Reporters.End_Test (R, Testing.Error, Clock - Start, Output);
             end;
          end if;
 
-         Flush (File);
-
          OS_Lib.Create_Folder (R.Unique_Folder / Hardcoded.Alr_Working_Folder);
          --  Might not exist for native/failed/skipped
-
          Output.Write (R.Unique_Folder /
                          Hardcoded.Alr_Working_Folder /
                            "alr_test_" & Timestamp & ".log");
-
-         Tested := Tested + 1;
       end Test_Release;
 
    begin
-      Create (File, Out_File, Report_Simplename & ".txt");
+      Reporters.Add (Testing.Console.New_Reporter);
+      Reporters.Add (Testing.JUnit.New_Reporter);
+      Reporters.Add (Testing.Text.New_Reporter);
 
-      Put_Line (File, "os-fingerprint:" & Version.Fingerprint);
+      Reporters.Start_Run ("alr_test_" & Timestamp,
+                           Natural (Releases.Length));
 
       for R of Releases loop
          Test_Release (R);
       end loop;
 
-      Close (File);
-
-      Trace.Info ("PASS:" & Passed'Img &
-                    " FAIL:" & Failed'Img &
-                    " SKIP:" & Skipped'Img &
-                    " UNAV:" & Unavail'Img &
-                    " Done");
-
-      --  JUnit output
-      Create (File, Out_File, Report_Simplename & ".xml");
-      Jsuite.To_Collection.Write (File);
-      Close (File);
-
+      Reporters.End_Run;
    end Do_Test;
 
    -------------
