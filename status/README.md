@@ -2,6 +2,8 @@
 
 These files reflect the build results of releases during the continuous integration check.
 
+NOTE: only latest versions of projects are tested.
+
 The name of the file reflects that of the docker image used to test `alr`. Those without an explicit operating system are Debian testing.
 
 At the top of each file are the details of the platform as detected by `alr`.
