@@ -91,14 +91,25 @@ package body Alr.Dependency_Graphs is
                    Instance : Alire.Containers.Release_Map)
    is
       function B (Str : String) return String is ("[ " & Str & " ]");
+      function Q (Str : String) return String is ("""" & Str & """");
 
       Source : Utils.String_Vector;
+      Alt    : Utils.String_Vector;
+
+      Filtered : constant Graph := This.Filtering_Unused (Instance);
    begin
-      for Dep of This loop
+      Alt.Append ("graph dependencies {");
+
+      for Dep of Filtered loop
+         Alt.Append (Q (Instance (+Dep.Dependent).Milestone.Image) &
+                          " -> " &
+                          Q (Instance (+Dep.Dependee).Milestone.Image) & "; ");
+
          Source.Append (B (Instance (+Dep.Dependent).Milestone.Image) &
                           " -> " &
                           B (Instance (+Dep.Dependee).Milestone.Image));
       end loop;
+      Alt.Append (" }");
 
       declare
          Tmp : constant Utils.Temp_File.File := Utils.Temp_File.New_File;
@@ -117,8 +128,10 @@ package body Alr.Dependency_Graphs is
                     Prefix   : String := "")
    is
       Table : AAA.Table_IO.Table;
+
+      Filtered : constant Graph := This.Filtering_Unused (Instance);
    begin
-      for Dep of This loop
+      for Dep of Filtered loop
          Table.Append (Prefix & Instance (+Dep.Dependent).Milestone.Image);
          Table.Append ("-->");
          Table.Append (Instance (+Dep.Dependee).Milestone.Image);

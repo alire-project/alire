@@ -12,6 +12,7 @@ package body Alr.Utils.Temp_File is
    begin
       if Exists (This.Name) then
          Delete_File (This.Name);
+         null;
       end if;
    end Finalize;
    
@@ -30,6 +31,8 @@ package body Alr.Utils.Temp_File is
       
       Suffix : String (1 .. 10);
    begin
+      Rand.Reset (Gen);
+      
       for C of Suffix loop
          C := Parts'Image (Rand.Random (Gen))(2);
       end loop;
