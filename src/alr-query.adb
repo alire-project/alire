@@ -275,7 +275,8 @@ package body Alr.Query is
                         Current,    --  Next node to consider
                         Remaining : --  Nodes pending to be considered
                                     Types.Platform_Dependencies;
-                        Frozen    : Instance)
+                        Frozen    : Instance;
+                        Forbidden : Types.Platform_Dependencies)
       is
 
          ------------------
@@ -298,7 +299,8 @@ package body Alr.Query is
                         Expand (Expanded,
                                 Remaining,
                                 Empty,
-                                Frozen);
+                                Frozen,
+                                Forbidden);
                      else
                         Trace.Debug ("SOLVER: discarding tree because of conflicting FROZEN release: " &
                                        R.Milestone.Image & " does not satisfy " &
@@ -309,6 +311,14 @@ package body Alr.Query is
                      Trace.Debug ("SOLVER: discarding tree because of conflicting PROVIDES release: " &
                                     R.Milestone.Image & " provides " & (+R.Provides) &
                                     " already in tree " &
+                                    Tree'(Expanded and Current and Remaining).Image_One_Line);
+                  elsif Contains (Forbidden, R.Project) then
+                     Trace.Debug ("SOLVER: discarding tree because of FORBIDDEN project: " &
+                                    R.Milestone.Image & " forbidden by some already in tree " &
+                                    Tree'(Expanded and Current and Remaining).Image_One_Line);
+                  elsif Contains (R.Forbids (Platform.Properties), Frozen) then
+                     Trace.Debug ("SOLVER: discarding tree because candidate FORBIDS frozen release: " &
+                                    R.Milestone.Image & " forbids some already in tree " &
                                     Tree'(Expanded and Current and Remaining).Image_One_Line);
                   elsif -- First time we see this project
                     Semver.Satisfies (R.Version, Dep.Versions) and then
@@ -324,7 +334,8 @@ package body Alr.Query is
                      Expand (Expanded and R.This_Version,
                              Remaining and R.Depends (Platform.Properties),
                              Empty,
-                             Frozen.Inserting (R));
+                             Frozen.Inserting (R),
+                             Forbidden and R.Forbids);
                   end if;
                else
                   null; -- Not even same project, this is related to the fixme below
