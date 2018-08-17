@@ -5,7 +5,8 @@
 repo_branch=${1:-master}
 repo_url=https://github.com/alire-project/alr.git
 
-required_tools="git hg id sudo"
+required_tools="git id"
+optional_tools="hg sudo"
 required_compiler="gprbuild gnatmake gnatls"
 
 alire_folder=${XDG_CONFIG_HOME:-$HOME/.config}/alire
@@ -29,9 +30,20 @@ function check_cmd() {
 A required tool is not installed or in the session PATH.
 Please install it and retry.
 
-Missing executable: $1
+Missing required executable: $1
 EOF
     exit 1
+    }
+}
+
+function check_optional() {
+    command -v $1 >/dev/null || { 
+        cat <<EOF
+An optional tool is not installed or in the session PATH.
+Some alr functions might not be available but installation can proceed.
+
+Missing optional executable: $1
+EOF
     }
 }
 
@@ -136,6 +148,10 @@ EOF
 function install_linux() {
     for cmd in $required_tools; do
         check_cmd $cmd
+    done
+
+    for cmd in $optional_tools; do
+        check_optional $cmd
     done
 
     check_no_root
