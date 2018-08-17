@@ -1,7 +1,7 @@
 with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Alire.Conditional;
+with Alire.Conditional.Operations;
 with Alire.Utils;
 
 with Alr.Commands;
@@ -275,8 +275,8 @@ package body Alr.Query is
                         Current,    --  Next node to consider
                         Remaining : --  Nodes pending to be considered
                                     Types.Platform_Dependencies;
-                        Frozen    : Instance;
-                        Forbidden : Types.Platform_Dependencies)
+                        Frozen    : Instance; -- Releases in current solution
+                        Forbidden : Types.Forbidden_Dependencies)
       is
 
          ------------------
@@ -291,6 +291,7 @@ package body Alr.Query is
 
             procedure Check (R : Release) is
                use Alire.Containers;
+               package Cond_Ops renames Conditional.Operations;
             begin
                if Dep.Project = R.Project then
                   if Frozen.Contains (R.Project) then
@@ -312,11 +313,11 @@ package body Alr.Query is
                                     R.Milestone.Image & " provides " & (+R.Provides) &
                                     " already in tree " &
                                     Tree'(Expanded and Current and Remaining).Image_One_Line);
-                  elsif Contains (Forbidden, R.Project) then
+                  elsif Cond_Ops.Contains (Forbidden, R) then
                      Trace.Debug ("SOLVER: discarding tree because of FORBIDDEN project: " &
                                     R.Milestone.Image & " forbidden by some already in tree " &
                                     Tree'(Expanded and Current and Remaining).Image_One_Line);
-                  elsif Contains (R.Forbids (Platform.Properties), Frozen) then
+                  elsif Cond_Ops.Contains_Some (R.Forbids (Platform.Properties), Frozen) then
                      Trace.Debug ("SOLVER: discarding tree because candidate FORBIDS frozen release: " &
                                     R.Milestone.Image & " forbids some already in tree " &
                                     Tree'(Expanded and Current and Remaining).Image_One_Line);
@@ -335,7 +336,7 @@ package body Alr.Query is
                              Remaining and R.Depends (Platform.Properties),
                              Empty,
                              Frozen.Inserting (R),
-                             Forbidden and R.Forbids);
+                             Forbidden and R.Forbids (Platform.Properties));
                   end if;
                else
                   null; -- Not even same project, this is related to the fixme below
@@ -368,7 +369,8 @@ package body Alr.Query is
             Expand (Expanded,
                     Current.First_Child,
                     Current.All_But_First_Children and Remaining,
-                    Frozen);
+                    Frozen,
+                    Forbidden);
          end Expand_And_Vector;
 
          ----------------------
@@ -378,7 +380,11 @@ package body Alr.Query is
          procedure Expand_Or_Vector is
          begin
             for I in Current.Iterate loop
-               Expand (Expanded, Current (I), Remaining, Frozen);
+               Expand (Expanded,
+                       Current (I),
+                       Remaining,
+                       Frozen,
+                       Forbidden);
             end loop;
          end Expand_Or_Vector;
 
@@ -389,7 +395,11 @@ package body Alr.Query is
                Check_Complete (Deps, Materialize (Expanded, Platform.Properties));
                return;
             else
-               Expand (Expanded, Remaining, Empty, Frozen);
+               Expand (Expanded,
+                       Remaining,
+                       Empty,
+                       Frozen,
+                       Forbidden);
             end if;
          end if;
 
@@ -418,7 +428,8 @@ package body Alr.Query is
       Expand (Empty,
               Deps,
               Empty,
-              Empty_Instance);
+              Empty_Instance,
+              Empty);
 
       if Solutions.Is_Empty then
          Trace.Debug ("Dependency resolution failed");
