@@ -55,10 +55,6 @@ package body Alr.Bootstrap is
       if Locate_Exec_On_Path ("git") = null then
          Trace.Warning ("git is not detected, alr will fail on most operations");
       end if;
-
-      if Locate_Exec_On_Path ("hg") = null then
-         Trace.Warning ("hg is not detected, alr will fail on mercurial checkouts");
-      end if;
    end Check_Ada_Tools;
 
    ----------------------------------
