@@ -6,6 +6,8 @@ with Alr.Interactive;
 with Alr.Origins.Apt;
 with Alr.Origins.Git;
 with Alr.Origins.Hg;
+with Alr.Origins.Source_Archive;
+with Alr.Origins.SVN;
 with Alr.Platform;
 
 with GNAT.IO;
@@ -26,6 +28,13 @@ package body Alr.Origins is
 
          when Alire.Origins.Hg =>
             return Hg.Origin'(Origin'(Base => From) with null record);
+
+         when Alire.Origins.SVN =>
+            return SVN.Origin'(Origin'(Base => From) with null record);
+
+         when Alire.Origins.Source_Archive =>
+            return Source_Archive.Origin'(Origin'(Base => From)
+                                          with null record);
 
          when Alire.Origins.Native =>
             case Alire.Platforms.Package_Manager (Platform.Distribution) is
