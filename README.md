@@ -1,5 +1,6 @@
 master: [![Run Status](https://api.shippable.com/projects/5ac50b3494f2af07000852d9/badge?branch=master)](https://app.shippable.com/github/alire-project/alr)
 testing: [![Run Status](https://api.shippable.com/projects/5ac50b3494f2af07000852d9/badge?branch=testing)](https://app.shippable.com/github/alire-project/alr)
+[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
 
 # ALR #
 
