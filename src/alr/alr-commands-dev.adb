@@ -1,7 +1,5 @@
 pragma Warnings (Off);
 
-with Alire.Index.Hello;
-
 with Alr.Bootstrap;
 with Alr.Code;
 with Alr.Parsers;

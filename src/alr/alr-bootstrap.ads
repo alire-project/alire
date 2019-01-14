@@ -1,8 +1,6 @@
 with Alire;
 with Alire.Index;
 
-private with Alire.Index.Alire;
-
 package Alr.Bootstrap is
 
    type Rebuild_Types is (Standalone, Session);
@@ -51,8 +49,6 @@ package Alr.Bootstrap is
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
-   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies;
-
    function No_Dependencies return Types.Platform_Dependencies
      renames Types.No_Dependencies;
 
@@ -60,8 +56,5 @@ private
 
    Is_Child : Boolean := False;
    --  During elaboration this will be updated accordingly
-
-   Alire_Minimal_Dependency : constant Alire.Index.Release_Dependencies :=
-                                Alire.Index.Alire.Project.Current;
 
 end Alr.Bootstrap;
