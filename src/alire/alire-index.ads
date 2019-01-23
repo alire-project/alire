@@ -42,13 +42,14 @@ package Alire.Index is
    
    generic
       Description  : Description_String;
-
-      --  For internal use:
-      First_Use    : access Boolean := new Boolean'(True);
    function Catalogued_Project return Catalog_Entry;
    --  A regular project
    --  See above note on Catalog_Entry  
-            
+
+   function Manually_Catalogued_Project
+     (Package_Name, Self_Name, Description : String) return Catalog_Entry;
+   --  Helper to programmatically create entries
+
    overriding
    function Project (C : Catalog_Entry) return Alire.Project;
    

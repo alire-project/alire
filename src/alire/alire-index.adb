@@ -37,29 +37,57 @@ package body Alire.Index is
    ------------------------
 
    function Catalogued_Project return Catalog_Entry is
-      use Utils;
       Reflected : constant Reflected_Info :=
                     Identify (GNAT.Source_Info.Enclosing_Entity);
    begin
-      return C : constant Catalog_Entry :=
-        (Name_Len  => Reflected.Pack_Len,
-         Descr_Len => Description'Length,
-         Pack_Len  => Reflected.Pack_Len,
-         Self_Len  => Reflected.Id_Len,
+      return Manually_Catalogued_Project
+        (Reflected.Package_Name, Reflected.Identifier, Description);
+   end Catalogued_Project;
 
-         Project      => +To_Lower_Case (Reflected.Package_Name),
-         Description  => Description,
-         Package_Name => Reflected.Package_Name,
-         Self_Name    => Reflected.Identifier)
-      do
-         if First_Use.all then
-            First_Use.all := False;
+   ---------------------------------
+   -- Manually_Catalogued_Project --
+   ---------------------------------
 
+   function Manually_Catalogued_Project
+     (Package_Name, Self_Name, Description : String) return Catalog_Entry
+   is
+      use Alire.Utils, Name_Entry_Maps;
+      Project  : constant Alire.Project := +To_Lower_Case (Package_Name);
+      Position : constant Cursor := Master_Entries.Find (Project);
+   begin
+      if Has_Element (Position) then
+
+         --  If this package was already registered, just check that arguments
+         --  haven't changed.
+
+         return Result : constant Catalog_Entry := Element (Position) do
+            if Result.Description /= Description
+               or else Result.Package_Name /= Package_Name
+               or else Result.Self_Name /= Self_Name
+            then
+               raise Constraint_Error;
+            end if;
+         end return;
+
+      else
+         --  Otherwise, create the entry and register it
+
+         return C : constant Catalog_Entry :=
+           (Name_Len  => Package_Name'Length,
+            Descr_Len => Description'Length,
+            Pack_Len  => Package_Name'Length,
+            Self_Len  => Self_Name'Length,
+
+            Project      => Project,
+            Description  => Description,
+            Package_Name => Package_Name,
+            Self_Name    => Self_Name)
+         do
             Master_Entries.Insert (C.Project, C);
             Projects.Descriptions.Insert (C.Project, Description);
-         end if;
-      end return;
-   end Catalogued_Project;
+         end return;
+      end if;
+   end Manually_Catalogued_Project;
 
    -------------
    -- Current --
