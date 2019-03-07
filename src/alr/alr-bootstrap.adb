@@ -2,12 +2,13 @@ with Ada.Calendar;
 
 with Alire_Early_Elaboration;
 
+with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.OS_Lib;
+with Alr.Paths;
 with Alr.Utils;
 
 with GNAT.Ctrl_C;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Alr.Bootstrap is
 
@@ -18,16 +19,33 @@ package body Alr.Bootstrap is
    procedure Check_Ada_Tools is
       --  FIXME mini-leak (once per run)
    begin
-      if Locate_Exec_On_Path ("gprbuild") = null or else
-        Locate_Exec_On_Path ("gnatmake") = null then
+      if not OS_Lib.Exists_In_Path ("gprbuild") or else
+        not OS_Lib.Exists_In_Path ("gnatmake") then
          Trace.Error ("Ada tools not detected, alr cannot proceed");
          OS_Lib.Bailout (1);
       end if;
 
-      if Locate_Exec_On_Path ("git") = null then
+      if not OS_Lib.Exists_In_Path ("git") then
          Trace.Warning ("git is not detected, alr will fail on most operations");
       end if;
    end Check_Ada_Tools;
+
+   ----------------------
+   -- Check_Src_Folder --
+   ----------------------
+
+   procedure Check_Src_Folder is
+   begin
+      if not OS_Lib.Is_Folder (Paths.Alr_Src_Folder) then
+         if Paths.Alr_Src_Folder = Paths.Alr_Default_Src_Folder then
+            Trace.Info ("Checking out alr resources...");
+            Commands.Update.Update_Alr;
+         else
+            Trace.Error ("Given alr source path does not exist: " & Paths.Alr_Src_Folder);
+            OS_Lib.Bailout (1);
+         end if;
+      end if;
+   end Check_Src_Folder;
 
    -----------------
    -- Interrupted --

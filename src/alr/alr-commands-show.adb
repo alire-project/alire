@@ -1,6 +1,8 @@
 with Alr.Dependency_Graphs;
 with Alr.Origins;
+with Alr.OS_Lib;
 with Alr.Parsers;
+with Alr.Paths;
 with Alr.Platform;
 
 with Alire.Index;

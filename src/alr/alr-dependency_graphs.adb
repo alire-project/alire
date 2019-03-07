@@ -3,6 +3,7 @@ with AAA.Table_IO;
 with Alire.Conditional;
 
 with Alr.OS_Lib;
+with Alr.Paths;
 with Alr.Platform;
 with Alr.Utils;
 with Alr.Utils.Temp_File;
@@ -115,7 +116,7 @@ package body Alr.Dependency_Graphs is
          Tmp : constant Utils.Temp_File.File := Utils.Temp_File.New_File;
       begin
          Source.Write (Tmp.Name, Separator => " ");
-         OS_Lib.Spawn_Raw ("graph-easy", "--as=boxart " & Tmp.Name);
+         OS_Lib.Spawn_Raw (Paths.Scripts_Graph_Easy, "--as=boxart " & Tmp.Name);
       end;
    end Plot;
 

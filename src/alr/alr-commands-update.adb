@@ -1,4 +1,3 @@
-with Alr.Bootstrap;
 with Alr.Checkout;
 with Alr.Paths;
 with Alr.Platform;

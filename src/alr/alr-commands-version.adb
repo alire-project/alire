@@ -43,21 +43,12 @@ package body Alr.Commands.Version is
          end if;
       end;
 
-      Log ("alr executable launched from " & Platform.Own_Executable, Always);
-      Log ("alr rolling source folder is " & Paths.Alr_Src_Folder, Always);
+      Log ("alr source folder is " & Paths.Alr_Src_Folder, Always);
 
       Log ("alr compiled on [" &
              GNAT.Source_Info.Compilation_ISO_Date & " " &
              GNAT.Source_Info.Compilation_Time & "] with GNAT version [" & GNAT_Version.Version & "]",
            Always);
-
-      -- FIXME this is OS dependent
-      declare
-         Guard : Folder_Guard (OS_Lib.Enter_Folder (Paths.Alr_Src_Folder))
-           with Unreferenced;
-      begin
-         OS_Lib.Spawn_Raw (Paths.Scripts_Git_Fingerprint);
-      end;
 
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);
       Put ("platform properties:");
