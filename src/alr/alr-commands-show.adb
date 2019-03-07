@@ -120,15 +120,8 @@ package body Alr.Commands.Show is
 
       -- asking for info, we could return the current project
       --  We have internal data, but is it valid?
-      if Num_Arguments = 0 then
-         case Bootstrap.Session_State is
-            when Detached =>
-               Bootstrap.Check_Rebuild_Respawn;
-            when Valid =>
-               null; -- Proceed
-            when others =>
-               Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
-         end case;
+      if Num_Arguments = 0 and then Bootstrap.Session_State = Outside then
+         Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
       end if;
 
       declare
@@ -140,8 +133,6 @@ package body Alr.Commands.Show is
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
                          else Parsers.Project_Versions (+Root.Current.Project)));
       begin
-         Requires_Full_Index;
-
          --  Execute
          Report (Allowed.Project, Allowed.Versions, Cmd);
       exception

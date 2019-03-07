@@ -1,6 +1,6 @@
 with Alr.Bootstrap;
 with Alr.Checkout;
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Spawn;
@@ -16,12 +16,12 @@ package body Alr.Commands.Update is
 
    procedure Checkout_If_Needed is
    begin
-      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
+      if not Is_Directory (Paths.Alr_Src_Folder) then
          Spawn.Command ("git",
                         "clone " &
-                          "-b " & Hardcoded.Alr_Branch & " " &
-                          String (Hardcoded.Alr_Repo) & " " &
-                          Hardcoded.Alr_Src_Folder);
+                          "-b " & Paths.Alr_Branch & " " &
+                          String (Paths.Alr_Repo) & " " &
+                          Paths.Alr_Src_Folder);
       end if;
    end Checkout_If_Needed;
 
@@ -57,11 +57,11 @@ package body Alr.Commands.Update is
 
    procedure Update_Alr is
    begin
-      if not Is_Directory (Hardcoded.Alr_Src_Folder) then
+      if not Is_Directory (Paths.Alr_Src_Folder) then
          Checkout_If_Needed;
       else
          declare
-            Guard : Folder_Guard (Enter_Folder (Hardcoded.Alr_Src_Folder))
+            Guard : Folder_Guard (Enter_Folder (Paths.Alr_Src_Folder))
               with Unreferenced;
          begin
             Spawn.Command ("git", "pull");
@@ -79,22 +79,20 @@ package body Alr.Commands.Update is
       if Cmd.Online then
          Log ("Checking remote repositories:");
          Update_Alr;
-
-         Bootstrap.Rebuild (Bootstrap.Standalone);     -- Update rolling alr
-
-         if Bootstrap.Session_State >= Detached then -- And this session one
-            Bootstrap.Rebuild (Bootstrap.Session);
-         end if;
-
-         --  And launch updated exec without online (or it would restart endlessly)
-         Spawn.Alr (Cmd_Update);
-      else
-         if Session_State >= Outdated then
-            Upgrade;
-         else
-            Trace.Detail ("No project to upgrade");
-         end if;
+         --  TODO: reload index
       end if;
+
+      if Session_State > Outside then
+         Upgrade;
+      else
+         Trace.Detail ("No project to upgrade");
+      end if;
+   end Execute;
+
+   procedure Execute (Online : Boolean) is
+      Cmd : Command := Command'(Online => Online);
+   begin
+      Execute (Cmd);
    end Execute;
 
    --------------------

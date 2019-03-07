@@ -5,11 +5,12 @@ with Alire.Index;
 
 with Alr.Actions;
 with Alr.Checkout;
+with Alr.Commands.Compile;
+with Alr.Commands.Update;
 with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Query;
-with Alr.Spawn;
 
 with Semantic_Versioning;
 
@@ -54,7 +55,7 @@ package body Alr.Commands.Get is
       end;
 
       --  Check if we are already in the fresh copy (may happen after respawning)
-      if Session_State = Detached then
+      if Session_State > Outside then
          Reportaise_Command_Failed ("Cannot get a project inside another alr project, stopping.");
       end if;
 
@@ -73,14 +74,14 @@ package body Alr.Commands.Get is
       declare
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder)) with Unreferenced;
       begin
-         Spawn.Alr (Cmd_Update);
+         Commands.Update.Execute (Online => False);
 
          --  Execute the checked out release post_fetch actions, now that
          --    dependencies are in place
          Actions.Execute_Actions (Rel, Alire.Actions.Post_Fetch);
 
          if Cmd.Compile then
-            Spawn.Alr (Cmd_Compile);
+            Commands.Compile.Execute;
          end if;
       end;
    exception
@@ -115,8 +116,6 @@ package body Alr.Commands.Get is
          if Cmd.Compile and Cmd.Only then
             Reportaise_Wrong_Arguments ("--only is incompatible with --compile");
          end if;
-
-         Requires_Full_Index;
 
          Retrieve (Cmd, Allowed.Project, Allowed.Versions);
       exception

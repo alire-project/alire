@@ -8,11 +8,11 @@ with Alire.Index;
 with Alire.Roots;
 with Alire.Utils;
 
+with Alr.Commands.Update;
 with Alr.Exceptions;
 with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Platform;
-with Alr.Spawn;
 with Alr.Templates;
 
 with Semantic_Versioning;
@@ -111,7 +111,7 @@ package body Alr.Commands.Withing is
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
-      Spawn.Alr (Cmd_Update);
+      Commands.Update.Execute (Online => False);
    end Replace_Current;
 
    ---------
@@ -278,18 +278,16 @@ package body Alr.Commands.Withing is
       end if;
 
       if not (Cmd.Del or else Cmd.From) and then Num_Arguments > 0 then
-         Requires_Full_Index (Even_In_Session => True);
          Add;
       elsif Cmd.Del then
          Del;
       elsif Cmd.From then
-         Requires_Full_Index (Even_In_Session => True);
          From;
       else
          raise Program_Error with "List should have already happended";
       end if;
 
-      Spawn.Alr (Cmd_Update);
+      Commands.Update.Execute (Online => False);
    exception
       when E : Constraint_Error =>
          Exceptions.Report ("In Withing.Execute:", E);
@@ -323,8 +321,6 @@ package body Alr.Commands.Withing is
 
    function With_Line (Name : Alire.Project) return String is
    begin
-      Requires_Full_Index;
-
       --  TODO: support actual separate child packages detecting their existence
       return "with Alire.Index." &
         Utils.Head (Alire.Index.Get (Name).Package_Name, '.') &

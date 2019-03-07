@@ -1,4 +1,4 @@
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.OS_Lib;
 
 package body Alr.Files is
@@ -10,8 +10,8 @@ package body Alr.Files is
    -------------------------
 
    function Is_Candidate_Folder (Folder : String := Ada.Directories.Current_Directory) return Boolean is
-     (Ada.Directories.Exists (Folder / Hardcoded.Alr_Working_Folder) and then
-      Ada.Directories.Exists (Folder / Hardcoded.Working_Deps_File));
+     (Ada.Directories.Exists (Folder / Paths.Alr_Working_Folder) and then
+      Ada.Directories.Exists (Folder / Paths.Working_Deps_File));
 
    -----------------------
    -- Locate_File_Under --

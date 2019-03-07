@@ -2,9 +2,8 @@ with Alire.Properties;
 with Alire.Utils;
 
 with Alr.Files;
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.OS_Lib;
-with Alr.Spawn;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -21,10 +20,6 @@ package body Alr.Commands.Version is
       pragma Unreferenced (Cmd);
       use Ada.Text_IO;
    begin
-      if Bootstrap.Session_State = Detached then
-         Spawn.Session_Alr_Without_Return;
-      end if;
-
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
       Trace.Always ("alr version (from git tag) is " & Git_Tag);
 
@@ -43,15 +38,13 @@ package body Alr.Commands.Version is
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
          Trace.Always ("alr session state is " & Session_State'Img);
 
-         if Session_State >= Detached then
-            Trace.Always ("alr session folder is " & Hardcoded.Session_Folder);
-         else
-            Trace.Always ("alr session folder is " & Hardcoded.No_Session_Folder);
+         if Session_State > Outside then
+            Trace.Always ("alr project folder is " & Files.Locate_Above_Project_Folder);
          end if;
       end;
 
       Log ("alr executable launched from " & Platform.Own_Executable, Always);
-      Log ("alr rolling source folder is " & Hardcoded.Alr_Src_Folder, Always);
+      Log ("alr rolling source folder is " & Paths.Alr_Src_Folder, Always);
 
       Log ("alr compiled on [" &
              GNAT.Source_Info.Compilation_ISO_Date & " " &
@@ -60,10 +53,10 @@ package body Alr.Commands.Version is
 
       -- FIXME this is OS dependent
       declare
-         Guard : Folder_Guard (OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder))
+         Guard : Folder_Guard (OS_Lib.Enter_Folder (Paths.Alr_Src_Folder))
            with Unreferenced;
       begin
-         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Git_Fingerprint);
+         OS_Lib.Spawn_Raw (Paths.Scripts_Git_Fingerprint);
       end;
 
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);
@@ -82,7 +75,7 @@ package body Alr.Commands.Version is
    begin
       -- FIXME this should be migrated to compiled-in git
       declare
-         Guard : Folder_Guard (Enter_Folder (Hardcoded.Alr_Src_Folder))
+         Guard : Folder_Guard (Enter_Folder (Paths.Alr_Src_Folder))
                    with Unreferenced;
          Output : Utils.String_Vector;
       begin

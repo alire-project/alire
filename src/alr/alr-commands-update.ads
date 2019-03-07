@@ -13,6 +13,9 @@ package Alr.Commands.Update is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
+   procedure Execute (Online : Boolean);
+   --  Execute from within Alr
+
    procedure Update_Alr;
    --  Deploy/Update alr sources if not there or outdated
 

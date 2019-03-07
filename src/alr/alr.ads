@@ -27,7 +27,7 @@ package Alr with Preelaborate is
 
    package Types renames Alire.Types;
 
-   --  Some hardcoded constants that help to break circularities
+   --  Some Paths constants that help to break circularities
 
    Bootstrap_Hash : constant String := "bootstrap";
 

@@ -4,6 +4,8 @@ package Alr.Commands.Compile is
 
    overriding procedure Execute (Cmd : in out Command);
 
+   procedure Execute;
+
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration);

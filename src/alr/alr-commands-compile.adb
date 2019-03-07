@@ -2,7 +2,7 @@ with Alire.Actions;
 with Alire.Properties.Labeled;
 
 with Alr.Actions;
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Query;
@@ -49,8 +49,7 @@ package body Alr.Commands.Compile is
          --  Perhaps it will be necessary in the future to cache these in the session file
          Add_Paths;
 
-         Spawn.Gprbuild (Hardcoded.Working_Build_File,
-                         Session_Build => False,
+         Spawn.Gprbuild (Paths.Working_Build_File,
                          Extra_Args    => Scenario.As_Command_Line);
       exception
          when others =>
@@ -79,6 +78,16 @@ package body Alr.Commands.Compile is
       pragma Unreferenced (Cmd);
    begin
       Do_Compile;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute is
+      Cmd : Command;
+   begin
+      Execute (Cmd);
    end Execute;
 
    --------------------
