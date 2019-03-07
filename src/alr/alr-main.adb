@@ -1,5 +1,7 @@
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 
+with Alire.Default_Index;
+
 with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.OS_Lib;

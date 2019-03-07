@@ -2,6 +2,7 @@ with Ada.Calendar;
 
 with Alire_Early_Elaboration;
 
+with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.OS_Lib;
 with Alr.Paths;
@@ -28,6 +29,23 @@ package body Alr.Bootstrap is
          Trace.Warning ("git is not detected, alr will fail on most operations");
       end if;
    end Check_Ada_Tools;
+
+   ----------------------
+   -- Check_Src_Folder --
+   ----------------------
+
+   procedure Check_Src_Folder is
+   begin
+      if not OS_Lib.Is_Folder (Paths.Alr_Src_Folder) then
+         if Paths.Alr_Src_Folder = Paths.Alr_Default_Src_Folder then
+            Trace.Info ("Checking out alr resources...");
+            Commands.Update.Update_Alr;
+         else
+            Trace.Error ("Given alr source path does not exist: " & Paths.Alr_Src_Folder);
+            OS_Lib.Bailout (1);
+         end if;
+      end if;
+   end Check_Src_Folder;
 
    -----------------
    -- Interrupted --

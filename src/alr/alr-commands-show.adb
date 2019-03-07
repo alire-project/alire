@@ -1,3 +1,5 @@
+with Alire.Index.Libgraph_Easy_Perl;
+
 with Alr.Dependency_Graphs;
 with Alr.Origins;
 with Alr.OS_Lib;
