@@ -276,7 +276,6 @@ package body Alr.Commands.Test is
          Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      Requires_Full_Index;
       Interactive.Not_Interactive := True;
 
       --  Start testing

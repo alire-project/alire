@@ -26,8 +26,6 @@ package body Alr.Commands.List is
          Reportaise_Wrong_Arguments ("Too many search arguments");
       end if;
 
-      Requires_Full_Index;
-
       declare
          use Alire.Projects.Project_Description_Maps;
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
