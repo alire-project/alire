@@ -63,10 +63,6 @@ package Alr.Paths is
    function Projects_Folder return Relative_Path;
    --  $ALR_WORKING_FOLDER/projects
 
-
-   --  Other stuff
-   Scripts_Graph_Easy : constant Simple_File := "graph-easy";
-
 private
 
    function "/"    (L, R : String)   return String is     (Ada.Directories.Compose (L, R));

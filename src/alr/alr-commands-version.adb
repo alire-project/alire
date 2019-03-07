@@ -2,6 +2,7 @@ with Alire.Properties;
 with Alire.Utils;
 
 with Alr.Files;
+with Alr.Paths;
 with Alr.OS_Lib;
 
 with GNAT.Compiler_Version;
@@ -35,6 +36,10 @@ package body Alr.Commands.Version is
          Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
          Trace.Always ("alr session state is " & Session_State'Img);
+
+         if Session_State > Outside then
+            Trace.Always ("alr project folder is " & Files.Locate_Above_Project_Folder);
+         end if;
       end;
 
       Log ("alr compiled on [" &
