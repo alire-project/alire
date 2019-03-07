@@ -1,7 +1,5 @@
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 
-with Alire.Default_Index;
-
 with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.OS_Lib;
@@ -13,8 +11,6 @@ begin
    Bootstrap.Check_Ada_Tools;
 
    Alr.Platform.Init (Alr.Platforms.Current.New_Platform);
-
-   Bootstrap.Check_Src_Folder;
 
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);
 

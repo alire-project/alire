@@ -1,4 +1,5 @@
 with Ada.Calendar;
+with Ada.Directories;
 
 with Alire_Early_Elaboration;
 
@@ -44,7 +45,7 @@ package body Alr.Bootstrap is
 
    function Session_State return Session_States is
    begin
-      --  WIP
+      --  TODO
       return Outside;
    end Session_State;
 
