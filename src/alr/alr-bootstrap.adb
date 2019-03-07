@@ -1,5 +1,4 @@
 with Ada.Calendar;
-with Ada.Directories;
 
 with Alire_Early_Elaboration;
 

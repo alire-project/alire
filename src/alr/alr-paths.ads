@@ -76,9 +76,6 @@ private
 
    --  Pseudo-constants (due to elaboration finished requirement)
 
-   function Alr_Default_Src_Folder return Absolute_Path renames
-     Platform.Config_Folder;
-
    function Alr_Src_Folder return String is
      (OS_Lib.Getenv (Environment.Alr_Src_Folder,
                      Self.Src_Folder));
