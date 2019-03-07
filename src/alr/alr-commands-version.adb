@@ -4,6 +4,7 @@ with Alire.Utils;
 with Alr.Files;
 with Alr.Paths;
 with Alr.OS_Lib;
+with Alr.Spawn;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -20,6 +21,10 @@ package body Alr.Commands.Version is
       pragma Unreferenced (Cmd);
       use Ada.Text_IO;
    begin
+      if Bootstrap.Session_State = Detached then
+         Spawn.Session_Alr_Without_Return;
+      end if;
+
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
       Trace.Always ("alr version (from git tag) is " & Git_Tag);
 
@@ -49,6 +54,14 @@ package body Alr.Commands.Version is
              GNAT.Source_Info.Compilation_ISO_Date & " " &
              GNAT.Source_Info.Compilation_Time & "] with GNAT version [" & GNAT_Version.Version & "]",
            Always);
+
+      -- FIXME this is OS dependent
+      declare
+         Guard : Folder_Guard (OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder))
+           with Unreferenced;
+      begin
+         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Git_Fingerprint);
+      end;
 
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);
       Put ("platform properties:");

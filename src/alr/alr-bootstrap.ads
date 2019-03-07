@@ -24,10 +24,6 @@ package Alr.Bootstrap is
    procedure Check_Ada_Tools;
    --  Check gprbuild/gnatmake are within reach
 
-   procedure Check_Src_Folder;
-   --  Check that either given/default source folder exists
-   --  If it doesn't, and it's the default location, check it out
-
    function Status_Line return String;
    --  One-liner reporting most interesting information
 

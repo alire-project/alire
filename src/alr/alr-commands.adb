@@ -26,9 +26,12 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Files;
+with Alr.Hardcoded;
 with Alr.Interactive;
 with Alr.Paths;
 with Alr.Platform;
+with Alr.Self;
+--  with Alr.Session;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
@@ -355,6 +358,7 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
+      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
       Root.Check_Valid;                -- Might raise Command_Failed
    end Requires_Project;
 

@@ -1,12 +1,11 @@
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 
-with Alire.Default_Index;
-
 with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.OS_Lib;
 with Alr.Platform.Init;
 with Alr.Platforms.Current;
+with Alr.Self;
 
 procedure Alr.Main is
 begin
