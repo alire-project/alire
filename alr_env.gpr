@@ -2,15 +2,11 @@ aggregate project Alr_Env is
 
    for Project_Path use (
                          "deps/ajunitgen",
-                         "deps/alire",
-                         "deps/alire/deps/aaa",
-                         "deps/alire/deps/semver",
-                         "deps/alire/deps/simple_logging",
+                         "deps/aaa",
+                         "deps/semantic_versioning",
+                         "deps/simple_logging",
                          "deps/xmlezout");
 
-   for Project_Files use ("alr.gpr",
-                          "deps/alire/alire.gpr");
-   --  Including alire.gpr here ensures that all index files are compiled.
-   --  They won't be included in the bootstrap alr (nor we want).
+   for Project_Files use ("alr.gpr");
 
 end Alr_Env;

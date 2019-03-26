@@ -1,6 +1,7 @@
+with "aaa";
 with "ajunitgen";
-with "alire";
 with "semantic_versioning";
+with "simple_logging";
 with "xml_ez_out";
 
 project Alr is
@@ -8,7 +9,9 @@ project Alr is
    for Source_Dirs use ("src/alire", 
                         "src/alr", 
                         "src/alr/os_linux",
-                        "deps/ajunitgen");
+                        "src/index",        -- To be removed on migration to TOML
+                        "src/index/**");    -- To be removed on migration to TOML
+
    for Object_Dir use "obj";
    for Main use ("alr-main.adb");
 
