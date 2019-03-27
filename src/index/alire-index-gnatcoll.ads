@@ -57,7 +57,8 @@ package Alire.Index.GNATCOLL is
         (Base
          .Renaming (GNATCOLL.Project)
          .Replacing (Git (Repo_Alire,
-                          "81bc37d7548fe40024eb0f647df65ec42f65443b")));
+                          "81bc37d7548fe40024eb0f647df65ec42f65443b"))
+         .Extending (Properties => Project_File ("gnatcoll.gpr")));
 
    end Slim;
 
@@ -70,7 +71,8 @@ package Alire.Index.GNATCOLL is
         (Base
          .Renaming (GNATCOLL.Project)
          .Replacing (Git (Repo_Alire,
-                          "7823e31add7133b9fbc6e037d9986a823e840dc0")));
+                          "7823e31add7133b9fbc6e037d9986a823e840dc0"))
+         .Extending (Properties => Project_File ("gnatcoll.gpr")));
 
    end Strings;
 
