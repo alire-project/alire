@@ -10,3 +10,12 @@
 [submodule "deps/ajunitgen"]
 	path = deps/ajunitgen
 	url = https://github.com/mosteo/ajunitgen.git
+[submodule "deps/aaa"]
+	path = deps/aaa
+	url = https://github.com/mosteo/aaa.git
+[submodule "deps/semantic_versioning"]
+	path = deps/semantic_versioning
+	url = https://github.com/alire-project/semantic_versioning.git
+[submodule "deps/simple_logging"]
+	path = deps/simple_logging
+	url = https://github.com/alire-project/simple_logging.git

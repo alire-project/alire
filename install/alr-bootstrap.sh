@@ -2,7 +2,7 @@
 
 # DEFINITIONS SECTION
 
-repo_branch=${1:-master}
+repo_branch=${1:-stable}
 repo_url=https://github.com/alire-project/alr.git
 
 required_tools="git id"

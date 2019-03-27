@@ -14,8 +14,9 @@ version=${1:-working}
 
 if [[ "$version" == "working" ]]; then
     echo Testing WORKING version, press enter
+    current=`pwd` # 
     pushd ~/opt/bin
-    ln -sf ~/local/alr/bin/alr
+    ln -sf "$current"/bin/alr
     popd
     read
 elif [[ "$version" == "docker" ]]; then

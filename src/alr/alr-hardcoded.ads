@@ -122,7 +122,7 @@ private
    function Alr_Src_Default_Session_Folder return String is (Alr_Src_Folder / "src" / "default_session");
    function Alr_Default_Index_File         return String is (Alr_Src_Default_Session_Folder / "alr-index.ads");
    function Alr_Selfbuild_Gpr_File         return String is (Alr_Src_Folder / "alr_env.gpr");
-   function Alr_Index_Folder               return String is (Alr_Src_Folder / "deps" / "alire" / "index");
+   function Alr_Index_Folder               return String is (Alr_Src_Folder / "src" / "index");
    function Alr_Rolling_Exec               return String is (Alr_Src_Folder / "bin" / "alr");
    function No_Session_Folder              return String is (Platform.Cache_Folder / "sessions" / Platform.Compiler'Img / "no_session");
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
