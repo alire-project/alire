@@ -10,11 +10,11 @@ if [ "$BRANCH" == "master" ]; then
     echo -e '\n\n/bin\ny' | ./install/alr-bootstrap.sh
     alr update --online
 else
-    gprbuild -p -P alr_env
+    gprbuild -j0 -p -P alr_env
     export PATH+=:`pwd`/bin
 fi 
 
-alr search --list --native
+alr search -d --list --native
 
 bash stress/selftest.sh docker
 
