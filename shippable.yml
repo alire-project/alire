@@ -6,10 +6,11 @@ branches:
         - testing
 
 env:
-    - IMAGE_TAG="debian-testing"
-    - IMAGE_TAG="ubuntu-lts"
     global:
         - IMAGE_NAME="alire/gnat"
+    matrix:
+        - IMAGE_TAG="debian-testing"
+        - IMAGE_TAG="ubuntu-lts"
 
 build:
     pre_ci_boot:
