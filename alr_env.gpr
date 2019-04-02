@@ -1,8 +1,9 @@
 aggregate project Alr_Env is
 
    for Project_Path use (
-                         "deps/ajunitgen",
                          "deps/aaa",
+                         "deps/ada-toml",
+                         "deps/ajunitgen",
                          "deps/semantic_versioning",
                          "deps/simple_logging",
                          "deps/xmlezout");
