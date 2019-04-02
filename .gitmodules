@@ -19,3 +19,6 @@
 [submodule "deps/simple_logging"]
 	path = deps/simple_logging
 	url = https://github.com/alire-project/simple_logging.git
+[submodule "deps/ada-toml"]
+	path = deps/ada-toml
+	url = https://github.com/pmderodat/ada-toml.git

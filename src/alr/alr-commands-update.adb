@@ -32,8 +32,7 @@ package body Alr.Commands.Update is
    procedure Upgrade is
       --  The part concerning only to the project
    begin
-      -- Requires_Full_Index;
-      -- Not anymore, thanks to explicit with requirements
+      Requires_Full_Index;
 
       Requires_Project;
 
