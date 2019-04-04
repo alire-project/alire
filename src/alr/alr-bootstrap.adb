@@ -57,7 +57,7 @@ package body Alr.Bootstrap is
       type Milliseconds is delta 0.001 range 0.0 .. 24.0 * 60.0 * 60.0;
    begin
       return
-        " (" & Session_State'Img & ") (" &
+        "(" & Session_State'Img & ") (" &
         Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
         (" (loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
    end Status_Line;

@@ -1,3 +1,4 @@
+with Alire.Config;
 with Alire.Properties;
 with Alire.Utils;
 
@@ -20,6 +21,7 @@ package body Alr.Commands.Version is
       use Ada.Text_IO;
    begin
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
+      Trace.Always ("config folder is " & Alire.Config.Path);
 
       if Root.Is_Empty then
          Trace.Always ("alr root is empty");
