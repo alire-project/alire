@@ -8,8 +8,9 @@ package body Alr.Commands.Build is
    -------------
 
    procedure Execute (Online : Boolean) is
+      pragma Unreferenced (Online);
    begin
-      Update.Execute (Online);
+      Update.Execute;
       Compile.Execute;
    end Execute;
 

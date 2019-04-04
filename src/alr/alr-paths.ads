@@ -29,11 +29,6 @@ package Alr.Paths is
    --  Filenames without path
 
 
-   --  Now, the declarations:
-
-   Alr_Branch : constant String := "master";
-   --  For initial checkouts
-
    Alr_Repo : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository checked out for self-upgrade
 
@@ -45,16 +40,6 @@ package Alr.Paths is
 
    Alr_Working_Deps_Path : constant Relative_Path;
    --  Path from inside the working folder to dependency folders
-
-   function Alr_Default_Src_Folder return Absolute_Path;
-   --  The default folder where alr is checked out if not overriden with
-   --    Environment.Alr_Src_Folder
-
-   function Alr_Src_Folder return Absolute_Path;
-   --  A folder where current alr sources are checked out.
-   --  These are needed not for recompilation anymore, but for scripts and templates
-
-   function Scripts_Git_Fingerprint return String;
 
    function Templates_Bin_Folder return Absolute_Path;
 
@@ -96,7 +81,6 @@ private
                      Alr_Default_Src_Folder));
 
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
-   function Scripts_Git_Fingerprint        return String is (Alr_Src_Folder / "scripts" / "git-fingerprint");
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");
    function Templates_Bin_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "bin");
    function Templates_Lib_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "lib");

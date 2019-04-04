@@ -74,7 +74,7 @@ package body Alr.Commands.Get is
       declare
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder)) with Unreferenced;
       begin
-         Commands.Update.Execute (Online => False);
+         Commands.Update.Execute;
 
          --  Execute the checked out release post_fetch actions, now that
          --    dependencies are in place

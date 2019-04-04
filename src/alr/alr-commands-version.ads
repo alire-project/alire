@@ -14,9 +14,6 @@ package Alr.Commands.Version is
 
    function Fingerprint return String;
 
-   function Git_Tag return String;
-   --  Returns latest annotated tag in alr sources (should be the alr version)
-
 private
 
    use Utils;

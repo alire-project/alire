@@ -189,7 +189,7 @@ package body Alr.Commands is
    procedure Display_Usage is
    begin
       New_Line;
-      Put_Line ("Ada Library Repository manager (" & Version.Git_Tag & ")");
+      Put_Line ("Ada Library Repository manager");
       Put_Line ("Usage : alr [global options] command [command options] [arguments]");
 
       New_Line;

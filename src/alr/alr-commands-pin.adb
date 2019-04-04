@@ -24,7 +24,7 @@ package body Alr.Commands.Pin is
               (Templates.Unreleased,
                Root.Current.Release.Replacing
                  (Dependencies => Deps.Releases.To_Dependencies));
-            Update.Execute (Online => False);
+            Update.Execute;
          else
             Trace.Error ("Could not resolve dependencies");
             raise Command_Failed;

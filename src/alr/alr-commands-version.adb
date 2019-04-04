@@ -2,7 +2,6 @@ with Alire.Properties;
 with Alire.Utils;
 
 with Alr.Files;
-with Alr.Paths;
 with Alr.OS_Lib;
 
 with GNAT.Compiler_Version;
@@ -21,7 +20,6 @@ package body Alr.Commands.Version is
       use Ada.Text_IO;
    begin
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
-      Trace.Always ("alr version (from git tag) is " & Git_Tag);
 
       if Root.Is_Empty then
          Trace.Always ("alr root is empty");
@@ -37,13 +35,7 @@ package body Alr.Commands.Version is
          Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
          Trace.Always ("alr session state is " & Session_State'Img);
-
-         if Session_State > Outside then
-            Trace.Always ("alr project folder is " & Files.Locate_Above_Project_Folder);
-         end if;
       end;
-
-      Log ("alr source folder is " & Paths.Alr_Src_Folder, Always);
 
       Log ("alr compiled on [" &
              GNAT.Source_Info.Compilation_ISO_Date & " " &
@@ -65,27 +57,5 @@ package body Alr.Commands.Version is
       end loop;
       New_Line;
    end Execute;
-
-   -------------
-   -- Git_Tag --
-   -------------
-
-   function Git_Tag return String is
-   begin
-      -- FIXME this should be migrated to compiled-in git
-      declare
-         Guard : Folder_Guard (Enter_Folder (Paths.Alr_Src_Folder))
-                   with Unreferenced;
-         Output : Utils.String_Vector;
-      begin
-         OS_Lib.Spawn_And_Capture (Output, "git", "describe --all --always");
-         return Alire.Utils.Split
-           (Utils.Trim (Output.Flatten),
-            '/',
-            Side => Alire.Utils.Tail,
-            From => Alire.Utils.Head,
-            Raises => False);
-      end;
-   end Git_Tag;
 
 end Alr.Commands.Version;

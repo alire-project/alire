@@ -15,8 +15,6 @@ begin
 
    Alr.Platform.Init (Alr.Platforms.Current.New_Platform);
 
-   Bootstrap.Check_Src_Folder;
-
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);
 
    Commands.Execute;

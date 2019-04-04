@@ -111,7 +111,7 @@ package body Alr.Commands.Withing is
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
-      Commands.Update.Execute (Online => False);
+      Commands.Update.Execute;
    end Replace_Current;
 
    ---------
@@ -287,7 +287,7 @@ package body Alr.Commands.Withing is
          raise Program_Error with "List should have already happended";
       end if;
 
-      Commands.Update.Execute (Online => False);
+      Commands.Update.Execute;
    exception
       when E : Constraint_Error =>
          Exceptions.Report ("In Withing.Execute:", E);
