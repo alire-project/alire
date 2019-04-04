@@ -3,8 +3,6 @@ with Alr.Platform;
 with Alr.Query;
 with Alr.Templates;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-
 package body Alr.Commands.Update is
 
    -------------
@@ -47,7 +45,7 @@ package body Alr.Commands.Update is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   procedure Execute is
    begin
       if Session_State > Outside then
          Upgrade;
