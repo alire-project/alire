@@ -6,10 +6,15 @@ with Alr.Defaults;
 with Alr.Environment;
 with Alr.Platform;
 with Alr.OS_Lib;
+with Alr.Self;
 
 package Alr.Paths is
 
    --  NOTE: none of the functions in this spec can be used before elaboration is complete
+   --  TODO: this note will be obsolete once Alire.Platform supersedes Alr.Platform
+
+   function "/" (L, R : String) return String;
+   --  Equivalent to Ada.Directories.Compose
 
 
    --  To clarify constants/functions declared herein:
@@ -40,6 +45,8 @@ package Alr.Paths is
 
    Alr_Working_Deps_Path : constant Relative_Path;
    --  Path from inside the working folder to dependency folders
+
+   function Alr_Src_Folder return Absolute_Path;
 
    function Templates_Bin_Folder return Absolute_Path;
 
@@ -78,7 +85,7 @@ private
 
    function Alr_Src_Folder return String is
      (OS_Lib.Getenv (Environment.Alr_Src_Folder,
-                     Alr_Default_Src_Folder));
+                     Self.Src_Folder));
 
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");

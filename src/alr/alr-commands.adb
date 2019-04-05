@@ -6,7 +6,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alire_Early_Elaboration;
 with Alire;
 with Alire.Features.Index;
-with Alire.TOML_Index;
 with Alire.Utils;
 
 with Alr.Commands.Build;
@@ -26,12 +25,9 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Files;
-with Alr.Hardcoded;
 with Alr.Interactive;
 with Alr.Paths;
 with Alr.Platform;
-with Alr.Self;
---  with Alr.Session;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
@@ -344,11 +340,8 @@ package body Alr.Commands is
    -- Requires_Full_Index --
    ---------------------------
 
-   procedure Requires_Full_Index (Even_In_Session : Boolean := False) is
-      pragma Unreferenced (Even_In_Session);
-      --  This is pointless now that all rebuilds incorporate it, but...
+   procedure Requires_Full_Index is
    begin
-      --  Load the TOML catalog, bail out when an error occurs
       Alire.Features.Index.Load_All;
    end Requires_Full_Index;
 
@@ -358,7 +351,6 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
       Root.Check_Valid;                -- Might raise Command_Failed
    end Requires_Project;
 

@@ -42,14 +42,6 @@ package body Alr.Commands.Version is
              GNAT.Source_Info.Compilation_Time & "] with GNAT version [" & GNAT_Version.Version & "]",
            Always);
 
-      -- FIXME this is OS dependent
-      declare
-         Guard : Folder_Guard (OS_Lib.Enter_Folder (Hardcoded.Alr_Src_Folder))
-           with Unreferenced;
-      begin
-         OS_Lib.Spawn_Raw (Hardcoded.Scripts_Git_Fingerprint);
-      end;
-
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);
       Put ("platform properties:");
       for Prop of Platform.Properties loop

@@ -76,6 +76,8 @@ package body Alr.Commands.Search is
 
       --  End of option verification, start of search
 
+      Requires_Full_Index;
+
       Tab.Append ("NAME");
       Tab.Append ("STATUS");
       Tab.Append ("VERSION");

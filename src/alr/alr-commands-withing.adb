@@ -278,10 +278,12 @@ package body Alr.Commands.Withing is
       end if;
 
       if not (Cmd.Del or else Cmd.From) and then Num_Arguments > 0 then
+         Requires_Full_Index;
          Add;
       elsif Cmd.Del then
          Del;
       elsif Cmd.From then
+         Requires_Full_Index;
          From;
       else
          raise Program_Error with "List should have already happended";
@@ -321,7 +323,8 @@ package body Alr.Commands.Withing is
 
    function With_Line (Name : Alire.Project) return String is
    begin
-      --  TODO: support actual separate child packages detecting their existence
+      Requires_Full_Index;
+
       return "with Alire.Index." &
         Utils.Head (Alire.Index.Get (Name).Package_Name, '.') &
         ";";

@@ -1,10 +1,6 @@
-with Alire.Index.Libgraph_Easy_Perl;
-
 with Alr.Dependency_Graphs;
 with Alr.Origins;
-with Alr.OS_Lib;
 with Alr.Parsers;
-with Alr.Paths;
 with Alr.Platform;
 
 with Alire.Index;
@@ -137,6 +133,8 @@ package body Alr.Commands.Show is
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
                          else Parsers.Project_Versions (+Root.Current.Project)));
       begin
+         Requires_Full_Index;
+
          --  Execute
          Report (Allowed.Project, Allowed.Versions, Cmd);
       exception

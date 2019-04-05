@@ -48,6 +48,8 @@ package Alr.Commands is
    -- Supporting subprograms for commands --
    -----------------------------------------
 
+   procedure Requires_Full_Index;
+
    procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it
    --  May trigger recompilation and respawn. In that case, it doesn't return to the caller, but respawns.

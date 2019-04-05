@@ -117,6 +117,8 @@ package body Alr.Commands.Get is
             Reportaise_Wrong_Arguments ("--only is incompatible with --compile");
          end if;
 
+         Requires_Full_Index;
+
          Retrieve (Cmd, Allowed.Project, Allowed.Versions);
       exception
          when Alire.Query_Unsuccessful =>
