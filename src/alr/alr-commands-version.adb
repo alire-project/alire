@@ -1,9 +1,9 @@
-with Alire.Config;
 with Alire.Properties;
 with Alire.Utils;
 
 with Alr.Files;
 with Alr.OS_Lib;
+with Alr.Paths;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -21,7 +21,8 @@ package body Alr.Commands.Version is
       use Ada.Text_IO;
    begin
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
-      Trace.Always ("config folder is " & Alire.Config.Path);
+      Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
+      Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
 
       if Root.Is_Empty then
          Trace.Always ("alr root is empty");

@@ -1,4 +1,4 @@
-with Alire.Hardcoded;
+with Alire.Environment;
 with Alire.OS_Lib;
 with Alire.Platform;
 
@@ -15,7 +15,7 @@ package body Alire.Config is
       if Config_Path /= null then -- Case with switch (TODO)
          return Config_Path.all;
       else
-         return OS_Lib.Getenv (Hardcoded.Env_Config, 
+         return OS_Lib.Getenv (Environment.Config, 
                                Platform.Default_Config_Folder);
       end if;
    end Path;
