@@ -5,6 +5,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
 with Alire;
+with Alire.Features.Index;
 with Alire.TOML_Index;
 with Alire.Utils;
 
@@ -348,36 +349,11 @@ package body Alr.Commands is
    ---------------------------
 
    procedure Requires_Full_Index (Even_In_Session : Boolean := False) is
+      pragma Unreferenced (Even_In_Session);
       --  This is pointless now that all rebuilds incorporate it, but...
    begin
       --  Load the TOML catalog, bail out when an error occurs
-
-      declare
-         use Os_Lib.Paths;
-
-         Result : Alire.TOML_Index.Load_Result;
-         Env    : Alire.TOML_Index.Environment_Maps.Map;
-      begin
-         Alire.TOML_Index.Set_Environment
-           (Env,
-            Platform.Distribution,
-            Platform.Operating_System,
-            Platform.Compiler);
-         Alire.TOML_Index.Load_Catalog
-           (Hardcoded.Alr_Src_Folder / "deps" / "alire" / "index",
-            Env, Result);
-
-         if not Result.Success then
-            Trace.Error ("Error while loading the index:");
-            Trace.Error (Alire.TOML_Index.Error_Message (Result));
-            OS_Lib.Bailout (1);
-         end if;
-      end;
-
-      if Self.Is_Session and not Even_In_Session then
-         Trace.Debug ("A session build should not request the full index");
---           raise Program_Error with "A session build should not request the full index";
-      end if;
+      Alire.Features.Index.Load_All;
    end Requires_Full_Index;
 
    ----------------------
