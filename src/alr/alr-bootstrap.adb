@@ -1,8 +1,10 @@
 with Ada.Calendar;
+with Ada.Directories;
 
 with Alire_Early_Elaboration;
 
 with Alr.OS_Lib;
+with Alr.Paths;
 with Alr.Utils;
 
 with GNAT.Ctrl_C;
@@ -26,6 +28,28 @@ package body Alr.Bootstrap is
          Trace.Warning ("git is not detected, alr will fail on most operations");
       end if;
    end Check_Ada_Tools;
+
+   --------------------------
+   -- Checkout_Alr_Sources --
+   --------------------------
+
+   procedure Checkout_Alr_Sources (To_Path : String) is
+      Parent : constant String := Ada.Directories.Containing_Directory (To_Path);
+   begin
+      if not OS_Lib.Is_Folder (Parent) then
+         Ada.Directories.Create_Path (Parent);
+      end if;
+
+      Trace.Detail ("Checking out alr sources...");
+
+      OS_Lib.Spawn ("git", "clone " & Paths.Alr_Repo & " " & To_Path);
+
+      declare
+         Enter : OS_Lib.Folder_Guard (OS_Lib.Enter_Folder (To_Path)) with Unreferenced;
+      begin
+         OS_Lib.Spawn ("git", "submodule update --init --recursive");
+      end;
+   end Checkout_Alr_Sources;
 
    -----------------
    -- Interrupted --

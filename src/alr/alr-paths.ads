@@ -1,12 +1,9 @@
 with Ada.Directories;
 
 with Alire;
+with Alire.Config;
 
 with Alr.Defaults;
-with Alr.Environment;
-with Alr.Platform;
-with Alr.OS_Lib;
-with Alr.Self;
 
 package Alr.Paths is
 
@@ -35,7 +32,13 @@ package Alr.Paths is
 
 
    Alr_Repo : constant Alire.URL := Defaults.Alr_Repository;
-   --  Repository checked out for self-upgrade
+   --  Repository where alr sources can be found
+
+   function Alr_Config_Folder return Absolute_Path;
+   --  Root folder containing persistent configuration: indexes, templates
+
+   function Alr_Source_Folder return Absolute_Path;
+   --  Folder inside Alr_Config_Folder containing a clone of the alr repo
 
    Alr_Working_Folder : constant Relative_Path;
    --  Folder within a working project that will contain metadata/build files, 3rd-party projects, and session
@@ -45,8 +48,6 @@ package Alr.Paths is
 
    Alr_Working_Deps_Path : constant Relative_Path;
    --  Path from inside the working folder to dependency folders
-
-   function Alr_Src_Folder return Absolute_Path;
 
    function Templates_Bin_Folder return Absolute_Path;
 
@@ -63,6 +64,10 @@ package Alr.Paths is
    function Projects_Folder return Relative_Path;
    --  $ALR_WORKING_FOLDER/projects
 
+
+   --  Scripts paths
+   Scripts_Graph_Easy : constant String := "graph-easy";
+
 private
 
    function "/"    (L, R : String)   return String is     (Ada.Directories.Compose (L, R));
@@ -75,15 +80,15 @@ private
    Alr_Working_Deps_Path      : constant Relative_Path := "cache" / "projects";
 
    --  Pseudo-constants (due to elaboration finished requirement)
+   --  Or because they can be set after elaboration (e.g. via config switches)
 
-   function Alr_Src_Folder return String is
-     (OS_Lib.Getenv (Environment.Alr_Src_Folder,
-                     Self.Src_Folder));
+   function Alr_Config_Folder return String is (Alire.Config.Path);
+   function Alr_Source_Folder return String is (Alr_Config_Folder / "alr");
 
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");
-   function Templates_Bin_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "bin");
-   function Templates_Lib_Folder           return String is (Alr_Src_Folder / "templates" / "projects" / "lib");
+   function Templates_Bin_Folder           return String is (Alr_Config_Folder / "templates" / "projects" / "bin");
+   function Templates_Lib_Folder           return String is (Alr_Config_Folder / "templates" / "projects" / "lib");
 
    --  Functions
 

@@ -5,6 +5,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
 with Alire;
+with Alire.Config;
 with Alire.Features.Index;
 with Alire.Utils;
 
@@ -348,6 +349,10 @@ package body Alr.Commands is
 
    procedure Requires_Full_Index is
    begin
+      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
+         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
+      end if;
+
       Alire.Features.Index.Load_All;
    end Requires_Full_Index;
 

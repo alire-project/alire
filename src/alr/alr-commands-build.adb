@@ -1,4 +1,5 @@
-with Alr.Spawn;
+with Alr.Commands.Compile;
+with Alr.Commands.Update;
 
 package body Alr.Commands.Build is
 
