@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alr.Hardcoded;
+with Alr.Paths;
 
 package body Alr.Root is
 
@@ -16,17 +16,17 @@ package body Alr.Root is
          raise Command_Failed;
       end if;
 
-      if not Exists (Hardcoded.Alr_Working_Folder) then
+      if not Exists (Paths.Alr_Working_Folder) then
          Trace.Error ("alire subfolder not found");
          raise Program_Error;
-      elsif Kind (Hardcoded.Alr_Working_Folder) /= Directory then
-         Trace.Error ("Expected alire folder but found a: " & Kind (Hardcoded.Alr_Working_Folder)'img);
+      elsif Kind (Paths.Alr_Working_Folder) /= Directory then
+         Trace.Error ("Expected alire folder but found a: " & Kind (Paths.Alr_Working_Folder)'img);
          raise Program_Error;
-      elsif not Exists (Hardcoded.Working_Deps_File) then
+      elsif not Exists (Paths.Working_Deps_File) then
          Trace.Error ("Dependency file not found in alire folder");
          raise Program_Error;
-      elsif Kind (Hardcoded.Working_Deps_File) /= Ordinary_File then
-         Trace.Error ("Expected ordinary file but found a: " & Kind (Hardcoded.Working_Deps_File)'img);
+      elsif Kind (Paths.Working_Deps_File) /= Ordinary_File then
+         Trace.Error ("Expected ordinary file but found a: " & Kind (Paths.Working_Deps_File)'img);
          raise Program_Error;
       end if;
    end Check_Valid;

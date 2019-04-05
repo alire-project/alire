@@ -21,7 +21,7 @@ package Alr.Platform is
    function Compiler return Alire.Platforms.Compilers;
 
    function Target return Alire.Platforms.Targets is (Alire.Platforms.Native);
-   --  Hardcoded for now
+   --  Paths for now
 
    function Word_Size return Alire.Platforms.Word_Sizes;
 

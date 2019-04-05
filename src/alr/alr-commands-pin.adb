@@ -1,5 +1,5 @@
+with Alr.Commands.Update;
 with Alr.Query;
-with Alr.Spawn;
 with Alr.Templates;
 
 package body Alr.Commands.Pin is
@@ -24,7 +24,7 @@ package body Alr.Commands.Pin is
               (Templates.Unreleased,
                Root.Current.Release.Replacing
                  (Dependencies => Deps.Releases.To_Dependencies));
-            Spawn.Alr (Cmd_Update);
+            Update.Execute;
          else
             Trace.Error ("Could not resolve dependencies");
             raise Command_Failed;

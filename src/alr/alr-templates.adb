@@ -15,7 +15,7 @@ with Alr.Code;
 with Alr.Commands;
 with Alr.Commands.Withing;
 with Alr.Files;
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Utils;
@@ -118,7 +118,7 @@ package body Alr.Templates is
       use all type Utils.String_Vectors.Cursor;
 
       File     : File_Type;
-      Filename : constant String := Hardcoded.Working_Build_File;
+      Filename : constant String := Paths.Working_Build_File;
       Prjname  : constant String := Utils.To_Mixed_Case (Ada.Directories.Base_Name (Filename));
 
       First    : Boolean := True;
@@ -170,14 +170,14 @@ package body Alr.Templates is
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
          else
-            All_Paths.Append (Hardcoded.Alr_Working_Deps_Path / Rel.Unique_Folder);
+            All_Paths.Append (Paths.Alr_Working_Deps_Path / Rel.Unique_Folder);
          end if;
 
          --  Add non-root extra project paths, always
          for Path of Rel.Project_Paths (Platform.Properties) loop
             All_Paths.Append ((if Rel.Project = Root.Project
                                then ".."
-                               else Hardcoded.Alr_Working_Deps_Path / Rel.Unique_Folder) / Path);
+                               else Paths.Alr_Working_Deps_Path / Rel.Unique_Folder) / Path);
          end loop;
       end loop;
 
@@ -253,7 +253,7 @@ package body Alr.Templates is
       Includes : Sets.Set; -- To sort them and remove duplicates
 
       File : File_Type;
-      Name : constant String := Hardcoded.Working_Deps_File;
+      Name : constant String := Paths.Working_Deps_File;
 
       Simple_Name : constant String := Ada.Directories.Simple_Name (Name);
 
@@ -266,7 +266,7 @@ package body Alr.Templates is
                       " with" & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
-      OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
+      OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
       Files.Backup_If_Existing (Name);
       Create (File, Out_File, Name);
 
@@ -323,55 +323,5 @@ package body Alr.Templates is
 
       Close (File);
    end Generate_Prj_Alr;
-
-   ----------------------
-   -- Generate_Session --
-   ----------------------
-
-   procedure Generate_Session (Session_Path : String;
-                               Full_Index   : Boolean;
-                               Alire_File   : String := "") is
-      use Ada.Directories;
-      use Alr.OS_Lib;
-
-      File : File_Type;
-      Hash : constant String := (if Alire_File /= "" then Utils.Hash_File (Alire_File) else "no-alr-file");
-   begin
-      Create (File, Out_File, Session_Path / "alr-session.ads");
-
-      Put_Line (File, "pragma Warnings (Off);");
-      if Full_Index then
-         Generate_Full_Index (File, Hardcoded.Alr_Index_Folder);
-         New_Line (File);
-      end if;
-
-      --  Depend on the project alr file that does the root registration
-      if Alire_File /= "" then
-         Put_Line (File, "with " & Utils.To_Mixed_Case (Base_Name (Alire_File)) & ";");
-         New_Line (File);
-      end if;
-
-      Put_Line (File, "package Alr.Session is");
-      New_Line (File);
-
-      Put_Line (File, Tab_1 & "--  This is a generated file. DO NOT EDIT MANUALLY!");
-      New_Line (File);
-
-      Put_Line (File, Tab_1 & "Alr_Src_Folder : constant String := """ & Hardcoded.Alr_Src_Folder & """;");
-      New_Line (File);
-
-      Put_Line (File, Tab_1 & "Hash : constant String := """ & Hash & """;");
-      New_Line (File);
-
-      Put_Line (File, Tab_1 & "Full_Index : constant Boolean := " & Full_Index'Img & ";");
-      New_Line (File);
-
-      Put_Line (File, Tab_1 & "Session_Build : constant Boolean := " & Boolean'(Alire_File /= "")'Img & ";");
-      New_Line (File);
-
-      Put_Line (File, "end Alr.Session;");
-
-      Close (File);
-   end Generate_Session;
 
 end Alr.Templates;

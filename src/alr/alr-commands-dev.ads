@@ -18,8 +18,6 @@ private
    type Command is new Commands.Command with record
       Custom       : aliased Boolean := False; -- Custom code to run instead
       Raise_Except : aliased Boolean := False;
-      Respawn      : aliased Boolean := False;
-      Self_Compile : aliased Boolean := False;
       Self_Test    : aliased Boolean := False;
    end record;
 

@@ -26,14 +26,6 @@ package Alr.Templates is
                                Release  : Types.Release);
    --  Generate dependency file, either for a released or unreleased project
 
-   procedure Generate_Session (Session_Path : String;
-                               Full_Index   : Boolean;
-                               Alire_File   : String := "");
-   --  Generate the alr-session.ads file for current project file
-   --  If no alr file, an empty hash will be used so this will be an outdated or stand-alone executable
-   --  This is needed when, for example, searching or getting projects: we are outside any project but
-   --    need the full index.
-
    Sed_Pattern : constant String;
 
 private

@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.Spawn;
 
 package body Alr.Commands.Clean is
@@ -15,24 +15,19 @@ package body Alr.Commands.Clean is
          Requires_Project;
 
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " & Hardcoded.Working_Build_File & " " & Scenario.As_Command_Line);
+         Spawn.Command ("gprclean", "-r -P " & Paths.Working_Build_File & " " & Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then
-         if Bootstrap.Session_State >= Outdated then
-            if OS_Lib.Is_Folder (Hardcoded.Alr_Working_Cache_Folder) then
+         if Bootstrap.Session_State > Outside then
+            if OS_Lib.Is_Folder (Paths.Alr_Working_Cache_Folder) then
                Trace.Detail ("Deleting working copy cache...");
-               Ada.Directories.Delete_Tree (Hardcoded.Alr_Working_Cache_Folder);
+               Ada.Directories.Delete_Tree (Paths.Alr_Working_Cache_Folder);
             else
                Trace.Warning ("Cache folder not present");
             end if;
          else
-            if OS_Lib.Is_Folder (Hardcoded.No_Session_Folder) then
-               Trace.Detail ("Deleting global cache...");
-               Ada.Directories.Delete_Tree (Hardcoded.No_Session_Folder);
-            else
-               Trace.Warning ("Global cache folder not present");
-            end if;
+            Trace.Info ("Not in a project or sandbox folder");
          end if;
       end if;
    end Execute;

@@ -1,5 +1,6 @@
-with Alr.Hardcoded; -- TODO remove these dependency inversions
+-- TODO remove these dependency inversions
 with Alr.Platform;
+with Alr.Self;
 
 with Alire.TOML_Index;
 
@@ -26,7 +27,7 @@ package body Alire.Features.Index is
             Platform.Operating_System,
             Platform.Compiler);
          Alire.TOML_Index.Load_Catalog
-           (Hardcoded.Alr_Src_Folder / "deps" / "alire" / "index",
+           (Self.Src_Folder / "deps" / "alire" / "index",
             Env, Result);
 
          if not Result.Success then

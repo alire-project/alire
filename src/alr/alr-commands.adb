@@ -6,7 +6,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alire_Early_Elaboration;
 with Alire;
 with Alire.Features.Index;
-with Alire.TOML_Index;
 with Alire.Utils;
 
 with Alr.Commands.Build;
@@ -26,11 +25,9 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Files;
-with Alr.Hardcoded;
 with Alr.Interactive;
+with Alr.Paths;
 with Alr.Platform;
-with Alr.Self;
---  with Alr.Session;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
@@ -188,7 +185,7 @@ package body Alr.Commands is
    procedure Display_Usage is
    begin
       New_Line;
-      Put_Line ("Ada Library Repository manager (" & Version.Git_Tag & ")");
+      Put_Line ("Ada Library Repository manager");
       Put_Line ("Usage : alr [global options] command [command options] [arguments]");
 
       New_Line;
@@ -263,7 +260,7 @@ package body Alr.Commands is
       Put_Line ("Valid commands: ");
       New_Line;
       for Cmd in Cmd_Names'Range loop
-         if Cmd /= Cmd_Dev or else not Self.Is_Canonical then
+         if Cmd /= Cmd_Dev then
             Table.New_Row;
             Table.Append (Tab);
             Table.Append (Image (Cmd));
@@ -279,22 +276,17 @@ package body Alr.Commands is
 
    function Enter_Project_Folder return OS_Lib.Destination is
    begin
-      if Session_State /= Valid then
-         --  Best guess
-         declare
-            Candidate_Folder : constant String := Files.Locate_Above_Project_Folder;
-         begin
-            if Candidate_Folder /= "" then
-               Trace.Detail ("Using candidate project root: " & Candidate_Folder);
-               return new String'(Candidate_Folder);
-            else
-               Trace.Debug ("Not entering project folder, no valid project root found");
-               return OS_Lib.Stay_In_Current_Folder;
-            end if;
-         end;
-      else
-         return OS_Lib.Stay_In_Current_Folder;
-      end if;
+      declare
+         Candidate_Folder : constant String := Files.Locate_Above_Project_Folder;
+      begin
+         if Candidate_Folder /= "" then
+            Trace.Detail ("Using candidate project root: " & Candidate_Folder);
+            return new String'(Candidate_Folder);
+         else
+            Trace.Debug ("Not entering project folder, no valid project root found");
+            return OS_Lib.Stay_In_Current_Folder;
+         end if;
+      end;
    end Enter_Project_Folder;
 
    ------------------
@@ -331,15 +323,15 @@ package body Alr.Commands is
    procedure Requires_Buildfile is
       Guard : OS_Lib.Folder_Guard (Enter_Project_Folder) with Unreferenced;
    begin
-      if Bootstrap.Session_State /= Valid then
+      if Bootstrap.Session_State /= Project then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
       end if;
 
-      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Working_Build_File) or else
-        OS_Lib.Is_Older (This => Hardcoded.Working_Build_File,
-                         Than => Hardcoded.Working_Deps_File)
+      if not GNAT.OS_Lib.Is_Regular_File (Paths.Working_Build_File) or else
+        OS_Lib.Is_Older (This => Paths.Working_Build_File,
+                         Than => Paths.Working_Deps_File)
       then
-         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Working_Build_File);
+         Trace.Detail ("Generating alr buildfile: " & Paths.Working_Build_File);
          Templates.Generate_Agg_Gpr (Root.Current);
       end if;
    end Requires_Buildfile;
@@ -348,11 +340,8 @@ package body Alr.Commands is
    -- Requires_Full_Index --
    ---------------------------
 
-   procedure Requires_Full_Index (Even_In_Session : Boolean := False) is
-      pragma Unreferenced (Even_In_Session);
-      --  This is pointless now that all rebuilds incorporate it, but...
+   procedure Requires_Full_Index is
    begin
-      --  Load the TOML catalog, bail out when an error occurs
       Alire.Features.Index.Load_All;
    end Requires_Full_Index;
 
@@ -362,7 +351,6 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
       Root.Check_Valid;                -- Might raise Command_Failed
    end Requires_Project;
 

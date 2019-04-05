@@ -51,7 +51,7 @@ package body Alr.Checkout is
    ---------------
 
    procedure To_Folder (Projects : Query.Instance;
-                        Parent   : String := Hardcoded.Projects_Folder)
+                        Parent   : String := Paths.Projects_Folder)
    is
       Was_There : Boolean;
       Graph     : Dependency_Graphs.Graph :=
@@ -124,7 +124,7 @@ package body Alr.Checkout is
          declare
             use OS_Lib;
             Guard      : Folder_Guard (Enter_Folder (R.Unique_Folder)) with Unreferenced;
-            Index_File : constant String := Hardcoded.Working_Deps_File;
+            Index_File : constant String := Paths.Working_Deps_File;
          begin
             if Is_Regular_File (Index_File) then
                Trace.Detail ("Renaming in-source alr file: " & Index_File);

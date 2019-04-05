@@ -19,6 +19,9 @@ package Alr.OS_Lib is
 
    procedure Setenv (Var : String; Value : String) renames GNAT.OS_Lib.Setenv;
 
+   function Exists_In_Path (File : String) return Boolean is
+      (GNAT.OS_Lib."/="  (GNAT.OS_Lib.Locate_Exec_On_Path (File), null));
+
    --  Process spawning
 
    function Spawn (Command             : String;

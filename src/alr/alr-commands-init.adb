@@ -4,7 +4,7 @@ with Alire.Origins;
 with Alire.Releases;
 with Alire.Roots;
 
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Templates;
@@ -25,8 +25,8 @@ package body Alr.Commands.Init is
          Ada.Directories.Create_Directory (Name);
       else
          OS_Lib.Copy_Folder ((if Cmd.Bin
-                             then Hardcoded.Templates_Bin_Folder
-                             else Hardcoded.Templates_Lib_Folder),
+                             then Paths.Templates_Bin_Folder
+                             else Paths.Templates_Lib_Folder),
                              Name);
 
          OS_Lib.Sed_Folder (Name,
@@ -43,7 +43,7 @@ package body Alr.Commands.Init is
                     then Os_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name))) with Unreferenced;
       begin
-         OS_Lib.Create_Folder (Hardcoded.Alr_Working_Folder);
+         OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
 
          Templates.Generate_Prj_Alr
            (Templates.Unreleased,
@@ -92,17 +92,17 @@ package body Alr.Commands.Init is
          end if;
 
          --  Create and enter folder for generation, if it didn't happen already
-         if not Cmd.In_Place and then Session_State >= Detached then
-            if Session_State = Valid and then Name = +Root.Project then
+         if Session_State = Project then
+            if Name = +Root.Project then
                Trace.Info ("Already in working copy, skipping initialization");
             else
                Trace.Error ("Cannot initialize a project inside another alr project, stopping.");
                raise Command_Failed;
             end if;
-         else
-            Generate (Cmd);
-            Trace.Detail ("Initialization completed");
          end if;
+
+         Generate (Cmd);
+         Trace.Detail ("Initialization completed");
       end;
    end Execute;
 

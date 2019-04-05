@@ -7,7 +7,7 @@ with Alire.Index;
 
 with Alr.Files;
 with Alr.Interactive;
-with Alr.Hardcoded;
+with Alr.Paths;
 with Alr.Platform;
 with Alr.OS_Lib;
 with Alr.Parsers;
@@ -158,10 +158,10 @@ package body Alr.Commands.Test is
             end;
          end if;
 
-         OS_Lib.Create_Folder (R.Unique_Folder / Hardcoded.Alr_Working_Folder);
+         OS_Lib.Create_Folder (R.Unique_Folder / Paths.Alr_Working_Folder);
          --  Might not exist for native/failed/skipped
          Output.Write (R.Unique_Folder /
-                         Hardcoded.Alr_Working_Folder /
+                         Paths.Alr_Working_Folder /
                            "alr_test_" & Timestamp & ".log");
       end Test_Release;
 
