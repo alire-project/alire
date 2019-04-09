@@ -10,6 +10,7 @@ env:
     global:
         - IMAGE_NAME="alire/gnat"
     matrix:
+        - IMAGE_TAG="community-2018"
         - IMAGE_TAG="debian-testing"
         - IMAGE_TAG="ubuntu-lts"
 
