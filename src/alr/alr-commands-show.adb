@@ -1,15 +1,33 @@
-with Alire.Index.Libgraph_Easy_Perl;
-
 with Alr.Dependency_Graphs;
 with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
+
+with Alire.Index;
 
 with Semantic_Versioning;
 
 package body Alr.Commands.Show is
 
    package Semver renames Semantic_Versioning;
+
+   function Libgraph_Easy_Perl_Installed return Boolean;
+   --  Return whether the rolling version of libgraph_easy_perl_install is
+   --  installed.
+
+   ----------------------------------
+   -- Libgraph_Easy_Perl_Installed --
+   ----------------------------------
+
+   function Libgraph_Easy_Perl_Installed return Boolean is
+      Prj : constant Alire.Project := "libgraph_easy_perl_installed";
+      Ver : constant Semantic_Versioning.Version :=
+         Semantic_Versioning.Parse ("0.0-rolling");
+   begin
+      return Alire.Index.Exists (Prj, Ver)
+             and then Origins.New_Origin
+                        (Alire.Index.Find (Prj, Ver).Origin).Already_Installed;
+   end Libgraph_Easy_Perl_Installed;
 
    --------------------------
    -- Display_Help_Details --
@@ -70,7 +88,7 @@ package body Alr.Commands.Show is
                                     .From_Instance (Needed.Releases)
                                     .Including (Rel);
                      begin
-                        if Origins.New_Origin (Alire.Index.Libgraph_Easy_Perl.V_Rolling.Origin).Already_Installed then -- plot
+                        if Libgraph_Easy_Perl_Installed then --  plot
                            Graph.Plot (Needed.Releases.Including (Rel));
                         else          -- textual
                            Graph.Print (Needed.Releases.Including (Rel),
@@ -102,15 +120,8 @@ package body Alr.Commands.Show is
 
       -- asking for info, we could return the current project
       --  We have internal data, but is it valid?
-      if Num_Arguments = 0 then
-         case Bootstrap.Session_State is
-            when Detached =>
-               Bootstrap.Check_Rebuild_Respawn;
-            when Valid =>
-               null; -- Proceed
-            when others =>
-               Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
-         end case;
+      if Num_Arguments = 0 and then Bootstrap.Session_State = Outside then
+         Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
       end if;
 
       declare
@@ -122,8 +133,6 @@ package body Alr.Commands.Show is
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
                          else Parsers.Project_Versions (+Root.Current.Project)));
       begin
-         Requires_Full_Index;
-
          --  Execute
          Report (Allowed.Project, Allowed.Versions, Cmd);
       exception

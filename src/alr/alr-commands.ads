@@ -48,12 +48,7 @@ package Alr.Commands is
    -- Supporting subprograms for commands --
    -----------------------------------------
 
-   --  These are in order of exigence
-   use all type Bootstrap.Session_States;
-
-   procedure Requires_Full_Index (Even_In_Session : Boolean := False);
-   --  Ensures that alr has self-built with a full index
-   --  Only depend should need the full index for a session build
+   procedure Requires_Full_Index;
 
    procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it
@@ -104,6 +99,8 @@ package Alr.Commands is
    function Image (N : Cmd_Names) return String;
 
 private
+
+   use all type Bootstrap.Session_States;
 
    --  Session shortcut
    function Session_State return Bootstrap.Session_States renames Bootstrap.Session_State;

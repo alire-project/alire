@@ -5,6 +5,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
 with Alire;
+with Alire.Config;
+with Alire.Features.Index;
 with Alire.Utils;
 
 with Alr.Commands.Build;
@@ -24,11 +26,9 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Files;
-with Alr.Hardcoded;
 with Alr.Interactive;
+with Alr.Paths;
 with Alr.Platform;
-with Alr.Self;
---  with Alr.Session;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
@@ -39,7 +39,9 @@ package body Alr.Commands is
 
    --  To add a command: update the dispatch table below
 
-   Dispatch_Table : constant array (Cmd_Names) of access Command'Class :=
+   type Command_Access is access Command'Class;
+
+   Dispatch_Table : constant array (Cmd_Names) of Command_Access :=
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Compile  => new Compile.Command,
@@ -55,6 +57,8 @@ package body Alr.Commands is
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
                        Cmd_With     => new Withing.Command);
+
+   Command_Line_Config_Path : aliased Gnat.OS_Lib.String_Access;
 
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
@@ -127,13 +131,22 @@ package body Alr.Commands is
    procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
    begin
       Define_Switch (Config,
+                     Command_Line_Config_Path'Access,
+                     "-c=", "--config=",
+                     "Override configuration folder location");
+      Define_Switch (Config,
                      Help_Switch'Access,
                      "-h", "--help", "Display general or command-specific help");
 
       Define_Switch (Config,
                      Interactive.Not_Interactive'Access,
-                     "-n", "--not-interactive",
+                     "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
+
+      Define_Switch (Config,
+                     Prefer_Oldest'Access,
+                     Long_Switch => "--prefer-oldest",
+                     Help        => "Prefer oldest versions instead of newest when resolving dependencies");
 
       Define_Switch (Config,
                      Log_Quiet'Access,
@@ -149,11 +162,6 @@ package body Alr.Commands is
                      Log_Debug'Access,
                      "-d",
                      Help => "Be even more verbose (including debug messages)");
-
-      Define_Switch (Config,
-                     Prefer_Oldest'Access,
-                     Long_Switch => "--prefer-oldest",
-                     Help => "Prefer oldest versions instead of newest when resolving dependencies");
    end Set_Global_Switches;
 
    ---------------------
@@ -186,7 +194,7 @@ package body Alr.Commands is
    procedure Display_Usage is
    begin
       New_Line;
-      Put_Line ("Ada Library Repository manager (" & Version.Git_Tag & ")");
+      Put_Line ("Ada Library Repository manager");
       Put_Line ("Usage : alr [global options] command [command options] [arguments]");
 
       New_Line;
@@ -261,7 +269,7 @@ package body Alr.Commands is
       Put_Line ("Valid commands: ");
       New_Line;
       for Cmd in Cmd_Names'Range loop
-         if Cmd /= Cmd_Dev or else not Self.Is_Canonical then
+         if Cmd /= Cmd_Dev then
             Table.New_Row;
             Table.Append (Tab);
             Table.Append (Image (Cmd));
@@ -277,22 +285,17 @@ package body Alr.Commands is
 
    function Enter_Project_Folder return OS_Lib.Destination is
    begin
-      if Session_State /= Valid then
-         --  Best guess
-         declare
-            Candidate_Folder : constant String := Files.Locate_Above_Project_Folder;
-         begin
-            if Candidate_Folder /= "" then
-               Trace.Detail ("Using candidate project root: " & Candidate_Folder);
-               return new String'(Candidate_Folder);
-            else
-               Trace.Debug ("Not entering project folder, no valid project root found");
-               return OS_Lib.Stay_In_Current_Folder;
-            end if;
-         end;
-      else
-         return OS_Lib.Stay_In_Current_Folder;
-      end if;
+      declare
+         Candidate_Folder : constant String := Files.Locate_Above_Project_Folder;
+      begin
+         if Candidate_Folder /= "" then
+            Trace.Detail ("Using candidate project root: " & Candidate_Folder);
+            return new String'(Candidate_Folder);
+         else
+            Trace.Debug ("Not entering project folder, no valid project root found");
+            return OS_Lib.Stay_In_Current_Folder;
+         end if;
+      end;
    end Enter_Project_Folder;
 
    ------------------
@@ -329,15 +332,15 @@ package body Alr.Commands is
    procedure Requires_Buildfile is
       Guard : OS_Lib.Folder_Guard (Enter_Project_Folder) with Unreferenced;
    begin
-      if Bootstrap.Session_State /= Valid then
+      if Bootstrap.Session_State /= Project then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
       end if;
 
-      if not GNAT.OS_Lib.Is_Regular_File (Hardcoded.Working_Build_File) or else
-        OS_Lib.Is_Older (This => Hardcoded.Working_Build_File,
-                         Than => Hardcoded.Working_Deps_File)
+      if not GNAT.OS_Lib.Is_Regular_File (Paths.Working_Build_File) or else
+        OS_Lib.Is_Older (This => Paths.Working_Build_File,
+                         Than => Paths.Working_Deps_File)
       then
-         Trace.Detail ("Generating alr buildfile: " & Hardcoded.Working_Build_File);
+         Trace.Detail ("Generating alr buildfile: " & Paths.Working_Build_File);
          Templates.Generate_Agg_Gpr (Root.Current);
       end if;
    end Requires_Buildfile;
@@ -346,24 +349,13 @@ package body Alr.Commands is
    -- Requires_Full_Index --
    ---------------------------
 
-   procedure Requires_Full_Index (Even_In_Session : Boolean := False) is
-      --  This is pointless now that all rebuilds incorporate it, but...
+   procedure Requires_Full_Index is
    begin
-      if Self.Is_Session and not Even_In_Session then
-         Trace.Debug ("A session build should not request the full index");
---           raise Program_Error with "A session build should not request the full index";
+      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
+         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
       end if;
 
-      if not Self.Has_Full_Index then
-         --  Can happen only first time after installation/devel build, or with depend command
-         Trace.Detail ("Upgrading standalone alr to full index");
-         if Even_In_Session then
-            Bootstrap.Rebuild_Respawn (Bootstrap.Session);
-         else
-            Bootstrap.Rebuild_Respawn (Bootstrap.Standalone);
-         end if;
-      end if;
-
+      Alire.Features.Index.Load_All;
    end Requires_Full_Index;
 
    ----------------------
@@ -372,7 +364,6 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Bootstrap.Check_Rebuild_Respawn; -- Might respawn and not return
       Root.Check_Valid;                -- Might raise Command_Failed
    end Requires_Project;
 
@@ -431,6 +422,7 @@ package body Alr.Commands is
    procedure Parse_Command_Line is
    --  Once this procedure returns, the command, arguments and switches will be ready for use
    --  Otherwise, appropriate help is shown and it does not return
+      use all type GNAT.OS_Lib.String_Access;
 
       Global_Config  : Command_Line_Configuration;
       Command_Config : Command_Line_Configuration;
@@ -482,6 +474,11 @@ package body Alr.Commands is
       end;
 
       -- At this point everything should be parsed OK.
+      if Command_Line_Config_Path     /= null and then
+         Command_Line_Config_Path.all /= ""
+      then
+         Alire.Config.Set_Path (Command_Line_Config_Path.all);
+      end if;
 
       -- The simplistic early parser do not recognizes compressed switches, so let's recheck now:
       declare

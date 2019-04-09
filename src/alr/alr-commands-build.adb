@@ -1,4 +1,5 @@
-with Alr.Spawn;
+with Alr.Commands.Compile;
+with Alr.Commands.Update;
 
 package body Alr.Commands.Build is
 
@@ -7,9 +8,10 @@ package body Alr.Commands.Build is
    -------------
 
    procedure Execute (Online : Boolean) is
+      pragma Unreferenced (Online);
    begin
-      Spawn.Alr (Cmd_Update, Args => (if Online then "--online" else ""));
-      Spawn.Alr (Cmd_Compile);
+      Update.Execute;
+      Compile.Execute;
    end Execute;
 
    -------------

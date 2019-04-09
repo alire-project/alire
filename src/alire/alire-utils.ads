@@ -19,6 +19,19 @@ package Alire.Utils with Preelaborate is
    --  If Str contains Separator, the rhs is returned
    --  Otherwise ""
 
+   function Starts_With (Full_String, Substring : String) return Boolean is
+     (Full_String'Length >= Substring'Length
+      and then Full_String
+        (Full_String'First
+         .. Full_String'First + Substring'Length - 1) = Substring);
+   --  Return whether Full_String starts with the given Substring
+
+   function Ends_With (Full_String, Substring : String) return Boolean is
+     (Full_String'Length >= Substring'Length
+      and then Full_String (Full_String'Last - Substring'Length + 1
+                            .. Full_String'Last) = Substring);
+   --  Return whether Full_String ends with the given Substring
+
    function Replace (Text : String; Match : String; Subst : String) return String;
 
    type Halves is (Head, Tail);

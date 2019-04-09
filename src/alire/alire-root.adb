@@ -2,7 +2,8 @@ with Alire.Index;
 
 package body Alire.Root is
 
-   Root : access Roots.Root;
+   type Root_Access is access Roots.Root;
+   Root : Root_Access;
    --  Root dependency (the working project). If Is_Empty we know we must recompile,
    --  unless the hash already matches. In this case, we know the project file is
    --  missing the Set call

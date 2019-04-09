@@ -1,7 +1,5 @@
 pragma Warnings (Off);
 
-with Alire.Index.Hello;
-
 with Alr.Bootstrap;
 with Alr.Code;
 with Alr.Parsers;
@@ -36,18 +34,6 @@ package body Alr.Commands.Dev is
          raise Program_Error with "Raising forcibly";
       end if;
 
-      if Cmd.Respawn then
-         Spawn.Updated_Alr_Without_Return;
-      end if;
-
-      if Cmd.Self_Compile then
-         if Bootstrap.Session_State >= Detached then
-            Bootstrap.Rebuild (Bootstrap.Session);
-         else
-            Bootstrap.Rebuild (Bootstrap.Standalone);
-         end if;
-      end if;
-
       if Cmd.Self_Test then
          Selftest.Run;
       end if;
@@ -72,16 +58,6 @@ package body Alr.Commands.Dev is
                      Cmd.Raise_Except'Access,
                      "", "--raise",
                      "Raise an exception");
-
-      Define_Switch (Config,
-                     Cmd.Respawn'Access,
-                     "", "--respawn",
-                     "Tries to respawn using rebuilt alr");
-
-      Define_Switch (Config,
-                     Cmd.Self_Compile'Access,
-                     "", "--compile",
-                     "Just self-compile");
 
       Define_Switch (Config,
                      Cmd.Self_Test'Access,

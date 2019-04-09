@@ -7,6 +7,148 @@ package body Alire.Conditional_Trees is
 --           when Anded => "and",
 --           when Ored  => "or");
 
+   function Image_Classwide (Node : Inner_Node'Class) return String is
+     (Node.Image);
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind (This : Tree) return Kinds is
+   begin
+      return This.Constant_Reference.Kind;
+   end Kind;
+
+   overriding function Image (V : Value_Inner) return String is
+     (Image (V.Value.Constant_Reference));
+
+   function Conjunction (This : Vector_Inner) return Conjunctions is
+     (This.Conjunction);
+
+   overriding function Image (V : Vector_Inner) return String is
+     ("(" & (if V.Conjunction = Anded
+             then Non_Primitive.One_Liner_And (V.Values)
+             else Non_Primitive.One_Liner_Or (V.Values)) & ")");
+
+   overriding function Image (V : Conditional_Inner) return String is
+     ("if " & V.Condition.Image &
+        " then " & V.Then_Value.Image_One_Line &
+        " else " & V.Else_Value.Image_One_Line);
+
+   --------------------
+   -- As_Conditional --
+   --------------------
+
+   function As_Conditional (This : Tree) return Conditional_Inner'Class is
+     (Conditional_Inner'Class (This.Element));
+
+   --------------
+   -- As_Value --
+   --------------
+
+   function As_Value (This : Tree) return Values
+   is
+     (Value_Inner (This.Element).Value.Element);
+
+   ---------------
+   -- As_Vector --
+   ---------------
+
+   function As_Vector (This : Tree) return Vectors.Vector is
+     (Vector_Inner'Class (This.Element).Values);
+
+   -----------------
+   -- Conjunction --
+   -----------------
+
+   function Conjunction (This : Tree) return Conjunctions is
+     (Vector_Inner'Class (This.Element).Conjunction);
+
+   -----------------
+   -- First_Child --
+   -----------------
+
+   function First_Child (This : Tree) return Tree is
+      (To_Holder (This.As_Vector.First_Element));
+
+   ---------------------
+   -- New_Conditional --
+   ---------------------
+
+   function New_Conditional (If_X   : Requisites.Tree;
+                             Then_X : Tree;
+                             Else_X : Tree) return Tree is
+     (To_Holder (Conditional_Inner'(Condition  => If_X,
+                                    Then_Value => Then_X,
+                                    Else_Value => Else_X)));
+   ---------------
+   -- New_Value --
+   ---------------
+
+   function New_Value (V : Values) return Tree is
+     (To_Holder (Value_Inner'(Value => Definite_Values.To_Holder (V))));
+
+   ---------------
+   -- Condition --
+   ---------------
+
+   function Condition (This : Tree) return Requisites.Tree is
+     (This.As_Conditional.Condition);
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (This : Tree) return Values renames As_Value;
+
+   ----------------
+   -- True_Value --
+   ----------------
+
+   function True_Value (This : Tree) return Tree is
+      (This.As_Conditional.Then_Value);
+
+   -----------------
+   -- False_Value --
+   -----------------
+
+   function False_Value (This : Tree) return Tree is
+      (This.As_Conditional.Else_Value);
+
+   -----------
+   -- Empty --
+   -----------
+
+   function Empty return Tree is
+      (Holders.Empty_Holder with null record);
+
+   --------------
+   -- Is_Empty --
+   --------------
+
+   overriding function Is_Empty (This : Tree) return Boolean is
+     (Holders.Holder (This).Is_Empty);
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind (This : Inner_Node'Class) return Kinds is
+     (if This in Value_Inner'Class
+      then Value
+      else (if This in Vector_Inner'Class
+            then Vector
+            else Condition));
+
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Tree) return String is
+     (if This.Is_Empty
+      then "(empty condition)"
+      else This.Constant_Reference.Image);
+
    ----------------------------
    -- All_But_First_Children --
    ----------------------------

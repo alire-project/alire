@@ -5,7 +5,6 @@ with Alr.Commands;
 with Alr.OS_Lib;
 with Alr.Platform.Init;
 with Alr.Platforms.Current;
-with Alr.Self;
 
 procedure Alr.Main is
 begin
@@ -13,12 +12,6 @@ begin
 
    Alr.Platform.Init (Alr.Platforms.Current.New_Platform);
 
-   Bootstrap.Check_If_Rolling_And_Respawn;
-
-   if not Self.Is_Canonical then
-      Trace.Detail ("alr running from " & Platform.Own_Executable &
-                      " as " & (if Platform.Am_I_Root then "ROOT" else "user"));
-   end if;
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);
 
    Commands.Execute;

@@ -6,20 +6,17 @@ package Alr.Commands.Update is
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration);
+      Config : in out GNAT.Command_Line.Command_Line_Configuration) is null;
 
    overriding function Short_Description (Cmd : Command) return String is
       ("Updates alire catalog and project dependencies");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
 
-   procedure Update_Alr;
-   --  Deploy/Update alr sources if not there or outdated
+   procedure Execute;
 
 private
 
-   type Command is new Commands.Command with record
-      Online     : aliased Boolean := False;
-   end record;
+   type Command is new Commands.Command with null record;
 
 end Alr.Commands.Update;
