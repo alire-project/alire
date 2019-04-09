@@ -3,7 +3,8 @@ language: none # Ada
 branches:
     only:
         - master
-        - testing
+        - mosteo
+        - stable
 
 env:
     global:

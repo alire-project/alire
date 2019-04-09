@@ -8,11 +8,13 @@ set -o nounset
 
 if [ "$BRANCH" == "master" ]; then 
     echo -e '\n\n/bin\ny' | ./install/alr-bootstrap.sh
-    alr update --online
+#    alr update --online # until #73 is fixed
 else
     gprbuild -j0 -p -P alr_env
     export PATH+=:`pwd`/bin
 fi 
+
+return 0 # until #73 is fixed
 
 alr search -d --list --native
 
