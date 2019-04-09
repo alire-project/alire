@@ -319,6 +319,9 @@ package body Alire.TOML_Expressions is
 
                for E of Mappings.Iterate_On_Table loop
                   Parse_Clause (+E.Key, E.Value, Node.Matchers, Node.Default);
+                  if not Success then
+                     return null;
+                  end if;
                end loop;
 
                --  If no default clause was present and we are asked to provide
