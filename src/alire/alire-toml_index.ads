@@ -299,6 +299,7 @@ private
 
    procedure Decode_TOML_Package
      (Filename, Package_Name : String;
+      Environment            : Environment_Variables;
       Value                  : TOML.TOML_Value;
       Pkg                    : out Package_Type;
       Result                 : out Load_Result);

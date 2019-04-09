@@ -110,8 +110,26 @@ package Alire.TOML_Expressions is
          end case;
       end record;
 
-      function Parse (Value : TOML.TOML_Value) return Parsing_Result;
-      --  Parse the expression tree encoded in the given TOML document
+      type Optional_Value (Present : Boolean) is record
+         case Present is
+            when True  => Value : Value_Type;
+            when False => null;
+         end case;
+      end record;
+
+      function Parse
+        (Value   : TOML.TOML_Value;
+         Env     : Environment_Variables;
+         Default : Optional_Value := (Present => False)) return Parsing_Result;
+      --  Parse the expression tree encoded in the given TOML document.
+      --
+      --  Using Env, check that matchers in "case" constructs cover only
+      --  possible values for the controlling variable.
+      --
+      --  If Default is provided, make all "case" constructs return it by
+      --  default (when they don't match the controlling variable). Otherwise,
+      --  use Env to make sure that all possible values for controlling
+      --  variables are covered.
 
       function Evaluate
         (Expr : Expression;
@@ -209,8 +227,12 @@ package Alire.TOML_Expressions is
          end case;
       end record;
 
-      function Parse (Value : TOML.TOML_Value) return Parsing_Result;
-      --  Parse the expression tree encoded in the given Value document
+      function Parse
+        (Value : TOML.TOML_Value;
+         Env   : Environment_Variables) return Parsing_Result;
+      --  Parse the expression tree encoded in the given TOML document. Env is
+      --  used to check that "case" constructs cover all possible values for
+      --  the controlling variable.
 
       function Evaluate
         (Expr : Expression;

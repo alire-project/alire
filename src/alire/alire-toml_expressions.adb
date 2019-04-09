@@ -155,7 +155,11 @@ package body Alire.TOML_Expressions is
       -- Parse --
       -----------
 
-      function Parse (Value : TOML.TOML_Value) return Parsing_Result is
+      function Parse
+        (Value   : TOML.TOML_Value;
+         Env     : Environment_Variables;
+         Default : Optional_Value := (Present => False)) return Parsing_Result
+      is
 
          Success : Boolean := True;
          Error   : US.Unbounded_String;
@@ -291,6 +295,12 @@ package body Alire.TOML_Expressions is
             Variable : US.Unbounded_String;
             Mappings : TOML.TOML_Value;
             Node     : Expression_Node;
+
+            Value_Set : String_Sets.Set;
+            --  Set of values for the controlling variables that this case must
+            --  cover.
+
+            Position : Matcher_Maps.Cursor;
          begin
             --  If TOML is a case expression pattern, convert it to the
             --  corresponding expression tree.
@@ -302,9 +312,58 @@ package body Alire.TOML_Expressions is
                   Matchers => <>,
                   Default  => <>);
                Nodes.Append (Node);
+
+               Value_Set := Env.Value_Sets.Element (Variable).all;
+
+               --  Process all clauses in this case construct
+
                for E of Mappings.Iterate_On_Table loop
                   Parse_Clause (+E.Key, E.Value, Node.Matchers, Node.Default);
                end loop;
+
+               --  If no default clause was present and we are asked to provide
+               --  automatically a default one, do it.
+
+               if Node.Default = null and then Default.Present then
+                  Node.Default := new Expression_Node_Record'
+                    (Is_Case => False, Literal => Default.Value);
+                  Nodes.Append (Node.Default);
+               end if;
+
+               --  Make sure that all matching values are valid values for this
+               --  variable.
+
+               Position := Node.Matchers.First;
+               while Matcher_Maps.Has_Element (Position) loop
+                  declare
+                     Key : constant US.Unbounded_String :=
+                        Matcher_Maps.Key (Position);
+                  begin
+                     if not Value_Set.Contains (Key) then
+                        Success := False;
+                        Error := +("invalid value for " & (+Variable)
+                                   & ": " & (+Key));
+                        return null;
+                     else
+                        Value_Set.Delete (Key);
+                     end if;
+                  end;
+                  Position := Matcher_Maps.Next (Position);
+               end loop;
+
+               --  Make sure that all possible values for this variable have
+               --  matchers.
+
+               if Node.Default = null and then not Value_Set.Is_Empty then
+                  Success := False;
+                  Error := +("unhandled values for " & (+Variable) & ":");
+                  for Value of Value_Set loop
+                     US.Append (Error, " ");
+                     US.Append (Error, Value);
+                  end loop;
+                  return null;
+               end if;
+
                return Node;
 
             elsif not Success then
@@ -531,7 +590,10 @@ package body Alire.TOML_Expressions is
       -- Parse --
       -----------
 
-      function Parse (Value : TOML.TOML_Value) return Parsing_Result is
+      function Parse
+        (Value : TOML.TOML_Value;
+         Env   : Environment_Variables) return Parsing_Result
+      is
 
          Success : Boolean := True;
          Error   : US.Unbounded_String;
@@ -731,6 +793,12 @@ package body Alire.TOML_Expressions is
                   Key       : constant String := +Case_Construct.Key;
                   Var_First : Positive;
                   Var_Last  : Natural;
+
+                  Value_Set : String_Sets.Set;
+                  --  Set of values for the controlling variables that this
+                  --  case must cover.
+
+                  Position : Matcher_Maps.Cursor;
                begin
                   --  This pass only reacts to case construct entries
 
@@ -745,6 +813,11 @@ package body Alire.TOML_Expressions is
                      Expr.Variables (Next_Case) :=
                         +Key (Var_First .. Var_Last);
 
+                     Value_Set := Env.Value_Sets.Element
+                       (Expr.Variables (Next_Case)).all;
+
+                     --  Process all clauses in this case construct
+
                      for Case_Entry of Case_Construct.Value.Iterate_On_Table
                      loop
                         Parse_Clause (+Case_Entry.Key, Case_Entry.Value);
@@ -752,6 +825,44 @@ package body Alire.TOML_Expressions is
                            return null;
                         end if;
                      end loop;
+
+                     --  Make sure that all matching values are valid values
+                     --  for this variable.
+
+                     Position := Expr.Cases (Next_Case).First;
+                     while Matcher_Maps.Has_Element (Position) loop
+                        declare
+                           Key : constant US.Unbounded_String :=
+                              Matcher_Maps.Key (Position);
+                        begin
+                           if not Value_Set.Contains (Key) then
+                              Success := False;
+                              Error := +("invalid value for "
+                                         & (+Expr.Variables (Next_Case))
+                                         & ": " & (+Key));
+                              return null;
+                           else
+                              Value_Set.Delete (Key);
+                           end if;
+                        end;
+                        Position := Matcher_Maps.Next (Position);
+                     end loop;
+
+                     --  Make sure that all possible values for this variable
+                     --  have matchers.
+
+                     if Expr.Defaults (Next_Case) = null
+                        and then not Value_Set.Is_Empty
+                     then
+                        Success := False;
+                        Error := +("unhandled values for "
+                                   & (+Expr.Variables (Next_Case)) & ":");
+                        for Value of Value_Set loop
+                           US.Append (Error, " ");
+                           US.Append (Error, Value);
+                        end loop;
+                        return null;
+                     end if;
                   end if;
                end;
 

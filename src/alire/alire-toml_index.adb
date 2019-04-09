@@ -444,7 +444,8 @@ package body Alire.TOML_Index is
 
       --  Convert it to our intermediate data structures
 
-      Decode_TOML_Package (Filename, Package_Name, Value, Pkg, Result);
+      Decode_TOML_Package
+        (Filename, Package_Name, Environment, Value, Pkg, Result);
       if not Result.Success then
          return;
       end if;
@@ -710,6 +711,7 @@ package body Alire.TOML_Index is
 
    procedure Decode_TOML_Package
      (Filename, Package_Name : String;
+      Environment            : Environment_Variables;
       Value                  : TOML.TOML_Value;
       Pkg                    : out Package_Type;
       Result                 : out Load_Result)
@@ -1042,7 +1044,7 @@ package body Alire.TOML_Index is
          Value   : TOML.TOML_Value) return Boolean
       is
          Res : String_Expressions.Parsing_Result :=
-            String_Expressions.Parse (Value);
+            String_Expressions.Parse (Value, Environment);
       begin
          if Res.Success then
             String_Expressions.Move (Expr, Res.Value);
@@ -1062,7 +1064,7 @@ package body Alire.TOML_Index is
          Value   : TOML.TOML_Value) return Boolean
       is
          Res : Origin_Expressions.Parsing_Result :=
-            Origin_Expressions.Parse (Value);
+            Origin_Expressions.Parse (Value, Environment);
       begin
          if Res.Success then
             Origin_Expressions.Move (Expr, Res.Value);
@@ -1158,7 +1160,7 @@ package body Alire.TOML_Index is
          Value   : TOML.TOML_Value) return Boolean
       is
          Parsing_Result : Dependencies_Expressions.Parsing_Result :=
-            Dependencies_Expressions.Parse (Value);
+            Dependencies_Expressions.Parse (Value, Environment);
       begin
          if Parsing_Result.Success then
             Dependencies_Expressions.Move (Deps, Parsing_Result.Value);
@@ -1341,12 +1343,15 @@ package body Alire.TOML_Index is
             return False;
          end if;
 
-         --  Decode the optional availability expression
+         --  Decode the optional availability expression. By default, assume
+         --  the project is not available (default => false).
 
          if Pop (Queue, Available_Str, Tmp) then
             declare
                Res : Boolean_Expressions.Parsing_Result :=
-                  Boolean_Expressions.Parse (Tmp);
+                  Boolean_Expressions.Parse
+                    (Tmp, Environment,
+                     Default => (Present => True, Value => False));
             begin
                if Res.Success then
                   Boolean_Expressions.Move (Common.Available, Res.Value);
