@@ -680,7 +680,13 @@ package body Alire.TOML_Index is
       begin
          Result := (Success => True, Value => <>);
 
-         if Starts_With (S, "git+")
+         if S = "" then
+            --  Both in the TOML index and in Alire's internals, an empty
+            --  string denotes an unavailable package.
+
+            Result.Value := (Native_Package, +"");
+
+         elsif Starts_With (S, "git+")
             and then Decode_VCS (S, URL, Revision)
          then
             Result.Value := (Git, URL, Revision);
