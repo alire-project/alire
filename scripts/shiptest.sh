@@ -14,7 +14,7 @@ else
     export PATH+=:`pwd`/bin
 fi 
 
-return 0 # until #73 is fixed
+exit 0 # until #73 is fixed
 
 alr search -d --list --native
 
