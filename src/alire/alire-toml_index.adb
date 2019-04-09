@@ -1394,10 +1394,10 @@ package body Alire.TOML_Index is
             return False;
          end if;
 
-         --  Decode the list of authors
+         --  Decode the optional list of authors
 
-         if not Pop (Queue, Authors_Str, Tmp)
-            or else not To_String_Vector ("general:authors", Pkg.Authors, Tmp)
+         if Pop (Queue, Authors_Str, Tmp)
+            and then not To_String_Vector ("general:authors", Pkg.Authors, Tmp)
          then
             return False;
          end if;
