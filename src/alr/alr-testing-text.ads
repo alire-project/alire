@@ -24,11 +24,13 @@ package Alr.Testing.Text is
                        Log     :        Utils.String_Vector);
    
 private
-      
+
+   type File_Access is access Ada.Text_IO.File_Type;
+
    type Reporter is new Testing.Reporter with record
-      File : access Ada.Text_IO.File_Type;
+      File : File_Access;
    end record;
-   
+
    overriding 
    function New_Reporter return Reporter is (others => <>);
 

@@ -39,7 +39,9 @@ package body Alr.Commands is
 
    --  To add a command: update the dispatch table below
 
-   Dispatch_Table : constant array (Cmd_Names) of access Command'Class :=
+   type Command_Access is access Command'Class;
+
+   Dispatch_Table : constant array (Cmd_Names) of Command_Access :=
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Compile  => new Compile.Command,

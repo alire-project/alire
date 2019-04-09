@@ -24,10 +24,13 @@ package Alr.Testing.JUnit is
                        Log     :        Utils.String_Vector);
    
 private
-      
+
+   type String_Access is access String;
+   type Test_Suite_Access is access AJUnitGen.Test_Suite;
+
    type Reporter is new Testing.Reporter with record
-      Name   : access String;
-      Jsuite : access AJUnitGen.Test_Suite;
+      Name   : String_Access;
+      Jsuite : Test_Suite_Access;
    end record;
    
    overriding 
