@@ -160,7 +160,7 @@ package body Alire.TOML_Index is
          when Platforms.GNAT_GPL_2017         => "gnat-gpl-2017",
          when Platforms.GNAT_Community_2018   => "gnat-community-2018");
    begin
-      Env.Insert (+"distrib", +Distrib_Str);
+      Env.Insert (+"distribution", +Distrib_Str);
       Env.Insert (+"os", +OS_Str);
       Env.Insert (+"compiler", +Compiler_Str);
    end Set_Environment;
