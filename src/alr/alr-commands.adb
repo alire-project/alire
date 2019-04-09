@@ -5,6 +5,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
 with Alire;
+with Alire.Config;
 with Alire.Features.Index;
 with Alire.Utils;
 
@@ -54,6 +55,8 @@ package body Alr.Commands is
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
                        Cmd_With     => new Withing.Command);
+
+   Command_Line_Config_Path : aliased Gnat.OS_Lib.String_Access;
 
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
@@ -126,13 +129,22 @@ package body Alr.Commands is
    procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
    begin
       Define_Switch (Config,
+                     Command_Line_Config_Path'Access,
+                     "-c=", "--config=",
+                     "Override configuration folder location");
+      Define_Switch (Config,
                      Help_Switch'Access,
                      "-h", "--help", "Display general or command-specific help");
 
       Define_Switch (Config,
                      Interactive.Not_Interactive'Access,
-                     "-n", "--not-interactive",
+                     "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
+
+      Define_Switch (Config,
+                     Prefer_Oldest'Access,
+                     Long_Switch => "--prefer-oldest",
+                     Help        => "Prefer oldest versions instead of newest when resolving dependencies");
 
       Define_Switch (Config,
                      Log_Quiet'Access,
@@ -148,11 +160,6 @@ package body Alr.Commands is
                      Log_Debug'Access,
                      "-d",
                      Help => "Be even more verbose (including debug messages)");
-
-      Define_Switch (Config,
-                     Prefer_Oldest'Access,
-                     Long_Switch => "--prefer-oldest",
-                     Help => "Prefer oldest versions instead of newest when resolving dependencies");
    end Set_Global_Switches;
 
    ---------------------
@@ -342,6 +349,10 @@ package body Alr.Commands is
 
    procedure Requires_Full_Index is
    begin
+      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
+         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
+      end if;
+
       Alire.Features.Index.Load_All;
    end Requires_Full_Index;
 
@@ -409,6 +420,7 @@ package body Alr.Commands is
    procedure Parse_Command_Line is
    --  Once this procedure returns, the command, arguments and switches will be ready for use
    --  Otherwise, appropriate help is shown and it does not return
+      use all type GNAT.OS_Lib.String_Access;
 
       Global_Config  : Command_Line_Configuration;
       Command_Config : Command_Line_Configuration;
@@ -460,6 +472,11 @@ package body Alr.Commands is
       end;
 
       -- At this point everything should be parsed OK.
+      if Command_Line_Config_Path     /= null and then
+         Command_Line_Config_Path.all /= ""
+      then
+         Alire.Config.Set_Path (Command_Line_Config_Path.all);
+      end if;
 
       -- The simplistic early parser do not recognizes compressed switches, so let's recheck now:
       declare

@@ -133,8 +133,6 @@ package body Alr.Commands.Show is
                          then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
                          else Parsers.Project_Versions (+Root.Current.Project)));
       begin
-         Requires_Full_Index;
-
          --  Execute
          Report (Allowed.Project, Allowed.Versions, Cmd);
       exception
