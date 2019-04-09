@@ -4,8 +4,9 @@ with Alire.Platform;
 
 package body Alire.Config is
 
-   Config_Path : access String;
-   
+   type String_Access is access String;
+   Config_Path : String_Access;
+
    ----------
    -- Path --
    ----------

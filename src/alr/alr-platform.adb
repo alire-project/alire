@@ -12,7 +12,8 @@ package body Alr.Platform is
    -------------
    -- Singletons
 
-   Instance : access Platforms.Supported'Class;
+   type Supported_Access is access Platforms.Supported'Class;
+   Instance : Supported_Access;
 
    ---------------
    -- Am_I_Root --
