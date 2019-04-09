@@ -19,6 +19,8 @@ package Alire.Platforms with Preelaborate is
                               OSX,
                               Windows,
                               OS_Unknown);
+   subtype Known_Operating_Systems is
+      Operating_Systems range GNU_Linux ..  Windows;
 
    type Targets is (Native,
                     Unknown_Cross_Target);

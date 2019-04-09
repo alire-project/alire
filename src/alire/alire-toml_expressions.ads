@@ -1,3 +1,4 @@
+private with Ada.Containers.Hashed_Sets;
 private with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Maps;
 with Ada.Finalization;
@@ -15,18 +16,44 @@ package Alire.TOML_Expressions is
    function "+" (S : String) return US.Unbounded_String
       renames US.To_Unbounded_String;
    function "+" (S : US.Unbounded_String) return String
-      renames US.To_String;
+                 renames US.To_String;
+
+   type String_Array is array (Positive range <>) of US.Unbounded_String;
 
    function Is_Valid_Variable_Name (Name : String) return Boolean;
+   function Is_Valid_Variable_Name (Name : US.Unbounded_String) return Boolean;
    --  Return whether Name is a valid name for an environment variable
 
-   package Environment_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => US.Unbounded_String,
-      Element_Type    => US.Unbounded_String,
-      Equivalent_Keys => US."=",
-      "="             => US."=",
-      Hash            => US.Hash);
-   --  Mapping assigning a value to each environment variable
+   type Environment_Variables is limited private;
+   --  Set of environment variables. Objects are used as a context to evaluate
+   --  expressions.
+
+   function Variable_Defined
+     (Self : Environment_Variables;
+      Name : US.Unbounded_String) return Boolean
+      with Pre => Is_Valid_Variable_Name (Name);
+   --  Return whether Name is the name of a variable defined in Self
+
+   procedure Add_Variable
+     (Self      : in out Environment_Variables;
+      Name      : US.Unbounded_String;
+      Value_Set : String_Array;
+      Value     : US.Unbounded_String)
+      with Pre => not Variable_Defined (Self, Name);
+   --  Add a variable to Self.
+   --
+   --  This adds to Self a variable with the given Name and assigns to it the
+   --  given Value. Value_Set gives the whole set of valid values for this
+   --  variable: it is used to check that expressions cover all possible cases.
+   --
+   --  If Value_Set contains duplicate entries or if Value is not in Value_Set,
+   --  this just raises a Constraint_Error.
+
+   function Variable_Value
+     (Self : Environment_Variables;
+      Name : US.Unbounded_String) return US.Unbounded_String
+      with Pre => Variable_Defined (Self, Name);
+   --  Return the value associated to the Name variable in Self
 
    generic
       type Value_Type is private;
@@ -88,13 +115,13 @@ package Alire.TOML_Expressions is
 
       function Evaluate
         (Expr : Expression;
-         Env  : Environment_Maps.Map) return Evaluation_Result.T;
+         Env  : Environment_Variables) return Evaluation_Result.T;
       --  Evaluate the given expression according to the given environment
 
       function Evaluate_Or_Default
         (Expr    : Expression;
          Default : Value_Type;
-         Env     : Environment_Maps.Map) return Evaluation_Result.T;
+         Env     : Environment_Variables) return Evaluation_Result.T;
       --  If Expr contains no expression, return Default. Otherwise, evaluate
       --  the given expression according to the given environment.
 
@@ -187,13 +214,13 @@ package Alire.TOML_Expressions is
 
       function Evaluate
         (Expr : Expression;
-         Env  : Environment_Maps.Map) return Evaluation_Result.T;
+         Env  : Environment_Variables) return Evaluation_Result.T;
       --  Evaluate the given expression according to the given environment
 
       function Evaluate_Or_Default
         (Expr    : Expression;
          Default : Value_Type;
-         Env     : Environment_Maps.Map) return Evaluation_Result.T;
+         Env     : Environment_Variables) return Evaluation_Result.T;
       --  If Expr contains no expression, return Default. Otherwise, evaluate
       --  the given expression according to the given environment.
 
@@ -253,5 +280,39 @@ package Alire.TOML_Expressions is
         (Ada.Finalization.Limited_Controlled with others => <>);
 
    end Composite_Values;
+
+private
+
+   package String_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => US.Unbounded_String,
+      Equivalent_Elements => US."=",
+      "="                 => US."=",
+      Hash                => US.Hash);
+   type String_Set_Access is access String_Sets.Set;
+   procedure Free is new Ada.Unchecked_Deallocation
+     (String_Sets.Set, String_Set_Access);
+
+   package Variable_Value_Sets is new Ada.Containers.Hashed_Maps
+     (Key_Type        => US.Unbounded_String,
+      Element_Type    => String_Set_Access,
+      Equivalent_Keys => US."=",
+      Hash            => US.Hash);
+   --  Mapping assigning a set of possible values to each environment variable
+
+   package Variable_Values is new Ada.Containers.Hashed_Maps
+     (Key_Type        => US.Unbounded_String,
+      Element_Type    => US.Unbounded_String,
+      Equivalent_Keys => US."=",
+      "="             => US."=",
+      Hash            => US.Hash);
+   --  Mapping assigning a value to each environment variable
+
+   type Environment_Variables is new Ada.Finalization.Limited_Controlled with
+   record
+      Value_Sets : Variable_Value_Sets.Map;
+      Values     : Variable_Values.Map;
+   end record;
+
+   overriding procedure Finalize (Self : in out Environment_Variables);
 
 end Alire.TOML_Expressions;

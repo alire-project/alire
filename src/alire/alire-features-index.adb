@@ -19,7 +19,7 @@ package body Alire.Features.Index is
          use Alr.OS_Lib.Paths;
 
          Result : Alire.TOML_Index.Load_Result;
-         Env    : Alire.TOML_Index.Environment_Maps.Map;
+         Env    : Alire.TOML_Index.Environment_Variables;
       begin
          Alire.TOML_Index.Set_Environment
            (Env,
