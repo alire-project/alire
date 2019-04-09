@@ -74,7 +74,10 @@ package body Alr.Commands.Search is
          raise Wrong_Command_Arguments;
       end if;
 
-      --  End of option verification, start of search
+      --  End of option verification, start of search. First load the index,
+      --  required to look at its entries.
+
+      Requires_Full_Index;
 
       Tab.Append ("NAME");
       Tab.Append ("STATUS");
