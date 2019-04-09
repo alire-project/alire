@@ -134,8 +134,8 @@ package body Alire.TOML_Index is
    ---------------------
 
    procedure Set_Environment
-     (Env     : in out Environment_Maps.Map;
-      Distrib : Platforms.Distributions;
+     (Env      : in out Environment_Maps.Map;
+      Distrib  : Platforms.Distributions;
       OS       : Platforms.Operating_Systems;
       Compiler : Platforms.Compilers)
    is
