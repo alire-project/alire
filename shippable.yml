@@ -3,20 +3,23 @@ language: none # Ada
 branches:
     only:
         - master
-        - testing
+        - mosteo
+        - stable
 
 env:
-    - IMAGE_NAME="mosteo/gnat-fsf-7.3"
-    - IMAGE_NAME="mosteo/gnat-gpl-2017"
-    - IMAGE_NAME="mosteo/gnat-ubuntu-lts"
+    global:
+        - IMAGE_NAME="alire/gnat"
+    matrix:
+        - IMAGE_TAG="community-2018"
+        - IMAGE_TAG="debian-testing"
+        - IMAGE_TAG="ubuntu-lts"
 
 build:
     pre_ci_boot:
         image_name: $IMAGE_NAME
-        image_tag: latest
+        image_tag: $IMAGE_TAG
         pull: true
     ci:
-        - apt-get install -y bash lsb-release mercurial
         - git submodule update --init --recursive
         - scripts/shiptest.sh
     on_success:
