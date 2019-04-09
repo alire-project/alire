@@ -6,15 +6,18 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 set -o errexit
 set -o nounset
 
-if [ "$BRANCH" == "master" ]; then 
+# Check compilation in all cases
+gprbuild -j0 -p -P alr_env
+
+# Check installer in stable branch
+if [ "$BRANCH" == "stable" ]; then 
     echo -e '\n\n/bin\ny' | ./install/alr-bootstrap.sh
 #    alr update --online # until #73 is fixed
-else
-    gprbuild -j0 -p -P alr_env
-    export PATH+=:`pwd`/bin
-fi 
+fi
 
 exit 0 # until #73 is fixed
+
+export PATH+=:`pwd`/bin
 
 alr search -d --list --native
 
