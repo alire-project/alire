@@ -21,6 +21,8 @@ package body Alire.TOML_Index is
    package Exc renames Ada.Exceptions;
    package TIO renames Ada.Text_IO;
 
+   subtype String_Array is Alire.TOML_Expressions.String_Array;
+
    procedure Set_Error
      (Result            : out Load_Result;
       Filename, Message : String;
@@ -41,14 +43,14 @@ package body Alire.TOML_Index is
 
    procedure Load_Package_Directory
      (Catalog_Dir, Package_Dir : String;
-      Environment              : Environment_Maps.Map;
+      Environment              : Environment_Variables;
       Result                   : out Load_Result)
       with Pre => Result.Success;
    --  Load packages from all *.toml files in Catalog_Dir/Package_Dir
 
    procedure Load_From_Catalog_Internal
      (Catalog_Dir, Package_Name : String;
-      Environment               : Environment_Maps.Map;
+      Environment               : Environment_Variables;
       Result                    : out Load_Result);
    --  Like Load_From_Catalog, but do not check the index
 
@@ -94,6 +96,30 @@ package body Alire.TOML_Index is
 
    Native_Prefix : constant String := "native:";
 
+   type Distribution_Names is
+      array (Platforms.Distributions) of US.Unbounded_String;
+   Distributions : constant Distribution_Names :=
+     (Platforms.Debian         => +"debian",
+      Platforms.Ubuntu         => +"ubuntu",
+      Platforms.Distro_Unknown => +"none");
+
+   type Operating_System_Names is
+      array (Platforms.Known_Operating_Systems) of US.Unbounded_String;
+   OS_List : constant Operating_System_Names :=
+     (Platforms.GNU_Linux => +"linux",
+      Platforms.OSX       => +"macos",
+      Platforms.Windows   => +"windows");
+
+   type Compiler_Names is array (Platforms.Compilers) of US.Unbounded_String;
+   Compilers : constant Compiler_Names :=
+     (Platforms.GNAT_Unknown          => +"gnat-unknown",
+      Platforms.GNAT_FSF_Old          => +"gnat-fsf-old",
+      Platforms.GNAT_FSF_7_2          => +"gnat-fsf-7.2",
+      Platforms.GNAT_FSF_7_3_Or_Newer => +"gnat-fsf-7.3",
+      Platforms.GNAT_GPL_Old          => +"gnat-gpl-old",
+      Platforms.GNAT_GPL_2017         => +"gnat-gpl-2017",
+      Platforms.GNAT_Community_2018   => +"gnat-community-2018");
+
    function To_Version_Set
      (Set   : out Semantic_Versioning.Version_Set;
       Value : TOML.TOML_Value) return Boolean;
@@ -134,35 +160,54 @@ package body Alire.TOML_Index is
    ---------------------
 
    procedure Set_Environment
-     (Env     : in out Environment_Maps.Map;
-      Distrib : Platforms.Distributions;
+     (Env      : in out Environment_Variables;
+      Distrib  : Platforms.Distributions;
       OS       : Platforms.Operating_Systems;
       Compiler : Platforms.Compilers)
    is
-      Distrib_Str : constant String :=
-        (case Distrib is
-         when Platforms.Debian         => "debian",
-         when Platforms.Ubuntu         => "ubuntu",
-         when Platforms.Distro_Unknown => "none");
-      OS_Str : constant String :=
-        (case OS is
-         when Platforms.GNU_Linux  => "linux",
-         when Platforms.OSX        => "macos",
-         when Platforms.Windows    => "windows",
-         when Platforms.OS_Unknown => raise Program_Error);
-      Compiler_Str : constant String :=
-        (case Compiler is
-         when Platforms.GNAT_Unknown          => "gnat-unknown",
-         when Platforms.GNAT_FSF_Old          => "gnat-fsf-old",
-         when Platforms.GNAT_FSF_7_2          => "gnat-fsf-7.2",
-         when Platforms.GNAT_FSF_7_3_Or_Newer => "gnat-fsf-7.3",
-         when Platforms.GNAT_GPL_Old          => "gnat-gpl-old",
-         when Platforms.GNAT_GPL_2017         => "gnat-gpl-2017",
-         when Platforms.GNAT_Community_2018   => "gnat-community-2018");
+
+      generic
+         type Names_Index is (<>);
+         type Names_Array is array (Names_Index) of US.Unbounded_String;
+      function Generic_Convert (Names : Names_Array) return String_Array;
+      --  Convert Names to a String_Array value, i.e. build a new array with
+      --  the same sequence of values, but Positive indexes.
+
+      ---------------------
+      -- Generic_Convert --
+      ---------------------
+
+      function Generic_Convert (Names : Names_Array) return String_Array is
+         Next : Positive := 1;
+      begin
+         return Result : String_Array (1 .. Names'Length) do
+            for I in Names_Index loop
+               Result (Next) := Names (I);
+               Next := Next + 1;
+            end loop;
+         end return;
+      end Generic_Convert;
+
+      function Convert is new Generic_Convert
+        (Platforms.Distributions, Distribution_Names);
+      function Convert is new Generic_Convert
+        (Platforms.Known_Operating_Systems, Operating_System_Names);
+      function Convert is new Generic_Convert
+        (Platforms.Compilers, Compiler_Names);
+
    begin
-      Env.Insert (+"distrib", +Distrib_Str);
-      Env.Insert (+"os", +OS_Str);
-      Env.Insert (+"compiler", +Compiler_Str);
+      Alire.TOML_Expressions.Add_Variable
+        (Env, +"distribution",
+         Value_Set => Convert (Distributions),
+         Value     => Distributions (Distrib));
+      Alire.TOML_Expressions.Add_Variable
+        (Env, +"os",
+         Value_Set => Convert (OS_List),
+         Value     => OS_List (OS));
+      Alire.TOML_Expressions.Add_Variable
+        (Env, +"compiler",
+         Value_Set => Convert (Compilers),
+         Value    => Compilers (Compiler));
    end Set_Environment;
 
    ------------------------
@@ -247,7 +292,7 @@ package body Alire.TOML_Index is
 
    procedure Load_Catalog
      (Catalog_Dir : String;
-      Environment : Environment_Maps.Map;
+      Environment : Environment_Variables;
       Result      : out Load_Result)
    is
       Search : Dirs.Search_Type;
@@ -303,7 +348,7 @@ package body Alire.TOML_Index is
 
    procedure Load_Package_Directory
      (Catalog_Dir, Package_Dir : String;
-      Environment              : Environment_Maps.Map;
+      Environment              : Environment_Variables;
       Result                   : out Load_Result)
    is
       Package_Dir_Full : constant String :=
@@ -377,7 +422,7 @@ package body Alire.TOML_Index is
 
    procedure Load_From_Catalog_Internal
      (Catalog_Dir, Package_Name : String;
-      Environment               : Environment_Maps.Map;
+      Environment               : Environment_Variables;
       Result                    : out Load_Result)
    is
       Filename : constant String :=
@@ -399,7 +444,8 @@ package body Alire.TOML_Index is
 
       --  Convert it to our intermediate data structures
 
-      Decode_TOML_Package (Filename, Package_Name, Value, Pkg, Result);
+      Decode_TOML_Package
+        (Filename, Package_Name, Environment, Value, Pkg, Result);
       if not Result.Success then
          return;
       end if;
@@ -418,7 +464,7 @@ package body Alire.TOML_Index is
 
    procedure Load_From_Catalog
      (Catalog_Dir, Package_Name : String;
-      Environment               : Environment_Maps.Map;
+      Environment               : Environment_Variables;
       Result                    : out Load_Result) is
    begin
       Check_Index (Catalog_Dir, Result);
@@ -634,7 +680,13 @@ package body Alire.TOML_Index is
       begin
          Result := (Success => True, Value => <>);
 
-         if Starts_With (S, "git+")
+         if S = "" then
+            --  Both in the TOML index and in Alire's internals, an empty
+            --  string denotes an unavailable package.
+
+            Result.Value := (Native_Package, +"");
+
+         elsif Starts_With (S, "git+")
             and then Decode_VCS (S, URL, Revision)
          then
             Result.Value := (Git, URL, Revision);
@@ -665,6 +717,7 @@ package body Alire.TOML_Index is
 
    procedure Decode_TOML_Package
      (Filename, Package_Name : String;
+      Environment            : Environment_Variables;
       Value                  : TOML.TOML_Value;
       Pkg                    : out Package_Type;
       Result                 : out Load_Result)
@@ -997,7 +1050,7 @@ package body Alire.TOML_Index is
          Value   : TOML.TOML_Value) return Boolean
       is
          Res : String_Expressions.Parsing_Result :=
-            String_Expressions.Parse (Value);
+            String_Expressions.Parse (Value, Environment);
       begin
          if Res.Success then
             String_Expressions.Move (Expr, Res.Value);
@@ -1017,7 +1070,7 @@ package body Alire.TOML_Index is
          Value   : TOML.TOML_Value) return Boolean
       is
          Res : Origin_Expressions.Parsing_Result :=
-            Origin_Expressions.Parse (Value);
+            Origin_Expressions.Parse (Value, Environment);
       begin
          if Res.Success then
             Origin_Expressions.Move (Expr, Res.Value);
@@ -1113,7 +1166,7 @@ package body Alire.TOML_Index is
          Value   : TOML.TOML_Value) return Boolean
       is
          Parsing_Result : Dependencies_Expressions.Parsing_Result :=
-            Dependencies_Expressions.Parse (Value);
+            Dependencies_Expressions.Parse (Value, Environment);
       begin
          if Parsing_Result.Success then
             Dependencies_Expressions.Move (Deps, Parsing_Result.Value);
@@ -1296,12 +1349,15 @@ package body Alire.TOML_Index is
             return False;
          end if;
 
-         --  Decode the optional availability expression
+         --  Decode the optional availability expression. By default, assume
+         --  the project is not available (default => false).
 
          if Pop (Queue, Available_Str, Tmp) then
             declare
                Res : Boolean_Expressions.Parsing_Result :=
-                  Boolean_Expressions.Parse (Tmp);
+                  Boolean_Expressions.Parse
+                    (Tmp, Environment,
+                     Default => (Present => True, Value => False));
             begin
                if Res.Success then
                   Boolean_Expressions.Move (Common.Available, Res.Value);
@@ -1344,10 +1400,10 @@ package body Alire.TOML_Index is
             return False;
          end if;
 
-         --  Decode the list of authors
+         --  Decode the optional list of authors
 
-         if not Pop (Queue, Authors_Str, Tmp)
-            or else not To_String_Vector ("general:authors", Pkg.Authors, Tmp)
+         if Pop (Queue, Authors_Str, Tmp)
+            and then not To_String_Vector ("general:authors", Pkg.Authors, Tmp)
          then
             return False;
          end if;
@@ -1484,7 +1540,7 @@ package body Alire.TOML_Index is
 
    procedure Import_TOML_Package
      (Pkg         : Package_Type;
-      Environment : Environment_Maps.Map)
+      Environment : Environment_Variables)
    is
       Cat_Ent : constant Index.Catalog_Entry :=
          Index.Manually_Catalogued_Project

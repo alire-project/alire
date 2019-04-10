@@ -28,10 +28,11 @@ package Alire.TOML_Index is
       with Pre => not Result.Success;
    --  Return the error message in Result
 
-   package Environment_Maps renames Alire.TOML_Expressions.Environment_Maps;
+   subtype Environment_Variables is
+      Alire.TOML_Expressions.Environment_Variables;
 
    procedure Set_Environment
-     (Env      : in out Environment_Maps.Map;
+     (Env      : in out Environment_Variables;
       Distrib  : Platforms.Distributions;
       OS       : Platforms.Operating_Systems;
       Compiler : Platforms.Compilers);
@@ -39,14 +40,14 @@ package Alire.TOML_Index is
 
    procedure Load_Catalog
      (Catalog_Dir : String;
-      Environment : Environment_Maps.Map;
+      Environment : Environment_Variables;
       Result      : out Load_Result);
    --  Load the whole TOML catalog from the given directory and using the given
    --  environment variables.
 
    procedure Load_From_Catalog
      (Catalog_Dir, Package_Name : String;
-      Environment               : Environment_Maps.Map;
+      Environment               : Environment_Variables;
       Result                    : out Load_Result);
    --  Load a specific package from the TOML catalog in the given directory
    --  using the given environment variables.  This does nothing if the package
@@ -298,6 +299,7 @@ private
 
    procedure Decode_TOML_Package
      (Filename, Package_Name : String;
+      Environment            : Environment_Variables;
       Value                  : TOML.TOML_Value;
       Pkg                    : out Package_Type;
       Result                 : out Load_Result);
@@ -307,7 +309,7 @@ private
 
    procedure Import_TOML_Package
      (Pkg         : Package_Type;
-      Environment : Environment_Maps.Map);
+      Environment : Environment_Variables);
    --  Import the given package to Alire's internal index
 
 end Alire.TOML_Index;

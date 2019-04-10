@@ -17,20 +17,23 @@ package body Alire.TOML_Expressions is
    -- Is_Valid_Variable_Name --
    ----------------------------
 
-   function Is_Valid_Variable_Name (Name : String) return Boolean is
+   function Is_Valid_Variable_Name (Name : US.Unbounded_String) return Boolean
+   is
+      subtype Name_Index is Positive range 1 .. US.Length (Name);
       Last_Was_Underscore : Boolean := False;
    begin
-      for I in Name'Range loop
-         if I in Name'First | Name'Last or else Last_Was_Underscore then
-            if Name (I) not in 'a' .. 'z' then
+      for I in Name_Index loop
+         if I in Name_Index'First | Name_Index'Last or else Last_Was_Underscore
+         then
+            if US.Element (Name, I) not in 'a' .. 'z' then
                return False;
             end if;
             Last_Was_Underscore := False;
 
-         elsif Name (I) = '_' then
+         elsif US.Element (Name, I) = '_' then
             Last_Was_Underscore := True;
 
-         elsif Name (I) not in 'a' .. 'z' then
+         elsif US.Element (Name, I) not in 'a' .. 'z' then
             return False;
 
          else
@@ -40,6 +43,89 @@ package body Alire.TOML_Expressions is
 
       return True;
    end Is_Valid_Variable_Name;
+
+   ----------------------------
+   -- Is_Valid_Variable_Name --
+   ----------------------------
+
+   function Is_Valid_Variable_Name (Name : String) return Boolean is
+   begin
+      return Is_Valid_Variable_Name (+Name);
+   end Is_Valid_Variable_Name;
+
+   ----------------------
+   -- Variable_Defined --
+   ----------------------
+
+   function Variable_Defined
+     (Self : Environment_Variables;
+      Name : US.Unbounded_String) return Boolean is
+   begin
+      return Self.Values.Contains (Name);
+   end Variable_Defined;
+
+   ------------------
+   -- Add_Variable --
+   ------------------
+
+   procedure Add_Variable
+     (Self      : in out Environment_Variables;
+      Name      : US.Unbounded_String;
+      Value_Set : String_Array;
+      Value     : US.Unbounded_String)
+   is
+      Set : String_Set_Access := new String_Sets.Set;
+   begin
+      --  Build Set from values in Value_Set
+
+      for V of Value_Set loop
+         if Set.Contains (V) then
+            Free (Set);
+            raise Constraint_Error with "duplicate variable value";
+         end if;
+         Set.Insert (V);
+      end loop;
+
+      --  Check that Value is an allowed value
+
+      if not Set.Contains (Value) then
+         Free (Set);
+         raise Constraint_Error with "value not in set";
+      end if;
+
+      --  Finally add the entry
+
+      Self.Value_Sets.Insert (Name, Set);
+      Self.Values.Insert (Name, Value);
+   end Add_Variable;
+
+   --------------------
+   -- Variable_Value --
+   --------------------
+
+   function Variable_Value
+     (Self : Environment_Variables;
+      Name : US.Unbounded_String) return US.Unbounded_String is
+   begin
+      return Self.Values.Element (Name);
+   end Variable_Value;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Environment_Variables) is
+   begin
+      --  Free dynamically allocated String_Set.Set objects in Self.Value_Sets
+
+      for VS in Self.Value_Sets.Iterate loop
+         declare
+            Set : String_Set_Access := Variable_Value_Sets.Element (VS);
+         begin
+            Free (Set);
+         end;
+      end loop;
+   end Finalize;
 
    -------------------------
    -- Process_Case_Clause --
@@ -69,7 +155,11 @@ package body Alire.TOML_Expressions is
       -- Parse --
       -----------
 
-      function Parse (Value : TOML.TOML_Value) return Parsing_Result is
+      function Parse
+        (Value   : TOML.TOML_Value;
+         Env     : Environment_Variables;
+         Default : Optional_Value := (Present => False)) return Parsing_Result
+      is
 
          Success : Boolean := True;
          Error   : US.Unbounded_String;
@@ -205,6 +295,12 @@ package body Alire.TOML_Expressions is
             Variable : US.Unbounded_String;
             Mappings : TOML.TOML_Value;
             Node     : Expression_Node;
+
+            Value_Set : String_Sets.Set;
+            --  Set of values for the controlling variables that this case must
+            --  cover.
+
+            Position : Matcher_Maps.Cursor;
          begin
             --  If TOML is a case expression pattern, convert it to the
             --  corresponding expression tree.
@@ -216,9 +312,61 @@ package body Alire.TOML_Expressions is
                   Matchers => <>,
                   Default  => <>);
                Nodes.Append (Node);
+
+               Value_Set := Env.Value_Sets.Element (Variable).all;
+
+               --  Process all clauses in this case construct
+
                for E of Mappings.Iterate_On_Table loop
                   Parse_Clause (+E.Key, E.Value, Node.Matchers, Node.Default);
+                  if not Success then
+                     return null;
+                  end if;
                end loop;
+
+               --  If no default clause was present and we are asked to provide
+               --  automatically a default one, do it.
+
+               if Node.Default = null and then Default.Present then
+                  Node.Default := new Expression_Node_Record'
+                    (Is_Case => False, Literal => Default.Value);
+                  Nodes.Append (Node.Default);
+               end if;
+
+               --  Make sure that all matching values are valid values for this
+               --  variable.
+
+               Position := Node.Matchers.First;
+               while Matcher_Maps.Has_Element (Position) loop
+                  declare
+                     Key : constant US.Unbounded_String :=
+                        Matcher_Maps.Key (Position);
+                  begin
+                     if not Value_Set.Contains (Key) then
+                        Success := False;
+                        Error := +("invalid value for " & (+Variable)
+                                   & ": " & (+Key));
+                        return null;
+                     else
+                        Value_Set.Delete (Key);
+                     end if;
+                  end;
+                  Position := Matcher_Maps.Next (Position);
+               end loop;
+
+               --  Make sure that all possible values for this variable have
+               --  matchers.
+
+               if Node.Default = null and then not Value_Set.Is_Empty then
+                  Success := False;
+                  Error := +("unhandled values for " & (+Variable) & ":");
+                  for Value of Value_Set loop
+                     US.Append (Error, " ");
+                     US.Append (Error, Value);
+                  end loop;
+                  return null;
+               end if;
+
                return Node;
 
             elsif not Success then
@@ -341,7 +489,7 @@ package body Alire.TOML_Expressions is
 
       function Evaluate
         (Expr : Expression;
-         Env  : Environment_Maps.Map) return Evaluation_Result.T
+         Env  : Environment_Variables) return Evaluation_Result.T
       is
          Result : Evaluation_Result.T := (Success => True, others => <>);
 
@@ -364,16 +512,14 @@ package body Alire.TOML_Expressions is
 
          while Node.Is_Case loop
             declare
-               Env_Cur   : Environment_Maps.Cursor;
                Env_Value : US.Unbounded_String;
 
                Matcher_Cur : Matcher_Maps.Cursor;
             begin
                --  Lookup the value for the case controlling variable
 
-               Env_Cur := Env.Find (Node.Variable);
-               if Environment_Maps.Has_Element (Env_Cur) then
-                  Env_Value := Environment_Maps.Element (Env_Cur);
+               if Variable_Defined (Env, Node.Variable) then
+                  Env_Value := Variable_Value (Env, Node.Variable);
                else
                   Set_Error ("undefined variable: " & (+Node.Variable));
                   return Result;
@@ -407,7 +553,7 @@ package body Alire.TOML_Expressions is
       function Evaluate_Or_Default
         (Expr    : Expression;
          Default : Value_Type;
-         Env     : Environment_Maps.Map) return Evaluation_Result.T is
+         Env     : Environment_Variables) return Evaluation_Result.T is
       begin
          return (if Expr.Root = null
                  then (Success => True, Value => Default)
@@ -447,7 +593,10 @@ package body Alire.TOML_Expressions is
       -- Parse --
       -----------
 
-      function Parse (Value : TOML.TOML_Value) return Parsing_Result is
+      function Parse
+        (Value : TOML.TOML_Value;
+         Env   : Environment_Variables) return Parsing_Result
+      is
 
          Success : Boolean := True;
          Error   : US.Unbounded_String;
@@ -647,6 +796,12 @@ package body Alire.TOML_Expressions is
                   Key       : constant String := +Case_Construct.Key;
                   Var_First : Positive;
                   Var_Last  : Natural;
+
+                  Value_Set : String_Sets.Set;
+                  --  Set of values for the controlling variables that this
+                  --  case must cover.
+
+                  Position : Matcher_Maps.Cursor;
                begin
                   --  This pass only reacts to case construct entries
 
@@ -661,6 +816,11 @@ package body Alire.TOML_Expressions is
                      Expr.Variables (Next_Case) :=
                         +Key (Var_First .. Var_Last);
 
+                     Value_Set := Env.Value_Sets.Element
+                       (Expr.Variables (Next_Case)).all;
+
+                     --  Process all clauses in this case construct
+
                      for Case_Entry of Case_Construct.Value.Iterate_On_Table
                      loop
                         Parse_Clause (+Case_Entry.Key, Case_Entry.Value);
@@ -668,6 +828,44 @@ package body Alire.TOML_Expressions is
                            return null;
                         end if;
                      end loop;
+
+                     --  Make sure that all matching values are valid values
+                     --  for this variable.
+
+                     Position := Expr.Cases (Next_Case).First;
+                     while Matcher_Maps.Has_Element (Position) loop
+                        declare
+                           Key : constant US.Unbounded_String :=
+                              Matcher_Maps.Key (Position);
+                        begin
+                           if not Value_Set.Contains (Key) then
+                              Success := False;
+                              Error := +("invalid value for "
+                                         & (+Expr.Variables (Next_Case))
+                                         & ": " & (+Key));
+                              return null;
+                           else
+                              Value_Set.Delete (Key);
+                           end if;
+                        end;
+                        Position := Matcher_Maps.Next (Position);
+                     end loop;
+
+                     --  Make sure that all possible values for this variable
+                     --  have matchers.
+
+                     if Expr.Defaults (Next_Case) = null
+                        and then not Value_Set.Is_Empty
+                     then
+                        Success := False;
+                        Error := +("unhandled values for "
+                                   & (+Expr.Variables (Next_Case)) & ":");
+                        for Value of Value_Set loop
+                           US.Append (Error, " ");
+                           US.Append (Error, Value);
+                        end loop;
+                        return null;
+                     end if;
                   end if;
                end;
 
@@ -726,7 +924,7 @@ package body Alire.TOML_Expressions is
 
       function Evaluate
         (Expr : Expression;
-         Env  : Environment_Maps.Map) return Evaluation_Result.T
+         Env  : Environment_Variables) return Evaluation_Result.T
       is
          Result : Evaluation_Result.T := (Success => True, others => <>);
 
@@ -776,16 +974,14 @@ package body Alire.TOML_Expressions is
                   Matchers : Matcher_Maps.Map renames Node.Cases (I);
                   Default  : Expression_Node renames Node.Defaults (I);
 
-                  Env_Cur   : Environment_Maps.Cursor;
                   Env_Value : US.Unbounded_String;
 
                   Matcher_Cur : Matcher_Maps.Cursor;
                begin
                   --  Lookup the value for the case controlling variable
 
-                  Env_Cur := Env.Find (Variable);
-                  if Environment_Maps.Has_Element (Env_Cur) then
-                     Env_Value := Environment_Maps.Element (Env_Cur);
+                  if Variable_Defined (Env, Variable) then
+                     Env_Value := Variable_Value (Env, Variable);
                   else
                      Set_Error ("undefined variable: " & (+Variable));
                      return;
@@ -821,7 +1017,7 @@ package body Alire.TOML_Expressions is
       function Evaluate_Or_Default
         (Expr    : Expression;
          Default : Value_Type;
-         Env     : Environment_Maps.Map) return Evaluation_Result.T is
+         Env     : Environment_Variables) return Evaluation_Result.T is
       begin
          return (if Expr.Root = null
                  then (Success => True, Value => Default)
