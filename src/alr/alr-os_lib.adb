@@ -11,15 +11,6 @@ with GNAT.Expect;
 
 package body Alr.OS_Lib is
 
-   -------------
-   -- Bailout --
-   -------------
-
-   procedure Bailout (Code : Integer := 0) is
-   begin
-      GNAT.OS_Lib.OS_Exit (Code);
-   end Bailout;
-
    -------------------
    -- Create_Folder --
    -------------------

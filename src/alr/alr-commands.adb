@@ -355,7 +355,12 @@ package body Alr.Commands is
          Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
       end if;
 
-      Alire.Features.Index.Load_All;
+      Alire.Features.Index.Load_All
+        (Platform =>
+           (OS       => Platform.Operating_System,
+            Distro   => Platform.Distribution,
+            Compiler => Platform.Compiler),
+         From => Paths.Alr_Index_Folder);
    end Requires_Full_Index;
 
    ----------------------

@@ -55,6 +55,22 @@ package Alire with Preelaborate is
    --  This type is used to ensure that folder separators are externally always '/',
    --  and internally properly converted to the platform one
 
+   --  To clarify constants/functions declared herein:
+
+   subtype Absolute_File is Platform_Independent_Path;
+   --  Filenames with full path
+
+   subtype Absolute_Path is Platform_Independent_Path;
+
+   subtype Relative_File is Platform_Independent_Path;
+   --  Filenames with relative paths
+
+   subtype Relative_Path is Platform_Independent_Path;
+   --  A relative path
+
+   subtype Simple_File is String;
+   --  Filenames without path
+
    ---------------
    --  LOGGING  --
    ---------------

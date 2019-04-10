@@ -43,6 +43,10 @@ package Alr.Paths is
    --  Folder inside Alr_Config_Folder containing a clone of the alr repo
    --  This folder can be overriden via environment variable Alire.Environment.Source
 
+   function Alr_Index_Folder return Absolute_Path;
+   --  Folder inside Alr_Src_Folder containing the defaul public index
+   --  TODO: obsolete this once "alr index" command is in place
+
    Alr_Working_Folder : constant Relative_Path;
    --  Folder within a working project that will contain metadata/build files, 3rd-party projects, and session
 
@@ -88,6 +92,7 @@ private
    function Alr_Config_Folder return String is (Alire.Config.Path);
    function Alr_Source_Folder return String is (OS_Lib.Getenv (Alire.Environment.Source,
                                                                Alr_Config_Folder / "alire"));
+   function Alr_Index_Folder return Absolute_Path is (Alr_Source_Folder / "deps" / "alire-index" / "index");
 
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");

@@ -1,27 +1,26 @@
 with "aaa";
 with "ada_toml";
-with "alire";
 with "ajunitgen";
 with "semantic_versioning";
 with "simple_logging";
 with "xml_ez_out";
 
-project Alr is
+library project Alire is
+
+   for Library_Name use "alire";
 
    type Any_Build_Mode is ("debug", "release");
    Build_Mode : Any_Build_Mode := external ("ALR_BUILD_MODE", "debug");
 
-   for Source_Dirs use ("src/alr", 
-                        "src/alr/os_linux");
+   for Source_Dirs use ("src/alire", 
+                        "src/alire/os_linux");
 
+   for Library_Dir use "lib";
    for Object_Dir use "obj";
-   for Exec_Dir use "bin";
-   for Main use ("alr-main.adb");
 
-   for Languages use ("Ada", "C");
+   for Languages use ("Ada");
 
    Ada_Switches := ();
-   C_Switches := ();
 
    case Build_Mode is
       when "debug" =>
@@ -38,9 +37,6 @@ project Alr is
             --  Enable all warnings and treat them as errors
             "-gnatwae");
 
-         --  Likewise for C units
-         C_Switches := ("-g", "-O0", "-Wall");
-
       when "release" =>
          --  Build with lots of optimizations, generate debug info (useful for
          --  tracebacks) and use maximum runtime checks. Also enable all
@@ -50,43 +46,28 @@ project Alr is
             --  for tracebacks).
             "-O2", "-g",
 
-            --  Force the use of Ada 2012
-            "-gnat12",
-
-            --  Generate extra code to write profile information (prof)
-            "-p",
-
             --  Generate position-independent code
             "-fPIC",
 
             --  Enable lots of extra runtime checks
             "-gnatVa", "-gnatwa", "-gnato", "-fstack-check", "-gnata",
             "-gnatf", "-fPIC");
-
-         --  Likewise for C units
-         C_Switches := ("-g", "-O2", "-Wall", "-fPIC");
    end case;
 
    package Compiler is
       for Default_Switches ("Ada") use Ada_Switches;
-      for Default_Switches ("C") use C_Switches;
    end Compiler;
 
    package Builder is
       for Switches ("ada") use ("-s", "-j0", "-g");
-      for Executable ("alr-main.adb") use "alr";
    end Builder;
 
    package Binder is
       for Switches ("ada") use ("-Es", "-g", "-static");
    end Binder;
 
-   package Linker is
-      for Switches ("ada") use ("-g");
-   end Linker;
-
    package Ide is
       for Vcs_Kind use "Git";
    end Ide;
 
-end Alr;
+end Alire;

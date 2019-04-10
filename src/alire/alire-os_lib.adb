@@ -2,8 +2,21 @@ with GNAT.OS_Lib;
 
 package body Alire.OS_Lib is
 
+   ---------
+   -- "/" --
+   ---------
+
    function "/" (L, R : String) return String is
      (L & GNAT.OS_Lib.Directory_Separator & R);
+
+   -------------
+   -- Bailout --
+   -------------
+
+   procedure Bailout (Code : Integer := 0) is
+   begin
+      GNAT.OS_Lib.OS_Exit (Code);
+   end Bailout;
 
    ----------------
    -- Exe_Suffix --
