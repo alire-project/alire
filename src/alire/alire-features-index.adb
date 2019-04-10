@@ -28,7 +28,7 @@ package body Alire.Features.Index is
             Platform.Compiler);
          Alire.TOML_Index.Load_Catalog
            --  TODO: use configured indexes with `alr index`
-           (Alr.Paths.Alr_Source_Folder / "deps" / "alire" / "index",
+           (Alr.Paths.Alr_Source_Folder / "deps" / "alire-index" / "index",
             Env, Result);
 
          if not Result.Success then

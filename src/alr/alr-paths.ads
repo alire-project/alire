@@ -87,7 +87,7 @@ private
 
    function Alr_Config_Folder return String is (Alire.Config.Path);
    function Alr_Source_Folder return String is (OS_Lib.Getenv (Alire.Environment.Source,
-                                                               Alr_Config_Folder / "alr"));
+                                                               Alr_Config_Folder / "alire"));
 
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");
