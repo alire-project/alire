@@ -48,7 +48,8 @@ package Alr.Commands is
    -- Supporting subprograms for commands --
    -----------------------------------------
 
-   procedure Requires_Full_Index;
+   procedure Requires_Full_Index (Force_Reload : Boolean := False);
+   --  Unless Force_Reload, if the index is not empty we no nothing
 
    procedure Requires_Project;
    --  Checks and performs session is up to date, and that the project matches to continue with it

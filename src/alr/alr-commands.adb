@@ -7,6 +7,7 @@ with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
 with Alire.Features.Index;
+with Alire.Index;
 with Alire.Utils;
 
 with Alr.Commands.Build;
@@ -349,18 +350,22 @@ package body Alr.Commands is
    -- Requires_Full_Index --
    ---------------------------
 
-   procedure Requires_Full_Index is
+   procedure Requires_Full_Index (Force_Reload : Boolean := False) is
    begin
-      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
-         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
-      end if;
+      if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
+         Trace.Detail ("Index already loaded, loading skipped");
+      else
+         if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
+            Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
+         end if;
 
-      Alire.Features.Index.Load_All
-        (Platform =>
-           (OS       => Platform.Operating_System,
-            Distro   => Platform.Distribution,
-            Compiler => Platform.Compiler),
-         From => Paths.Alr_Index_Folder);
+         Alire.Features.Index.Load_All
+           (Platform =>
+              (OS       => Platform.Operating_System,
+               Distro   => Platform.Distribution,
+               Compiler => Platform.Compiler),
+            From     => Paths.Alr_Index_Folder);
+      end if;
    end Requires_Full_Index;
 
    ----------------------
