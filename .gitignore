@@ -8,5 +8,6 @@
 .*sw?
 
 bin
+lib
 obj
 stress/*/
