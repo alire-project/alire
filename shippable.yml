@@ -3,7 +3,6 @@ language: none # Ada
 branches:
     only:
         - master
-        - mosteo
         - stable
 
 env:
