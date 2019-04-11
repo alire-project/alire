@@ -132,7 +132,7 @@ package body Alr.Commands.Get is
    begin
       Define_Switch (Config,
                      Cmd.Compile'Access,
-                     "-c", "--compile", "Compile after download");
+                     "", "--compile", "Compile after download");
 
       Define_Switch (Config,
                      Cmd.Only'Access,
