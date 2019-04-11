@@ -1,1 +1,1 @@
-* Remove the Alr.Root package and fix dependent functionality
+- Remove the Alr.Root package and fix dependent functionality
