@@ -124,6 +124,13 @@ package body Alr.Commands.Show is
          Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
       end if;
 
+      if Num_Arguments = 1 then
+         Requires_Full_Index;
+      else
+         -- TODO: load current dependency file (former alr_deps)
+         raise Program_Error with "To be fixed";
+      end if;
+
       declare
          Allowed : constant Parsers.Allowed_Milestones :=
                      (if Num_Arguments = 1
