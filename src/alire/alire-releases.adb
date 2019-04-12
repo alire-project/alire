@@ -435,6 +435,20 @@ package body Alire.Releases is
    end Property_Contains;
 
    -------------
+   -- To_TOML --
+   -------------
+
+   function To_TOML (R : Release) return TOML.TOML_Value is
+      Root    : constant TOML.TOML_Value := TOML.Create_Table;
+      General : constant TOML.TOML_Value := TOML.Create_Table;
+      Relinfo : constant TOML.TOML_Value := TOML.Create_Table;
+   begin
+      Root.Set ("general",       General);
+      Root.Set (R.Version_Image, Relinfo);
+      return Root;
+   end To_TOML;
+
+   -------------
    -- Version --
    -------------
 

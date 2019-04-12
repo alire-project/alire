@@ -7,6 +7,8 @@ with Alire.Environment;
 with Alr.Defaults;
 with Alr.OS_Lib;
 
+with Gnat.OS_Lib;
+
 package Alr.Paths is
 
    --  NOTE: none of the functions in this spec can be used before elaboration is complete
@@ -15,6 +17,10 @@ package Alr.Paths is
    function "/" (L, R : String) return String;
    --  Equivalent to Ada.Directories.Compose
 
+   function Parent (Folder : String) return String renames Ada.Directories.Containing_Directory;
+
+   function Is_Simple_Name (Path : String) return Boolean is
+      (for all C of Path => C /= Gnat.OS_Lib.Directory_Separator);
 
    --  To clarify constants/functions declared herein:
 
@@ -63,7 +69,7 @@ package Alr.Paths is
    --  Functions that return Paths-derived files
 
    function Working_Deps_File return Relative_File;
-   --  File with dependencies ($alr_working_folder/alr_deps.ads)
+   --  File with dependencies ($alr_working_folder/$project.toml)
 
    function Working_Build_File return Relative_File;
    --  Aggregate project file ($alr_working_folder/alr_build.gpr)
@@ -78,7 +84,6 @@ package Alr.Paths is
 private
 
    function "/"    (L, R : String)   return String is     (Ada.Directories.Compose (L, R));
-   function Parent (Folder : String) return String renames Ada.Directories.Containing_Directory;
 
    --  Constants
 

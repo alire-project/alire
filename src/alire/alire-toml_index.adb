@@ -12,6 +12,7 @@ with Alire.Requisites.Booleans;
 
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
+with TOML.Text_IO;
 
 with Alire.Utils;
 
@@ -251,7 +252,7 @@ package body Alire.TOML_Index is
    function Load_TOML_From_File
      (Filename : String; Result : out Load_Result) return TOML.TOML_Value
    is
-      TOML_Result : constant TOML.Read_Result := TOML.Load_File (Filename);
+      TOML_Result : constant TOML.Read_Result := TOML.Text_IO.Load_File (Filename);
    begin
       if TOML_Result.Success then
          Result := (Success => True);

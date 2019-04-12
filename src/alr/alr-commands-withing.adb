@@ -106,8 +106,7 @@ package body Alr.Commands.Withing is
                          (Root.Current.Release.Replacing
                             (Dependencies => Deps)) with Unreferenced;
       begin
-         Templates.Generate_Prj_Alr (Templates.Unreleased,
-                                     Root.Current.Release);
+         Templates.Generate_Prj_Alr (Root.Current.Release);
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
