@@ -68,12 +68,6 @@ package Alr.Paths is
 
    --  Functions that return Paths-derived files
 
-   function Working_Deps_File return Relative_File;
-   --  File with dependencies ($alr_working_folder/$project.toml)
-
-   function Working_Build_File return Relative_File;
-   --  Aggregate project file ($alr_working_folder/alr_build.gpr)
-
    function Projects_Folder return Relative_Path;
    --  $ALR_WORKING_FOLDER/projects
 
@@ -103,13 +97,5 @@ private
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");
    function Templates_Bin_Folder           return String is (Alr_Source_Folder / "templates" / "projects" / "bin");
    function Templates_Lib_Folder           return String is (Alr_Source_Folder / "templates" / "projects" / "lib");
-
-   --  Functions
-
-   function Working_Deps_File return String is
-     (Alr_Working_Folder / "alr_deps.ads");
-
-   function Working_Build_File return String is
-     (Alr_Working_Folder / "alr_build.gpr");
 
 end Alr.Paths;

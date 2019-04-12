@@ -4,6 +4,7 @@ with Alire.Utils;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Paths;
+with Alr.Root;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -24,10 +25,10 @@ package body Alr.Commands.Version is
       Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
       Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
 
-      if Root.Is_Empty then
+      if not Root.Current.Is_Valid then
          Trace.Always ("alr root is empty");
       else
-         Trace.Always ("alr root is " & Root.Current.Milestone.Image);
+         Trace.Always ("alr root is " & Root.Current.Release.Milestone.Image);
       end if;
 
 --        Trace.Always ("alr session hash is " & Session.Hash);

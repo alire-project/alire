@@ -50,4 +50,6 @@ package Alire.Containers with Preelaborate is
 
    function To_Map (R : Releases.Release) return Release_Map;
 
+   function To_Release_H (R : Releases.Release) return Release_H renames Release_Holders.To_Holder;
+
 end Alire.Containers;

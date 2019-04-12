@@ -18,8 +18,6 @@ with Alire.Releases;
 with Alire.Requisites;
 --  with Alire.Requisites.Dependencies;
 with Alire.Requisites.Platform;
-with Alire.Root;
-with Alire.Roots;
 with Alire.Utils;
 with Alire.Versions;
 
@@ -320,16 +318,6 @@ package Alire.Index is
       Dependencies : Conditional.Dependencies := Conditional.For_Dependencies.Empty;
       Properties   : Conditional.Properties   := Conditional.For_Properties.Empty)
       return         Release renames Releases.New_Working_Release;
-   
-   subtype Root is Roots.Root;
-   
-   function Set_Root (Project      : Catalog_Entry;
-                      Version      : Semantic_Versioning.Version)
-                      return Roots.Root is (Alire.Root.Set (Project.Project, Version));
-   --  All information will be taken from the indexed release
-
-   function Set_Root (R : Release) return Roots.Root renames Alire.Root.Set;
-   --  An unindexed working copy (See New_Working_Release)
    
    ------------
    --  USES  --

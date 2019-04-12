@@ -1,17 +1,10 @@
-with Alr.Paths;
+with Ada.Directories;
+
 with Alr.OS_Lib;
 
 package body Alr.Files is
 
    use OS_Lib.Paths;
-
-   -------------------------
-   -- Is_Candidate_Folder --
-   -------------------------
-
-   function Is_Candidate_Folder (Folder : String := Ada.Directories.Current_Directory) return Boolean is
-     (Ada.Directories.Exists (Folder / Paths.Alr_Working_Folder) and then
-      Ada.Directories.Exists (Folder / Paths.Working_Deps_File));
 
    -----------------------
    -- Locate_File_Under --
@@ -69,30 +62,6 @@ package body Alr.Files is
 
       return Natural (Candidates.Length);
    end Locate_Any_GPR_File;
-
-   ---------------------------------
-   -- Locate_Above_Project_Folder --
-   ---------------------------------
-
-   function Locate_Above_Project_Folder return String is
-      use Ada.Directories;
-      use Alr.OS_Lib;
-
-      Guard : Folder_Guard (Enter_Folder (Current_Directory)) with Unreferenced;
-   begin
-      Trace.Debug ("Starting root search at " & Current_Folder);
-      loop
-         if Is_Candidate_Folder then
-            return Current_Folder;
-         else
-            Set_Directory (Containing_Directory (Current_Folder));
-            Trace.Debug ("Going up to " & Current_Folder);
-         end if;
-      end loop;
-   exception
-      when Use_Error =>
-         return ""; -- There's no containing folder (hence we're at root)
-   end Locate_Above_Project_Folder;
 
    ------------------------
    -- Backup_If_Existing --

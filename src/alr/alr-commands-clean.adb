@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alr.Paths;
+with Alr.Root;
 with Alr.Spawn;
 
 package body Alr.Commands.Clean is
@@ -15,7 +16,7 @@ package body Alr.Commands.Clean is
          Requires_Project;
 
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " & Paths.Working_Build_File & " " & Scenario.As_Command_Line);
+         Spawn.Command ("gprclean", "-r -P " & Root.Current.Build_File & " " & Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then

@@ -1,9 +1,7 @@
 with Ada.Characters;
 with Ada.Characters.Latin_1;
 with Ada.Command_Line;
-with Ada.Exceptions;
 with Ada.Text_IO;
-with Ada.Unchecked_Deallocation;
 
 with Alire;
 
@@ -171,7 +169,8 @@ package body Alr.OS_Lib is
       -- FIXME this is OS dependent and should be made independent (or moved to OS)
       --  File contents
       declare
-         Guard : Folder_Guard (Enter_Folder (Folder)) with Unreferenced;
+         use Alire.Directories;
+         G : Guard (Enter (Folder)) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
          Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;",
@@ -502,39 +501,5 @@ package body Alr.OS_Lib is
          raise Child_Failed with "Exit code:" & Code'Image;
       end if;
    end Spawn_Raw;
-
-   ---------------
-   -- Initialie --
-   ---------------
-
-   overriding procedure Initialize (This : in out Folder_Guard) is
-   begin
-      This.Original := To_Unbounded_String (Current_Folder);
-      if This.Enter /= null and then This.Enter.all /= Current_Folder and then This.Enter.all /= "" then
-         Trace.Debug ("Entering folder: " & This.Enter.all);
-         Ada.Directories.Set_Directory (This.Enter.all);
-      end if;
-   end Initialize;
-
-   --------------
-   -- Finalize --
-   --------------
-
-   overriding procedure Finalize (This : in out Folder_Guard) is
-      use Ada.Exceptions;
-      procedure Free is new Ada.Unchecked_Deallocation (String, Destination);
-      Freeable : Destination := This.Enter;
-   begin
-      if This.Enter /= null and then Current_Folder /= To_String (This.Original) then
-         Log ("Going back to folder: " & To_String (This.Original), Debug);
-         Ada.Directories.Set_Directory (To_String (This.Original));
-      end if;
-      Free (Freeable);
-   exception
-      when E : others =>
-         Trace.Debug ("FG.Finalize: unexpected exception: " &
-                        Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-                        Exception_Information (E));
-   end Finalize;
 
 end Alr.OS_Lib;

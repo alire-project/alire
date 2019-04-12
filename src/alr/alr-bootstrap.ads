@@ -1,5 +1,4 @@
 with Alire;
-with Alire.Index;
 
 package Alr.Bootstrap is
 

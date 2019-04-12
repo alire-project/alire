@@ -6,6 +6,7 @@ with Alr.Commands.Compile;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Platform;
+with Alr.Root;
 with Alr.Utils;
 
 package body Alr.Commands.Run is
@@ -54,18 +55,18 @@ package body Alr.Commands.Run is
       end if;
 
       declare
-         Name       : constant String              := +Root.Project;
+         Name       : constant String              := Root.Current.Release.Project_Str;
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
            (OS_Lib.Current_Folder,
-            Root.Current.Default_Executable,
+            Root.Current.Release.Default_Executable,
             Max_Depth => 2);
          --  We look at most in something like ./build/configuration
 
          Declared : Utils.String_Vector;
       begin
-         Declared := Root.Current.Executables (Platform.Properties);
+         Declared := Root.Current.Release.Executables (Platform.Properties);
          if Declared.Is_Empty then
-            Declared.Append (Root.Current.Default_Executable);
+            Declared.Append (Root.Current.Release.Default_Executable);
          end if;
 
          --  LISTING  --
@@ -76,7 +77,7 @@ package body Alr.Commands.Run is
                   Put_Line ("No built executable has been automatically found either by alr");
                else
                   Put_Line ("However, the following executables have been autodetected:");
-                  Check_Report (Root.Current.Default_Executable);
+                  Check_Report (Root.Current.Release.Default_Executable);
                end if;
             else
                Put_Line ("Project " & Name & " builds these executables:");
@@ -85,9 +86,9 @@ package body Alr.Commands.Run is
                end loop;
 
                --  Default one:
-               if not Declared.Contains (Root.Current.Default_Executable) and then not Candidates.Is_Empty then
+               if not Declared.Contains (Root.Current.Release.Default_Executable) and then not Candidates.Is_Empty then
                   Put_Line ("In addition, the following default-named executables have been detected:");
-                  Check_Report (Root.Current.Default_Executable);
+                  Check_Report (Root.Current.Release.Default_Executable);
                end if;
             end if;
 
@@ -108,7 +109,7 @@ package body Alr.Commands.Run is
                                                else
                                                  (if Declared.Length = 1
                                                   then Declared.First_Element
-                                                  else Root.Current.Default_Executable));
+                                                  else Root.Current.Release.Default_Executable));
 
             Target : constant String :=
                        (if Alire.OS_Lib.Exe_Suffix /= "" and Then
