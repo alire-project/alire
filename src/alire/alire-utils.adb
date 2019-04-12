@@ -30,6 +30,20 @@ package body Alire.Utils is
    function Contains (Text : String; Sub : String) return Boolean is
      (Ada.Strings.Fixed.Count (Text, Sub) > 0);
 
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert (V : Vector) return Other_Vector is
+      OV : Other_Vector; -- What happens with this initialization?
+   begin
+      for E of V loop
+         Append (OV, To_New_Value (E));
+      end loop;
+
+      return OV;
+   end Convert;
+
    ----------
    -- Head --
    ----------

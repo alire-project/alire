@@ -1,6 +1,9 @@
 with Ada.Containers.Indefinite_Vectors;
 
+with Alire.Interfaces;
 with Alire.Utils;
+
+with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Properties with Preelaborate is
 
@@ -11,15 +14,19 @@ package Alire.Properties with Preelaborate is
    --  multiple inheritance for the simplest design.
    --  Instead, a first check of matching tags is done and then the checks can proceed.
 
-   type Property is interface;
+   type Property is abstract new Interfaces.Tomifiable with null record;
 
    function Image (P : Property) return String is abstract;
 
    function Image_Classwide (P : Property'Class) return String is (P.Image);
 
+   overriding function To_TOML (P : Property) return TOML.TOML_Value is abstract;
+
+   function To_TOML_Classwide (P : Property'Class) return TOML.TOML_Value is (P.To_TOML);
+
    package Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Property'Class);
 
-   type Vector is new Vectors.Vector with null record;
+   type Vector is new Vectors.Vector and Interfaces.Tomifiable with null record;
    --  New type so using all it sees "and" below
 
    No_Properties : constant Vector;
@@ -32,6 +39,9 @@ package Alire.Properties with Preelaborate is
    function "+" (P : Property'Class) return Vector;
 
    function Image_One_Line (V : Vector) return String;
+
+   function To_TOML (V : Vector) return TOML.TOML_Value
+     with Post => To_TOML'Result.Kind = TOML.TOML_Array;
 
    --  A generic helper to simply store/retrieve e.g. an enumerated type
    generic
@@ -51,6 +61,8 @@ package Alire.Properties with Preelaborate is
 
       overriding function Image (P : Property) return String;
 
+      overriding function To_TOML (P : Property) return TOML.TOML_Value;
+
       type Property is new Properties.Property with record
          V : Value;
       end record;
@@ -62,6 +74,8 @@ package Alire.Properties with Preelaborate is
       function Element (P : Property) return Value is (P.V);
 
       overriding function Image (P : Property) return String is (Image (P.V));
+
+      overriding function To_TOML (P : Property) return TOML.TOML_Value is (TOML.Create_String (Image (P.V)));
 
    end Values;
 
@@ -84,8 +98,18 @@ private
                                   Image_Classwide,
                                   " and ",
                                   "(no properties");
+
+      function Vector_To_TOML is
+        new Utils.Convert (Vectors            => Vectors,
+                           Vector             => Vector,
+                           Other_Vector       => TOML.TOML_Value,
+                           Other_Vector_Value => TOML.TOML_Value,
+                           To_New_Value       => To_TOML_Classwide,
+                           Append             => TOML.Append);
    end Non_Primitives;
 
    function Image_One_Line (V : Vector) return String renames Non_Primitives.Image_One_Line_Instance;
+
+   function To_TOML (V : Vector) return TOML.TOML_Value renames Non_Primitives.Vector_To_TOML;
 
 end Alire.Properties;

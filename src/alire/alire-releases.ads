@@ -165,6 +165,12 @@ package Alire.Releases with Preelaborate is
                                     return Alire.Properties.Vector;
    --  Return properties that apply to R under platform properties P
    
+   function Labeled_Properties_Vector (R     : Release; 
+                                       P     : Alire.Properties.Vector; 
+                                       Label : Alire.Properties.Labeled.Labels) 
+                                       return Alire.Properties.Vector;
+   --  Return properties of Labeled class for a particular label
+   
    function Labeled_Properties (R     : Release; 
                                 P     : Alire.Properties.Vector; 
                                 Label : Alire.Properties.Labeled.Labels) 
