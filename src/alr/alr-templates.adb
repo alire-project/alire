@@ -249,7 +249,7 @@ package body Alr.Templates is
 
       Files.Backup_If_Existing (Filename);
 
-      Alire.Releases.TOML_IO.To_File (Release, Filename => Release.Project_Str & ".toml");
+      Alire.Releases.TOML_IO.To_File (Release, Filename);
    end Generate_Prj_Alr;
 
    ----------------------
