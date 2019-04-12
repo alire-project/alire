@@ -1,6 +1,7 @@
 with Alr.Checkout;
 with Alr.Platform;
 with Alr.Query;
+with Alr.Root;
 with Alr.Templates;
 
 package body Alr.Commands.Update is
@@ -19,7 +20,7 @@ package body Alr.Commands.Update is
       declare
          Needed  : constant Query.Solution :=
                      Query.Resolve
-                       (Root.Current.Dependencies.Evaluate (Platform.Properties),
+                       (Root.Current.Release.Dependencies.Evaluate (Platform.Properties),
                         Query_Policy);
       begin
          if not Needed.Valid then

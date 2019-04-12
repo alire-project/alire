@@ -3,7 +3,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.Containers;
 with Alire.GPR;
-with Alire.Index;
 with Alire.Milestones;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
@@ -15,6 +14,7 @@ with Alr.Files;
 with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Platform;
+with Alr.Root;
 with Alr.Utils;
 
 package body Alr.Templates is
@@ -91,7 +91,7 @@ package body Alr.Templates is
    procedure Generate_Agg_Gpr (Root : Alire.Roots.Root) is
       Needed  : constant Query.Solution :=
                   Query.Resolve
-                    (Root.Dependencies.Evaluate (Platform.Properties),
+                    (Root.Release.Dependencies.Evaluate (Platform.Properties),
                      Commands.Query_Policy);
    begin
       if Needed.Valid then
@@ -111,7 +111,7 @@ package body Alr.Templates is
       use all type Utils.String_Vectors.Cursor;
 
       File     : File_Type;
-      Filename : constant String := Paths.Working_Build_File;
+      Filename : constant String := Root.Build_File;
       Prjname  : constant String := Utils.To_Mixed_Case (Ada.Directories.Base_Name (Filename));
 
       First    : Boolean := True;
@@ -124,7 +124,7 @@ package body Alr.Templates is
 
       Full_Instance : constant Query.Instance := (Instance.Including (Root.Release));
    begin
-      if Query.Exists (Root.Project, Root.Version) then
+      if Query.Exists (Root.Release.Project, Root.Release.Version) then
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else
@@ -159,7 +159,7 @@ package body Alr.Templates is
 
       --  First obtain all paths and then output them, if any needed
       for Rel of Instance.Including (Root.Release) loop
-         if Rel.Project = Root.Project then
+         if Rel.Project = Root.Release.Project then
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
          else
@@ -168,7 +168,7 @@ package body Alr.Templates is
 
          --  Add non-root extra project paths, always
          for Path of Rel.Project_Paths (Platform.Properties) loop
-            All_Paths.Append ((if Rel.Project = Root.Project
+            All_Paths.Append ((if Rel.Project = Root.Release.Project
                                then ".."
                                else Paths.Alr_Working_Deps_Path / Rel.Unique_Folder) / Path);
          end loop;
@@ -259,7 +259,7 @@ package body Alr.Templates is
    procedure Generate_Prj_Alr (Release : Types.Release) is
       Guard : OS_Lib.Folder_Guard (Commands.Enter_Project_Folder) with Unreferenced;
    begin
-      Generate_Prj_Alr (Release, Paths.Working_Deps_File);
+      Generate_Prj_Alr (Release, Root.Current.Crate_File);
    end Generate_Prj_Alr;
 
 end Alr.Templates;

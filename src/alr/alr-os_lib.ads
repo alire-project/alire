@@ -1,7 +1,6 @@
 with Ada.Directories;
-with Ada.Finalization;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire.Directories;
 with Alire.OS_Lib;
 
 with Alr.Utils;
@@ -58,21 +57,6 @@ package Alr.OS_Lib is
    --  Redirects output to file
    --  Raises CHILD_FAILED if exit code /= 0
 
-   type Destination is access String;
-   Stay : constant Destination := null;
-
-   type Folder_Guard (Enter : Destination := Stay) is limited private;
-   --  use this type in conjunction with Enter_Folder to ensure that
-   --  the CWD is modified and restored when creating/destroying the Folder_Guard
-
-   function Enter_Folder (Path : String) return Destination is
-      (new String'(Path));
-
-   function Stay_In_Current_Folder return Destination is (Stay);
-   --  This whole mess of accesses and leaks is due to a bug in the
-   --    in-place initialization of limited
-
-
    --  OS PORTABLE FUNCTIONS
 
    procedure Bailout (Code : Integer := 0) renames Alire.OS_Lib.Bailout;
@@ -94,6 +78,17 @@ package Alr.OS_Lib is
    package Paths is
       function "/" (L, R : String) return String renames Alr.OS_Lib."/";
    end Paths;
+
+
+   --  WORKING FOLDER MANAGEMENT
+
+   subtype Folder_Guard is Alire.Directories.Guard;
+
+   function Enter_Folder (Path : String) return Alire.Directories.Destination
+                          renames Alire.Directories.Enter;
+
+   function Stay_In_Current_Folder return Alire.Directories.Destination
+     renames Alire.Directories.Stay_In_Current;
 
 
    --  FILE / FOLDER MANAGEMENT
@@ -134,13 +129,6 @@ private
 
    Line_Separator : constant String := ASCII.LF & "";
    --  This should be made OS independent
-
-   type Folder_Guard (Enter : Destination := Stay) is new Ada.Finalization.Limited_Controlled with record
-      Original : Unbounded_String;
-   end record;
-
-   overriding procedure Initialize (This : in out Folder_Guard);
-   overriding procedure Finalize   (This : in out Folder_Guard);
 
    function "/" (L, R : String) return String is
      (L & GNAT.OS_Lib.Directory_Separator & R);

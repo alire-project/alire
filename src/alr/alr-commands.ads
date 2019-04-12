@@ -1,5 +1,7 @@
 with GNAT.Command_Line;
 
+with Alire.Directories;
+
 with Alr.Bootstrap;
 with Alr.Query;
 
@@ -7,8 +9,9 @@ private with Ada.Text_IO;
 
 private with Alire.GPR;
 
-with Alr.OS_Lib;
-pragma Warnings (Off); private with Alr.Root; pragma Warnings (On);
+pragma Warnings (Off);
+private with Alr.OS_Lib; -- For the benefit of many child packages that use it
+pragma Warnings (On);
 private with Alr.Utils;
 
 package Alr.Commands is
@@ -99,7 +102,7 @@ package Alr.Commands is
 
    function Image (N : Cmd_Names) return String;
 
-   function Enter_Project_Folder return OS_Lib.Destination;
+   function Enter_Project_Folder return Alire.Directories.Destination;
    --  If we have a compiled-in project, attempt to find its root above us
    --  Does nothing if we don't have a project, or if the root is not found
 
@@ -137,10 +140,10 @@ private
 
    --  Folder guards conveniences for commands:
 
-   subtype Folder_Guard is OS_Lib.Folder_Guard;
+   subtype Folder_Guard is Alire.Directories.Guard;
 
-   function Enter_Folder (Path : String) return OS_Lib.Destination
-                          renames OS_Lib.Enter_Folder;
+   function Enter_Folder (Path : String) return Alire.Directories.Destination
+                          renames Alire.Directories.Enter;
 
    --  Common generalities
 

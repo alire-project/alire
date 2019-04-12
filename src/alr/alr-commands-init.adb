@@ -7,6 +7,7 @@ with Alire.Roots;
 with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Parsers;
+with Alr.Root;
 with Alr.Templates;
 with Alr.Utils;
 
@@ -42,14 +43,15 @@ package body Alr.Commands.Init is
                    (if Cmd.In_Place
                     then Os_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name))) with Unreferenced;
+         Root : constant Alire.Roots.Root := Alire.Roots.New_Root (+Name, Alire.Directories.Current);
       begin
          OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
 
          Templates.Generate_Prj_Alr
            (Alire.Releases.New_Working_Release (+Name),
-            Paths.Working_Deps_File);
+            Root.Crate_File);
 
-         Templates.Generate_Agg_Gpr (Alire.Roots.New_Root (+Name));
+         Templates.Generate_Agg_Gpr (Root);
       end;
    end Generate;
 
@@ -93,7 +95,7 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen already
          if Session_State = Project then
-            if Name = +Root.Project then
+            if Name = Root.Current.Release.Project_Str then
                Trace.Info ("Already in working copy, skipping initialization");
             else
                Trace.Error ("Cannot initialize a project inside another alr project, stopping.");
