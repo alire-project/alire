@@ -3,7 +3,7 @@ with Ada.Tags;
 with Alire.Actions;
 with Alire.Conditional;
 with Alire.Dependencies;
---  with Alire.Interfaces;
+with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Origins;
 with Alire.Projects;
@@ -15,6 +15,8 @@ with Alire.Versions;
 
 with Semantic_Versioning;
 
+with TOML;
+
 private with Alire.OS_Lib;
 
 package Alire.Releases with Preelaborate is
@@ -22,7 +24,8 @@ package Alire.Releases with Preelaborate is
 --     subtype Dependency_Vector is Dependencies.Vectors.Vector;
 
    type Release (<>) is 
-     new Versions.Versioned
+     new Versions.Versioned 
+     and Interfaces.Tomifiable
    with private;
 
    function "<" (L, R : Release) return Boolean;
@@ -183,6 +186,10 @@ package Alire.Releases with Preelaborate is
    function Satisfies (R : Release; Dep : Alire.Dependencies.Dependency) return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
    
+   overriding function To_TOML (R : Release) return TOML.TOML_Value;
+   
+   function Version_Image (R : Release) return String;
+   
 private
    
    use Semantic_Versioning;
@@ -204,6 +211,7 @@ private
    type Release (Prj_Len, 
                  Notes_Len : Natural) is 
      new Versions.Versioned
+     and Interfaces.Tomifiable
    with record 
       Project      : Alire.Project (1 .. Prj_Len);
       Alias        : Ustring; -- I finally gave up on constraints
@@ -292,4 +300,7 @@ private
      (R.Project = Dep.Project and then
       Satisfies (R.Version, Dep.Versions));
 
+   function Version_Image (R : Release) return String is
+      (Semantic_Versioning.Image (R.Version));
+   
 end Alire.Releases;

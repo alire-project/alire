@@ -7,7 +7,7 @@ private with Ada.Text_IO;
 
 private with Alire.GPR;
 
-private with Alr.OS_Lib;
+with Alr.OS_Lib;
 pragma Warnings (Off); private with Alr.Root; pragma Warnings (On);
 private with Alr.Utils;
 
@@ -98,6 +98,10 @@ package Alr.Commands is
 
    function Image (N : Cmd_Names) return String;
 
+   function Enter_Project_Folder return OS_Lib.Destination;
+   --  If we have a compiled-in project, attempt to find its root above us
+   --  Does nothing if we don't have a project, or if the root is not found
+
 private
 
    use all type Bootstrap.Session_States;
@@ -136,10 +140,6 @@ private
 
    function Enter_Folder (Path : String) return OS_Lib.Destination
                           renames OS_Lib.Enter_Folder;
-
-   function Enter_Project_Folder return OS_Lib.Destination;
-   --  If we have a compiled-in project, attempt to find its root above us
-   --  Does nothing if we don't have a project, or if the root is not found
 
    --  Common generalities
 
