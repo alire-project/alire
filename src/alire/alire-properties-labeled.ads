@@ -16,7 +16,12 @@ package Alire.Properties.Labeled with Preelaborate is
                    Website      -- A website other than the repository
                   );
 
-   type Label (<>) is new Properties.Property with private;
+   --  TODO: subranges for mandatory/optional labels
+
+   type Label (<>) is New
+     Properties.Property And
+     Interfaces.Tomifiable
+   with private;
 
    function New_Label (Name  : Labels;
                        Value : String) return Label;
@@ -25,12 +30,19 @@ package Alire.Properties.Labeled with Preelaborate is
 
    function Value (L : Label) return String;
 
+   -- TODO: use this one in Releases instead of the non-reusables Values
+   function Filter (LV : Vector; Name : Labels) return Vector;
+   --  Return only Label'Class with matching name
+
    overriding function Image (L : Label) return String;
 
---     generic
---        Name : Labels;
---     function Vec_New_Label (Value : String) return Properties.Vector;
---     --  Returns a vector so its directly usable during indexing
+   overriding function To_TOML (L : Label) return TOML.TOML_Value with
+     Post => To_TOML'Result.Kind = TOML.TOML_String;
+   --  Returns only the value, not the name (TOML key)
+
+   function To_TOML_Array (LV : Vector; Name : Labels) return TOML.TOML_Value with
+     Post => To_TOML_Array'Result.Kind = TOML.TOML_Array;
+   --  Filter LV and generate a key = [values ...] table.
 
    generic
       Name : Labels;
@@ -42,7 +54,10 @@ package Alire.Properties.Labeled with Preelaborate is
 
 private
 
-   type Label (Length : Natural) is new Properties.Property with record
+   type Label (Length : Natural) is new
+     Properties.Property and
+     Interfaces.Tomifiable with
+   record
       Name  : Labels;
       Value : String (1 .. Length);
    end record;
@@ -64,5 +79,8 @@ private
      (Conditional.For_Properties.New_Value (New_Label (Name, Utils.To_Native (Value))));
 
    overriding function Image (L : Label) return String is (Utils.To_Mixed_Case (L.Name'Img) & ": " & L.Value);
+
+   overriding function To_TOML (L : Label) return TOML.TOML_Value is
+     (TOML.Create_String (L.Value));
 
 end Alire.Properties.Labeled;

@@ -3,6 +3,7 @@ with AAA.Table_IO;
 --  with Alire.Platform;
 with Alire.Platforms;
 with Alire.Requisites.Booleans;
+with Alire.TOML_Adapters;
 
 with GNAT.IO; -- To keep preelaborable
 
@@ -241,20 +242,33 @@ package body Alire.Releases is
 
    function Values (Props : Alire.Properties.Vector;
                     Label : Alire.Properties.Labeled.Labels)
-                    return Utils.String_Vector is
+                    return Alire.Properties.Vector is
    --  Extract values of a particular label
    begin
-      return Strs : Utils.String_Vector do
+      return Filtered : Alire.Properties.Vector do
          for P of Props loop
             if P in Alire.Properties.Labeled.Label'Class then
                declare
                   LP : Alire.Properties.Labeled.Label renames Alire.Properties.Labeled.Label (P);
                begin
                   if LP.Name = Label then
-                     Strs.Append (LP.Value);
+                     Filtered.Append (P);
                   end if;
                end;
             end if;
+         end loop;
+      end return;
+   end Values;
+
+   function Values (Props : Alire.Properties.Vector;
+                    Label : Alire.Properties.Labeled.Labels)
+                    return Utils.String_Vector is
+      --  Extract values of a particular label
+      Filtered : constant Alire.Properties.Vector := Values (Props, Label);
+   begin
+      return Strs : Utils.String_Vector do
+         for P of Filtered loop
+            Strs.Append (Alire.Properties.Labeled.Label (P).Value);
          end loop;
       end return;
    end Values;
@@ -336,6 +350,14 @@ package body Alire.Releases is
    ------------------------
    -- Labeled_Properties --
    ------------------------
+
+   function Labeled_Properties_Vector (R     : Release;
+                                       P     : Alire.Properties.Vector;
+                                       Label : Alire.Properties.Labeled.Labels)
+                                       return Alire.Properties.Vector is
+   begin
+      return Values (R.All_Properties (P), Label);
+   end Labeled_Properties_Vector;
 
    function Labeled_Properties (R     : Release;
                                 P     : Alire.Properties.Vector;
@@ -442,7 +464,18 @@ package body Alire.Releases is
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
       General : constant TOML.TOML_Value := TOML.Create_Table;
       Relinfo : constant TOML.TOML_Value := TOML.Create_Table;
+
+      use TOML_Adapters;
    begin
+      --  General properties
+      General.Set ("description", +Alire.Projects.Descriptions (R.Project));
+
+      General.Set ("maintainers",
+                   Alire.Properties.Labeled.To_TOML_Array
+                     (R.Labeled_Properties_Vector (No_Properties,
+                                                   Alire.Properties.Labeled.Maintainer),
+                      Alire.Properties.Labeled.Maintainer));
+
       Root.Set ("general",       General);
       Root.Set (R.Version_Image, Relinfo);
       return Root;

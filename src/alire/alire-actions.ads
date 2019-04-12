@@ -1,6 +1,8 @@
 with Alire.Properties;
 with Alire.Utils;
 
+private with TOML;
+
 package Alire.Actions with Preelaborate is
 
    type Moments is (
@@ -47,6 +49,8 @@ private
      (Utils.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
         (if This.Working_Folder /= "" then "/" else "") &
         This.Working_Folder & "/" & This.Relative_Command_Line);
+
+   overriding function To_TOML (This : Run) return TOML.TOML_Value is (raise Program_Error with "TODO: implement");
 
    function New_Run (Moment                : Moments;
                      Relative_Command_Line : Platform_Independent_Path;
