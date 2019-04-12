@@ -1,5 +1,4 @@
 with Alr.Commands.Update;
-with Alr.Paths;
 with Alr.Query;
 with Alr.Templates;
 
@@ -16,7 +15,6 @@ package body Alr.Commands.Pin is
       Requires_Project;
 
       declare
-         Guard : Folder_Guard (Enter_Project_Folder) with Unreferenced;
          Deps : constant Query.Solution :=
                   Query.Resolve (Root.Platform_Dependencies,
                                  Query_Policy);
@@ -24,8 +22,7 @@ package body Alr.Commands.Pin is
          if Deps.Valid then
             Templates.Generate_Prj_Alr
               (Root.Current.Release.Replacing
-                 (Dependencies => Deps.Releases.To_Dependencies),
-               Paths.Working_Deps_File);
+                 (Dependencies => Deps.Releases.To_Dependencies));
 
             Update.Execute;
          else
