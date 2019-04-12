@@ -22,9 +22,12 @@ package Alr.Templates is
    procedure Generate_Agg_Gpr (Root : Alire.Roots.Root);
    --  Generate the aggregate project file solving the dependencies of the given root
 
-   procedure Generate_Prj_Alr (Scenario : Generation_Scenarios;
-                               Release  : Types.Release);
-   --  Generate dependency file, either for a released or unreleased project
+   procedure Generate_Prj_Alr (Release  : Types.Release;
+                               Filename : String);
+   --  Generate textual release representation at given location
+
+   procedure Generate_Prj_Alr (Release : Types.Release);
+   --  As previous, but ensure that we are at the project root folder
 
    Sed_Pattern : constant String;
 

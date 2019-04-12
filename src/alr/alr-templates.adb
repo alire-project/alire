@@ -1,30 +1,23 @@
-with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
-with Alire.Conditional;
 with Alire.Containers;
 with Alire.GPR;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Properties.Labeled; use all type Alire.Properties.Labeled.Labels;
 with Alire.Properties.Scenarios;
+with Alire.Releases.TOML_IO;
 with Alire.Utils;
 
-with Alr.Code;
 with Alr.Commands;
-with Alr.Commands.Withing;
 with Alr.Files;
 with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Utils;
 
-with Semantic_Versioning;
-
 package body Alr.Templates is
-
-   package Semver renames Semantic_Versioning;
 
    Tab_1 : constant String (1 .. 3) := (others => ' ');
    Tab_2 : constant String := Tab_1 & Tab_1;
@@ -241,87 +234,32 @@ package body Alr.Templates is
    -- Generate_Project_Alire --
    ----------------------------
 
-   procedure Generate_Prj_Alr (Scenario : Generation_Scenarios;
-                               Release  : Types.Release)
+   procedure Generate_Prj_Alr (Release  : Types.Release;
+                               Filename : String)
    is
-      function Enumerate is new Alire.Conditional.For_Dependencies.Enumerate
-        (Alire.Containers.Dependency_Lists.List,
-         Alire.Containers.Dependency_Lists.Append);
-
-      package Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
-
-      Includes : Sets.Set; -- To sort them and remove duplicates
-
-      File : File_Type;
-      Name : constant String := Paths.Working_Deps_File;
-
-      Simple_Name : constant String := Ada.Directories.Simple_Name (Name);
-
-      Pkg_Name : constant String := Simple_Name (Simple_Name'First .. Simple_Name'Last - 4);
    begin
-      Trace.Detail ("Generating alr_deps.ads file for " &
-                    (if Scenario = Released
-                       then Release.Milestone.Image
-                       else "unreleased project " & (+Release.Project)) &
+      Trace.Detail ("Generating " & Release.Project_Str & ".toml file for " &
+                    Release.Milestone.Image &
                       " with" & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
-      OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
-      Files.Backup_If_Existing (Name);
-      Create (File, Out_File, Name);
-
-      Put_Line (File, "--  Visibility of operators:");
-      Put_Line (File, "with Alire.Index;    use Alire.Index;");
-      Put_Line (File, "with Alire.Versions; use Alire.Versions.Expressions;");
-
-      --  With generation
-
-      if Scenario = Released then
-         Includes.Include (Commands.Withing.With_Line (Release.Project));
-      else
-         for Dep of Enumerate (Release.Dependencies (Platform.Properties)) loop
-            Includes.Include (Commands.Withing.With_Line (Dep.Project));
-         end loop;
+      if not Paths.Is_Simple_Name (Filename) then
+         OS_Lib.Create_Folder (Paths.Parent (Filename));
       end if;
 
-      if not Includes.Is_Empty then
-         New_Line (File);
-         Put_Line (File, "--  Dependencies:");
-         for Inc of Includes loop
-            Put_Line (File, Inc);
-         end loop;
-      end if;
+      Files.Backup_If_Existing (Filename);
 
-      New_Line (File);
+      Alire.Releases.TOML_IO.To_File (Release, Filename => Release.Project_Str & ".toml");
+   end Generate_Prj_Alr;
 
-      --  Spec generation
+   ----------------------
+   -- Generate_Prj_Alr --
+   ----------------------
 
-      Put_Line (File, "package " & Utils.To_Mixed_Case (Pkg_Name) & " is");
-      New_Line (File);
-      Put_Line (File, Tab_1 & "Current_Root : constant Root := Set_Root (");
-
-      if Scenario = Released then
-         --  Typed name plus version
-         Put_Line (File, Tab_2 & Alire.Index.Get (Release.Project).Ada_Identifier & ",");
-         Put_Line (File, Tab_2 & "V (" & Q (Semver.Image (Release.Version)) & "));");
-      else
-         Put_Line (File,
-                   Code
-                   .Generate (Release)
-                   .Append_To_Last_Line (");")
-                   .Indent (Tab_2)
-                   .Flatten (Separator => OS_Lib.Line_Separator));
-      end if;
-      New_Line (File);
-
-      Put_Line (File, "   --  An explicit dependency on alire is only needed if you want to compile this file.");
-      Put_Line (File, "   --  To do so, include the ""alire.gpr"" project in your own project file.");
-      Put_Line (File, "   --  Once you are satisfied with your own dependencies it can be safely removed.");
-      New_Line (File);
-
-      Put_Line (File, "end " & Utils.To_Mixed_Case (Pkg_Name) & ";");
-
-      Close (File);
+   procedure Generate_Prj_Alr (Release : Types.Release) is
+      Guard : OS_Lib.Folder_Guard (Commands.Enter_Project_Folder) with Unreferenced;
+   begin
+      Generate_Prj_Alr (Release, Paths.Working_Deps_File);
    end Generate_Prj_Alr;
 
 end Alr.Templates;
