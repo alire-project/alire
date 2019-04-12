@@ -48,7 +48,7 @@ package body Alr.Commands.Init is
          OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
 
          Templates.Generate_Prj_Alr
-           (Alire.Releases.New_Working_Release (+Name),
+           (Root.Release,
             Root.Crate_File);
 
          Templates.Generate_Agg_Gpr (Root);
