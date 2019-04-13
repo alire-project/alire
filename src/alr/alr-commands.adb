@@ -358,9 +358,7 @@ package body Alr.Commands is
       if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
          Trace.Detail ("Index already loaded, loading skipped");
       else
-         if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
-            Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
-         end if;
+         Requires_Sources;
 
          Alire.Features.Index.Load_All
            (Platform =>
@@ -379,6 +377,22 @@ package body Alr.Commands is
    begin
       Alire.Roots.Check_Valid (Alire.Root.Current);
    end Requires_Project;
+
+   procedure Requires_Sources is
+   begin
+      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
+         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
+      end if;
+   end Requires_Sources;
+
+   ------------------------
+   -- Requires_Templates --
+   ------------------------
+
+   procedure Requires_Templates is
+   begin
+      Requires_Sources;
+   end Requires_Templates;
 
    --------------------
    -- Fill_Arguments --
