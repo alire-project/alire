@@ -524,6 +524,80 @@ package body Alire.Conditional_Trees is
    end Print;
 
    -------------
+   -- To_TOML --
+   -------------
+
+   function To_TOML (This : Tree) return TOML.TOML_Value is
+      Root : TOML.TOML_Value;
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Table : TOML.TOML_Value;
+                     Key   : String;
+                     Val   : TOML.TOML_Value)
+      is
+         use all type TOML.Any_Value_Kind;
+      begin
+         pragma Assert (Table.Kind = TOML.TOML_Table);
+         if Table.Has (Key) then
+            declare
+               Current : constant TOML.TOML_Value := Table.Get (Key);
+            begin
+               case Current.Kind is
+                  when TOML_Table =>
+                     raise Constraint_Error with "Cannot replace table value (TOML forbidden format)";
+                  when TOML_Array =>
+                     Current.Append (Val);
+                     Table.Set (Key, Current); -- This might be redundant since TOML is shallow referenced (I think)
+                  when others => -- Convert to array
+                     declare
+                        Replace : constant TOML.TOML_Value := TOML.Create_Array;
+                     begin
+                        Replace.Append (Current);
+                        Replace.Append (Val);
+                        Table.Set (Key, Replace);
+                     end;
+               end case;
+            end;
+         else
+            Table.Set (Key, Val);
+         end if;
+      end Add;
+
+      ------------
+      -- Tomify --
+      ------------
+
+      procedure Tomify (Parent : TOML.TOML_Value; This : Tree) is
+      begin
+         case This.Kind is
+         when Value =>
+            Add (Parent, This.Value.Key, This.Value.To_TOML);
+         when Condition =>
+            raise Unimplemented;
+         when Vector =>
+            case This.Conjunction is
+               when Anded => null;
+               when Ored  => raise Unimplemented;
+            end case;
+
+            for I in This.Iterate loop
+               Tomify (Parent, This (I));
+            end loop;
+         end case;
+      end Tomify;
+
+   begin
+      if not This.Is_Empty then
+         Root := TOML.Create_Table;
+         Tomify (Root, This);
+      end if;
+      return Root;
+   end To_TOML;
+
+   -------------
    -- To_Code --
    -------------
 

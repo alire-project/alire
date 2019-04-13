@@ -463,7 +463,13 @@ package body Alire.Releases is
       Relinfo : constant TOML.TOML_Value := TOML.Create_Table;
    begin
       --  General properties
-      Root.Set (TOML_Keys.General, R.Properties.To_Toml);
+      declare
+         General : constant TOML.TOML_Value := R.Properties.To_Toml;
+      begin
+         if General.Is_Present then
+            Root.Set (TOML_Keys.General, R.Properties.To_Toml);
+         end if;
+      end;
 
 --        for Label in Alire.Properties.Labeled.Labels loop
 --           declare
