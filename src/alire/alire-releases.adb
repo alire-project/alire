@@ -236,42 +236,23 @@ package body Alire.Releases is
       end if;
    end On_Platform_Properties;
 
-   ------------
-   -- Values --
-   ------------
+   ----------------------
+   -- Props_To_Strings --
+   ----------------------
 
-   function Values (Props : Alire.Properties.Vector;
-                    Label : Alire.Properties.Labeled.Labels)
-                    return Alire.Properties.Vector is
-   --  Extract values of a particular label
-   begin
-      return Filtered : Alire.Properties.Vector do
-         for P of Props loop
-            if P in Alire.Properties.Labeled.Label'Class then
-               declare
-                  LP : Alire.Properties.Labeled.Label renames Alire.Properties.Labeled.Label (P);
-               begin
-                  if LP.Name = Label then
-                     Filtered.Append (P);
-                  end if;
-               end;
-            end if;
-         end loop;
-      end return;
-   end Values;
-
-   function Values (Props : Alire.Properties.Vector;
+   function Props_To_Strings (Props : Alire.Properties.Vector;
                     Label : Alire.Properties.Labeled.Labels)
                     return Utils.String_Vector is
       --  Extract values of a particular label
-      Filtered : constant Alire.Properties.Vector := Values (Props, Label);
+      Filtered : constant Alire.Properties.Vector :=
+                   Alire.Properties.Labeled.Filter (Props, Label);
    begin
       return Strs : Utils.String_Vector do
          for P of Filtered loop
             Strs.Append (Alire.Properties.Labeled.Label (P).Value);
          end loop;
       end return;
-   end Values;
+   end Props_To_Strings;
 
    -----------------
    -- Executables --
@@ -283,7 +264,7 @@ package body Alire.Releases is
    is
    begin
       return Exes : Utils.String_Vector :=
-        Values (R.All_Properties (P), Executable)
+        Props_To_Strings (R.All_Properties (P), Executable)
       do
          if OS_Lib.Exe_Suffix /= "" then
             for I in Exes.Iterate loop
@@ -304,7 +285,7 @@ package body Alire.Releases is
    is
       use Utils;
 
-      With_Paths : Utils.String_Vector := Values (R.All_Properties (P), Project_File);
+      With_Paths : Utils.String_Vector := Props_To_Strings (R.All_Properties (P), Project_File);
       Without    : Utils.String_Vector;
    begin
       if With_Paths.Is_Empty then
@@ -356,8 +337,12 @@ package body Alire.Releases is
                                        Label : Alire.Properties.Labeled.Labels)
                                        return Alire.Properties.Vector is
    begin
-      return Values (R.All_Properties (P), Label);
+      return Alire.Properties.Labeled.Filter (R.All_Properties (P), Label);
    end Labeled_Properties_Vector;
+
+   ------------------------
+   -- Labeled_Properties --
+   ------------------------
 
    function Labeled_Properties (R     : Release;
                                 P     : Alire.Properties.Vector;
@@ -365,7 +350,7 @@ package body Alire.Releases is
                                 return Utils.String_Vector
    is
    begin
-      return Values (R.All_Properties (P), Label);
+      return Props_To_Strings (R.All_Properties (P), Label);
    end Labeled_Properties;
 
    -----------
@@ -468,6 +453,10 @@ package body Alire.Releases is
       use TOML_Adapters;
    begin
       --  General properties
+      for Label in Alire.Properties.Labeled.Labels loop
+         null;
+      end loop;
+
       General.Set ("description", +Alire.Projects.Descriptions (R.Project));
 
       General.Set ("maintainers",
