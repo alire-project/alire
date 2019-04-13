@@ -16,7 +16,13 @@ package Alire.Properties.Labeled with Preelaborate is
                    Website      -- A website other than the repository
                   );
 
-   --  TODO: subranges for mandatory/optional labels
+   type Cardinalities is (Unique, Multiple); -- Are they atoms or arrays?
+
+   Cardinality : array (Labels) of Cardinalities :=
+                   (Comment     |
+                    Description |
+                    Website     => Unique,
+                    others      => Multiple);
 
    type Label (<>) is New
      Properties.Property And
