@@ -8,7 +8,6 @@ package Alire.Properties.Labeled with Preelaborate is
 
    type Labels is (Author,      -- VIP
                    Comment,     -- Extra text
-                   Description, -- One-liner description, so it is searched too
                    Executable,  -- A resulting executable built by the project
                    Maintainer,  -- Info about the maintainer of the alr-packaged project
                    Path,        -- Extra path for PATH to add to build (prepended)
@@ -20,13 +19,11 @@ package Alire.Properties.Labeled with Preelaborate is
 
    Cardinality : array (Labels) of Cardinalities :=
                    (Comment     |
-                    Description |
                     Website     => Unique,
                     others      => Multiple);
 
    Mandatory : array (Labels) of Boolean :=
-                 (Description |
-                  Maintainer  => True,
+                 (Maintainer  => True,
                   others      => False);
 
    type Label (<>) is New

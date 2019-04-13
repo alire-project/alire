@@ -212,7 +212,6 @@ private
 
    use Alire.Properties;
    function Comment  is new Alire.Properties.Labeled.Cond_New_Label (Alire.Properties.Labeled.Comment);
-   function Describe is new Alire.Properties.Labeled.Cond_New_Label (Alire.Properties.Labeled.Description);
 
    type Release (Prj_Len, 
                  Notes_Len : Natural) is 
