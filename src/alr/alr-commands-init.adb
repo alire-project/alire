@@ -25,6 +25,8 @@ package body Alr.Commands.Init is
       elsif Cmd.No_Skel then
          Ada.Directories.Create_Directory (Name);
       else
+         Requires_Templates;
+
          OS_Lib.Copy_Folder ((if Cmd.Bin
                              then Paths.Templates_Bin_Folder
                              else Paths.Templates_Lib_Folder),
