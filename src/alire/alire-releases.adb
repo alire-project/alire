@@ -1,6 +1,7 @@
 with AAA.Table_IO;
 
 --  with Alire.Platform;
+with Alire.Defaults;
 with Alire.Platforms;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Adapters;
@@ -204,7 +205,10 @@ package body Alire.Releases is
       Notes        => "",
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
-      Properties   => Properties,
+      Properties   => (if Properties = Conditional.For_Properties.Empty
+                       then Conditional.For_Properties.New_Value (New_Label (Maintainer,
+                                                                             Defaults.Maintainer))
+                       else Properties),
       Priv_Props   => Conditional.For_Properties.Empty,
       Available    => Requisites.Booleans.Always_True);
 

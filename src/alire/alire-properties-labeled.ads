@@ -24,6 +24,11 @@ package Alire.Properties.Labeled with Preelaborate is
                     Website     => Unique,
                     others      => Multiple);
 
+   Mandatory : array (Labels) of Boolean :=
+                 (Description |
+                  Maintainer  => True,
+                  others      => False);
+
    type Label (<>) is New
      Properties.Property And
      Interfaces.Tomifiable
