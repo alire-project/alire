@@ -458,6 +458,7 @@ package body Alire.Releases is
    -------------
 
    function To_TOML (R : Release) return TOML.TOML_Value is
+      use all type Alire.Requisites.Tree;
       use TOML_Adapters;
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
       Relinfo :          TOML.TOML_Value := TOML.Create_Table;
@@ -498,11 +499,19 @@ package body Alire.Releases is
       -- Forbidden
       Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
 
+      -- Available
+      if R.Available.Is_Empty or else R.Available = Alire.Requisites.Booleans.Always_True then
+         null; -- Do nothing, do not pollute .toml file
+      else
+         raise Unimplemented; -- TODO
+                              -- Not straightforward, since current expressions are and/or only,
+                              -- and the toml format is case-based.
+                              -- This will require a way to load the case expression(s),
+                              --   before they can be exported
+      end if;
+
       -- Version release
       Root.Set (R.Version_Image, Relinfo);
-
-      -- TODO:
-      --   Available
 
       return Root;
    end To_TOML;
