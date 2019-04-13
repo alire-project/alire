@@ -9,7 +9,9 @@ package Alire.TOML_Keys with Preelaborate is
    Distribution : constant String := "distribution";
    General      : constant String := "general";
    License      : constant String := "license";
+   Notes        : constant String := "notes";
    OS           : constant String := "os";
+   Provides     : constant String := "provides";
    Target       : constant String := "target";
    Word_Size    : constant String := "word-size";
    
