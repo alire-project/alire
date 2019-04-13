@@ -98,18 +98,8 @@ private
                                   Image_Classwide,
                                   " and ",
                                   "(no properties");
-
-      function Vector_To_TOML is
-        new Utils.Convert (Vectors            => Vectors,
-                           Vector             => Vector,
-                           Other_Vector       => TOML.TOML_Value,
-                           Other_Vector_Value => TOML.TOML_Value,
-                           To_New_Value       => To_TOML_Classwide,
-                           Append             => TOML.Append);
    end Non_Primitives;
 
    function Image_One_Line (V : Vector) return String renames Non_Primitives.Image_One_Line_Instance;
-
-   function To_TOML (V : Vector) return TOML.TOML_Value renames Non_Primitives.Vector_To_TOML;
 
 end Alire.Properties;

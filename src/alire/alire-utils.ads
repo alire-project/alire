@@ -63,8 +63,9 @@ package Alire.Utils with Preelaborate is
       type Vector is new Vectors.Vector with private;
       type Other_Vector is new Ada.Finalization.Controlled with private;
       type Other_Vector_Value is private;
+      Initial_Other_Vector : Other_Vector;
       with function To_New_Value (Item : Vectors.Element_Type) return Other_Vector_Value is <>;
-      with procedure Append (Vec : Other_Vector; Val : Other_Vector_Value);
+      with procedure Append (Vec : in out Other_Vector; Val : Other_Vector_Value);
    function Convert (V : Vector) return Other_Vector;
    --  Convert between two vector types
 

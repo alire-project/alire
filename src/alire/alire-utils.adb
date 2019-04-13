@@ -35,7 +35,7 @@ package body Alire.Utils is
    -------------
 
    function Convert (V : Vector) return Other_Vector is
-      OV : Other_Vector; -- What happens with this initialization?
+      OV : Other_Vector := Initial_Other_Vector;
    begin
       for E of V loop
          Append (OV, To_New_Value (E));
