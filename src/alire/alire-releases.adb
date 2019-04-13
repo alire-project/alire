@@ -4,7 +4,7 @@ with AAA.Table_IO;
 with Alire.Defaults;
 with Alire.Platforms;
 with Alire.Requisites.Booleans;
--- with Alire.TOML_Adapters;
+with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 
 with GNAT.IO; -- To keep preelaborable
@@ -458,52 +458,45 @@ package body Alire.Releases is
    -------------
 
    function To_TOML (R : Release) return TOML.TOML_Value is
+      use TOML_Adapters;
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
---        General : constant TOML.TOML_Value := TOML.Create_Table;
       Relinfo : constant TOML.TOML_Value := TOML.Create_Table;
    begin
-      --  General properties
+      -- General properties
       declare
          General : constant TOML.TOML_Value := R.Properties.To_Toml;
       begin
+         -- Description
+         if Projects.Descriptions.Contains (R.Project) then
+            General.Set (TOML_Keys.Description, +Projects.Descriptions (R.Project));
+         else
+            General.Set (TOML_Keys.Description, +Defaults.Description);
+         end if;
+
+         -- Alias/Provides
+         if UStrings.Length (R.Alias) > 0 then
+            General.Set (TOML_Keys.Provides, +(+R.Alias));
+         end if;
+
+         -- Notes
+         if R.Notes'Length > 0 then
+            General.Set (TOML_Keys.Notes, +R.Notes);
+         end if;
+
+         -- Final assignment
          if General.Is_Present then
-            Root.Set (TOML_Keys.General, R.Properties.To_Toml);
+            Root.Set (TOML_Keys.General, General);
          end if;
       end;
 
---        for Label in Alire.Properties.Labeled.Labels loop
---           declare
---              package APL renames Alire.Properties.Labeled;
---              use all type APL.Cardinalities;
---
---              Values : constant Vector :=
---                         R.Labeled_Properties_Vector (No_Properties, -- TODO: what about platform properties?
---                                                      Label);
---           begin
---              --  Sanity checks
---              if APL.Mandatory (Label) and then Values.Is_Empty then
---                 raise Program_Error with "Release lacks mandatory label: " & Label'Img;
---              elsif APL.Cardinality (Label) = Unique and then Natural (Values.Length) > 1 then
---                 raise Program_Error with "Release property should be unique: " & Label'Img;
---              end if;
---
---              --  Extract either single or vector TOML values
---              if not Values.Is_Empty then
---                 declare
---                    TOML_Values : constant TOML.TOML_Value :=
---                                    (case APL.Cardinality (Label) is
---                                        when Unique   => Values.First_Element.To_TOML,
---                                        when Multiple => Values.To_TOML);
---                 begin
---                    General.Set (TOML_Keys.Labels (Label),
---                                 TOML_Values);
---                 end;
---              end if;
---           end;
---        end loop;
---
---        Root.Set ("general",       General);
       Root.Set (R.Version_Image, Relinfo);
+
+      -- TODO:
+      --   Origin
+      --   Dependencies
+      --   Forbidden
+      --   Available
+
       return Root;
    end To_TOML;
 
