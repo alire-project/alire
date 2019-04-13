@@ -1,10 +1,9 @@
 with Alire.Interfaces;
-with Alire.TOML_Keys;
 with Alire.Utils;
 
 with Semantic_Versioning;
 
-with TOML;
+with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Dependencies with Preelaborate is
 
@@ -13,7 +12,7 @@ package Alire.Dependencies with Preelaborate is
    --  A single dependency is a project name plus a version set
 
    type Dependency (<>) is new
-     Interfaces.Classificable and -- Not really, but helps with Tomification
+     Interfaces.Classificable and -- since the project name is the key
      Interfaces.Tomifiable with private;
 
    function New_Dependency (Project  : Alire.Project;
@@ -25,10 +24,10 @@ package Alire.Dependencies with Preelaborate is
 
    function Image (Dep : Dependency) return String;
 
-   overriding function Key (Dep : Dependency) return String is (TOML_Keys.Dependency);
+   overriding function Key (Dep : Dependency) return String;
 
-   overriding function To_TOML (Dep : Dependency) return TOML.TOML_Value is
-      (raise Program_Error with "TODO: implement");
+   overriding function To_TOML (Dep : Dependency) return TOML.TOML_Value;
+   --  String representation of the dependency, e.g. "^1.0.0"
 
    function Unavailable return Dependency;
    --  Special never available dependency to beautify a bit textual outputs
@@ -58,6 +57,8 @@ private
       else
         (Utils.To_Lower_Case (+Dep.Project) & " is " &
            Semantic_Versioning.Image (Dep.Versions)));
+
+   overriding function Key (Dep : Dependency) return String is (+Dep.Project);
 
    function Unavailable return Dependency is
      (New_Dependency ("alire", Semantic_Versioning.Exactly (Semantic_Versioning.V ("0"))));
