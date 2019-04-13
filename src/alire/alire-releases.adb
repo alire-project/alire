@@ -460,7 +460,7 @@ package body Alire.Releases is
    function To_TOML (R : Release) return TOML.TOML_Value is
       use TOML_Adapters;
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
-      Relinfo : constant TOML.TOML_Value := TOML.Create_Table;
+      Relinfo :          TOML.TOML_Value := TOML.Create_Table;
    begin
       -- General properties
       declare
@@ -489,10 +489,11 @@ package body Alire.Releases is
          end if;
       end;
 
+      Relinfo := TOML.Merge (Relinfo, R.Origin.To_TOML);
+
       Root.Set (R.Version_Image, Relinfo);
 
       -- TODO:
-      --   Origin
       --   Dependencies
       --   Forbidden
       --   Available

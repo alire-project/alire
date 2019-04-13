@@ -4,6 +4,8 @@ with Alire.Utils;
 
 private with Ada.Strings.Unbounded;
 
+with TOML; use all type TOML.Any_Value_Kind;
+
 package Alire.Origins with Preelaborate is
 
    --  Minimal information about origins of sources.
@@ -43,7 +45,9 @@ package Alire.Origins with Preelaborate is
 
    Unknown_Source_Archive_Format_Error : exception;
 
-   type Origin is new Interfaces.Codifiable with private;
+   type Origin is New
+     Interfaces.Codifiable and
+     Interfaces.Tomifiable with private;
 
    function Kind (This : Origin) return Kinds;
 
@@ -108,6 +112,9 @@ package Alire.Origins with Preelaborate is
 
    overriding function To_Code (This : Origin) return Utils.String_Vector;
 
+   overriding function To_TOML (This : Origin) return TOML.TOML_Value with
+     Post => To_TOML'Result.Kind = TOML.TOML_Table;
+
 private
 
    use Ada.Strings.Unbounded;
@@ -142,7 +149,7 @@ private
       end case;
    end record;
 
-   type Origin is new Interfaces.Codifiable with record
+   type Origin is new Interfaces.Codifiable and Interfaces.Tomifiable with record
       Data : Origin_Data;
   end record;
 
@@ -208,6 +215,5 @@ private
      (if This.Kind = Filesystem
       then Utils.To_Vector (Path (This))
       else raise Program_Error with "Unimplemented");
-
 
 end Alire.Origins;
