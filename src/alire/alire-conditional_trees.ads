@@ -136,6 +136,8 @@ package Alire.Conditional_Trees with Preelaborate is
    -------------
 
    function To_TOML (This : Tree) return TOML.TOML_Value;
+   --  Every tree element can provide a key under which to be filed
+   --  This is used for key = value leaves and [table] names in non-leaves
 
    -----------------
    --  ITERATORS  --

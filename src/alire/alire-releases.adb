@@ -489,13 +489,19 @@ package body Alire.Releases is
          end if;
       end;
 
+      -- Origin
       Relinfo := TOML.Merge (Relinfo, R.Origin.To_TOML);
 
+      -- Dependencies
+      Relinfo.Set (TOML_Keys.Dependency, R.Dependencies.To_TOML);
+
+      -- Forbidden
+      Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+
+      -- Version release
       Root.Set (R.Version_Image, Relinfo);
 
       -- TODO:
-      --   Dependencies
-      --   Forbidden
       --   Available
 
       return Root;

@@ -8,6 +8,7 @@ package Alire.TOML_Keys with Preelaborate is
    Dependency   : constant String := "depends-on";
    Description  : constant String := "description";  
    Distribution : constant String := "distribution";
+   Forbidden    : constant String := "forbids";
    General      : constant String := "general";
    License      : constant String := "license";
    Notes        : constant String := "notes";
