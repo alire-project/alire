@@ -28,10 +28,7 @@ package body Alire.Releases is
    function Default_Properties return Conditional.Properties is
      (Conditional.For_Properties.New_Value
         (New_Label (Maintainer,
-                    Defaults.Maintainer)) and
-        Conditional.For_Properties.New_Value
-          (New_Label (Description,
-                      Defaults.Description)));
+                    Defaults.Maintainer)));
 
    ---------------
    -- Extending --

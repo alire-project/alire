@@ -10,7 +10,6 @@ package Alire.TOML_Keys with Preelaborate is
      (case Label is 
          when Author       => "authors",
          when Comment      => "comment",
-         when Description  => "description",
          when Executable   => "executables",
          when Maintainer   => "maintainers",
          when Path         => "paths",
