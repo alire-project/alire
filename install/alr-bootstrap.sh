@@ -3,14 +3,14 @@
 # DEFINITIONS SECTION
 
 repo_branch=${1:-stable}
-repo_url=https://github.com/alire-project/alr.git
+repo_url=https://github.com/alire-project/alire.git
 
 required_tools="git id"
 optional_tools="hg sudo"
 required_compiler="gprbuild gnatmake gnatls"
 
 alire_folder=${XDG_CONFIG_HOME:-$HOME/.config}/alire
-alire_src=$alire_folder/alr
+alire_src=$alire_folder/alire
 alire_bin=$alire_src/bin/alr
 alire_version=unknown
 

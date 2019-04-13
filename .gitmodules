@@ -1,6 +1,6 @@
-[submodule "deps/alire"]
+[submodule "deps/alire-index"]
 	path = deps/alire
-	url = https://github.com/alire-project/alire.git
+	url = https://github.com/alire-project/alire-index.git
 [submodule "deps/ahven"]
 	path = deps/ahven
 	url = ./deps/ahven
