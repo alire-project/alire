@@ -12,7 +12,7 @@ private with Ada.Containers.Indefinite_Vectors;
 with TOML;
 
 generic
-   type Values (<>) is new Interfaces.Tomifiable with private;
+   type Values (<>) is new Interfaces.Classificable and Interfaces.Tomifiable with private;
    with function Image (V : Values) return String;
 package Alire.Conditional_Trees with Preelaborate is
 
@@ -135,8 +135,7 @@ package Alire.Conditional_Trees with Preelaborate is
    -- To_TOML --
    -------------
 
-   function To_TOML (This : Tree) return TOML.TOML_Value is
-      (raise Program_Error with "TODO: implement");
+   function To_TOML (This : Tree) return TOML.TOML_Value;
 
    -----------------
    --  ITERATORS  --
