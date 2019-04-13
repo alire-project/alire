@@ -1,6 +1,9 @@
+with Alire.Interfaces;
 with Alire.Utils;
 
 with Semantic_Versioning;
+
+with TOML;
 
 package Alire.Dependencies with Preelaborate is
 
@@ -8,7 +11,7 @@ package Alire.Dependencies with Preelaborate is
 
    --  A single dependency is a project name plus a version set
 
-   type Dependency (<>) is tagged private;
+   type Dependency (<>) is new Interfaces.Tomifiable with private;
 
    function New_Dependency (Project  : Alire.Project;
                             Versions : Semantic_Versioning.Version_Set) return Dependency;
@@ -19,12 +22,15 @@ package Alire.Dependencies with Preelaborate is
 
    function Image (Dep : Dependency) return String;
 
+   function To_TOML (Dep : Dependency) return TOML.TOML_Value is
+      (raise Program_Error with "TODO: implement");
+
    function Unavailable return Dependency;
    --  Special never available dependency to beautify a bit textual outputs
 
 private
 
-   type Dependency (Name_Len : Natural) is tagged record
+   type Dependency (Name_Len : Natural) is new Interfaces.Tomifiable with record
       Project    : Alire.Project (1 .. Name_Len);
       Versions   : Semantic_Versioning.Version_Set;
    end record;
