@@ -1,4 +1,5 @@
 with Alire.Properties;
+with Alire.TOML_Keys;
 with Alire.Utils;
 
 private with TOML;
@@ -16,6 +17,8 @@ package Alire.Actions with Preelaborate is
    --  We'll cross that bridge once it proves necessary
 
    type Action (<>) is abstract new Properties.Property with private;
+
+   overriding function Key (This : Action) return String is (TOML_Keys.Action);
 
    function Moment (This : Action) return Moments;
 

@@ -1,21 +1,15 @@
-with Alire.Properties.Labeled;
-
 package Alire.TOML_Keys with Preelaborate is
 
    --  Constants for TOML keys in the index format
-   --  TODO: update elsewere   
-   
-   use all type Properties.Labeled.Labels;   
-   function Labels (Label : Properties.Labeled.Labels) return String is      
-     (case Label is 
-         when Author       => "authors",
-         when Comment      => "comment",
-         when Executable   => "executables",
-         when Maintainer   => "maintainers",
-         when Path         => "paths",
-         when Project_File => "project-files",
-         when Website      => "website");
 
-   Description : constant String := "description";
+   Action       : constant String := "actions";
+   Compiler     : constant String := "compiler";
+   Description  : constant String := "description";  
+   Distribution : constant String := "distribution";
+   General      : constant String := "general";
+   License      : constant String := "license";
+   OS           : constant String := "os";
+   Target       : constant String := "target";
+   Word_Size    : constant String := "word_size";
    
 end Alire.TOML_Keys;

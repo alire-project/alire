@@ -44,6 +44,8 @@ package Alire.Properties.Labeled with Preelaborate is
 
    overriding function Image (L : Label) return String;
 
+   overriding function Key (L : Label) return String;
+
    overriding function To_TOML (L : Label) return TOML.TOML_Value with
      Post => To_TOML'Result.Kind = TOML.TOML_String;
    --  Returns only the value, not the name (TOML key)
@@ -87,6 +89,16 @@ private
      (Conditional.For_Properties.New_Value (New_Label (Name, Utils.To_Native (Value))));
 
    overriding function Image (L : Label) return String is (Utils.To_Mixed_Case (L.Name'Img) & ": " & L.Value);
+
+   overriding function Key (L : Label) return String is
+     (case L.Name is
+         when Author       => "authors",
+         when Comment      => "comment",
+         when Executable   => "executables",
+         when Maintainer   => "maintainers",
+         when Path         => "paths",
+         when Project_File => "project-files",
+         when Website      => "website");
 
    overriding function To_TOML (L : Label) return TOML.TOML_Value is
      (TOML.Create_String (L.Value));

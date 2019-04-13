@@ -1,6 +1,7 @@
 with Ada.Containers; use Ada.Containers;
 with Ada.Iterator_Interfaces;
 
+with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Requisites;
 with Alire.Utils;
@@ -8,14 +9,16 @@ with Alire.Utils;
 private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Vectors;
 
+with TOML;
+
 generic
-   type Values (<>) is private;
+   type Values (<>) is new Interfaces.Tomifiable with private;
    with function Image (V : Values) return String;
 package Alire.Conditional_Trees with Preelaborate is
 
    type Kinds is (Condition, Value, Vector);
 
-   type Tree is tagged private with
+   type Tree is new Interfaces.Tomifiable with private with
      Default_Iterator => Iterate,
      Iterator_Element => Tree,
      Constant_Indexing => Indexed_Element;
@@ -128,6 +131,13 @@ package Alire.Conditional_Trees with Preelaborate is
                     And_Or : Boolean := True);
    --  And_Or is false if only And can appear, thus no necessity to distinguish
 
+   -------------
+   -- To_TOML --
+   -------------
+
+   function To_TOML (This : Tree) return TOML.TOML_Value is
+      (raise Program_Error with "TODO: implement");
+
    -----------------
    --  ITERATORS  --
    -----------------
@@ -163,7 +173,7 @@ private
 
    type Cursor is new Vectors.Cursor;
 
-   type Tree is new Holders.Holder with null record;
+   type Tree is new Holders.Holder and Interfaces.Tomifiable with null record;
    --  Instead of dealing with pointers and finalization, we use this class-wide container
 
    package Definite_Values is new Ada.Containers.Indefinite_Holders (Values);

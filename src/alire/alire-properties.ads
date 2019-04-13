@@ -14,7 +14,11 @@ package Alire.Properties with Preelaborate is
    --  multiple inheritance for the simplest design.
    --  Instead, a first check of matching tags is done and then the checks can proceed.
 
-   type Property is abstract new Interfaces.Tomifiable with null record;
+   type Property is abstract new
+     Interfaces.Classificable and
+     Interfaces.Tomifiable with null record;
+
+   function Key (P : Property) return String is abstract;
 
    function Image (P : Property) return String is abstract;
 
@@ -47,6 +51,7 @@ package Alire.Properties with Preelaborate is
    generic
       type Value is private;
       with function Image (V : Value) return String is <>;
+      with function Key (V : Value) return String is <>;
    package Values is
 
       type Property is new Properties.Property with private;
@@ -58,6 +63,8 @@ package Alire.Properties with Preelaborate is
       function Element (P : Property) return Value;
 
    private
+
+      overriding function Key (P : Property) return String;
 
       overriding function Image (P : Property) return String;
 
@@ -74,6 +81,8 @@ package Alire.Properties with Preelaborate is
       function Element (P : Property) return Value is (P.V);
 
       overriding function Image (P : Property) return String is (Image (P.V));
+
+      overriding function Key (P : Property) return String is (Key (P.V));
 
       overriding function To_TOML (P : Property) return TOML.TOML_Value is (TOML.Create_String (Image (P.V)));
 

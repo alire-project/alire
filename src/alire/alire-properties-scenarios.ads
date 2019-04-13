@@ -12,6 +12,9 @@ package Alire.Properties.Scenarios with Preelaborate is
 
    function Value (V : Property) return Gpr.Variable;
 
+   overriding function Key (V : Property) return String is
+      (raise Unimplemented);
+
 private
 
    package Holders is new Ada.Containers.Indefinite_Holders (Gpr.Variable, GPR."=");

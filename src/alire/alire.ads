@@ -10,6 +10,9 @@ package Alire with Preelaborate is
    Query_Unsuccessful : exception;
    --  Raised by subprograms that return releases/dependencies when not found/impossible
 
+   Unimplemented      : exception;
+   --  Features that are known to be missing and scheduled for near future implementation
+
    subtype URL is String;
 
    Min_Name_Length        : constant := 3;
