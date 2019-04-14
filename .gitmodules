@@ -19,9 +19,6 @@
 [submodule "deps/ada-toml"]
 	path = deps/ada-toml
 	url = https://github.com/mosteo/ada-toml.git
-[submodule "deps/alire"]
-	path = deps/alire
-	url = https://github.com/alire-project/alire.git
 [submodule "deps/alire-index"]
 	path = deps/alire-index
 	url = https://github.com/alire-project/alire-index.git
