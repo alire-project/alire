@@ -1,6 +1,6 @@
 with Ada.Text_IO;
 
-with TOML.Text_IO;
+with TOML.File_IO;
 
 package body Alire.Releases.TOML_IO is
 
@@ -13,7 +13,7 @@ package body Alire.Releases.TOML_IO is
       File : File_Type;
    begin
       Create (File, Out_File, Filename);
-      TOML.Text_IO.Dump_To_File (R.To_TOML, File);
+      TOML.File_IO.Dump_To_File (R.To_TOML, File);
       Close (File);
    exception
       when others =>
