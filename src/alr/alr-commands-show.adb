@@ -124,6 +124,10 @@ package body Alr.Commands.Show is
          Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
       end if;
 
+      --  First load the index so that we can look for available releases
+
+      Requires_Full_Index;
+
       declare
          Allowed : constant Parsers.Allowed_Milestones :=
                      (if Num_Arguments = 1
