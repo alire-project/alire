@@ -8,7 +8,7 @@ package body Alire.Features.Index is
    --------------
 
    procedure Load_All (Platform : Environment.Setup;
-                       From    : Absolute_Path) is
+                       From     : Absolute_Path) is
    begin
       declare
          Result : Alire.TOML_Index.Load_Result;
