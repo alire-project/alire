@@ -10,7 +10,7 @@ library project Alire is
    for Library_Name use "alire";
 
    type Any_Build_Mode is ("debug", "release");
-   Build_Mode : Any_Build_Mode := external ("ALR_BUILD_MODE", "debug");
+   Build_Mode : Any_Build_Mode := external ("ALIRE_BUILD_MODE", "debug");
 
    for Source_Dirs use ("src/alire", 
                         "src/alire/os_linux");
