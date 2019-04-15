@@ -866,14 +866,14 @@ package body Alire.TOML_Expressions is
                         end loop;
                         return null;
                      end if;
+
+                     --  Remove this case construct from Base and prepare the
+                     --  next pass.
+
+                     Base.Unset (Case_Construct.Key);
+                     Next_Case := Next_Case + 1;
                   end if;
                end;
-
-               --  Remove this case construct from Base and prepare the next
-               --  pass.
-
-               Base.Unset (Case_Construct.Key);
-               Next_Case := Next_Case + 1;
             end loop;
             if not Success then
                return null;
