@@ -2,6 +2,8 @@ with Ada.Directories;
 with Ada.Finalization;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire.OS_Lib;
+
 with Alr.Utils;
 
 with GNAT.OS_Lib;
@@ -73,7 +75,7 @@ package Alr.OS_Lib is
 
    --  OS PORTABLE FUNCTIONS
 
-   procedure Bailout (Code : Integer := 0);
+   procedure Bailout (Code : Integer := 0) renames Alire.OS_Lib.Bailout;
 
    function Is_Older (This : String; Than : String) return Boolean;
    --  Says if This file is older than Than

@@ -1,10 +1,5 @@
--- TODO remove these dependency inversions ASAP
-with Alr.Paths;
-with Alr.Platform;
-
+with Alire.OS_Lib;
 with Alire.TOML_Index;
-
-with Alr.Os_Lib;
 
 package body Alire.Features.Index is
 
@@ -12,24 +7,21 @@ package body Alire.Features.Index is
    -- Load_All --
    --------------
 
-   procedure Load_All is
+   procedure Load_All (Platform : Environment.Setup;
+                       From     : Absolute_Path) is
    begin
       declare
-         use Alr;
-         use Alr.OS_Lib.Paths;
-
          Result : Alire.TOML_Index.Load_Result;
          Env    : Alire.TOML_Index.Environment_Variables;
       begin
          Alire.TOML_Index.Set_Environment
            (Env,
-            Platform.Distribution,
-            Platform.Operating_System,
+            Platform.Distro,
+            Platform.OS,
             Platform.Compiler);
          Alire.TOML_Index.Load_Catalog
            --  TODO: use configured indexes with `alr index`
-           (Alr.Paths.Alr_Source_Folder / "deps" / "alire-index" / "index",
-            Env, Result);
+           (From, Env, Result);
 
          if not Result.Success then
             Trace.Error ("Error while loading the index:");
