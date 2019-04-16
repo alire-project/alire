@@ -7,7 +7,7 @@ package body Alire.Dependencies is
       use TOML_Adapters;
    begin
       if Dep.Versions = Any then
-         return +"*";
+         return +"any";
       elsif Length (Dep.Versions) > 1 then
          raise Unimplemented; -- TODO (but not yet in index format)
       else
