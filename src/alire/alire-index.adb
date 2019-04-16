@@ -158,7 +158,7 @@ package body Alire.Index is
    function Register_Real (R : Release) return Release is
    begin
       if Catalog.Contains (R) then
-         Trace.Error ("Attempt to register duplicate versions: " & R.Milestone.Image);
+         Trace.Debug ("Not registering release already indexed: " & R.Milestone.Image);
       else
          Catalog.Insert (R);
       end if;

@@ -105,13 +105,7 @@ package body Alr.Commands.Get is
       end if;
 
       declare
-         Allowed : constant Parsers.Allowed_Milestones :=
-                     (if Num_Arguments = 1
-                      then Parsers.Project_Versions (Argument (1))
-                      else
-                        (if Root.Is_Indexed
-                         then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
-                         else Parsers.Project_Versions (+Root.Current.Project)));
+         Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (1));
       begin
          if Cmd.Compile and Cmd.Only then
             Reportaise_Wrong_Arguments ("--only is incompatible with --compile");

@@ -96,8 +96,8 @@ private
 
    function Projects_Folder                return String is (Alr_Working_Cache_Folder / "projects");
    function Session_Folder                 return String is (Alr_Working_Cache_Folder / "session");
-   function Templates_Bin_Folder           return String is (Alr_Config_Folder / "templates" / "projects" / "bin");
-   function Templates_Lib_Folder           return String is (Alr_Config_Folder / "templates" / "projects" / "lib");
+   function Templates_Bin_Folder           return String is (Alr_Source_Folder / "templates" / "projects" / "bin");
+   function Templates_Lib_Folder           return String is (Alr_Source_Folder / "templates" / "projects" / "lib");
 
    --  Functions
 
