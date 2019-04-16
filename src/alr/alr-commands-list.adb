@@ -1,6 +1,5 @@
 with AAA.Table_IO;
 
-with Alire.Index;
 with Alire.Projects;
 
 with Alr.Utils;

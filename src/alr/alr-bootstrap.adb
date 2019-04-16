@@ -1,7 +1,10 @@
 with Ada.Calendar;
 with Ada.Directories;
 
+with Alire.Directories;
 with Alire_Early_Elaboration;
+with Alire.Index;
+
 
 with Alr.OS_Lib;
 with Alr.Paths;
@@ -45,7 +48,8 @@ package body Alr.Bootstrap is
       OS_Lib.Spawn ("git", "clone " & Paths.Alr_Repo & " " & To_Path);
 
       declare
-         Enter : OS_Lib.Folder_Guard (OS_Lib.Enter_Folder (To_Path)) with Unreferenced;
+         use Alire.Directories;
+         Folder : Guard (Enter (To_Path)) with Unreferenced;
       begin
          OS_Lib.Spawn ("git", "submodule update --init --recursive");
       end;

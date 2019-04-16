@@ -1,8 +1,11 @@
 with AAA.Table_IO;
 
 --  with Alire.Platform;
+with Alire.Defaults;
 with Alire.Platforms;
 with Alire.Requisites.Booleans;
+with Alire.TOML_Adapters;
+with Alire.TOML_Keys;
 
 with GNAT.IO; -- To keep preelaborable
 
@@ -18,6 +21,14 @@ package body Alire.Releases is
                             P : Alire.Properties.Vector) return Alire.Properties.Vector is
       (Materialize (R.Properties and R.Priv_Props, P));
 
+   ------------------------
+   -- Default_Properties --
+   ------------------------
+
+   function Default_Properties return Conditional.Properties is
+     (Conditional.For_Properties.New_Value
+        (New_Label (Maintainer,
+                    Defaults.Maintainer)));
 
    ---------------
    -- Extending --
@@ -203,7 +214,9 @@ package body Alire.Releases is
       Notes        => "",
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
-      Properties   => Properties,
+      Properties   => (if Properties = Conditional.For_Properties.Empty
+                       then Default_Properties
+                       else Properties),
       Priv_Props   => Conditional.For_Properties.Empty,
       Available    => Requisites.Booleans.Always_True);
 
@@ -235,29 +248,23 @@ package body Alire.Releases is
       end if;
    end On_Platform_Properties;
 
-   ------------
-   -- Values --
-   ------------
+   ----------------------
+   -- Props_To_Strings --
+   ----------------------
 
-   function Values (Props : Alire.Properties.Vector;
+   function Props_To_Strings (Props : Alire.Properties.Vector;
                     Label : Alire.Properties.Labeled.Labels)
                     return Utils.String_Vector is
-   --  Extract values of a particular label
+      --  Extract values of a particular label
+      Filtered : constant Alire.Properties.Vector :=
+                   Alire.Properties.Labeled.Filter (Props, Label);
    begin
       return Strs : Utils.String_Vector do
-         for P of Props loop
-            if P in Alire.Properties.Labeled.Label'Class then
-               declare
-                  LP : Alire.Properties.Labeled.Label renames Alire.Properties.Labeled.Label (P);
-               begin
-                  if LP.Name = Label then
-                     Strs.Append (LP.Value);
-                  end if;
-               end;
-            end if;
+         for P of Filtered loop
+            Strs.Append (Alire.Properties.Labeled.Label (P).Value);
          end loop;
       end return;
-   end Values;
+   end Props_To_Strings;
 
    -----------------
    -- Executables --
@@ -269,7 +276,7 @@ package body Alire.Releases is
    is
    begin
       return Exes : Utils.String_Vector :=
-        Values (R.All_Properties (P), Executable)
+        Props_To_Strings (R.All_Properties (P), Executable)
       do
          if OS_Lib.Exe_Suffix /= "" then
             for I in Exes.Iterate loop
@@ -290,7 +297,7 @@ package body Alire.Releases is
    is
       use Utils;
 
-      With_Paths : Utils.String_Vector := Values (R.All_Properties (P), Project_File);
+      With_Paths : Utils.String_Vector := Props_To_Strings (R.All_Properties (P), Project_File);
       Without    : Utils.String_Vector;
    begin
       if With_Paths.Is_Empty then
@@ -337,13 +344,25 @@ package body Alire.Releases is
    -- Labeled_Properties --
    ------------------------
 
+   function Labeled_Properties_Vector (R     : Release;
+                                       P     : Alire.Properties.Vector;
+                                       Label : Alire.Properties.Labeled.Labels)
+                                       return Alire.Properties.Vector is
+   begin
+      return Alire.Properties.Labeled.Filter (R.All_Properties (P), Label);
+   end Labeled_Properties_Vector;
+
+   ------------------------
+   -- Labeled_Properties --
+   ------------------------
+
    function Labeled_Properties (R     : Release;
                                 P     : Alire.Properties.Vector;
                                 Label : Alire.Properties.Labeled.Labels)
                                 return Utils.String_Vector
    is
    begin
-      return Values (R.All_Properties (P), Label);
+      return Props_To_Strings (R.All_Properties (P), Label);
    end Labeled_Properties;
 
    -----------
@@ -433,6 +452,69 @@ package body Alire.Releases is
 
       return False;
    end Property_Contains;
+
+   -------------
+   -- To_TOML --
+   -------------
+
+   function To_TOML (R : Release) return TOML.TOML_Value is
+      use all type Alire.Requisites.Tree;
+      use TOML_Adapters;
+      Root    : constant TOML.TOML_Value := TOML.Create_Table;
+      Relinfo :          TOML.TOML_Value := TOML.Create_Table;
+   begin
+      -- General properties
+      declare
+         General : constant TOML.TOML_Value := R.Properties.To_Toml;
+      begin
+         -- Description
+         if Projects.Descriptions.Contains (R.Project) then
+            General.Set (TOML_Keys.Description, +Projects.Descriptions (R.Project));
+         else
+            General.Set (TOML_Keys.Description, +Defaults.Description);
+         end if;
+
+         -- Alias/Provides
+         if UStrings.Length (R.Alias) > 0 then
+            General.Set (TOML_Keys.Provides, +(+R.Alias));
+         end if;
+
+         -- Notes
+         if R.Notes'Length > 0 then
+            General.Set (TOML_Keys.Notes, +R.Notes);
+         end if;
+
+         -- Final assignment
+         if General.Is_Present then
+            Root.Set (TOML_Keys.General, General);
+         end if;
+      end;
+
+      -- Origin
+      Relinfo := TOML.Merge (Relinfo, R.Origin.To_TOML);
+
+      -- Dependencies
+      Relinfo.Set (TOML_Keys.Dependency, R.Dependencies.To_TOML);
+
+      -- Forbidden
+      Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+
+      -- Available
+      if R.Available.Is_Empty or else R.Available = Alire.Requisites.Booleans.Always_True then
+         null; -- Do nothing, do not pollute .toml file
+      else
+         raise Unimplemented; -- TODO
+                              -- Not straightforward, since current expressions are and/or only,
+                              -- and the toml format is case-based.
+                              -- This will require a way to load the case expression(s),
+                              --   before they can be exported
+      end if;
+
+      -- Version release
+      Root.Set (R.Version_Image, Relinfo);
+
+      return Root;
+   end To_TOML;
 
    -------------
    -- Version --

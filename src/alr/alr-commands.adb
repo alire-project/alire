@@ -8,6 +8,9 @@ with Alire;
 with Alire.Config;
 with Alire.Features.Index;
 with Alire.Index;
+with Alire.Root;
+with Alire.Roots;
+with Alire.Roots.Check_Valid;
 with Alire.Utils;
 
 with Alr.Commands.Build;
@@ -26,7 +29,6 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
-with Alr.Files;
 with Alr.Interactive;
 with Alr.Paths;
 with Alr.Platform;
@@ -284,17 +286,17 @@ package body Alr.Commands is
    -- Enter_Project_Folder --
    --------------------------
 
-   function Enter_Project_Folder return OS_Lib.Destination is
+   function Enter_Project_Folder return Alire.Directories.Destination is
    begin
       declare
-         Candidate_Folder : constant String := Files.Locate_Above_Project_Folder;
+         Candidate_Folder : constant String := Alire.Directories.Detect_Root_Path;
       begin
          if Candidate_Folder /= "" then
             Trace.Detail ("Using candidate project root: " & Candidate_Folder);
             return new String'(Candidate_Folder);
          else
             Trace.Debug ("Not entering project folder, no valid project root found");
-            return OS_Lib.Stay_In_Current_Folder;
+            return Alire.Directories.Stay_In_Current;
          end if;
       end;
    end Enter_Project_Folder;
@@ -332,17 +334,18 @@ package body Alr.Commands is
 
    procedure Requires_Buildfile is
       Guard : OS_Lib.Folder_Guard (Enter_Project_Folder) with Unreferenced;
+      Root  : constant Alire.Roots.Root := Alire.Root.Current;
    begin
       if Bootstrap.Session_State /= Project then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
       end if;
 
-      if not GNAT.OS_Lib.Is_Regular_File (Paths.Working_Build_File) or else
-        OS_Lib.Is_Older (This => Paths.Working_Build_File,
-                         Than => Paths.Working_Deps_File)
+      if not GNAT.OS_Lib.Is_Regular_File (Root.Build_File) or else
+        OS_Lib.Is_Older (This => Root.Build_File,
+                         Than => Root.Crate_File)
       then
-         Trace.Detail ("Generating alr buildfile: " & Paths.Working_Build_File);
-         Templates.Generate_Agg_Gpr (Root.Current);
+         Trace.Detail ("Generating alr buildfile: " & Root.Build_File);
+         Templates.Generate_Agg_Gpr (Root);
       end if;
    end Requires_Buildfile;
 
@@ -355,9 +358,7 @@ package body Alr.Commands is
       if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
          Trace.Detail ("Index already loaded, loading skipped");
       else
-         if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
-            Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
-         end if;
+         Requires_Sources;
 
          Alire.Features.Index.Load_All
            (Platform =>
@@ -374,8 +375,24 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Root.Check_Valid;                -- Might raise Command_Failed
+      Alire.Roots.Check_Valid (Alire.Root.Current);
    end Requires_Project;
+
+   procedure Requires_Sources is
+   begin
+      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
+         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
+      end if;
+   end Requires_Sources;
+
+   ------------------------
+   -- Requires_Templates --
+   ------------------------
+
+   procedure Requires_Templates is
+   begin
+      Requires_Sources;
+   end Requires_Templates;
 
    --------------------
    -- Fill_Arguments --

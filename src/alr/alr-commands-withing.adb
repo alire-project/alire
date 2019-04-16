@@ -13,6 +13,7 @@ with Alr.Exceptions;
 with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Platform;
+with Alr.Root;
 with Alr.Templates;
 
 with Semantic_Versioning;
@@ -102,12 +103,12 @@ package body Alr.Commands.Withing is
       --  Set, regenerate and update
       declare
          New_Root  : constant Alire.Roots.Root :=
-                       Alire.Index.Set_Root
-                         (Root.Current.Release.Replacing
-                            (Dependencies => Deps)) with Unreferenced;
+                       Alire.Roots.New_Root
+                         (Root.Current.Release.Replacing (Dependencies => Deps),
+                          Root.Current.Working_Folder);
       begin
-         Templates.Generate_Prj_Alr (Templates.Unreleased,
-                                     Root.Current.Release);
+         Templates.Generate_Prj_Alr (New_Root.Release,
+                                     New_Root.Crate_File);
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
@@ -119,7 +120,7 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Add is
-      Deps : Alire.Conditional.Dependencies := Root.Current.Dependencies;
+      Deps : Alire.Conditional.Dependencies := Root.Current.Release.Dependencies;
    begin
       for I in 1 .. Num_Arguments loop
          Deps := Add (Deps, Argument (I));
@@ -133,7 +134,7 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Del is
-      Deps : Alire.Conditional.Dependencies := Root.Current.Dependencies;
+      Deps : Alire.Conditional.Dependencies := Root.Current.Release.Dependencies;
    begin
       for I in 1 .. Num_Arguments loop
          Deps := Del (Deps, Argument (I));
@@ -237,7 +238,7 @@ package body Alr.Commands.Withing is
 
    procedure List is
    begin
-      Root.Platform_Dependencies.Print;
+      Root.Current.Release.Dependencies (Platform.Properties).Print;
    end List;
 
    --------------------------

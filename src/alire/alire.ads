@@ -1,12 +1,17 @@
 --  with Ada.Strings.Bounded;
 with Ada.Strings.Unbounded;
 
+with GNAT.OS_Lib;
+
 with Simple_Logging;
 
 package Alire with Preelaborate is
 
    Query_Unsuccessful : exception;
    --  Raised by subprograms that return releases/dependencies when not found/impossible
+
+   Unimplemented      : exception;
+   --  Features that are known to be missing and scheduled for near future implementation
 
    subtype URL is String;
 
@@ -57,10 +62,12 @@ package Alire with Preelaborate is
 
    --  To clarify constants/functions declared herein:
 
-   subtype Absolute_File is Platform_Independent_Path;
+   subtype Absolute_File is Platform_Independent_Path with
+     Dynamic_Predicate => Absolute_File (Absolute_File'First) = GNAT.OS_Lib.Directory_Separator;
    --  Filenames with full path
 
-   subtype Absolute_Path is Platform_Independent_Path;
+   subtype Absolute_Path is Platform_Independent_Path with
+     Dynamic_Predicate => Absolute_Path (Absolute_Path'First) = GNAT.OS_Lib.Directory_Separator;
 
    subtype Relative_File is Platform_Independent_Path;
    --  Filenames with relative paths
@@ -68,7 +75,8 @@ package Alire with Preelaborate is
    subtype Relative_Path is Platform_Independent_Path;
    --  A relative path
 
-   subtype Simple_File is String;
+   subtype Simple_File is String with
+     Dynamic_Predicate => (for all C of Simple_File => C /= GNAT.OS_Lib.Directory_Separator);
    --  Filenames without path
 
    ---------------

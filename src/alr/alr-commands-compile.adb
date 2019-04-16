@@ -2,7 +2,6 @@ with Alire.Actions;
 with Alire.Properties.Labeled;
 
 with Alr.Actions;
-with Alr.Paths;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Query;
@@ -25,7 +24,7 @@ package body Alr.Commands.Compile is
 
       procedure Add_Paths is
          Sol : constant Query.Solution :=
-                 Query.Resolve (Root.Platform_Dependencies,
+                 Query.Resolve (Root.Current.Release.Dependencies (Platform.Properties),
                                 Query_Policy);
       begin
          if Sol.Valid then
@@ -49,7 +48,7 @@ package body Alr.Commands.Compile is
          --  Perhaps it will be necessary in the future to cache these in the session file
          Add_Paths;
 
-         Spawn.Gprbuild (Paths.Working_Build_File,
+         Spawn.Gprbuild (Root.Current.Build_File,
                          Extra_Args    => Scenario.As_Command_Line);
       exception
          when others =>

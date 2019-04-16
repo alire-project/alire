@@ -1,5 +1,7 @@
 with Alr.Commands.Update;
+with Alr.Platform;
 with Alr.Query;
+with Alr.Root;
 with Alr.Templates;
 
 package body Alr.Commands.Pin is
@@ -16,14 +18,14 @@ package body Alr.Commands.Pin is
 
       declare
          Deps : constant Query.Solution :=
-                  Query.Resolve (Root.Platform_Dependencies,
+                  Query.Resolve (Root.Current.Release.Dependencies (Platform.Properties),
                                  Query_Policy);
       begin
          if Deps.Valid then
             Templates.Generate_Prj_Alr
-              (Templates.Unreleased,
-               Root.Current.Release.Replacing
+              (Root.Current.Release.Replacing
                  (Dependencies => Deps.Releases.To_Dependencies));
+
             Update.Execute;
          else
             Trace.Error ("Could not resolve dependencies");

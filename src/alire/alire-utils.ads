@@ -1,6 +1,7 @@
 with Ada.Containers;
 with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Finalization;
 
 package Alire.Utils with Preelaborate is
 
@@ -55,6 +56,18 @@ package Alire.Utils with Preelaborate is
       Separator  : String := " ";
       When_Empty : String := "(empty)";
    function Image_One_Line (V : Vector) return String;
+   --  Flatten vector into string representation
+
+   generic
+      with package Vectors is new Ada.Containers.Indefinite_Vectors (<>);
+      type Vector is new Vectors.Vector with private;
+      type Other_Vector is new Ada.Finalization.Controlled with private;
+      type Other_Vector_Value is private;
+      Initial_Other_Vector : Other_Vector;
+      with function To_New_Value (Item : Vectors.Element_Type) return Other_Vector_Value is <>;
+      with procedure Append (Vec : in out Other_Vector; Val : Other_Vector_Value);
+   function Convert (V : Vector) return Other_Vector;
+   --  Convert between two vector types
 
    package String_Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
    type String_Set is new String_Sets.Set with null record;

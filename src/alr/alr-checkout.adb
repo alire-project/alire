@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire;
 with Alire.Actions;
 with Alire.Containers;
+with Alire.Directories;
 with Alire.Roots;
 
 with Alr.Actions;
@@ -124,16 +125,11 @@ package body Alr.Checkout is
          declare
             use OS_Lib;
             Guard      : Folder_Guard (Enter_Folder (R.Unique_Folder)) with Unreferenced;
-            Index_File : constant String := Paths.Working_Deps_File;
+            Root       : constant Alire.Roots.Root :=
+                           Alire.Roots.New_Root (R.Project, Alire.Directories.Current);
          begin
-            if Is_Regular_File (Index_File) then
-               Trace.Detail ("Renaming in-source alr file: " & Index_File);
-               Ada.Directories.Copy_File (Index_File, Index_File & ".orig", "mode=overwrite");
-               Ada.Directories.Delete_File (Index_File);
-            end if;
-
-            Templates.Generate_Prj_Alr (Templates.Released, R);
-            Templates.Generate_Agg_Gpr (Alire.Roots.New_Root (R));
+            Templates.Generate_Prj_Alr (R, Root.Crate_File);
+            Templates.Generate_Agg_Gpr (Root);
          end;
       end if;
    end Working_Copy;

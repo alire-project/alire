@@ -1,3 +1,6 @@
+with Alire.TOML_Adapters;
+with Alire.TOML_Keys;
+
 package body Alire.Origins is
 
    function Ends_With (S : String; Suffix : String) return Boolean is
@@ -90,5 +93,37 @@ package body Alire.Origins is
 
       return (Data => (Source_Archive, +URL, +Archive_Name, Format));
    end New_Source_Archive;
+
+   -------------
+   -- To_TOML --
+   -------------
+
+   overriding function To_TOML (This : Origin) return TOML.TOML_Value is
+      use TOML_Adapters;
+      Table : constant TOML.TOML_Value := TOML.Create_Table;
+
+      function Prefix (Kind : VCS_Kinds) return String is
+        (case Kind is
+            when Git => "git",
+            when Hg  => "hg",
+            when SVN => "svn");
+
+   begin
+      case This.Kind is
+         when Filesystem =>
+            Table.Set (TOML_Keys.Origin, +("path:" & This.Path));
+         when VCS_Kinds =>
+            Table.Set (TOML_Keys.Origin, +(Prefix (This.Kind) & "+" & This.URL & "@" & This.Commit));
+         when Native =>
+            raise Program_Error with "native packages do not need to be exported";
+         when Source_Archive =>
+            Table.Set (TOML_Keys.Origin, +This.Archive_URL);
+            if This.Archive_Name /= "" then
+               Table.Set (TOML_Keys.Archive_Name, +This.Archive_Name);
+            end if;
+      end case;
+
+      return Table;
+   end To_TOML;
 
 end Alire.Origins;

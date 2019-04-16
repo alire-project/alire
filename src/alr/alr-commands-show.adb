@@ -2,6 +2,7 @@ with Alr.Dependency_Graphs;
 with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
+with Alr.Root;
 
 with Alire.Index;
 
@@ -135,10 +136,7 @@ package body Alr.Commands.Show is
          Allowed : constant Parsers.Allowed_Milestones :=
                      (if Num_Arguments = 1
                       then Parsers.Project_Versions (Argument (1))
-                      else
-                        (if Root.Is_Indexed
-                         then Parsers.Project_Versions (Root.Current.Release.Milestone.Image)
-                         else Parsers.Project_Versions (+Root.Current.Project)));
+                      else Parsers.Project_Versions (Root.Current.Release.Milestone.Image));
       begin
          --  Execute
          Report (Allowed.Project, Allowed.Versions, Cmd);
