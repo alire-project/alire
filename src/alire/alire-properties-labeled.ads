@@ -1,5 +1,6 @@
 with Alire.Conditional;
 
+private with Alire.TOML_Keys;
 private with Alire.Utils;
 
 package Alire.Properties.Labeled with Preelaborate is
@@ -92,13 +93,13 @@ private
 
    overriding function Key (L : Label) return String is
      (case L.Name is
-         when Author       => "authors",
-         when Comment      => "comment",
-         when Executable   => "executables",
-         when Maintainer   => "maintainers",
-         when Path         => "paths",
-         when Project_File => "project-files",
-         when Website      => "website");
+         when Author       => TOML_Keys.Author,
+         when Comment      => TOML_Keys.Comment,
+         when Executable   => TOML_Keys.Executable,
+         when Maintainer   => TOML_Keys.Maintainer,
+         when Path         => TOML_Keys.Path,
+         when Project_File => TOML_Keys.Project_File,
+         when Website      => TOML_Keys.Website);
 
    overriding function To_TOML (L : Label) return TOML.TOML_Value is
      (TOML.Create_String (L.Value));
