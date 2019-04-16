@@ -484,10 +484,8 @@ package body Alire.Releases is
             General.Set (TOML_Keys.Notes, +R.Notes);
          end if;
 
-         -- Final assignment
-         if General.Is_Present then
-            Root.Set (TOML_Keys.General, General);
-         end if;
+         -- Final assignment, always have general section
+         Root.Set (TOML_Keys.General, General);
       end;
 
       -- Origin

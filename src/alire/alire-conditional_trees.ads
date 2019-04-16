@@ -9,7 +9,7 @@ with Alire.Utils;
 private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Vectors;
 
-with TOML;
+with TOML; use all type TOML.Any_Value_Kind;
 
 generic
    type Values (<>) is new Interfaces.Classificable and Interfaces.Tomifiable with private;
@@ -135,7 +135,8 @@ package Alire.Conditional_Trees with Preelaborate is
    -- To_TOML --
    -------------
 
-   function To_TOML (This : Tree) return TOML.TOML_Value;
+   function To_TOML (This : Tree) return TOML.TOML_Value
+     with Post => To_TOML'Result.Kind = TOML.TOML_Table;
    --  Every tree element can provide a key under which to be filed
    --  This is used for key = value leaves and [table] names in non-leaves
 

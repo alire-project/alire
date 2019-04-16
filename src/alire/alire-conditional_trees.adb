@@ -538,7 +538,6 @@ package body Alire.Conditional_Trees is
                      Key   : String;
                      Val   : TOML.TOML_Value)
       is
-         use all type TOML.Any_Value_Kind;
       begin
          pragma Assert (Table.Kind = TOML.TOML_Table);
          if Table.Has (Key) then
@@ -590,8 +589,8 @@ package body Alire.Conditional_Trees is
       end Tomify;
 
    begin
+      Root := TOML.Create_Table;
       if not This.Is_Empty then
-         Root := TOML.Create_Table;
          Tomify (Root, This);
       end if;
       return Root;
