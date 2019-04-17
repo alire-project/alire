@@ -378,6 +378,10 @@ package body Alr.Commands is
       Alire.Roots.Check_Valid (Alire.Root.Current);
    end Requires_Project;
 
+   ----------------------
+   -- Requires_Sources --
+   ----------------------
+
    procedure Requires_Sources is
    begin
       if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
