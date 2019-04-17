@@ -13,7 +13,7 @@ package Alire.TOML_Keys with Preelaborate is
    Executable   : constant String := "executables";
    Forbidden    : constant String := "forbids";
    General      : constant String := "general";
-   License      : constant String := "license";
+   License      : constant String := "licenses";
    Maintainer   : constant String := "maintainers";
    Notes        : constant String := "notes";
    Origin       : constant String := "origin";
