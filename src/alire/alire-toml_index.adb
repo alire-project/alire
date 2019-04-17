@@ -344,6 +344,56 @@ package body Alire.TOML_Index is
    end Load_Catalog;
 
    ----------------------------
+   -- Load_Release_From_File --
+   ----------------------------
+
+   procedure Load_Release_From_File
+     (Filename    : String;
+      Environment : Environment_Variables;
+      Release     : out Containers.Release_Holders.Holder;
+      Result      : out Load_Result)
+   is
+      Pkg      : Package_Type;
+      Value    : TOML.TOML_Value;
+      Releases : Containers.Release_Sets.Set;
+   begin
+      Value := Load_TOML_From_File (Filename, Result);
+      if not Result.Success then
+         Trace.Debug ("Could not load " & Filename & ": " & (+Result.Message));
+         return;
+      end if;
+
+      --  Convert it to our intermediate data structures
+
+      Decode_TOML_Package
+        (Filename, Ada.Directories.Base_Name (Filename),
+         Environment, Value, Pkg, Result);
+      if not Result.Success then
+         Trace.Debug ("Could not load release from " & Filename & ": " &
+                      (+Result.Message));
+         return;
+      end if;
+
+      --  Generate the releases to be imported
+
+      Import_TOML_Package_As_Releases (Pkg, Environment, Releases);
+
+      --  Verify and return
+      if Releases.Is_Empty then
+         Result := (Success => False,
+                    Message => +("No valid release found in " & Filename));
+      elsif Natural (Releases.Length) > 1 then
+         Result :=
+           (Success => False,
+            Message => +("Too many releases in " & Filename &
+                         ":" & Releases.Length'Img));
+      else
+         Result := (Success => True);
+         Release.Replace_Element (Releases.First_Element);
+      end if;
+   end Load_Release_From_File;
+
+   ----------------------------
    -- Load_Package_Directory --
    ----------------------------
 
@@ -431,8 +481,9 @@ package body Alire.TOML_Index is
            (Dirs.Compose (Catalog_Dir, Package_Directory (Package_Name)),
             Package_Name & ".toml");
 
-      Value : TOML.TOML_Value;
-      Pkg   : Package_Type;
+      Value    : TOML.TOML_Value;
+      Pkg      : Package_Type;
+      Releases : Containers.Release_Sets.Set;
    begin
       Trace.Detail ("Loading " & Package_Name & " from " & Catalog_Dir);
 
@@ -454,9 +505,13 @@ package body Alire.TOML_Index is
       --  TODO: check that dependencies are available before doing the import
       --  (and potentially import these dependencies first).
 
-      --  Finally import it to the catalog
+      --  Generate the releases to be imported
 
-      Import_TOML_Package (Pkg, Environment);
+      Import_TOML_Package_As_Releases (Pkg, Environment, Releases);
+
+      --  Finally import them to the catalog
+
+      Index_Releases (Pkg, Releases);
    end Load_From_Catalog_Internal;
 
    -----------------------
@@ -1535,18 +1590,15 @@ package body Alire.TOML_Index is
       end loop;
    end Decode_TOML_Package;
 
-   -------------------------
-   -- Import_TOML_Package --
-   -------------------------
+   -------------------------------------
+   -- Import_TOML_Package_As_Releases --
+   -------------------------------------
 
-   procedure Import_TOML_Package
+   procedure Import_TOML_Package_As_Releases
      (Pkg         : Package_Type;
-      Environment : Environment_Variables)
+      Environment : Environment_Variables;
+      Releases    : out Containers.Release_Sets.Set)
    is
-      Cat_Ent : constant Index.Catalog_Entry :=
-         Index.Manually_Catalogued_Project
-           (+Pkg.Name, "Alire.Index", +Pkg.Description);
-
       General_Dependencies : constant Dependencies_Result.T :=
          Dependencies_Expressions.Evaluate_Or_Default
            (Pkg.Common.Dependencies, Dependency_Maps.Empty_Map, Environment);
@@ -1797,7 +1849,7 @@ package body Alire.TOML_Index is
          end loop;
       end;
 
-      --  Register all releases in Pkg
+      --  Generate all releases in Pkg
 
       for Cursor in Pkg.Releases.Iterate loop
          R := Release_Maps.Element (Cursor);
@@ -1811,20 +1863,20 @@ package body Alire.TOML_Index is
                Error (Release_Available.Error);
             end if;
 
-            declare
-               Dummy : constant Index.Release := Cat_Ent.Register
-                 (Version        => R.Version,
-                  Origin         => Origin,
-                  Dependencies   => Dependencies,
-                  Properties     => Index."and"
+            Releases.Insert
+              (Alire.Releases.New_Release
+                 (Project            => +(+Pkg.Name),
+                  Version            => R.Version,
+                  Origin             => Origin,
+                  Notes              => +Pkg.Common.Notes,
+                  Dependencies       => Dependencies,
+                  Properties         => Index."and"
                     (Index."and" (General_Properties, Properties (Pkg.Common)),
-                                  Properties (R.Common)),
-                  Available_When => To_Requisite
+                     Properties (R.Common)),
+                  Private_Properties => Index.No_Properties,
+                  Available          => To_Requisite
                     (General_Available.Value
-                     and then Release_Available.Value));
-            begin
-               null;
-            end;
+                     and then Release_Available.Value)));
          end;
       end loop;
 
@@ -1832,7 +1884,33 @@ package body Alire.TOML_Index is
       when Evaluation_Error =>
          Trace.Error (+Error_Message);
          null;
-   end Import_TOML_Package;
+   end Import_TOML_Package_As_Releases;
+
+   --------------------
+   -- Index_Releases --
+   --------------------
+
+   procedure Index_Releases
+     (Pkg      : Package_Type;
+      Releases : Containers.Release_Sets.Set)
+   is
+      Cat_Ent : constant Index.Catalog_Entry :=
+         Index.Manually_Catalogued_Project
+           (+Pkg.Name, "Alire.Index", +Pkg.Description);
+   begin
+      for R of Releases loop
+         declare
+            Dummy : constant Index.Release := Cat_Ent.Register
+              (Version        => R.Version,
+               Origin         => R.Origin,
+               Dependencies   => R.Dependencies,
+               Properties     => R.Properties,
+               Available_When => R.Available);
+         begin
+            null;
+         end;
+      end loop;
+   end Index_Releases;
 
 begin
    Expected_Index.Set ("version", TOML.Create_String ("1.0"));
