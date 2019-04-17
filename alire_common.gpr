@@ -1,0 +1,58 @@
+abstract project Alire_Common is
+
+   type Any_Build_Mode is ("debug", "release");
+   Build_Mode : Any_Build_Mode := external ("ALIRE_BUILD_MODE", "debug");
+   --  Profile for the build, depending on the use case. Debug favors
+   --  debuggability (for developper convenience) while release favors
+   --  optimizations.
+
+   package Compiler is
+      case Build_Mode is
+         when "debug" =>
+            for Default_Switches ("Ada") use (
+               --  Build with no optimization in debug mode
+               "-g", "-O0",
+
+               --  Enable lots of extra runtime checks
+               "-gnatVa", "-gnato", "-fstack-check", "-gnata",
+
+               --  Enable full errors, verbose details
+               "-gnatf",
+
+               --  Enable all warnings and treat them as errors
+               "-gnatwae");
+
+            for Default_Switches ("C") use ("-g", "-O0", "-Wall");
+            --  Likewise for C units
+
+         when "release" =>
+            for Default_Switches ("Ada") use (
+               --  Build with lots of optimizations. Generate debug info
+               --  (useful for tracebacks).
+               "-O2", "-g",
+
+               --  Generate position-independent code
+               "-fPIC",
+
+               --  Enable lots of extra runtime checks
+               "-gnatVa", "-gnatwa", "-gnato", "-fstack-check", "-gnata",
+               "-gnatf", "-fPIC");
+
+            for Default_Switches ("C") use ("-g", "-O2", "-Wall", "-fPIC");
+            --  Likewise for C units
+      end case;
+   end Compiler;
+
+   package Builder is
+      for Switches ("Ada") use ("-s", "-j0", "-g");
+   end Builder;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es", "-g", "-static");
+   end Binder;
+
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+end Alire_Common;
