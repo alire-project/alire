@@ -45,6 +45,8 @@ package Alire.Properties.Labeled with Preelaborate is
 
    overriding function Image (L : Label) return String;
 
+   function Key (L : Labels) return String;
+
    overriding function Key (L : Label) return String;
 
    overriding function To_TOML (L : Label) return TOML.TOML_Value with
@@ -91,8 +93,8 @@ private
 
    overriding function Image (L : Label) return String is (Utils.To_Mixed_Case (L.Name'Img) & ": " & L.Value);
 
-   overriding function Key (L : Label) return String is
-     (case L.Name is
+   function Key (L : Labels) return String is
+     (case L is
          when Author       => TOML_Keys.Author,
          when Comment      => TOML_Keys.Comment,
          when Executable   => TOML_Keys.Executable,
@@ -100,6 +102,8 @@ private
          when Path         => TOML_Keys.Path,
          when Project_File => TOML_Keys.Project_File,
          when Website      => TOML_Keys.Website);
+
+   overriding function Key (L : Label) return String is (Key (L.Name));
 
    overriding function To_TOML (L : Label) return TOML.TOML_Value is
      (TOML.Create_String (L.Value));

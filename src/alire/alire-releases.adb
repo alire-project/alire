@@ -458,6 +458,8 @@ package body Alire.Releases is
    -------------
 
    function To_TOML (R : Release) return TOML.TOML_Value is
+      package APL renames Alire.Properties.Labeled;
+      use all type Alire.Properties.Labeled.Cardinalities;
       use all type Alire.Requisites.Tree;
       use TOML_Adapters;
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
@@ -483,6 +485,28 @@ package body Alire.Releases is
          if R.Notes'Length > 0 then
             General.Set (TOML_Keys.Notes, +R.Notes);
          end if;
+
+         --  Ensure atoms are atoms and arrays are arrays
+         for Label in APL.Cardinality'Range loop
+            if General.Has (APL.Key (Label)) then
+               case APL.Cardinality (Label) is
+                  when Unique   =>
+                     pragma Assert
+                       (General.Get (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
+                  when Multiple =>
+                     General.Set
+                       (APL.Key (Label),
+                        TOML_Adapters.To_Array (General.Get (APL.Key (Label))));
+               end case;
+            end if;
+         end loop;
+
+         --  Ensure mandatory keys are there
+         for Label in APL.Mandatory'Range loop
+            if APL.Mandatory (Label) then
+               pragma Assert (General.Has (APL.Key (Label)));
+            end if;
+         end loop;
 
          -- Final assignment, always have general section
          Root.Set (TOML_Keys.General, General);
