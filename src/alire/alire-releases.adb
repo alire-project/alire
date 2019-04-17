@@ -501,12 +501,15 @@ package body Alire.Releases is
             end if;
          end loop;
 
-         --  Ensure mandatory keys are there
+         --  Ensure mandatory labels are there
          for Label in APL.Mandatory'Range loop
             if APL.Mandatory (Label) then
                pragma Assert (General.Has (APL.Key (Label)));
             end if;
          end loop;
+
+         -- License
+         General.Set (TOML_Keys.License, R.License.To_TOML);
 
          -- Final assignment, always have general section
          Root.Set (TOML_Keys.General, General);

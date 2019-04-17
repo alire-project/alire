@@ -1,7 +1,7 @@
 with Alire.Licensing;
 with Alire.TOML_Keys;
 
-package Alire.Properties.Licenses is
+package Alire.Properties.Licenses with Preelaborate is
 
    function Image (L : Licensing.Licenses) return String;
 

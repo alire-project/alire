@@ -1,4 +1,5 @@
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Tags;
 
 with Alire.Interfaces;
 with Alire.Utils;
@@ -41,6 +42,9 @@ package Alire.Properties with Preelaborate is
 --     function "and" (L : Vector; R : Property'Class) return Vector;
    function "and" (L, R : Vector) return Vector;
    function "+" (P : Property'Class) return Vector;
+
+   function Filter (V : Vector; Ancestor : Ada.Tags.Tag) return Vector;
+   --  Filter properties by ancestor class
 
    function Image_One_Line (V : Vector) return String;
 

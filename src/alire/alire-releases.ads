@@ -9,6 +9,7 @@ with Alire.Origins;
 with Alire.Projects;
 with Alire.Properties;
 with Alire.Properties.Labeled;
+with Alire.Properties.Licenses;
 with Alire.Requisites;
 with Alire.Utils;
 with Alire.Versions;
@@ -177,6 +178,8 @@ package Alire.Releases with Preelaborate is
                                 return Utils.String_Vector;
    --  Get all values for a given property for a given platform properties
    
+   function License (R : Release) return Alire.Properties.Vector;
+   
    function Milestone (R : Release) return Milestones.Milestone;
 
    procedure Print (R : Release; Private_Too : Boolean := False);
@@ -283,7 +286,10 @@ private
 
    function Default_Executable (R : Release) return String is
       (Utils.Replace (+R.Project, ":", "_") & OS_Lib.Exe_Suffix);
-
+   
+   function License (R : Release) return Alire.Properties.Vector is
+      (Enumerate (R.Properties).Filter (Alire.Properties.Licenses.Values.Property'Tag));
+   
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String is
      (Utils.Head (+R.Project, Extension_Separator) & "_" &
@@ -306,6 +312,6 @@ private
       Satisfies (R.Version, Dep.Versions));
 
    function Version_Image (R : Release) return String is
-      (Semantic_Versioning.Image (R.Version));
+     (Semantic_Versioning.Image (R.Version));   
    
 end Alire.Releases;

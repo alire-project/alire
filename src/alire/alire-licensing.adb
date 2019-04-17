@@ -9,7 +9,7 @@ package body Alire.Licensing is
 
       ULabel : constant Unbounded_String := +Label;
    begin
-      for License in License_Labels'Range loop
+      for License in Licenses'Range loop
          if License_Labels (License) = ULabel then
             return License;
          end if;
