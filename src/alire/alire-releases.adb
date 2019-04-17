@@ -519,10 +519,14 @@ package body Alire.Releases is
       Relinfo := TOML.Merge (Relinfo, R.Origin.To_TOML);
 
       -- Dependencies
-      Relinfo.Set (TOML_Keys.Dependency, R.Dependencies.To_TOML);
+      if not R.Dependencies.Is_Empty then
+         Relinfo.Set (TOML_Keys.Dependency, R.Dependencies.To_TOML);
+      end if;
 
       -- Forbidden
-      Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+      if not R.Forbidden.Is_Empty then
+         Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+      end if;
 
       -- Available
       if R.Available.Is_Empty or else R.Available = Alire.Requisites.Booleans.Always_True then
