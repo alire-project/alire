@@ -18,7 +18,12 @@ project Alr is
    for Languages use ("Ada", "C");
 
    package Compiler renames Alire_Common.Compiler;
-   package Builder renames Alire_Common.Builder;
+
+   package Builder is
+      for Switches ("Ada") use Alire_Common.Builder'Switches ("Ada");
+      for Executable ("alr-main.adb") use "alr";
+   end Builder;
+
    package Binder renames Alire_Common.Binder;
    package Ide renames Alire_Common.Ide;
 

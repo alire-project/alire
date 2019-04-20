@@ -15,6 +15,9 @@ if [ "$BRANCH" == "stable" ]; then
 #    alr update --online # until #73 is fixed
 fi
 
+# Check minimal execution
+alr version
+
 exit 0 # until #73 is fixed
 
 export PATH+=:`pwd`/bin
