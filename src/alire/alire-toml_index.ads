@@ -317,7 +317,7 @@ private
    --  Result.Success to true. If the package description is invalid, set it to
    --  false and produce an error message.
 
-   procedure Import_TOML_Package_As_Releases
+   procedure Decode_TOML_Package_As_Releases
      (Pkg         : Package_Type;
       Environment : Environment_Variables;
       Releases    : out Containers.Release_Sets.Set);
