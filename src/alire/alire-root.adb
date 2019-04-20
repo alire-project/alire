@@ -1,3 +1,4 @@
+with Alire.Containers;
 with Alire.Directories;
 with Alire.Paths;
 with Alire.TOML_Index;
@@ -16,13 +17,24 @@ package body Alire.Root is
          Compiler => Env.Compiler);
 
       if Path /= "" then
-         return Roots.New_Root
-           (TOML_Index.Load_Release_From_File
+         declare
+            Release : Containers.Release_Holders.Holder;
+            Result  : TOML_Index.Load_Result;
+         begin
+            TOML_Index.Load_Release_From_File
               (Filename    => Directories.Find_Single_File
                  (Path      => Path / Paths.Working_Folder_Inside_Root,
                   Extension => Paths.Crate_File_Extension_With_Dot),
-               Environment => Index_Env),
-            Path);
+               Environment => Index_Env,
+               Release     => Release,
+               Result      => Result);
+
+            if Result.Success then
+               return Roots.New_Root (Release.Element, Path);
+            else
+               return Roots.New_Invalid_Root;
+            end if;
+         end;
       else
          return Roots.New_Invalid_Root;
       end if;

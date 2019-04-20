@@ -347,10 +347,11 @@ package body Alire.TOML_Index is
    -- Load_Release_From_File --
    ----------------------------
 
-   function Load_Release_From_File
+   procedure Load_Release_From_File
      (Filename    : String;
-      Environment : Environment_Variables)
-      return        Releases.Release
+      Environment : Environment_Variables;
+      Release     : out Containers.Release_Holders.Holder;
+      Result      : out Load_Result)
    is
       Pkg      : Package_Type;
       Value    : TOML.TOML_Value;
