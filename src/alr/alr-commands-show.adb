@@ -47,11 +47,14 @@ package body Alr.Commands.Show is
 
    procedure Report (Name     : Alire.Project;
                      Versions : Semver.Version_Set;
+                     Current  : Boolean; -- session or command-line requested release
                      Cmd      : Command) is
    begin
       declare
          Rel     : constant Types.Release  :=
-                     Query.Find (Name, Versions, Query_Policy);
+                     (if Current
+                      then Root.Current.Release
+                      else Query.Find (Name, Versions, Query_Policy));
       begin
          New_Line;
 
@@ -127,9 +130,6 @@ package body Alr.Commands.Show is
 
       if Num_Arguments = 1 then
          Requires_Full_Index;
-      else
-         -- TODO: load current dependency file (former alr_deps)
-         raise Program_Error with "To be fixed";
       end if;
 
       declare
@@ -139,7 +139,10 @@ package body Alr.Commands.Show is
                       else Parsers.Project_Versions (Root.Current.Release.Milestone.Image));
       begin
          --  Execute
-         Report (Allowed.Project, Allowed.Versions, Cmd);
+         Report (Allowed.Project,
+                 Allowed.Versions,
+                 Num_Arguments = 0,
+                 Cmd);
       exception
          when Alire.Query_Unsuccessful =>
             Trace.Info ("Project [" & Argument (1) & "] does not exist in the catalog.");
