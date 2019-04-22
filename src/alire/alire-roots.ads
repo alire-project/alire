@@ -15,8 +15,23 @@ package Alire.Roots with Preelaborate is
 
    function Is_Valid (This : Root) return Boolean;
 
+   -------------------
+   -- Invalid roots --
+   -------------------
+
    function New_Invalid_Root return Root with
      Post => not New_Invalid_Root'Result.Is_Valid;
+
+   function With_Reason (This : Root; Reason : String) return Root with
+     Pre  => not This.Is_Valid,
+     Post => not This.Is_Valid and then With_Reason'Result.Invalid_Reason = Reason;
+
+   function Invalid_Reason (This : Root) return String with
+     Pre => not This.Is_Valid;
+
+   -----------------
+   -- Valid roots --
+   -----------------
 
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
@@ -57,13 +72,21 @@ private
             Path    : Ustring;
             Release : Containers.Release_H;
          when False =>
-            null;
+            Reason  : Ustring;
       end case;
    end record;
 
    function Is_Valid (This : Root) return Boolean is (This.Valid);
 
-   function New_Invalid_Root return Root is (Valid => False);
+   function New_Invalid_Root return Root is
+     (Valid => False, Reason => +"");
+
+   function With_Reason (This : Root; Reason : String) return Root is
+     (Valid  => False,
+      Reason => +Reason);
+
+   function Invalid_Reason (This : Root) return String is
+      (+This.Reason);
 
    function New_Root (Name : Alire.Project;
                       Path : Absolute_Path) return Root is

@@ -34,12 +34,12 @@ package body Alire.Root is
             if Result.Success then
                return Roots.New_Root (Release.Element, Path);
             else
-               Trace.Error ("Failed to load " & File & ": " & (+Result.Message));
-               return Roots.New_Invalid_Root;
+               return Roots.New_Invalid_Root.With_Reason
+                 ("Failed to load " & File & ": " & (+Result.Message));
             end if;
          end;
       else
-         return Roots.New_Invalid_Root;
+         return Roots.New_Invalid_Root.With_Reason ("Could not detect a session folder at current or parent locations");
       end if;
    end Current;
 

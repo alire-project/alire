@@ -374,8 +374,11 @@ package body Alr.Commands is
    ----------------------
 
    procedure Requires_Project is
+      Checked : constant Alire.Roots.Root := Alire.Roots.Check_Valid (Root.Current);
    begin
-      Alire.Roots.Check_Valid (Root.Current);
+      if not Checked.Is_Valid then
+         Reportaise_Command_Failed ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
+      end if;
    end Requires_Project;
 
    ----------------------
