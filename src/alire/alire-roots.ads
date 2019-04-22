@@ -43,6 +43,7 @@ package Alire.Roots with Preelaborate is
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path) return Root;
    --  From existing release
+   --  Path must point to the session folder (parent of alire metadata folder)
 
    function Path (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;

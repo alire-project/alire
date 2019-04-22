@@ -57,7 +57,6 @@ echo BUILD
 alr get hello
 pushd hello*
 alr build 
-alr build --online
 popd
 
 # CLEAN test
@@ -105,9 +104,9 @@ echo PIN
 alr init --bin xxx
 cd xxx
 alr with libhello
-grep -q -i Current alire/alr_deps.ads
+grep -q -i 'libhello = "any"' alire/xxx.toml
 alr pin
-grep -q -i '=' alire/alr_deps.ads
+grep -q -i 'libhello = "1.0.0"' alire/xxx.toml
 cd ..
 rm -rf xxx
 
@@ -129,7 +128,7 @@ alr search hell | grep -q -i hello
 # UPDATE
 echo UPDATE
 # outisde
-alr update --online 
+alr update
 # inside
 alr init --bin xxx
 cd xxx
