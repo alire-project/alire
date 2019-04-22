@@ -16,7 +16,7 @@ if [ "$BRANCH" == "stable" ]; then
 fi
 
 # Check minimal execution
-alr version
+bin/alr version
 
 exit 0 # until #73 is fixed
 
