@@ -39,6 +39,7 @@ package body Alr.Commands.Compile is
       end Add_Paths;
 
    begin
+      Requires_Full_Index;
       Requires_Project;
       Requires_Buildfile;
 
