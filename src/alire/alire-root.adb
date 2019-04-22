@@ -20,11 +20,13 @@ package body Alire.Root is
          declare
             Release : Containers.Release_Holders.Holder;
             Result  : TOML_Index.Load_Result;
+            File    : constant String :=
+                        Directories.Find_Single_File
+                          (Path      => Path / Paths.Working_Folder_Inside_Root,
+                           Extension => Paths.Crate_File_Extension_With_Dot);
          begin
             TOML_Index.Load_Release_From_File
-              (Filename    => Directories.Find_Single_File
-                 (Path      => Path / Paths.Working_Folder_Inside_Root,
-                  Extension => Paths.Crate_File_Extension_With_Dot),
+              (Filename    => File,
                Environment => Index_Env,
                Release     => Release,
                Result      => Result);
@@ -32,6 +34,7 @@ package body Alire.Root is
             if Result.Success then
                return Roots.New_Root (Release.Element, Path);
             else
+               Trace.Debug ("Failed to load " & File & ": " & (+Result.Message));
                return Roots.New_Invalid_Root;
             end if;
          end;

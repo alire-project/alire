@@ -11,7 +11,9 @@ package body Alire.Dependencies is
       elsif Length (Dep.Versions) > 1 then
          raise Unimplemented; -- TODO (but not yet in index format)
       else
-         return +Operator_Image (Element (Dep.Versions, 1));
+         return +Image_Abbreviated (Dep.Versions,
+                                    Unicode        => True,
+                                    Implicit_Equal => True);
       end if;
    end To_TOML;
 

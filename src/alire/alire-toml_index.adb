@@ -7,6 +7,7 @@ with Alire.Conditional;
 with Alire.GPR;
 with Alire.Index;
 with Alire.Origins;
+with Alire.Projects;
 with Alire.Requisites;
 with Alire.Requisites.Booleans;
 
@@ -390,6 +391,9 @@ package body Alire.TOML_Index is
       else
          Result := (Success => True);
          Release.Replace_Element (Releases.First_Element);
+         --  Override project description with the one in the parsed file
+         Projects.Descriptions.Include (Release.Element.project,
+                                        +Pkg.Description);
       end if;
    end Load_Release_From_File;
 
@@ -544,42 +548,14 @@ package body Alire.TOML_Index is
          return False;
       end if;
 
-      declare
-         type Constraint_Kind is (Exactly, Within_Major, Within_Minor);
-
-         V : SV.Version;
-
-         S          : constant String := Value.As_String;
-         S_First    : Positive := S'First + 1;
-         Constraint : Constraint_Kind;
       begin
-         if S'Length = 0 then
+         Set := SV.To_Set (Value.As_String);
+      exception
+         when SV.Malformed_Input =>
             return False;
-         end if;
-
-         case S (S'First) is
-            when '^' =>
-               Constraint := Within_Major;
-            when '~' =>
-               Constraint := Within_Minor;
-            when others =>
-               Constraint := Exactly;
-               S_First := S'First;
-         end case;
-
-         begin
-            V := SV.Parse (S (S_First .. S'Last));
-         exception
-            when Constraint_Error =>
-               return False;
-         end;
-
-         Set := (case Constraint is
-                 when Exactly => SV.Exactly (V),
-                 when Within_Major => SV.Within_Major (V),
-                 when Within_Minor => SV.Within_Minor (V));
-         return True;
       end;
+
+      return True;
    end To_Version_Set;
 
    --------------------
@@ -1742,11 +1718,6 @@ package body Alire.TOML_Index is
 
          Result : Release_Properties := No_Properties;
       begin
-         --  Import notes as comments
-
-         if US.Length (Data.Notes) > 0 then
-            Add_Property (Result, Comment (+Data.Notes));
-         end if;
 
          --  Import project files
 
@@ -1868,8 +1839,10 @@ package body Alire.TOML_Index is
                  (Project            => +(+Pkg.Name),
                   Version            => R.Version,
                   Origin             => Origin,
-                  Notes              => +US.Head
-                    (Pkg.Common.Notes, Alire.Max_Description_Length),
+                  Notes              =>
+                    (if US.Length (Pkg.Common.Notes) > Alire.Max_Description_Length
+                     then +US.Head (Pkg.Common.Notes, Alire.Max_Description_Length)
+                     else +Pkg.Common.Notes),
                   -- It crops too long notes, so something TODO about this
                   -- Since it didn't fail before, I guess they weren't added
                   --  this way (only as property?)
