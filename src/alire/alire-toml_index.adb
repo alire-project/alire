@@ -96,6 +96,7 @@ package body Alire.TOML_Index is
 
    Custom_License_Prefix : constant String := "custom:";
 
+   Filesystem_Prefix : constant String := "file://";
    Native_Prefix : constant String := "native:";
 
    type Distribution_Names is
@@ -717,6 +718,10 @@ package body Alire.TOML_Index is
             --  string denotes an unavailable package.
 
             Result.Value := (Native_Package, +"");
+
+         elsif Starts_With (S, Filesystem_Prefix) then
+            Result.Value := (Filesystem,
+                             +S (S'First + Native_Prefix'Length .. S'Last));
 
          elsif Starts_With (S, "git+")
             and then Decode_VCS (S, URL, Revision)
@@ -1651,6 +1656,7 @@ package body Alire.TOML_Index is
          O := Label.Value;
          return
            (case O.Kind is
+            when Filesystem => Alire.Origins.New_Filesystem (+O.Path),
             when Git => Index.Git (+O.Repo_URL, +O.Revision),
             when Mercurial => Index.Hg (+O.Repo_URL, +O.Revision),
             when SVN => Index.SVN (+O.Repo_URL, +O.Revision),

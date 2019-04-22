@@ -77,7 +77,7 @@ pushd hello*
 alr compile
 popd
 rm -rf hello*
-alr get -c libhello
+alr get --compile libhello
 rm -rf libhello
 
 # GET

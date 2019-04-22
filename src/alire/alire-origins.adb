@@ -111,7 +111,7 @@ package body Alire.Origins is
    begin
       case This.Kind is
          when Filesystem =>
-            Table.Set (TOML_Keys.Origin, +("path:" & This.Path));
+            Table.Set (TOML_Keys.Origin, +("file://" & This.Path));
          when VCS_Kinds =>
             Table.Set (TOML_Keys.Origin, +(Prefix (This.Kind) & "+" & This.URL & "@" & This.Commit));
          when Native =>
