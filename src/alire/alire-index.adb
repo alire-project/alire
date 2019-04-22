@@ -84,7 +84,8 @@ package body Alire.Index is
             Self_Name    => Self_Name)
          do
             Master_Entries.Insert (C.Project, C);
-            Projects.Descriptions.Insert (C.Project, Description);
+            Projects.Descriptions.Include (C.Project, Description);
+            --  This description may be already present from the session project file
          end return;
       end if;
    end Manually_Catalogued_Project;

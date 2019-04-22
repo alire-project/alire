@@ -39,7 +39,6 @@ package body Alr.Commands.Compile is
       end Add_Paths;
 
    begin
-      Requires_Full_Index;
       Requires_Project;
       Requires_Buildfile;
 
@@ -47,7 +46,11 @@ package body Alr.Commands.Compile is
       begin
          --  TODO: this is a costly operation that requires solving dependencies
          --  Perhaps it will be necessary in the future to cache these in the session file
-         Add_Paths;
+         --  Alternatively, with gprinstall, paths might become obsolete
+         if not Root.Current.Release.Dependencies (Platform.Properties).Is_Empty then
+            Requires_Full_Index;
+            Add_Paths;
+         end if;
 
          Spawn.Gprbuild (Root.Current.Build_File,
                          Extra_Args    => Scenario.As_Command_Line);
