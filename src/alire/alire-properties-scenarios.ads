@@ -1,4 +1,5 @@
 with Alire.GPR;
+with Alire.TOML_Keys;
 
 private with Ada.Containers.Indefinite_Holders;
 
@@ -12,8 +13,7 @@ package Alire.Properties.Scenarios with Preelaborate is
 
    function Value (V : Property) return Gpr.Variable;
 
-   overriding function Key (V : Property) return String is
-      (raise Unimplemented);
+   overriding function Key (V : Property) return String;
 
 private
 
@@ -33,8 +33,10 @@ private
           when GPR.External => "GPR External: ",
           when others       => "GPR Scenario: ") & V.Var.Element.Image);
 
-   overriding function To_TOML (V : Property) return TOML.TOML_Value is
-      (raise Program_Error with "TODO: implement");
+   overriding function Key (V : Property) return String is
+     (case V.Var.Element.Kind is
+         when GPR.External => TOML_Keys.GPR_Set_Ext,
+         when others       => TOML_Keys.GPR_Ext);
 
    function Value (V : Property) return Gpr.Variable is
       (V.Var.Element);
