@@ -12,6 +12,15 @@ package Alire.TOML_Adapters with Preelaborate is
      Post => To_Array'Result.Kind = TOML.TOML_Array;
    --  Take an atom value and return an array of a single element
    --  If already an array, do nothing
-      
+   
+   generic
+      type Enum is (<>);
+   function Tomify (E : Enum) return TOML.TOML_Value;
+   --  Simple tomifier for when the image is enough
+   
+private
+   
+   function Tomify (E : Enum) return TOML.TOML_Value is 
+      (TOML.Create_String (E'Img));
    
 end Alire.TOML_Adapters;
