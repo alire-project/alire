@@ -531,6 +531,9 @@ package body Alire.Releases is
       -- Available
       if R.Available.Is_Empty or else R.Available = Alire.Requisites.Booleans.Always_True then
          null; -- Do nothing, do not pollute .toml file
+      elsif not R.Available.Is_Empty and then R.Available = Alire.Requisites.Booleans.Always_False then
+         Relinfo.Set (TOML_Keys.Available, TOML.Create_Boolean (False));
+         --  Stop-gag until proper requisites are re-introduced
       else
          raise Unimplemented; -- TODO
                               -- Not straightforward, since current expressions are and/or only,
