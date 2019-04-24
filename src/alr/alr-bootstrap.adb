@@ -79,6 +79,8 @@ package body Alr.Bootstrap is
    begin
       if Root.Current.Is_Valid then
          return Project;
+      elsif Alire.Directories.Detect_Root_Path /= "" then
+         return Broken;
       else
          return Outside;
       end if;
