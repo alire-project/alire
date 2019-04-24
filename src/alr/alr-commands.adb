@@ -8,7 +8,6 @@ with Alire;
 with Alire.Config;
 with Alire.Features.Index;
 with Alire.Index;
-with Alire.Root;
 with Alire.Roots;
 with Alire.Roots.Check_Valid;
 with Alire.Utils;
@@ -32,6 +31,7 @@ with Alr.Commands.Withing;
 with Alr.Interactive;
 with Alr.Paths;
 with Alr.Platform;
+with Alr.Root;
 with Alr.Templates;
 
 with GNAT.OS_Lib;
@@ -334,7 +334,7 @@ package body Alr.Commands is
 
    procedure Requires_Buildfile is
       Guard : OS_Lib.Folder_Guard (Enter_Project_Folder) with Unreferenced;
-      Root  : constant Alire.Roots.Root := Alire.Root.Current;
+      Root  : constant Alire.Roots.Root := Alr.Root.Current;
    begin
       if Bootstrap.Session_State /= Project then
          Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
@@ -375,7 +375,7 @@ package body Alr.Commands is
 
    procedure Requires_Project is
    begin
-      Alire.Roots.Check_Valid (Alire.Root.Current);
+      Alire.Roots.Check_Valid (Root.Current);
    end Requires_Project;
 
    ----------------------

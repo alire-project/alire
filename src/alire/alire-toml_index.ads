@@ -8,9 +8,11 @@ private with TOML;
 private with Semantic_Versioning;
 
 private with Alire.Actions;
+with Alire.Containers;
 with Alire.TOML_Expressions;
 private with Alire.Licensing;
 with Alire.Platforms;
+with Alire.Releases;
 
 package Alire.TOML_Index is
 
@@ -52,6 +54,14 @@ package Alire.TOML_Index is
    --  Load a specific package from the TOML catalog in the given directory
    --  using the given environment variables.  This does nothing if the package
    --  is already loaded.
+
+   procedure Load_Release_From_File
+     (Filename    : String;
+      Environment : Environment_Variables;
+      Release     : out Containers.Release_Holders.Holder;
+      Result      : out Load_Result) with
+     Post => Result.Success = not Release.Is_Empty;
+   --  Load a file that must contain a single release.
 
 private
 
@@ -307,9 +317,15 @@ private
    --  Result.Success to true. If the package description is invalid, set it to
    --  false and produce an error message.
 
-   procedure Import_TOML_Package
+   procedure Decode_TOML_Package_As_Releases
      (Pkg         : Package_Type;
-      Environment : Environment_Variables);
-   --  Import the given package to Alire's internal index
+      Environment : Environment_Variables;
+      Releases    : out Containers.Release_Sets.Set);
+   --  Generate one fully populated release per version loaded in Pkg
+
+   procedure Index_Releases
+     (Pkg      : Package_Type;
+      Releases : Containers.Release_Sets.Set);
+   --  Add the given releases to the internal index
 
 end Alire.TOML_Index;
