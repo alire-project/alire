@@ -546,11 +546,10 @@ package body Alire.Conditional_Trees is
             begin
                case Current.Kind is
                   when TOML_Table =>
-                     raise Constraint_Error with "Cannot replace table value (TOML forbidden format)";
+                     Table.Set (Key, TOML.Merge (Current, Val));
                   when TOML_Array =>
                      Current.Append (Val);
-                     Table.Set (Key, Current); -- This might be redundant since TOML is shallow referenced (I think)
-                  when others => -- Convert to array
+                  when TOML.Atom_Value_Kind => -- Convert to array
                      declare
                         Replace : constant TOML.TOML_Value := TOML.Create_Array;
                      begin
