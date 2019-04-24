@@ -2,7 +2,7 @@ with Alire.Properties;
 with Alire.TOML_Keys;
 with Alire.Utils;
 
-private with TOML;
+with TOML;
 
 package Alire.Actions with Preelaborate is
 
@@ -37,6 +37,8 @@ package Alire.Actions with Preelaborate is
    function Command_Line   (This : Run) return String;
    function Working_Folder (This : Run) return String;
 
+   overriding function To_TOML (This : Run) return TOML.TOML_Value;
+
 private
 
    type Action (Moment : Moments) is abstract new Properties.Property with null record;
@@ -52,8 +54,6 @@ private
      (Utils.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
         (if This.Working_Folder /= "" then "/" else "") &
         This.Working_Folder & "/" & This.Relative_Command_Line);
-
-   overriding function To_TOML (This : Run) return TOML.TOML_Value is (raise Program_Error with "TODO: implement");
 
    function New_Run (Moment                : Moments;
                      Relative_Command_Line : Platform_Independent_Path;

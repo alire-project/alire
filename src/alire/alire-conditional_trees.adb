@@ -538,6 +538,12 @@ package body Alire.Conditional_Trees is
                      Key   : String;
                      Val   : TOML.TOML_Value)
       is
+         --  Add one property to the parent table.
+         --  Atomic values are automatically converted into arrays, if
+         --    more than one for the same key appears (e.g., executables)
+         --  Table values with same key are merged in a single table (e.g., dependencies)
+         --  Array values with same key are consolidated in a single array
+         --    (e.g., actions, which are created as an array of tables).
       begin
          pragma Assert (Table.Kind = TOML.TOML_Table);
          if Table.Has (Key) then
@@ -548,7 +554,15 @@ package body Alire.Conditional_Trees is
                   when TOML_Table =>
                      Table.Set (Key, TOML.Merge (Current, Val));
                   when TOML_Array =>
-                     Current.Append (Val);
+                     case Val.Kind Is
+                        when TOML.Atom_Value_Kind | TOML.TOML_Table =>
+                           Current.Append (Val);
+                        when TOML.TOML_Array =>
+                           --  Consolidate the array into one
+                           for I in 1 .. Val.Length loop
+                              Current.Append (Val.Item (I));
+                           end loop;
+                     end case;
                   when TOML.Atom_Value_Kind => -- Convert to array
                      declare
                         Replace : constant TOML.TOML_Value := TOML.Create_Array;
