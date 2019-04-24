@@ -1,3 +1,5 @@
+with Alire.Releases;
+
 with Alr.Commands.Update;
 with Alr.Platform;
 with Alr.Query;
@@ -14,17 +16,18 @@ package body Alr.Commands.Pin is
    is
       pragma Unreferenced (Cmd);
    begin
+      Requires_Full_Index;
       Requires_Project;
 
       declare
-         Deps : constant Query.Solution :=
+         Sol : constant Query.Solution :=
                   Query.Resolve (Root.Current.Release.Dependencies (Platform.Properties),
                                  Query_Policy);
       begin
-         if Deps.Valid then
+         if Sol.Valid then
             Templates.Generate_Prj_Alr
               (Root.Current.Release.Replacing
-                 (Dependencies => Deps.Releases.To_Dependencies));
+                 (Dependencies => Sol.Releases.To_Dependencies));
 
             Update.Execute;
          else

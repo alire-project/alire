@@ -105,7 +105,7 @@ package body Alr.Commands.Withing is
          New_Root  : constant Alire.Roots.Root :=
                        Alire.Roots.New_Root
                          (Root.Current.Release.Replacing (Dependencies => Deps),
-                          Root.Current.Working_Folder);
+                          Root.Current.Path);
       begin
          Templates.Generate_Prj_Alr (New_Root.Release,
                                      New_Root.Crate_File);
@@ -289,8 +289,6 @@ package body Alr.Commands.Withing is
       else
          raise Program_Error with "List should have already happended";
       end if;
-
-      Commands.Update.Execute;
    exception
       when E : Constraint_Error =>
          Exceptions.Report ("In Withing.Execute:", E);

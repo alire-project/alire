@@ -51,12 +51,12 @@ private
    function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set is
      (Dep.Versions);
 
-   function Image (Dep : Dependency) return String is -- Exceptional case: alire=0.0.0 means Unavailable
+   function Image (Dep : Dependency) return String is
      (if Dep = Unavailable
       then "Unavailable"
       else
         (Utils.To_Lower_Case (+Dep.Project) & " is " &
-           Semantic_Versioning.Image (Dep.Versions)));
+           Semantic_Versioning.Image_Ada (Dep.Versions)));
 
    overriding function Key (Dep : Dependency) return String is (+Dep.Project);
 

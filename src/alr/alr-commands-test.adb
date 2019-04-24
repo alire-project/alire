@@ -292,6 +292,8 @@ package body Alr.Commands.Test is
          end if;
       end if;
 
+      Requires_Full_Index;
+
       --  Pre-find candidates to not have duplicate tests if overlapping requested
       Find_Candidates;
 

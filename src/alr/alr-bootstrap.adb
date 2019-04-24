@@ -8,6 +8,7 @@ with Alire.Index;
 
 with Alr.OS_Lib;
 with Alr.Paths;
+with Alr.Root;
 with Alr.Utils;
 
 with GNAT.Ctrl_C;
@@ -72,8 +73,11 @@ package body Alr.Bootstrap is
 
    function Session_State return Session_States is
    begin
-      --  TODO
-      return Outside;
+      if Root.Current.Is_Valid then
+         return Project;
+      else
+         return Outside;
+      end if;
    end Session_State;
 
    -----------------

@@ -28,7 +28,7 @@ package body Alr.Query is
                               Policy   : Policies := Newest) return String is
       ((+Project) &
        (if Versions /= Semver.Any
-        then " version " & Semver.Image (Versions)
+        then " version " & Semver.Image_Ada (Versions)
         else " with " & Utils.To_Mixed_Case (Policy'Img) & " version"));
 
    ------------

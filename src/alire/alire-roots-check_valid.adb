@@ -1,19 +1,19 @@
 with Ada.Directories;
 
-procedure Alire.Roots.Check_Valid (This : Root) is
+function Alire.Roots.Check_Valid (This : Root) return Root is
    use Ada.Directories;
 begin
-   if not Exists (This.Working_Folder) then
-      Trace.Error ("alire subfolder not found");
-      raise Program_Error;
+   if not This.Is_Valid then
+      return This; -- Keep as is
+   elsif not Exists (This.Working_Folder) then
+      return New_Invalid_Root.With_Reason ("alire subfolder not found");
    elsif Kind (This.Working_Folder) /= Directory then
-      Trace.Error ("Expected alire folder but found a: " & Kind (This.Working_Folder)'Img);
-      raise Program_Error;
+      return New_Invalid_Root.With_Reason ("Expected alire folder but found a: " & Kind (This.Working_Folder)'Img);
    elsif not Exists (This.Crate_File) then
-      Trace.Error ("Dependency file not found in alire folder");
-      raise Program_Error;
+      return New_Invalid_Root.With_Reason ("Dependency file not found in alire folder");
    elsif Kind (This.Crate_File) /= Ordinary_File then
-      Trace.Error ("Expected ordinary file but found a: " & Kind (This.Crate_File)'Img);
-      raise Program_Error;
+      return New_Invalid_Root.With_Reason ("Expected ordinary file but found a: " & Kind (This.Crate_File)'Img);
+   else
+      return This; -- Nothing untoward detected
    end if;
 end Alire.Roots.Check_Valid;
