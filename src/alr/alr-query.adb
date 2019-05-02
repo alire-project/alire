@@ -257,7 +257,7 @@ package body Alr.Query is
 
       procedure Check_Complete (Deps : Types.Platform_Dependencies;
                                 Sol  : Instance) is
-         -- Note: these Deps may include more than the ones requested to solve,
+         --  Note: these Deps may include more than the ones requested to solve,
          --   as indirect dependencies are progressively added
       begin
          if Is_Complete (Deps, Sol) then
@@ -347,7 +347,7 @@ package body Alr.Query is
             if Frozen.Contains (Dep.Project) then
                Check (Frozen (Dep.Project)); -- Cut search once a project is frozen
             else
-               -- FIXME: use Floor/Ceiling or cleverer data structure to not blindly visit all releases
+               --  FIXME: use Floor/Ceiling or cleverer data structure to not blindly visit all releases
                if Policy = Newest then
                   for R of reverse Index.Catalog loop
                      Check (R);

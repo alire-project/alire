@@ -10,16 +10,16 @@ package Alire.Types with Preelaborate is
    --  Recopilation of types for convenient use and documentation
 
    subtype Dependency is Dependencies.Dependency;
-   -- A single dependency on a single project+versions
+   --  A single dependency on a single project+versions
 
    subtype Abstract_Dependencies is Conditional.Dependencies;
-   -- Conditional dependencies as yet unmaterialized for a precise platform
+   --  Conditional dependencies as yet unmaterialized for a precise platform
 
    subtype Platform_Dependencies is Conditional.Platform_Dependencies;
-   -- A plain tree without conditions (but might have OR nodes)
+   --  A plain tree without conditions (but might have OR nodes)
 
    subtype Forbidden_Dependencies is Conditional.Forbidden_Dependencies;
-   -- A plain tree without conditions or alternatives
+   --  A plain tree without conditions or alternatives
 
    function No_Dependencies return Conditional.Dependencies
      renames Conditional.For_Dependencies.Empty;
@@ -30,6 +30,6 @@ package Alire.Types with Preelaborate is
      renames Conditional.New_Dependency;
 
    subtype Release is Releases.Release;
-   -- A catalogued release
+   --  A catalogued release
 
 end Alire.Types;

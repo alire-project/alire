@@ -11,14 +11,15 @@ package body Alr.Code is
    use all type Alire.Conditional.For_Dependencies.Conjunctions;
    use all type Semantic_Versioning.Conditions;
 
-   function Condition_To_Code (C : Semantic_Versioning.Conditions) return String is
-     (case C is
-         when At_Least => " >= ",
-         when At_Most => " <= ",
-         when Exactly => " = ",
-         when Except => " /= ",
-         when Within_Major => ".Within_Major ",
-         when Within_Minor => ".Within_Minor ");
+   function Condition_To_Code (C : Semantic_Versioning.Conditions)
+                               return String
+   is (case C is
+          when At_Least => " >= ",
+          when At_Most  => " <= ",
+          when Exactly  => " = ",
+          when Except   => " /= ",
+          when Within_Major => ".Within_Major ",
+          when Within_Minor => ".Within_Minor ");
 
    function Conj_To_Code (C : Alire.Conditional.For_Dependencies.Conjunctions)
                           return String is
@@ -94,7 +95,9 @@ package body Alr.Code is
       -- Visit --
       -----------
 
-      procedure Visit (Dep : Types.Platform_Dependencies; Prefix : String := "") is
+      procedure Visit (Dep    : Types.Platform_Dependencies;
+                       Prefix : String := "")
+      is
          Tab : constant String := "   ";
 
          --------------------
@@ -111,8 +114,11 @@ package body Alr.Code is
             else
                for I in 1 .. Length (Vers) loop
                   declare
-                     Cond : constant Conditions := Condition (Element (Vers, I));
-                     Ver  : constant Version    := On_Version (Element (Vers, I));
+                     Cond : constant Conditions :=
+                       Condition (Element (Vers, I));
+
+                     Ver  : constant Version    :=
+                       On_Version (Element (Vers, I));
                   begin
                      Result.Append (Prefix & Cat.Ada_Identifier &
                                       Condition_To_Code (Cond) &
@@ -133,12 +139,14 @@ package body Alr.Code is
                for I in Dep.Iterate loop -- "of" bugs out
                   Visit (Dep (I), Prefix & Tab);
                   if Has_Element (Next (I)) then -- and/or
-                     Result.Append (Prefix & Tab & Conj_To_Code (Dep.Conjunction));
+                     Result.Append
+                       (Prefix & Tab & Conj_To_Code (Dep.Conjunction));
                   end if;
                end loop;
                Result.Append (Prefix & ")");
             when Condition =>
-               raise Program_Error with "Requisites should be already evaluated";
+               raise Program_Error
+                 with "Requisites should be already evaluated";
          end case;
       end Visit;
    begin

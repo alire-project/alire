@@ -61,7 +61,7 @@ package body Alr.Commands is
                        Cmd_Version  => new Version.Command,
                        Cmd_With     => new Withing.Command);
 
-   Command_Line_Config_Path : aliased Gnat.OS_Lib.String_Access;
+   Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
@@ -131,7 +131,9 @@ package body Alr.Commands is
    -- Set_Global_Switches --
    -------------------------
 
-   procedure Set_Global_Switches (Config : in out GNAT.Command_Line.Command_Line_Configuration) is
+   procedure Set_Global_Switches
+     (Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
    begin
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
@@ -139,7 +141,8 @@ package body Alr.Commands is
                      "Override configuration folder location");
       Define_Switch (Config,
                      Help_Switch'Access,
-                     "-h", "--help", "Display general or command-specific help");
+                     "-h", "--help",
+                     "Display general or command-specific help");
 
       Define_Switch (Config,
                      Interactive.Not_Interactive'Access,
@@ -149,7 +152,8 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Prefer_Oldest'Access,
                      Long_Switch => "--prefer-oldest",
-                     Help        => "Prefer oldest versions instead of newest when resolving dependencies");
+                     Help        => "Prefer oldest versions instead of " &
+                       "newest when resolving dependencies");
 
       Define_Switch (Config,
                      Log_Quiet'Access,
@@ -164,7 +168,8 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Log_Debug'Access,
                      "-d",
-                     Help => "Be even more verbose (including debug messages)");
+                     Help =>
+                       "Be even more verbose (including debug messages)");
    end Set_Global_Switches;
 
    ---------------------
@@ -198,14 +203,16 @@ package body Alr.Commands is
    begin
       New_Line;
       Put_Line ("Ada Library Repository manager");
-      Put_Line ("Usage : alr [global options] command [command options] [arguments]");
+      Put_Line ("Usage : alr [global options] " &
+                  "command [command options] [arguments]");
 
       New_Line;
 
       Display_Valid_Commands;
 
       New_Line;
-      Put_Line ("Use ""alr help <command>"" for more information about a command.");
+      Put_Line ("Use ""alr help <command>"" " &
+                  "for more information about a command.");
       New_Line;
    end Display_Usage;
 
@@ -220,10 +227,11 @@ package body Alr.Commands is
    begin
       Set_Usage (Config,
                  "[global options] " &
-                   Image (Cmd) & " [command options] " & Dispatch_Table (Cmd).Usage_Custom_Parameters,
+                   Image (Cmd) & " [command options] " &
+                   Dispatch_Table (Cmd).Usage_Custom_Parameters,
                  Help => " ");
 
-      -- Ugly hack that goes by GNAT
+      --  Ugly hack that goes by GNAT
       Define_Switch (Config, "Global options:", "", "", "", "");
       Define_Switch (Config, " ");
       Set_Global_Switches (Config);
@@ -233,9 +241,10 @@ package body Alr.Commands is
       Dispatch_Table (Cmd).Setup_Switches (Canary1);
 
       if Get_Switches (Canary1) /= Get_Switches (Canary2) then
-         -- Ugly hack that goes by GNAT
+         --  Ugly hack that goes by GNAT
          Define_Switch (Config, " ");
-         Define_Switch (Config, "Options specific to " & Image (Cmd) & ":", "", "", "", "");
+         Define_Switch (Config, "Options specific to " &
+                          Image (Cmd) & ":", "", "", "", "");
          Define_Switch (Config, " ");
 
          Dispatch_Table (Cmd).Setup_Switches (Config);
@@ -289,13 +298,15 @@ package body Alr.Commands is
    function Enter_Project_Folder return Alire.Directories.Destination is
    begin
       declare
-         Candidate_Folder : constant String := Alire.Directories.Detect_Root_Path;
+         Candidate_Folder : constant String :=
+           Alire.Directories.Detect_Root_Path;
       begin
          if Candidate_Folder /= "" then
             Trace.Detail ("Using candidate project root: " & Candidate_Folder);
             return new String'(Candidate_Folder);
          else
-            Trace.Debug ("Not entering project folder, no valid project root found");
+            Trace.Debug
+              ("Not entering project folder, no valid project root found");
             return Alire.Directories.Stay_In_Current;
          end if;
       end;
@@ -337,7 +348,8 @@ package body Alr.Commands is
       Root  : constant Alire.Roots.Root := Alr.Root.Current;
    begin
       if Bootstrap.Session_State /= Project then
-         Reportaise_Wrong_Arguments ("Cannot generate build file when not in a project");
+         Reportaise_Wrong_Arguments
+           ("Cannot generate build file when not in a project");
       end if;
 
       if not GNAT.OS_Lib.Is_Regular_File (Root.Build_File) or else
@@ -374,10 +386,12 @@ package body Alr.Commands is
    ----------------------
 
    procedure Requires_Project is
-      Checked : constant Alire.Roots.Root := Alire.Roots.Check_Valid (Root.Current);
+      Checked : constant Alire.Roots.Root :=
+        Alire.Roots.Check_Valid (Root.Current);
    begin
       if not Checked.Is_Valid then
-         Reportaise_Command_Failed ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
+         Reportaise_Command_Failed
+           ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
       end if;
    end Requires_Project;
 
@@ -411,8 +425,10 @@ package body Alr.Commands is
                              Parameter : String;
                              Section   : String)
    is
-   -- For some reason, Get_Argument is not working
-   -- This allows capturing any unknown switch under the wildcard class as an argument
+      --  For some reason, Get_Argument is not working.
+
+      --  This allows capturing any unknown switch under the wildcard class as
+      --  an argument.
       pragma Unreferenced (Section);
    begin
       Trace.Never ("S: " & Switch & "; P: " & Parameter);
@@ -432,7 +448,8 @@ package body Alr.Commands is
                      Val : constant String := Tail (Parameter, '=');
                   begin
                      if Var = "" or else Val = "" then
-                        Reportaise_Wrong_Arguments ("Malformed -X switch: " & Switch);
+                        Reportaise_Wrong_Arguments
+                          ("Malformed -X switch: " & Switch);
                      else
                         Scenario.Add_Argument (Var, Val);
                      end if;
@@ -442,7 +459,9 @@ package body Alr.Commands is
                Reportaise_Wrong_Arguments ("Unrecognized switch: " & Switch);
             end if;
          else
-            null; -- We are only checking global command/switches, these switches are not yet interesting
+             --  We are only checking global command/switches, these switches
+             --  are not yet interesting.
+            null;
          end if;
       else
          Raw_Arguments.Append (Switch);
@@ -454,8 +473,9 @@ package body Alr.Commands is
    ------------------------
 
    procedure Parse_Command_Line is
-   --  Once this procedure returns, the command, arguments and switches will be ready for use
-   --  Otherwise, appropriate help is shown and it does not return
+   --  Once this procedure returns, the command, arguments and switches will
+   --  be ready for use. Otherwise, appropriate help is shown and it does not
+   --  return.
       use all type GNAT.OS_Lib.String_Access;
 
       Global_Config  : Command_Line_Configuration;
@@ -466,11 +486,15 @@ package body Alr.Commands is
                  Help => " ");
 
       Set_Global_Switches (Global_Config);
-      Define_Switch (Global_Config, "*"); -- To avoid erroring on command-specific switches
+
+      --  To avoid erroring on command-specific switches
+      Define_Switch (Global_Config, "*");
+
       Initialize_Option_Scan;
       Getopt (Global_Config, Callback => Fill_Arguments'Access);
 
-      --  At this point the command and all unknown switches are in Raw_Arguments
+      --  At this point the command and all unknown switches are in
+      --  Raw_Arguments.
 
       if Raw_Arguments.Is_Empty then
          Trace.Error ("No command given");
@@ -479,7 +503,7 @@ package body Alr.Commands is
       elsif Raw_Arguments.First_Element = "help" then
          if Num_Arguments >= 1 then
             Display_Usage (Argument (1));
-            Os_Lib.Bailout (0);
+            OS_Lib.Bailout (0);
          else
             Trace.Error ("Please specific a help topic");
             OS_Lib.Bailout (1);
@@ -487,11 +511,14 @@ package body Alr.Commands is
       end if;
 
       declare
-         Cmd : constant Cmd_Names := What_Command; -- Might raise if invalid, if so we are done
+         Cmd : constant Cmd_Names := What_Command;
+         --  Might raise if invalid, if so we are done
       begin
          Raw_Arguments := Alire.Utils.Empty_Vector; -- Reinitialize arguments
          Set_Global_Switches (Command_Config);
-         Dispatch_Table (Cmd).Setup_Switches (Command_Config); -- Specific to command
+
+         --  Specific to command
+         Dispatch_Table (Cmd).Setup_Switches (Command_Config);
 
          --  Validate command + global configuration:
 
@@ -500,21 +527,23 @@ package body Alr.Commands is
          Initialize_Option_Scan;
          Getopt (Command_Config);
 
-         --  If OK, retrieve all arguments with the final, command-specific proper configuration
+         --  If OK, retrieve all arguments with the final, command-specific
+         --  proper configuration.
          Define_Switch (Command_Config, "*");
          Scenario := Alire.GPR.Empty_Scenario;
          Getopt (Command_Config, Callback => Fill_Arguments'Access);
 --           Getopt (Command_Config);
       end;
 
-      -- At this point everything should be parsed OK.
+      --  At this point everything should be parsed OK.
       if Command_Line_Config_Path     /= null and then
          Command_Line_Config_Path.all /= ""
       then
          Alire.Config.Set_Path (Command_Line_Config_Path.all);
       end if;
 
-      -- The simplistic early parser do not recognizes compressed switches, so let's recheck now:
+      --  The simplistic early parser do not recognizes compressed switches, so
+      --  let's recheck now:.
       declare
          use Alire_Early_Elaboration;
       begin
@@ -531,7 +560,8 @@ package body Alr.Commands is
       when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
          --  Getopt has already displayed some help
          Ada.Text_IO.New_Line;
-         Ada.Text_IO.Put_Line ("Use ""alr help <command>"" for specific command help");
+         Ada.Text_IO.Put_Line
+           ("Use ""alr help <command>"" for specific command help");
          OS_Lib.Bailout (1);
       when Constraint_Error =>
          if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
@@ -597,9 +627,11 @@ package body Alr.Commands is
 
    procedure Print_Project_Version_Sets is
    begin
-      Put_Line (" Project selection syntax (policy applies within the allowed version subsets)");
+      Put_Line (" Project selection syntax (policy applies " &
+                  "within the allowed version subsets)");
       New_Line;
-      Put_Line (" project        " & ASCII.HT & "Newest/oldest version (according to policy)");
+      Put_Line (" project        " & ASCII.HT &
+                  "Newest/oldest version (according to policy)");
       Put_Line (" project=version" & ASCII.HT & "Exact version");
       Put_Line (" project^version" & ASCII.HT & "Major-compatible version");
       Put_Line (" project~version" & ASCII.HT & "Minor-compatible version");

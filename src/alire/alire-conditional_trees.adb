@@ -10,6 +10,10 @@ package body Alire.Conditional_Trees is
    function Image_Classwide (Node : Inner_Node'Class) return String is
      (Node.Image);
 
+   procedure Flatten (Inner : in out Vector_Inner; -- The resulting vector
+                      This  : Inner_Node'Class;    -- The next node to flatten
+                      Conj  : Conjunctions);       -- To prevent mixing
+
    ----------
    -- Kind --
    ----------
@@ -164,15 +168,17 @@ package body Alire.Conditional_Trees is
    -- Flatten --
    -------------
 
-   procedure Flatten (Inner : in out Vector_Inner; -- The resulting vector
-                      This  : Inner_Node'Class;    -- The next node to flatten
-                      Conj  : Conjunctions) is      -- To prevent mixing
-      begin
+   procedure Flatten (Inner : in out Vector_Inner;
+                      This  : Inner_Node'Class;
+                      Conj  : Conjunctions)
+   is
+   begin
       case This.Kind is
          when Value | Condition =>
             Inner.Values.Append (This);
          when Vector =>
-            --  Flatten ofly if conjunction matches, otherwise just append subtree
+            --  Flatten ofly if conjunction matches, otherwise just append
+            --  subtree.
             if Vector_Inner (This).Conjunction = Conj then
                for Child of Vector_Inner (This).Values loop
                   Flatten (Inner, Child, Conj);
@@ -257,7 +263,10 @@ package body Alire.Conditional_Trees is
    -- Materialize --
    -----------------
 
-   function Materialize (This : Tree; Against : Properties.Vector) return Collection is
+   function Materialize (This : Tree;
+                         Against : Properties.Vector)
+                         return Collection
+   is
       Col : Collection with Warnings => Off;
       Pre : constant Tree := This.Evaluate (Against);
 
@@ -274,7 +283,8 @@ package body Alire.Conditional_Trees is
                      Visit (Child);
                   end loop;
                else
-                  raise Constraint_Error with "OR trees cannot be materialized as list";
+                  raise Constraint_Error
+                    with "OR trees cannot be materialized as list";
                end if;
          end case;
       end Visit;
@@ -301,7 +311,8 @@ package body Alire.Conditional_Trees is
             when Condition =>
                Visit (Conditional_Inner (Inner).Then_Value.Constant_Reference);
                if not Conditional_Inner (Inner).Else_Value.Is_Empty then
-                  Visit (Conditional_Inner (Inner).Else_Value.Constant_Reference);
+                  Visit
+                    (Conditional_Inner (Inner).Else_Value.Constant_Reference);
                end if;
             when Vector =>
                for Child of Vector_Inner (Inner).Values loop
@@ -380,8 +391,8 @@ package body Alire.Conditional_Trees is
             when Value =>
                return False;
             when Condition =>
-               Return
-                 This.True_Value.Contains_ORs or Else
+               return
+                 This.True_Value.Contains_ORs or else
                  This.False_Value.Contains_ORs;
             when Vector =>
                if This.Conjunction = Ored then
@@ -541,7 +552,8 @@ package body Alire.Conditional_Trees is
          --  Add one property to the parent table.
          --  Atomic values are automatically converted into arrays, if
          --    more than one for the same key appears (e.g., executables)
-         --  Table values with same key are merged in a single table (e.g., dependencies)
+         --  Table values with same key are merged in a single table (e.g.,
+         --  dependencies)
          --  Array values with same key are consolidated in a single array
          --    (e.g., actions, which are created as an array of tables).
       begin
@@ -554,7 +566,7 @@ package body Alire.Conditional_Trees is
                   when TOML_Table =>
                      Table.Set (Key, TOML.Merge (Current, Val));
                   when TOML_Array =>
-                     case Val.Kind Is
+                     case Val.Kind is
                         when TOML.Atom_Value_Kind | TOML.TOML_Table =>
                            Current.Append (Val);
                         when TOML.TOML_Array =>
@@ -565,7 +577,8 @@ package body Alire.Conditional_Trees is
                      end case;
                   when TOML.Atom_Value_Kind => -- Convert to array
                      declare
-                        Replace : constant TOML.TOML_Value := TOML.Create_Array;
+                        Replace : constant TOML.TOML_Value :=
+                          TOML.Create_Array;
                      begin
                         Replace.Append (Current);
                         Replace.Append (Val);

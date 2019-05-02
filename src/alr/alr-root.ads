@@ -1,7 +1,7 @@
 with Alire.Roots;
 
 package Alr.Root is
-   -- TODO: delete once global Alire.Root is removed
+   --  TODO: delete once global Alire.Root is removed
 
    function Current return Alire.Roots.Root;
 

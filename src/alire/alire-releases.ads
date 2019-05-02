@@ -21,11 +21,11 @@ with TOML;
 private with Alire.OS_Lib;
 
 package Alire.Releases with Preelaborate is
-   
+
 --     subtype Dependency_Vector is Dependencies.Vectors.Vector;
 
-   type Release (<>) is 
-     new Versions.Versioned 
+   type Release (<>) is
+     new Versions.Versioned
      and Interfaces.Tomifiable
    with private;
 
@@ -38,90 +38,110 @@ package Alire.Releases with Preelaborate is
                          Dependencies       : Conditional.Dependencies;
                          Properties         : Conditional.Properties;
                          Private_Properties : Conditional.Properties;
-                         Available          : Alire.Requisites.Tree) return Release;
-   
-   function New_Working_Release 
+                         Available          : Alire.Requisites.Tree)
+                         return Release;
+
+   function New_Working_Release
      (Project      : Alire.Project;
       Origin       : Origins.Origin := Origins.New_Filesystem (".");
-      Dependencies : Conditional.Dependencies := Conditional.For_Dependencies.Empty;
-      Properties   : Conditional.Properties   := Conditional.For_Properties.Empty)
+
+      Dependencies : Conditional.Dependencies :=
+        Conditional.For_Dependencies.Empty;
+
+      Properties   : Conditional.Properties   :=
+        Conditional.For_Properties.Empty
+     )
+
       return         Release;
    --  For working project releases that may have incomplete information
 
-   function Extending (Base               : Release;
-                       Dependencies       : Conditional.Dependencies := Conditional.For_Dependencies.Empty;
-                       Properties         : Conditional.Properties   := Conditional.For_Properties.Empty;
-                       Private_Properties : Conditional.Properties   := Conditional.For_Properties.Empty;
-                       Available          : Alire.Requisites.Tree    := Requisites.Trees.Empty_Tree)                        
-                       return Release;
+   function Extending
+     (Base               : Release;
+
+      Dependencies       : Conditional.Dependencies :=
+        Conditional.For_Dependencies.Empty;
+
+      Properties         : Conditional.Properties   :=
+        Conditional.For_Properties.Empty;
+
+      Private_Properties : Conditional.Properties   :=
+        Conditional.For_Properties.Empty;
+
+      Available          : Alire.Requisites.Tree    :=
+        Requisites.Trees.Empty_Tree
+     )
+      return Release;
    --  Takes a release and merges given fields
-             
+
    function Renaming (Base     : Release;
                       Provides : Alire.Project) return Release;
-   
+
    function Renaming (Base     : Release;
                       Provides : Projects.Named'Class) return Release;
    --  Fills-in the "provides" field
    --  During resolution, a project that has a renaming will act as the
-   --    "Provides" project, so both projects cannot be selected simultaneously.
-   
+   --  "Provides" project, so both projects cannot be selected simultaneously.
+
    function Replacing (Base               : Release;
                        Project            : Alire.Project      := "";
-                       Notes              : Description_String := "") return Release;      
+                       Notes              : Description_String := "")
+                       return Release;
    --  Takes a release and replaces the given fields
-   
+
    function Replacing (Base         : Release;
                        Dependencies : Conditional.Dependencies) return Release;
-   
+
    function Replacing (Base   : Release;
-                       Origin : Origins.Origin) return Release;  
-   
+                       Origin : Origins.Origin) return Release;
+
    function Retagging (Base    : Release;
                        Version : Semantic_Versioning.Version) return Release;
    --  Keep all data but version
-   
+
    function Upgrading (Base    : Release;
                        Version : Semantic_Versioning.Version;
                        Origin  : Origins.Origin) return Release;
-   --  Takes a release and replaces version and origin   
-   
+   --  Takes a release and replaces version and origin
+
    function Forbidding (Base      : Release;
                         Forbidden : Conditional.Forbidden_Dependencies)
                         return Release;
    --  Add forbidden dependencies to a release
 
    function Whenever (R : Release; P : Properties.Vector) return Release;
-   --  Materialize conditions in a Release once the whatever properties are known
-   --  At present dependencies and properties
-   
-   overriding function Project (R : Release) return Alire.Project;   
-   
+   --  Materialize conditions in a Release once the whatever properties are
+   --  known. At present dependencies and properties.
+
+   overriding function Project (R : Release) return Alire.Project;
+
    function Project_Str (R : Release) return String is (+R.Project);
-   
+
    function Project_Base (R : Release) return String;
-   --  Project up to first dot, if any; which is needed for extension projects in templates and so on
-   
+   --  Project up to first dot, if any; which is needed for extension projects
+   --  in templates and so on.
+
    function Provides (R : Release) return Alire.Project;
-   --  The actual project name to be used during dependency resolution 
+   --  The actual project name to be used during dependency resolution
    --  (But nowhere else)
-   
-   function Forbids (R : Release; 
+
+   function Forbids (R : Release;
                      P : Alire.Properties.Vector)
      return Conditional.Dependencies;
-   
+
    function Is_Extension (R : Release) return Boolean;
-   
-   function Notes   (R : Release) return Description_String; -- Specific to release
+
+   function Notes   (R : Release) return Description_String;
+   --  Specific to release
    function Version (R : Release) return Semantic_Versioning.Version;
-   
+
    function Depends (R : Release) return Conditional.Dependencies;
    function Dependencies (R : Release) return Conditional.Dependencies
                           renames Depends;
-   
+
    function Properties (R : Release) return Conditional.Properties;
-   
+
    function Private_Properties (R : Release) return Conditional.Properties;
-   
+
    function Depends (R : Release;
                      P : Alire.Properties.Vector)
                      return Conditional.Dependencies;
@@ -129,23 +149,24 @@ package Alire.Releases with Preelaborate is
    function Dependencies (R : Release;
                           P : Alire.Properties.Vector)
                           return Conditional.Dependencies renames Depends;
-   
+
    function Origin  (R : Release) return Origins.Origin;
    function Available (R : Release) return Requisites.Tree;
 
    function Default_Executable (R : Release) return String;
    --  We encapsulate here the fixing of platform extension
 
-   function Executables (R : Release; 
-                         P : Alire.Properties.Vector) 
+   function Executables (R : Release;
+                         P : Alire.Properties.Vector)
                          return Utils.String_Vector;
-   -- Only explicity declared ones
-   -- Under some conditions (usually current platform)
+   --  Only explicity declared ones
+   --  Under some conditions (usually current platform)
 
-   function Project_Paths (R         : Release;
-                           P         : Alire.Properties.Vector) return Utils.String_Set;
+   function Project_Paths (R : Release;
+                           P : Alire.Properties.Vector)
+                           return Utils.String_Set;
    --  Deduced from Project_Files
-   
+
    function Project_Files (R         : Release;
                            P         : Alire.Properties.Vector;
                            With_Path : Boolean)
@@ -154,78 +175,88 @@ package Alire.Releases with Preelaborate is
 
    function Unique_Folder (R : Release) return Folder_String;
 
-   --  NOTE: property retrieval functions do not distinguish between public/private, since that's 
-   --  merely informative for the users
+   --  NOTE: property retrieval functions do not distinguish between
+   --  public/private, since that's merely informative for the users.
 
-   function On_Platform_Actions (R : Release; P : Alire.Properties.Vector) return Alire.Properties.Vector;
+   function On_Platform_Actions (R : Release;
+                                 P : Alire.Properties.Vector)
+                                 return Alire.Properties.Vector;
    --  Get only Action properties for the platform
-   
-   function On_Platform_Properties (R             : Release; 
-                                    P             : Alire.Properties.Vector;
-                                    Descendant_Of : Ada.Tags.Tag := Ada.Tags.No_Tag) 
-                                    return Alire.Properties.Vector;
+
+   function On_Platform_Properties
+     (R             : Release;
+      P             : Alire.Properties.Vector;
+      Descendant_Of : Ada.Tags.Tag := Ada.Tags.No_Tag)
+      return Alire.Properties.Vector;
    --  Return properties that apply to R under platform properties P
-   
-   function Labeled_Properties_Vector (R     : Release; 
-                                       P     : Alire.Properties.Vector; 
-                                       Label : Alire.Properties.Labeled.Labels) 
-                                       return Alire.Properties.Vector;
+
+   function Labeled_Properties_Vector
+     (R     : Release;
+      P     : Alire.Properties.Vector;
+      Label : Alire.Properties.Labeled.Labels)
+      return Alire.Properties.Vector;
    --  Return properties of Labeled class for a particular label
-   
-   function Labeled_Properties (R     : Release; 
-                                P     : Alire.Properties.Vector; 
-                                Label : Alire.Properties.Labeled.Labels) 
-                                return Utils.String_Vector;
+
+   function Labeled_Properties
+     (R     : Release;
+      P     : Alire.Properties.Vector;
+      Label : Alire.Properties.Labeled.Labels)
+      return Utils.String_Vector;
    --  Get all values for a given property for a given platform properties
-   
+
    function License (R : Release) return Alire.Properties.Vector;
-   
+
    function Milestone (R : Release) return Milestones.Milestone;
 
    procedure Print (R : Release; Private_Too : Boolean := False);
-   -- Dump info to console   
+   --  Dump info to console
 
 --     overriding function To_Code (R : Release) return Utils.String_Vector;
-   
+
    --  Search helpers
 
    function Property_Contains (R : Release; Str : String) return Boolean;
    --  True if some property contains the given string
-   
-   function Satisfies (R : Release; Dep : Alire.Dependencies.Dependency) return Boolean;
+
+   function Satisfies (R   : Release;
+                       Dep : Alire.Dependencies.Dependency)
+                       return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
-   
+
    overriding function To_TOML (R : Release) return TOML.TOML_Value;
-   
+
    function Version_Image (R : Release) return String;
-   
+
 private
-   
+
    use Semantic_Versioning;
-   
+
    function Materialize is new Conditional.For_Properties.Materialize
      (Alire.Properties.Vector, Alire.Properties.Append);
-   
+
    function Enumerate is new Conditional.For_Properties.Enumerate
      (Alire.Properties.Vector, Alire.Properties.Append);
-   
+
    function All_Properties (R : Release;
-                            P : Alire.Properties.Vector) return Alire.Properties.vector;  
+                            P : Alire.Properties.Vector)
+                            return Alire.Properties.Vector;
    --  Properties that R has un der platform properties P
 
    use Alire.Properties;
-   function Comment  is new Alire.Properties.Labeled.Cond_New_Label (Alire.Properties.Labeled.Comment);
+   function Comment
+   is new Alire.Properties.Labeled.Cond_New_Label
+     (Alire.Properties.Labeled.Comment);
 
-   type Release (Prj_Len, 
-                 Notes_Len : Natural) is 
+   type Release (Prj_Len,
+                 Notes_Len : Natural) is
      new Versions.Versioned
      and Interfaces.Tomifiable
-   with record 
+   with record
       Project      : Alire.Project (1 .. Prj_Len);
-      Alias        : Ustring; -- I finally gave up on constraints
+      Alias        : UString; -- I finally gave up on constraints
       Version      : Semantic_Versioning.Version;
       Origin       : Origins.Origin;
-      Notes        : Description_String (1 .. Notes_Len);      
+      Notes        : Description_String (1 .. Notes_Len);
       Dependencies : Conditional.Dependencies;
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
@@ -235,83 +266,98 @@ private
 
    use all type Conditional.Properties;
 
-   function "<" (L, R : Release) return Boolean is
-     (L.Project < R.Project or else
-        
-      (L.Project = R.Project and then
-       L.Version < R.Version) or else
-      
-      (L.Project = R.Project and then
-       L.Version = R.Version and then
-       Build (L.Version) < Build (R.Version)));
-   
-   function Is_Extension (R : Release) return Boolean is
-      (R.Project_Base'Length < R.Project'Length);
-   
-   overriding function Project (R : Release) return Alire.Project is (R.Project);  
-   
-   function Project_Base (R : Release) return String is
-     (Utils.Head (+R.Project, Extension_Separator));
-   
-   function Provides (R : Release) return Alire.Project is 
-     ((if Ustrings.Length (R.Alias) = 0
+   function "<" (L, R : Release) return Boolean
+   is (L.Project < R.Project
+         or else
+       (L.Project = R.Project and then L.Version < R.Version)
+         or else
+       (L.Project = R.Project
+           and then
+        L.Version = R.Version
+           and then
+        Build (L.Version) < Build (R.Version)
+       )
+      );
+
+   function Is_Extension (R : Release) return Boolean
+   is (R.Project_Base'Length < R.Project'Length);
+
+   overriding
+   function Project (R : Release) return Alire.Project
+   is (R.Project);
+
+   function Project_Base (R : Release) return String
+   is (Utils.Head (+R.Project, Extension_Separator));
+
+   function Provides (R : Release) return Alire.Project
+   is (if UStrings.Length (R.Alias) = 0
        then R.Project
-       else +(+R.Alias)));
-   
-   function Notes (R : Release) return Description_String is (R.Notes);
-   
-   function Depends (R : Release) return Conditional.Dependencies is (R.Dependencies); 
-   
+       else +(+R.Alias));
+
+   function Notes (R : Release) return Description_String
+   is (R.Notes);
+
+   function Depends (R : Release) return Conditional.Dependencies
+   is (R.Dependencies);
+
    function Depends (R : Release;
                      P : Alire.Properties.Vector)
-                     return Conditional.Dependencies is 
-     (R.Dependencies.Evaluate (P));
-   
-   function Forbids (R : Release; 
+                     return Conditional.Dependencies
+   is (R.Dependencies.Evaluate (P));
+
+   function Forbids (R : Release;
                      P : Alire.Properties.Vector)
-                     return Conditional.Dependencies is
-      (R.Forbidden.Evaluate (P));
-   
-   function Properties (R : Release) return Conditional.Properties is
-     (R.Properties);
-   
-   function Private_Properties (R : Release) return Conditional.Properties is
-     (R.Priv_Props);
-   
-   function Origin  (R : Release) return Origins.Origin is (R.Origin);
-   function Available (R : Release) return Requisites.Tree is (R.Available);
+                     return Conditional.Dependencies
+   is (R.Forbidden.Evaluate (P));
 
-   function Milestone (R : Release) return Milestones.Milestone is
-      (Milestones.New_Milestone (R.Project, R.Version));
+   function Properties (R : Release) return Conditional.Properties
+   is (R.Properties);
 
-   function Default_Executable (R : Release) return String is
-      (Utils.Replace (+R.Project, ":", "_") & OS_Lib.Exe_Suffix);
-   
-   function License (R : Release) return Alire.Properties.Vector is
-      (Enumerate (R.Properties).Filter (Alire.Properties.Licenses.Values.Property'Tag));
-   
+   function Private_Properties (R : Release) return Conditional.Properties
+   is (R.Priv_Props);
+
+   function Origin  (R : Release) return Origins.Origin
+   is (R.Origin);
+
+   function Available (R : Release) return Requisites.Tree
+   is (R.Available);
+
+   function Milestone (R : Release) return Milestones.Milestone
+   is (Milestones.New_Milestone (R.Project, R.Version));
+
+   function Default_Executable (R : Release) return String
+   is (Utils.Replace (+R.Project, ":", "_") & OS_Lib.Exe_Suffix);
+
+   function License (R : Release) return Alire.Properties.Vector
+   is (Enumerate (R.Properties).Filter
+       (Alire.Properties.Licenses.Values.Property'Tag));
+
    use all type Origins.Kinds;
-   function Unique_Folder (R : Release) return Folder_String is
-     (Utils.Head (+R.Project, Extension_Separator) & "_" &
-      Image (R.Version) & "_" &
-      (case R.Origin.Kind is
-          when Filesystem     => "filesystem",
-          when Native         => "native",
-          when Source_Archive => "archive",
-          when Git | Hg       =>
-            (if R.Origin.Commit'Length <= 8
-             then R.Origin.Commit
-             else R.Origin.Commit (R.Origin.Commit'First .. R.Origin.Commit'First + 7)),
-          when SVN            => R.Origin.Commit));
-   
-   function On_Platform_Actions (R : Release; P : Alire.Properties.Vector) return Alire.Properties.Vector is
-     (R.On_Platform_Properties (P, Actions.Action'Tag));
-   
-   function Satisfies (R : Release; Dep : Alire.Dependencies.Dependency) return Boolean is
-     (R.Project = Dep.Project and then
-      Satisfies (R.Version, Dep.Versions));
+   function Unique_Folder (R : Release) return Folder_String
+   is (Utils.Head (+R.Project, Extension_Separator) & "_" &
+         Image (R.Version) & "_" &
+       (case R.Origin.Kind is
+           when Filesystem     => "filesystem",
+           when Native         => "native",
+           when Source_Archive => "archive",
+           when Git | Hg       => (if R.Origin.Commit'Length <= 8
+                                   then R.Origin.Commit
+                                   else R.Origin.Commit
+                                     (R.Origin.Commit'First ..
+                                        R.Origin.Commit'First + 7)),
+           when SVN            => R.Origin.Commit));
 
-   function Version_Image (R : Release) return String is
-     (Semantic_Versioning.Image (R.Version));   
-   
+   function On_Platform_Actions (R : Release;
+                                 P : Alire.Properties.Vector)
+                                 return Alire.Properties.Vector
+   is (R.On_Platform_Properties (P, Actions.Action'Tag));
+
+   function Satisfies (R   : Release;
+                       Dep : Alire.Dependencies.Dependency)
+                       return Boolean
+   is (R.Project = Dep.Project and then Satisfies (R.Version, Dep.Versions));
+
+   function Version_Image (R : Release) return String
+   is (Semantic_Versioning.Image (R.Version));
+
 end Alire.Releases;

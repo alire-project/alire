@@ -24,13 +24,18 @@ package body Alr.Commands.Compile is
 
       procedure Add_Paths is
          Sol : constant Query.Solution :=
-                 Query.Resolve (Root.Current.Release.Dependencies (Platform.Properties),
-                                Query_Policy);
+           Query.Resolve (Root.Current.Release.Dependencies
+                            (Platform.Properties),
+                          Query_Policy);
       begin
          if Sol.Valid then
             for R of Sol.Releases loop
-               for Path of R.Labeled_Properties (Platform.Properties, Alire.Properties.Labeled.Path) loop
-                  OS_Lib.Setenv ("PATH", Path & GNAT.OS_Lib.Path_Separator & OS_Lib.Getenv ("PATH"));
+               for Path of R.Labeled_Properties
+                 (Platform.Properties, Alire.Properties.Labeled.Path)
+               loop
+                  OS_Lib.Setenv ("PATH",
+                                 Path & GNAT.OS_Lib.Path_Separator &
+                                   OS_Lib.Getenv ("PATH"));
                end loop;
             end loop;
          else
@@ -44,10 +49,15 @@ package body Alr.Commands.Compile is
 
       --  COMPILATION
       begin
-         --  TODO: this is a costly operation that requires solving dependencies
-         --  Perhaps it will be necessary in the future to cache these in the session file
+         --  TODO: this is a costly operation that requires solving
+         --  dependencies.
+
+         --  Perhaps it will be necessary in the future to cache these in the
+         --  session file.
          --  Alternatively, with gprinstall, paths might become obsolete
-         if not Root.Current.Release.Dependencies (Platform.Properties).Is_Empty then
+         if not Root.Current.Release.Dependencies
+           (Platform.Properties).Is_Empty
+         then
             Requires_Full_Index;
             Add_Paths;
          end if;
@@ -56,16 +66,19 @@ package body Alr.Commands.Compile is
                          Extra_Args    => Scenario.As_Command_Line);
       exception
          when others =>
-            Trace.Warning ("alr detected a compilation failure, re-run with -v or -d for details");
+            Trace.Warning ("alr detected a compilation failure, " &
+                             "re-run with -v or -d for details");
             raise;
       end;
 
       --  POST-COMPILE ACTIONS
-         begin
-         Actions.Execute_Actions (Root.Current.Release, Alire.Actions.Post_Compile);
+      begin
+         Actions.Execute_Actions
+           (Root.Current.Release, Alire.Actions.Post_Compile);
       exception
          when others =>
-            Trace.Warning ("A post-compile action failed, re-run with -v or -d for details");
+            Trace.Warning ("A post-compile action failed, " &
+                             "re-run with -v or -d for details");
             raise;
       end;
 

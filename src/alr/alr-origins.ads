@@ -29,7 +29,8 @@ package Alr.Origins is
    type Origin is tagged private;
    --  This should be abstract but I'm hitting many funny things
 
-   function New_Origin (From : Alire.Origins.Origin) return Origin'Class; -- factory
+   function New_Origin (From : Alire.Origins.Origin) return Origin'Class;
+   --  factory
 
    function Already_Installed (This : Origin) return Boolean is (False)
      with Pre'Class => This.Is_Native;
@@ -54,8 +55,8 @@ package Alr.Origins is
    --  This is critical since some packages may request the installation of
    --  the platform GNAT, which in turn could trigger the removal of another
    --  platform-packaged-but-not-default compiler.
-   --  E.g., in current ubuntu, gnat depends on gnat-7. If you are using gnat-8,
-   --  any package depending on gnat would remove gnat-8
+   --  E.g., in current ubuntu, gnat depends on gnat-7. If you are using
+   --  gnat - 8, any package depending on gnat would remove gnat-8
 
    function Is_Native (This : Origin) return Boolean;
 

@@ -21,8 +21,9 @@ package body Alr.Commands.Pin is
 
       declare
          Sol : constant Query.Solution :=
-                  Query.Resolve (Root.Current.Release.Dependencies (Platform.Properties),
-                                 Query_Policy);
+           Query.Resolve (Root.Current.Release.Dependencies
+                            (Platform.Properties),
+                          Query_Policy);
       begin
          if Sol.Valid then
             Templates.Generate_Prj_Alr

@@ -5,11 +5,12 @@ with Alire.Releases;
 
 package Alire.Roots with Preelaborate is
 
-   --  Type used to encapsulate the information about the working context
+   --  Type used to encapsulate the information about the working context.
    --  Currently, this can either be:
-   --    Nothing, when we are outside of a valid alire project folder
-   --    A release, when we are inside a descendent folder of a valid alire project
-   --  A valid alire project is one containing an alire/project.toml file
+   --   - Nothing, when we are outside of a valid alire project folder
+   --   - A release, when we are inside a descendent folder of a valid alire
+   --     project
+   --  A valid alire project is one containing an alire/project.toml file.
 
    type Root (<>) is tagged private;
 
@@ -24,7 +25,9 @@ package Alire.Roots with Preelaborate is
 
    function With_Reason (This : Root; Reason : String) return Root with
      Pre  => not This.Is_Valid,
-     Post => not This.Is_Valid and then With_Reason'Result.Invalid_Reason = Reason;
+     Post => not This.Is_Valid
+               and then
+             With_Reason'Result.Invalid_Reason = Reason;
 
    function Invalid_Reason (This : Root) return String with
      Pre => not This.Is_Valid;
@@ -51,7 +54,7 @@ package Alire.Roots with Preelaborate is
    function Release (This : Root) return Releases.Release with
      Pre => This.Is_Valid;
 
-   -- files and folders derived from the root path (this obsoletes Alr.Paths)
+   --  files and folders derived from the root path (this obsoletes Alr.Paths)
 
    function Working_Folder (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
@@ -70,10 +73,10 @@ private
    type Root (Valid : Boolean) is tagged record
       case Valid is
          when True =>
-            Path    : Ustring;
+            Path    : UString;
             Release : Containers.Release_H;
          when False =>
-            Reason  : Ustring;
+            Reason  : UString;
       end case;
    end record;
 

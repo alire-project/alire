@@ -6,8 +6,9 @@ package body Alire.Index is
 
    use all type Version;
 
-   package Name_Entry_Maps is new Ada.Containers.Indefinite_Ordered_Maps (Alire.Project,
-                                                                          Catalog_Entry);
+   package Name_Entry_Maps
+   is new Ada.Containers.Indefinite_Ordered_Maps (Alire.Project,
+                                                  Catalog_Entry);
 
    Master_Entries : Name_Entry_Maps.Map;
 
@@ -16,18 +17,25 @@ package body Alire.Index is
       Identifier   : String (1 .. Id_Len);
    end record;
 
+   function Identify (Enclosing : String) return Reflected_Info;
+
    --------------
    -- Identify --
    --------------
 
    function Identify (Enclosing : String) return Reflected_Info is
       use Utils;
-      Identifier : constant String := -- Portion after last dot
-                     Split (Enclosing, '.', Side => Tail, From => Tail);
-      Full_Name  : constant String := -- Portion after Alire.Index.
-                     Split (Enclosing, '.', Side => Tail, From => Head, Count => 2);
-      Pack_Name  : constant String := -- Portion between Alire.Index. and .Identifier
-                     Split (Full_Name, '.', Side => Head, From => Tail);
+      Identifier : constant String :=
+        Split (Enclosing, '.', Side => Tail, From => Tail);
+      --  Portion after last dot
+
+      Full_Name  : constant String :=
+        Split (Enclosing, '.', Side => Tail, From => Head, Count => 2);
+      --  Portion after Alire.Index.
+
+      Pack_Name  : constant String :=
+        Split (Full_Name, '.', Side => Head, From => Tail);
+      --  Portion between Alire.Index. and .Identifier
    begin
       return (Pack_Name'Length, Identifier'Length, Pack_Name, Identifier);
    end Identify;
@@ -85,7 +93,8 @@ package body Alire.Index is
          do
             Master_Entries.Insert (C.Project, C);
             Projects.Descriptions.Include (C.Project, Description);
-            --  This description may be already present from the session project file
+            --  This description may be already present from the session
+            --  project file.
          end return;
       end if;
    end Manually_Catalogued_Project;
@@ -102,7 +111,8 @@ package body Alire.Index is
          end if;
       end loop;
 
-      raise Program_Error with "Catalog entry without releases: " & (+C.Project);
+      raise Program_Error
+        with "Catalog entry without releases: " & (+C.Project);
    end Current;
 
    ---------
@@ -149,7 +159,9 @@ package body Alire.Index is
          end if;
       end loop;
 
-      raise Constraint_Error with "Not in index: " & (+Project) & "=" & Semantic_Versioning.Image (Version);
+      raise Constraint_Error
+        with "Not in index: " & (+Project) & "=" &
+        Semantic_Versioning.Image (Version);
    end Find;
 
    -------------------
@@ -159,7 +171,8 @@ package body Alire.Index is
    function Register_Real (R : Release) return Release is
    begin
       if Catalog.Contains (R) then
-         Trace.Debug ("Not registering release already indexed: " & R.Milestone.Image);
+         Trace.Debug ("Not registering release already indexed: " &
+                        R.Milestone.Image);
       else
          Catalog.Insert (R);
       end if;
@@ -171,19 +184,20 @@ package body Alire.Index is
    -- Register --
    --------------
 
-   function Register (--  Mandatory
+   function Register
+     ( --  Mandatory
                       This               : Catalog_Entry;
-                      Version            : Semantic_Versioning.Version;
-                      Origin             : Origins.Origin;
-                      -- we force naming beyond this point with this ugly guard:
-                      XXXXXXXXXXXXXX     : Utils.XXX_XXX         := Utils.XXX_XXX_XXX;
-                      --  Optional
-                      Notes              : Description_String    := "";
-                      Dependencies       : Release_Dependencies  := No_Dependencies;
-                      Properties         : Release_Properties    := No_Properties;
-                      Private_Properties : Release_Properties    := No_Properties;
-                      Available_When     : Release_Requisites    := No_Requisites)
-                      return Release
+       Version            : Semantic_Versioning.Version;
+       Origin             : Origins.Origin;
+       -- we force naming beyond this point with this ugly guard:
+       XXXXXXXXXXXXXX     : Utils.XXX_XXX         := Utils.XXX_XXX_XXX;
+       --  Optional
+       Notes              : Description_String    := "";
+       Dependencies       : Release_Dependencies  := No_Dependencies;
+       Properties         : Release_Properties    := No_Properties;
+       Private_Properties : Release_Properties    := No_Properties;
+       Available_When     : Release_Requisites    := No_Requisites)
+      return Release
    is
       pragma Unreferenced (XXXXXXXXXXXXXX);
    begin
@@ -216,15 +230,16 @@ package body Alire.Index is
    -- Unreleased --
    ----------------
 
-   function Unreleased (This               : Catalog_Entry;
-                        Version            : Semantic_Versioning.Version := No_Version;
-                        Origin             : Origins.Origin        := No_Origin;
-                        Notes              : Description_String    := "";
-                        Dependencies       : Release_Dependencies  := No_Dependencies;
-                        Properties         : Release_Properties    := No_Properties;
-                        Private_Properties : Release_Properties    := No_Properties;
-                        Available_When     : Release_Requisites    := No_Requisites)
-                    return Release
+   function Unreleased
+     (This               : Catalog_Entry;
+      Version            : Semantic_Versioning.Version := No_Version;
+      Origin             : Origins.Origin        := No_Origin;
+      Notes              : Description_String    := "";
+      Dependencies       : Release_Dependencies  := No_Dependencies;
+      Properties         : Release_Properties    := No_Properties;
+      Private_Properties : Release_Properties    := No_Properties;
+      Available_When     : Release_Requisites    := No_Requisites)
+      return Release
    is
    begin
       return
@@ -245,11 +260,11 @@ package body Alire.Index is
    package body Project_Release is
 
       The_Release : constant Index.Release :=
-                      Project.Register			--  Add to catalog
-                        (Base.Retagging                 --  Overriding the version
-                           (Versions.From_Identifier    --  with the one in the
-                              (Identify			--  package name
-                                 (GNAT.Source_Info.Enclosing_Entity).Identifier)));
+        Project.Register                  --  Add to catalog
+          (Base.Retagging                 --  Overriding the version
+             (Versions.From_Identifier    --  with the one in the
+                (Identify                 --  package name
+                     (GNAT.Source_Info.Enclosing_Entity).Identifier)));
 
       -------------
       -- Release --

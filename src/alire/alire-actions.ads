@@ -11,10 +11,11 @@ package Alire.Actions with Preelaborate is
                     Post_Compile  -- After being compiled as the main project
                    );
 
-   --  It's probable that there'll be a need to pre-compile every dependency after being downloaded,
-   --  and then we will have the possibility of having another moment post THAT compilation
-   --  But that compilation may depend on configuration set by the main project... -_-'
-   --  We'll cross that bridge once it proves necessary
+   --  It's probable that there'll be a need to pre-compile every dependency
+   --  after being downloaded, and then we will have the possibility of having
+   --  another moment post THAT compilation. But that compilation may depend on
+   --  configuration set by the main project... -_-'. We'll cross that bridge
+   --  once it proves necessary.
 
    type Action (<>) is abstract new Properties.Property with private;
 
@@ -22,7 +23,8 @@ package Alire.Actions with Preelaborate is
 
    function Moment (This : Action) return Moments;
 
-   procedure Execute (This : Action; Implementer : access procedure (This : Action'Class));
+   procedure Execute (This : Action;
+                      Implementer : access procedure (This : Action'Class));
 
 
    type Run (<>) is new Action with private;
@@ -30,7 +32,8 @@ package Alire.Actions with Preelaborate is
 
    function New_Run (Moment                : Moments;
                      Relative_Command_Line : Platform_Independent_Path;
-                     Working_Folder        : Platform_Independent_Path) return Run;
+                     Working_Folder        : Platform_Independent_Path)
+                     return Run;
    --  Working folder will be entered for execution
    --  Relative command-line must consider being in working folder
 
@@ -41,11 +44,13 @@ package Alire.Actions with Preelaborate is
 
 private
 
-   type Action (Moment : Moments) is abstract new Properties.Property with null record;
+   type Action (Moment : Moments)
+   is abstract new Properties.Property with null record;
 
    function Moment (This : Action) return Moments is (This.Moment);
 
-   type Run (Moment : Moments; Cmd_Len, Folder_Len : Natural) is new Action (Moment) with record
+   type Run (Moment : Moments; Cmd_Len, Folder_Len : Natural)
+   is new Action (Moment) with record
       Relative_Command_Line : Platform_Independent_Path (1 .. Cmd_Len);
       Working_Folder        : Platform_Independent_Path (1 .. Folder_Len);
    end record;
@@ -57,15 +62,19 @@ private
 
    function New_Run (Moment                : Moments;
                      Relative_Command_Line : Platform_Independent_Path;
-                     Working_Folder        : Platform_Independent_Path) return Run is
+                     Working_Folder        : Platform_Independent_Path)
+                     return Run
+   is
      (Moment,
       Relative_Command_Line'Length,
       Working_Folder'Length,
       Utils.To_Native (Relative_Command_Line),
       Utils.To_Native (Working_Folder));
 
-   function Command_Line (This : Run) return String is (This.Relative_Command_Line);
+   function Command_Line (This : Run) return String
+   is (This.Relative_Command_Line);
 
-   function Working_Folder (This : Run) return String is (This.Working_Folder);
+   function Working_Folder (This : Run) return String
+   is (This.Working_Folder);
 
 end Alire.Actions;

@@ -22,14 +22,17 @@ package body Alr.Bootstrap is
    procedure Check_Ada_Tools is
       --  FIXME mini-leak (once per run)
    begin
-      if not OS_Lib.Exists_In_Path ("gprbuild") or else
-        not OS_Lib.Exists_In_Path ("gnatmake") then
+      if not OS_Lib.Exists_In_Path ("gprbuild")
+        or else
+         not OS_Lib.Exists_In_Path ("gnatmake")
+      then
          Trace.Error ("Ada tools not detected, alr cannot proceed");
          OS_Lib.Bailout (1);
       end if;
 
       if not OS_Lib.Exists_In_Path ("git") then
-         Trace.Warning ("git is not detected, alr will fail on most operations");
+         Trace.Warning
+           ("git is not detected, alr will fail on most operations");
       end if;
    end Check_Ada_Tools;
 
@@ -38,7 +41,8 @@ package body Alr.Bootstrap is
    --------------------------
 
    procedure Checkout_Alr_Sources (To_Path : String) is
-      Parent : constant String := Ada.Directories.Containing_Directory (To_Path);
+      Parent : constant String :=
+        Ada.Directories.Containing_Directory (To_Path);
    begin
       if not OS_Lib.Is_Folder (Parent) then
          Ada.Directories.Create_Path (Parent);
@@ -87,11 +91,13 @@ package body Alr.Bootstrap is
    function Status_Line return String is
       use Ada.Calendar;
       type Milliseconds is delta 0.001 range 0.0 .. 24.0 * 60.0 * 60.0;
+      Elapsed : constant Duration :=
+        Ada.Calendar.Clock - Alire_Early_Elaboration.Start;
    begin
       return
         "(" & Session_State'Img & ") (" &
         Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
-        (" (loaded in" & Milliseconds'Image (Milliseconds (Ada.Calendar.Clock - Alire_Early_Elaboration.Start)) & "s)");
+        (" (loaded in" & Milliseconds'Image (Milliseconds (Elapsed)) & "s)");
    end Status_Line;
 
 begin

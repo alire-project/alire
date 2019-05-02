@@ -2,16 +2,21 @@ package Alr.Commands.Dev is
 
    type Command is new Commands.Command with private;
 
-   overriding procedure Execute (Cmd : in out Command);
+   overriding
+   procedure Execute (Cmd : in out Command);
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
-   overriding function Short_Description (Cmd : Command) return String is
-      ("Developer helpers");
+   overriding
+   function Short_Description (Cmd : Command) return String
+   is ("Developer helpers");
 
-   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("");
+   overriding
+   function Usage_Custom_Parameters (Cmd : Command) return String
+   is ("");
 
 private
 

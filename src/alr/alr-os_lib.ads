@@ -29,8 +29,9 @@ package Alr.OS_Lib is
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
                    Force_Quiet         : Boolean := False) return Integer;
-   --  If Understands, an extra -v will be passed on Debug log levels
-   --  If Force_Quiet and not in Debug level, output will be entirely muted (stdout & stderr)
+   --  If Understands, an extra -v will be passed on Debug log levels.
+   --  If Force_Quiet and not in Debug level, output will be entirely muted
+   --  (stdout & stderr).
 
    procedure Spawn (Command             : String;
                     Arguments           : String := "";
@@ -39,8 +40,9 @@ package Alr.OS_Lib is
    --  Raises CHILD_FAILED if exit code /= 0
 
    procedure Spawn_Raw (Command : String; Arguments : String := "");
-   --  Direct launch, without any shenanigangs on output, for example for respawning the canonical version
-   --  Raises CHILD_FAILED if exit code /= 0
+   --  Direct launch, without any shenanigangs on output, for example for
+   --  respawning the canonical version.
+   --  Raises CHILD_FAILED if exit code /= 0.
 
    procedure Spawn_And_Capture (Output     : in out Utils.String_Vector;
                                 Command    : String;
@@ -66,7 +68,8 @@ package Alr.OS_Lib is
 
    --  GENERAL COMMAND LINE
 
-   function Current_Folder return String renames Ada.Directories.Current_Directory;
+   function Current_Folder return String
+   renames Ada.Directories.Current_Directory;
 
    function Current_Command_Line return String;
 
@@ -93,9 +96,14 @@ package Alr.OS_Lib is
 
    --  FILE / FOLDER MANAGEMENT
 
-   function Is_Executable_File (Path : String) return Boolean renames GNAT.OS_Lib.Is_Executable_File;
-   function Is_Regular_File    (Path : String) return Boolean renames GNAT.OS_Lib.Is_Regular_File;
-   function Is_Folder (Path : Alire.Platform_Independent_Path) return Boolean renames GNAT.OS_Lib.Is_Directory;
+   function Is_Executable_File (Path : String) return Boolean
+   renames GNAT.OS_Lib.Is_Executable_File;
+
+   function Is_Regular_File    (Path : String) return Boolean
+   renames GNAT.OS_Lib.Is_Regular_File;
+
+   function Is_Folder (Path : Alire.Platform_Independent_Path) return Boolean
+   renames GNAT.OS_Lib.Is_Directory;
 
    procedure Traverse_Folder (Folder  : String;
                               Doing   : access procedure

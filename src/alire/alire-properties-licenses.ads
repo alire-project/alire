@@ -7,7 +7,8 @@ package Alire.Properties.Licenses with Preelaborate is
 
    function Image (L : Licensing.Licenses) return String;
 
-   function Key (Dummy_L : Licensing.Licenses) return String is (TOML_Keys.License);
+   function Key (Dummy_L : Licensing.Licenses) return String
+   is (TOML_Keys.License);
 
    function To_TOML (L : Licensing.Licenses) return TOML.TOML_Value;
 

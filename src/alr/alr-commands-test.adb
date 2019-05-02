@@ -273,7 +273,7 @@ package body Alr.Commands.Test is
       elsif Cmd.Redo then
          Trace.Detail ("Redoing tests");
       else
-         Os_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
+         OS_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
       Interactive.Not_Interactive := True;
@@ -283,7 +283,7 @@ package body Alr.Commands.Test is
          if Cmd.Full then
             if Cmd.Last then
                Trace.Detail ("Testing newest release of every project");
-               else
+            else
                Trace.Detail ("Testing all releases");
             end if;
          else
@@ -315,7 +315,7 @@ package body Alr.Commands.Test is
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is
-      use Gnat.Command_Line;
+      use GNAT.Command_Line;
    begin
       Define_Switch (Config,
                      Cmd.Cont'Access,

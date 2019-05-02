@@ -11,10 +11,14 @@ package body Alr.Origins.Apt is
    function Already_Installed (This : Origin) return Boolean is
       Output : Utils.String_Vector;
    begin
-      OS_Lib.Spawn_And_Capture (Output, "apt-cache", "policy " &
-                                  This.Base.Package_Name (Platform.Distribution));
+      OS_Lib.Spawn_And_Capture
+        (Output, "apt-cache", "policy " &
+           This.Base.Package_Name (Platform.Distribution));
       for Line of Output loop
-         if Utils.Contains (Line, "Installed") and then not Utils.Contains (Line, "none") then
+         if Utils.Contains (Line, "Installed")
+           and then
+            not Utils.Contains (Line, "none")
+         then
             return True;
          end if;
       end loop;
@@ -30,11 +34,14 @@ package body Alr.Origins.Apt is
       Output : Utils.String_Vector;
       use Utils;
    begin
-      OS_Lib.Spawn_And_Capture (Output, "apt-cache", "-q policy " &
-                                  This.Base.Package_Name (Platform.Distribution));
+      OS_Lib.Spawn_And_Capture
+        (Output, "apt-cache", "-q policy " &
+           This.Base.Package_Name (Platform.Distribution));
       for Line of Output loop
-         if Contains (To_Lower_Case (Line), "candidate:") and then
-           not Contains (To_Lower_Case (Line), "none") then
+         if Contains (To_Lower_Case (Line), "candidate:")
+           and then
+            not Contains (To_Lower_Case (Line), "none")
+         then
             return True;
          end if;
       end loop;
@@ -56,11 +63,14 @@ package body Alr.Origins.Apt is
    -------------
 
    overriding procedure Install (This : Origin) is
-      Cmd : constant String := (if Platform.Am_I_Root then "apt-get" else "sudo");
-      Sub : constant String := (if Platform.Am_I_Root then "" else "apt-get ");
+      Cmd : constant String :=
+        (if Platform.Am_I_Root then "apt-get" else "sudo");
+
+      Sub : constant String :=
+        (if Platform.Am_I_Root then "" else "apt-get ");
    begin
       OS_Lib.Spawn_Raw (Cmd, Sub & "install --no-remove -q -q -y " &
-                                This.Base.Package_Name (Platform.Distribution));
+                          This.Base.Package_Name (Platform.Distribution));
    end Install;
 
    --------------------
@@ -73,8 +83,10 @@ package body Alr.Origins.Apt is
    begin
       OS_Lib.Spawn_And_Capture (Output, "apt-cache", "-q policy " & Name);
       for Line of Output loop
-         if Contains (To_Lower_Case (Line), "candidate:") and then
-           not Contains (To_Lower_Case (Line), "none") then
+         if Contains (To_Lower_Case (Line), "candidate:")
+           and then
+            not Contains (To_Lower_Case (Line), "none")
+         then
             return Trim (Tail (Line, ':'));
          end if;
       end loop;

@@ -16,7 +16,8 @@ package Alire.Dependencies with Preelaborate is
      Interfaces.Tomifiable with private;
 
    function New_Dependency (Project  : Alire.Project;
-                            Versions : Semantic_Versioning.Version_Set) return Dependency;
+                            Versions : Semantic_Versioning.Version_Set)
+                            return Dependency;
 
    function Project (Dep : Dependency) return Names;
 
@@ -34,7 +35,7 @@ package Alire.Dependencies with Preelaborate is
 
 private
 
-   type Dependency (Name_Len : Natural) is New
+   type Dependency (Name_Len : Natural) is new
      Interfaces.Classificable and
      Interfaces.Tomifiable with
    record
@@ -43,13 +44,14 @@ private
    end record;
 
    function New_Dependency (Project  : Alire.Project;
-                            Versions : Semantic_Versioning.Version_Set) return Dependency
+                            Versions : Semantic_Versioning.Version_Set)
+                            return Dependency
    is (Project'Length, Project, Versions);
 
    function Project (Dep : Dependency) return Names is (Dep.Project);
 
-   function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set is
-     (Dep.Versions);
+   function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set
+   is (Dep.Versions);
 
    function Image (Dep : Dependency) return String is
      (if Dep = Unavailable
@@ -60,7 +62,9 @@ private
 
    overriding function Key (Dep : Dependency) return String is (+Dep.Project);
 
-   function Unavailable return Dependency is
-     (New_Dependency ("alire", Semantic_Versioning.Exactly (Semantic_Versioning.V ("0"))));
+   function Unavailable return Dependency
+   is (New_Dependency ("alire",
+                       Semantic_Versioning.Exactly
+                         (Semantic_Versioning.V ("0"))));
 
 end Alire.Dependencies;

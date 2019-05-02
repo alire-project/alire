@@ -43,7 +43,7 @@ package body Alr.Commands.Init is
       declare
          Guard : Folder_Guard (
                    (if Cmd.In_Place
-                    then Os_Lib.Stay_In_Current_Folder
+                    then OS_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name))) with Unreferenced;
          Root : constant Alire.Roots.Root := Alire.Roots.New_Root (+Name, Alire.Directories.Current);
       begin

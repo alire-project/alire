@@ -4,6 +4,13 @@ with GNAT.IO;
 
 package body Alire.Boolean_Trees is
 
+   function Merge_Under (N    : Node;
+                         L, R : Tree := Empty_Tree)
+                         return Tree;
+
+   function Image_Recursive (C        : Trees.Cursor;
+                             Skeleton : Boolean)
+                             return String;
    ----------
    -- Leaf --
    ----------
@@ -19,7 +26,10 @@ package body Alire.Boolean_Trees is
    -- Merge_Under --
    -----------------
 
-   function Merge_Under (N : Node; L, R : Tree := Empty_Tree) return Tree is
+   function Merge_Under (N    : Node;
+                         L, R : Tree := Empty_Tree)
+                         return Tree
+   is
       use Trees;
    begin
       return T : Tree do
@@ -92,7 +102,17 @@ package body Alire.Boolean_Trees is
    -- Check --
    -----------
 
-   function Check (T : Tree; V : Value; If_Empty : Boolean := True) return Boolean is
+   function Check (T        : Tree;
+                   V        : Value;
+                   If_Empty : Boolean := True)
+                   return Boolean
+   is
+
+      function Check (C : Trees.Cursor) return Boolean;
+
+      -----------
+      -- Check --
+      -----------
 
       function Check (C : Trees.Cursor) return Boolean is
          N : constant Node := Trees.Element (C);
@@ -101,9 +121,13 @@ package body Alire.Boolean_Trees is
             when Leaf =>
                return Check (N.Condition.Element, V);
             when And_Node =>
-               return Check (Trees.First_Child (C)) and then Check (Trees.Last_Child (C));
+               return Check (Trees.First_Child (C))
+                        and then
+                      Check (Trees.Last_Child (C));
             when Or_Node =>
-               return Check (Trees.First_Child (C)) or else Check (Trees.Last_Child (C));
+               return Check (Trees.First_Child (C))
+                        or else
+                      Check (Trees.Last_Child (C));
             when Not_Node =>
                return not Check (Trees.First_Child (C));
          end case;
@@ -121,7 +145,10 @@ package body Alire.Boolean_Trees is
    -- Image_Recursive --
    ---------------------
 
-   function Image_Recursive (C : Trees.Cursor; Skeleton : Boolean) return String is
+   function Image_Recursive (C        : Trees.Cursor;
+                             Skeleton : Boolean)
+                             return String
+   is
       N : constant Node := Trees.Element (C);
    begin
       case N.Kind is
@@ -132,13 +159,16 @@ package body Alire.Boolean_Trees is
                return Image (N.Condition.Constant_Reference);
             end if;
          when And_Node =>
-            return "(" & Image_Recursive (Trees.First_Child (C), Skeleton) & " and " &
-                         Image_Recursive (Trees.Last_Child (C), Skeleton) & ")";
+            return "(" & Image_Recursive (Trees.First_Child (C), Skeleton) &
+              " and " &
+              Image_Recursive (Trees.Last_Child (C), Skeleton) & ")";
          when Or_Node =>
-            return "(" & Image_Recursive (Trees.First_Child (C), Skeleton) & " or " &
-                         Image_Recursive (Trees.Last_Child (C), Skeleton) & ")";
+            return "(" & Image_Recursive (Trees.First_Child (C), Skeleton) &
+              " or " &
+              Image_Recursive (Trees.Last_Child (C), Skeleton) & ")";
          when Not_Node =>
-            return "(not " & Image_Recursive (Trees.First_Child (C), Skeleton) & ")";
+            return "(not " &
+              Image_Recursive (Trees.First_Child (C), Skeleton) & ")";
       end case;
    end Image_Recursive;
 
@@ -151,7 +181,8 @@ package body Alire.Boolean_Trees is
       if T.Is_Empty then
          return "(empty tree)";
       else
-         return Image_Recursive (Trees.First_Child (T.Root), Skeleton => False);
+         return Image_Recursive
+           (Trees.First_Child (T.Root), Skeleton => False);
       end if;
    end Image;
 

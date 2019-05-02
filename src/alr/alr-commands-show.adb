@@ -73,7 +73,7 @@ package body Alr.Commands.Show is
             declare
                Needed  : Query.Solution :=
                            Query.Resolve (Rel.This_Version, Query_Policy);
-               begin
+            begin
                if Needed.Valid then
                   if Needed.Releases.Contains (Rel.Project) then
                      Needed.Releases.Delete (Rel.Project);
@@ -122,7 +122,7 @@ package body Alr.Commands.Show is
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      -- asking for info, we could return the current project
+      --  asking for info, we could return the current project
       --  We have internal data, but is it valid?
       if Num_Arguments = 0 and then Bootstrap.Session_State = Outside then
          Reportaise_Wrong_Arguments ("Cannot proceed with a project name");

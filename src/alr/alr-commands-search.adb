@@ -36,9 +36,9 @@ package body Alr.Commands.Search is
          if (Cmd.Prop.all = "" or else
              R.Property_Contains (Cmd.Prop.all) or else
              Utils.Contains (R.Notes, Cmd.Prop.all) or else
-             Utils.Contains (Alire.Projects.Descriptions (R.Project), Cmd.Prop.All))
+             Utils.Contains (Alire.Projects.Descriptions (R.Project), Cmd.Prop.all))
            and then
-             (Cmd.Native or Else
+             (Cmd.Native or else
               not R.Origin.Is_Native)
          then
             Found := Found + 1;
@@ -60,7 +60,7 @@ package body Alr.Commands.Search is
       use Alire.Containers.Release_Sets;
    begin
       if Num_Arguments = 0 and then not Cmd.List and then Cmd.Prop.all = "" then
-         -- no search term, nor --list, nor --prop
+         --  no search term, nor --list, nor --prop
          Trace.Error ("Please provide a search term, --property, or use --list to show all available releases");
          raise Wrong_Command_Arguments;
       end if;

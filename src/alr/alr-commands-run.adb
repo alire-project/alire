@@ -112,7 +112,7 @@ package body Alr.Commands.Run is
                                                   else Root.Current.Release.Default_Executable));
 
             Target : constant String :=
-                       (if Alire.OS_Lib.Exe_Suffix /= "" and Then
+                       (if Alire.OS_Lib.Exe_Suffix /= "" and then
                                    not Utils.Contains (Proto_Target, Alire.OS_Lib.Exe_Suffix)
                         then Proto_Target & Alire.OS_Lib.Exe_Suffix
                         else Proto_Target);

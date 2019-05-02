@@ -33,7 +33,9 @@ package body Alr.Platforms.Linux is
    Cached_Distro : Alire.Platforms.Distributions;
    Distro_Cached : Boolean := False;
 
-   function Distribution (This : Linux_Variant) return Alire.Platforms.Distributions is
+   function Distribution (This : Linux_Variant)
+                          return Alire.Platforms.Distributions
+   is
       pragma Unreferenced (This);
    begin
       if Distro_Cached then
@@ -46,7 +48,8 @@ package body Alr.Platforms.Linux is
             OS_Lib.Spawn_And_Capture (Release, "lsb_release", "-is");
             for Known in Alire.Platforms.Distributions'Range loop
                for Line of Release loop
-                  if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line)) then
+                  if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line))
+                  then
                      Cached_Distro := Known;
                      Distro_Cached := True;
                      return Known;
@@ -70,7 +73,9 @@ package body Alr.Platforms.Linux is
    Cached_Version : Alire.Platforms.Versions;
    Version_Cached : Boolean := False;
 
-   function Distro_Version (This : Linux_Variant) return Alire.Platforms.Versions is
+   function Distro_Version (This : Linux_Variant)
+                            return Alire.Platforms.Versions
+   is
       pragma Unreferenced (This);
    begin
       if Version_Cached then
@@ -106,36 +111,39 @@ package body Alr.Platforms.Linux is
 
    function Own_Executable (This : Linux_Variant) return String is
       pragma Unreferenced (This);
-   -- (int buflen, char *buffer, int *len)
+      --   (int buflen, char *buffer, int *len)
       use Interfaces;
-      use type C.Size_T;
+      use type C.size_t;
 
       --------------
       -- Readlink --
       --------------
 
       function Readlink (Path   : C.Strings.chars_ptr;
-                         Buffer : out C.Char_Array;
+                         Buffer : out C.char_array;
                          Buflen :     C.size_t) return C.size_t;
       pragma Import (C, Readlink, "readlink");
 
-      Buffer : aliased C.Char_Array (1 .. 1024);
+      Buffer : aliased C.char_array (1 .. 1024);
       Used   : C.size_t;
 
-      Link : aliased C.Char_Array := C.To_C (Linux_Self_Exec);
+      Link : aliased C.char_array := C.To_C (Linux_Self_Exec);
    begin
       Used := Readlink (C.Strings.To_Chars_Ptr (Link'Unchecked_Access),
                         Buffer,
                         Buffer'Length);
 
-      return C.To_Ada (Buffer (Buffer'First .. Buffer'First + Used - 1), Trim_Nul => False);
+      return C.To_Ada (Buffer (Buffer'First .. Buffer'First + Used - 1),
+                       Trim_Nul => False);
    end Own_Executable;
 
    ---------------------
    -- Package_Version --
    ---------------------
 
-   function Package_Version (This : Linux_Variant; Origin : Alire.Origins.Origin) return String is
-     (Alr.Origins.New_Origin (Origin).Native_Version);
+   function Package_Version (This   : Linux_Variant;
+                             Origin : Alire.Origins.Origin)
+                             return String
+   is (Alr.Origins.New_Origin (Origin).Native_Version);
 
 end Alr.Platforms.Linux;

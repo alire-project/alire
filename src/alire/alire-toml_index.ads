@@ -187,7 +187,12 @@ private
    -- Origin expressions --
    ------------------------
 
-   type Origin_Kind is (Filesystem, Git, Mercurial, SVN, Source_Archive, Native_Package);
+   type Origin_Kind is (Filesystem,
+                        Git,
+                        Mercurial,
+                        SVN,
+                        Source_Archive,
+                        Native_Package);
    subtype VCS_Origin_Kind is Origin_Kind range Git .. SVN;
 
    type Origin_Type (Kind : Origin_Kind := Git) is record

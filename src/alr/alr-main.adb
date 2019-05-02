@@ -17,7 +17,7 @@ begin
    Commands.Execute;
 
    OS_Lib.Bailout (0);
-   --  There's something writing an empty line on finalization and I can't find it
-   --  There's almost nothing controlled so it's puzzling
-   --  For now, this is a temporary workaround
+   --  There's something writing an empty line on finalization and I can't find
+   --  it. There's almost nothing controlled so it's puzzling. For now, this is
+   --  a temporary workaround.
 end Alr.Main;

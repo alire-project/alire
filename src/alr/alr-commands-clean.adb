@@ -16,7 +16,9 @@ package body Alr.Commands.Clean is
          Requires_Project;
 
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " & Root.Current.Build_File & " " & Scenario.As_Command_Line);
+         Spawn.Command ("gprclean", "-r -P " &
+                          Root.Current.Build_File & " " &
+                          Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then

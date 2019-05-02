@@ -7,7 +7,8 @@ package Alire.Milestones with Preelaborate is
    function "<" (L, R : Milestone) return Boolean;
 
    function New_Milestone (Name    : Alire.Project;
-                           Version : Semantic_Versioning.Version) return Milestone;
+                           Version : Semantic_Versioning.Version)
+                           return Milestone;
 
    function Project (M : Milestone) return Alire.Project;
 
@@ -24,16 +25,20 @@ private
 
    use all type Semantic_Versioning.Version;
 
-   function "<" (L, R : Milestone) return Boolean is
-     (L.Name < R.Name or else (L.Name = R.Name and then L.Version < R.Version));
+   function "<" (L, R : Milestone) return Boolean
+   is (L.Name < R.Name
+       or else
+      (L.Name = R.Name and then L.Version < R.Version));
 
    function New_Milestone (Name    : Alire.Project;
-                           Version : Semantic_Versioning.Version) return Milestone is
-     (Name'Length, Name, Version);
+                           Version : Semantic_Versioning.Version)
+                           return Milestone
+     is (Name'Length, Name, Version);
 
    function Project (M : Milestone) return Alire.Project is (M.Name);
 
-   function Version (M : Milestone) return Semantic_Versioning.Version is (M.Version);
+   function Version (M : Milestone) return Semantic_Versioning.Version
+   is (M.Version);
 
    function Image (M : Milestone) return String is
       (+M.Project & "=" & Image (M.Version));

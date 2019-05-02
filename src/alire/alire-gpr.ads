@@ -23,7 +23,8 @@ package Alire.GPR with Preelaborate is
 
    function Enum_Variable (Name   : String;
                            Values : Value_Vector'Class) return Variable;
-   -- Used to represent a Typed enum with its possible values: Name = Value1 | Value2 ...
+   --  Used to represent a Typed enum with its possible values:
+   --  Name = Value1 | Value2 ...
 
    function External_Value (Name : String;
                             Value : String) return Variable;
@@ -32,7 +33,7 @@ package Alire.GPR with Preelaborate is
    function Values (V : Variable) return Value_Vector'Class
      with Pre => V.Kind = Enumeration;
 
-   function External_value (V : Variable) return String
+   function External_Value (V : Variable) return String
      with Pre => V.Kind = External;
 
    function "or" (L, R : Value) return Value_Vector;
@@ -70,27 +71,36 @@ private
 
    function Name (V : Variable) return String is (V.Name);
 
-   function Free_Variable (Name : String) return Variable is (Free_String, Name'Length, Name);
+   function Free_Variable (Name : String) return Variable
+   is (Free_String, Name'Length, Name);
 
    function Enum_Variable (Name   : String;
-                           Values : Value_Vector'Class) return Variable is
-     (Enumeration, Name'Length, Name, Value_Vector (Values));
+                           Values : Value_Vector'Class)
+                           return Variable
+   is (Enumeration, Name'Length, Name, Value_Vector (Values));
 
    function External_Value (Name  : String;
-                            Value : String) return Variable is
-     (External, Name'Length, Name, To_Vector (Value, 1));
+                            Value : String)
+                            return Variable
+   is (External, Name'Length, Name, To_Vector (Value, 1));
 
-   function Values (V : Variable) return Value_Vector'Class is (V.Values);
+   function Values (V : Variable) return Value_Vector'Class
+   is (V.Values);
 
-   function External_Value (V : Variable) return String is (V.Value.First_Element);
+   function External_Value (V : Variable) return String
+   is (V.Value.First_Element);
 
-   function "or" (L, R : Value) return Value_Vector is (L & R);
-   function "or" (L : Value_Vector; R : Value) return Value_Vector is (L & R);
+   function "or" (L, R : Value) return Value_Vector
+   is (L & R);
+   function "or" (L : Value_Vector; R : Value) return Value_Vector
+   is (L & R);
 
    type Scenario is new Utils.String_Vector with null record;
 
-   function Is_Empty (S : Scenario) return Boolean is (Utils.String_Vector (S).Is_Empty);
+   function Is_Empty (S : Scenario) return Boolean
+   is (Utils.String_Vector (S).Is_Empty);
 
-   Empty_Scenario : constant Scenario := (Utils.String_Vectors.Empty_Vector with null record);
+   Empty_Scenario : constant Scenario :=
+     (Utils.String_Vectors.Empty_Vector with null record);
 
 end Alire.GPR;

@@ -11,7 +11,10 @@ package body Alire.Utils is
    -- Append_To_Last_Line --
    -------------------------
 
-   function Append_To_Last_Line (V : String_Vector; S : String) return String_Vector is
+   function Append_To_Last_Line (V : String_Vector;
+                                 S : String)
+                                 return String_Vector
+   is
    begin
       if V.Is_Empty then
          return To_Vector (S);
@@ -63,7 +66,16 @@ package body Alire.Utils is
    -- Flatten --
    -------------
 
-   function Flatten (V : String_Vector; Separator : String := " ") return String is
+   function Flatten (V         : String_Vector;
+                     Separator : String := " ")
+                     return String
+   is
+
+      function Flatten (Pos : Positive; V : String_Vector) return String;
+
+      -------------
+      -- Flatten --
+      -------------
 
       function Flatten (Pos : Positive; V : String_Vector) return String is
         (if Pos > V.Count
@@ -93,7 +105,11 @@ package body Alire.Utils is
    -- Replace --
    -------------
 
-   function Replace (Text : String; Match : String; Subst : String) return String is
+   function Replace (Text  : String;
+                     Match : String;
+                     Subst : String)
+                     return String
+   is
       use Ada.Strings.Fixed;
       First : Natural;
    begin
@@ -101,7 +117,10 @@ package body Alire.Utils is
       if First = 0 then
          return Text;
       else
-         return Replace (Replace_Slice (Text, First, First + Match'Length - 1, Subst), Match, Subst);
+         return Replace
+           (Replace_Slice (Text, First, First + Match'Length - 1, Subst),
+            Match,
+            Subst);
       end if;
    end Replace;
 
@@ -220,7 +239,9 @@ package body Alire.Utils is
    ---------------
 
    function To_Native (Path : Platform_Independent_Path) return String is
-      Dir_Seps : constant Ada.Strings.Maps.Character_Set := Ada.Strings.Maps.To_Set ("/\");
+      Dir_Seps : constant Ada.Strings.Maps.Character_Set :=
+        Ada.Strings.Maps.To_Set ("/\");
+
       use Ada.Strings.Maps;
    begin
       return Native : String := Path do

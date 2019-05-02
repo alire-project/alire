@@ -47,7 +47,12 @@ package body Alr.Utils is
 
       --  Remove excess spaces:
       while Src <= Text'Last loop
-         if Src = Text'First or else Text (Src) /= ' ' or else Text (Src - 1) /= ' ' then
+         if Src = Text'First
+           or else
+            Text (Src) /= ' '
+           or else
+            Text (Src - 1) /= ' '
+         then
             Result (Dst) := Text (Src);
             Dst := Dst + 1;
          end if;
@@ -64,7 +69,8 @@ package body Alr.Utils is
    overriding procedure Finalize (This : in out Busy_Prompt) is
    begin
       if Trace.Level = Info then
-         Ada.Text_IO.Put (ASCII.CR & (1 .. This.Activity'Length + 1 => ' ') & ASCII.CR);
+         Ada.Text_IO.Put
+           (ASCII.CR & (1 .. This.Activity'Length + 1 => ' ') & ASCII.CR);
          Ada.Text_IO.Flush;
       end if;
    exception
@@ -114,7 +120,8 @@ package body Alr.Utils is
       use Ada.Calendar;
    begin
       if Trace.Level = Info and then Clock - This.Last >= 0.1 then
-         Ada.Text_IO.Put (ASCII.CR & This.Activity & " " & Indicator (This.Pos));
+         Ada.Text_IO.Put
+           (ASCII.CR & This.Activity & " " & Indicator (This.Pos));
          Ada.Text_IO.Flush;
 
          This.Last := Clock;
