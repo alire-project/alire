@@ -14,7 +14,8 @@ package Alr.Bootstrap is
    --  Sandbox mode is not implemented yet
 
    function Session_State return Session_States;
-   --  Note that even if you're in a project within a sandbox, result is sandbox
+   --  Note that even if you're in a project within a sandbox, result is
+   --  sandbox.
 
    -------------
    --  OTHER  --

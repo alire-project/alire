@@ -33,7 +33,10 @@ package Alire.Utils with Preelaborate is
                             .. Full_String'Last) = Substring);
    --  Return whether Full_String ends with the given Substring
 
-   function Replace (Text : String; Match : String; Subst : String) return String;
+   function Replace (Text  : String;
+                     Match : String;
+                     Subst : String)
+                     return String;
 
    type Halves is (Head, Tail);
 
@@ -64,8 +67,11 @@ package Alire.Utils with Preelaborate is
       type Other_Vector is new Ada.Finalization.Controlled with private;
       type Other_Vector_Value is private;
       Initial_Other_Vector : Other_Vector;
-      with function To_New_Value (Item : Vectors.Element_Type) return Other_Vector_Value is <>;
-      with procedure Append (Vec : in out Other_Vector; Val : Other_Vector_Value);
+      with function To_New_Value (Item : Vectors.Element_Type)
+                                  return Other_Vector_Value
+        is <>;
+      with procedure Append (Vec : in out Other_Vector;
+                             Val : Other_Vector_Value);
    function Convert (V : Vector) return Other_Vector;
    --  Convert between two vector types
 
@@ -78,7 +84,9 @@ package Alire.Utils with Preelaborate is
 
    --  To simplify somewhat managing lists of strigns
 
-   package String_Vectors is new Ada.Containers.Indefinite_Vectors (Positive, String);
+   package String_Vectors
+   is new Ada.Containers.Indefinite_Vectors (Positive, String);
+
    type String_Vector is new String_Vectors.Vector with null record;
 
    Empty_Vector : constant String_Vector;
@@ -91,12 +99,16 @@ package Alire.Utils with Preelaborate is
    procedure Append_Vector (V : in out String_Vector; V2 : String_Vector)
                             renames Append;
 
-   function Append_To_Last_Line (V : String_Vector; S : String) return String_Vector;
+   function Append_To_Last_Line (V : String_Vector;
+                                 S : String)
+                                 return String_Vector;
 
    function Count (V : String_Vector) return Natural;
    --  FSM do I hate the Containers.Count_Type...
 
-   function Flatten (V : String_Vector; Separator : String := " ") return String;
+   function Flatten (V         : String_Vector;
+                     Separator : String := " ")
+                     return String;
    --  Concatenate all elements
 
    function Indent (V      : String_Vector;
@@ -121,9 +133,11 @@ package Alire.Utils with Preelaborate is
 
 private
 
-   Empty_Vector : constant String_Vector := (String_Vectors.Empty_Vector with null record);
+   Empty_Vector : constant String_Vector :=
+     (String_Vectors.Empty_Vector with null record);
 
-   function Count (V : String_Vector) return Natural is (Natural (String_Vectors.Vector (V).Length));
+   function Count (V : String_Vector) return Natural
+   is (Natural (String_Vectors.Vector (V).Length));
 
    function Quote (S : String) return String is
       ("""" & S & """");

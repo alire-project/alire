@@ -21,9 +21,9 @@ package body Alire.Root is
             Release : Containers.Release_Holders.Holder;
             Result  : TOML_Index.Load_Result;
             File    : constant String :=
-                        Directories.Find_Single_File
-                          (Path      => Path / Paths.Working_Folder_Inside_Root,
-                           Extension => Paths.Crate_File_Extension_With_Dot);
+              Directories.Find_Single_File
+                (Path      => Path / Paths.Working_Folder_Inside_Root,
+                 Extension => Paths.Crate_File_Extension_With_Dot);
          begin
             TOML_Index.Load_Release_From_File
               (Filename    => File,
@@ -39,7 +39,9 @@ package body Alire.Root is
             end if;
          end;
       else
-         return Roots.New_Invalid_Root.With_Reason ("Could not detect a session folder at current or parent locations");
+         return Roots.New_Invalid_Root.With_Reason
+           ("Could not detect a session folder" &
+              " at current or parent locations");
       end if;
    end Current;
 

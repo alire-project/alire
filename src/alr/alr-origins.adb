@@ -58,7 +58,8 @@ package body Alr.Origins is
       New_Origin (From).Fetch (Folder);
    exception
       when others =>
-         Trace.Error ("Deployment of " & From.Image & " to " & Folder & " failed");
+         Trace.Error ("Deployment of " & From.Image & " to " &
+                        Folder & " failed");
          if Ada.Directories.Exists (Folder) then
             Ada.Directories.Delete_Tree (Folder);
          end if;
@@ -87,14 +88,17 @@ package body Alr.Origins is
    procedure Install_Warning (From : Origin'Class) is
       use GNAT.IO;
 
-      Native_Name : constant String := From.Base.Package_Name (Platform.Distribution);
+      Native_Name : constant String :=
+        From.Base.Package_Name (Platform.Distribution);
    begin
       if From.Already_Installed then
          Trace.Detail ("Package " & Native_Name & " is already installed");
       elsif not Native_Proceed then
          New_Line;
-         Put_Line ("The native package " & Native_Name & " is about to be installed");
-         Put_Line ("This action requires sudo privileges and might impact your system installation");
+         Put_Line ("The native package " & Native_Name &
+                     " is about to be installed");
+         Put_Line ("This action requires sudo privileges " &
+                     "and might impact your system installation");
          New_Line;
          Interactive.Enter_Or_Ctrl_C;
          Native_Proceed := True;
@@ -109,14 +113,16 @@ package body Alr.Origins is
       Orig : constant Origin'Class := New_Origin (From);
    begin
       if Orig.Already_Installed then
-         Trace.Detail (From.Package_Name (Platform.Distribution) & " already installed");
+         Trace.Detail (From.Package_Name (Platform.Distribution) &
+                         " already installed");
       else
          Install_Warning (Orig);
          Orig.Install;
       end if;
    exception
       when others =>
-         Trace.Error ("Installation of " & From.Package_Name (Platform.Distribution) & " failed");
+         Trace.Error ("Installation of " &
+                        From.Package_Name (Platform.Distribution) & " failed");
          raise Command_Failed;
    end Install_Native;
 

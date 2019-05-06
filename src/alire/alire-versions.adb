@@ -8,6 +8,8 @@ package body Alire.Versions is
 
    function From_Identifier (S : String) return Semantic_Versioning.Version is
 
+      procedure Error;
+
       -----------
       -- Error --
       -----------

@@ -17,7 +17,8 @@ package body Alr.Origins.Hg is
       end if;
 
       Trace.Detail ("Checking out: " & This.Base.URL);
-      Spawn.Command ("hg", "clone -v -y -u " & This.Base.Commit & " " & This.Base.URL & " " & Folder);
+      Spawn.Command ("hg", "clone -v -y -u " & This.Base.Commit & " " &
+                       This.Base.URL & " " & Folder);
    exception
       when others =>
          raise Command_Failed;

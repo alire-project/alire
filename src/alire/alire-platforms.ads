@@ -12,8 +12,8 @@ package Alire.Platforms with Preelaborate is
                       GNAT_GPL_2017,
 
                       GNAT_Community_2018);
-   --  We do a minimum of future proofing. Unless newer version have known problems we don't need to
-   --    isolate their versions
+   --  We do a minimum of future proofing. Unless newer version have known
+   --  problems we don't need to isolate their versions.
 
    type Operating_Systems is (GNU_Linux,
                               OSX,
@@ -34,8 +34,8 @@ package Alire.Platforms with Preelaborate is
                      Ubuntu_Bionic,
                      Distro_Version_Unknown);
    --  Known flavors of OSs
-   --  It turns out that Debian uses no numbers for its non-stable releases, so we'll prefer the codename
-   --  Not really used very much for now
+   --  It turns out that Debian uses no numbers for its non-stable releases, so
+   --  we'll prefer the codename. Not really used very much for now.
 
    type Word_Sizes is (Bits_32,
                        Bits_64,

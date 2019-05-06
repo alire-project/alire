@@ -18,28 +18,40 @@ package body Alire.Releases is
    --------------------
 
    function All_Properties (R : Release;
-                            P : Alire.Properties.Vector) return Alire.Properties.Vector is
-      (Materialize (R.Properties and R.Priv_Props, P));
+                            P : Alire.Properties.Vector)
+                            return Alire.Properties.Vector
+   is (Materialize (R.Properties and R.Priv_Props, P));
 
    ------------------------
    -- Default_Properties --
    ------------------------
 
-   function Default_Properties return Conditional.Properties is
-     (Conditional.For_Properties.New_Value
-        (New_Label (Maintainer,
-                    Defaults.Maintainer)));
+   function Default_Properties return Conditional.Properties
+   is (Conditional.For_Properties.New_Value
+       (New_Label (Maintainer,
+                   Defaults.Maintainer)));
 
    ---------------
    -- Extending --
    ---------------
 
-   function Extending (Base               : Release;
-                       Dependencies       : Conditional.Dependencies := Conditional.For_Dependencies.Empty;
-                       Properties         : Conditional.Properties   := Conditional.For_Properties.Empty;
-                       Private_Properties : Conditional.Properties   := Conditional.For_Properties.Empty;
-                       Available          : Alire.Requisites.Tree    := Requisites.Trees.Empty_Tree)
-                       return Release
+   function Extending
+     (Base               : Release;
+
+      Dependencies       : Conditional.Dependencies :=
+        Conditional.For_Dependencies.Empty;
+
+      Properties         : Conditional.Properties   :=
+        Conditional.For_Properties.Empty;
+
+      Private_Properties : Conditional.Properties   :=
+        Conditional.For_Properties.Empty;
+
+      Available          : Alire.Requisites.Tree    :=
+        Requisites.Trees.Empty_Tree
+     )
+
+      return Release
    is
       use all type Conditional.Dependencies;
       use all type Requisites.Tree;
@@ -102,7 +114,9 @@ package body Alire.Releases is
    ---------------
 
    function Replacing (Base         : Release;
-                       Dependencies : Conditional.Dependencies) return Release is
+                       Dependencies : Conditional.Dependencies)
+                       return Release
+   is
    begin
       return Replaced : Release := Base do
          Replaced.Dependencies := Dependencies;
@@ -113,9 +127,11 @@ package body Alire.Releases is
    -- Replacing --
    ---------------
 
-   function Replacing (Base               : Release;
-                       Project            : Alire.Project      := "";
-                       Notes              : Description_String := "") return Release
+   function Replacing
+     (Base               : Release;
+      Project            : Alire.Project      := "";
+      Notes              : Description_String := "")
+      return Release
    is
       New_Project : constant Alire.Project := (if Project = ""
                                                then Base.Project
@@ -125,7 +141,8 @@ package body Alire.Releases is
                                                     else Notes);
    begin
 
-      return Replacement : constant Release (New_Project'Length, New_Notes'Length) :=
+      return Replacement : constant Release
+        (New_Project'Length, New_Notes'Length) :=
         (Prj_Len   => New_Project'Length,
          Notes_Len => New_Notes'Length,
          Project   => New_Project,
@@ -181,8 +198,9 @@ package body Alire.Releases is
                          Dependencies       : Conditional.Dependencies;
                          Properties         : Conditional.Properties;
                          Private_Properties : Conditional.Properties;
-                         Available          : Alire.Requisites.Tree) return Release is
-     (Prj_Len      => Project'Length,
+                         Available          : Alire.Requisites.Tree)
+                         return Release
+   is (Prj_Len      => Project'Length,
       Notes_Len    => Notes'Length,
       Project      => Project,
       Alias        => +"",
@@ -202,8 +220,10 @@ package body Alire.Releases is
    function New_Working_Release
      (Project      : Alire.Project;
       Origin       : Origins.Origin := Origins.New_Filesystem (".");
-      Dependencies : Conditional.Dependencies := Conditional.For_Dependencies.Empty;
-      Properties   : Conditional.Properties   := Conditional.For_Properties.Empty)
+      Dependencies : Conditional.Dependencies :=
+        Conditional.For_Dependencies.Empty;
+      Properties   : Conditional.Properties   :=
+        Conditional.For_Properties.Empty)
       return         Release is
      (Prj_Len      => Project'Length,
       Notes_Len    => 0,
@@ -224,18 +244,22 @@ package body Alire.Releases is
    -- On_Platform_Properties --
    ----------------------------
 
-   function On_Platform_Properties (R             : Release;
-                                    P             : Alire.Properties.Vector;
-                                    Descendant_Of : Ada.Tags.Tag := Ada.Tags.No_Tag)
-                                    return Alire.Properties.Vector
+   function On_Platform_Properties
+     (R             : Release;
+      P             : Alire.Properties.Vector;
+      Descendant_Of : Ada.Tags.Tag := Ada.Tags.No_Tag)
+      return Alire.Properties.Vector
    is
       use Ada.Tags;
    begin
       if Descendant_Of = No_Tag then
-         return Materialize (R.Properties, P) and Materialize (R.Priv_Props, P);
+         return Materialize (R.Properties, P)
+                  and
+                Materialize (R.Priv_Props, P);
       else
          declare
-            Props : constant Alire.Properties.Vector := R.On_Platform_Properties (P);
+            Props : constant Alire.Properties.Vector :=
+              R.On_Platform_Properties (P);
          begin
             return Result : Alire.Properties.Vector do
                for P of Props loop
@@ -297,7 +321,8 @@ package body Alire.Releases is
    is
       use Utils;
 
-      With_Paths : Utils.String_Vector := Props_To_Strings (R.All_Properties (P), Project_File);
+      With_Paths : Utils.String_Vector :=
+        Props_To_Strings (R.All_Properties (P), Project_File);
       Without    : Utils.String_Vector;
    begin
       if With_Paths.Is_Empty then
@@ -329,7 +354,8 @@ package body Alire.Releases is
                            return      Utils.String_Set
    is
       use Utils;
-      Files : constant String_Vector := Project_Files (R, P, With_Path => True);
+      Files : constant String_Vector :=
+        Project_Files (R, P, With_Path => True);
    begin
       return Paths : String_Set do
          for File of Files loop
@@ -390,7 +416,8 @@ package body Alire.Releases is
             Table : AAA.Table_IO.Table;
          begin
             for Dist in Platforms.Distributions loop
-               if R.Origin.Package_Name (Dist) /= Origins.Unavailable.Image then
+               if R.Origin.Package_Name (Dist) /= Origins.Unavailable.Image
+               then
                   Table.New_Row;
                   Table.Append ("   ");
                   Table.Append (Utils.To_Mixed_Case (Dist'Img) & ":");
@@ -465,23 +492,25 @@ package body Alire.Releases is
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
       Relinfo :          TOML.TOML_Value := TOML.Create_Table;
    begin
-      -- General properties
+      --  General properties
       declare
-         General : constant TOML.TOML_Value := R.Properties.To_Toml;
+         General : constant TOML.TOML_Value := R.Properties.To_TOML;
       begin
-         -- Description
+         --  Description
          if Projects.Descriptions.Contains (R.Project) then
-            General.Set (TOML_Keys.Description, +Projects.Descriptions (R.Project));
+            General.Set (TOML_Keys.Description,
+                         +Projects.Descriptions (R.Project));
          else
-            General.Set (TOML_Keys.Description, +Defaults.Description);
+            General.Set (TOML_Keys.Description,
+                         +Defaults.Description);
          end if;
 
-         -- Alias/Provides
+         --  Alias/Provides
          if UStrings.Length (R.Alias) > 0 then
             General.Set (TOML_Keys.Provides, +(+R.Alias));
          end if;
 
-         -- Notes
+         --  Notes
          if R.Notes'Length > 0 then
             General.Set (TOML_Keys.Notes, +R.Notes);
          end if;
@@ -492,11 +521,13 @@ package body Alire.Releases is
                case APL.Cardinality (Label) is
                   when Unique   =>
                      pragma Assert
-                       (General.Get (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
+                       (General.Get
+                          (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
                   when Multiple =>
                      General.Set
                        (APL.Key (Label),
-                        TOML_Adapters.To_Array (General.Get (APL.Key (Label))));
+                        TOML_Adapters.To_Array
+                          (General.Get (APL.Key (Label))));
                end case;
             end if;
          end loop;
@@ -508,41 +539,46 @@ package body Alire.Releases is
             end if;
          end loop;
 
-         -- License
+         --  License
          General.Set (TOML_Keys.License, R.License.To_TOML);
 
-         -- Final assignment, always have general section
+         --  Final assignment, always have general section
          Root.Set (TOML_Keys.General, General);
       end;
 
-      -- Origin
+      --  Origin
       Relinfo := TOML.Merge (Relinfo, R.Origin.To_TOML);
 
-      -- Dependencies
+      --  Dependencies
       if not R.Dependencies.Is_Empty then
          Relinfo.Set (TOML_Keys.Dependency, R.Dependencies.To_TOML);
       end if;
 
-      -- Forbidden
+      --  Forbidden
       if not R.Forbidden.Is_Empty then
          Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
       end if;
 
-      -- Available
-      if R.Available.Is_Empty or else R.Available = Alire.Requisites.Booleans.Always_True then
+      --  Available
+      if R.Available.Is_Empty
+           or else
+         R.Available = Alire.Requisites.Booleans.Always_True
+      then
          null; -- Do nothing, do not pollute .toml file
-      elsif not R.Available.Is_Empty and then R.Available = Alire.Requisites.Booleans.Always_False then
+      elsif not R.Available.Is_Empty
+              and then
+            R.Available = Alire.Requisites.Booleans.Always_False
+      then
          Relinfo.Set (TOML_Keys.Available, TOML.Create_Boolean (False));
          --  Stop-gag until proper requisites are re-introduced
       else
-         raise Unimplemented; -- TODO
-                              -- Not straightforward, since current expressions are and/or only,
-                              -- and the toml format is case-based.
-                              -- This will require a way to load the case expression(s),
-                              --   before they can be exported
+         raise Unimplemented;
+         --  TODO Not straightforward, since current expressions are and/or
+         --  only, and the toml format is case-based. This will require a way
+         --  to load the case expression(s), before they can be exported
       end if;
 
-      -- Version release
+      --  Version release
       Root.Set (R.Version_Image, Relinfo);
 
       return Root;
@@ -559,7 +595,10 @@ package body Alire.Releases is
    -- Whenever --
    --------------
 
-   function Whenever (R : Release; P : Alire.Properties.Vector) return Release is
+   function Whenever (R : Release;
+                      P : Alire.Properties.Vector)
+                      return Release
+   is
    begin
       return Solid : constant Release (R.Prj_Len, R.Notes_Len) :=
         (Prj_Len      => R.Prj_Len,

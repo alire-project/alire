@@ -12,7 +12,9 @@ private with Ada.Containers.Indefinite_Vectors;
 with TOML; use all type TOML.Any_Value_Kind;
 
 generic
-   type Values (<>) is new Interfaces.Classificable and Interfaces.Tomifiable with private;
+   type Values (<>)
+   is new Interfaces.Classificable and Interfaces.Tomifiable with private;
+
    with function Image (V : Values) return String;
 package Alire.Conditional_Trees with Preelaborate is
 
@@ -22,15 +24,21 @@ package Alire.Conditional_Trees with Preelaborate is
      Default_Iterator => Iterate,
      Iterator_Element => Tree,
      Constant_Indexing => Indexed_Element;
-   --  Recursive type that stores conditions (requisites) and values/further conditions if they are met or not
-   --  Iteration is only over direct children, when the tree is AND/OR list
+   --  Recursive type that stores conditions (requisites) and values/further
+   --  conditions if they are met or not. Iteration is only over direct
+   --  children, when the tree is AND/OR list
 
    function Leaf_Count (This : Tree) return Natural;
 
    generic
       type Collection is private;
-      with procedure Append (C : in out Collection; V : Values; Count : Count_Type := 1);
-   function Materialize (This : Tree; Against : Properties.Vector) return Collection;
+      with procedure Append (C     : in out Collection;
+                             V     : Values;
+                             Count : Count_Type := 1);
+
+   function Materialize (This    : Tree;
+                         Against : Properties.Vector)
+                         return Collection;
    --  Materialize against the given properties, and return as list
    --  NOTE: this presumes there are no OR conditions along the tree
    --  In Alire context, this is always true for properties and
@@ -38,14 +46,17 @@ package Alire.Conditional_Trees with Preelaborate is
 
    generic
       type Collection is private;
-      with procedure Append (C : in out Collection; V : Values; Count : Count_Type := 1);
+      with procedure Append (C     : in out Collection;
+                             V     : Values;
+                             Count : Count_Type := 1);
    function Enumerate (This : Tree) return Collection;
    --  Return all value nodes, regardless of dependencies/conjunctions
    --  This is used for textual search and has no semantic trascendence
 
    function Evaluate (This : Tree; Against : Properties.Vector) return Tree;
-   --  Materialize against the given properties, returning values as an unconditional tree
-   --  NOTE: the result is unconditional but can still contain a mix of AND/OR subtrees
+   --  Materialize against the given properties, returning values as an
+   --  unconditional tree. NOTE: the result is unconditional but can still
+   --  contain a mix of AND/OR subtrees.
 
    function Kind (This : Tree) return Kinds;
 
@@ -56,7 +67,7 @@ package Alire.Conditional_Trees with Preelaborate is
    function Image_One_Line (This : Tree) return String;
 
    function Is_Unconditional (This : Tree) return Boolean;
-   -- Recursively!
+   --  Recursively!
 
    function Contains_ORs (This : Tree) return Boolean;
 
@@ -64,7 +75,8 @@ package Alire.Conditional_Trees with Preelaborate is
    --  SINGLES  --
    ---------------
 
-   function New_Value (V : Values) return Tree; -- when we don't really need a condition
+   function New_Value (V : Values) return Tree;
+   --  when we don't really need a condition
 
    function Value (This : Tree) return Values
      with Pre => This.Kind = Value;
@@ -85,7 +97,8 @@ package Alire.Conditional_Trees with Preelaborate is
 
    procedure Iterate_Children (This    : Tree;
                                Visitor : access procedure (CV : Tree));
-   --  There is "of" notation too, but that bugs out when using this package as generic formal
+   --  There is "of" notation too, but that bugs out when using this package as
+   --  generic formal.
 
    type Children_Array is array (Positive range <>) of Tree;
 
@@ -154,8 +167,8 @@ package Alire.Conditional_Trees with Preelaborate is
 
    function Iterate (Container : Tree)
       return Iterators.Forward_Iterator'Class;
-   -- Returns our own iterator, which in general will be defined in the
-   -- private part or the body.
+   --  Returns our own iterator, which in general will be defined in the
+   --  private part or the body.
 
    function Indexed_Element (Container : Tree; Pos : Cursor)
       return Tree;
@@ -170,13 +183,17 @@ private
 
    function Kind (This : Inner_Node'Class) return Kinds;
 
-   package Holders is new Ada.Containers.Indefinite_Holders (Inner_Node'Class);
-   package Vectors is new Ada.Containers.Indefinite_Vectors (Positive, Inner_Node'Class);
+   package Holders
+   is new Ada.Containers.Indefinite_Holders (Inner_Node'Class);
+
+   package Vectors
+   is new Ada.Containers.Indefinite_Vectors (Positive, Inner_Node'Class);
 
    type Cursor is new Vectors.Cursor;
 
    type Tree is new Holders.Holder and Interfaces.Tomifiable with null record;
-   --  Instead of dealing with pointers and finalization, we use this class-wide container
+   --  Instead of dealing with pointers and finalization, we use this
+   --  class-wide container.
 
    package Definite_Values is new Ada.Containers.Indefinite_Holders (Values);
 

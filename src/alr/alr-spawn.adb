@@ -29,7 +29,8 @@ package body Alr.Spawn is
    is
    begin
       Command ("gprbuild",
-                 "-gnatwU -j0 -p " & -- Supress warnings on unused (may happen in prj_alr.ads)
+               "-gnatwU -j0 -p " &
+               --  Supress warnings on unused (may happen in prj_alr.ads)
                  Extra_Args & (if Extra_Args /= "" then " " else "") &
                  "-P " & Project_File,
                Understands_Verbose => True);

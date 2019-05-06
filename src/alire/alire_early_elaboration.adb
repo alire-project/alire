@@ -1,4 +1,5 @@
-with Alire; -- Kind of circularity here but somehow it slips past static GNAT rules??
+with Alire;
+--  Kind of circularity here but somehow it slips past static GNAT rules??
 
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
@@ -15,7 +16,8 @@ package body Alire_Early_Elaboration is
       use GNAT.Command_Line;
    begin
 
-      --  We use the simpler Getopt form to avoid built-in help and other shenanigans
+      --  We use the simpler Getopt form to avoid built-in help and other
+      --  shenanigans.
       begin
          loop
             case Getopt ("* d q v") is
@@ -28,15 +30,21 @@ package body Alire_Early_Elaboration is
          end loop;
       exception
          when Exit_From_Command_Line =>
-            --  Something unexpected happened but it will be properly dealt with later on,
-            --  in the regular command-line parser
+            --  Something unexpected happened but it will be properly dealt
+            --  with later on, in the regular command-line parser.
             null;
       end;
 
       --  Exclusivity check
-      if (Switch_D and Switch_V) or (Switch_D and Switch_Q) or (Switch_V and Switch_Q) then
+      if (Switch_D and Switch_V)
+           or
+         (Switch_D and Switch_Q)
+           or
+         (Switch_V and Switch_Q)
+      then
          Alire.Trace.Info ("Ada Library Repository manager (alr)");
-         Alire.Trace.Error ("Only one verbosity switch allowed (either -d, -v or -q)");
+         Alire.Trace.Error
+           ("Only one verbosity switch allowed (either -d, -v or -q)");
          GNAT.OS_Lib.OS_Exit (1);
       end if;
 

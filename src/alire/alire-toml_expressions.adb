@@ -762,7 +762,7 @@ package body Alire.TOML_Expressions is
                   return Success;
                end Process_Value;
 
-            Dummy : Boolean;
+               Dummy : Boolean;
             begin
                if not Success then
                   return;
@@ -966,7 +966,7 @@ package body Alire.TOML_Expressions is
             end;
 
             --  Go through all nested case constructs, locate the clause
-            --  corresponding to 
+            --  corresponding to.
 
             for I in 1 .. Node.Case_Count loop
                declare

@@ -151,7 +151,7 @@ package body Alr.Templates is
       for I in GPR_Files.Iterate loop
          Put (File, Tab_2 & Q (".." / GPR_Files (I)));
          if I /= GPR_Files.Last then
-            Put_line (File, ", ");
+            Put_Line (File, ", ");
          end if;
       end loop;
       Put_Line (File, ");");

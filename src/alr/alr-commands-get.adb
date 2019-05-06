@@ -33,10 +33,17 @@ package body Alr.Commands.Get is
    -- Retrieve --
    --------------
 
-   procedure Retrieve (Cmd : Command; Name : Alire.Project; Versions : Semver.Version_Set) is
-      Rel     : constant Alire.Index.Release  := Query.Find (Name, Versions, Query_Policy);
+   procedure Retrieve (Cmd      : Command;
+                       Name     : Alire.Project;
+                       Versions : Semver.Version_Set)
+   is
+      Rel : constant Alire.Index.Release :=
+        Query.Find (Name, Versions, Query_Policy);
    begin
-      if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties)) and then not Cmd.Only then
+      if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties))
+        and then
+         not Cmd.Only
+      then
          Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
          Trace.Error ("This may happen when requesting a project that requires native libraries, while using a GPL gnat");
          Trace.Error ("In that case, try again with the native FSF gnat compiler");
@@ -45,7 +52,8 @@ package body Alr.Commands.Get is
 
       --  Check if it's native first
       declare
-         R : constant Alire.Index.Release := Query.Find (Name, Versions, Query_Policy);
+         R : constant Alire.Index.Release :=
+           Query.Find (Name, Versions, Query_Policy);
       begin
          --  If dependencies succeeded then the release is available!
          if R.Origin.Is_Native then
@@ -54,9 +62,11 @@ package body Alr.Commands.Get is
          end if;
       end;
 
-      --  Check if we are already in the fresh copy (may happen after respawning)
+      --  Check if we are already in the fresh copy (may happen after
+      --  respawning).
       if Session_State > Outside then
-         Reportaise_Command_Failed ("Cannot get a project inside another alr project, stopping.");
+         Reportaise_Command_Failed
+           ("Cannot get a project inside another alr project, stopping.");
       end if;
 
       --  Check out requested project release under current directory,
@@ -72,7 +82,8 @@ package body Alr.Commands.Get is
 
       --  Check out rest of dependencies and optionally compile
       declare
-         Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder)) with Unreferenced;
+         Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
+           with Unreferenced;
       begin
          Commands.Update.Execute;
 
@@ -86,7 +97,8 @@ package body Alr.Commands.Get is
       end;
    exception
       when Alire.Query_Unsuccessful =>
-         Trace.Info ("Release [" & Query.Dependency_Image (Name, Versions) & "] does not exist in the catalog.");
+         Trace.Info ("Release [" & Query.Dependency_Image (Name, Versions) &
+                       "] does not exist in the catalog.");
    end Retrieve;
 
    -------------
@@ -105,10 +117,12 @@ package body Alr.Commands.Get is
       end if;
 
       declare
-         Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (1));
+         Allowed : constant Parsers.Allowed_Milestones :=
+           Parsers.Project_Versions (Argument (1));
       begin
          if Cmd.Compile and Cmd.Only then
-            Reportaise_Wrong_Arguments ("--only is incompatible with --compile");
+            Reportaise_Wrong_Arguments
+              ("--only is incompatible with --compile");
          end if;
 
          Requires_Full_Index;
@@ -116,7 +130,8 @@ package body Alr.Commands.Get is
          Retrieve (Cmd, Allowed.Project, Allowed.Versions);
       exception
          when Alire.Query_Unsuccessful =>
-            Trace.Info ("Project [" & Argument (1) & "] does not exist in the catalog.");
+            Trace.Info ("Project [" & Argument (1) &
+                          "] does not exist in the catalog.");
       end;
    end Execute;
 

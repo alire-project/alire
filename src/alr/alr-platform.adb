@@ -9,8 +9,8 @@ with Semantic_Versioning;
 
 package body Alr.Platform is
 
-   -------------
-   -- Singletons
+   --------------
+   --  Singletons
 
    type Supported_Access is access Platforms.Supported'Class;
    Instance : Supported_Access;
@@ -20,8 +20,8 @@ package body Alr.Platform is
    ---------------
 
    function Am_I_Root return Boolean is
-      function GetEUID return Interfaces.C.Int with
-        Import, Convention => C, External_Name => "alr_geteuid";
+      function GetEUID return Interfaces.C.int
+        with Import, Convention => C, External_Name => "alr_geteuid";
    begin
       Trace.Debug ("UID=" & Utils.Trim (GetEUID'Img));
       return Integer (GetEUID) = 0;
@@ -34,13 +34,13 @@ package body Alr.Platform is
    package Platprop renames Alire.Properties.Platform;
    use all type Alire.Properties.Vector;
 
-   function Properties return Alire.Properties.Vector is
-     (Platprop.Compiler_Is (Compiler) and
-      Platprop.Distribution_Is (Distribution) and
-      Platprop.System_Is (Operating_System) and
-      Platprop.Target_Is (Target) and
-      Platprop.Version_Is (Distro_Version) and
-      Platprop.Word_Size_Is (Word_Size));
+   function Properties return Alire.Properties.Vector
+   is (Platprop.Compiler_Is (Compiler) and
+         Platprop.Distribution_Is (Distribution) and
+         Platprop.System_Is (Operating_System) and
+         Platprop.Target_Is (Target) and
+         Platprop.Version_Is (Distro_Version) and
+         Platprop.Word_Size_Is (Word_Size));
 
    --------------
    -- Compiler --
@@ -60,7 +60,10 @@ package body Alr.Platform is
       OS_Lib.Spawn_And_Capture (Output, "gnat");
 
       for Line of Output loop
-         if Line'Length > 4 and then Line (Line'First .. Line'First + 3) = "GNAT" then
+         if Line'Length > 4
+              and then
+            Line (Line'First .. Line'First + 3) = "GNAT"
+         then
             declare
                Version : constant String := To_Lower_Case (Tail (Line, ' '));
             begin
@@ -73,7 +76,9 @@ package body Alr.Platform is
                         return GNAT_GPL_2017;
                      end if;
                   exception
-                     when others => -- Somehow it doesn't follow the GPL XXXX (X) convention
+                     when others =>
+                        --  Somehow it doesn't follow the GPL XXXX (X)
+                        --  convention.
                         return GNAT_GPL_Old;
                   end;
                elsif Contains (Version, "community") then
@@ -96,7 +101,8 @@ package body Alr.Platform is
                         return GNAT_FSF_Old;
                      end if;
                   exception
-                     when others => -- Not a plain semantic version like FSF uses
+                     when others =>
+                        --  Not a plain semantic version like FSF uses
                         return GNAT_Unknown;
                   end;
                end if;

@@ -10,7 +10,8 @@ package body Alire.Properties.Scenarios is
       case V.Var.Element.Kind is
          when Enumeration =>
             declare
-               Arr : constant TOML.TOML_Value := TOML.Create_Array (TOML.TOML_String);
+               Arr : constant TOML.TOML_Value :=
+                 TOML.Create_Array (TOML.TOML_String);
             begin
                for Val of V.Var.Element.Values loop
                   Arr.Append (+Val);

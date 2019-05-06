@@ -69,19 +69,22 @@ private
    -- Distribution --
    ------------------
 
-   function Distribution return Alire.Platforms.Distributions is (Get.Distribution);
+   function Distribution return Alire.Platforms.Distributions
+   is (Get.Distribution);
 
    --------------------
    -- Distro_Version --
    --------------------
 
-   function Distro_Version return Alire.Platforms.Versions is (Get.Distro_Version);
+   function Distro_Version return Alire.Platforms.Versions
+   is (Get.Distro_Version);
 
    ----------------------
    -- Operating_System --
    ----------------------
 
-   function Operating_System return Alire.Platforms.Operating_Systems is (Get.Operating_System);
+   function Operating_System return Alire.Platforms.Operating_Systems
+   is (Get.Operating_System);
 
    --------------------
    -- Own_Executable --

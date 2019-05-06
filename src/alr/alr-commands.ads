@@ -37,8 +37,10 @@ package Alr.Commands is
    procedure Execute (Cmd : in out Command) is abstract;
    --  May raise Command_Failed
 
-   procedure Setup_Switches (Cmd    : in out Command;
-                             Config : in out GNAT.Command_Line.Command_Line_Configuration) is null;
+   procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is null;
 
    function Short_Description (Cmd : Command) return String is abstract;
    --  One-liner displayed in the main help after the command name
@@ -55,12 +57,16 @@ package Alr.Commands is
    --  Unless Force_Reload, if the index is not empty we no nothing
 
    procedure Requires_Project;
-   --  Checks and performs session is up to date, and that the project matches to continue with it
-   --  May trigger recompilation and respawn. In that case, it doesn't return to the caller, but respawns.
-   --  If it returns, then we are running the updated alr executable for the current session+project
+   --  Checks and performs session is up to date, and that the project matches
+   --  to continue with it.
+   --  May trigger recompilation and respawn. In that case, it doesn't return
+   --  to the caller, but respawns.
+   --  If it returns, then we are running the updated alr executable for the
+   --  current session+project.
 
    procedure Requires_Buildfile;
-   --  Ensures that the build file exists, and if not generates one from dependencies
+   --  Ensures that the build file exists, and if not generates one from
+   --  dependencies.
 
    procedure Requires_Sources;
    --  Ensure sources are checked out
@@ -73,9 +79,10 @@ package Alr.Commands is
    ---------------------------
 
    function Global_Switches return String;
-   --  This is exported only to be reachable from Spawn, but there's no reason to use it from commands
-   --  Returns the in use global switches (-d -q -v)
-   --  Useful e.g. to pass along on respawning a custom command
+   --  This is exported only to be reachable from Spawn, but there's no reason
+   --  to use it from commands.
+   --  Returns the in use global switches (-d -q -v).
+   --  Useful e.g. to pass along on respawning a custom command.
 
    function Is_Quiet return Boolean;
    --  Says if -q was in the command line
@@ -83,10 +90,12 @@ package Alr.Commands is
    function Query_Policy return Query.Policies;
    --  Current policy
 
-   -- Declared here so they are available to the help metacommand child package and Spawn
+   --  Declared here so they are available to the help metacommand child
+   --  package and Spawn.
 
    procedure Print_Project_Version_Sets;
-   --  How to specify project version sets (to be used in specific command help)
+   --  How to specify project version sets (to be used in specific command
+   --  help).
 
    type Cmd_Names is (Cmd_Build,
                       Cmd_Clean,
@@ -103,8 +112,10 @@ package Alr.Commands is
                       Cmd_Update,
                       Cmd_Version,
                       Cmd_With);
-   --  The Cmd_ prefix allows the use of the proper name in child packages which otherwise cause conflict
-   --  It is a bit ugly but also it makes clear when we are using this enumeration
+   --  The Cmd_ prefix allows the use of the proper name in child packages
+   --  which otherwise cause conflict.
+   --  It is a bit ugly but also it makes clear when we are using this
+   --  enumeration.
 
    function Image (N : Cmd_Names) return String;
 
@@ -117,23 +128,28 @@ private
    use all type Bootstrap.Session_States;
 
    --  Session shortcut
-   function Session_State return Bootstrap.Session_States renames Bootstrap.Session_State;
+   function Session_State return Bootstrap.Session_States
+   renames Bootstrap.Session_State;
 
-   --  Facilities for command/argument identification. These are available to commands.
+   --  Facilities for command/argument identification. These are available to
+   --  commands.
 
    procedure Reportaise_Command_Failed  (Message : String);
    procedure Reportaise_Wrong_Arguments (Message : String);
    --  Report and Raise :P
 
-   Raw_Arguments : Utils.String_Vector; -- Raw arguments, first one is the command
+   Raw_Arguments : Utils.String_Vector;
+   --  Raw arguments, first one is the command
 
    function What_Command return String;
    function What_Command return Cmd_Names;
-   function Num_Arguments return Natural; -- Actual arguments besides the command
+   function Num_Arguments return Natural;
+   --  Actual arguments besides the command
    function Argument (I : Positive) return String; -- May raise if not existing
 
    Scenario : Alire.GPR.Scenario;
-   --  This will be filled in during parsing of command line with any seen "-X" parameters
+   --  This will be filled in during parsing of command line with any seen "-X"
+   --  parameters.
 
    --  Other options
 
@@ -142,18 +158,21 @@ private
    procedure Display_Valid_Commands;
 
    procedure Execute_By_Name (Cmd : Cmd_Names);
-   -- Execute a command with the externally given command line
+   --  Execute a command with the externally given command line
 
    --  Folder guards conveniences for commands:
 
    subtype Folder_Guard is Alire.Directories.Guard;
 
    function Enter_Folder (Path : String) return Alire.Directories.Destination
-                          renames Alire.Directories.Enter;
+   renames Alire.Directories.Enter;
 
    --  Common generalities
 
-   procedure New_Line (Spacing : Ada.Text_IO.Positive_Count := 1) renames Ada.Text_IO.New_Line;
-   procedure Put_Line (S : String) renames Ada.Text_IO.Put_Line;
+   procedure New_Line (Spacing : Ada.Text_IO.Positive_Count := 1)
+   renames Ada.Text_IO.New_Line;
+
+   procedure Put_Line (S : String)
+   renames Ada.Text_IO.Put_Line;
 
 end Alr.Commands;

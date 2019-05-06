@@ -6,6 +6,8 @@ package body Alire.GPR is
 
    function Image (V : Variable) return String is
 
+      function Listify (Vals : Value_Vector) return String;
+
       function Listify (Vals : Value_Vector) return String is
          Head : constant String := Vals.First_Element;
          Tail : Value_Vector := Vals;
@@ -45,9 +47,11 @@ package body Alire.GPR is
 
    function As_Command_Line (S : Scenario) return String is
 
-   -------------
-   -- Listify --
-   -------------
+      function Listify (S : Scenario) return String;
+
+      -------------
+      -- Listify --
+      -------------
 
       function Listify (S : Scenario) return String is
          Var : constant String := S (1);

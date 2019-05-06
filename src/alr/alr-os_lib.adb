@@ -61,8 +61,9 @@ package body Alr.OS_Lib is
    ---------------------
 
    procedure Traverse_Folder (Folder : String;
-                              Doing   : access procedure (Item : Ada.Directories.Directory_Entry_Type;
-                                                          Stop : in out Boolean);
+                              Doing   : access procedure
+                                (Item : Ada.Directories.Directory_Entry_Type;
+                                 Stop : in out Boolean);
                               Recurse : Boolean := False)
    is
       use Ada.Directories;
@@ -85,7 +86,9 @@ package body Alr.OS_Lib is
    begin
       Log ("Traversing folder: " & Folder, Debug);
 
-      Search (Folder, "", (Directory => True, Ordinary_File => True, others => False),
+      Search (Folder,
+              "",
+              (Directory => True, Ordinary_File => True, others => False),
               Go_Down'Access);
    end Traverse_Folder;
 
@@ -95,9 +98,11 @@ package body Alr.OS_Lib is
 
    procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String) is
    begin
-      -- FIXME this is OS dependent and should be made independent (or moved to OS)
-      -- FIXME this is not robust with blanks in paths
-      Spawn ("cp", "-r " & Src_Folder & " " & Dst_Parent_Folder, Force_Quiet => True);
+      --  FIXME this is OS dependent and should be made independent (or moved
+      --  to OS).
+      --  FIXME this is not robust with blanks in paths.
+      Spawn ("cp", "-r " & Src_Folder & " " & Dst_Parent_Folder,
+             Force_Quiet => True);
    end Copy_Folder;
 
    -----------------
@@ -145,7 +150,9 @@ package body Alr.OS_Lib is
       -- Rename --
       ------------
 
-      procedure Rename (Item : Ada.Directories.Directory_Entry_Type; Stop : in out Boolean) is
+      procedure Rename (Item : Ada.Directories.Directory_Entry_Type;
+                        Stop : in out Boolean)
+      is
          pragma Unreferenced (Stop);
          use Ada.Directories;
          use Utils;
@@ -161,19 +168,24 @@ package body Alr.OS_Lib is
          if Contains (Simple_Name (Item), Pattern) then
             Log ("Filename match: " & Simple_Name (Item), Debug);
             Rename (Full_Name (Item),
-                    Containing_Directory (Full_Name (Item)) / Utils.Replace (Simple_Name (Item), Pattern, Replace));
+                    Containing_Directory (Full_Name (Item)) /
+                      Utils.Replace (Simple_Name (Item),
+                        Pattern, Replace));
          end if;
       end Rename;
 
    begin
-      -- FIXME this is OS dependent and should be made independent (or moved to OS)
+      --  FIXME this is OS dependent and should be made independent (or moved
+      --  to OS).
+
       --  File contents
       declare
          use Alire.Directories;
          G : Guard (Enter (Folder)) with Unreferenced;
       begin
          Log ("sed-ing project name in files...", Debug);
-         Spawn ("find", ". -type f -exec sed -i s/" & Pattern & "/" & Replace & "/g {} \;",
+         Spawn ("find", ". -type f -exec sed -i s/" &
+                  Pattern & "/" & Replace & "/g {} \;",
                 Force_Quiet => True);
       end;
 
@@ -187,10 +199,13 @@ package body Alr.OS_Lib is
    -- File_Contains_Ignore_Case --
    -------------------------------
 
-   function File_Contains_Ignore_Case (Filename, Word : String) return Boolean is
+   function File_Contains_Ignore_Case (Filename, Word : String)
+                                       return Boolean
+   is
    begin
       --  FIXME: this is OS dependent, and it shouldn't be
-      return Spawn ("grep", "-q " & Word & " " & Filename, Force_Quiet => True) = 0;
+      return Spawn ("grep", "-q " & Word & " " &
+                      Filename, Force_Quiet => True) = 0;
 --      return True;
    exception
       when Command_Failed =>
@@ -204,7 +219,7 @@ package body Alr.OS_Lib is
    function Is_Older (This : String; Than : String) return Boolean is
       use GNAT.OS_Lib;
    begin
-      if Is_Regular_File (This) Then
+      if Is_Regular_File (This) then
          if not Is_Regular_File (Than) then
             return True;
          elsif File_Time_Stamp (This) < File_Time_Stamp (Than) then
@@ -245,7 +260,8 @@ package body Alr.OS_Lib is
       use Ada.Text_IO;
       use GNAT.Expect;
 
-      Simple_Command : constant String := Ada.Directories.Simple_Name (Command);
+      Simple_Command : constant String :=
+        Ada.Directories.Simple_Name (Command);
 
       --------------
       -- Sanitize --
@@ -282,12 +298,16 @@ package body Alr.OS_Lib is
       ----------------
 
       procedure Print_Line (Text : String := "") is
-      --  When empty, just update progress and reprint previous line
-         Indicator_Only : constant String := Simple_Command & ": " & Indicator (Integer (Pos) + 1);
+         --  When empty, just update progress and reprint previous line
+         Indicator_Only : constant String :=
+           Simple_Command & ": " & Indicator (Integer (Pos) + 1);
+
          Current_Line   : constant String := Indicator_Only & " " & Text;
+
          Capped_Line  : constant String :=
-                          Current_Line (Current_Line'First ..
-                                        Current_Line'First - 1 + Natural'Min (79, Current_Line'Length));
+           Current_Line (Current_Line'First ..
+                           Current_Line'First - 1 +
+                             Natural'Min (79, Current_Line'Length));
       begin
          if Text = "" then -- Keep previous output
             Line (Indicator_Only'Range) := Indicator_Only;
@@ -313,7 +333,8 @@ package body Alr.OS_Lib is
       loop
          begin
             Expect (Pid, Match,
-                    "([ \t\S]+)[ \n\r\f\v]", -- works for \n and \r in output (git vs gprbuild)
+                    "([ \t\S]+)[ \n\r\f\v]",
+                    --  works for \n and \r in output (git vs gprbuild)
                     Timeout => 200);
 
             if Match >= 0 then
@@ -339,7 +360,7 @@ package body Alr.OS_Lib is
    -----------
    -- Spawn --
    -----------
-   -- FIXME: memory leaks
+   --  FIXME: memory leaks
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
@@ -357,7 +378,10 @@ package body Alr.OS_Lib is
          Log ("Spawning: " & Command & " " & Arguments, Debug);
       end if;
 
-      if (Force_Quiet and then Alire.Log_Level /= Debug) or else Alire.Log_Level in Always | Error | Warning then
+      if (Force_Quiet and then Alire.Log_Level /= Debug)
+        or else
+          Alire.Log_Level in Always | Error | Warning
+      then
          Create_Temp_Output_File (File, Name);
          return Code : Integer do
             Spawn
@@ -394,7 +418,8 @@ package body Alr.OS_Lib is
                     Understands_Verbose : Boolean := False;
                     Force_Quiet         : Boolean := False)
    is
-      Code : constant Integer := Spawn (Command, Arguments, Understands_Verbose, Force_Quiet);
+      Code : constant Integer :=
+        Spawn (Command, Arguments, Understands_Verbose, Force_Quiet);
    begin
       if Code /= 0 then
          raise Child_Failed with "Exit code:" & Code'Img;
@@ -494,8 +519,9 @@ package body Alr.OS_Lib is
    begin
       Trace.Debug ("Spawning " & Command & " " & Arguments);
 
-      Code := GNAT.OS_Lib.Spawn (Locate_In_Path (Command),
-                                 GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
+      Code := GNAT.OS_Lib.Spawn
+        (Locate_In_Path (Command),
+         GNAT.OS_Lib.Argument_String_To_List (Arguments).all);
 
       if Code /= 0 then
          raise Child_Failed with "Exit code:" & Code'Image;

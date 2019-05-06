@@ -15,9 +15,11 @@ package body Alr.Origins.Git is
                  else "--progress ");
    begin
       Trace.Detail ("Checking out: " & This.Base.URL);
-      Spawn.Command ("git", "clone -n -q " & Extra & This.Base.URL & " " & Folder);
+      Spawn.Command ("git", "clone -n -q " & Extra &
+                       This.Base.URL & " " & Folder);
       declare
-         Guard : OS_Lib.Folder_Guard (Os_Lib.Enter_Folder (Folder)) with Unreferenced;
+         Guard : OS_Lib.Folder_Guard (OS_Lib.Enter_Folder (Folder))
+           with Unreferenced;
       begin
          Spawn.Command ("git", "reset --hard -q " & This.Base.Commit);
       end;

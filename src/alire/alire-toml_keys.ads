@@ -12,11 +12,11 @@ package Alire.TOML_Keys with Preelaborate is
    Comment        : constant String := "comments";
    Compiler       : constant String := "compiler";
    Dependency     : constant String := "depends-on";
-   Description    : constant String := "description";  
+   Description    : constant String := "description";
    Distribution   : constant String := "distribution";
    Executable     : constant String := "executables";
    Forbidden      : constant String := "forbids";
-   General        : constant String := "general";   
+   General        : constant String := "general";
    GPR_Ext        : constant String := "gpr-externals";
    GPR_Set_Ext    : constant String := "gpr-set-externals";
    License        : constant String := "licenses";
@@ -30,5 +30,5 @@ package Alire.TOML_Keys with Preelaborate is
    Target         : constant String := "target";
    Website        : constant String := "website";
    Word_Size      : constant String := "word-size";
-   
+
 end Alire.TOML_Keys;

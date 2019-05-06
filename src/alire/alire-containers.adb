@@ -17,7 +17,10 @@ package body Alire.Containers is
    -- Inserting --
    ---------------
 
-   function Inserting (Dst : Release_Map; Src : Release_Map) return Release_Map is
+   function Inserting (Dst : Release_Map;
+                       Src : Release_Map)
+                       return Release_Map
+   is
    begin
       return Result : Release_Map := Dst do
          for E of Src loop
@@ -29,14 +32,23 @@ package body Alire.Containers is
       end return;
    end Inserting;
 
-   function Inserting (Dst : Release_Map; Src : Releases.Release) return Release_Map is
-      (Dst.Inserting (To_Map (Src)));
+   ---------------
+   -- Inserting --
+   ---------------
+
+   function Inserting (Dst : Release_Map;
+                       Src : Releases.Release)
+                       return Release_Map
+   is (Dst.Inserting (To_Map (Src)));
 
    ---------------
    -- Excluding --
    ---------------
 
-   function Excluding (Map : Release_Map; Name : Alire.Project) return Release_Map is
+   function Excluding (Map  : Release_Map;
+                       Name : Alire.Project)
+                       return Release_Map
+   is
    begin
       return Filtered : Release_Map := Map do
          Filtered.Exclude (Name);
@@ -47,7 +59,10 @@ package body Alire.Containers is
    -- Including --
    ---------------
 
-   function Including (Map : Release_Map; Release : Releases.Release) return Release_Map is
+   function Including (Map     : Release_Map;
+                       Release : Releases.Release)
+                       return Release_Map
+   is
    begin
       return New_Map : Release_Map := Map do
          New_Map.Include (Release.Project, Release);
@@ -58,7 +73,9 @@ package body Alire.Containers is
    -- To_Dependencies --
    ---------------------
 
-   function To_Dependencies (Map : Release_Map) return Conditional.Dependencies is
+   function To_Dependencies (Map : Release_Map)
+                             return Conditional.Dependencies
+   is
       use Conditional.For_Dependencies;
       use Project_Release_Maps;
    begin

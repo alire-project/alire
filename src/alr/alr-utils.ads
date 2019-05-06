@@ -9,21 +9,31 @@ package Alr.Utils is
 
    --  Miscellaneous utilities
 
-   function To_Lower_Case (S : String) return String renames Alire.Utils.To_Lower_Case;
-   function To_Mixed_Case (S : String) return String renames Alire.Utils.To_Mixed_Case;
+   function To_Lower_Case (S : String) return String
+   renames Alire.Utils.To_Lower_Case;
 
-   function Contains (Text : String; Sub : String) return Boolean renames Alire.Utils.Contains;
+   function To_Mixed_Case (S : String) return String
+   renames Alire.Utils.To_Mixed_Case;
+
+   function Contains (Text : String; Sub : String) return Boolean
+   renames Alire.Utils.Contains;
 
    function Crunch (Text : String) return String;
    --  Remove consecutive spaces
 
    function Quote (S : String) return String;
 
-   function Replace (Text : String; Match : String; Subst : String) return String renames Alire.Utils.Replace;
+   function Replace (Text  : String;
+                     Match : String;
+                     Subst : String)
+                     return String
+   renames Alire.Utils.Replace;
 
-   function Head (Str : String; Separator : Character) return String renames Alire.Utils.Head;
+   function Head (Str : String; Separator : Character) return String
+   renames Alire.Utils.Head;
 
-   function Tail (Str : String; Separator : Character) return String renames Alire.Utils.Tail;
+   function Tail (Str : String; Separator : Character) return String
+   renames Alire.Utils.Tail;
    --  If Str contains Separator, the rhs is returned
    --  Otherwise ""
 
@@ -58,7 +68,9 @@ private
    function Trim (S : String) return String is
      (Ada.Strings.Fixed.Trim (S, Ada.Strings.Both));
 
-   type Busy_Prompt (Len : Natural) is new Ada.Finalization.Limited_Controlled with record
+   type Busy_Prompt (Len : Natural)
+   is new Ada.Finalization.Limited_Controlled
+   with record
       Last     : Ada.Calendar.Time := Ada.Calendar.Time_Of (1976, 9, 6);
       Activity : String (1 .. Len);
       Pos      : Positive := 1;

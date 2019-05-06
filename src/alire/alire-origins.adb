@@ -113,9 +113,11 @@ package body Alire.Origins is
          when Filesystem =>
             Table.Set (TOML_Keys.Origin, +("file://" & This.Path));
          when VCS_Kinds =>
-            Table.Set (TOML_Keys.Origin, +(Prefix (This.Kind) & "+" & This.URL & "@" & This.Commit));
+            Table.Set (TOML_Keys.Origin, +(Prefix (This.Kind) & "+" &
+                         This.URL & "@" & This.Commit));
          when Native =>
-            raise Program_Error with "native packages do not need to be exported";
+            raise Program_Error
+              with "native packages do not need to be exported";
          when Source_Archive =>
             Table.Set (TOML_Keys.Origin, +This.Archive_URL);
             if This.Archive_Name /= "" then

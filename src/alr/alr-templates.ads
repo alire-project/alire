@@ -9,7 +9,7 @@ package Alr.Templates is
    type Generation_Scenarios is
      (Released,  -- Project is already released and packaged
       Unreleased -- Project is a working copy, pinned or some other variation
-                 -- with explicit dependencies
+      --  with explicit dependencies
      );
    --  In initial generation we know the only dependency is on Alire itself
    --  When pinning we are fixing to current resolved versions

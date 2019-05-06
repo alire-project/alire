@@ -254,7 +254,8 @@ package body Alire.TOML_Index is
    function Load_TOML_From_File
      (Filename : String; Result : out Load_Result) return TOML.TOML_Value
    is
-      TOML_Result : constant TOML.Read_Result := TOML.File_IO.Load_File (Filename);
+      TOML_Result : constant TOML.Read_Result :=
+        TOML.File_IO.Load_File (Filename);
    begin
       if TOML_Result.Success then
          Result := (Success => True);
@@ -393,7 +394,7 @@ package body Alire.TOML_Index is
          Result := (Success => True);
          Release.Replace_Element (Releases.First_Element);
          --  Override project description with the one in the parsed file
-         Projects.Descriptions.Include (Release.Element.project,
+         Projects.Descriptions.Include (Release.Element.Project,
                                         +Pkg.Description);
       end if;
    end Load_Release_From_File;
@@ -1180,7 +1181,7 @@ package body Alire.TOML_Index is
                --  since it's not possible for a single TOML table to have
                --  several identical keys.
 
-               Set_Externals_Expr:= new String_Expressions.Expression;
+               Set_Externals_Expr := new String_Expressions.Expression;
                Map.Insert (E.Key, Set_Externals_Expr);
 
                Dummy := To_String_Expression
@@ -1849,8 +1850,8 @@ package body Alire.TOML_Index is
                     (if US.Length (Pkg.Common.Notes) > Alire.Max_Description_Length
                      then +US.Head (Pkg.Common.Notes, Alire.Max_Description_Length)
                      else +Pkg.Common.Notes),
-                  -- It crops too long notes, so something TODO about this
-                  -- Since it didn't fail before, I guess they weren't added
+                  --  It crops too long notes, so something TODO about this
+                  --  Since it didn't fail before, I guess they weren't added
                   --  this way (only as property?)
                   Dependencies       => Dependencies,
                   Properties         => Index."and"
