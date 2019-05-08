@@ -14,7 +14,7 @@ Documentation at this time is minimal. Expect further efforts in this direction 
 
 ## TL;DR ##
 
-To see available projects per platform/compiler, see the [status folder](status)
+To see available crates per platform/compiler, see the [alire-crates-ci](https://github.com/alire-project/alire-crates-ci) companion repository.
 
 Available for Debian testing / Ubuntu >=17.10
 

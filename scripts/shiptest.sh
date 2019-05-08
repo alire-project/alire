@@ -6,13 +6,15 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 set -o errexit
 set -o nounset
 
+# Ensure subrepos are there
+git submodule update --init --recursive
+
 # Check compilation in all cases
 gprbuild -j0 -p -P alr_env
 
 # Check installer in stable branch
-if [ "$BRANCH" == "stable" ]; then 
+if [ "$BRANCH" == "stable" ] || [ "$BASE_BRANCH" == "stable" ]; then 
     echo -e '\n\n/bin\ny' | ./install/alr-bootstrap.sh
-#    alr update --online # until #73 is fixed
 fi
 
 export PATH+=:`pwd`/bin
@@ -25,14 +27,3 @@ alr search -d --list --native
 
 # Minimal self-checks until new test suite
 bash stress/selftest.sh docker
-
-# Do not perform package tests yet
-exit 0
-
-mkdir reltest selftest
-cd selftest
-alr dev --test
-cp *.xml ../shippable/testresults
-cd ../reltest 
-alr test --full --newest
-cp *.xml ../shippable/testresults 

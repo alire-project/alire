@@ -1,5 +1,13 @@
 language: none # Ada
 
+integrations:                               
+    notifications:
+        - integrationName: email
+          type: email
+          on_success: change
+          on_failure: change
+          on_cancel: never
+
 branches:
     only:
         - master
@@ -20,9 +28,22 @@ build:
         image_tag: $IMAGE_TAG
         pull: true
     ci:
-        - git submodule update --init --recursive
         - scripts/shiptest.sh
-    on_success:
-        - scripts/shippost.sh
-    on_failure:
-        - scripts/shippost.sh
+
+### JOBS ###
+# This should trigger a CI job in alire-crates-ci
+
+jobs:
+  - name: alire_runCI
+    type: runCI
+    steps:
+      - IN: alire_ciRepo
+
+  - name: crates-ci
+    type: runSh
+    dependencyMode: strict
+    steps:
+      - IN: alire_runCI
+      - TASK:
+        - script: 
+          - echo "triggering crate CI now"
