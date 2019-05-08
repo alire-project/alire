@@ -5,6 +5,7 @@ with Alr.Platform;
 with Alr.Root;
 
 with Alire.Index;
+with Alire.Roots;
 
 with Semantic_Versioning;
 
@@ -124,8 +125,16 @@ package body Alr.Commands.Show is
 
       --  asking for info, we could return the current project
       --  We have internal data, but is it valid?
-      if Num_Arguments = 0 and then Bootstrap.Session_State = Outside then
-         Reportaise_Wrong_Arguments ("Cannot proceed with a project name");
+      if Num_Arguments = 0 Then
+         case Bootstrap.Session_State is
+            when Outside =>
+               Reportaise_Wrong_Arguments
+                 ("Cannot proceed without a project name");
+            when Broken =>
+               Requires_Project;
+            when Bootstrap.Valid_Session_States =>
+               null;
+         end case;
       end if;
 
       if Num_Arguments = 1 then
