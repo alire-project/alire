@@ -29,21 +29,3 @@ build:
         pull: true
     ci:
         - scripts/shiptest.sh
-
-### JOBS ###
-# This should trigger a CI job in alire-crates-ci
-
-jobs:
-  - name: alire_runCI
-    type: runCI
-    steps:
-      - IN: alire_ciRepo
-
-  - name: crates-ci
-    type: runSh
-    dependencyMode: strict
-    steps:
-      - IN: alire_runCI
-      - TASK:
-        - script: 
-          - echo "triggering crate CI now"
