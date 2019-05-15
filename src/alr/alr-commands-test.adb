@@ -320,27 +320,27 @@ package body Alr.Commands.Test is
       Define_Switch (Config,
                      Cmd.Cont'Access,
                      Long_Switch => "--continue",
-                     Help        => "Skip compilation of releases already in folder");
+                     Help        => "Skip testing of releases already in folder");
 
       Define_Switch (Config,
                      Cmd.Full'Access,
                      Long_Switch => "--full",
-                     Help        => "Select all releases for testing");
+                     Help        => "Test all indexed crates");
 
       Define_Switch (Config,
                      Cmd.Last'Access,
                      Long_Switch => "--newest",
-                     Help        => "Select only newest releases for testing");
+                     Help        => "Test only the newest release in crates");
 
       Define_Switch (Config,
                      Cmd.Redo'Access,
                      Long_Switch => "--redo",
-                     Help        => "Redo test for releases already in folder (implies --continue)");
+                     Help        => "Retest releases already in folder (implies --continue)");
 
       Define_Switch (Config,
                      Cmd.Search'Access,
                      Long_Switch => "--search",
-                     Help        => "Interpret arguments as substrings instead of exact project names");
+                     Help        => "Interpret arguments as substrings instead of exact crate names");
 
 --        Define_Switch (Config,
 --                       Cmd.Jobs'Access,
