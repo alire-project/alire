@@ -29,3 +29,19 @@ build:
         pull: true
     ci:
         - scripts/shiptest.sh
+    on_success:
+        - shipctl put_resource_state branchInfo branch "none"; fi
+        - if [ "$IS_PULL_REQUEST" == false ]; then shipctl put_resource_state branchInfo BRANCH $BRANCH; fi
+
+resources:
+  - name: branchInfo
+    type: params
+    versionTemplate:
+      params:
+        BRANCH: "none" 
+  
+jobs:
+  - name: alire_runCI
+    type: runCI
+    steps:
+      - OUT: branchInfo
