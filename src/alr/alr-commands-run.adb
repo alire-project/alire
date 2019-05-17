@@ -65,9 +65,6 @@ package body Alr.Commands.Run is
          Declared : Utils.String_Vector;
       begin
          Declared := Root.Current.Release.Executables (Platform.Properties);
-         if Declared.Is_Empty then
-            Declared.Append (Root.Current.Release.Default_Executable);
-         end if;
 
          --  LISTING  --
          if Cmd.List then
