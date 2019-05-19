@@ -17,6 +17,7 @@ with Alr.Commands.Clean;
 with Alr.Commands.Compile;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
+with Alr.Commands.Index;
 with Alr.Commands.Init;
 with Alr.Commands.List;
 with Alr.Commands.Pin;
@@ -50,6 +51,7 @@ package body Alr.Commands is
                        Cmd_Compile  => new Compile.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
+                       Cmd_Index    => new Index.Command,
                        Cmd_Init     => new Init.Command,
                        Cmd_List     => new List.Command,
                        Cmd_Pin      => new Pin.Command,
