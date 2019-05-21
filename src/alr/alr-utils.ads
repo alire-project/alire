@@ -18,7 +18,7 @@ package Alr.Utils is
    function Contains (Text : String; Sub : String) return Boolean
    renames Alire.Utils.Contains;
 
-   function Crunch (Text : String) return String;
+   function Crunch (Text : String) return String renames Alire.Utils.Crunch;
    --  Remove consecutive spaces
 
    function Quote (S : String) return String;

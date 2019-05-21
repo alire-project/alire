@@ -30,6 +30,9 @@ package Alr with Preelaborate is
 
    package Types renames Alire.Types;
 
+   function "+" (S : Alire.UString) return String
+                 renames Alire.UStrings.To_String;
+
    --  Some Paths constants that help to break circularities
 
    Bootstrap_Hash : constant String := "bootstrap";

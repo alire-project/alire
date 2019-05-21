@@ -19,12 +19,7 @@ package Alire.TOML_Index is
    function Valid_Package_Name (Name : String) return Boolean;
    --  Return whether the given name is a valid package name
 
-   type Load_Result (Success : Boolean := True) is record
-      case Success is
-         when True  => null;
-         when False => Message : Ada.Strings.Unbounded.Unbounded_String;
-      end case;
-   end record;
+   subtype Load_Result is Outcome;
 
    function Error_Message (Result : Load_Result) return String
       with Pre => not Result.Success;

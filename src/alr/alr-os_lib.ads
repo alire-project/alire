@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Directories;
 with Alire.OS_Lib;
+with Alire.OS_Lib.Subprocess;
 
 with Alr.Utils;
 
@@ -28,7 +29,8 @@ package Alr.OS_Lib is
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False) return Integer;
+                   Force_Quiet         : Boolean := False) return Integer
+                   renames Alire.OS_Lib.Subprocess.Spawn;
    --  If Understands, an extra -v will be passed on Debug log levels.
    --  If Force_Quiet and not in Debug level, output will be entirely muted
    --  (stdout & stderr).
