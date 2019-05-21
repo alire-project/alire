@@ -1,4 +1,4 @@
---  with Ada.Strings.Bounded;
+with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
@@ -97,6 +97,32 @@ package Alire with Preelaborate is
          (for all C of Simple_File => C /= GNAT.OS_Lib.Directory_Separator);
    --  Filenames without path
 
+   ----------------
+   --  Outcomes  --
+   ----------------
+
+   --  For operations that may fail as part of normal usage.
+
+   type Outcome (Success : Boolean := True) is record
+      case Success is
+         when True  => null;
+         when False => Message : Ada.Strings.Unbounded.Unbounded_String;
+      end case;
+   end record;
+
+   function Outcome_Failure (Message : String) return Outcome is
+      (Success => False, Message => +Message);
+
+   function Outcome_Success return Outcome is (Success => True);
+
+   function Outcome_From_Exception
+     (Ex  : Ada.Exceptions.Exception_Occurrence;
+      Msg : String := "") return Outcome with
+     Post => not Outcome_From_Exception'Result.Success;
+   --  Create a failed Outcome when a exception has occurred.
+   --  The exception stack trace will be dumped at debug level.
+   --  If message is empty, message will be Ex exception message.
+
    ---------------
    --  LOGGING  --
    ---------------
@@ -108,6 +134,9 @@ package Alire with Preelaborate is
    Log_Level : Simple_Logging.Levels renames Simple_Logging.Level;
 
    procedure Log (S : String; Level : Simple_Logging.Levels := Info)
-   renames Simple_Logging.Log;
+                  renames Simple_Logging.Log;
+
+   procedure Log_Exception (E     : Ada.Exceptions.Exception_Occurrence;
+                            Level : Simple_Logging.Levels := Debug);
 
 end Alire;
