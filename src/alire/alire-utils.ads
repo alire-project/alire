@@ -12,6 +12,9 @@ package Alire.Utils with Preelaborate is
 
    function Contains (Text : String; Sub : String) return Boolean;
 
+   function Crunch (Text : String) return String;
+   --  Remove consecutive spaces
+
    function Head (Str : String; Separator : Character) return String;
    --  if Str contains Separator, the lhs is returned
    --  Otherwise Str is returned

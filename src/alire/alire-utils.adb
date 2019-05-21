@@ -47,6 +47,37 @@ package body Alire.Utils is
       return OV;
    end Convert;
 
+   ------------
+   -- Crunch --
+   ------------
+
+   function Crunch (Text : String) return String is
+      Result : String (Text'Range);
+      Src    : Natural := Text'First;
+      Dst    : Natural := Result'First;
+   begin
+      --  Trim initial spaces:
+      while Src <= Text'Last and then Text (Src) = ' ' loop
+         Src := Src + 1;
+      end loop;
+
+      --  Remove excess spaces:
+      while Src <= Text'Last loop
+         if Src = Text'First
+           or else
+            Text (Src) /= ' '
+           or else
+            Text (Src - 1) /= ' '
+         then
+            Result (Dst) := Text (Src);
+            Dst := Dst + 1;
+         end if;
+         Src := Src + 1;
+      end loop;
+
+      return Result (Result'First .. Dst - 1);
+   end Crunch;
+
    ----------
    -- Head --
    ----------
