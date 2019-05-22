@@ -1,3 +1,5 @@
+with Alire.OS_Lib; use Alire.OS_Lib.Operators;
+
 package Alire.Config with Preelaborate is
 
    --  For Alire to be usable as a library, options here aren't parsed
@@ -15,5 +17,7 @@ package Alire.Config with Preelaborate is
 
    procedure Set_Path (Path : String);
    --  Override
+
+   function Indexes_Directory return Absolute_Path is (Path / "indexes");
 
 end Alire.Config;
