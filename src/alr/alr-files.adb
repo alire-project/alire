@@ -1,48 +1,6 @@
 with Ada.Directories;
 
-with Alr.OS_Lib;
-
 package body Alr.Files is
-
-   use OS_Lib.Paths;
-
-   -----------------------
-   -- Locate_File_Under --
-   -----------------------
-
-   function Locate_File_Under (Folder    : String;
-                               Name      : String;
-                               Max_Depth : Natural := Natural'Last) return Utils.String_Vector is
-      Found : Utils.String_Vector;
-
-      procedure Locate (Folder : String; Current_Depth : Natural; Max_Depth : Natural) is
-         use Ada.Directories;
-         Search : Search_Type;
-      begin
-         Start_Search (Search, Folder, "", Filter => (Ordinary_File => True, Directory => True, others => False));
-
-         while More_Entries (Search) loop
-            declare
-               Current : Directory_Entry_Type;
-            begin
-               Get_Next_Entry (Search, Current);
-               if Kind (Current) = Directory then
-                  if Simple_Name (Current) /= "." and then Simple_Name (Current) /= ".." and then Current_Depth < Max_Depth then
-                     Locate (Folder / Simple_Name (Current), Current_Depth + 1, Max_Depth);
-                  end if;
-               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Simple_Name (Name) then
-                  Found.Append (Folder / Name);
-               end if;
-            end;
-         end loop;
-
-         End_Search (Search);
-      end Locate;
-
-   begin
-      Locate (Folder, 0, Max_Depth);
-      return Found;
-   end Locate_File_Under;
 
    -------------------------
    -- Locate_Any_GPR_File --

@@ -1,4 +1,7 @@
 with Ada.Directories;
+
+with Alire.Utils;
+
 private with Ada.Finalization;
 
 package Alire.Directories is
@@ -6,11 +9,31 @@ package Alire.Directories is
    function "/" (L, R : String) return String
    is (Ada.Directories.Compose (L, R));
 
+   -- Package to enable easy use of "/"
+   package Operators is
+      function "/" (L, R : String) return String renames Directories."/";
+   end Operators;
+
+   procedure Create_Directory (Name : Platform_Independent_Path);
+   --  Creates a directory and all necessary parent ones.
+   --  May raise usual filesystem exceptions.
+
    function Current return String renames Ada.Directories.Current_Directory;
+
+   function Parent (Dir : String) return String
+                    renames Ada.Directories.Containing_Directory;
 
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String;
    --  Return either the valid enclosing root folder, or ""
+
+   function Find_Files_Under (Folder    : String;
+                              Name      : String;
+                              Max_Depth : Natural := Natural'Last)
+                              return Utils.String_Vector;
+   --  Recursively search for a file
+   --  Depth 0 means given folder only
+   --  Returns all instances found
 
    function Find_Single_File (Path      : String;
                               Extension : String)
