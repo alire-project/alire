@@ -37,7 +37,7 @@ package Alire.Index_On_Disk is
    --  Program_Error in all attempted operations.
 
    function New_Handler (Origin : URL;
-                         Name   : String;
+                         Name   : Restricted_Name;
                          Parent : Platform_Independent_Path)
                          return Index is abstract;
    --  Descendants use this function to initialize a URL-specific handler

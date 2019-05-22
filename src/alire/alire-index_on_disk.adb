@@ -1,5 +1,5 @@
 with Alire.Directories;
---  with Alire.Index_On_Disk.Git;
+with Alire.Index_On_Disk.Git;
 with Alire.TOML_Keys;
 with Alire.Utils;
 with Alire.VCSs;
@@ -12,7 +12,7 @@ package body Alire.Index_On_Disk is
      (raise Program_Error);
 
    function New_Handler (Origin : URL;
-                         Name   : String;
+                         Name   : Restricted_Name;
                          Parent : Platform_Independent_Path)
                             return Invalid_Index;
 
@@ -56,7 +56,7 @@ package body Alire.Index_On_Disk is
    -----------------
 
    function New_Handler (Origin : URL;
-                         Name   : String;
+                         Name   : Restricted_Name;
                          Parent : Platform_Independent_Path)
                          return Invalid_Index is
       pragma Unreferenced (Origin, Name, Parent);
@@ -83,7 +83,7 @@ package body Alire.Index_On_Disk is
          when VCSs.VCS_Git =>
             Result := Outcome_Success;
             raise Unimplemented;
---              return Index_On_Disk.Git.New_Handler (Origin, Name, Parent);
+            return Index_On_Disk.Git.New_Handler (Origin, Name, Parent);
          when VCSs.VCS_Unknown =>
             Result := Outcome_Failure ("Unknown index kind: " & Origin);
             return Invalid_Index'(New_Handler (Origin, Name, Parent));
