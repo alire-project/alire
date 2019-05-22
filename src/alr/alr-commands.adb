@@ -6,6 +6,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
+with Alire.Defaults;
 with Alire.Features.Index;
 with Alire.Index;
 with Alire.Roots;
@@ -368,20 +369,37 @@ package body Alr.Commands is
    ---------------------------
 
    procedure Requires_Full_Index (Force_Reload : Boolean := False) is
-      use Alr.Paths;
    begin
       if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
          Trace.Detail ("Index already loaded, loading skipped");
+         return;
       else
-         Requires_Sources;
+         if Alire.Features.Index.Find_All
+           (Alire.Config.Indexes_Directory).Is_Empty
+         then
+            Trace.Detail
+              ("No indexes configured, adding default community index");
+            declare
+               Outcome : constant Alire.Outcome :=
+                           Alire.Features.Index.Add
+                             (Origin => Alire.Defaults.Community_Index,
+                              Name   => Alire.Defaults.Community_Index_Name,
+                              Under  => Alire.Config.Indexes_Directory);
+            begin
+               if not Outcome.Success then
+                  Reportaise_Command_Failed
+                    ("Could not add community index: " & (+Outcome.Message));
+                  return;
+               end if;
+            end;
+         end if;
 
          Alire.Features.Index.Load_All
            (Platform =>
               (OS       => Platform.Operating_System,
                Distro   => Platform.Distribution,
                Compiler => Platform.Compiler),
-            From     => Paths.Alr_Config_Folder /
-                          "alire" / "deps" / "alire-index" / "index");
+            From     => Alire.Config.Indexes_Directory);
       end if;
    end Requires_Full_Index;
 
