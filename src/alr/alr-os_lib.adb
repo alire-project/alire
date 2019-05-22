@@ -2,33 +2,6 @@ with Ada.Command_Line;
 
 package body Alr.OS_Lib is
 
-   -------------------
-   -- Create_Folder --
-   -------------------
-
-   procedure Create_Folder (Path : String) is
-
-      procedure Create_Parent (Path : String) is
-         use Ada.Directories;
-      begin
-         if Exists (Path) then
-            return;
-         else
-            begin
-               Create_Parent (Containing_Directory (Path));
-            exception
-               when Use_Error =>
-                  null; -- We reached root at worst, and start digging down...
-            end;
-
-            Create_Directory (Path); -- Parent must exist at this point
-         end if;
-      end Create_Parent;
-
-   begin
-      Create_Parent (Path);
-   end Create_Folder;
-
    --------------------------
    -- Current_Command_Line --
    --------------------------
