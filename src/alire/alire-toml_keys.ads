@@ -30,9 +30,9 @@ package Alire.TOML_Keys with Preelaborate is
    Target         : constant String := "target";
    Website        : constant String := "website";
    Word_Size      : constant String := "word-size";
-   
+
    --  Constants used elsewhere
-   
+
    Index_URL : constant String := "url";
 
 end Alire.TOML_Keys;
