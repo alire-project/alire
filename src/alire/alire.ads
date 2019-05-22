@@ -110,6 +110,8 @@ package Alire with Preelaborate is
       end case;
    end record;
 
+   function Message (Result : Outcome) return String is (+Result.Message);
+
    function Outcome_Failure (Message : String) return Outcome is
       (Success => False, Message => +Message);
 

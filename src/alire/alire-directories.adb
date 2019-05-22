@@ -6,6 +6,38 @@ with Alire.Paths;
 package body Alire.Directories is
 
    ----------------------
+   -- Create_Directory --
+   ----------------------
+
+   procedure Create_Directory (Name : Platform_Independent_Path) is
+
+      -------------------
+      -- Create_Parent --
+      -------------------
+
+      procedure Create_Parent (Path : String) is
+         use Ada.Directories;
+      begin
+         if Exists (Path) then
+            return;
+         else
+            begin
+               Create_Parent (Containing_Directory (Path));
+            exception
+               when Use_Error =>
+                  null; -- We reached root at worst, and start digging down...
+            end;
+
+            Ada.Directories.Create_Directory (Path);
+            --  Parent must exist at this point
+         end if;
+      end Create_Parent;
+
+   begin
+      Create_Parent (Name);
+   end Create_Directory;
+
+   ----------------------
    -- Detect_Root_Path --
    ----------------------
 
@@ -42,6 +74,46 @@ package body Alire.Directories is
       when Use_Error =>
          return ""; -- There's no containing folder (hence we're at root)
    end Detect_Root_Path;
+
+   ----------------------
+   -- Find_Files_Under --
+   ----------------------
+
+   function Find_Files_Under (Folder    : String;
+                              Name      : String;
+                              Max_Depth : Natural := Natural'Last)
+                              return Utils.String_Vector
+   is
+      Found : Utils.String_Vector;
+
+      procedure Locate (Folder : String; Current_Depth : Natural; Max_Depth : Natural) is
+         use Ada.Directories;
+         Search : Search_Type;
+      begin
+         Start_Search (Search, Folder, "", Filter => (Ordinary_File => True, Directory => True, others => False));
+
+         while More_Entries (Search) loop
+            declare
+               Current : Directory_Entry_Type;
+            begin
+               Get_Next_Entry (Search, Current);
+               if Kind (Current) = Directory then
+                  if Simple_Name (Current) /= "." and then Simple_Name (Current) /= ".." and then Current_Depth < Max_Depth then
+                     Locate (Folder / Simple_Name (Current), Current_Depth + 1, Max_Depth);
+                  end if;
+               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Simple_Name (Name) then
+                  Found.Append (Folder / Name);
+               end if;
+            end;
+         end loop;
+
+         End_Search (Search);
+      end Locate;
+
+   begin
+      Locate (Folder, 0, Max_Depth);
+      return Found;
+   end Find_Files_Under;
 
    ----------------------
    -- Find_Single_File --

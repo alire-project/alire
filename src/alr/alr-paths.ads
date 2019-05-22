@@ -54,10 +54,6 @@ package Alr.Paths is
    --  This folder can be overriden via environment variable
    --  Alire.Environment.Source.
 
-   function Alr_Index_Folder return Absolute_Path;
-   --  Folder inside Alr_Src_Folder containing the defaul public index
-   --  TODO: obsolete this once "alr index" command is in place
-
    Alr_Working_Folder : constant Relative_Path;
    --  Folder within a working project that will contain metadata/build files,
    --  3rd-party projects, and session.
