@@ -366,6 +366,7 @@ package body Alr.Commands is
    ---------------------------
 
    procedure Requires_Full_Index (Force_Reload : Boolean := False) is
+      use Alr.Paths;
    begin
       if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
          Trace.Detail ("Index already loaded, loading skipped");
@@ -377,7 +378,8 @@ package body Alr.Commands is
               (OS       => Platform.Operating_System,
                Distro   => Platform.Distribution,
                Compiler => Platform.Compiler),
-            From     => Paths.Alr_Index_Folder);
+            From     => Paths.Alr_Config_Folder /
+                          "alire" / "deps" / "alire-index" / "index");
       end if;
    end Requires_Full_Index;
 
