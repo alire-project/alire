@@ -1,6 +1,3 @@
-[submodule "deps/ahven"]
-	path = deps/ahven
-	url = ./deps/ahven
 [submodule "deps/xmlezout"]
 	path = deps/xmlezout
 	url = https://github.com/alire-project/xmlezout.git
@@ -19,6 +16,3 @@
 [submodule "deps/ada-toml"]
 	path = deps/ada-toml
 	url = https://github.com/pmderodat/ada-toml.git
-[submodule "deps/alire-index"]
-	path = deps/alire-index
-	url = https://github.com/alire-project/alire-index.git
