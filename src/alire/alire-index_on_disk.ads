@@ -48,6 +48,22 @@ package Alire.Index_On_Disk is
    function Delete (This : Index'Class) return Outcome;
    --  Remove index from current configuration and delete its folder
 
+   function Load (This : Index'Class;
+                  Env  : Alire.TOML_Index.Environment_Variables)
+                  return Outcome;
+   --  Loads the actual index contents into the in-memory index
+
+   function Update (This : Index) return Outcome is abstract;
+   --  If the index allows updating (e.g. git), do it.
+   --  Otherwise, silently do nothing and return success.
+
+   function Verify (This : Index'Class) return Outcome;
+   --  Ascertain if an index is properly populated (metadata, crates);
+
+   -----------------------
+   -- Index information --
+   -----------------------
+
    function Index_Directory (This : Index'Class) return String;
    --  Returns the actual path in which the index is to be checked out,
    --  i.e., <config>/indexes/<Parent>/<Name>/repo
@@ -55,20 +71,15 @@ package Alire.Index_On_Disk is
    function Metadata_Directory (This : Index'Class) return String;
    --  Returns the parent of the checkout directory
 
-   function Load (This : Index'Class;
-                  Env  : Alire.TOML_Index.Environment_Variables)
-                  return Outcome;
-   --  Loads the actual index contents into the in-memory index
-
    function Name (This : Index'Class) return Restricted_Name;
    --  Returns the user's given Name for the index
 
    function Origin (This : Index) return URL;
    --  A unique string that describes where to find this index (git, dir...).
 
-   function Update (This : Index) return Outcome is abstract;
-   --  If the index allows updating (e.g. git), do it.
-   --  Otherwise, silently do nothing and return success.
+   ---------------
+   -- Utilities --
+   ---------------
 
    overriding
    function To_TOML (This : Index) return TOML.TOML_Value;

@@ -136,4 +136,11 @@ package body Alire.Index_On_Disk is
    function Name (This : Index'Class) return Restricted_Name is
      (This.Name);
 
+   ------------
+   -- Verify --
+   ------------
+
+   function Verify (This : Index'Class) return Outcome is
+     (raise Unimplemented);
+
 end Alire.Index_On_Disk;

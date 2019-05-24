@@ -88,7 +88,11 @@ package body Alr.Commands.Index is
            .Append (Index.Index_Directory);
       end loop;
 
-      Table.Print;
+      if Count > 0 then
+         Table.Print;
+      else
+         Trace.Info ("No index configured.");
+      end if;
    end List;
 
 
