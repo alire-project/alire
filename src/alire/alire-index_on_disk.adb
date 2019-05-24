@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Directories;
 with Alire.Index_On_Disk.Git;
 with Alire.TOML_Keys;
@@ -18,6 +20,32 @@ package body Alire.Index_On_Disk is
 
    function Update (This : Invalid_Index) return Outcome is
      (raise Program_Error);
+
+   ------------
+   -- Delete --
+   ------------
+
+   function Delete (This : Index'Class) return Outcome is
+      use Ada.Directories;
+   begin
+      if Exists (This.Metadata_Directory) then
+         if Kind (This.Metadata_Directory) = Directory then
+            Delete_Tree (This.Metadata_Directory);
+         else
+            return Outcome_Failure
+              ("Expected directory folder is not a folder: " &
+                 This.Metadata_Directory);
+         end if;
+      else
+         return Outcome_Failure ("Expected index directory does not exist: " &
+                                   This.Metadata_Directory);
+      end if;
+
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Outcome_From_Exception (E, "Could not delete index directory");
+   end Delete;
 
    ----------
    -- Load --

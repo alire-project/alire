@@ -4,7 +4,7 @@ package Alr.Commands.Index is
 
    procedure Display_Help_Details (Cmd : Command) is null;
 
-   procedure Execute (Cmd : in out Command) is null; -- TODO
+   procedure Execute (Cmd : in out Command);
 
    procedure Setup_Switches
      (Cmd    : in out Command;

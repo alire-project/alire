@@ -45,9 +45,15 @@ package Alire.Index_On_Disk is
    function Add (This : Index) return Outcome is abstract;
    --  Deploy the index on disk for the first time at <Parent>/<Name>/repo
 
+   function Delete (This : Index'Class) return Outcome;
+   --  Remove index from current configuration and delete its folder
+
    function Index_Directory (This : Index'Class) return String;
    --  Returns the actual path in which the index is to be checked out,
    --  i.e., <config>/indexes/<Parent>/<Name>/repo
+
+   function Metadata_Directory (This : Index'Class) return String;
+   --  Returns the parent of the checkout directory
 
    function Load (This : Index'Class;
                   Env  : Alire.TOML_Index.Environment_Variables)
@@ -85,7 +91,10 @@ private
    use OS_Lib.Operators;
 
    function Index_Directory (This : Index'Class) return String is
-      (This.Parent / This.Name / Checkout_Directory);
+     (This.Parent / This.Name / Checkout_Directory);
+
+   function Metadata_Directory (This : Index'Class) return String is
+     (This.Parent / This.Name);
 
    function Origin (This : Index) return URL is (This.Origin);
 
