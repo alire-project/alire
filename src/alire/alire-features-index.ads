@@ -23,6 +23,6 @@ package Alire.Features.Index is
                  Before : String := "") return Outcome;
    --  Add a new remote index under a folder that possibly contains more
    --    indexes in child folders. That is, Under is the parent of all indexes
-   --  Priority will be set as last, or before given index ID
+   --  Index will be set as last one, or before given index name
 
 end Alire.Features.Index;

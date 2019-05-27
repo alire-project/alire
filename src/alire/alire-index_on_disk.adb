@@ -178,7 +178,8 @@ package body Alire.Index_On_Disk is
       case VCSs.Kind (Origin) is
          when VCSs.VCS_Git =>
             Result := Outcome_Success;
-            return Index_On_Disk.Git.New_Handler (Origin, Name, Parent);
+            return Index_On_Disk.Git.New_Handler (Origin, Name, Parent)
+                                    .With_Priority (Priority);
          when VCSs.VCS_Unknown =>
             Result := Outcome_Failure ("Unknown index kind: " & Origin);
             return Invalid_Index'(New_Handler (Origin, Name, Parent));
@@ -221,6 +222,8 @@ package body Alire.Index_On_Disk is
    begin
       Table.Set (TOML_Keys.Index_URL,
                  TOML.Create_String (This.Origin));
+      Table.Set (TOML_Keys.Index_Name,
+                 TOML.Create_String (This.Name));
       Table.Set (TOML_Keys.Index_Priority,
                  TOML.Create_Integer (TOML.Any_Integer (This.Priority)));
       return Table;

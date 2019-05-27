@@ -18,6 +18,10 @@ package Alire.Index_On_Disk.Directory is
    --  Nothing to do because general checks are done in Features.Index.Add
 
    overriding
+   function Index_Directory (This : Index) return String;
+   --  A file:// index is already on disk, so we don't create a folder for it.
+
+   overriding
    function Update (This : Index) return Outcome is (Outcome_Success);
    --  Nothing to do since the index is on disk, externally managed
 

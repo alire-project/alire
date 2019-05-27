@@ -82,7 +82,7 @@ package Alire.Index_On_Disk is
    -- Index information --
    -----------------------
 
-   function Index_Directory (This : Index'Class) return String;
+   function Index_Directory (This : Index) return String;
    --  Returns the actual path in which the index is to be checked out,
    --  i.e., <config>/indexes/<Parent>/<Name>/repo
 
@@ -128,7 +128,7 @@ private
 
    use OS_Lib.Operators;
 
-   function Index_Directory (This : Index'Class) return String is
+   function Index_Directory (This : Index) return String is
      (This.Parent / This.Name / Checkout_Directory);
 
    function Metadata_Directory (This : Index'Class) return String is

@@ -1,5 +1,13 @@
 package body Alire.Index_On_Disk.Directory is
 
+   ---------------------
+   -- Index_Directory --
+   ---------------------
+
+   function Index_Directory (This : Index) return String is
+     (This.Origin
+        (This.Origin'First + File_Prefix'Length .. This.Origin'Last));
+
    -----------------
    -- New_Handler --
    -----------------
