@@ -25,6 +25,15 @@ package body Alire.Features.Index is
    function Add (Origin : URL;
                  Name   : String;
                  Under  : Absolute_Path) return Outcome is
+
+      procedure Cleanup (Path : String) is
+      begin
+         if Ada.Directories.Exists (Path) then
+            Trace.Debug ("Cleaning up failed index remnants at " & Path);
+            Ada.Directories.Delete_Tree (Path);
+         end if;
+      end Cleanup;
+
       Result : Outcome;
       Index  : constant Index_On_Disk.Index'Class :=
                  Index_On_Disk.New_Handler (Origin, Name, Under, Result);
@@ -35,12 +44,23 @@ package body Alire.Features.Index is
 
       use Alire.Directories.Operators;
    begin
-      Trace.Debug ("Adding index " & Origin & " at " & Under);
+      --  Try to avoid some minimal aliasing
+      if Origin (Origin'Last) = '/' then
+         return Add (Origin (Origin'First .. Origin'Last - 1), Name, Under);
+      end if;
+
+      --  Don't re-add if it is already valid:
+      if Index.Verify.Success then
+         Trace.Warning ("Index is already configured, skipping action.");
+         return Outcome_Success;
+      end if;
 
       --  Ensure no other index has the same name:
       if Search.Contains (Find_All (Under), Name) then
          return Outcome_Failure ("Index with given name already exists");
       end if;
+
+      Trace.Debug ("Adding index " & Origin & " at " & Under);
 
       if Result.Success then
          declare
@@ -58,8 +78,20 @@ package body Alire.Features.Index is
 
             --  Deploy the index
             Result := Index.Add;
+            if not Result.Success then
+               Cleanup (Metafolder);
+               return Result;
+            end if;
 
-            return Result;
+            --  Verify the index
+            Result := Index.Verify;
+            if not Result.Success then
+               Cleanup (Metafolder);
+               return Result;
+            end if;
+
+            return Outcome_Success;
+
          exception
             when E : others =>
                Trace.Debug ("Exception creating index " & Origin);
@@ -69,10 +101,8 @@ package body Alire.Features.Index is
                   Close (File);
                end if;
 
-               --  Clean up if unsuccessful
-               if Ada.Directories.Exists (Under / Index.Name) then
-                  Ada.Directories.Delete_Tree (Under / Index.Name);
-               end if;
+               Cleanup (Metafolder);
+
                return Outcome_From_Exception (E);
          end;
       else
