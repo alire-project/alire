@@ -16,12 +16,13 @@ package Alr.Commands.Index is
       ("Manage indexes used by current configuration");
 
    function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("--del <name> | --list");
+     ("--add <url> --name <name> [--before <name>] | --del <name> | --list");
 
 private
 
    type Command is new Commands.Command with record
       Add  : aliased GNAT.Strings.String_Access;
+      Bfr  : aliased GNAT.Strings.String_Access;
       Del  : aliased GNAT.Strings.String_Access;
       Name : aliased GNAT.Strings.String_Access;
       List : aliased Boolean := False;

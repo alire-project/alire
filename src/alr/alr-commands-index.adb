@@ -18,12 +18,17 @@ package body Alr.Commands.Index is
    ---------
 
    procedure Add (Cmd : Command) is
+      Before : constant String := Cmd.Bfr.all;
+
       Result : constant Alire.Outcome :=
                  Alire.Features.Index.Add
-                   (Cmd.Add.all,
-                    Cmd.Name.all,
-                    Alire.Config.Indexes_Directory);
+                   (Origin => Cmd.Add.all,
+                    Name   => Cmd.Name.all,
+                    Under  => Alire.Config.Indexes_Directory,
+                    Before => Before);
    begin
+      Trace.Debug ("Index before ID = " & Before);
+
       if not Result.Success then
          Reportaise_Command_Failed (Alire.Message (Result));
       end if;
@@ -105,7 +110,12 @@ package body Alr.Commands.Index is
       Table : AAA.Table_IO.Table;
       Count : Natural := 0;
    begin
-      Table.Append ("#").Append ("Name").Append ("URL").Append ("Path");
+      Table
+        .Append ("#").Append ("Name").Append ("URL").Append ("Path");
+
+      if Alire.Log_Level = Alire.Trace.Debug then
+         Table.Append ("Priority");
+      end if;
 
       for Index of Features.Index.Find_All (Config.Indexes_Directory) loop
          Count := Count + 1;
@@ -115,6 +125,10 @@ package body Alr.Commands.Index is
            .Append (Index.Name)
            .Append (Index.Origin)
            .Append (Index.Index_Directory);
+
+         if Alire.Log_Level = Alire.Trace.Debug then
+            Table.Append (Utils.Trim (Index.Priority'Img));
+         end if;
       end loop;
 
       if Count > 0 then
@@ -142,9 +156,16 @@ package body Alr.Commands.Index is
 
       GNAT.Command_Line.Define_Switch
         (Config      => Config,
+         Output      => Cmd.Bfr'Access,
+         Long_Switch => "--before=",
+         Argument    => "ID",
+         Help        => "Priority order (defaults to last)");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
          Output      => Cmd.Del'Access,
          Long_Switch => "--del=",
-         Argument    => "id",
+         Argument    => "ID",
          Help        => "Remove an index");
 
       GNAT.Command_Line.Define_Switch
