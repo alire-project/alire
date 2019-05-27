@@ -12,7 +12,7 @@ package body Alire.Dependencies is
          raise Unimplemented; -- TODO (but not yet in index format)
       else
          return +Image_Abbreviated (Dep.Versions,
-                                    Unicode        => True,
+                                    Unicode        => False,
                                     Implicit_Equal => True);
       end if;
    end To_TOML;
