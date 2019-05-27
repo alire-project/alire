@@ -31,6 +31,7 @@ package body Alr.Testing.Console is
              " FAIL:" & This.Results (Fail)'Img &
              " SKIP:" & This.Results (Skip)'Img &
              " UNAV:" & This.Results (Unavailable)'Img &
+             " UNRS:" & This.Results (Unresolvable)'Img &             
              " CURR:" & This.Current'Img & "/" &
              Utils.Trim (This.Tests'Img) & " " & Rel.Milestone.Image);
    end Start_Test;
