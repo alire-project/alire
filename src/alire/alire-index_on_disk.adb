@@ -141,6 +141,36 @@ package body Alire.Index_On_Disk is
    ------------
 
    function Verify (This : Index'Class) return Outcome is
-     (raise Unimplemented);
+      use GNAT.OS_Lib;
+   begin
+      if not Is_Directory (This.Metadata_Directory) then
+         return Outcome_Failure ("Metadata folder over index not found");
+      elsif not Is_Directory (This.Index_Directory) then
+         return Outcome_Failure ("Index folder not found");
+      else
+         declare
+            Repo_Version_Files : constant Utils.String_Vector :=
+                                   Directories.Find_Files_Under
+                                     (Folder    => This.Index_Directory,
+                                      Name      => "index.toml",
+                                      Max_Depth => 1);
+         begin
+            case Repo_Version_Files.Length is
+               when 0 =>
+                  return Outcome_Failure
+                    ("No index version metadata found in " &
+                       This.Index_Directory);
+               when 1 =>
+                  null;
+               when others =>
+                  return Outcome_Failure
+                    ("Repo contains several version files: " &
+                       This.Index_Directory);
+            end case;
+         end;
+      end if;
+
+      return Outcome_Success;
+   end Verify;
 
 end Alire.Index_On_Disk;
