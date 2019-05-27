@@ -1,10 +1,8 @@
 with Ada.Directories;
-with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.OS_Lib;
 with Alire.TOML_Index;
-with Alire.TOML_Keys;
 
 with GNAT.OS_Lib;
 
@@ -24,7 +22,73 @@ package body Alire.Features.Index is
 
    function Add (Origin : URL;
                  Name   : String;
-                 Under  : Absolute_Path) return Outcome is
+                 Under  : Absolute_Path;
+                 Before : String := "") return Outcome is
+
+      -----------------------
+      -- Adjust_Priorities --
+      -----------------------
+
+      function Adjust_Priorities (Result : out Outcome)
+                                  return Index_On_Disk.Priorities
+      --  Returns the priority the index has to have, and move down the others
+      is
+         Indexes  : constant Index_On_Disk_Set := Find_All (Under);
+         Found    : Boolean := False;
+
+         Priority : Index_On_Disk.Priorities := Index_On_Disk.Default_Priority;
+      begin
+         Result := Outcome_Failure ("Internal error: result status not set");
+
+         --  Trivial case if not Before
+         if Before = "" then
+            Result := Outcome_Success;
+            if Indexes.Is_Empty then
+               return Index_On_Disk.Default_Priority;
+            else
+               return Indexes.Last_Element.Priority + 1;
+            end if;
+         end if;
+
+         --  Look for the given index and, when found,
+         --    increase priorities of all after that point
+         for Index of Indexes loop
+            if (not Found) and then Index.Name = Before then
+               Trace.Debug ("Found index inserting priority:" &
+                              Index.Priority'Img);
+               Found    := True;
+               Priority := Index.Priority;
+            end if;
+
+            if Found then
+               Trace.Debug ("Demoting index priority of " & Index.Name);
+               declare
+                  New_Index : constant Index_On_Disk.Index'Class :=
+                                Index.With_Priority (Index.Priority + 1);
+               begin
+                  Result :=
+                    New_Index.Write_Metadata (New_Index.Metadata_File);
+                  if not Result.Success then
+                     return 0; -- Cut it short, value is no longer important
+                  end if;
+               end;
+            end if;
+         end loop;
+
+         if Found then
+            Result := Outcome_Success;
+         else
+            --  Error, given index does not exist
+            Result :=
+              Outcome_Failure ("Given before-index does not exist: " & Before);
+         end if;
+
+         return Priority;
+      end Adjust_Priorities;
+
+      -------------
+      -- Cleanup --
+      -------------
 
       procedure Cleanup (Path : String) is
       begin
@@ -34,72 +98,78 @@ package body Alire.Features.Index is
          end if;
       end Cleanup;
 
-      Result : Outcome;
-      Index  : constant Index_On_Disk.Index'Class :=
-                 Index_On_Disk.New_Handler (Origin, Name, Under, Result);
-
-      use Alire.Directories.Operators;
    begin
       --  Try to avoid some minimal aliasing
       if Origin (Origin'Last) = '/' then
          return Add (Origin (Origin'First .. Origin'Last - 1), Name, Under);
       end if;
 
-      --  Don't re-add if it is already valid:
-      if Index.Verify.Success then
-         Trace.Warning ("Index is already configured, skipping action.");
-         return Outcome_Success;
-      end if;
-
-      Trace.Debug ("Adding index " & Origin & " at " & Under);
-
-      if Result.Success then
-         declare
-            use Ada.Text_IO;
-            File       : File_Type;
-            Metafolder : constant Platform_Independent_Path :=
-                           Under / Index.Name;
-         begin
-            --  Create containing folder with its metadata
-            Alire.Directories.Create_Directory (Metafolder);
-            Create (File, Out_File,
-                    Metafolder / Index_On_Disk.Metadata_Filename);
-            TOML.File_IO.Dump_To_File (Index.To_TOML, File);
-            Close (File);
-
-            --  Deploy the index
-            Result := Index.Add;
-            if not Result.Success then
-               Cleanup (Metafolder);
-               return Result;
-            end if;
-
-            --  Verify the index
-            Result := Index.Verify;
-            if not Result.Success then
-               Cleanup (Metafolder);
-               return Result;
-            end if;
-
+      --  Check, with fake priority, that the index does not exist already
+      declare
+         Result : Outcome;
+         Index  : constant Index_On_Disk.Index'Class :=
+                    Index_On_Disk.New_Handler
+                      (Origin, Name, Under, Result,
+                       Index_On_Disk.Default_Priority);
+      begin
+         --  Don't re-add if it is already valid:
+         if Result.Success and then Index.Verify.Success then
+            Trace.Warning ("Index is already configured, skipping action.");
             return Outcome_Success;
+         elsif not Result.Success then
+            return Result;
+         end if;
+      end;
 
-         exception
-            when E : others =>
-               Trace.Debug ("Exception creating index " & Origin);
-               Log_Exception (E);
+      --  Create handler with proper priority and proceed
+      declare
+         Result        : Outcome;
+         Adjust_Result : Outcome := Outcome_Success; -- Might end unused
 
-               if Is_Open (File) then
-                  Close (File);
-               end if;
+         Priority      : constant Index_On_Disk.Priorities :=
+                           Adjust_Priorities (Adjust_Result);
+         Index         : constant Index_On_Disk.Index'Class :=
+                           Index_On_Disk.New_Handler
+                             (Origin, Name, Under, Result, Priority);
+      begin
+         Trace.Debug ("Insertion priority is" & Priority'Img);
 
-               Cleanup (Metafolder);
+         --  Check that priorities could be adjusted
+         if not Adjust_Result.Success then
+            return Adjust_Result;
+         end if;
 
-               return Outcome_From_Exception (E);
-         end;
-      else
-         Trace.Warning ("Could not add requested index from " & Origin);
-         return Result;
-      end if;
+         --  Re-check the URL provides a valid handler:
+         if not Result.Success then
+            return Result;
+         end if;
+
+         Trace.Debug ("Adding index " & Origin & " at " & Under);
+
+         --  Create containing folder with its metadata
+         Alire.Directories.Create_Directory (Index.Metadata_Directory);
+         Result := Index.Write_Metadata (Index.Metadata_File);
+         if not Result.Success then
+            Cleanup (Index.Metadata_Directory);
+            return Result;
+         end if;
+
+         --  Deploy the index
+         Result := Index.Add;
+         if not Result.Success then
+            Cleanup (Index.Metadata_Directory);
+            return Result;
+         end if;
+
+         --  Verify the index
+         Result := Index.Verify;
+         if not Result.Success then
+            Cleanup (Index.Metadata_Directory);
+            return Result;
+         end if;
+
+         return Outcome_Success;
+      end;
    end Add;
 
    --------------
@@ -129,35 +199,21 @@ package body Alire.Features.Index is
             begin
                --  Load and verify contents
                if Load_Result.Success then
+                  --  Create the handler for the on-disk index from metadata
                   declare
-                     TOML_URL : constant TOML.TOML_Value :=
-                                  TOML.Get_Or_Null (Metadata,
-                                                    TOML_Keys.Index_URL);
+                     Result : Outcome;
+                     Index  : constant Index_On_Disk.Index'Class :=
+                                Index_On_Disk.New_Handler
+                                  (From   => Metadata,
+                                   Parent => Under,
+                                   Result => Result);
                   begin
-                     if TOML_URL.Is_Null then
-                        Trace.Warning ("Index metadata at " & Metafile &
-                                         " is invalid (missing URL)");
-                        return;
+                     if Result.Success then
+                        Set.Insert (Index);
+                     else
+                        Trace.Warning ("Index metadata in " & Metafile &
+                                       " is invalid: " & Message (Result));
                      end if;
-
-                     --  Create the handler for the on-disk index from metadata
-                     declare
-                        Result : Outcome;
-                        Index  : constant Index_On_Disk.Index'Class :=
-                                   Index_On_Disk.New_Handler
-                                     (Origin => TOML_URL.As_String,
-                                      Name   => "", -- Fixed in a later commit
-                                      Parent => Under,
-                                      Result => Result);
-                     begin
-                        if Result.Success then
-                           Set.Insert (Index);
-                        else
-                           Trace.Warning
-                             ("Index URL in " & Metafile &
-                                " is invalid: " & TOML_URL.As_String);
-                        end if;
-                     end;
                   end;
                else
                   Trace.Warning ("Unable to load metadata from " & Metafile &

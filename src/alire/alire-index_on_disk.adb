@@ -91,6 +91,13 @@ package body Alire.Index_On_Disk is
       end case;
    end Load;
 
+   ----------
+   -- Name --
+   ----------
+
+   function Name (This : Index'Class) return Restricted_Name is
+     (This.Name);
+
    -----------------
    -- New_Handler --
    -----------------
@@ -218,13 +225,6 @@ package body Alire.Index_On_Disk is
                  TOML.Create_Integer (TOML.Any_Integer (This.Priority)));
       return Table;
    end To_TOML;
-
-   ---------------
-   -- Unique_Id --
-   ---------------
-
-   function Name (This : Index'Class) return Restricted_Name is
-     (This.Name);
 
    ------------
    -- Verify --

@@ -19,8 +19,10 @@ package Alire.Features.Index is
 
    function Add (Origin : URL;
                  Name   : String;
-                 Under  : Absolute_Path) return Outcome;
+                 Under  : Absolute_Path;
+                 Before : String := "") return Outcome;
    --  Add a new remote index under a folder that possibly contains more
    --    indexes in child folders. That is, Under is the parent of all indexes
+   --  Priority will be set as last, or before given index ID
 
 end Alire.Features.Index;
