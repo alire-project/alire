@@ -7,10 +7,10 @@ package Alire.Index_On_Disk.Git is
    type Index is new Index_On_Disk.Index with private;
 
    overriding
-   function New_Handler (From   : URL;
+   function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Platform_Independent_Path) return Index with
-     Pre => Utils.Starts_With (From, "git+");
+     Pre => Utils.Starts_With (Origin, "git+");
 
    function Add (This : Index) return Outcome;
    --  Clones the index repository

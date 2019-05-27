@@ -38,10 +38,6 @@ package body Alire.Features.Index is
       Index  : constant Index_On_Disk.Index'Class :=
                  Index_On_Disk.New_Handler (Origin, Name, Under, Result);
 
-      package Search is new Sets.Generic_Keys
-        (Key_Type => String,
-         Key      => Index_On_Disk.Name);
-
       use Alire.Directories.Operators;
    begin
       --  Try to avoid some minimal aliasing

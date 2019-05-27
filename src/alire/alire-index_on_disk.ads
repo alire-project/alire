@@ -21,6 +21,8 @@ package Alire.Index_On_Disk is
    Checkout_Directory : constant String := "repo";
    Metadata_Filename  : constant String := "index.toml";
 
+   File_Prefix        : constant String := "file://";
+
    type Index (<>) is abstract new Interfaces.Tomifiable with private;
 
    pragma Warnings (Off); -- because Post doesn't mention New_Handler'Result
