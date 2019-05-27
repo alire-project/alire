@@ -244,9 +244,9 @@ entries:
    [depends-on.'case(os)'.windows]
    libwinbar = "^3.0"
 
-Available constraint operators are the usual Ada ones (=, /=, >, >=, <, <=) 
-plus caret (^, any upwards version within the same major point) and tilde 
-(~, any upwards version within the same minor point).
+  Available constraint operators are the usual Ada ones (=, /=, >, >=, <, <=) 
+  plus caret (^, any upwards version within the same major point) and tilde 
+  (~, any upwards version within the same minor point).
 
 * ``project-files``: optional list of strings. Each is a path, relative to the
   root of the source directory, to a project file to be made available. For
