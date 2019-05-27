@@ -1,4 +1,5 @@
 with Ada.Directories;
+with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Index_On_Disk.Directory;
@@ -8,6 +9,8 @@ with Alire.Utils;
 with Alire.VCSs;
 
 with GNAT.OS_Lib;
+
+with TOML.File_IO;
 
 package body Alire.Index_On_Disk is
 
@@ -19,7 +22,7 @@ package body Alire.Index_On_Disk is
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Platform_Independent_Path)
-                            return Invalid_Index;
+                         return Invalid_Index;
 
    function New_Invalid_Index return Invalid_Index'Class is
      (Invalid_Index'(URL_Len  => 0,
@@ -102,10 +105,12 @@ package body Alire.Index_On_Disk is
    -- New_Handler --
    -----------------
 
-   function New_Handler (Origin : URL;
-                         Name   : String;
-                         Parent : Platform_Independent_Path;
-                         Result : out Outcome) return Index'Class
+   function New_Handler (Origin   :     URL;
+                         Name     :     String;
+                         Parent   :     Platform_Independent_Path;
+                         Result   : out Outcome;
+                         Priority :     Priorities := Default_Priority)
+                         return Index'Class
    is
       use GNAT.OS_Lib;
 
@@ -125,7 +130,6 @@ package body Alire.Index_On_Disk is
             return New_Invalid_Index;
          else
             Result := Outcome_Success;
-
             --  Ensure the created Index wrapper has absolute path
             return Directory.New_Handler
               (File_Prefix & Ada.Directories.Full_Name (Path),
@@ -147,7 +151,7 @@ package body Alire.Index_On_Disk is
                      Origin (Origin'First + File_Prefix'Length .. Origin'Last);
          begin
             if Is_Directory (Path) then
-               return New_Directory_Handler (Path);
+               return New_Directory_Handler (Path).With_Priority (Priority);
             elsif Is_Directory (Directory_Separator & Path) then
                Result := Outcome_Failure
                  ("Given relative path matches an absolute path." &
@@ -156,7 +160,12 @@ package body Alire.Index_On_Disk is
             end if;
          end;
       elsif Is_Directory (Origin) then
-         return New_Directory_Handler (Origin);
+         return New_Directory_Handler (Origin).With_Priority (Priority);
+      elsif Origin (Origin'First) = '/' or else
+        not Utils.Contains (Origin, "+")
+      then
+         Result := Outcome_Failure ("Not a readable directory: " & Origin);
+         return New_Invalid_Index;
       end if;
 
       case VCSs.Kind (Origin) is
@@ -169,6 +178,33 @@ package body Alire.Index_On_Disk is
       end case;
    end New_Handler;
 
+   -----------------
+   -- New_Handler --
+   -----------------
+
+   function New_Handler (From   :     TOML.TOML_Value;
+                         Parent :     Platform_Independent_Path;
+                         Result : out Outcome) return Index'Class is
+   begin
+      if not From.Has (TOML_Keys.Index_URL) then
+         Result := Outcome_Failure ("Missing URL in index metadata");
+         return New_Invalid_Index;
+      elsif not From.Has (TOML_Keys.Index_Name) then
+         Result := Outcome_Failure ("Missing Name in index metadata");
+         return New_Invalid_Index;
+      elsif not From.Has (TOML_Keys.Index_Priority) then
+         Result := Outcome_Failure ("Missing Priority in index metadata");
+         return New_Invalid_Index;
+      end if;
+
+      return New_Handler
+        (Origin   => From.Get (TOML_Keys.Index_URL).As_String,
+         Name     => From.Get (TOML_Keys.Index_Name).As_String,
+         Parent   => Parent,
+         Result   => Result,
+         Priority => Integer (From.Get (TOML_Keys.Index_Priority).As_Integer));
+   end New_Handler;
+
    -------------
    -- To_TOML --
    -------------
@@ -176,7 +212,10 @@ package body Alire.Index_On_Disk is
    function To_TOML (This : Index) return TOML.TOML_Value is
       Table : constant TOML.TOML_Value := TOML.Create_Table;
    begin
-      Table.Set (TOML_Keys.Index_URL, TOML.Create_String (This.Origin));
+      Table.Set (TOML_Keys.Index_URL,
+                 TOML.Create_String (This.Origin));
+      Table.Set (TOML_Keys.Index_Priority,
+                 TOML.Create_Integer (TOML.Any_Integer (This.Priority)));
       return Table;
    end To_TOML;
 
@@ -201,6 +240,8 @@ package body Alire.Index_On_Disk is
          return Outcome_Failure ("Index folder not found: " &
                                    This.Index_Directory);
       else
+         --  TODO: simply try to load it once the loaded index is not global
+         --  For now, instead, locate index version file:
          declare
             Repo_Version_Files : constant Utils.String_Vector :=
                                    Directories.Find_Files_Under
@@ -225,5 +266,43 @@ package body Alire.Index_On_Disk is
 
       return Outcome_Success;
    end Verify;
+
+   -------------------
+   -- With_Priority --
+   -------------------
+
+   function With_Priority (This     : Index'Class;
+                           Priority : Priorities) return Index'Class is
+   begin
+      return Wrapper : Index'Class := This do
+         Wrapper.Priority := Priority;
+      end return;
+   end With_Priority;
+
+   --------------------
+   -- Write_Metadata --
+   --------------------
+
+   function Write_Metadata (This     : Index'Class;
+                            Filename : String) return Outcome is
+      use Ada.Text_IO;
+      File : File_Type;
+   begin
+      Create (File, Out_File, Filename);
+      TOML.File_IO.Dump_To_File (This.To_TOML, File);
+      Close (File);
+
+      return Outcome_Success;
+   exception
+      when E : others =>
+         Trace.Debug ("Exception saving index to " & Filename);
+         Log_Exception (E);
+
+         if Is_Open (File) then
+            Close (File);
+         end if;
+
+         return Outcome_From_Exception (E);
+   end Write_Metadata;
 
 end Alire.Index_On_Disk;

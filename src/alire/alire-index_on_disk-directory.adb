@@ -13,7 +13,8 @@ package body Alire.Index_On_Disk.Directory is
                                             Dir_Len  => Parent'Length,
                                             Origin   => From,
                                             Name     => Name,
-                                            Parent   => Parent);
+                                            Parent   => Parent,
+                                            Priority => <>);
    end New_Handler;
 
 end Alire.Index_On_Disk.Directory;

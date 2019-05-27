@@ -25,6 +25,7 @@ package body Alire.Index_On_Disk.Git is
                Origin     => Origin,
                Name       => Name,
                Parent     => Parent,
+               Priority   => <>,
                Has_Commit => VCSs.Commit (Origin) /= "");
    end New_Handler;
 
