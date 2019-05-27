@@ -9,7 +9,25 @@ package body Alr.Commands.Index is
 
    --  Forward declarations
 
+   procedure Add (Cmd : Command);
+
    procedure List;
+
+   ---------
+   -- Add --
+   ---------
+
+   procedure Add (Cmd : Command) is
+      Result : constant Alire.Outcome :=
+                 Alire.Features.Index.Add
+                   (Cmd.Add.all,
+                    Cmd.Name.all,
+                    Alire.Config.Indexes_Directory);
+   begin
+      if not Result.Success then
+         Reportaise_Command_Failed (Alire.Message (Result));
+      end if;
+   end Add;
 
    ------------
    -- Delete --
@@ -50,14 +68,25 @@ package body Alr.Commands.Index is
    -------------
 
    procedure Execute (Cmd : in out Command) is
+      Enabled : Natural := 0;
    begin
       --  Check no multi-action
-      if Cmd.Del.all /= "" and then Cmd.List then
+      Enabled := Enabled + (if Cmd.Add.all /= "" then 1 else 0);
+      Enabled := Enabled + (if Cmd.Del.all /= "" then 1 else 0);
+      Enabled := Enabled + (if Cmd.List then 1 else 0);
+
+      if Enabled /= 1 then
          Reportaise_Wrong_Arguments ("Specify exactly one index subcommand");
       end if;
 
       --  Dispatch to selected action
-      if Cmd.Del.all /= "" then
+      if Cmd.Add.all /= "" then
+         if Cmd.Name.all = "" then
+            Reportaise_Wrong_Arguments
+              ("Must provide a local name for new index");
+         end if;
+         Add (Cmd);
+      elsif Cmd.Del.all /= "" then
          Delete (Cmd.Del.all);
       elsif Cmd.List then
          List;
@@ -106,6 +135,13 @@ package body Alr.Commands.Index is
    begin
       GNAT.Command_Line.Define_Switch
         (Config      => Config,
+         Output      => Cmd.Add'Access,
+         Long_Switch => "--add=",
+         Argument    => "URL",
+         Help        => "Add an index");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
          Output      => Cmd.Del'Access,
          Long_Switch => "--del=",
          Argument    => "id",
@@ -116,6 +152,13 @@ package body Alr.Commands.Index is
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
          Help        => "List configured indexes");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Name'Access,
+         Long_Switch => "--name=",
+         Argument    => "NAME",
+         Help        => "User given name for the index");
    end Setup_Switches;
 
 end Alr.Commands.Index;

@@ -21,7 +21,9 @@ package Alr.Commands.Index is
 private
 
    type Command is new Commands.Command with record
+      Add  : aliased GNAT.Strings.String_Access;
       Del  : aliased GNAT.Strings.String_Access;
+      Name : aliased GNAT.Strings.String_Access;
       List : aliased Boolean := False;
    end record;
 
