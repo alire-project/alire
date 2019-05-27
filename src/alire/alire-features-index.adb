@@ -285,4 +285,25 @@ package body Alire.Features.Index is
       end if;
    end Load_Index_Metadata;
 
+   ----------------
+   -- Update_All --
+   ----------------
+
+   function Update_All (Under : Absolute_Path) return Outcome is
+   begin
+      for Index of Find_All (Under) loop
+         declare
+            Result : constant Outcome := Index.Update;
+         begin
+            if Result.Success then
+               Trace.Detail ("Updated succesfully: " & Index.Origin);
+            else
+               return Result;
+            end if;
+         end;
+      end loop;
+
+      return Outcome_Success;
+   end Update_All;
+
 end Alire.Features.Index;

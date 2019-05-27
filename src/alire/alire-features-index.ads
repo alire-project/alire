@@ -17,6 +17,9 @@ package Alire.Features.Index is
                        From     : Absolute_Path);
    --  Load all indexes available at the given location
 
+   function Update_All (Under : Absolute_Path) return Outcome;
+   --  Find and update all indexes at given location
+
    function Add (Origin : URL;
                  Name   : String;
                  Under  : Absolute_Path;
