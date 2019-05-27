@@ -13,6 +13,8 @@ package body Alr.Commands.Index is
 
    procedure List;
 
+   procedure Update_All;
+
    ---------
    -- Add --
    ---------
@@ -42,15 +44,14 @@ package body Alr.Commands.Index is
       Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
                   Alire.Features.Index.Find_All
                     (Alire.Config.Indexes_Directory);
-      Cursor  : Alire.Features.Index.Sets.Cursor := Indexes.First;
       Found   : Boolean := False;
    begin
       --  Find matching index and delete
-      for I in 1 .. Natural (Indexes.Length) loop
-         if Indexes (Cursor).Name = Name then
+      for Index of Indexes loop
+         if Index.Name = Name then
             Found := True;
             declare
-               Result : constant Alire.Outcome := Indexes (Cursor).Delete;
+               Result : constant Alire.Outcome := Index.Delete;
             begin
                if Result.Success then
                   exit;
@@ -59,8 +60,6 @@ package body Alr.Commands.Index is
                end if;
             end;
          end if;
-
-         Cursor := Alire.Features.Index.Sets.Next (Cursor);
       end loop;
 
       if not Found then
@@ -79,6 +78,7 @@ package body Alr.Commands.Index is
       Enabled := Enabled + (if Cmd.Add.all /= "" then 1 else 0);
       Enabled := Enabled + (if Cmd.Del.all /= "" then 1 else 0);
       Enabled := Enabled + (if Cmd.List then 1 else 0);
+      Enabled := Enabled + (if Cmd.Update_All then 1 else 0);
 
       if Enabled /= 1 then
          Reportaise_Wrong_Arguments ("Specify exactly one index subcommand");
@@ -95,6 +95,8 @@ package body Alr.Commands.Index is
          Delete (Cmd.Del.all);
       elsif Cmd.List then
          List;
+      elsif Cmd.Update_All then
+         Update_All;
       else
          Reportaise_Wrong_Arguments ("Specify an index subcommand");
       end if;
@@ -180,6 +182,26 @@ package body Alr.Commands.Index is
          Long_Switch => "--name=",
          Argument    => "NAME",
          Help        => "User given name for the index");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Update_All'Access,
+         Long_Switch => "--update-all",
+         Help        => "Update configured indexes");
    end Setup_Switches;
+
+   ----------------
+   -- Update_All --
+   ----------------
+
+   procedure Update_All is
+      Result : constant Alire.Outcome :=
+                 Alire.Features.Index.Update_All
+                   (Alire.Config.Indexes_Directory);
+   begin
+      if not Result.Success then
+         Reportaise_Command_Failed (Alire.Message (Result));
+      end if;
+   end Update_All;
 
 end Alr.Commands.Index;

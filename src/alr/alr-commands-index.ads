@@ -26,6 +26,8 @@ private
       Del  : aliased GNAT.Strings.String_Access;
       Name : aliased GNAT.Strings.String_Access;
       List : aliased Boolean := False;
+
+      Update_All : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Index;
