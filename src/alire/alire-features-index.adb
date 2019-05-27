@@ -55,11 +55,6 @@ package body Alire.Features.Index is
          return Outcome_Success;
       end if;
 
-      --  Ensure no other index has the same name:
-      if Search.Contains (Find_All (Under), Name) then
-         return Outcome_Failure ("Index with given name already exists");
-      end if;
-
       Trace.Debug ("Adding index " & Origin & " at " & Under);
 
       if Result.Success then

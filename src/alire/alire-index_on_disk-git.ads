@@ -1,12 +1,16 @@
+with Alire.Utils;
+
 package Alire.Index_On_Disk.Git is
 
    --  Local management of remote indexes stored in git repositories
 
    type Index is new Index_On_Disk.Index with private;
 
-   function New_Handler (Origin : URL;
+   overriding
+   function New_Handler (From   : URL;
                          Name   : Restricted_Name;
-                         Parent : Platform_Independent_Path) return Index;
+                         Parent : Platform_Independent_Path) return Index with
+     Pre => Utils.Starts_With (From, "git+");
 
    function Add (This : Index) return Outcome;
    --  Clones the index repository
