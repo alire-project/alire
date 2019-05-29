@@ -43,14 +43,17 @@ package body Alr.Commands.Init is
       end if;
 
       declare
-         Guard : Folder_Guard (
-                   (if Cmd.In_Place
-                    then OS_Lib.Stay_In_Current_Folder
-                    else OS_Lib.Enter_Folder (Name))) with Unreferenced;
-         Root : constant Alire.Roots.Root :=
-           Alire.Roots.New_Root (+Name, Alire.Directories.Current);
+         use Alr.Os_Lib;
+
+         Directory : constant String :=
+           (if Cmd.In_Place
+            then Alire.Directories.Current
+            else Alire.Directories.Current / Name);
+
+         Root : constant Alire.Roots.Root := Alire.Roots.New_Root
+           (+Name, Directory);
       begin
-         OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
+         OS_Lib.Create_Folder (Name / Paths.Alr_Working_Folder);
 
          Templates.Generate_Prj_Alr
            (Root.Release,
