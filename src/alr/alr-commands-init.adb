@@ -22,15 +22,17 @@ package body Alr.Commands.Init is
    begin
       if Cmd.In_Place then
          null; -- do nothing
+
       elsif Cmd.No_Skel then
          Ada.Directories.Create_Directory (Name);
+
       else
          Requires_Templates;
 
          OS_Lib.Copy_Folder ((if Cmd.Bin
-                             then Paths.Templates_Bin_Folder
-                             else Paths.Templates_Lib_Folder),
-                             Name);
+                              then Paths.Templates_Bin_Folder
+                              else Paths.Templates_Lib_Folder),
+                              Name);
 
          OS_Lib.Sed_Folder (Name,
                             Utils.To_Lower_Case (Templates.Sed_Pattern),
@@ -81,7 +83,7 @@ package body Alr.Commands.Init is
       --  Validation finished
 
       declare
-         Name : constant String := Argument (1);
+         Name  : constant String := Argument (1);
          Check : constant Parsers.Allowed_Milestones :=
                    Parsers.Project_Versions (Name)
                    with Unreferenced;
@@ -89,14 +91,14 @@ package body Alr.Commands.Init is
          if Utils.To_Lower_Case (Name)
            = Utils.To_Lower_Case (Templates.Sed_Pattern)
          then
-            Log ("The project name is invalid, as it is used" &
-                   " internally by alr; please choose another name");
+            Log ("The project name is invalid, as it is used internally by"
+                 & " alr; please choose another name");
             raise Command_Failed;
          end if;
 
          if not Cmd.In_Place and then Ada.Directories.Exists (Name) then
-            Log ("Folder " & Utils.Quote (Name) &
-                   " already exists, not proceeding.");
+            Log ("Folder " & Utils.Quote (Name)
+                 & " already exists, not proceeding.");
             raise Command_Failed;
          end if;
 
