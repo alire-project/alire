@@ -1,4 +1,5 @@
 with Ada.Directories;
+with Ada.Text_IO;
 
 with Alire.Origins;
 with Alire.Releases;
@@ -18,38 +19,144 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      Name  : constant String := Argument (1);
+      use Alr.Os_Lib;
+
+      package TIO renames Ada.Text_IO;
+
+      For_Library : constant Boolean := not Cmd.Bin;
+      Name        : constant String := Argument (1);
+      Lower_Name  : constant String := Utils.To_Lower_Case (Name);
+      Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
+
+      Directory     : constant String :=
+        (if Cmd.In_Place
+         then Alire.Directories.Current
+         else Alire.Directories.Current / Name);
+      Src_Directory : constant String := Directory / "src";
+
+      File : TIO.File_Type;
+
+      procedure Put_New_Line;
+      procedure Put_Line (S : String);
+      --  Shortcuts to write to File
+
+      procedure Generate_Project_File;
+      --  Generate a project file for this crate
+
+      procedure Generate_Root_Package;
+      --  Generate the specification for the root package of this crate
+
+      procedure Generate_Program_Main;
+      --  Generate the procedure body for the program main of this crate
+
+      ---------------------------
+      -- Generate_Project_File --
+      ---------------------------
+
+      procedure Generate_Project_File is
+         Filename : constant String := Directory / (Lower_Name & ".gpr");
+      begin
+         TIO.Create (File, TIO.Out_File, Filename);
+         Put_Line ("project " & Mixed_Name & " is");
+         Put_New_Line;
+         if For_Library then
+            Put_Line ("   for Library_Name use """ & Mixed_Name & """;");
+            Put_Line ("   for Library_Version use ""0.0.0"";");
+            Put_New_Line;
+         end if;
+         Put_Line ("  for Source_Dirs use (""src"");");
+         Put_Line ("  for Object_Dir use ""obj"";");
+         if For_Library then
+            Put_Line ("  for Library_Dir use ""lib"";");
+         else
+            Put_Line ("  for Exec_Dir use ""bin"";");
+            Put_Line ("  for Main use (""" & Lower_Name & ".adb"");");
+         end if;
+         Put_New_Line;
+         Put_Line ("   package Builder is");
+         Put_Line ("      for Switches (""ada"") use (""-j0"", ""-g"");");
+         Put_Line ("   end Builder;");
+         Put_New_Line;
+         Put_Line ("   package Compiler is");
+         Put_Line ("      for Switches (""ada"") use");
+         Put_Line ("        (""-gnatVa"", ""-gnatwa"", ""-g"", ""-O2"",");
+         Put_Line ("         ""-gnata"", ""-gnato"", ""-fstack-check"");");
+         Put_Line ("   end Compiler;");
+         Put_New_Line;
+         Put_Line ("   package Binder is");
+         Put_Line ("      for Switches (""ada"") use (""-Es"");");
+         Put_Line ("   end Binder;");
+         Put_New_Line;
+         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Close (File);
+      end Generate_Project_File;
+
+      ---------------------------
+      -- Generate_Root_Package --
+      ---------------------------
+
+      procedure Generate_Root_Package is
+         Filename : constant String := Src_Directory / (Lower_Name & ".ads");
+      begin
+         TIO.Create (File, TIO.Out_File, Filename);
+         Put_Line ("package " & Mixed_Name & " is");
+         Put_New_Line;
+         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Close (File);
+      end Generate_Root_Package;
+
+      ---------------------------
+      -- Generate_Program_Main --
+      ---------------------------
+
+      procedure Generate_Program_Main is
+         Filename : constant String := Src_Directory / (Lower_Name & ".adb");
+      begin
+         TIO.Create (File, TIO.Out_File, Filename);
+         Put_Line ("procedure " & Mixed_Name & " is");
+         Put_Line ("begin");
+         Put_Line ("   null;");
+         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Close (File);
+      end Generate_Program_Main;
+
+      ------------------
+      -- Put_New_Line --
+      ------------------
+
+      procedure Put_New_Line is
+      begin
+         TIO.New_Line (File);
+      end Put_New_Line;
+
+      --------------
+      -- Put_Line --
+      --------------
+
+      procedure Put_Line (S : String) is
+      begin
+         TIO.Put_Line (File, S);
+      end Put_Line;
+
    begin
       if Cmd.In_Place then
          null; -- do nothing
 
       elsif Cmd.No_Skel then
-         Ada.Directories.Create_Directory (Name);
+         Ada.Directories.Create_Directory (Directory);
 
       else
-         Requires_Templates;
-
-         OS_Lib.Copy_Folder ((if Cmd.Bin
-                              then Paths.Templates_Bin_Folder
-                              else Paths.Templates_Lib_Folder),
-                              Name);
-
-         OS_Lib.Sed_Folder (Name,
-                            Utils.To_Lower_Case (Templates.Sed_Pattern),
-                            Utils.To_Lower_Case (Name));
-         OS_Lib.Sed_Folder (Name,
-                            Utils.To_Mixed_Case (Templates.Sed_Pattern),
-                            Utils.To_Mixed_Case (Name));
+         Ada.Directories.Create_Directory (Directory);
+         Generate_Project_File;
+         Ada.Directories.Create_Directory (Src_Directory);
+         if For_Library then
+            Generate_Root_Package;
+         else
+            Generate_Program_Main;
+         end if;
       end if;
 
       declare
-         use Alr.Os_Lib;
-
-         Directory : constant String :=
-           (if Cmd.In_Place
-            then Alire.Directories.Current
-            else Alire.Directories.Current / Name);
-
          Root : constant Alire.Roots.Root := Alire.Roots.New_Root
            (+Name, Directory);
       begin
