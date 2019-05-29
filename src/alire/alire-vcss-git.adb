@@ -58,7 +58,7 @@ package body Alire.VCSs.Git is
    -- Update --
    ------------
 
-   Function Update (This : VCS;
+   function Update (This : VCS;
                     Repo : Platform_Independent_Path)
                     return Outcome
    is
@@ -70,7 +70,7 @@ package body Alire.VCSs.Git is
                  then "-q"
                  else "--progress ");
       Exit_Code : constant Integer :=
-                    Os_Lib.Subprocess.Spawn ("git", "update " & Extra);
+                    OS_Lib.Subprocess.Spawn ("git", "update " & Extra);
    begin
       if Exit_Code /= 0 then
          return Outcome_Failure ("git update exited with code: " &

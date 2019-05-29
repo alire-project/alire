@@ -15,7 +15,7 @@ package body Alr.Utils.Temp_File is
          null;
       end if;
    end Finalize;
-   
+
    --------------
    -- New_File --
    --------------
@@ -24,19 +24,19 @@ package body Alr.Utils.Temp_File is
       type Parts is ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
                      'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-                    'u', 'v', 'w', 'x', 'y', 'z');
-      
+                     'u', 'v', 'w', 'x', 'y', 'z');
+
       package Rand is new Ada.Numerics.Discrete_Random (Parts);
       Gen : Rand.Generator;
-      
+
       Suffix : String (1 .. 10);
    begin
       Rand.Reset (Gen);
-      
+
       for C of Suffix loop
          C := Parts'Image (Rand.Random (Gen))(2);
       end loop;
-      
+
       declare
          Name : constant String := "alrtmp." & Suffix;
       begin

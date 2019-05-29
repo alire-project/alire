@@ -3,7 +3,7 @@ with Alire.Releases;
 
 package Alr.Actions is
 
-   -- Implements executors for Alire.Actions
+   --  Implements executors for Alire.Actions
 
    procedure Execute (This : Alire.Actions.Action'Class);
 

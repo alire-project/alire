@@ -9,7 +9,7 @@ package Alire.Directories is
    function "/" (L, R : String) return String
    is (Ada.Directories.Compose (L, R));
 
-   -- Package to enable easy use of "/"
+   --  Package to enable easy use of "/"
    package Operators is
       function "/" (L, R : String) return String renames Directories."/";
    end Operators;

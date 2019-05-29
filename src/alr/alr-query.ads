@@ -13,8 +13,12 @@ package Alr.Query is
 
    use Alire;
 
-   --  subtype Solution is Containers.Version_Map; -- A dependence-valid mapping of project -> version
-   subtype Instance is Containers.Release_Map;   -- A list of releases complying with a Solution
+   --  subtype Solution is Containers.Version_Map;
+   --  A dependence-valid mapping of project -> version
+
+   subtype Instance is Containers.Release_Map;
+   --  A list of releases complying with a Solution
+
    subtype Release  is Types.Release;
 
    type Solution (Valid : Boolean) is record
@@ -24,7 +28,8 @@ package Alr.Query is
       end case;
    end record;
 
-   Empty_Instance : constant Instance := (Containers.Project_Release_Maps.Empty_Map with null record);
+   Empty_Instance : constant Instance :=
+     (Containers.Project_Release_Maps.Empty_Map with null record);
 
    ---------------------
    --  Basic queries  --
@@ -35,15 +40,20 @@ package Alr.Query is
                     return Boolean renames Alire.Index.Exists;
 
    function Find (Project : Alire.Project;
-                  Version : Semantic_Versioning.Version) return Release renames Alire.Index.Find;
+                  Version : Semantic_Versioning.Version)
+                  return Release
+   renames Alire.Index.Find;
 
-   function Exists (Project : Alire.Project;
-                    Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
-                    return Boolean;
+   function Exists
+     (Project : Alire.Project;
+      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
+      return Boolean;
 
-   function Find (Project : Alire.Project;
-                  Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
-                  Policy  : Policies) return Release;
+   function Find
+     (Project : Alire.Project;
+      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
+      Policy  : Policies)
+      return Release;
 
    function Find (Project : String;
                   Policy  : Policies) return Release;
@@ -54,13 +64,16 @@ package Alr.Query is
    --  Only need a release and the platform properties
 
    function Is_Available (R : Alire.Index.Release) return Boolean;
-   --  The release knows the requisites on the platform; here we evaluate these against the current platform
-   --  Current checks include the "available" requisites and that the native package do exist
-   --  NOTE: it does not consider that dependencies can be resolved, only that it "could" be available
+   --  The release knows the requisites on the platform; here we evaluate these
+   --  against the current platform. Current checks include the "available"
+   --  requisites and that the native package do exist. NOTE: it does not
+   --  consider that dependencies can be resolved, only that it "could" be
+   --  available.
 
    -----------------------
    --  Advanced queries --
-   --  They may need to travel the full catalog, with multiple individual availability checks
+   --  They may need to travel the full catalog, with multiple individual
+   --  availability checks.
 
    function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
                      Policy  :     Policies) return Solution;

@@ -4,12 +4,16 @@ package Alr.Commands.Search is
 
    type Command is new Commands.Command with private;
 
-   overriding procedure Execute (Cmd : in out Command);
+   overriding
+   procedure Execute (Cmd : in out Command);
 
-   overriding function Short_Description (Cmd : Command) return String is
-     ("Search a string in release names and properties");
+   overriding
+   function Short_Description (Cmd : Command) return String
+   is ("Search a string in release names and properties");
 
-   overriding function Usage_Custom_Parameters (Cmd : Command) return String is ("<search term>");
+   overriding
+   function Usage_Custom_Parameters (Cmd : Command) return String
+   is ("<search term>");
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;

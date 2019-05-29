@@ -20,7 +20,8 @@ package Alr.Templates is
    --  Generate the aggregate project file with given resolved dependencies
 
    procedure Generate_Agg_Gpr (Root : Alire.Roots.Root);
-   --  Generate the aggregate project file solving the dependencies of the given root
+   --  Generate the aggregate project file solving the dependencies of the
+   --  given root.
 
    procedure Generate_Prj_Alr (Release  : Types.Release;
                                Filename : String);
@@ -33,8 +34,10 @@ package Alr.Templates is
 
 private
 
-   procedure Generate_Full_Index (File : in out Ada.Text_IO.File_Type; Index_Folder : String);
-   --  Add with Alire.Index.* for all dependencies in the given already opened file
+   procedure Generate_Full_Index (File         : in out Ada.Text_IO.File_Type;
+                                  Index_Folder : String);
+   --  Add with Alire.Index.* for all dependencies in the given already opened
+   --  file.
 
 
    Sed_Pattern : constant String := "PROJECT_SKEL";

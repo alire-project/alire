@@ -3,7 +3,7 @@ package Alire.OS_Lib with Preelaborate is
    function "/" (L, R : String) return String;
    --  Shorthand for path composition
 
-   -- Package to enable easy use of "/"
+   --  Package to enable easy use of "/"
    package Operators is
       function "/" (L, R : String) return String renames OS_Lib."/";
    end Operators;

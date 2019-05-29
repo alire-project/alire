@@ -4,7 +4,7 @@ with Alr.Utils;
 
 package Alr.Files is
 
-   -- The files specific to alr/alire working, and related facilities
+   --  The files specific to alr/alire working, and related facilities
 
    function Locate_File_Under (Folder    : String;
                                Name      : String;
@@ -16,7 +16,8 @@ package Alr.Files is
    --  Returns all instances found
 
    function Locate_Any_GPR_File return Natural;
-   --  Says if there's any *.gpr file in current folder (making the cwd a plausible alr project)
+   --  Says if there's any *.gpr file in current folder (making the cwd a
+   --  plausible alr project).
 
    procedure Backup_If_Existing (File : String);
    --  If File exists, move to file.prev

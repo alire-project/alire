@@ -24,20 +24,28 @@ package body Alr.Commands.Withing is
    -- Add --
    ---------
 
-   function Add (Deps : Alire.Conditional.Dependencies; New_Dep : String) return Alire.Conditional.Dependencies
+   function Add (Deps    : Alire.Conditional.Dependencies;
+                 New_Dep : String)
+                 return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
-      Requested : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (New_Dep);
+      Requested : constant Parsers.Allowed_Milestones :=
+        Parsers.Project_Versions (New_Dep);
    begin
       if not Query.Exists (Requested.Project) then
-         Reportaise_Command_Failed ("The requested project was not found in the catalog: " & (+Requested.Project));
+         Reportaise_Command_Failed
+           ("The requested project was not found in the catalog: " &
+            (+Requested.Project));
       end if;
 
       return Result : constant Alire.Conditional.Dependencies :=
-        Deps and Alire.Conditional.New_Dependency (Requested.Project, Requested.Versions)
+        Deps and Alire.Conditional.New_Dependency (Requested.Project,
+                                                   Requested.Versions)
       do
-         if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties)) then
-            Reportaise_Command_Failed ("Adding " & New_Dep & " has no dependency solution");
+         if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties))
+         then
+            Reportaise_Command_Failed ("Adding " & New_Dep &
+                                         " has no dependency solution");
          else
             Trace.Detail ("Dependency " & New_Dep & " successfully added");
          end if;
@@ -48,14 +56,18 @@ package body Alr.Commands.Withing is
    -- Del --
    ---------
 
-   function Del (Deps : Alire.Conditional.Dependencies; Old_Dep : String) return Alire.Conditional.Dependencies
+   function Del (Deps    : Alire.Conditional.Dependencies;
+                 Old_Dep : String)
+                 return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
       use all type Semantic_Versioning.Version_Set;
-      Requested : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Old_Dep);
+      Requested : constant Parsers.Allowed_Milestones :=
+        Parsers.Project_Versions (Old_Dep);
    begin
       if Requested.Versions /= Semantic_Versioning.Any then
-         Trace.Warning ("Version is not used when removing dependencies: " & Old_Dep);
+         Trace.Warning
+           ("Version is not used when removing dependencies: " & Old_Dep);
       end if;
 
       --  Iterate over actual dependencies and remove any matching the given
@@ -66,7 +78,8 @@ package body Alr.Commands.Withing is
             begin
                case Dep.Kind is
                   when Condition =>
-                     Trace.Warning ("Skipping unsupported conditional dependency");
+                     Trace.Warning
+                       ("Skipping unsupported conditional dependency");
                   when Value => -- A value is a vector of dependencies!
                      if Dep.Value.Project /= Requested.Project then
                         Filtered := Filtered and
@@ -103,9 +116,9 @@ package body Alr.Commands.Withing is
       --  Set, regenerate and update
       declare
          New_Root  : constant Alire.Roots.Root :=
-                       Alire.Roots.New_Root
-                         (Root.Current.Release.Replacing (Dependencies => Deps),
-                          Root.Current.Path);
+           Alire.Roots.New_Root
+             (Root.Current.Release.Replacing (Dependencies => Deps),
+              Root.Current.Path);
       begin
          Templates.Generate_Prj_Alr (New_Root.Release,
                                      New_Root.Crate_File);
@@ -120,7 +133,8 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Add is
-      Deps : Alire.Conditional.Dependencies := Root.Current.Release.Dependencies;
+      Deps : Alire.Conditional.Dependencies :=
+        Root.Current.Release.Dependencies;
    begin
       for I in 1 .. Num_Arguments loop
          Deps := Add (Deps, Argument (I));
@@ -134,7 +148,8 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Del is
-      Deps : Alire.Conditional.Dependencies := Root.Current.Release.Dependencies;
+      Deps : Alire.Conditional.Dependencies :=
+        Root.Current.Release.Dependencies;
    begin
       for I in 1 .. Num_Arguments loop
          Deps := Del (Deps, Argument (I));
@@ -212,7 +227,8 @@ package body Alr.Commands.Withing is
 
          while not End_Of_File (File) loop
             declare
-               Line : constant String := Crunch (To_Lower_Case (Get_Line (File)));
+               Line : constant String :=
+                 Crunch (To_Lower_Case (Get_Line (File)));
             begin
                exit when Contains (Line, "project");
 
@@ -267,14 +283,16 @@ package body Alr.Commands.Withing is
       end if;
 
       if Cmd.Del and Cmd.From then
-         Reportaise_Wrong_Arguments ("Simultaneous --del, --from are incompatible");
+         Reportaise_Wrong_Arguments
+           ("Simultaneous --del, --from are incompatible");
       end if;
 
       if Num_Arguments < 1 then
          if Cmd.Del then
             Reportaise_Wrong_Arguments ("At least one dependency required");
          elsif Cmd.From then
-            Reportaise_Wrong_Arguments ("At least one GPR file to process required");
+            Reportaise_Wrong_Arguments
+              ("At least one GPR file to process required");
          end if;
       end if;
 
@@ -292,7 +310,8 @@ package body Alr.Commands.Withing is
    exception
       when E : Constraint_Error =>
          Exceptions.Report ("In Withing.Execute:", E);
-         Reportaise_Command_Failed ("Could not locate package containing releases of " & Argument (1));
+         Reportaise_Command_Failed
+           ("Could not locate package containing releases of " & Argument (1));
    end Execute;
 
    --------------------

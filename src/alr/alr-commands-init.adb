@@ -45,7 +45,8 @@ package body Alr.Commands.Init is
                    (if Cmd.In_Place
                     then OS_Lib.Stay_In_Current_Folder
                     else OS_Lib.Enter_Folder (Name))) with Unreferenced;
-         Root : constant Alire.Roots.Root := Alire.Roots.New_Root (+Name, Alire.Directories.Current);
+         Root : constant Alire.Roots.Root :=
+           Alire.Roots.New_Root (+Name, Alire.Directories.Current);
       begin
          OS_Lib.Create_Folder (Paths.Alr_Working_Folder);
 
@@ -85,22 +86,28 @@ package body Alr.Commands.Init is
                    Parsers.Project_Versions (Name)
                    with Unreferenced;
       begin
-         if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Templates.Sed_Pattern) then
-            Log ("The project name is invalid, as it is used internally by alr; please choose another name");
+         if Utils.To_Lower_Case (Name)
+           = Utils.To_Lower_Case (Templates.Sed_Pattern)
+         then
+            Log ("The project name is invalid, as it is used" &
+                   " internally by alr; please choose another name");
             raise Command_Failed;
          end if;
 
          if not Cmd.In_Place and then Ada.Directories.Exists (Name) then
-            Log ("Folder " & Utils.Quote (Name) & " already exists, not proceeding.");
+            Log ("Folder " & Utils.Quote (Name) &
+                   " already exists, not proceeding.");
             raise Command_Failed;
          end if;
 
-         --  Create and enter folder for generation, if it didn't happen already
+         --  Create and enter folder for generation, if it didn't happen
+         --  already.
          if Session_State = Project then
             if Name = Root.Current.Release.Project_Str then
                Trace.Info ("Already in working copy, skipping initialization");
             else
-               Trace.Error ("Cannot initialize a project inside another alr project, stopping.");
+               Trace.Error ("Cannot initialize a project inside another"
+                            & " alr project, stopping.");
                raise Command_Failed;
             end if;
          end if;

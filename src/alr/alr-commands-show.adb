@@ -48,7 +48,8 @@ package body Alr.Commands.Show is
 
    procedure Report (Name     : Alire.Project;
                      Versions : Semver.Version_Set;
-                     Current  : Boolean; -- session or command-line requested release
+                     Current  : Boolean;
+                     --  session or command-line requested release
                      Cmd      : Command) is
    begin
       declare
@@ -125,7 +126,7 @@ package body Alr.Commands.Show is
 
       --  asking for info, we could return the current project
       --  We have internal data, but is it valid?
-      if Num_Arguments = 0 Then
+      if Num_Arguments = 0 then
          case Bootstrap.Session_State is
             when Outside =>
                Reportaise_Wrong_Arguments
@@ -143,9 +144,10 @@ package body Alr.Commands.Show is
 
       declare
          Allowed : constant Parsers.Allowed_Milestones :=
-                     (if Num_Arguments = 1
-                      then Parsers.Project_Versions (Argument (1))
-                      else Parsers.Project_Versions (Root.Current.Release.Milestone.Image));
+           (if Num_Arguments = 1
+            then Parsers.Project_Versions (Argument (1))
+            else Parsers.Project_Versions
+              (Root.Current.Release.Milestone.Image));
       begin
          --  Execute
          Report (Allowed.Project,
@@ -154,7 +156,8 @@ package body Alr.Commands.Show is
                  Cmd);
       exception
          when Alire.Query_Unsuccessful =>
-            Trace.Info ("Project [" & Argument (1) & "] does not exist in the catalog.");
+            Trace.Info ("Project [" & Argument (1) &
+                          "] does not exist in the catalog.");
       end;
    end Execute;
 

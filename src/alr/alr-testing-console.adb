@@ -6,19 +6,20 @@ with GNAT.IO; use GNAT.IO;
 package body Alr.Testing.Console is
 
    Tab : constant Character := ASCII.HT;
-   
+
    ---------------
    -- Start_Run --
    ---------------
 
-   procedure Start_Run (This  : in out Reporter; 
+   procedure Start_Run (This  : in out Reporter;
                         Name  :        String;
                         Tests :        Natural) is
    begin
       This.Tests := Tests;
-      Put_Line ("Starting test run " & Name & " for " & Commands.Version.Fingerprint);
+      Put_Line ("Starting test run " & Name & " for " &
+                  Commands.Version.Fingerprint);
    end Start_Run;
-   
+
    ----------------
    -- Start_Test --
    ----------------
@@ -31,11 +32,11 @@ package body Alr.Testing.Console is
              " FAIL:" & This.Results (Fail)'Img &
              " SKIP:" & This.Results (Skip)'Img &
              " UNAV:" & This.Results (Unavailable)'Img &
-             " UNRS:" & This.Results (Unresolvable)'Img &             
+             " UNRS:" & This.Results (Unresolvable)'Img &
              " CURR:" & This.Current'Img & "/" &
              Utils.Trim (This.Tests'Img) & " " & Rel.Milestone.Image);
    end Start_Test;
-   
+
    --------------
    -- End_Test --
    --------------
@@ -44,20 +45,20 @@ package body Alr.Testing.Console is
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
                        Elapsed :        Duration;
-                       Log     :        Utils.String_Vector) 
+                       Log     :        Utils.String_Vector)
    is
       pragma Unreferenced (Rel, Log);
       type CS is delta 0.01 digits 6;
 
    begin
       This.Results (Outcome) := This.Results (Outcome) + 1;
-      
-      case Outcome is 
+
+      case Outcome is
          when Error =>
-            Put_Line (Tab & "ERRED");            
+            Put_Line (Tab & "ERRED");
          when Fail =>
             Put_Line (Tab & "FAILED");
-         when Pass =>                         
+         when Pass =>
             Put_Line (Tab & "tested in" & CS'Image (CS (Elapsed)) & "s");
          when Skip =>
             Put_Line (Tab & "skipped");
@@ -67,13 +68,13 @@ package body Alr.Testing.Console is
             Put_Line (Tab & "unresolvable in" & CS'Image (CS (Elapsed)) & "s");
       end case;
    end End_Test;
-   
+
    -------------
    -- End_Run --
    -------------
 
    procedure End_Run (This : in out Reporter) is
-   begin 
+   begin
       Put_Line ("PASS:" & This.Results (Pass)'Img &
                   " FAIL:" & This.Results (Fail)'Img &
                   " SKIP:" & This.Results (Skip)'Img &

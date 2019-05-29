@@ -86,11 +86,17 @@ package body Alire.Directories is
    is
       Found : Utils.String_Vector;
 
-      procedure Locate (Folder : String; Current_Depth : Natural; Max_Depth : Natural) is
+      procedure Locate (Folder        : String;
+                        Current_Depth : Natural;
+                        Max_Depth     : Natural)
+      is
          use Ada.Directories;
          Search : Search_Type;
       begin
-         Start_Search (Search, Folder, "", Filter => (Ordinary_File => True, Directory => True, others => False));
+         Start_Search (Search, Folder, "",
+                       Filter => (Ordinary_File => True,
+                                  Directory     => True,
+                                  others        => False));
 
          while More_Entries (Search) loop
             declare
@@ -98,10 +104,19 @@ package body Alire.Directories is
             begin
                Get_Next_Entry (Search, Current);
                if Kind (Current) = Directory then
-                  if Simple_Name (Current) /= "." and then Simple_Name (Current) /= ".." and then Current_Depth < Max_Depth then
-                     Locate (Folder / Simple_Name (Current), Current_Depth + 1, Max_Depth);
+                  if Simple_Name (Current) /= "."
+                    and then
+                     Simple_Name (Current) /= ".."
+                    and then
+                     Current_Depth < Max_Depth
+                  then
+                     Locate (Folder / Simple_Name (Current),
+                             Current_Depth + 1,
+                             Max_Depth);
                   end if;
-               elsif Kind (Current) = Ordinary_File and then Simple_Name (Current) = Simple_Name (Name) then
+               elsif Kind (Current) = Ordinary_File
+                 and then Simple_Name (Current) = Simple_Name (Name)
+               then
                   Found.Append (Folder / Name);
                end if;
             end;

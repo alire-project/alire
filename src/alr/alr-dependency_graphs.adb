@@ -21,7 +21,9 @@ package body Alr.Dependency_Graphs is
    -- From_Instance --
    -------------------
 
-   function From_Instance (Instance : Alire.Containers.Release_Map) return Graph is
+   function From_Instance (Instance : Alire.Containers.Release_Map)
+                           return Graph
+   is
    begin
       return Result : Graph do
          for Rel of Instance loop
@@ -37,7 +39,8 @@ package body Alr.Dependency_Graphs is
    ---------------
 
    function Including (This : Graph;
-                       R    : Types.Release) return Graph
+                       R    : Types.Release)
+                       return Graph
    is
 
       function Enumerate is new Alire.Conditional.For_Dependencies.Enumerate
@@ -46,7 +49,8 @@ package body Alr.Dependency_Graphs is
 
    begin
       return Result : Graph := This do
-         for Dep of Enumerate (R.Dependencies.Evaluate (Platform.Properties)) loop
+         for Dep of Enumerate (R.Dependencies.Evaluate (Platform.Properties))
+         loop
             Result.Include (New_Dependency (R.Project, Dep.Project));
          end loop;
       end return;
@@ -57,7 +61,9 @@ package body Alr.Dependency_Graphs is
    ----------------------
 
    function Filtering_Unused (This     : Graph;
-                              Instance : Alire.Containers.Release_Map) return Graph is
+                              Instance : Alire.Containers.Release_Map)
+                              return Graph
+   is
    begin
       return Result : Graph do
          for Dep of This loop
@@ -73,7 +79,9 @@ package body Alr.Dependency_Graphs is
    ----------------------
 
    function Has_Dependencies (This : Graph;
-                              Project : Alire.Project) return Boolean is
+                              Project : Alire.Project)
+                              return Boolean
+   is
    begin
       for Dep of This loop
          if +Dep.Dependent = Project then
@@ -116,7 +124,8 @@ package body Alr.Dependency_Graphs is
          Tmp : constant Utils.Temp_File.File := Utils.Temp_File.New_File;
       begin
          Source.Write (Tmp.Name, Separator => " ");
-         OS_Lib.Spawn_Raw (Paths.Scripts_Graph_Easy, "--as=boxart " & Tmp.Name);
+         OS_Lib.Spawn_Raw (Paths.Scripts_Graph_Easy, "--as=boxart " &
+                             Tmp.Name);
       end;
    end Plot;
 

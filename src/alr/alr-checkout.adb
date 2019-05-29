@@ -29,14 +29,16 @@ package body Alr.Checkout is
    begin
       if Ada.Directories.Exists (Folder) then
          Was_There := True;
-         Trace.Detail ("Skipping checkout of already available " & R.Milestone.Image);
+         Trace.Detail ("Skipping checkout of already available " &
+                         R.Milestone.Image);
       else
          Was_There := False;
          Trace.Detail ("About to deploy " & R.Milestone.Image);
          Alr.Origins.Fetch_Or_Install (R.Origin, Folder);
       end if;
 
-      --  Actions must run always, in case this is a subproject with shared folder
+      --  Actions must run always, in case this is a subproject with shared
+      --  folder.
       if Perform_Actions and then Ada.Directories.Exists (Folder) then
          declare
             use OS_Lib;
@@ -69,9 +71,11 @@ package body Alr.Checkout is
             --  TODO: this can be done in parallel within each round
             for Rel of Pending loop
                if Graph.Has_Dependencies (Rel.Project) then
-                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " & Rel.Milestone.Image);
+                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
+                                 Rel.Milestone.Image);
                else
-                  Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " & Rel.Milestone.Image);
+                  Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
+                                 Rel.Milestone.Image);
                   Checkout (Rel, Parent, Was_There);
                   Graph := Graph.Removing_Dependee (Rel.Project);
                   To_Remove.Include (Rel);
@@ -80,9 +84,11 @@ package body Alr.Checkout is
 
             if To_Remove.Is_Empty then
                Trace.Error ("No project checked-out in round" & Round'Img);
-               Trace.Error ("Remaining projects:" & Pending.Length'Img & "; Dependency graph:");
+               Trace.Error ("Remaining projects:" & Pending.Length'Img &
+                              "; Dependency graph:");
                Graph.Print (Pending);
-               raise Program_Error with "No project checked-out in round" & Round'Img;
+               raise Program_Error
+                 with "No project checked-out in round" & Round'Img;
             else
                for Rel of To_Remove loop
                   Pending.Exclude (Rel.Project);
@@ -110,11 +116,11 @@ package body Alr.Checkout is
    -- Working_Copy --
    ------------------
 
-   procedure Working_Copy (R              : Alire.Index.Release;
-                           Parent_Folder  : String;
-                           Generate_Files : Boolean := True;
-                           Perform_Actions: Boolean := True)
-     				--  FIXME policies not implemented
+   procedure Working_Copy (R               : Alire.Index.Release;
+                           Parent_Folder   : String;
+                           Generate_Files  : Boolean := True;
+                           Perform_Actions : Boolean := True)
+                           --  FIXME policies not implemented
    is
       Was_There : Boolean with Unreferenced;
    begin
@@ -124,9 +130,10 @@ package body Alr.Checkout is
       if Generate_Files then
          declare
             use OS_Lib;
-            Guard      : Folder_Guard (Enter_Folder (R.Unique_Folder)) with Unreferenced;
+            Guard      : Folder_Guard (Enter_Folder (R.Unique_Folder))
+              with Unreferenced;
             Root       : constant Alire.Roots.Root :=
-                           Alire.Roots.New_Root (R.Project, Alire.Directories.Current);
+              Alire.Roots.New_Root (R.Project, Alire.Directories.Current);
          begin
             Templates.Generate_Prj_Alr (R, Root.Crate_File);
             Templates.Generate_Agg_Gpr (Root);

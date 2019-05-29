@@ -27,18 +27,22 @@ package body Alr.Parsers is
                                        then Spec (Op_Pos)
                                        else ASCII.NUL);
 
-      V       : constant Semver.Version := (if Op_Pos > Spec'First
-                                            then Semver.Relaxed (Spec (Op_Pos + 1 .. Spec'Last))
-                                            else Semver.V ("0.0.0"));
+      V       : constant Semver.Version :=
+        (if Op_Pos > Spec'First
+         then Semver.Relaxed (Spec (Op_Pos + 1 .. Spec'Last))
+         else Semver.V ("0.0.0"));
 
-      Versions : constant Semver.Version_Set := (case Op is
-                                                    when ASCII.NUL => Semver.Any,
-                                                    when '='       => Semver.Exactly (V),
-                                                    when '^'       => Semver.Within_Major (V),
-                                                    when '~'       => Semver.Within_Minor (V),
-                                                    when others    => raise Constraint_Error with "Unrecognized version operator: " & Op);
+      Versions : constant Semver.Version_Set :=
+        (case Op is
+            when ASCII.NUL => Semver.Any,
+            when '='       => Semver.Exactly (V),
+            when '^'       => Semver.Within_Major (V),
+            when '~'       => Semver.Within_Minor (V),
+            when others    => raise Constraint_Error
+              with "Unrecognized version operator: " & Op);
    begin
-      --  Previous return with copy caused double free on finalize of Versions???
+      --  Previous return with copy caused double free on finalize of
+      --  Versions???
       return M : Allowed_Milestones (Name'Length) do
          M.Project  := +Name;
          M.Versions := Versions;

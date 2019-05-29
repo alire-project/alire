@@ -35,9 +35,11 @@ package body Alr.Commands.Test is
    begin
       --  Declared GPR files in include paths
       declare
-         Guard : Folder_Guard (Enter_Folder (R.Unique_Folder)) with Unreferenced;
+         Guard : Folder_Guard (Enter_Folder (R.Unique_Folder))
+           with Unreferenced;
       begin
-         for Gpr of R.Project_Files (Platform.Properties, With_Path => True) loop
+         for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
+         loop
             if not OS_Lib.Is_Regular_File (Gpr) then
                Trace.Error ("Declared project file not found: " & Gpr);
                return False;
@@ -49,8 +51,10 @@ package body Alr.Commands.Test is
       for Exe of R.Executables (Platform.Properties) loop
          if Files.Locate_File_Under (Folder    => R.Unique_Folder,
                                      Name      => Exe,
-                                     Max_Depth => Natural'Last).Is_Empty then
-            Trace.Error ("Declared executable not found after compilation: " & Exe);
+                                     Max_Depth => Natural'Last).Is_Empty
+         then
+            Trace.Error
+              ("Declared executable not found after compilation: " & Exe);
             return False;
          end if;
       end loop;
@@ -73,7 +77,9 @@ package body Alr.Commands.Test is
    -- Do_Test --
    -------------
 
-   procedure Do_Test (Cmd : Command; Releases : Alire.Containers.Release_Sets.Set) is
+   procedure Do_Test (Cmd      : Command;
+                      Releases : Alire.Containers.Release_Sets.Set)
+   is
       use Ada.Calendar;
       use OS_Lib.Paths;
 
@@ -86,9 +92,9 @@ package body Alr.Commands.Test is
       Skipping_Extensions         : Boolean := False;
 
       Timestamp                   : constant String :=
-                                      Utils.Trim
-                                        (Long_Long_Integer'Image
-                                           (Long_Long_Integer (Clock - Time_Of (1970, 1, 1))));
+        Utils.Trim
+          (Long_Long_Integer'Image
+             (Long_Long_Integer (Clock - Time_Of (1970, 1, 1))));
 
       Newline : constant String := "" & ASCII.LF;
 
@@ -105,12 +111,14 @@ package body Alr.Commands.Test is
          Start := Clock;
 
          Is_Available  := Query.Is_Available (R);
-         Is_Resolvable := Query.Is_Resolvable (R.Depends (Platform.Properties));
+         Is_Resolvable := Query.Is_Resolvable
+           (R.Depends (Platform.Properties));
 
          if not Is_Available then
             Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);
          elsif not Is_Resolvable then
-            Reporters.End_Test (R, Testing.Unresolvable, Clock - Start, No_Log);
+            Reporters.End_Test
+              (R, Testing.Unresolvable, Clock - Start, No_Log);
          elsif not R.Origin.Is_Native and then
            not R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
@@ -126,7 +134,8 @@ package body Alr.Commands.Test is
          then
             Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
             Skipping_Extensions := True;
-            Trace.Detail ("Skipping already tested extension " & R.Milestone.Image);
+            Trace.Detail
+              ("Skipping already tested extension " & R.Milestone.Image);
          else
             begin
                Skipping_Extensions := False;
@@ -188,10 +197,13 @@ package body Alr.Commands.Test is
    overriding procedure Execute (Cmd : in out Command) is
       Test_All : constant Boolean := Num_Arguments = 0;
 
-      procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type; Stop : in out Boolean) is
+      procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
+                           Stop : in out Boolean)
+      is
          pragma Unreferenced (Item, Stop);
       begin
-         Put_Line ("Current folder is not empty, testing aborted (use --continue to resume a partial test)");
+         Put_Line ("Current folder is not empty, testing aborted " &
+                     "(use --continue to resume a partial test)");
          raise Command_Failed;
       end Not_Empty;
 
@@ -207,35 +219,51 @@ package body Alr.Commands.Test is
       begin
          for I in Alire.Index.Catalog.Iterate loop
             if Test_All then
-               if not Cmd.Last or else
-                 I = Alire.Index.Catalog.Last or else
-                 Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+               if not Cmd.Last
+                 or else
+                  I = Alire.Index.Catalog.Last
+                 or else
+                  Alire.Index.Catalog (I).Project /=
+                    Alire.Index.Catalog (Next (I)).Project
                then
                   Candidates.Include (Alire.Index.Catalog (I));
                end if;
             else
                for J in 1 .. Num_Arguments loop
                   declare
-                     R       :          Alire.Index.Release renames Alire.Index.Catalog (I);
+                     R :  Alire.Index.Release renames Alire.Index.Catalog (I);
                   begin
                      if Cmd.Search then
                         if Utils.Contains (+R.Project, Argument (J)) then
-                           if not Cmd.Last or else
-                             I = Alire.Index.Catalog.Last or else
-                             R.Project /= Alire.Index.Catalog (Next (I)).Project
+                           if not Cmd.Last
+                             or else
+                              I = Alire.Index.Catalog.Last
+                             or else
+                              R.Project /=
+                                Alire.Index.Catalog (Next (I)).Project
                            then
                               Candidates.Include (R);
                            end if;
                         end if;
                      else
                         declare
-                           Allowed : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Argument (J));
+                           Allowed : constant Parsers.Allowed_Milestones :=
+                             Parsers.Project_Versions (Argument (J));
                         begin
-                           if R.Project = Allowed.Project and then Semver.Satisfies (R.Version, Allowed.Versions) then
-                              if not Cmd.Last or else
-                                I = Alire.Index.Catalog.Last or else
-                                R.Project /= Alire.Index.Catalog (Next (I)).Project or else
-                                not Semver.Satisfies (Alire.Index.Catalog (Next (I)).Version, Allowed.Versions)
+                           if R.Project = Allowed.Project
+                             and then
+                              Semver.Satisfies (R.Version, Allowed.Versions)
+                           then
+                              if not Cmd.Last
+                                or else
+                                 I = Alire.Index.Catalog.Last
+                                or else
+                                 R.Project /=
+                                   Alire.Index.Catalog (Next (I)).Project
+                                or else
+                                 not Semver.Satisfies
+                                      (Alire.Index.Catalog (Next (I)).Version,
+                                       Allowed.Versions)
                               then
                                  Candidates.Include (R);
                               end if;
@@ -254,7 +282,7 @@ package body Alr.Commands.Test is
          for I in 1 .. Num_Arguments loop
             declare
                Cry_Me_A_River : constant Parsers.Allowed_Milestones :=
-                                  Parsers.Project_Versions (Argument (I)) with Unreferenced;
+                 Parsers.Project_Versions (Argument (I)) with Unreferenced;
             begin
                null; -- Just check that no exception is raised
             end;
@@ -263,7 +291,8 @@ package body Alr.Commands.Test is
 
       --  Validate exclusive options
       if Cmd.Full and then (Num_Arguments /= 0 or else Cmd.Search) then
-         Trace.Always ("Either use --full or specify project names, but not both");
+         Trace.Always
+           ("Either use --full or specify project names, but not both");
          raise Command_Failed;
       end if;
 
@@ -273,7 +302,8 @@ package body Alr.Commands.Test is
       elsif Cmd.Redo then
          Trace.Detail ("Redoing tests");
       else
-         OS_Lib.Traverse_Folder (Ada.Directories.Current_Directory, Not_Empty'Access);
+         OS_Lib.Traverse_Folder
+           (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
       Interactive.Not_Interactive := True;
@@ -294,7 +324,8 @@ package body Alr.Commands.Test is
 
       Requires_Full_Index;
 
-      --  Pre-find candidates to not have duplicate tests if overlapping requested
+      --  Pre-find candidates to not have duplicate tests if overlapping
+      --  requested.
       Find_Candidates;
 
       if Candidates.Is_Empty then
@@ -317,37 +348,45 @@ package body Alr.Commands.Test is
    is
       use GNAT.Command_Line;
    begin
-      Define_Switch (Config,
-                     Cmd.Cont'Access,
-                     Long_Switch => "--continue",
-                     Help        => "Skip testing of releases already in folder");
+      Define_Switch
+        (Config,
+         Cmd.Cont'Access,
+         Long_Switch => "--continue",
+         Help        => "Skip testing of releases already in folder");
 
-      Define_Switch (Config,
-                     Cmd.Full'Access,
-                     Long_Switch => "--full",
-                     Help        => "Test all indexed crates");
+      Define_Switch
+        (Config,
+         Cmd.Full'Access,
+         Long_Switch => "--full",
+         Help        => "Test all indexed crates");
 
-      Define_Switch (Config,
-                     Cmd.Last'Access,
-                     Long_Switch => "--newest",
-                     Help        => "Test only the newest release in crates");
+      Define_Switch
+        (Config,
+         Cmd.Last'Access,
+         Long_Switch => "--newest",
+         Help        => "Test only the newest release in crates");
 
-      Define_Switch (Config,
-                     Cmd.Redo'Access,
-                     Long_Switch => "--redo",
-                     Help        => "Retest releases already in folder (implies --continue)");
+      Define_Switch
+        (Config,
+         Cmd.Redo'Access,
+         Long_Switch => "--redo",
+         Help => "Retest releases already in folder (implies --continue)");
 
-      Define_Switch (Config,
-                     Cmd.Search'Access,
-                     Long_Switch => "--search",
-                     Help        => "Interpret arguments as substrings instead of exact crate names");
+      Define_Switch
+        (Config,
+         Cmd.Search'Access,
+         Long_Switch => "--search",
+         Help        => "Interpret arguments as substrings instead of " &
+           "exact crate names");
 
---        Define_Switch (Config,
---                       Cmd.Jobs'Access,
---                       "-j:", "--jobs=",
---                       "Tests up to N jobs in parallel, or as many as processors if 0 (default)",
---                       Default => 0,
---                       Argument => "N");
+--        Define_Switch
+--          (Config,
+--           Cmd.Jobs'Access,
+--           "-j:", "--jobs=",
+--           "Tests up to N jobs in parallel, or as many as processors " &
+--             "if 0 (default)",
+--           Default => 0,
+--           Argument => "N");
    end Setup_Switches;
 
 end Alr.Commands.Test;

@@ -19,9 +19,9 @@ package body Alr.Commands.Update is
 
       declare
          Needed  : constant Query.Solution :=
-                     Query.Resolve
-                       (Root.Current.Release.Dependencies.Evaluate (Platform.Properties),
-                        Query_Policy);
+           Query.Resolve
+             (Root.Current.Release.Dependencies.Evaluate (Platform.Properties),
+              Query_Policy);
       begin
          if not Needed.Valid then
             Reportaise_Command_Failed ("Update failed");

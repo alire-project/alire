@@ -5,27 +5,27 @@ with Alr.Utils;
 package Alr.Testing is
 
    --  Reporters for the testing of release
-   
-   type Outcomes is (Error, 		-- Alr failed
-                     Fail,		-- Release build failed
-                     Pass, 		-- Success
-                     Skip,		-- Skipped (already tested)
+
+   type Outcomes is (Error,             -- Alr failed
+                     Fail,              -- Release build failed
+                     Pass,              -- Success
+                     Skip,              -- Skipped (already tested)
                      Unavailable,       -- Unavailable in the platform
-                     Unresolvable); 	-- Dependencies can't be solved
-   
+                     Unresolvable);     -- Dependencies can't be solved
+
    type Reporter is interface;
-   
+
    function New_Reporter return Reporter is abstract;
-   
-   procedure Start_Run (This  : in out Reporter; 
+
+   procedure Start_Run (This  : in out Reporter;
                         Name  :        String;
-                        Tests :        Natural) is null;   
+                        Tests :        Natural) is null;
    procedure End_Run   (This : in out Reporter) is null;
    --  These refer to a whole run of tests
-      
+
    procedure Start_Test (This : in out Reporter;
                          Rel  :        Alire.Types.Release) is null;
-   
+
    procedure End_Test (This    : in out Reporter;
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;

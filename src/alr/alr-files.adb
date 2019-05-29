@@ -16,7 +16,10 @@ package body Alr.Files is
          Candidates.Append (Full_Name (File));
       end Check;
    begin
-      Search (Current_Directory, "*.gpr", (Ordinary_File => True, others => False), Check'Access);
+      Search (Current_Directory,
+              "*.gpr",
+              (Ordinary_File => True, others => False),
+              Check'Access);
 
       return Natural (Candidates.Length);
    end Locate_Any_GPR_File;
