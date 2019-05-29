@@ -408,15 +408,6 @@ package body Alr.Commands is
       end if;
    end Requires_Sources;
 
-   ------------------------
-   -- Requires_Templates --
-   ------------------------
-
-   procedure Requires_Templates is
-   begin
-      Requires_Sources;
-   end Requires_Templates;
-
    --------------------
    -- Fill_Arguments --
    --------------------

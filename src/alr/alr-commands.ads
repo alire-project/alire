@@ -71,9 +71,6 @@ package Alr.Commands is
    procedure Requires_Sources;
    --  Ensure sources are checked out
 
-   procedure Requires_Templates;
-   --  Ensure templates are available
-
    ---------------------------
    --  command-line helpers --
    ---------------------------
