@@ -44,9 +44,12 @@ package body Alr.Commands.Get is
         and then
          not Cmd.Only
       then
-         Trace.Error ("Could not resolve dependencies for: " & Query.Dependency_Image (Name, Versions));
-         Trace.Error ("This may happen when requesting a project that requires native libraries, while using a GPL gnat");
-         Trace.Error ("In that case, try again with the native FSF gnat compiler");
+         Trace.Error ("Could not resolve dependencies for: " &
+                        Query.Dependency_Image (Name, Versions));
+         Trace.Error ("This may happen when requesting a project that" &
+                        " requires native libraries, while using a GPL gnat");
+         Trace.Error ("In that case, try again with the native" &
+                        " FSF gnat compiler");
          raise Command_Failed;
       end if;
 
@@ -76,7 +79,8 @@ package body Alr.Commands.Get is
                              Perform_Actions => False);
 
       if Cmd.Only then
-         Trace.Detail ("By your command, dependencies not resolved nor retrieved: compilation might fail");
+         Trace.Detail ("By your command, dependencies not resolved nor" &
+                         " retrieved: compilation might fail");
          return;
       end if;
 
@@ -151,7 +155,8 @@ package body Alr.Commands.Get is
 
       Define_Switch (Config,
                      Cmd.Only'Access,
-                     "", "--only", "Retrieve requested project only, without dependencies");
+                     "", "--only",
+                     "Retrieve requested project only, without dependencies");
    end Setup_Switches;
 
 end Alr.Commands.Get;

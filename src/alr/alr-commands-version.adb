@@ -36,14 +36,17 @@ package body Alr.Commands.Version is
       declare
          Guard : Folder_Guard (Enter_Project_Folder) with Unreferenced;
       begin
-         Trace.Always ("alr project root detection has settled on path: " & OS_Lib.Current_Folder);
-         Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img & " GPR project files");
+         Trace.Always ("alr project root detection has settled on path: " &
+                         OS_Lib.Current_Folder);
+         Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img &
+                         " GPR project files");
          Trace.Always ("alr session state is " & Session_State'Img);
       end;
 
       Log ("alr compiled on [" &
              GNAT.Source_Info.Compilation_ISO_Date & " " &
-             GNAT.Source_Info.Compilation_Time & "] with GNAT version [" & GNAT_Version.Version & "]",
+             GNAT.Source_Info.Compilation_Time & "] with GNAT version [" &
+             GNAT_Version.Version & "]",
            Always);
 
       Trace.Always ("platform fingerprint: " & Version.Fingerprint);

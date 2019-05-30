@@ -33,24 +33,33 @@ package body Alr.Commands.Search is
 
       procedure List_Release (R : Alire.Releases.Release) is
       begin
-         if (Cmd.Prop.all = "" or else
-             R.Property_Contains (Cmd.Prop.all) or else
-             Utils.Contains (R.Notes, Cmd.Prop.all) or else
-             Utils.Contains (Alire.Projects.Descriptions (R.Project), Cmd.Prop.all))
+         if (Cmd.Prop.all = ""
+             or else
+             R.Property_Contains (Cmd.Prop.all)
+             or else
+             Utils.Contains (R.Notes, Cmd.Prop.all)
+             or else
+             Utils.Contains (Alire.Projects.Descriptions (R.Project),
+                             Cmd.Prop.all))
            and then
-             (Cmd.Native or else
-              not R.Origin.Is_Native)
+             (Cmd.Native or else not R.Origin.Is_Native)
          then
             Found := Found + 1;
             Tab.New_Row;
             Tab.Append (+R.Project);
             Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
                         (if Query.Is_Available (R) then " " else "U") &
-                        (if Query.Is_Resolvable (R.Depends (Platform.Properties)) then " " else "X"));
+                        (if Query.Is_Resolvable
+                             (R.Depends (Platform.Properties))
+                           then " "
+                           else "X"));
             Tab.Append (Semantic_Versioning.Image
                         (R.Version) &
-                        (if R.Origin.Is_Native and then Origins.New_Origin (R.Origin).Native_Version /= ""
-                           then "+" & Origins.New_Origin (R.Origin).Native_Version
+                        (if R.Origin.Is_Native
+                           and then
+                           Origins.New_Origin (R.Origin).Native_Version /= ""
+                           then "+" & Origins.New_Origin
+                             (R.Origin).Native_Version
                            else ""));
             Tab.Append (Alire.Projects.Descriptions (R.Project));
             Tab.Append (R.Notes);
@@ -59,9 +68,15 @@ package body Alr.Commands.Search is
 
       use Alire.Containers.Release_Sets;
    begin
-      if Num_Arguments = 0 and then not Cmd.List and then Cmd.Prop.all = "" then
+      if Num_Arguments = 0
+        and then
+         not Cmd.List
+        and then
+         Cmd.Prop.all = ""
+      then
          --  no search term, nor --list, nor --prop
-         Trace.Error ("Please provide a search term, --property, or use --list to show all available releases");
+         Trace.Error ("Please provide a search term, --property, or use" &
+                        " --list to show all available releases");
          raise Wrong_Command_Arguments;
       end if;
 
@@ -91,8 +106,12 @@ package body Alr.Commands.Search is
          if Cmd.List then
             Trace.Detail ("Searching...");
             for I in Alire.Index.Catalog.Iterate loop
-               if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-                 Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+               if Cmd.Full
+                 or else
+                  I = Alire.Index.Catalog.Last
+                 or else
+                  Alire.Index.Catalog (I).Project /= Alire.Index.Catalog
+                                                       (Next (I)).Project
                then
                   List_Release (Alire.Index.Catalog (I));
                   Busy.Step;
@@ -107,7 +126,8 @@ package body Alr.Commands.Search is
                for I in Alire.Index.Catalog.Iterate loop
                   if Count (+Alire.Index.Catalog (I).Project, Pattern) > 0 then
                      if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-                       Alire.Index.Catalog (I).Project /= Alire.Index.Catalog (Next (I)).Project
+                       Alire.Index.Catalog (I).Project /= Alire.Index.Catalog
+                                                            (Next (I)).Project
                      then
                         List_Release (Alire.Index.Catalog (I));
                      end if;

@@ -35,9 +35,10 @@ package body Alr.Query is
    -- Exists --
    ------------
 
-   function Exists (Project : Alire.Project;
-                    Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
-                    return Boolean
+   function Exists
+     (Project : Alire.Project;
+      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
+      return Boolean
    is
       use Semver;
    begin
@@ -54,9 +55,11 @@ package body Alr.Query is
    -- Find --
    ----------
 
-   function Find (Project : Alire.Project;
-                  Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
-                  Policy  : Policies) return Release
+   function Find
+     (Project : Alire.Project;
+      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
+      Policy  : Policies)
+      return Release
    is
       use Semantic_Versioning;
 
@@ -70,7 +73,8 @@ package body Alr.Query is
             if Satisfies (R.Version, Allowed) then
                return True;
             else
-               Trace.Debug ("Skipping unsatisfactory version: " & Image (R.Version));
+               Trace.Debug ("Skipping unsatisfactory version: " &
+                              Image (R.Version));
             end if;
          end if;
 
@@ -102,7 +106,8 @@ package body Alr.Query is
    function Find (Project : String;
                   Policy  : Policies) return Release
    is
-      Spec : constant Parsers.Allowed_Milestones := Parsers.Project_Versions (Project);
+      Spec : constant Parsers.Allowed_Milestones :=
+        Parsers.Project_Versions (Project);
    begin
       return Find (Spec.Project,
                    Spec.Versions,
@@ -122,8 +127,8 @@ package body Alr.Query is
    -- Is_Resolvable --
    -------------------
 
-   function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean is
-      (Resolve (Deps, Commands.Query_Policy).Valid);
+   function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean
+   is (Resolve (Deps, Commands.Query_Policy).Valid);
 
    --------------------
    -- Print_Solution --
@@ -180,13 +185,16 @@ package body Alr.Query is
       begin
          for R of Sol loop
             if R.Satisfies (Deps.Value) then
-               Trace.Debug ("SOLVER:CHECK " & R.Milestone.Image & " satisfies " & Deps.Image_One_Line);
-               --  Check in turn that the release dependencies are satisfied too
+               Trace.Debug ("SOLVER:CHECK " & R.Milestone.Image & " satisfies "
+                            & Deps.Image_One_Line);
+               --  Check in turn that the release dependencies are satisfied
+               --  too.
                return Is_Complete (R.Depends (Platform.Properties), Sol);
             end if;
          end loop;
 
-         Trace.Debug ("SOLVER:CHECK Solution fails to satisfy " & Deps.Image_One_Line);
+         Trace.Debug ("SOLVER:CHECK Solution fails to satisfy " &
+                        Deps.Image_One_Line);
          return False;
       end Check_Value;
 
@@ -257,8 +265,8 @@ package body Alr.Query is
 
       procedure Check_Complete (Deps : Types.Platform_Dependencies;
                                 Sol  : Instance) is
-         --  Note: these Deps may include more than the ones requested to solve,
-         --   as indirect dependencies are progressively added
+         --  Note: these Deps may include more than the ones requested to
+         --  solve, as indirect dependencies are progressively added.
       begin
          if Is_Complete (Deps, Sol) then
             Solutions.Append (Sol);
@@ -303,34 +311,62 @@ package body Alr.Query is
                                 Frozen,
                                 Forbidden);
                      else
-                        Trace.Debug ("SOLVER: discarding tree because of conflicting FROZEN release: " &
-                                       R.Milestone.Image & " does not satisfy " &
-                                       Dep.Image & " in tree " &
-                                       Tree'(Expanded and Current and Remaining).Image_One_Line);
+                        Trace.Debug
+                          ("SOLVER: discarding tree because of " &
+                             "conflicting FROZEN release: " &
+                             R.Milestone.Image & " does not satisfy " &
+                             Dep.Image & " in tree " &
+                             Tree'(Expanded
+                                   and Current
+                                   and Remaining).Image_One_Line);
                      end if;
                   elsif Frozen.Contains (R.Provides) then
-                     Trace.Debug ("SOLVER: discarding tree because of conflicting PROVIDES release: " &
-                                    R.Milestone.Image & " provides " & (+R.Provides) &
-                                    " already in tree " &
-                                    Tree'(Expanded and Current and Remaining).Image_One_Line);
+                     Trace.Debug
+                       ("SOLVER: discarding tree because of " &
+                          "conflicting PROVIDES release: " &
+                          R.Milestone.Image & " provides " & (+R.Provides) &
+                          " already in tree " &
+                          Tree'(Expanded
+                                and Current
+                                and Remaining).Image_One_Line);
                   elsif Cond_Ops.Contains (Forbidden, R) then
-                     Trace.Debug ("SOLVER: discarding tree because of FORBIDDEN project: " &
-                                    R.Milestone.Image & " forbidden by some already in tree " &
-                                    Tree'(Expanded and Current and Remaining).Image_One_Line);
-                  elsif Cond_Ops.Contains_Some (R.Forbids (Platform.Properties), Frozen) then
-                     Trace.Debug ("SOLVER: discarding tree because candidate FORBIDS frozen release: " &
-                                    R.Milestone.Image & " forbids some already in tree " &
-                                    Tree'(Expanded and Current and Remaining).Image_One_Line);
+                     Trace.Debug
+                       ("SOLVER: discarding tree because of" &
+                          " FORBIDDEN project: " &
+                          R.Milestone.Image &
+                          " forbidden by some already in tree " &
+                          Tree'(Expanded
+                                and Current
+                                and Remaining).Image_One_Line);
+                  elsif Cond_Ops.Contains_Some
+                    (R.Forbids (Platform.Properties), Frozen)
+                  then
+                     Trace.Debug
+                       ("SOLVER: discarding tree because " &
+                          "candidate FORBIDS frozen release: " &
+                          R.Milestone.Image &
+                          " forbids some already in tree " &
+                          Tree'(Expanded
+                                and Current
+                                and Remaining).Image_One_Line);
                   elsif -- First time we see this project
                     Semver.Satisfies (R.Version, Dep.Versions) and then
                     Is_Available (R)
                   then
-                     Trace.Debug ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
-                                    " to satisfy " & Dep.Image &
-                                    (if R.Project /= R.Provides then " also providing " & (+R.Provides) else "") &
-                                    " adding" & R.Depends (Platform.Properties).Leaf_Count'Img &
-                                    " dependencies to tree " &
-                                    Tree'(Expanded and Current and Remaining and R.Depends (Platform.Properties)).Image_One_Line);
+                     Trace.Debug
+                       ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
+                          " to satisfy " & Dep.Image &
+                        (if R.Project /= R.Provides
+                           then " also providing " & (+R.Provides)
+                           else "") &
+                          " adding" &
+                          R.Depends (Platform.Properties).Leaf_Count'Img &
+                          " dependencies to tree " &
+                          Tree'(Expanded
+                                and Current
+                                and Remaining
+                                and R.Depends
+                                  (Platform.Properties)).Image_One_Line);
 
                      Expand (Expanded and R.This_Version,
                              Remaining and R.Depends (Platform.Properties),
@@ -339,15 +375,18 @@ package body Alr.Query is
                              Forbidden and R.Forbids (Platform.Properties));
                   end if;
                else
-                  null; -- Not even same project, this is related to the fixme below
+                  --  Not even same project, this is related to the fixme below
+                  null;
                end if;
             end Check;
 
          begin
             if Frozen.Contains (Dep.Project) then
-               Check (Frozen (Dep.Project)); -- Cut search once a project is frozen
+               --  Cut search once a project is frozen
+               Check (Frozen (Dep.Project));
             else
-               --  FIXME: use Floor/Ceiling or cleverer data structure to not blindly visit all releases
+               --  FIXME: use Floor/Ceiling or cleverer data structure to not
+               --  blindly visit all releases.
                if Policy = Newest then
                   for R of reverse Index.Catalog loop
                      Check (R);
@@ -391,8 +430,10 @@ package body Alr.Query is
       begin
          if Current.Is_Empty then
             if Remaining.Is_Empty then
-               Trace.Debug ("SOLVER: tree FULLY expanded as: " & Expanded.Image_One_Line);
-               Check_Complete (Deps, Materialize (Expanded, Platform.Properties));
+               Trace.Debug ("SOLVER: tree FULLY expanded as: " &
+                              Expanded.Image_One_Line);
+               Check_Complete (Deps,
+                               Materialize (Expanded, Platform.Properties));
                return;
             else
                Expand (Expanded,
@@ -435,7 +476,8 @@ package body Alr.Query is
          Trace.Debug ("Dependency resolution failed");
          return (Valid => False);
       else
-         Trace.Debug ("Dependencies solvable in" & Solutions.Length'Img & " ways");
+         Trace.Debug ("Dependencies solvable in" &
+                        Solutions.Length'Img & " ways");
          Trace.Debug ("Dependencies solved with" &
                         Solutions.First_Element.Length'Img & " releases");
          return (True, Solutions.First_Element);

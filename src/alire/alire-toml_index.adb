@@ -1847,8 +1847,10 @@ package body Alire.TOML_Index is
                   Version            => R.Version,
                   Origin             => Origin,
                   Notes              =>
-                    (if US.Length (Pkg.Common.Notes) > Alire.Max_Description_Length
-                     then +US.Head (Pkg.Common.Notes, Alire.Max_Description_Length)
+                    (if US.Length (Pkg.Common.Notes) >
+                         Alire.Max_Description_Length
+                     then +US.Head (Pkg.Common.Notes,
+                                    Alire.Max_Description_Length)
                      else +Pkg.Common.Notes),
                   --  It crops too long notes, so something TODO about this
                   --  Since it didn't fail before, I guess they weren't added

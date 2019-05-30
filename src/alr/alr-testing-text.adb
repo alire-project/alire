@@ -17,7 +17,8 @@ package body Alr.Testing.Text is
    begin
       This.File := new File_Type;
       Create   (This.File.all, Out_File, Name & ".txt");
-      Put_Line (This.File.all, "os-fingerprint:" & Commands.Version.Fingerprint);
+      Put_Line (This.File.all, "os-fingerprint:" &
+                  Commands.Version.Fingerprint);
    end Start_Run;
 
    -------------

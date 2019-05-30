@@ -4,16 +4,17 @@ package body Alr.Testing.Collections is
    -- Add --
    ---------
 
-   procedure Add (This : in out Collection; Reporter : Testing.Reporter'Class) is
+   procedure Add (This : in out Collection; Reporter : Testing.Reporter'Class)
+   is
    begin
       This.Append (Reporter);
    end Add;
-   
+
    ---------------
    -- Start_Run --
    ---------------
 
-   procedure Start_Run (This  : in out Collection; 
+   procedure Start_Run (This  : in out Collection;
                         Name  :        String;
                         Tests :        Natural) is
    begin
@@ -21,7 +22,7 @@ package body Alr.Testing.Collections is
          Reporter.Start_Run (Name, Tests);
       end loop;
    end Start_Run;
-   
+
    -------------
    -- End_Run --
    -------------
@@ -32,7 +33,7 @@ package body Alr.Testing.Collections is
          Reporter.End_Run;
       end loop;
    end End_Run;
-      
+
    ----------------
    -- Start_Test --
    ----------------
@@ -44,7 +45,7 @@ package body Alr.Testing.Collections is
          Reporter.Start_Test (Rel);
       end loop;
    end Start_Test;
-   
+
    --------------
    -- End_Test --
    --------------

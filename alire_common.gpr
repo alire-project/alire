@@ -6,6 +6,16 @@ abstract project Alire_Common is
    --  debuggability (for developper convenience) while release favors
    --  optimizations.
 
+   type Any_Style_Check_Mode is ("enabled", "disabled");
+   Style_Check_Mode : Any_Style_Check_Mode :=
+       external ("ALIRE_STYLE_CHECK_MODE", "disabled");
+
+   Style_Check_Switches := ();
+   case Style_Check_Mode is
+      when "enabled"  => Style_Check_Switches := ("-gnaty", "-gnaty-s");
+      when "disabled" => Style_Check_Switches := ();
+   end case;
+
    package Compiler is
       case Build_Mode is
          when "debug" =>
@@ -20,7 +30,8 @@ abstract project Alire_Common is
                "-gnatf",
 
                --  Enable all warnings and treat them as errors
-               "-gnatwae");
+               "-gnatwae")
+              & Style_Check_Switches;
 
             for Default_Switches ("C") use ("-g", "-O0", "-Wall");
             --  Likewise for C units
@@ -36,7 +47,8 @@ abstract project Alire_Common is
 
                --  Enable lots of extra runtime checks
                "-gnatVa", "-gnatwa", "-gnato", "-fstack-check", "-gnata",
-               "-gnatf", "-fPIC");
+               "-gnatf", "-fPIC")
+              & Style_Check_Switches;
 
             for Default_Switches ("C") use ("-g", "-O2", "-Wall", "-fPIC");
             --  Likewise for C units

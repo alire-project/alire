@@ -9,7 +9,7 @@ package Alire.VCSs.Git is
                    Into : Platform_Independent_Path)
                    return Outcome;
 
-   Function Update (This : VCS;
+   function Update (This : VCS;
                     Repo : Platform_Independent_Path)
                     return Outcome;
 

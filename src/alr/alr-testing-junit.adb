@@ -52,7 +52,8 @@ package body Alr.Testing.JUnit is
                  (Rel.Milestone.Image,
                   AJUnitGen.Error,
                   Classname => "ERROR",
-                  Message   => "alr test unexpected error: " & Commands.Version.Fingerprint,
+                  Message   => "alr test unexpected error: " &
+                    Commands.Version.Fingerprint,
                   Output    => Log.Flatten (Newline)));
 
          when Fail =>
@@ -61,7 +62,8 @@ package body Alr.Testing.JUnit is
                  (Rel.Milestone.Image,
                   AJUnitGen.Fail,
                   Classname => "FAIL",
-                  Message   => "get --compile failure: " & Commands.Version.Fingerprint,
+                  Message   => "get --compile failure: " &
+                    Commands.Version.Fingerprint,
                   Output    => Log.Flatten (Newline)));
 
          when Pass =>

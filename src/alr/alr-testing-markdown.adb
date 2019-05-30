@@ -48,23 +48,28 @@ package body Alr.Testing.Markdown is
       pragma Unreferenced (Log);
       type CS is delta 0.01 digits 6;
    begin
-      Put_Line (This.File.all,
-                "|" &
-                (case Outcome is
-                      when Pass         => "![green](https://placehold.it/8/00aa00/000000?text=+)",
-                      when Error | Fail => "![red](https://placehold.it/8/ff0000/000000?text=+)",
-                      when others       => "![yellow](https://placehold.it/8/ffbb00/000000?text=+)") &
-                   " " &
-                  BT (case Outcome is
-                     when Error        => "ERR ",
-                     when Fail         => "FAIL",
-                     when Pass         => "pass",
-                     when Skip         => "SKIP",
-                     when Unavailable  => "UNAV",
-                     when Unresolvable => "DEPS") & " | " &
-                  BT (+Rel.Milestone.Project) & " | " &
-                  BT (Semantic_Versioning.Image (Rel.Milestone.Version)) & " | " &
-                  BT (CS (Elapsed)'Img) & " s |");
+      Put_Line
+        (This.File.all,
+         "|" &
+         (case Outcome is
+               when Pass         =>
+                 "![green](https://placehold.it/8/00aa00/000000?text=+)",
+               when Error | Fail =>
+                 "![red](https://placehold.it/8/ff0000/000000?text=+)",
+               when others       =>
+                 "![yellow](https://placehold.it/8/ffbb00/000000?text=+)") &
+            " " &
+           BT (case Outcome is
+              when Error        => "ERR ",
+              when Fail         => "FAIL",
+              when Pass         => "pass",
+              when Skip         => "SKIP",
+              when Unavailable  => "UNAV",
+              when Unresolvable => "DEPS") & " | " &
+            BT (+Rel.Milestone.Project) & " | " &
+            BT (Semantic_Versioning.Image
+             (Rel.Milestone.Version)) & " | " &
+            BT (CS (Elapsed)'Img) & " s |");
 
       Flush (This.File.all);
    end End_Test;

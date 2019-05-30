@@ -19,7 +19,8 @@ package body Alr.Commands.Run is
       use Ada.Text_IO;
 
       Found_At : constant Utils.String_Vector :=
-                   Files.Locate_File_Under (OS_Lib.Current_Folder, Exe_Name, Max_Depth => 2);
+        Files.Locate_File_Under (OS_Lib.Current_Folder,
+                                 Exe_Name, Max_Depth => 2);
    begin
       Put ("   " & Exe_Name);
       case Found_At.Length is
@@ -43,8 +44,12 @@ package body Alr.Commands.Run is
       Requires_Project;
 
       --  Validation
-      if Cmd.List and then
-        (Num_Arguments /= 0 or else (Cmd.Args /= null and then Cmd.Args.all /= "")) then
+      if Cmd.List
+        and then
+          (Num_Arguments /= 0
+           or else
+             (Cmd.Args /= null and then Cmd.Args.all /= ""))
+      then
          Put_Line ("Listing is incompatible with execution");
          raise Wrong_Command_Arguments;
       end if;
@@ -55,7 +60,7 @@ package body Alr.Commands.Run is
       end if;
 
       declare
-         Name       : constant String              := Root.Current.Release.Project_Str;
+         Name       : constant String := Root.Current.Release.Project_Str;
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
            (OS_Lib.Current_Folder,
             Root.Current.Release.Default_Executable,
@@ -69,11 +74,15 @@ package body Alr.Commands.Run is
          --  LISTING  --
          if Cmd.List then
             if Declared.Is_Empty then
-               Put_Line ("Project " & Name & " does not explicitly declares to build any executable");
+               Put_Line
+                 ("Project " & Name &
+                    " does not explicitly declares to build any executable");
                if Candidates.Is_Empty then
-                  Put_Line ("No built executable has been automatically found either by alr");
+                  Put_Line ("No built executable has been automatically " &
+                              "found either by alr");
                else
-                  Put_Line ("However, the following executables have been autodetected:");
+                  Put_Line ("However, the following executables" &
+                              " have been autodetected:");
                   Check_Report (Root.Current.Release.Default_Executable);
                end if;
             else
@@ -83,8 +92,13 @@ package body Alr.Commands.Run is
                end loop;
 
                --  Default one:
-               if not Declared.Contains (Root.Current.Release.Default_Executable) and then not Candidates.Is_Empty then
-                  Put_Line ("In addition, the following default-named executables have been detected:");
+               if not Declared.Contains
+                        (Root.Current.Release.Default_Executable)
+                 and then
+                   not Candidates.Is_Empty
+               then
+                  Put_Line ("In addition, the following default-named" &
+                              " executables have been detected:");
                   Check_Report (Root.Current.Release.Default_Executable);
                end if;
             end if;
@@ -101,18 +115,20 @@ package body Alr.Commands.Run is
          --  EXECUTION  --
          declare
             use all type Ada.Containers.Count_Type;
-            Proto_Target : constant String := (if Num_Arguments = 1
-                                              then Argument (1)
-                                               else
-                                                 (if Declared.Length = 1
-                                                  then Declared.First_Element
-                                                  else Root.Current.Release.Default_Executable));
+            Proto_Target : constant String :=
+              (if Num_Arguments = 1
+               then Argument (1)
+               else
+                 (if Declared.Length = 1
+                  then Declared.First_Element
+                  else Root.Current.Release.Default_Executable));
 
             Target : constant String :=
-                       (if Alire.OS_Lib.Exe_Suffix /= "" and then
-                                   not Utils.Contains (Proto_Target, Alire.OS_Lib.Exe_Suffix)
-                        then Proto_Target & Alire.OS_Lib.Exe_Suffix
-                        else Proto_Target);
+              (if Alire.OS_Lib.Exe_Suffix /= ""
+                and then
+                 not Utils.Contains (Proto_Target, Alire.OS_Lib.Exe_Suffix)
+               then Proto_Target & Alire.OS_Lib.Exe_Suffix
+               else Proto_Target);
 
             Target_Exes : constant Utils.String_Vector :=
                             Files.Locate_File_Under
@@ -121,11 +137,13 @@ package body Alr.Commands.Run is
                                Max_Depth => 2);
          begin
             if Target /= Name and then not Declared.Contains (Target) then
-               Trace.Warning ("Requested executable is not in project declared list");
+               Trace.Warning
+                 ("Requested executable is not in project declared list");
             end if;
 
             if Target_Exes.Is_Empty then
-               Trace.Warning ("Executable " & Utils.Quote (Target) & " not found");
+               Trace.Warning
+                 ("Executable " & Utils.Quote (Target) & " not found");
                raise Command_Failed;
             elsif Natural (Target_Exes.Length) > 1 then
                Trace.Warning ("Too many candidates found:");
@@ -153,7 +171,8 @@ package body Alr.Commands.Run is
       GNAT.Command_Line.Define_Switch
         (Config,
          Cmd.Args'Access,
-         "-a:", "--args=", "Arguments to pass through (quote them if more than one)",
+         "-a:", "--args=",
+         "Arguments to pass through (quote them if more than one)",
          Argument => "ARGS");
 
       GNAT.Command_Line.Define_Switch
