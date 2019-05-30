@@ -84,7 +84,7 @@ package Alr.OS_Lib is
       function "/" (L, R : String) return String renames Alr.OS_Lib."/";
    end Paths;
 
-
+   -----------------------------
    --  WORKING FOLDER MANAGEMENT
 
    subtype Folder_Guard is Alire.Directories.Guard;
@@ -95,7 +95,7 @@ package Alr.OS_Lib is
    function Stay_In_Current_Folder return Alire.Directories.Destination
      renames Alire.Directories.Stay_In_Current;
 
-
+   ----------------------------
    --  FILE / FOLDER MANAGEMENT
 
    function Is_Executable_File (Path : String) return Boolean

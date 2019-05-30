@@ -26,7 +26,6 @@ package Alire.Actions with Preelaborate is
    procedure Execute (This : Action;
                       Implementer : access procedure (This : Action'Class));
 
-
    type Run (<>) is new Action with private;
    --  Encapsulates the execution of an external command
 

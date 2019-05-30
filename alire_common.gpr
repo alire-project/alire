@@ -8,11 +8,15 @@ abstract project Alire_Common is
 
    type Any_Style_Check_Mode is ("enabled", "disabled");
    Style_Check_Mode : Any_Style_Check_Mode :=
-       external ("ALIRE_STYLE_CHECK_MODE", "disabled");
+       external ("ALIRE_STYLE_CHECK_MODE", "enabled");
 
    Style_Check_Switches := ();
    case Style_Check_Mode is
-      when "enabled"  => Style_Check_Switches := ("-gnaty", "-gnaty-s");
+      when "enabled"  => Style_Check_Switches :=
+           ("-gnatyg",   -- Standard checks
+            "-gnatyI",   -- no IN mode
+            "-gnatyO",   -- all overrides
+            "-gnaty-s"); -- relax fwd decl
       when "disabled" => Style_Check_Switches := ();
    end case;
 

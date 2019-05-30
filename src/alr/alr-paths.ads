@@ -42,6 +42,7 @@ package Alr.Paths is
    subtype Simple_File is String;
    --  Filenames without path
 
+   --  Paths used thorough alr
 
    Alr_Repo : constant Alire.URL := Defaults.Alr_Repository;
    --  Repository where alr sources can be found
@@ -74,8 +75,7 @@ package Alr.Paths is
    function Projects_Folder return Relative_Path;
    --  $ALR_WORKING_FOLDER/projects
 
-
-   --  Scripts paths
+   --  Scripts paths/names
    Scripts_Graph_Easy : constant String := "graph-easy";
 
 private
