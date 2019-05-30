@@ -118,7 +118,7 @@ package body Alr.Commands.Show is
    -- Execute --
    -------------
 
-   procedure Execute (Cmd : in out Command) is
+   overriding procedure Execute (Cmd : in out Command) is
    begin
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
@@ -165,7 +165,7 @@ package body Alr.Commands.Show is
    -- Setup_Switches --
    --------------------
 
-   procedure Setup_Switches
+   overriding procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is

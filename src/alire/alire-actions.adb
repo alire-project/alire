@@ -17,7 +17,7 @@ package body Alire.Actions is
    -- To_TOML --
    -------------
 
-   function To_TOML (This : Run) return TOML.TOML_Value is
+   overriding function To_TOML (This : Run) return TOML.TOML_Value is
 
       use TOML_Adapters;
 

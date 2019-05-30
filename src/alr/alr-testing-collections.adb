@@ -14,6 +14,7 @@ package body Alr.Testing.Collections is
    -- Start_Run --
    ---------------
 
+   overriding
    procedure Start_Run (This  : in out Collection;
                         Name  :        String;
                         Tests :        Natural) is
@@ -27,7 +28,7 @@ package body Alr.Testing.Collections is
    -- End_Run --
    -------------
 
-   procedure End_Run   (This : in out Collection) is
+   overriding procedure End_Run   (This : in out Collection) is
    begin
       for Reporter of This loop
          Reporter.End_Run;
@@ -38,6 +39,7 @@ package body Alr.Testing.Collections is
    -- Start_Test --
    ----------------
 
+   overriding
    procedure Start_Test (This : in out Collection;
                          Rel  :        Alire.Types.Release) is
    begin
@@ -50,6 +52,7 @@ package body Alr.Testing.Collections is
    -- End_Test --
    --------------
 
+   overriding
    procedure End_Test (This    : in out Collection;
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;

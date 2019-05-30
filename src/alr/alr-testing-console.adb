@@ -11,6 +11,7 @@ package body Alr.Testing.Console is
    -- Start_Run --
    ---------------
 
+   overriding
    procedure Start_Run (This  : in out Reporter;
                         Name  :        String;
                         Tests :        Natural) is
@@ -24,6 +25,7 @@ package body Alr.Testing.Console is
    -- Start_Test --
    ----------------
 
+   overriding
    procedure Start_Test (This : in out Reporter;
                          Rel  :        Alire.Types.Release) is
    begin
@@ -41,6 +43,7 @@ package body Alr.Testing.Console is
    -- End_Test --
    --------------
 
+   overriding
    procedure End_Test (This    : in out Reporter;
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
@@ -73,7 +76,7 @@ package body Alr.Testing.Console is
    -- End_Run --
    -------------
 
-   procedure End_Run (This : in out Reporter) is
+   overriding procedure End_Run (This : in out Reporter) is
    begin
       Put_Line ("PASS:" & This.Results (Pass)'Img &
                   " FAIL:" & This.Results (Fail)'Img &

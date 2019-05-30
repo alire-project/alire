@@ -11,29 +11,30 @@ package Alr.Platforms.Linux is
    -------------------
    --  Low level stuff
 
-   function Config_Folder (This : Linux_Variant) return String;
+   overriding function Config_Folder (This : Linux_Variant) return String;
    --  Folder where alire will store its source code. Must be preserved after
    --  installation.
    --  ${XDG_CONFIG_HOME:-.config}/alire
 
-   function Cache_Folder (This : Linux_Variant) return String;
+   overriding function Cache_Folder (This : Linux_Variant) return String;
    --  Folder for dependencies and sessions. Can be deleted freely, is
    --  repopulated on-demand.
    --  ${XDG_CACHE_HOME:-.cache}/alire
 
-   function Own_Executable (This : Linux_Variant) return String;
+   overriding function Own_Executable (This : Linux_Variant) return String;
    --  Returns full path to own executable (not argv[0] but the real,
    --  effective, full path).
 
    -----------------------
    --  Self identification
 
-   function Distribution (This : Linux_Variant)
-                          return Alire.Platforms.Distributions;
+   overriding function Distribution (This : Linux_Variant)
+                                     return Alire.Platforms.Distributions;
 
-   function Distro_Version (This : Linux_Variant)
-                            return Alire.Platforms.Versions;
+   overriding function Distro_Version (This : Linux_Variant)
+                                       return Alire.Platforms.Versions;
 
+   overriding
    function Operating_System (This : Linux_Variant)
                               return Alire.Platforms.Operating_Systems
    is (Alire.Platforms.GNU_Linux);

@@ -14,7 +14,7 @@ package body Alr.Platforms.Linux is
    -- Cache_Folder --
    ------------------
 
-   function Cache_Folder (This : Linux_Variant) return String is
+   overriding function Cache_Folder (This : Linux_Variant) return String is
      (OS_Lib.Getenv ("XDG_CACHE_HOME",
                      Default => OS_Lib.Getenv ("HOME") / ".cache" / "alire"));
 
@@ -22,7 +22,7 @@ package body Alr.Platforms.Linux is
    -- Config_Folder --
    -------------------
 
-   function Config_Folder (This : Linux_Variant) return String is
+   overriding function Config_Folder (This : Linux_Variant) return String is
      (OS_Lib.Getenv ("XDG_CONFIG_HOME",
                      Default => OS_Lib.Getenv ("HOME") / ".config" / "alire"));
 
@@ -33,8 +33,8 @@ package body Alr.Platforms.Linux is
    Cached_Distro : Alire.Platforms.Distributions;
    Distro_Cached : Boolean := False;
 
-   function Distribution (This : Linux_Variant)
-                          return Alire.Platforms.Distributions
+   overriding function Distribution (This : Linux_Variant)
+                                     return Alire.Platforms.Distributions
    is
       pragma Unreferenced (This);
    begin
@@ -73,8 +73,8 @@ package body Alr.Platforms.Linux is
    Cached_Version : Alire.Platforms.Versions;
    Version_Cached : Boolean := False;
 
-   function Distro_Version (This : Linux_Variant)
-                            return Alire.Platforms.Versions
+   overriding function Distro_Version (This : Linux_Variant)
+                                       return Alire.Platforms.Versions
    is
       pragma Unreferenced (This);
    begin
@@ -109,6 +109,7 @@ package body Alr.Platforms.Linux is
    -- Own_Executable --
    --------------------
 
+   overriding
    function Own_Executable (This : Linux_Variant) return String is
       pragma Unreferenced (This);
       --   (int buflen, char *buffer, int *len)

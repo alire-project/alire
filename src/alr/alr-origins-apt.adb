@@ -8,7 +8,7 @@ package body Alr.Origins.Apt is
    -- Already_Installed --
    -----------------------
 
-   function Already_Installed (This : Origin) return Boolean is
+   overriding function Already_Installed (This : Origin) return Boolean is
       Output : Utils.String_Vector;
    begin
       OS_Lib.Spawn_And_Capture

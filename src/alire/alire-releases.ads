@@ -132,6 +132,7 @@ package Alire.Releases with Preelaborate is
 
    function Notes   (R : Release) return Description_String;
    --  Specific to release
+   overriding
    function Version (R : Release) return Semantic_Versioning.Version;
 
    function Depends (R : Release) return Conditional.Dependencies;

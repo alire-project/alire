@@ -9,6 +9,7 @@ package body Alire.VCSs.Git is
    -- Clone --
    -----------
 
+   overriding
    function Clone (This : VCS;
                    From : URL;
                    Into : Platform_Independent_Path)
@@ -58,6 +59,7 @@ package body Alire.VCSs.Git is
    -- Update --
    ------------
 
+   overriding
    function Update (This : VCS;
                     Repo : Platform_Independent_Path)
                     return Outcome

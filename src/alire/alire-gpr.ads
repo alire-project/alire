@@ -97,6 +97,7 @@ private
 
    type Scenario is new Utils.String_Vector with null record;
 
+   overriding
    function Is_Empty (S : Scenario) return Boolean
    is (Utils.String_Vector (S).Is_Empty);
 
