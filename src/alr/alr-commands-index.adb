@@ -71,6 +71,7 @@ package body Alr.Commands.Index is
    -- Execute --
    -------------
 
+   overriding
    procedure Execute (Cmd : in out Command) is
       Enabled : Natural := 0;
    begin
@@ -140,11 +141,11 @@ package body Alr.Commands.Index is
       end if;
    end List;
 
-
    --------------------
    -- Setup_Switches --
    --------------------
 
+   overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration) is

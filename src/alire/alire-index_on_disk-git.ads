@@ -12,9 +12,11 @@ package Alire.Index_On_Disk.Git is
                          Parent : Platform_Independent_Path) return Index with
      Pre => Utils.Starts_With (Origin, "git+");
 
+   overriding
    function Add (This : Index) return Outcome;
    --  Clones the index repository
 
+   overriding
    function Update (This : Index) return Outcome;
    --  Pulls the repository, unless it had a specific commit on checkout.
    --  In that case, silently do nothing and return success.

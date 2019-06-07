@@ -6,6 +6,7 @@ package body Alire.Index_On_Disk.Git is
    -- Add --
    ---------
 
+   overriding
    function Add (This : Index) return Outcome is
      (VCSs.Git.Handler.Clone
         (VCSs.Repo_And_Commit (This.Origin), This.Index_Directory));
@@ -14,6 +15,7 @@ package body Alire.Index_On_Disk.Git is
    -- New_Handler --
    -----------------
 
+   overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Platform_Independent_Path) return Index is
@@ -33,6 +35,7 @@ package body Alire.Index_On_Disk.Git is
    -- Update --
    ------------
 
+   overriding
    function Update (This : Index) return Outcome is
      (if This.Has_Commit
       then Outcome_Success -- Trying to pull from a detached repo is a failure

@@ -19,9 +19,11 @@ package body Alire.Index_On_Disk is
    --  when there is no index to return.
    --  All operations on it raise Program_Error.
 
+   overriding
    function Add (This : Invalid_Index) return Outcome is
      (raise Program_Error);
 
+   overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Platform_Independent_Path)
@@ -33,6 +35,7 @@ package body Alire.Index_On_Disk is
                      Dir_Len  => 0,
                      others   => <>));
 
+   overriding
    function Update (This : Invalid_Index) return Outcome is
      (raise Program_Error);
 
@@ -105,6 +108,7 @@ package body Alire.Index_On_Disk is
    -- New_Handler --
    -----------------
 
+   overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
                          Parent : Platform_Independent_Path)
@@ -220,6 +224,7 @@ package body Alire.Index_On_Disk is
    -- To_TOML --
    -------------
 
+   overriding
    function To_TOML (This : Index) return TOML.TOML_Value is
       Table : constant TOML.TOML_Value := TOML.Create_Table;
    begin
