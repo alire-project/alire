@@ -13,8 +13,8 @@ package Alire.Features.Index is
    function Find_All (Under : Absolute_Path) return Index_On_Disk_Set;
    --  Find all indexes available on a disk location
 
-   procedure Load_All (Platform : Environment.Setup;
-                       From     : Absolute_Path);
+   function Load_All (Platform : Environment.Setup;
+                      From     : Absolute_Path) return Outcome;
    --  Load all indexes available at the given location
 
    function Update_All (Under : Absolute_Path) return Outcome;

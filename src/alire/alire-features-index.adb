@@ -252,8 +252,8 @@ package body Alire.Features.Index is
    -- Load_All --
    --------------
 
-   procedure Load_All (Platform : Environment.Setup;
-                       From     : Absolute_Path)
+   function Load_All (Platform : Environment.Setup;
+                       From     : Absolute_Path) return Outcome
    is
       Env : Alire.TOML_Index.Environment_Variables;
    begin
@@ -268,12 +268,15 @@ package body Alire.Features.Index is
             Result : constant Outcome := Index.Load (Env);
          begin
             if not Result.Success then
-               Trace.Error ("Error while loading the index:");
-               Trace.Error (Message (Result));
-               OS_Lib.Bailout (1);
+               return
+                 Outcome_Failure
+                   ("While loading index " & Index.Name
+                    & ": " & Message (Result));
             end if;
          end;
       end loop;
+
+      return Outcome_Success;
    end Load_All;
 
    -------------------------

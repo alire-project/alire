@@ -394,12 +394,19 @@ package body Alr.Commands is
             end;
          end if;
 
-         Alire.Features.Index.Load_All
-           (Platform =>
-              (OS       => Platform.Operating_System,
-               Distro   => Platform.Distribution,
-               Compiler => Platform.Compiler),
-            From     => Alire.Config.Indexes_Directory);
+         declare
+            Outcome : constant Alire.Outcome := Alire.Features.Index.Load_All
+              (Platform =>
+                 (OS       => Platform.Operating_System,
+                  Distro   => Platform.Distribution,
+                  Compiler => Platform.Compiler),
+               From     => Alire.Config.Indexes_Directory);
+         begin
+            if not Outcome.Success then
+               Reportaise_Command_Failed
+                 ("Could not load index: " & (+Outcome.Message));
+            end if;
+         end;
       end if;
    end Requires_Full_Index;
 
