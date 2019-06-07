@@ -25,6 +25,8 @@ package body Alire.Features.Index is
                  Under  : Absolute_Path;
                  Before : String := "") return Outcome is
 
+      Indexes  : constant Index_On_Disk_Set := Find_All (Under);
+
       -----------------------
       -- Adjust_Priorities --
       -----------------------
@@ -33,7 +35,6 @@ package body Alire.Features.Index is
                                   return Index_On_Disk.Priorities
       --  Returns the priority the index has to have, and move down the others
       is
-         Indexes  : constant Index_On_Disk_Set := Find_All (Under);
          Found    : Boolean := False;
 
          Priority : Index_On_Disk.Priorities := Index_On_Disk.Default_Priority;
@@ -104,6 +105,14 @@ package body Alire.Features.Index is
          return Add (Origin (Origin'First .. Origin'Last - 1), Name, Under);
       end if;
 
+      --  Check that no other index has the same URL
+      for Index of Indexes loop
+         if Index.Origin = Origin then
+            return Outcome_Failure ("Given URL already used by index named: "
+                                    & Index.Name);
+         end if;
+      end loop;
+
       --  Check, with fake priority, that the index does not exist already
       declare
          Result : Outcome;
@@ -114,7 +123,7 @@ package body Alire.Features.Index is
       begin
          --  Don't re-add if it is already valid:
          if Result.Success and then Index.Verify.Success then
-            Trace.Warning ("Index is already configured, skipping action.");
+            Trace.Warning ("Index with given name exists, skipping action.");
             return Outcome_Success;
          elsif not Result.Success then
             return Result;
