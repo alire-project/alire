@@ -37,9 +37,9 @@ package Alire.Directories is
 
    function Find_Single_File (Path      : String;
                               Extension : String)
-                              return Absolute_Path;
-   --  Finds a single file in a folder with the given extension.
-   --  If more than one, or none, returns ""
+                              return String;
+   --  Finds a single file in a folder with the given extension and return its
+   --  absolute path.  If more than one, or none, returns "".
 
    ----------------
    -- GUARD TYPE --

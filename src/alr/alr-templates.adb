@@ -23,6 +23,9 @@ package body Alr.Templates is
    Tab_2 : constant String := Tab_1 & Tab_1;
 --     Tab_3 : constant String := Tab_2 & Tab_1;
 
+   Warning_Text : constant String :=
+     "--  This is an automatically generated file. DO NOT EDIT MANUALLY!";
+
    function Q (S : String) return String renames Utils.Quote;
 
    -------------
@@ -46,8 +49,7 @@ package body Alr.Templates is
 
    procedure Manual_Warning (File : File_Type) is
    begin
-      Put_Line (File, Tab_1 & "--  This is an automatically generated file." &
-                  " DO NOT EDIT MANUALLY!");
+      Put_Line (File, Tab_1 & Warning_Text);
       New_Line (File);
    end Manual_Warning;
 
@@ -64,26 +66,22 @@ package body Alr.Templates is
       -- Add_Entry --
       ---------------
 
-      procedure Add_Entry (Found : Directory_Entry_Type;
-                           Stop  : in out Boolean)
+      procedure Add_Entry (Found : Directory_Entry_Type; Stop : in out Boolean)
       is
          pragma Unreferenced (Stop);
          Name : constant String := Utils.To_Lower_Case (Simple_Name (Found));
-
-         Alire_Index : constant String := "alire-index-";
       begin
          if Kind (Found) = Ordinary_File then
-            if Name'Length >= String'("alire-index-X.ads")'Length
-              and then
-                Name (Name'Last - 3 .. Name'Last) = ".ads"
-              and then
-                Name (Name'First .. Name'First + Alire_Index'Length - 1) =
-                 Alire_Index
+            if Alire.Utils.Starts_With (Name, "alire-index-")
+               and then Alire.Utils.Ends_With (Name, ".ads")
             then
-               Log ("Indexing " & Full_Name (Found), Debug);
-               Put_Line (File, "with Alire.Index." &
-                           Utils.To_Mixed_Case
-                           (Project (Simple_Name (Found))) & ";");
+               declare
+                  Project_Name : constant String :=
+                     Utils.To_Mixed_Case (Project (Simple_Name (Found)));
+               begin
+                  Log ("Indexing " & Full_Name (Found), Debug);
+                  Put_Line (File, "with Alire.Index." & Project_Name & ";");
+               end;
             elsif Name /= "alire-projects.ads" then
                Log ("Unexpected file in index folder: " & Full_Name (Found));
             end if;
@@ -124,14 +122,14 @@ package body Alr.Templates is
       File     : File_Type;
       Filename : constant String := Root.Build_File;
       Prjname  : constant String :=
-        Utils.To_Mixed_Case (Ada.Directories.Base_Name (Filename));
+         Utils.To_Mixed_Case (Ada.Directories.Base_Name (Filename));
 
-      First    : Boolean := True;
+      First : Boolean := True;
 
       use Alr.OS_Lib;
 
-      GPR_Files : Utils.String_Vector;
-      All_Paths : Utils.String_Vector;
+      GPR_Files    : Utils.String_Vector;
+      All_Paths    : Utils.String_Vector;
       Sorted_Paths : Alire.Utils.String_Set;
 
       Full_Instance : constant Query.Instance :=
@@ -141,9 +139,9 @@ package body Alr.Templates is
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
                 " with" & Instance.Length'Img & " dependencies", Detail);
       else
-         Log ("Generating GPR for unreleased project " &
-                Root.Release.Milestone.Image & " with" &
-                Instance.Length'Img & " dependencies", Detail);
+         Log ("Generating GPR for unreleased project "
+              & Root.Release.Milestone.Image & " with" & Instance.Length'Img
+              & " dependencies", Detail);
       end if;
 
       GPR_Files := Root.Release.Project_Files
@@ -158,9 +156,8 @@ package body Alr.Templates is
 
       Manual_Warning (File);
 
-      --  Absolute paths in the following could be made relative.
-      --  That would allow moving working copies.
-      --  Not worth the hassle yet.
+      --  Absolute paths in the following could be made relative.  That would
+      --  allow moving working copies.  Not worth the hassle yet.
 
       Put_Line (File, Tab_1 & "for Project_Files use (");
       for I in GPR_Files.Iterate loop
@@ -185,8 +182,8 @@ package body Alr.Templates is
          for Path of Rel.Project_Paths (Platform.Properties) loop
             All_Paths.Append
               ((if Rel.Project = Root.Release.Project
-               then ".."
-               else Paths.Alr_Working_Deps_Path / Rel.Unique_Folder) / Path);
+                then ".."
+                else Paths.Alr_Working_Deps_Path / Rel.Unique_Folder) / Path);
          end loop;
       end loop;
 
@@ -215,6 +212,7 @@ package body Alr.Templates is
       end if;
 
       --  Externals
+      --
       --  FIXME: what to do with duplicates? at a minimum research what
       --  gprbuild does (err, ignore...).
       for Release of Full_Instance loop
@@ -230,10 +228,10 @@ package body Alr.Templates is
                begin
 --                    Put_Line ("KIND: " & Variable.Kind'Img);
                   if Variable.Kind = External then
-                     Put_Line (File,
-                               Tab_1 & "for External (" &
-                                 Q (Variable.Name) & ") use " &
-                                 Q (Variable.External_Value) & ";");
+                     Put_Line
+                       (File,
+                        Tab_1 & "for External (" & Q (Variable.Name) & ") use "
+                        & Q (Variable.External_Value) & ";");
                   end if;
                end;
             end if;
@@ -257,10 +255,9 @@ package body Alr.Templates is
                                Filename : String)
    is
    begin
-      Trace.Detail ("Generating " & Release.Project_Str & ".toml file for " &
-                    Release.Milestone.Image &
-                      " with" & Release.Dependencies.Leaf_Count'Img &
-                      " dependencies");
+      Trace.Detail ("Generating " & Release.Project_Str & ".toml file for "
+                    & Release.Milestone.Image & " with"
+                    & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
       if not Paths.Is_Simple_Name (Filename) then
@@ -278,7 +275,7 @@ package body Alr.Templates is
 
    procedure Generate_Prj_Alr (Release : Types.Release) is
       Guard : OS_Lib.Folder_Guard (Commands.Enter_Project_Folder)
-        with Unreferenced;
+         with Unreferenced;
    begin
       Generate_Prj_Alr (Release, Root.Current.Crate_File);
    end Generate_Prj_Alr;

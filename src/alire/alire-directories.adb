@@ -136,7 +136,7 @@ package body Alire.Directories is
 
    function Find_Single_File (Path      : String;
                               Extension : String)
-                              return Absolute_Path
+                              return String
    is
       use Ada.Directories;
       Search : Search_Type;
