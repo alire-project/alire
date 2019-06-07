@@ -19,7 +19,7 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      use Alr.Os_Lib;
+      use Alr.OS_Lib;
 
       package TIO renames Ada.Text_IO;
 
