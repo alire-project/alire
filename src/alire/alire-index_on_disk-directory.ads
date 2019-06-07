@@ -2,7 +2,7 @@ with Alire.Utils;
 
 package Alire.Index_On_Disk.Directory is
 
-   --  A local index that is already on disk
+   --  A local index that is taken from a local filesystem path
 
    type Index (<>) is new Index_On_Disk.Index with private;
 
@@ -19,7 +19,7 @@ package Alire.Index_On_Disk.Directory is
 
    overriding
    function Index_Directory (This : Index) return String;
-   --  A file:// index is already on disk, so we don't create a folder for it.
+   --  A file:// index is already on disk, so we reuse its path
 
    overriding
    function Update (This : Index) return Outcome is (Outcome_Success);

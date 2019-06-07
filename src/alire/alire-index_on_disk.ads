@@ -69,7 +69,9 @@ package Alire.Index_On_Disk is
 
    function Update (This : Index) return Outcome is abstract;
    --  If the index allows updating (e.g. git), do it.
-   --  Otherwise, silently do nothing and return success.
+   --  Otherwise, silently do nothing and return success, since at this level
+   --  there is no way to know if an indexed can be updated, and is always
+   --  called.
 
    function Verify (This : Index'Class) return Outcome;
    --  Ascertain if an index is properly populated (metadata, crates);

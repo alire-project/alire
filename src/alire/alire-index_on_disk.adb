@@ -15,6 +15,9 @@ with TOML.File_IO;
 package body Alire.Index_On_Disk is
 
    type Invalid_Index is new Index with null record;
+   --  Dummy index type, used to return a placeholder value in error handling,
+   --  when there is no index to return.
+   --  All operations on it raise Program_Error.
 
    function Add (This : Invalid_Index) return Outcome is
      (raise Program_Error);
