@@ -485,7 +485,7 @@ private
    is (Conditional.New_Dependency
        (C.Project, Semver.Within_Minor (Index.V (V))));
 
-   function Project (C : Catalog_Entry) return Alire.Project
+   overriding function Project (C : Catalog_Entry) return Alire.Project
    is (C.Project);
 
    function Description (C : Catalog_Entry) return Description_String

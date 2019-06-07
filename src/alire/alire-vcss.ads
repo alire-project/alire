@@ -18,8 +18,9 @@ package Alire.VCSs is
                     Repo : Platform_Independent_Path)
                     return Outcome is abstract;
 
-
-   --  General utilities
+   -----------------------
+   -- General utilities --
+   -----------------------
 
    function Kind (Origin : URL) return Kinds;
 
@@ -32,8 +33,10 @@ package Alire.VCSs is
    function Commit (Origin : URL) return String;
    --  Empty string if no commit part
 
-
-   --  Classwide versions that redispatch to the appropriate descendant
+   ------------------------
+   -- Classwide versions --
+   ------------------------
+   --  Those redispatch to the appropriate descendant
 
    function Clone (From : URL;
                    Into : Platform_Independent_Path)

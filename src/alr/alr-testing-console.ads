@@ -34,6 +34,6 @@ private
       Results : Counters := (others => 0);
    end record;
 
-   function New_Reporter return Reporter is (others => <>);
+   overriding function New_Reporter return Reporter is (others => <>);
 
 end Alr.Testing.Console;

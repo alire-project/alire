@@ -48,5 +48,4 @@ package Alr.Platforms is
    is abstract;
    --  self-factory
 
-
 end Alr.Platforms;

@@ -7,7 +7,7 @@ package body Alr.Utils.Temp_File is
    -- Finalize --
    --------------
 
-   procedure Finalize (This : in out File) is
+   overriding procedure Finalize (This : in out File) is
       use Ada.Directories;
    begin
       if Exists (This.Name) then

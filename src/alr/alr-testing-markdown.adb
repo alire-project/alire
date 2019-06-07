@@ -12,6 +12,7 @@ package body Alr.Testing.Markdown is
    -- Start_Run --
    ---------------
 
+   overriding
    procedure Start_Run (This  : in out Reporter;
                         Name  :        String;
                         Tests :        Natural) is
@@ -29,6 +30,7 @@ package body Alr.Testing.Markdown is
    -- End_Run --
    -------------
 
+   overriding
    procedure End_Run   (This : in out Reporter) is
    begin
       Close (This.File.all);
@@ -39,6 +41,7 @@ package body Alr.Testing.Markdown is
    -- End_Test --
    --------------
 
+   overriding
    procedure End_Test (This    : in out Reporter;
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;

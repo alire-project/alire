@@ -37,7 +37,6 @@ package body Alire.VCSs is
      (if Utils.Starts_With (Origin, "git+") then VCS_Git
       else VCS_Unknown);
 
-
    ----------
    -- Repo --
    ----------

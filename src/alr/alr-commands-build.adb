@@ -18,7 +18,7 @@ package body Alr.Commands.Build is
    -- Execute --
    -------------
 
-   procedure Execute (Cmd : in out Command) is
+   overriding procedure Execute (Cmd : in out Command) is
    begin
       Execute (Cmd.Online);
    end Execute;

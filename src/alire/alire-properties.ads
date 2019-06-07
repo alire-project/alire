@@ -21,7 +21,7 @@ package Alire.Properties with Preelaborate is
      Interfaces.Classificable and
      Interfaces.Tomifiable with null record;
 
-   function Key (P : Property) return String is abstract;
+   overriding function Key (P : Property) return String is abstract;
 
    function Image (P : Property) return String is abstract;
 
@@ -55,7 +55,7 @@ package Alire.Properties with Preelaborate is
 
    function Image_One_Line (V : Vector) return String;
 
-   function To_TOML (V : Vector) return TOML.TOML_Value
+   overriding function To_TOML (V : Vector) return TOML.TOML_Value
      with Post => To_TOML'Result.Kind = TOML.TOML_Array;
 
    --  A generic helper to simply store/retrieve e.g. an enumerated type

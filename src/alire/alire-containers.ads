@@ -20,7 +20,6 @@ package Alire.Containers with Preelaborate is
                                                   Milestones."<",
                                                   Milestones."=");
 
-
    package Release_Sets
    is new Ada.Containers.Indefinite_Ordered_Sets (Releases.Release,
                                                   Releases."<",
@@ -31,7 +30,6 @@ package Alire.Containers with Preelaborate is
    is new Ada.Containers.Indefinite_Holders (Releases.Release,
                                              Releases."=");
    subtype Release_H is Release_Holders.Holder;
-
 
    package Project_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (Alire.Project, Releases.Release, "<", Releases."=");

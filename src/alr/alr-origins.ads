@@ -19,7 +19,6 @@ package Alr.Origins is
    procedure Fetch_Or_Install (From : Alire.Origins.Origin; Folder : String);
    --  Dispatch to proper one
 
-
    ------------
    -- Origin --
    ------------

@@ -20,7 +20,7 @@ package body Alire.Properties is
    -- To_TOML --
    -------------
 
-   function To_TOML (V : Vector) return TOML.TOML_Value is
+   overriding function To_TOML (V : Vector) return TOML.TOML_Value is
       use TOML;
    begin
       if V.Is_Empty then

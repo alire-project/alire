@@ -484,7 +484,7 @@ package body Alire.Releases is
    -- To_TOML --
    -------------
 
-   function To_TOML (R : Release) return TOML.TOML_Value is
+   overriding function To_TOML (R : Release) return TOML.TOML_Value is
       package APL renames Alire.Properties.Labeled;
       use all type Alire.Properties.Labeled.Cardinalities;
       use all type Alire.Requisites.Tree;
@@ -588,6 +588,7 @@ package body Alire.Releases is
    -- Version --
    -------------
 
+   overriding
    function Version (R : Release) return Semantic_Versioning.Version is
      (R.Version);
 

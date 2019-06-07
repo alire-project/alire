@@ -133,7 +133,6 @@ package Alire.Utils with Preelaborate is
    type XXX_XXX (<>) is limited private;
    function XXX_XXX_XXX return XXX_XXX;
 
-
 private
 
    Empty_Vector : constant String_Vector :=

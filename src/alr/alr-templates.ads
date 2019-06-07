@@ -39,7 +39,6 @@ private
    --  Add with Alire.Index.* for all dependencies in the given already opened
    --  file.
 
-
    Sed_Pattern : constant String := "PROJECT_SKEL";
    --  In Caps so its proper use in lowercase or Mixed Case is ensured
 

@@ -4,30 +4,35 @@ package Alire.Requisites.Booleans with Preelaborate is
 
    type Requisite_False is new Requisite with null record;
 
-   pragma Warnings (Off); -- For the unused parameters
-   function Is_Applicable (R : Requisite_True;
-                           P : Property'Class)
+   overriding
+   function Is_Applicable (R      : Requisite_True;
+                           Unused : Property'Class)
                            return Boolean
    is (True);
 
-   function Satisfies (R : Requisite_True;
-                       P : Property'Class)
+   overriding
+   function Satisfies (R      : Requisite_True;
+                       Unused : Property'Class)
                        return Boolean
    is (True);
 
+   overriding
    function Image (R : Requisite_True) return String
    is ("True");
 
-   function Is_Applicable (R : Requisite_False;
-                           P : Property'Class)
+   overriding
+   function Is_Applicable (R      : Requisite_False;
+                           Unused : Property'Class)
                            return Boolean
    is (True);
 
-   function Satisfies (R : Requisite_False;
-                       P : Property'Class)
+   overriding
+   function Satisfies (R      : Requisite_False;
+                       Unused : Property'Class)
                        return Boolean
    is (False);
 
+   overriding
    function Image (R : Requisite_False) return String
    is ("False");
    pragma Warnings (On);

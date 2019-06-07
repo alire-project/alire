@@ -10,6 +10,7 @@ package body Alr.Testing.JUnit is
    -- Start_Run --
    ---------------
 
+   overriding
    procedure Start_Run (This  : in out Reporter;
                         Name  :        String;
                         Tests :        Natural) is
@@ -23,7 +24,7 @@ package body Alr.Testing.JUnit is
    -- End_Run --
    -------------
 
-   procedure End_Run   (This : in out Reporter) is
+   overriding procedure End_Run   (This : in out Reporter) is
       File : File_Type;
    begin
       Create (File, Out_File, This.Name.all & ".xml");
@@ -37,6 +38,7 @@ package body Alr.Testing.JUnit is
    -- End_Test --
    --------------
 
+   overriding
    procedure End_Test (This    : in out Reporter;
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;

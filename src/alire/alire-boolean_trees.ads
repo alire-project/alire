@@ -86,7 +86,7 @@ private
 
    Empty_Tree : constant Tree := (Trees.Empty_Tree with null record);
 
-   function Is_Empty (T : Tree) return Boolean
+   overriding function Is_Empty (T : Tree) return Boolean
    is (Trees.Is_Empty (Trees.Tree (T)));
 
 end Alire.Boolean_Trees;

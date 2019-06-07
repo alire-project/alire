@@ -2,6 +2,7 @@ package Alr.Origins.Git is
 
    type Origin is new Alr.Origins.Origin with null record;
 
+   overriding
    function Already_Installed (This : Origin) return Boolean
    is (raise Program_Error);
 

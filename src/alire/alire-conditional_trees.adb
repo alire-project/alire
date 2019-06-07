@@ -538,6 +538,7 @@ package body Alire.Conditional_Trees is
    -- To_TOML --
    -------------
 
+   overriding
    function To_TOML (This : Tree) return TOML.TOML_Value is
       Root : TOML.TOML_Value;
 
@@ -666,7 +667,7 @@ package body Alire.Conditional_Trees is
    -- Next --
    ----------
 
-   function Next (This : Cursor) return Cursor is
+   overriding function Next (This : Cursor) return Cursor is
       (Cursor (Vectors.Next (Vectors.Cursor (This))));
 
    ----------
@@ -681,7 +682,7 @@ package body Alire.Conditional_Trees is
    -- Has_Element --
    -----------------
 
-   function Has_Element (This : Cursor) return Boolean is
+   overriding function Has_Element (This : Cursor) return Boolean is
       (Vectors.Has_Element (Vectors.Cursor (This)));
 
    -------------

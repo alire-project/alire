@@ -10,6 +10,7 @@ package body Alr.Testing.Text is
    -- Start_Run --
    ---------------
 
+   overriding
    procedure Start_Run (This  : in out Reporter;
                         Name  :        String;
                         Tests :        Natural) is
@@ -25,7 +26,7 @@ package body Alr.Testing.Text is
    -- End_Run --
    -------------
 
-   procedure End_Run   (This : in out Reporter) is
+   overriding procedure End_Run   (This : in out Reporter) is
    begin
       Close (This.File.all);
       --  TODO: free File, but alr is exiting anyway...
@@ -35,6 +36,7 @@ package body Alr.Testing.Text is
    -- End_Test --
    --------------
 
+   overriding
    procedure End_Test (This    : in out Reporter;
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;

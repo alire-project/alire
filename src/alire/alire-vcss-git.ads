@@ -4,11 +4,13 @@ package Alire.VCSs.Git is
 
    function Handler return VCS;
 
+   overriding
    function Clone (This : VCS;
                    From : URL;
                    Into : Platform_Independent_Path)
                    return Outcome;
 
+   overriding
    function Update (This : VCS;
                     Repo : Platform_Independent_Path)
                     return Outcome;
