@@ -1647,6 +1647,7 @@ package body Alire.TOML_Index is
       ------------
 
       function Origin return Origins.Origin is
+         use type US.Unbounded_String;
          Label : constant Origin_Result.T :=
             Origin_Expressions.Evaluate (R.Origin, Environment);
          O     : Origin_Type;
@@ -1666,6 +1667,12 @@ package body Alire.TOML_Index is
                                      (+O.Archive_URL, +R.Archive_Name),
             when Native_Package => Index.Native
               ((others => Index.Packaged_As (+O.Package_Name))));
+      exception
+         when E : Alire.Origins.Unknown_Source_Archive_Format_Error
+                | Alire.Origins.Unknown_Source_Archive_Name_Error
+         =>
+            Error (Pkg.Name & " (origin): "
+                   & US.To_Unbounded_String (Exc.Exception_Message (E)));
       end Origin;
 
       ------------------
