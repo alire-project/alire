@@ -1601,7 +1601,8 @@ package body Alire.TOML_Index is
       Error_Message    : US.Unbounded_String;
       Evaluation_Error : exception;
 
-      procedure Error (Message : US.Unbounded_String);
+      procedure Error (Message : US.Unbounded_String)
+         with No_Return;
       --  Set Error_Message to Message and raise an Evaluation_Error exception
 
       procedure Add_Property
