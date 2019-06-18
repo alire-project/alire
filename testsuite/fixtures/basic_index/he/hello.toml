@@ -1,0 +1,16 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+
+['1.0.1']
+origin = "git+https://github.com/alire-project/hello.git@65725c20778875eef12b61a01b437120932965f3"
+
+    ['1.0.1'.depends-on]
+    libhello = "^1.0"
+
+['1.0.0']
+origin = "git+https://github.com/alire-project/hello.git@8cac0afddc505794ae3e5634745ce0830129d241"
+
+    ['1.0.0'.depends-on]
+    libhello = "^1.0"

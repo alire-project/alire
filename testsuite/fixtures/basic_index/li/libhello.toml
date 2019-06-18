@@ -1,0 +1,7 @@
+[general]
+description = """"Hello, world!" demonstration project support library"""
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+
+['1.0']
+origin = "git+https://github.com/alire-project/libhello.git@ce78e7706c9d3f97605df48d8befca5407f8d328"
