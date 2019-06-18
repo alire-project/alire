@@ -136,6 +136,7 @@ package body Alr.Commands.Get is
          when Alire.Query_Unsuccessful =>
             Trace.Info ("Project [" & Argument (1) &
                           "] does not exist in the catalog.");
+            raise Command_Failed;
       end;
    end Execute;
 
