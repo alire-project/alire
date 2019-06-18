@@ -20,15 +20,14 @@ package body Alire.Origins is
    ------------------
 
    function URL_Basename (URL : Alire.URL) return String is
-      Separator : Positive;
-      --  Index of the first URL separator we can find ('#' or '?') in URL
+      Separator : Positive := URL'Last + 1;
+      --  Index of the first URL separator we can find ('#' or '?') in URL, or
+      --  URL'Last + 1 if we haven't found any.
 
-      Last_Slash : Natural;
+      Last_Slash : Natural := URL'First - 1;
       --  Index of the last slash character in URL before the first URL
-      --  separator.
+      --  separator or URL'First - 1 if we haven't found any.
    begin
-      Last_Slash := 0;
-      Separator := URL'Last + 1;
       for I in URL'Range loop
          case URL (I) is
             when '?' | '#' =>
@@ -43,7 +42,7 @@ package body Alire.Origins is
          end case;
       end loop;
 
-      return URL (Last_Slash + 1 .. Separator);
+      return URL (Last_Slash + 1 .. Separator - 1);
    end URL_Basename;
 
    --------------------
