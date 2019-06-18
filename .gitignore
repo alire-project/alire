@@ -4,6 +4,7 @@
 *.db
 *.db-???
 *.xml
+*.pyc
 
 .*sw?
 
@@ -11,3 +12,5 @@ bin
 lib
 obj
 stress/*/
+
+testsuite/out
