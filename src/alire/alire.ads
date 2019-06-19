@@ -51,6 +51,13 @@ package Alire with Preelaborate is
      Project (Project'Last) /= Extension_Separator and then
      (for all C of Project => C in Project_Character);
 
+   subtype Restricted_Name is String with Dynamic_Predicate =>
+     Restricted_Name'Length >= Min_Name_Length and then
+     Restricted_Name (Restricted_Name'First) /= '_' and then
+     (for all C of Restricted_Name => C in Project_Character);
+   --  A type used to limit some things that are given names by the user
+   --  (e.g., remote index names).
+
    function "+" (P : Project) return String  is (String (P));
    function "+" (P : String)  return Project is (Project (P));
 

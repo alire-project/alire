@@ -1,5 +1,4 @@
 with Alire.Environment;
-with Alire.OS_Lib;
 with Alire.Platform;
 
 package body Alire.Config is
@@ -20,6 +19,10 @@ package body Alire.Config is
                                Platform.Default_Config_Folder);
       end if;
    end Path;
+
+   --------------
+   -- Set_Path --
+   --------------
 
    procedure Set_Path (Path : String) is
    begin

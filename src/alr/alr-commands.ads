@@ -99,6 +99,7 @@ package Alr.Commands is
                       Cmd_Compile,
                       Cmd_Dev,
                       Cmd_Get,
+                      Cmd_Index,
                       Cmd_Init,
                       Cmd_List,
                       Cmd_Pin,
