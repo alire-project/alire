@@ -15,17 +15,14 @@ from drivers.asserts import assert_eq
 
 
 # Get the "hello" project and enter its directory
-run_alr('get', 'hello')
+run_alr('get', '-q', 'hello')
 os.chdir(glob('hello*')[0])
 
 # Build it
-run_alr('build')
+run_alr('build', '-q')
 
 # Run it
-p = run_alr('run')
-assert_eq('\ngprbuild: . gprbuild: "hello" up to date '
-          '\n                                         '
-          '\nHello, world!'
-          '\n', p.out)
+p = run_alr('run', '-q')
+assert_eq('Hello, world!\n' , p.out)
 
 print('SUCCESS')
