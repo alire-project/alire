@@ -1,0 +1,7 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["user@example.com"]
+
+['0.1']
+origin = "http://example.com/"
