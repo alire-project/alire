@@ -29,4 +29,7 @@ alr search -d --list --native
 bash stress/selftest.sh docker
 
 # New e3 test suite
-testsuite/run.py
+echo
+cd testsuite
+./run.py || { cat out/new/*; exit 1; }
+cd ..

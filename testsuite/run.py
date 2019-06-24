@@ -37,3 +37,8 @@ if __name__ == '__main__':
              if count]
     for name, count in sorted(stats):
         print('{: <8} {}'.format(name + ':', count))
+
+    # Exit with failure if some test didn't pass
+    for name, count in sorted(stats):
+        if name == 'FAIL' and count > 0:
+            exit(1)
