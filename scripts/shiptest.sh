@@ -25,5 +25,11 @@ alr version
 # List releases for the record
 alr search -d --list --native
 
-# Minimal self-checks until new test suite
+# Old test suite
 bash stress/selftest.sh docker
+
+# New e3 test suite
+echo
+cd testsuite
+./run.py || { cat out/new/*; exit 1; }
+cd ..
