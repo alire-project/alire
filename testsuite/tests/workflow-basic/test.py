@@ -15,14 +15,14 @@ from drivers.asserts import assert_eq
 
 
 # Get the "hello" project and enter its directory
-run_alr('get', '-q', 'hello')
+run_alr('get', 'hello')
 os.chdir(glob('hello*')[0])
 
 # Build it
-run_alr('build', '-q')
+run_alr('build')
 
 # Run it
-p = run_alr('run', '-q')
+p = run_alr('run')
 assert_eq('Hello, world!\n' , p.out)
 
 print('SUCCESS')

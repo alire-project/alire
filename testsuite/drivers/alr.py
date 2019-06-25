@@ -35,15 +35,21 @@ def run_alr(*args, **kwargs):
     :param bool complain_on_error: If true and the subprocess exits with a
         non-zero status code, print information on the standard output (for
         debugging) and raise a CalledProcessError (to abort the test).
+    :param bool quiet: If true (which is the default), append "-q" to the
+        command line.
     :rtype: Run
     """
 
     complain_on_error = kwargs.pop('complain_on_error', True)
+    quiet = kwargs.pop('quiet', True)
     if kwargs:
         first_unknown_kwarg = sorted(kwargs)[0]
         raise ValueError('Invalid argument: {}'.format(first_unknown_kwarg))
 
-    argv = ['alr'] + list(args)
+    argv = ['alr']
+    if quiet:
+        argv.append('-q')
+    argv.extend(args)
     p = Run(argv)
     if p.status != 0 and complain_on_error:
         print('The following command:')
