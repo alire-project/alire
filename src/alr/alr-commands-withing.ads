@@ -16,9 +16,6 @@ package Alr.Commands.Withing is
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[{ [--del] <project>[versions]... | --from <gpr_file>... }]");
 
-   function With_Line (Name : Alire.Project) return String;
-   --  The "with Alire.Index.Project;" full line
-
 private
 
    type Command is new Commands.Command with record
