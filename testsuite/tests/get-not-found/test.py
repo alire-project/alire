@@ -3,7 +3,6 @@ Test the behavior of "alr get" to get a crate that does not exist.
 """
 
 from glob import glob
-import os
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq

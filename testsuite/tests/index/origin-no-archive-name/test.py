@@ -2,9 +2,6 @@
 Test that origins lacking archive names in indexes are properly reported.
 """
 
-from glob import glob
-import os
-
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq
 
