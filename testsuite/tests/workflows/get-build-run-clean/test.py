@@ -23,6 +23,11 @@ run_alr('build')
 
 # Run it
 p = run_alr('run')
-assert_eq('Hello, world!\n' , p.out)
+assert_eq('Hello, world!\n', p.out)
+
+# Clean it
+assert os.listdir('obj')
+run_alr('clean')
+assert not os.listdir('obj')
 
 print('SUCCESS')
