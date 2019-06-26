@@ -4,7 +4,6 @@ with Ada.Strings.Maps;
 with Ada.Text_IO;
 
 with Alire.Conditional;
-with Alire.Index;
 with Alire.Roots;
 with Alire.Utils;
 
@@ -334,18 +333,5 @@ package body Alr.Commands.Withing is
                      "", "--from",
                      "Use dependencies declared within GPR project file");
    end Setup_Switches;
-
-   ---------------
-   -- With_Line --
-   ---------------
-
-   function With_Line (Name : Alire.Project) return String is
-   begin
-      Requires_Full_Index;
-
-      return "with Alire.Index." &
-        Utils.Head (Alire.Index.Get (Name).Package_Name, '.') &
-        ";";
-   end With_Line;
 
 end Alr.Commands.Withing;

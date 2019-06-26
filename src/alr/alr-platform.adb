@@ -57,7 +57,7 @@ package body Alr.Platform is
       Year   : Natural;
       Output : String_Vector;
    begin
-      OS_Lib.Spawn_And_Capture (Output, "gnat");
+      OS_Lib.Spawn_And_Capture (Output, "gnat", Err_To_Out => True);
 
       for Line of Output loop
          if Line'Length > 4
