@@ -3,6 +3,8 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Finalization;
 
+private with Ada.Strings.Fixed;
+
 package Alire.Utils with Preelaborate is
 
    function Quote (S : String) return String;
@@ -22,6 +24,9 @@ package Alire.Utils with Preelaborate is
    function Tail (Str : String; Separator : Character) return String;
    --  If Str contains Separator, the rhs is returned
    --  Otherwise ""
+
+   function Trim (S : String) return String;
+   --  Remove spaces at S extremes
 
    function Starts_With (Full_String, Substring : String) return Boolean is
      (Full_String'Length >= Substring'Length
@@ -142,7 +147,10 @@ private
    is (Natural (String_Vectors.Vector (V).Length));
 
    function Quote (S : String) return String is
-      ("""" & S & """");
+     ("""" & S & """");
+
+   function Trim (S : String) return String is
+     (Ada.Strings.Fixed.Trim (S, Ada.Strings.Both));
 
    type XXX_XXX is limited null record;
    function XXX_XXX_XXX return XXX_XXX is (null record);

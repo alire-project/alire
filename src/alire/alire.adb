@@ -35,4 +35,14 @@ package body Alire is
       end if;
    end Outcome_From_Exception;
 
+   -----------------------
+   -- Uncontained_Error --
+   -----------------------
+
+   procedure Uncontained_Error (Msg : String) is
+   begin
+      Trace.Error (Msg);
+      raise Internal_Error with Msg;
+   end Uncontained_Error;
+
 end Alire;

@@ -1,3 +1,5 @@
+with Alire.Platform;
+
 with Alr.Origins;
 with Alr.OS_Lib;
 with Alr.Utils;
@@ -30,41 +32,9 @@ package body Alr.Platforms.Linux is
    -- Distribution --
    ------------------
 
-   Cached_Distro : Alire.Platforms.Distributions;
-   Distro_Cached : Boolean := False;
-
    overriding function Distribution (This : Linux_Variant)
                                      return Alire.Platforms.Distributions
-   is
-      pragma Unreferenced (This);
-   begin
-      if Distro_Cached then
-         return Cached_Distro;
-      else
-         declare
-            use all type Alire.Platforms.Distributions;
-            Release : String_Vector;
-         begin
-            OS_Lib.Spawn_And_Capture (Release, "lsb_release", "-is");
-            for Known in Alire.Platforms.Distributions'Range loop
-               for Line of Release loop
-                  if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line))
-                  then
-                     Cached_Distro := Known;
-                     Distro_Cached := True;
-                     return Known;
-                  end if;
-               end loop;
-            end loop;
-
-            Trace.Debug ("Found unsupported distro: " & Release (1));
-
-            Cached_Distro := Distro_Unknown;
-            Distro_Cached := True;
-            return Distro_Unknown;
-         end;
-      end if;
-   end Distribution;
+   is (Alire.Platform.Distribution);
 
    --------------------
    -- Distro_Version --
