@@ -3,7 +3,7 @@ with Ada.Exceptions;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 
-package body Alire.VCSs.Git is
+package body Alire.VCSs.SVN is
 
    -----------
    -- Clone --
@@ -19,33 +19,24 @@ package body Alire.VCSs.Git is
       Extra : constant String :=
                 (if Log_Level < Trace.Info
                  then "-q "
-                 else "--progress ");
+                 else "");
    begin
-      Trace.Detail ("Checking out [git]: " & From);
+      Trace.Detail ("Checking out [svn]: " & From);
 
       declare
          Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-           ("git", "clone " & Extra & Repo (From) & " " & Into);
+           ("svn",
+            "checkout "
+            & Extra
+            & Repo (From)
+            & (if Commit (From) /= "" then " -r" & Commit (From) else "")
+            & " " & Into);
       begin
          if Exit_Code /= 0 then
-            return Outcome_Failure ("git clone exited with code:" &
+            return Outcome_Failure ("svn checkout exited with code:" &
                                     Exit_Code'Img);
          end if;
       end;
-
-      if Commit (From) /= "" then
-         declare
-            Guard : Directories.Guard (Directories.Enter (Into))
-              with Unreferenced;
-            Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-              ("git", "reset --hard " & Commit (From));
-         begin
-            if Exit_Code /= 0 then
-               return Outcome_Failure ("git reset exited with code:" &
-                                         Exit_Code'Img);
-            end if;
-         end;
-      end if;
 
       return Outcome_Success;
    exception
@@ -69,17 +60,17 @@ package body Alire.VCSs.Git is
         with Unreferenced;
       Extra : constant String :=
                 (if Log_Level < Trace.Info
-                 then "-q "
-                 else "--progress ");
+                 then "-q"
+                 else "");
       Exit_Code : constant Integer :=
-                    OS_Lib.Subprocess.Spawn ("git", "pull " & Extra);
+                    OS_Lib.Subprocess.Spawn ("svn", "update " & Extra);
    begin
       if Exit_Code /= 0 then
-         return Outcome_Failure ("git pull exited with code: " &
+         return Outcome_Failure ("svn update exited with code: " &
                                    Exit_Code'Img);
       else
          return Outcome_Success;
       end if;
    end Update;
 
-end Alire.VCSs.Git;
+end Alire.VCSs.SVN;
