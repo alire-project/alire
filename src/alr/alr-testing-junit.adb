@@ -25,11 +25,8 @@ package body Alr.Testing.JUnit is
    -------------
 
    overriding procedure End_Run   (This : in out Reporter) is
-      File : File_Type;
    begin
-      Create (File, Out_File, This.Name.all & ".xml");
-      This.Jsuite.To_Collection.Write (File);
-      Close (File);
+      This.Flush;
 
       --  TODO: free name
    end End_Run;
@@ -87,6 +84,21 @@ package body Alr.Testing.JUnit is
                   Message => Outcome'Img,
                   Output  => Commands.Version.Fingerprint));
       end case;
+
+      This.Flush;
    end End_Test;
+
+   -----------
+   -- Flush --
+   -----------
+
+   not overriding
+   procedure Flush (This : Reporter) is
+      File : File_Type;
+   begin
+      Create (File, Out_File, This.Name.all & ".xml");
+      This.Jsuite.To_Collection.Write (File);
+      Close (File);
+   end Flush;
 
 end Alr.Testing.JUnit;

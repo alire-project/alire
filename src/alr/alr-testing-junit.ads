@@ -33,6 +33,10 @@ private
       Jsuite : Test_Suite_Access;
    end record;
 
+   not overriding
+   procedure Flush (This : Reporter);
+   --  Ensure partial test results are dumped to file
+
    overriding
    function New_Reporter return Reporter is (others => <>);
 
