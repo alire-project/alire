@@ -1,10 +1,5 @@
 """
 Test a basic init-with-pin-run workflow.
-
-TODO: this test relies on external resources (GitHub repositories for the
-hello/libhello crates sources). This makes this test slower than needed and
-potentially unstable. We should refactor it to rely only on testsuite files
-instead.
 """
 
 import os
