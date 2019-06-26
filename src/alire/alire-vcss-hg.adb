@@ -3,7 +3,11 @@ with Ada.Exceptions;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 
-package body Alire.VCSs.Git is
+with Alire.OS_Lib;
+
+with GNAT.OS_Lib;
+
+package body Alire.VCSs.Hg is
 
    -----------
    -- Clone --
@@ -16,36 +20,30 @@ package body Alire.VCSs.Git is
                    return Outcome
    is
       pragma Unreferenced (This);
+      use GNAT.OS_Lib;
       Extra : constant String :=
                 (if Log_Level < Trace.Info
                  then "-q "
-                 else "--progress ");
+                 else "-v ");
    begin
-      Trace.Detail ("Checking out [git]: " & From);
+      if Locate_Exec_On_Path ("hg") = null then
+         return Outcome_Failure ("hg not found in path, aborting");
+      end if;
+
+      Trace.Detail ("Checking out [hg]: " & From);
 
       declare
          Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-           ("git", "clone " & Extra & Repo (From) & " " & Into);
+           ("hg",
+            "clone -y "
+            & (if Commit (From) /= "" then "-u " & Commit (From) else "")
+            & Extra & Repo (From) & " " & Into);
       begin
          if Exit_Code /= 0 then
-            return Outcome_Failure ("git clone exited with code:" &
+            return Outcome_Failure ("hg clone exited with code:" &
                                     Exit_Code'Img);
          end if;
       end;
-
-      if Commit (From) /= "" then
-         declare
-            Guard : Directories.Guard (Directories.Enter (Into))
-              with Unreferenced;
-            Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-              ("git", "reset --hard " & Commit (From));
-         begin
-            if Exit_Code /= 0 then
-               return Outcome_Failure ("git reset exited with code:" &
-                                         Exit_Code'Img);
-            end if;
-         end;
-      end if;
 
       return Outcome_Success;
    exception
@@ -69,17 +67,17 @@ package body Alire.VCSs.Git is
         with Unreferenced;
       Extra : constant String :=
                 (if Log_Level < Trace.Info
-                 then "-q "
-                 else "--progress ");
+                 then "-q"
+                 else "-v ");
       Exit_Code : constant Integer :=
-                    OS_Lib.Subprocess.Spawn ("git", "pull " & Extra);
+                    OS_Lib.Subprocess.Spawn ("hg", "pull -u " & Extra);
    begin
       if Exit_Code /= 0 then
-         return Outcome_Failure ("git pull exited with code: " &
+         return Outcome_Failure ("hg pull exited with code: " &
                                    Exit_Code'Img);
       else
          return Outcome_Success;
       end if;
    end Update;
 
-end Alire.VCSs.Git;
+end Alire.VCSs.Hg;
