@@ -1,4 +1,6 @@
-package Alire.Platform with Preelaborate is
+with Alire.Platforms;
+
+package Alire.Platform is
 
    --  Spec that all OS-dependent bodies must fulfill
 
@@ -11,6 +13,9 @@ package Alire.Platform with Preelaborate is
    --  In the future, other persistent configuration items might live here.
    --  There are none currently (except for the index, alr is stateless)
    --  ${XDG_CONFIG_HOME:-.config}/alire
+
+   function Distribution return Platforms.Distributions;
+   --  TODO: during ALR -> Alire refactorings move body from here to Linux body
 
    function Name return Supported;
    --  Self identify

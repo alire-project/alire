@@ -1,3 +1,4 @@
+with Alire;
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 
 with Alr.Bootstrap;
@@ -20,4 +21,10 @@ begin
    --  There's something writing an empty line on finalization and I can't find
    --  it. There's almost nothing controlled so it's puzzling. For now, this is
    --  a temporary workaround.
+exception
+   --  Ensure we do not show an exception trace to unsuspecting users
+   when E : others =>
+      Alire.Log_Exception (E);
+      Trace.Error ("alr encountered an unexpected error");
+      OS_Lib.Bailout (1);
 end Alr.Main;
