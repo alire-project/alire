@@ -9,9 +9,11 @@ package body Alire is
    is
       use Ada.Exceptions;
    begin
+      Log ("---8<--- Exception dump begin ---8<---", Level);
       Log (Exception_Name (E), Level);
       Log (Exception_Message (E), Level);
       Log (Exception_Information (E), Level);
+      Log ("--->8--- Exception dump end ----->8---", Level);
    end Log_Exception;
 
    ----------------------------
