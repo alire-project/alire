@@ -5,6 +5,45 @@ with Alire.Paths;
 
 package body Alire.Directories is
 
+   ----------
+   -- Copy --
+   ----------
+
+   procedure Copy (Src_Folder, Dst_Parent_Folder : String;
+                   Excluding                     : String := "") is
+      use Ada.Directories;
+      Search : Search_Type;
+      Item   : Directory_Entry_Type;
+   begin
+      Start_Search (Search, Src_Folder, "*");
+      while More_Entries (Search) loop
+         Get_Next_Entry (Search, Item);
+         if Simple_Name (Item) /= Excluding then
+            --  Recurse for subdirectories
+            if Kind (Item) = Directory and then
+              Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".."
+            then
+               declare
+                  Subfolder : constant String :=
+                                Compose (Dst_Parent_Folder,
+                                         Simple_Name (Item));
+               begin
+                  if not Exists (Subfolder) then
+                     Ada.Directories.Create_Directory (Subfolder);
+                  end if;
+                  Copy (Full_Name (Item), Subfolder, Excluding);
+               end;
+
+            --  Copy for files
+            elsif Kind (Item) = Ordinary_File then
+               Copy_File (Full_Name (Item),
+                          Compose (Dst_Parent_Folder, Simple_Name (Item)));
+            end if;
+         end if;
+      end loop;
+      End_Search (Search);
+   end Copy;
+
    ----------------------
    -- Create_Directory --
    ----------------------

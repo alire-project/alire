@@ -118,10 +118,6 @@ package Alr.OS_Lib is
    --  "." and ".." are ignored
    --  If Stop, stop
 
-   procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String);
-   --  Copies a folder and its contents to within another location
-   --  That is, equivalent to cp -r src dst
-
    procedure Delete_File (Name : String);
    --  Don't fail if not existing, unlike the one in Directories
 

@@ -59,19 +59,6 @@ package body Alr.OS_Lib is
    end Traverse_Folder;
 
    -----------------
-   -- Copy_Folder --
-   -----------------
-
-   procedure Copy_Folder (Src_Folder, Dst_Parent_Folder : String) is
-   begin
-      --  FIXME this is OS dependent and should be made independent (or moved
-      --  to OS).
-      --  FIXME this is not robust with blanks in paths.
-      Spawn ("cp", "-r " & Src_Folder & " " & Dst_Parent_Folder,
-             Force_Quiet => True);
-   end Copy_Folder;
-
-   -----------------
    -- Delete_File --
    -----------------
 
