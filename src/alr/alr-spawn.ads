@@ -12,5 +12,9 @@ package Alr.Spawn is
 
    procedure Gprbuild (Project_File  : String;
                        Extra_Args    : String := "");
+   --  Launches gprbuild for the building of a crate.
+   --  Extra args can be -Xblah detected from command-line.
+   --  Out-of-tree build takes place in
+   --    $crate / Alire.Paths.Build_Folder ($crate/alire/build).
 
 end Alr.Spawn;
