@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Config;
 with Alire.Origins.Deployers.APT;
+with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Deployers.Git;
 with Alire.Origins.Deployers.Hg;
 with Alire.Origins.Deployers.Source_Archive;
@@ -21,6 +22,9 @@ package body Alire.Origins.Deployers is
    function New_Deployer (From : Origin) return Deployer'Class is
    begin
       case From.Kind is
+         when Origins.Filesystem =>
+            return Filesystem.Deployer'(Deployer'(Base => From)
+                                        with null record);
          when Origins.Git =>
             return Git.Deployer'(Deployer'(Base => From) with null record);
 
@@ -33,12 +37,10 @@ package body Alire.Origins.Deployers is
          when Alire.Origins.Source_Archive =>
             return Source_Archive.Deployer'(Deployer'(Base => From)
                                             with null record);
-
          when Alire.Origins.Native =>
             --  TODO: during native refactoring, deal with non-apt pkg managers
             return APT.Deployer'(Deployer'(Base => From) with null record);
-         when others =>
-            raise Program_Error with "Unsupported origin";
+
       end case;
    end New_Deployer;
 
