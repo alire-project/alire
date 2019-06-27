@@ -1,0 +1,16 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+
+['1.0.1']
+origin = "file://../../../../../fixtures/crates/hello_1.0.1_65725c20"
+
+    ['1.0.1'.depends-on]
+    libhello = "^1.0"
+
+['1.0.0']
+origin = "file://../../../../../fixtures/crates/hello_1.0.0_8cac0afd"
+
+    ['1.0.0'.depends-on]
+    libhello = "^1.0"
