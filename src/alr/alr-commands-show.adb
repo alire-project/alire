@@ -1,11 +1,11 @@
+with Alire.Index;
+with Alire.Origins.Deployers;
+with Alire.Roots;
+
 with Alr.Dependency_Graphs;
-with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Root;
-
-with Alire.Index;
-with Alire.Roots;
 
 with Semantic_Versioning;
 
@@ -27,7 +27,7 @@ package body Alr.Commands.Show is
          Semantic_Versioning.Parse ("0.0-rolling");
    begin
       return Alire.Index.Exists (Prj, Ver)
-             and then Origins.New_Origin
+             and then Alire.Origins.Deployers.New_Deployer
                         (Alire.Index.Find (Prj, Ver).Origin).Already_Installed;
    end Libgraph_Easy_Perl_Installed;
 
@@ -67,8 +67,9 @@ package body Alr.Commands.Show is
          end if;
 
          if Rel.Origin.Is_Native then
-            Put_Line ("Platform version: " &
-                        Origins.New_Origin (Rel.Origin).Native_Version);
+            Put_Line ("Platform version: "
+                      & Alire.Origins.Deployers.New_Deployer
+                         (Rel.Origin).Native_Version);
          end if;
 
          if Cmd.Solve then
