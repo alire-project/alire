@@ -125,8 +125,12 @@ package body Alire.Directories is
          End_Search (Search);
       end Locate;
 
+      use Ada.Directories;
    begin
-      Locate (Folder, 0, Max_Depth);
+      if Exists (Folder) and then Kind (Folder) = Directory then
+         Locate (Folder, 0, Max_Depth);
+      end if;
+
       return Found;
    end Find_Files_Under;
 

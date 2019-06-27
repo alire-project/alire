@@ -1,5 +1,7 @@
 with Ada.Directories;
 
+with Alire.Paths;
+
 with Alr.Paths;
 with Alr.Root;
 with Alr.Spawn;
@@ -16,9 +18,10 @@ package body Alr.Commands.Clean is
          Requires_Project;
 
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " &
-                          Root.Current.Build_File & " " &
-                          Scenario.As_Command_Line);
+         Spawn.Command ("gprclean", "-r -P " & Root.Current.Build_File
+                        & " --root-dir=."
+                        & " --relocate-build-tree=" & Alire.Paths.Build_Folder
+                        & " " & Scenario.As_Command_Line);
       end if;
 
       if Cmd.Cache then
