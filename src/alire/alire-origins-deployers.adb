@@ -112,7 +112,7 @@ package body Alire.Origins.Deployers is
    -- Deploy --
    ------------
 
-   function Deploy (From : Origin; Folder : String) return Outcome is
+   function Deploy (From : Origin; Folder : String := "") return Outcome is
    begin
       if From.Is_Native then
          return Install_Native (From);

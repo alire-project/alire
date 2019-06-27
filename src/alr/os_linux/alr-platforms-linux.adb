@@ -1,6 +1,6 @@
+with Alire.Origins.Deployers;
 with Alire.Platform;
 
-with Alr.Origins;
 with Alr.OS_Lib;
 with Alr.Utils;
 
@@ -115,6 +115,6 @@ package body Alr.Platforms.Linux is
    function Package_Version (This   : Linux_Variant;
                              Origin : Alire.Origins.Origin)
                              return String
-   is (Alr.Origins.New_Origin (Origin).Native_Version);
+   is (Alire.Origins.Deployers.New_Deployer (Origin).Native_Version);
 
 end Alr.Platforms.Linux;

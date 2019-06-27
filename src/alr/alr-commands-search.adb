@@ -4,10 +4,10 @@ with Ada.Strings.Fixed;
 
 with Alire.Containers;
 with Alire.Index;
+with Alire.Origins.Deployers;
 with Alire.Projects;
 with Alire.Releases;
 
-with Alr.Origins;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Utils;
@@ -57,8 +57,9 @@ package body Alr.Commands.Search is
                         (R.Version) &
                         (if R.Origin.Is_Native
                            and then
-                           Origins.New_Origin (R.Origin).Native_Version /= ""
-                           then "+" & Origins.New_Origin
+                           Alire.Origins.Deployers.New_Deployer
+                             (R.Origin).Native_Version /= ""
+                           then "+" & Alire.Origins.Deployers.New_Deployer
                              (R.Origin).Native_Version
                            else ""));
             Tab.Append (Alire.Projects.Descriptions (R.Project));
