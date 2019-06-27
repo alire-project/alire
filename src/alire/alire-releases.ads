@@ -336,7 +336,8 @@ private
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String
    is (Utils.Head (+R.Project, Extension_Separator) & "_" &
-         Image (R.Version) & "_" &
+         Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
+         --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is
            when Filesystem     => "filesystem",
            when Native         => "native",
