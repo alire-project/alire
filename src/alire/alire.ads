@@ -145,9 +145,9 @@ package Alire with Preelaborate is
    -----------------------
 
    procedure Uncontained_Error (Msg : String) with No_Return;
-   --  For errors where we can't or won't (for now) proceed normally,
-   --  nor return an Outcome_Failure, we trace an ERROR Msg and raise
-   --  Internal_Error
+   --  For errors where we can't or won't (for now) proceed normally, nor
+   --  return an Outcome_Failure, we trace an error message (Msg) and raise
+   --  Internal_Error.
 
    ---------------
    --  LOGGING  --
