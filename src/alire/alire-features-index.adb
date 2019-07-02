@@ -1,10 +1,11 @@
 with Ada.Directories;
 
-with Alire.Directories;
 with Alire.OS_Lib;
 with Alire.TOML_Index;
 
 with GNAT.OS_Lib;
+
+with GNATCOLL.VFS;
 
 with TOML;
 with TOML.File_IO;
@@ -132,6 +133,8 @@ package body Alire.Features.Index is
 
       --  Create handler with proper priority and proceed
       declare
+         use GNATCOLL.VFS;
+
          Result        : Outcome;
          Adjust_Result : Outcome := Outcome_Success; -- Might end unused
 
@@ -156,7 +159,7 @@ package body Alire.Features.Index is
          Trace.Debug ("Adding index " & Origin & " at " & Under);
 
          --  Create containing folder with its metadata
-         Alire.Directories.Create_Directory (Index.Metadata_Directory);
+         Create (+Index.Metadata_Directory).Make_Dir;
          Result := Index.Write_Metadata (Index.Metadata_File);
          if not Result.Success then
             Cleanup (Index.Metadata_Directory);
