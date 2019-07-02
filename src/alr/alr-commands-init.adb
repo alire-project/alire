@@ -6,11 +6,12 @@ with Alire.Releases;
 with Alire.Roots;
 
 with Alr.Paths;
-with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Root;
 with Alr.Templates;
 with Alr.Utils;
+
+with GNATCOLL.VFS;
 
 package body Alr.Commands.Init is
 
@@ -19,7 +20,7 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      use Alr.OS_Lib;
+      use GNATCOLL.VFS;
 
       package TIO renames Ada.Text_IO;
 
@@ -28,11 +29,11 @@ package body Alr.Commands.Init is
       Lower_Name  : constant String := Utils.To_Lower_Case (Name);
       Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
 
-      Directory     : constant String :=
+      Directory     : constant Virtual_File :=
         (if Cmd.In_Place
-         then Alire.Directories.Current
-         else Alire.Directories.Current / Name);
-      Src_Directory : constant String := Directory / "src";
+         then Get_Current_Dir
+         else Create (+Name, Normalize => True));
+      Src_Directory : constant Virtual_File := Directory / "src";
 
       File : TIO.File_Type;
 
@@ -54,7 +55,8 @@ package body Alr.Commands.Init is
       ---------------------------
 
       procedure Generate_Project_File is
-         Filename : constant String := Directory / (Lower_Name & ".gpr");
+         Filename : constant String :=
+            +Full_Name (Directory / (+Lower_Name & ".gpr"));
       begin
          TIO.Create (File, TIO.Out_File, Filename);
          Put_Line ("project " & Mixed_Name & " is");
@@ -96,7 +98,8 @@ package body Alr.Commands.Init is
       ---------------------------
 
       procedure Generate_Root_Package is
-         Filename : constant String := Src_Directory / (Lower_Name & ".ads");
+         Filename : constant String :=
+            +Full_Name (Src_Directory / (+Lower_Name & ".ads"));
       begin
          TIO.Create (File, TIO.Out_File, Filename);
          Put_Line ("package " & Mixed_Name & " is");
@@ -110,7 +113,8 @@ package body Alr.Commands.Init is
       ---------------------------
 
       procedure Generate_Program_Main is
-         Filename : constant String := Src_Directory / (Lower_Name & ".adb");
+         Filename : constant String :=
+            +Full_Name (Src_Directory / (+Lower_Name & ".adb"));
       begin
          TIO.Create (File, TIO.Out_File, Filename);
          Put_Line ("procedure " & Mixed_Name & " is");
@@ -143,12 +147,12 @@ package body Alr.Commands.Init is
          null; -- do nothing
 
       elsif Cmd.No_Skel then
-         Ada.Directories.Create_Directory (Directory);
+         Directory.Make_Dir;
 
       else
-         Ada.Directories.Create_Directory (Directory);
+         Directory.Make_Dir;
          Generate_Project_File;
-         Ada.Directories.Create_Directory (Src_Directory);
+         Src_Directory.Make_Dir;
          if For_Library then
             Generate_Root_Package;
          else
@@ -158,9 +162,9 @@ package body Alr.Commands.Init is
 
       declare
          Root : constant Alire.Roots.Root := Alire.Roots.New_Root
-           (+Name, Directory);
+           (+Name, +Directory.Full_Name);
       begin
-         OS_Lib.Create_Folder (Name / Paths.Alr_Working_Folder);
+         Make_Dir (Create (+Name) / (+Paths.Alr_Working_Folder));
 
          Templates.Generate_Prj_Alr
            (Root.Release,
