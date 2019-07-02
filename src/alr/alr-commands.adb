@@ -38,6 +38,8 @@ with Alr.Templates;
 
 with GNAT.OS_Lib;
 
+with GNATCOLL.VFS;
+
 package body Alr.Commands is
 
    use GNAT.Command_Line;
@@ -193,9 +195,10 @@ package body Alr.Commands is
    --------------------------
 
    procedure Create_Alire_Folders is
+      use GNATCOLL.VFS;
    begin
-      OS_Lib.Create_Folder (Platform.Config_Folder);
-      OS_Lib.Create_Folder (Platform.Cache_Folder);
+      Make_Dir (Create (+Platform.Config_Folder));
+      Make_Dir (Create (+Platform.Cache_Folder));
    end Create_Alire_Folders;
 
    -------------------
