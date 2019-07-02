@@ -3,7 +3,6 @@ with Ada.Directories;
 with Alire;
 with Alire.Actions;
 with Alire.Containers;
-with Alire.Directories;
 with Alire.Origins.Deployers;
 with Alire.Roots;
 
@@ -140,7 +139,8 @@ package body Alr.Checkout is
             Guard      : Folder_Guard (Enter_Folder (R.Unique_Folder))
               with Unreferenced;
             Root       : constant Alire.Roots.Root :=
-              Alire.Roots.New_Root (R.Project, Alire.Directories.Current);
+              Alire.Roots.New_Root
+                 (R.Project, Ada.Directories.Current_Directory);
          begin
             Templates.Generate_Prj_Alr (R, Root.Crate_File);
             Templates.Generate_Agg_Gpr (Root);
