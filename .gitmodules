@@ -16,3 +16,9 @@
 [submodule "deps/ada-toml"]
 	path = deps/ada-toml
 	url = https://github.com/pmderodat/ada-toml.git
+[submodule "deps/gnatcoll-core"]
+	path = deps/gnatcoll-core
+	url = https://github.com/AdaCore/gnatcoll-core
+[submodule "deps/gprbuild"]
+	path = deps/gprbuild
+	url = https://github.com/AdaCore/gprbuild

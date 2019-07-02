@@ -4,10 +4,17 @@ aggregate project Alr_Env is
                          "deps/aaa",
                          "deps/ada-toml",
                          "deps/ajunitgen",
+                         "deps/gnatcoll-core",
+                         "deps/gprbuild/gpr",
                          "deps/semantic_versioning",
                          "deps/simple_logging",
                          "deps/xmlezout");
 
    for Project_Files use ("alr.gpr");
+
+   --  Provide defaults for environment variables that GNATcoll requires
+
+   for External ("LIBRARY_TYPE") use "static";
+   for External ("BUILD") use "DEBUG";
 
 end Alr_Env;

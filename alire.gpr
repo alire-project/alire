@@ -2,6 +2,7 @@ with "aaa";
 with "ada_toml";
 with "alire_common";
 with "ajunitgen";
+with "gnatcoll";
 with "semantic_versioning";
 with "simple_logging";
 with "xml_ez_out";
