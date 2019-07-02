@@ -87,7 +87,7 @@ package body Alire.Index_On_Disk is
 
             return Result : Outcome do
                TOML_Index.Load_Catalog
-                 (Catalog_Dir => Directories.Parent
+                 (Catalog_Dir => Ada.Directories.Containing_Directory
                                    (Repo_Version_Files.First_Element),
                   Environment => Env,
                   Result      => Result);
