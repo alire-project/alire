@@ -10,6 +10,8 @@ with Alire.VCSs;
 
 with GNAT.OS_Lib;
 
+with GNATCOLL.VFS;
+
 with TOML.File_IO;
 
 package body Alire.Index_On_Disk is
@@ -126,31 +128,41 @@ package body Alire.Index_On_Disk is
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
    is
-      use GNAT.OS_Lib;
+      function Process_Local_Index (Path : String) return Index'Class;
+      --  Check that Path designates a readable directory and create the
+      --  corresponding index handler for it. If something goes wrong, set
+      --  Result to contain the corresponding error message and return
+      --  New_Invalid_Index.
 
-      ---------------------------
-      -- New_Directory_Handler --
-      ---------------------------
+      -------------------------
+      -- Process_Local_Index --
+      -------------------------
 
-      function New_Directory_Handler (Path : String) return Index'Class with
-        Pre => Is_Directory (Path);
-
-      function New_Directory_Handler (Path : String) return Index'Class is
+      function Process_Local_Index (Path : String) return Index'Class is
+         use GNATCOLL.VFS;
+         Dir : constant Virtual_File := Create (+Path);
       begin
+         if not Dir.Is_Directory then
+            Result := Outcome_Failure ("Not a readable directory");
+            return New_Invalid_Index;
+         end if;
+
          --  Ensure the given path is not one of our own configured indexes
+
          if Utils.Starts_With (Path, Parent) then
             Result := Outcome_Failure
               ("Given index path is inside Alire configuration path");
             return New_Invalid_Index;
-         else
-            Result := Outcome_Success;
-            --  Ensure the created Index wrapper has absolute path
-            return Directory.New_Handler
-              (File_Prefix & Ada.Directories.Full_Name (Path),
-               Name,
-               Parent);
          end if;
-      end New_Directory_Handler;
+
+         --  Ensure the created Index wrapper has absolute path
+
+         Result := Outcome_Success;
+         return Directory.New_Handler
+           (File_Prefix & Ada.Directories.Full_Name (Path),
+            Name,
+            Parent).With_Priority (Priority);
+      end Process_Local_Index;
 
    begin
       if Name not in Restricted_Name then
@@ -159,28 +171,19 @@ package body Alire.Index_On_Disk is
          return Invalid_Index'(New_Handler (Origin, Name, Parent));
       end if;
 
+      --  Process "file://" URLs and anything that looks like a file name as a
+      --  local index.
+
       if Utils.Starts_With (Origin, File_Prefix) then
-         declare
-            Path : constant String :=
-                     Origin (Origin'First + File_Prefix'Length .. Origin'Last);
-         begin
-            if Is_Directory (Path) then
-               return New_Directory_Handler (Path).With_Priority (Priority);
-            elsif Is_Directory (Directory_Separator & Path) then
-               Result := Outcome_Failure
-                 ("Given relative path matches an absolute path." &
-                    " Check whether you intended file:///" & Path);
-               return New_Invalid_Index;
-            end if;
-         end;
-      elsif Is_Directory (Origin) then
-         return New_Directory_Handler (Origin).With_Priority (Priority);
-      elsif Origin (Origin'First) = '/' or else
-        not Utils.Contains (Origin, "+")
+         return Process_Local_Index
+           (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
+      elsif Origin (Origin'First) = '/'
+            or else not Utils.Contains (Origin, "+")
       then
-         Result := Outcome_Failure ("Not a readable directory: " & Origin);
-         return New_Invalid_Index;
+         return Process_Local_Index (Origin);
       end if;
+
+      --  Process other paths as VCS's
 
       case VCSs.Kind (Origin) is
          when VCSs.VCS_Git =>
