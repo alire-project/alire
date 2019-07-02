@@ -14,10 +14,6 @@ package Alire.Directories is
       function "/" (L, R : String) return String renames Directories."/";
    end Operators;
 
-   procedure Create_Directory (Name : Platform_Independent_Path);
-   --  Creates a directory and all necessary parent ones.
-   --  May raise usual filesystem exceptions.
-
    procedure Copy (Src_Folder,
                    Dst_Parent_Folder : String;
                    Excluding         : String := "");
