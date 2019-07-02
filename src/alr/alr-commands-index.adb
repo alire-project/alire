@@ -41,11 +41,17 @@ package body Alr.Commands.Index is
    ------------
 
    procedure Delete (Name : String) is
+      Result  : Alire.Outcome;
       Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
                   Alire.Features.Index.Find_All
-                    (Alire.Config.Indexes_Directory);
+                    (Alire.Config.Indexes_Directory, Result);
       Found   : Boolean := False;
    begin
+      if not Result.Success then
+         Reportaise_Command_Failed (Alire.Message (Result));
+         return;
+      end if;
+
       --  Find matching index and delete
       for Index of Indexes loop
          if Index.Name = Name then
@@ -110,9 +116,19 @@ package body Alr.Commands.Index is
    procedure List is
       use Alire;
 
+      Result  : Alire.Outcome;
+      Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
+                  Alire.Features.Index.Find_All
+                    (Alire.Config.Indexes_Directory, Result);
+
       Table : AAA.Table_IO.Table;
       Count : Natural := 0;
    begin
+      if not Result.Success then
+         Reportaise_Command_Failed (Alire.Message (Result));
+         return;
+      end if;
+
       Table
         .Append ("#").Append ("Name").Append ("URL").Append ("Path");
 
@@ -120,7 +136,7 @@ package body Alr.Commands.Index is
          Table.Append ("Priority");
       end if;
 
-      for Index of Features.Index.Find_All (Config.Indexes_Directory) loop
+      for Index of Indexes loop
          Count := Count + 1;
          Table.New_Row;
          Table
