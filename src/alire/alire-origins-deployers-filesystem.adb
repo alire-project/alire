@@ -1,24 +1,24 @@
-with Ada.Directories;
+with GNATCOLL.VFS;
 
 with Alire.Directories;
-
-with GNAT.OS_Lib;
 
 package body Alire.Origins.Deployers.Filesystem is
 
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
-      package Dirs renames Ada.Directories;
+      use GNATCOLL.VFS;
+
+      F : constant Virtual_File := Create (+Folder);
    begin
       --  Check source crate existence
-      if not GNAT.OS_Lib.Is_Directory (This.Base.Path) then
+      if not Create (+This.Base.Path).Is_Directory then
          return Outcome_Failure ("Filesystem crate is not a folder: "
                                  & This.Base.Path);
       end if;
 
       --  Create destination
-      if not GNAT.OS_Lib.Is_Directory (Folder) then
-         Dirs.Create_Path (Folder);
+      if not F.Is_Directory then
+         F.Make_Dir;
          --  Necessary for dependencies that may create cache/projects/$crate
       end if;
 
