@@ -10,14 +10,13 @@ with Alire.Origins;
 with Alire.Projects;
 with Alire.Requisites;
 with Alire.Requisites.Booleans;
+with Alire.Utils;
 
-with GNAT.OS_Lib;
+with GNATCOLL.VFS;
 
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
 with TOML.File_IO;
-
-with Alire.Utils;
 
 package body Alire.TOML_Index is
 
@@ -1676,22 +1675,22 @@ package body Alire.TOML_Index is
          --  index location.
          if O.Kind = Filesystem then
             declare
-               Path      : constant String := +O.Path;
-               Full_Path : constant String :=
-                             (if GNAT.OS_Lib.Is_Absolute_Path (Path)
-                              then Path
-                              else Dirs.Full_Name
-                                (Package_Dir
-                                 & GNAT.OS_Lib.Directory_Separator
-                                 & Path));
+               use GNATCOLL.VFS;
+
+               Path             : constant String := +O.Path;
+               Full_Path        : constant Virtual_File :=
+                  (if Create (+Path).Is_Absolute_Path
+                   then Create (+Path)
+                   else Create (+Package_Dir) / (+Path));
+               Full_Path_String : constant String := +Full_Path.Full_Name;
             begin
                if Path = "" then
                   Error (+"Empty path given in local origin");
-               elsif not GNAT.OS_Lib.Is_Directory (Full_Path) then
+               elsif not Full_Path.Is_Directory then
                   Error (+"Local origin path is not a valid directory: "
-                         & Full_Path);
+                         & Full_Path_String);
                else
-                  O.Path := +Full_Path;
+                  O.Path := +Full_Path_String;
                end if;
             end;
          end if;
