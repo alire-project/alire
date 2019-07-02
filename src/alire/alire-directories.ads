@@ -21,10 +21,9 @@ package Alire.Directories is
    procedure Copy (Src_Folder,
                    Dst_Parent_Folder : String;
                    Excluding         : String := "");
-   --  Copies a folder contents to within another existing location
-   --  That is, equivalent to cp -r src/* dst/
-   --  Excluding may be a single name that will not be copied (if file) or
-   --  recursed into (if folder)
+   --  Copies a folder contents to within another existing location. That is,
+   --  equivalent to "cp -r src/* dst/". Excluding may be a single name that
+   --  will not be copied (if file) or recursed into (if folder).
 
    function Current return String renames Ada.Directories.Current_Directory;
 
