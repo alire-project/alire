@@ -17,6 +17,11 @@ package Alire.Features.Index is
    --  found or none, set Result to Outcome_Success and return the
    --  corresponding set. If at least one found index is invalid, set Result to
    --  an outcome failure and return en empty set.
+   --
+   --  We abort at the first invalid index as it's likely in this case that
+   --  users misconfigured something, so this helps them notice the issue
+   --  instead of proceeding with default behaviors, such as getting the
+   --  community index.
 
    function Load_All (Platform : Environment.Setup;
                       From     : Absolute_Path) return Outcome;

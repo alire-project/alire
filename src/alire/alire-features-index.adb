@@ -208,37 +208,42 @@ package body Alire.Features.Index is
          use OS_Lib.Operators;
          Metafile : constant String :=
                       Dirs.Full_Name (Dir) / Index_On_Disk.Metadata_Filename;
+         Metadata : TOML.TOML_Value;
       begin
+         --  If we have already found an invalid index, abort
+
+         if not Result.Success then
+            return;
+         end if;
+
          --  Find metadata file
          if GNAT.OS_Lib.Is_Regular_File (Metafile) then
-            declare
-               Metadata    : TOML.TOML_Value;
-               Load_Result : constant Outcome :=
-                               Load_Index_Metadata (Metafile, Metadata);
-            begin
-               --  Load and verify contents
-               if Load_Result.Success then
-                  --  Create the handler for the on-disk index from metadata
-                  declare
-                     Result : Outcome;
-                     Index  : constant Index_On_Disk.Index'Class :=
-                                Index_On_Disk.New_Handler
-                                  (From   => Metadata,
-                                   Parent => Under,
-                                   Result => Result);
-                  begin
-                     if Result.Success then
-                        Set.Insert (Index);
-                     else
-                        Trace.Warning ("Index metadata in " & Metafile &
-                                       " is invalid: " & Message (Result));
-                     end if;
-                  end;
-               else
-                  Trace.Warning ("Unable to load metadata from " & Metafile &
-                                 "; error: " & Message (Load_Result));
-               end if;
-            end;
+            Result := Load_Index_Metadata (Metafile, Metadata);
+
+            --  Load and verify contents
+
+            if Result.Success then
+
+               --  Create the handler for the on-disk index from metadata
+
+               declare
+                  Index : constant Index_On_Disk.Index'Class :=
+                            Index_On_Disk.New_Handler
+                              (From   => Metadata,
+                               Parent => Under,
+                               Result => Result);
+               begin
+                  if Result.Success then
+                     Set.Insert (Index);
+                  end if;
+               end;
+            end if;
+
+            if not Result.Success then
+               Result := Outcome_Failure
+                 ("Cannot load metadata from " & Metafile & ": "
+                  & Message (Result));
+            end if;
          end if;
       end Check_One;
 
