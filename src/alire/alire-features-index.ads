@@ -10,8 +10,13 @@ package Alire.Features.Index is
 
    subtype Index_On_Disk_Set is Sets.Set;
 
-   function Find_All (Under : Absolute_Path) return Index_On_Disk_Set;
-   --  Find all indexes available on a disk location
+   function Find_All
+     (Under  : Absolute_Path;
+      Result : out Outcome) return Index_On_Disk_Set;
+   --  Find all indexes available on a disk location. If valid indexes are
+   --  found or none, set Result to Outcome_Success and return the
+   --  corresponding set. If at least one found index is invalid, set Result to
+   --  an outcome failure and return en empty set.
 
    function Load_All (Platform : Environment.Setup;
                       From     : Absolute_Path) return Outcome;

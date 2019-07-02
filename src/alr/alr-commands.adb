@@ -372,44 +372,51 @@ package body Alr.Commands is
    ---------------------------
 
    procedure Requires_Full_Index (Force_Reload : Boolean := False) is
+      Result  : Alire.Outcome;
+      Indexes : Alire.Features.Index.Index_On_Disk_Set;
    begin
       if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
          Trace.Detail ("Index already loaded, loading skipped");
          return;
-      else
-         if Alire.Features.Index.Find_All
-           (Alire.Config.Indexes_Directory).Is_Empty
-         then
-            Trace.Detail
-              ("No indexes configured, adding default community index");
-            declare
-               Outcome : constant Alire.Outcome :=
-                           Alire.Features.Index.Add
-                             (Origin => Alire.Defaults.Community_Index,
-                              Name   => Alire.Defaults.Community_Index_Name,
-                              Under  => Alire.Config.Indexes_Directory);
-            begin
-               if not Outcome.Success then
-                  Reportaise_Command_Failed
-                    ("Could not add community index: " & (+Outcome.Message));
-                  return;
-               end if;
-            end;
-         end if;
+      end if;
 
+      Indexes := Alire.Features.Index.Find_All
+        (Alire.Config.Indexes_Directory, Result);
+      if not Result.Success then
+         Reportaise_Command_Failed (Alire.Message (Result));
+         return;
+      end if;
+
+      if Indexes.Is_Empty then
+         Trace.Detail
+           ("No indexes configured, adding default community index");
          declare
-            Outcome : constant Alire.Outcome := Alire.Features.Index.Load_All
-              (Platform =>
-                 (OS       => Platform.Operating_System,
-                  Distro   => Platform.Distribution,
-                  Compiler => Platform.Compiler),
-               From     => Alire.Config.Indexes_Directory);
+            Outcome : constant Alire.Outcome :=
+                        Alire.Features.Index.Add
+                          (Origin => Alire.Defaults.Community_Index,
+                           Name   => Alire.Defaults.Community_Index_Name,
+                           Under  => Alire.Config.Indexes_Directory);
          begin
             if not Outcome.Success then
-               Reportaise_Command_Failed (+Outcome.Message);
+               Reportaise_Command_Failed
+                 ("Could not add community index: " & (+Outcome.Message));
+               return;
             end if;
          end;
       end if;
+
+      declare
+         Outcome : constant Alire.Outcome := Alire.Features.Index.Load_All
+           (Platform =>
+              (OS       => Platform.Operating_System,
+               Distro   => Platform.Distribution,
+               Compiler => Platform.Compiler),
+            From     => Alire.Config.Indexes_Directory);
+      begin
+         if not Outcome.Success then
+            Reportaise_Command_Failed (+Outcome.Message);
+         end if;
+      end;
    end Requires_Full_Index;
 
    ----------------------

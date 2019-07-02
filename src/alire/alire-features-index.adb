@@ -26,7 +26,8 @@ package body Alire.Features.Index is
                  Under  : Absolute_Path;
                  Before : String := "") return Outcome is
 
-      Indexes  : constant Index_On_Disk_Set := Find_All (Under);
+      Result  : Outcome;
+      Indexes : constant Index_On_Disk_Set := Find_All (Under, Result);
 
       -----------------------
       -- Adjust_Priorities --
@@ -101,6 +102,10 @@ package body Alire.Features.Index is
       end Cleanup;
 
    begin
+      if not Result.Success then
+         return Result;
+      end if;
+
       --  Try to avoid some minimal aliasing
       if Origin (Origin'Last) = '/' then
          return Add (Origin (Origin'First .. Origin'Last - 1), Name, Under);
@@ -135,7 +140,6 @@ package body Alire.Features.Index is
       declare
          use GNATCOLL.VFS;
 
-         Result        : Outcome;
          Adjust_Result : Outcome := Outcome_Success; -- Might end unused
 
          Priority      : constant Index_On_Disk.Priorities :=
@@ -188,7 +192,10 @@ package body Alire.Features.Index is
    -- Find_All --
    --------------
 
-   function Find_All (Under : Absolute_Path) return Index_On_Disk_Set is
+   function Find_All
+     (Under  : Absolute_Path;
+      Result : out Outcome) return Index_On_Disk_Set
+   is
       package Dirs renames Ada.Directories;
 
       Set : Index_On_Disk_Set;
@@ -238,12 +245,17 @@ package body Alire.Features.Index is
    begin
       Trace.Debug ("Looking for indexes at " & Under);
 
+      Result := Outcome_Success;
       if GNAT.OS_Lib.Is_Directory (Under) then
          Dirs.Search (Directory => Under,
                       Pattern   => "*",
                       Filter    => (Dirs.Directory => True,
                                     others         => False),
                       Process   => Check_One'Access);
+      end if;
+
+      if not Result.Success then
+         return Sets.Empty_Set;
       end if;
 
       Trace.Detail ("Found" & Set.Length'Img & " indexes");
@@ -258,15 +270,21 @@ package body Alire.Features.Index is
    function Load_All (Platform : Environment.Setup;
                       From     : Absolute_Path) return Outcome
    is
-      Env : Alire.TOML_Index.Environment_Variables;
+      Result  : Outcome;
+      Indexes : constant Index_On_Disk_Set := Find_All (From, Result);
+      Env     : Alire.TOML_Index.Environment_Variables;
    begin
+      if not Result.Success then
+         return Result;
+      end if;
+
       Alire.TOML_Index.Set_Environment
         (Env,
          Platform.Distro,
          Platform.OS,
          Platform.Compiler);
 
-      for Index of Find_All (From) loop
+      for Index of Indexes loop
          declare
             Result : constant Outcome := Index.Load (Env);
          begin
@@ -302,8 +320,14 @@ package body Alire.Features.Index is
    ----------------
 
    function Update_All (Under : Absolute_Path) return Outcome is
+      Result  : Outcome;
+      Indexes : constant Index_On_Disk_Set := Find_All (Under, Result);
    begin
-      for Index of Find_All (Under) loop
+      if not Result.Success then
+         return Result;
+      end if;
+
+      for Index of Indexes loop
          declare
             Result : constant Outcome := Index.Update;
          begin
