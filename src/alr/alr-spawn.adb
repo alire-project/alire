@@ -1,3 +1,5 @@
+with Alire.Paths;
+
 with Alr.OS_Lib;
 
 package body Alr.Spawn is
@@ -24,15 +26,16 @@ package body Alr.Spawn is
    -- Gprbuild --
    --------------
 
-   procedure Gprbuild (Project_File        : String;
-                       Extra_Args          : String := "")
-   is
+   procedure Gprbuild (Project_File : String;
+                       Extra_Args   : String := "") is
    begin
       Command ("gprbuild",
-               "-gnatwU -j0 -p " &
+               "-gnatwU -j0 -p "
                --  Supress warnings on unused (may happen in prj_alr.ads)
-                 Extra_Args & (if Extra_Args /= "" then " " else "") &
-                 "-P " & Project_File,
+               & Extra_Args & (if Extra_Args /= "" then " " else "")
+               & "-P " & Project_File
+               & " --root-dir=."
+               & " --relocate-build-tree=" & Alire.Paths.Build_Folder,
                Understands_Verbose => True);
    end Gprbuild;
 

@@ -1,6 +1,7 @@
 with Ada.Containers;
 
 with Alire.OS_Lib;
+with Alire.Paths;
 
 with Alr.Commands.Compile;
 with Alr.Files;
@@ -11,6 +12,10 @@ with Alr.Utils;
 
 package body Alr.Commands.Run is
 
+   Max_Search_Depth : constant := 3;
+   --  How many levels to go down looking for built executables,
+   --  relative to the build folder of the root crate
+
    ------------------
    -- Check_Report --
    ------------------
@@ -19,8 +24,8 @@ package body Alr.Commands.Run is
       use Ada.Text_IO;
 
       Found_At : constant Utils.String_Vector :=
-        Files.Locate_File_Under (OS_Lib.Current_Folder,
-                                 Exe_Name, Max_Depth => 2);
+        Files.Locate_File_Under (Alire.Paths.Build_Folder,
+                                 Exe_Name, Max_Depth => Max_Search_Depth);
    begin
       Put ("   " & Exe_Name);
       case Found_At.Length is
@@ -62,9 +67,9 @@ package body Alr.Commands.Run is
       declare
          Name       : constant String := Root.Current.Release.Project_Str;
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
-           (OS_Lib.Current_Folder,
+           (Alire.Paths.Build_Folder,
             Root.Current.Release.Default_Executable,
-            Max_Depth => 2);
+            Max_Depth => Max_Search_Depth);
          --  We look at most in something like ./build/configuration
 
          Declared : Utils.String_Vector;
@@ -132,9 +137,9 @@ package body Alr.Commands.Run is
 
             Target_Exes : constant Utils.String_Vector :=
                             Files.Locate_File_Under
-                              (OS_Lib.Current_Folder,
+                              (Alire.Paths.Build_Folder,
                                Target,
-                               Max_Depth => 2);
+                               Max_Depth => Max_Search_Depth);
          begin
             if Target /= Name and then not Declared.Contains (Target) then
                Trace.Warning
