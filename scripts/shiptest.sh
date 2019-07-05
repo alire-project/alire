@@ -28,5 +28,5 @@ alr search -d --list --native
 # Run e3.testsuite
 echo
 cd testsuite
-./run.py || { cat out/new/*; exit 1; }
+./run.py --xunit-output ../shippable/testresults/e3-output.xml
 cd ..
