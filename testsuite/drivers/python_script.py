@@ -28,13 +28,17 @@ class PythonScriptDriver(TestDriver):
         sync_tree(self.test_env['test_dir'],
                   self.test_env['working_dir'])
 
-        # Prepare the environment so that the Python script can run "alr"
         env = dict(os.environ)
-        config_dir = os.path.join(self.test_env['working_dir'], 'alr-config')
-        prepare_env(config_dir, env)
-        prepare_indexes(config_dir,
-                        self.test_env['working_dir'],
-                        self.test_env.get('indexes', {}))
+
+        # If requested, prepare a default environment for Python scripts to
+        # run "alr".
+        if 'indexes' in self.test_env:
+            config_dir = os.path.join(self.test_env['working_dir'],
+                                      'alr-config')
+            prepare_env(config_dir, env)
+            prepare_indexes(config_dir,
+                            self.test_env['working_dir'],
+                            self.test_env.get('indexes', {}))
 
         # Also give it access to our Python helpers
         python_path = env.get('PYTHONPATH', '')
