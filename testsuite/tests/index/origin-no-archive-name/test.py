@@ -10,7 +10,7 @@ p = run_alr('show', 'hello_world', complain_on_error=False, quiet=False)
 assert_eq(
     'ERROR: hello_world (origin): Unable to determine archive name: please'
     ' specify one'
-    '\nNot found: hello_world with Newest version'
+    '\nERROR: alr show unsuccessful'
     '\n', p.out)
 
 print('SUCCESS')

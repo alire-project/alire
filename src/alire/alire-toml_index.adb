@@ -379,7 +379,10 @@ package body Alire.TOML_Index is
 
       --  Generate the releases to be imported
 
-      Decode_TOML_Package_As_Releases (Pkg, Environment, Releases);
+      Decode_TOML_Package_As_Releases (Pkg, Environment, Releases, Result);
+      if not Result.Success then
+         return;
+      end if;
 
       --  Verify and return
       if Releases.Is_Empty then
@@ -513,7 +516,10 @@ package body Alire.TOML_Index is
 
       --  Generate the releases to be imported
 
-      Decode_TOML_Package_As_Releases (Pkg, Environment, Releases);
+      Decode_TOML_Package_As_Releases (Pkg, Environment, Releases, Result);
+      if not Result.Success then
+         return;
+      end if;
 
       --  Finally import them to the catalog
 
@@ -1579,7 +1585,8 @@ package body Alire.TOML_Index is
    procedure Decode_TOML_Package_As_Releases
      (Pkg         : Package_Type;
       Environment : Environment_Variables;
-      Releases    : out Containers.Release_Sets.Set)
+      Releases    : out Containers.Release_Sets.Set;
+      Result      : out Load_Result)
    is
       General_Dependencies : constant Dependencies_Result.T :=
          Dependencies_Expressions.Evaluate_Or_Default
@@ -1874,10 +1881,11 @@ package body Alire.TOML_Index is
          end;
       end loop;
 
+      Result := (Success => True);
+
    exception
       when Evaluation_Error =>
-         Trace.Error (+Error_Message);
-         null;
+         Result := (Success => False, Message => Error_Message);
    end Decode_TOML_Package_As_Releases;
 
    --------------------
