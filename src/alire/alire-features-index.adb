@@ -253,7 +253,7 @@ package body Alire.Features.Index is
    --------------
 
    function Load_All (Platform : Environment.Setup;
-                       From     : Absolute_Path) return Outcome
+                      From     : Absolute_Path) return Outcome
    is
       Env : Alire.TOML_Index.Environment_Variables;
    begin
@@ -268,10 +268,7 @@ package body Alire.Features.Index is
             Result : constant Outcome := Index.Load (Env);
          begin
             if not Result.Success then
-               return
-                 Outcome_Failure
-                   ("While loading index " & Index.Name
-                    & ": " & Message (Result));
+               return Result;
             end if;
          end;
       end loop;
