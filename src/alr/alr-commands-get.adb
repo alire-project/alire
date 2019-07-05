@@ -2,12 +2,12 @@ with Ada.Directories;
 
 with Alire.Actions;
 with Alire.Index;
+with Alire.Origins.Deployers;
 
 with Alr.Actions;
 with Alr.Checkout;
 with Alr.Commands.Compile;
 with Alr.Commands.Update;
-with Alr.Origins;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Query;
@@ -56,12 +56,16 @@ package body Alr.Commands.Get is
       --  Check if it's native first
       declare
          R : constant Alire.Index.Release :=
-           Query.Find (Name, Versions, Query_Policy);
+               Query.Find (Name, Versions, Query_Policy);
+         Result : Alire.Outcome;
       begin
-         --  If dependencies succeeded then the release is available!
          if R.Origin.Is_Native then
-            Origins.Install_Native (R.Origin);
-            return;
+            Result := Alire.Origins.Deployers.Deploy (R.Origin);
+            if Result.Success then
+               return;
+            else
+               Reportaise_Command_Failed (Alire.Message (Result));
+            end if;
          end if;
       end;
 

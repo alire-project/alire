@@ -11,6 +11,8 @@ with Alire.Projects;
 with Alire.Requisites;
 with Alire.Requisites.Booleans;
 
+with GNAT.OS_Lib;
+
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
 with TOML.File_IO;
@@ -379,7 +381,12 @@ package body Alire.TOML_Index is
 
       --  Generate the releases to be imported
 
-      Decode_TOML_Package_As_Releases (Pkg, Environment, Releases);
+      Decode_TOML_Package_As_Releases
+        (Dirs.Containing_Directory (Filename), Pkg, Environment, Releases,
+         Result);
+      if not Result.Success then
+         return;
+      end if;
 
       --  Verify and return
       if Releases.Is_Empty then
@@ -491,7 +498,7 @@ package body Alire.TOML_Index is
       Pkg      : Package_Type;
       Releases : Containers.Release_Sets.Set;
    begin
-      Trace.Detail ("Loading " & Package_Name & " from " & Catalog_Dir);
+      Trace.Debug ("Loading " & Package_Name & " from " & Catalog_Dir);
 
       --  Load the TOML file
 
@@ -513,7 +520,12 @@ package body Alire.TOML_Index is
 
       --  Generate the releases to be imported
 
-      Decode_TOML_Package_As_Releases (Pkg, Environment, Releases);
+      Decode_TOML_Package_As_Releases
+        (Dirs.Containing_Directory (Filename), Pkg, Environment, Releases,
+         Result);
+      if not Result.Success then
+         return;
+      end if;
 
       --  Finally import them to the catalog
 
@@ -1577,9 +1589,11 @@ package body Alire.TOML_Index is
    -------------------------------------
 
    procedure Decode_TOML_Package_As_Releases
-     (Pkg         : Package_Type;
+     (Package_Dir : String;
+      Pkg         : Package_Type;
       Environment : Environment_Variables;
-      Releases    : out Containers.Release_Sets.Set)
+      Releases    : out Containers.Release_Sets.Set;
+      Result      : out Load_Result)
    is
       General_Dependencies : constant Dependencies_Result.T :=
          Dependencies_Expressions.Evaluate_Or_Default
@@ -1657,6 +1671,31 @@ package body Alire.TOML_Index is
          end if;
 
          O := Label.Value;
+
+         --  Ensure that, for local origins, they exist and are relative to the
+         --  index location.
+         if O.Kind = Filesystem then
+            declare
+               Path      : constant String := +O.Path;
+               Full_Path : constant String :=
+                             (if GNAT.OS_Lib.Is_Absolute_Path (Path)
+                              then Path
+                              else Dirs.Full_Name
+                                (Package_Dir
+                                 & GNAT.OS_Lib.Directory_Separator
+                                 & Path));
+            begin
+               if Path = "" then
+                  Error (+"Empty path given in local origin");
+               elsif not GNAT.OS_Lib.Is_Directory (Full_Path) then
+                  Error (+"Local origin path is not a valid directory: "
+                         & Full_Path);
+               else
+                  O.Path := +Full_Path;
+               end if;
+            end;
+         end if;
+
          return
            (case O.Kind is
             when Filesystem => Alire.Origins.New_Filesystem (+O.Path),
@@ -1874,10 +1913,11 @@ package body Alire.TOML_Index is
          end;
       end loop;
 
+      Result := (Success => True);
+
    exception
       when Evaluation_Error =>
-         Trace.Error (+Error_Message);
-         null;
+         Result := (Success => False, Message => Error_Message);
    end Decode_TOML_Package_As_Releases;
 
    --------------------

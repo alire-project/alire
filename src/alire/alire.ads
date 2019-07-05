@@ -7,6 +7,14 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
+   Internal_Error : exception;
+   --  While we transition to error codes, there are places that would require
+   --  extensive refactoring. Also, legitimate irrecoverable situations may
+   --  arise in places were an outcome cannot be easily returned. Instead of
+   --  aborting and exiting from Alire, a last resort handler in Alr can catch
+   --  this exception and exit gracefully. Should be used sparingly and of
+   --  course not when user input is involved.
+
    Query_Unsuccessful : exception;
    --  Raised by subprograms that return releases/dependencies when not
    --  found/impossible.
@@ -131,6 +139,15 @@ package Alire with Preelaborate is
    --  Create a failed Outcome when a exception has occurred.
    --  The exception stack trace will be dumped at debug level.
    --  If message is empty, message will be Ex exception message.
+
+   -----------------------
+   -- Uncontained_Error --
+   -----------------------
+
+   procedure Uncontained_Error (Msg : String) with No_Return;
+   --  For errors where we can't or won't (for now) proceed normally,
+   --  nor return an Outcome_Failure, we trace an ERROR Msg and raise
+   --  Internal_Error
 
    ---------------
    --  LOGGING  --

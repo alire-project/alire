@@ -4,12 +4,12 @@ with Alire;
 with Alire.Actions;
 with Alire.Containers;
 with Alire.Directories;
+with Alire.Origins.Deployers;
 with Alire.Roots;
 
 with Alr.Actions;
 with Alr.Dependency_Graphs;
 with Alr.OS_Lib;
-with Alr.Origins;
 with Alr.Templates;
 
 package body Alr.Checkout is
@@ -26,6 +26,7 @@ package body Alr.Checkout is
       use all type Alire.Actions.Moments;
       use Alr.OS_Lib.Paths;
       Folder : constant String := Parent_Folder / R.Unique_Folder;
+      Result : Alire.Outcome;
    begin
       if Ada.Directories.Exists (Folder) then
          Was_There := True;
@@ -34,7 +35,13 @@ package body Alr.Checkout is
       else
          Was_There := False;
          Trace.Detail ("About to deploy " & R.Milestone.Image);
-         Alr.Origins.Fetch_Or_Install (R.Origin, Folder);
+         Result := Alire.Origins.Deployers.Deploy (R.Origin, Folder);
+         if not Result.Success then
+            Trace.Error (Alire.Message (Result));
+            raise Command_Failed;
+            --  TODO: this will be eventually refactored into Alire and the
+            --  exception removed
+         end if;
       end if;
 
       --  Actions must run always, in case this is a subproject with shared

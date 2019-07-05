@@ -321,10 +321,17 @@ private
    --  false and produce an error message.
 
    procedure Decode_TOML_Package_As_Releases
-     (Pkg         : Package_Type;
+     (Package_Dir : String;
+      Pkg         : Package_Type;
       Environment : Environment_Variables;
-      Releases    : out Containers.Release_Sets.Set);
-   --  Generate one fully populated release per version loaded in Pkg
+      Releases    : out Containers.Release_Sets.Set;
+      Result      : out Load_Result);
+   --  Generate one fully populated release per version loaded in Pkg.
+   --
+   --  If an error occurs while interpreting the package description, put the
+   --  error message in Result. Set it to a successful load result otherwise.
+   --
+   --  Package_Dir must point to the folder containing the crate .toml file.
 
    procedure Index_Releases
      (Pkg      : Package_Type;

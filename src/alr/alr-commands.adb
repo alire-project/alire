@@ -403,8 +403,7 @@ package body Alr.Commands is
                From     => Alire.Config.Indexes_Directory);
          begin
             if not Outcome.Success then
-               Reportaise_Command_Failed
-                 ("Could not load index: " & (+Outcome.Message));
+               Reportaise_Command_Failed (+Outcome.Message);
             end if;
          end;
       end if;

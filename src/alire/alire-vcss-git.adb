@@ -38,7 +38,7 @@ package body Alire.VCSs.Git is
             Guard : Directories.Guard (Directories.Enter (Into))
               with Unreferenced;
             Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-              ("git", "reset --hard-q " & Commit (From));
+              ("git", "reset --hard " & Commit (From));
          begin
             if Exit_Code /= 0 then
                return Outcome_Failure ("git reset exited with code:" &
@@ -69,13 +69,13 @@ package body Alire.VCSs.Git is
         with Unreferenced;
       Extra : constant String :=
                 (if Log_Level < Trace.Info
-                 then "-q"
+                 then "-q "
                  else "--progress ");
       Exit_Code : constant Integer :=
-                    OS_Lib.Subprocess.Spawn ("git", "update " & Extra);
+                    OS_Lib.Subprocess.Spawn ("git", "pull " & Extra);
    begin
       if Exit_Code /= 0 then
-         return Outcome_Failure ("git update exited with code: " &
+         return Outcome_Failure ("git pull exited with code: " &
                                    Exit_Code'Img);
       else
          return Outcome_Success;

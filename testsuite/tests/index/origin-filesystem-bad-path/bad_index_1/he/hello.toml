@@ -1,0 +1,7 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+
+['1.0.0']
+origin = "file://"

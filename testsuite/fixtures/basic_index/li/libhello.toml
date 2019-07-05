@@ -4,4 +4,4 @@ licenses = []
 maintainers = ["alejandro@mosteo.com"]
 
 ['1.0']
-origin = "git+https://github.com/alire-project/libhello.git@ce78e7706c9d3f97605df48d8befca5407f8d328"
+origin = "file://../../crates/libhello_1.0.0"

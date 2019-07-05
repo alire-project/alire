@@ -1,7 +1,5 @@
 private with Ada.Calendar;
 private with Ada.Finalization;
-private with Ada.Strings;
-private with Ada.Strings.Fixed;
 
 with Alire.Utils;
 
@@ -37,7 +35,7 @@ package Alr.Utils is
    --  If Str contains Separator, the rhs is returned
    --  Otherwise ""
 
-   function Trim (S : String) return String;
+   function Trim (S : String) return String renames Alire.Utils.Trim;
 
    function Hash_File (Path : String) return String;
    --  Returns the hexadecimal representation
@@ -64,9 +62,6 @@ package Alr.Utils is
 private
 
    function Quote (S : String) return String is ("""" & S & """");
-
-   function Trim (S : String) return String is
-     (Ada.Strings.Fixed.Trim (S, Ada.Strings.Both));
 
    type Busy_Prompt (Len : Natural)
    is new Ada.Finalization.Limited_Controlled

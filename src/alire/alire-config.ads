@@ -1,10 +1,17 @@
 with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 
-package Alire.Config with Preelaborate is
+package Alire.Config is
+
+   --  TODO: refactor this globals package into a type that can be
+   --  passed around.
 
    --  For Alire to be usable as a library, options here aren't parsed
    --  from command-line but set by someone else that has done the parsing.
    --  Right now the only client is alr.
+
+   -----------
+   -- Paths --
+   -----------
 
    function Path return String;
    --  The in-use config path.
@@ -19,5 +26,19 @@ package Alire.Config with Preelaborate is
    --  Override
 
    function Indexes_Directory return Absolute_Path is (Path / "indexes");
+
+   -------------------
+   -- Interactivity --
+   -------------------
+
+   Interactive : aliased Boolean := True;
+   --  When not Interactive, instead of asking the user something, use default.
+   --  Currently only used before the first call to `sudo apt` to ask for
+   --  confirmation.
+   --  TODO: remove global eventually
+
+   procedure Enter_Or_Ctrl_C;
+   --  If interactive, ask the user to press Enter or Ctrl-C to stop.
+   --  Output a log trace otherwise and continue.
 
 end Alire.Config;

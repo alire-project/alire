@@ -171,6 +171,9 @@ package Alire.Index is
 
    --  Shortcuts for origins:
 
+   function Filesystem (Folder : Alire.URL)
+                        return Origins.Origin
+                        renames Origins.New_Filesystem;
    function Git (URL    : Alire.URL;
                  Commit : Origins.Git_Commit)
                  return Origins.Origin

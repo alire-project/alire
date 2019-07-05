@@ -3,8 +3,6 @@ with Alire.Index;
 with Alire.Properties;
 with Alire.Types;
 
-with Alr.Origins;
-
 with Semantic_Versioning;
 
 package Alr.Query is
