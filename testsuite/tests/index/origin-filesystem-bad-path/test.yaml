@@ -1,4 +1,1 @@
 driver: python-script
-indexes:
-    bad_index:
-        in_fixtures: false
