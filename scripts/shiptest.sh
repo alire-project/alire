@@ -6,6 +6,11 @@ trap 'echo "Interrupted" >&2 ; exit 1' INT
 set -o errexit
 set -o nounset
 
+# For the record
+echo ENVIRONMENT:
+env | sort
+echo ............................
+
 # Ensure subrepos are there
 git submodule update --init --recursive
 
@@ -19,8 +24,13 @@ fi
 
 export PATH+=:`pwd`/bin
 
-# Check minimal execution
+echo GNAT VERSION:
+gnatls -v
+echo ............................
+
+echo ALR VERSION:
 alr version
+echo ............................
 
 # List releases for the record
 alr search -d --list --native
