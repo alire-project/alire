@@ -6,6 +6,29 @@ with GNAT.OS_Lib;
 
 package body Alire.Utils is
 
+   ------------
+   -- Append --
+   ------------
+
+   function Append (V : String_Vector;
+                    S : String) return String_Vector is
+   begin
+      return R : String_Vector := V do
+         R.Append (S);
+      end return;
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   function Append (L, R : String_Vector) return String_Vector is
+   begin
+      return Result : String_Vector := L do
+         Result.Append (R);
+      end return;
+   end Append;
+
    -------------------------
    -- Append_To_Last_Line --
    -------------------------
@@ -130,6 +153,13 @@ package body Alire.Utils is
          end loop;
       end return;
    end Indent;
+
+   --------------
+   -- New_Line --
+   --------------
+
+   function New_Line (V : String_Vector) return String_Vector
+   is (V.Append (""));
 
    -------------
    -- Replace --

@@ -99,6 +99,13 @@ package Alire.Utils with Preelaborate is
 
    Empty_Vector : constant String_Vector;
 
+   function Append (V : String_Vector;
+                    S : String) return String_Vector;
+   --  Returns a copy of V with S appended at the end
+
+   function Append (L, R : String_Vector) return String_Vector;
+   --  Append R at the end of L.
+
    procedure Append_Line (V : in out String_Vector;
                           S : String;
                           C : Ada.Containers.Count_Type := 1)
@@ -110,6 +117,8 @@ package Alire.Utils with Preelaborate is
    function Append_To_Last_Line (V : String_Vector;
                                  S : String)
                                  return String_Vector;
+   --  Appends S to the last line in V. Does *not* add a new line. If V is
+   --  empty, then a vector with a single line equal to S is returned.
 
    function Count (V : String_Vector) return Natural;
    --  FSM do I hate the Containers.Count_Type...
@@ -122,6 +131,9 @@ package Alire.Utils with Preelaborate is
    function Indent (V      : String_Vector;
                     Spaces : String := "   ")
                     return   String_Vector;
+
+   function New_Line (V : String_Vector) return String_Vector;
+   --  Append an empty line to V
 
    not overriding
    function To_Vector (S : String) return String_Vector;
