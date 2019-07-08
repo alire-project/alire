@@ -231,14 +231,23 @@ package body Alr.Commands is
       Canary1 : Command_Line_Configuration;
       Canary2 : Command_Line_Configuration;
    begin
+      Put_Line ("Summary: " & Dispatch_Table (Cmd).Short_Description);
+
+      --  Prepare command-line summary
       Set_Usage (Config,
                  "[global options] " &
                    Image (Cmd) & " [command options] " &
                    Dispatch_Table (Cmd).Usage_Custom_Parameters,
                  Help => " ");
 
+      --  Hack for one-liner help:
+      Define_Switch (Config,
+                     Image (Cmd) & " command: "
+                     & Dispatch_Table (Cmd).Short_Description);
+      Define_Switch (Config, " ");
+
       --  Ugly hack that goes by GNAT
-      Define_Switch (Config, "Global options:", "", "", "", "");
+      Define_Switch (Config, "Global options:");
       Define_Switch (Config, " ");
       Set_Global_Switches (Config);
 
