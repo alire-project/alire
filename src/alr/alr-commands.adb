@@ -230,7 +230,10 @@ package body Alr.Commands is
       Canary1 : Command_Line_Configuration;
       Canary2 : Command_Line_Configuration;
    begin
-      Put_Line ("Summary: " & Dispatch_Table (Cmd).Short_Description);
+      New_Line;
+      Put_Line ("SUMMARY");
+      New_Line;
+      Put_Line (" " & Dispatch_Table (Cmd).Short_Description);
 
       --  Prepare command-line summary
       Set_Usage (Config,
@@ -238,12 +241,6 @@ package body Alr.Commands is
                    Image (Cmd) & " [command options] " &
                    Dispatch_Table (Cmd).Usage_Custom_Parameters,
                  Help => " ");
-
-      --  Hack for one-liner help:
-      Define_Switch (Config,
-                     Image (Cmd) & " command: "
-                     & Dispatch_Table (Cmd).Short_Description);
-      Define_Switch (Config, " ");
 
       --  Ugly hack that goes by GNAT
       Define_Switch (Config, "Global options:", "", "", "", "");
@@ -257,8 +254,8 @@ package body Alr.Commands is
       if Get_Switches (Canary1) /= Get_Switches (Canary2) then
          --  Ugly hack that goes by GNAT
          Define_Switch (Config, " ");
-         Define_Switch (Config, "Options specific to " &
-                          Image (Cmd) & ":", "", "", "", "");
+         Define_Switch (Config, "Specific " & Image (Cmd) & " options:",
+                        "", "", "", "");
          Define_Switch (Config, " ");
 
          Dispatch_Table (Cmd).Setup_Switches (Config);
@@ -273,13 +270,11 @@ package body Alr.Commands is
 
       for Line of Dispatch_Table (Cmd).Long_Description loop
          AAA.Text_IO.Put_Paragraph (Line,
-                                    Line_Prefix => "   ");
+                                    Line_Prefix => " ");
          --  GNATCOLL.Paragraph_Filling seems buggy at the moment, otherwise
          --  it would be the logical choice.
       end loop;
-   exception
-      when E : others =>
-         Alire.Log_Exception (E);
+      New_Line;
    end Display_Usage;
 
    -------------------
