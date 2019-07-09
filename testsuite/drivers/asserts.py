@@ -23,8 +23,8 @@ def assert_eq(expected, actual, label=None):
         assert False, '\n'.join(text)
 
 
-def assert_match(expected_re, actual, label=None):
-    if not re.match(expected_re, actual):
+def assert_match(expected_re, actual, label=None, flags=0):
+    if not re.match(expected_re, actual, flags=flags):
         text = ['Unexpected {}'.format(label or 'output'),
                 'Expecting a match on:',
                 indent(expected_re),
