@@ -18,17 +18,6 @@ package body Alr.Commands.Get is
 
    package Semver renames Semantic_Versioning;
 
-   --------------------------
-   -- Display_Help_Details --
-   --------------------------
-
-   overriding procedure Display_Help_Details (Cmd : Command) is
-      pragma Unreferenced (Cmd);
-   begin
-      Ada.Text_IO.New_Line;
-      Print_Project_Version_Sets;
-   end Display_Help_Details;
-
    --------------
    -- Retrieve --
    --------------
@@ -143,6 +132,21 @@ package body Alr.Commands.Get is
             raise Command_Failed;
       end;
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector
+   is (Alire.Utils.Empty_Vector
+       .Append ("Retrieve a crate, in the case of regular ones, or install"
+                & " a system package provided by the platform."
+                & " A regular crate is deployed under an immediate folder"
+                & " with naming 'name_version_hash'.")
+       .New_Line
+       .Append (Project_Version_Sets));
 
    --------------------
    -- Setup_Switches --

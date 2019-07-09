@@ -157,6 +157,23 @@ package body Alr.Commands.Index is
       end if;
    end List;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Add, remove, list and update indexes used by the current"
+               & " alr configuration.")
+      .New_Line
+      .Append ("Updating applies only to repository-stored indexes, in which"
+               & " case a pull operation will be performed on them."
+               & " An index initially set up with a specific commit will"
+               & " not be updated.")
+     );
+
    --------------------
    -- Setup_Switches --
    --------------------

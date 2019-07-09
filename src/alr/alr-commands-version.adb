@@ -57,4 +57,16 @@ package body Alr.Commands.Version is
       New_Line;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Shows assorted metadata about the alr executable,"
+               & " and about the crate or sandbox found in the current"
+               & " directory, if any."));
+
 end Alr.Commands.Version;

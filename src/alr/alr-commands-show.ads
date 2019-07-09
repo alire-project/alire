@@ -2,9 +2,11 @@ package Alr.Commands.Show is
 
    type Command is new Commands.Command with private;
 
-   overriding procedure Display_Help_Details (Cmd : Command);
-
    overriding procedure Execute (Cmd : in out Command);
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;

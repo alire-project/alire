@@ -1,8 +1,12 @@
+with Alire.Paths;
+
 with Alr.Checkout;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Root;
 with Alr.Templates;
+
+with GNAT.OS_Lib;
 
 package body Alr.Commands.Update is
 
@@ -54,5 +58,18 @@ package body Alr.Commands.Update is
          Trace.Detail ("No project to update");
       end if;
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Resolves dependencies using the loaded indexes, and"
+               & " regenerates the aggregate project building file found in"
+               & " <crate>" & GNAT.OS_Lib.Directory_Separator
+               & Alire.Paths.Working_Folder_Inside_Root));
 
 end Alr.Commands.Update;

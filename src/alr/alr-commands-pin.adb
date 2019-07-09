@@ -38,4 +38,15 @@ package body Alr.Commands.Pin is
       end;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Pins dependencies to its resolved versions, and so prevent"
+              & " future update commands from upgrading them."));
+
 end Alr.Commands.Pin;

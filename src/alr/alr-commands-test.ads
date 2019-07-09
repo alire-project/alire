@@ -3,10 +3,11 @@ package Alr.Commands.Test is
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Display_Help_Details (Cmd : Command);
+   procedure Execute (Cmd : in out Command);
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
 
    overriding
    procedure Setup_Switches

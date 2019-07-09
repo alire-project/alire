@@ -8,12 +8,16 @@ package Alr.Commands.Search is
    procedure Execute (Cmd : in out Command);
 
    overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
+
+   overriding
    function Short_Description (Cmd : Command) return String
    is ("Search a string in release names and properties");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("<search term>");
+   is ("<search term> | --list");
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;

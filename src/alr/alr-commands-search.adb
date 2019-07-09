@@ -146,6 +146,39 @@ package body Alr.Commands.Search is
       end if;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Searches the given substring in crate names (or properties"
+               & " with --property), and shows the most recent release"
+               & " of matching crates (unless --full is specified).")
+      .New_Line
+      .Append ("Besides version, description and release notes, a status"
+               & " column with the following status flags is provided:")
+      .New_Line
+      .Append ("N: the release is native and provided by a system package.")
+      .Append ("U: the release is not available in the current platform.")
+      .Append ("X: the release has dependencies that cannot be resolved.")
+      .New_Line
+      .Append ("The reasons for unavalaibility (U) can be ascertained with"
+               & " 'alr show <crate>=<version>'.")
+      .New_Line
+      .Append ("Unresolvable releases (X) should not happen in platforms"
+               & " with assigned maintainers. Common reasons are missing"
+               & " native dependencies that have been phased out by the"
+               & " platform without being updated yet in the community"
+               & " index.")
+     );
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)

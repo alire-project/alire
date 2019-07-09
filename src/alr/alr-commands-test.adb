@@ -63,17 +63,6 @@ package body Alr.Commands.Test is
       return True;
    end Check_Files;
 
-   --------------------------
-   -- Display_Help_Details --
-   --------------------------
-
-   overriding procedure Display_Help_Details (Cmd : Command) is
-      pragma Unreferenced (Cmd);
-   begin
-      New_Line;
-      Print_Project_Version_Sets;
-   end Display_Help_Details;
-
    -------------
    -- Do_Test --
    -------------
@@ -340,6 +329,25 @@ package body Alr.Commands.Test is
 
       Do_Test (Cmd, Candidates);
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector
+   is (Alire.Utils.Empty_Vector
+       .Append ("Tests the retrievability and buildability of all or"
+                & " specific releases. Unless --continue or --redo is given,"
+                & " the command expects to be run in an empty folder.")
+       .New_Line
+       .Append ("After completion, a report in text, markup and junit format"
+                & " will be available in the current directory. A complete log"
+                & " of each release building process will be available in"
+                & " respective <release>/alire/alr_test.log files.")
+       .New_Line
+       .Append (Project_Version_Sets));
 
    --------------------
    -- Setup_Switches --

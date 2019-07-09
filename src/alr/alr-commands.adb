@@ -1,4 +1,5 @@
 with AAA.Table_IO;
+with AAA.Text_IO;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -11,7 +12,6 @@ with Alire.Features.Index;
 with Alire.Index;
 with Alire.Roots;
 with Alire.Roots.Check_Valid;
-with Alire.Utils;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -22,7 +22,6 @@ with Alr.Commands.Index;
 with Alr.Commands.Init;
 with Alr.Commands.List;
 with Alr.Commands.Pin;
---  with Alr.Commands.Reserved;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
@@ -209,7 +208,7 @@ package body Alr.Commands is
    begin
       New_Line;
       Put_Line ("Ada Library Repository manager");
-      Put_Line ("Usage : alr [global options] " &
+      Put_Line ("USAGE: alr [global options] " &
                   "command [command options] [arguments]");
 
       New_Line;
@@ -247,7 +246,7 @@ package body Alr.Commands is
       Define_Switch (Config, " ");
 
       --  Ugly hack that goes by GNAT
-      Define_Switch (Config, "Global options:");
+      Define_Switch (Config, "Global options:", "", "", "", "");
       Define_Switch (Config, " ");
       Set_Global_Switches (Config);
 
@@ -267,9 +266,20 @@ package body Alr.Commands is
 
       GNAT.Command_Line.Display_Help (Config);
 
-      Dispatch_Table (Cmd).Display_Help_Details;
-
+      --  Format and print the long command description
       New_Line;
+      Put_Line ("DESCRIPTION");
+      New_Line;
+
+      for Line of Dispatch_Table (Cmd).Long_Description loop
+         AAA.Text_IO.Put_Paragraph (Line,
+                                    Line_Prefix => "   ");
+         --  GNATCOLL.Paragraph_Filling seems buggy at the moment, otherwise
+         --  it would be the logical choice.
+      end loop;
+   exception
+      when E : others =>
+         Alire.Log_Exception (E);
    end Display_Usage;
 
    -------------------
@@ -659,20 +669,20 @@ package body Alr.Commands is
          OS_Lib.Bailout (1);
    end Execute_By_Name;
 
-   --------------------------------
-   -- Print_Project_Version_Sets --
-   --------------------------------
+   --------------------------
+   -- Project_Version_Sets --
+   --------------------------
 
-   procedure Print_Project_Version_Sets is
+   function Project_Version_Sets return Alire.Utils.String_Vector is
    begin
-      Put_Line (" Project selection syntax (policy applies " &
-                  "within the allowed version subsets)");
-      New_Line;
-      Put_Line (" project        " & ASCII.HT &
-                  "Newest/oldest version (according to policy)");
-      Put_Line (" project=version" & ASCII.HT & "Exact version");
-      Put_Line (" project^version" & ASCII.HT & "Major-compatible version");
-      Put_Line (" project~version" & ASCII.HT & "Minor-compatible version");
-   end Print_Project_Version_Sets;
+      return Alire.Utils.Empty_Vector
+        .Append ("Version selection syntax (global policy applies "
+                 & "within the allowed version subsets):")
+        .New_Line
+        .Append ("crate        " & ASCII.HT & "Newest/oldest version")
+        .Append ("crate=version" & ASCII.HT & "Exact version")
+        .Append ("crate^version" & ASCII.HT & "Major-compatible version")
+        .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
+   end Project_Version_Sets;
 
 end Alr.Commands;

@@ -232,6 +232,24 @@ package body Alr.Commands.Init is
       end;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Initializes a new crate containing a ready-to-build GNAT"
+               & " project. The crate is created as a child of the current"
+               & " directory, containing minimal sources for an executable"
+               & " or library, as specified.")
+      .New_Line
+      .Append ("--in-place is intended to be used inside the crate directory"
+               & " to regenerate alire metadata files, if for some reason"
+               & " they become missing or invalid.")
+     );
+
    --------------------
    -- Setup_Switches --
    --------------------
