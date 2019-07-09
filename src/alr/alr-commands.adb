@@ -2,6 +2,7 @@ with AAA.Table_IO;
 with AAA.Text_IO;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
@@ -519,11 +520,55 @@ package body Alr.Commands is
    --  Once this procedure returns, the command, arguments and switches will
    --  be ready for use. Otherwise, appropriate help is shown and it does not
    --  return.
+
+      --------------------
+      -- Check_For_Help --
+      --------------------
+
+      procedure Check_For_Help is
+         use Ada.Command_Line;
+         Help_Requested  : Boolean := False;
+         First_Nonswitch : Integer := 0;
+         --  Used to store the first argument that doesn't start with '-';
+         --  that would be the command for which help is being asked.
+      begin
+         for I in 1 .. Argument_Count loop
+            declare
+               Arg : constant String := Ada.Command_Line.Argument (I);
+            begin
+               if Arg = "-h" or else Arg = "--help" then
+                  Help_Requested := True;
+               elsif First_Nonswitch = 0 and then  Arg (Arg'First) /= '-' then
+                  First_Nonswitch := I;
+               end if;
+            end;
+         end loop;
+
+         --  Show either general or specific help
+         if Help_Requested then
+            if First_Nonswitch > 0 then
+               Display_Usage (Ada.Command_Line.Argument (First_Nonswitch));
+               OS_Lib.Bailout (0);
+            else
+               null;
+               --  Nothing to do; later on GNAT switch processing will catch
+               --  the -h/--help and display the general help.
+            end if;
+         end if;
+      end Check_For_Help;
+
       use all type GNAT.OS_Lib.String_Access;
 
       Global_Config  : Command_Line_Configuration;
       Command_Config : Command_Line_Configuration;
    begin
+      --  GNAT switch handling intercepts -h/--help. To have the same output
+      --  for 'alr -h command' and 'alr help command', we do manual handling
+      --  first in search of a -h/--help:
+      Check_For_Help;
+
+      --  If the above call returned, we continue with regular switch handling.
+
       Set_Usage (Global_Config,
                  "[global options] <command> [command options] [arguments]",
                  Help => " ");
