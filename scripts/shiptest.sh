@@ -38,5 +38,5 @@ alr search -d --list --native
 # Run e3.testsuite
 echo
 cd testsuite
-./run.py --xunit-output ../shippable/testresults/e3-output.xml
+./run.py --xunit-output ../shippable/testresults/e3-output.xml || echo Test suite failures, unstable build!
 cd ..
