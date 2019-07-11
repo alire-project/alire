@@ -1,5 +1,7 @@
 pragma Warnings (Off);
 
+with Ada.Command_Line;
+
 with Alr.Bootstrap;
 with Alr.Code;
 with Alr.Parsers;
@@ -49,6 +51,27 @@ package body Alr.Commands.Dev is
    is
       use GNAT.Command_Line;
    begin
+      --  Special case to enable a simple test for switch redefinition.
+      --  If exactly the second argument is "--check-switch-redefinition"
+      --  (e.g., calling alr dev --check-switch-redefinition), this will result
+      --  in alr erroring as expected. Two -1 and -2 variants are checked so
+      --  both long and short switch clashes can be tested separately.
+      if Ada.Command_Line.Argument_Count = 2 then
+         if Ada.Command_Line.Argument (2) = "--check-switch-redefinition-1"
+         then
+            Define_Switch (Config,
+                           Cmd.Custom'Access,
+                           "-h", "",
+                           "Check for redefined switch");
+         elsif Ada.Command_Line.Argument (2) = "--check-switch-redefinition-2"
+         then
+            Define_Switch (Config,
+                           Cmd.Custom'Access,
+                           "", "--help",
+                           "Check for redefined switch");
+         end if;
+      end if;
+
       Define_Switch (Config,
                      Cmd.Custom'Access,
                      "", "--custom",
