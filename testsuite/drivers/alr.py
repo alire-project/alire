@@ -37,16 +37,22 @@ def run_alr(*args, **kwargs):
         debugging) and raise a CalledProcessError (to abort the test).
     :param bool quiet: If true (which is the default), append "-q" to the
         command line.
+    :param bool debug: If true (which is the default), append "-d" to the
+        command line. This ensures uncaught exceptions are logged instead
+        of presenting a sanitized error intended for final users.
     :rtype: Run
     """
 
     complain_on_error = kwargs.pop('complain_on_error', True)
+    debug = kwargs.pop('debug', True)
     quiet = kwargs.pop('quiet', True)
     if kwargs:
         first_unknown_kwarg = sorted(kwargs)[0]
         raise ValueError('Invalid argument: {}'.format(first_unknown_kwarg))
 
     argv = ['alr']
+    if debug:
+        argv.append('-d')
     if quiet:
         argv.append('-q')
     argv.extend(args)
