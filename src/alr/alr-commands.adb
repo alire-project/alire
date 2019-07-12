@@ -68,13 +68,20 @@ package body Alr.Commands is
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 
+   --  Following aliased booleans are used by GNAT.Command_Line processing:
+
    Log_Quiet  : Boolean renames Alire_Early_Elaboration.Switch_Q;
    Log_Detail : Boolean renames Alire_Early_Elaboration.Switch_V;
-   Log_Debug  : Boolean renames Alire_Early_Elaboration.Switch_D;
+   --  For the regular verbosity levels
+
+   Debug_Channel : Boolean renames Alire_Early_Elaboration.Switch_D;
+   --  For the stderr debug channel
 
    Help_Switch   : aliased Boolean := False;
+   --  Catches the -h/--help help switch
 
    Prefer_Oldest : aliased Boolean := False;
+   --  Catches the --prefer-oldest policy switch
 
    -----------
    -- Image --
@@ -168,27 +175,15 @@ package body Alr.Commands is
       Define_Switch (Config,
                      Log_Detail'Access,
                      "-v",
-                     Help => "Be more verbose");
+                     Help => "Be more verbose (use twice for extra detail)");
 
       Define_Switch (Config,
-                     Log_Debug'Access,
+                     Debug_Channel'Access,
                      "-d",
+                     Long_Switch => "--debug",
                      Help =>
-                       "Be even more verbose (including debug messages)");
+                       "Enable debug-specific log messages");
    end Set_Global_Switches;
-
-   ---------------------
-   -- Global_Switches --
-   ---------------------
-
-   function Global_Switches return String is
-   begin
-      return Utils.Trim ((if Log_Debug  then "-d " else "") &
-                         (if Log_Detail then "-v " else "") &
-                         (if Log_Quiet  then "-q " else "") &
-                         (if Interactive.Not_Interactive then "-n " else "") &
-                         (if Prefer_Oldest then "--prefer-oldest" else ""));
-   end Global_Switches;
 
    --------------------------
    -- Create_Alire_Folders --
@@ -632,20 +627,6 @@ package body Alr.Commands is
          Alire.Config.Set_Path (Command_Line_Config_Path.all);
       end if;
 
-      --  The simplistic early parser do not recognizes compressed switches, so
-      --  let's recheck now:.
-      declare
-         use Alire_Early_Elaboration;
-      begin
-         if Switch_D then
-            Alire.Log_Level := Simple_Logging.Debug;
-         elsif Switch_V then
-            Alire.Log_Level := Simple_Logging.Detail;
-         elsif Switch_Q then
-            Alire.Log_Level := Simple_Logging.Error;
-         end if;
-      end;
-
    exception
       when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
          --  Getopt has already displayed some help
@@ -663,7 +644,7 @@ package body Alr.Commands is
          OS_Lib.Bailout (1);
       when Wrong_Command_Arguments =>
          --  Raised in here, so no need to raise up unless in debug mode
-         if Log_Debug then
+         if Debug_Channel then
             raise;
          else
             OS_Lib.Bailout (1);
