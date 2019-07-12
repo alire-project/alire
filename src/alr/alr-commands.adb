@@ -179,8 +179,8 @@ package body Alr.Commands is
 
       Define_Switch (Config,
                      Debug_Channel'Access,
-                     "-d",
-                     Long_Switch => "--debug",
+                     "-d?",
+                     Long_Switch => "--debug?",
                      Help =>
                        "Enable debug-specific log messages");
    end Set_Global_Switches;

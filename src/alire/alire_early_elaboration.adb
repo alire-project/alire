@@ -1,12 +1,46 @@
+with Ada.Text_IO;
+
 with Alire;
---  Kind of circularity here but somehow it slips past static GNAT rules??
 
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
 
-with Simple_Logging;
+with Simple_Logging.Filtering;
 
 package body Alire_Early_Elaboration is
+
+   ----------------
+   -- Add_Scopes --
+   ----------------
+
+   procedure Add_Scopes (Debug_Arg : String) is
+      --  Receives as-is the --debug/-d[ARG] argument. This is a list of
+      --  optionally comma-separated, plus/minus prefixed substrings that will
+      --  be used for filtering against the enclosing entity/source location.
+      --  Example whitelisting argument: +commands,-search
+      --  Example blacklisting argument: -commands,+search
+      --  The first sign puts the filter in (-) blacklist / (+) whitelist mode.
+      --  In whitelist mode, only the given substrings are logged, unless later
+      --  added as exception. E.g., in the "+commands,-search" example, only
+      --  commands traces would be logged (because of whitelist mode), except
+      --  the ones for the search command (because given as an exception).
+      --  In the "-commands,+search" example for blacklist mode, everything but
+      --  command traces would be logged, but search command traces would be
+      --  logged because that's the exception.
+
+      --  Once scopes are used, we activate logging of enclosing entity and
+      --  location to provide full logging information.
+
+   begin
+      if not Simple_Logging.Filtering.Add_From_String (Debug_Arg,
+                                                       Say => True)
+      then
+         --  Bypass debug channel, which was not entirely set up.
+         --  Otherwise we get unwanted location/entity info already.
+         Ada.Text_IO.Put_Line ("ERROR: Invalid logging filters.");
+         GNAT.OS_Lib.OS_Exit (1);
+      end if;
+   end Add_Scopes;
 
    ----------------------------
    -- Early_Switch_Detection --
@@ -20,19 +54,37 @@ package body Alire_Early_Elaboration is
       --------------------
 
       procedure Check_Switches is
+
+         ----------------------
+         -- Check_Long_Debug --
+         ----------------------
+         --  Take care manually of the -debug[ARG] optional ARG, since the
+         --  simple Getopt below doesn't for us:
+         procedure Check_Long_Debug (Switch : String) is
+            Target : constant String := "--debug";
+         begin
+            if Switch'Length >= Target'Length and then
+              Switch (Switch'First ..
+                        Switch'First + Target'Length - 1) = Target
+            then
+               Switch_D := True;
+               Add_Scopes
+                 (Switch (Switch'First + Target'Length .. Switch'Last));
+            end if;
+         end Check_Long_Debug;
+
       begin
          loop
             --  We use the simpler Getopt form to avoid built-in help and other
             --  shenanigans.
-            case Getopt ("* d --debug q v") is
+            case Getopt ("* d? --debug? q v") is
                when ASCII.NUL =>
                   exit;
                when '*' =>
-                  if Full_Switch = "--debug" then
-                     Switch_D := True;
-                  end if;
+                  Check_Long_Debug (Full_Switch);
                when 'd' =>
                   Switch_D := True;
+                  Add_Scopes (Parameter);
                when 'q' =>
                   Switch_Q := True;
                when 'v' =>
