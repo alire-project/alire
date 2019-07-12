@@ -28,7 +28,7 @@ build:
         image_tag: $IMAGE_TAG
         pull: true
     ci:
-        - pip install git+https://github.com/pmderodat/e3-testsuite.git
+        - pip install git+https://github.com/pmderodat/e3-testsuite.git@98e6847
         - scripts/shiptest.sh
     on_success:
         - shipctl put_resource_state branchInfo branch "none"
