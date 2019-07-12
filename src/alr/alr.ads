@@ -16,15 +16,11 @@ package Alr with Preelaborate is
    --  Signals "normal" command completion with failure (i.e., no need to print
    --  stack trace).
 
+   --  Use some general types for the benefit of all child packages:
    pragma Warnings (Off);
    use all type Alire.Project;
-   pragma Warnings (On);
-
    use all type Simple_Logging.Levels;
-
-   procedure Log (S : String;
-                  Level : Simple_Logging.Levels := Info)
-   renames Simple_Logging.Log;
+   pragma Warnings (On);
 
    package Trace renames Simple_Logging;
 

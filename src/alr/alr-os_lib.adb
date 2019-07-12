@@ -50,7 +50,7 @@ package body Alr.OS_Lib is
       end Go_Down;
 
    begin
-      Log ("Traversing folder: " & Folder, Debug);
+      Trace.Debug ("Traversing folder: " & Folder);
 
       Search (Folder,
               "",
@@ -65,10 +65,10 @@ package body Alr.OS_Lib is
    procedure Delete_File (Name : String) is
    begin
       if GNAT.OS_Lib.Is_Regular_File (Name) then
-         Log ("Deleting file: " & Name, Debug);
+         Trace.Debug ("Deleting file: " & Name);
          Ada.Directories.Delete_File (Name);
       else
-         Log ("Skipping deletion of non-existent file: " & Name, Debug);
+         Trace.Debug ("Skipping deletion of non-existent file: " & Name);
       end if;
    end Delete_File;
 
@@ -119,7 +119,7 @@ package body Alr.OS_Lib is
          end if;
 
          if Contains (Simple_Name (Item), Pattern) then
-            Log ("Filename match: " & Simple_Name (Item), Debug);
+            Trace.Debug ("Filename match: " & Simple_Name (Item));
             Rename (Full_Name (Item),
                     Containing_Directory (Full_Name (Item)) /
                       Utils.Replace (Simple_Name (Item),
@@ -136,7 +136,7 @@ package body Alr.OS_Lib is
          use Alire.Directories;
          G : Guard (Enter (Folder)) with Unreferenced;
       begin
-         Log ("sed-ing project name in files...", Debug);
+         Trace.Debug ("sed-ing project name in files...");
          Spawn ("find", ". -type f -exec sed -i s/" &
                   Pattern & "/" & Replace & "/g {} \;",
                 Force_Quiet => True);
@@ -144,7 +144,7 @@ package body Alr.OS_Lib is
 
       --  This is not OS dependent
       --  File names
-      Log ("sed-ing project in file names...", Debug);
+      Trace.Debug ("sed-ing project in file names...");
       Traverse_Folder (Folder, Rename'Access);
    end Sed_Folder;
 
