@@ -14,22 +14,14 @@ package Alire.Directories is
       function "/" (L, R : String) return String renames Directories."/";
    end Operators;
 
-   procedure Create_Directory (Name : Platform_Independent_Path);
-   --  Creates a directory and all necessary parent ones.
-   --  May raise usual filesystem exceptions.
-
    procedure Copy (Src_Folder,
                    Dst_Parent_Folder : String;
                    Excluding         : String := "");
-   --  Copies a folder contents to within another existing location
-   --  That is, equivalent to cp -r src/* dst/
-   --  Excluding may be a single name that will not be copied (if file) or
-   --  recursed into (if folder)
+   --  Copies a folder contents to within another existing location. That is,
+   --  equivalent to "cp -r src/* dst/". Excluding may be a single name that
+   --  will not be copied (if file) or recursed into (if folder).
 
    function Current return String renames Ada.Directories.Current_Directory;
-
-   function Parent (Dir : String) return String
-                    renames Ada.Directories.Containing_Directory;
 
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String;

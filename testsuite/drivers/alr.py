@@ -118,7 +118,7 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
         # Compute the directory that contains index files
         files_dir = (fixtures_path(files_dir)
                      if in_fixtures else
-                     os.path.join(working_dir, files_dir))
+                     files_dir)
 
         # Finally create the index description in the config directory
         index_dir = os.path.join(indexes_dir, name)

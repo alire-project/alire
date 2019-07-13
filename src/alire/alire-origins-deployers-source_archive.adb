@@ -2,6 +2,8 @@ with Ada.Directories;
 
 with Alire.OS_Lib.Subprocess;
 
+with GNATCOLL.VFS;
+
 package body Alire.Origins.Deployers.Source_Archive is
 
    package Dirs renames Ada.Directories;
@@ -12,13 +14,14 @@ package body Alire.Origins.Deployers.Source_Archive is
 
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
+      use GNATCOLL.VFS;
       Archive_Name : constant String := This.Base.Archive_Name;
       Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
       Exit_Code    :          Integer;
       package Subprocess renames Alire.OS_Lib.Subprocess;
    begin
       Trace.Detail ("Creating folder: " & Folder);
-      Dirs.Create_Directory (Folder);
+      Create (+Folder).Make_Dir;
 
       Trace.Detail ("Downloading archive: " & This.Base.Archive_URL);
       Exit_Code := OS_Lib.Subprocess.Spawn

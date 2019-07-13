@@ -45,38 +45,6 @@ package body Alire.Directories is
    end Copy;
 
    ----------------------
-   -- Create_Directory --
-   ----------------------
-
-   procedure Create_Directory (Name : Platform_Independent_Path) is
-
-      -------------------
-      -- Create_Parent --
-      -------------------
-
-      procedure Create_Parent (Path : String) is
-         use Ada.Directories;
-      begin
-         if Exists (Path) then
-            return;
-         else
-            begin
-               Create_Parent (Containing_Directory (Path));
-            exception
-               when Use_Error =>
-                  null; -- We reached root at worst, and start digging down...
-            end;
-
-            Ada.Directories.Create_Directory (Path);
-            --  Parent must exist at this point
-         end if;
-      end Create_Parent;
-
-   begin
-      Create_Parent (Name);
-   end Create_Directory;
-
-   ----------------------
    -- Detect_Root_Path --
    ----------------------
 

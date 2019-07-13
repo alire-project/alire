@@ -9,7 +9,6 @@ with Alr.Files;
 with Alr.Interactive;
 with Alr.Paths;
 with Alr.Platform;
-with Alr.OS_Lib;
 with Alr.Parsers;
 with Alr.Query;
 with Alr.Testing.Collections;
@@ -20,6 +19,8 @@ with Alr.Testing.Text;
 with Alr.Utils;
 
 with GNAT.Command_Line;
+
+with GNATCOLL.VFS;
 
 with Semantic_Versioning;
 
@@ -81,6 +82,7 @@ package body Alr.Commands.Test is
                       Releases : Alire.Containers.Release_Sets.Set)
    is
       use Ada.Calendar;
+      use GNATCOLL.VFS;
       use OS_Lib.Paths;
 
       Reporters : Testing.Collections.Collection;
@@ -167,7 +169,8 @@ package body Alr.Commands.Test is
             end;
          end if;
 
-         OS_Lib.Create_Folder (R.Unique_Folder / Paths.Alr_Working_Folder);
+         Make_Dir
+           (Create (+R.Unique_Folder) / Create (+Paths.Alr_Working_Folder));
          --  Might not exist for native/failed/skipped
          Output.Write (R.Unique_Folder /
                          Paths.Alr_Working_Folder /

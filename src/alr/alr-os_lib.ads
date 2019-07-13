@@ -14,10 +14,6 @@ package Alr.OS_Lib is
 
    --  Environment
 
-   procedure Create_Folder (Path : String)
-     renames Alire.Directories.Create_Directory;
-   --  Able to create full given path, permissions permitting
-
    function Getenv (Var : String; Default : String := "") return String;
 
    procedure Setenv (Var : String; Value : String) renames GNAT.OS_Lib.Setenv;

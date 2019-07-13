@@ -17,6 +17,8 @@ with Alr.Platform;
 with Alr.Root;
 with Alr.Utils;
 
+with GNATCOLL.VFS;
+
 package body Alr.Templates is
 
    Tab_1 : constant String (1 .. 3) := (others => ' ');
@@ -254,15 +256,15 @@ package body Alr.Templates is
    procedure Generate_Prj_Alr (Release  : Types.Release;
                                Filename : String)
    is
+      use GNATCOLL.VFS;
+      F : constant Virtual_File := Create (+Filename, Normalize => True);
    begin
       Trace.Detail ("Generating " & Release.Project_Str & ".toml file for "
                     & Release.Milestone.Image & " with"
                     & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
-      if not Paths.Is_Simple_Name (Filename) then
-         OS_Lib.Create_Folder (Paths.Parent (Filename));
-      end if;
+      F.Get_Parent.Make_Dir;
 
       Files.Backup_If_Existing (Filename);
 
