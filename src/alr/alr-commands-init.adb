@@ -5,7 +5,6 @@ with Alire.Origins;
 with Alire.Releases;
 with Alire.Roots;
 
-with Alr.Paths;
 with Alr.Parsers;
 with Alr.Root;
 with Alr.Templates;
@@ -164,7 +163,7 @@ package body Alr.Commands.Init is
          Root : constant Alire.Roots.Root := Alire.Roots.New_Root
            (+Name, Ada.Directories.Full_Name (+Directory.Full_Name));
       begin
-         Make_Dir (Create (+Name) / (+Paths.Alr_Working_Folder));
+         Make_Dir (Create (+Root.Working_Folder));
 
          Templates.Generate_Prj_Alr
            (Root.Release,
