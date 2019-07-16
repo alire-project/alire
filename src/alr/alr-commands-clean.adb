@@ -30,7 +30,8 @@ package body Alr.Commands.Clean is
                Trace.Detail ("Deleting working copy cache...");
                Ada.Directories.Delete_Tree (Paths.Alr_Working_Cache_Folder);
             else
-               Trace.Warning ("Cache folder not present");
+               Trace.Detail ("Cache folder not present");
+               --  This is expected if the crate has no dependencies
             end if;
          else
             Trace.Info ("Not in a project or sandbox folder");
