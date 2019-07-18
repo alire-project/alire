@@ -52,9 +52,9 @@ package body Alr.Commands.Show is
          New_Line;
 
          if Cmd.Native then
-            Rel.Whenever (Platform.Properties).Print (Private_Too => Cmd.Priv);
+            Rel.Whenever (Platform.Properties).Print;
          else
-            Rel.Print (Private_Too => Cmd.Priv);
+            Rel.Print;
          end if;
 
          if Rel.Origin.Is_Native then
@@ -215,10 +215,6 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Native'Access,
                      "", "--native", "Show info relevant to current platform");
-
-      Define_Switch (Config,
-                     Cmd.Priv'Access,
-                     "", "--private", "Show also private properties");
 
       Define_Switch (Config,
                      Cmd.Solve'Access,
