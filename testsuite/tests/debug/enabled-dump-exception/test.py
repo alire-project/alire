@@ -25,6 +25,7 @@ check_output(run_alr('dev', '--raise', '--debug',
 
 # Check ordinary non-debug output:
 assert_eq(run_alr('dev', '--raise', debug=False, complain_on_error=False).out,
+          "ERROR: Raising forcibly\n"
           "ERROR: alr encountered an unexpected error, re-run with -d for details.\n")
 
 print('SUCCESS')
