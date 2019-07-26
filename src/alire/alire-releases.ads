@@ -13,6 +13,7 @@ with Alire.Properties.Licenses;
 with Alire.Requisites;
 with Alire.Utils;
 with Alire.Versions;
+with Alire.TOML_Keys;
 
 with Semantic_Versioning;
 
@@ -27,6 +28,7 @@ package Alire.Releases with Preelaborate is
    type Release (<>) is
      new Versions.Versioned
      and Interfaces.Tomifiable
+     and Interfaces.Yamlable
    with private;
 
    function "<" (L, R : Release) return Boolean;
@@ -207,6 +209,12 @@ package Alire.Releases with Preelaborate is
 
    function License (R : Release) return Alire.Properties.Vector;
 
+   function Author (R : Release) return Alire.Properties.Vector;
+
+   function Maintainer (R : Release) return Alire.Properties.Vector;
+
+   function Website (R : Release) return Alire.Properties.Vector;
+
    function Milestone (R : Release) return Milestones.Milestone;
 
    procedure Print (R : Release; Private_Too : Boolean := False);
@@ -224,7 +232,11 @@ package Alire.Releases with Preelaborate is
                        return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
 
-   overriding function To_TOML (R : Release) return TOML.TOML_Value;
+   overriding
+   function To_TOML (R : Release) return TOML.TOML_Value;
+
+   overriding
+   function To_YAML (R : Release) return String;
 
    function Version_Image (R : Release) return String;
 
@@ -252,6 +264,7 @@ private
                  Notes_Len : Natural) is
      new Versions.Versioned
      and Interfaces.Tomifiable
+     and Interfaces.Yamlable
    with record
       Project      : Alire.Project (1 .. Prj_Len);
       Alias        : UString; -- I finally gave up on constraints
@@ -332,6 +345,15 @@ private
    function License (R : Release) return Alire.Properties.Vector
    is (Enumerate (R.Properties).Filter
        (Alire.Properties.Licenses.Values.Property'Tag));
+
+   function Author (R : Release) return Alire.Properties.Vector
+   is (Enumerate (R.Properties).Filter (Alire.TOML_Keys.Author));
+
+   function Maintainer (R : Release) return Alire.Properties.Vector
+   is (Enumerate (R.Properties).Filter (Alire.TOML_Keys.Maintainer));
+
+   function Website (R : Release) return Alire.Properties.Vector
+   is (Enumerate (R.Properties).Filter (Alire.TOML_Keys.Website));
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String

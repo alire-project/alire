@@ -9,11 +9,16 @@ package Alire.Properties.Scenarios with Preelaborate is
 
    function New_Property (V : GPR.Variable) return Property;
 
-   overriding function Image (V : Property) return String;
+   overriding
+   function Image (V : Property) return String;
+
+   overriding
+   function To_YAML (V : Property) return String;
 
    function Value (V : Property) return GPR.Variable;
 
-   overriding function Key (V : Property) return String;
+   overriding
+   function Key (V : Property) return String;
 
 private
 
@@ -24,12 +29,20 @@ private
       Var : Holders.Holder;
    end record;
 
-   overriding function To_TOML (V : Property) return TOML.TOML_Value;
+   overriding
+   function To_TOML (V : Property) return TOML.TOML_Value;
 
    function New_Property (V : GPR.Variable) return Property is
       (Var => Holders.To_Holder (V));
 
-   overriding function Image (V : Property) return String is
+   overriding
+   function Image (V : Property) return String is
+     ((case V.Var.Element.Kind is
+          when GPR.External => "GPR External: ",
+          when others       => "GPR Scenario: ") & V.Var.Element.Image);
+
+   overriding
+   function To_YAML (V : Property) return String is
      ((case V.Var.Element.Kind is
           when GPR.External => "GPR External: ",
           when others       => "GPR Scenario: ") & V.Var.Element.Image);

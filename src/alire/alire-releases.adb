@@ -5,7 +5,6 @@ with Alire.Defaults;
 with Alire.Platforms;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Adapters;
-with Alire.TOML_Keys;
 
 with GNAT.IO; -- To keep preelaborable
 
@@ -583,6 +582,29 @@ package body Alire.Releases is
 
       return Root;
    end To_TOML;
+
+   -------------
+   -- To_YAML --
+   -------------
+
+   overriding
+   function To_YAML (R : Release) return String is
+
+      function Props_To_YAML
+      is new Utils.To_YAML (Alire.Properties.Property'Class,
+                            Alire.Properties.Vectors,
+                            Alire.Properties.Vector);
+
+   begin
+      return
+        "crate: " & Utils.YAML_Stringify (R.Project_Str) & ASCII.LF &
+        "authors: " & Props_To_YAML (R.Author) & ASCII.LF &
+        "maintainers: " & Props_To_YAML (R.Maintainer) & ASCII.LF &
+        "licenses: " & Props_To_YAML (R.License) & ASCII.LF &
+        "websites: " & Props_To_YAML (R.Website) & ASCII.LF &
+        "version: " & Utils.YAML_Stringify (R.Version_Image) & ASCII.LF &
+        "dependencies: " & R.Dependencies.To_YAML;
+   end To_YAML;
 
    -------------
    -- Version --

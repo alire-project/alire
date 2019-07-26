@@ -15,6 +15,7 @@ package Alire.Properties.Platform with Preelaborate is
    function Tomify is new TOML_Adapters.Tomify (Platforms.Compilers);
    package Compilers is new Values (Platforms.Compilers,
                                     Platforms.Compilers'Image,
+                                    Platforms.Compilers'Image,
                                     Compiler_Key,
                                     Tomify);
 
@@ -23,6 +24,7 @@ package Alire.Properties.Platform with Preelaborate is
 
    function Tomify is new TOML_Adapters.Tomify (Platforms.Distributions);
    package Distributions is new Values (Platforms.Distributions,
+                                        Platforms.Distributions'Image,
                                         Platforms.Distributions'Image,
                                         Distro_Key,
                                         Tomify);
@@ -33,6 +35,7 @@ package Alire.Properties.Platform with Preelaborate is
    function Tomify is new TOML_Adapters.Tomify (Platforms.Operating_Systems);
    package Operating_Systems is new Values (Platforms.Operating_Systems,
                                             Platforms.Operating_Systems'Image,
+                                            Platforms.Operating_Systems'Image,
                                             OS_Key,
                                             Tomify);
 
@@ -40,6 +43,7 @@ package Alire.Properties.Platform with Preelaborate is
    is (TOML_Keys.Target);
    function Tomify is new TOML_Adapters.Tomify (Platforms.Targets);
    package Targets is new Values (Platforms.Targets,
+                                  Platforms.Targets'Image,
                                   Platforms.Targets'Image,
                                   Target_Key,
                                   Tomify);
@@ -49,6 +53,7 @@ package Alire.Properties.Platform with Preelaborate is
    function Tomify is new TOML_Adapters.Tomify (Platforms.Versions);
    package Versions is new Values (Platforms.Versions,
                                    Platforms.Versions'Image,
+                                   Platforms.Versions'Image,
                                    Version_Key,
                                    Tomify);
 
@@ -56,6 +61,7 @@ package Alire.Properties.Platform with Preelaborate is
    is (TOML_Keys.Word_Size);
    function Tomify is new TOML_Adapters.Tomify (Platforms.Word_Sizes);
    package Word_Sizes is new Values (Platforms.Word_Sizes,
+                                     Platforms.Word_Sizes'Image,
                                      Platforms.Word_Sizes'Image,
                                      Word_Size_Key,
                                      Tomify);
