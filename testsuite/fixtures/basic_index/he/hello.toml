@@ -1,7 +1,9 @@
 [general]
 description = """"Hello, world!" demonstration project"""
-licenses = []
-maintainers = ["alejandro@mosteo.com"]
+licenses = ["GPL 3.0", "MIT"]
+website = "example.com"
+maintainers = ["alejandro@mosteo.com", "bob@example.com"]
+authors = ["Bob", "Alice"]
 
 ['1.0.1']
 origin = "file://../../crates/hello_1.0.1"

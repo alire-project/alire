@@ -57,7 +57,11 @@ package Alire.Properties.Labeled with Preelaborate is
    function Filter (LV : Vector; Name : Labels) return Vector;
    --  Return only Label'Class with matching name
 
-   overriding function Image (L : Label) return String;
+   overriding
+   function Image (L : Label) return String;
+
+   overriding
+   function To_YAML (L : Label) return String;
 
    function Key (L : Labels) return String;
 
@@ -114,6 +118,10 @@ private
    overriding
    function Image (L : Label) return String
    is (Utils.To_Mixed_Case (L.Name'Img) & ": " & L.Value);
+
+   overriding
+   function To_YAML (L : Label) return String
+   is (Utils.YAML_Stringify (L.Value));
 
    function Key (L : Labels) return String
    is  (case L is

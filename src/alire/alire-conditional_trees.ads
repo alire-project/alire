@@ -12,15 +12,21 @@ private with Ada.Containers.Indefinite_Vectors;
 with TOML; use all type TOML.Any_Value_Kind;
 
 generic
-   type Values (<>)
-   is new Interfaces.Classificable and Interfaces.Tomifiable with private;
+   type Values (<>) is
+     new Interfaces.Classificable
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable
+   with private;
 
    with function Image (V : Values) return String;
 package Alire.Conditional_Trees with Preelaborate is
 
    type Kinds is (Condition, Value, Vector);
 
-   type Tree is new Interfaces.Tomifiable with private with
+   type Tree is
+     new Interfaces.Tomifiable
+     and Interfaces.Yamlable
+   with private with
      Default_Iterator => Iterate,
      Iterator_Element => Tree,
      Constant_Indexing => Indexed_Element;
@@ -65,6 +71,9 @@ package Alire.Conditional_Trees with Preelaborate is
    function Empty return Tree;
 
    function Image_One_Line (This : Tree) return String;
+
+   overriding
+   function To_YAML (This : Tree) return String;
 
    function Is_Unconditional (This : Tree) return Boolean;
    --  Recursively!
@@ -175,9 +184,12 @@ package Alire.Conditional_Trees with Preelaborate is
 
 private
 
-   type Inner_Node is interface;
+   type Inner_Node is interface and Interfaces.Yamlable;
 
    function Image (Node : Inner_Node) return String is abstract;
+
+   overriding
+   function To_YAML (Node : Inner_Node) return String is abstract;
 
    function Image_Classwide (Node : Inner_Node'Class) return String;
 
@@ -191,7 +203,11 @@ private
 
    type Cursor is new Vectors.Cursor;
 
-   type Tree is new Holders.Holder and Interfaces.Tomifiable with null record;
+   type Tree is
+     new Holders.Holder
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable
+   with null record;
    --  Instead of dealing with pointers and finalization, we use this
    --  class-wide container.
 
@@ -201,7 +217,11 @@ private
       Value : Definite_Values.Holder;
    end record;
 
-   overriding function Image (V : Value_Inner) return String;
+   overriding
+   function Image (V : Value_Inner) return String;
+
+   overriding
+   function To_YAML (V : Value_Inner) return String;
 
 --     overriding function To_Code (This : Tree) return Utils.String_Vector;
 
@@ -226,9 +246,19 @@ private
          Image_Classwide,
          " or ",
          "(empty condition)");
+
+      function To_YAML is new Utils.To_YAML
+        (Inner_Node'Class,
+         Vectors,
+         Vectors.Vector);
+
    end Non_Primitive;
 
-   overriding function Image (V : Vector_Inner) return String;
+   overriding
+   function Image (V : Vector_Inner) return String;
+
+   overriding
+   function TO_YAML (V : Vector_Inner) return String;
 
    type Conditional_Inner is new Inner_Node with record
       Condition  : Requisites.Tree;
@@ -236,7 +266,11 @@ private
       Else_Value : Tree;
    end record;
 
-   overriding function Image (V : Conditional_Inner) return String;
+   overriding
+   function Image (V : Conditional_Inner) return String;
+
+   overriding
+   function To_YAML (V : Conditional_Inner) return String;
 
    function As_Value (This : Tree) return Values
    with Pre => This.Kind = Value;

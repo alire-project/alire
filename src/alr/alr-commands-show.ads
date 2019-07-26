@@ -21,9 +21,10 @@ package Alr.Commands.Show is
 private
 
    type Command is new Commands.Command with record
-      Native  : aliased Boolean := False;
-      Priv    : aliased Boolean := False;
-      Solve   : aliased Boolean := False;
+      Native : aliased Boolean := False;
+      Priv   : aliased Boolean := False;
+      Solve  : aliased Boolean := False;
+      Jekyll : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Show;
