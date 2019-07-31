@@ -594,6 +594,8 @@ package body Alr.Commands is
             OS_Lib.Bailout (0);
          else
             Trace.Error ("Please specific a help topic");
+            New_Line;
+            Display_Valid_Commands;
             OS_Lib.Bailout (1);
          end if;
       end if;
