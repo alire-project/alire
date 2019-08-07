@@ -39,6 +39,17 @@ package body Alr.Commands.Dev is
       end if;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Internal command for development help. Options and features"
+               & " are not stable and may change without warning."));
+
    --------------------
    -- Setup_Switches --
    --------------------

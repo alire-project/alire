@@ -6,6 +6,10 @@ package Alr.Commands.Pin is
    procedure Execute (Cmd : in out Command);
 
    overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
+
+   overriding
    function Short_Description (Cmd : Command) return String
    is ("Pin dependencies to exact versions");
 

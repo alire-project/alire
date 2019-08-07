@@ -52,4 +52,18 @@ package body Alr.Commands.List is
       end if;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Shows the list of all indexed crates without further"
+               & " details other than its common description. This command"
+               & " is intended as a fast alternative to the 'search' command"
+               & " when the information it provides is enough.")
+     );
+
 end Alr.Commands.List;

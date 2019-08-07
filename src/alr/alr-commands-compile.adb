@@ -1,4 +1,5 @@
 with Alire.Actions;
+with Alire.Paths;
 with Alire.Properties.Labeled;
 
 with Alr.Actions;
@@ -105,6 +106,22 @@ package body Alr.Commands.Compile is
    begin
       Execute (Cmd);
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Invokes gprbuild to compile all targets in the current"
+               & " crate. The project file in use is located at <crate>"
+               & GNAT.OS_Lib.Directory_Separator
+               & Alire.Paths.Working_Folder_Inside_Root & "."
+               & " The build is performed out-of-tree at <crate>"
+               & GNAT.OS_Lib.Directory_Separator
+               & Alire.Paths.Build_Folder));
 
    --------------------
    -- Setup_Switches --

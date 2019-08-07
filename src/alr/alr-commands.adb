@@ -1,6 +1,8 @@
 with AAA.Table_IO;
+with AAA.Text_IO;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
@@ -11,7 +13,6 @@ with Alire.Features.Index;
 with Alire.Index;
 with Alire.Roots;
 with Alire.Roots.Check_Valid;
-with Alire.Utils;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -22,7 +23,6 @@ with Alr.Commands.Index;
 with Alr.Commands.Init;
 with Alr.Commands.List;
 with Alr.Commands.Pin;
---  with Alr.Commands.Reserved;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
@@ -209,7 +209,7 @@ package body Alr.Commands is
    begin
       New_Line;
       Put_Line ("Ada Library Repository manager");
-      Put_Line ("Usage : alr [global options] " &
+      Put_Line ("USAGE: alr [global options] " &
                   "command [command options] [arguments]");
 
       New_Line;
@@ -231,6 +231,12 @@ package body Alr.Commands is
       Canary1 : Command_Line_Configuration;
       Canary2 : Command_Line_Configuration;
    begin
+      New_Line;
+      Put_Line ("SUMMARY");
+      New_Line;
+      Put_Line (" " & Dispatch_Table (Cmd).Short_Description);
+
+      --  Prepare command-line summary
       Set_Usage (Config,
                  "[global options] " &
                    Image (Cmd) & " [command options] " &
@@ -249,8 +255,8 @@ package body Alr.Commands is
       if Get_Switches (Canary1) /= Get_Switches (Canary2) then
          --  Ugly hack that goes by GNAT
          Define_Switch (Config, " ");
-         Define_Switch (Config, "Options specific to " &
-                          Image (Cmd) & ":", "", "", "", "");
+         Define_Switch (Config, "Specific " & Image (Cmd) & " options:",
+                        "", "", "", "");
          Define_Switch (Config, " ");
 
          Dispatch_Table (Cmd).Setup_Switches (Config);
@@ -258,8 +264,17 @@ package body Alr.Commands is
 
       GNAT.Command_Line.Display_Help (Config);
 
-      Dispatch_Table (Cmd).Display_Help_Details;
+      --  Format and print the long command description
+      New_Line;
+      Put_Line ("DESCRIPTION");
+      New_Line;
 
+      for Line of Dispatch_Table (Cmd).Long_Description loop
+         AAA.Text_IO.Put_Paragraph (Line,
+                                    Line_Prefix => " ");
+         --  GNATCOLL.Paragraph_Filling seems buggy at the moment, otherwise
+         --  it would be the logical choice.
+      end loop;
       New_Line;
    end Display_Usage;
 
@@ -505,11 +520,55 @@ package body Alr.Commands is
    --  Once this procedure returns, the command, arguments and switches will
    --  be ready for use. Otherwise, appropriate help is shown and it does not
    --  return.
+
+      --------------------
+      -- Check_For_Help --
+      --------------------
+
+      procedure Check_For_Help is
+         use Ada.Command_Line;
+         Help_Requested  : Boolean := False;
+         First_Nonswitch : Integer := 0;
+         --  Used to store the first argument that doesn't start with '-';
+         --  that would be the command for which help is being asked.
+      begin
+         for I in 1 .. Argument_Count loop
+            declare
+               Arg : constant String := Ada.Command_Line.Argument (I);
+            begin
+               if Arg = "-h" or else Arg = "--help" then
+                  Help_Requested := True;
+               elsif First_Nonswitch = 0 and then  Arg (Arg'First) /= '-' then
+                  First_Nonswitch := I;
+               end if;
+            end;
+         end loop;
+
+         --  Show either general or specific help
+         if Help_Requested then
+            if First_Nonswitch > 0 then
+               Display_Usage (Ada.Command_Line.Argument (First_Nonswitch));
+               OS_Lib.Bailout (0);
+            else
+               null;
+               --  Nothing to do; later on GNAT switch processing will catch
+               --  the -h/--help and display the general help.
+            end if;
+         end if;
+      end Check_For_Help;
+
       use all type GNAT.OS_Lib.String_Access;
 
       Global_Config  : Command_Line_Configuration;
       Command_Config : Command_Line_Configuration;
    begin
+      --  GNAT switch handling intercepts -h/--help. To have the same output
+      --  for 'alr -h command' and 'alr help command', we do manual handling
+      --  first in search of a -h/--help:
+      Check_For_Help;
+
+      --  If the above call returned, we continue with regular switch handling.
+
       Set_Usage (Global_Config,
                  "[global options] <command> [command options] [arguments]",
                  Help => " ");
@@ -650,20 +709,20 @@ package body Alr.Commands is
          OS_Lib.Bailout (1);
    end Execute_By_Name;
 
-   --------------------------------
-   -- Print_Project_Version_Sets --
-   --------------------------------
+   --------------------------
+   -- Project_Version_Sets --
+   --------------------------
 
-   procedure Print_Project_Version_Sets is
+   function Project_Version_Sets return Alire.Utils.String_Vector is
    begin
-      Put_Line (" Project selection syntax (policy applies " &
-                  "within the allowed version subsets)");
-      New_Line;
-      Put_Line (" project        " & ASCII.HT &
-                  "Newest/oldest version (according to policy)");
-      Put_Line (" project=version" & ASCII.HT & "Exact version");
-      Put_Line (" project^version" & ASCII.HT & "Major-compatible version");
-      Put_Line (" project~version" & ASCII.HT & "Minor-compatible version");
-   end Print_Project_Version_Sets;
+      return Alire.Utils.Empty_Vector
+        .Append ("Version selection syntax (global policy applies "
+                 & "within the allowed version subsets):")
+        .New_Line
+        .Append ("crate        " & ASCII.HT & "Newest/oldest version")
+        .Append ("crate=version" & ASCII.HT & "Exact version")
+        .Append ("crate^version" & ASCII.HT & "Major-compatible version")
+        .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
+   end Project_Version_Sets;
 
 end Alr.Commands;

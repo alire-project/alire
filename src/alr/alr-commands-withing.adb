@@ -256,17 +256,6 @@ package body Alr.Commands.Withing is
       Root.Current.Release.Dependencies (Platform.Properties).Print;
    end List;
 
-   --------------------------
-   -- Display_Help_Details --
-   --------------------------
-
-   overriding procedure Display_Help_Details (Cmd : Command) is
-      pragma Unreferenced (Cmd);
-   begin
-      New_Line;
-      Print_Project_Version_Sets;
-   end Display_Help_Details;
-
    -------------
    -- Execute --
    -------------
@@ -312,6 +301,42 @@ package body Alr.Commands.Withing is
          Reportaise_Command_Failed
            ("Could not locate package containing releases of " & Argument (1));
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector
+   is (Alire.Utils.Empty_Vector
+       .Append ("Manages dependencies of the current crate or sandbox.")
+       .New_Line
+       .Append ("* From the command line:")
+       .Append ("Dependencies are added by giving their name, and removed"
+                & " by using the --del flag. Dependencies cannot be"
+                & " simultaneously added and removed in a single invocation.")
+       .New_Line
+       .Append ("* From a GPR file:")
+       .Append ("The project file given with --from will be scanned looking"
+                & " for comments that contain the sequence 'alr with'. "
+                & " These will be processed individually as if they had been"
+                & " given in the command line, starting with no dependencies."
+                & " That is, only dependencies given in the GPR file will be"
+                & " preserved.")
+       .New_Line
+       .Append ("Example of GPR file contents:")
+       .New_Line
+       .Append ("with ""libhello""; -- alr with libhello")
+       .New_Line
+       .Append ("* Caveat:")
+       .Append ("Since alr does not modify user files, any dependencies"
+                & " managed through this command only directly affect"
+                & " the metadata files of alr itself. In order to use the"
+                & " dependencies in Ada code, the user *must* add the needed"
+                & " 'with'ed project files in their own GPR files.")
+       .New_Line
+       .Append (Project_Version_Sets));
 
    --------------------
    -- Setup_Switches --

@@ -5,10 +5,11 @@ package Alr.Commands.Index is
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Display_Help_Details (Cmd : Command) is null;
+   procedure Execute (Cmd : in out Command);
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
 
    overriding
    procedure Setup_Switches
@@ -21,7 +22,8 @@ package Alr.Commands.Index is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("--add <url> --name <name> [--before <name>] | --del <name> | --list");
+     ("--add <url> --name <name> [--before <name>] | --del <name> | --list"
+      & " | --update-all");
 
 private
 

@@ -39,6 +39,21 @@ package body Alr.Commands.Clean is
       end if;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("no options:")
+      .Append ("   gprclean -r will be called to clean up the"
+               & " build environment.")
+      .New_Line
+      .Append ("--cache:")
+      .Append ("   All downloaded dependencies will be deleted."));
+
    --------------------
    -- Setup_Switches --
    --------------------

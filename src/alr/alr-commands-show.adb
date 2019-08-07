@@ -31,17 +31,6 @@ package body Alr.Commands.Show is
                         (Alire.Index.Find (Prj, Ver).Origin).Already_Installed;
    end Libgraph_Easy_Perl_Installed;
 
-   --------------------------
-   -- Display_Help_Details --
-   --------------------------
-
-   overriding procedure Display_Help_Details (Cmd : Command) is
-      pragma Unreferenced (Cmd);
-   begin
-      Ada.Text_IO.New_Line;
-      Print_Project_Version_Sets;
-   end Display_Help_Details;
-
    ------------
    -- Report --
    ------------
@@ -161,6 +150,22 @@ package body Alr.Commands.Show is
                           "] does not exist in the catalog.");
       end;
    end Execute;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector
+   is (Alire.Utils.Empty_Vector
+       .Append ("Shows information found in the loaded indexes about a"
+                & " specific release (see below to narrow the searched"
+                & " milestones). By default, only direct dependencies are"
+                & " reported. With --solve, a full solution is resolved and"
+                & " reported in list and graph form.")
+       .New_Line
+       .Append (Project_Version_Sets));
 
    --------------------
    -- Setup_Switches --

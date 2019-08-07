@@ -8,6 +8,10 @@ package Alr.Commands.Run is
    procedure Execute (Cmd : in out Command);
 
    overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
+
+   overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
@@ -18,7 +22,7 @@ package Alr.Commands.Run is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[executable]");
+   is ("[executable] [--args=ARGS] [--skip-compile] | [--list]");
 
 private
 

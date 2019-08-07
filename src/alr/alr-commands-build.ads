@@ -4,6 +4,10 @@ package Alr.Commands.Build is
 
    overriding procedure Execute (Cmd : in out Command);
 
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector;
+
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration);

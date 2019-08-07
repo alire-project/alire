@@ -164,6 +164,23 @@ package body Alr.Commands.Run is
       end;
    end Execute;
 
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   overriding
+   function Long_Description (Cmd : Command)
+                              return Alire.Utils.String_Vector is
+     (Alire.Utils.Empty_Vector
+      .Append ("Compiles the crate (unless --skip-compile is specified)"
+               & " and then executes the default or given resulting"
+               & " executable. ")
+      .New_Line
+      .Append ("With --list, a list of declared executables is produced"
+               & " instead of invoking the compiler, and"
+               & " its location (if already built) is given.")
+     );
+
    --------------------
    -- Setup_Switches --
    --------------------
