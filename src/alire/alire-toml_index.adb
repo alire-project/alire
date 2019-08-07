@@ -259,7 +259,7 @@ package body Alire.TOML_Index is
         TOML.File_IO.Load_File (Filename);
    begin
       if TOML_Result.Success then
-         Result := (Success => True);
+         Result := Outcome_Success;
          return TOML_Result.Value;
       else
          Set_Error (Result, Filename, TOML.Format_Error (TOML_Result));
@@ -397,7 +397,7 @@ package body Alire.TOML_Index is
             Message => +("Too many releases in " & Filename &
                          ":" & Releases.Length'Img));
       else
-         Result := (Success => True);
+         Result := Outcome_Success;
          Release.Replace_Element (Releases.First_Element);
          --  Override project description with the one in the parsed file
          Projects.Descriptions.Include (Release.Element.Project,
@@ -1535,7 +1535,7 @@ package body Alire.TOML_Index is
       Tmp     : TOML.TOML_Value;
       Version : Semantic_Versioning.Version;
    begin
-      Result := (Success => True);
+      Result := Outcome_Success;
 
       Pkg.Name := +Package_Name;
 
@@ -1912,7 +1912,7 @@ package body Alire.TOML_Index is
          end;
       end loop;
 
-      Result := (Success => True);
+      Result := Outcome_Success;
 
    exception
       when Evaluation_Error =>

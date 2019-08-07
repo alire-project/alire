@@ -116,21 +116,25 @@ package Alire with Preelaborate is
    --  Outcomes  --
    ----------------
 
+   type Outcome is tagged private;
    --  For operations that may fail as part of normal usage.
 
-   type Outcome (Success : Boolean := True) is record
-      case Success is
-         when True  => null;
-         when False => Message : Ada.Strings.Unbounded.Unbounded_String;
-      end case;
-   end record;
+   --  Status  --
 
-   function Message (Result : Outcome) return String is (+Result.Message);
+   function Message (Result : Outcome) return String with
+     Pre => not Result.Success;
+   --  Returns some information in case of unsuccessful Outcome
 
-   function Outcome_Failure (Message : String) return Outcome is
-      (Success => False, Message => +Message);
+   function Success (Result : Outcome) return Boolean;
 
-   function Outcome_Success return Outcome is (Success => True);
+   --  Constructors  --
+
+   function Outcome_Failure (Message : String) return Outcome with
+     Pre  => Message'Length > 0,
+     Post => not Outcome_Failure'Result.Success;
+
+   function Outcome_Success return Outcome with
+     Post => Outcome_Success'Result.Success;
 
    function Outcome_From_Exception
      (Ex  : Ada.Exceptions.Exception_Occurrence;
@@ -164,5 +168,27 @@ package Alire with Preelaborate is
 
    procedure Log_Exception (E     : Ada.Exceptions.Exception_Occurrence;
                             Level : Simple_Logging.Levels := Debug);
+
+private
+
+   type Outcome is tagged record
+      Success : Boolean := False;
+      Message : Ada.Strings.Unbounded.Unbounded_String :=
+                  +"Uninitialized Outcome";
+   end record;
+   --  We cannot simultaneously be tagged and have default constraints; the
+   --  small overhead of always having the Message member is the price to pay.
+
+   function Message (Result : Outcome) return String is (+Result.Message);
+
+   function Outcome_Failure (Message : String) return Outcome is
+     (Success => False,
+      Message => +Message);
+
+   function Outcome_Success return Outcome is
+     (Success => True,
+      Message => +"");
+
+   function Success (Result : Outcome) return Boolean is (Result.Success);
 
 end Alire;

@@ -87,7 +87,7 @@ package body Alire.Index_On_Disk is
             Trace.Detail ("Loading index found at " &
                             Repo_Version_Files.First_Element);
 
-            return Result : Outcome do
+            return Result : Outcome := Outcome_Success do
                TOML_Index.Load_Catalog
                  (Catalog_Dir => Ada.Directories.Containing_Directory
                                    (Repo_Version_Files.First_Element),

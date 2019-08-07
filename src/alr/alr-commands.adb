@@ -399,7 +399,7 @@ package body Alr.Commands is
          begin
             if not Outcome.Success then
                Reportaise_Command_Failed
-                 ("Could not add community index: " & (+Outcome.Message));
+                 ("Could not add community index: " & Outcome.Message);
                return;
             end if;
          end;
@@ -414,7 +414,7 @@ package body Alr.Commands is
             From     => Alire.Config.Indexes_Directory);
       begin
          if not Outcome.Success then
-            Reportaise_Command_Failed (+Outcome.Message);
+            Reportaise_Command_Failed (Outcome.Message);
          end if;
       end;
    end Requires_Full_Index;
