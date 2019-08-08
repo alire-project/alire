@@ -30,6 +30,10 @@ package body Alr.Commands.Dev is
          Custom;
       end if;
 
+      if Cmd.Filtering then
+         Trace.Debug ("In dev --filter");
+      end if;
+
       if Cmd.Raise_Except then
          raise Program_Error with "Raising forcibly";
       end if;
@@ -64,6 +68,11 @@ package body Alr.Commands.Dev is
                      Cmd.Custom'Access,
                      "", "--custom",
                      "Execute current custom code");
+
+      Define_Switch (Config,
+                     Cmd.Filtering'Access,
+                     "", "--filter",
+                     "Used by scope filtering test");
 
       Define_Switch (Config,
                      Cmd.Raise_Except'Access,
