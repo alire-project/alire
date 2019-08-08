@@ -7,10 +7,19 @@ package Alire_Early_Elaboration with Elaborate_Body is
 
    --  Not directly a child of Alire to avoid circularity
 
-   Switch_D,
+   --  Logging in alire works in two separate channels:
+   --  The -q, (none), -v and -vv switches allow to select one of the normal
+   --  verbosity levels: quiet, normal, verbose, detail.
+   --  OTOH, the -d/--debug switch enables logging of all unexpected exceptions
+   --  to stderr independently of the verbosity level.
+
+   Switch_D  : aliased Boolean := False;
+   --  For the debugging channel.
+
    Switch_Q,
-   Switch_V : aliased Boolean := False;
-   --  Verbosity switches detected during early elaboration
+   Switch_V,
+   Switch_VV : aliased Boolean := False;
+   --  For the verbosity level.
 
    Start : constant Ada.Calendar.Time := Ada.Calendar.Clock;
    --  Out of curiosity

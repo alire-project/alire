@@ -162,9 +162,10 @@ package Alire with Preelaborate is
    package Trace renames Simple_Logging;
 
    Log_Level : Simple_Logging.Levels renames Simple_Logging.Level;
+   --  This one selects the verbosity level of the logging library.
 
-   procedure Log (S : String; Level : Simple_Logging.Levels := Info)
-                  renames Simple_Logging.Log;
+   Log_Debug : aliased Boolean := False;
+   --  This one enables special debug output, irrespectively of the log level.
 
    procedure Log_Exception (E     : Ada.Exceptions.Exception_Occurrence;
                             Level : Simple_Logging.Levels := Debug);

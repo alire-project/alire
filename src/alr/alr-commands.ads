@@ -104,12 +104,6 @@ package Alr.Commands is
    --  command-line helpers --
    ---------------------------
 
-   function Global_Switches return String;
-   --  This is exported only to be reachable from Spawn, but there's no reason
-   --  to use it from commands.
-   --  Returns the in use global switches (-d -q -v).
-   --  Useful e.g. to pass along on respawning a custom command.
-
    function Is_Quiet return Boolean;
    --  Says if -q was in the command line
 
