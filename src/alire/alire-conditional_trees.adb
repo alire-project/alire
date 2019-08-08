@@ -14,6 +14,16 @@ package body Alire.Conditional_Trees is
                       This  : Inner_Node'Class;    -- The next node to flatten
                       Conj  : Conjunctions);       -- To prevent mixing
 
+   -------------
+   -- To_YAML --
+   -------------
+
+   overriding
+   function To_YAML (This : Tree) return String
+   is (if This.Is_Empty
+       then ""
+       else This.Constant_Reference.To_YAML);
+
    ----------
    -- Kind --
    ----------
@@ -23,21 +33,36 @@ package body Alire.Conditional_Trees is
       return This.Constant_Reference.Kind;
    end Kind;
 
-   overriding function Image (V : Value_Inner) return String is
+   overriding
+   function Image (V : Value_Inner) return String is
      (Image (V.Value.Constant_Reference));
+
+   overriding
+   function To_YAML (V : Value_Inner) return String is
+     (V.Value.Constant_Reference.To_YAML);
 
    function Conjunction (This : Vector_Inner) return Conjunctions is
      (This.Conjunction);
 
-   overriding function Image (V : Vector_Inner) return String is
+   overriding
+   function Image (V : Vector_Inner) return String is
      ("(" & (if V.Conjunction = Anded
              then Non_Primitive.One_Liner_And (V.Values)
              else Non_Primitive.One_Liner_Or (V.Values)) & ")");
 
-   overriding function Image (V : Conditional_Inner) return String is
+   overriding
+   function To_YAML (V : Vector_Inner) return String is
+     (Non_Primitive.To_YAML (V.Values));
+
+   overriding
+   function Image (V : Conditional_Inner) return String is
      ("if " & V.Condition.Image &
         " then " & V.Then_Value.Image_One_Line &
         " else " & V.Else_Value.Image_One_Line);
+
+   overriding
+   function To_YAML (V : Conditional_Inner) return String is
+     (raise Program_Error with "TODO YAML output to be defined");
 
    --------------------
    -- As_Conditional --

@@ -1,6 +1,7 @@
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Roots;
+with Alire.Utils;
 
 with Alr.Dependency_Graphs;
 with Alr.Parsers;
@@ -8,6 +9,7 @@ with Alr.Platform;
 with Alr.Root;
 
 with Semantic_Versioning;
+with Alire.Projects;
 
 package body Alr.Commands.Show is
 
@@ -104,6 +106,33 @@ package body Alr.Commands.Show is
          Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
    end Report;
 
+   -------------------
+   -- Report_Jekyll --
+   -------------------
+
+   procedure Report_Jekyll (Name     : Alire.Project;
+                            Versions : Semver.Version_Set;
+                            Current  : Boolean)
+   is
+   begin
+      declare
+         Rel : constant Types.Release  :=
+           (if Current
+            then Root.Current.Release
+            else Query.Find (Name, Versions, Query_Policy));
+      begin
+         Put_Line ("---");
+         Put_Line ("layout: crate");
+         Put_Line (Rel.To_YAML);
+         Put_Line ("---");
+         Put_Line (Alire.Projects.Descriptions (Rel.Project));
+         Put_Line (Rel.Notes);
+      end;
+   exception
+      when Alire.Query_Unsuccessful =>
+         Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
+   end Report_Jekyll;
+
    -------------
    -- Execute --
    -------------
@@ -140,10 +169,16 @@ package body Alr.Commands.Show is
               (Root.Current.Release.Milestone.Image));
       begin
          --  Execute
-         Report (Allowed.Project,
-                 Allowed.Versions,
-                 Num_Arguments = 0,
-                 Cmd);
+         if Cmd.Jekyll then
+            Report_Jekyll (Allowed.Project,
+                           Allowed.Versions,
+                           Num_Arguments = 0);
+         else
+            Report (Allowed.Project,
+                    Allowed.Versions,
+                    Num_Arguments = 0,
+                    Cmd);
+         end if;
       exception
          when Alire.Query_Unsuccessful =>
             Trace.Info ("Project [" & Argument (1) &
@@ -188,6 +223,10 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Solve'Access,
                      "", "--solve", "Solve dependencies and report");
+
+      Define_Switch (Config,
+                     Cmd.Jekyll'Access,
+                     "", "--jekyll", "Enable Jekyll output format");
    end Setup_Switches;
 
 end Alr.Commands.Show;

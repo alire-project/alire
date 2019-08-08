@@ -16,6 +16,22 @@ package body Alire.Properties is
       return Result;
    end Filter;
 
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter (V : Vector; Key : String) return Vector is
+      Result : Vector := No_Properties;
+   begin
+      for Prop of V loop
+         if Prop.Key = Key then
+            Result.Append (Prop);
+         end if;
+      end loop;
+
+      return Result;
+   end Filter;
+
    -------------
    -- To_TOML --
    -------------

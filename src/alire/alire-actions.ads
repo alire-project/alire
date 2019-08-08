@@ -54,8 +54,15 @@ private
       Working_Folder        : Platform_Independent_Path (1 .. Folder_Len);
    end record;
 
-   overriding function Image (This : Run) return String is
-     (Utils.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
+   overriding
+   function Image (This : Run) return String
+   is (Utils.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
+        (if This.Working_Folder /= "" then "/" else "") &
+        This.Working_Folder & "/" & This.Relative_Command_Line);
+
+   overriding
+   function To_YAML (This : Run) return String
+   is (Utils.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
         (if This.Working_Folder /= "" then "/" else "") &
         This.Working_Folder & "/" & This.Relative_Command_Line);
 

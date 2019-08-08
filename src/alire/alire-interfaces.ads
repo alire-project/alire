@@ -1,4 +1,4 @@
-with Alire.Utils;
+limited with Alire.Utils;
 
 with TOML;
 
@@ -38,5 +38,14 @@ package Alire.Interfaces with Preelaborate is
    --  This can be recursive (trees, arrays...)
 
    function To_TOML (This : Tomifiable) return TOML.TOML_Value is abstract;
+
+   --------------
+   -- Yamlable --
+   --------------
+
+   type Yamlable is limited interface;
+
+   function To_YAML (This : Yamlable) return String is abstract;
+   --  Return a YAML text repsentation of the object
 
 end Alire.Interfaces;
