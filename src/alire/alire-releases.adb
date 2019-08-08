@@ -19,7 +19,7 @@ package body Alire.Releases is
    function All_Properties (R : Release;
                             P : Alire.Properties.Vector)
                             return Alire.Properties.Vector
-   is (Materialize (R.Properties and R.Priv_Props, P));
+   is (Materialize (R.Properties, P));
 
    ------------------------
    -- Default_Properties --
@@ -43,9 +43,6 @@ package body Alire.Releases is
       Properties         : Conditional.Properties   :=
         Conditional.For_Properties.Empty;
 
-      Private_Properties : Conditional.Properties   :=
-        Conditional.For_Properties.Empty;
-
       Available          : Alire.Requisites.Tree    :=
         Requisites.Trees.Empty_Tree
      )
@@ -58,7 +55,6 @@ package body Alire.Releases is
       return Extended : Release := Base do
          Extended.Dependencies := Base.Dependencies and Dependencies;
          Extended.Properties   := Base.Properties   and Properties;
-         Extended.Priv_Props   := Base.Priv_Props   and Private_Properties;
          Extended.Available    := Base.Available    and Available;
       end return;
    end Extending;
@@ -153,7 +149,6 @@ package body Alire.Releases is
          Dependencies => Base.Dependencies,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
-         Priv_Props   => Base.Priv_Props,
          Available    => Base.Available)
       do
          null;
@@ -209,7 +204,6 @@ package body Alire.Releases is
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
-      Priv_Props   => Private_Properties,
       Available    => Available);
 
    -------------------------
@@ -236,7 +230,6 @@ package body Alire.Releases is
       Properties   => (if Properties = Conditional.For_Properties.Empty
                        then Default_Properties
                        else Properties),
-      Priv_Props   => Conditional.For_Properties.Empty,
       Available    => Requisites.Booleans.Always_True);
 
    ----------------------------
@@ -252,9 +245,7 @@ package body Alire.Releases is
       use Ada.Tags;
    begin
       if Descendant_Of = No_Tag then
-         return Materialize (R.Properties, P)
-                  and
-                Materialize (R.Priv_Props, P);
+         return Materialize (R.Properties, P);
       else
          declare
             Props : constant Alire.Properties.Vector :=
@@ -394,7 +385,7 @@ package body Alire.Releases is
    -- Print --
    -----------
 
-   procedure Print (R : Release; Private_Too : Boolean := False) is
+   procedure Print (R : Release) is
       use GNAT.IO;
    begin
       --  MILESTONE
@@ -440,12 +431,6 @@ package body Alire.Releases is
          R.Properties.Print ("   ", False);
       end if;
 
-      --  PRIVATE PROPERTIES
-      if Private_Too and then not R.Properties.Is_Empty then
-         Put_Line ("Private properties:");
-         R.Priv_Props.Print ("   ", False);
-      end if;
-
       --  DEPENDENCIES
       if not R.Dependencies.Is_Empty then
          Put_Line ("Dependencies (direct):");
@@ -462,7 +447,7 @@ package body Alire.Releases is
 
       Search : constant String := To_Lower_Case (Str);
    begin
-      for P of Enumerate (R.Properties and R.Priv_Props) loop
+      for P of Enumerate (R.Properties) loop
          declare
             Text : constant String :=
                      To_Lower_Case
@@ -634,7 +619,6 @@ package body Alire.Releases is
          Dependencies => R.Dependencies.Evaluate (P),
          Forbidden    => R.Forbidden.Evaluate (P),
          Properties   => R.Properties.Evaluate (P),
-         Priv_Props   => R.Priv_Props.Evaluate (P),
          Available    => (if R.Available.Check (P)
                           then Requisites.Booleans.Always_True
                           else Requisites.Booleans.Always_False))
