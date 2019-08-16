@@ -194,14 +194,14 @@ package body Alr.Commands.Index is
         (Config      => Config,
          Output      => Cmd.Bfr'Access,
          Long_Switch => "--before=",
-         Argument    => "ID",
+         Argument    => "NAME",
          Help        => "Priority order (defaults to last)");
 
       GNAT.Command_Line.Define_Switch
         (Config      => Config,
          Output      => Cmd.Del'Access,
          Long_Switch => "--del=",
-         Argument    => "ID",
+         Argument    => "NAME",
          Help        => "Remove an index");
 
       GNAT.Command_Line.Define_Switch
