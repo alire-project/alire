@@ -232,21 +232,18 @@ package body Alr.Query is
          return True;
       end if;
 
-      case Deps.Kind is
-         when Value =>
-            return Check_Value;
-
-         when Vector =>
-            if Deps.Conjunction = Anded then
-               return Check_And_Vector;
-            else
-               return Check_Or_Vector;
-            end if;
-
-         when Condition =>
-            raise Program_Error
+      if Deps.Is_Value then
+         return Check_Value;
+      elsif Deps.Is_Vector then
+         if Deps.Conjunction = Anded then
+            return Check_And_Vector;
+         else
+            return Check_Or_Vector;
+         end if;
+      else
+         raise Program_Error
               with "Requisites should be already evaluated at this point";
-      end case;
+      end if;
    end Is_Complete;
 
    -------------
@@ -445,21 +442,18 @@ package body Alr.Query is
             end if;
          end if;
 
-         case Current.Kind is
-            when Value =>
-               Expand_Value (Current.Value);
-
-            when Vector =>
-               if Current.Conjunction = Anded then
-                  Expand_And_Vector;
-               else
-                  Expand_Or_Vector;
-               end if;
-
-            when Condition =>
-               raise Program_Error
-                 with "Requisites should be evaluated prior to Resolve";
-         end case;
+         if Current.Is_Value then
+            Expand_Value (Current.Value);
+         elsif Current.Is_Vector then
+            if Current.Conjunction = Anded then
+               Expand_And_Vector;
+            else
+               Expand_Or_Vector;
+            end if;
+         else
+            raise Program_Error
+              with "Requisites should be evaluated prior to Resolve";
+         end if;
       end Expand;
 
    begin
