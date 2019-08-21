@@ -49,8 +49,6 @@ package body Alr.Commands.Show is
                       then Root.Current.Release
                       else Query.Find (Name, Versions, Query_Policy));
       begin
-         New_Line;
-
          if Cmd.Native then
             Rel.Whenever (Platform.Properties).Print;
          else
