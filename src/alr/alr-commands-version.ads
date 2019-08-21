@@ -34,7 +34,6 @@ private
        (To_Mixed_Case (Platform.Operating_System'Img) & " " &
         To_Mixed_Case (Platform.Word_Size'Img) & " " &
         To_Mixed_Case (Platform.Distribution'Img) & " " &
-        To_Mixed_Case (Platform.Distro_Version'Img) & " " &
         To_Mixed_Case (Platform.Compiler'Img));
 
 end Alr.Commands.Version;

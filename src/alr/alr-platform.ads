@@ -34,8 +34,6 @@ package Alr.Platform is
 
    function Distribution return Alire.Platforms.Distributions;
 
-   function Distro_Version return Alire.Platforms.Versions;
-
    function Operating_System return Alire.Platforms.Operating_Systems;
 
    function Own_Executable   return String;
@@ -71,13 +69,6 @@ private
 
    function Distribution return Alire.Platforms.Distributions
    is (Get.Distribution);
-
-   --------------------
-   -- Distro_Version --
-   --------------------
-
-   function Distro_Version return Alire.Platforms.Versions
-   is (Get.Distro_Version);
 
    ----------------------
    -- Operating_System --

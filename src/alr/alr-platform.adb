@@ -39,7 +39,6 @@ package body Alr.Platform is
          Platprop.Distribution_Is (Distribution) and
          Platprop.System_Is (Operating_System) and
          Platprop.Target_Is (Target) and
-         Platprop.Version_Is (Distro_Version) and
          Platprop.Word_Size_Is (Word_Size));
 
    --------------
