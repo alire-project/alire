@@ -4,7 +4,7 @@ with Ada.Iterator_Interfaces;
 with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Requisites;
-with Alire.Utils;
+with Alire.Utils.YAML;
 
 private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Vectors;
@@ -247,7 +247,7 @@ private
          " or ",
          "(empty condition)");
 
-      function To_YAML is new Utils.To_YAML
+      function To_YAML is new Utils.YAML.To_YAML
         (Inner_Node'Class,
          Vectors,
          Vectors.Vector);
