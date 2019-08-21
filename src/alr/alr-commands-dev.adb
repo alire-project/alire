@@ -1,15 +1,6 @@
-pragma Warnings (Off);
-
 with Ada.Command_Line;
 
-with Alr.Bootstrap;
-with Alr.Code;
-with Alr.Parsers;
-with Alr.Platform;
 with Alr.Selftest;
-with Alr.Spawn;
-
-pragma Warnings (On);
 
 package body Alr.Commands.Dev is
 
@@ -19,7 +10,7 @@ package body Alr.Commands.Dev is
 
    procedure Custom is
    begin
-      Trace.Always (+Parsers.Project_Versions ("abcd=1.0").Project);
+      null;
    end Custom;
 
    -------------
