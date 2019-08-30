@@ -27,6 +27,13 @@ package body Alire.TOML_Index is
    package Exc renames Ada.Exceptions;
    package TIO renames Ada.Text_IO;
 
+   function Crate_Name (Filename : String) return Project is
+     (+(Utils.Replace
+        (Text  => Filename,
+         Match => String'(1 .. 1 => Child_File_Separator),
+         Subst => String'(1 .. 1 => Child_Separator))));
+   --  Convert "crate-child" (on disk) to "crate.child" (in catalog)
+
    procedure Set_Error
      (Result            : out Load_Result;
       Filename, Message : String;
@@ -68,7 +75,7 @@ package body Alire.TOML_Index is
    --  Suffix for the name of package description files
 
    subtype Package_Name_Character is Project_Character
-      with Static_Predicate => Package_Name_Character /= Extension_Separator;
+      with Static_Predicate => Package_Name_Character /= Child_Separator;
 
    ---------------
    -- Set_Error --
@@ -332,7 +339,8 @@ package body Alire.TOML_Index is
 
       declare
          Crate  : Projects.With_Releases.Crate :=
-                    Projects.With_Releases.New_Crate (+Package_Name);
+                    Projects.With_Releases.New_Crate
+                      (Crate_Name (Package_Name));
       begin
          Result := Crate.From_TOML (TOML_Adapters.From
                                     (Value,
@@ -350,8 +358,8 @@ package body Alire.TOML_Index is
 
    function Load_Release_From_File (Filename : String) return Releases.Release
    is
-      Name : constant String :=
-               Dirs.Base_Name (Dirs.Simple_Name (Filename));
+      Name : constant Alire.Project :=
+               Crate_Name (Dirs.Base_Name (Dirs.Simple_Name (Filename)));
       --  This file is requested by Alire so we don't need to check that it's a
       --  proper TOML name.
 
@@ -367,7 +375,7 @@ package body Alire.TOML_Index is
       --  Parse the TOML structure
       declare
          Crate  : Projects.With_Releases.Crate :=
-                    Projects.With_Releases.New_Crate (+Name);
+                    Projects.With_Releases.New_Crate (Name);
          Result : constant Load_Result :=
                     Crate.From_TOML
                       (TOML_Adapters.From

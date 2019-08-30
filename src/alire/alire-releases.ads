@@ -308,7 +308,7 @@ private
    is (R.Project);
 
    function Project_Base (R : Release) return String
-   is (Utils.Head (+R.Project, Extension_Separator));
+   is (Utils.Head (+R.Project, Child_Separator));
 
    function Provides (R : Release) return Alire.Project
    is (if UStrings.Length (R.Alias) = 0
@@ -364,7 +364,7 @@ private
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String
-   is (Utils.Head (+R.Project, Extension_Separator) & "_" &
+   is (Utils.Head (+R.Project, Child_Separator) & "_" &
          Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is

@@ -42,8 +42,12 @@ package Alire with Preelaborate is
    --  package BStrings is new Ada.Strings.Bounded.Generic_Bounded_Length
    --       (Integer'Max (Max_Name_Length, Max_Description_Length));
 
-   Extension_Separator    : constant Character := '.';
-   --  Refers to extension releases! Nothing to do with files
+   Child_Separator    : constant Character := '.';
+   --  Character used to denote child crates: adayaml.server
+
+   Child_File_Separator   : constant Character := '-';
+   --  In the filesystem, children are expressed like Ada child packages:
+   --  adayaml-server.toml
 
    --  Strings that are used quite generally
 
@@ -58,13 +62,13 @@ package Alire with Preelaborate is
 
    subtype Project_Character is Character
       with Static_Predicate => Project_Character in
-         'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Extension_Separator;
+         'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Child_Separator;
 
    type Project is new String with Dynamic_Predicate =>
      Project'Length >= Min_Name_Length and then
      Project (Project'First) /= '_' and then
-     Project (Project'First) /= Extension_Separator and then
-     Project (Project'Last) /= Extension_Separator and then
+     Project (Project'First) /= Child_Separator and then
+     Project (Project'Last) /= Child_Separator and then
      (for all C of Project => C in Project_Character);
 
    subtype Restricted_Name is String with Dynamic_Predicate =>
@@ -85,8 +89,9 @@ package Alire with Preelaborate is
        Dynamic_Predicate =>
          Folder_String'Length > 0 and then
          (for all C of Folder_String => C in
-          'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Extension_Separator);
+          'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Child_File_Separator);
    --  Used for cross-platform folder names
+   --  Typically, crate folders are "crate_ver.si.on_hash
 
    subtype Platform_Independent_Path is String
      with
