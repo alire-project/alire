@@ -1,0 +1,10 @@
+[general]
+description = "A child of parent package"
+licenses = ["MIT"]
+authors = ["Alejandro R. Mosteo"]
+maintainers = ["alejandro@mosteo.com"]
+
+project-files = ["parent-child.gpr"]
+
+['1']
+origin = "file://../../crates/parent_1.0.0"

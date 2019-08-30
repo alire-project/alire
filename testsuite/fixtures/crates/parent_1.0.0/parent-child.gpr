@@ -1,0 +1,10 @@
+with "parent";
+
+project Parent.Child is
+
+   for Library_Name use "Parent_Child";
+   for Library_Version use "0.0.0";
+
+  for Source_Dirs use ("src/child");
+
+end Parent.Child;

@@ -1,0 +1,8 @@
+project Parent is
+
+   for Library_Name use "Parent";
+   for Library_Version use "0.0.0";
+
+  for Source_Dirs use ("src");
+
+end Parent;
