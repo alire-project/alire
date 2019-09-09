@@ -36,6 +36,7 @@ with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
 
+with GNAT.Command_Line.Extra;
 with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;
@@ -605,8 +606,13 @@ package body Alr.Commands is
          --  Specific to command
          Dispatch_Table (Cmd).Setup_Switches (Command_Config);
 
-         --  Validate command + global configuration:
+         --  Ensure Command has not set a switch that is already global:
+         if not GNAT.Command_Line.Extra.Verify_No_Duplicates (Command_Config)
+         then
+            raise Program_Error with "Duplicate switch definition detected";
+         end if;
 
+         --  Validate combined command + global configuration:
          Fill_For_Real := True;
 
          Initialize_Option_Scan;

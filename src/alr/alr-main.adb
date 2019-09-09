@@ -25,6 +25,7 @@ exception
    --  Ensure we do not show an exception trace to unsuspecting users
    when E : others =>
       Alire.Log_Exception (E);
-      Trace.Error ("alr encountered an unexpected error");
+      Trace.Error ("alr encountered an unexpected error,"
+                   & " re-run with -d for details.");
       OS_Lib.Bailout (1);
 end Alr.Main;
