@@ -37,9 +37,6 @@ package Alr.Platforms is
                           return Alire.Platforms.Distributions
    is abstract;
 
-   function Distro_Version (This : Supported) return Alire.Platforms.Versions
-   is abstract;
-
    function Operating_System (This : Supported)
                               return Alire.Platforms.Operating_Systems
    is abstract;
