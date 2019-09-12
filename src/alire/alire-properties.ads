@@ -43,7 +43,9 @@ package Alire.Properties with Preelaborate is
    is new Ada.Containers.Indefinite_Vectors (Positive, Property'Class);
 
    type Vector
-   is new Vectors.Vector and Interfaces.Tomifiable with null record;
+   is new Vectors.Vector
+      and Interfaces.Tomifiable
+   with null record;
    --  New type so using all it sees "and" below
 
    No_Properties : constant Vector;
@@ -54,6 +56,7 @@ package Alire.Properties with Preelaborate is
 --     function "and" (L : Vector; R : Property'Class) return Vector;
    function "and" (L, R : Vector) return Vector;
    function "+" (P : Property'Class) return Vector;
+   function To_Vector (P : Property'Class) return Vector renames "+";
 
    function Filter (V : Vector; Ancestor : Ada.Tags.Tag) return Vector;
    --  Filter properties by ancestor class
