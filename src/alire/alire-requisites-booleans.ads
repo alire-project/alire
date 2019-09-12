@@ -1,3 +1,5 @@
+with Alire.TOML_Adapters;
+
 with TOML;
 
 package Alire.Requisites.Booleans with Preelaborate is
@@ -9,6 +11,9 @@ package Alire.Requisites.Booleans with Preelaborate is
    function Always_False return Tree;
 
    function New_Requisite (Bool : Boolean) return Tree;
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Tree;
 
 private
 
