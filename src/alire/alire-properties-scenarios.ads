@@ -1,4 +1,6 @@
+with Alire.Conditional;
 with Alire.GPR;
+with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 
 private with Ada.Containers.Indefinite_Holders;
@@ -19,6 +21,15 @@ package Alire.Properties.Scenarios with Preelaborate is
 
    overriding
    function Key (V : Property) return String;
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Conditional.Properties;
+   --  Recognizes GPR_Scenario and GPR_Set_Scenario properties.
+
+   function From_TOML_Cases (From : TOML_Adapters.Key_Queue)
+                             return Conditional.Properties;
+   --  Only accepts GPR_Set_Scenario properties, which can appear on dynamic
+   --  expressions. GPR_Scenario are required to be static in the index.
 
 private
 
