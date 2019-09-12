@@ -11,9 +11,10 @@ with Alire.Properties;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Requisites;
+with Alire.TOML_Adapters;
+with Alire.TOML_Keys;
 with Alire.Utils;
 with Alire.Versions;
-with Alire.TOML_Keys;
 
 with Semantic_Versioning;
 
@@ -28,6 +29,7 @@ package Alire.Releases with Preelaborate is
    type Release (<>) is
      new Versions.Versioned
      and Interfaces.Tomifiable
+     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with private;
 
@@ -80,8 +82,20 @@ package Alire.Releases with Preelaborate is
                        return Release;
    --  Takes a release and replaces the given fields
 
-   function Replacing (Base         : Release;
-                       Dependencies : Conditional.Dependencies) return Release;
+   function Replacing
+     (Base         : Release;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies)
+      return Release;
+
+   function Replacing
+     (Base         : Release;
+      Properties   : Conditional.Properties   := Conditional.No_Properties)
+      return Release;
+
+   function Replacing
+     (Base         : Release;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
+      return Release;
 
    function Replacing (Base   : Release;
                        Origin : Origins.Origin) return Release;
@@ -221,6 +235,14 @@ package Alire.Releases with Preelaborate is
    --  Ascertain if this release is a valid candidate for Dep
 
    overriding
+   function From_TOML (This : in out Release;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome;
+   --  Fill in the release-specific parts. This expects the common information
+   --  from [general] to be already present in the release, since From points
+   --  to the release proper.
+
+   overriding
    function To_TOML (R : Release) return TOML.TOML_Value;
 
    overriding
@@ -249,6 +271,7 @@ private
                  Notes_Len : Natural) is
      new Versions.Versioned
      and Interfaces.Tomifiable
+     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
       Project      : Alire.Project (1 .. Prj_Len);
