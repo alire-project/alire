@@ -36,18 +36,10 @@ package body Alire.Releases is
    ---------------
 
    function Extending
-     (Base               : Release;
-
-      Dependencies       : Conditional.Dependencies :=
-        Conditional.For_Dependencies.Empty;
-
-      Properties         : Conditional.Properties   :=
-        Conditional.For_Properties.Empty;
-
-      Available          : Alire.Requisites.Tree    :=
-        Requisites.Trees.Empty_Tree
-     )
-
+     (Base         : Release;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
+      Properties   : Conditional.Properties   := Conditional.No_Properties;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
       return Release
    is
       use all type Conditional.Dependencies;
@@ -213,7 +205,7 @@ package body Alire.Releases is
 
    function New_Working_Release
      (Project      : Alire.Project;
-      Origin       : Origins.Origin := Origins.New_Filesystem (".");
+      Origin       : Origins.Origin := Origins.New_Filesystem ("..");
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
       Properties   : Conditional.Properties   :=
@@ -448,7 +440,7 @@ package body Alire.Releases is
 
       Search : constant String := To_Lower_Case (Str);
    begin
-      for P of Enumerate (R.Properties) loop
+      for P of Conditional.Enumerate (R.Properties) loop
          declare
             Text : constant String :=
                      To_Lower_Case
@@ -477,6 +469,9 @@ package body Alire.Releases is
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
       Relinfo :          TOML.TOML_Value := TOML.Create_Table;
    begin
+
+      --  TODO: move generation of the [general] crate part to Alire.Crates.
+
       --  General properties
       declare
          General : constant TOML.TOML_Value := R.Properties.To_TOML;
@@ -545,8 +540,7 @@ package body Alire.Releases is
       end if;
 
       --  Available
-      if R.Available.Is_Empty
-           or else
+      if R.Available.Is_Empty or else
          R.Available = Alire.Requisites.Booleans.Always_True
       then
          null; -- Do nothing, do not pollute .toml file

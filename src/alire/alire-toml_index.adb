@@ -110,7 +110,7 @@ package body Alire.TOML_Index is
    type Operating_System_Names is
       array (Platforms.Known_Operating_Systems) of US.Unbounded_String;
    OS_List : constant Operating_System_Names :=
-     (Platforms.GNU_Linux => +"linux",
+     (Platforms.Linux     => +"linux",
       Platforms.OSX       => +"macos",
       Platforms.Windows   => +"windows");
 

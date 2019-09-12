@@ -224,6 +224,24 @@ package body Alire.Utils is
       end if;
    end Split;
 
+   -----------
+   -- Split --
+   -----------
+
+   function Split (S : String; Separator : Character) return String_Vector is
+      Prev : Integer := S'First - 1;
+   begin
+      return V : String_Vector do
+         for I in S'Range loop
+            if S (I) = Separator then
+               V.Append (S (Prev + 1 .. I - 1));
+               Prev := I;
+            end if;
+         end loop;
+         V.Append (S (Prev + 1 .. S'Last));
+      end return;
+   end Split;
+
    ----------
    -- Tail --
    ----------

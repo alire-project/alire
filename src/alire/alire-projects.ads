@@ -2,6 +2,8 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 
 package Alire.Projects with Preelaborate is
 
+   --  TODO: Rename to Crates (Issue #113)
+
    package Project_Description_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Alire.Project, Description_String);

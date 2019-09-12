@@ -8,11 +8,6 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Origins with Preelaborate is
 
-   --  Minimal information about origins of sources. We use the term origins to
-   --  avoid mixing 'alire sources' with 'project sources' or other 'sources'.
-
-   --  The actual capabilities for check-outs or fetches are in alr proper
-
    --------------------------------------------
    --  supporting types for native packages  --
    --------------------------------------------
