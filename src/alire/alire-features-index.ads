@@ -1,6 +1,5 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-with Alire.Environment;
 with Alire.Index_On_Disk;
 
 package Alire.Features.Index is
@@ -23,8 +22,7 @@ package Alire.Features.Index is
    --  instead of proceeding with default behaviors, such as getting the
    --  community index.
 
-   function Load_All (Platform : Environment.Setup;
-                      From     : Absolute_Path) return Outcome;
+   function Load_All (From : Absolute_Path) return Outcome;
    --  Load all indexes available at the given location
 
    function Update_All (Under : Absolute_Path) return Outcome;

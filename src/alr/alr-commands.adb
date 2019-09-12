@@ -418,11 +418,7 @@ package body Alr.Commands is
 
       declare
          Outcome : constant Alire.Outcome := Alire.Features.Index.Load_All
-           (Platform =>
-              (OS       => Platform.Operating_System,
-               Distro   => Platform.Distribution,
-               Compiler => Platform.Compiler),
-            From     => Alire.Config.Indexes_Directory);
+           (From => Alire.Config.Indexes_Directory);
       begin
          if not Outcome.Success then
             Reportaise_Command_Failed (Outcome.Message);

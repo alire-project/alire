@@ -1,340 +1,151 @@
-private with Ada.Containers.Hashed_Sets;
-private with Ada.Containers.Vectors;
-with Ada.Containers.Hashed_Maps;
-with Ada.Finalization;
-with Ada.Strings.Unbounded;
-with Ada.Strings.Unbounded.Hash;
-with Ada.Unchecked_Deallocation;
+with Alire.TOML_Adapters;
+with Alire.Requisites;
 
 with TOML;
-use type TOML.Any_Value_Kind;
 
-package Alire.TOML_Expressions is
+package Alire.TOML_Expressions with Preelaborate is
 
-   package US renames Ada.Strings.Unbounded;
+   --  This package is the core of loading and holding unresolved dynamic case
+   --  expressions. This is achieved through three generic packages below.
 
-   function "+" (S : String) return US.Unbounded_String
-      renames US.To_Unbounded_String;
-   function "+" (S : US.Unbounded_String) return String
-                 renames US.To_String;
+   --  The first one, Enum_Cases, defines a loader for TOML case expressions
+   --  that only loads one such expression, for a concrete enumeration type.
 
-   type String_Array is array (Positive range <>) of US.Unbounded_String;
+   --  The second one, Enum_Trees, takes a tree that can hold case expressions
+   --  and defines a Load function that is able to detect case expressions in
+   --  the midst of loading a tree. As argument, this function must receive
+   --  a function that redirects to the loader for a particular case-typed
+   --  expression.
 
-   function Is_Valid_Variable_Name (Name : String) return Boolean;
-   function Is_Valid_Variable_Name (Name : US.Unbounded_String) return Boolean;
-   --  Return whether Name is a valid name for an environment variable
+   --  Finally, Tree_Builders defines a function that can load any case(xx)
+   --  expression, and that for non-case values (or expressions of a different
+   --  case type) redirects to the loader in Enum_Trees, which in turn will
+   --  either load a static value, or redirect to the proper case type loader.
 
-   type Environment_Variables is limited private;
-   --  Set of environment variables. Objects are used as a context to evaluate
-   --  expressions.
+   --  Since there is a circularity here (Enum_Trees requires all case loaders,
+   --  for all known types, which are provided by Tree_Builders, which in turn
+   --  cannot be instantiated without first instantiating Tree_Builders), this
+   --  circularity is broken by Enum_Trees accepting a function that returns
+   --  the pointers to Tree_Builders.Load_Case instances. This function is
+   --  defined externally, and relies on information gathered after all
+   --  instances have been created.
 
-   function Variable_Defined
-     (Self : Environment_Variables;
-      Name : US.Unbounded_String) return Boolean
-      with Pre => Is_Valid_Variable_Name (Name);
-   --  Return whether Name is the name of a variable defined in Self
+   --  TODO: we can drop the strong-typing for these expressions, which is no
+   --  longer necessary with the new index since these types are not seen by
+   --  users of the index or used after a conditional tree is resolved for
+   --  use with the dependency solver. This will greatly reduce the convoluted
+   --  generics that we have currently. We can do this transparently at a later
+   --  time since it only concerns internals. I (álex) also would like to
+   --  be completely sure that indeed we do not need the strong typing for
+   --  anything useful.
 
-   procedure Add_Variable
-     (Self      : in out Environment_Variables;
-      Name      : US.Unbounded_String;
-      Value_Set : String_Array;
-      Value     : US.Unbounded_String)
-      with Pre => not Variable_Defined (Self, Name);
-   --  Add a variable to Self.
-   --
-   --  This adds to Self a variable with the given Name and assigns to it the
-   --  given Value. Value_Set gives the whole set of valid values for this
-   --  variable: it is used to check that expressions cover all possible cases.
-   --
-   --  If Value_Set contains duplicate entries or if Value is not in Value_Set,
-   --  this just raises a Constraint_Error.
+   Case_Prefix : constant String := "case(";
+   Dots        : constant String := "...";
 
-   function Variable_Value
-     (Self : Environment_Variables;
-      Name : US.Unbounded_String) return US.Unbounded_String
-      with Pre => Variable_Defined (Self, Name);
-   --  Return the value associated to the Name variable in Self
+   type Case_Loader_Keys is (Compiler,
+                             Distribution,
+                             OS,
+                             Word_Size);
+   --  The variables that can be used in index cases. Must match the toml text.
 
-   generic
-      type Value_Type is private;
-   package Computation_Result is
-      type T (Success : Boolean := True) is record
-         case Success is
-            when False =>
-               Error : US.Unbounded_String;
-               --  Computation could not reach completion: this contains
-               --  information about the error that occurred.
-
-            when True =>
-               Value : Value_Type;
-               --  Computation reached completion: this contains the resulting
-               --  value.
-         end case;
-      end record;
-   end Computation_Result;
-
-   --  TODO: find a way to share more code between the following Single_Values
-   --  and Composite_Values generic packages.
-
-   --  TODO: check case clauses coverage on the controlling variables
-
-   --  TODO: check that controlling variables exist
+   function Contains_Expression (Value : TOML.TOML_Value) return Boolean;
+   --  Check if Value contains some case(xx) key.
 
    generic
-      type Value_Type is private;
-      --  Type for the expressions to handle
+      type Enum is (<>);
+   package Enum_Cases is
 
-      with package Evaluation_Result is new Computation_Result (Value_Type);
+      --  This package is the simplest one, just loading a single case(xx).
 
-      with procedure Parse_Literal
-        (Value : TOML.TOML_Value; Result : out Evaluation_Result.T) is <>;
-      --  Parse Value as a literal for Value_Type
+      type TOML_Array is array (Enum) of TOML.TOML_Value;
+      --  Immediate TOML value for each case.
 
-   package Single_Values is
+      function Load_Cases (From : TOML_Adapters.Key_Queue) return TOML_Array;
+      --  Intermediate loader that does not resolve leaves.
+      --  May raise Checked_Error if a case entry is missing.
 
-      --  Provides helpers to parse and evaluate expressions which yield static
-      --  values.
-
-      type Expression is limited private;
-      --  Expression, whose evaluation produces a Value_Type value
-
-      No_Expression : constant Expression;
-
-      --  TODO: Ada rules prevent us from instantiating Computation_Result on
-      --  Expression because that would be a "premature use of private type".
-
-      type Parsing_Result (Success : Boolean := True) is limited record
-         case Success is
-            when False => Error : US.Unbounded_String;
-            when True  => Value : Expression;
-         end case;
-      end record;
-
-      type Optional_Value (Present : Boolean) is record
-         case Present is
-            when True  => Value : Value_Type;
-            when False => null;
-         end case;
-      end record;
-
-      function Parse
-        (Value   : TOML.TOML_Value;
-         Env     : Environment_Variables;
-         Default : Optional_Value := (Present => False)) return Parsing_Result;
-      --  Parse the expression tree encoded in the given TOML document.
-      --
-      --  Using Env, check that matchers in "case" constructs cover only
-      --  possible values for the controlling variable.
-      --
-      --  If Default is provided, make all "case" constructs return it by
-      --  default (when they don't match the controlling variable). Otherwise,
-      --  use Env to make sure that all possible values for controlling
-      --  variables are covered.
-
-      function Evaluate
-        (Expr : Expression;
-         Env  : Environment_Variables) return Evaluation_Result.T;
-      --  Evaluate the given expression according to the given environment
-
-      function Evaluate_Or_Default
-        (Expr    : Expression;
-         Default : Value_Type;
-         Env     : Environment_Variables) return Evaluation_Result.T;
-      --  If Expr contains no expression, return Default. Otherwise, evaluate
-      --  the given expression according to the given environment.
-
-      procedure Move
-        (Destination : out Expression; Source : in out Expression);
-      --  Move the content of Source to Destination and set Source to
-      --  No_Expression.
-
-   private
-
-      type Expression_Node_Record;
-      type Expression_Node is access all Expression_Node_Record;
-
-      package Matcher_Maps is new Ada.Containers.Hashed_Maps
-        (Key_Type        => US.Unbounded_String,
-         Element_Type    => Expression_Node,
-         Equivalent_Keys => US."=",
-         Hash            => US.Hash);
-
-      type Expression_Node_Record (Is_Case : Boolean := False) is record
-         case Is_Case is
-            when False =>
-               Literal : Value_Type;
-            when True =>
-               Variable : US.Unbounded_String;
-               Matchers : Matcher_Maps.Map;
-               Default  : Expression_Node;
-         end case;
-      end record;
-
-      package Node_Vectors is new Ada.Containers.Vectors
-        (Positive, Expression_Node);
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Expression_Node_Record, Expression_Node);
-
-      type Expression is limited
-         new Ada.Finalization.Limited_Controlled with
-      record
-         Root  : Expression_Node;
-         --  Root node, from which evaluation must start
-
-         Nodes : Node_Vectors.Vector;
-         --  List of all expression nodes associated to this expression
-      end record;
-
-      overriding procedure Finalize (Self : in out Expression);
-
-      No_Expression : constant Expression :=
-        (Ada.Finalization.Limited_Controlled with others => <>);
-
-   end Single_Values;
+   end Enum_Cases;
 
    generic
-      type Value_Type is private;
-      --  Type for the expressions to handle
+      type Tree is private;
+      with function "and" (L, R : Tree) return Tree;
+      with function Default return Tree with Warnings => Off;
+      --  We allow omitting alternatives in cases, even without '...'. This
+      --  default applies then; which is True for boolean expressions (like
+      --  in Ada (if Cond then Bool [else True]), and also like when the
+      --  "available" field is not given. For Props/Deps, it is an empty list.
+      --  Warnings (Off) applied because it is unreferenced in this package,
+      --  but used down the road by other instances.
+   package Enum_Trees is
 
-      with package Evaluation_Result is new Computation_Result (Value_Type);
+      --  A tree of values that will be have leaves containing cases with
+      --  values. Either Boolean_Trees, for requisites, or Conditional_Trees,
+      --  for Dependencies and Properties.
 
-      with procedure Parse_Literal
-        (Value : TOML.TOML_Value; Result : out Evaluation_Result.T) is <>;
-      --  Parse Value as a literal for Value_Type
+      type Static_Tree_Loader is not null access
+        function (From : TOML_Adapters.Key_Queue) return Tree;
+      --  Static loaders receive the pair data (key = whatever} that has to be
+      --  used to build values. For some, key may be redundant, but properties
+      --  need it to discriminate among them.
 
-      with procedure Merge
-        (Left, Right : Value_Type;
-         Result      : out Evaluation_Result.T) is <>;
-      --  Merge two Value_Type values into a single one
+      type Recursive_Case_Loader is access
+        function (Parent        : String;
+                  From          : TOML_Adapters.Key_Queue;
+                  Static_Loader : Static_Tree_Loader;
+                  Unused_Marker : Integer := 0) return Tree;
+      --  The recursive loader prototype matches the Tree_Builders.Load_Cases
+      --  function, with an extra dummy parameter to avoid confusion with the
+      --  following Load function. The difference between the following Load
+      --  and Tree_Builders.Load_Cases is as follows: Load_Cases does the
+      --  actual loading of a case, recursively invoking Load for the actual
+      --  case values. Load, in turn dispatches to the proper type Load_Cases
+      --  when a case is encountered. These functions could both be in
+      --  this package but the we could not use proper named types for the
+      --  function prototypes, making everything (even more) confusing.
+      --  Recursive_Case_Loaders are all known at runtime, and so they can
+      --  be returned by the following Loaders formal to the Load function.
 
-   package Composite_Values is
+      generic
+         type Case_Keys is (<>);
+         with function Loaders (Key : Case_Keys) return Recursive_Case_Loader;
+      function Load (Parent        : String;
+                     From          : TOML_Adapters.Key_Queue;
+                     Static_Loader : Static_Tree_Loader) return Tree;
+      --  Entry point into loading expression trees. Identifies case(xx)
+      --  expressions, which are recursivley loaded using the Loaders, or using
+      --  Static_Loader for final values. Parent is the "key" being loaded.
+      --  From points to the RHS value or case expr May raise Checked_Error.
 
-      --  Provides helpers to parse and evaluate expressions which yield
-      --  dynamic values.
+   end Enum_Trees;
 
-      type Expression is limited private;
-      --  Expression, whose evaluation produces a Value_Type value
+   generic
+      with package Trees is new Enum_Trees (<>);
+      with package Cases is new Enum_Cases (<>);
+      --  Instances for the enumeration we are loading.
 
-      No_Expression : constant Expression;
+      type Enum_Array is array (Cases.Enum) of Trees.Tree;
+      with function New_Leaf (Cases : Enum_Array) return Trees.Tree;
+      --  Creation of a leaf holding a case expression.
 
-      --  TODO: Ada rules prevent us from instantiating Computation_Result on
-      --  Expression because that would be a "premature use of private type".
+      with function Load (Parent        : String;
+                          From          : TOML_Adapters.Key_Queue;
+                          Static_Loader : Trees.Static_Tree_Loader)
+                          return Trees.Tree;
+      --  The static loader for values of the enumeration type (the one
+      --  instantiated from the above Enum_Trees instance, that knows how
+      --  to redispatch in case of a different type case expression.
+   package Tree_Builders is
 
-      type Parsing_Result (Success : Boolean := True) is limited record
-         case Success is
-            when False => Error : US.Unbounded_String;
-            when True  => Value : Expression;
-         end case;
-      end record;
+      function Load_Cases (Parent        : String;
+                           From          : TOML_Adapters.Key_Queue;
+                           Static_Loader : Trees.Static_Tree_Loader;
+                           Unused_Marker : Integer := 0)
+                           return Trees.Tree;
+      --  Parent is the actual key of the expr being loaded ("case(xx)" text).
+      --  From points to a case(xx) table of alternatives for Enum_Cases. Each
+      --  case value will be recursively loaded, be it static or an expr, using
+      --  the Load generic formal.
 
-      function Parse
-        (Value : TOML.TOML_Value;
-         Env   : Environment_Variables) return Parsing_Result;
-      --  Parse the expression tree encoded in the given TOML document. Env is
-      --  used to check that "case" constructs cover all possible values for
-      --  the controlling variable.
-
-      function Evaluate
-        (Expr : Expression;
-         Env  : Environment_Variables) return Evaluation_Result.T;
-      --  Evaluate the given expression according to the given environment
-
-      function Evaluate_Or_Default
-        (Expr    : Expression;
-         Default : Value_Type;
-         Env     : Environment_Variables) return Evaluation_Result.T;
-      --  If Expr contains no expression, return Default. Otherwise, evaluate
-      --  the given expression according to the given environment.
-
-      procedure Move
-        (Destination : out Expression; Source : in out Expression);
-      --  Move the content of Source to Destination and set Source to
-      --  No_Expression.
-
-   private
-
-      type Expression_Node_Record;
-      type Expression_Node is access all Expression_Node_Record;
-
-      package Matcher_Maps is new Ada.Containers.Hashed_Maps
-        (Key_Type        => US.Unbounded_String,
-         Element_Type    => Expression_Node,
-         Equivalent_Keys => US."=",
-         Hash            => US.Hash);
-
-      type Variable_Array is array (Positive range <>) of US.Unbounded_String;
-      type Case_Array is array (Positive range <>) of Matcher_Maps.Map;
-      type Expression_Node_Array is
-         array (Positive range <>) of Expression_Node;
-
-      type Expression_Node_Record (Case_Count : Natural) is record
-         Base_Value : Value_Type;
-         --  Value to which this expression evaluates before computing the
-         --  "case" parts.
-
-         Variables : Variable_Array (1 .. Case_Count);
-         Cases     : Case_Array (1 .. Case_Count);
-         Defaults  : Expression_Node_Array (1 .. Case_Count);
-         --  Couples of variable names and corresponding case expressions and
-         --  default expressions. Each case expression gives another value, and
-         --  the final evaluation comes from merging Base_Value and these other
-         --  values.
-      end record;
-
-      package Node_Vectors is new Ada.Containers.Vectors
-        (Positive, Expression_Node);
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Expression_Node_Record, Expression_Node);
-
-      type Expression is limited
-         new Ada.Finalization.Limited_Controlled with
-      record
-         Root  : Expression_Node;
-         --  Root node, from which evaluation must start
-
-         Nodes : Node_Vectors.Vector;
-         --  List of all expression nodes associated to this expression
-      end record;
-
-      overriding procedure Finalize (Self : in out Expression);
-
-      No_Expression : constant Expression :=
-        (Ada.Finalization.Limited_Controlled with others => <>);
-
-   end Composite_Values;
-
-private
-
-   package String_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => US.Unbounded_String,
-      Equivalent_Elements => US."=",
-      "="                 => US."=",
-      Hash                => US.Hash);
-   type String_Set_Access is access String_Sets.Set;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (String_Sets.Set, String_Set_Access);
-
-   package Variable_Value_Sets is new Ada.Containers.Hashed_Maps
-     (Key_Type        => US.Unbounded_String,
-      Element_Type    => String_Set_Access,
-      Equivalent_Keys => US."=",
-      Hash            => US.Hash);
-   --  Mapping assigning a set of possible values to each environment variable
-
-   package Variable_Values is new Ada.Containers.Hashed_Maps
-     (Key_Type        => US.Unbounded_String,
-      Element_Type    => US.Unbounded_String,
-      Equivalent_Keys => US."=",
-      "="             => US."=",
-      Hash            => US.Hash);
-   --  Mapping assigning a value to each environment variable
-
-   type Environment_Variables is new Ada.Finalization.Limited_Controlled with
-   record
-      Value_Sets : Variable_Value_Sets.Map;
-      Values     : Variable_Values.Map;
-   end record;
-
-   overriding procedure Finalize (Self : in out Environment_Variables);
+   end Tree_Builders;
 
 end Alire.TOML_Expressions;

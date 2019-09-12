@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire.OS_Lib;
-with Alire.TOML_Index;
 
 with GNAT.OS_Lib;
 
@@ -272,26 +271,18 @@ package body Alire.Features.Index is
    -- Load_All --
    --------------
 
-   function Load_All (Platform : Environment.Setup;
-                      From     : Absolute_Path) return Outcome
+   function Load_All (From : Absolute_Path) return Outcome
    is
       Result  : Outcome;
       Indexes : constant Index_On_Disk_Set := Find_All (From, Result);
-      Env     : Alire.TOML_Index.Environment_Variables;
    begin
       if not Result.Success then
          return Result;
       end if;
 
-      Alire.TOML_Index.Set_Environment
-        (Env,
-         Platform.Distro,
-         Platform.OS,
-         Platform.Compiler);
-
       for Index of Indexes loop
          declare
-            Result : constant Outcome := Index.Load (Env);
+            Result : constant Outcome := Index.Load;
          begin
             if not Result.Success then
                return Result;
