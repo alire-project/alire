@@ -7,6 +7,14 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
+   Checked_Error : exception;
+   --  A Checked_Error is an explicitly diagnosed error condition, usually in
+   --  relation with user inputs (e.g., parsing of TOML files or other inputs).
+   --  Used internally in Alire in conjunction with Alire.Errors to use the
+   --  normal exception mechanisms, that produce less boilerplate, while using
+   --  Outcomes for results returned to clients. That is, a Checked_Error ought
+   --  not to propagate into Alr.* code.
+
    Internal_Error : exception;
    --  While we transition to error codes, there are places that would require
    --  extensive refactoring. Also, legitimate irrecoverable situations may
