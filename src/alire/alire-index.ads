@@ -333,7 +333,7 @@ package Alire.Index is
 
    function License (L : Licensing.Licenses)
                      return Conditional.Properties
-   is (U (Properties.Licenses.Values.New_Property (L)));
+   is (U (Properties.Licenses.New_License (L)));
 
    --  Concatenate
    function "and" (L, R : Release_Properties) return Release_Properties

@@ -325,7 +325,7 @@ private
 
    function License (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
-       (Alire.Properties.Licenses.Values.Property'Tag));
+       (Alire.Properties.Licenses.License'Tag));
 
    function Author (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter

@@ -1,4 +1,7 @@
+with Alire.Conditional;
+with Alire.Errors;
 with Alire.Licensing;
+with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils.YAML;
 
@@ -6,30 +9,78 @@ with TOML;
 
 package Alire.Properties.Licenses with Preelaborate is
 
-   function Image (L : Licensing.Licenses) return String;
+   --  Licenses can be either a value from the enumeration of known licenses,
+   --  or a free custom text.
 
-   function To_YAML (L : Licensing.Licenses) return String;
+   type License (Custom : Boolean) is new Property with record
+      case Custom is
+         when False =>
+            Known : Licensing.Licenses;
+         when True =>
+            Text  : UString;
+      end case;
+   end record;
 
-   function Key (Dummy_L : Licensing.Licenses) return String
+   function New_License (Known : Licensing.Licenses) return License;
+   --  Creates a known license.
+
+   function New_License (From  : String) return License;
+   --  If From starts with "custom:" it creates a custom license property.
+   --  Otherwise it verifies that From is a known license name, and creates it.
+   --  Finally, in other cases Checked_Error is raised.
+
+   overriding
+   function Key (Dummy_L : License) return String
    is (TOML_Keys.License);
 
-   function To_TOML (L : Licensing.Licenses) return TOML.TOML_Value;
+   overriding
+   function Image (L : License) return String;
 
-   package Values is new Properties.Values (Alire.Licensing.Licenses,
-                                            Image,
-                                            To_YAML,
-                                            Key,
-                                            To_TOML);
+   overriding
+   function To_TOML (L : License) return TOML.TOML_Value;
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Conditional.Properties;
+
+   overriding
+   function To_YAML (L : License) return String;
 
 private
 
-   function Image (L : Licensing.Licenses) return String is
-     ("License: " & L'Image);
+   use all type Licensing.Licenses;
 
-   function To_YAML (L : Licensing.Licenses) return String is
-     (Alire.Utils.YAML.YAML_Stringify (L'Image));
+   Custom_Prefix : constant String := "custom:";
 
-   function To_TOML (L : Licensing.Licenses) return TOML.TOML_Value is
-      (TOML.Create_String (Licensing.License_Labels (L)));
+   function New_License (From  : String) return License is
+     (if Utils.Starts_With (From, Custom_Prefix)
+      then License'(Custom => True, Text => +From)
+      elsif Licensing.From_String (From) = Licensing.Unknown
+      then raise Checked_Error with Errors.Set ("unknown license: " & From)
+      else New_License (Licensing.From_String (From)));
+
+   function New_License (Known : Licensing.Licenses) return License is
+     (License'(Custom => False,
+               Known  => Known));
+
+   overriding
+   function Image (L : License) return String is
+     ("License: " &
+      (if L.Custom
+       then +L.Text
+       else L.Known'Img));
+
+   overriding
+   function To_TOML (L : License) return TOML.TOML_Value is
+     (TOML_Adapters.To_Array
+        (TOML.Create_String
+             (if L.Custom
+              then +L.Text
+              else +Licensing.License_Labels (L.Known))));
+
+   overriding
+   function To_YAML (L : License) return String is
+     (Alire.Utils.YAML.YAML_Stringify
+        (Utils.Replace (L.Image, "License: ", "")));
+   --  Remove the prefix "License: " which is not machine-intended.
 
 end Alire.Properties.Licenses;

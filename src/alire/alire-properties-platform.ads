@@ -49,15 +49,6 @@ package Alire.Properties.Platform with Preelaborate is
                                   Target_Key,
                                   Tomify);
 
-   function Version_Key (V : Platforms.Versions) return String
-   is (raise Unimplemented); -- Probably due to be deprecated?
-   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Versions);
-   package Versions is new Values (Platforms.Versions,
-                                   Platforms.Versions'Image,
-                                   Platforms.Versions'Image,
-                                   Version_Key,
-                                   Tomify);
-
    function Word_Size_Key (WS : Platforms.Word_Sizes) return String
    is (TOML_Keys.Word_Size);
    function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Word_Sizes);
@@ -80,9 +71,6 @@ package Alire.Properties.Platform with Preelaborate is
 
    function Target_Is (T : Platforms.Targets) return Vector
    renames Targets.New_Vector;
-
-   function Version_Is (V : Platforms.Versions) return Vector
-   renames Versions.New_Vector;
 
    function Word_Size_Is (V : Platforms.Word_Sizes) return Vector
    renames Word_Sizes.New_Vector;

@@ -16,11 +16,11 @@ package Alire.Platforms with Preelaborate is
    --  problems we don't need to isolate their versions.
 
    type Operating_Systems is (Linux,
-                              OSX,
+                              MacOS,
                               Windows,
                               OS_Unknown);
    subtype Known_Operating_Systems is
-      Operating_Systems range Linux ..  Windows;
+      Operating_Systems range Linux .. Windows;
 
    type Targets is (Native,
                     Unknown_Cross_Target);
@@ -29,13 +29,6 @@ package Alire.Platforms with Preelaborate is
    type Distributions is (Debian,
                           Ubuntu,
                           Distro_Unknown);
-
-   type Versions is (Debian_Buster,
-                     Ubuntu_Bionic,
-                     Distro_Version_Unknown);
-   --  Known flavors of OSs
-   --  It turns out that Debian uses no numbers for its non-stable releases, so
-   --  we'll prefer the codename. Not really used very much for now.
 
    type Word_Sizes is (Bits_32,
                        Bits_64,
@@ -47,6 +40,6 @@ package Alire.Platforms with Preelaborate is
    function Package_Manager (D : Distributions) return Package_Managers is
      (case D is
          when Debian | Ubuntu => Apt,
-         when others => Packager_Unknown);
+         when others          => Packager_Unknown);
 
 end Alire.Platforms;
