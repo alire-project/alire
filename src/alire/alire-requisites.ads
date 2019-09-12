@@ -1,11 +1,13 @@
 with Alire.Boolean_Trees;
+with Alire.Interfaces;
 with Alire.Properties;
 
 package Alire.Requisites with Preelaborate is
 
    use Properties;
 
-   type Requisite is abstract tagged null record;
+   type Requisite is abstract new
+     Interfaces.Tomifiable with null record;
    --  A Requisite verifies against some internally stored data that a property
    --  is satisfied. Here we provide the basic storage of values but the actual
    --  checking function must be overridden for particular checks.

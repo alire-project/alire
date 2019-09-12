@@ -32,6 +32,10 @@ private
                        return Boolean
    is (R.Bool);
 
+   overriding
+   function To_TOML (This : Requisite) return TOML.TOML_Value is
+     (raise Unimplemented);
+
    function Always_True return Tree is
       (Trees.Leaf (Requisite'(Bool => True)));
 
