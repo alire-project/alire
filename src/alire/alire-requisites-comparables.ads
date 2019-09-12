@@ -1,5 +1,7 @@
 with Alire.Utils;
 
+with TOML;
+
 generic
    --  Encapsulated basic type
    type Value is private;
@@ -53,6 +55,11 @@ package Alire.Requisites.Comparables with Preelaborate is
 
    function Is_Equal_To (V : Value) return Tree;
    --  Non-operator function useful elsewhere for case statements
+
+   overriding
+   function To_TOML (This : Comparable) return TOML.TOML_Value is
+     (raise Unimplemented);
+   --  Should not currently appear in the toml index, unless syntax changes.
 
 private
 
