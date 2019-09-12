@@ -1,4 +1,5 @@
-limited with Alire.Utils;
+with Alire.TOML_Adapters;
+with Alire.Utils;
 
 with TOML;
 
@@ -38,6 +39,19 @@ package Alire.Interfaces with Preelaborate is
    --  This can be recursive (trees, arrays...)
 
    function To_TOML (This : Tomifiable) return TOML.TOML_Value is abstract;
+
+   ------------------
+   -- Detomifiable --
+   ------------------
+
+   type Detomifiable is limited interface;
+   --  Implemented by types that can be loaded from a TOML crate file;
+   --  in particular by complex objects stored as tables.
+
+   function From_TOML (This : in out Detomifiable;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome is abstract;
+   --  To allow partial load this uses an in out object.
 
    --------------
    -- Yamlable --
