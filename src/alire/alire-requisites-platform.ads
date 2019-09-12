@@ -56,12 +56,6 @@ package Alire.Requisites.Platform with Preelaborate is
       PrPl.Targets.Element,
       "Target");
 
-   package Versions is new Comparables
-     (Ps.Versions, Ps."<", Ps.Versions'Image,
-      PrPl.Versions.Property,
-      PrPl.Versions.Element,
-      "Version");
-
    package Word_Sizes is new Comparables
      (Ps.Word_Sizes, Ps."<", Ps.Word_Sizes'Image,
       PrPl.Word_Sizes.Property,
