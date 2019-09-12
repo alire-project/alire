@@ -12,7 +12,7 @@ package Alire.Properties.Platform with Preelaborate is
    function Compiler_Key (C : Platforms.Compilers) return String
    is (TOML_Keys.Compiler);
 
-   function Tomify is new TOML_Adapters.Tomify (Platforms.Compilers);
+   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Compilers);
    package Compilers is new Values (Platforms.Compilers,
                                     Platforms.Compilers'Image,
                                     Platforms.Compilers'Image,
@@ -22,7 +22,7 @@ package Alire.Properties.Platform with Preelaborate is
    function Distro_Key (D : Platforms.Distributions) return String
    is (TOML_Keys.Distribution);
 
-   function Tomify is new TOML_Adapters.Tomify (Platforms.Distributions);
+   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Distributions);
    package Distributions is new Values (Platforms.Distributions,
                                         Platforms.Distributions'Image,
                                         Platforms.Distributions'Image,
@@ -32,7 +32,8 @@ package Alire.Properties.Platform with Preelaborate is
    function OS_Key (OS : Platforms.Operating_Systems) return String
    is (TOML_Keys.OS);
 
-   function Tomify is new TOML_Adapters.Tomify (Platforms.Operating_Systems);
+   function Tomify is new TOML_Adapters.Tomify_Enum
+     (Platforms.Operating_Systems);
    package Operating_Systems is new Values (Platforms.Operating_Systems,
                                             Platforms.Operating_Systems'Image,
                                             Platforms.Operating_Systems'Image,
@@ -41,7 +42,7 @@ package Alire.Properties.Platform with Preelaborate is
 
    function Target_Key (T : Platforms.Targets) return String
    is (TOML_Keys.Target);
-   function Tomify is new TOML_Adapters.Tomify (Platforms.Targets);
+   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Targets);
    package Targets is new Values (Platforms.Targets,
                                   Platforms.Targets'Image,
                                   Platforms.Targets'Image,
@@ -50,7 +51,7 @@ package Alire.Properties.Platform with Preelaborate is
 
    function Version_Key (V : Platforms.Versions) return String
    is (raise Unimplemented); -- Probably due to be deprecated?
-   function Tomify is new TOML_Adapters.Tomify (Platforms.Versions);
+   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Versions);
    package Versions is new Values (Platforms.Versions,
                                    Platforms.Versions'Image,
                                    Platforms.Versions'Image,
@@ -59,7 +60,7 @@ package Alire.Properties.Platform with Preelaborate is
 
    function Word_Size_Key (WS : Platforms.Word_Sizes) return String
    is (TOML_Keys.Word_Size);
-   function Tomify is new TOML_Adapters.Tomify (Platforms.Word_Sizes);
+   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Word_Sizes);
    package Word_Sizes is new Values (Platforms.Word_Sizes,
                                      Platforms.Word_Sizes'Image,
                                      Platforms.Word_Sizes'Image,

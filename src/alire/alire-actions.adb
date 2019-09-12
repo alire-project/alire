@@ -21,7 +21,7 @@ package body Alire.Actions is
 
       use TOML_Adapters;
 
-      function Tomify is new TOML_Adapters.Tomify (Moments);
+      function Tomify is new TOML_Adapters.Tomify_Enum (Moments);
 
       Arr : constant TOML.TOML_Value := TOML.Create_Array;
       --  Actions are output as an array of tables, so we return an array
