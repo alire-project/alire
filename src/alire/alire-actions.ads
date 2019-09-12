@@ -1,10 +1,14 @@
+with Alire.Conditional;
 with Alire.Properties;
+with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils;
 
 with TOML;
 
 package Alire.Actions with Preelaborate is
+
+   --  TODO: probably should be a child of Alire.Properties for consistency.
 
    type Moments is (
                     Post_Fetch,   -- After being downloaded
@@ -40,6 +44,9 @@ package Alire.Actions with Preelaborate is
    function Working_Folder (This : Run) return String;
 
    overriding function To_TOML (This : Run) return TOML.TOML_Value;
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Conditional.Properties;
 
 private
 
