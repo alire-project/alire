@@ -15,12 +15,12 @@ package Alire.Platforms with Preelaborate is
    --  We do a minimum of future proofing. Unless newer version have known
    --  problems we don't need to isolate their versions.
 
-   type Operating_Systems is (GNU_Linux,
+   type Operating_Systems is (Linux,
                               OSX,
                               Windows,
                               OS_Unknown);
    subtype Known_Operating_Systems is
-      Operating_Systems range GNU_Linux ..  Windows;
+      Operating_Systems range Linux ..  Windows;
 
    type Targets is (Native,
                     Unknown_Cross_Target);

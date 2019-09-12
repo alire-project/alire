@@ -9,6 +9,7 @@ with Alire.Roots;
 with Alr.Actions;
 with Alr.Dependency_Graphs;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Templates;
 
 package body Alr.Checkout is
@@ -142,7 +143,11 @@ package body Alr.Checkout is
               Alire.Roots.New_Root
                  (R.Project, Ada.Directories.Current_Directory);
          begin
-            Templates.Generate_Prj_Alr (R, Root.Crate_File);
+            --  TODO: be able to export dynamic expressions.
+            --  Currently, as workaround, we resolve the release for the
+            --  current platform (this was also unimplemented in the old index)
+            Templates.Generate_Prj_Alr (R.Whenever (Platform.Properties),
+                                        Root.Crate_File);
             Templates.Generate_Agg_Gpr (Root);
          end;
       end if;
