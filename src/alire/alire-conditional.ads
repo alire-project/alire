@@ -1,7 +1,7 @@
 with Alire.Conditional_Trees;
 with Alire.Dependencies;
 with Alire.Properties;
-with Alire.Requisites;
+with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
 
@@ -29,6 +29,11 @@ package Alire.Conditional with Preelaborate is
 
    function No_Dependencies return Dependencies is (For_Dependencies.Empty);
 
+   function Deps_From_TOML (From : TOML_Adapters.Key_Queue)
+                            return Dependencies;
+   --  Expects a wrapped table of crate = version_set pairs:
+   --  depends-on = { crate = version [...] }
+
    ----------------
    -- Properties --
    ----------------
@@ -49,6 +54,13 @@ package Alire.Conditional with Preelaborate is
      (Alire.Properties.Vector, Alire.Properties.Append);
 
    function No_Properties return Properties is (For_Properties.Empty);
+
+   type Property_Loader is access
+     function (From : TOML_Adapters.Key_Queue)
+               return Conditional.Properties;
+   --  Function provided by each concrete Property class for TOML loading.
+   --  From is always a table "prop-name = whatever".
+   --  These may raise Checked_Error.
 
 private
 
