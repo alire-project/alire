@@ -23,6 +23,7 @@ package Alire.TOML_Keys with Preelaborate is
    Maintainer     : constant String := "maintainers";
    Notes          : constant String := "notes";
    Origin         : constant String := "origin";
+   Origin_Source  : constant String := "archive-name";
    OS             : constant String := "os";
    Path           : constant String := "path";
    Project_File   : constant String := "project-files";
