@@ -500,7 +500,14 @@ package body Alire.Releases is
    begin
       Trace.Detail ("Loading release " & This.Milestone.Image);
 
-      --  Origin: implemented in latter commit
+      --  Origin
+      declare
+         Result : constant Outcome := This.Origin.From_TOML (From);
+      begin
+         if not Result.Success then
+            return Result;
+         end if;
+      end;
 
       declare
          Result : constant Outcome :=
@@ -539,9 +546,23 @@ package body Alire.Releases is
       declare
          General : constant TOML.TOML_Value := R.Properties.To_TOML;
       begin
+         --  Description
+--           if Projects.Descriptions.Contains (R.Project) then
+--              General.Set (TOML_Keys.Description,
+--                           +Projects.Descriptions (R.Project));
+--           else
+--              General.Set (TOML_Keys.Description,
+--                           +Defaults.Description);
+--           end if;
+
          --  Alias/Provides
          if UStrings.Length (R.Alias) > 0 then
             General.Set (TOML_Keys.Provides, +(+R.Alias));
+         end if;
+
+         --  Notes
+         if R.Notes'Length > 0 then
+            General.Set (TOML_Keys.Notes, +R.Notes);
          end if;
 
          --  Ensure atoms are atoms and arrays are arrays
