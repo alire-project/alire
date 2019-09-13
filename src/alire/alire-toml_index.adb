@@ -4,8 +4,11 @@ with Ada.Text_IO;
 
 with Alire.Errors;
 with Alire.GPR;
-with Alire.Projects.With_Releases;
+with Alire.Index;
+with Alire.Origins.Tweaks;
 with Alire.Utils;
+
+with GNATCOLL.VFS;
 
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
@@ -319,9 +322,7 @@ package body Alire.TOML_Index is
                                       Context => "Loading crate " & Filename));
 
          if Result.Success then
-            --  Index_Crate (Filename, Crate);
-            --  Incoming in future commit
-            null;
+            Index_Crate (Filename, Crate);
          end if;
       end;
    end Load_From_Catalog_Internal;
@@ -369,6 +370,58 @@ package body Alire.TOML_Index is
          end if;
       end;
    end Load_Release_From_File;
+
+   -----------------
+   -- Index_Crate --
+   -----------------
+
+   procedure Index_Crate (Path  : Relative_Path;
+                          Crate : Projects.With_Releases.Crate) is
+      Cat_Ent : constant Index.Catalog_Entry :=
+                  Index.Manually_Catalogued_Project
+                    (+Crate.Name, "Alire.Index", Crate.Description);
+      use all type Origins.Kinds;
+      use GNATCOLL;
+      use all type VFS.Filesystem_String;
+   begin
+      for R of Crate.Releases loop
+         --  Adjust and check a valid path for a local origin.
+         --  This is delayed until this moment to keep many other
+         --  packages Preelaborable.
+         declare
+            Origin : constant Origins.Origin :=
+                       Origins.Tweaks.Fixed_Origin (Path, R.Origin);
+         begin
+            if Origin.Kind = Filesystem then
+               if not VFS.Create (+Origin.Path).Is_Directory then
+                  raise Checked_Error with
+                    ("Local origin path is not a valid directory: "
+                     & Origin.Path);
+               end if;
+            end if;
+
+            declare
+               Dummy : constant Index.Release := Cat_Ent.Register
+                 (Version        => R.Version,
+                  Origin         => Origin,
+                  Dependencies   => R.Dependencies,
+                  Properties     => R.Properties,
+                  Available_When => R.Available);
+            begin
+               null;
+            end;
+         end;
+      end loop;
+   end Index_Crate;
+
+   -----------------------------------
+   -- Fix_Release_Local_Origin_Path --
+   -----------------------------------
+
+   function Fix_Release_Local_Origin_Path
+     (Crate_Path : Relative_Path;
+      Release    : Releases.Release) return Releases.Release is
+     (raise Unimplemented);
 
 begin
    Expected_Index.Set ("version", TOML.Create_String ("1.0"));
