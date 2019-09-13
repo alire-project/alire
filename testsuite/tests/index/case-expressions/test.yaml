@@ -1,0 +1,5 @@
+driver: python-script
+indexes:
+    cases_index: {}
+    # CAVEAT: for some funny Python reason, a folder named 'case_*' breaks
+    # the testsuite.

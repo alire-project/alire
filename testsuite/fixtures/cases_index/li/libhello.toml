@@ -1,0 +1,26 @@
+[general]
+description = """"Hello, world!" demonstration project support library"""
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+
+['1.0-cond_orig']
+   ['1.0-cond_orig'.origin.'case(distribution)']
+   ubuntu = "native:libhello"
+   debian = "native:libhello~1"
+   '...' = ""
+
+['1.0-linuxonly']
+origin = "file://../../crates/libhello_1.0.0"
+   ['1.0-linuxonly'.available.'case(os)']
+   linux = true
+   '...' = false
+      ['1.0-linuxonly'.available.'case(os)'.windows.'case(word_size)']
+      bits_64 = true
+      '...' = false
+
+['1.0-unavail']
+origin = "file://../../crates/libhello_1.0.0"
+available = false
+
+['1.0']
+origin = "file://../../crates/libhello_1.0.0"

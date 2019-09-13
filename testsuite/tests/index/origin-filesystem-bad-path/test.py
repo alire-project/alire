@@ -20,7 +20,7 @@ def run(i, error):
         p.out)
 
 
-run(1, 'Empty path given in local origin')
+run(1, '.*empty path given in local origin')
 
 # Since the location reported is an absolute path, and thus filesystem
 # dependent, check only that the beginning of the error is there:

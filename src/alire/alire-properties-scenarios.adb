@@ -108,7 +108,7 @@ package body Alire.Properties.Scenarios is
 
    begin
       if Value.Kind /= TOML_Table then
-         raise Checked_Error with "scenarios require a table";
+         From.Checked_Error ("scenarios require a table");
       end if;
 
       if Key = TOML_Keys.GPR_Ext then
