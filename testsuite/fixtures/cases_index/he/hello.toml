@@ -1,0 +1,51 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+
+    [general.executables.'case(word-size)' ]
+    bits-64 = "hello"
+    bits-32 = "hello32"
+    '...' = "bye"
+
+    [general.gpr-set-externals]
+    BUILD = "debug"
+
+    [general.gpr-set-externals.'case(os)']
+    linux = { OS = "linux" }
+    '...' = { OS = "other" }
+
+    [[ general.actions.'case(os)'.linux ]]
+    type = "post-fetch"
+    command = "make"
+
+    [[ general.actions.'case(os)'.linux ]]
+    type = "post-compile"
+    command = "hello"
+
+    [[ general.actions.'case(os)'.'...' ]]
+
+
+['1.0.1']
+origin = "file://../../crates/hello_1.0.1"
+
+    ['1.0.1'.depends-on]
+    libbye = "^1.0"
+
+    ['1.0.1'.depends-on.'case(os)'.linux]
+    libhello = "^1.0"
+
+    ['1.0.1'.depends-on.'case(os)'.'...']
+    libhello = "^1.1"
+
+    ['1.0.1'.project-files.'case(word-size)' ]
+    bits-64 = ["hello.gpr"]
+    bits-32 = ["hello.gpr", "hello32.gpr"]
+    '...' = ["bye.gpr"]
+
+    ['1.0.1'.available.'case(os)']
+    linux = true
+    '...' = false
+       ['1.0.1'.available.'case(os)'.windows.'case(word_size)']
+       bits_64 = true
+       '...' = false
