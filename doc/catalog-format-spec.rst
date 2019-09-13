@@ -249,12 +249,16 @@ entries:
   (~, any upwards version within the same minor point).
 
 * ``project-files``: optional list of strings. Each is a path, relative to the
-  root of the source directory, to a project file to be made available. For
-  instance:
+  root of the source directory, to a project file to be made available. 
+  Expressions are accepted. For instance:
 
   .. code-block:: toml
 
    project-files = ["my_project.gpr", "utils/utils_for_my_project.gpr"]
+
+   [project-files.'case(word-size)']
+   bits-64 = ["my_project.gpr"]
+   bits-32 = ["my_project32.gpr"]
 
 * ``gpr-externals``: optional table, giving a mapping from the name of external
   variables in the project files to sets of possible values (as array of
@@ -267,17 +271,17 @@ entries:
    TAG = ""
 
 * ``gpr-set-externals``: optional table, giving a mapping from the name of
-  external variables to dynamic expressions for the values to use by default
-  when building the project.  For instance:
+  external variables to the values to use by default when building the project.  
+  Expressions are accepted before the mapping. For instance:
 
   .. code-block:: toml
 
    [gpr-set-externals]
    BUILD_MODE = "release"
 
-   [gpr-set-externals.OS.'case(os)']
-   linux = "gnu-linux"
-   windows = "ms-windows"
+   [gpr-set-externals.'case(os)']
+   linux   = { OS = "gnu-linux" } # Compact table syntax is convenient in this case
+   windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
 
 * ``executables``: optional list of strings. Each is a path, relative to the root
   of the source directory, to an executable provided by the package. For
@@ -287,8 +291,8 @@ entries:
 
    executables = ["bin/my_main"]
 
-* ``actions``: optional list of actions (in addition to gprinstall) to perform
-  when installing this package. The general action syntax is:
+* ``actions``: optional list of actions to perform when installing this package. 
+  The general action syntax is:
 
   .. code-block:: toml
 
@@ -303,6 +307,21 @@ entries:
     sources;
   * ``post-compile``: the command is to be run right after GPRbuild has been
     run.
+
+  Actions accept dynamic expressions. For example:
+
+  .. code-block:: toml
+
+   [[general.actions.'case(os)'.linux]]
+   type = "post-fetch"
+   command = "make"
+
+   [[general.actions.'case(os)'.windows]]
+   type = "post-fetch"
+   command = "cmd build"
+
+   [[general.actions.'case(os)'.'...']]
+   # An explicit empty case alternative, which is not mandatory
 
 Release-specific info
 ---------------------
@@ -379,3 +398,4 @@ Parameters
 * ``compiler``: name of the current compiler. Currently supported values are:
   ``gnat-unknown``, ``gnat-fsf-old``, ``gnat-fsf-7.2``, ``gnat-fsf-7.3``,
   ``gnat-gpl-old``, ``gnat-gpl-2017``, ``gnat-community-2018``.
+* ``word-size``: architecture word size. Currently supported values are: ``bits-32``, ``bits-64``, ``bits-unknown``
