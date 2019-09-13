@@ -2,7 +2,10 @@ with Alire.Conditional;
 with Alire.Platforms;
 with Alire.Properties.Platform;
 
+with Alire.Requisites.Cases;
 with Alire.Requisites.Comparables;
+
+with TOML;
 
 package Alire.Requisites.Platform with Preelaborate is
 
@@ -11,6 +14,39 @@ package Alire.Requisites.Platform with Preelaborate is
 
    use all type Ps.Compilers;
    use all type Tree;
+
+   --  Packages used in new index, purely case-based.
+
+   package Compiler_TOML_Cases is new Cases
+     (Enum      => Ps.Compilers,
+      Property  => PrPl.Compilers.Property,
+      Element   => PrPl.Compilers.Element,
+      Name      => "Compiler",
+      TOML_Name => "compiler");
+
+   package Distro_Cases is new Cases
+     (Enum      => Ps.Distributions,
+      Property  => PrPl.Distributions.Property,
+      Element   => PrPl.Distributions.Element,
+      Name      => "Distribution",
+      TOML_Name => "distribution");
+
+   package OS_Cases is new Cases
+     (Enum      => Ps.Operating_Systems,
+      Property  => PrPl.Operating_Systems.Property,
+      Element   => PrPl.Operating_Systems.Element,
+      Name      => "OS",
+      TOML_Name => "os");
+
+   package Word_Size_Cases is new Cases
+     (Enum      => Ps.Word_Sizes,
+      Property  => PrPl.Word_Sizes.Property,
+      Element   => PrPl.Word_Sizes.Element,
+      Name      => "Word_Size",
+      TOML_Name => "word-size");
+
+   --  Packages used in Alire.Index, e.g., old more general expressions.
+   --  TODO: remove during the old index Alire.Index dead code removal
 
    package Op_Systems is new Comparables
      (Ps.Operating_Systems, Ps."<", Ps.Operating_Systems'Image,
