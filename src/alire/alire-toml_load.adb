@@ -1,11 +1,10 @@
 with Alire.Errors;
+with Alire.Properties.From_TOML;
+with Alire.TOML_Expressions.Cases;
 
 with TOML;
 
 package body Alire.TOML_Load is
-
-   pragma Warnings (Off);
-   --  Temporary until implementation is completed in later commits.
 
    ------------------------
    -- Load_Crate_Section --
@@ -25,14 +24,25 @@ package body Alire.TOML_Load is
       TOML_Avail : TOML.TOML_Value;
       TOML_Deps  : TOML.TOML_Value;
    begin
-      --  TODO: Load dependencies (in upcoming commit)
+      --  Process Dependencies
+      if From.Pop ("depends-on", TOML_Deps) then
+         Deps := Deps and
+           TOML_Expressions.Cases.Load_Dependencies
+             (TOML_Adapters.From (TOML_Deps, From.Message ("depends-on")));
+      end if;
 
       --  TODO: Process Forbidden
 
-      --  TODO: Load Available (in upcoming commit)
+      --  Process Available
+      if From.Pop ("available", TOML_Avail) then
+         Avail := Avail and
+           TOML_Expressions.Cases.Load_Requisites
+             (TOML_Adapters.From (TOML_Avail, From.Message ("available")));
+      end if;
 
       --  Process remaining keys, which must be properties
-      --  TODO: Load Properties (in upcoming commit)
+      Props := Props and
+        Properties.From_TOML.Section_Loaders (Section) (From);
 
       return Outcome_Success;
    exception
