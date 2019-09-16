@@ -90,7 +90,10 @@ private
 
    overriding
    function To_TOML (This : Tree) return TOML.TOML_Value is
-     (raise Unimplemented);
+     (case Trees.First_Child_Element (This.Root).Kind is
+         when Leaf   => Trees.First_Child_Element (This.Root)
+                          .Condition.Constant_Reference.To_TOML,
+         when others => raise Unimplemented);
 
    overriding function Is_Empty (T : Tree) return Boolean
    is (Trees.Is_Empty (Trees.Tree (T)));
