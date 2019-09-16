@@ -170,7 +170,18 @@ package Alire with Preelaborate is
    package Trace renames Simple_Logging;
 
    Log_Level : Simple_Logging.Levels renames Simple_Logging.Level;
-   --  This one selects the verbosity level of the logging library.
+   --  This one selects the verbosity level of the logging library. The usage
+   --  of log levels in Alire is as follows. By default, no output is produced
+   --  unless in case of warning or error. The log levels supported are:
+   --  * ERROR:   for fatal situations that preclude further operation.
+   --  * Warning: for suspicious situations, but where alr continues normally.
+   --             Hidden with '-q' switch.
+   --  * Info:    messages that are shown by default. Output that is the result
+   --             of user requests in normal situations.
+   --  * Detail:  not shown by default, enabled with '-v' switch, that
+   --             may be interesting to and intended for regular users.
+   --  * Debug:   not shown by default, enabled with '-vv' switch, messages
+   --             intended for developers or curious users, not user friendly.
 
    Log_Debug : aliased Boolean := False;
    --  This one enables special debug output, irrespectively of the log level.
