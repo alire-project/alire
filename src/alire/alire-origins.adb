@@ -74,7 +74,9 @@ package body Alire.Origins is
    ------------------------
 
    function New_Source_Archive
-     (URL : Alire.URL; Name : String := "") return Origin
+     (URL  : Alire.URL;
+      Hash : Hashes.Any_Hash;
+      Name : String := "") return Origin
    is
       Archive_Name : constant String :=
         (if Name'Length = 0 then URL_Basename (URL) else Name);
@@ -91,7 +93,7 @@ package body Alire.Origins is
            "Unable to determine archive format from file extension";
       end if;
 
-      return (Data => (Source_Archive, +URL, +Archive_Name, Format));
+      return (Data => (Source_Archive, +URL, +Archive_Name, Format, +Hash));
    end New_Source_Archive;
 
    -----------------
@@ -148,14 +150,42 @@ package body Alire.Origins is
       else
          declare
             Archive : TOML.TOML_Value;
+            Hash    : TOML.TOML_Value;
          begin
-            if not Parent.Pop (TOML_Keys.Origin_Source, Archive) then
-               return Parent.Failure ("missing mandatory "
-                                      & TOML_Keys.Origin_Source);
-            elsif Archive.Kind /= TOML.TOML_String then
-               return Parent.Failure ("archive name must be a string");
+            --  Optional filename checks:
+            if Parent.Pop (TOML_Keys.Archive_Name, Archive) then
+               if Archive.Kind /= TOML.TOML_String then
+                  return Parent.Failure ("archive name must be a string");
+               end if;
             end if;
-            This := New_Source_Archive (From, Archive.As_String);
+
+            --  Hash checks:
+            if not Parent.Pop (TOML_Keys.Archive_Hash, Hash) then
+               return Parent.Failure ("missing mandatory field: "
+                                      & TOML_Keys.Archive_Hash);
+            elsif Hash.Kind /= TOML.TOML_String then
+               return Parent.Failure
+                 ("hash must be a 'kind:digest' formatted string");
+            elsif not Hashes.Is_Well_Formed (Hash.As_String) then
+               return Parent.Failure
+                 ("malformed or unknown hash: " & Hash.As_String);
+            end if;
+
+            begin
+               This := New_Source_Archive
+                 (URL  => From,
+                  Hash => Hash.As_String,
+                  Name => (if Archive.Is_Present
+                           then Archive.As_String
+                           else ""));
+            exception
+               when Unknown_Source_Archive_Name_Error =>
+                  return Parent.Failure
+                    ("unable to determine archive name from URL: "
+                     & "please specify one with '"
+                     & TOML_Keys.Archive_Name & "'");
+            end;
+
             return Outcome_Success;
          end;
       end if;
@@ -265,6 +295,23 @@ package body Alire.Origins is
          return From.Failure ("expected string description or case table");
       end if;
    end From_TOML;
+
+   ---------------------
+   -- Short_Unique_Id --
+   ---------------------
+
+   function Short_Unique_Id (This : Origin) return String is
+      Hash : constant String :=
+               (if This.Kind = Source_Archive
+                then Utils.Tail (This.Archive_Hash, ':')
+                else This.Commit);
+   begin
+      if Hash'Length < 8 then
+         return Hash;
+      else
+         return Hash (Hash'First .. Hash'First + 7);
+      end if;
+   end Short_Unique_Id;
 
    -------------
    -- To_TOML --

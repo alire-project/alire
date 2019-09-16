@@ -1,3 +1,4 @@
+with Alire.Hashes;
 with Alire.Interfaces;
 with Alire.Platforms;
 with Alire.TOML_Adapters;
@@ -76,12 +77,19 @@ package Alire.Origins with Preelaborate is
      with Pre => This.Kind = Source_Archive;
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
      with Pre => This.Kind = Source_Archive;
+   function Archive_Hash (This : Origin) return Hashes.Any_Hash
+     with Pre => This.Kind = Source_Archive;
+   function Archive_Digest (This : Origin) return String -- part after the ':'
+     with Pre => This.Kind = Source_Archive;
 
    function Is_Native (This : Origin) return Boolean is (This.Kind = Native);
    function Package_Name (This         : Origin;
                           Distribution : Platforms.Distributions)
                           return String;
    function All_Native_Names (This : Origin) return Native_Packages;
+
+   function Short_Unique_Id (This : Origin) return String with
+     Pre => This.Kind in Git | Hg | Source_Archive;
 
    --  Helper types
 
@@ -105,7 +113,9 @@ package Alire.Origins with Preelaborate is
    Unknown_Source_Archive_Name_Error : exception;
 
    function New_Source_Archive
-     (URL : Alire.URL; Name : String := "") return Origin;
+     (URL  : Alire.URL;
+      Hash : Hashes.Any_Hash;
+      Name : String := "") return Origin;
    --  Create a reference to a source archive to be downloaded and extracted.
    --  URL is the address of the archive to download. Name is the name of the
    --  file to download.
@@ -176,7 +186,7 @@ private
             Archive_URL    : Unbounded_String;
             Archive_Name   : Unbounded_String;
             Archive_Format : Known_Source_Archive_Format;
-            --  TODO: include hash type and value
+            Archive_Hash   : Unbounded_String;
 
          when Native =>
             Packages : Native_Packages;
@@ -218,16 +228,20 @@ private
    function Commit (This : Origin) return String is
      (+This.Data.Commit);
    function URL_With_Commit (This : Origin) return Alire.URL is
-      (This.URL & "@" & This.Commit);
+     (This.URL & "@" & This.Commit);
 
    function Path (This : Origin) return String is (+This.Data.Path);
 
    function Archive_URL (This : Origin) return Alire.URL is
-      (+This.Data.Archive_URL);
+     (+This.Data.Archive_URL);
    function Archive_Name (This : Origin) return String is
      (+This.Data.Archive_Name);
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
-     is (This.Data.Archive_Format);
+   is (This.Data.Archive_Format);
+   function Archive_Hash (This : Origin) return Hashes.Any_Hash is
+     (+This.Data.Archive_Hash);
+   function Archive_Digest (This : Origin) return String is
+     (Hashes.Digest (This.Archive_Hash));
 
    function Package_Name (This         : Origin;
                           Distribution : Platforms.Distributions)
@@ -245,8 +259,11 @@ private
             "commit " & S (This.Data.Commit)
             & " from " & S (This.Data.Repo_URL),
          when Source_Archive =>
-            "source archive " & S (This.Data.Archive_Name)
-            & " at " & S (This.Data.Archive_URL),
+            "source archive " & (if S (This.Data.Archive_Name) /= ""
+                                 then S (This.Data.Archive_Name) & " "
+                                 else "")
+            & "at " & S (This.Data.Archive_URL)
+            & " with hash " & S (This.Data.Archive_Hash),
          when Native =>
             "native package from platform software manager",
          when Filesystem =>

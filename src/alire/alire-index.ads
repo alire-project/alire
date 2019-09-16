@@ -198,11 +198,6 @@ package Alire.Index is
    function Native (Distros : Origins.Native_Packages) return Origins.Origin
    renames Origins.New_Native;
 
-   function Source_Archive (URL : Alire.URL;
-                            Name : String := "")
-                            return Origins.Origin
-                            renames Origins.New_Source_Archive;
-
    ------------------
    -- Dependencies --
    ------------------
