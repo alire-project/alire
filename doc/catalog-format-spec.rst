@@ -358,6 +358,10 @@ following entries:
    [origin.'case(distribution)']
    'debian|ubuntu' = "native:make"
 
+* ``archive-hash``: mandatory string for source archives. A "kind:digest" field
+  that specifies a hash kind and its value. The only accepted kind is SHA512 at
+  this time.
+
 * ``archive-name``: optional string. If ``origin`` points to a source archive,
   this can specifiy the name of the file to download, which is needed in order
   to properly extract the sources. For instance:
@@ -366,6 +370,7 @@ following entries:
 
    origin = "https://example.org/0123456789"
    archive-name = "archive.tar.gz"
+   archive-hash = "sha512:bf6082573dc537836ea8506a2c9a75dc7837440c35c5b02a52add52e38293640d99e90a9706690591f8899b8b4935824b195f230b3aa1c4da10911e3caf954c04ac"
 
 * ``available``: optional dynamic boolean expression. It is used the following
   way:
