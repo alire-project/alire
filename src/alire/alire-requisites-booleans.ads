@@ -39,10 +39,10 @@ private
 
    overriding
    function To_TOML (This : Requisite) return TOML.TOML_Value is
-     (raise Unimplemented);
+     (TOML.Create_Boolean (This.Bool));
 
    function Always_True return Tree is
-      (Trees.Leaf (Requisite'(Bool => True)));
+     (Trees.Leaf (Requisite'(Bool => True)));
 
    function Always_False return Tree is
      (Trees.Leaf (Requisite'(Bool => False)));
