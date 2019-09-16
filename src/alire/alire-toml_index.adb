@@ -4,6 +4,13 @@ with Ada.Text_IO;
 
 with Alire.Errors;
 with Alire.GPR;
+
+with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
+--  Hash implementation generics are not directly withed anywhere. Since they
+--  are not Preelaborate, and the index loader is one of the few in Alire also
+--  not Preelaborate, and retrieving a file will always occur after loading the
+--  index, this seems a decent place to force inclusion in the build closure.
+
 with Alire.Index;
 with Alire.Origins.Tweaks;
 with Alire.Utils;
