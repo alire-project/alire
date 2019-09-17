@@ -30,7 +30,7 @@ echo ............................
 
 # This is temporary addition for this PR to pass CI tests with the updated index.
 # Remove once merged.
-alr index --name pro --add git+https://github.com/alire-project/alire-index@cb6c920
+alr index --name pro --add git+https://github.com/alire-project/alire-index@2e01404
 
 echo ALR VERSION:
 alr version
