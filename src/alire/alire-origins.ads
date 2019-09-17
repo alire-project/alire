@@ -1,5 +1,6 @@
 with Alire.Interfaces;
 with Alire.Platforms;
+with Alire.TOML_Adapters;
 with Alire.Utils;
 
 private with Ada.Strings.Unbounded;
@@ -7,11 +8,6 @@ private with Ada.Strings.Unbounded;
 with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Origins with Preelaborate is
-
-   --  Minimal information about origins of sources. We use the term origins to
-   --  avoid mixing 'alire sources' with 'project sources' or other 'sources'.
-
-   --  The actual capabilities for check-outs or fetches are in alr proper
 
    --------------------------------------------
    --  supporting types for native packages  --
@@ -40,6 +36,10 @@ package Alire.Origins with Preelaborate is
       Native          -- Native platform package
      );
 
+   type String_Access is access constant String;
+   type Prefix_Array is array (Kinds) of String_Access;
+   Prefixes : constant Prefix_Array;
+
    subtype VCS_Kinds is Kinds range Git .. SVN;
 
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);
@@ -50,6 +50,7 @@ package Alire.Origins with Preelaborate is
 
    type Origin is new
      Interfaces.Codifiable and
+     Interfaces.Detomifiable and
      Interfaces.Tomifiable with private;
 
    function Kind (This : Origin) return Kinds;
@@ -122,6 +123,21 @@ package Alire.Origins with Preelaborate is
 
    overriding function To_Code (This : Origin) return Utils.String_Vector;
 
+   function From_String
+     (This   : out Origin;
+      From   : String;
+      Parent : TOML_Adapters.Key_Queue := TOML_Adapters.Empty_Queue)
+      return Outcome;
+   --  Parse a string and dispatch to the appropiate constructor.
+   --  Parent is an optional parent TOML table that may contain extra fields
+   --  (e.g., source_archive in case of an https: origin)
+
+   overriding
+   function From_TOML (This : in out Origin;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome;
+   --  Pops "origin" from From.
+
    overriding function To_TOML (This : Origin) return TOML.TOML_Value with
      Post => To_TOML'Result.Kind = TOML.TOML_Table;
 
@@ -160,6 +176,7 @@ private
             Archive_URL    : Unbounded_String;
             Archive_Name   : Unbounded_String;
             Archive_Format : Known_Source_Archive_Format;
+            --  TODO: include hash type and value
 
          when Native =>
             Packages : Native_Packages;
@@ -167,7 +184,10 @@ private
    end record;
 
    type Origin
-   is new Interfaces.Codifiable and Interfaces.Tomifiable
+   is new
+     Interfaces.Codifiable and
+     Interfaces.Detomifiable and
+     Interfaces.Tomifiable
    with record
       Data : Origin_Data;
    end record;
@@ -236,5 +256,19 @@ private
      (if This.Kind = Filesystem
       then Utils.To_Vector (Path (This))
       else raise Program_Error with "Unimplemented");
+
+   Prefix_Git    : aliased constant String := "git+";
+   Prefix_Hg     : aliased constant String := "hg+";
+   Prefix_SVN    : aliased constant String := "svn+";
+   Prefix_File   : aliased constant String := "file://";
+   Prefix_Native : aliased constant String := "native:";
+
+   Prefixes : constant Prefix_Array :=
+                (Git            => Prefix_Git'Access,
+                 Hg             => Prefix_Hg'Access,
+                 SVN            => Prefix_SVN'Access,
+                 Filesystem     => Prefix_File'Access,
+                 Native         => Prefix_Native'Access,
+                 Source_Archive => null);
 
 end Alire.Origins;

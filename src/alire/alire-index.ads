@@ -333,7 +333,7 @@ package Alire.Index is
 
    function License (L : Licensing.Licenses)
                      return Conditional.Properties
-   is (U (Properties.Licenses.Values.New_Property (L)));
+   is (U (Properties.Licenses.New_License (L)));
 
    --  Concatenate
    function "and" (L, R : Release_Properties) return Release_Properties
@@ -371,8 +371,6 @@ package Alire.Index is
 
    function Operating_System is new Requisites.Platform.Op_Systems.Factory;
 
-   function Distro_Release   is new Requisites.Platform.Versions.Factory;
-
    function Target           is new Requisites.Platform.Targets.Factory;
 
    function Word_Size        is new Requisites.Platform.Word_Sizes.Factory;
@@ -406,7 +404,6 @@ package Alire.Index is
    use all type Platforms.Distributions;
    use all type Platforms.Operating_Systems;
    use all type Platforms.Targets;
-   use all type Platforms.Versions;
    use all type Platforms.Word_Sizes;
    use all type Properties.Property'Class;
    use all type Release_Dependencies;
@@ -416,7 +413,6 @@ package Alire.Index is
    use all type Requisites.Platform.Distributions.Comparable;
    use all type Requisites.Platform.Op_Systems.Comparable;
    use all type Requisites.Platform.Targets.Comparable;
-   use all type Requisites.Platform.Versions.Comparable;
    use all type Requisites.Platform.Word_Sizes.Comparable;
 
    use all type Requisites.Tree;

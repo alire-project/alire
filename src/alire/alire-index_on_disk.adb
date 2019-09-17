@@ -1,9 +1,11 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Errors;
 with Alire.Directories;
 with Alire.Index_On_Disk.Directory;
 with Alire.Index_On_Disk.Git;
+with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.Utils;
 with Alire.VCSs;
@@ -71,8 +73,7 @@ package body Alire.Index_On_Disk is
    -- Load --
    ----------
 
-   function Load (This : Index'Class;
-                  Env  : Alire.TOML_Index.Environment_Variables) return Outcome
+   function Load (This : Index'Class) return Outcome
    is
       Repo_Version_Files : constant Utils.String_Vector :=
                              Directories.Find_Files_Under
@@ -91,12 +92,15 @@ package body Alire.Index_On_Disk is
                TOML_Index.Load_Catalog
                  (Catalog_Dir => Ada.Directories.Containing_Directory
                                    (Repo_Version_Files.First_Element),
-                  Environment => Env,
                   Result      => Result);
             end return;
          when others =>
             return Outcome_Failure ("Several index.toml files found in index");
       end case;
+
+   exception
+      when E : Checked_Error =>
+         return Errors.Get (E);
    end Load;
 
    ----------

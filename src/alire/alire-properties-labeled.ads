@@ -1,11 +1,13 @@
 with Alire.Conditional;
-
+with Alire.TOML_Adapters;
 private with Alire.TOML_Keys;
 private with Alire.Utils.YAML;
 
 package Alire.Properties.Labeled with Preelaborate is
 
-   --  Properties that have a single string value and a name
+   --  Properties that have a string atomic/array value and a name.
+   --  Note that string arrays are internally stored as several individual
+   --  properties with the same label at present.
 
    type Labels is
      (Author,
@@ -14,11 +16,17 @@ package Alire.Properties.Labeled with Preelaborate is
       Comment,
       --  Extra text
 
+      Description,
+      --  Free-form but short description
+
       Executable,
       --  A resulting executable built by the project
 
       Maintainer,
       --  Info about the maintainer of the alr-packaged project
+
+      Notes,
+      --  Specific information about a release
 
       Path,
       --  Extra path for PATH to add to build (prepended)
@@ -31,15 +39,32 @@ package Alire.Properties.Labeled with Preelaborate is
      );
 
    type Cardinalities is (Unique, Multiple); -- Are they atoms or arrays?
+   --  This information is used during loading to enforce index correctness,
+   --  and during exporting to ensure the proper type (atom/array) is created.
 
    Cardinality : array (Labels) of Cardinalities :=
-                   (Comment     |
-                    Website     => Unique,
-                    others      => Multiple);
+                   (Author       => Multiple,
+                    Comment      => Unique,
+                    Description  => Unique,
+                    Executable   => Multiple,
+                    Maintainer   => Multiple,
+                    Notes        => Unique,
+                    Path         => Multiple,
+                    Project_File => Multiple,
+                    Website      => Unique);
 
    Mandatory : array (Labels) of Boolean :=
-                 (Maintainer  => True,
-                  others      => False);
+                 (Author       => False,
+                  Comment      => False,
+                  Description  => True,
+                  Executable   => False,
+                  Maintainer   => True,
+                  Notes        => False,
+                  Path         => False,
+                  Project_File => False,
+                  Website      => False);
+   --  Some properties are mandatory in the [general] section; we used this
+   --  array to check their presence.
 
    type Label (<>) is new
      Properties.Property and
@@ -53,9 +78,12 @@ package Alire.Properties.Labeled with Preelaborate is
 
    function Value (L : Label) return String;
 
-   --  TODO: use this one in Releases instead of the non-reusables Values
    function Filter (LV : Vector; Name : Labels) return Vector;
    --  Return only Label'Class with matching name
+
+   function Filter (PV   : Conditional.Properties;
+                    Name : Labels) return Vector;
+   --  Version that takes a conditional tree, enumerates it and filters it.
 
    overriding
    function Image (L : Label) return String;
@@ -77,6 +105,18 @@ package Alire.Properties.Labeled with Preelaborate is
      with
        Post => To_TOML_Array'Result.Kind = TOML.TOML_Array;
    --  Filter LV and generate a key = [values ...] table.
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Conditional.Properties;
+   --  Loads any labeled property. May raise Checked_Error.
+
+   function From_TOML_Executable_Cases (From : TOML_Adapters.Key_Queue)
+                                        return Conditional.Properties;
+   --  Loads only executable properties; used during resolution of cases.
+
+   function From_TOML_Project_File_Cases (From : TOML_Adapters.Key_Queue)
+                                          return Conditional.Properties;
+   --  Loads only project-file properties; used during resolution of cases.
 
    generic
       Name : Labels;
@@ -104,9 +144,6 @@ private
 
    function Value (L : Label) return String is (L.Value);
 
---     function Vec_New_Label (Value : String) return Properties.Vector is
---       (To_Vector (New_Label (Name, Value), 1));
-
    function Cond_New_Label (Value : String) return Conditional.Properties is
      (Conditional.For_Properties.New_Value (New_Label (Name, Value)));
 
@@ -124,14 +161,16 @@ private
    is (Utils.YAML.YAML_Stringify (L.Value));
 
    function Key (L : Labels) return String
-   is  (case L is
-         when Author       => TOML_Keys.Author,
-         when Comment      => TOML_Keys.Comment,
-         when Executable   => TOML_Keys.Executable,
-         when Maintainer   => TOML_Keys.Maintainer,
-         when Path         => TOML_Keys.Path,
-         when Project_File => TOML_Keys.Project_File,
-         when Website      => TOML_Keys.Website);
+   is (case L is
+          when Author       => TOML_Keys.Author,
+          when Comment      => TOML_Keys.Comment,
+          when Description  => TOML_Keys.Description,
+          when Executable   => TOML_Keys.Executable,
+          when Maintainer   => TOML_Keys.Maintainer,
+          when Notes        => TOML_Keys.Notes,
+          when Path         => TOML_Keys.Path,
+          when Project_File => TOML_Keys.Project_File,
+          when Website      => TOML_Keys.Website);
 
    overriding
    function Key (L : Label) return String is (Key (L.Name));

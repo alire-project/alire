@@ -28,6 +28,10 @@ echo GNAT VERSION:
 gnatls -v
 echo ............................
 
+# This is temporary addition for this PR to pass CI tests with the new index.
+# Remove once merged
+alr index --name pro --add git+https://github.com/alire-project/alire-index@06ce3ef
+
 echo ALR VERSION:
 alr version
 echo ............................

@@ -1,11 +1,15 @@
 with Alire.Conditional_Trees;
 with Alire.Dependencies;
 with Alire.Properties;
-with Alire.Requisites;
+with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
 
 package Alire.Conditional with Preelaborate is
+
+   ------------------
+   -- Dependencies --
+   ------------------
 
    package For_Dependencies is new Conditional_Trees (Dependencies.Dependency,
                                                        Dependencies.Image);
@@ -23,13 +27,40 @@ package Alire.Conditional with Preelaborate is
                             Versions : Semantic_Versioning.Version_Set)
                             return Dependencies;
 
+   function No_Dependencies return Dependencies is (For_Dependencies.Empty);
+
+   function Deps_From_TOML (From : TOML_Adapters.Key_Queue)
+                            return Dependencies;
+   --  Expects a wrapped table of crate = version_set pairs:
+   --  depends-on = { crate = version [...] }
+
+   ----------------
+   -- Properties --
+   ----------------
+
    package For_Properties
    is new Conditional_Trees (Properties.Property'Class,
                              Properties.Image_Classwide);
    subtype Properties is For_Properties.Tree;
 
+   subtype Unconditional_Properties is Conditional.Properties with
+     Dynamic_Predicate => Unconditional_Properties.Is_Unconditional;
+   --  A plain list of properties without dynamic expressions.
+
    function New_Property (Property : Alire.Properties.Property'Class)
                           return Properties;
+
+   function Enumerate is new Conditional.For_Properties.Enumerate
+     (Alire.Properties.Vector, Alire.Properties.Append);
+
+   function No_Properties return Properties is (For_Properties.Empty);
+
+   type Property_Loader is access
+     function (From : TOML_Adapters.Key_Queue)
+               return Conditional.Properties;
+   --  Function provided by each concrete Property class for TOML loading.
+   --  From is always a table "prop-name = whatever".
+   --  These may raise Checked_Error.
 
 private
 

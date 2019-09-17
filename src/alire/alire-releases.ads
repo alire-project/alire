@@ -11,9 +11,10 @@ with Alire.Properties;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Requisites;
+with Alire.TOML_Adapters;
+with Alire.TOML_Keys;
 with Alire.Utils;
 with Alire.Versions;
-with Alire.TOML_Keys;
 
 with Semantic_Versioning;
 
@@ -28,6 +29,7 @@ package Alire.Releases with Preelaborate is
    type Release (<>) is
      new Versions.Versioned
      and Interfaces.Tomifiable
+     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with private;
 
@@ -45,7 +47,7 @@ package Alire.Releases with Preelaborate is
 
    function New_Working_Release
      (Project      : Alire.Project;
-      Origin       : Origins.Origin := Origins.New_Filesystem (".");
+      Origin       : Origins.Origin := Origins.New_Filesystem ("..");
 
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
@@ -58,17 +60,10 @@ package Alire.Releases with Preelaborate is
    --  For working project releases that may have incomplete information
 
    function Extending
-     (Base               : Release;
-
-      Dependencies       : Conditional.Dependencies :=
-        Conditional.For_Dependencies.Empty;
-
-      Properties         : Conditional.Properties   :=
-        Conditional.For_Properties.Empty;
-
-      Available          : Alire.Requisites.Tree    :=
-        Requisites.Trees.Empty_Tree
-     )
+     (Base         : Release;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
+      Properties   : Conditional.Properties   := Conditional.No_Properties;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
       return Release;
    --  Takes a release and merges given fields
 
@@ -87,8 +82,20 @@ package Alire.Releases with Preelaborate is
                        return Release;
    --  Takes a release and replaces the given fields
 
-   function Replacing (Base         : Release;
-                       Dependencies : Conditional.Dependencies) return Release;
+   function Replacing
+     (Base         : Release;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies)
+      return Release;
+
+   function Replacing
+     (Base         : Release;
+      Properties   : Conditional.Properties   := Conditional.No_Properties)
+      return Release;
+
+   function Replacing
+     (Base         : Release;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
+      return Release;
 
    function Replacing (Base   : Release;
                        Origin : Origins.Origin) return Release;
@@ -109,7 +116,7 @@ package Alire.Releases with Preelaborate is
 
    function Whenever (R : Release; P : Properties.Vector) return Release;
    --  Materialize conditions in a Release once the whatever properties are
-   --  known. At present dependencies and properties.
+   --  known. At present dependencies, properties, and availability.
 
    overriding function Project (R : Release) return Alire.Project;
 
@@ -202,20 +209,20 @@ package Alire.Releases with Preelaborate is
       return Utils.String_Vector;
    --  Get all values for a given property for a given platform properties
 
-   function License (R : Release) return Alire.Properties.Vector;
-
    function Author (R : Release) return Alire.Properties.Vector;
+
+   function License (R : Release) return Alire.Properties.Vector;
 
    function Maintainer (R : Release) return Alire.Properties.Vector;
 
-   function Website (R : Release) return Alire.Properties.Vector;
-
    function Milestone (R : Release) return Milestones.Milestone;
+
+   function Website (R : Release) return Alire.Properties.Vector with
+     Post => Natural (Website'Result.Length) <= 1;
+   --  Website is optional and unique in the index spec.
 
    procedure Print (R : Release);
    --  Dump info to console
-
---     overriding function To_Code (R : Release) return Utils.String_Vector;
 
    --  Search helpers
 
@@ -226,6 +233,14 @@ package Alire.Releases with Preelaborate is
                        Dep : Alire.Dependencies.Dependency)
                        return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
+
+   overriding
+   function From_TOML (This : in out Release;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome;
+   --  Fill in the release-specific parts. This expects the common information
+   --  from [general] to be already present in the release, since From points
+   --  to the release proper.
 
    overriding
    function To_TOML (R : Release) return TOML.TOML_Value;
@@ -242,9 +257,6 @@ private
    function Materialize is new Conditional.For_Properties.Materialize
      (Alire.Properties.Vector, Alire.Properties.Append);
 
-   function Enumerate is new Conditional.For_Properties.Enumerate
-     (Alire.Properties.Vector, Alire.Properties.Append);
-
    function All_Properties (R : Release;
                             P : Alire.Properties.Vector)
                             return Alire.Properties.Vector;
@@ -259,6 +271,7 @@ private
                  Notes_Len : Natural) is
      new Versions.Versioned
      and Interfaces.Tomifiable
+     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
       Project      : Alire.Project (1 .. Prj_Len);
@@ -334,17 +347,20 @@ private
    is (Utils.Replace (+R.Project, ":", "_") & OS_Lib.Exe_Suffix);
 
    function License (R : Release) return Alire.Properties.Vector
-   is (Enumerate (R.Properties).Filter
-       (Alire.Properties.Licenses.Values.Property'Tag));
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.Properties.Licenses.License'Tag));
 
    function Author (R : Release) return Alire.Properties.Vector
-   is (Enumerate (R.Properties).Filter (Alire.TOML_Keys.Author));
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Author));
 
    function Maintainer (R : Release) return Alire.Properties.Vector
-   is (Enumerate (R.Properties).Filter (Alire.TOML_Keys.Maintainer));
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Maintainer));
 
    function Website (R : Release) return Alire.Properties.Vector
-   is (Enumerate (R.Properties).Filter (Alire.TOML_Keys.Website));
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Website));
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String

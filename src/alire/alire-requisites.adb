@@ -15,6 +15,13 @@ package body Alire.Requisites is
          end if;
       end loop;
 
+      --  Attempt the alternative, more exhaustive form:
+      for Prop of P loop
+         if R.Satisfies (Prop, P) then
+            return True;
+         end if;
+      end loop;
+
       return False;
    end Satisfies;
 

@@ -1,6 +1,39 @@
-with Alire.TOML_Adapters;
-
 package body Alire.Dependencies is
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   function From_TOML (Key    : String;
+                       Value  : TOML.TOML_Value) return Dependency
+   is
+      package SV renames Semantic_Versioning;
+      Version_Str : constant String := Value.As_String;
+   begin
+      return New_Dependency (+Key,
+                             SV.To_Set (Version_Str));
+      --  TODO: if no operator appears the version, this results in strict
+      --  match. Rust, for example, assumes caret (^) in this case. Do we want
+      --  to do the same?
+   exception
+      when SV.Malformed_Input =>
+         raise Checked_Error with "version set invalid: " & Version_Str;
+   end From_TOML;
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   function From_TOML (From : TOML_Adapters.Key_Queue) return Dependency is
+      Val : TOML.TOML_Value;
+      Key : constant String := From.Pop (Val);
+   begin
+      return From_TOML (Key, Val);
+   end From_TOML;
+
+   -------------
+   -- To_TOML --
+   -------------
 
    overriding function To_TOML (Dep : Dependency) return TOML.TOML_Value is
       use Semantic_Versioning;

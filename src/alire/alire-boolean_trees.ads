@@ -1,16 +1,20 @@
 private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Multiway_Trees;
 
+with Alire.Interfaces;
+
+with TOML;
+
 generic
    type Value     (<>) is private;
-   type Condition (<>) is private;
+   type Condition (<>) is new Interfaces.Tomifiable with private;
    with function Check (C : Condition; V : Value) return Boolean;
    with function Image (C : Condition) return String;
 package Alire.Boolean_Trees with Preelaborate is
 
    --  A package to represent trees of logical expressions
 
-   type Tree is tagged private;
+   type Tree is new Interfaces.Tomifiable with private;
 
    Empty_Tree : constant Tree;
 
@@ -82,11 +86,18 @@ private
 
    package Trees is new Ada.Containers.Indefinite_Multiway_Trees (Node);
 
-   type Tree is new Trees.Tree with null record;
+   type Tree is new Trees.Tree and Interfaces.Tomifiable with null record;
 
-   Empty_Tree : constant Tree := (Trees.Empty_Tree with null record);
+   overriding
+   function To_TOML (This : Tree) return TOML.TOML_Value is
+     (case Trees.First_Child_Element (This.Root).Kind is
+         when Leaf   => Trees.First_Child_Element (This.Root)
+                          .Condition.Constant_Reference.To_TOML,
+         when others => raise Unimplemented);
 
    overriding function Is_Empty (T : Tree) return Boolean
    is (Trees.Is_Empty (Trees.Tree (T)));
+
+   Empty_Tree : constant Tree := (Trees.Empty_Tree with null record);
 
 end Alire.Boolean_Trees;

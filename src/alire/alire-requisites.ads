@@ -1,11 +1,13 @@
 with Alire.Boolean_Trees;
+with Alire.Interfaces;
 with Alire.Properties;
 
 package Alire.Requisites with Preelaborate is
 
    use Properties;
 
-   type Requisite is abstract tagged null record;
+   type Requisite is abstract new
+     Interfaces.Tomifiable with null record;
    --  A Requisite verifies against some internally stored data that a property
    --  is satisfied. Here we provide the basic storage of values but the actual
    --  checking function must be overridden for particular checks.
@@ -29,6 +31,16 @@ package Alire.Requisites with Preelaborate is
    --  This function is used later in the generic implementation to
    --  automatically downcast, so requisite implementations do not need to
    --  deal with this MI-mess
+
+   function Satisfies (R : Requisite;
+                       Unused_P : Property'Class;
+                       Unused_V : Properties.Vector)
+                       return Boolean
+                       is (False);
+   --  However, for the new case requisites, which in turn may contain other
+   --  trees, we need to pass all properties to each of these requisite nodes
+   --  so they can pass them down to their owned trees.
+   --  These special requisites must override this alternative version.
 
    function Image (R : Requisite) return String is abstract;
    --  A necessary pain to be able to report
@@ -73,6 +85,15 @@ package Alire.Requisites with Preelaborate is
       --  This is the important function to override by Requisite
       --  implementations
 
+      not overriding
+      function Children_Are_Satisfied (R : Requisite;
+                                       P : Matching_Property;
+                                       Unused_V : Properties.Vector)
+                                       return Boolean is
+        (Requisite'Class (R).Is_Satisfied (P));
+      --  The exhaustive form used only by 'case(xx)'
+      --  It defaults to Is_Satisfied
+
       --  The remainder methods are utilities that do not require modifications
       --  by the client.
 
@@ -89,6 +110,16 @@ package Alire.Requisites with Preelaborate is
         (if R.Is_Applicable (P)
          then Requisite'Class (R).Is_Satisfied (Matching_Property (P))
          else False);
+
+      overriding
+      function Satisfies (R : Requisite;
+                          P : Property'Class;
+                          V : Properties.Vector)
+                          return Boolean
+      is (if R.Is_Applicable (P)
+          then Requisite'Class (R)
+               .Children_Are_Satisfied (Matching_Property (P), V)
+          else False);
 
    end For_Property;
 

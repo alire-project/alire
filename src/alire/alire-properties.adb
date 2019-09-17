@@ -1,3 +1,5 @@
+with Alire.Conditional;
+
 package body Alire.Properties is
 
    ------------
@@ -37,17 +39,16 @@ package body Alire.Properties is
    -------------
 
    overriding function To_TOML (V : Vector) return TOML.TOML_Value is
-      use TOML;
+      use Conditional.For_Properties;
+      Tree : Conditional.Properties;
    begin
-      if V.Is_Empty then
-         return Create_Array (TOML_String); -- Ensure typed
-      else
-         return TV : constant TOML_Value := Create_Array do
-            for Prop of V loop
-               Append (TV, Prop.To_TOML);
-            end loop;
-         end return;
-      end if;
+      --  Convert to a conditional vector to reuse the export function there,
+      --  which is more general and takes property cardinalities into account.
+      for Prop of V loop
+         Tree := Tree and Prop;
+      end loop;
+
+      return Tree.To_TOML;
    end To_TOML;
 
 end Alire.Properties;

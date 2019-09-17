@@ -1,42 +1,28 @@
-with Alire.Containers;
 with Alire.Directories;
+with Alire.Errors;
 with Alire.Paths;
 with Alire.TOML_Index;
 
 package body Alire.Root is
 
-   function Current (Env : Environment.Setup) return Roots.Root is
+   function Current return Roots.Root is
       use Alire.Directories;
       Path      : constant String := Directories.Detect_Root_Path;
-      Index_Env : TOML_Index.Environment_Variables;
    begin
-      Alire.TOML_Index.Set_Environment
-        (Env      => Index_Env,
-         Distrib  => Env.Distro,
-         OS       => Env.OS,
-         Compiler => Env.Compiler);
-
       if Path /= "" then
          declare
-            Release : Containers.Release_Holders.Holder;
-            Result  : TOML_Index.Load_Result;
             File    : constant String :=
               Directories.Find_Single_File
                 (Path      => Path / Paths.Working_Folder_Inside_Root,
                  Extension => Paths.Crate_File_Extension_With_Dot);
          begin
-            TOML_Index.Load_Release_From_File
-              (Filename    => File,
-               Environment => Index_Env,
-               Release     => Release,
-               Result      => Result);
-
-            if Result.Success then
-               return Roots.New_Root (Release.Element, Path);
-            else
+            return Roots.New_Root
+              (TOML_Index.Load_Release_From_File (File),
+               Path);
+         exception
+            when E : Checked_Error =>
                return Roots.New_Invalid_Root.With_Reason
-                 ("Failed to load " & File & ": " & (+Result.Message));
-            end if;
+                 ("Failed to load " & File & ": " & Errors.Get (E));
          end;
       else
          return Roots.New_Invalid_Root.With_Reason

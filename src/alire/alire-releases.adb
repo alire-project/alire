@@ -4,7 +4,7 @@ with AAA.Table_IO;
 with Alire.Defaults;
 with Alire.Platforms;
 with Alire.Requisites.Booleans;
-with Alire.TOML_Adapters;
+with Alire.TOML_Load;
 with Alire.Utils.YAML;
 
 with GNAT.IO; -- To keep preelaborable
@@ -28,6 +28,9 @@ package body Alire.Releases is
 
    function Default_Properties return Conditional.Properties
    is (Conditional.For_Properties.New_Value
+       (New_Label (Description,
+                   Defaults.Description)) and
+       Conditional.For_Properties.New_Value
        (New_Label (Maintainer,
                    Defaults.Maintainer)));
 
@@ -36,18 +39,10 @@ package body Alire.Releases is
    ---------------
 
    function Extending
-     (Base               : Release;
-
-      Dependencies       : Conditional.Dependencies :=
-        Conditional.For_Dependencies.Empty;
-
-      Properties         : Conditional.Properties   :=
-        Conditional.For_Properties.Empty;
-
-      Available          : Alire.Requisites.Tree    :=
-        Requisites.Trees.Empty_Tree
-     )
-
+     (Base         : Release;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
+      Properties   : Conditional.Properties   := Conditional.No_Properties;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
       return Release
    is
       use all type Conditional.Dependencies;
@@ -109,13 +104,41 @@ package body Alire.Releases is
    -- Replacing --
    ---------------
 
-   function Replacing (Base         : Release;
-                       Dependencies : Conditional.Dependencies)
-                       return Release
-   is
+   function Replacing
+     (Base         : Release;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies)
+      return Release is
    begin
       return Replaced : Release := Base do
          Replaced.Dependencies := Dependencies;
+      end return;
+   end Replacing;
+
+   ---------------
+   -- Replacing --
+   ---------------
+
+   function Replacing
+     (Base         : Release;
+      Properties   : Conditional.Properties   := Conditional.No_Properties)
+      return Release is
+   begin
+      return Replaced : Release := Base do
+         Replaced.Properties := Properties;
+      end return;
+   end Replacing;
+
+   ---------------
+   -- Replacing --
+   ---------------
+
+   function Replacing
+     (Base         : Release;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
+      return Release is
+   begin
+      return Replaced : Release := Base do
+         Replaced.Available := Available;
       end return;
    end Replacing;
 
@@ -213,7 +236,7 @@ package body Alire.Releases is
 
    function New_Working_Release
      (Project      : Alire.Project;
-      Origin       : Origins.Origin := Origins.New_Filesystem (".");
+      Origin       : Origins.Origin := Origins.New_Filesystem ("..");
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
       Properties   : Conditional.Properties   :=
@@ -448,7 +471,7 @@ package body Alire.Releases is
 
       Search : constant String := To_Lower_Case (Str);
    begin
-      for P of Enumerate (R.Properties) loop
+      for P of Conditional.Enumerate (R.Properties) loop
          declare
             Text : constant String :=
                      To_Lower_Case
@@ -465,6 +488,45 @@ package body Alire.Releases is
       return False;
    end Property_Contains;
 
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   overriding
+   function From_TOML (This : in out Release;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome
+   is
+   begin
+      Trace.Detail ("Loading release " & This.Milestone.Image);
+
+      --  Origin
+      declare
+         Result : constant Outcome := This.Origin.From_TOML (From);
+      begin
+         if not Result.Success then
+            return Result;
+         end if;
+      end;
+
+      declare
+         Result : constant Outcome :=
+                    TOML_Load.Load_Crate_Section
+                      (Projects.Release_Section,
+                       From,
+                       This.Properties,
+                       This.Dependencies,
+                       This.Available);
+      begin
+         if not Result.Success then
+            return Result;
+         end if;
+      end;
+
+      --  Check for remaining keys, which must be erroneous:
+      return From.Report_Extra_Keys;
+   end From_TOML;
+
    -------------
    -- To_TOML --
    -------------
@@ -477,18 +539,21 @@ package body Alire.Releases is
       Root    : constant TOML.TOML_Value := TOML.Create_Table;
       Relinfo :          TOML.TOML_Value := TOML.Create_Table;
    begin
+
+      --  TODO: move generation of the [general] crate part to Alire.Crates.
+
       --  General properties
       declare
          General : constant TOML.TOML_Value := R.Properties.To_TOML;
       begin
          --  Description
-         if Projects.Descriptions.Contains (R.Project) then
-            General.Set (TOML_Keys.Description,
-                         +Projects.Descriptions (R.Project));
-         else
-            General.Set (TOML_Keys.Description,
-                         +Defaults.Description);
-         end if;
+--           if Projects.Descriptions.Contains (R.Project) then
+--              General.Set (TOML_Keys.Description,
+--                           +Projects.Descriptions (R.Project));
+--           else
+--              General.Set (TOML_Keys.Description,
+--                           +Defaults.Description);
+--           end if;
 
          --  Alias/Provides
          if UStrings.Length (R.Alias) > 0 then
@@ -517,17 +582,7 @@ package body Alire.Releases is
             end if;
          end loop;
 
-         --  Ensure mandatory labels are there
-         for Label in APL.Mandatory'Range loop
-            if APL.Mandatory (Label) then
-               pragma Assert (General.Has (APL.Key (Label)));
-            end if;
-         end loop;
-
-         --  License
-         General.Set (TOML_Keys.License, R.License.To_TOML);
-
-         --  Final assignment, always have general section
+         --  Final assignment, always have general section.
          Root.Set (TOML_Keys.General, General);
       end;
 
@@ -545,22 +600,12 @@ package body Alire.Releases is
       end if;
 
       --  Available
-      if R.Available.Is_Empty
-           or else
+      if R.Available.Is_Empty or else
          R.Available = Alire.Requisites.Booleans.Always_True
       then
          null; -- Do nothing, do not pollute .toml file
-      elsif not R.Available.Is_Empty
-              and then
-            R.Available = Alire.Requisites.Booleans.Always_False
-      then
-         Relinfo.Set (TOML_Keys.Available, TOML.Create_Boolean (False));
-         --  Stop-gag until proper requisites are re-introduced
       else
-         raise Unimplemented;
-         --  TODO Not straightforward, since current expressions are and/or
-         --  only, and the toml format is case-based. This will require a way
-         --  to load the case expression(s), before they can be exported
+         Relinfo.Set (TOML_Keys.Available, R.Available.To_TOML);
       end if;
 
       --  Version release

@@ -135,6 +135,10 @@ package Alire.Utils with Preelaborate is
    function New_Line (V : String_Vector) return String_Vector;
    --  Append an empty line to V
 
+   function Split (S : String; Separator : Character) return String_Vector;
+   --  Split a string in substrings at Separator positions. A Separator at
+   --  S'First or S'Last will result in an empty string also being included.
+
    not overriding
    function To_Vector (S : String) return String_Vector;
 
