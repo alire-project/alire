@@ -58,7 +58,7 @@ package Alire with Preelaborate is
 
    subtype Project_Character is Character
       with Static_Predicate => Project_Character in
-         'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Extension_Separator;
+         'a' .. 'z' | '0' .. '9' | '_' | Extension_Separator;
 
    type Project is new String with Dynamic_Predicate =>
      Project'Length >= Min_Name_Length and then

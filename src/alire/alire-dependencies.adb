@@ -10,7 +10,7 @@ package body Alire.Dependencies is
       package SV renames Semantic_Versioning;
       Version_Str : constant String := Value.As_String;
    begin
-      return New_Dependency (+Key,
+      return New_Dependency (+Utils.To_Lower_Case (Key),
                              SV.To_Set (Version_Str));
       --  TODO: if no operator appears the version, this results in strict
       --  match. Rust, for example, assumes caret (^) in this case. Do we want
