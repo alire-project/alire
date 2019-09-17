@@ -71,38 +71,17 @@ package body Alr.Commands.Withing is
 
       --  Iterate over actual dependencies and remove any matching the given
       return Filtered : Alire.Conditional.Dependencies do
-         declare
-            procedure Check (Dep : Alire.Conditional.Dependencies) is
-               use all type Alire.Conditional.For_Dependencies.Kinds;
-            begin
-               case Dep.Kind is
-                  when Condition =>
-                     Trace.Warning
-                       ("Skipping unsupported conditional dependency");
-                  when Value => -- A value is a vector of dependencies!
-                     if Dep.Value.Project /= Requested.Project then
-                        Filtered := Filtered and
-                          Alire.Conditional.New_Dependency
-                            (Dep.Value.Project, Dep.Value.Versions);
-                     end if;
-                  when Vector =>
-                     for I in Dep.Iterate loop
-                        Check (Dep (I));
-                     end loop;
-               end case;
-            end Check;
-
-            use all type Alire.Conditional.For_Dependencies.Kinds;
-         begin
-            case Deps.Kind is
-               when Vector =>
-                  Deps.Iterate_Children (Check'Access);
-               when Value =>
-                  Check (Deps);
-               when Condition =>
-                  raise Program_Error with "Should not happen";
-            end case;
-         end;
+         if Deps.Is_Iterable then
+            for Dep of Deps loop
+               if Dep.Value.Project /= Requested.Project then
+                  Filtered := Filtered and
+                    Alire.Conditional.New_Dependency
+                      (Dep.Value.Project, Dep.Value.Versions);
+               end if;
+            end loop;
+         else
+            Trace.Warning ("Skipping unsupported conditional dependency");
+         end if;
       end return;
    end Del;
 

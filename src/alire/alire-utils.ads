@@ -3,8 +3,6 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Finalization;
 
-with Alire.Interfaces;
-
 private with Ada.Strings.Fixed;
 
 package Alire.Utils with Preelaborate is
@@ -144,22 +142,6 @@ package Alire.Utils with Preelaborate is
                     Filename  : Platform_Independent_Path;
                     Separator : String := ASCII.LF & "");
    --  Dump contents to a given file
-
-   ----------
-   -- YAML --
-   ----------
-
-   generic
-      type T (<>) is new Alire.Interfaces.Yamlable with private;
-      with package Vectors is new Ada.Containers.Indefinite_Vectors
-        (Index_Type => <>, Element_Type => T);
-      type Vector is new Vectors.Vector with private;
-   function To_YAML (V : Vector) return String;
-   --  Turn a vector of Yamlable into a YAML array
-
-   function YAML_Stringify (Input : String) return String;
-   --  Turn String data into YAML string, including enclosing double-quotes and
-   --  escape characters.
 
    -----------------
    -- XXX_XXX_XXX --

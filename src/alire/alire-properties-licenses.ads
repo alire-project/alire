@@ -1,5 +1,6 @@
 with Alire.Licensing;
 with Alire.TOML_Keys;
+with Alire.Utils.YAML;
 
 with TOML;
 
@@ -26,7 +27,7 @@ private
      ("License: " & L'Image);
 
    function To_YAML (L : Licensing.Licenses) return String is
-     (Alire.Utils.YAML_Stringify (L'Image));
+     (Alire.Utils.YAML.YAML_Stringify (L'Image));
 
    function To_TOML (L : Licensing.Licenses) return TOML.TOML_Value is
       (TOML.Create_String (Licensing.License_Labels (L)));

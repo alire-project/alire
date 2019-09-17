@@ -19,8 +19,8 @@ private
    function Contains (Tree : Dependencies;
                       R    : Releases.Release)
                       return Boolean
-   is (for some I in Tree.Iterate =>
-          Tree (I).Kind = Value and then R.Satisfies (Tree (I).Value)
+   is (for some Child of Tree =>
+          Child.Is_Value and then R.Satisfies (Child.Value)
       );
 
    function Contains_Some (Tree : Dependencies;

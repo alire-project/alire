@@ -1,7 +1,7 @@
 with Alire.Conditional;
 
 private with Alire.TOML_Keys;
-private with Alire.Utils;
+private with Alire.Utils.YAML;
 
 package Alire.Properties.Labeled with Preelaborate is
 
@@ -121,7 +121,7 @@ private
 
    overriding
    function To_YAML (L : Label) return String
-   is (Utils.YAML_Stringify (L.Value));
+   is (Utils.YAML.YAML_Stringify (L.Value));
 
    function Key (L : Labels) return String
    is  (case L is
