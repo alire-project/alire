@@ -31,6 +31,7 @@ package Alire.Index is
    ---------------
 
    Catalog : Containers.Release_Set;
+   --  Contains every indexed release.
 
    type Catalog_Entry (<>)
    is new Projects.Named and Versions.Comparable with private;
@@ -109,7 +110,7 @@ package Alire.Index is
    --  A extension is a secondary project in the same commit as its
    --  parent release Essentially, another project file with additional
    --  properties/dependencies.
-   --  A extension name is parent:name (e.g.: adayaml:server) It inherits all
+   --  A extension name is parent.name (e.g.: adayaml.server) It inherits all
    --  properties (including project files).
 
    function Unreleased

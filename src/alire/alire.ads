@@ -89,7 +89,7 @@ package Alire with Preelaborate is
        Dynamic_Predicate =>
          Folder_String'Length > 0 and then
          (for all C of Folder_String => C in
-          'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Child_File_Separator);
+          'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | '.');
    --  Used for cross-platform folder names
    --  Typically, crate folders are "crate_ver.si.on_hash
 

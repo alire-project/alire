@@ -123,8 +123,8 @@ package Alire.Releases with Preelaborate is
    function Project_Str (R : Release) return String is (+R.Project);
 
    function Project_Base (R : Release) return String;
-   --  Project up to first dot, if any; which is needed for extension projects
-   --  in templates and so on.
+   --  Project up to first dot, if any. Note that this is not the immediate
+   --  parent, but the root parent.
 
    function Provides (R : Release) return Alire.Project;
    --  The actual project name to be used during dependency resolution
@@ -364,7 +364,7 @@ private
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String
-   is (Utils.Head (+R.Project, Child_Separator) & "_" &
+   is (R.Project_Base & "_" &
          Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is

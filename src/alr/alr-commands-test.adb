@@ -131,6 +131,19 @@ package body Alr.Commands.Test is
             begin
                Skipping_Extensions := False;
 
+               if R.Is_Extension then
+                  --  Child crates require clearing any former .toml file in
+                  --  their directory. This situation does not arise in normal
+                  --  user usage because dependencies manifests are not loaded.
+                  if Ada.Directories.Exists
+                    (R.Unique_Folder / Paths.Alr_Working_Folder)
+                  then
+                     Ada.Directories.Delete_Tree
+                       (R.Unique_Folder /
+                          Paths.Alr_Working_Folder);
+                  end if;
+               end if;
+
                OS_Lib.Spawn_And_Capture
                  (Output,
                   "alr", "get --compile -d -n " & R.Milestone.Image,

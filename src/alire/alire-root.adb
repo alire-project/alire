@@ -16,6 +16,9 @@ package body Alire.Root is
                 (Path      => Path / Paths.Working_Folder_Inside_Root,
                  Extension => Paths.Crate_File_Extension_With_Dot);
          begin
+            --  TODO: avoid multiple reloads here.
+            --  Should naturally go away when we ditch globals around Alire.
+
             return Roots.New_Root
               (TOML_Index.Load_Release_From_File (File),
                Path);

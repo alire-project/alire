@@ -21,6 +21,13 @@ package Alire.Projects.With_Releases with Preelaborate is
                        From :        TOML_Adapters.Key_Queue)
                        return Outcome;
 
+   --  Child crate extras  --
+
+   function Is_Child (This : Crate) return Boolean;
+
+   function Parent_Name (This : Crate) return Alire.Project with
+     Pre => This.Is_Child;
+
 private
 
    type Crate (Len : Natural) is new General and

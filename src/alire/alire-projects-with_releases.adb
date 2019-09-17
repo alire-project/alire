@@ -1,3 +1,5 @@
+with Ada.Strings.Fixed;
+
 with Alire.Properties.Labeled;
 with Alire.Releases;
 with Alire.TOML_Keys;
@@ -18,6 +20,10 @@ package body Alire.Projects.With_Releases is
                        return Outcome
    is
       package Semver renames Semantic_Versioning;
+
+      --  TODO: reestructure this proc into several smaller procs.
+      --  general/child-inheritance/releases.
+
    begin
       --  Process the general key
       declare
@@ -95,8 +101,6 @@ package body Alire.Projects.With_Releases is
 
       if This.Releases.Is_Empty then
          Trace.Debug ("Crate contains no releases: " & (+This.Name));
-         --  This does not make much sense currently, but it might serve as a
-         --  placeholder, or if in the future we rescue child crates.
       end if;
 
       return Outcome_Success;
@@ -142,5 +146,26 @@ package body Alire.Projects.With_Releases is
 
    function Releases (This : Crate) return Containers.Release_Set is
       (This.Releases);
+
+   --------------
+   -- Is_Child --
+   --------------
+
+   function Is_Child (This : Crate) return Boolean is
+     (for some Char of This.Name => Char = Child_Separator);
+
+   -----------------
+   -- Parent_Name --
+   -----------------
+
+   function Parent_Name (This : Crate) return Alire.Project is
+      Last_Sep_Pos : constant Positive :=
+                       Ada.Strings.Fixed.Index
+                         (Source  => +This.Name,
+                          Pattern => String'(1 => Child_Separator),
+                          Going   => Ada.Strings.Backward);
+   begin
+      return This.Name (This.Name'First .. Last_Sep_Pos);
+   end Parent_Name;
 
 end Alire.Projects.With_Releases;
