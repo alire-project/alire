@@ -5,3 +5,4 @@ maintainers = ["user@example.com"]
 
 ['0.1']
 origin = "http://example.com/"
+archive-hash = "sha512:deadbeef"

@@ -370,12 +370,8 @@ private
        (case R.Origin.Kind is
            when Filesystem     => "filesystem",
            when Native         => "native",
-           when Source_Archive => "archive",
-           when Git | Hg       => (if R.Origin.Commit'Length <= 8
-                                   then R.Origin.Commit
-                                   else R.Origin.Commit
-                                     (R.Origin.Commit'First ..
-                                        R.Origin.Commit'First + 7)),
+           when Source_Archive => R.Origin.Short_Unique_Id,
+           when Git | Hg       => R.Origin.Short_Unique_Id,
            when SVN            => R.Origin.Commit));
 
    function On_Platform_Actions (R : Release;
