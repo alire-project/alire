@@ -139,11 +139,11 @@ package body Alr.Templates is
    begin
       if Query.Exists (Root.Release.Project, Root.Release.Version) then
          Log ("Generating GPR for release " & Root.Release.Milestone.Image &
-                " with" & Instance.Length'Img & " dependencies", Detail);
+                " with" & Instance.Length'Img & " dependencies", Debug);
       else
          Log ("Generating GPR for unreleased project "
               & Root.Release.Milestone.Image & " with" & Instance.Length'Img
-              & " dependencies", Detail);
+              & " dependencies", Debug);
       end if;
 
       GPR_Files := Root.Release.Project_Files
@@ -259,9 +259,9 @@ package body Alr.Templates is
       use GNATCOLL.VFS;
       F : constant Virtual_File := Create (+Filename, Normalize => True);
    begin
-      Trace.Detail ("Generating " & Release.Project_Str & ".toml file for "
-                    & Release.Milestone.Image & " with"
-                    & Release.Dependencies.Leaf_Count'Img & " dependencies");
+      Trace.Debug ("Generating " & Release.Project_Str & ".toml file for "
+                   & Release.Milestone.Image & " with"
+                   & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
       --  Ensure working folder exists (might not upon first get)
       F.Get_Parent.Make_Dir;

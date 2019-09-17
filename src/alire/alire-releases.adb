@@ -498,7 +498,7 @@ package body Alire.Releases is
                        return Outcome
    is
    begin
-      Trace.Detail ("Loading release " & This.Milestone.Image);
+      Trace.Debug ("Loading release " & This.Milestone.Image);
 
       --  Origin
       declare
