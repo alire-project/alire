@@ -67,6 +67,14 @@ package Alire with Preelaborate is
      Project (Project'Last) /= Extension_Separator and then
      (for all C of Project => C in Project_Character);
 
+   overriding
+   function "=" (L, R : Project) return Boolean;
+   --  Project names are case preserving but insensitive when compared.
+
+   overriding
+   function "<" (L, R : Project) return Boolean;
+   --  Likewise, we do not want capitalization to influence ordering.
+
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then
      Restricted_Name (Restricted_Name'First) /= '_' and then

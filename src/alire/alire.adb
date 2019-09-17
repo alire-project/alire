@@ -1,6 +1,24 @@
+with Alire.Utils;
+
 with GNAT.IO;
 
 package body Alire is
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding
+   function "=" (L, R : Project) return Boolean is
+     (Utils.To_Lower_Case (+L) = Utils.To_Lower_Case (+R));
+
+   ---------
+   -- "<" --
+   ---------
+
+   overriding
+   function "<" (L, R : Project) return Boolean is
+     (Utils.To_Lower_Case (+L) < Utils.To_Lower_Case (+R));
 
    -------------
    -- Err_Log --
