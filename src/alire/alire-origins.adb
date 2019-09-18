@@ -334,7 +334,8 @@ package body Alire.Origins is
               with "native packages do not need to be exported";
 
          when Source_Archive =>
-            Table.Set (TOML_Keys.Origin, +This.Archive_URL);
+            Table.Set (TOML_Keys.Origin,       +This.Archive_URL);
+            Table.Set (TOML_Keys.Archive_Hash, +This.Archive_Hash);
             if This.Archive_Name /= "" then
                Table.Set (TOML_Keys.Archive_Name, +This.Archive_Name);
             end if;
