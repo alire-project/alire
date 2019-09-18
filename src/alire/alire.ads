@@ -58,7 +58,7 @@ package Alire with Preelaborate is
 
    subtype Project_Character is Character
       with Static_Predicate => Project_Character in
-         'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Extension_Separator;
+         'a' .. 'z' | '0' .. '9' | '_' | Extension_Separator;
 
    type Project is new String with Dynamic_Predicate =>
      Project'Length >= Min_Name_Length and then
@@ -66,6 +66,14 @@ package Alire with Preelaborate is
      Project (Project'First) /= Extension_Separator and then
      Project (Project'Last) /= Extension_Separator and then
      (for all C of Project => C in Project_Character);
+
+   overriding
+   function "=" (L, R : Project) return Boolean;
+   --  Project names are case preserving but insensitive when compared.
+
+   overriding
+   function "<" (L, R : Project) return Boolean;
+   --  Likewise, we do not want capitalization to influence ordering.
 
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then

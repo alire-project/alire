@@ -322,7 +322,8 @@ package body Alire.TOML_Index is
 
       declare
          Crate  : Projects.With_Releases.Crate :=
-                    Projects.With_Releases.New_Crate (+Package_Name);
+                    Projects.With_Releases.New_Crate
+                      (+Utils.To_Lower_Case (Package_Name));
       begin
          Result := Crate.From_TOML (TOML_Adapters.From
                                     (Value,
@@ -357,7 +358,8 @@ package body Alire.TOML_Index is
       --  Parse the TOML structure
       declare
          Crate  : Projects.With_Releases.Crate :=
-                    Projects.With_Releases.New_Crate (+Name);
+                    Projects.With_Releases.New_Crate
+                      (+Utils.To_Lower_Case (Name));
          Result : constant Load_Result :=
                     Crate.From_TOML
                       (TOML_Adapters.From
