@@ -211,7 +211,13 @@ package body Alire.Origins is
       function Package_From_String (Val : TOML.TOML_Value;
                                     Pkg : out Package_Names) return Outcome is
       begin
-         if Val.Kind /= TOML.TOML_String then
+         --  A missing entry defaults to unavailable:
+         if Val.Is_Null then
+            Pkg := Unavailable;
+            return Outcome_Success;
+
+         --  Otherwise, it must be a "native:blah" strings:
+         elsif Val.Kind /= TOML.TOML_String then
             return From.Failure ("expected ""native:name"" string for origin");
          end if;
 
