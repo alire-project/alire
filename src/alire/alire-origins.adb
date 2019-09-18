@@ -211,7 +211,13 @@ package body Alire.Origins is
       function Package_From_String (Val : TOML.TOML_Value;
                                     Pkg : out Package_Names) return Outcome is
       begin
-         if Val.Kind /= TOML.TOML_String then
+         --  A missing entry defaults to unavailable:
+         if Val.Is_Null then
+            Pkg := Unavailable;
+            return Outcome_Success;
+
+         --  Otherwise, it must be a "native:blah" strings:
+         elsif Val.Kind /= TOML.TOML_String then
             return From.Failure ("expected ""native:name"" string for origin");
          end if;
 
@@ -334,7 +340,8 @@ package body Alire.Origins is
               with "native packages do not need to be exported";
 
          when Source_Archive =>
-            Table.Set (TOML_Keys.Origin, +This.Archive_URL);
+            Table.Set (TOML_Keys.Origin,       +This.Archive_URL);
+            Table.Set (TOML_Keys.Archive_Hash, +This.Archive_Hash);
             if This.Archive_Name /= "" then
                Table.Set (TOML_Keys.Archive_Name, +This.Archive_Name);
             end if;
