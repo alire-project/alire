@@ -42,12 +42,26 @@ package body Alr.Commands.Get is
          raise Command_Failed;
       end if;
 
-      --  Check if it's native first
+      --  Find a release that satisfies the requested version.
+      --  TODO: perhaps we should resolve all dependencies at this point so
+      --  if the latest release is not solvable we get another one that is.
+      --  Probably we should warn in that case.
       declare
          R : constant Alire.Index.Release :=
                Query.Find (Name, Versions, Query_Policy);
          Result : Alire.Outcome;
       begin
+         --  Check that itself is available (but overridable with --only)
+         if not Cmd.Only and then not Query.Is_Available (R) then
+            Trace.Error
+              ("The requested version ("
+               & R.Milestone.Image
+               & ") is not available");
+            Reportaise_Command_Failed
+              ("You can retrieve it without dependencies with --only");
+         end if;
+
+         --  Check if it's native first and thus we need not to check out.
          if R.Origin.Is_Native then
             Result := Alire.Origins.Deployers.Deploy (R.Origin);
             if Result.Success then
