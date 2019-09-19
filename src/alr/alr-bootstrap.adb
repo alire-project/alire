@@ -19,15 +19,16 @@ package body Alr.Bootstrap is
    ---------------------
 
    procedure Check_Ada_Tools is
-      --  FIXME mini-leak (once per run)
+      procedure Check_Tool (Exec : String) is
+      begin
+         if not OS_Lib.Exists_In_Path (Exec) then
+            Trace.Error ("Required tool not detected: " & Exec);
+            Trace.Error ("alr cannot proceed");
+            OS_Lib.Bailout (1);
+         end if;
+      end Check_Tool;
    begin
-      if not OS_Lib.Exists_In_Path ("gprbuild")
-        or else
-         not OS_Lib.Exists_In_Path ("gnatmake")
-      then
-         Trace.Error ("Ada tools not detected, alr cannot proceed");
-         OS_Lib.Bailout (1);
-      end if;
+      Check_Tool ("gprbuild");
 
       if not OS_Lib.Exists_In_Path ("git") then
          Trace.Warning
