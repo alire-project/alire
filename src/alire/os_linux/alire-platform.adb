@@ -37,7 +37,7 @@ package body Alire.Platform is
             if Subprocess.Spawn_And_Capture (Release,
                                              "lsb_release", "-is") /= 0
             then
-               Trace.Warning ("Unable to detect distribution");
+               Trace.Debug ("Unable to detect distribution");
                return Distro_Unknown;
             end if;
 
