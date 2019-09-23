@@ -18,6 +18,7 @@ env:
     global:
         - IMAGE_NAME="alire/gnat"
     matrix:
+        - IMAGE_TAG="centos-latest-community-2019"
         - IMAGE_TAG="community-current"
         - IMAGE_TAG="debian-stable"
         - IMAGE_TAG="ubuntu-lts"
