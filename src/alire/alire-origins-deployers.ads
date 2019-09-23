@@ -1,3 +1,5 @@
+with Alire.Releases;
+
 package Alire.Origins.Deployers is
 
    --  Actual fetching logic
@@ -10,9 +12,10 @@ package Alire.Origins.Deployers is
    -- Deploy --
    ------------
 
-   function Deploy (From : Origin; Folder : String := "") return Outcome with
-     Pre => From.Is_Native or else
-            (not From.Is_Native and then Folder /= "");
+   function Deploy (Release : Releases.Release;
+                    Folder  : String := "") return Outcome with
+     Pre => Release.Origin.Is_Native or else
+            (not Release.Origin.Is_Native and then Folder /= "");
    --  This subprogram is intended to be called with an origin and it will
    --  create and redispatch the necessary concrete Deployer implementation.
    --  Since it may fail during normal operation (e.g. network down) it

@@ -63,7 +63,7 @@ package body Alr.Commands.Get is
 
          --  Check if it's native first and thus we need not to check out.
          if R.Origin.Is_Native then
-            Result := Alire.Origins.Deployers.Deploy (R.Origin);
+            Result := Alire.Origins.Deployers.Deploy (R);
             if Result.Success then
                return;
             else

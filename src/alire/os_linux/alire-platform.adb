@@ -35,21 +35,27 @@ package body Alire.Platform is
             Release : Utils.String_Vector;
          begin
             if Subprocess.Spawn_And_Capture (Release,
-                                             "lsb_release", "-is") /= 0
+                                             "cat", "/etc/os-release") /= 0
             then
-               Trace.Warning ("Unable to detect distribution");
+               Trace.Debug ("Unable to detect distribution");
                return Distro_Unknown;
             end if;
 
-            for Known in Alire.Platforms.Distributions'Range loop
-               for Line of Release loop
-                  if Contains (To_Lower_Case (Known'Img), To_Lower_Case (Line))
-                  then
-                     Cached_Distro := Known;
+            for Line of Release loop
+               declare
+                  Normalized : constant String :=
+                                 To_Lower_Case (Replace (Line, " ", ""));
+               begin
+                  if Starts_With (Normalized, "id=") then
+                     Cached_Distro :=
+                       Platforms.Distributions'Value (Tail (Normalized, '='));
                      Distro_Cached := True;
-                     return Known;
+                     return Cached_Distro;
                   end if;
-               end loop;
+               exception
+                  when others =>
+                     exit; -- Not a known distro.
+               end;
             end loop;
 
             Trace.Debug ("Found unsupported distro: " & Release (1));

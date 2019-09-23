@@ -92,10 +92,16 @@ package body Alire.Origins.Deployers is
    -- Install_Native --
    --------------------
 
-   function Install_Native (From : Origin) return Outcome is
+   function Install_Native (Release : Releases.Release) return Outcome is
+      From : constant Origin         := Release.Origin;
       Orig : constant Deployer'Class := New_Deployer (From);
    begin
-      if Orig.Already_Installed then
+      if From.All_Native_Names (Platform.Distribution) = Origins.Unavailable
+      then
+         return Outcome_Failure
+           ("No native package known in current platform for "
+            & Release.Milestone.Image);
+      elsif Orig.Already_Installed then
          Trace.Detail (From.Package_Name (Platform.Distribution) &
                          " already installed");
          return Outcome_Success;
@@ -114,10 +120,19 @@ package body Alire.Origins.Deployers is
    -- Deploy --
    ------------
 
-   function Deploy (From : Origin; Folder : String := "") return Outcome is
+   function Deploy (Release : Releases.Release;
+                    Folder  : String := "") return Outcome
+   is
+      From : constant Origin := Release.Origin;
    begin
       if From.Is_Native then
-         return Install_Native (From);
+         if Platform.Distribution_Is_Known then
+            return Install_Native (Release);
+         else
+            return Outcome_Failure
+              ("Unknown distribution: cannot provide native package for "
+               & Release.Milestone.Image);
+         end if;
       else
          return Deploy_Not_Native (From, Folder);
       end if;

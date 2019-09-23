@@ -1,5 +1,6 @@
 with Alire.Index;
 with Alire.Origins.Deployers;
+with Alire.Platforms;
 with Alire.Roots;
 with Alire.Utils;
 
@@ -41,7 +42,9 @@ package body Alr.Commands.Show is
                      Versions : Semver.Version_Set;
                      Current  : Boolean;
                      --  session or command-line requested release
-                     Cmd      : Command) is
+                     Cmd      : Command)
+   is
+      use all type Alire.Platforms.Distributions;
    begin
       declare
          Rel     : constant Types.Release  :=
@@ -56,9 +59,13 @@ package body Alr.Commands.Show is
          end if;
 
          if Rel.Origin.Is_Native then
-            Put_Line ("Platform version: "
-                      & Alire.Origins.Deployers.New_Deployer
-                         (Rel.Origin).Native_Version);
+            if Platform.Distribution /= Alire.Platforms.Distro_Unknown then
+               Put_Line ("Platform version: "
+                         & Alire.Origins.Deployers.New_Deployer
+                           (Rel.Origin).Native_Version);
+            else
+               Put_Line ("Platform version unknown");
+            end if;
          end if;
 
          if Cmd.Solve then

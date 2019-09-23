@@ -35,7 +35,7 @@ package body Alr.Checkout is
       else
          Was_There := False;
          Trace.Detail ("About to deploy " & R.Milestone.Image);
-         Result := Alire.Origins.Deployers.Deploy (R.Origin, Folder);
+         Result := Alire.Origins.Deployers.Deploy (R, Folder);
          if not Result.Success then
             Trace.Error (Alire.Message (Result));
             raise Command_Failed;

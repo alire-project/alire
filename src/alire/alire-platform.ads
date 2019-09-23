@@ -15,9 +15,15 @@ package Alire.Platform is
    --  ${XDG_CONFIG_HOME:-.config}/alire
 
    function Distribution return Platforms.Distributions;
-   --  TODO: during ALR -> Alire refactorings move body from here to Linux body
 
    function Name return Supported;
    --  Self identify
+
+   --------------------------------
+   -- Portable derived utilities --
+   --------------------------------
+
+   function Distribution_Is_Known return Boolean is
+      (Platforms."/=" (Distribution, Platforms.Distro_Unknown));
 
 end Alire.Platform;

@@ -3,6 +3,7 @@ with Ada.Containers.Doubly_Linked_Lists;
 
 with Alire.Conditional.Operations;
 with Alire.Origins.Deployers;
+with Alire.Platform;
 with Alire.Utils;
 
 with Alr.Commands;
@@ -121,8 +122,9 @@ package body Alr.Query is
 
    function Is_Available (R : Alire.Index.Release) return Boolean is
      (R.Available.Check (Platform.Properties) and then
-          (if R.Origin.Is_Native
-           then Origins.Deployers.New_Deployer (R.Origin).Exists));
+          (not R.Origin.Is_Native or else
+               (Alire.Platform.Distribution_Is_Known
+                and then Origins.Deployers.New_Deployer (R.Origin).Exists)));
 
    -------------------
    -- Is_Resolvable --
@@ -349,7 +351,9 @@ package body Alr.Query is
                                 and Remaining).Image_One_Line);
                   elsif -- First time we see this project
                     Semver.Satisfies (R.Version, Dep.Versions) and then
-                    Is_Available (R)
+                    Is_Available (R) and then
+                    (Alire.Platform.Distribution_Is_Known or else
+                     not R.Origin.Is_Native)
                   then
                      Trace.Debug
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
