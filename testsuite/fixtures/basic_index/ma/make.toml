@@ -1,0 +1,8 @@
+[general]
+description = "Utility for directing compilation"
+maintainers = ["alejandro@mosteo.com"]
+licenses = []
+
+[0]
+    [0.origin.'case(distribution)']
+    '...' = ""
