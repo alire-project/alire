@@ -1,0 +1,49 @@
+name: linux
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+
+jobs:
+
+  build:
+    name: CI on ${{ matrix.tag }}
+ 
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        tag: # Those are our dockerhub alire/gnat:tag machines
+            - centos-latest-community-2019
+            - community-current
+            - debian-stable
+            - ubuntu-lts
+ 
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+
+    - name: Check out submodules
+      run: git submodule update --init --recursive
+
+    - name: Pull docker image
+      run: docker pull alire/gnat:${{ matrix.tag }}
+
+    - name: Run test script
+      run: docker run -v${PWD}:/alire -w /alire -e "BRANCH=${{ github.base_ref }}" alire/gnat:${{ matrix.tag }} scripts/ci-github.sh               
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: e3-log-${{ matrix.tag }}.zip
+        path: testsuite/out
+
+# Not working (pending feedback from github):
+# Issue: https://github.com/actions/starter-workflows/issues/137
+# name: Build alr_env.gpr
+# uses: mosteo/actions/gprbuild@master
+# with:
+#   docker-image: ${{ matrix.tag }}
+#   project-file: alr_env.gpr
