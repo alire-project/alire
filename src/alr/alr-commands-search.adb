@@ -5,6 +5,7 @@ with Ada.Strings.Fixed;
 with Alire.Containers;
 with Alire.Index;
 with Alire.Origins.Deployers;
+with Alire.Platform;
 with Alire.Projects;
 with Alire.Releases;
 
@@ -55,13 +56,11 @@ package body Alr.Commands.Search is
                            else "X"));
             Tab.Append (Semantic_Versioning.Image
                         (R.Version) &
-                        (if R.Origin.Is_Native
-                           and then
-                           Alire.Origins.Deployers.New_Deployer
-                             (R.Origin).Native_Version /= ""
-                           then "+" & Alire.Origins.Deployers.New_Deployer
+                        (if R.Origin.Is_Native and then
+                           Alire.Platform.Distribution_Is_Known
+                         then "+" & Alire.Origins.Deployers.New_Deployer
                              (R.Origin).Native_Version
-                           else ""));
+                         else ""));
             Tab.Append (Alire.Projects.Descriptions (R.Project));
             Tab.Append (R.Notes);
          end if;
