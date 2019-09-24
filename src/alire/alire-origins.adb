@@ -16,6 +16,16 @@ package body Alire.Origins is
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name
 
+   --------------
+   -- Add_Hash --
+   --------------
+
+   procedure Add_Hash (This : in out Origin;
+                       Hash :        Hashes.Any_Hash) is
+   begin
+      This.Data.Hashes.Append (Hash);
+   end Add_Hash;
+
    ------------------
    -- URL_Basename --
    ------------------
@@ -75,7 +85,6 @@ package body Alire.Origins is
 
    function New_Source_Archive
      (URL  : Alire.URL;
-      Hash : Hashes.Any_Hash;
       Name : String := "") return Origin
    is
       Archive_Name : constant String :=
@@ -93,7 +102,11 @@ package body Alire.Origins is
            "Unable to determine archive format from file extension";
       end if;
 
-      return (Data => (Source_Archive, +URL, +Archive_Name, Format, +Hash));
+      return (Data => (Source_Archive,
+                       Hashes         => <>,
+                       Archive_URL    => +URL,
+                       Archive_Name   => +Archive_Name,
+                       Archive_Format => Format));
    end New_Source_Archive;
 
    -----------------
@@ -108,6 +121,46 @@ package body Alire.Origins is
       Parent : TOML_Adapters.Key_Queue := TOML_Adapters.Empty_Queue)
       return Outcome
    is
+
+      ----------------
+      -- Add_Hashes --
+      ----------------
+
+      function Add_Hashes (Mandatory : Boolean) return Outcome is
+         Val : TOML.TOML_Value;
+      begin
+         if Parent.Pop (TOML_Keys.Origin_Hashes, Val) then
+            if Val.Kind /= TOML.TOML_Array then
+               return Parent.Failure
+                 (TOML_Keys.Origin_Hashes
+                  & " must be an array of hash values");
+            end if;
+
+            for I in 1 .. Val.Length loop
+               if Val.Item (I).Kind /= TOML.TOML_String then
+                  return Parent.Failure
+                    ("hash must be a 'kind:digest' formatted string");
+               end if;
+
+               declare
+                  Hash : constant String := Val.Item (I).As_String;
+               begin
+                  if not Hashes.Is_Well_Formed (Hash) then
+                     return Parent.Failure
+                       ("malformed or unknown hash: " & Hash);
+                  end if;
+
+                  This.Add_Hash (Hash);
+               end;
+            end loop;
+         elsif Mandatory then
+            return Parent.Failure
+              ("missing mandatory " & TOML_Keys.Origin_Hashes & " field");
+         end if;
+
+         return Outcome_Success;
+      end Add_Hashes;
+
       use Utils;
       Commit : constant String := Tail (From, '@');
       URL    : constant String := Tail (Head (From, '@'), '+');
@@ -138,7 +191,9 @@ package body Alire.Origins is
                when Source_Archive =>
                   raise Program_Error with "can't happen";
             end case;
-            return Outcome_Success;
+
+            --  Add optional (for now) hashes:
+            return Add_Hashes (Mandatory => False);
          end if;
       end loop;
 
@@ -150,7 +205,6 @@ package body Alire.Origins is
       else
          declare
             Archive : TOML.TOML_Value;
-            Hash    : TOML.TOML_Value;
          begin
             --  Optional filename checks:
             if Parent.Pop (TOML_Keys.Archive_Name, Archive) then
@@ -159,22 +213,9 @@ package body Alire.Origins is
                end if;
             end if;
 
-            --  Hash checks:
-            if not Parent.Pop (TOML_Keys.Archive_Hash, Hash) then
-               return Parent.Failure ("missing mandatory field: "
-                                      & TOML_Keys.Archive_Hash);
-            elsif Hash.Kind /= TOML.TOML_String then
-               return Parent.Failure
-                 ("hash must be a 'kind:digest' formatted string");
-            elsif not Hashes.Is_Well_Formed (Hash.As_String) then
-               return Parent.Failure
-                 ("malformed or unknown hash: " & Hash.As_String);
-            end if;
-
             begin
                This := New_Source_Archive
                  (URL  => From,
-                  Hash => Hash.As_String,
                   Name => (if Archive.Is_Present
                            then Archive.As_String
                            else ""));
@@ -186,7 +227,7 @@ package body Alire.Origins is
                      & TOML_Keys.Archive_Name & "'");
             end;
 
-            return Outcome_Success;
+            return Add_Hashes (Mandatory => True);
          end;
       end if;
    end From_String;
@@ -303,13 +344,30 @@ package body Alire.Origins is
    end From_TOML;
 
    ---------------------
+   -- Image_Of_Hashes --
+   ---------------------
+
+   function Image_Of_Hashes (This : Origin) return String is
+
+      --  Recursively concatenate all hashes:
+      function Reduce (I : Natural := This.Data.Hashes.Last_Index)
+                       return String is
+        (if I = 0 then ""
+         elsif I > 1 then String'(Reduce (I - 1)) & ", " & This.Data.Hashes (I)
+         else This.Data.Hashes (I));
+
+   begin
+      return Reduce;
+   end Image_Of_Hashes;
+
+   ---------------------
    -- Short_Unique_Id --
    ---------------------
 
    function Short_Unique_Id (This : Origin) return String is
       Hash : constant String :=
                (if This.Kind = Source_Archive
-                then Utils.Tail (This.Archive_Hash, ':')
+                then Utils.Tail (This.Data.Hashes.First_Element, ':')
                 else This.Commit);
    begin
       if Hash'Length < 8 then
@@ -328,7 +386,6 @@ package body Alire.Origins is
       Table : constant TOML.TOML_Value := TOML.Create_Table;
    begin
       case This.Kind is
-
          when Filesystem =>
             Table.Set (TOML_Keys.Origin, +("file://" & This.Path));
 
@@ -341,11 +398,22 @@ package body Alire.Origins is
 
          when Source_Archive =>
             Table.Set (TOML_Keys.Origin,       +This.Archive_URL);
-            Table.Set (TOML_Keys.Archive_Hash, +This.Archive_Hash);
             if This.Archive_Name /= "" then
                Table.Set (TOML_Keys.Archive_Name, +This.Archive_Name);
             end if;
       end case;
+
+      if not This.Data.Hashes.Is_Empty then
+         declare
+            Hashes : constant TOML.TOML_Value := TOML.Create_Array;
+         begin
+            for Hash of This.Data.Hashes loop
+               Hashes.Append (+Hash);
+            end loop;
+
+            Table.Set (TOML_Keys.Origin_Hashes, Hashes);
+         end;
+      end if;
 
       return Table;
    end To_TOML;
