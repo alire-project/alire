@@ -23,6 +23,79 @@ package body Alire.OS_Lib.Subprocess is
       end if;
    end Locate_In_Path;
 
+   ---------------
+   -- Raw_Spawn --
+   ---------------
+
+   procedure Raw_Spawn (Program    : String;
+                        Arguments  : Utils.String_Vector;
+                        Output     : out Utils.String_Vector;
+                        Exit_Code  : out Integer;
+                        Err_To_Out : Boolean := True)
+   is
+      use GNAT.OS_Lib;
+      File     : File_Descriptor;
+      Name     : String_Access;
+      Arg_List : Argument_List (1 .. Natural (Arguments.Length));
+
+      use Ada.Text_IO;
+      Outfile : File_Type;
+
+      -------------
+      -- Cleanup --
+      -------------
+
+      procedure Cleanup is
+         Ok : Boolean;
+      begin
+         Delete_File (Name.all, Ok);
+         Free (Name);
+
+         for Str of Arg_List loop
+            Free (Str);
+         end loop;
+      end Cleanup;
+
+      -----------------
+      -- Read_Output --
+      -----------------
+
+      procedure Read_Output is
+      begin
+         Open (Outfile, In_File, Name.all);
+         while not End_Of_File (Outfile) loop
+            Output.Append (Get_Line (Outfile));
+         end loop;
+      end Read_Output;
+
+   begin
+      Create_Temp_Output_File (File, Name);
+
+      Trace.Debug ("Spawning: " & Program & " " & Arguments.Flatten
+                   & " > " & Name.all);
+
+      --  Prepare arguments
+      for I in Arg_List'Range loop
+         Arg_List (I) := new String'(Arguments (I));
+      end loop;
+
+      Spawn (Program_Name           => Locate_In_Path (Program),
+             Args                   => Arg_List,
+             Output_File_Descriptor => File,
+             Return_Code            => Exit_Code,
+             Err_To_Out             => Err_To_Out);
+
+      Close (File); -- Can't raise
+      Read_Output;
+
+      if Exit_Code /= 0 then
+         Trace.Debug ("Process errored with code" & Exit_Code'Img
+                      & " and output: " & Output.Flatten);
+      end if;
+
+      Cleanup;
+   end Raw_Spawn;
+
    -----------
    -- Spawn --
    -----------
@@ -85,57 +158,25 @@ package body Alire.OS_Lib.Subprocess is
                                Err_To_Out : Boolean := False) return Integer
    is
       use GNAT.OS_Lib;
-      File  : File_Descriptor;
-      Name  : GNAT.OS_Lib.String_Access;
-      Ok    : Boolean;
 
-      use Ada.Text_IO;
+      Code : Integer;
 
-      Outfile : File_Type;
-
-      -------------
-      -- Cleanup --
-      -------------
-
-      procedure Cleanup is
-      begin
-         Delete_File (Name.all, Ok);
-         Free (Name);
-      end Cleanup;
-
-      -----------------
-      -- Read_Output --
-      -----------------
-
-      procedure Read_Output is
-      begin
-         Open (Outfile, In_File, Name.all);
-         while not End_Of_File (Outfile) loop
-            Output.Append (Get_Line (Outfile));
-         end loop;
-
-         Cleanup;
-      end Read_Output;
-
+      Arg_List : Argument_List_Access := Argument_String_To_List (Arguments);
+      Arg_Vec  : Utils.String_Vector;
    begin
-      Create_Temp_Output_File (File, Name);
-      Close (File);
+      --  Massage arguments type:
+      for Arg of Arg_List.all loop
+         Arg_Vec.Append (Arg.all);
+      end loop;
+      Free (Arg_List);
 
-      declare
-         Exit_Code : constant Integer :=
-                       Spawn_And_Redirect
-                         (Name.all, Command, Arguments, Err_To_Out);
-      begin
-         Read_Output;
-         return Exit_Code;
-      exception
-         when E : others =>
-            Read_Output;
-            Trace.Error ("Could not spawn subprocess: " &
-                           Command & " " & Arguments);
-            Log_Exception (E);
-            return -1;
-      end;
+      Raw_Spawn (Program    => Command,
+                 Arguments  => Arg_Vec,
+                 Output     => Output,
+                 Exit_Code  => Code,
+                 Err_To_Out => Err_To_Out);
+
+      return Code;
    end Spawn_And_Capture;
 
    ------------------------
