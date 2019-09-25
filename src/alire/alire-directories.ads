@@ -60,7 +60,26 @@ package Alire.Directories is
    --  This whole mess of accesses and leaks is due to a bug in the
    --    in-place initialization of limited
 
+   ---------------------
+   -- Temporary files --
+   ---------------------
+
+   type Temp_File (<>) is tagged limited private;
+   --  A RAII scoped type to manage a temporary file.
+   --  The file is deleted once an object of this type goes out of scope.
+   --  If the file was never created nothing will happen.
+
+   function Create_Temp_File return Temp_File;
+   --  Creates an instance with a unique file name.
+
+   function Filename (This : Temp_File) return String;
+   --  The filename is a random sequence of 8 characters + ".tmp"
+
 private
+
+   ------------
+   -- Guards --
+   ------------
 
    Stay : constant Destination := null;
 
@@ -72,5 +91,18 @@ private
 
    overriding procedure Initialize (This : in out Guard);
    overriding procedure Finalize   (This : in out Guard);
+
+   ----------------
+   -- Temp files --
+   ----------------
+
+   subtype Temp_Filename is String (1 .. 8);
+
+   type Temp_File is new Ada.Finalization.Limited_Controlled with record
+      Name : Temp_Filename;
+   end record;
+
+   overriding
+   procedure Finalize (This : in out Temp_File);
 
 end Alire.Directories;

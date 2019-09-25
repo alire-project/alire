@@ -1,4 +1,5 @@
 with Ada.Exceptions;
+with Ada.Numerics.Discrete_Random;
 with Ada.Unchecked_Deallocation;
 
 with Alire.Paths;
@@ -216,6 +217,54 @@ package body Alire.Directories is
            ("FG.Finalize: unexpected exception: " &
               Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
               Exception_Information (E));
+   end Finalize;
+
+   ----------------
+   -- TEMP FILES --
+   ----------------
+
+   ----------------------
+   -- Create_Temp_File --
+   ----------------------
+
+   function Create_Temp_File return Temp_File is
+      subtype Valid_Character is Character range 'a' .. 'z';
+      package Char_Random is new
+        Ada.Numerics.Discrete_Random (Valid_Character);
+      Gen : Char_Random.Generator;
+   begin
+      return File : Temp_File do
+         File.Name (1 .. 4) := "alr-";
+         for I in 5 .. 8 loop
+            File.Name (I) := Char_Random.Random (Gen);
+         end loop;
+      end return;
+   end Create_Temp_File;
+
+   --------------
+   -- Filename --
+   --------------
+
+   function Filename (This : Temp_File) return String is
+     (This.Name & ".tmp");
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding
+   procedure Finalize (This : in out Temp_File) is
+      use Ada.Directories;
+   begin
+      if Exists (This.Filename) then
+         if Kind (This.Filename) = Ordinary_File then
+            Trace.Debug ("Deleting temporary file " & This.Filename & "...");
+            Delete_File (This.Filename);
+         elsif Kind (This.Filename) = Directory then
+            Trace.Debug ("Deleting temporary folder " & This.Filename & "...");
+            Delete_Tree (This.Filename);
+         end if;
+      end if;
    end Finalize;
 
 end Alire.Directories;

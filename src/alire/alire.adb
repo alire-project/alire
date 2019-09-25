@@ -1,3 +1,4 @@
+with Alire.Errors;
 with Alire.Utils;
 
 with GNAT.IO;
@@ -39,16 +40,18 @@ package body Alire is
                             Level : Simple_Logging.Levels := Debug)
    is
       use Ada.Exceptions;
+      Full_Msg : constant String := Errors.Get (E);
+      --  Avoid consuming the message for good.
    begin
       Log ("---8<--- Exception dump begin ---8<---", Level);
       Log (Exception_Name (E), Level);
-      Log (Exception_Message (E), Level);
+      Log (Full_Msg, Level);
       Log (Exception_Information (E), Level);
       Log ("--->8--- Exception dump end ----->8---", Level);
 
       if Log_Debug then
          Err_Log (Exception_Name (E));
-         Err_Log (Exception_Message (E));
+         Err_Log (Full_Msg);
          Err_Log (Exception_Information (E));
       end if;
    end Log_Exception;
@@ -59,15 +62,18 @@ package body Alire is
 
    function Outcome_From_Exception
      (Ex  : Ada.Exceptions.Exception_Occurrence;
-      Msg : String := "") return Outcome is
+      Msg : String := "") return Outcome
+   is
+      Full_Msg : constant String := Errors.Get (Ex);
+      --  Avoid consuming the message for good.
    begin
       Trace.Debug ("Failed Outcome because of exception: ");
-      Trace.Debug (Ada.Exceptions.Exception_Message (Ex));
+      Trace.Debug (Full_Msg);
       Trace.Debug (Ada.Exceptions.Exception_Information (Ex));
 
       if Log_Debug then
          Err_Log ("Failed Outcome because of exception: ");
-         Err_Log (Ada.Exceptions.Exception_Message (Ex));
+         Err_Log (Full_Msg);
          Err_Log (Ada.Exceptions.Exception_Information (Ex));
       end if;
 
@@ -76,7 +82,7 @@ package body Alire is
                          Message => +Msg);
       else
          return Outcome'(Success => False,
-                         Message => +Ada.Exceptions.Exception_Message (Ex));
+                         Message => +Full_Msg);
       end if;
    end Outcome_From_Exception;
 

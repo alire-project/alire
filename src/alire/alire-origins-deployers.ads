@@ -68,9 +68,10 @@ package Alire.Origins.Deployers is
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest with
      Pre'Class =>
        Supports_Hashing (This.Base.Kind) or else raise Program_Error;
-   --  Called immediately after deploy for each hash in the origin,
-   --  Should be overriden by all deployers that support hashing; it won't be
-   --  called otherwise.
+   --  Called immediately after deploy for each hash in the origin, Should
+   --  be overriden by all deployers that support hashing; it won't be called
+   --  otherwise. This function may raise exceptions that will be properly
+   --  dealt with.
 
    function Is_Native (This : Deployer) return Boolean;
    --  Whether This targets a package from the system's package manager
