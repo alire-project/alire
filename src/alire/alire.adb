@@ -65,6 +65,12 @@ package body Alire is
       Trace.Debug (Ada.Exceptions.Exception_Message (Ex));
       Trace.Debug (Ada.Exceptions.Exception_Information (Ex));
 
+      if Log_Debug then
+         Err_Log ("Failed Outcome because of exception: ");
+         Err_Log (Ada.Exceptions.Exception_Message (Ex));
+         Err_Log (Ada.Exceptions.Exception_Information (Ex));
+      end if;
+
       if Msg /= "" then
          return Outcome'(Success => False,
                          Message => +Msg);

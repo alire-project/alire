@@ -13,7 +13,14 @@ with GNAT.IO;
 
 package body Alire.Origins.Deployers is
 
---     use all type Alire.Origins.Kinds;
+   ------------------
+   -- Compute_Hash --
+   ------------------
+
+   function Compute_Hash (This   : Deployer;
+                          Folder : String;
+                          Kind   : Hashes.Kinds) return Hashes.Any_Digest is
+     (raise Program_Error with "Should not be called unless overriden");
 
    ------------------
    -- New_Deployer --
@@ -49,9 +56,16 @@ package body Alire.Origins.Deployers is
    -----------------------
 
    function Deploy_Not_Native (From   : Origin;
-                               Folder : String) return Outcome is
+                               Folder : String) return Outcome
+   is
+      The_Deployer  : constant Deployer'Class := New_Deployer (From);
+      Deploy_Result : constant Outcome := The_Deployer.Deploy (Folder);
    begin
-      return New_Deployer (From).Deploy (Folder);
+      if Deploy_Result.Success then
+         return The_Deployer.Verify_Hashes (Folder);
+      else
+         return Deploy_Result;
+      end if;
    exception
       when E : others =>
          Log_Exception (E);
@@ -144,5 +158,53 @@ package body Alire.Origins.Deployers is
 
    function Deploy (This : Deployer; Folder : String) return Outcome
    is (raise Program_Error with "should never be called for base class");
+
+   -------------------
+   -- Verify_Hashes --
+   -------------------
+
+   function Verify_Hashes (This   : Deployer'Class;
+                           Folder : String) return Outcome is
+   begin
+      if Supports_Hashing (This.Base.Kind) then
+
+         --  Emit a note if we might profit from hashes:
+         if This.Base.Data.Hashes.Is_Empty then
+            Trace.Warning ("No integrity hashes provided for "
+                           & This.Base.Image);
+            --  TODO: make this an error once all crates are updated with
+            --  their hashes.
+         else
+            Trace.Detail ("Verifying integrity...");
+         end if;
+
+         --  Compute hashes from downloaded release and verify:
+         for Index_Hash of This.Base.Data.Hashes loop
+            Trace.Debug ("Computing " & Hashes.Kind (Index_Hash)'Img & "...");
+            declare
+               use type Hashes.Any_Digest;
+               Local_Digest : constant Hashes.Any_Digest :=
+                                This.Compute_Hash (Folder,
+                                                   Hashes.Kind (Index_Hash));
+            begin
+               if Hashes.Digest (Index_Hash) /= Local_Digest then
+                  return Outcome_Failure
+                    ("release integrity test failed: "
+                     & "expected ["  & String (Index_Hash)
+                     & "] but got [" & String (Local_Digest) & "]");
+               end if;
+            end;
+         end loop;
+      end if;
+
+      return Outcome_Success;
+   exception
+      when E : others =>
+         --  May happen if Compute_Hash for some reason errs out.
+         return Outcome_From_Exception
+           (E,
+            "Unexpected error while verify origin integrity"
+            & " (use -d for details)");
+   end Verify_Hashes;
 
 end Alire.Origins.Deployers;

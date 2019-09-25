@@ -5,4 +5,9 @@ package Alire.Origins.Deployers.Source_Archive is
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome;
 
+   overriding
+   function Compute_Hash (This   : Deployer;
+                          Folder : String;
+                          Kind   : Hashes.Kinds) return Hashes.Any_Digest;
+
 end Alire.Origins.Deployers.Source_Archive;

@@ -25,7 +25,7 @@ package Alire.Origins.Deployers is
    -- Deployer --
    --------------
 
-   type Deployer is abstract tagged private;
+   type Deployer is tagged private;
    --  Type that encapsulates the particulars of every origin and knows how
    --  to deploy it on disk.
 
@@ -63,6 +63,15 @@ package Alire.Origins.Deployers is
    --  case, it is polite not to uninstall anything installed in the user
    --  system.
 
+   function Compute_Hash (This   : Deployer;
+                          Folder : String;
+                          Kind   : Hashes.Kinds) return Hashes.Any_Digest with
+     Pre'Class =>
+       Supports_Hashing (This.Base.Kind) or else raise Program_Error;
+   --  Called immediately after deploy for each hash in the origin,
+   --  Should be overriden by all deployers that support hashing; it won't be
+   --  called otherwise.
+
    function Is_Native (This : Deployer) return Boolean;
    --  Whether This targets a package from the system's package manager
 
@@ -80,5 +89,12 @@ private
 
    function Is_Native (This : Deployer) return Boolean is
      (This.Base.Is_Native);
+
+   function Verify_Hashes (This : Deployer'Class;
+                           Folder : String) return Outcome;
+   --  Called immediately after Deploy to use Compute_Hash to verify all
+   --  supplied hashes. At present, origins without hashes that support hashing
+   --  is merely treated as a detail log; eventually we may want a way of
+   --  enforcing that the chain of trust is not broken and fail otherwise.
 
 end Alire.Origins.Deployers;
