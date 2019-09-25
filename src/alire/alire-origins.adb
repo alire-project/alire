@@ -150,7 +150,7 @@ package body Alire.Origins is
                        ("malformed or unknown hash: " & Hash);
                   end if;
 
-                  This.Add_Hash (Hash);
+                  This.Add_Hash (Hashes.Any_Hash (Hash));
                end;
             end loop;
          elsif Mandatory then
@@ -353,8 +353,9 @@ package body Alire.Origins is
       function Reduce (I : Natural := This.Data.Hashes.Last_Index)
                        return String is
         (if I = 0 then ""
-         elsif I > 1 then String'(Reduce (I - 1)) & ", " & This.Data.Hashes (I)
-         else This.Data.Hashes (I));
+         elsif I > 1 then Reduce (I => I - 1) & ", "
+                          & String (This.Data.Hashes.Element (I))
+         else String (This.Data.Hashes.Element (I)));
 
    begin
       return Reduce;
@@ -367,7 +368,7 @@ package body Alire.Origins is
    function Short_Unique_Id (This : Origin) return String is
       Hash : constant String :=
                (if This.Kind = Source_Archive
-                then Utils.Tail (This.Data.Hashes.First_Element, ':')
+                then Utils.Tail (String (This.Data.Hashes.First_Element), ':')
                 else This.Commit);
    begin
       if Hash'Length < 8 then
@@ -408,7 +409,7 @@ package body Alire.Origins is
             Hashes : constant TOML.TOML_Value := TOML.Create_Array;
          begin
             for Hash of This.Data.Hashes loop
-               Hashes.Append (+Hash);
+               Hashes.Append (+String (Hash));
             end loop;
 
             Table.Set (TOML_Keys.Origin_Hashes, Hashes);

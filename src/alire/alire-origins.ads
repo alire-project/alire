@@ -4,6 +4,7 @@ with Alire.Platforms;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
+private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
 
 with TOML; use all type TOML.Any_Value_Kind;
@@ -36,6 +37,12 @@ package Alire.Origins with Preelaborate is
       Source_Archive, -- Remote source archive
       Native          -- Native platform package
      );
+
+   Supports_Hashing : constant array (Kinds) of Boolean :=
+                        (Git |
+                         Source_Archive => True,
+                         others         => False);
+   --  We should add Hg and SVN eventually.
 
    type String_Access is access constant String;
    type Prefix_Array is array (Kinds) of String_Access;
@@ -153,6 +160,11 @@ private
 
    use Ada.Strings.Unbounded;
 
+   use all type Hashes.Any_Hash;
+
+   package Hash_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
+
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;
 
@@ -172,7 +184,7 @@ private
    is (Name => +Name);
 
    type Origin_Data (Kind : Kinds := Kinds'First) is record
-      Hashes : Utils.String_Vector;
+      Hashes : Hash_Vectors.Vector;
 
       case Kind is
          when Filesystem =>
@@ -267,8 +279,8 @@ private
       & (if This.Data.Hashes.Is_Empty
          then ""
          elsif This.Data.Hashes.Last_Index = 1
-         then "with hash " & This.Image_Of_Hashes
-         else "with hashes " & This.Image_Of_Hashes)
+         then " with hash " & This.Image_Of_Hashes
+         else " with hashes " & This.Image_Of_Hashes)
      );
 
    overriding function To_Code (This : Origin) return Utils.String_Vector is

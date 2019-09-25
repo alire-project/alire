@@ -22,7 +22,7 @@ package body Alire.Hashes.Common is
       end loop;
       Close (File);
 
-      return Utils.To_Lower_Case (Kind'Img) & ":" & Digest (Ctxt);
+      return Any_Hash (Utils.To_Lower_Case (Kind'Img) & ":" & Digest (Ctxt));
 
    exception
       when others =>
