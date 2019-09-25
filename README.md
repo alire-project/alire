@@ -1,7 +1,4 @@
-![branch-master](https://badgen.net/badge/branch/master/blue)[![Run Status](https://api.shippable.com/projects/5ac50b3494f2af07000852d9/badge?branch=master)](https://app.shippable.com/github/alire-project/alire/dashboard)
-❦
-![branch-master](https://badgen.net/badge/branch/stable/blue)[![Run Status](https://api.shippable.com/projects/5ac50b3494f2af07000852d9/badge?branch=stable)](https://app.shippable.com/github/alire-project/alire/dashboard)
-❦
+[![Linux CI](https://github.com/alire-project/alire/workflows/.github/workflows/ci-linux.yml/badge.svg)](https://github.com/alire-project/alire/actions)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
 
 # ALR #
