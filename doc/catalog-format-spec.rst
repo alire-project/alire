@@ -244,12 +244,12 @@ entries:
    [depends-on.'case(os)'.windows]
    libwinbar = "^3.0"
 
-  Available constraint operators are the usual Ada ones (=, /=, >, >=, <, <=) 
-  plus caret (^, any upwards version within the same major point) and tilde 
+  Available constraint operators are the usual Ada ones (=, /=, >, >=, <, <=)
+  plus caret (^, any upwards version within the same major point) and tilde
   (~, any upwards version within the same minor point).
 
 * ``project-files``: optional list of strings. Each is a path, relative to the
-  root of the source directory, to a project file to be made available. 
+  root of the source directory, to a project file to be made available.
   Expressions are accepted. For instance:
 
   .. code-block:: toml
@@ -271,7 +271,7 @@ entries:
    TAG = ""
 
 * ``gpr-set-externals``: optional table, giving a mapping from the name of
-  external variables to the values to use by default when building the project.  
+  external variables to the values to use by default when building the project.
   Expressions are accepted before the mapping. For instance:
 
   .. code-block:: toml
@@ -291,7 +291,7 @@ entries:
 
    executables = ["bin/my_main"]
 
-* ``actions``: optional list of actions to perform when installing this package. 
+* ``actions``: optional list of actions to perform when installing this package.
   The general action syntax is:
 
   .. code-block:: toml
@@ -302,7 +302,7 @@ entries:
 
   ``<command>`` is a string for a shell command to run in the source directory.
   ``<kind>`` can be either:
- 
+
   * ``post-fetch``: the command is to be run right after getting the package
     sources;
   * ``post-compile``: the command is to be run right after GPRbuild has been
@@ -358,9 +358,9 @@ following entries:
    [origin.'case(distribution)']
    'debian|ubuntu' = "native:make"
 
-* ``archive-hash``: mandatory string for source archives. A "kind:digest" field
-  that specifies a hash kind and its value. The only accepted kind is SHA512 at
-  this time.
+* ``origin-hashes``: mandatory string array for git origins and source archives.
+  An array of "kind:digest" fields that specify a hash kind and its value.
+  Kinds accepted are: sha512.
 
 * ``archive-name``: optional string. If ``origin`` points to a source archive,
   this can specifiy the name of the file to download, which is needed in order
