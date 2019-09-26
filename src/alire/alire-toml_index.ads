@@ -24,13 +24,6 @@ package Alire.TOML_Index is
 
 private
 
-   function Fix_Release_Local_Origin_Path
-     (Crate_Path : Relative_Path;
-      Release    : Releases.Release) return Releases.Release;
-   --  Takes a freshly loaded Release with a relative path from its index file
-   --  to its actual crate location, and replaces it with the absolute path.
-   --  If Release has no local origin, does nothing.
-
    procedure Index_Crate (Path  : Relative_Path;
                           Crate : Projects.With_Releases.Crate);
    --  Add the crate and its releases to the internal index.
