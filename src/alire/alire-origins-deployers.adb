@@ -186,12 +186,15 @@ package body Alire.Origins.Deployers is
                Local_Digest : constant Hashes.Any_Digest :=
                                 This.Compute_Hash (Folder,
                                                    Hashes.Kind (Index_Hash));
+               Local_Hash   : constant Hashes.Any_Hash :=
+                                Hashes.New_Hash (Hashes.Kind (Index_Hash),
+                                                 Local_Digest);
             begin
                if Hashes.Digest (Index_Hash) /= Local_Digest then
                   return Outcome_Failure
                     ("release integrity test failed: "
                      & "expected ["  & String (Index_Hash)
-                     & "] but got [" & String (Local_Digest) & "]");
+                     & "] but got [" & String (Local_Hash) & "]");
                end if;
             end;
          end loop;
