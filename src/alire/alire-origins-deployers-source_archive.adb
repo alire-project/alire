@@ -17,7 +17,6 @@ package body Alire.Origins.Deployers.Source_Archive is
       use GNATCOLL.VFS;
       Archive_Name : constant String := This.Base.Archive_Name;
       Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
-      Archive_Hash : constant String := This.Base.Archive_Hash;
       Exit_Code    :          Integer;
       package Subprocess renames Alire.OS_Lib.Subprocess;
    begin
@@ -30,22 +29,6 @@ package body Alire.Origins.Deployers.Source_Archive is
       if Exit_Code /= 0 then
          return Outcome_Failure ("wget call failed with code" & Exit_Code'Img);
       end if;
-
-      declare
-         Down_Hash : constant Hashes.Any_Hash :=
-                       Hashes.Hash_File (Kind => Hashes.Kind (Archive_Hash),
-                                         Path => Archive_File);
-      begin
-         if Archive_Hash /= Down_Hash then
-            return Outcome_Failure
-              ("Archive integrity test failed. "
-               & "Expected [" & Archive_Hash
-               & "] but got [" & Down_Hash & "]");
-         else
-            Trace.Debug
-              ("Retrieved file " & Archive_File & " integrity verified.");
-         end if;
-      end;
 
       Trace.Detail ("Extracting source archive...");
       case This.Base.Archive_Format is
@@ -63,5 +46,19 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       return Outcome_Success;
    end Deploy;
+
+   -------------------
+   -- Verify_Hashes --
+   -------------------
+
+   overriding
+   function Compute_Hash (This   : Deployer;
+                          Folder : String;
+                          Kind   : Hashes.Kinds) return Hashes.Any_Digest is
+      Archive_Name : constant String := This.Base.Archive_Name;
+      Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
+   begin
+      return Hashes.Digest (Hashes.Hash_File (Kind, Archive_File));
+   end Compute_Hash;
 
 end Alire.Origins.Deployers.Source_Archive;

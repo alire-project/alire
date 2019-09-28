@@ -4,6 +4,7 @@ with Alire.Platforms;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
+private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
 
 with TOML; use all type TOML.Any_Value_Kind;
@@ -36,6 +37,12 @@ package Alire.Origins with Preelaborate is
       Source_Archive, -- Remote source archive
       Native          -- Native platform package
      );
+
+   Supports_Hashing : constant array (Kinds) of Boolean :=
+                        (Git |
+                         Source_Archive => True,
+                         others         => False);
+   --  We should add Hg and SVN eventually.
 
    type String_Access is access constant String;
    type Prefix_Array is array (Kinds) of String_Access;
@@ -77,10 +84,6 @@ package Alire.Origins with Preelaborate is
      with Pre => This.Kind = Source_Archive;
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
      with Pre => This.Kind = Source_Archive;
-   function Archive_Hash (This : Origin) return Hashes.Any_Hash
-     with Pre => This.Kind = Source_Archive;
-   function Archive_Digest (This : Origin) return String -- part after the ':'
-     with Pre => This.Kind = Source_Archive;
 
    function Is_Native (This : Origin) return Boolean is (This.Kind = Native);
    function Package_Name (This         : Origin;
@@ -114,7 +117,6 @@ package Alire.Origins with Preelaborate is
 
    function New_Source_Archive
      (URL  : Alire.URL;
-      Hash : Hashes.Any_Hash;
       Name : String := "") return Origin;
    --  Create a reference to a source archive to be downloaded and extracted.
    --  URL is the address of the archive to download. Name is the name of the
@@ -130,6 +132,9 @@ package Alire.Origins with Preelaborate is
    function New_Native (Packages : Native_Packages) return Origin;
 
    function Image (This : Origin) return String;
+
+   procedure Add_Hash (This : in out Origin;
+                       Hash :        Hashes.Any_Hash);
 
    overriding function To_Code (This : Origin) return Utils.String_Vector;
 
@@ -155,6 +160,11 @@ private
 
    use Ada.Strings.Unbounded;
 
+   use all type Hashes.Any_Hash;
+
+   package Hash_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
+
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;
 
@@ -174,6 +184,8 @@ private
    is (Name => +Name);
 
    type Origin_Data (Kind : Kinds := Kinds'First) is record
+      Hashes : Hash_Vectors.Vector;
+
       case Kind is
          when Filesystem =>
             Path : Unbounded_String;
@@ -186,7 +198,6 @@ private
             Archive_URL    : Unbounded_String;
             Archive_Name   : Unbounded_String;
             Archive_Format : Known_Source_Archive_Format;
-            Archive_Hash   : Unbounded_String;
 
          when Native =>
             Packages : Native_Packages;
@@ -202,24 +213,26 @@ private
       Data : Origin_Data;
    end record;
 
+   function Image_Of_Hashes (This : Origin) return String;
+
    function New_Filesystem (Path : String) return Origin is
-     (Data => (Filesystem, Path => +Path));
+     (Data => (Filesystem, Path => +Path, Hashes => <>));
 
    function New_Git (URL    : Alire.URL;
                      Commit : Git_Commit)
                      return Origin is
-     (Data => (Git, +URL, +Commit));
+     (Data => (Git, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
 
    function New_Hg (URL    : Alire.URL;
                     Commit : Hg_Commit)
                     return Origin is
-     (Data => (Hg, +URL, +Commit));
+     (Data => (Hg, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
 
    function New_SVN (URL : Alire.URL; Commit : String) return Origin is
-     (Data => (SVN, +URL, +Commit));
+     (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
 
    function New_Native (Packages : Native_Packages) return Origin is
-     (Data => (Native, Packages));
+     (Data => (Native, Packages => Packages, Hashes => <>));
 
    function Kind (This : Origin) return Kinds is (This.Data.Kind);
 
@@ -238,10 +251,6 @@ private
      (+This.Data.Archive_Name);
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
    is (This.Data.Archive_Format);
-   function Archive_Hash (This : Origin) return Hashes.Any_Hash is
-     (+This.Data.Archive_Hash);
-   function Archive_Digest (This : Origin) return String is
-     (Hashes.Digest (This.Archive_Hash));
 
    function Package_Name (This         : Origin;
                           Distribution : Platforms.Distributions)
@@ -254,20 +263,25 @@ private
    function S (Str : Unbounded_String) return String is (To_String (Str));
 
    function Image (This : Origin) return String is
-     (case This.Kind is
-         when VCS_Kinds =>
-            "commit " & S (This.Data.Commit)
-            & " from " & S (This.Data.Repo_URL),
-         when Source_Archive =>
-            "source archive " & (if S (This.Data.Archive_Name) /= ""
-                                 then S (This.Data.Archive_Name) & " "
-                                 else "")
-            & "at " & S (This.Data.Archive_URL)
-            & " with hash " & S (This.Data.Archive_Hash),
-         when Native =>
-            "native package from platform software manager",
-         when Filesystem =>
-            "path " & S (This.Data.Path));
+     ((case This.Kind is
+          when VCS_Kinds      =>
+             "commit " & S (This.Data.Commit)
+       & " from " & S (This.Data.Repo_URL),
+          when Source_Archive =>
+             "source archive " & (if S (This.Data.Archive_Name) /= ""
+                                  then S (This.Data.Archive_Name) & " "
+                                  else "")
+       & "at " & S (This.Data.Archive_URL),
+          when Native         =>
+             "native package from platform software manager",
+          when Filesystem     =>
+             "path " & S (This.Data.Path))
+      & (if This.Data.Hashes.Is_Empty
+         then ""
+         elsif This.Data.Hashes.Last_Index = 1
+         then " with hash " & This.Image_Of_Hashes
+         else " with hashes " & This.Image_Of_Hashes)
+     );
 
    overriding function To_Code (This : Origin) return Utils.String_Vector is
      (if This.Kind = Filesystem

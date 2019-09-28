@@ -423,15 +423,6 @@ package body Alire.TOML_Index is
       end loop;
    end Index_Crate;
 
-   -----------------------------------
-   -- Fix_Release_Local_Origin_Path --
-   -----------------------------------
-
-   function Fix_Release_Local_Origin_Path
-     (Crate_Path : Relative_Path;
-      Release    : Releases.Release) return Releases.Release is
-     (raise Unimplemented);
-
 begin
    Expected_Index.Set ("version", TOML.Create_String ("1.0"));
 end Alire.TOML_Index;

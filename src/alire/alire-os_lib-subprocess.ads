@@ -7,6 +7,15 @@ package Alire.OS_Lib.Subprocess is
    function Locate_In_Path (Name : String) return String;
    --  Returns full path to Name command or "" if not found
 
+   procedure Raw_Spawn (Program    : String;
+                        Arguments  : Utils.String_Vector;
+                        Output     : out Utils.String_Vector;
+                        Exit_Code  : out Integer;
+                        Err_To_Out : Boolean := True);
+   --  Spawn without autoprocessing of arguments, which we may need in cases
+   --  where arguments are convolutedly quoted, breaking standard GNAT
+   --  autoseparation of arguments.
+
    function Spawn (Command             : String;
                    Arguments           : String := "";
                    Understands_Verbose : Boolean := False;

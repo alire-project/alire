@@ -12,10 +12,18 @@ package Alire.Hashes with Preelaborate is
    --  To add a new kind, instance the Alire.Hashes.Common generic and with it
    --  in Alire.TOML_Index body.
 
-   subtype Any_Hash is String with
-     Dynamic_Predicate => Is_Well_Formed (Any_Hash);
+   type Any_Digest is new String with
+     Dynamic_Predicate =>
+       (for all Char of Any_Digest => Char in 'a' .. 'f' | '0' .. '9');
+   --  Just the actual hash part, in hexadecimal encoding.
 
-   function Digest (Hash : Any_Hash) return String;
+   type Any_Hash is new String with
+     Dynamic_Predicate => Is_Well_Formed (String (Any_Hash));
+   --  A string with "kind:digest" format.
+
+   function New_Hash (Kind : Kinds; Digest : Any_Digest) return Any_Hash;
+
+   function Digest (Hash : Any_Hash) return Any_Digest;
    --  Return the actual fingerprint without the kind prefix.
 
    function Hash_File (Kind : Kinds;
@@ -37,8 +45,8 @@ private
    -- Digest --
    ------------
 
-   function Digest (Hash : Any_Hash) return String is
-     (Utils.Tail (Hash, ':'));
+   function Digest (Hash : Any_Hash) return Any_Digest is
+     (Any_Digest (Utils.Tail (String (Hash), ':')));
 
    --------------------
    -- Hash_Functions --
@@ -79,6 +87,13 @@ private
    ----------
 
    function Kind (Hash : Any_Hash) return Kinds is
-     (Kinds'Value (Utils.Head (Hash, ':')));
+     (Kinds'Value (Utils.Head (String (Hash), ':')));
+
+   --------------
+   -- New_Hash --
+   --------------
+
+   function New_Hash (Kind : Kinds; Digest : Any_Digest) return Any_Hash is
+     (Any_Hash (Utils.To_Lower_Case (Kind'Img) & ":" & String (Digest)));
 
 end Alire.Hashes;
