@@ -12,6 +12,12 @@ generic
    with function Digest (C : Context) return String is <>;
 package Alire.Hashes.Common is
 
+   function Hash_Directory (Path   : Platform_Independent_Path;
+                            Except : Platform_Independent_Path := "")
+                            return Any_Hash;
+   --  See documentation in Alire.Hashes. Path must designate a folder or
+   --  Checked_Error will be raised.
+
    function Hash_File (Path : Platform_Independent_Path) return Any_Hash;
    --  This function does not need to be visible (it is not used directly), but
    --  hiding it in the body results in the following error in FSF compilers:

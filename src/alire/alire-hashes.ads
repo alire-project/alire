@@ -30,6 +30,31 @@ package Alire.Hashes with Preelaborate is
    function Digest (Hash : Any_Hash) return Any_Digest;
    --  Return the actual fingerprint without the kind prefix.
 
+   function Hash_Directory (Kind   : Kinds;
+                            Path   : Platform_Independent_Path;
+                            Except : Platform_Independent_Path := "")
+                            return Any_Hash;
+   --  Deterministic recursive hashing of a folder contents. The Except
+   --  folder, if given, is not included in the hashing nor recursed into. The
+   --  deterministic procedure followed is:
+   --  * All operations use utf8-encoded filenames.
+   --  * Enumerate current folder contents, and sort them alphabetically.
+   --    (Note that ordinary String comparison is used, so not utf8-order but
+   --    plain Character order is used.)
+   --    * ".", "..", Except entries are omitted from hashing.
+   --  * For each dir entry hash the following:
+   --    * UTF8-encoded name, with full route from "root" (Path).
+   --      Routes are absolute as if in a chroot jail containing only Path.
+   --    * 'f' or 'd', if entry is file/directory.
+   --    * Decimal trimmed image of:
+   --      * Size (for files).
+   --      * Entry count (for directories).
+   --    * Contents (for files).
+   --  * Recurse into folders in depth-first order as they are found in the
+   --    previous enumeration.
+   --  See the expected output of testcase 'tests/publish/hash-internals' for a
+   --  complete example.
+
    function Hash_File (Kind : Kinds;
                        Path : Platform_Independent_Path) return Any_Hash;
    --  Compute a particular hash kind. May raise usual file exceptions.
@@ -56,11 +81,27 @@ private
    -- Hash_Functions --
    --------------------
 
-   --  The following function array is initialized by each instance of a
+   --  The following function array are initialized by each instance of a
    --  known hash in child packages.
 
-   Hash_Functions : array (Kinds) of access
+   Hash_Dir_Functions : array (Kinds) of access
+     function (Path   : Platform_Independent_Path;
+               Except : Platform_Independent_Path := "")
+               return Any_Hash;
+
+   Hash_File_Functions : array (Kinds) of access
      function (File : Platform_Independent_Path) return Any_Hash;
+
+   --------------------
+   -- Hash_Directory --
+   --------------------
+
+   function Hash_Directory (Kind   : Kinds;
+                            Path   : Platform_Independent_Path;
+                            Except : Platform_Independent_Path := "")
+                            return Any_Hash is
+      (Hash_Dir_Functions (Kind) (Path, Except));
+      --  Dispatch to a particular implementation
 
    ---------------
    -- Hash_File --
@@ -68,7 +109,8 @@ private
 
    function Hash_File (Kind : Kinds;
                        Path : Platform_Independent_Path) return Any_Hash is
-     (Hash_Functions (Kind) (Path)); -- Dispatch to a particular implementation
+     (Hash_File_Functions (Kind) (Path));
+     --  Dispatch to a particular implementation
 
    --------------
    -- Is_Known --
