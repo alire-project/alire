@@ -85,11 +85,16 @@ package body Alire.TOML_Adapters is
    is
       use TOML;
    begin
-      Value := Queue.Value.Get_Or_Null (Key);
-      if Value /= No_TOML_Value then
-         Queue.Value.Unset (Key);
+      if Queue.Value /= No_TOML_Value and then Queue.Value.Kind = TOML_Table
+      then
+         Value := Queue.Value.Get_Or_Null (Key);
+         if Value /= No_TOML_Value then
+            Queue.Value.Unset (Key);
+         end if;
+         return Value /= TOML.No_TOML_Value;
+      else
+         return False;
       end if;
-      return Value /= TOML.No_TOML_Value;
    end Pop;
 
    --------------
