@@ -1,8 +1,14 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with Alire.Hashes;
 with Alire.Index_On_Disk;
+with Alire.Outcomes.Indefinite;
 
 package Alire.Features.Index is
+
+   -------------------
+   -- Index loading --
+   -------------------
 
    package Sets is new Ada.Containers.Indefinite_Ordered_Sets
      (Index_On_Disk.Index'Class, Index_On_Disk."<", Index_On_Disk."=");
@@ -35,5 +41,18 @@ package Alire.Features.Index is
    --  Add a new remote index under a folder that possibly contains more
    --    indexes in child folders. That is, Under is the parent of all indexes
    --  Index will be set as last one, or before given index name
+
+   ------------------------
+   --  Hashing utilities --
+   ------------------------
+
+   package Hashing_Outcomes is new Outcomes.Indefinite (Hashes.Any_Hash);
+
+   function Hash_Origin (Kind       : Hashes.Kinds;
+                         Origin_Img : URL)
+                         return Hashing_Outcomes.Outcome;
+   --  Given a valid image of an origin, compute its hash as it would appear
+   --  in the index. The origin is retrieved into a temporary folder that is
+   --  deleted after use.
 
 end Alire.Features.Index;
