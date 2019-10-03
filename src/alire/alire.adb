@@ -40,7 +40,7 @@ package body Alire is
                             Level : Simple_Logging.Levels := Debug)
    is
       use Ada.Exceptions;
-      Full_Msg : constant String := Errors.Get (E);
+      Full_Msg : constant String := Errors.Get (E, Clear => False);
       --  Avoid consuming the message for good.
    begin
       Log ("---8<--- Exception dump begin ---8<---", Level);
@@ -65,7 +65,6 @@ package body Alire is
       Msg : String := "") return Outcome
    is
       Full_Msg : constant String := Errors.Get (Ex);
-      --  Avoid consuming the message for good.
    begin
       Trace.Debug ("Failed Outcome because of exception: ");
       Trace.Debug (Full_Msg);

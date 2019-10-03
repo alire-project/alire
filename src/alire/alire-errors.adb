@@ -1,5 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 
+with Alire.Utils;
+
 package body Alire.Errors is
 
    --  Internally, an error is stored with a unique id, which is an integer.
@@ -9,6 +11,9 @@ package body Alire.Errors is
 
    package String_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (Positive, String);
+
+   function To_Int (Id : Unique_Id) return Integer is
+     (Integer'Value (Utils.Tail (String (Id), ':')));
 
    -----------
    -- Store --
@@ -47,7 +52,7 @@ package body Alire.Errors is
       ---------
 
       function Get (Id : Unique_Id) return String is
-         (Store (Positive'Value (Id)));
+         (Store (To_Int (Id)));
 
       -----------
       -- Clear --
@@ -55,7 +60,7 @@ package body Alire.Errors is
 
       procedure Clear (Id : Unique_Id) is
       begin
-         Store.Delete (Positive'Value (Id));
+         Store.Delete (To_Int (Id));
       end Clear;
 
    end Store;
@@ -64,21 +69,23 @@ package body Alire.Errors is
    -- Set --
    ---------
 
-   function Set (Text : String) return Unique_Id is
+   function Set (Text : String) return String is
       Id : Positive;
    begin
       Store.Set (Text, Id);
-      return Id'Img;
+      return Id_Marker & Utils.Trim (Id'Img);
    end Set;
 
    ---------
    -- Get --
    ---------
 
-   function Get (Id : Unique_Id) return String is
+   function Get (Id : Unique_Id; Clear : Boolean := True) return String is
    begin
       return Text : constant String := Store.Get (Id) do
-         Store.Clear (Id);
+         if Clear then
+            Store.Clear (Id);
+         end if;
       end return;
    end Get;
 
@@ -86,20 +93,25 @@ package body Alire.Errors is
    -- Get --
    ---------
 
-   function Get (Ex : Ada.Exceptions.Exception_Occurrence) return Outcome is
-      (Outcome_Failure (Get (Ex)));
+   function Get (Ex    : Ada.Exceptions.Exception_Occurrence;
+                 Clear : Boolean := True) return Outcome is
+      (Outcome_Failure (Get (Ex, Clear)));
 
    ---------
    -- Get --
    ---------
 
-   function Get (Ex : Ada.Exceptions.Exception_Occurrence) return String is
+   function Get (Ex    : Ada.Exceptions.Exception_Occurrence;
+                 Clear : Boolean := True) return String
+   is
       use Ada.Exceptions;
+      Msg : constant String := Exception_Message (Ex);
    begin
-      return Get (Exception_Message (Ex));
-   exception
-      when others =>
-         return Exception_Message (Ex);
+      if Is_Error_Id (Msg) then
+         return Get (Unique_Id (Msg), Clear);
+      else
+         return Msg;
+      end if;
    end Get;
 
 end Alire.Errors;
