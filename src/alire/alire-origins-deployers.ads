@@ -71,7 +71,7 @@ package Alire.Origins.Deployers is
    --  Called immediately after deploy for each hash in the origin, Should
    --  be overriden by all deployers that support hashing; it won't be called
    --  otherwise. This function may raise exceptions that will be properly
-   --  dealt with.
+   --  dealt with by Origins.Deployers.Deploy.
 
    function Is_Native (This : Deployer) return Boolean;
    --  Whether This targets a package from the system's package manager
