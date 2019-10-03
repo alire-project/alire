@@ -12,10 +12,10 @@ import re
 # Get a release with different hash and check the error:
 p = run_alr('get', 'libhello=1.0.0-gitbad', complain_on_error=False)
 assert_match('ERROR: release integrity test failed: '
-             'expected \[sha512:deadbeef\] but got '
-             '\[sha512:f9d5a85fec4db46d5a2859057658c01ee4fe1ab412dab'
-             '80bcbb426102b5dcb147ab7e0744e781d045e5d2b50ec3cb4f0990'
-             'c8ce66e52cda37c88833d0f814500\].*',
+             'expected \[sha512:deadbeef\] but got \[sha512:'
+             '76ac929d1346bff4ae77f92008a18578383c80c920850cc4d45877996fd5cbda'
+             '3ba73096697def23a6c6d848d509724bbe7351e750a72d4e77fd215789c8f64b'
+             '\].*',
              p.out, flags=re.S)
 
 print('SUCCESS')
