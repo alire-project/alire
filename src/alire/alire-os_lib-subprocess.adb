@@ -2,6 +2,8 @@ with Ada.Characters.Latin_1;
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Errors;
+
 with GNAT.Expect;
 
 package body Alire.OS_Lib.Subprocess is
@@ -22,6 +24,30 @@ package body Alire.OS_Lib.Subprocess is
          return "";
       end if;
    end Locate_In_Path;
+
+   -------------------
+   -- Checked_Spawn --
+   -------------------
+
+   procedure Checked_Spawn (Command   : String;
+                            Arguments : String := "")
+   is
+      Output : Utils.String_Vector;
+      Code   : constant Integer :=
+                 Spawn_And_Capture (Output     => Output,
+                                    Command    => Command,
+                                    Arguments  => Arguments,
+                                    Err_To_Out => True);
+   begin
+      if Code /= 0 then
+         raise Checked_Error
+           with Errors.Set ("Command [" & Command
+                            & (if Arguments /= "" then " " & Arguments else "")
+                            & "] exited with code"
+                            & Code'Img
+                            & " and output: " & Output.Flatten);
+      end if;
+   end Checked_Spawn;
 
    ---------------
    -- Raw_Spawn --
