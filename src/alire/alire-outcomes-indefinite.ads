@@ -1,4 +1,4 @@
-with Ada.Containers.Indefinite_Holders;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with Alire.Errors;
 
@@ -36,23 +36,36 @@ package Alire.Outcomes.Indefinite with Preelaborate is
 
 private
 
-   package Definites is new Ada.Containers.Indefinite_Holders (Result);
+   use type Ada.Containers.Count_Type;
+
+   package Definites is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Result);
+
+   --  Indefinite_Holders raise a tampering exception on finalization. Since
+   --  the use is not changed with this list I conclude that it is a bug in
+   --  Indefinite_Holders. Also, the exception is raised even when there are no
+   --  references left to the container.
+
+   function To_Holder (R : Result) return Definites.List;
 
    type Outcome (OK : Boolean) is new Alire.Outcome with record
       case OK is
-         when True  => The_Result : Definites.Holder;
+         when True  => The_Result : Definites.List;
          when False => null;
       end case;
-   end record;
+   end record
+     with Type_Invariant =>
+       (Outcome.OK and then Outcome.The_Result.Length = 1) or else
+       not Outcome.OK;
 
    function New_Result (R : Result) return Outcome is
-     (OK         => True,
-      Success    => True,
-      Message    => <>,
-      The_Result => Definites.To_Holder (R));
+     (Alire.Outcome_Success with
+      OK         => True,
+      The_Result => To_Holder (R));
 
    function Value (This : aliased Outcome) return Reference is
-     (Ptr => This.The_Result.Constant_Reference.Element);
+     (Ptr => This.The_Result.Constant_Reference
+        (This.The_Result.First).Element);
 
    overriding
    function Outcome_Failure (Message : String) return Outcome is
