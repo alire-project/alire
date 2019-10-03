@@ -248,5 +248,6 @@ package body Alire.Hashes.Common is
    end Update;
 
 begin
+   Hashes.Hash_Dir_Functions  (Kind) := Hash_Directory'Access;
    Hashes.Hash_File_Functions (Kind) := Hash_File'Access;
 end Alire.Hashes.Common;

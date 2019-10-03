@@ -1,5 +1,8 @@
 with Ada.Directories;
 
+with Alire.Directories;
+with Alire.Errors;
+with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 
 with GNAT.OS_Lib;
@@ -337,5 +340,46 @@ package body Alire.Features.Index is
 
       return Outcome_Success;
    end Update_All;
+
+   -----------------
+   -- Hash_Origin --
+   -----------------
+
+   function Hash_Origin (Kind       : Hashes.Kinds;
+                         Origin_Img : URL)
+                         return Hashing_Outcomes.Outcome
+   is
+      Origin : Origins.Origin;
+      Create_Result : constant Outcome := Origins.From_String
+        (Origin, Origin_Img, Hashed => False);
+   begin
+      Create_Result.Assert;
+
+      --  Retrieve the given origin and compute its hash:
+
+      declare
+         Depl : constant Origins.Deployers.Deployer'Class :=
+                  Origins.Deployers.New_Deployer (Origin);
+         Tmp : Alire.Directories.Temp_File;
+         Deploy_Result : constant Outcome :=
+                           Depl.Deploy (Tmp.Filename);
+      begin
+         Deploy_Result.Assert;
+
+         declare
+            Hash : constant Hashes.Any_Hash :=
+                     Hashes.New_Hash (Kind,
+                                      Depl.Compute_Hash (Tmp.Filename, Kind));
+         begin
+            return Hashing_Outcomes.New_Result (Hash);
+         end;
+      end;
+
+   exception
+      when E : Checked_Error =>
+         return Hashing_Outcomes.Outcome_Failure (Errors.Get (E));
+      when E : others =>
+         return Hashing_Outcomes.Outcome_From_Exception (E);
+   end Hash_Origin;
 
 end Alire.Features.Index;
