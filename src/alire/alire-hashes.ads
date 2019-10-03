@@ -12,6 +12,10 @@ package Alire.Hashes with Preelaborate is
    --  To add a new kind, instance the Alire.Hashes.Common generic and with it
    --  in Alire.TOML_Index body.
 
+   Default : constant Kinds := SHA512;
+   --  In the event we introduce several hashes, this default is considered the
+   --  strongest/preferred one for any new hashes to be generated going forward
+
    type Any_Digest is new String with
      Dynamic_Predicate =>
        (for all Char of Any_Digest => Char in 'a' .. 'f' | '0' .. '9');
