@@ -32,8 +32,7 @@ package body Alire.Origins.Deployers.Git is
       Guard : Directories.Guard (Directories.Enter (Folder)) with unreferenced;
 
       Output    : Utils.String_Vector;
-      Tmp_File  : constant Directories.Temp_File :=
-                    Directories.Create_Temp_File;
+      Tmp_File  : Directories.Temp_File;
 
       --  Generate platform-independent archive
       Exit_Code : constant Integer :=
