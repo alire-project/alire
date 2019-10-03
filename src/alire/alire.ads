@@ -160,6 +160,10 @@ package Alire with Preelaborate is
    --  The exception stack trace will be dumped at debug level.
    --  If message is empty, message will be Ex exception message.
 
+   procedure Assert (Result : Outcome'Class);
+   --  Does nothing for successful outcomes. Raises Checked_Error with the
+   --  corresponding message set in Alire.Errors otherwise.
+
    -----------------------
    -- Uncontained_Error --
    -----------------------

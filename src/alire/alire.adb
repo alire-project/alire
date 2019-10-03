@@ -56,6 +56,17 @@ package body Alire is
       end if;
    end Log_Exception;
 
+   ------------
+   -- Assert --
+   ------------
+
+   procedure Assert (Result : Outcome'Class) is
+   begin
+      if not Result.Success then
+         raise Checked_Error with Errors.Set (+Result.Message);
+      end if;
+   end Assert;
+
    ----------------------------
    -- Outcome_From_Exception --
    ----------------------------
