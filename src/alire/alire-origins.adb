@@ -118,7 +118,8 @@ package body Alire.Origins is
    function From_String
      (This   : out Origin;
       From   : String;
-      Parent : TOML_Adapters.Key_Queue := TOML_Adapters.Empty_Queue)
+      Parent : TOML_Adapters.Key_Queue := TOML_Adapters.Empty_Queue;
+      Hashed : Boolean := True)
       return Outcome
    is
 
@@ -153,7 +154,7 @@ package body Alire.Origins is
                   This.Add_Hash (Hashes.Any_Hash (Hash));
                end;
             end loop;
-         elsif Mandatory then
+         elsif Hashed and then Mandatory then
             return Parent.Failure
               ("missing mandatory " & TOML_Keys.Origin_Hashes & " field");
          end if;
@@ -192,8 +193,12 @@ package body Alire.Origins is
                   raise Program_Error with "can't happen";
             end case;
 
-            --  Add optional (for now) hashes:
-            return Add_Hashes (Mandatory => False);
+            if Hashed then
+               --  Add optional (for now) hashes:
+               return Add_Hashes (Mandatory => False);
+            else
+               return Outcome_Success;
+            end if;
          end if;
       end loop;
 
