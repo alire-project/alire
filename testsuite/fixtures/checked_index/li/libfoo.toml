@@ -1,0 +1,8 @@
+[general]
+description = "Custom repo to check proper hashing of directories"
+licenses = ["Public Domain"]
+maintainers = ["alejandro@mosteo.com"]
+
+['1.0-git']
+origin = "git+file://../../crates/libfoo_git@9a6aa1471db1a0c821570db875b12f08653f623c"
+origin-hashes = ["sha512:ba5681ea8421d1ef1a0977c0102fb2d64cb559b68b6e3f78187958a7e72b38e81bf70afef914ce3731dcc2017a55551ce813d70fd1a41890b31c5177cc2c11a0"]
