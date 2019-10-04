@@ -1,0 +1,4 @@
+driver: python-script
+indexes:
+    git_index:
+        in_fixtures: true

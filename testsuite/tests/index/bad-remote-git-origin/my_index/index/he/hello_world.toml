@@ -1,0 +1,9 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+['0.1']
+origin = "git+http://blah.com/pkg.zip"
+# A remote git+ is not allowed

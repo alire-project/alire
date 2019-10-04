@@ -1,0 +1,8 @@
+[general]
+description = "Custom repo to check proper retrieval of local git crates"
+licenses = ["Public Domain"]
+maintainers = ["some@one.com"]
+maintainers-logins = ["mylogin"]
+
+['1.0-git']
+origin = "git+file://../../crates/libfoo_git@9ddda32bbbf117dcf2314cb8c23f127c735e5863"
