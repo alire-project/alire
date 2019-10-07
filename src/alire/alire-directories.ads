@@ -64,13 +64,12 @@ package Alire.Directories is
    -- Temporary files --
    ---------------------
 
-   type Temp_File (<>) is tagged limited private;
-   --  A RAII scoped type to manage a temporary file.
+   type Temp_File is tagged limited private;
+   --  A RAII scoped type to manage a temporary file name.
+   --  Creates an instance with a unique file name. This does nothing on disk.
+   --  The user is responsible for using the temp file name as they see fit.
    --  The file is deleted once an object of this type goes out of scope.
-   --  If the file was never created nothing will happen.
-
-   function Create_Temp_File return Temp_File;
-   --  Creates an instance with a unique file name.
+   --  If the file/folder was never created on disk nothing will happen.
 
    function Filename (This : Temp_File) return String;
    --  The filename is a random sequence of 8 characters + ".tmp"
@@ -101,6 +100,9 @@ private
    type Temp_File is new Ada.Finalization.Limited_Controlled with record
       Name : Temp_Filename;
    end record;
+
+   overriding
+   procedure Initialize (This : in out Temp_File);
 
    overriding
    procedure Finalize (This : in out Temp_File);

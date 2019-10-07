@@ -223,23 +223,24 @@ package body Alire.Directories is
    -- TEMP FILES --
    ----------------
 
-   ----------------------
-   -- Create_Temp_File --
-   ----------------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Create_Temp_File return Temp_File is
+   overriding
+   procedure Initialize (This : in out Temp_File) is
       subtype Valid_Character is Character range 'a' .. 'z';
       package Char_Random is new
         Ada.Numerics.Discrete_Random (Valid_Character);
       Gen : Char_Random.Generator;
    begin
-      return File : Temp_File do
-         File.Name (1 .. 4) := "alr-";
-         for I in 5 .. 8 loop
-            File.Name (I) := Char_Random.Random (Gen);
-         end loop;
-      end return;
-   end Create_Temp_File;
+      Char_Random.Reset (Gen);
+
+      This.Name (1 .. 4) := "alr-";
+      for I in 5 .. 8 loop
+         This.Name (I) := Char_Random.Random (Gen);
+      end loop;
+   end Initialize;
 
    --------------
    -- Filename --
@@ -255,6 +256,7 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Temp_File) is
       use Ada.Directories;
+      use Ada.Exceptions;
    begin
       if Exists (This.Filename) then
          if Kind (This.Filename) = Ordinary_File then
@@ -265,6 +267,12 @@ package body Alire.Directories is
             Delete_Tree (This.Filename);
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace.Debug
+           ("Temp_File.Finalize: unexpected exception: " &
+              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
+              Exception_Information (E));
    end Finalize;
 
 end Alire.Directories;
