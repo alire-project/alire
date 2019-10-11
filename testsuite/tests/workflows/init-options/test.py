@@ -6,18 +6,7 @@ import os.path
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq
-
-
-# Return the entries (sorted) under a given folder, both folders and files
-def contents(dir):
-    assert os.path.exists(dir), "Bad path for enumeration: {}".format(dir)
-    return sorted([os.path.join(root, name) for
-                   root, dirs, files in os.walk(dir)
-                   for name in dirs + files])
-
-
-def compare(found, wanted):
-    assert found == wanted, 'Got:    {}\nWanted: {}'.format(found, wanted)
+from drivers.helpers import compare, contents
 
 
 # Plain init
