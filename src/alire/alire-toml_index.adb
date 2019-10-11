@@ -12,6 +12,7 @@ with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
 --  index, this seems a decent place to force inclusion in the build closure.
 
 with Alire.Index;
+with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
 with Alire.Utils;
 
@@ -402,7 +403,9 @@ package body Alire.TOML_Index is
                        Origins.Tweaks.Fixed_Origin (Path, R.Origin);
          begin
             if Origin.Kind = Filesystem then
-               if not VFS.Create (+Origin.Path).Is_Directory then
+               if not Origins.Deployers.Filesystem.Is_Valid_Local_Crate
+                 (VFS.Create (+Origin.Path))
+               then
                   raise Checked_Error with
                     ("Local origin path is not a valid directory: "
                      & Origin.Path);

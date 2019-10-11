@@ -24,9 +24,12 @@ package body Alire.Origins.Tweaks is
          declare
             Base   : constant Virtual_File := Create (+TOML_Path);
             Target : constant Virtual_File := Create (+This.Path);
+            Fixed  : Origins.Origin := This; -- Copy contents
          begin
-            return New_Filesystem (+Full_Name (Base.Dir / Target,
-                                   Normalize => True));
+            Fixed.Data.Path :=
+              +(+Full_Name (Base.Dir / Target, Normalize => True));
+
+            return Fixed;
          end;
       end Fix_Filesystem;
 

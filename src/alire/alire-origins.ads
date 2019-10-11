@@ -30,7 +30,7 @@ package Alire.Origins with Preelaborate is
    --  The name of a package in every distro for a given version
 
    type Kinds is
-     (Filesystem,     -- Not really an origin, but a working copy of a project
+     (Filesystem,     -- A local folder/tarball with release sources
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
       SVN,            -- Remote svn repo
@@ -39,10 +39,10 @@ package Alire.Origins with Preelaborate is
      );
 
    Supports_Hashing : constant array (Kinds) of Boolean :=
-                        (Git |
+                        (Filesystem |
+                         Git |
                          Source_Archive => True,
                          others         => False);
-   --  We should add Hg and SVN eventually.
 
    type String_Access is access constant String;
    type Prefix_Array is array (Kinds) of String_Access;
@@ -84,6 +84,8 @@ package Alire.Origins with Preelaborate is
      with Pre => This.Kind = Source_Archive;
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
      with Pre => This.Kind = Source_Archive;
+   function Archive_Format (Name : String) return Source_Archive_Format;
+   --  Guess the format of a source archive from its file name.
 
    function Is_Native (This : Origin) return Boolean is (This.Kind = Native);
    function Package_Name (This         : Origin;
