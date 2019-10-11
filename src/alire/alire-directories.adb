@@ -236,9 +236,9 @@ package body Alire.Directories is
    begin
       Char_Random.Reset (Gen);
 
-      This.Name (1 .. 4) := "alr-";
+      This.Name := +"alr-XXXX.tmp";
       for I in 5 .. 8 loop
-         This.Name (I) := Char_Random.Random (Gen);
+         UStrings.Replace_Element (This.Name, I, Char_Random.Random (Gen));
       end loop;
    end Initialize;
 
@@ -247,7 +247,16 @@ package body Alire.Directories is
    --------------
 
    function Filename (This : Temp_File) return String is
-     (This.Name & ".tmp");
+     (+This.Name);
+
+   ----------
+   -- Keep --
+   ----------
+
+   procedure Keep (This : in out Temp_File) is
+   begin
+      This.Keep := True;
+   end Keep;
 
    --------------
    -- Finalize --
@@ -258,6 +267,10 @@ package body Alire.Directories is
       use Ada.Directories;
       use Ada.Exceptions;
    begin
+      if This.Keep then
+         return;
+      end if;
+
       if Exists (This.Filename) then
          if Kind (This.Filename) = Ordinary_File then
             Trace.Debug ("Deleting temporary file " & This.Filename & "...");
@@ -274,5 +287,10 @@ package body Alire.Directories is
               Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
               Exception_Information (E));
    end Finalize;
+
+   function With_Name (Name : String) return Temp_File is
+     (Temp_File'(Ada.Finalization.Limited_Controlled with
+                 Keep => <>,
+                 Name => +Name));
 
 end Alire.Directories;

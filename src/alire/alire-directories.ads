@@ -74,6 +74,14 @@ package Alire.Directories is
    function Filename (This : Temp_File) return String;
    --  The filename is a random sequence of 8 characters + ".tmp"
 
+   procedure Keep (This : in out Temp_File);
+   --  If Keep is called, the file/dir will not be erased on finalization. This
+   --  allows creating a temporary that will be deleted in case of failure but
+   --  kept in case of success.
+
+   function With_Name (Name : String) return Temp_File;
+   --  Allows initializing the tmp file with a desired name.
+
 private
 
    ------------
@@ -95,10 +103,9 @@ private
    -- Temp files --
    ----------------
 
-   subtype Temp_Filename is String (1 .. 8);
-
    type Temp_File is new Ada.Finalization.Limited_Controlled with record
-      Name : Temp_Filename;
+      Keep : Boolean := False;
+      Name : UString;
    end record;
 
    overriding
