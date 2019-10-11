@@ -1,5 +1,7 @@
 abstract project Alire_Common is
 
+   for Create_Missing_Dirs use "True";
+
    type Any_Build_Mode is ("debug", "release");
    Build_Mode : Any_Build_Mode := external ("ALIRE_BUILD_MODE", "debug");
    --  Profile for the build, depending on the use case. Debug favors
