@@ -30,7 +30,7 @@ package Alr.Query is
    --  in resolution. In this case, a warning will be provided for the user
    --  with a list of the dependencies that are externally required.
 
-   type Solution (Valid : Boolean) is record
+   type Solution (Valid : Boolean) is tagged record
       case Valid is
          when True  =>
             Releases : Instance; -- Resolved dependencies to be deployed

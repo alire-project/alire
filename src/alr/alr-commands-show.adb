@@ -85,19 +85,32 @@ package body Alr.Commands.Show is
                      for Rel of Needed.Releases loop
                         Put_Line ("   " & Rel.Milestone.Image);
                      end loop;
+                  end if;
 
+                  if not Needed.Hints.Is_Empty then
+                     Put_Line ("Dependencies (native):");
+                     for Dep of Needed.Hints loop
+                        Put_Line ("   " & Dep.Image);
+                     end loop;
+                  end if;
+
+                  if not (Needed.Releases.Is_Empty and then
+                          Needed.Hints.Is_Empty)
+                  then
                      Put_Line ("Dependencies (graph):");
                      declare
                         Graph : constant Dependency_Graphs.Graph :=
                                   Dependency_Graphs
-                                    .From_Instance (Needed.Releases)
+                                    .From_Solution (Needed)
                                     .Including (Rel);
                      begin
                         if Libgraph_Easy_Perl_Installed then --  plot
-                           Graph.Plot (Needed.Releases.Including (Rel));
+                           Graph.Plot
+                             (Needed.Releases.Including (Rel));
                         else          -- textual
-                           Graph.Print (Needed.Releases.Including (Rel),
-                                        Prefix => "   ");
+                           Graph.Print
+                             (Needed.Releases.Including (Rel),
+                              Prefix => "   ");
                         end if;
                      end;
                   end if;

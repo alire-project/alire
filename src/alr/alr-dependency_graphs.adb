@@ -21,18 +21,16 @@ package body Alr.Dependency_Graphs is
    -- From_Instance --
    -------------------
 
-   function From_Instance (Instance : Alire.Containers.Release_Map)
-                           return Graph
-   is
+   function From_Solution (Sol : Query.Solution) return Graph is
    begin
       return Result : Graph do
-         for Rel of Instance loop
+         for Rel of Sol.Releases loop
             Result := Result.Including (Rel);
          end loop;
 
-         Result := Result.Filtering_Unused (Instance);
+         Result := Result.Filtering_Unused (Sol.Releases);
       end return;
-   end From_Instance;
+   end From_Solution;
 
    ---------------
    -- Including --
