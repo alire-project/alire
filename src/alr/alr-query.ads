@@ -92,12 +92,11 @@ package Alr.Query is
    --  availability checks.
 
    type Query_Options is record
-      Age    : Age_Policies;
-      Native : Native_Policies;
+      Age    : Age_Policies    := Newest;
+      Native : Native_Policies := Hint;
    end record;
 
-   Default_Options : constant Query_Options := (Age    => Newest,
-                                                Native => Hint);
+   Default_Options : constant Query_Options := (others => <>);
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
                      Options : Query_Options := Default_Options)

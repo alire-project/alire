@@ -2,6 +2,7 @@ with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with Alire.Conditional.Operations;
+with Alire.Dependencies;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Utils;
@@ -20,6 +21,17 @@ package body Alr.Query is
    package Semver renames Semantic_Versioning;
 
    use all type Semver.Version_Set;
+
+   ---------
+   -- "&" --
+   ---------
+
+   function "&" (L : Dep_List; R : Dependencies.Dependency) return Dep_List is
+   begin
+      return Result : Dep_List := L do
+         Result.Append (R);
+      end return;
+   end "&";
 
    ----------------------
    -- Dependency_Image --
@@ -148,10 +160,14 @@ package body Alr.Query is
          Log ("  " & Rel.Milestone.Image, Debug);
       end loop;
 
-      Trace.Debug ("Hinted:");
-      for Dep of Sol.Hints loop
-         Log ("  " & Dep.Image, Debug);
-      end loop;
+      if Sol.Hints.Is_Empty then
+         Trace.Debug ("No external hints needed.");
+      else
+         Trace.Debug ("Hinted:");
+         for Dep of Sol.Hints loop
+            Log ("  " & Dep.Image, Debug);
+         end loop;
+      end if;
    end Print_Solution;
 
    ------------------------
@@ -426,11 +442,9 @@ package body Alr.Query is
                   --  crate to the candidate version and this dependency is
                   --  done along this search branch:
 
-                  elsif -- First time we see this project
+                  elsif -- First time we see this crate in the current branch.
                     Semver.Satisfies (R.Version, Dep.Versions) and then
-                    Is_Available (R) and then
-                    (Alire.Platform.Distribution_Is_Known or else
-                     not R.Origin.Is_Native)
+                    Is_Available (R)
                   then
                      Trace.Debug
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
@@ -453,6 +467,37 @@ package body Alr.Query is
                              Frozen.Inserting (R),
                              Forbidden and R.Forbids (Platform.Properties),
                              Hints);
+
+                  --  If native policy is Hint and we find a native compatible
+                  --  release, we accept it even if it is not available. If it
+                  --  is available we may treat it as a regular release (in
+                  --  the next case).
+
+                  elsif Options.Native = Hint and then
+                        R.Origin.Is_Native and then
+                        not Is_Available (R)
+                  then
+                     Trace.Debug
+                       ("SOLVER: dependency HINTED: " & R.Project_Str &
+                          " to satisfy " & Dep.Image &
+                        (if R.Project /= R.Provides
+                           then " also providing " & (+R.Provides)
+                           else "") &
+                          " adding" &
+                          R.Depends (Platform.Properties).Leaf_Count'Img &
+                          " dependencies to tree " &
+                          Tree'(Expanded
+                                and Current
+                                and Remaining
+                                and R.Depends
+                                  (Platform.Properties)).Image_One_Line);
+
+                     Expand (Expanded,
+                             Remaining and R.Depends (Platform.Properties),
+                             Empty,
+                             Frozen.Inserting (R),
+                             Forbidden and R.Forbids (Platform.Properties),
+                             Hints & Dep);
 
                   --  Finally, even a valid candidate may not satisfy version
                   --  restrictions, or not be available in the current
