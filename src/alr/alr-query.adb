@@ -343,7 +343,19 @@ package body Alr.Query is
                use Alire.Containers;
                package Cond_Ops renames Conditional.Operations;
             begin
+
+               --  We first check that the release matches the dependency we
+               --  are attempting to resolve, in which case we check if it is
+               --  a valid candidate taking into account the following cases:
+
                if Dep.Project = R.Project then
+
+                  --  A possibility is that the dependency was already frozen
+                  --  previously (it was a dependency of an earlierly frozen
+                  --  release). If the frozen version also satisfied the
+                  --  current dependency, we may continue along this branch,
+                  --  with this dependency out of the picture.
+
                   if Frozen.Contains (R.Project) then
                      if Semver.Satisfies (R.Version, Dep.Versions) then
                         --  Continue along this tree
@@ -363,6 +375,11 @@ package body Alr.Query is
                                    and Current
                                    and Remaining).Image_One_Line);
                      end if;
+
+                  --  If the alias of the candidate release is already in the
+                  --  frozen list, the candidate is incompatible since another
+                  --  crate as already provided this dependency:
+
                   elsif Frozen.Contains (R.Provides) then
                      Trace.Debug
                        ("SOLVER: discarding tree because of " &
@@ -372,6 +389,11 @@ package body Alr.Query is
                           Tree'(Expanded
                                 and Current
                                 and Remaining).Image_One_Line);
+
+                  --  If the candidate release is forbidden by a previously
+                  --  resolved dependency, the candidate release is
+                  --  incompatible and we may stop search along this branch.
+
                   elsif Cond_Ops.Contains (Forbidden, R) then
                      Trace.Debug
                        ("SOLVER: discarding tree because of" &
@@ -381,6 +403,10 @@ package body Alr.Query is
                           Tree'(Expanded
                                 and Current
                                 and Remaining).Image_One_Line);
+
+                  --  Conversely, if the candidate release forbids some of the
+                  --  frozen crates, it is incompatible and we can discard it:
+
                   elsif Cond_Ops.Contains_Some
                     (R.Forbids (Platform.Properties), Frozen)
                   then
@@ -392,6 +418,14 @@ package body Alr.Query is
                           Tree'(Expanded
                                 and Current
                                 and Remaining).Image_One_Line);
+
+                  --  After all these checks, the candidate release must belong
+                  --  to a crate that is still unfrozen, so it is a valid
+                  --  candidate. If it satisfies the dependency version set,
+                  --  and is available in the current platform, we freeze the
+                  --  crate to the candidate version and this dependency is
+                  --  done along this search branch:
+
                   elsif -- First time we see this project
                     Semver.Satisfies (R.Version, Dep.Versions) and then
                     Is_Available (R) and then
@@ -419,9 +453,29 @@ package body Alr.Query is
                              Frozen.Inserting (R),
                              Forbidden and R.Forbids (Platform.Properties),
                              Hints);
+
+                  --  Finally, even a valid candidate may not satisfy version
+                  --  restrictions, or not be available in the current
+                  --  platform, in which case this search branch is
+                  --  exhausted without success:
+
+                  else
+                     --  TODO: we could be more specific by actually
+                     --  identifying the reason for rejecting the release
+                     --  in the following log message:
+                     Trace.Debug
+                       ("SOLVER: discarding search branch because "
+                        & "candidate FAILS to fulfil version "
+                        & R.Milestone.Image
+                        & ", or is unavailable in target platform, "
+                        & "when the search tree was "
+                        & Tree'(Expanded
+                                and Current
+                                and Remaining).Image_One_Line);
                   end if;
+
                else
-                  --  Not even same project, this is related to the fixme below
+                  --  Not even same crate, this is related to the fixme below.
                   null;
                end if;
             end Check;
