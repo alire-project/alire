@@ -71,7 +71,8 @@ package body Alr.Commands.Show is
          if Cmd.Solve then
             declare
                Needed  : Query.Solution :=
-                           Query.Resolve (Rel.This_Version, Query_Policy);
+                           Query.Resolve (Rel.This_Version,
+                                          Query_Policy);
             begin
                if Needed.Valid then
                   if Needed.Releases.Contains (Rel.Project) then

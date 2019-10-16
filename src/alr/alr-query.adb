@@ -462,7 +462,7 @@ package body Alr.Query is
 
    begin
       if Deps.Is_Empty then
-         return (True, Empty_Instance);
+         return (True, Empty_Instance, Empty_Deps);
       end if;
 
       Expand (Empty,
@@ -479,7 +479,7 @@ package body Alr.Query is
                         Solutions.Length'Img & " ways");
          Trace.Debug ("Dependencies solved with" &
                         Solutions.First_Element.Length'Img & " releases");
-         return (True, Solutions.First_Element);
+         return (True, Solutions.First_Element, Empty_Deps);
       end if;
    end Resolve;
 
