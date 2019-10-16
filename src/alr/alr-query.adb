@@ -1,5 +1,5 @@
 with Ada.Containers; use Ada.Containers;
-with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with Alire.Conditional.Operations;
 with Alire.Origins.Deployers;
@@ -14,10 +14,8 @@ package body Alr.Query is
 
    use Alire;
 
-   package Instance_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Instance,
-      Alire.Containers."=");
-   type Instances is new Instance_Lists.List with null record;
+   package Solution_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (Solution);
 
    package Semver renames Semantic_Versioning;
 
@@ -142,17 +140,24 @@ package body Alr.Query is
    -- Print_Solution --
    --------------------
 
-   procedure Print_Solution (I : Instance) is
+   procedure Print_Solution (Sol : Solution) is
       use Containers.Project_Release_Maps;
    begin
-      for Rel of I loop
+      Trace.Debug ("Resolved:");
+      for Rel of Sol.Releases loop
          Log ("  " & Rel.Milestone.Image, Debug);
+      end loop;
+
+      Trace.Debug ("Hinted:");
+      for Dep of Sol.Hints loop
+         Log ("  " & Dep.Image, Debug);
       end loop;
    end Print_Solution;
 
    ------------------------
    -- Add_Dep_As_Release --
    ------------------------
+   --  Declared for use with Materialize instance below.
 
    procedure Add_Dep_Release (Sol   : in out Instance;
                               Dep   :        Types.Dependency;
@@ -171,6 +176,10 @@ package body Alr.Query is
                   Find (Dep.Project, Dep.Versions, Commands.Query_Policy));
    end Add_Dep_Release;
 
+   -----------------
+   -- Materialize --
+   -----------------
+
    function Materialize is new Alire.Conditional.For_Dependencies.Materialize
      (Instance,
       Add_Dep_Release);
@@ -180,7 +189,7 @@ package body Alr.Query is
    -----------------
 
    function Is_Complete (Deps : Types.Platform_Dependencies;
-                         Sol  : Instance)
+                         Sol  : Solution)
                          return Boolean is
 
       use Alire.Conditional.For_Dependencies;
@@ -191,13 +200,28 @@ package body Alr.Query is
 
       function Check_Value return Boolean is
       begin
-         for R of Sol loop
+         for R of Sol.Releases loop
             if R.Satisfies (Deps.Value) then
                Trace.Debug ("SOLVER:CHECK " & R.Milestone.Image & " satisfies "
                             & Deps.Image_One_Line);
+
                --  Check in turn that the release dependencies are satisfied
                --  too.
                return Is_Complete (R.Depends (Platform.Properties), Sol);
+            end if;
+         end loop;
+
+         for Dep of Sol.Hints loop
+            if Dep.Project = Deps.Value.Project then
+
+               --  Hints are unmet dependencies, that may have in turn other
+               --  dependencies. These are unknown at this point though, so we
+               --  can only report that a Hint indeed matches a dependency.
+
+               Trace.Debug ("SOLVER:CHECK " & Dep.Image & " HINTS "
+                            & Deps.Image_One_Line);
+
+               return True;
             end if;
          end loop;
 
@@ -263,14 +287,25 @@ package body Alr.Query is
    is
       use Alire.Conditional.For_Dependencies;
 
-      Solutions : Instances;
+      Solutions : Solution_Lists.List;
+      --  We store here all valid solutions found. The solver is currently
+      --  exhaustive in that it will not stop after the first solution, but
+      --  will keep going until all possibilities are exhausted. This was done
+      --  for test purposes, to verify that the solver is indeed complete.
+      --  The solver is greedily guided by the Age_Policy, and the first found
+      --  solution is returned after the solving ends. It might be useful to
+      --  use some other criterion, like Pareto (e.g. returning the solution
+      --  where no release can be upgraded without degrading some other one).
+      --  On the other hand, if at some point resolution starts to take too
+      --  much time, it may be useful to be able to select the solver behavior
+      --  (e.g. stop after the first solution is found).
 
       --------------------
       -- Check_Complete --
       --------------------
 
       procedure Check_Complete (Deps : Types.Platform_Dependencies;
-                                Sol  : Instance) is
+                                Sol  : Solution) is
          --  Note: these Deps may include more than the ones requested to
          --  solve, as indirect dependencies are progressively added.
       begin
@@ -290,7 +325,8 @@ package body Alr.Query is
                         Remaining : --  Nodes pending to be considered
                                     Types.Platform_Dependencies;
                         Frozen    : Instance; -- Releases in current solution
-                        Forbidden : Types.Forbidden_Dependencies)
+                        Forbidden : Types.Forbidden_Dependencies;
+                        Hints     : Dep_List) -- Natives taken for granted
       is
 
          ------------------
@@ -315,7 +351,8 @@ package body Alr.Query is
                                 Remaining,
                                 Empty,
                                 Frozen,
-                                Forbidden);
+                                Forbidden,
+                                Hints);
                      else
                         Trace.Debug
                           ("SOLVER: discarding tree because of " &
@@ -380,7 +417,8 @@ package body Alr.Query is
                              Remaining and R.Depends (Platform.Properties),
                              Empty,
                              Frozen.Inserting (R),
-                             Forbidden and R.Forbids (Platform.Properties));
+                             Forbidden and R.Forbids (Platform.Properties),
+                             Hints);
                   end if;
                else
                   --  Not even same project, this is related to the fixme below
@@ -417,7 +455,8 @@ package body Alr.Query is
                     Current.First_Child,
                     Current.All_But_First_Children and Remaining,
                     Frozen,
-                    Forbidden);
+                    Forbidden,
+                    Hints);
          end Expand_And_Vector;
 
          ----------------------
@@ -431,7 +470,8 @@ package body Alr.Query is
                        Current (I),
                        Remaining,
                        Frozen,
-                       Forbidden);
+                       Forbidden,
+                       Hints);
             end loop;
          end Expand_Or_Vector;
 
@@ -440,15 +480,20 @@ package body Alr.Query is
             if Remaining.Is_Empty then
                Trace.Debug ("SOLVER: tree FULLY expanded as: " &
                               Expanded.Image_One_Line);
-               Check_Complete (Deps,
-                               Materialize (Expanded, Platform.Properties));
+               Check_Complete
+                 (Deps,
+                  Solution'(Valid    => True,
+                            Releases => Materialize
+                              (Expanded, Platform.Properties),
+                            Hints    => Hints));
                return;
             else
                Expand (Expanded,
                        Remaining,
                        Empty,
                        Frozen,
-                       Forbidden);
+                       Forbidden,
+                       Hints);
             end if;
          end if;
 
@@ -473,23 +518,27 @@ package body Alr.Query is
                           Hints    => Empty_Deps);
       end if;
 
-      Expand (Empty,
-              Deps,
-              Empty,
-              Empty_Instance,
-              Empty);
+      Expand (Expanded  => Empty,
+              Current   => Deps,
+              Remaining => Empty,
+              Frozen    => Empty_Instance,
+              Forbidden => Empty,
+              Hints     => Empty_Deps);
 
       if Solutions.Is_Empty then
-         Trace.Debug ("Dependency resolution failed");
+         Trace.Detail ("Dependency resolution failed");
          return (Valid => False);
       else
-         Trace.Debug ("Dependencies solvable in" &
-                        Solutions.Length'Img & " ways");
-         Trace.Debug ("Dependencies solved with" &
-                        Solutions.First_Element.Length'Img & " releases");
-         return Solution'(Valid    => True,
-                          Releases => Solutions.First_Element,
-                          Hints    => Empty_Deps);
+         Trace.Detail ("Dependencies solvable in" &
+                         Solutions.Length'Img & " ways");
+         Trace.Detail ("Dependencies solved with"
+                       & Solutions.First_Element.Releases.Length'Img
+                       & " releases"
+                       & (if not Solutions.First_Element.Hints.Is_Empty
+                         then " and" & Solutions.First_Element.Hints.Length'Img
+                         & " external hints"
+                         else ""));
+         return Solutions.First_Element;
       end if;
    end Resolve;
 

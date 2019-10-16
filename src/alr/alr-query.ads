@@ -106,7 +106,11 @@ package Alr.Query is
    function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean;
    --  simplified call to Resolve, discarding result
 
-   procedure Print_Solution (I : Instance);
+   -------------------
+   -- Debug helpers --
+   -------------------
+
+   procedure Print_Solution (Sol : Solution);
 
    function Dependency_Image (Project  : Alire.Project;
                               Versions : Semantic_Versioning.Version_Set;
