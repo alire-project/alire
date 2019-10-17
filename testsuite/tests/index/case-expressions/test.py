@@ -28,7 +28,7 @@ assert_match(".*case OS is .* when Linux => .GPR External: OS := linux.*",
              p.out, flags=re.S)
 
 # Dependencies
-assert_match(".*Dependencies .direct.:.*case OS is.*when Linux => .libhello is Within_Major.*",
+assert_match(".*Dependencies .direct.:.*case OS is.*when Linux => .libhello\^1.*",
              p.out, flags=re.S)
 
 # Check that evaluation for the current platform does work
