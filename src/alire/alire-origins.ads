@@ -38,11 +38,6 @@ package Alire.Origins with Preelaborate is
       Native          -- Native platform package
      );
 
-   Supports_Hashing : constant array (Kinds) of Boolean :=
-                        (Filesystem     => True,
-                         Source_Archive => True,
-                         others         => False);
-
    type String_Access is access constant String;
    type Prefix_Array is array (Kinds) of String_Access;
    Prefixes : constant Prefix_Array;

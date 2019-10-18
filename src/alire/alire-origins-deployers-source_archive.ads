@@ -10,6 +10,9 @@ package Alire.Origins.Deployers.Source_Archive is
                           Folder : String;
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest;
 
+   overriding
+   function Supports_Hashing (This : Deployer) return Boolean is (True);
+
    procedure Unpack (Src_File : String;
                      Dst_Dir  : String;
                      Move_Up  : Boolean);

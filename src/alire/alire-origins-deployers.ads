@@ -66,12 +66,14 @@ package Alire.Origins.Deployers is
    function Compute_Hash (This   : Deployer;
                           Folder : String;
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest with
-     Pre'Class =>
-       Supports_Hashing (This.Base.Kind) or else raise Program_Error;
+     Pre'Class => This.Supports_Hashing or else raise Program_Error;
    --  Called immediately after deploy for each hash in the origin, Should
    --  be overriden by all deployers that support hashing; it won't be called
    --  otherwise. This function may raise exceptions that will be properly
    --  dealt with.
+
+   function Supports_Hashing (This : Deployer) return Boolean is (False);
+   --  Deployers that support hashing must override and return True.
 
    function Is_Native (This : Deployer) return Boolean;
    --  Whether This targets a package from the system's package manager

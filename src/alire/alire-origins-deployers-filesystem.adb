@@ -99,4 +99,15 @@ package body Alire.Origins.Deployers.Filesystem is
      (Path.Is_Directory or else
       Archive_Format (Path.Display_Base_Name) in Known_Source_Archive_Format);
 
+   ----------------------
+   -- Supports_Hashing --
+   ----------------------
+
+   overriding
+   function Supports_Hashing (This : Deployer) return Boolean is
+      use GNATCOLL.VFS;
+   begin
+      return Create (+This.Base.Path).Is_Regular_File;
+   end Supports_Hashing;
+
 end Alire.Origins.Deployers.Filesystem;
