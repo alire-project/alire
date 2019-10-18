@@ -13,9 +13,6 @@ package body Alire.Origins is
    --  Try to get a basename for the given URL. Return an empty string on
    --  failure.
 
-   function Archive_Format (Name : String) return Source_Archive_Format;
-   --  Guess the format of a source archive from its file name
-
    --------------
    -- Add_Hash --
    --------------

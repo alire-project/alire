@@ -10,4 +10,11 @@ package Alire.Origins.Deployers.Source_Archive is
                           Folder : String;
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest;
 
+   procedure Unpack (Src_File : String;
+                     Dst_Dir  : String;
+                     Move_Up  : Boolean);
+   --  Unpack a file in one of the known formats into the destination dir. If
+   --  Move_Up, then if Src contains a single root folder, its contents are
+   --  moved up one level into Dst_Dir. Otherwise, Checked_Error is raised.
+
 end Alire.Origins.Deployers.Source_Archive;
