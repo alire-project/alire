@@ -27,7 +27,8 @@ package body Alr.Commands.Compile is
          Sol : constant Query.Solution :=
            Query.Resolve (Root.Current.Release.Dependencies
                             (Platform.Properties),
-                          Query_Policy);
+                          Options => (Age    => Query_Policy,
+                                      Native => <>));
       begin
          if Sol.Valid then
             for R of Sol.Releases loop

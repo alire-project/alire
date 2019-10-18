@@ -25,7 +25,8 @@ package body Alr.Commands.Update is
          Needed  : constant Query.Solution :=
            Query.Resolve
              (Root.Current.Release.Dependencies.Evaluate (Platform.Properties),
-              Query_Policy);
+              Options => (Age    => Query_Policy,
+                          Native => <>));
       begin
          if not Needed.Valid then
             Reportaise_Command_Failed ("Update failed");

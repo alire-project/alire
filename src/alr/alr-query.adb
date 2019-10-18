@@ -12,6 +12,8 @@ with Alr.Platform;
 
 package body Alr.Query is
 
+   use Alire;
+
    package Instance_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Instance,
       Alire.Containers."=");
@@ -27,7 +29,8 @@ package body Alr.Query is
 
    function Dependency_Image (Project  : Alire.Project;
                               Versions : Semantic_Versioning.Version_Set;
-                              Policy   : Policies := Newest) return String is
+                              Policy   : Age_Policies := Newest)
+                              return String is
       ((+Project) &
        (if Versions /= Semver.Any
         then " version " & Semver.Image_Ada (Versions)
@@ -60,7 +63,7 @@ package body Alr.Query is
    function Find
      (Project : Alire.Project;
       Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
-      Policy  : Policies)
+      Policy  : Age_Policies)
       return Release
    is
       use Semantic_Versioning;
@@ -106,7 +109,7 @@ package body Alr.Query is
    ----------
 
    function Find (Project : String;
-                  Policy  : Policies) return Release
+                  Policy  : Age_Policies) return Release
    is
       Spec : constant Parsers.Allowed_Milestones :=
         Parsers.Project_Versions (Project);
@@ -131,7 +134,9 @@ package body Alr.Query is
    -------------------
 
    function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean
-   is (Resolve (Deps, Commands.Query_Policy).Valid);
+   is (Resolve (Deps,
+                Options => (Age    => Commands.Query_Policy,
+                            Native => <>)).Valid);
 
    --------------------
    -- Print_Solution --
@@ -252,8 +257,9 @@ package body Alr.Query is
    -- Resolve --
    -------------
 
-   function Resolve (Deps   : Types.Platform_Dependencies;
-                     Policy : Policies) return Solution
+   function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+                     Options : Query_Options := Default_Options)
+                     return Solution
    is
       use Alire.Conditional.For_Dependencies;
 
@@ -389,7 +395,7 @@ package body Alr.Query is
             else
                --  FIXME: use Floor/Ceiling or cleverer data structure to not
                --  blindly visit all releases.
-               if Policy = Newest then
+               if Options.Age = Newest then
                   for R of reverse Index.Catalog loop
                      Check (R);
                   end loop;
@@ -462,7 +468,9 @@ package body Alr.Query is
 
    begin
       if Deps.Is_Empty then
-         return (True, Empty_Instance, Empty_Deps);
+         return Solution'(Valid    => True,
+                          Releases => Empty_Instance,
+                          Hints    => Empty_Deps);
       end if;
 
       Expand (Empty,
@@ -479,7 +487,9 @@ package body Alr.Query is
                         Solutions.Length'Img & " ways");
          Trace.Debug ("Dependencies solved with" &
                         Solutions.First_Element.Length'Img & " releases");
-         return (True, Solutions.First_Element, Empty_Deps);
+         return Solution'(Valid    => True,
+                          Releases => Solutions.First_Element,
+                          Hints    => Empty_Deps);
       end if;
    end Resolve;
 

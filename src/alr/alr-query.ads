@@ -7,9 +7,13 @@ with Semantic_Versioning;
 
 package Alr.Query is
 
-   type Policies is (Oldest, Newest);
+   type Age_Policies is (Oldest, Newest);
+   --  When looking for releases within a crate, which one to try first.
 
-   use Alire;
+   type Native_Policies is (Hint, Fail);
+   --  * Hint: attempt to normally resolve native crates. When impossible,
+   --  store such crate as a hint and assume it is available.
+   --  * Fail: treat native crates normally and fail if unavailable.
 
    subtype Dep_List is Alire.Containers.Dependency_Lists.List;
    --  Dependency lists are used to keep track of failed dependencies
@@ -64,11 +68,11 @@ package Alr.Query is
    function Find
      (Project : Alire.Project;
       Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
-      Policy  : Policies)
+      Policy  : Age_Policies)
       return Release;
 
    function Find (Project : String;
-                  Policy  : Policies) return Release;
+                  Policy  : Age_Policies) return Release;
    --  Given a textual project+set (see Parsers), find the release if it exists
 
    ----------------------------------
@@ -87,8 +91,17 @@ package Alr.Query is
    --  They may need to travel the full catalog, with multiple individual
    --  availability checks.
 
-   function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
-                     Policy  :     Policies) return Solution;
+   type Query_Options is record
+      Age    : Age_Policies;
+      Native : Native_Policies;
+   end record;
+
+   Default_Options : constant Query_Options := (Age    => Newest,
+                                                Native => Hint);
+
+   function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+                     Options : Query_Options := Default_Options)
+                     return Solution;
 
    function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean;
    --  simplified call to Resolve, discarding result
@@ -97,6 +110,6 @@ package Alr.Query is
 
    function Dependency_Image (Project  : Alire.Project;
                               Versions : Semantic_Versioning.Version_Set;
-                              Policy   : Policies := Newest) return String;
+                              Policy   : Age_Policies := Newest) return String;
 
 end Alr.Query;

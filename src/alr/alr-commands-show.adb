@@ -72,7 +72,8 @@ package body Alr.Commands.Show is
             declare
                Needed  : Query.Solution :=
                            Query.Resolve (Rel.This_Version,
-                                          Query_Policy);
+                                          Options => (Age    => Query_Policy,
+                                                      Native => <>));
             begin
                if Needed.Valid then
                   if Needed.Releases.Contains (Rel.Project) then

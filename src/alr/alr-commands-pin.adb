@@ -23,7 +23,8 @@ package body Alr.Commands.Pin is
          Sol : constant Query.Solution :=
            Query.Resolve (Root.Current.Release.Dependencies
                             (Platform.Properties),
-                          Query_Policy);
+                          Options => (Age    => Query_Policy,
+                                      Native => <>));
       begin
          if Sol.Valid then
             Templates.Generate_Prj_Alr
