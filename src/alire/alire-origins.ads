@@ -30,7 +30,7 @@ package Alire.Origins with Preelaborate is
    --  The name of a package in every distro for a given version
 
    type Kinds is
-     (Filesystem,     -- A local folder/tarball with release sources
+     (Filesystem,     -- Not really an origin, but a working copy of a project
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
       SVN,            -- Remote svn repo
@@ -39,8 +39,7 @@ package Alire.Origins with Preelaborate is
      );
 
    Supports_Hashing : constant array (Kinds) of Boolean :=
-                        (Filesystem |
-                         Git |
+                        (Filesystem     => True,
                          Source_Archive => True,
                          others         => False);
 
