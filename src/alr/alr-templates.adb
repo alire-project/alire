@@ -30,21 +30,6 @@ package body Alr.Templates is
 
    function Q (S : String) return String renames Utils.Quote;
 
-   -------------
-   -- Project --
-   -------------
-
-   function Project (Filename : String) return String is
-   begin
-      for I in reverse Filename'Range loop
-         if Filename (I) = '-' then
-            return Filename (I + 1 .. Filename'Last - 4);
-         end if;
-      end loop;
-
-      raise Program_Error with "Malformed index filename: " & Filename;
-   end Project;
-
    --------------------
    -- Manual_Warning --
    --------------------
@@ -54,46 +39,6 @@ package body Alr.Templates is
       Put_Line (File, Tab_1 & Warning_Text);
       New_Line (File);
    end Manual_Warning;
-
-   --------------------
-   -- Generate_Index --
-   --------------------
-
-   procedure Generate_Full_Index (File         : in out Ada.Text_IO.File_Type;
-                                  Index_Folder : String)
-   is
-      use Ada.Directories;
-
-      ---------------
-      -- Add_Entry --
-      ---------------
-
-      procedure Add_Entry (Found : Directory_Entry_Type; Stop : in out Boolean)
-      is
-         pragma Unreferenced (Stop);
-         Name : constant String := Utils.To_Lower_Case (Simple_Name (Found));
-      begin
-         if Kind (Found) = Ordinary_File then
-            if Alire.Utils.Starts_With (Name, "alire-index-")
-               and then Alire.Utils.Ends_With (Name, ".ads")
-            then
-               declare
-                  Project_Name : constant String :=
-                     Utils.To_Mixed_Case (Project (Simple_Name (Found)));
-               begin
-                  Log ("Indexing " & Full_Name (Found), Debug);
-                  Put_Line (File, "with Alire.Index." & Project_Name & ";");
-               end;
-            elsif Name /= "alire-projects.ads" then
-               Log ("Unexpected file in index folder: " & Full_Name (Found));
-            end if;
-         end if;
-      end Add_Entry;
-
-   begin
-      OS_Lib.Traverse_Folder (Index_Folder, Add_Entry'Access, Recurse => True);
-      New_Line (File);
-   end Generate_Full_Index;
 
    ----------------------
    -- Generate_Agg_Gpr --
