@@ -461,7 +461,7 @@ package body Alr.Query is
                                 and R.Depends
                                   (Platform.Properties)).Image_One_Line);
 
-                     Expand (Expanded and R.This_Version,
+                     Expand (Expanded and R.To_Dependency,
                              Remaining and R.Depends (Platform.Properties),
                              Empty,
                              Frozen.Inserting (R),

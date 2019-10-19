@@ -31,7 +31,6 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Interactive;
-with Alr.Paths;
 with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
@@ -439,17 +438,6 @@ package body Alr.Commands is
            ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
       end if;
    end Requires_Project;
-
-   ----------------------
-   -- Requires_Sources --
-   ----------------------
-
-   procedure Requires_Sources is
-   begin
-      if not OS_Lib.Is_Folder (Paths.Alr_Source_Folder) then
-         Bootstrap.Checkout_Alr_Sources (Paths.Alr_Source_Folder);
-      end if;
-   end Requires_Sources;
 
    --------------------
    -- Fill_Arguments --

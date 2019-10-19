@@ -44,9 +44,6 @@ package Alire.Dependencies with Preelaborate is
           raise Checked_Error with "dependency version must be a string");
    --  May raise Checked_Error with stored Alire.Errors.
 
-   function From_TOML (From : TOML_Adapters.Key_Queue) return Dependency;
-   --  Wrapper for case loaders; may fail as the previous function.
-
    overriding
    function To_TOML (Dep : Dependency) return TOML.TOML_Value;
 

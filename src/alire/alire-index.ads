@@ -11,7 +11,6 @@ with Alire.Properties.Licenses;
 with Alire.Releases;
 with Alire.Requisites;
 with Alire.Utils;
-with Alire.Versions;
 
 with Semantic_Versioning;
 

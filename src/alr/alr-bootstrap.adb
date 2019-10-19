@@ -1,12 +1,10 @@
 with Ada.Calendar;
-with Ada.Directories;
 
 with Alire.Directories;
 with Alire_Early_Elaboration;
 with Alire.Index;
 
 with Alr.OS_Lib;
-with Alr.Paths;
 with Alr.Root;
 with Alr.Utils;
 
@@ -35,30 +33,6 @@ package body Alr.Bootstrap is
            ("git is not detected, alr will fail on most operations");
       end if;
    end Check_Ada_Tools;
-
-   --------------------------
-   -- Checkout_Alr_Sources --
-   --------------------------
-
-   procedure Checkout_Alr_Sources (To_Path : String) is
-      Parent : constant String :=
-        Ada.Directories.Containing_Directory (To_Path);
-   begin
-      if not OS_Lib.Is_Folder (Parent) then
-         Ada.Directories.Create_Path (Parent);
-      end if;
-
-      Trace.Detail ("Checking out alr sources...");
-
-      OS_Lib.Spawn ("git", "clone " & Paths.Alr_Repo & " " & To_Path);
-
-      declare
-         use Alire.Directories;
-         Folder : Guard (Enter (To_Path)) with Unreferenced;
-      begin
-         OS_Lib.Spawn ("git", "submodule update --init --recursive");
-      end;
-   end Checkout_Alr_Sources;
 
    -----------------
    -- Interrupted --

@@ -527,6 +527,16 @@ package body Alire.Releases is
       return From.Report_Extra_Keys;
    end From_TOML;
 
+   -------------------
+   -- To_Dependency --
+   -------------------
+
+   function To_Dependency (R : Release) return Conditional.Dependencies is
+     (Conditional.For_Dependencies.New_Value
+        (Alire.Dependencies.New_Dependency
+             (R.Project,
+              Semantic_Versioning.Exactly (R.Version))));
+
    -------------
    -- To_TOML --
    -------------
@@ -641,7 +651,6 @@ package body Alire.Releases is
    -- Version --
    -------------
 
-   overriding
    function Version (R : Release) return Semantic_Versioning.Version is
      (R.Version);
 

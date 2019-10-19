@@ -14,7 +14,6 @@ with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils;
-with Alire.Versions;
 
 with Semantic_Versioning;
 
@@ -27,8 +26,7 @@ package Alire.Releases with Preelaborate is
 --     subtype Dependency_Vector is Dependencies.Vectors.Vector;
 
    type Release (<>) is
-     new Versions.Versioned
-     and Interfaces.Tomifiable
+     new Interfaces.Tomifiable
      and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with private;
@@ -118,7 +116,7 @@ package Alire.Releases with Preelaborate is
    --  Materialize conditions in a Release once the whatever properties are
    --  known. At present dependencies, properties, and availability.
 
-   overriding function Project (R : Release) return Alire.Project;
+   function Project (R : Release) return Alire.Project;
 
    function Project_Str (R : Release) return String is (+R.Project);
 
@@ -138,7 +136,7 @@ package Alire.Releases with Preelaborate is
 
    function Notes   (R : Release) return Description_String;
    --  Specific to release
-   overriding
+
    function Version (R : Release) return Semantic_Versioning.Version;
 
    function Depends (R : Release) return Conditional.Dependencies;
@@ -234,6 +232,10 @@ package Alire.Releases with Preelaborate is
                        return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
 
+   function To_Dependency (R : Release) return Conditional.Dependencies;
+   --  Return the dependency that represents this very release (crate=version),
+   --  wrapped as a dependency tree with a single value.
+
    overriding
    function From_TOML (This : in out Release;
                        From :        TOML_Adapters.Key_Queue)
@@ -260,17 +262,11 @@ private
    function All_Properties (R : Release;
                             P : Alire.Properties.Vector)
                             return Alire.Properties.Vector;
-   --  Properties that R has un der platform properties P
-
-   use Alire.Properties;
-   function Comment
-   is new Alire.Properties.Labeled.Cond_New_Label
-     (Alire.Properties.Labeled.Comment);
+   --  Properties that R has under platform properties P
 
    type Release (Prj_Len,
                  Notes_Len : Natural) is
-     new Versions.Versioned
-     and Interfaces.Tomifiable
+     new Interfaces.Tomifiable
      and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
@@ -303,7 +299,6 @@ private
    function Is_Extension (R : Release) return Boolean
    is (R.Project_Base'Length < R.Project'Length);
 
-   overriding
    function Project (R : Release) return Alire.Project
    is (R.Project);
 

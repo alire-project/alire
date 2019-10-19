@@ -21,10 +21,6 @@ package Alr.Platforms.Linux is
    --  repopulated on-demand.
    --  ${XDG_CACHE_HOME:-.cache}/alire
 
-   overriding function Own_Executable (This : Linux_Variant) return String;
-   --  Returns full path to own executable (not argv[0] but the real,
-   --  effective, full path).
-
    -----------------------
    --  Self identification
 
@@ -35,13 +31,5 @@ package Alr.Platforms.Linux is
    function Operating_System (This : Linux_Variant)
                               return Alire.Platforms.Operating_Systems
    is (Alire.Platforms.Linux);
-
-   function Package_Version (This   : Linux_Variant;
-                             Origin : Alire.Origins.Origin)
-                             return String;
-
-private
-
-   Linux_Self_Exec : constant String := "/proc/self/exe";
 
 end Alr.Platforms.Linux;

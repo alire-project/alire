@@ -16,8 +16,6 @@ package Alr.Platform is
    ----------------------------------
    --  Portably detectable properties
 
-   function Am_I_Root return Boolean;
-
    function Compiler return Alire.Platforms.Compilers;
 
    function Target return Alire.Platforms.Targets is (Alire.Platforms.Native);
@@ -35,8 +33,6 @@ package Alr.Platform is
    function Distribution return Alire.Platforms.Distributions;
 
    function Operating_System return Alire.Platforms.Operating_Systems;
-
-   function Own_Executable   return String;
 
 private
 
@@ -76,12 +72,6 @@ private
 
    function Operating_System return Alire.Platforms.Operating_Systems
    is (Get.Operating_System);
-
-   --------------------
-   -- Own_Executable --
-   --------------------
-
-   function Own_Executable   return String is (Get.Own_Executable);
 
    ---------------
    -- Word_Size --

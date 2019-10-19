@@ -26,10 +26,6 @@ package Alr.Platforms is
    --  repopulated on-demand.
    --  ${XDG_CACHE_HOME:-.cache}/alire
 
-   function Own_Executable (This : Supported) return String is abstract;
-   --  Returns full path to own executable (not argv[0] but the real,
-   --  effective, full path).
-
    -----------------------
    --  Self identification
 

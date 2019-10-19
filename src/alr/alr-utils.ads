@@ -37,12 +37,6 @@ package Alr.Utils is
 
    function Trim (S : String) return String renames Alire.Utils.Trim;
 
-   function Hash_File (Path : String) return String;
-   --  Returns the hexadecimal representation
-
-   function Hash_String (Str : String) return String;
-   --  Returns the hexadecimal representation
-
    --  General containers
 
    package String_Vectors renames Alire.Utils.String_Vectors;

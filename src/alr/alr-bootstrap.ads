@@ -27,9 +27,6 @@ package Alr.Bootstrap is
    procedure Check_Ada_Tools;
    --  Check gprbuild/gnatmake are within reach
 
-   procedure Checkout_Alr_Sources (To_Path : String);
-   --  Checks out current master branch
-
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
