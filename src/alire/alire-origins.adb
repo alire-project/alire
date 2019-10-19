@@ -1,6 +1,7 @@
 with Alire.Errors;
 with Alire.TOML_Expressions;
 with Alire.TOML_Keys;
+with Alire.Utils;
 
 package body Alire.Origins is
 
