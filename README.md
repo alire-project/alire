@@ -1,4 +1,4 @@
-[![Linux CI](https://github.com/alire-project/alire/workflows/.github/workflows/ci-linux.yml/badge.svg)](https://github.com/alire-project/alire/actions)
+[![Linux CI](https://github.com/alire-project/alire/workflows/CI%20linux/badge.svg)](https://github.com/alire-project/alire/actions)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
 
 # ALR #
