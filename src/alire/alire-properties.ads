@@ -2,7 +2,6 @@ with Ada.Containers.Indefinite_Vectors;
 with Ada.Tags;
 
 with Alire.Interfaces;
-with Alire.Utils;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
@@ -33,9 +32,6 @@ package Alire.Properties with Preelaborate is
    overriding
    function To_TOML (P : Property) return TOML.TOML_Value is abstract;
 
-   function To_TOML_Classwide (P : Property'Class) return TOML.TOML_Value
-   is (P.To_TOML);
-
    overriding
    function To_YAML (P : Property) return String is abstract;
 
@@ -50,10 +46,6 @@ package Alire.Properties with Preelaborate is
 
    No_Properties : constant Vector;
 
-   function Empty_Properties return Vector;
-
---     function "and" (L, R : Property'Class)          return Vector;
---     function "and" (L : Vector; R : Property'Class) return Vector;
    function "and" (L, R : Vector) return Vector;
    function "+" (P : Property'Class) return Vector;
    function To_Vector (P : Property'Class) return Vector renames "+";
@@ -63,8 +55,6 @@ package Alire.Properties with Preelaborate is
 
    function Filter (V : Vector; Key : String) return Vector;
    --  Filter properties by key
-
-   function Image_One_Line (V : Vector) return String;
 
    overriding
    function To_TOML (V : Vector) return TOML.TOML_Value
@@ -132,26 +122,7 @@ private
 
    No_Properties : constant Vector := (Vectors.Empty_Vector with null record);
 
-   function Empty_Properties return Vector is (No_Properties);
-
    function "and" (L, R : Vector) return Vector is (L & R);
    function "+" (P : Property'Class) return Vector is (To_Vector (P, 1));
-
-   --  function "and" (L, R : Property'Class) return Vector
-   --  is (L & R);
-   --  function "and" (L : Vector; R : Property'Class) return Vector
-   --  is (L & R);
-
-   package Non_Primitives is
-      function Image_One_Line_Instance is
-        new Utils.Image_One_Line (Vectors,
-                                  Vector,
-                                  Image_Classwide,
-                                  " and ",
-                                  "(no properties");
-   end Non_Primitives;
-
-   function Image_One_Line (V : Vector) return String
-   renames Non_Primitives.Image_One_Line_Instance;
 
 end Alire.Properties;

@@ -1,4 +1,5 @@
 with Alire.TOML_Expressions.Cases;
+with Alire.Utils;
 
 package body Alire.Properties.From_TOML is
 

@@ -3,8 +3,6 @@ with Alire.Properties.Platform;
 with Alr.OS_Lib;
 with Alr.Utils;
 
-with Interfaces.C;
-
 with Semantic_Versioning;
 
 package body Alr.Platform is
@@ -14,18 +12,6 @@ package body Alr.Platform is
 
    type Supported_Access is access Platforms.Supported'Class;
    Instance : Supported_Access;
-
-   ---------------
-   -- Am_I_Root --
-   ---------------
-
-   function Am_I_Root return Boolean is
-      function GetEUID return Interfaces.C.int
-        with Import, Convention => C, External_Name => "alr_geteuid";
-   begin
-      Trace.Debug ("UID=" & Utils.Trim (GetEUID'Img));
-      return Integer (GetEUID) = 0;
-   end Am_I_Root;
 
    ----------------------
    -- Basic_Properties --

@@ -1,6 +1,6 @@
-with Alire.Platform;
-
 with Alire.OS_Lib.Subprocess;
+with Alire.Platform;
+with Alire.Utils;
 
 package body Alire.Origins.Deployers.APT is
 

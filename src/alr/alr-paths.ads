@@ -7,8 +7,6 @@ with Alire.Environment;
 with Alr.Defaults;
 with Alr.OS_Lib;
 
-with GNAT.OS_Lib;
-
 package Alr.Paths is
 
    --  NOTE: none of the functions in this spec can be used before elaboration
@@ -22,9 +20,6 @@ package Alr.Paths is
 
    function Parent (Folder : String) return String
    renames Ada.Directories.Containing_Directory;
-
-   function Is_Simple_Name (Path : String) return Boolean
-   is (for all C of Path => C /= GNAT.OS_Lib.Directory_Separator);
 
    --  To clarify constants/functions declared herein:
 
@@ -66,10 +61,6 @@ package Alr.Paths is
    Alr_Working_Deps_Path : constant Relative_Path;
    --  Path from inside the working folder to dependency folders
 
-   function Templates_Bin_Folder return Absolute_Path;
-
-   function Templates_Lib_Folder return Absolute_Path;
-
    --  Functions that return Paths-derived files
 
    function Projects_Folder return Relative_Path;
@@ -101,19 +92,7 @@ private
    function Alr_Source_Folder return String
    is (OS_Lib.Getenv (Alire.Environment.Source, Alr_Config_Folder / "alire"));
 
-   function Alr_Index_Folder return Absolute_Path
-   is (Alr_Source_Folder / "deps" / "alire-index" / "index");
-
    function Projects_Folder      return String
    is (Alr_Working_Cache_Folder / "projects");
-
-   function Session_Folder       return String
-   is (Alr_Working_Cache_Folder / "session");
-
-   function Templates_Bin_Folder return String
-   is (Alr_Source_Folder / "templates" / "projects" / "bin");
-
-   function Templates_Lib_Folder return String
-   is (Alr_Source_Folder / "templates" / "projects" / "lib");
 
 end Alr.Paths;

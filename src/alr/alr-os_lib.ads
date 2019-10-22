@@ -33,12 +33,6 @@ package Alr.OS_Lib is
    --  If Force_Quiet and not in Debug level, output will be entirely muted
    --  (stdout & stderr).
 
-   procedure Spawn (Command             : String;
-                    Arguments           : String := "";
-                    Understands_Verbose : Boolean := False;
-                    Force_Quiet         : Boolean := False);
-   --  Raises CHILD_FAILED if exit code /= 0
-
    procedure Spawn_Raw (Command : String; Arguments : String := "");
    --  Direct launch, without any shenanigangs on output, for example for
    --  respawning the canonical version.
@@ -52,13 +46,6 @@ package Alr.OS_Lib is
    --  Raises CHILD_FAILED if exit code /= 0
    --  Even if exception raised, Output will be filled-in
 
-   procedure Spawn_And_Redirect (Out_File   : String;
-                                 Command    : String;
-                                 Arguments  : String := "";
-                                 Err_To_Out : Boolean := False);
-   --  Redirects output to file
-   --  Raises CHILD_FAILED if exit code /= 0
-
    --  OS PORTABLE FUNCTIONS
 
    procedure Bailout (Code : Integer := 0) renames Alire.OS_Lib.Bailout;
@@ -70,8 +57,6 @@ package Alr.OS_Lib is
 
    function Current_Folder return String
    renames Ada.Directories.Current_Directory;
-
-   function Current_Command_Line return String;
 
    --  PATH BUILDING
 
@@ -114,20 +99,6 @@ package Alr.OS_Lib is
    --  If recursively, the directory entry is passed before entering it
    --  "." and ".." are ignored
    --  If Stop, stop
-
-   procedure Delete_File (Name : String);
-   --  Don't fail if not existing, unlike the one in Directories
-
-   procedure Sed_Folder (Folder  : String;
-                         Pattern : String;
-                         Replace : String);
-   --  Replace, in both file names and contents, Pattern by Replace
-   --  Case sensitive!
-
-   --  UGLY HACKS
-
-   function File_Contains_Ignore_Case (Filename, Word : String) return Boolean
-     with Pre => (for all C of Word => C /= ' ');
 
 private
 

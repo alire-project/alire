@@ -16,9 +16,6 @@ package Alire.Platform is
 
    function Distribution return Platforms.Distributions;
 
-   function Name return Supported;
-   --  Self identify
-
    --------------------------------
    -- Portable derived utilities --
    --------------------------------

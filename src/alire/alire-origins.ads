@@ -2,7 +2,6 @@ with Alire.Hashes;
 with Alire.Interfaces;
 with Alire.Platforms;
 with Alire.TOML_Adapters;
-with Alire.Utils;
 
 private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
@@ -51,7 +50,6 @@ package Alire.Origins with Preelaborate is
    Unknown_Source_Archive_Format_Error : exception;
 
    type Origin is new
-     Interfaces.Codifiable and
      Interfaces.Detomifiable and
      Interfaces.Tomifiable with private;
 
@@ -132,8 +130,6 @@ package Alire.Origins with Preelaborate is
    procedure Add_Hash (This : in out Origin;
                        Hash :        Hashes.Any_Hash);
 
-   overriding function To_Code (This : Origin) return Utils.String_Vector;
-
    function From_String
      (This   : out Origin;
       From   : String;
@@ -205,7 +201,6 @@ private
 
    type Origin
    is new
-     Interfaces.Codifiable and
      Interfaces.Detomifiable and
      Interfaces.Tomifiable
    with record
@@ -281,11 +276,6 @@ private
          then " with hash " & This.Image_Of_Hashes
          else " with hashes " & This.Image_Of_Hashes)
      );
-
-   overriding function To_Code (This : Origin) return Utils.String_Vector is
-     (if This.Kind = Filesystem
-      then Utils.To_Vector (Path (This))
-      else raise Program_Error with "Unimplemented");
 
    Prefix_Git    : aliased constant String := "git+";
    Prefix_Hg     : aliased constant String := "hg+";

@@ -20,17 +20,6 @@ package body Alire.Dependencies is
          raise Checked_Error with "version set invalid: " & Version_Str;
    end From_TOML;
 
-   ---------------
-   -- From_TOML --
-   ---------------
-
-   function From_TOML (From : TOML_Adapters.Key_Queue) return Dependency is
-      Val : TOML.TOML_Value;
-      Key : constant String := From.Pop (Val);
-   begin
-      return From_TOML (Key, Val);
-   end From_TOML;
-
    -------------
    -- To_TOML --
    -------------

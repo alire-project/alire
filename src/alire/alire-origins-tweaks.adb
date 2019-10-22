@@ -1,3 +1,5 @@
+with Alire.Utils;
+
 with GNATCOLL.VFS;
 
 package body Alire.Origins.Tweaks is

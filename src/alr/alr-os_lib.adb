@@ -1,26 +1,4 @@
-with Ada.Command_Line;
-
 package body Alr.OS_Lib is
-
-   --------------------------
-   -- Current_Command_Line --
-   --------------------------
-
-   function Current_Command_Line return String is
-      use Ada.Command_Line;
-
-      function Append (Arg : Positive) return String is
-      begin
-         if Arg > Argument_Count then
-            return "";
-         else
-            return Argument (Arg) & " " & Append (Arg + 1);
-         end if;
-      end Append;
-
-   begin
-      return Append (1);
-   end Current_Command_Line;
 
    ---------------------
    -- Traverse_Folder --
@@ -58,20 +36,6 @@ package body Alr.OS_Lib is
               Go_Down'Access);
    end Traverse_Folder;
 
-   -----------------
-   -- Delete_File --
-   -----------------
-
-   procedure Delete_File (Name : String) is
-   begin
-      if GNAT.OS_Lib.Is_Regular_File (Name) then
-         Trace.Debug ("Deleting file: " & Name);
-         Ada.Directories.Delete_File (Name);
-      else
-         Trace.Debug ("Skipping deletion of non-existent file: " & Name);
-      end if;
-   end Delete_File;
-
    ------------
    -- Getenv --
    ------------
@@ -89,81 +53,6 @@ package body Alr.OS_Lib is
          return Env;
       end if;
    end Getenv;
-
-   ----------------
-   -- Sed_Folder --
-   ----------------
-
-   procedure Sed_Folder (Folder  : String;
-                         Pattern : String;
-                         Replace : String)
-   is
-
-      ------------
-      -- Rename --
-      ------------
-
-      procedure Rename (Item : Ada.Directories.Directory_Entry_Type;
-                        Stop : in out Boolean)
-      is
-         pragma Unreferenced (Stop);
-         use Ada.Directories;
-         use Utils;
-      begin
-         if Simple_Name (Item) = "." or else Simple_Name (Item) = ".." then
-            return;
-         end if;
-
-         if Kind (Item) = Directory then
-            Traverse_Folder (Full_Name (Item), Rename'Access);
-         end if;
-
-         if Contains (Simple_Name (Item), Pattern) then
-            Trace.Debug ("Filename match: " & Simple_Name (Item));
-            Rename (Full_Name (Item),
-                    Containing_Directory (Full_Name (Item)) /
-                      Utils.Replace (Simple_Name (Item),
-                        Pattern, Replace));
-         end if;
-      end Rename;
-
-   begin
-      --  FIXME this is OS dependent and should be made independent (or moved
-      --  to OS).
-
-      --  File contents
-      declare
-         use Alire.Directories;
-         G : Guard (Enter (Folder)) with Unreferenced;
-      begin
-         Trace.Debug ("sed-ing project name in files...");
-         Spawn ("find", ". -type f -exec sed -i s/" &
-                  Pattern & "/" & Replace & "/g {} \;",
-                Force_Quiet => True);
-      end;
-
-      --  This is not OS dependent
-      --  File names
-      Trace.Debug ("sed-ing project in file names...");
-      Traverse_Folder (Folder, Rename'Access);
-   end Sed_Folder;
-
-   -------------------------------
-   -- File_Contains_Ignore_Case --
-   -------------------------------
-
-   function File_Contains_Ignore_Case (Filename, Word : String)
-                                       return Boolean
-   is
-   begin
-      --  FIXME: this is OS dependent, and it shouldn't be
-      return Spawn ("grep", "-q " & Word & " " &
-                      Filename, Force_Quiet => True) = 0;
---      return True;
-   exception
-      when Command_Failed =>
-         return False;
-   end File_Contains_Ignore_Case;
 
    --------------
    -- Is_Older --
@@ -186,23 +75,6 @@ package body Alr.OS_Lib is
       end if;
    end Is_Older;
 
-   -----------
-   -- Spawn --
-   -----------
-
-   procedure Spawn (Command             : String;
-                    Arguments           : String := "";
-                    Understands_Verbose : Boolean := False;
-                    Force_Quiet         : Boolean := False)
-   is
-      Code : constant Integer :=
-        Spawn (Command, Arguments, Understands_Verbose, Force_Quiet);
-   begin
-      if Code /= 0 then
-         raise Child_Failed with "Exit code:" & Code'Img;
-      end if;
-   end Spawn;
-
    -----------------------
    -- Spawn_And_Capture --
    -----------------------
@@ -222,26 +94,6 @@ package body Alr.OS_Lib is
          raise Child_Failed with "exit code:" & Exit_Code'Img;
       end if;
    end Spawn_And_Capture;
-
-   ------------------------
-   -- Spawn_And_Redirect --
-   ------------------------
-
-   procedure Spawn_And_Redirect (Out_File   : String;
-                                 Command    : String;
-                                 Arguments  : String := "";
-                                 Err_To_Out : Boolean := False)
-   is
-      Exit_Code : constant Integer :=
-                    Alire.OS_Lib.Subprocess.Spawn_And_Redirect (Out_File,
-                                                                Command,
-                                                                Arguments,
-                                                                Err_To_Out);
-   begin
-      if Exit_Code /= 0 then
-         raise Child_Failed with "exit code:" & Exit_Code'Img;
-      end if;
-   end Spawn_And_Redirect;
 
    ---------------
    -- Spawn_Raw --

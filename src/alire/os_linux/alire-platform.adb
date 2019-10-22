@@ -67,10 +67,4 @@ package body Alire.Platform is
       end if;
    end Distribution;
 
-   ----------
-   -- Name --
-   ----------
-
-   function Name return Supported is (Linux);
-
 end Alire.Platform;

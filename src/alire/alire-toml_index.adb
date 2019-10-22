@@ -389,7 +389,7 @@ package body Alire.TOML_Index is
                           Crate : Projects.With_Releases.Crate) is
       Cat_Ent : constant Index.Catalog_Entry :=
                   Index.Manually_Catalogued_Project
-                    (+Crate.Name, "Alire.Index", Crate.Description);
+                    (+Crate.Name, Crate.Description);
       use all type Origins.Kinds;
       use GNATCOLL;
       use all type VFS.Filesystem_String;

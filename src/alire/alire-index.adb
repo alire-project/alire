@@ -1,10 +1,10 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 
-with GNAT.Source_Info;
+with Alire.Projects;
 
 package body Alire.Index is
 
-   use all type Version;
+   use all type Semantic_Versioning.Version;
 
    package Name_Entry_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps (Alire.Project,
@@ -12,55 +12,15 @@ package body Alire.Index is
 
    Master_Entries : Name_Entry_Maps.Map;
 
-   type Reflected_Info (Pack_Len, Id_Len : Positive) is record
-      Package_Name : String (1 .. Pack_Len);
-      Identifier   : String (1 .. Id_Len);
-   end record;
-
-   function Identify (Enclosing : String) return Reflected_Info;
-
-   --------------
-   -- Identify --
-   --------------
-
-   function Identify (Enclosing : String) return Reflected_Info is
-      use Utils;
-      Identifier : constant String :=
-        Split (Enclosing, '.', Side => Tail, From => Tail);
-      --  Portion after last dot
-
-      Full_Name  : constant String :=
-        Split (Enclosing, '.', Side => Tail, From => Head, Count => 2);
-      --  Portion after Alire.Index.
-
-      Pack_Name  : constant String :=
-        Split (Full_Name, '.', Side => Head, From => Tail);
-      --  Portion between Alire.Index. and .Identifier
-   begin
-      return (Pack_Name'Length, Identifier'Length, Pack_Name, Identifier);
-   end Identify;
-
-   ------------------------
-   -- Catalogued_Project --
-   ------------------------
-
-   function Catalogued_Project return Catalog_Entry is
-      Reflected : constant Reflected_Info :=
-                    Identify (GNAT.Source_Info.Enclosing_Entity);
-   begin
-      return Manually_Catalogued_Project
-        (Reflected.Package_Name, Reflected.Identifier, Description);
-   end Catalogued_Project;
-
    ---------------------------------
    -- Manually_Catalogued_Project --
    ---------------------------------
 
    function Manually_Catalogued_Project
-     (Package_Name, Self_Name, Description : String) return Catalog_Entry
+     (Crate_Name, Description : String) return Catalog_Entry
    is
       use Alire.Utils, Name_Entry_Maps;
-      Project  : constant Alire.Project := +To_Lower_Case (Package_Name);
+      Project  : constant Alire.Project := +To_Lower_Case (Crate_Name);
       Position : constant Cursor := Master_Entries.Find (Project);
    begin
       if Has_Element (Position) then
@@ -69,10 +29,7 @@ package body Alire.Index is
          --  haven't changed.
 
          return Result : constant Catalog_Entry := Element (Position) do
-            if Result.Description /= Description
-               or else Result.Package_Name /= Package_Name
-               or else Result.Self_Name /= Self_Name
-            then
+            if Result.Description /= Description then
                raise Constraint_Error;
             end if;
          end return;
@@ -81,15 +38,11 @@ package body Alire.Index is
          --  Otherwise, create the entry and register it
 
          return C : constant Catalog_Entry :=
-           (Name_Len  => Package_Name'Length,
+           (Name_Len  => Crate_Name'Length,
             Descr_Len => Description'Length,
-            Pack_Len  => Package_Name'Length,
-            Self_Len  => Self_Name'Length,
 
             Project      => Project,
-            Description  => Description,
-            Package_Name => Package_Name,
-            Self_Name    => Self_Name)
+            Description  => Description)
          do
             Master_Entries.Insert (C.Project, C);
             Projects.Descriptions.Include (C.Project, Description);
@@ -98,36 +51,6 @@ package body Alire.Index is
          end return;
       end if;
    end Manually_Catalogued_Project;
-
-   -------------
-   -- Current --
-   -------------
-
-   function Current (C : Catalog_Entry) return Release is
-   begin
-      for R of reverse Catalog loop
-         if R.Project = C.Project then
-            return R;
-         end if;
-      end loop;
-
-      raise Program_Error
-        with "Catalog entry without releases: " & (+C.Project);
-   end Current;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Name : Alire.Project) return Catalog_Entry is
-     (Master_Entries.Element (Name));
-
-   --------------------------
-   -- Is_Currently_Indexed --
-   --------------------------
-
-   function Is_Currently_Indexed (Name : Alire.Project) return Boolean is
-      (Master_Entries.Contains (Name));
 
    ------------
    -- Exists --
@@ -212,84 +135,5 @@ package body Alire.Index is
             Private_Properties => Private_Properties,
             Available          => Available_When));
    end Register;
-
-   --------------
-   -- Register --
-   --------------
-
-   function Register (Extension          : Catalog_Entry;
-                      Extended_Release   : Release)
-                      return Release
-   is
-   begin
-      return Register_Real (Extended_Release.Replacing
-                            (Project => Extension.Project));
-   end Register;
-
-   ----------------
-   -- Unreleased --
-   ----------------
-
-   function Unreleased
-     (This               : Catalog_Entry;
-      Version            : Semantic_Versioning.Version := No_Version;
-      Origin             : Origins.Origin        := No_Origin;
-      Notes              : Description_String    := "";
-      Dependencies       : Release_Dependencies  := No_Dependencies;
-      Properties         : Release_Properties    := No_Properties;
-      Private_Properties : Release_Properties    := No_Properties;
-      Available_When     : Release_Requisites    := No_Requisites)
-      return Release
-   is
-   begin
-      return
-        Alire.Releases.New_Release (Project            => This.Project,
-                                    Version            => Version,
-                                    Origin             => Origin,
-                                    Notes              => Notes,
-                                    Dependencies       => Dependencies,
-                                    Properties         => Properties,
-                                    Private_Properties => Private_Properties,
-                                    Available          => Available_When);
-   end Unreleased;
-
-   -----------------
-   -- New_Release --
-   -----------------
-
-   package body Project_Release is
-
-      The_Release : constant Index.Release :=
-        Project.Register                  --  Add to catalog
-          (Base.Retagging                 --  Overriding the version
-             (Versions.From_Identifier    --  with the one in the
-                (Identify                 --  package name
-                     (GNAT.Source_Info.Enclosing_Entity).Identifier)));
-
-      -------------
-      -- Release --
-      -------------
-
-      function Release return Index.Release is
-      begin
-         return The_Release;
-      end Release;
-
-      function Version return Semantic_Versioning.Version is
-        (The_Release.Version);
-
-      function Version return Semantic_Versioning.Version_Set is
-        (Exactly (The_Release.Version));
-
-      function This_Version return Conditional.Dependencies is
-         (The_Release.This_Version);
-
-      function Within_Major return Conditional.Dependencies is
-         (The_Release.Within_Major);
-
-      function Within_Minor return Conditional.Dependencies is
-         (The_Release.Within_Minor);
-
-   end Project_Release;
 
 end Alire.Index;

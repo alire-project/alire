@@ -99,13 +99,6 @@ package Alire.Properties.Labeled with Preelaborate is
      Post => To_TOML'Result.Kind = TOML.TOML_String;
    --  Returns only the value, not the name (TOML key)
 
-   function To_TOML_Array (LV   : Vector;
-                           Name : Labels)
-                           return TOML.TOML_Value
-     with
-       Post => To_TOML_Array'Result.Kind = TOML.TOML_Array;
-   --  Filter LV and generate a key = [values ...] table.
-
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Conditional.Properties;
    --  Loads any labeled property. May raise Checked_Error.

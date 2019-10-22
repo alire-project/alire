@@ -97,9 +97,6 @@ package Alr.Commands is
    --  Ensures that the build file exists, and if not generates one from
    --  dependencies.
 
-   procedure Requires_Sources;
-   --  Ensure sources are checked out
-
    ---------------------------
    --  command-line helpers --
    ---------------------------

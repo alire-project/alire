@@ -37,9 +37,4 @@ package Alire.Platforms with Preelaborate is
    type Package_Managers is (Apt,
                              Packager_Unknown);
 
-   function Package_Manager (D : Distributions) return Package_Managers is
-     (case D is
-         when Debian | Ubuntu => Apt,
-         when others          => Packager_Unknown);
-
 end Alire.Platforms;

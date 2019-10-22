@@ -1,5 +1,3 @@
-with Ada.Text_IO;
-
 with Alire.Roots;
 
 with Alr.Query;
@@ -33,11 +31,6 @@ package Alr.Templates is
    Sed_Pattern : constant String;
 
 private
-
-   procedure Generate_Full_Index (File         : in out Ada.Text_IO.File_Type;
-                                  Index_Folder : String);
-   --  Add with Alire.Index.* for all dependencies in the given already opened
-   --  file.
 
    Sed_Pattern : constant String := "PROJECT_SKEL";
    --  In Caps so its proper use in lowercase or Mixed Case is ensured
