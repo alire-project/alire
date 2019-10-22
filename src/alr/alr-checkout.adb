@@ -60,23 +60,38 @@ package body Alr.Checkout is
    -- To_Folder --
    ---------------
 
-   procedure To_Folder (Projects : Query.Instance;
+   procedure To_Folder (Solution : Query.Solution;
                         Parent   : String := Paths.Projects_Folder)
    is
       Was_There : Boolean;
       Graph     : Dependency_Graphs.Graph :=
-                    Dependency_Graphs.From_Instance (Projects);
-      Pending   : Query.Instance := Projects;
+                    Dependency_Graphs.From_Solution (Solution);
+      Pending   : Query.Solution := Solution;
       Round     : Natural        := 0;
    begin
-      while not Pending.Is_Empty loop
+
+      --  Notify about missing native dependencies:
+
+      if not Pending.Hints.Is_Empty then
+         Trace.Warning
+           ("The following native dependencies are unavailable within Alire:");
+         for Dep of Pending.Hints loop
+            Trace.Warning ("   " & Dep.Image);
+         end loop;
+         Trace.Warning
+           ("They should be made available in the environment by the user.");
+      end if;
+
+      --  Deploy resolved dependencies:
+
+      while not Pending.Releases.Is_Empty loop
          Round := Round + 1;
 
          declare
             To_Remove : Alire.Containers.Release_Set;
          begin
             --  TODO: this can be done in parallel within each round
-            for Rel of Pending loop
+            for Rel of Pending.Releases loop
                if Graph.Has_Dependencies (Rel.Project) then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
                                  Rel.Milestone.Image);
@@ -91,14 +106,15 @@ package body Alr.Checkout is
 
             if To_Remove.Is_Empty then
                Trace.Error ("No project checked-out in round" & Round'Img);
-               Trace.Error ("Remaining projects:" & Pending.Length'Img &
+               Trace.Error ("Remaining projects:"
+                            & Pending.Releases.Length'Img &
                               "; Dependency graph:");
-               Graph.Print (Pending);
+               Graph.Print (Pending.Releases);
                raise Program_Error
                  with "No project checked-out in round" & Round'Img;
             else
                for Rel of To_Remove loop
-                  Pending.Exclude (Rel.Project);
+                  Pending.Releases.Exclude (Rel.Project);
                end loop;
             end if;
          end;

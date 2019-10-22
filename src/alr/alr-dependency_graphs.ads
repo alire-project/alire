@@ -2,13 +2,15 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
 
+with Alr.Query;
+
 package Alr.Dependency_Graphs is
 
    type Graph is tagged private;
 
    function Empty_Graph return Graph;
 
-   function From_Instance (Instance : Alire.Containers.Release_Map)
+   function From_Solution (Sol : Query.Solution)
                            return Graph;
 
    function Including (This : Graph;

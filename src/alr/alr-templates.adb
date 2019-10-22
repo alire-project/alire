@@ -103,7 +103,8 @@ package body Alr.Templates is
       Needed  : constant Query.Solution :=
                   Query.Resolve
                     (Root.Release.Dependencies.Evaluate (Platform.Properties),
-                     Commands.Query_Policy);
+                     Options => (Age    => Commands.Query_Policy,
+                                 Native => <>));
    begin
       if Needed.Valid then
          Generate_Agg_Gpr (Needed.Releases, Root);

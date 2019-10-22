@@ -7,27 +7,45 @@ with Semantic_Versioning;
 
 package Alr.Query is
 
-   type Policies is (Oldest, Newest);
+   type Age_Policies is (Oldest, Newest);
+   --  When looking for releases within a crate, which one to try first.
 
-   use Alire;
+   type Native_Policies is (Hint, Fail);
+   --  * Hint: attempt to normally resolve native crates. When impossible,
+   --  store such crate as a hint and assume it is available.
+   --  * Fail: treat native crates normally and fail if unavailable.
 
-   --  subtype Solution is Containers.Version_Map;
-   --  A dependence-valid mapping of project -> version
+   subtype Dep_List is Alire.Containers.Dependency_Lists.List;
+   --  Dependency lists are used to keep track of failed dependencies
 
-   subtype Instance is Containers.Release_Map;
+   subtype Instance is Alire.Containers.Release_Map;
    --  A list of releases complying with a Solution
 
    subtype Release  is Types.Release;
 
-   type Solution (Valid : Boolean) is record
+   --  The dependency solver receives a list of dependencies and will return
+   --  either a valid solution if one can be found (exploration is exhaustive).
+   --  Native dependencies are resolved in platforms with native packager
+   --  support. Otherwise they're filed as "hints" but do not cause a failure
+   --  in resolution. In this case, a warning will be provided for the user
+   --  with a list of the dependencies that are externally required.
+
+   type Solution (Valid : Boolean) is tagged record
       case Valid is
-         when True  => Releases : Instance;
-         when False => null;
+         when True  =>
+            Releases : Instance; -- Resolved dependencies to be deployed
+            Hints    : Dep_List; -- Unresolved native dependencies
+
+         when False =>
+            null;
       end case;
    end record;
 
+   Empty_Deps : constant Dep_List :=
+                  Alire.Containers.Dependency_Lists.Empty_List;
+
    Empty_Instance : constant Instance :=
-     (Containers.Project_Release_Maps.Empty_Map with null record);
+     (Alire.Containers.Project_Release_Maps.Empty_Map with null record);
 
    ---------------------
    --  Basic queries  --
@@ -50,11 +68,11 @@ package Alr.Query is
    function Find
      (Project : Alire.Project;
       Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
-      Policy  : Policies)
+      Policy  : Age_Policies)
       return Release;
 
    function Find (Project : String;
-                  Policy  : Policies) return Release;
+                  Policy  : Age_Policies) return Release;
    --  Given a textual project+set (see Parsers), find the release if it exists
 
    ----------------------------------
@@ -73,16 +91,28 @@ package Alr.Query is
    --  They may need to travel the full catalog, with multiple individual
    --  availability checks.
 
-   function Resolve (Deps    :     Alire.Types.Platform_Dependencies;
-                     Policy  :     Policies) return Solution;
+   type Query_Options is record
+      Age    : Age_Policies    := Newest;
+      Native : Native_Policies := Hint;
+   end record;
+
+   Default_Options : constant Query_Options := (others => <>);
+
+   function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+                     Options : Query_Options := Default_Options)
+                     return Solution;
 
    function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean;
    --  simplified call to Resolve, discarding result
 
-   procedure Print_Solution (I : Instance);
+   -------------------
+   -- Debug helpers --
+   -------------------
+
+   procedure Print_Solution (Sol : Solution);
 
    function Dependency_Image (Project  : Alire.Project;
                               Versions : Semantic_Versioning.Version_Set;
-                              Policy   : Policies := Newest) return String;
+                              Policy   : Age_Policies := Newest) return String;
 
 end Alr.Query;

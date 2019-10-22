@@ -333,7 +333,7 @@ package body Alr.Commands is
    -- Query_Policy --
    ------------------
 
-   function Query_Policy return Query.Policies is
+   function Query_Policy return Query.Age_Policies is
       (if Prefer_Oldest then Query.Oldest else Query.Newest);
 
    -------------------------------

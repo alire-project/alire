@@ -26,8 +26,11 @@ package Alire.Dependencies with Preelaborate is
 
    function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set;
 
+   function Image_Ada (Dep : Dependency) return String;
+   --  Adaish string representation of the dependency, e.g. "make is Any"
+
    function Image (Dep : Dependency) return String;
-   --  String representation of the dependency, e.g. "^1.0.0"
+   --  Standard-style version image, e.g. "make^3.1"
 
    overriding
    function Key (Dep : Dependency) return String;
@@ -74,12 +77,19 @@ private
    function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set
    is (Dep.Versions);
 
-   function Image (Dep : Dependency) return String is
+   function Image_Ada (Dep : Dependency) return String is
      (if Dep = Unavailable
       then "Unavailable"
       else
         (Utils.To_Lower_Case (+Dep.Project) & " is " &
            Semantic_Versioning.Image_Ada (Dep.Versions)));
+
+   function Image (Dep : Dependency) return String is
+      (if Dep = Unavailable
+      then "Unavailable"
+      else
+         (Utils.To_Lower_Case (+Dep.Project)
+          & Semantic_Versioning.Image_Abbreviated (Dep.Versions)));
 
    overriding
    function To_YAML (Dep : Dependency) return String is

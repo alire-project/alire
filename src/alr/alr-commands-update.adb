@@ -25,12 +25,13 @@ package body Alr.Commands.Update is
          Needed  : constant Query.Solution :=
            Query.Resolve
              (Root.Current.Release.Dependencies.Evaluate (Platform.Properties),
-              Query_Policy);
+              Options => (Age    => Query_Policy,
+                          Native => <>));
       begin
          if not Needed.Valid then
             Reportaise_Command_Failed ("Update failed");
          end if;
-         Checkout.To_Folder (Needed.Releases);
+         Checkout.To_Folder (Needed);
          Templates.Generate_Agg_Gpr (Needed.Releases, Root.Current);
          Trace.Detail ("Update completed");
       end;
