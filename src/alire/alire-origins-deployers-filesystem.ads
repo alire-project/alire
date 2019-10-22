@@ -21,6 +21,11 @@ package Alire.Origins.Deployers.Filesystem is
    --  in-progress crate).
    --  For files : hash the origin file.
 
+   overriding
+   function Supports_Hashing (This : Deployer) return Boolean;
+   --  Filesystem origins that point to a tarball must verify it, while ones
+   --  that point to a directory must not.
+
    function Is_Valid_Local_Crate (Path : VFS.Virtual_File) return Boolean;
    --  True if Path is a folder or a file with known source archive extension.
 

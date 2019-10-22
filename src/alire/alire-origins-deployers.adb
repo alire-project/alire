@@ -166,7 +166,7 @@ package body Alire.Origins.Deployers is
    function Verify_Hashes (This   : Deployer'Class;
                            Folder : String) return Outcome is
    begin
-      if Supports_Hashing (This.Base.Kind) then
+      if This.Supports_Hashing then
 
          --  Emit a note if we might profit from hashes:
          if This.Base.Data.Hashes.Is_Empty then
