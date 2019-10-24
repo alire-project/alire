@@ -59,13 +59,23 @@ package body Alire.Origins.Deployers is
                                Folder : String) return Outcome
    is
       The_Deployer  : constant Deployer'Class := New_Deployer (From);
-      Deploy_Result : constant Outcome := The_Deployer.Deploy (Folder);
+      Result        : Outcome;
    begin
-      if Deploy_Result.Success then
-         return The_Deployer.Verify_Hashes (Folder);
-      else
-         return Deploy_Result;
+
+      --  1. Fetch sources
+      Result := The_Deployer.Fetch (Folder);
+      if not Result.Success then
+         return Result;
       end if;
+
+      --  2. Verify sources
+      Result := The_Deployer.Verify_Hashes (Folder);
+      if not Result.Success then
+         return Result;
+      end if;
+
+      --  3. Deploy final sources
+      return The_Deployer.Deploy (Folder);
    exception
       when E : others =>
          Log_Exception (E);
@@ -157,6 +167,13 @@ package body Alire.Origins.Deployers is
    ------------
 
    function Deploy (This : Deployer; Folder : String) return Outcome
+   is (raise Program_Error with "should never be called for base class");
+
+   -----------
+   -- Fetch --
+   -----------
+
+   function Fetch (This   : Deployer; Folder : String) return Outcome
    is (raise Program_Error with "should never be called for base class");
 
    -------------------

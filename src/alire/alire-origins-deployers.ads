@@ -2,7 +2,12 @@ with Alire.Releases;
 
 package Alire.Origins.Deployers is
 
-   --  Actual fetching logic
+   --  Actual fetching logic.
+   --  A deployer is invoked thrice during retrieval of a release, in order:
+   --  1. Fetch: should obtain the sources in the format for hash verification.
+   --  2. Compute_Hashes: should compute the instructed hash with a method
+   --     appropriated to the origin.
+   --  3. Deploy: deploy the sources in its final location in compilable state.
 
    --  TODO: during the native package reworking, clean up the functionality
    --  that is only relevant for native packages from here and put it
@@ -46,31 +51,22 @@ package Alire.Origins.Deployers is
      with Pre'Class => This.Is_Native;
    --  Says if a native package exists in this system. Unneeded otherwise.
 
-   function Deploy (This : Deployer; Folder : String) return Outcome;
-   --  Deploy the origin designated by This to the given Folder. This installs
-   --  packages for native origins and fetches sources for other origins.
-   --
-   --  IMPORTANT: when implementing a new package manager support, take care
-   --  of failing if an installation would imply removal of packages. For
-   --  instance with apt-get, use the --no-remove switch.
-   --
-   --  This is critical since some packages may request the installation of
-   --  the platform GNAT, which in turn could trigger the removal of another
-   --  platform-packaged-but-not-default compiler.
-   --
-   --  E.g., in current Ubuntu, gnat depends on gnat-7. If you are using
-   --  gnat-8, any package depending on gnat would remove gnat-8.  And, in any
-   --  case, it is polite not to uninstall anything installed in the user
-   --  system.
+   function Fetch (This   : Deployer;
+                   Folder : String) return Outcome;
+   --  Retrieve the sources in a format ready for hashing. Folder is the final
+   --  destination, that can be used as temporary location until Deploy.
 
    function Compute_Hash (This   : Deployer;
                           Folder : String;
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest with
      Pre'Class => This.Supports_Hashing or else raise Program_Error;
-   --  Called immediately after deploy for each hash in the origin, Should
+   --  Called immediately after Fetch for each hash in the origin, Should
    --  be overriden by all deployers that support hashing; it won't be called
    --  otherwise. This function may raise exceptions that will be properly
-   --  dealt with.
+   --  dealt with in the classwide Deploy.
+
+   function Deploy (This : Deployer; Folder : String) return Outcome;
+   --  Deploy the sources in the final form for compilation.
 
    function Supports_Hashing (This : Deployer) return Boolean is (False);
    --  Deployers that support hashing must override and return True.

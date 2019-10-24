@@ -65,6 +65,7 @@ package body Alire.Origins.Deployers.Filesystem is
       begin
          Source_Archive.Unpack (Src_File => This.Base.Path,
                                 Dst_Dir  => Dst_Guard.Filename,
+                                Delete   => False,
                                 Move_Up  => True);
 
          Dst_Guard.Keep;
@@ -90,6 +91,14 @@ package body Alire.Origins.Deployers.Filesystem is
             & This.Base.Path);
       end if;
    end Deploy;
+
+   -----------
+   -- Fetch --
+   -----------
+
+   overriding
+   function Fetch (This   : Deployer; Folder : String) return Outcome is
+     (Outcome_Success);
 
    --------------------------
    -- Is_Valid_Local_Crate --

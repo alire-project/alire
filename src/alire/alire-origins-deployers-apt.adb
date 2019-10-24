@@ -87,6 +87,14 @@ package body Alire.Origins.Deployers.APT is
       return False;
    end Exists;
 
+   -----------
+   -- Fetch --
+   -----------
+
+   overriding
+   function Fetch (This   : Deployer; Folder : String) return Outcome is
+     (Outcome_Success);
+
    --------------------
    -- Native_Version --
    --------------------
