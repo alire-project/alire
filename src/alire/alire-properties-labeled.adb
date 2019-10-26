@@ -32,29 +32,23 @@ package body Alire.Properties.Labeled is
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Conditional.Properties
    is
-
-      --  Following array used to convert from toml keys to label enum values.
-      type TOML_Images is
-        (Authors,
-         Comment,
-         Description,
-         Executables,
-         Maintainers,
-         Notes,
-         Paths,
-         Project_Files,
-         Website);
-
-      pragma Assert (TOML_Images'Pos (TOML_Images'Last) =
-                       Labels'Pos (Labels'Last));
-      --  Ensure that we have not forgotten any label in the previous array.
-      --  They should match in alphabetical order.
-
       Value : TOML.TOML_Value;
       Key   : constant String := From.Pop (Value);
 
-      function Key_To_Label (K : TOML_Images) return Labels is
-        (Labels'Val (TOML_Images'Pos (K)));
+      ------------------
+      -- Key_To_Label --
+      ------------------
+
+      function Key_To_Label (K : String) return Labels is
+      begin
+         --  TODO: instead of this inefficient O(n) lookup, have a map.
+         for L in Labels loop
+            if Labeled.Key (L) = K then
+               return L;
+            end if;
+         end loop;
+         From.Checked_Error ("Key is not a valid property: " & K);
+      end Key_To_Label;
 
       --  For conditional loading, we use specific conditional loaders that
       --  only recognize the property being loaded:
@@ -69,8 +63,7 @@ package body Alire.Properties.Labeled is
             for I in 1 .. Val.Length loop
                declare
                   L : constant Label := New_Label
-                    (Key_To_Label
-                       (TOML_Images'Value (TOML_Adapters.Adafy (Key))),
+                    (Key_To_Label (Key),
                      Val.Item (I).As_String);
                   use all type Conditional.Properties;
                begin

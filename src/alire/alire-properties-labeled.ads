@@ -25,6 +25,9 @@ package Alire.Properties.Labeled with Preelaborate is
       Maintainer,
       --  Info about the maintainer of the alr-packaged project
 
+      Maintainers_Logins,
+      --  E-mails used by the maintainers of a crate to log in to GitHub
+
       Notes,
       --  Specific information about a release
 
@@ -43,26 +46,28 @@ package Alire.Properties.Labeled with Preelaborate is
    --  and during exporting to ensure the proper type (atom/array) is created.
 
    Cardinality : array (Labels) of Cardinalities :=
-                   (Author       => Multiple,
-                    Comment      => Unique,
-                    Description  => Unique,
-                    Executable   => Multiple,
-                    Maintainer   => Multiple,
-                    Notes        => Unique,
-                    Path         => Multiple,
-                    Project_File => Multiple,
-                    Website      => Unique);
+                   (Author             => Multiple,
+                    Comment            => Unique,
+                    Description        => Unique,
+                    Executable         => Multiple,
+                    Maintainer         => Multiple,
+                    Maintainers_Logins => Multiple,
+                    Notes              => Unique,
+                    Path               => Multiple,
+                    Project_File       => Multiple,
+                    Website            => Unique);
 
    Mandatory : array (Labels) of Boolean :=
-                 (Author       => False,
-                  Comment      => False,
-                  Description  => True,
-                  Executable   => False,
-                  Maintainer   => True,
-                  Notes        => False,
-                  Path         => False,
-                  Project_File => False,
-                  Website      => False);
+                 (Author             => False,
+                  Comment            => False,
+                  Description        => True,
+                  Executable         => False,
+                  Maintainer         => True,
+                  Maintainers_Logins => True,
+                  Notes              => False,
+                  Path               => False,
+                  Project_File       => False,
+                  Website            => False);
    --  Some properties are mandatory in the [general] section; we used this
    --  array to check their presence.
 
@@ -155,15 +160,16 @@ private
 
    function Key (L : Labels) return String
    is (case L is
-          when Author       => TOML_Keys.Author,
-          when Comment      => TOML_Keys.Comment,
-          when Description  => TOML_Keys.Description,
-          when Executable   => TOML_Keys.Executable,
-          when Maintainer   => TOML_Keys.Maintainer,
-          when Notes        => TOML_Keys.Notes,
-          when Path         => TOML_Keys.Path,
-          when Project_File => TOML_Keys.Project_File,
-          when Website      => TOML_Keys.Website);
+          when Author             => TOML_Keys.Author,
+          when Comment            => TOML_Keys.Comment,
+          when Description        => TOML_Keys.Description,
+          when Executable         => TOML_Keys.Executable,
+          when Maintainer         => TOML_Keys.Maintainer,
+          when Maintainers_Logins => TOML_Keys.Maint_Logins,
+          when Notes              => TOML_Keys.Notes,
+          when Path               => TOML_Keys.Path,
+          when Project_File       => TOML_Keys.Project_File,
+          when Website            => TOML_Keys.Website);
 
    overriding
    function Key (L : Label) return String is (Key (L.Name));
