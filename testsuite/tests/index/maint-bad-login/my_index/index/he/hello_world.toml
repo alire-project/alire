@@ -1,0 +1,8 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["Mr. User <mr.user@example.com>"]
+maintainers-logins = ["mr.user"] # Dot is forbidden
+
+['0.1']
+origin = "http://blah.com/pkg.zip"
