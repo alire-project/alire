@@ -2,6 +2,7 @@
 description = """"Hello, world!" demonstration project"""
 licenses = []
 maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
 
     [general.executables.'case(word-size)' ]
     bits-64 = "hello"

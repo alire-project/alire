@@ -2,7 +2,7 @@
 description = """"Hello, world!" demonstration project"""
 licenses = []
 maintainers = ["Mr. User"]
-maintainers-logins = ["user@example.com"]
+maintainers-logins = ["mylogin"]
 
 ['0.1']
 origin = "http://blah.com/pkg.zip"
