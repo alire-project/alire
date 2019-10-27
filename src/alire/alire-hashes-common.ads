@@ -12,7 +12,7 @@ generic
    with function Digest (C : Context) return String is <>;
 package Alire.Hashes.Common is
 
-   function Hash_File (Path : Platform_Independent_Path) return Any_Hash;
+   function Hash_File (Path : File_Path) return Any_Hash;
    --  This function does not need to be visible (it is not used directly), but
    --  hiding it in the body results in the following error in FSF compilers:
    --

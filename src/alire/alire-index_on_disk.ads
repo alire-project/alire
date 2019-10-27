@@ -32,7 +32,7 @@ package Alire.Index_On_Disk is
    pragma Warnings (Off); -- because Post doesn't mention New_Handler'Result
    function New_Handler (Origin   :     URL;
                          Name     :     String;
-                         Parent   :     Platform_Independent_Path;
+                         Parent   :     Any_Path;
                          Result   : out Outcome;
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
@@ -45,14 +45,14 @@ package Alire.Index_On_Disk is
    --  Program_Error in all attempted operations.
 
    function New_Handler (From   :     TOML.TOML_Value;
-                         Parent :     Platform_Independent_Path;
+                         Parent :     Any_Path;
                          Result : out Outcome) return Index'Class with
      Pre => From.Kind in TOML.TOML_Table;
    --  Load from a output Index.To_TOML value
 
    function New_Handler (Origin :     URL;
                          Name   :     Restricted_Name;
-                         Parent : Platform_Independent_Path)
+                         Parent :     Any_Path)
                          return Index is abstract;
    --  Descendants use this function to initialize a URL-specific handler
 

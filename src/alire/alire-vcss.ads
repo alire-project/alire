@@ -11,11 +11,11 @@ package Alire.VCSs is
 
    function Clone (This : VCS;
                    From : URL;
-                   Into : Platform_Independent_Path)
+                   Into : Directory_Path)
                    return Outcome is abstract;
 
    function Update (This : VCS;
-                    Repo : Platform_Independent_Path)
+                    Repo : Directory_Path)
                     return Outcome is abstract;
 
    -----------------------
@@ -39,7 +39,7 @@ package Alire.VCSs is
    --  Those redispatch to the appropriate descendant
 
    function Clone (From : URL;
-                   Into : Platform_Independent_Path)
+                   Into : Directory_Path)
                    return Outcome
      with Pre => Kind (From) in Known_Kinds;
 

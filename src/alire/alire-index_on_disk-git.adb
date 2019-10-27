@@ -18,7 +18,9 @@ package body Alire.Index_On_Disk.Git is
    overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
-                         Parent : Platform_Independent_Path) return Index is
+                         Parent : Any_Path)
+                         return Index
+   is
    begin
       return Idx : constant Index :=
         Index'(URL_Len    => Origin'Length,

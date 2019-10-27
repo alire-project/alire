@@ -31,7 +31,7 @@ package Alire.Hashes with Preelaborate is
    --  Return the actual fingerprint without the kind prefix.
 
    function Hash_File (Kind : Kinds;
-                       Path : Platform_Independent_Path) return Any_Hash;
+                       Path : File_Path) return Any_Hash;
    --  Compute a particular hash kind. May raise usual file exceptions.
 
    function Is_Known (Kind_Img : String) return Boolean;
@@ -60,14 +60,14 @@ private
    --  known hash in child packages.
 
    Hash_Functions : array (Kinds) of access
-     function (File : Platform_Independent_Path) return Any_Hash;
+     function (File : File_Path) return Any_Hash;
 
    ---------------
    -- Hash_File --
    ---------------
 
    function Hash_File (Kind : Kinds;
-                       Path : Platform_Independent_Path) return Any_Hash is
+                       Path : File_Path) return Any_Hash is
      (Hash_Functions (Kind) (Path)); -- Dispatch to a particular implementation
 
    --------------

@@ -102,32 +102,35 @@ package Alire with Preelaborate is
           'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Extension_Separator);
    --  Used for cross-platform folder names
 
-   subtype Platform_Independent_Path is String;
-   --  This type is used to ensure that folder separators are externally always
-   --  '/', and internally properly converted to the platform one
+   subtype Any_Path is String;
+   --  Base type for paths in Alire
 
    --  To clarify constants/functions declared herein:
 
-   function Check_Absolute_Path (Path : String) return Boolean;
+   function Check_Absolute_Path (Path : Any_Path) return Boolean;
    --  Return True if the string Path represent an absolute path on the
    --  platform.
 
-   subtype Absolute_File is Platform_Independent_Path
-     with
-       Dynamic_Predicate =>
-         Check_Absolute_Path (Absolute_File)
-          and then
-         Absolute_File (Absolute_File'Last) /= GNAT.OS_Lib.Directory_Separator;
+   subtype Directory_Path is Any_Path;
+
+   subtype File_Path is Any_Path
+     with Dynamic_Predicate =>
+       File_Path (File_Path'Last) /= GNAT.OS_Lib.Directory_Separator;
+
+   subtype Absolute_File is Any_Path
+     with Dynamic_Predicate =>
+       Check_Absolute_Path (Absolute_File)
+        and then
+       Absolute_File (Absolute_File'Last) /= GNAT.OS_Lib.Directory_Separator;
    --  Filenames with full path
 
-   subtype Absolute_Path is Platform_Independent_Path
-     with
-       Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
+   subtype Absolute_Path is Any_Path
+     with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
 
-   subtype Relative_File is Platform_Independent_Path;
+   subtype Relative_File is Any_Path;
    --  Filenames with relative paths
 
-   subtype Relative_Path is Platform_Independent_Path;
+   subtype Relative_Path is Any_Path;
    --  A relative path
 
    subtype Simple_File is String

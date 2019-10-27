@@ -127,7 +127,7 @@ package Alire.Properties.Labeled with Preelaborate is
 
    generic
       Name : Labels;
-   function Cond_New_Path_Label (Value : Platform_Independent_Path)
+   function Cond_New_Path_Label (Value : Any_Path)
                                  return Conditional.Properties;
 
 private
@@ -156,7 +156,7 @@ private
    function Cond_New_Label (Value : String) return Conditional.Properties is
      (Conditional.For_Properties.New_Value (New_Label (Name, Value)));
 
-   function Cond_New_Path_Label (Value : Platform_Independent_Path)
+   function Cond_New_Path_Label (Value : Any_Path)
                                  return Conditional.Properties
    is (Conditional.For_Properties.New_Value
        (New_Label (Name, Utils.To_Native (Value))));

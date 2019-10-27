@@ -1,5 +1,5 @@
 separate (Alire)
-function Check_Absolute_Path (Path : String) return Boolean is
+function Check_Absolute_Path (Path : Any_Path) return Boolean is
 begin
    return (Path'Length >= 3
            and then Path (Path'First) in 'A' .. 'Z'

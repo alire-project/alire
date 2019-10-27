@@ -9,7 +9,7 @@ package Alire.Index_On_Disk.Git is
    overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
-                         Parent : Platform_Independent_Path) return Index with
+                         Parent : Any_Path) return Index with
      Pre => Utils.Starts_With (Origin, "git+");
 
    overriding

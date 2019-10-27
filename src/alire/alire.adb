@@ -25,7 +25,7 @@ package body Alire is
    -- Check_Absolute_Path --
    -------------------------
 
-   function Check_Absolute_Path (Path : String) return Boolean is separate;
+   function Check_Absolute_Path (Path : Any_Path) return Boolean is separate;
 
    -------------
    -- Err_Log --

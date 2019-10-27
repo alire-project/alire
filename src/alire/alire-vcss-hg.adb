@@ -15,7 +15,7 @@ package body Alire.VCSs.Hg is
    overriding
    function Clone (This : VCS;
                    From : URL;
-                   Into : Platform_Independent_Path)
+                   Into : Directory_Path)
                    return Outcome
    is
       pragma Unreferenced (This);
@@ -59,7 +59,7 @@ package body Alire.VCSs.Hg is
 
    overriding
    function Update (This : VCS;
-                    Repo : Platform_Independent_Path)
+                    Repo : Directory_Path)
                     return Outcome
    is
       pragma Unreferenced (This);
