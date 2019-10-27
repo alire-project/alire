@@ -1,3 +1,5 @@
+with Alire.Errors;
+
 package body Alire.Properties.Labeled is
 
    ------------
@@ -72,6 +74,10 @@ package body Alire.Properties.Labeled is
                        "Expected single value for " & Key;
                   end if;
 
+                  --  Label-specific validation:
+                  L.Validate (From);
+
+                  --  Labeled property is valid and added to the release props.
                   Props := Props and
                     Conditional.For_Properties.New_Value (L);
                end;
@@ -124,5 +130,43 @@ package body Alire.Properties.Labeled is
      (From : TOML_Adapters.Key_Queue)
       return Conditional.Properties
       renames From_TOML_Project_File_Cases_Internal;
+
+   --------------
+   -- Validate --
+   --------------
+
+   procedure Validate (L    : Label;
+                       From : TOML_Adapters.Key_Queue) is
+   begin
+      case L.Name is
+         when Description =>
+            if L.Value'Length > Max_Description_Length then
+               From.Checked_Error ("Description string is too long");
+            end if;
+
+         when Maintainer =>
+            if not Utils.Could_Be_An_Email (L.Value, With_Name => True) then
+               From.Checked_Error
+                 ("Maintainers must have a valid email, but got: "
+                  & L.Value);
+            end if;
+
+         when Maintainers_Logins =>
+            if not Utils.Is_Valid_GitHub_Username (L.Value) then
+               From.Checked_Error
+                 ("maintainers-logins must be a valid GitHub login, but got: "
+                  & L.Value);
+            end if;
+
+         when others =>
+            null;
+      end case;
+
+   exception
+      when E : Checked_Error =>
+         --  Print the error for the user before raising:
+         Trace.Error (Errors.Get (E, Clear => False));
+         raise;
+   end Validate;
 
 end Alire.Properties.Labeled;

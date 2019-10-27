@@ -135,6 +135,12 @@ private
       Value : String (1 .. Length);
    end record;
 
+   not overriding
+   procedure Validate (L    : Label;
+                       From : TOML_Adapters.Key_Queue);
+   --  Check a just loaded label for validity (descr. lenght, email format...).
+   --  If invalid, raise Checked_Error with appropriate context and message.
+
    function New_Label (Name : Labels; Value : String) return Label is
      (Properties.Property with Value'Length, Name, Value);
 

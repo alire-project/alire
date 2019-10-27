@@ -7,6 +7,22 @@ private with Ada.Strings.Fixed;
 
 package Alire.Utils with Preelaborate is
 
+   function Could_Be_An_Email (Str       : String;
+                               With_Name : Boolean) return Boolean;
+   --  Minimally check that a string could be an email. Since well-formed
+   --  emails can be perfectly fake, we don't make this exceptionally
+   --  foolprof. Complete regexps for email-compliant addresses are not
+   --  trivial (see RFC 5322). We settle for the following: "a@b.c",
+   --  where a can be anything printable but whitespace. b, c, can be
+   --  alphanumeric and hyphens, not starting/ending with the latter
+   --  (https://en.wikipedia.org/wiki/Domain_name). Additionaly, if With_Name,
+   --  the email can be enclosed in "<...>", with anything before it a
+   --  plaintext name.
+
+   function Is_Valid_GitHub_Username (User : String) return Boolean;
+   --  Check username is valid according to
+   --  https://github.com/shinnn/github-username-regex
+
    function Quote (S : String) return String;
 
    function To_Lower_Case (S : String) return String;

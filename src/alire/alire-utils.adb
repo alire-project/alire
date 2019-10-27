@@ -3,6 +3,7 @@ with Ada.Strings.Maps;
 
 with GNAT.Case_Util;
 with GNAT.OS_Lib;
+with GNAT.Regpat;
 
 package body Alire.Utils is
 
@@ -68,6 +69,81 @@ package body Alire.Utils is
 
       return OV;
    end Convert;
+
+   -----------------------
+   -- Could_Be_An_Email --
+   -----------------------
+
+   type Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
+
+   Email_Matcher : Matcher_Access;
+   --  Holds the email pattern matcher, compiled on first use.
+
+   Email_With_Name_Matcher : Matcher_Access;
+   --  Likewise, with a name and email enclosed in '<...>'.
+
+   function Could_Be_An_Email (Str       : String;
+                               With_Name : Boolean) return Boolean
+   is
+      Pat_Printable : constant String := "[!-~]";
+      --  Anything printable (ASCII 32-126).
+
+      Pat_Printable_But_Dot : constant String := "[!--/-~]";
+      --  Anything printable but a dot
+
+      Pat_User      : constant String :=
+                        Pat_Printable_But_Dot &
+                        Pat_Printable & "*";
+      --  Part before '@', anything printable goes except starting with  '.'
+      --  (ending is valid).
+
+      Pat_Subdomain : constant String :=
+                        "([[:alnum:]]([[:alnum:]]|-){0,61}[[:alnum:]])";
+      --  Subdomain parts; alphanumeric plus dash sequences, not
+      --  starting/ending with a dash. Length in 2..63 (RFC 1035).
+
+      Pat_Domain    : constant String :=
+                        Pat_Subdomain & "(\." & Pat_Subdomain & "){1,85}";
+      --  A domain is at least two subdomains separated by dots. A domain can
+      --  be at worst 255 chars in length, but subs are already 2 + dot.
+
+      Pat_Email     : constant String := Pat_User & "@" & Pat_Domain;
+      --  user@do.ma.in
+
+      Pat_Only_Email : constant String := "^" & Pat_Email & "$";
+      --  An email without anything before or after.
+
+      Pat_Named_Email : constant String :=
+                          "^[^<]+ <" & Pat_Email & ">$";
+      --  A name plus a <...> quoted email.
+
+      Pat_With_Or_Without_Name : constant String :=
+                                   "(" &
+                                   Pat_Only_Email & ")|("
+                                   & Pat_Named_Email & ")";
+      --  Accept either of the two.
+
+      use GNAT.Regpat;
+   begin
+      --  Initialize matchers on first call:
+
+      if Email_Matcher = null then
+         Trace.Debug ("Compiling email pattern...: " & Pat_Only_Email);
+         Email_Matcher :=
+           new Pattern_Matcher'(Compile (Pat_Only_Email));
+
+         Trace.Debug ("Compiling named email pattern...: " & Pat_Named_Email);
+         Email_With_Name_Matcher :=
+           new Pattern_Matcher'(Compile (Pat_With_Or_Without_Name));
+      end if;
+
+      --  Do the matching:
+
+      return Match (Self => (if With_Name
+                             then Email_With_Name_Matcher.all
+                             else Email_Matcher.all),
+                    Data => Str);
+   end Could_Be_An_Email;
 
    ------------
    -- Crunch --
@@ -153,6 +229,17 @@ package body Alire.Utils is
          end loop;
       end return;
    end Indent;
+
+   ------------------------------
+   -- Is_Valid_GitHub_Username --
+   ------------------------------
+
+   function Is_Valid_GitHub_Username (User : String) return Boolean is
+     ((for all C of User => C in '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-')
+      and then User'Length in 1 .. 39
+      and then User (User'First) /= '-'
+      and then User (User'Last) /= '-'
+      and then not Contains (User, "--"));
 
    --------------
    -- New_Line --
