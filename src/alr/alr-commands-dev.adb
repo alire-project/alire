@@ -2,8 +2,7 @@ with Ada.Command_Line;
 
 with Alire.Features.Index;
 with Alire.Hashes;
-
-with Alr.Selftest;
+with Alire.Selftest;
 
 package body Alr.Commands.Dev is
 
@@ -49,7 +48,7 @@ package body Alr.Commands.Dev is
       end if;
 
       if Cmd.Self_Test then
-         Selftest.Run;
+         Alire.Selftest.Run;
       end if;
    end Execute;
 
