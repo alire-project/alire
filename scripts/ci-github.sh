@@ -30,14 +30,21 @@ if [ "$INDEX" != "" ]; then
     alr index --name default --add "$INDEX"
 fi
 
+echo ALR SEARCH:
 # List releases for the record
 alr search -d --list --native
+echo ............................
 
+echo TESTSUITE:
 # Run e3.testsuite
 echo
 cd testsuite
-./run.py || { echo Test suite failures, unstable build!; exit 1; }
+python --version
+pip --version
+pip install e3-testsuite
+python ./run.py || { echo Test suite failures, unstable build!; exit 1; }
 cd ..
+echo ............................
 
 # Check installer in stable branch
 if [ "$BRANCH" == "stable" ]; then 
