@@ -347,7 +347,13 @@ package body Alire.Conditional_Trees is
    begin
       Result.Conjunction := This.Conjunction;
       for Child of This.Values loop
-         Result.Values.Append (Child.Evaluate (Against).Root);
+         declare
+            Eval : constant Tree'Class := Child.Evaluate (Against);
+         begin
+            if not Eval.Is_Empty then
+               Result.Values.Append (Eval.Root);
+            end if;
+         end;
       end loop;
 
       return Result.To_Tree and Empty;
