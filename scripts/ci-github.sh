@@ -24,6 +24,12 @@ echo ALR VERSION:
 alr version
 echo ............................
 
+# Set up index if not default:
+if [ "$INDEX" != "" ]; then
+    echo Setting default index to: $INDEX
+    alr index --name default --add "$INDEX"
+fi
+
 # List releases for the record
 alr search -d --list --native
 
