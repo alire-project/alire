@@ -1,7 +1,5 @@
 with Ada.Command_Line;
 
-with Alire.Features.Index;
-with Alire.Hashes;
 with Alire.Selftest;
 
 package body Alr.Commands.Dev is
@@ -15,15 +13,6 @@ package body Alr.Commands.Dev is
       null;
    end Custom;
 
-   procedure Hash is
-   begin
-      Trace.Info
-        (String
-           (Alire.Features.Index.Hash_Origin
-                (Alire.Hashes.Default,
-                 Argument (1)).Value.Ptr.all));
-   end Hash;
-
    -------------
    -- Execute --
    -------------
@@ -36,11 +25,6 @@ package body Alr.Commands.Dev is
 
       if Cmd.Filtering then
          Trace.Debug ("In dev --filter");
-      end if;
-
-      if Cmd.Hash then
-         Hash;
-         return;
       end if;
 
       if Cmd.Raise_Except then
@@ -104,11 +88,6 @@ package body Alr.Commands.Dev is
                      Cmd.Filtering'Access,
                      "", "--filter",
                      "Used by scope filtering test");
-
-      Define_Switch (Config,
-                     Cmd.Hash'Access,
-                     "", "--hash",
-                     "Compute hash of given origin URL");
 
       Define_Switch (Config,
                      Cmd.Raise_Except'Access,

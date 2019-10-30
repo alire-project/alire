@@ -123,6 +123,7 @@ package Alr.Commands is
                       Cmd_Init,
                       Cmd_List,
                       Cmd_Pin,
+                      Cmd_Publish,
                       Cmd_Run,
                       Cmd_Search,
                       Cmd_Show,

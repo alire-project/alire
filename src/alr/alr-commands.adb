@@ -23,6 +23,7 @@ with Alr.Commands.Index;
 with Alr.Commands.Init;
 with Alr.Commands.List;
 with Alr.Commands.Pin;
+with Alr.Commands.Publish;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
@@ -58,6 +59,7 @@ package body Alr.Commands is
                        Cmd_Init     => new Init.Command,
                        Cmd_List     => new List.Command,
                        Cmd_Pin      => new Pin.Command,
+                       Cmd_Publish  => new Publish.Command,
                        Cmd_Run      => new Run.Command,
                        Cmd_Search   => new Search.Command,
                        Cmd_Show     => new Show.Command,
