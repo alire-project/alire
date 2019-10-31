@@ -5,6 +5,12 @@ on:
     paths-ignore:
       - 'doc/**'
 
+env:
+  alire_index: "git+https://github.com/mosteo/alire-index@22a13d9" 
+  # Empty index: test with master of community index
+  # Otherwise: test with particular commit
+  # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef" 
+
 jobs:
 
   build:
@@ -31,7 +37,10 @@ jobs:
       run: docker pull alire/gnat:${{ matrix.tag }}
 
     - name: Run test script
-      run: docker run -v${PWD}:/alire -w /alire -e "BRANCH=${{ github.base_ref }}" alire/gnat:${{ matrix.tag }} scripts/ci-github.sh               
+      run: >
+        docker run -v${PWD}:/alire -w /alire 
+        -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}" 
+        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh               
 
     - name: Upload logs (if failed)
       if: failure()

@@ -32,7 +32,10 @@ package body Alire.Releases is
                    Defaults.Description)) and
        Conditional.For_Properties.New_Value
        (New_Label (Maintainer,
-                   Defaults.Maintainer)));
+                   Defaults.Maintainer)) and
+       Conditional.For_Properties.New_Value
+       (New_Label (Maintainers_Logins,
+                   Defaults.Maintainer_Login)));
 
    ---------------
    -- Extending --

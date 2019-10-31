@@ -21,6 +21,7 @@ package Alire.TOML_Keys with Preelaborate is
    GPR_Set_Ext    : constant String := "gpr-set-externals";
    License        : constant String := "licenses";
    Maintainer     : constant String := "maintainers";
+   Maint_Logins   : constant String := "maintainers-logins";
    Notes          : constant String := "notes";
    Origin         : constant String := "origin";
    Origin_Hashes  : constant String := "origin-hashes";

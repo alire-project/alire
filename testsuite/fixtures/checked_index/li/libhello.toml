@@ -2,6 +2,7 @@
 description = """"Hello, world!" demonstration project support library"""
 licenses = []
 maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
 
 ['1.0-git']
 origin = "git+file://../../crates/libhello_git@ce78e7706c9d3f97605df48d8befca5407f8d328"

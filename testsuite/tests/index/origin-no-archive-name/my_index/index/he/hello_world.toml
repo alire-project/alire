@@ -2,6 +2,7 @@
 description = """"Hello, world!" demonstration project"""
 licenses = []
 maintainers = ["user@example.com"]
+maintainers-logins = ["mylogin"]
 
 ['0.1']
 origin = "http://example.com/"

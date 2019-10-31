@@ -3,6 +3,7 @@ description = """"Hello, world!" demonstration project"""
 licenses = ["GPL 3.0", "MIT"]
 website = "example.com"
 maintainers = ["alejandro@mosteo.com", "bob@example.com"]
+maintainers-logins = ["mylogin"]
 authors = ["Bob", "Alice"]
 
 ['1.0.1']

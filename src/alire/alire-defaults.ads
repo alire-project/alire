@@ -11,4 +11,7 @@ package Alire.Defaults with Preelaborate is
 
    Maintainer  : constant String := "your@email.here";
 
+   Maintainer_Login : constant String := "github-username";
+   --  A well-formed GitHub username
+
 end Alire.Defaults;

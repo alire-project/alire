@@ -1,6 +1,7 @@
 [general]
 description = "Utility for directing compilation"
 maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
 licenses = []
 
 [0]

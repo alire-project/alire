@@ -157,14 +157,22 @@ entries:
    authors = ["Alice Example",
               "Bob For Instance <bob@example.com>"]
 
-* ``maintainers``: mandatory array of strings. Flat list of human-readable names
-  for the maintainers, i.e. the people that maintain the package description in
-  Alire. For instance:
+* ``maintainers``: mandatory array of strings. Flat list of human-readable
+  names (optional) for the maintainers, with a contact email (mandatory); i.e.
+  the people that maintain the crate metadata in Alire. For instance:
 
   .. code-block:: toml
 
-   maintainers = ["Alice Example",
-                  "Bob For Instance <bob@example.com>"]
+   maintainers = ["alice@example.com",
+                  "Bob For Instance <bob@athome.com>"]
+
+* ``maintainers-logins``: mandatory array of strings. Flat list of github login
+  usernames used by the maintainers of the crate. This information is used to
+  authorize crate modifications. For instance:
+
+  .. code-block:: toml
+
+   maintainers-logins = ["alicehacks", "bobcoder"]
 
 * ``licenses``: mandatory array of strings. Flat list of licenses for the
   software that is packaged. The following licenses are allowed:
