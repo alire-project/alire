@@ -361,10 +361,17 @@ package body Alire.Features.Index is
          Depl : constant Origins.Deployers.Deployer'Class :=
                   Origins.Deployers.New_Deployer (Origin);
          Tmp : Alire.Directories.Temp_File;
-         Deploy_Result : constant Outcome :=
-                           Depl.Deploy (Tmp.Filename);
       begin
-         Deploy_Result.Assert;
+         if not Depl.Supports_Hashing then
+            return Hashing_Outcomes.Outcome_Failure
+              ("The supplied origin does not support integrity verification");
+         end if;
+
+         declare
+            Result : constant Outcome := Depl.Fetch (Tmp.Filename);
+         begin
+            Result.Assert;
+         end;
 
          declare
             Hash : constant Hashes.Any_Hash :=

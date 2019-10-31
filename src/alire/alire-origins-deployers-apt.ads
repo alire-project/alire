@@ -4,9 +4,13 @@ package Alire.Origins.Deployers.APT is
 
    overriding
    function Already_Installed (This : Deployer) return Boolean;
+   --  Does nothing for this origin kind.
 
    overriding
    function Exists (This : Deployer) return Boolean;
+
+   overriding
+   function Fetch (This   : Deployer; Folder : String) return Outcome;
 
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome;

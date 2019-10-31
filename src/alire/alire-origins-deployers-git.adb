@@ -12,4 +12,12 @@ package body Alire.Origins.Deployers.Git is
       return VCSs.Git.Handler.Clone (This.Base.URL_With_Commit, Folder);
    end Deploy;
 
+   -----------
+   -- Fetch --
+   -----------
+
+   overriding
+   function Fetch (This   : Deployer; Folder : String) return Outcome is
+     (Outcome_Success);
+
 end Alire.Origins.Deployers.Git;
