@@ -6,9 +6,9 @@ on:
       - 'doc/**'
 
 env:
-  alire_index: "git+https://github.com/mosteo/alire-index@22a13d9" 
+  alire_index: ""
   # Empty index: test with master of community index
-  # Otherwise: test with particular commit
+  # Otherwise: test with particular commit/branch
   # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef" 
 
 jobs:
