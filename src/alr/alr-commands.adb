@@ -240,10 +240,8 @@ package body Alr.Commands is
                    Dispatch_Table (Cmd).Usage_Custom_Parameters,
                  Help => " ");
 
-      --  Ugly hack that goes by GNAT
-      Define_Switch (Config, "Global options:", "", "", "", "");
-      Define_Switch (Config, " ");
-      Set_Global_Switches (Config);
+      --  We use the following two canaries to detect if a command is adding
+      --  its own switches, in which case we need to show their specific help.
 
       Set_Global_Switches (Canary1); -- For comparison
       Set_Global_Switches (Canary2); -- For comparison
@@ -251,13 +249,17 @@ package body Alr.Commands is
 
       if Get_Switches (Canary1) /= Get_Switches (Canary2) then
          --  Ugly hack that goes by GNAT
-         Define_Switch (Config, " ");
-         Define_Switch (Config, "Specific " & Image (Cmd) & " options:",
+         Define_Switch (Config, "Specific " & Image (Cmd) & " options::",
                         "", "", "", "");
          Define_Switch (Config, " ");
 
          Dispatch_Table (Cmd).Setup_Switches (Config);
+
+         Define_Switch (Config, " ");
       end if;
+
+      Define_Switch (Config, "See global options with 'alr --help'",
+                     "", "", "", "");
 
       GNAT.Command_Line.Display_Help (Config);
 
@@ -507,7 +509,7 @@ package body Alr.Commands is
       -- Check_For_Help --
       --------------------
 
-      procedure Check_For_Help is
+      function Check_For_Help return Boolean is
          use Ada.Command_Line;
          Help_Requested  : Boolean := False;
          First_Nonswitch : Integer := 0;
@@ -537,17 +539,20 @@ package body Alr.Commands is
                --  the -h/--help and display the general help.
             end if;
          end if;
+
+         return Help_Requested;
       end Check_For_Help;
 
       use all type GNAT.OS_Lib.String_Access;
 
       Global_Config  : Command_Line_Configuration;
       Command_Config : Command_Line_Configuration;
+      Help_Requested : Boolean;
    begin
       --  GNAT switch handling intercepts -h/--help. To have the same output
       --  for 'alr -h command' and 'alr help command', we do manual handling
       --  first in search of a -h/--help:
-      Check_For_Help;
+      Help_Requested := Check_For_Help;
 
       --  If the above call returned, we continue with regular switch handling.
 
@@ -557,8 +562,12 @@ package body Alr.Commands is
 
       Set_Global_Switches (Global_Config);
 
-      --  To avoid erroring on command-specific switches
-      Define_Switch (Global_Config, "*");
+      --  To avoid erroring on command-specific switches we add the wildcard.
+      --  However, if help was requested, we don't want the "[any string]" text
+      --  to be displayed by Getopt below, so in that case we bypass it.
+      if not Help_Requested then
+         Define_Switch (Global_Config, "*");
+      end if;
 
       Initialize_Option_Scan;
       Getopt (Global_Config, Callback => Fill_Arguments'Access);
@@ -609,7 +618,6 @@ package body Alr.Commands is
          Define_Switch (Command_Config, "*");
          Scenario := Alire.GPR.Empty_Scenario;
          Getopt (Command_Config, Callback => Fill_Arguments'Access);
---           Getopt (Command_Config);
       end;
 
       --  At this point everything should be parsed OK.
