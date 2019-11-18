@@ -10,6 +10,8 @@ with Alr.Platform;
 with Alr.Root;
 with Alr.Utils;
 
+with GNAT.OS_Lib;
+
 package body Alr.Commands.Run is
 
    Max_Search_Depth : constant := 3;
@@ -45,6 +47,56 @@ package body Alr.Commands.Run is
 
    overriding procedure Execute (Cmd : in out Command) is
       use type GNAT.Strings.String_Access;
+
+      Name       : constant String := Root.Current.Release.Project_Str;
+      Declared   : constant Utils.String_Vector :=
+                     Root.Current.Release.Executables (Platform.Properties);
+
+      ----------
+      -- List --
+      ----------
+      --  List declared/found executables
+
+      procedure List is
+         Candidates : constant Utils.String_Vector := Files.Locate_File_Under
+           (Alire.Paths.Build_Folder,
+            Root.Current.Release.Default_Executable,
+            Max_Depth => Max_Search_Depth);
+         --  Candidate default executable
+      begin
+         if Declared.Is_Empty then
+            Put_Line
+              ("Project " & Name &
+                 " does not explicitly declares to build any executable");
+
+            if Candidates.Is_Empty then
+               Put_Line ("No default executable has been automatically " &
+                           "found either by alr");
+            else
+               Put_Line ("However, the following default executables" &
+                           " have been autodetected:");
+               Check_Report (Root.Current.Release.Default_Executable);
+            end if;
+
+         else
+            Put_Line ("Project " & Name & " builds these executables:");
+            for Exe of Declared loop
+               Check_Report (Exe);
+            end loop;
+
+            --  Default one:
+            if not Declared.Contains
+              (Root.Current.Release.Default_Executable)
+              and then
+                not Candidates.Is_Empty
+            then
+               Put_Line ("In addition, the following default-named" &
+                           " executables have been detected:");
+               Check_Report (Root.Current.Release.Default_Executable);
+            end if;
+         end if;
+      end List;
+
    begin
       Requires_Project;
 
@@ -65,50 +117,13 @@ package body Alr.Commands.Run is
       end if;
 
       declare
-         Name       : constant String := Root.Current.Release.Project_Str;
-         Candidates : constant Utils.String_Vector := Files.Locate_File_Under
-           (Alire.Paths.Build_Folder,
-            Root.Current.Release.Default_Executable,
-            Max_Depth => Max_Search_Depth);
-         --  We look at most in something like ./build/configuration
-
          Declared : Utils.String_Vector;
       begin
          Declared := Root.Current.Release.Executables (Platform.Properties);
 
          --  LISTING  --
          if Cmd.List then
-            if Declared.Is_Empty then
-               Put_Line
-                 ("Project " & Name &
-                    " does not explicitly declares to build any executable");
-               if Candidates.Is_Empty then
-                  Put_Line ("No built executable has been automatically " &
-                              "found either by alr");
-               else
-                  Put_Line ("However, the following executables" &
-                              " have been autodetected:");
-                  Check_Report (Root.Current.Release.Default_Executable);
-               end if;
-            else
-               Put_Line ("Project " & Name & " builds these executables:");
-               for Exe of Declared loop
-                  Check_Report (Exe);
-               end loop;
-
-               --  Default one:
-               if not Declared.Contains
-                        (Root.Current.Release.Default_Executable)
-                 and then
-                   not Candidates.Is_Empty
-               then
-                  Put_Line ("In addition, the following default-named" &
-                              " executables have been detected:");
-                  Check_Report (Root.Current.Release.Default_Executable);
-               end if;
-            end if;
-
-            --  LISTING EARLY RETURN
+            List;
             return;
          end if;
 
@@ -118,9 +133,38 @@ package body Alr.Commands.Run is
          end if;
 
          --  EXECUTION  --
+
+         --  Do not default if more than one declared executable. Otherwise use
+         --  either the declared executable or, by lack of that, an executable
+         --  with the name of the crate.
+
+         if Num_Arguments = 0 and then Natural (Declared.Length) > 1 then
+            Trace.Error
+              ("No executable specified but "
+               & "the release builds more than one executable:");
+            List;
+            return;
+         end if;
+
+         --  Also do not accept an explicit executable not listed (unless
+         --  the project declares no executables and the requested one is
+         --  the default one, e.g., same as running without argument).
+
+         if Num_Arguments = 1
+           and then not Declared.Contains (Argument (1))
+           and then Argument (1) /= Root.Current.Release.Default_Executable
+         then
+            Reportaise_Wrong_Arguments
+              ("The requested executable is not built by this release"
+               & " (see declared list with 'alr run --list')");
+         end if;
+
+         --  Proceed to run the requested executable, or if none requested,
+         --  the single one declared, or if none, the default named one.
+
          declare
             use all type Ada.Containers.Count_Type;
-            Proto_Target : constant String :=
+            Target_WO_Ext : constant String :=
               (if Num_Arguments = 1
                then Argument (1)
                else
@@ -131,27 +175,38 @@ package body Alr.Commands.Run is
             Target : constant String :=
               (if Alire.OS_Lib.Exe_Suffix /= ""
                 and then
-                 not Utils.Contains (Proto_Target, Alire.OS_Lib.Exe_Suffix)
-               then Proto_Target & Alire.OS_Lib.Exe_Suffix
-               else Proto_Target);
+                 not Utils.Contains (Target_WO_Ext, Alire.OS_Lib.Exe_Suffix)
+               then Target_WO_Ext & Alire.OS_Lib.Exe_Suffix
+               else Target_WO_Ext);
 
-            Target_Exes : constant Utils.String_Vector :=
+            Target_Exes : Utils.String_Vector :=
                             Files.Locate_File_Under
                               (Alire.Paths.Build_Folder,
                                Target,
                                Max_Depth => Max_Search_Depth);
          begin
-            if Target /= Name and then not Declared.Contains (Target) then
+
+            --  Ensure that a found default executable is indeed executable:
+
+            if Declared.Is_Empty
+              and then Target_Exes.Length = 1
+              and then not GNAT.OS_Lib.Is_Executable_File
+                             (Target_Exes.First_Element)
+            then
                Trace.Warning
-                 ("Requested executable is not in project declared list");
+                 ("Candidate to default executable is not an executable file: "
+                  & Target_Exes.First_Element);
+               Target_Exes.Clear;
             end if;
 
+            --  Finally launch a single target executable, or error otherwise:
+
             if Target_Exes.Is_Empty then
-               Trace.Warning
+               Trace.Error
                  ("Executable " & Utils.Quote (Target) & " not found");
                raise Command_Failed;
             elsif Natural (Target_Exes.Length) > 1 then
-               Trace.Warning ("Too many candidates found:");
+               Trace.Error ("Too many candidates found:");
                for Candid of Target_Exes loop
                   Log (Candid);
                end loop;
