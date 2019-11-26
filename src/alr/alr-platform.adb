@@ -36,7 +36,6 @@ package body Alr.Platform is
 
    function Compiler_Uncached return Alire.Platforms.Compilers is
       package Semver renames Semantic_Versioning;
-      use all type Semver.Point;
       use Utils;
 
       Year   : Natural;
@@ -67,24 +66,54 @@ package body Alr.Platform is
                         return GNAT_GPL_Old;
                   end;
                elsif Contains (Version, "community") then
-                  return GNAT_Community_2018;
+                  begin
+                     Year := Natural'Value (Head (Tail (Version, ' '), ' '));
+                     case Year is
+                        when 2018   => return GNAT_Community_2018;
+                        when 2019   => return GNAT_Community_2019;
+                        when others => return GNAT_Unknown;
+                     end case;
+                  exception
+                     when others =>
+                        --  Somehow it doesn't follow the Community XXXX (X)
+                        --  convention.
+                        return GNAT_Unknown;
+                  end;
                else
                   declare
                      V : Semver.Version;
                   begin
                      V := Semver.Parse (Version, Relaxed => False);
 
-                     if Semver.Major (V) > 7 then
-                        return GNAT_FSF_7_3_Or_Newer;
-                     elsif Semver.Major (V) = 7 then
-                        case Semver.Minor (V) is
-                        when 0 | 1  => return GNAT_FSF_Old;
-                        when 2      => return GNAT_FSF_7_2;
-                        when others => return GNAT_FSF_7_3_Or_Newer;
-                        end case;
-                     else
-                        return GNAT_FSF_Old;
-                     end if;
+                     case Semver.Major (V) is
+                        when 0 .. 6 =>
+                           return GNAT_FSF_Old;
+                        when 7 =>
+                           case Semver.Minor (V) is
+                              when 0 | 1  => return GNAT_FSF_Old;
+                              when 2      => return GNAT_FSF_7_2;
+                              when 3      => return GNAT_FSF_7_3;
+                              when 4      => return GNAT_FSF_7_4;
+                              when 5      => return GNAT_FSF_7_5;
+                              when others => return GNAT_Unknown;
+                           end case;
+                        when 8 =>
+                           case Semver.Minor (V) is
+                              when 0      => return GNAT_FSF_8_0;
+                              when 1      => return GNAT_FSF_8_1;
+                              when 2      => return GNAT_FSF_8_2;
+                              when 3      => return GNAT_FSF_8_3;
+                              when others => return GNAT_Unknown;
+                           end case;
+                        when 9 =>
+                           case Semver.Minor (V) is
+                              when 0      => return GNAT_FSF_9_0;
+                              when 1      => return GNAT_FSF_9_1;
+                              when others => return GNAT_FSF_9_2_Or_Newer;
+                           end case;
+                        when others =>
+                           return GNAT_FSF_9_2_Or_Newer;
+                     end case;
                   exception
                      when others =>
                         --  Not a plain semantic version like FSF uses
