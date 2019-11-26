@@ -172,7 +172,7 @@ package body Alire.Index_On_Disk is
       if Name not in Restricted_Name then
          Result := Outcome_Failure ("Name is too short/long or contains"
                                     & " illegal characters");
-         return Invalid_Index'(New_Handler (Origin, Name, Parent));
+         return New_Invalid_Index;
       end if;
 
       --  Process "file://" URLs and anything that looks like a file name as a
@@ -196,7 +196,7 @@ package body Alire.Index_On_Disk is
                                     .With_Priority (Priority);
          when VCSs.VCS_Unknown =>
             Result := Outcome_Failure ("Unknown index kind: " & Origin);
-            return Invalid_Index'(New_Handler (Origin, Name, Parent));
+            return New_Invalid_Index;
       end case;
    end New_Handler;
 
