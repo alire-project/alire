@@ -119,6 +119,7 @@ package Alr.Commands is
                       Cmd_Compile,
                       Cmd_Dev,
                       Cmd_Get,
+                      Cmd_Help,
                       Cmd_Index,
                       Cmd_Init,
                       Cmd_List,
@@ -160,8 +161,14 @@ private
    Raw_Arguments : Utils.String_Vector;
    --  Raw arguments, first one is the command
 
+   function Is_Command (Str : String) return Boolean;
+   --  Say if string matches an alr command
+
    function What_Command return String;
-   function What_Command return Cmd_Names;
+   function What_Command (Str : String := "") return Cmd_Names;
+   --  Return the command for the given string, or use the first non-switch
+   --  command-line argument if Str = "".
+
    function Num_Arguments return Natural;
    --  Actual arguments besides the command
    function Argument (I : Positive) return String; -- May raise if not existing

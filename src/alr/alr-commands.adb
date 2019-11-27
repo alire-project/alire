@@ -1,3 +1,4 @@
+with AAA.Enum_Tools;
 with AAA.Table_IO;
 with AAA.Text_IO;
 
@@ -19,6 +20,7 @@ with Alr.Commands.Clean;
 with Alr.Commands.Compile;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
+with Alr.Commands.Help;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
 with Alr.Commands.List;
@@ -55,6 +57,7 @@ package body Alr.Commands is
                        Cmd_Compile  => new Compile.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
+                       Cmd_Help     => new Help.Command,
                        Cmd_Index    => new Index.Command,
                        Cmd_Init     => new Init.Command,
                        Cmd_List     => new List.Command,
@@ -95,6 +98,16 @@ package body Alr.Commands is
       return Pre (Pre'First + 4 .. Pre'Last);
    end Image;
 
+   ----------------
+   -- Is_Command --
+   ----------------
+
+   function Is_Command (Str : String) return Boolean is
+      function Is_Valid is new AAA.Enum_Tools.Is_Valid (Cmd_Names);
+   begin
+      return Is_Valid ("cmd_" & Str);
+   end Is_Command;
+
    --------------
    -- Is_Quiet --
    --------------
@@ -105,9 +118,12 @@ package body Alr.Commands is
    -- What_Command --
    ------------------
 
-   function What_Command return Cmd_Names is
+   function What_Command (Str : String := "") return Cmd_Names is
    begin
-      return Cmd_Names'Value ("CMD_" & What_Command);
+      return Cmd_Names'Value ("CMD_"
+                              & (if Str = ""
+                                 then What_Command
+                                 else Str));
    end What_Command;
 
    ------------------
@@ -211,11 +227,11 @@ package body Alr.Commands is
 
       New_Line;
 
-      Display_Valid_Commands;
+      Help.Display_Valid_Keywords;
 
       New_Line;
-      Put_Line ("Use ""alr help <command>"" " &
-                  "for more information about a command.");
+      Put_Line ("Use ""alr help <keyword>"" " &
+                  "for more information about a command or topic.");
       New_Line;
    end Display_Usage;
 
@@ -275,19 +291,6 @@ package body Alr.Commands is
          --  it would be the logical choice.
       end loop;
       New_Line;
-   end Display_Usage;
-
-   -------------------
-   -- Display_Usage --
-   -------------------
-
-   procedure Display_Usage (Cmd : String) is
-   begin
-      Display_Usage (Cmd_Names'Value ("cmd_" & Cmd));
-   exception
-      when Constraint_Error =>
-         Trace.Error ("Unrecognized help topic: " & Cmd);
-         OS_Lib.Bailout (1);
    end Display_Usage;
 
    ----------------------------
@@ -531,7 +534,8 @@ package body Alr.Commands is
          --  Show either general or specific help
          if Help_Requested then
             if First_Nonswitch > 0 then
-               Display_Usage (Ada.Command_Line.Argument (First_Nonswitch));
+               Commands.Help.Display_Help
+                 (Ada.Command_Line.Argument (First_Nonswitch));
                OS_Lib.Bailout (0);
             else
                null;
@@ -579,17 +583,9 @@ package body Alr.Commands is
          Trace.Error ("No command given");
          Display_Usage;
          OS_Lib.Bailout (1);
-      elsif Raw_Arguments.First_Element = "help" then
-         if Num_Arguments >= 1 then
-            Display_Usage (Argument (1));
-            OS_Lib.Bailout (0);
-         else
-            Trace.Error ("Please specific a help topic");
-            New_Line;
-            Display_Valid_Commands;
-            OS_Lib.Bailout (1);
-         end if;
       end if;
+
+      --  Dispatch to the appropriate command (which includes 'help')
 
       declare
          Cmd : constant Cmd_Names := What_Command;
