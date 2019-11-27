@@ -124,6 +124,10 @@ package Alire.Releases with Preelaborate is
    --  Project up to first dot, if any; which is needed for extension projects
    --  in templates and so on.
 
+   function Description (R : Release) return Description_String;
+   --  Returns the description for the crate, which is also stored as a
+   --  property of the release.
+
    function Provides (R : Release) return Alire.Project;
    --  The actual project name to be used during dependency resolution
    --  (But nowhere else)
@@ -336,6 +340,12 @@ private
 
    function Available (R : Release) return Requisites.Tree
    is (R.Available);
+
+   function Description (R : Release) return Description_String
+   --  Image returns "Description: Blah" so we have to cut.
+   is (Utils.Tail
+       (Conditional.Enumerate (R.Properties).Filter
+        (Alire.TOML_Keys.Description).First_Element.Image, ' '));
 
    function Milestone (R : Release) return Milestones.Milestone
    is (Milestones.New_Milestone (R.Project, R.Version));
