@@ -1,0 +1,9 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+tags = [""]
+
+['0.1']
+origin = "http://blah.com/pkg.zip"

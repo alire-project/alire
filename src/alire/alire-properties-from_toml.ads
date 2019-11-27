@@ -21,7 +21,8 @@ package Alire.Properties.From_TOML with Preelaborate is
                           Maintainers_Logins,
                           Notes,
                           Project_Files,
-                          Website);
+                          Website,
+                          Tags);
    --  These enum values must match the toml key they represent with '-' => '_'
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;

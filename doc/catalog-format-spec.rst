@@ -208,6 +208,13 @@ entries:
 
      website = "https://myproject.example.org/"
 
+* ``tags``: optional array of strings. Flat list of topics covered by the
+  crate. Tags will help users find crates reletaed to their interests:
+
+  .. code-block:: toml
+
+     tags = ["spark", "security"]
+
 * ``available``: optional dynamic boolean expression.  Determines whether the
   package is available for the current platform (true) or not (false). For
   instance:

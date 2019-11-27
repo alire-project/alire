@@ -37,8 +37,11 @@ package Alire.Properties.Labeled with Preelaborate is
       Project_File,
       --  Buildable project files in the release, with full relative path
 
-      Website
+      Website,
       --  A website other than the repository
+
+      Tag
+      --  One word that indentify one of the topic convered by a crate
      );
 
    type Cardinalities is (Unique, Multiple); -- Are they atoms or arrays?
@@ -55,7 +58,8 @@ package Alire.Properties.Labeled with Preelaborate is
                     Notes              => Unique,
                     Path               => Multiple,
                     Project_File       => Multiple,
-                    Website            => Unique);
+                    Website            => Unique,
+                    Tag                => Multiple);
 
    Mandatory : array (Labels) of Boolean :=
                  (Author             => False,
@@ -67,7 +71,8 @@ package Alire.Properties.Labeled with Preelaborate is
                   Notes              => False,
                   Path               => False,
                   Project_File       => False,
-                  Website            => False);
+                  Website            => False,
+                  Tag                => False);
    --  Some properties are mandatory in the [general] section; we used this
    --  array to check their presence.
 
@@ -175,7 +180,8 @@ private
           when Notes              => TOML_Keys.Notes,
           when Path               => TOML_Keys.Path,
           when Project_File       => TOML_Keys.Project_File,
-          when Website            => TOML_Keys.Website);
+          when Website            => TOML_Keys.Website,
+          when Tag                => TOML_Keys.Tag);
 
    overriding
    function Key (L : Label) return String is (Key (L.Name));

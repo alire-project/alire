@@ -219,6 +219,8 @@ package Alire.Releases with Preelaborate is
      Post => Natural (Website'Result.Length) <= 1;
    --  Website is optional and unique in the index spec.
 
+   function Tag (R : Release) return Alire.Properties.Vector;
+
    procedure Print (R : Release);
    --  Dump info to console
 
@@ -356,6 +358,10 @@ private
    function Website (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
        (Alire.TOML_Keys.Website));
+
+   function Tag (R : Release) return Alire.Properties.Vector
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Tag));
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String
