@@ -177,24 +177,18 @@ entries:
 * ``licenses``: mandatory array of strings. Flat list of licenses for the
   software that is packaged. The following licenses are allowed:
 
-    * ``GMGPL 2.0`` and ``GMGPL 3.0`` for the corresponding GNAT Modified
-      General Public Licenses.
+    * ``AFL 3.0``, ``AGPL 3.0``, ``Apache 2.0``, ``Artistic 2.0``,
+      ``BSD 2-Clauses``, ``BSD 3-Clauses Clear``, ``BSD 3-Clauses``,
+      ``BSL 1.0``, ``CC0 1.0``, ``CC BY 4.0``, ``CC BY-SA 4.0``,
+      ``ECL 2.0``, ``EPL 1.0``, ``EPL 2.0``, ``EUPL 1.1``, ``EUPL 1.2``,
+      ``GPL 2.0``, ``GPL 3.0``, ``ISC``, ``LGPL 2.1``, ``LGPL 3.0``,
+      ``LPPL 1.3c``, ``MIT``, ``MPL 2.0``, ``MS PL``, ``MS RL``, ``NCSA``,
+      ``OFL 1.1``, ``OSL 3.0``, ``PostgreSQL``, ``Unlicense``, ``WTFPL``,
+      ``zlib``, ``GMGPL 2.0``, ``GMGPL 3.0``, ``Public Domain``.
 
-    * ``GPL 1.0``, ``GPL 2.0`` and ``GPL 3.0`` for the corresponding GNU General Public
-      Licenses.
+    * ``Custom``, can be used for project specific licenses.
 
-    * ``LGPL 3.0`` for the corresponding Lesser General Public License.
-
-    * ``MIT`` for the MIT License.
-
-    * ``Public Domain`` for code in the public domain.
-
-    * ``zlib`` fo the zlib License.
-
-    * ``custom:XXX``, to be used for licenses unlisted here, where ``XXX`` is the
-      body of the license itself.
-
-  If the license is unknown, leave an empty array.
+  If the license is unknown or not in the list above, leave an empty array.
 
   .. code-block:: toml
 
@@ -206,17 +200,6 @@ entries:
 
    licenses = ["GPL 3.0", "MIT"]
 
-  Custom license example:
-
-  .. code-block:: toml
-
-   licenses = """
-      "THE BEER-WARE LICENSE" (Revision 42):
-      <phk@FreeBSD.ORG> wrote this file.  As long as you retain this notice you
-      can do whatever you want with this stuff. If we meet some day, and you
-      think this stuff is worth it, you can buy me a beer in return.
-      Poul-Henning Kamp
-   """
 
 * ``website``: optional string. URL to the original project's website. For
   instance:
