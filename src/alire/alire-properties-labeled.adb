@@ -141,7 +141,9 @@ package body Alire.Properties.Labeled is
       case L.Name is
          when Description =>
             if L.Value'Length > Max_Description_Length then
-               From.Checked_Error ("Description string is too long");
+               From.Checked_Error
+                 ("Description string is too long (must be no more than"
+                    & Max_Description_Length'Img & ")");
             end if;
 
          when Maintainer =>
