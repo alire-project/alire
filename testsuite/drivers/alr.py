@@ -131,7 +131,7 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
         mkdir(index_dir)
         with open(os.path.join(index_dir, 'index.toml'), 'w') as f:
             f.write("""
-                name = "{}"
-                priority = {}
-                url = "{}"
+name = '{}'
+priority = {}
+url = '{}'
             """.format(name, priority, files_dir))
