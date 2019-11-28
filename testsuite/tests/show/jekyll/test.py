@@ -15,6 +15,7 @@ assert_eq(
       'maintainers: ["alejandro@mosteo.com", "bob@example.com"]\n'
       'licenses: ["GPL 3.0", "MIT"]\n'
       'websites: ["example.com"]\n'
+      'tags: ["tag1", "other-tag"]\n'
       'version: "1.0.1"\n'
       'dependencies: [{crate: "libhello", version: "Within_Major (1.0.0)"}]\n'
       '---\n'

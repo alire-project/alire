@@ -241,6 +241,16 @@ package body Alire.Utils is
       and then User (User'Last) /= '-'
       and then not Contains (User, "--"));
 
+   ------------------
+   -- Is_Valid_Tag --
+   ------------------
+
+   function Is_Valid_Tag (Tag : String) return Boolean is
+     ((for all C of Tag => C in '0' .. '9' | 'a' .. 'z' | '-')
+      and then Tag (Tag'First) /= '-'
+      and then Tag (Tag'Last) /= '-'
+      and then not Contains (Tag, "--"));
+
    --------------
    -- New_Line --
    --------------

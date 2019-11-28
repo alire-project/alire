@@ -646,6 +646,7 @@ package body Alire.Releases is
         "maintainers: " & Props_To_YAML (R.Maintainer) & ASCII.LF &
         "licenses: " & Props_To_YAML (R.License) & ASCII.LF &
         "websites: " & Props_To_YAML (R.Website) & ASCII.LF &
+        "tags: " & Props_To_YAML (R.Tag) & ASCII.LF &
         "version: " & Utils.YAML.YAML_Stringify (R.Version_Image) & ASCII.LF &
         "dependencies: " & R.Dependencies.To_YAML;
    end To_YAML;

@@ -23,6 +23,8 @@ package Alire.Utils with Preelaborate is
    --  Check username is valid according to
    --  https://github.com/shinnn/github-username-regex
 
+   function Is_Valid_Tag (Tag : String) return Boolean;
+
    function Quote (S : String) return String;
 
    function To_Lower_Case (S : String) return String;

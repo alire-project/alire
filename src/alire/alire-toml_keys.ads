@@ -30,6 +30,7 @@ package Alire.TOML_Keys with Preelaborate is
    Path           : constant String := "path";
    Project_File   : constant String := "project-files";
    Provides       : constant String := "provides";
+   Tag            : constant String := "tags";
    Target         : constant String := "target";
    Website        : constant String := "website";
    Word_Size      : constant String := "word-size";

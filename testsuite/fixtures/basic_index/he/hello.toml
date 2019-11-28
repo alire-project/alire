@@ -5,6 +5,7 @@ website = "example.com"
 maintainers = ["alejandro@mosteo.com", "bob@example.com"]
 maintainers-logins = ["mylogin"]
 authors = ["Bob", "Alice"]
+tags = ["tag1", "other-tag"]
 
 ['1.0.1']
 origin = "file://../../crates/hello_1.0.1"

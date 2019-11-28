@@ -39,6 +39,9 @@ package Alire with Preelaborate is
    Max_Description_Length : constant := 72;
    --  Git line recommendation (although it's 50 for subject line)
 
+   Max_Tag_Length         : constant := 15;
+   --  Maximum length of a single element of the tags field
+
    --  package BStrings is new Ada.Strings.Bounded.Generic_Bounded_Length
    --       (Integer'Max (Max_Name_Length, Max_Description_Length));
 

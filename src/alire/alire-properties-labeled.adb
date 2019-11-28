@@ -141,7 +141,9 @@ package body Alire.Properties.Labeled is
       case L.Name is
          when Description =>
             if L.Value'Length > Max_Description_Length then
-               From.Checked_Error ("Description string is too long");
+               From.Checked_Error
+                 ("Description string is too long (must be no more than"
+                    & Max_Description_Length'Img & ")");
             end if;
 
          when Maintainer =>
@@ -158,6 +160,20 @@ package body Alire.Properties.Labeled is
                   & L.Value);
             end if;
 
+         when Tag =>
+            if L.Value'Length = 0 then
+               From.Checked_Error ("Tag string is empty");
+            end if;
+
+            if L.Value'Length > Max_Tag_Length then
+               From.Checked_Error
+                 ("Tag string is too long (must be no more than"
+                  & Max_Tag_Length'Img  & ")");
+            end if;
+
+            if not Utils.Is_Valid_Tag (L.Value) then
+               From.Checked_Error ("Tag string is not valid");
+            end if;
          when others =>
             null;
       end case;
