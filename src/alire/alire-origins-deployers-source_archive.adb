@@ -142,8 +142,10 @@ package body Alire.Origins.Deployers.Source_Archive is
       case Archive_Format (Src_File) is
          when Tarball =>
             Subprocess.Checked_Spawn
-              ("tar", Empty_Vector & "xf" & Src_File & "-C" & Dst_Dir);
-
+              ("tar", Empty_Vector &
+                      "--force-local" &
+                      "-xf" & Src_File &
+                      "-C" & Dst_Dir);
          when Zip_Archive =>
             Subprocess.Checked_Spawn
               ("unzip", Empty_Vector & "-q" & Src_File & "-d" & Dst_Dir);
