@@ -15,6 +15,8 @@ os.chdir('xxx')
 # Run it without compiling it first
 p = run_alr('run', '-s', complain_on_error=False)
 assert p.status != 0
-assert_eq('ERROR: alr run unsuccessful\n', p.out)
+assert_eq('ERROR: Executable "xxx" not found\n'
+          'ERROR: alr run unsuccessful\n', 
+          p.out)
 
 print('SUCCESS')
