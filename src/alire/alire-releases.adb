@@ -416,7 +416,7 @@ package body Alire.Releases is
       use GNAT.IO;
    begin
       --  MILESTONE
-      Put_Line (R.Milestone.Image & ": " & Projects.Descriptions (R.Project));
+      Put_Line (R.Milestone.Image & ": " & R.Description);
 
       if R.Provides /= R.Project then
          Put_Line ("Provides: " & (+R.Provides));
@@ -559,14 +559,6 @@ package body Alire.Releases is
       declare
          General : constant TOML.TOML_Value := R.Properties.To_TOML;
       begin
-         --  Description
---           if Projects.Descriptions.Contains (R.Project) then
---              General.Set (TOML_Keys.Description,
---                           +Projects.Descriptions (R.Project));
---           else
---              General.Set (TOML_Keys.Description,
---                           +Defaults.Description);
---           end if;
 
          --  Alias/Provides
          if UStrings.Length (R.Alias) > 0 then
