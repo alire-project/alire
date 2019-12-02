@@ -12,7 +12,7 @@ with Alr.Parsers;
 with Alr.Platform;
 with Alr.Query;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Get is
 
@@ -24,7 +24,7 @@ package body Alr.Commands.Get is
 
    procedure Retrieve (Cmd      : Command;
                        Name     : Alire.Project;
-                       Versions : Semver.Version_Set)
+                       Versions : Semver.Extended.Version_Set)
    is
       Rel : constant Alire.Index.Release :=
         Query.Find (Name, Versions, Query_Policy);

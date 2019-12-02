@@ -15,7 +15,7 @@ with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Withing is
 
@@ -60,11 +60,11 @@ package body Alr.Commands.Withing is
                  return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
-      use all type Semantic_Versioning.Version_Set;
+      use all type Semantic_Versioning.Extended.Version_Set;
       Requested : constant Parsers.Allowed_Milestones :=
         Parsers.Project_Versions (Old_Dep);
    begin
-      if Requested.Versions /= Semantic_Versioning.Any then
+      if Requested.Versions /= Semantic_Versioning.Extended.Any then
          Trace.Warning
            ("Version is not used when removing dependencies: " & Old_Dep);
       end if;

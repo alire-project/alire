@@ -20,7 +20,7 @@ package body Alr.Query is
 
    package Semver renames Semantic_Versioning;
 
-   use all type Semver.Version_Set;
+   use all type Semver.Extended.Version_Set;
 
    ---------
    -- "&" --
@@ -37,13 +37,14 @@ package body Alr.Query is
    -- Dependency_Image --
    ----------------------
 
-   function Dependency_Image (Project  : Alire.Project;
-                              Versions : Semantic_Versioning.Version_Set;
-                              Policy   : Age_Policies := Newest)
-                              return String is
-      ((+Project) &
-       (if Versions /= Semver.Any
-        then " version " & Semver.Image_Ada (Versions)
+   function Dependency_Image
+     (Project  : Alire.Project;
+      Versions : Semantic_Versioning.Extended.Version_Set;
+      Policy   : Age_Policies := Newest)
+      return String
+   is ((+Project) &
+       (if Versions /= Semver.Extended.Any
+        then " version " & Versions.Image
         else " with " & Utils.To_Mixed_Case (Policy'Img) & " version"));
 
    ------------
@@ -52,13 +53,13 @@ package body Alr.Query is
 
    function Exists
      (Project : Alire.Project;
-      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
+      Allowed : Semantic_Versioning.Extended.Version_Set :=
+        Semantic_Versioning.Extended.Any)
       return Boolean
    is
-      use Semver;
    begin
       for R of Index.Catalog loop
-         if R.Project = Project and then Satisfies (R.Version, Allowed) then
+         if R.Project = Project and then Allowed.Contains (R.Version) then
             return True;
          end if;
       end loop;
@@ -72,7 +73,8 @@ package body Alr.Query is
 
    function Find
      (Project : Alire.Project;
-      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
+      Allowed : Semantic_Versioning.Extended.Version_Set :=
+        Semantic_Versioning.Extended.Any;
       Policy  : Age_Policies)
       return Release
    is
@@ -85,7 +87,7 @@ package body Alr.Query is
       function Check (R : Index.Release) return Boolean is
       begin
          if R.Project = Project then
-            if Satisfies (R.Version, Allowed) then
+            if Allowed.Contains (R.Version) then
                return True;
             else
                Trace.Debug ("Skipping unsatisfactory version: " &
@@ -180,11 +182,8 @@ package body Alr.Query is
                               Count :        Count_Type := 1)
    is
       pragma Unreferenced (Count);
-      use Semantic_Versioning;
    begin
-      if Length (Dep.Versions) /= 1 or else
-         Condition (Element (Dep.Versions, 1)) /= Exactly
-      then
+      if not Dep.Versions.Is_Single_Version then
          raise Constraint_Error with "Materialization requires exact versions";
       end if;
 
@@ -373,7 +372,7 @@ package body Alr.Query is
                   --  with this dependency out of the picture.
 
                   if Frozen.Contains (R.Project) then
-                     if Semver.Satisfies (R.Version, Dep.Versions) then
+                     if Dep.Versions.Contains (R.Version) then
                         --  Continue along this tree
                         Expand (Expanded,
                                 Remaining,
@@ -443,7 +442,7 @@ package body Alr.Query is
                   --  done along this search branch:
 
                   elsif -- First time we see this crate in the current branch.
-                    Semver.Satisfies (R.Version, Dep.Versions) and then
+                    Dep.Versions.Contains (R.Version) and then
                     Is_Available (R)
                   then
                      Trace.Debug

@@ -393,7 +393,7 @@ private
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency)
                        return Boolean
-   is (R.Project = Dep.Project and then Satisfies (R.Version, Dep.Versions));
+   is (R.Project = Dep.Project and then Dep.Versions.Contains (R.Version));
 
    function Version_Image (R : Release) return String
    is (Semantic_Versioning.Image (R.Version));

@@ -9,7 +9,12 @@ with Alire.Utils.YAML;
 
 with GNAT.IO; -- To keep preelaborable
 
+with Semantic_Versioning.Basic;
+with Semantic_Versioning.Extended;
+
 package body Alire.Releases is
+
+   package Semver renames Semantic_Versioning;
 
    use all type Alire.Properties.Labeled.Labels;
 
@@ -538,7 +543,8 @@ package body Alire.Releases is
      (Conditional.For_Dependencies.New_Value
         (Alire.Dependencies.New_Dependency
              (R.Project,
-              Semantic_Versioning.Exactly (R.Version))));
+              Semver.Extended.To_Extended
+                (Semver.Basic.Exactly (R.Version)))));
 
    -------------
    -- To_TOML --

@@ -24,11 +24,7 @@ with GNAT.Command_Line;
 
 with GNATCOLL.VFS;
 
-with Semantic_Versioning;
-
 package body Alr.Commands.Test is
-
-   package Semver renames Semantic_Versioning;
 
    -----------------
    -- Check_Files --
@@ -254,8 +250,7 @@ package body Alr.Commands.Test is
                              Parsers.Project_Versions (Argument (J));
                         begin
                            if R.Project = Allowed.Project
-                             and then
-                              Semver.Satisfies (R.Version, Allowed.Versions)
+                             and then Allowed.Versions.Contains (R.Version)
                            then
                               if not Cmd.Last
                                 or else
@@ -264,9 +259,8 @@ package body Alr.Commands.Test is
                                  R.Project /=
                                    Alire.Index.Catalog (Next (I)).Project
                                 or else
-                                 not Semver.Satisfies
-                                      (Alire.Index.Catalog (Next (I)).Version,
-                                       Allowed.Versions)
+                                 not Allowed.Versions.Contains
+                                      (Alire.Index.Catalog (Next (I)).Version)
                               then
                                  Candidates.Include (R);
                               end if;
