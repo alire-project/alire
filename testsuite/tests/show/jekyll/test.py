@@ -17,7 +17,7 @@ assert_eq(
       'websites: ["example.com"]\n'
       'tags: ["tag1", "other-tag"]\n'
       'version: "1.0.1"\n'
-      'dependencies: [{crate: "libhello", version: "Within_Major (1.0.0)"}]\n'
+      'dependencies: [{crate: "libhello", version: "^1.0"}]\n'
       '---\n'
       '"Hello, world!" demonstration project\n'
       '\n', p.out)
