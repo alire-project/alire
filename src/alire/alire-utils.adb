@@ -207,12 +207,16 @@ package body Alire.Utils is
       -------------
 
       function Flatten (Pos : Positive; V : String_Vector) return String is
-        (if Pos > V.Count
-         then ""
+        (if Pos = V.Count
+         then V (Pos)
          else V (Pos) & Separator & Flatten (Pos + 1, V));
 
    begin
-      return Flatten (1, V);
+      if V.Is_Empty then
+         return "";
+      else
+         return Flatten (1, V);
+      end if;
    end Flatten;
 
    ------------
