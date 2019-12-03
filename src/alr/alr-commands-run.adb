@@ -3,7 +3,7 @@ with Ada.Containers;
 with Alire.OS_Lib;
 with Alire.Paths;
 
-with Alr.Commands.Compile;
+with Alr.Commands.Build;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Platform;
@@ -129,7 +129,7 @@ package body Alr.Commands.Run is
 
          --  COMPILATION  --
          if not Cmd.No_Compile then
-            Commands.Compile.Execute;
+            Commands.Build.Execute;
          end if;
 
          --  EXECUTION  --

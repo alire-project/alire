@@ -17,7 +17,6 @@ with Alire.Roots.Check_Valid;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
-with Alr.Commands.Compile;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
 with Alr.Commands.Help;
@@ -54,7 +53,6 @@ package body Alr.Commands is
    Dispatch_Table : constant array (Cmd_Names) of Command_Access :=
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
-                       Cmd_Compile  => new Compile.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Help     => new Help.Command,

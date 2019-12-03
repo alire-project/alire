@@ -6,7 +6,7 @@ with Alire.Origins.Deployers;
 
 with Alr.Actions;
 with Alr.Checkout;
-with Alr.Commands.Compile;
+with Alr.Commands.Build;
 with Alr.Commands.Update;
 with Alr.Parsers;
 with Alr.Platform;
@@ -103,7 +103,7 @@ package body Alr.Commands.Get is
          Actions.Execute_Actions (Rel, Alire.Actions.Post_Fetch);
 
          if Cmd.Compile then
-            Commands.Compile.Execute;
+            Commands.Build.Execute;
          end if;
       end;
    exception
