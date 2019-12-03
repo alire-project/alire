@@ -21,6 +21,7 @@ package Alire.Index_On_Disk is
    Metadata_Filename  : constant String := "index.toml";
 
    File_Prefix        : constant String := "file://";
+   HTTP_Prefix        : constant String := "http";
 
    subtype Priorities is Integer; -- Lower is loaded before
 
