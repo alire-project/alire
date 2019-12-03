@@ -169,9 +169,8 @@ package body Alire.Index_On_Disk is
       end Process_Local_Index;
 
    begin
-      if Name not in Restricted_Name then
-         Result := Outcome_Failure ("Name is too short/long or contains"
-                                    & " illegal characters");
+      if not Is_Valid_Name (Name) then
+         Result := Outcome_Failure (Error_In_Name);
          return New_Invalid_Index;
       end if;
 

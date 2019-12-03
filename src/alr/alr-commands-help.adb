@@ -2,6 +2,8 @@ with AAA.Enum_Tools;
 with AAA.Table_IO;
 with AAA.Text_IO;
 
+with Alire.Projects;
+
 package body Alr.Commands.Help is
 
    type Help_Topics is (Identifiers);
@@ -26,14 +28,7 @@ package body Alr.Commands.Help is
    is
      (case Topic is
          when Identifiers =>
-            Alire.Utils.Empty_Vector
-              .Append ("Identifiers for crates and indexes must use "
-                       & "lowercase alphanumeric characters from the latin "
-                       & "alphabet. Underscores can also be used except as "
-                       & "the first character.")
-              .New_Line
-              .Append ("Length must be of at least" & Alire.Min_Name_Length'Img
-                       & " characters.")
+            Alire.Projects.Naming_Convention
      );
 
    ------------------

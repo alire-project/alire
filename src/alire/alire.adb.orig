@@ -68,6 +68,16 @@ package body Alire is
    end Assert;
 
    -------------------
+<<<<<<< HEAD
+   -- Checked_Error --
+   -------------------
+
+   procedure Raise_Checked_Error (Msg : String) is
+   begin
+      Err_Log (Msg);
+      raise Checked_Error with Errors.Set (Msg);
+   end Raise_Checked_Error;
+=======
    -- Error_In_Name --
    -------------------
 
@@ -85,8 +95,6 @@ package body Alire is
    begin
       if S'Length < Min_Name_Length then
          Err := +"Identifier too short.";
-      elsif S'Length > Max_Name_Length then
-         Err := +"Identifier too long.";
       elsif S (S'First) = '_' then
          Err := +"Identifiers must not begin with an underscore.";
       elsif (for some C of S => C not in Project_Character) then
@@ -102,15 +110,12 @@ package body Alire is
       return +Err = "";
    end Is_Valid_Name;
 
-   -------------------
-   -- Raise_Checked_Error --
-   -------------------
-
-   procedure Raise_Checked_Error (Msg : String) is
-   begin
-      Err_Log (Msg);
-      raise Checked_Error with Errors.Set (Msg);
-   end Raise_Checked_Error;
+--     Project'Length >= Min_Name_Length and then
+--       Project (Project'First) /= '_' and then
+--       Project (Project'First) /= Extension_Separator and then
+--       Project (Project'Last) /= Extension_Separator and then
+--       (for all C of Project => C in Project_Character);
+>>>>>>> Better feedback on bad crate/index names
 
    ----------------------------
    -- Outcome_From_Exception --

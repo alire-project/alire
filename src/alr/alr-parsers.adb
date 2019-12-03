@@ -48,6 +48,8 @@ package body Alr.Parsers is
          M.Versions := Versions;
       end return;
    exception
+      when Alire.Checked_Error =>
+         raise;
       when others =>
          Trace.Error ("A project/version string was invalid");
          raise Command_Failed;
