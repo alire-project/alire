@@ -1,11 +1,7 @@
 with Alire.Actions;
 with Alire.Paths;
-with Alire.Properties.Labeled;
 
 with Alr.Actions;
-with Alr.OS_Lib;
-with Alr.Platform;
-with Alr.Query;
 with Alr.Root;
 with Alr.Spawn;
 
@@ -18,52 +14,12 @@ package body Alr.Commands.Build is
    ----------------
 
    procedure Do_Compile is
-
-      ---------------
-      -- Add_Paths --
-      ---------------
-
-      procedure Add_Paths is
-         Sol : constant Query.Solution :=
-           Query.Resolve (Root.Current.Release.Dependencies
-                            (Platform.Properties),
-                          Options => (Age    => Query_Policy,
-                                      Native => <>));
-      begin
-         if Sol.Valid then
-            for R of Sol.Releases loop
-               for Path of R.Labeled_Properties
-                 (Platform.Properties, Alire.Properties.Labeled.Path)
-               loop
-                  OS_Lib.Setenv ("PATH",
-                                 Path & GNAT.OS_Lib.Path_Separator &
-                                   OS_Lib.Getenv ("PATH"));
-               end loop;
-            end loop;
-         else
-            Reportaise_Command_Failed ("Could not resolve dependencies");
-         end if;
-      end Add_Paths;
-
    begin
       Requires_Project;
       Requires_Buildfile;
 
       --  COMPILATION
       begin
-         --  TODO: this is a costly operation that requires solving
-         --  dependencies.
-
-         --  Perhaps it will be necessary in the future to cache these in the
-         --  session file.
-         --  Alternatively, with gprinstall, paths might become obsolete
-         if not Root.Current.Release.Dependencies
-           (Platform.Properties).Is_Empty
-         then
-            Requires_Full_Index;
-            Add_Paths;
-         end if;
-
          Spawn.Gprbuild (Root.Current.Build_File,
                          Extra_Args    => Scenario.As_Command_Line);
       exception
