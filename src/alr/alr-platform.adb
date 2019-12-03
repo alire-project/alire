@@ -1,6 +1,5 @@
-with Alire.Properties.Platform;
-
 with Alire.OS_Lib.Subprocess;
+with Alire.Properties.Platform;
 with Alire.Utils;
 
 with Alr.Utils;

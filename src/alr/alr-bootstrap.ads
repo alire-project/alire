@@ -27,6 +27,10 @@ package Alr.Bootstrap is
    procedure Check_Ada_Tools;
    --  Check gprbuild/gnatmake are within reach
 
+   procedure Check_Tool (Exec : String);
+   --  Check that some executable is in the path, or print error and die with
+   --  exit code 1.
+
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
