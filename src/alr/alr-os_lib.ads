@@ -2,9 +2,6 @@ with Ada.Directories;
 
 with Alire.Directories;
 with Alire.OS_Lib;
-with Alire.OS_Lib.Subprocess;
-
-with Alr.Utils;
 
 with GNAT.OS_Lib;
 
@@ -24,27 +21,10 @@ package Alr.OS_Lib is
 
    --  Process spawning
 
-   function Spawn (Command             : String;
-                   Arguments           : String := "";
-                   Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False) return Integer
-                   renames Alire.OS_Lib.Subprocess.Spawn;
-   --  If Understands, an extra -v will be passed on Debug log levels.
-   --  If Force_Quiet and not in Debug level, output will be entirely muted
-   --  (stdout & stderr).
-
    procedure Spawn_Raw (Command : String; Arguments : String := "");
    --  Direct launch, without any shenanigangs on output, for example for
    --  respawning the canonical version.
    --  Raises CHILD_FAILED if exit code /= 0.
-
-   procedure Spawn_And_Capture (Output     : in out Utils.String_Vector;
-                                Command    : String;
-                                Arguments  : String := "";
-                                Err_To_Out : Boolean := False);
-   --  Returns output as vector of strings
-   --  Raises CHILD_FAILED if exit code /= 0
-   --  Even if exception raised, Output will be filled-in
 
    --  OS PORTABLE FUNCTIONS
 

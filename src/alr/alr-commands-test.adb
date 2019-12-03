@@ -4,6 +4,8 @@ with Ada.Exceptions;
 
 with Alire.Containers;
 with Alire.Index;
+with Alire.Utils;
+with Alire.OS_Lib.Subprocess;
 
 with Alr.Files;
 with Alr.Interactive;
@@ -128,12 +130,21 @@ package body Alr.Commands.Test is
             Trace.Detail
               ("Skipping already tested extension " & R.Milestone.Image);
          else
+            declare
+               use Alire.Utils;
+
+               Unused : Integer;
             begin
                Skipping_Extensions := False;
 
-               OS_Lib.Spawn_And_Capture
-                 (Output,
-                  "alr", "get --compile -d -n " & R.Milestone.Image,
+               Unused := Alire.OS_Lib.Subprocess.Spawn_And_Capture
+                 (Output, "alr",
+                  Empty_Vector &
+                    "get" &
+                    "--compile" &
+                    "-d" &
+                    "-n" &
+                    R.Milestone.Image,
                   Err_To_Out => True);
 
                Trace.Detail (Output.Flatten (Newline));

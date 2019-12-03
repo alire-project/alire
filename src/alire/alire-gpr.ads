@@ -48,7 +48,7 @@ package Alire.GPR with Preelaborate is
 
    procedure Add_Argument (S : in out Scenario; Var : String; Val : String);
 
-   function As_Command_Line (S : Scenario) return String;
+   function As_Command_Line (S : Scenario) return Utils.String_Vector;
    --  -Xvar1=val -Xvar2=val ...
 
    function Is_Empty (S : Scenario) return Boolean;

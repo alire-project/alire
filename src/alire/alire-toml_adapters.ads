@@ -1,4 +1,4 @@
-private with Alire.Utils;
+with Alire.Utils;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
@@ -89,6 +89,8 @@ package Alire.TOML_Adapters with Preelaborate is
    function "+" (S : String) return TOML.TOML_Value is
       (TOML.Create_String (S));
 
+   function "+" (Vect : Utils.String_Vector) return TOML.TOML_Value;
+
    function To_Array (V : TOML.TOML_Value) return TOML.TOML_Value with
      Pre  => V.Kind in TOML.Atom_Value_Kind or V.Kind = TOML.TOML_Array,
      Post => To_Array'Result.Kind = TOML.TOML_Array;
@@ -106,6 +108,11 @@ package Alire.TOML_Adapters with Preelaborate is
    function Tomify (Image : String) return String;
    --  Take some enumeration image and turn it into a TOML-style key, replacing
    --  every "_" with a "-" and in lower case.
+
+   function To_Vector (Val : TOML.TOML_Value) return Utils.String_Vector
+     with
+       Pre => Val.Kind = TOML.TOML_Array;
+   --  Take a TOML value and turn it into a vector of strings
 
    generic
       type Enum is (<>);

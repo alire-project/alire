@@ -1,8 +1,9 @@
 with Ada.Tags;
 
+with Alire.Utils;
+
 with Alr.OS_Lib;
 with Alr.Platform;
-with Alr.Utils;
 with Alr.Spawn;
 
 package body Alr.Actions is
@@ -15,12 +16,16 @@ package body Alr.Actions is
 
    procedure Execute_Run (This : Run) is
       use OS_Lib;
-      use Utils;
+      use Alire.Utils;
+
       Guard : Folder_Guard (Enter_Folder (This.Working_Folder))
         with Unreferenced;
+      Cmd  : constant String_Vector := This.Command_Line;
+      Args : String_Vector := Cmd;
    begin
-      Alr.Spawn.Command (Head (This.Command_Line, ' '),
-                         Tail (This.Command_Line, ' '));
+      Args.Delete_First;
+
+      Alr.Spawn.Command (Cmd.First_Element, Args);
    end Execute_Run;
 
    -------------

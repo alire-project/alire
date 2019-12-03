@@ -1,6 +1,7 @@
 with Alire.OS_Lib.Subprocess;
 with Alire.Platform;
-with Alire.Utils;
+with Alire.Utils;             use Alire.Utils;
+with Alire.Errors;
 
 package body Alire.Origins.Deployers.APT is
 
@@ -15,7 +16,7 @@ package body Alire.Origins.Deployers.APT is
       Output    : Utils.String_Vector;
    begin
       Exit_Code := Subprocess.Spawn_And_Capture
-        (Output, "apt-cache", "policy " &
+        (Output, "apt-cache", Empty_Vector & "policy" &
            This.Base.Package_Name (Platform.Distribution));
 
       if Exit_Code /= 0 then
@@ -42,19 +43,21 @@ package body Alire.Origins.Deployers.APT is
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome is
       pragma Unreferenced (Folder);
-      Exit_Code : Integer;
    begin
-      Exit_Code :=
-        Subprocess.Spawn ("sudo",
-                          "apt-get install --no-remove -q -q -y " &
-                            This.Base.Package_Name (Platform.Distribution));
-
-      if Exit_Code /= 0 then
-         return Outcome_Failure ("apt-get install exited with code:"
-                                 & Exit_Code'Img);
-      end if;
+      Subprocess.Checked_Spawn
+        ("sudo", Empty_Vector &
+           "apt-get" &
+           "install" &
+           "--no-remove" &
+           "-q" &
+           "-q" &
+           "-y" &
+           This.Base.Package_Name (Platform.Distribution));
 
       return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
    end Deploy;
 
    ------------
@@ -63,11 +66,13 @@ package body Alire.Origins.Deployers.APT is
 
    overriding function Exists (This : Deployer) return Boolean is
       Exit_Code : Integer;
-      Output    : Utils.String_Vector;
-      use Utils;
+      Output    : String_Vector;
    begin
       Exit_Code := Subprocess.Spawn_And_Capture
-        (Output, "apt-cache", "-q policy " &
+        (Output, "apt-cache",
+         Empty_Vector &
+           "-q" &
+           "policy" &
            This.Base.Package_Name (Platform.Distribution));
 
       if Exit_Code /= 0 then
@@ -102,10 +107,14 @@ package body Alire.Origins.Deployers.APT is
    function Native_Version (Name : String) return String is
       Exit_Code : Integer;
       Output    : Utils.String_Vector;
-      use Utils;
    begin
       Exit_Code := Subprocess.Spawn_And_Capture
-        (Output, "apt-cache", "-q policy " & Name);
+        (Output, "apt-cache",
+         Empty_Vector &
+           "-q" &
+           "policy" &
+           Name);
+
       if Exit_Code /= 0 then
          Uncontained_Error
            ("apt-cache policy exited with code:" & Exit_Code'Img);

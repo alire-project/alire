@@ -34,8 +34,8 @@ package body Alire.Platform is
             use Utils;
             Release : Utils.String_Vector;
          begin
-            if Subprocess.Spawn_And_Capture (Release,
-                                             "cat", "/etc/os-release") /= 0
+            if Subprocess.Spawn_And_Capture
+              (Release, "cat", Empty_Vector & "/etc/os-release") /= 0
             then
                Trace.Debug ("Unable to detect distribution");
                return Distro_Unknown;

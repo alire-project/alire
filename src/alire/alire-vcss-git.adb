@@ -1,7 +1,7 @@
-with Ada.Exceptions;
-
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
+with Alire.Errors;
+with Alire.Utils;             use Alire.Utils;
 
 package body Alire.VCSs.Git is
 
@@ -16,43 +16,32 @@ package body Alire.VCSs.Git is
                    return Outcome
    is
       pragma Unreferenced (This);
-      Extra : constant String :=
-                (if Log_Level < Trace.Info
-                 then "-q "
-                 else "--progress ");
+      Extra : constant String_Vector :=
+        Empty_Vector & (if Log_Level < Trace.Info
+                        then "-q"
+                        else "--progress");
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
-      declare
-         Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-           ("git", "clone " & Extra & Repo (From) & " " & Into);
-      begin
-         if Exit_Code /= 0 then
-            return Outcome_Failure ("git clone exited with code:" &
-                                    Exit_Code'Img);
-         end if;
-      end;
+      OS_Lib.Subprocess.Checked_Spawn
+        ("git",
+         Empty_Vector & "clone" & Extra & Repo (From) & Into);
 
       if Commit (From) /= "" then
          declare
             Guard : Directories.Guard (Directories.Enter (Into))
               with Unreferenced;
-            Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-              ("git", "reset --hard " & Commit (From));
          begin
-            if Exit_Code /= 0 then
-               return Outcome_Failure ("git reset exited with code:" &
-                                         Exit_Code'Img);
-            end if;
+            OS_Lib.Subprocess.Checked_Spawn
+              ("git",
+               Empty_Vector & "reset" & "--hard" & Commit (From));
          end;
       end if;
 
       return Outcome_Success;
    exception
       when E : others =>
-         return Outcome_From_Exception
-           (E, "Could not check out repo: " & From &
-               "; Ex: " & Ada.Exceptions.Exception_Message (E));
+         return Alire.Errors.Get (E);
    end Clone;
 
    ------------
@@ -67,19 +56,16 @@ package body Alire.VCSs.Git is
       pragma Unreferenced (This);
       Guard : Directories.Guard (Directories.Enter (Repo))
         with Unreferenced;
-      Extra : constant String :=
+      Extra : constant String_Vector :=
                 (if Log_Level < Trace.Info
-                 then "-q "
-                 else "--progress ");
-      Exit_Code : constant Integer :=
-                    OS_Lib.Subprocess.Spawn ("git", "pull " & Extra);
+                 then Empty_Vector & "-q "
+                 else Empty_Vector & "--progress ");
    begin
-      if Exit_Code /= 0 then
-         return Outcome_Failure ("git pull exited with code: " &
-                                   Exit_Code'Img);
-      else
-         return Outcome_Success;
-      end if;
+      OS_Lib.Subprocess.Checked_Spawn ("git", Empty_Vector & "pull" & Extra);
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
    end Update;
 
 end Alire.VCSs.Git;

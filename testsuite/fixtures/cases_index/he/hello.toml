@@ -18,11 +18,11 @@ maintainers-logins = ["mylogin"]
 
     [[ general.actions.'case(os)'.linux ]]
     type = "post-fetch"
-    command = "make"
+    command = ["make"]
 
     [[ general.actions.'case(os)'.linux ]]
     type = "post-compile"
-    command = "hello"
+    command = ["hello"]
 
     [[ general.actions.'case(os)'.'...' ]]
 

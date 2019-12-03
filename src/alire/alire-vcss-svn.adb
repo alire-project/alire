@@ -1,7 +1,7 @@
-with Ada.Exceptions;
-
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
+with Alire.Errors;
+with Alire.Utils;             use Alire.Utils;
 
 package body Alire.VCSs.SVN is
 
@@ -16,34 +16,30 @@ package body Alire.VCSs.SVN is
                    return Outcome
    is
       pragma Unreferenced (This);
-      Extra : constant String :=
-                (if Log_Level < Trace.Info
-                 then "-q "
-                 else "");
+      Extra : constant String_Vector :=
+        (if Log_Level < Trace.Info
+         then Empty_Vector & "-q"
+         else Empty_Vector);
+
+      Commit_Arg : constant String_Vector :=
+        (if Commit (From) /= ""
+         then Empty_Vector & String'("-r" & Commit (From))
+         else Empty_Vector);
    begin
       Trace.Detail ("Checking out [svn]: " & From);
 
-      declare
-         Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-           ("svn",
-            "checkout "
-            & Extra
-            & Repo (From)
-            & (if Commit (From) /= "" then " -r" & Commit (From) else "")
-            & " " & Into);
-      begin
-         if Exit_Code /= 0 then
-            return Outcome_Failure ("svn checkout exited with code:" &
-                                    Exit_Code'Img);
-         end if;
-      end;
-
+      OS_Lib.Subprocess.Checked_Spawn
+        ("svn",
+            Empty_Vector &
+              "checkout" &
+              Extra &
+              Repo (From) &
+              Commit_Arg &
+              Into);
       return Outcome_Success;
    exception
       when E : others =>
-         return Outcome_From_Exception
-           (E, "Could not check out repo: " & From &
-               "; Ex: " & Ada.Exceptions.Exception_Message (E));
+         return Alire.Errors.Get (E);
    end Clone;
 
    ------------
@@ -58,19 +54,17 @@ package body Alire.VCSs.SVN is
       pragma Unreferenced (This);
       Guard : Directories.Guard (Directories.Enter (Repo))
         with Unreferenced;
-      Extra : constant String :=
-                (if Log_Level < Trace.Info
-                 then "-q"
-                 else "");
-      Exit_Code : constant Integer :=
-                    OS_Lib.Subprocess.Spawn ("svn", "update " & Extra);
+      Extra : constant String_Vector :=
+        (if Log_Level < Trace.Info
+         then Empty_Vector & "-q"
+         else Empty_Vector);
    begin
-      if Exit_Code /= 0 then
-         return Outcome_Failure ("svn update exited with code: " &
-                                   Exit_Code'Img);
-      else
-         return Outcome_Success;
-      end if;
+      OS_Lib.Subprocess.Checked_Spawn
+        ("svn", Empty_Vector & "update" & Extra);
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
    end Update;
 
 end Alire.VCSs.SVN;
