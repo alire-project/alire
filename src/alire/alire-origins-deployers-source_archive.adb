@@ -138,9 +138,17 @@ package body Alire.Origins.Deployers.Source_Archive is
       end Check_And_Move_Up;
 
       package Subprocess renames Alire.OS_Lib.Subprocess;
+      use GNATCOLL.VFS;
+
    begin
+
       case Archive_Format (Src_File) is
          when Tarball =>
+
+            --  Some versions of tar fail if the destination directory doesn't
+            --  exists, so we create it beforehand.
+            Create (+Dst_Dir).Make_Dir;
+
             Subprocess.Checked_Spawn
               ("tar", Empty_Vector &
                       "--force-local" &
