@@ -21,8 +21,8 @@ package Alr.Commands.Get is
 private
 
    type Command is new Commands.Command with record
-      Compile : aliased Boolean := False;
-      Only    : aliased Boolean := False;
+      Build : aliased Boolean := False;
+      Only  : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Get;

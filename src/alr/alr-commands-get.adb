@@ -102,7 +102,7 @@ package body Alr.Commands.Get is
          --    dependencies are in place
          Actions.Execute_Actions (Rel, Alire.Actions.Post_Fetch);
 
-         if Cmd.Compile then
+         if Cmd.Build then
             Commands.Build.Execute;
          end if;
       end;
@@ -131,9 +131,9 @@ package body Alr.Commands.Get is
          Allowed : constant Parsers.Allowed_Milestones :=
            Parsers.Project_Versions (Argument (1));
       begin
-         if Cmd.Compile and Cmd.Only then
+         if Cmd.Build and Cmd.Only then
             Reportaise_Wrong_Arguments
-              ("--only is incompatible with --compile");
+              ("--only is incompatible with --build");
          end if;
 
          Requires_Full_Index;
@@ -173,12 +173,12 @@ package body Alr.Commands.Get is
       use GNAT.Command_Line;
    begin
       Define_Switch (Config,
-                     Cmd.Compile'Access,
-                     "", "--compile", "Compile after download");
+                     Cmd.Build'Access,
+                     "-b", "--build", "Build after download");
 
       Define_Switch (Config,
                      Cmd.Only'Access,
-                     "", "--only",
+                     "-o", "--only",
                      "Retrieve requested project only, without dependencies");
    end Setup_Switches;
 

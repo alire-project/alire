@@ -137,7 +137,7 @@ package body Alr.Commands.Test is
                  (Output, "alr",
                   Empty_Vector &
                     "get" &
-                    "--compile" &
+                    "--build" &
                     "-d" &
                     "-n" &
                     R.Milestone.Image,

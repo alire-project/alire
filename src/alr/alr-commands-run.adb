@@ -260,7 +260,7 @@ package body Alr.Commands.Run is
       GNAT.Command_Line.Define_Switch
         (Config,
          Cmd.No_Compile'Access,
-         "-s", "--skip-compile", "Skip compilation step");
+         "-s", "--skip-build", "Skip building step");
    end Setup_Switches;
 
 end Alr.Commands.Run;
