@@ -207,6 +207,19 @@ package body Alire.TOML_Adapters is
       Print (Queue.Value, "");
    end Print;
 
+   ---------
+   -- "+" --
+   ---------
+
+   function "+" (Vect : Utils.String_Vector) return TOML.TOML_Value is
+      Result : constant TOML.TOML_Value := TOML.Create_Array;
+   begin
+      for Str of Vect loop
+         Result.Append (TOML.Create_String (Str));
+      end loop;
+      return Result;
+   end "+";
+
    --------------
    -- To_Array --
    --------------
@@ -238,5 +251,20 @@ package body Alire.TOML_Adapters is
          Table.Set (Key, Val);
       end return;
    end To_Table;
+
+   ---------------
+   -- To_Vector --
+   ---------------
+
+   function To_Vector (Val : TOML.TOML_Value) return Utils.String_Vector is
+      use Alire.Utils;
+
+      Result : String_Vector := Empty_Vector;
+   begin
+      for I in 1 .. Val.Length loop
+         Result.Append (Val.Item (I).As_String);
+      end loop;
+      return Result;
+   end To_Vector;
 
 end Alire.TOML_Adapters;

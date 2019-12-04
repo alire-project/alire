@@ -4,6 +4,7 @@ with Alire.Errors;
 
 with Alire.OS_Lib.Subprocess;
 with Alire.VFS;
+with Alire.Utils;             use Alire.Utils;
 
 with GNATCOLL.VFS;
 
@@ -52,19 +53,24 @@ package body Alire.Origins.Deployers.Source_Archive is
       use GNATCOLL.VFS;
       Archive_Name : constant String := This.Base.Archive_Name;
       Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
-      Exit_Code    :          Integer;
    begin
       Trace.Debug ("Creating folder: " & Folder);
       Create (+Folder).Make_Dir;
 
       Trace.Detail ("Downloading archive: " & This.Base.Archive_URL);
-      Exit_Code := OS_Lib.Subprocess.Spawn
-        ("wget", This.Base.Archive_URL & " -q -O " & Archive_File);
-      if Exit_Code /= 0 then
-         return Outcome_Failure ("wget call failed with code" & Exit_Code'Img);
-      end if;
+
+      OS_Lib.Subprocess.Checked_Spawn
+        ("wget",
+         Empty_Vector &
+           This.Base.Archive_URL &
+           "-q" &
+           "-O" &
+           Archive_File);
 
       return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
    end Fetch;
 
    ------------
@@ -136,10 +142,11 @@ package body Alire.Origins.Deployers.Source_Archive is
       case Archive_Format (Src_File) is
          when Tarball =>
             Subprocess.Checked_Spawn
-              ("tar", "xf " & Src_File & " -C " & Dst_Dir);
+              ("tar", Empty_Vector & "xf" & Src_File & "-C" & Dst_Dir);
+
          when Zip_Archive =>
             Subprocess.Checked_Spawn
-              ("unzip", "-q " & Src_File & " -d " & Dst_Dir);
+              ("unzip", Empty_Vector & "-q" & Src_File & "-d" & Dst_Dir);
          when Unknown =>
             raise Checked_Error with Errors.Set
               ("Given packed archive has unknown format: " & Src_File);

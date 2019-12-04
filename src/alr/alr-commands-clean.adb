@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Paths;
+with Alire.Utils;
 
 with Alr.Paths;
 with Alr.Root;
@@ -12,16 +13,24 @@ package body Alr.Commands.Clean is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd : in out Command) is
+      use Alire.Utils;
+      Relocate : constant String :=
+        "--relocate-build-tree=" & Alire.Paths.Build_Folder;
    begin
       if not Cmd.Cache then
          Requires_Project;
 
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean", "-r -P " & Root.Current.Build_File
-                        & " --root-dir=."
-                        & " --relocate-build-tree=" & Alire.Paths.Build_Folder
-                        & " " & Scenario.As_Command_Line);
+         Spawn.Command ("gprclean",
+                        Empty_Vector &
+                          "-r" &
+                          "-P" & Root.Current.Build_File &
+                          "--root-dir=." &
+                          Relocate &
+                          Scenario.As_Command_Line,
+                        Understands_Verbose => True);
       end if;
 
       if Cmd.Cache then

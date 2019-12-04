@@ -5,8 +5,58 @@ with Ada.Text_IO;
 with Alire.Errors;
 
 with GNAT.Expect;
+with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
+
+   function To_Argument_List
+     (Args : Utils.String_Vector)
+      return GNAT.OS_Lib.Argument_List_Access;
+
+   procedure Cleanup (List : in out GNAT.OS_Lib.Argument_List_Access);
+
+   function Image (Cmd : String; Args : Utils.String_Vector) return String;
+
+   ----------------------
+   -- To_Argument_List --
+   ----------------------
+
+   function To_Argument_List (Args : Utils.String_Vector)
+                              return GNAT.OS_Lib.Argument_List_Access
+   is
+      use GNAT.OS_Lib;
+      Arg_List : constant Argument_List_Access :=
+        new Argument_List'(1 .. Natural (Args.Length) => null);
+   begin
+      for I in Arg_List'Range loop
+         Arg_List (I) := new String'(Args (I));
+      end loop;
+      return Arg_List;
+   end To_Argument_List;
+
+   -------------
+   -- Cleanup --
+   -------------
+
+   procedure Cleanup (List : in out GNAT.OS_Lib.Argument_List_Access) is
+      use GNAT.OS_Lib;
+   begin
+      for Str of List.all loop
+         Free (Str);
+      end loop;
+      Free (List);
+   end Cleanup;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Cmd : String; Args : Utils.String_Vector) return String
+   is ("[""" & Cmd &
+       (if Args.Is_Empty
+        then ""
+        else """, """ & Args.Flatten (""", """)) &
+         """]");
 
    --------------------
    -- Locate_In_Path --
@@ -29,57 +79,117 @@ package body Alire.OS_Lib.Subprocess is
    -- Checked_Spawn --
    -------------------
 
-   procedure Checked_Spawn (Command   : String;
-                            Arguments : String := "")
+   procedure Checked_Spawn
+     (Command   : String;
+      Arguments : Utils.String_Vector)
    is
       Output : Utils.String_Vector;
       Code   : constant Integer :=
-                 Spawn_And_Capture (Output     => Output,
-                                    Command    => Command,
-                                    Arguments  => Arguments,
-                                    Err_To_Out => True);
+        Spawn_And_Capture (Output     => Output,
+                           Command    => Command,
+                           Arguments  => Arguments,
+                           Err_To_Out => True);
    begin
       if Code /= 0 then
          raise Checked_Error
-           with Errors.Set ("Command [" & Command
-                            & (if Arguments /= "" then " " & Arguments else "")
-                            & "] exited with code"
-                            & Code'Img
-                            & " and output: " & Output.Flatten);
+           with Errors.Set ("Command " & Image (Command, Arguments) &
+                              " exited with code" & Code'Img &
+                              " and output: " & Output.Flatten);
       end if;
    end Checked_Spawn;
 
-   ---------------
-   -- Raw_Spawn --
-   ---------------
+   -----------
+   -- Spawn --
+   -----------
 
-   procedure Raw_Spawn (Program    : String;
-                        Arguments  : Utils.String_Vector;
-                        Output     : out Utils.String_Vector;
-                        Exit_Code  : out Integer;
-                        Err_To_Out : Boolean := True)
+   function Spawn (Command             : String;
+                   Arguments           : Utils.String_Vector;
+                   Understands_Verbose : Boolean := False;
+                   Force_Quiet         : Boolean := False) return Integer
+   is
+      use GNAT.OS_Lib;
+      use Alire.Utils;
+
+      Extra : constant String_Vector :=
+        (if Understands_Verbose then Empty_Vector & "-v " else Empty_Vector);
+      File  : File_Descriptor;
+      Name  : GNAT.OS_Lib.String_Access;
+      Ok    : Boolean;
+   begin
+      Trace.Detail ("Spawning: " & Image (Command, Extra & Arguments));
+
+      if (Force_Quiet and then Alire.Log_Level /= Debug)
+        or else
+          Alire.Log_Level in Always | Error | Warning
+      then
+         Create_Temp_Output_File (File, Name);
+         return Code : Integer do
+            declare
+               Arg_List : Argument_List_Access := To_Argument_List (Arguments);
+            begin
+               Spawn
+                 (Locate_In_Path (Command),
+                  Arg_List.all,
+                  File,
+                  Code,
+                  Err_To_Out => False);
+               Cleanup (Arg_List);
+               Delete_File (Name.all, Ok);
+               if not Ok then
+                  Log ("Failed to delete tmp file: " & Name.all, Warning);
+               end if;
+               Free (Name);
+            end;
+         end return;
+      elsif Alire.Log_Level = Info then
+         return Spawn_With_Progress (Locate_In_Path (Command), Arguments);
+      else
+         declare
+            Ret : Integer;
+            Arg_List : Argument_List_Access :=
+              To_Argument_List (Arguments &
+                                (if Alire.Log_Level = Detail
+                                   then Empty_Vector
+                                   else Extra));
+         begin
+            Ret := Spawn (Locate_In_Path (Command), Arg_List.all);
+            Cleanup (Arg_List);
+            return Ret;
+         end;
+      end if;
+   end Spawn;
+
+   -----------------------
+   -- Spawn_And_Capture --
+   -----------------------
+
+   function Spawn_And_Capture
+     (Output     : in out Utils.String_Vector;
+      Command    : String;
+      Arguments  : Utils.String_Vector;
+      Err_To_Out : Boolean := False) return Integer
    is
       use GNAT.OS_Lib;
       File     : File_Descriptor;
       Name     : String_Access;
-      Arg_List : Argument_List (1 .. Natural (Arguments.Length));
+      Arg_List : Argument_List_Access := To_Argument_List (Arguments);
 
       use Ada.Text_IO;
       Outfile : File_Type;
+
+      Exit_Code : Integer;
 
       -------------
       -- Cleanup --
       -------------
 
       procedure Cleanup is
-         Ok : Boolean;
+         Unused : Boolean;
       begin
-         Delete_File (Name.all, Ok);
+         Delete_File (Name.all, Unused);
          Free (Name);
 
-         for Str of Arg_List loop
-            Free (Str);
-         end loop;
+         Cleanup (Arg_List);
       end Cleanup;
 
       -----------------
@@ -97,16 +207,16 @@ package body Alire.OS_Lib.Subprocess is
    begin
       Create_Temp_Output_File (File, Name);
 
-      Trace.Debug ("Spawning: " & Program & " " & Arguments.Flatten
-                   & " > " & Name.all);
+      Trace.Detail ("Spawning: " & Image (Command, Arguments) &
+                      " > " & Name.all);
 
       --  Prepare arguments
       for I in Arg_List'Range loop
          Arg_List (I) := new String'(Arguments (I));
       end loop;
 
-      Spawn (Program_Name           => Locate_In_Path (Program),
-             Args                   => Arg_List,
+      Spawn (Program_Name           => Locate_In_Path (Command),
+             Args                   => Arg_List.all,
              Output_File_Descriptor => File,
              Return_Code            => Exit_Code,
              Err_To_Out             => Err_To_Out);
@@ -120,124 +230,20 @@ package body Alire.OS_Lib.Subprocess is
       end if;
 
       Cleanup;
-   end Raw_Spawn;
-
-   -----------
-   -- Spawn --
-   -----------
-   --  FIXME: memory leaks
-   function Spawn (Command             : String;
-                   Arguments           : String := "";
-                   Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False) return Integer
-   is
-      use GNAT.OS_Lib;
-      Extra : constant String := (if Understands_Verbose then "-v " else "");
-      File  : File_Descriptor;
-      Name  : GNAT.OS_Lib.String_Access;
-      Ok    : Boolean;
-   begin
-      if Simple_Logging.Level = Debug then
-         Log ("Spawning: " & Command & " " & Extra & Arguments, Debug);
-      else
-         Log ("Spawning: " & Command & " " & Arguments, Debug);
-      end if;
-
-      if (Force_Quiet and then Alire.Log_Level /= Debug)
-        or else
-          Alire.Log_Level in Always | Error | Warning
-      then
-         Create_Temp_Output_File (File, Name);
-         return Code : Integer do
-            Spawn
-              (Locate_In_Path (Command),
-               Argument_String_To_List (Arguments).all,
-               File,
-               Code,
-               Err_To_Out => False);
-            Delete_File (Name.all, Ok);
-            if not Ok then
-               Log ("Failed to delete tmp file: " & Name.all, Warning);
-            end if;
-            Free (Name);
-         end return;
-      elsif Alire.Log_Level = Info then
-         return Spawn_With_Progress (Command, Arguments);
-      elsif Alire.Log_Level = Detail then -- All lines, without -v
-         return
-           (Spawn (Locate_In_Path (Command),
-            Argument_String_To_List (Arguments).all));
-      else  -- Debug: all lines plus -v in commands
-         return
-           (Spawn (Locate_In_Path (Command),
-            Argument_String_To_List (Extra & Arguments).all));
-      end if;
-   end Spawn;
-
-   -----------------------
-   -- Spawn_And_Capture --
-   -----------------------
-
-   function Spawn_And_Capture (Output     : in out Utils.String_Vector;
-                               Command    : String;
-                               Arguments  : String := "";
-                               Err_To_Out : Boolean := False) return Integer
-   is
-      use GNAT.OS_Lib;
-
-      Code : Integer;
-
-      Arg_List : Argument_List_Access := Argument_String_To_List (Arguments);
-      Arg_Vec  : Utils.String_Vector;
-   begin
-      --  Massage arguments type:
-      for Arg of Arg_List.all loop
-         Arg_Vec.Append (Arg.all);
-      end loop;
-      Free (Arg_List);
-
-      Raw_Spawn (Program    => Command,
-                 Arguments  => Arg_Vec,
-                 Output     => Output,
-                 Exit_Code  => Code,
-                 Err_To_Out => Err_To_Out);
-
-      return Code;
+      return Exit_Code;
    end Spawn_And_Capture;
-
-   ------------------------
-   -- Spawn_And_Redirect --
-   ------------------------
-
-   function Spawn_And_Redirect (Out_File   : String;
-                                Command    : String;
-                                Arguments  : String := "";
-                                Err_To_Out : Boolean := False) return Integer
-   is
-      use GNAT.OS_Lib;
-      File : constant File_Descriptor := Create_File (Out_File, Text);
-      Code : Integer;
-   begin
-      Trace.Debug ("Spawning " & Command & " " & Arguments & " > " & Out_File &
-                   (if Err_To_Out then " 2>&1" else ""));
-
-      Spawn (Locate_In_Path (Command),
-             Argument_String_To_List (Arguments).all,
-             File, Code, Err_To_Out);
-      Close (File);
-
-      return Code;
-   end Spawn_And_Redirect;
 
    -------------------------
    -- Spawn_With_Progress --
    -------------------------
 
    function Spawn_With_Progress (Command   : String;
-                                 Arguments : String) return Integer
+                                 Arguments : Utils.String_Vector)
+                                 return Integer
    is
       use Ada.Text_IO;
       use GNAT.Expect;
+      use GNAT.OS_Lib;
 
       Simple_Command : constant String :=
         Ada.Directories.Simple_Name (Command);
@@ -302,12 +308,15 @@ package body Alire.OS_Lib.Subprocess is
          Pos := Pos + 1;
       end Print_Line;
 
+      Arg_List : Argument_List_Access := To_Argument_List (Arguments);
    begin
       Non_Blocking_Spawn
         (Pid,
          Command,
-         GNAT.OS_Lib.Argument_String_To_List (Arguments).all,
+         Arg_List.all,
          Err_To_Out => True);
+
+      Cleanup (Arg_List);
 
       loop
          begin

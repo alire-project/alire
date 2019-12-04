@@ -15,7 +15,8 @@ package body Alire.Actions is
    -- To_TOML --
    -------------
 
-   overriding function To_TOML (This : Run) return TOML.TOML_Value is
+   overriding
+   function To_TOML (This : Run) return TOML.TOML_Value is
 
       use TOML_Adapters;
 
@@ -52,7 +53,8 @@ package body Alire.Actions is
       ----------------
 
       function Create_One (Raw : TOML.TOML_Value)
-                           return Conditional.Properties is
+                           return Conditional.Properties
+      is
          From    : constant TOML_Adapters.Key_Queue :=
                      From_TOML.From.Descend (Raw, "action");
          Kind    : TOML_Value;
@@ -70,10 +72,19 @@ package body Alire.Actions is
          --  The path key for an action is optional.
 
          if Kind.Kind /= TOML_String
-           or else Command.Kind /= TOML_String
            or else (Used and then Path.Kind /= TOML_String)
          then
-            From.Checked_Error ("actions fields must be strings");
+            From.Checked_Error ("actions type and folder must be strings");
+         end if;
+
+         if Command.Kind /= TOML_Array
+           or else
+            Command.Length = 0
+           or else
+            Command.Item (1).Kind /= TOML_String
+         then
+            From.Checked_Error
+              ("actions command must be an array of string(s)");
          end if;
 
          From.Report_Extra_Keys;
@@ -82,8 +93,10 @@ package body Alire.Actions is
            (New_Run
               (Moment                =>
                  Moments'Value (TOML_Adapters.Adafy (Kind.As_String)),
+
                Relative_Command_Line =>
-                 Command.As_String,
+                 TOML_Adapters.To_Vector (TOML_Adapters.To_Array (Command)),
+
                Working_Folder        =>
                  (if Used then Path.As_String else ".")));
       end Create_One;

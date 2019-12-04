@@ -1,9 +1,8 @@
-with Ada.Exceptions;
-
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
-
+with Alire.Utils;             use Alire.Utils;
 with Alire.OS_Lib;
+with Alire.Errors;
 
 with GNAT.OS_Lib;
 
@@ -21,10 +20,16 @@ package body Alire.VCSs.Hg is
    is
       pragma Unreferenced (This);
       use GNAT.OS_Lib;
-      Extra : constant String :=
-                (if Log_Level < Trace.Info
-                 then "-q "
-                 else "-v ");
+      Extra : constant String_Vector :=
+        Empty_Vector & (if Log_Level < Trace.Info
+                        then "-q"
+                        else "-v");
+
+      Commit_Arg : constant String_Vector :=
+        (if Commit (From) /= ""
+         then Empty_Vector & "-u" & Commit (From)
+         else Empty_Vector);
+
    begin
       if Locate_Exec_On_Path ("hg") = null then
          return Outcome_Failure ("hg not found in path, aborting");
@@ -32,25 +37,20 @@ package body Alire.VCSs.Hg is
 
       Trace.Detail ("Checking out [hg]: " & From);
 
-      declare
-         Exit_Code : constant Integer := OS_Lib.Subprocess.Spawn
-           ("hg",
-            "clone -y "
-            & (if Commit (From) /= "" then "-u " & Commit (From) else "")
-            & Extra & Repo (From) & " " & Into);
-      begin
-         if Exit_Code /= 0 then
-            return Outcome_Failure ("hg clone exited with code:" &
-                                    Exit_Code'Img);
-         end if;
-      end;
+      OS_Lib.Subprocess.Checked_Spawn
+        ("hg",
+         Empty_Vector &
+           "clone" &
+           "-y" &
+           Commit_Arg &
+           Extra &
+           Repo (From) &
+           Into);
 
       return Outcome_Success;
    exception
       when E : others =>
-         return Outcome_From_Exception
-           (E, "Could not check out repo: " & From &
-               "; Ex: " & Ada.Exceptions.Exception_Message (E));
+         return Alire.Errors.Get (E);
    end Clone;
 
    ------------
@@ -65,19 +65,21 @@ package body Alire.VCSs.Hg is
       pragma Unreferenced (This);
       Guard : Directories.Guard (Directories.Enter (Repo))
         with Unreferenced;
-      Extra : constant String :=
-                (if Log_Level < Trace.Info
-                 then "-q"
-                 else "-v ");
-      Exit_Code : constant Integer :=
-                    OS_Lib.Subprocess.Spawn ("hg", "pull -u " & Extra);
+      Extra : constant String_Vector :=
+        Empty_Vector & (if Log_Level < Trace.Info
+                        then "-q"
+                        else "-v");
    begin
-      if Exit_Code /= 0 then
-         return Outcome_Failure ("hg pull exited with code: " &
-                                   Exit_Code'Img);
-      else
-         return Outcome_Success;
-      end if;
+      OS_Lib.Subprocess.Checked_Spawn
+        ("hg",
+         Empty_Vector &
+           "pull" &
+           "-u" &
+           Extra);
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
    end Update;
 
 end Alire.VCSs.Hg;

@@ -1,3 +1,5 @@
+with Alire.OS_Lib.Subprocess;
+
 package body Alr.OS_Lib is
 
    ---------------------
@@ -74,26 +76,6 @@ package body Alr.OS_Lib is
          return False;
       end if;
    end Is_Older;
-
-   -----------------------
-   -- Spawn_And_Capture --
-   -----------------------
-
-   procedure Spawn_And_Capture (Output     : in out Utils.String_Vector;
-                                Command    : String;
-                                Arguments  : String := "";
-                                Err_To_Out : Boolean := False)
-   is
-      Exit_Code : constant Integer :=
-                    Alire.OS_Lib.Subprocess.Spawn_And_Capture (Output,
-                                                               Command,
-                                                               Arguments,
-                                                               Err_To_Out);
-   begin
-      if Exit_Code /= 0 then
-         raise Child_Failed with "exit code:" & Exit_Code'Img;
-      end if;
-   end Spawn_And_Capture;
 
    ---------------
    -- Spawn_Raw --

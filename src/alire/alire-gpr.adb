@@ -45,27 +45,19 @@ package body Alire.GPR is
    -- As_Command_Line --
    ---------------------
 
-   function As_Command_Line (S : Scenario) return String is
+   function As_Command_Line (S : Scenario) return Utils.String_Vector is
+      use Alire.Utils;
 
-      function Listify (S : Scenario) return String;
+      Result : String_Vector := Empty_Vector;
 
-      -------------
-      -- Listify --
-      -------------
-
-      function Listify (S : Scenario) return String is
-         Var : constant String := S (1);
-         Val : constant String := S (2);
-         Cdr : Scenario := S;
-      begin
-         Cdr.Delete_First;
-         Cdr.Delete_First;
-         return "-X" & Var & "=" & Val &
-           (if Cdr.Is_Empty then "" else " " & Listify (Cdr));
-      end Listify;
-
+      Cdr : Scenario := S;
    begin
-      return (if S.Is_Empty then "" else Listify (S));
+      while not Cdr.Is_Empty loop
+         Result.Append (String'("-X" & Cdr (1) & "=" & Cdr (2)));
+         Cdr.Delete_First;
+            Cdr.Delete_First;
+      end loop;
+      return Result;
    end As_Command_Line;
 
 end Alire.GPR;

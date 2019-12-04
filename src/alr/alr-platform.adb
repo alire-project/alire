@@ -1,6 +1,8 @@
 with Alire.Properties.Platform;
 
-with Alr.OS_Lib;
+with Alire.OS_Lib.Subprocess;
+with Alire.Utils;
+
 with Alr.Utils;
 
 with Semantic_Versioning;
@@ -40,8 +42,10 @@ package body Alr.Platform is
 
       Year   : Natural;
       Output : String_Vector;
+      Unused : Integer;
    begin
-      OS_Lib.Spawn_And_Capture (Output, "gnat", Err_To_Out => True);
+      Unused := Alire.OS_Lib.Subprocess.Spawn_And_Capture
+        (Output, "gnat", Alire.Utils.Empty_Vector, Err_To_Out => True);
 
       for Line of Output loop
          if Line'Length > 4
