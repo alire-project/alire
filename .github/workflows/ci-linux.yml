@@ -6,7 +6,7 @@ on:
       - 'doc/**'
 
 env:
-  alire_index: "git+https://github.com/fabien-chouteau/alire-index@3ac5f3708448bb57fa70da41c8b838ada79d0bbb"
+  alire_index: ""
   # Empty index: test with master of community index
   # Otherwise: test with particular commit/branch
   # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef" 
