@@ -59,7 +59,7 @@ package body Alire.VCSs.Git is
       Extra : constant String_Vector :=
                 (if Log_Level < Trace.Info
                  then Empty_Vector & "-q "
-                 else Empty_Vector & "--progress ");
+                 else Empty_Vector & "--progress");
    begin
       OS_Lib.Subprocess.Checked_Spawn ("git", Empty_Vector & "pull" & Extra);
       return Outcome_Success;
