@@ -1,0 +1,16 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+['0.1']
+origin = "file://."
+
+[[general.actions.'case(os)'.linux]]
+type = "post-fetch"
+command = ["touch", "test_post_fetch"]
+
+[[general.actions.'case(os)'.windows]]
+type = "post-fetch"
+command = ["copy", "NUL", "test_post_fetch"]
