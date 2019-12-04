@@ -57,7 +57,7 @@ dependencies, with version constraints:
 .. code-block:: toml
 
    libfoo = "^1.2"
-   libbar = "^2.0"
+   libbar = "^2.0 & /=2.1.3" # Excluding a known bad version
 
 In some contexts, information can be dynamic: special encodings can be used to
 make data vary depending on the environment (OS, architecture, …). The
@@ -244,7 +244,10 @@ entries:
 
   Available constraint operators are the usual Ada ones (=, /=, >, >=, <, <=)
   plus caret (^, any upwards version within the same major point) and tilde
-  (~, any upwards version within the same minor point).
+  (~, any upwards version within the same minor point). Logical operators for
+  and (&), or (|) are accepted; see the ``Semantic_Versioning`` project 
+  documentation on `extended version sets 
+  <https://github.com/alire-project/semantic_versioning#types>`_.
 
 * ``project-files``: optional list of strings. Each is a path, relative to the
   root of the source directory, to a project file to be made available.
