@@ -136,9 +136,10 @@ package body Alire.OS_Lib.Subprocess is
                   Code,
                   Err_To_Out => False);
                Cleanup (Arg_List);
+               Close (File);
                Delete_File (Name.all, Ok);
                if not Ok then
-                  Log ("Failed to delete tmp file: " & Name.all, Warning);
+                  Trace.Error ("Failed to delete tmp file: " & Name.all);
                end if;
                Free (Name);
             end;
@@ -194,9 +195,13 @@ package body Alire.OS_Lib.Subprocess is
       -------------
 
       procedure Cleanup is
-         Unused : Boolean;
+         Ok : Boolean;
       begin
-         Delete_File (Name.all, Unused);
+         Delete_File (Name.all, Ok);
+         if not Ok then
+            Trace.Error ("Failed to delete tmp file: " & Name.all);
+         end if;
+
          Free (Name);
 
          Cleanup (Arg_List);
@@ -212,6 +217,7 @@ package body Alire.OS_Lib.Subprocess is
          while not End_Of_File (Outfile) loop
             Output.Append (Get_Line (Outfile));
          end loop;
+         Close (Outfile);
       end Read_Output;
 
    begin
