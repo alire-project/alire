@@ -281,13 +281,14 @@ entries:
    linux   = { OS = "gnu-linux" } # Compact table syntax is convenient in this case
    windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
 
-* ``executables``: optional list of strings. Each is a path, relative to the root
-  of the source directory, to an executable provided by the package. For
-  instance:
+* ``executables``: optional list of strings. Each one is the simple name of an 
+  executable provided by the package. Executables are looked for by ``alr`` in the
+  build tree and must not include a path. If only one executable is given, it is 
+  considered the default for ``alr run``. For instance:
 
   .. code-block:: toml
 
-   executables = ["bin/my_main"]
+   executables = ["my_main"]
 
 * ``actions``: optional list of actions to perform when installing this package.
   The general action syntax is:
