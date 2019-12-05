@@ -174,6 +174,16 @@ package body Alire.Index_On_Disk is
          return New_Invalid_Index;
       end if;
 
+      --  Warn about http[s]:// URLs being not supported and suggest git+http
+      --  instead.
+
+      if Utils.Starts_With (Origin, HTTP_Prefix) then
+         Result := Outcome_Failure
+           ("HTTP/HTTPS URLs are not valid index origins. "
+            & "You may want git+" & Origin & " instead.");
+         return New_Invalid_Index;
+      end if;
+
       --  Process "file://" URLs and anything that looks like a file name as a
       --  local index.
 
