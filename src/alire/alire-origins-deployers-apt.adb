@@ -20,8 +20,8 @@ package body Alire.Origins.Deployers.APT is
            This.Base.Package_Name (Platform.Distribution));
 
       if Exit_Code /= 0 then
-         Trace.Error ("apt-cache policy exited with error:" & Exit_Code'Img);
-         raise Internal_Error;
+         Raise_Checked_Error
+           ("apt-cache policy exited with error:" & Exit_Code'Img);
       end if;
 
       for Line of Output loop
@@ -76,8 +76,8 @@ package body Alire.Origins.Deployers.APT is
            This.Base.Package_Name (Platform.Distribution));
 
       if Exit_Code /= 0 then
-         Trace.Error ("apt-cache policy exited with error:" & Exit_Code'Img);
-         raise Internal_Error;
+         Raise_Checked_Error
+           ("apt-cache policy exited with error:" & Exit_Code'Img);
       end if;
 
       for Line of Output loop
@@ -116,7 +116,7 @@ package body Alire.Origins.Deployers.APT is
            Name);
 
       if Exit_Code /= 0 then
-         Uncontained_Error
+         Raise_Checked_Error
            ("apt-cache policy exited with code:" & Exit_Code'Img);
       end if;
 

@@ -67,6 +67,16 @@ package body Alire is
       end if;
    end Assert;
 
+   -------------------
+   -- Checked_Error --
+   -------------------
+
+   procedure Raise_Checked_Error (Msg : String) is
+   begin
+      Err_Log (Msg);
+      raise Checked_Error with Errors.Set (Msg);
+   end Raise_Checked_Error;
+
    ----------------------------
    -- Outcome_From_Exception --
    ----------------------------
@@ -95,15 +105,5 @@ package body Alire is
                          Message => +Full_Msg);
       end if;
    end Outcome_From_Exception;
-
-   -----------------------
-   -- Uncontained_Error --
-   -----------------------
-
-   procedure Uncontained_Error (Msg : String) is
-   begin
-      Trace.Error (Msg);
-      raise Internal_Error with Msg;
-   end Uncontained_Error;
 
 end Alire;

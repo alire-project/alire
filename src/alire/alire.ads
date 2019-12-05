@@ -15,14 +15,6 @@ package Alire with Preelaborate is
    --  Outcomes for results returned to clients. That is, a Checked_Error ought
    --  not to propagate into Alr.* code.
 
-   Internal_Error : exception;
-   --  While we transition to error codes, there are places that would require
-   --  extensive refactoring. Also, legitimate irrecoverable situations may
-   --  arise in places were an outcome cannot be easily returned. Instead of
-   --  aborting and exiting from Alire, a last resort handler in Alr can catch
-   --  this exception and exit gracefully. Should be used sparingly and of
-   --  course not when user input is involved.
-
    Query_Unsuccessful : exception;
    --  Raised by subprograms that return releases/dependencies when not
    --  found/impossible.
@@ -167,14 +159,10 @@ package Alire with Preelaborate is
    --  Does nothing for successful outcomes. Raises Checked_Error with the
    --  corresponding message set in Alire.Errors otherwise.
 
-   -----------------------
-   -- Uncontained_Error --
-   -----------------------
-
-   procedure Uncontained_Error (Msg : String) with No_Return;
-   --  For errors where we can't or won't (for now) proceed normally, nor
-   --  return an Outcome_Failure, we trace an error message (Msg) and raise
-   --  Internal_Error.
+   procedure Raise_Checked_Error (Msg : String) with No_Return;
+   --  For errors where we do not return an Outcome_Failure, we log an error
+   --  message (Msg) and raise Checked_Error. There is no limitation on the
+   --  length of Msg.
 
    ---------------
    --  LOGGING  --
