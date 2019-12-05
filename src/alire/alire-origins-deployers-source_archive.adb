@@ -1,7 +1,7 @@
 with Ada.Directories;
 
 with Alire.Errors;
-
+with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.VFS;
 with Alire.Utils;             use Alire.Utils;
@@ -145,15 +145,30 @@ package body Alire.Origins.Deployers.Source_Archive is
       case Archive_Format (Src_File) is
          when Tarball =>
 
-            --  Some versions of tar fail if the destination directory doesn't
-            --  exists, so we create it beforehand.
-            Create (+Dst_Dir).Make_Dir;
+            declare
+               --  We had some trouble on Windows with trying to extract a
+               --  tar archive in a specified destination directory (using the
+               --  -C switch). To workaround these issue we now move to the
+               --  destination directory before running tar.
 
-            Subprocess.Checked_Spawn
-              ("tar", Empty_Vector &
-                      "--force-local" &
-                      "-xf" & Src_File &
-                      "-C" & Dst_Dir);
+               --  Create the destination directory
+               Dst       : constant Virtual_File := Create (+Dst_Dir);
+               Dst_Guard : Directories.Temp_File :=
+                 Directories.With_Name (+Dst.Full_Name);
+
+               --  Enter the destination directory, and automatically restore
+               --  the current dir at the end of the scope.
+               Guard : Directories.Guard (Directories.Enter (Dst_Dir))
+                 with Unreferenced;
+            begin
+               Subprocess.Checked_Spawn
+                 ("tar", Empty_Vector &
+                    "--force-local" &
+                    "-xf" & Src_File);
+
+               --  In case of success we keep the destination folder
+               Dst_Guard.Keep;
+            end;
          when Zip_Archive =>
             Subprocess.Checked_Spawn
               ("unzip", Empty_Vector & "-q" & Src_File & "-d" & Dst_Dir);
