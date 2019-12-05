@@ -61,7 +61,7 @@ package body Alr.Testing.JUnit is
                  (Rel.Milestone.Image,
                   AJUnitGen.Fail,
                   Classname => "FAIL",
-                  Message   => "get --compile failure: " &
+                  Message   => "get --build failure: " &
                     Commands.Version.Fingerprint,
                   Output    => Log.Flatten (Newline)));
 
