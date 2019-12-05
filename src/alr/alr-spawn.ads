@@ -8,8 +8,7 @@ package Alr.Spawn is
    procedure Command
      (Cmd                 : String;
       Args                : Alire.Utils.String_Vector;
-      Understands_Verbose : Boolean := False;
-      Force_Quiet         : Boolean := False);
+      Understands_Verbose : Boolean := False);
    --  Adds -v if understands in Debug log level
    --  Summary is shown after process successful end, if Log_Level = Info
 

@@ -10,17 +10,10 @@ package body Alr.Spawn is
 
    procedure Command (Cmd                 : String;
                       Args                : Alire.Utils.String_Vector;
-                      Understands_Verbose : Boolean := False;
-                      Force_Quiet         : Boolean := False)
+                      Understands_Verbose : Boolean := False)
    is
    begin
-      if Alire.OS_Lib.Subprocess.Spawn (Cmd,
-                                        Args,
-                                        Understands_Verbose,
-                                        Force_Quiet) /= 0
-      then
-         raise Child_Failed;
-      end if;
+      Alire.OS_Lib.Subprocess.Checked_Spawn (Cmd, Args, Understands_Verbose);
    end Command;
 
    --------------

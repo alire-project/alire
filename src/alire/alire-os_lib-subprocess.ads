@@ -8,8 +8,9 @@ package Alire.OS_Lib.Subprocess is
    --  Returns full path to Name command or "" if not found
 
    procedure Checked_Spawn
-     (Command   : String;
-      Arguments : Utils.String_Vector);
+     (Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False);
    --  Either suceeds or raises Checked_Error with the code and output as info.
 
    function Spawn (Command             : String;
@@ -22,10 +23,11 @@ package Alire.OS_Lib.Subprocess is
    --  (stdout & stderr).
 
    function Spawn_And_Capture
-     (Output     : in out Utils.String_Vector;
-      Command    : String;
-      Arguments  : Utils.String_Vector;
-      Err_To_Out : Boolean := False)
+     (Output              : in out Utils.String_Vector;
+      Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False;
+      Err_To_Out          : Boolean := False)
       return Integer;
    --  Returns output as vector of strings
    --  Even if exception raised, Output will be filled-in
