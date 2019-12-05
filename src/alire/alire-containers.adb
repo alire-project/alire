@@ -1,4 +1,5 @@
-with Semantic_Versioning;
+with Semantic_Versioning.Basic;
+with Semantic_Versioning.Extended;
 
 package body Alire.Containers is
 
@@ -76,6 +77,7 @@ package body Alire.Containers is
    function To_Dependencies (Map : Release_Map)
                              return Conditional.Dependencies
    is
+      package Semver renames Semantic_Versioning;
       use Conditional.For_Dependencies;
       use Project_Release_Maps;
    begin
@@ -86,7 +88,8 @@ package body Alire.Containers is
                  Deps and
                  Conditional.New_Dependency
                    (Map (I).Project,
-                    Semantic_Versioning.Exactly (Map (I).Version));
+                    Semver.Extended.To_Extended
+                      (Semver.Basic.Exactly (Map (I).Version)));
             end if;
          end loop;
       end return;

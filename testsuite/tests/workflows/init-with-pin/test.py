@@ -29,7 +29,7 @@ os.chdir('xxx')
 # Make it depend on libhello
 session_file = os.path.join('alire', 'xxx.toml')
 run_alr('with', 'libhello')
-check_line_in(session_file, 'libhello = "any"')
+check_line_in(session_file, 'libhello = "*"')
 
 # Add the corresponding "with" line in xxx.gpr.
 #
@@ -42,7 +42,7 @@ with open('xxx.gpr', 'w') as f:
 
 # Pin the version of libhello
 run_alr('pin')
-check_line_in(session_file, 'libhello = "1.0.0"')
+check_line_in(session_file, 'libhello = "=1.0.0"')
 
 # Build and run "xxx"
 with open(os.path.join('src', 'xxx.adb'), 'w') as f:

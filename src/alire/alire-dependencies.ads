@@ -2,7 +2,7 @@ with Alire.Interfaces;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
@@ -18,16 +18,15 @@ package Alire.Dependencies with Preelaborate is
      and Interfaces.Yamlable
    with private;
 
-   function New_Dependency (Project  : Alire.Project;
-                            Versions : Semantic_Versioning.Version_Set)
-                            return Dependency;
+   function New_Dependency
+     (Project  : Alire.Project;
+      Versions : Semantic_Versioning.Extended.Version_Set)
+      return Dependency;
 
    function Project (Dep : Dependency) return Names;
 
-   function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set;
-
-   function Image_Ada (Dep : Dependency) return String;
-   --  Adaish string representation of the dependency, e.g. "make is Any"
+   function Versions (Dep : Dependency)
+                      return Semantic_Versioning.Extended.Version_Set;
 
    function Image (Dep : Dependency) return String;
    --  Standard-style version image, e.g. "make^3.1"
@@ -61,32 +60,27 @@ private
      and Interfaces.Yamlable
    with record
       Project    : Alire.Project (1 .. Name_Len);
-      Versions   : Semantic_Versioning.Version_Set;
+      Versions   : Semantic_Versioning.Extended.Version_Set;
    end record;
 
-   function New_Dependency (Project  : Alire.Project;
-                            Versions : Semantic_Versioning.Version_Set)
-                            return Dependency
+   function New_Dependency
+     (Project  : Alire.Project;
+      Versions : Semantic_Versioning.Extended.Version_Set)
+      return Dependency
    is (Project'Length, Project, Versions);
 
    function Project (Dep : Dependency) return Names is (Dep.Project);
 
-   function Versions (Dep : Dependency) return Semantic_Versioning.Version_Set
+   function Versions (Dep : Dependency)
+                      return Semantic_Versioning.Extended.Version_Set
    is (Dep.Versions);
-
-   function Image_Ada (Dep : Dependency) return String is
-     (if Dep = Unavailable
-      then "Unavailable"
-      else
-        (Utils.To_Lower_Case (+Dep.Project) & " is " &
-           Semantic_Versioning.Image_Ada (Dep.Versions)));
 
    function Image (Dep : Dependency) return String is
       (if Dep = Unavailable
       then "Unavailable"
       else
          (Utils.To_Lower_Case (+Dep.Project)
-          & Semantic_Versioning.Image_Abbreviated (Dep.Versions)));
+          & Dep.Versions.Image));
 
    overriding
    function To_YAML (Dep : Dependency) return String is
@@ -94,14 +88,13 @@ private
       then "{}"
       else
         ("{crate: """ & Utils.To_Lower_Case (+Dep.Project) &
-           """, version: """ & Semantic_Versioning.Image_Ada (Dep.Versions) &
+           """, version: """ & Dep.Versions.Image &
            """}"));
 
    overriding function Key (Dep : Dependency) return String is (+Dep.Project);
 
    function Unavailable return Dependency
    is (New_Dependency ("alire",
-                       Semantic_Versioning.Exactly
-                         (Semantic_Versioning.V ("0"))));
+                       Semantic_Versioning.Extended.Value ("0")));
 
 end Alire.Dependencies;

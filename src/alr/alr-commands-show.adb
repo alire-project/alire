@@ -9,7 +9,7 @@ with Alr.Parsers;
 with Alr.Platform;
 with Alr.Root;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 with Alire.Projects;
 
 package body Alr.Commands.Show is
@@ -39,7 +39,7 @@ package body Alr.Commands.Show is
    ------------
 
    procedure Report (Name     : Alire.Project;
-                     Versions : Semver.Version_Set;
+                     Versions : Semver.Extended.Version_Set;
                      Current  : Boolean;
                      --  session or command-line requested release
                      Cmd      : Command)
@@ -131,7 +131,7 @@ package body Alr.Commands.Show is
    -------------------
 
    procedure Report_Jekyll (Name     : Alire.Project;
-                            Versions : Semver.Version_Set;
+                            Versions : Semver.Extended.Version_Set;
                             Current  : Boolean)
    is
    begin

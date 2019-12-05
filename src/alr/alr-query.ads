@@ -3,7 +3,7 @@ with Alire.Index;
 with Alire.Properties;
 with Alire.Types;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 package Alr.Query is
 
@@ -62,12 +62,14 @@ package Alr.Query is
 
    function Exists
      (Project : Alire.Project;
-      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any)
+      Allowed : Semantic_Versioning.Extended.Version_Set :=
+        Semantic_Versioning.Extended.Any)
       return Boolean;
 
    function Find
      (Project : Alire.Project;
-      Allowed : Semantic_Versioning.Version_Set := Semantic_Versioning.Any;
+      Allowed : Semantic_Versioning.Extended.Version_Set :=
+        Semantic_Versioning.Extended.Any;
       Policy  : Age_Policies)
       return Release;
 
@@ -111,8 +113,9 @@ package Alr.Query is
 
    procedure Print_Solution (Sol : Solution);
 
-   function Dependency_Image (Project  : Alire.Project;
-                              Versions : Semantic_Versioning.Version_Set;
-                              Policy   : Age_Policies := Newest) return String;
+   function Dependency_Image
+     (Project  : Alire.Project;
+      Versions : Semantic_Versioning.Extended.Version_Set;
+      Policy   : Age_Policies := Newest) return String;
 
 end Alr.Query;

@@ -3,7 +3,7 @@ with Alire.Dependencies;
 with Alire.Properties;
 with Alire.TOML_Adapters;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 package Alire.Conditional with Preelaborate is
 
@@ -23,9 +23,10 @@ package Alire.Conditional with Preelaborate is
      with Dynamic_Predicate => not Forbidden_Dependencies.Contains_ORs;
    --  A plain tree without conditions or alternatives
 
-   function New_Dependency (Name     : Alire.Project;
-                            Versions : Semantic_Versioning.Version_Set)
-                            return Dependencies;
+   function New_Dependency
+     (Name     : Alire.Project;
+      Versions : Semantic_Versioning.Extended.Version_Set)
+      return Dependencies;
 
    function No_Dependencies return Dependencies is (For_Dependencies.Empty);
 
@@ -64,9 +65,10 @@ package Alire.Conditional with Preelaborate is
 
 private
 
-   function New_Dependency (Name     : Alire.Project;
-                            Versions : Semantic_Versioning.Version_Set)
-                            return Dependencies is
+   function New_Dependency
+     (Name     : Alire.Project;
+      Versions : Semantic_Versioning.Extended.Version_Set)
+      return Dependencies is
      (For_Dependencies.New_Value
         (Alire.Dependencies.New_Dependency (Name, Versions)));
 
