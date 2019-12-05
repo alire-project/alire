@@ -5,6 +5,7 @@ with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Requisites;
 with Alire.TOML_Adapters;
+with Alire.Utils;
 
 package Alire.Projects with Preelaborate is
 
@@ -17,6 +18,9 @@ package Alire.Projects with Preelaborate is
    --  TODO: combine Index, Descriptions in a single data structure
    Descriptions : Project_Description_Maps.Map;
    --  Master list of known projects & descriptions
+
+   function Naming_Convention return Utils.String_Vector;
+   --  Return a description of the naming restrictions on crates/indexes.
 
    type Named is limited interface;
 

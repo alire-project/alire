@@ -26,8 +26,8 @@ package Alire with Preelaborate is
    subtype URL is String;
 
    Min_Name_Length        : constant := 3;
-   Max_Name_Length        : constant := 72;
-   --  Github maximum is 100 and bitbucket 128, but since Description is 72...
+   Max_Name_Length        : constant := 64;
+   --  Github maximum is 100 and bitbucket 128, cargo is 64 and npm 50...
    Max_Description_Length : constant := 72;
    --  Git line recommendation (although it's 50 for subject line)
 
@@ -55,12 +55,23 @@ package Alire with Preelaborate is
       with Static_Predicate => Project_Character in
          'a' .. 'z' | '0' .. '9' | '_' | Extension_Separator;
 
-   type Project is new String with Dynamic_Predicate =>
-     Project'Length >= Min_Name_Length and then
-     Project (Project'First) /= '_' and then
-     Project (Project'First) /= Extension_Separator and then
-     Project (Project'Last) /= Extension_Separator and then
-     (for all C of Project => C in Project_Character);
+   --------------------
+   --  Crate Naming  --
+   --------------------
+
+   function Is_Valid_Name (S : String) return Boolean;
+   function Error_In_Name return String;
+   --  Returns the problem with the last checked crate name. This is a global,
+   --  thread-unsafe kludge for a GNAT bug already reported. Since alr is
+   --  single-threaded, it is not a problem right now.
+   --  TODO: work around this in the big Project -> Crate_Name refactoring.
+
+   type Project is new String with
+     Dynamic_Predicate =>
+       Is_Valid_Name (String (Project)),
+     Predicate_Failure => -- This is the buggy predicate requiring workarounds
+       raise Alire.Checked_Error with Alire.Error_In_Name;
+       --  Alire.* prefix needed for GNAT bug workaround.
 
    overriding
    function "=" (L, R : Project) return Boolean;

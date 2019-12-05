@@ -30,4 +30,15 @@ package body Alire.Projects is
       return From.Report_Extra_Keys;
    end From_TOML;
 
+   function Naming_Convention return Utils.String_Vector is
+     (Utils.Empty_Vector
+      .Append ("Identifiers for crates and indexes must use "
+               & "lowercase alphanumeric characters from the latin "
+               & "alphabet. Underscores can also be used except as "
+               & "the first character.")
+      .New_Line
+      .Append ("Length must be of" & Alire.Min_Name_Length'Img
+               & " to" & Alire.Max_Name_Length'Img
+               & " characters."));
+
 end Alire.Projects;
