@@ -32,7 +32,6 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
-with Alr.Interactive;
 with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
@@ -173,7 +172,7 @@ package body Alr.Commands is
                      "Display general or command-specific help");
 
       Define_Switch (Config,
-                     Interactive.Not_Interactive'Access,
+                     Alire.Config.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
 

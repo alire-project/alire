@@ -31,7 +31,7 @@ package Alire.Config is
    -- Interactivity --
    -------------------
 
-   Interactive : aliased Boolean := True;
+   Not_Interactive : aliased Boolean := False;
    --  When not Interactive, instead of asking the user something, use default.
    --  Currently only used before the first call to `sudo apt` to ask for
    --  confirmation.
