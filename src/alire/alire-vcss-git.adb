@@ -44,6 +44,29 @@ package body Alire.VCSs.Git is
          return Alire.Errors.Get (E);
    end Clone;
 
+   -----------------
+   -- Is_Detached --
+   -----------------
+
+   function Is_Detached (This : VCS;
+                         Path : Directory_Path) return Boolean
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant Utils.String_Vector :=
+                 OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                   ("git",
+                    Empty_Vector & "status");
+   begin
+
+      --  When a repo is in detached head state (e.g. after checking out a
+      --  commit instead of a branch), 'git status' will have as the first line
+      --  "HEAD detached at <commit>". Other changes come next.
+
+      return not Output.Is_Empty
+        and then Utils.Contains (Output.First_Element, "HEAD detached");
+   end Is_Detached;
+
    ------------
    -- Update --
    ------------

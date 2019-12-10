@@ -10,6 +10,11 @@ package Alire.VCSs.Git is
                    Into : Directory_Path)
                    return Outcome;
 
+   not overriding
+   function Is_Detached (This : VCS;
+                         Path : Directory_Path) return Boolean;
+   --  Says if the repo checked out at Path is in a detached HEAD state.
+
    overriding
    function Update (This : VCS;
                     Repo : Directory_Path)
