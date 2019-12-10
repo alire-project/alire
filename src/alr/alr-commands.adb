@@ -405,11 +405,7 @@ package body Alr.Commands is
            ("No indexes configured, adding default community index");
          declare
             Outcome : constant Alire.Outcome :=
-                        Alire.Features.Index.Add
-                          (Origin => Alire.Index.Community_Repo &
-                                       "@" & Alire.Index.Community_Branch,
-                           Name   => Alire.Index.Community_Name,
-                           Under  => Alire.Config.Indexes_Directory);
+                        Alire.Features.Index.Add_Or_Reset_Community;
          begin
             if not Outcome.Success then
                Reportaise_Command_Failed

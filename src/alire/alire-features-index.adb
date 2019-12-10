@@ -1,7 +1,9 @@
 with Ada.Directories;
 
+with Alire.Config;
 with Alire.Directories;
 with Alire.Errors;
+with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 
@@ -189,6 +191,35 @@ package body Alire.Features.Index is
          return Outcome_Success;
       end;
    end Add;
+
+   ----------------------------
+   -- Add_Or_Reset_Community --
+   ----------------------------
+
+   function Add_Or_Reset_Community return Outcome is
+      Result : Outcome;
+   begin
+      for Idx of Find_All (Config.Indexes_Directory, Result) loop
+         Assert (Result);
+
+         if Idx.Name = Alire.Index.Community_Name then
+            Assert (Idx.Delete);
+            Assert (Idx.Add);
+
+            return Outcome_Success;
+         end if;
+      end loop;
+
+      --  If we reach here, the index wasn't configured yet:
+
+      return Add (Origin => Alire.Index.Community_Repo &
+                    "@" & Alire.Index.Community_Branch,
+                  Name   => Alire.Index.Community_Name,
+                  Under  => Config.Indexes_Directory);
+   exception
+      when E : Checked_Error =>
+         return Outcome_From_Exception (E);
+   end Add_Or_Reset_Community;
 
    --------------
    -- Find_All --

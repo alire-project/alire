@@ -42,6 +42,11 @@ package Alire.Features.Index is
    --    indexes in child folders. That is, Under is the parent of all indexes
    --  Index will be set as last one, or before given index name
 
+   function Add_Or_Reset_Community return Outcome;
+   --  Adds the community index, if not already configured. If configured,
+   --  re-adds it at the required branch by Index.Community_Branch with the
+   --  same priority (i.e., maintaining the relative ordering);
+
    ------------------------
    --  Hashing utilities --
    ------------------------
