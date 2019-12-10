@@ -9,7 +9,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
-with Alire.Defaults;
 with Alire.Features.Index;
 with Alire.Index;
 with Alire.Roots;
@@ -407,8 +406,9 @@ package body Alr.Commands is
          declare
             Outcome : constant Alire.Outcome :=
                         Alire.Features.Index.Add
-                          (Origin => Alire.Defaults.Community_Index,
-                           Name   => Alire.Defaults.Community_Index_Name,
+                          (Origin => Alire.Index.Community_Repo &
+                                       "@" & Alire.Index.Community_Branch,
+                           Name   => Alire.Index.Community_Name,
                            Under  => Alire.Config.Indexes_Directory);
          begin
             if not Outcome.Success then
