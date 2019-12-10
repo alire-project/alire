@@ -34,7 +34,7 @@ package body Alire.VCSs.Git is
          begin
             OS_Lib.Subprocess.Checked_Spawn
               ("git",
-               Empty_Vector & "reset" & "--hard" & Commit (From));
+               Empty_Vector & "checkout" & Commit (From));
          end;
       end if;
 
