@@ -6,6 +6,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.VFS;
 with Alire.Utils;             use Alire.Utils;
 
+with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
 
 package body Alire.Origins.Deployers.Source_Archive is
@@ -21,7 +22,11 @@ package body Alire.Origins.Deployers.Source_Archive is
       Archive_Name : constant String := This.Base.Archive_Name;
       Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
    begin
-      Trace.Detail ("Extracting source archive...");
+      Trace.Detail ("Deploying source archive " &
+                      Archive_Name &
+                      " into " &
+                      Folder &
+                      "...");
       Unpack (Src_File => Archive_File,
               Dst_Dir  => Folder,
               Delete   => True,
@@ -149,7 +154,14 @@ package body Alire.Origins.Deployers.Source_Archive is
                --  We had some trouble on Windows with trying to extract a
                --  tar archive in a specified destination directory (using the
                --  -C switch). To workaround these issue we now move to the
-               --  destination directory before running tar.
+               --  destination directory before running tar ..
+
+               --  .. which means we need to preserve the full name of
+               --  the source file, in case the given name is
+               --  relative.
+               Src_File_Full_Name : constant String
+                 := +GNATCOLL.VFS.Full_Name
+                   (GNATCOLL.VFS.Create_From_Base (+Src_File));
 
                --  Create the destination directory
                Dst       : constant Virtual_File := Create (+Dst_Dir);
@@ -160,11 +172,22 @@ package body Alire.Origins.Deployers.Source_Archive is
                --  the current dir at the end of the scope.
                Guard : Directories.Guard (Directories.Enter (Dst_Dir))
                  with Unreferenced;
+
+               --  Option required on Windows to force e.g. C: to mean
+               --  a local file location rather than the net host C.
+               --  Not available as standard on MacOS.
+               Force_Local_Option : constant String_Vector :=
+                 (case GNATCOLL.OS.Constants.OS is
+                     when GNATCOLL.OS.Windows =>
+                        Empty_Vector & "--force-local",
+                     when others =>
+                        Empty_Vector);
             begin
                Subprocess.Checked_Spawn
                  ("tar", Empty_Vector &
-                    "--force-local" &
-                    "-xf" & Src_File);
+                    Force_Local_Option &
+                    "-x" &
+                    "-f" & Src_File_Full_Name);
 
                --  In case of success we keep the destination folder
                Dst_Guard.Keep;
