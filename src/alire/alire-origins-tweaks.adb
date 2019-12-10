@@ -50,7 +50,7 @@ package body Alire.Origins.Tweaks is
 
          declare
             Base     : constant Virtual_File := Create (+TOML_Path);
-            Rel_Path : constant Platform_Independent_Path :=
+            Rel_Path : constant Relative_Path :=
                          Tail (Tail (URL, '/'), '/');
             Target   : constant Virtual_File := Create (+Rel_Path);
             Absolute : Origin := This;

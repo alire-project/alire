@@ -76,7 +76,7 @@ package Alire.Utils with Preelaborate is
    --  Start the search according to From, and return Side at that point
    --  If not enough separators are seen then raises or whole string
 
-   function To_Native (Path : Platform_Independent_Path) return String;
+   function To_Native (Path : Any_Path) return String;
 
    generic
       with package Vectors is new Ada.Containers.Indefinite_Vectors (<>);
@@ -161,7 +161,7 @@ package Alire.Utils with Preelaborate is
    function To_Vector (S : String) return String_Vector;
 
    procedure Write (V         : String_Vector;
-                    Filename  : Platform_Independent_Path;
+                    Filename  : Any_Path;
                     Separator : String := ASCII.LF & "");
    --  Dump contents to a given file
 

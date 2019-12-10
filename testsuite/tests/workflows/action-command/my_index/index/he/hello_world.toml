@@ -13,4 +13,4 @@ command = ["touch", "test_post_fetch"]
 
 [[general.actions.'case(os)'.windows]]
 type = "post-fetch"
-command = ["copy", "NUL", "test_post_fetch"]
+command = ["cmd", "/C", "copy NUL test_post_fetch"]

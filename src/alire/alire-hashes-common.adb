@@ -6,7 +6,7 @@ package body Alire.Hashes.Common is
    -- Hash_File --
    ---------------
 
-   function Hash_File (Path : Platform_Independent_Path) return Any_Hash is
+   function Hash_File (Path : File_Path) return Any_Hash is
       use Ada.Streams;
       use Ada.Streams.Stream_IO;
 

@@ -80,15 +80,17 @@ package body Alire.OS_Lib.Subprocess is
    -------------------
 
    procedure Checked_Spawn
-     (Command   : String;
-      Arguments : Utils.String_Vector)
+     (Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False)
    is
       Output : Utils.String_Vector;
       Code   : constant Integer :=
-        Spawn_And_Capture (Output     => Output,
-                           Command    => Command,
-                           Arguments  => Arguments,
-                           Err_To_Out => True);
+        Spawn_And_Capture (Output              => Output,
+                           Command             => Command,
+                           Arguments           => Arguments,
+                           Understands_Verbose => Understands_Verbose,
+                           Err_To_Out          => True);
    begin
       if Code /= 0 then
          raise Checked_Error
@@ -111,7 +113,7 @@ package body Alire.OS_Lib.Subprocess is
       use Alire.Utils;
 
       Extra : constant String_Vector :=
-        (if Understands_Verbose then Empty_Vector & "-v " else Empty_Vector);
+        (if Understands_Verbose then Empty_Vector & "-v" else Empty_Vector);
       File  : File_Descriptor;
       Name  : GNAT.OS_Lib.String_Access;
       Ok    : Boolean;
@@ -134,9 +136,10 @@ package body Alire.OS_Lib.Subprocess is
                   Code,
                   Err_To_Out => False);
                Cleanup (Arg_List);
+               Close (File);
                Delete_File (Name.all, Ok);
                if not Ok then
-                  Log ("Failed to delete tmp file: " & Name.all, Warning);
+                  Trace.Error ("Failed to delete tmp file: " & Name.all);
                end if;
                Free (Name);
             end;
@@ -164,15 +167,23 @@ package body Alire.OS_Lib.Subprocess is
    -----------------------
 
    function Spawn_And_Capture
-     (Output     : in out Utils.String_Vector;
-      Command    : String;
-      Arguments  : Utils.String_Vector;
-      Err_To_Out : Boolean := False) return Integer
+     (Output              : in out Utils.String_Vector;
+      Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False;
+      Err_To_Out          : Boolean := False)
+     return Integer
    is
+      use Alire.Utils;
       use GNAT.OS_Lib;
       File     : File_Descriptor;
       Name     : String_Access;
-      Arg_List : Argument_List_Access := To_Argument_List (Arguments);
+
+      Extra    : constant String_Vector :=
+        (if Understands_Verbose then Empty_Vector & "-v" else Empty_Vector);
+
+      Full_Args : constant String_Vector := Extra & Arguments;
+      Arg_List : Argument_List_Access := To_Argument_List (Full_Args);
 
       use Ada.Text_IO;
       Outfile : File_Type;
@@ -184,9 +195,13 @@ package body Alire.OS_Lib.Subprocess is
       -------------
 
       procedure Cleanup is
-         Unused : Boolean;
+         Ok : Boolean;
       begin
-         Delete_File (Name.all, Unused);
+         Delete_File (Name.all, Ok);
+         if not Ok then
+            Trace.Error ("Failed to delete tmp file: " & Name.all);
+         end if;
+
          Free (Name);
 
          Cleanup (Arg_List);
@@ -202,17 +217,18 @@ package body Alire.OS_Lib.Subprocess is
          while not End_Of_File (Outfile) loop
             Output.Append (Get_Line (Outfile));
          end loop;
+         Close (Outfile);
       end Read_Output;
 
    begin
       Create_Temp_Output_File (File, Name);
 
-      Trace.Detail ("Spawning: " & Image (Command, Arguments) &
+      Trace.Detail ("Spawning: " & Image (Command, Full_Args) &
                       " > " & Name.all);
 
       --  Prepare arguments
       for I in Arg_List'Range loop
-         Arg_List (I) := new String'(Arguments (I));
+         Arg_List (I) := new String'(Full_Args (I));
       end loop;
 
       Spawn (Program_Name           => Locate_In_Path (Command),

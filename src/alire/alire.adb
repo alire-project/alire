@@ -21,6 +21,12 @@ package body Alire is
    function "<" (L, R : Project) return Boolean is
      (Utils.To_Lower_Case (+L) < Utils.To_Lower_Case (+R));
 
+   -------------------------
+   -- Check_Absolute_Path --
+   -------------------------
+
+   function Check_Absolute_Path (Path : Any_Path) return Boolean is separate;
+
    -------------
    -- Err_Log --
    -------------

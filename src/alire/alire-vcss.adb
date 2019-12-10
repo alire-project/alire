@@ -8,7 +8,7 @@ package body Alire.VCSs is
    -----------
 
    function Clone (From : URL;
-                   Into : Platform_Independent_Path)
+                   Into : Directory_Path)
                    return Outcome
    is
    begin

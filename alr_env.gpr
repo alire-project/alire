@@ -1,5 +1,5 @@
 aggregate project Alr_Env is
- 
+
    for Create_Missing_Dirs use "True";
 
    for Project_Path use (
@@ -18,4 +18,12 @@ aggregate project Alr_Env is
    for External ("LIBRARY_TYPE") use "static";
    for External ("BUILD") use "DEBUG";
 
+   Host_OS := external ("OS", "default");
+   --  On Windows an OS environment variable is defined, we can use it to
+   --  determine if we are compiling on Windows.
+
+   case Host_OS is
+      when "Windows_NT" => for External ("GNATCOLL_OS") use "windows";
+      when others       => for External ("GNATCOLL_OS") use "unix";
+   end case;
 end Alr_Env;

@@ -1,0 +1,8 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text eol=lf
+
+# Declare files that will always have LF line endings on checkout.
+*.adb text eol=lf
+*.adc text eol=lf
+*.ads text eol=lf
+*.gpr text eol=lf

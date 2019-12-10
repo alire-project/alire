@@ -227,16 +227,16 @@ package body Alire.Releases is
                          Available          : Alire.Requisites.Tree)
                          return Release
    is (Prj_Len      => Project'Length,
-      Notes_Len    => Notes'Length,
-      Project      => Project,
-      Alias        => +"",
-      Version      => Version,
-      Origin       => Origin,
-      Notes        => Notes,
-      Dependencies => Dependencies,
-      Forbidden    => Conditional.For_Dependencies.Empty,
-      Properties   => Properties,
-      Available    => Available);
+       Notes_Len    => Notes'Length,
+       Project      => Project,
+       Alias        => +"",
+       Version      => Version,
+       Origin       => Origin,
+       Notes        => Notes,
+       Dependencies => Dependencies,
+       Forbidden    => Conditional.For_Dependencies.Empty,
+       Properties   => Properties,
+       Available    => Available);
 
    -------------------------
    -- New_Working_Release --
@@ -320,16 +320,20 @@ package body Alire.Releases is
                          P : Alire.Properties.Vector)
                          return Utils.String_Vector
    is
+      Exes : constant Utils.String_Vector :=
+        Props_To_Strings (R.All_Properties (P), Executable);
    begin
-      return Exes : Utils.String_Vector :=
-        Props_To_Strings (R.All_Properties (P), Executable)
-      do
-         if OS_Lib.Exe_Suffix /= "" then
+      if OS_Lib.Exe_Suffix /= "" then
+         declare
+            With_Suffix : Utils.String_Vector;
+         begin
             for I in Exes.Iterate loop
-               Exes (I) := Exes (I) & OS_Lib.Exe_Suffix;
+               With_Suffix.Append (Exes (I) & OS_Lib.Exe_Suffix);
             end loop;
-         end if;
-      end return;
+            return With_Suffix;
+         end;
+      end if;
+      return Exes;
    end Executables;
 
    -------------------

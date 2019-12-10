@@ -9,8 +9,10 @@ package Alire.Index_On_Disk.Directory is
    overriding
    function New_Handler (From   : URL;
                          Name   : Restricted_Name;
-                         Parent : Platform_Independent_Path) return Index with
-     Pre => Utils.Starts_With (From, "file:///");
+                         Parent : Any_Path) return Index with
+     Pre => Utils.Starts_With (From, "file://")
+              and then
+            Check_Absolute_Path (From (From'First + 7 .. From'Last));
    --  file:// + absolute path
 
    overriding

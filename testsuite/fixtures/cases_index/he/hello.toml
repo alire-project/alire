@@ -14,6 +14,7 @@ maintainers-logins = ["mylogin"]
 
     [general.gpr-set-externals.'case(os)']
     linux = { OS = "linux" }
+    windows = { OS = "windows" }
     '...' = { OS = "other" }
 
     [[ general.actions.'case(os)'.linux ]]

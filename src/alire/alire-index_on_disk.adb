@@ -30,7 +30,7 @@ package body Alire.Index_On_Disk is
    overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
-                         Parent : Platform_Independent_Path)
+                         Parent : Any_Path)
                          return Invalid_Index;
 
    function New_Invalid_Index return Invalid_Index'Class is
@@ -117,9 +117,9 @@ package body Alire.Index_On_Disk is
    overriding
    function New_Handler (Origin : URL;
                          Name   : Restricted_Name;
-                         Parent : Platform_Independent_Path)
-                         return Invalid_Index is
-     (Invalid_Index (New_Invalid_Index));
+                         Parent : Any_Path)
+                         return Invalid_Index
+   is (Invalid_Index (New_Invalid_Index));
 
    -----------------
    -- New_Handler --
@@ -127,7 +127,7 @@ package body Alire.Index_On_Disk is
 
    function New_Handler (Origin   :     URL;
                          Name     :     String;
-                         Parent   :     Platform_Independent_Path;
+                         Parent   :     Any_Path;
                          Result   : out Outcome;
                          Priority :     Priorities := Default_Priority)
                          return Index'Class
@@ -214,7 +214,7 @@ package body Alire.Index_On_Disk is
    -----------------
 
    function New_Handler (From   :     TOML.TOML_Value;
-                         Parent :     Platform_Independent_Path;
+                         Parent :     Any_Path;
                          Result : out Outcome) return Index'Class is
    begin
       if not From.Has (TOML_Keys.Index_URL) then

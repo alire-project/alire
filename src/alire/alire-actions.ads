@@ -35,7 +35,7 @@ package Alire.Actions with Preelaborate is
 
    function New_Run (Moment                : Moments;
                      Relative_Command_Line : Utils.String_Vector;
-                     Working_Folder        : Platform_Independent_Path)
+                     Working_Folder        : Any_Path)
                      return Run;
    --  Working folder will be entered for execution
    --  Relative command-line must consider being in working folder
@@ -58,7 +58,7 @@ private
    type Run (Moment : Moments; Folder_Len : Natural)
    is new Action (Moment) with record
       Relative_Command_Line : Utils.String_Vector;
-      Working_Folder        : Platform_Independent_Path (1 .. Folder_Len);
+      Working_Folder        : Any_Path (1 .. Folder_Len);
    end record;
 
    overriding
@@ -75,7 +75,7 @@ private
 
    function New_Run (Moment                : Moments;
                      Relative_Command_Line : Utils.String_Vector;
-                     Working_Folder        : Platform_Independent_Path)
+                     Working_Folder        : Any_Path)
                      return Run
    is
      (Moment,

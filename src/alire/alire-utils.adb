@@ -417,7 +417,7 @@ package body Alire.Utils is
    -- To_Native --
    ---------------
 
-   function To_Native (Path : Platform_Independent_Path) return String is
+   function To_Native (Path : Any_Path) return String is
       Dir_Seps : constant Ada.Strings.Maps.Character_Set :=
         Ada.Strings.Maps.To_Set ("/\");
 
@@ -437,7 +437,7 @@ package body Alire.Utils is
    -----------
 
    procedure Write (V         : String_Vector;
-                    Filename  : Platform_Independent_Path;
+                    Filename  : Any_Path;
                     Separator : String := ASCII.LF & "")
    is
       use Ada.Streams.Stream_IO;

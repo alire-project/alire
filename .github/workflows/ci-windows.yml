@@ -1,0 +1,47 @@
+name: CI Windows
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+
+jobs:
+
+  build:
+    name: CI on Windows
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+
+    - name: Check out submodules
+      run: git submodule update --init --recursive
+
+    - name: Install toolchain
+      uses: ada-actions/toolchain@dev
+      with:
+        distrib: community
+
+    - name: Install Python 2.x (required for the testsuite)
+      uses: actions/setup-python@v1
+      with:
+        python-version: '2.x'
+
+    - name: Install vcpython27 (required for some e3-testsuite deps)
+      run: choco install vcpython27
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: testsuite-log-windows.zip
+        path: testsuite/out
