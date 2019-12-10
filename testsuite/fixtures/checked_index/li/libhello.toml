@@ -4,14 +4,6 @@ licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 
-['1.0-git']
-origin = "git+file://../../crates/libhello_git@ce78e7706c9d3f97605df48d8befca5407f8d328"
-origin-hashes = ["sha512:f9d5a85fec4db46d5a2859057658c01ee4fe1ab412dab80bcbb426102b5dcb147ab7e0744e781d045e5d2b50ec3cb4f0990c8ce66e52cda37c88833d0f814500"]
-
-['1.0-gitbad']
-origin = "git+file://../../crates/libhello_git@ce78e7706c9d3f97605df48d8befca5407f8d328"
-origin-hashes = ["sha512:deadbeef"] # Bad hash in purpose
-
 ['1.0-tarball']
 origin = "file://../../crates/libhello_1.0.0.tgz"
 origin-hashes = ["sha512:99fa3a55540d0655c87605b54af732f76a8a363015f183b06e98aa91e54c0e69397872718c5c16f436dd6de0fba506dc50c66d34a0e5c61fb63cb01fa22f35ac"]
