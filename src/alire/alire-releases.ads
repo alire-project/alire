@@ -381,9 +381,7 @@ private
        (case R.Origin.Kind is
            when Filesystem     => "filesystem",
            when Native         => "native",
-           when Source_Archive => R.Origin.Short_Unique_Id,
-           when Git | Hg       => R.Origin.Short_Unique_Id,
-           when SVN            => R.Origin.Commit));
+           when Source_Archive => R.Origin.Short_Unique_Id));
 
    function On_Platform_Actions (R : Release;
                                  P : Alire.Properties.Vector)

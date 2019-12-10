@@ -161,8 +161,6 @@ package body Alire.Origins is
       end Add_Hashes;
 
       use Utils;
-      Commit : constant String := Tail (From, '@');
-      URL    : constant String := Tail (Head (From, '@'), '+');
       Pkg    : constant String := Tail (From, ':');
       Path   : constant String :=
                  From (From'First + Prefixes (Filesystem)'Length ..
@@ -174,10 +172,6 @@ package body Alire.Origins is
            Utils.Starts_With (From, Prefixes (Kind).all)
          then
             case Kind is
-               when Git            => This := New_Git (URL, Commit);
-               when Hg             => This := New_Hg (URL, Commit);
-               when SVN            => This := New_SVN (URL, Commit);
-
                when Filesystem     =>
                   if Path = "" then
                      return Parent.Failure
@@ -370,9 +364,7 @@ package body Alire.Origins is
 
    function Short_Unique_Id (This : Origin) return String is
       Hash : constant String :=
-               (if This.Kind = Source_Archive
-                then Utils.Tail (String (This.Data.Hashes.First_Element), ':')
-                else This.Commit);
+               Utils.Tail (String (This.Data.Hashes.First_Element), ':');
    begin
       if Hash'Length < 8 then
          return Hash;
@@ -393,9 +385,6 @@ package body Alire.Origins is
          when Filesystem =>
             Table.Set (TOML_Keys.Origin, +("file://" & This.Path));
 
-         when VCS_Kinds =>
-            Table.Set (TOML_Keys.Origin, +(Prefixes (This.Kind).all &
-                         This.URL & "@" & This.Commit));
          when Native =>
             raise Program_Error
               with "native packages do not need to be exported";

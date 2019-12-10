@@ -3,10 +3,7 @@ with Ada.Directories;
 with Alire.Config;
 with Alire.Origins.Deployers.APT;
 with Alire.Origins.Deployers.Filesystem;
-with Alire.Origins.Deployers.Git;
-with Alire.Origins.Deployers.Hg;
 with Alire.Origins.Deployers.Source_Archive;
-with Alire.Origins.Deployers.SVN;
 with Alire.Platform;
 
 with GNAT.IO;
@@ -32,14 +29,6 @@ package body Alire.Origins.Deployers is
          when Origins.Filesystem =>
             return Filesystem.Deployer'(Deployer'(Base => From)
                                         with null record);
-         when Origins.Git =>
-            return Git.Deployer'(Deployer'(Base => From) with null record);
-
-         when Alire.Origins.Hg =>
-            return Hg.Deployer'(Deployer'(Base => From) with null record);
-
-         when Alire.Origins.SVN =>
-            return SVN.Deployer'(Deployer'(Base => From) with null record);
 
          when Alire.Origins.Source_Archive =>
             return Source_Archive.Deployer'(Deployer'(Base => From)

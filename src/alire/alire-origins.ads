@@ -30,9 +30,6 @@ package Alire.Origins with Preelaborate is
 
    type Kinds is
      (Filesystem,     -- Not really an origin, but a working copy of a project
-      Git,            -- Remote git repo
-      Hg,             -- Remote hg repo
-      SVN,            -- Remote svn repo
       Source_Archive, -- Remote source archive
       Native          -- Native platform package
      );
@@ -40,8 +37,6 @@ package Alire.Origins with Preelaborate is
    type String_Access is access constant String;
    type Prefix_Array is array (Kinds) of String_Access;
    Prefixes : constant Prefix_Array;
-
-   subtype VCS_Kinds is Kinds range Git .. SVN;
 
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);
    subtype Known_Source_Archive_Format is
@@ -58,14 +53,6 @@ package Alire.Origins with Preelaborate is
    -------------------
    --  member data  --
    -------------------
-
-   function Commit (This : Origin) return String
-     with Pre => This.Kind in VCS_Kinds;
-   function URL (This : Origin) return Alire.URL
-     with Pre => This.Kind in VCS_Kinds;
-   function URL_With_Commit (This : Origin) return Alire.URL
-     with Pre => This.Kind in VCS_Kinds;
-   --  Append commit as '@commit'
 
    function Path (This : Origin) return String
      with Pre => This.Kind = Filesystem;
@@ -86,7 +73,7 @@ package Alire.Origins with Preelaborate is
    function All_Native_Names (This : Origin) return Native_Packages;
 
    function Short_Unique_Id (This : Origin) return String with
-     Pre => This.Kind in Git | Hg | Source_Archive;
+     Pre => This.Kind in Source_Archive;
 
    --  Helper types
 
@@ -96,16 +83,6 @@ package Alire.Origins with Preelaborate is
    --  Constructors
 
    function New_Filesystem (Path : String) return Origin;
-
-   function New_Git (URL    : Alire.URL;
-                     Commit : Git_Commit)
-                     return Origin;
-
-   function New_Hg (URL    : Alire.URL;
-                    Commit : Hg_Commit)
-                    return Origin;
-
-   function New_SVN (URL : Alire.URL; Commit : String) return Origin;
 
    Unknown_Source_Archive_Name_Error : exception;
 
@@ -185,10 +162,6 @@ private
          when Filesystem =>
             Path : Unbounded_String;
 
-         when VCS_Kinds =>
-            Repo_URL : Unbounded_String;
-            Commit   : Unbounded_String;
-
          when Source_Archive =>
             Archive_URL    : Unbounded_String;
             Archive_Name   : Unbounded_String;
@@ -212,30 +185,10 @@ private
    function New_Filesystem (Path : String) return Origin is
      (Data => (Filesystem, Path => +Path, Hashes => <>));
 
-   function New_Git (URL    : Alire.URL;
-                     Commit : Git_Commit)
-                     return Origin is
-     (Data => (Git, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
-
-   function New_Hg (URL    : Alire.URL;
-                    Commit : Hg_Commit)
-                    return Origin is
-     (Data => (Hg, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
-
-   function New_SVN (URL : Alire.URL; Commit : String) return Origin is
-     (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
-
    function New_Native (Packages : Native_Packages) return Origin is
      (Data => (Native, Packages => Packages, Hashes => <>));
 
    function Kind (This : Origin) return Kinds is (This.Data.Kind);
-
-   function URL    (This : Origin) return Alire.URL is
-     (Alire.URL (+This.Data.Repo_URL));
-   function Commit (This : Origin) return String is
-     (+This.Data.Commit);
-   function URL_With_Commit (This : Origin) return Alire.URL is
-     (This.URL & "@" & This.Commit);
 
    function Path (This : Origin) return String is (+This.Data.Path);
 
@@ -258,9 +211,6 @@ private
 
    function Image (This : Origin) return String is
      ((case This.Kind is
-          when VCS_Kinds      =>
-             "commit " & S (This.Data.Commit)
-       & " from " & S (This.Data.Repo_URL),
           when Source_Archive =>
              "source archive " & (if S (This.Data.Archive_Name) /= ""
                                   then S (This.Data.Archive_Name) & " "
@@ -277,17 +227,11 @@ private
          else " with hashes " & This.Image_Of_Hashes)
      );
 
-   Prefix_Git    : aliased constant String := "git+";
-   Prefix_Hg     : aliased constant String := "hg+";
-   Prefix_SVN    : aliased constant String := "svn+";
    Prefix_File   : aliased constant String := "file://";
    Prefix_Native : aliased constant String := "native:";
 
    Prefixes : constant Prefix_Array :=
-                (Git            => Prefix_Git'Access,
-                 Hg             => Prefix_Hg'Access,
-                 SVN            => Prefix_SVN'Access,
-                 Filesystem     => Prefix_File'Access,
+                (Filesystem     => Prefix_File'Access,
                  Native         => Prefix_Native'Access,
                  Source_Archive => null);
 
