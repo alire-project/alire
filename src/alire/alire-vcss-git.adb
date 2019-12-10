@@ -5,6 +5,32 @@ with Alire.Utils;             use Alire.Utils;
 
 package body Alire.VCSs.Git is
 
+   ------------
+   -- Branch --
+   ------------
+
+   function Branch (This : VCS;
+                    Path : Directory_Path)
+                    return String
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant Utils.String_Vector :=
+                 OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                   ("git",
+                    Empty_Vector & "branch");
+   begin
+      for Line of Output loop
+         if Line'Length > 0 and then Line (Line'First) = '*' then
+            return Utils.Tail (Line, ' ');
+         end if;
+      end loop;
+
+      Raise_Checked_Error
+        ("Unexpected output from 'git branch: "
+         & Output.Flatten ("\n "));
+   end Branch;
+
    -----------
    -- Clone --
    -----------

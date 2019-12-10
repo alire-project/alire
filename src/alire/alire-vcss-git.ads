@@ -4,6 +4,12 @@ package Alire.VCSs.Git is
 
    function Handler return VCS;
 
+   not overriding
+   function Branch (This : VCS;
+                    Path : Directory_Path)
+                    return String;
+   --  Returns the branch name of the repo checked out at Path.
+
    overriding
    function Clone (This : VCS;
                    From : URL;
