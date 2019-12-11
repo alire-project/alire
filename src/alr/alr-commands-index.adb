@@ -13,6 +13,8 @@ package body Alr.Commands.Index is
 
    procedure List;
 
+   procedure Reset_Community;
+
    procedure Update_All;
 
    ---------
@@ -86,6 +88,7 @@ package body Alr.Commands.Index is
       Enabled := Enabled + (if Cmd.Del.all /= "" then 1 else 0);
       Enabled := Enabled + (if Cmd.List then 1 else 0);
       Enabled := Enabled + (if Cmd.Update_All then 1 else 0);
+      Enabled := Enabled + (if Cmd.Rset then 1 else 0);
 
       if Enabled /= 1 then
          Reportaise_Wrong_Arguments ("Specify exactly one index subcommand");
@@ -104,6 +107,8 @@ package body Alr.Commands.Index is
          List;
       elsif Cmd.Update_All then
          Update_All;
+      elsif Cmd.Rset then
+         Reset_Community;
       else
          Reportaise_Wrong_Arguments ("Specify an index subcommand");
       end if;
@@ -174,6 +179,19 @@ package body Alr.Commands.Index is
                & " not be updated.")
      );
 
+   ---------------------
+   -- Reset_Community --
+   ---------------------
+
+   procedure Reset_Community is
+      Result : constant Alire.Outcome :=
+                 Alire.Features.Index.Add_Or_Reset_Community;
+   begin
+      if not Result.Success then
+         Reportaise_Command_Failed (Result.Message);
+      end if;
+   end Reset_Community;
+
    --------------------
    -- Setup_Switches --
    --------------------
@@ -222,6 +240,12 @@ package body Alr.Commands.Index is
          Output      => Cmd.Update_All'Access,
          Long_Switch => "--update-all",
          Help        => "Update configured indexes");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Rset'Access,
+         Long_Switch => "--reset-community",
+         Help        => "Add the community index, or reset any local changes");
    end Setup_Switches;
 
    ----------------

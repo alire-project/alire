@@ -9,8 +9,6 @@ with Alire.OS_Lib;
 
 with GNAT.OS_Lib;
 
-with GNATCOLL.VFS;
-
 with TOML;
 with TOML.File_IO;
 
@@ -93,18 +91,6 @@ package body Alire.Features.Index is
          return Priority;
       end Adjust_Priorities;
 
-      -------------
-      -- Cleanup --
-      -------------
-
-      procedure Cleanup (Path : String) is
-      begin
-         if Ada.Directories.Exists (Path) then
-            Trace.Debug ("Cleaning up failed index remnants at " & Path);
-            Ada.Directories.Delete_Tree (Path);
-         end if;
-      end Cleanup;
-
    begin
       if not Result.Success then
          return Result;
@@ -142,8 +128,6 @@ package body Alire.Features.Index is
 
       --  Create handler with proper priority and proceed
       declare
-         use GNATCOLL.VFS;
-
          Adjust_Result : Outcome := Outcome_Success; -- Might end unused
 
          Priority      : constant Index_On_Disk.Priorities :=
@@ -166,29 +150,7 @@ package body Alire.Features.Index is
 
          Trace.Debug ("Adding index " & Origin & " at " & Under);
 
-         --  Create containing folder with its metadata
-         Create (+Index.Metadata_Directory).Make_Dir;
-         Result := Index.Write_Metadata (Index.Metadata_File);
-         if not Result.Success then
-            Cleanup (Index.Metadata_Directory);
-            return Result;
-         end if;
-
-         --  Deploy the index
-         Result := Index.Add;
-         if not Result.Success then
-            Cleanup (Index.Metadata_Directory);
-            return Result;
-         end if;
-
-         --  Verify the index
-         Result := Index.Verify;
-         if not Result.Success then
-            Cleanup (Index.Metadata_Directory);
-            return Result;
-         end if;
-
-         return Outcome_Success;
+         return Index.Add_With_Metadata;
       end;
    end Add;
 
@@ -197,21 +159,31 @@ package body Alire.Features.Index is
    ----------------------------
 
    function Add_Or_Reset_Community return Outcome is
-      Result : Outcome;
+      Result  : Outcome;
+      Indexes : constant Sets.Set :=
+                  Find_All (Config.Indexes_Directory, Result);
+      use Sets;
    begin
-      for Idx of Find_All (Config.Indexes_Directory, Result) loop
+      Trace.Debug ("Resetting community index...");
+      for I in Indexes.Iterate loop
          Assert (Result);
 
-         if Idx.Name = Alire.Index.Community_Name then
-            Assert (Idx.Delete);
-            Assert (Idx.Add);
-
-            return Outcome_Success;
+         if Indexes (I).Name = Alire.Index.Community_Name then
+            Trace.Debug ("Index was already set, deleting and re-adding...");
+            Assert (Indexes (I).Delete);
+            return Add (Origin => Alire.Index.Community_Repo &
+                          "@" & Alire.Index.Community_Branch,
+                        Name   => Alire.Index.Community_Name,
+                        Under  => Config.Indexes_Directory,
+                        Before => (if Has_Element (Next (I))
+                                   then Indexes (Next (I)).Name
+                                   else ""));
          end if;
       end loop;
 
       --  If we reach here, the index wasn't configured yet:
 
+      Trace.Debug ("Index was not set, adding it...");
       return Add (Origin => Alire.Index.Community_Repo &
                     "@" & Alire.Index.Community_Branch,
                   Name   => Alire.Index.Community_Name,

@@ -33,6 +33,7 @@ private
       Del  : aliased GNAT.Strings.String_Access;
       Name : aliased GNAT.Strings.String_Access;
       List : aliased Boolean := False;
+      Rset : aliased Boolean := False; -- Reset the community index
 
       Update_All : aliased Boolean := False;
    end record;

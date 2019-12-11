@@ -43,6 +43,35 @@ package body Alire.Index_On_Disk is
    function Update (This : Invalid_Index) return Outcome is
      (raise Program_Error);
 
+   -----------------------
+   -- Add_With_Metadata --
+   -----------------------
+
+   function Add_With_Metadata (This : Index'Class) return Outcome is
+      use GNATCOLL.VFS;
+
+      Dst : Directories.Temp_File :=
+              Directories.With_Name
+                (+Create (+This.Metadata_Directory).Full_Name);
+   begin
+      --  Create containing folder with its metadata
+      Create (+This.Metadata_Directory).Make_Dir;
+      Assert (This.Write_Metadata (This.Metadata_File));
+
+      --  Deploy the index contents
+      Assert (This.Add);
+
+      --  Verify the index
+      Assert (This.Verify);
+
+      Dst.Keep;
+
+      return Outcome_Success;
+   exception
+      when E : Checked_Error =>
+         return Outcome_From_Exception (E);
+   end Add_With_Metadata;
+
    ------------
    -- Delete --
    ------------
@@ -53,6 +82,7 @@ package body Alire.Index_On_Disk is
       if Exists (This.Metadata_Directory) then
          if Kind (This.Metadata_Directory) = Ada.Directories.Directory then
             Delete_Tree (This.Metadata_Directory);
+            Trace.Debug ("Metadata dir deleted: " & This.Metadata_Directory);
          else
             return Outcome_Failure
               ("Expected directory folder is not a folder: " &
