@@ -1,6 +1,9 @@
 name: CI linux
 
 on:
+  push:
+    paths-ignore:
+      - 'doc/**'
   pull_request:
     paths-ignore:
       - 'doc/**'
@@ -9,15 +12,15 @@ env:
   alire_index: ""
   # Empty index: test with master of community index
   # Otherwise: test with particular commit/branch
-  # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef" 
+  # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef"
 
 jobs:
 
   build:
     name: CI on ${{ matrix.tag }}
- 
+
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         tag: # Those are our dockerhub alire/gnat:tag machines
@@ -25,7 +28,7 @@ jobs:
             - community-current
             - debian-stable
             - ubuntu-lts
- 
+
     steps:
     - name: Check out repository
       uses: actions/checkout@v1
@@ -38,9 +41,9 @@ jobs:
 
     - name: Run test script
       run: >
-        docker run -v${PWD}:/alire -w /alire 
-        -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}" 
-        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh               
+        docker run -v${PWD}:/alire -w /alire
+        -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}"
+        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh
 
     - name: Upload logs (if failed)
       if: failure()
