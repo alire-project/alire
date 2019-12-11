@@ -11,6 +11,10 @@ origin = "file://."
 type = "post-fetch"
 command = ["touch", "test_post_fetch"]
 
+[[general.actions.'case(os)'.macos]]
+type = "post-fetch"
+command = ["touch", "test_post_fetch"]
+
 [[general.actions.'case(os)'.windows]]
 type = "post-fetch"
 command = ["cmd", "/C", "copy NUL test_post_fetch"]
