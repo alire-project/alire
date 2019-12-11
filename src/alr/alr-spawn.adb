@@ -1,6 +1,7 @@
+with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 
-with Alire.OS_Lib.Subprocess;
+with Alr.Commands;
 
 package body Alr.Spawn is
 
@@ -12,8 +13,16 @@ package body Alr.Spawn is
                       Args                : Alire.Utils.String_Vector;
                       Understands_Verbose : Boolean := False)
    is
+      Unused_Output : Alire.Utils.String_Vector;
    begin
-      Alire.OS_Lib.Subprocess.Checked_Spawn (Cmd, Args, Understands_Verbose);
+      if Commands.Is_Quiet then
+         Unused_Output :=
+           Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+             (Cmd, Args, Understands_Verbose, Err_To_Out => True);
+      else
+         Alire.OS_Lib.Subprocess.Checked_Spawn
+           (Cmd, Args, Understands_Verbose);
+      end if;
    end Command;
 
    --------------

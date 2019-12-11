@@ -14,6 +14,12 @@ package body Alire.OS_Lib.Subprocess is
 
    function Image (Cmd : String; Args : Utils.String_Vector) return String;
 
+   function Spawn
+     (Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False)
+      return Integer;
+
    function Spawn_And_Capture
      (Output              : in out Utils.String_Vector;
       Command             : String;
@@ -91,15 +97,17 @@ package body Alire.OS_Lib.Subprocess is
       Arguments           : Utils.String_Vector;
       Understands_Verbose : Boolean := False)
    is
-      Output : constant Utils.String_Vector :=
-                 Checked_Spawn_And_Capture
-                   (Command             => Command,
-                    Arguments           => Arguments,
-                    Understands_Verbose => Understands_Verbose,
-                    Err_To_Out          => True)
-        with Unreferenced;
+      Exit_Code : constant Integer :=
+                    Spawn
+                      (Command             => Command,
+                       Arguments           => Arguments,
+                       Understands_Verbose => Understands_Verbose);
    begin
-      null;
+      if Exit_Code /= 0 then
+         Raise_Checked_Error
+           ("Command " & Image (Command, Arguments) &
+              " exited with code" & Exit_Code'Img);
+      end if;
    end Checked_Spawn;
 
    -------------------------------
@@ -129,6 +137,48 @@ package body Alire.OS_Lib.Subprocess is
          return Output;
       end if;
    end Checked_Spawn_And_Capture;
+
+   -----------
+   -- Spawn --
+   -----------
+
+   function Spawn
+     (Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False)
+      return Integer
+   is
+      use Alire.Utils;
+      use GNAT.OS_Lib;
+
+      Extra    : constant String_Vector :=
+        (if Understands_Verbose then Empty_Vector & "-v" else Empty_Vector);
+
+      Full_Args : constant String_Vector := Extra & Arguments;
+      Arg_List : Argument_List_Access := To_Argument_List (Full_Args);
+
+      Exit_Code : Integer;
+
+   begin
+      Trace.Detail ("Spawning: " & Image (Command, Full_Args));
+
+      --  Prepare arguments
+      for I in Arg_List'Range loop
+         Arg_List (I) := new String'(Full_Args (I));
+      end loop;
+
+      Exit_Code := GNAT.OS_Lib.Spawn
+        (Program_Name           => Locate_In_Path (Command),
+         Args                   => Arg_List.all);
+
+      Cleanup (Arg_List);
+
+      if Exit_Code /= 0 then
+         Trace.Debug ("Process errored with code" & Exit_Code'Img);
+      end if;
+
+      return Exit_Code;
+   end Spawn;
 
    -----------------------
    -- Spawn_And_Capture --

@@ -69,6 +69,9 @@ package body Alire.Origins.Deployers.Source_Archive is
          Empty_Vector &
            This.Base.Archive_URL &
            "-q" &
+         (if Log_Level < Trace.Info
+            then Empty_Vector
+            else Empty_Vector & "--show-progress" & "--progress=bar") &
            "-O" &
            Archive_File);
 
