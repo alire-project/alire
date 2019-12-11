@@ -128,13 +128,11 @@ package body Alr.Commands.Test is
          else
             declare
                use Alire.Utils;
-
-               Unused : Integer;
             begin
                Skipping_Extensions := False;
 
-               Unused := Alire.OS_Lib.Subprocess.Spawn_And_Capture
-                 (Output, "alr",
+               Output := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                 ("alr",
                   Empty_Vector &
                     "get" &
                     "--build" &

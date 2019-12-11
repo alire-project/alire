@@ -25,22 +25,17 @@ package body Alire.Platform is
 
    function Distribution return Platforms.Distributions is
       use Alire.OS_Lib;
+      use all type Alire.Platforms.Distributions;
    begin
       if Distro_Cached then
          return Cached_Distro;
       else
          declare
-            use all type Alire.Platforms.Distributions;
             use Utils;
-            Release : Utils.String_Vector;
+            Release : constant Utils.String_Vector :=
+                        Subprocess.Checked_Spawn_And_Capture
+                          ("cat", Empty_Vector & "/etc/os-release");
          begin
-            if Subprocess.Spawn_And_Capture
-              (Release, "cat", Empty_Vector & "/etc/os-release") /= 0
-            then
-               Trace.Debug ("Unable to detect distribution");
-               return Distro_Unknown;
-            end if;
-
             for Line of Release loop
                declare
                   Normalized : constant String :=
@@ -65,6 +60,11 @@ package body Alire.Platform is
             return Distro_Unknown;
          end;
       end if;
+   exception
+      when E : Checked_Error =>
+         Trace.Debug ("Unable to detect distribution:");
+         Log_Exception (E);
+         return Distro_Unknown;
    end Distribution;
 
 end Alire.Platform;

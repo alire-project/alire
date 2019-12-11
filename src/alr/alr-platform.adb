@@ -41,10 +41,9 @@ package body Alr.Platform is
 
       Year   : Natural;
       Output : String_Vector;
-      Unused : Integer;
    begin
-      Unused := Alire.OS_Lib.Subprocess.Spawn_And_Capture
-        (Output, "gnat", Alire.Utils.Empty_Vector, Err_To_Out => True);
+      Output := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+        ("gnat", Alire.Utils.Empty_Vector, Err_To_Out => True);
 
       for Line of Output loop
          if Line'Length > 4
@@ -127,8 +126,11 @@ package body Alr.Platform is
          end if;
       end loop;
 
-      Trace.Debug ("Unexpected output from gnat");
       return GNAT_Unknown;
+   exception
+      when E : Alire.Checked_Error =>
+         Alire.Log_Exception (E);
+         return GNAT_Unknown;
    end Compiler_Uncached;
 
    function Compiler return Alire.Platforms.Compilers is

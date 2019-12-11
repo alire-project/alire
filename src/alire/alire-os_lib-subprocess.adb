@@ -1,10 +1,7 @@
-with Ada.Characters.Latin_1;
-with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Errors;
 
-with GNAT.Expect;
 with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
@@ -16,6 +13,16 @@ package body Alire.OS_Lib.Subprocess is
    procedure Cleanup (List : in out GNAT.OS_Lib.Argument_List_Access);
 
    function Image (Cmd : String; Args : Utils.String_Vector) return String;
+
+   function Spawn_And_Capture
+     (Output              : in out Utils.String_Vector;
+      Command             : String;
+      Arguments           : Utils.String_Vector;
+      Understands_Verbose : Boolean := False;
+      Err_To_Out          : Boolean := False)
+      return Integer;
+   --  Returns output as vector of strings
+   --  Even if exception raised, Output will be filled-in
 
    ----------------------
    -- To_Argument_List --
@@ -123,68 +130,6 @@ package body Alire.OS_Lib.Subprocess is
       end if;
    end Checked_Spawn_And_Capture;
 
-   -----------
-   -- Spawn --
-   -----------
-
-   function Spawn (Command             : String;
-                   Arguments           : Utils.String_Vector;
-                   Understands_Verbose : Boolean := False;
-                   Force_Quiet         : Boolean := False) return Integer
-   is
-      use GNAT.OS_Lib;
-      use Alire.Utils;
-
-      Extra : constant String_Vector :=
-        (if Understands_Verbose then Empty_Vector & "-v" else Empty_Vector);
-      File  : File_Descriptor;
-      Name  : GNAT.OS_Lib.String_Access;
-      Ok    : Boolean;
-   begin
-      Trace.Detail ("Spawning: " & Image (Command, Extra & Arguments));
-
-      if (Force_Quiet and then Alire.Log_Level /= Debug)
-        or else
-          Alire.Log_Level in Always | Error | Warning
-      then
-         Create_Temp_Output_File (File, Name);
-         return Code : Integer do
-            declare
-               Arg_List : Argument_List_Access := To_Argument_List (Arguments);
-            begin
-               Spawn
-                 (Locate_In_Path (Command),
-                  Arg_List.all,
-                  File,
-                  Code,
-                  Err_To_Out => False);
-               Cleanup (Arg_List);
-               Close (File);
-               Delete_File (Name.all, Ok);
-               if not Ok then
-                  Trace.Error ("Failed to delete tmp file: " & Name.all);
-               end if;
-               Free (Name);
-            end;
-         end return;
-      elsif Alire.Log_Level = Info then
-         return Spawn_With_Progress (Locate_In_Path (Command), Arguments);
-      else
-         declare
-            Ret : Integer;
-            Arg_List : Argument_List_Access :=
-              To_Argument_List (Arguments &
-                                (if Alire.Log_Level = Detail
-                                   then Empty_Vector
-                                   else Extra));
-         begin
-            Ret := Spawn (Locate_In_Path (Command), Arg_List.all);
-            Cleanup (Arg_List);
-            return Ret;
-         end;
-      end if;
-   end Spawn;
-
    -----------------------
    -- Spawn_And_Capture --
    -----------------------
@@ -271,117 +216,5 @@ package body Alire.OS_Lib.Subprocess is
       Cleanup;
       return Exit_Code;
    end Spawn_And_Capture;
-
-   -------------------------
-   -- Spawn_With_Progress --
-   -------------------------
-
-   function Spawn_With_Progress (Command   : String;
-                                 Arguments : Utils.String_Vector)
-                                 return Integer
-   is
-      use Ada.Text_IO;
-      use GNAT.Expect;
-      use GNAT.OS_Lib;
-
-      Simple_Command : constant String :=
-        Ada.Directories.Simple_Name (Command);
-
-      --------------
-      -- Sanitize --
-      --------------
-
-      function Sanitize (S : String) return String is -- Remove CR y LFs
-      begin
-         return Result : String := S do
-            for I in Result'Range loop
-               if Result (I) = Ada.Characters.Latin_1.CR then
-                  Result (I) := ' ';
-               elsif Result (I) = Ada.Characters.Latin_1.LF then
-                  Result (I) := ' ';
-               end if;
-            end loop;
-         end return;
-      end Sanitize;
-
---        Indicator : constant String := "/-\|/-\|";
---        Indicator : constant String := "+x";
-      Indicator : constant String := ".oOo";
-      type Indicator_Mod is mod Indicator'Length;
-      Pos       : Indicator_Mod := 0;
-
-      Pid : Process_Descriptor;
-
-      Match     : Expect_Match;
-
-      Line      : String (1 .. 79) := (others => ' ');
-      Max_Len   : Natural := 0;
-
-      ----------------
-      -- Print_Line --
-      ----------------
-
-      procedure Print_Line (Text : String := "") is
-         --  When empty, just update progress and reprint previous line
-         Indicator_Only : constant String :=
-           Simple_Command & ": " & Indicator (Integer (Pos) + 1);
-
-         Current_Line   : constant String := Indicator_Only & " " & Text;
-
-         Capped_Line  : constant String :=
-           Current_Line (Current_Line'First ..
-                           Current_Line'First - 1 +
-                             Natural'Min (79, Current_Line'Length));
-      begin
-         if Text = "" then -- Keep previous output
-            Line (Indicator_Only'Range) := Indicator_Only;
-            Max_Len := Natural'Max (Max_Len, Indicator_Only'Length);
-         else -- Erase remainder
-            Line (Capped_Line'Range) := Capped_Line;
-            Line (Capped_Line'Last + 1 .. Line'Last) := (others => ' ');
-            Max_Len := Natural'Max (Max_Len, Capped_Line'Length);
-         end if;
-
-         Put (ASCII.CR & Line (1 .. Max_Len));
-         Flush;
-         Pos := Pos + 1;
-      end Print_Line;
-
-      Arg_List : Argument_List_Access := To_Argument_List (Arguments);
-   begin
-      Non_Blocking_Spawn
-        (Pid,
-         Command,
-         Arg_List.all,
-         Err_To_Out => True);
-
-      Cleanup (Arg_List);
-
-      loop
-         begin
-            Expect (Pid, Match,
-                    "([ \t\S]+)[ \n\r\f\v]",
-                    --  works for \n and \r in output (git vs gprbuild)
-                    Timeout => 200);
-
-            if Match >= 0 then
-               Print_Line (Utils.Crunch (Sanitize (Expect_Out_Match (Pid))));
-            else
-               Print_Line;
-            end if;
-         exception
-            when Process_Died =>
-               Log ("Spawned process died", Debug);
-               exit;
-         end;
-      end loop;
-
-      return Code : Integer do
-         Close (Pid, Code);
-
-         Put (ASCII.CR & String'(1 .. Max_Len => ' ') & ASCII.CR);
-         Flush;
-      end return;
-   end Spawn_With_Progress;
 
 end Alire.OS_Lib.Subprocess;
