@@ -1,5 +1,6 @@
 private with TOML;
 
+with Alire.Index_On_Disk;
 with Alire.Projects.With_Releases;
 with Alire.Releases;
 with Alire.Requisites;
@@ -12,11 +13,10 @@ package Alire.TOML_Index is
 
    subtype Load_Result is Outcome;
 
-   procedure Load_Catalog
-     (Catalog_Dir : String;
-      Result      : out Load_Result);
-   --  Load the whole TOML catalog from the given directory and using the given
-   --  environment variables.
+   procedure Load
+     (Index    : Index_On_Disk.Index'Class;
+      Result   : out Load_Result);
+   --  Load the whole TOML catalog for the given index.
 
    function Load_Release_From_File (Filename : String) return Releases.Release;
    --  Load a file that must contain a single release.

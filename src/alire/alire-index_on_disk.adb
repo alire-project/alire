@@ -105,29 +105,12 @@ package body Alire.Index_On_Disk is
 
    function Load (This : Index'Class) return Outcome
    is
-      Repo_Version_Files : constant Utils.String_Vector :=
-                             Directories.Find_Files_Under
-                               (Folder    => This.Index_Directory,
-                                Name      => "index.toml",
-                                Max_Depth => 1);
    begin
-      case Natural (Repo_Version_Files.Length) is
-         when 0 =>
-            return Outcome_Failure ("No index.toml file found in index");
-         when 1 =>
-            Trace.Detail ("Loading index found at " &
-                            Repo_Version_Files.First_Element);
-
-            return Result : Outcome := Outcome_Success do
-               TOML_Index.Load_Catalog
-                 (Catalog_Dir => Ada.Directories.Containing_Directory
-                                   (Repo_Version_Files.First_Element),
-                  Result      => Result);
-            end return;
-         when others =>
-            return Outcome_Failure ("Several index.toml files found in index");
-      end case;
-
+      return Result : Outcome := Outcome_Success do
+         TOML_Index.Load
+           (Index  => This,
+            Result => Result);
+      end return;
    exception
       when E : Checked_Error =>
          return Errors.Get (E);
