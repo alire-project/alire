@@ -173,6 +173,16 @@ package body Alire.Origins is
          if Prefixes (Kind) /= null and then
            Utils.Starts_With (From, Prefixes (Kind).all)
          then
+
+            --  Ensure that VCSs are local
+            if Kind in VCS_Kinds then
+               if not Utils.Starts_With (URL, Prefix_File) then
+                  return Parent.Failure
+                    ("Version Control System origins are only allowed for "
+                     & "repositories in the local filesystem");
+               end if;
+            end if;
+
             case Kind is
                when Git            => This := New_Git (URL, Commit);
                when Hg             => This := New_Hg (URL, Commit);
