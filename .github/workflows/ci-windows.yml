@@ -23,7 +23,7 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Install toolchain
-      uses: Fabien-Chouteau/setup-ada@dev
+      uses: ada-actions/toolchain@dev
       with:
         distrib: community
 

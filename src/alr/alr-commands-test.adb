@@ -6,9 +6,9 @@ with Alire.Containers;
 with Alire.Index;
 with Alire.Utils;
 with Alire.OS_Lib.Subprocess;
+with Alire.Config;
 
 with Alr.Files;
-with Alr.Interactive;
 with Alr.Paths;
 with Alr.Platform;
 with Alr.Parsers;
@@ -128,13 +128,11 @@ package body Alr.Commands.Test is
          else
             declare
                use Alire.Utils;
-
-               Unused : Integer;
             begin
                Skipping_Extensions := False;
 
-               Unused := Alire.OS_Lib.Subprocess.Spawn_And_Capture
-                 (Output, "alr",
+               Output := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                 ("alr",
                   Empty_Vector &
                     "get" &
                     "--build" &
@@ -303,7 +301,7 @@ package body Alr.Commands.Test is
            (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      Interactive.Not_Interactive := True;
+      Alire.Config.Not_Interactive := True;
 
       --  Start testing
       if Test_All then

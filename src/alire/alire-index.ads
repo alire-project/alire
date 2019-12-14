@@ -16,6 +16,11 @@ with Semantic_Versioning;
 
 package Alire.Index is
 
+   Version : constant Semantic_Versioning.Version :=
+               Semantic_Versioning.New_Version ("1.0");
+   --  The index version understood by alire must match the one in the indexes
+   --  being loaded.
+
    ---------------
    --  CATALOG  --
    ---------------

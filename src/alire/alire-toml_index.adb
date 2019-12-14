@@ -18,6 +18,8 @@ with Alire.Utils;
 
 with GNATCOLL.VFS;
 
+with Semantic_Versioning;
+
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
 with TOML.File_IO;
@@ -61,9 +63,6 @@ package body Alire.TOML_Index is
      (Package_Name (Package_Name'First .. Package_Name'First + 1));
    --  Return the name of the directory that must contain the description of
    --  the given package.
-
-   Expected_Index : constant TOML.TOML_Value := TOML.Create_Table;
-   --  TOML value for the expected content of "index.toml"
 
    Package_File_Suffix : constant String := ".toml";
    --  Suffix for the name of package description files
@@ -150,6 +149,9 @@ package body Alire.TOML_Index is
    procedure Check_Index (Catalog_Dir : String; Result : out Load_Result) is
       Filename : constant String := Dirs.Compose (Catalog_Dir, "index.toml");
       Value    : TOML.TOML_Value;
+      Key      : constant String := "version";
+      Version  : Semantic_Versioning.Version;
+      use type Semantic_Versioning.Version;
    begin
       --  Read "index.toml"
 
@@ -158,13 +160,46 @@ package body Alire.TOML_Index is
          return;
       end if;
 
-      --  Check that its content is what we expect: {"version": "1.0"}. TODO:
-      --  provide more information when the check fails.
+      --  Check that index version is the expected one, or give minimal advice
+      --  if it does not match.
 
-      if not TOML.Equals (Value, Expected_Index) then
-         Set_Error (Result, Filename, "unexpected index information");
-         return;
+      if not Value.Has (Key) then
+         Set_Error (Result, Filename, "index metadata missing 'version' key");
+      elsif Value.Get (Key).Kind /= TOML.TOML_String then
+         Set_Error (Result, Filename,
+                    "index version should hold a string, but found a "
+                    & Value.Get (Key).Kind'Img);
+      elsif Value.Keys'Length /= 1 then
+         Set_Error (Result, Filename,
+                    "index metadata contains unexpected fields, "
+                    & "only 'version' is expected");
+      else
+         Version := Semantic_Versioning.Parse (Value.Get (Key).As_String,
+                                               Relaxed => False);
+
+         if Index.Version < Version then
+            Set_Error (Result, Filename,
+                       "index version is newer than that expected by alr."
+                       & " You may have to update alr");
+         elsif Version < Index.Version then
+            Set_Error (Result, Filename,
+                       "index version is older than that expected by alr."
+                       & " Please update your local index "
+                       & "(alr index --update-all)");
+         end if;
+
+         if Index.Version /= Version then
+            Trace.Debug ("Expected index version: "
+                         & Semantic_Versioning.Image (Index.Version));
+            Trace.Debug ("But got index version: "
+                         & Semantic_Versioning.Image (Version));
+         end if;
       end if;
+
+   exception
+      when Semantic_Versioning.Malformed_Input =>
+         Set_Error (Result, Filename,
+                    "malformed version string: " & Value.Get (Key).As_String);
    end Check_Index;
 
    ------------------
@@ -184,6 +219,10 @@ package body Alire.TOML_Index is
       Trace.Detail ("Loading full catalog from " & Catalog_Dir);
 
       Check_Index (Catalog_Dir, Result);
+
+      if not Result.Success then
+         return;
+      end if;
 
       --  Go through all directories allowed to contain packages
 
@@ -426,6 +465,4 @@ package body Alire.TOML_Index is
       end loop;
    end Index_Crate;
 
-begin
-   Expected_Index.Set ("version", TOML.Create_String ("1.0"));
 end Alire.TOML_Index;

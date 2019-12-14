@@ -12,18 +12,12 @@ package body Alire.Origins.Deployers.APT is
    -----------------------
 
    overriding function Already_Installed (This : Deployer) return Boolean is
-      Exit_Code : Integer;
-      Output    : Utils.String_Vector;
+      Output : constant Utils.String_Vector :=
+                 Subprocess.Checked_Spawn_And_Capture
+                   ("apt-cache",
+                    Empty_Vector & "policy"
+                    & This.Base.Package_Name (Platform.Distribution));
    begin
-      Exit_Code := Subprocess.Spawn_And_Capture
-        (Output, "apt-cache", Empty_Vector & "policy" &
-           This.Base.Package_Name (Platform.Distribution));
-
-      if Exit_Code /= 0 then
-         Raise_Checked_Error
-           ("apt-cache policy exited with error:" & Exit_Code'Img);
-      end if;
-
       for Line of Output loop
          if Utils.Contains (Line, "Installed")
            and then
@@ -65,21 +59,14 @@ package body Alire.Origins.Deployers.APT is
    ------------
 
    overriding function Exists (This : Deployer) return Boolean is
-      Exit_Code : Integer;
-      Output    : String_Vector;
+      Output : constant String_Vector :=
+                 Subprocess.Checked_Spawn_And_Capture
+                   ("apt-cache",
+                    Empty_Vector &
+                      "-q" &
+                      "policy" &
+                      This.Base.Package_Name (Platform.Distribution));
    begin
-      Exit_Code := Subprocess.Spawn_And_Capture
-        (Output, "apt-cache",
-         Empty_Vector &
-           "-q" &
-           "policy" &
-           This.Base.Package_Name (Platform.Distribution));
-
-      if Exit_Code /= 0 then
-         Raise_Checked_Error
-           ("apt-cache policy exited with error:" & Exit_Code'Img);
-      end if;
-
       for Line of Output loop
          if Contains (To_Lower_Case (Line), "candidate:")
            and then
@@ -105,21 +92,14 @@ package body Alire.Origins.Deployers.APT is
    --------------------
 
    function Native_Version (Name : String) return String is
-      Exit_Code : Integer;
-      Output    : Utils.String_Vector;
+      Output : constant Utils.String_Vector :=
+                 Subprocess.Checked_Spawn_And_Capture
+                   ("apt-cache",
+                    Empty_Vector &
+                      "-q" &
+                      "policy" &
+                      Name);
    begin
-      Exit_Code := Subprocess.Spawn_And_Capture
-        (Output, "apt-cache",
-         Empty_Vector &
-           "-q" &
-           "policy" &
-           Name);
-
-      if Exit_Code /= 0 then
-         Raise_Checked_Error
-           ("apt-cache policy exited with code:" & Exit_Code'Img);
-      end if;
-
       for Line of Output loop
          if Contains (To_Lower_Case (Line), "candidate:")
            and then

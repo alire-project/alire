@@ -17,7 +17,7 @@ package body Alire.Config is
       Foo : String := "bar";
       Bar : Integer;
    begin
-      if not Interactive then
+      if Not_Interactive then
          Trace.Detail ("Non-interactive session, continuing");
       else
          Put_Line ("Press Enter to continue or Ctrl-C to abort");
