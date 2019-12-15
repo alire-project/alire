@@ -1,4 +1,5 @@
 with AAA.Table_IO;
+with Ada.Strings.Fixed;
 
 --  with Alire.Platform;
 with Alire.Defaults;
@@ -380,13 +381,15 @@ package body Alire.Releases is
                            return      Utils.String_Set
    is
       use Utils;
+      use Ada.Strings;
       Files : constant String_Vector :=
         Project_Files (R, P, With_Path => True);
    begin
       return Paths : String_Set do
          for File of Files loop
             if Contains (File, "/") then
-               Paths.Include (Head (File, '/'));
+               Paths.Include
+                 (File (File'First .. Fixed.Index (File, "/", Backward)));
             end if;
          end loop;
       end return;
