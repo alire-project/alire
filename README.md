@@ -14,12 +14,13 @@ Documentation at this time is minimal. Expect further efforts in this direction 
 
 ## TL;DR ##
 
-Available for Debian stable / Ubuntu >=17.10
+Available for Debian stable / Ubuntu >=17.10 / macOS
 
 `alr` is undergoing frequent changes in preparation for a first publicly announced beta. Hence, the current recommendation is to run the latest `master` branch version, and double-check in case of problems that no new PRs have been merged since your last compiled version.
 
 To install run the following as user in a terminal, or see below for more details:
 
+1. If running on macOS, `export OS=macOS`
 1. `git clone --recursive https://github.com/alire-project/alire.git`
 1. `cd alire`
 1. `gprbuild -j0 -p -P alr_env`
@@ -47,12 +48,13 @@ Note that, for projects that require platform-provided Ada libraries (such as De
 
 At present, only the latest master version is recommended. To obtain it you need to perform a manual clone and build:
 
+1. If running on macOS, `export OS=macOS`
 1. `git clone --recursive https://github.com/alire-project/alire.git`
 1. `cd alire`
 1. `gprbuild -j0 -p -P alr_env`
 
 The executable will be found in `bin/alr`.
-    
+
 ## First steps ##
 The following miniguide shows how to obtain and compile already packaged projects, and create your own. First, create or enter into some folder where you don't mind that new project folders are created by the `alr` tool
 

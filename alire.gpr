@@ -14,8 +14,9 @@ library project Alire is
    Src_Dirs := ("src/alire");
 
    case Alire_Common.Host_Os is
-      when "Windows_NT" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
-      when others       => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
+      when "windows" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
+      when "osx"     => Src_Dirs := Src_Dirs & ("src/alire/os_macos");
+      when others    => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
    end case;
 
    for Source_Dirs use Src_Dirs;
