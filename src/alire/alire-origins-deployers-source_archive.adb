@@ -65,14 +65,14 @@ package body Alire.Origins.Deployers.Source_Archive is
       Trace.Detail ("Downloading archive: " & This.Base.Archive_URL);
 
       OS_Lib.Subprocess.Checked_Spawn
-        ("wget",
+        ("curl",
          Empty_Vector &
            This.Base.Archive_URL &
-           "-q" &
-         (if Log_Level < Trace.Info
-            then Empty_Vector
-            else Empty_Vector & "--show-progress" & "--progress=bar") &
-           "-O" &
+           "--location" &  -- allow for redirects at the remote host
+           (if Log_Level <= Trace.Info
+            then Empty_Vector & "--silent"
+            else Empty_Vector) &
+           "--output" &
            Archive_File);
 
       return Outcome_Success;

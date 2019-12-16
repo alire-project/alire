@@ -8,7 +8,7 @@ from drivers.alr import run_alr
 from drivers.asserts import assert_match
 
 import re
-import os
+import platform
 
 p = run_alr('show', 'hello')
 
@@ -36,8 +36,11 @@ assert_match(".*Dependencies .direct.:.*case OS is.*when Linux => .libhello\^1.*
 p = run_alr('show', 'hello', '--native')
 
 # And that, once resolved, the expected property is there:
-if os.environ.get('OS','') == 'Windows_NT':
+if platform.system() == 'Windows':
     assert_match(".*GPR External: OS := windows.*",
+                 p.out, flags=re.S)
+elif platform.system() == 'Darwin':
+    assert_match(".*GPR External: OS := macos.*",
                  p.out, flags=re.S)
 else:
     assert_match(".*GPR External: OS := linux.*",

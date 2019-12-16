@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 
-trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR 
-trap 'echo "Interrupted" >&2 ; exit 1' INT 
+trap 'echo "ERROR at line ${LINENO} (code: $?)" >&2' ERR
+trap 'echo "Interrupted" >&2 ; exit 1' INT
 
 set -o errexit
 set -o nounset
 
 export PATH+=:${PWD}/bin
+
+# For Darwin, have to define OS=macOS for alr_env.gpr
+# Windows defines it anyway
+# Linux (undefined) selects the default
+
+[ `uname -s` == "Darwin" ] && export OS=macOS
 
 # Build alr
 gprbuild -j0 -p -P alr_env
@@ -47,6 +53,6 @@ cd ..
 echo ............................
 
 # Check installer in stable branch
-if [ "$BRANCH" == "stable" ]; then 
+if [ "$BRANCH" == "stable" ]; then
     echo -e '\n\n/bin\ny' | ./install/alr-bootstrap.sh
 fi

@@ -2,9 +2,8 @@ abstract project Alire_Common is
 
    for Create_Missing_Dirs use "True";
 
-   Host_OS := external ("OS", "default");
-   --  On Windows an OS environment variable is defined, we can use it to
-   --  determine if we are compiling on Windows.
+   Host_OS := external ("ALIRE_OS", "default");
+   --  Defined in alr_env.gpr.
 
    type Any_Build_Mode is ("debug", "release");
    Build_Mode : Any_Build_Mode := external ("ALIRE_BUILD_MODE", "debug");
