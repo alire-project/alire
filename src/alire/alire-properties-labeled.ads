@@ -13,14 +13,14 @@ package Alire.Properties.Labeled with Preelaborate is
      (Author,
       --  VIP
 
-      Comment,
-      --  Extra text
-
       Description,
       --  Free-form but short description
 
       Executable,
       --  A resulting executable built by the project
+
+      Long_Description,
+      --  Unlimited-length crate description
 
       Maintainer,
       --  Info about the maintainer of the alr-packaged project
@@ -50,9 +50,9 @@ package Alire.Properties.Labeled with Preelaborate is
 
    Cardinality : array (Labels) of Cardinalities :=
                    (Author             => Multiple,
-                    Comment            => Unique,
                     Description        => Unique,
                     Executable         => Multiple,
+                    Long_Description   => Unique,
                     Maintainer         => Multiple,
                     Maintainers_Logins => Multiple,
                     Notes              => Unique,
@@ -63,9 +63,9 @@ package Alire.Properties.Labeled with Preelaborate is
 
    Mandatory : array (Labels) of Boolean :=
                  (Author             => False,
-                  Comment            => False,
                   Description        => True,
                   Executable         => False,
+                  Long_Description   => False,
                   Maintainer         => True,
                   Maintainers_Logins => True,
                   Notes              => False,
@@ -172,9 +172,9 @@ private
    function Key (L : Labels) return String
    is (case L is
           when Author             => TOML_Keys.Author,
-          when Comment            => TOML_Keys.Comment,
           when Description        => TOML_Keys.Description,
           when Executable         => TOML_Keys.Executable,
+          when Long_Description   => TOML_Keys.Long_Descr,
           when Maintainer         => TOML_Keys.Maintainer,
           when Maintainers_Logins => TOML_Keys.Maint_Logins,
           when Notes              => TOML_Keys.Notes,
