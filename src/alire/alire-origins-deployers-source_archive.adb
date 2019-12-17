@@ -69,9 +69,9 @@ package body Alire.Origins.Deployers.Source_Archive is
          Empty_Vector &
            This.Base.Archive_URL &
            "--location" &  -- allow for redirects at the remote host
-           (if Log_Level <= Trace.Info
+           (if Log_Level < Trace.Info
             then Empty_Vector & "--silent"
-            else Empty_Vector) &
+            else Empty_Vector & "--progress-bar") &
            "--output" &
            Archive_File);
 
