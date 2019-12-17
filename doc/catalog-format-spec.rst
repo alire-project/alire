@@ -148,6 +148,10 @@ entries:
 
    description = "Library to handle foobars"
 
+
+* ``long-description``: optional free-form string to provide information about
+  this package, in addition to ``description``, without length restrictions.
+
 * ``authors``: optional array of strings. Flat list of human-readable names for
   the authors, i.e. the people that wrote the software that is packaged. For
   instance:
@@ -225,9 +229,6 @@ entries:
    'debian|ubuntu' = true
    '...' = false
 
-* ``comments``: free form optional string to provide information about this
-  package, in addition to ``description``.
-
 * ``depends-on``: optional dynamic dependencies expression common to all
   releases. For instance:
 
@@ -245,8 +246,8 @@ entries:
   Available constraint operators are the usual Ada ones (=, /=, >, >=, <, <=)
   plus caret (^, any upwards version within the same major point) and tilde
   (~, any upwards version within the same minor point). Logical operators for
-  and (&), or (|) are accepted; see the ``Semantic_Versioning`` project 
-  documentation on `extended version sets 
+  and (&), or (|) are accepted; see the ``Semantic_Versioning`` project
+  documentation on `extended version sets
   <https://github.com/alire-project/semantic_versioning#types>`_.
 
 * ``project-files``: optional list of strings. Each is a path, relative to the
@@ -284,9 +285,9 @@ entries:
    linux   = { OS = "gnu-linux" } # Compact table syntax is convenient in this case
    windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
 
-* ``executables``: optional list of strings. Each one is the simple name of an 
+* ``executables``: optional list of strings. Each one is the simple name of an
   executable provided by the package. Executables are looked for by ``alr`` in the
-  build tree and must not include a path. If only one executable is given, it is 
+  build tree and must not include a path. If only one executable is given, it is
   considered the default for ``alr run``. For instance:
 
   .. code-block:: toml
