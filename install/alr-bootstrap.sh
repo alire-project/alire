@@ -6,7 +6,7 @@ repo_branch=${1:-stable}
 repo_url=https://github.com/alire-project/alr.git
 
 required_tools="git id"
-optional_tools="hg sudo"
+optional_tools="curl hg sudo"
 required_compiler="gprbuild gnatmake gnatls"
 
 alire_folder=${XDG_CONFIG_HOME:-$HOME/.config}/alire
