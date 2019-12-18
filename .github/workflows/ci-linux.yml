@@ -1,12 +1,12 @@
 name: CI linux
 
 on:
-  push:
-    paths-ignore:
-      - 'doc/**'
   pull_request:
     paths-ignore:
       - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
 
 env:
   alire_index: ""
