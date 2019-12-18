@@ -1,12 +1,12 @@
 name: CI macOS
 
 on:
-  push:
-    paths-ignore:
-      - 'doc/**'
   pull_request:
     paths-ignore:
       - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
 
 jobs:
 
