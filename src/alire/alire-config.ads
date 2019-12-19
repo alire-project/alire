@@ -41,4 +41,12 @@ package Alire.Config is
    --  If interactive, ask the user to press Enter or Ctrl-C to stop.
    --  Output a log trace otherwise and continue.
 
+   --------------
+   -- Symlinks --
+   --------------
+
+   Use_Symlinks : aliased Boolean := False;
+   --  When possible, use symbolic links for local crates instead of copying
+   --  the source directory.
+
 end Alire.Config;

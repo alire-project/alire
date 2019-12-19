@@ -3,6 +3,9 @@ with Ada.Numerics.Discrete_Random;
 with Ada.Unchecked_Deallocation;
 
 with Alire.Paths;
+with Alire.OS_Lib.Subprocess;
+
+with GNATCOLL.OS.Constants;
 
 package body Alire.Directories is
 
@@ -44,6 +47,26 @@ package body Alire.Directories is
       end loop;
       End_Search (Search);
    end Copy;
+
+   --------------------
+   -- Create_Symlink --
+   --------------------
+
+   procedure Create_Symlink (Src, Dst : Absolute_Path) is
+      use Alire.Utils;
+   begin
+      case GNATCOLL.OS.Constants.OS is
+         when GNATCOLL.OS.Unix | GNATCOLL.OS.MacOS =>
+            Alire.OS_Lib.Subprocess.Checked_Spawn
+              ("ln",
+               Utils.Empty_Vector &
+                 "-s" &
+                 Src &
+                 Dst);
+         when others =>
+            Raise_Checked_Error ("Symlinks not available on this platform");
+      end case;
+   end Create_Symlink;
 
    ----------------------
    -- Detect_Root_Path --

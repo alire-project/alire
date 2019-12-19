@@ -3,6 +3,7 @@ with GNATCOLL.VFS;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Origins.Deployers.Source_Archive;
+with Alire.Config;
 
 package body Alire.Origins.Deployers.Filesystem is
 
@@ -57,6 +58,34 @@ package body Alire.Origins.Deployers.Filesystem is
          return Outcome_Success;
       end Deploy_From_Dir;
 
+      --------------------
+      -- Deploy_Symlink --
+      --------------------
+
+      function Deploy_Symlink return Outcome is
+         Dst_Full_Name : constant String
+           := +GNATCOLL.VFS.Full_Name
+             (GNATCOLL.VFS.Create_From_Base (+Folder));
+
+         Parent       : constant Virtual_File := Dst.Get_Parent;
+         Parent_Guard : Directories.Temp_File :=
+           Directories.With_Name (+Dst.Full_Name);
+         --  The guard ensures deletion in case of error.
+
+      begin
+
+         Parent.Make_Dir;
+
+         Alire.Directories.Create_Symlink (This.Base.Path, Dst_Full_Name);
+
+         Parent_Guard.Keep;
+
+         --  The dst dir must be kept otherwise the parent dir is also deleted
+         Dst_Guard.Keep;
+
+         return Outcome_Success;
+      end Deploy_Symlink;
+
       -------------------------
       -- Deploy_From_Archive --
       -------------------------
@@ -76,13 +105,17 @@ package body Alire.Origins.Deployers.Filesystem is
       Src : constant Virtual_File := Create (+This.Base.Path);
    begin
       --  Create destination
-      if not Dst.Is_Directory then
+      if not Dst.Is_Directory and then not Config.Use_Symlinks then
          Dst.Make_Dir;
       end if;
 
       --  Check source crate existence
       if Src.Is_Directory then
-         return Deploy_From_Dir;
+         if Config.Use_Symlinks then
+            return Deploy_Symlink;
+         else
+            return Deploy_From_Dir;
+         end if;
       elsif Src.Is_Regular_File then
          return Deploy_From_Archive;
       else

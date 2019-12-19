@@ -21,6 +21,9 @@ package Alire.Directories is
    --  equivalent to "cp -r src/* dst/". Excluding may be a single name that
    --  will not be copied (if file) or recursed into (if folder).
 
+   procedure Create_Symlink (Src, Dst : Absolute_Path);
+   --  Create a symbolic link Dst pointing to Src
+
    function Current return String renames Ada.Directories.Current_Directory;
 
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)

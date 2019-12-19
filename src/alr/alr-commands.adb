@@ -177,6 +177,12 @@ package body Alr.Commands is
                      "Assume default answers for all user prompts");
 
       Define_Switch (Config,
+                     Alire.Config.Use_Symlinks'Access,
+                     "", "--use-symlinks",
+                     "Use symbolic links for local crates instead of copying" &
+                       " directories");
+
+      Define_Switch (Config,
                      Prefer_Oldest'Access,
                      Long_Switch => "--prefer-oldest",
                      Help        => "Prefer oldest versions instead of " &
