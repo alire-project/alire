@@ -63,8 +63,17 @@ package body Alire.Directories is
                  "-s" &
                  Src &
                  Dst);
-         when others =>
-            Raise_Checked_Error ("Symlinks not available on this platform");
+
+         when GNATCOLL.OS.Windows =>
+            declare
+               Extra_Args : constant String_Vector :=
+                 (case Ada.Directories.Kind (Src) is
+                     when Ada.Directories.Directory => Empty_Vector & "/d",
+                     when others                    => Empty_Vector);
+            begin
+               Alire.OS_Lib.Subprocess.Checked_Spawn
+                 ("mklink", Extra_Args & Dst & Src);
+            end;
       end case;
    end Create_Symlink;
 
