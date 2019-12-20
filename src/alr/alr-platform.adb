@@ -83,9 +83,24 @@ package body Alr.Platform is
                   end;
                else
                   declare
-                     V : Semver.Version;
+                     V    : Semver.Version;
+                     Last : Natural := Version'First;
                   begin
-                     V := Semver.Parse (Version, Relaxed => False);
+                     --  At least on Ubuntu, Version looks like:
+                     --     9.2.1 20191008
+                     --
+                     --  We want semver to parse only the first part. Set Last
+                     --  to the index of the last character before the first
+                     --  space in Version. If there is no space in Line, set
+                     --  it to Version'Last.
+
+                     for I in Version'Range loop
+                        exit when Version (I) = ' ';
+                        Last := I;
+                     end loop;
+
+                     V := Semver.Parse
+                       (Version (Version'First .. Last), Relaxed => False);
 
                      case Semver.Major (V) is
                         when 0 .. 6 =>
