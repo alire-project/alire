@@ -1,5 +1,4 @@
 with Alire;
-with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 with Alire.Errors;
 
 with Alr.Bootstrap;

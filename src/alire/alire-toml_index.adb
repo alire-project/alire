@@ -504,6 +504,9 @@ package body Alire.TOML_Index is
       use GNATCOLL;
       use all type VFS.Filesystem_String;
    begin
+
+      --  Add releases
+
       for R of Crate.Releases loop
          --  Adjust and check a valid path for a local origin.
          --  This is delayed until this moment to keep many other

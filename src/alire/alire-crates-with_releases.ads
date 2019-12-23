@@ -1,5 +1,6 @@
 with Alire.Interfaces;
 with Alire.Containers;
+with Alire.Externals;
 with Alire.Releases;
 with Alire.TOML_Adapters;
 
@@ -27,6 +28,8 @@ package Alire.Crates.With_Releases with Preelaborate is
 
    function Description (This : Crate) return Description_String;
 
+   function Externals (This : Crate) return Alire.Externals.List;
+
    function Releases (This : Crate) return Containers.Release_Set;
 
    overriding
@@ -46,7 +49,8 @@ private
    type Crate (Len : Natural) is new General and
      Interfaces.Detomifiable with
       record
-         Name      : Crate_Name (1 .. Len);
+         Name      : Alire.Crate_Name (1 .. Len);
+         Externals : Alire.Externals.List;
          Releases  : Containers.Release_Set;
       end record;
 
