@@ -1,6 +1,7 @@
 with AAA.Table_IO;
 
 with Alire.Containers;
+with Alire.Externals;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Platform;
@@ -62,6 +63,22 @@ package body Alr.Commands.Search is
          end if;
       end List_Release;
 
+      ---------------------
+      -- List_Undetected --
+      ---------------------
+
+      procedure List_Undetected (Name : Alire.Crate_Name;
+                                 Ext  : Alire.Externals.External'Class) is
+      begin
+         Found := Found + 1;
+         Tab.New_Row;
+            Tab.Append (+Name);
+            Tab.Append ("NU ");
+            Tab.Append ("external");
+            Tab.Append (Alire.Index.Crate (Name).Description);
+            Tab.Append (Ext.Image);
+      end List_Undetected;
+
       use Alire.Containers.Release_Sets;
    begin
       if Num_Arguments = 0
@@ -117,11 +134,28 @@ package body Alr.Commands.Search is
             end if;
          end List_All_Or_Latest;
 
+         --------------------
+         -- List_Externals --
+         --------------------
+
+         procedure List_Externals (Crate : Alire.Crates.With_Releases.Crate)
+         is
+         begin
+            if Cmd.External then
+               --  We must show only externals that have failed detection
+               --  (otherwise they'll appear as normal releases).
+               for External of Crate.Externals loop
+                  List_Undetected (Crate.Name, External);
+               end loop;
+            end if;
+         end List_Externals;
+
       begin
          if Cmd.List then
             Trace.Detail ("Searching...");
             for Crate of Alire.Index.All_Crates.all loop
                List_All_Or_Latest (Crate);
+               List_Externals (Crate);
             end loop;
          else
             declare
@@ -132,6 +166,7 @@ package body Alr.Commands.Search is
                for Crate of Alire.Index.All_Crates.all loop
                   if Utils.Contains (+Crate.Name, Pattern) then
                      List_All_Or_Latest (Crate);
+                     List_Externals (Crate);
                   end if;
                   Busy.Step;
                end loop;
