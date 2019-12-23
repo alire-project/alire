@@ -39,7 +39,7 @@ package body Alr.Commands.Search is
              Utils.Contains (R.Description,
                              Cmd.Prop.all))
            and then
-             (Cmd.Native or else not R.Origin.Is_Native)
+             (Cmd.External or else not R.Origin.Is_Native)
          then
             Found := Found + 1;
             Tab.New_Row;
@@ -196,9 +196,9 @@ package body Alr.Commands.Search is
                      "List all available releases");
 
       Define_Switch (Config,
-                     Cmd.Native'Access,
-                     "", "--native",
-                     "Include platform-provided native packages in search");
+                     Cmd.External'Access,
+                     "", "--external",
+                     "Include externally-provided releases in search");
 
       Define_Switch (Config,
                      Cmd.Prop'Access,

@@ -26,10 +26,10 @@ package Alr.Commands.Search is
 private
 
    type Command is new Commands.Command with record
-      Full   : aliased Boolean := False;
-      List   : aliased Boolean := False;
-      Native : aliased Boolean := False;
-      Prop   : aliased GNAT.Strings.String_Access;
+      Full     : aliased Boolean := False;
+      List     : aliased Boolean := False;
+      External : aliased Boolean := False;
+      Prop     : aliased GNAT.Strings.String_Access;
    end record;
 
 end Alr.Commands.Search;
