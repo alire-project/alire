@@ -1,0 +1,7 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
