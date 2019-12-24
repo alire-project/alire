@@ -388,7 +388,7 @@ package body Alr.Commands is
       Result  : Alire.Outcome;
       Indexes : Alire.Features.Index.Index_On_Disk_Set;
    begin
-      if not Alire.Index.Catalog.Is_Empty and then not Force_Reload then
+      if Alire.Index.Crate_Count /= 0 and then not Force_Reload then
          Trace.Detail ("Index already loaded, loading skipped");
          return;
       end if;

@@ -1,6 +1,6 @@
 with AAA.Table_IO;
 
-with Alire.Projects;
+with Alire.Index;
 
 with Alr.Utils;
 
@@ -28,18 +28,17 @@ package body Alr.Commands.List is
       Requires_Full_Index;
 
       declare
-         use Alire.Projects.Project_Description_Maps;
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
       begin
-         for I in Alire.Projects.Descriptions.Iterate loop
+         for Crate of Alire.Index.All_Crates.all loop
             if Num_Arguments = 0 or else
-              Contains (To_Lower_Case (+Key (I)), Search) or else
-              Contains (To_Lower_Case (Element (I)), Search)
+              Contains (+Crate.Name, Search) or else
+              Contains (+Crate.Name, Search)
             then
                Found := Found + 1;
                Table.New_Row;
-               Table.Append (To_Lower_Case (+Key (I)));
-               Table.Append (Element (I));
+               Table.Append (+Crate.Name);
+               Table.Append (Crate.Description);
             end if;
             Busy.Step;
          end loop;

@@ -25,7 +25,7 @@ package Alire.TOML_Index is
 private
 
    procedure Index_Crate (Path  : Relative_Path;
-                          Crate : Projects.With_Releases.Crate);
+                          Crate : in out Projects.With_Releases.Crate);
    --  Add the crate and its releases to the internal index.
    --  Path is where on disk the Crate was loaded from. This is necessary
    --  to fix relative paths in local origins, which at load time are relative

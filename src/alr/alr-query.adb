@@ -58,11 +58,13 @@ package body Alr.Query is
       return Boolean
    is
    begin
-      for R of Index.Catalog loop
-         if R.Project = Project and then Allowed.Contains (R.Version) then
-            return True;
-         end if;
-      end loop;
+      if Alire.Index.Exists (Project) then
+         for R of Index.Crate (Project).Releases loop
+            if Allowed.Contains (R.Version) then
+               return True;
+            end if;
+         end loop;
+      end if;
 
       return False;
    end Exists;
@@ -99,18 +101,20 @@ package body Alr.Query is
       end Check;
 
    begin
-      if Policy = Newest then
-         for R of reverse Index.Catalog loop
-            if Check (R) then
-               return R;
-            end if;
-         end loop;
-      else
-         for R of Index.Catalog loop
-            if Check (R) then
-               return R;
-            end if;
-         end loop;
+      if Alire.Index.Exists (Project) then
+         if Policy = Newest then
+            for R of reverse Alire.Index.Crate (Project).Releases loop
+               if Check (R) then
+                  return R;
+               end if;
+            end loop;
+         else
+            for R of Alire.Index.Crate (Project).Releases loop
+               if Check (R) then
+                  return R;
+               end if;
+            end loop;
+         end if;
       end if;
 
       raise Query_Unsuccessful with "Release not found: " & (+Project);
@@ -528,18 +532,24 @@ package body Alr.Query is
             if Frozen.Contains (Dep.Project) then
                --  Cut search once a project is frozen
                Check (Frozen (Dep.Project));
-            else
-               --  FIXME: use Floor/Ceiling or cleverer data structure to not
-               --  blindly visit all releases.
+            elsif Index.Exists (Dep.Project) then
                if Options.Age = Newest then
-                  for R of reverse Index.Catalog loop
+                  for R of reverse Index.Crate (Dep.Project).Releases loop
                      Check (R);
                   end loop;
                else
-                  for R of Index.Catalog loop
+                  for R of Index.Crate (Dep.Project).Releases loop
                      Check (R);
                   end loop;
                end if;
+            else
+               Trace.Debug
+                 ("SOLVER: discarding search branch because "
+                  & "index LACKS the crate " & Dep.Image
+                  & "when the search tree was "
+                  & Tree'(Expanded
+                    and Current
+                    and Remaining).Image_One_Line);
             end if;
          end Expand_Value;
 
