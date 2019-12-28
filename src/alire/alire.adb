@@ -1,3 +1,5 @@
+with AAA.Debug;
+
 with Alire.Errors;
 with Alire.Utils;
 
@@ -114,9 +116,32 @@ package body Alire is
 
    procedure Raise_Checked_Error (Msg : String) is
    begin
-      Err_Log (Msg);
+      if Log_Debug then
+         Err_Log (Msg);
+      end if;
       raise Checked_Error with Errors.Set (Msg);
    end Raise_Checked_Error;
+
+   ---------------------
+   -- Outcome_Failure --
+   ---------------------
+
+   function Outcome_Failure (Message : String) return Outcome is
+      Stack : constant String := AAA.Debug.Stack_Trace;
+   begin
+      if Log_Debug then
+         Err_Log ("Generating Outcome_Failure with message: " & Message);
+         Err_Log ("Generating Outcome_Failure with call stack:");
+         Err_Log (Stack);
+      end if;
+
+      Trace.Debug ("Generating Outcome_Failure with message: " & Message);
+      Trace.Debug ("Generating Outcome_Failure with call stack:");
+      Trace.Debug (Stack);
+
+      return (Success => False,
+              Message => +Message);
+   end Outcome_Failure;
 
    ----------------------------
    -- Outcome_From_Exception --

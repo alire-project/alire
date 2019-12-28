@@ -43,8 +43,6 @@ package body Alire.Features.Index is
 
          Priority : Index_On_Disk.Priorities := Index_On_Disk.Default_Priority;
       begin
-         Result := Outcome_Failure ("Internal error: result status not set");
-
          --  Trivial case if not Before
          if Before = "" then
             Result := Outcome_Success;
@@ -109,22 +107,13 @@ package body Alire.Features.Index is
          end if;
       end loop;
 
-      --  Check, with fake priority, that the index does not exist already
-      declare
-         Result : Outcome;
-         Index  : constant Index_On_Disk.Index'Class :=
-                    Index_On_Disk.New_Handler
-                      (Origin, Name, Under, Result,
-                       Index_On_Disk.Default_Priority);
-      begin
-         --  Don't re-add if it is already valid:
-         if Result.Success and then Index.Verify.Success then
-            Trace.Warning ("Index with given name exists, skipping action.");
-            return Outcome_Success;
-         elsif not Result.Success then
-            return Result;
+      --  Check that no other index has the same name (& hence dir location)
+      for Index of Indexes loop
+         if Index.Name = Name then
+            return Outcome_Failure
+              ("Given name already in use by existing index");
          end if;
-      end;
+      end loop;
 
       --  Create handler with proper priority and proceed
       declare
