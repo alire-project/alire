@@ -31,24 +31,38 @@ alr version
 echo ............................
 
 # Set up index if not default:
-if [ "$INDEX" != "" ]; then
+if [ "${INDEX:-}" != "" ]; then
     echo Setting default index to: $INDEX
     alr index --name default --add "$INDEX"
 fi
 
 echo ALR SEARCH:
 # List releases for the record
-alr search -d --list --native
+alr search -q -d --list --native
 echo ............................
 
 echo TESTSUITE:
 # Run e3.testsuite
 echo
 cd testsuite
-python --version
-pip --version
-pip install e3-testsuite
-python ./run.py || { echo Test suite failures, unstable build!; exit 1; }
+if [ "${OS:-}" == "Windows_NT" ]; then
+    # There is some mixup of Python versions between the one installed by
+    # Chocolatey and the one hosted in the github VM. To be looked into.
+    run_python=python
+    run_pip=pip
+else
+    run_python=python2
+    run_pip=pip2
+fi
+
+$run_python --version
+$run_pip --version
+$run_pip install e3-testsuite
+echo Python search paths:
+$run_python -c "import sys; print('\n'.join(sys.path))"
+
+echo Running test suite now:
+$run_python ./run.py || { echo Test suite failures, unstable build!; exit 1; }
 cd ..
 echo ............................
 
