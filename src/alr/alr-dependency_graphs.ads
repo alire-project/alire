@@ -22,15 +22,15 @@ package Alr.Dependency_Graphs is
                               return Graph;
    --  Remove dependencies that don't appear in the solution
 
-   function Has_Dependencies (This    : Graph;
-                              Project : Alire.Crate_Name)
+   function Has_Dependencies (This  : Graph;
+                              Crate : Alire.Crate_Name)
                               return Boolean;
-   --  Say if Project has dependencies in the current graph (hence not
+   --  Say if Crate has dependencies in the current graph (hence not
    --  installable yet).
 
    function Removing_Dependee (This    : Graph;
-                               Project : Alire.Crate_Name) return Graph;
-   --  Remove all dependencies with Project as the dependee project
+                               Crate : Alire.Crate_Name) return Graph;
+   --  Remove all dependencies with Crate as the dependee crate
 
    procedure Plot (This     : Graph;
                    Instance : Alire.Containers.Release_Map);
@@ -44,7 +44,7 @@ package Alr.Dependency_Graphs is
 private
 
    type Dependency (L1, L2 : Natural) is record
-      Dependent : String (1 .. L1); -- Should be project names but bug
+      Dependent : String (1 .. L1); -- Should be crate names but bug
       Dependee  : String (1 .. L2);
    end record;
 

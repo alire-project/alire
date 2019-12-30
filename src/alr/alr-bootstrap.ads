@@ -8,16 +8,16 @@ package Alr.Bootstrap is
 
    type Session_States is
      (Outside,   -- Not in any Alire context
-      Broken,    -- Top-level folder is a single project, invalid TOML file
-      Project,   -- Top-level folder is a single project
-      Sandbox    -- Top-level folder is a sandbox with several projects
+      Broken,    -- Top-level folder is a single release, invalid TOML file
+      Release,   -- Top-level folder is a single release
+      Sandbox    -- Top-level folder is a sandbox with several releases
      );
    --  Sandbox mode is not implemented yet
 
-   subtype Valid_Session_States is Session_States range Project .. Sandbox;
+   subtype Valid_Session_States is Session_States range Release .. Sandbox;
 
    function Session_State return Session_States;
-   --  Note that even if you're in a project within a sandbox, result is
+   --  Note that even if you're in a release within a sandbox, result is
    --  sandbox.
 
    -------------

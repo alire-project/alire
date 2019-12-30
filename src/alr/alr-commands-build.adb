@@ -15,7 +15,7 @@ package body Alr.Commands.Build is
 
    procedure Do_Compile is
    begin
-      Requires_Project;
+      Requires_Valid_Session;
       Requires_Buildfile;
 
       --  COMPILATION

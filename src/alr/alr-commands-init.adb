@@ -180,7 +180,7 @@ package body Alr.Commands.Init is
    overriding procedure Execute (Cmd : in out Command) is
    begin
       if Num_Arguments /= 1 then
-         Trace.Error ("No project name given");
+         Trace.Error ("No crate name given");
          raise Wrong_Command_Arguments;
       end if;
 
@@ -198,13 +198,13 @@ package body Alr.Commands.Init is
       declare
          Name  : constant String := Argument (1);
          Check : constant Parsers.Allowed_Milestones :=
-                   Parsers.Project_Versions (Name)
+                   Parsers.Crate_Versions (Name)
                    with Unreferenced;
       begin
          if Utils.To_Lower_Case (Name)
            = Utils.To_Lower_Case (Templates.Sed_Pattern)
          then
-            Log ("The project name is invalid, as it is used internally by"
+            Log ("The crate name is invalid, as it is used internally by"
                  & " alr; please choose another name");
             raise Command_Failed;
          end if;
@@ -217,12 +217,12 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen
          --  already.
-         if Session_State = Project then
-            if Name = Root.Current.Release.Project_Str then
+         if Session_State = Release then
+            if Name = Root.Current.Release.Name_Str then
                Trace.Info ("Already in working copy, skipping initialization");
             else
-               Trace.Error ("Cannot initialize a project inside another"
-                            & " alr project, stopping.");
+               Trace.Error ("Cannot initialize a working release inside"
+                            & " another release, stopping.");
                raise Command_Failed;
             end if;
          end if;

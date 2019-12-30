@@ -1,4 +1,8 @@
+with Alire.Conditional;
+with Alire.Errors;
+with Alire.Origins;
 with Alire.Properties.Labeled;
+with Alire.Requisites;
 with Alire.TOML_Keys;
 
 with TOML;
@@ -91,7 +95,7 @@ package body Alire.Crates.With_Releases is
             declare
                Release : Alire.Releases.Release :=
                            Alire.Releases
-                             .New_Working_Release (Project => This.Name)
+                             .New_Working_Release (Name => This.Name)
                              .Retagging (Ver)
                              .Replacing (Properties   => This.Properties)
                              .Replacing (Dependencies => This.Dependencies)
@@ -123,6 +127,10 @@ package body Alire.Crates.With_Releases is
       end if;
 
       return Outcome_Success;
+
+   exception
+      when E : Alire.Checked_Error =>
+         return Errors.Get (E);
    end From_TOML;
 
    -----------------

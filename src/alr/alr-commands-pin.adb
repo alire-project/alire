@@ -17,7 +17,7 @@ package body Alr.Commands.Pin is
       pragma Unreferenced (Cmd);
    begin
       Requires_Full_Index;
-      Requires_Project;
+      Requires_Valid_Session;
 
       declare
          Sol : constant Query.Solution :=

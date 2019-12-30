@@ -17,7 +17,7 @@ package Alr.Files is
 
    function Locate_Any_GPR_File return Natural;
    --  Says if there's any *.gpr file in current folder (making the cwd a
-   --  plausible alr project).
+   --  plausible alr working dir).
 
    procedure Backup_If_Existing (File : String);
    --  If File exists, move to file.prev

@@ -57,7 +57,7 @@ package body Alr.Bootstrap is
    function Session_State return Session_States is
    begin
       if Root.Current.Is_Valid then
-         return Project;
+         return Release;
       elsif Alire.Directories.Detect_Root_Path /= "" then
          return Broken;
       else

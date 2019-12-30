@@ -35,7 +35,7 @@ package body Alr.Commands.Get is
       then
          Trace.Error ("Could not resolve dependencies for: " &
                         Query.Dependency_Image (Name, Versions));
-         Trace.Error ("This may happen when requesting a project that" &
+         Trace.Error ("This may happen when requesting a release that" &
                         " requires native libraries, while using a GPL gnat");
          Trace.Error ("In that case, try again with the native" &
                         " FSF gnat compiler");
@@ -76,10 +76,10 @@ package body Alr.Commands.Get is
       --  respawning).
       if Session_State > Outside then
          Reportaise_Command_Failed
-           ("Cannot get a project inside another alr project, stopping.");
+           ("Cannot get a release inside another alr release, stopping.");
       end if;
 
-      --  Check out requested project release under current directory,
+      --  Check out requested crate release under current directory,
       --  but delay its post-fetch:
       Checkout.Working_Copy (Rel,
                              Ada.Directories.Current_Directory,
@@ -123,13 +123,13 @@ package body Alr.Commands.Get is
       end if;
 
       if Num_Arguments /= 1 then
-         Trace.Error ("No project requested");
-         raise Wrong_Command_Arguments with "One project to get expected";
+         Trace.Error ("No crate requested");
+         raise Wrong_Command_Arguments with "One crate to get expected";
       end if;
 
       declare
          Allowed : constant Parsers.Allowed_Milestones :=
-           Parsers.Project_Versions (Argument (1));
+           Parsers.Crate_Versions (Argument (1));
       begin
          if Cmd.Build and Cmd.Only then
             Reportaise_Wrong_Arguments
@@ -138,10 +138,10 @@ package body Alr.Commands.Get is
 
          Requires_Full_Index;
 
-         Retrieve (Cmd, Allowed.Project, Allowed.Versions);
+         Retrieve (Cmd, Allowed.Crate, Allowed.Versions);
       exception
          when Alire.Query_Unsuccessful =>
-            Trace.Info ("Project [" & Argument (1) &
+            Trace.Info ("Crate [" & Argument (1) &
                           "] does not exist in the catalog.");
             raise Command_Failed;
       end;
@@ -160,7 +160,7 @@ package body Alr.Commands.Get is
                 & " A regular crate is deployed under an immediate folder"
                 & " with naming 'name_version_hash'.")
        .New_Line
-       .Append (Project_Version_Sets));
+       .Append (Crate_Version_Sets));
 
    --------------------
    -- Setup_Switches --
@@ -179,7 +179,7 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Only'Access,
                      "-o", "--only",
-                     "Retrieve requested project only, without dependencies");
+                     "Retrieve requested crate only, without dependencies");
    end Setup_Switches;
 
 end Alr.Commands.Get;

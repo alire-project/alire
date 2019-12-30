@@ -5,8 +5,8 @@ with Alr.Query;
 package Alr.Templates is
 
    type Generation_Scenarios is
-     (Released,  -- Project is already released and packaged
-      Unreleased -- Project is a working copy, pinned or some other variation
+     (Released,  -- Release is already released and packaged
+      Unreleased -- Release is a working copy, pinned or some other variation
       --  with explicit dependencies
      );
    --  In initial generation we know the only dependency is on Alire itself
@@ -26,7 +26,7 @@ package Alr.Templates is
    --  Generate textual release representation at given location
 
    procedure Generate_Prj_Alr (Release : Types.Release);
-   --  As previous, but ensure that we are at the project root folder
+   --  As previous, but ensure that we are at the working root folder
 
    Sed_Pattern : constant String;
 

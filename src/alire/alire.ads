@@ -51,8 +51,8 @@ package Alire with Preelaborate is
    function "+" (S : UString) return String
    renames UStrings.To_String;
 
-   subtype Project_Character is Character
-      with Static_Predicate => Project_Character in
+   subtype Crate_Character is Character
+      with Static_Predicate => Crate_Character in
          'a' .. 'z' | '0' .. '9' | '_' | Extension_Separator;
 
    --------------------
@@ -64,7 +64,7 @@ package Alire with Preelaborate is
    --  Returns the problem with the last checked crate name. This is a global,
    --  thread-unsafe kludge for a GNAT bug already reported. Since alr is
    --  single-threaded, it is not a problem right now.
-   --  TODO: work around this in the big Project -> Crate_Name refactoring.
+   --  TODO: remove this once the bug is fixed.
 
    type Crate_Name is new String with
      Dynamic_Predicate =>
@@ -75,7 +75,7 @@ package Alire with Preelaborate is
 
    overriding
    function "=" (L, R : Crate_Name) return Boolean;
-   --  Project names are case preserving but insensitive when compared.
+   --  Crate names are case preserving but insensitive when compared.
 
    overriding
    function "<" (L, R : Crate_Name) return Boolean;
@@ -84,7 +84,7 @@ package Alire with Preelaborate is
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then
      Restricted_Name (Restricted_Name'First) /= '_' and then
-     (for all C of Restricted_Name => C in Project_Character);
+     (for all C of Restricted_Name => C in Crate_Character);
    --  A type used to limit some things that are given names by the user
    --  (e.g., remote index names).
 

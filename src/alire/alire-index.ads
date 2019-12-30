@@ -74,19 +74,19 @@ package Alire.Index is
        Exists (Name) or else
        raise Checked_Error with "Requested crate not in index: " & (+Name);
 
-   function Exists (Project : Crate_Name) return Boolean;
+   function Exists (Name : Crate_Name) return Boolean;
 
-   function Exists (Project : Crate_Name;
+   function Exists (Name : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean;
 
-   function Find (Project : Crate_Name;
+   function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release
      with Pre =>
-       Exists (Project, Version) or else
+       Exists (Name, Version) or else
      raise Checked_Error with
        "Requested milestone not in index: "
-       & (+Project) & "=" & Semantic_Versioning.Image (Version);
+       & (+Name) & "=" & Semantic_Versioning.Image (Version);
 
    --  Counts
 

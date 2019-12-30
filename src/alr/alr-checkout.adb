@@ -44,7 +44,7 @@ package body Alr.Checkout is
          end if;
       end if;
 
-      --  Actions must run always, in case this is a subproject with shared
+      --  Actions must run always, in case this is a subcrate with shared
       --  folder.
       if Perform_Actions and then Ada.Directories.Exists (Folder) then
          declare
@@ -61,7 +61,7 @@ package body Alr.Checkout is
    ---------------
 
    procedure To_Folder (Solution : Query.Solution;
-                        Parent   : String := Paths.Projects_Folder)
+                        Parent   : String := Paths.Releases_Folder)
    is
       Was_There : Boolean;
       Graph     : Dependency_Graphs.Graph :=
@@ -92,47 +92,35 @@ package body Alr.Checkout is
          begin
             --  TODO: this can be done in parallel within each round
             for Rel of Pending.Releases loop
-               if Graph.Has_Dependencies (Rel.Project) then
+               if Graph.Has_Dependencies (Rel.Name) then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
                                  Rel.Milestone.Image);
                else
                   Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
                                  Rel.Milestone.Image);
                   Checkout (Rel, Parent, Was_There);
-                  Graph := Graph.Removing_Dependee (Rel.Project);
+                  Graph := Graph.Removing_Dependee (Rel.Name);
                   To_Remove.Include (Rel);
                end if;
             end loop;
 
             if To_Remove.Is_Empty then
-               Trace.Error ("No project checked-out in round" & Round'Img);
-               Trace.Error ("Remaining projects:"
+               Trace.Error ("No release checked-out in round" & Round'Img);
+               Trace.Error ("Remaining releases:"
                             & Pending.Releases.Length'Img &
                               "; Dependency graph:");
                Graph.Print (Pending.Releases);
                raise Program_Error
-                 with "No project checked-out in round" & Round'Img;
+                 with "No release checked-out in round" & Round'Img;
             else
                for Rel of To_Remove loop
-                  Pending.Releases.Exclude (Rel.Project);
+                  Pending.Releases.Exclude (Rel.Name);
                end loop;
             end if;
          end;
       end loop;
 
-      return; -- Old method follows
-
-      --  Two passes: native packages are installed first in case they're a
-      --  tool needed by the non-native packages
---        for Pass in 1 .. 2 loop
---           for R of Projects loop
---              if (R.Origin.Is_Native and then Pass = 1) or else
---                 (Pass = 2 and then not R.Origin.Is_Native)
---              then
---                 Checkout (R, Parent, Was_There);
---              end if;
---           end loop;
---        end loop;
+      return;
    end To_Folder;
 
    ------------------
@@ -157,7 +145,7 @@ package body Alr.Checkout is
               with Unreferenced;
             Root       : constant Alire.Roots.Root :=
               Alire.Roots.New_Root
-                 (R.Project, Ada.Directories.Current_Directory);
+                 (R.Name, Ada.Directories.Current_Directory);
          begin
             --  TODO: be able to export dynamic expressions.
             --  Currently, as workaround, we resolve the release for the

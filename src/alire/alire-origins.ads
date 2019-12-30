@@ -29,7 +29,7 @@ package Alire.Origins with Preelaborate is
    --  The name of a package in every distro for a given version
 
    type Kinds is
-     (Filesystem,     -- Not really an origin, but a working copy of a project
+     (Filesystem,     -- Not really an origin, but a working copy of a release
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
       SVN,            -- Remote svn repo
