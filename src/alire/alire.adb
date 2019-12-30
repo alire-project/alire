@@ -97,7 +97,7 @@ package body Alire is
          Err := +"Identifier too long.";
       elsif S (S'First) = '_' then
          Err := +"Identifiers must not begin with an underscore.";
-      elsif (for some C of S => C not in Project_Character) then
+      elsif (for some C of S => C not in Crate_Character) then
          Err := +"Identifiers must be lowercase ASCII alphanumerical.";
       end if;
 

@@ -45,37 +45,37 @@ package Alr.Query is
                   Alire.Containers.Dependency_Lists.Empty_List;
 
    Empty_Instance : constant Instance :=
-     (Alire.Containers.Project_Release_Maps.Empty_Map with null record);
+     (Alire.Containers.Crate_Release_Maps.Empty_Map with null record);
 
    ---------------------
    --  Basic queries  --
    --  Merely check the catalog
 
-   function Exists (Project : Alire.Crate_Name;
+   function Exists (Name    : Alire.Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean renames Alire.Index.Exists;
 
-   function Find (Project : Alire.Crate_Name;
+   function Find (Name    : Alire.Crate_Name;
                   Version : Semantic_Versioning.Version)
                   return Release
    renames Alire.Index.Find;
 
    function Exists
-     (Project : Alire.Crate_Name;
+     (Name    : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any)
       return Boolean;
 
    function Find
-     (Project : Alire.Crate_Name;
+     (Name    : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any;
       Policy  : Age_Policies)
       return Release;
 
-   function Find (Project : String;
+   function Find (Name    : String;
                   Policy  : Age_Policies) return Release;
-   --  Given a textual project+set (see Parsers), find the release if it exists
+   --  Given a textual crate+set (see Parsers), find the release if it exists
 
    ----------------------------------
    --  Platform individual queries --
@@ -114,7 +114,7 @@ package Alr.Query is
    procedure Print_Solution (Sol : Solution);
 
    function Dependency_Image
-     (Project  : Alire.Crate_Name;
+     (Name     : Alire.Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set;
       Policy   : Age_Policies := Newest) return String;
 

@@ -71,7 +71,7 @@ package body Alire.TOML_Index is
    Package_File_Suffix : constant String := ".toml";
    --  Suffix for the name of package description files
 
-   subtype Package_Name_Character is Project_Character
+   subtype Package_Name_Character is Crate_Character
       with Static_Predicate => Package_Name_Character /= Extension_Separator;
 
    ---------------

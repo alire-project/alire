@@ -95,7 +95,7 @@ package body Alire.Releases is
 
    function Renaming (Base     : Release;
                       Provides : Crates.Named'Class) return Release is
-      (Base.Renaming (Provides.Project));
+      (Base.Renaming (Provides.Name));
 
    ---------------
    -- Replacing --
@@ -157,23 +157,19 @@ package body Alire.Releases is
 
    function Replacing
      (Base               : Release;
-      Project            : Alire.Crate_Name   := "";
       Notes              : Description_String := "")
       return Release
    is
-      New_Project : constant Alire.Crate_Name := (if Project = ""
-                                                  then Base.Project
-                                                  else Project);
       New_Notes   : constant Description_String := (if Notes = ""
                                                     then Base.Notes
                                                     else Notes);
    begin
 
       return Replacement : constant Release
-        (New_Project'Length, New_Notes'Length) :=
-        (Prj_Len   => New_Project'Length,
+        (Base.Name'Length, New_Notes'Length) :=
+        (Prj_Len   => Base.Name'Length,
          Notes_Len => New_Notes'Length,
-         Project   => New_Project,
+         Name      => Base.Name,
          Notes     => New_Notes,
 
          Alias        => Base.Alias,
@@ -218,18 +214,17 @@ package body Alire.Releases is
    -- New_Release --
    -----------------
 
-   function New_Release (Project            : Crate_Name;
-                         Version            : Semantic_Versioning.Version;
-                         Origin             : Origins.Origin;
-                         Notes              : Description_String;
-                         Dependencies       : Conditional.Dependencies;
-                         Properties         : Conditional.Properties;
-                         Private_Properties : Conditional.Properties;
-                         Available          : Alire.Requisites.Tree)
+   function New_Release (Name         : Crate_Name;
+                         Version      : Semantic_Versioning.Version;
+                         Origin       : Origins.Origin;
+                         Notes        : Description_String;
+                         Dependencies : Conditional.Dependencies;
+                         Properties   : Conditional.Properties;
+                         Available    : Alire.Requisites.Tree)
                          return Release
-   is (Prj_Len      => Project'Length,
+   is (Prj_Len      => Name'Length,
        Notes_Len    => Notes'Length,
-       Project      => Project,
+       Name         => Name,
        Alias        => +"",
        Version      => Version,
        Origin       => Origin,
@@ -244,16 +239,16 @@ package body Alire.Releases is
    -------------------------
 
    function New_Working_Release
-     (Project      : Crate_Name;
+     (Name         : Crate_Name;
       Origin       : Origins.Origin := Origins.New_Filesystem ("..");
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
       Properties   : Conditional.Properties   :=
         Conditional.For_Properties.Empty)
       return         Release is
-     (Prj_Len      => Project'Length,
+     (Prj_Len      => Name'Length,
       Notes_Len    => 0,
-      Project      => Project,
+      Name         => Name,
       Alias        => +"",
       Version      => +"0.0.0",
       Origin       => Origin,
@@ -353,7 +348,7 @@ package body Alire.Releases is
       Without    : Utils.String_Vector;
    begin
       if With_Paths.Is_Empty then
-         With_Paths.Append (String'((+R.Project) & ".gpr"));
+         With_Paths.Append (String'((+R.Name) & ".gpr"));
       end if;
 
       if With_Path then
@@ -430,7 +425,7 @@ package body Alire.Releases is
       --  MILESTONE
       Put_Line (R.Milestone.Image & ": " & R.Description);
 
-      if R.Provides /= R.Project then
+      if R.Provides /= R.Name then
          Put_Line ("Provides: " & (+R.Provides));
       end if;
 
@@ -549,7 +544,7 @@ package body Alire.Releases is
    function To_Dependency (R : Release) return Conditional.Dependencies is
      (Conditional.For_Dependencies.New_Value
         (Alire.Dependencies.New_Dependency
-             (R.Project,
+             (R.Name,
               Semver.Extended.To_Extended
                 (Semver.Basic.Exactly (R.Version)))));
 
@@ -646,7 +641,7 @@ package body Alire.Releases is
 
    begin
       return
-        "crate: " & Utils.YAML.YAML_Stringify (R.Project_Str) & ASCII.LF &
+        "crate: " & Utils.YAML.YAML_Stringify (R.Name_Str) & ASCII.LF &
         "authors: " & Props_To_YAML (R.Author) & ASCII.LF &
         "maintainers: " & Props_To_YAML (R.Maintainer) & ASCII.LF &
         "licenses: " & Props_To_YAML (R.License) & ASCII.LF &
@@ -675,7 +670,7 @@ package body Alire.Releases is
       return Solid : constant Release (R.Prj_Len, R.Notes_Len) :=
         (Prj_Len      => R.Prj_Len,
          Notes_Len    => R.Notes_Len,
-         Project      => R.Project,
+         Name         => R.Name,
          Alias        => R.Alias,
          Version      => R.Version,
          Origin       => R.Origin,

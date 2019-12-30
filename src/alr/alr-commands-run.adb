@@ -48,7 +48,7 @@ package body Alr.Commands.Run is
    overriding procedure Execute (Cmd : in out Command) is
       use type GNAT.Strings.String_Access;
 
-      Name       : constant String := Root.Current.Release.Project_Str;
+      Name       : constant String := Root.Current.Release.Name_Str;
       Declared   : constant Utils.String_Vector :=
                      Root.Current.Release.Executables (Platform.Properties);
 
@@ -66,7 +66,7 @@ package body Alr.Commands.Run is
       begin
          if Declared.Is_Empty then
             Put_Line
-              ("Project " & Name &
+              ("Crate " & Name &
                  " does not explicitly declares to build any executable");
 
             if Candidates.Is_Empty then
@@ -79,7 +79,7 @@ package body Alr.Commands.Run is
             end if;
 
          else
-            Put_Line ("Project " & Name & " builds these executables:");
+            Put_Line ("Crate " & Name & " builds these executables:");
             for Exe of Declared loop
                Check_Report (Exe);
             end loop;
@@ -98,7 +98,7 @@ package body Alr.Commands.Run is
       end List;
 
    begin
-      Requires_Project;
+      Requires_Valid_Session;
 
       --  Validation
       if Cmd.List
@@ -147,7 +147,7 @@ package body Alr.Commands.Run is
          end if;
 
          --  Also do not accept an explicit executable not listed (unless
-         --  the project declares no executables and the requested one is
+         --  the release declares no executables and the requested one is
          --  the default one, e.g., same as running without argument).
 
          if Num_Arguments = 1
@@ -255,7 +255,7 @@ package body Alr.Commands.Run is
       GNAT.Command_Line.Define_Switch
         (Config,
          Cmd.List'Access,
-         "", "--list", "List executables produced by current project");
+         "", "--list", "List executables produced by current release");
 
       GNAT.Command_Line.Define_Switch
         (Config,

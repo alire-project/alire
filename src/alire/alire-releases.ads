@@ -33,18 +33,17 @@ package Alire.Releases with Preelaborate is
 
    function "<" (L, R : Release) return Boolean;
 
-   function New_Release (Project            : Crate_Name;
-                         Version            : Semantic_Versioning.Version;
-                         Origin             : Origins.Origin;
-                         Notes              : Description_String;
-                         Dependencies       : Conditional.Dependencies;
-                         Properties         : Conditional.Properties;
-                         Private_Properties : Conditional.Properties;
-                         Available          : Alire.Requisites.Tree)
+   function New_Release (Name         : Crate_Name;
+                         Version      : Semantic_Versioning.Version;
+                         Origin       : Origins.Origin;
+                         Notes        : Description_String;
+                         Dependencies : Conditional.Dependencies;
+                         Properties   : Conditional.Properties;
+                         Available    : Alire.Requisites.Tree)
                          return Release;
 
    function New_Working_Release
-     (Project      : Crate_Name;
+     (Name         : Crate_Name;
       Origin       : Origins.Origin := Origins.New_Filesystem ("..");
 
       Dependencies : Conditional.Dependencies :=
@@ -55,7 +54,7 @@ package Alire.Releases with Preelaborate is
      )
 
       return         Release;
-   --  For working project releases that may have incomplete information
+   --  For working releases that may have incomplete information
 
    function Extending
      (Base         : Release;
@@ -71,12 +70,11 @@ package Alire.Releases with Preelaborate is
    function Renaming (Base     : Release;
                       Provides : Crates.Named'Class) return Release;
    --  Fills-in the "provides" field
-   --  During resolution, a project that has a renaming will act as the
-   --  "Provides" project, so both projects cannot be selected simultaneously.
+   --  During resolution, a release that has a renaming will act as the
+   --  "Provides" release, so both releases cannot be selected simultaneously.
 
-   function Replacing (Base               : Release;
-                       Project            : Alire.Crate_Name   := "";
-                       Notes              : Description_String := "")
+   function Replacing (Base    : Release;
+                       Notes   : Description_String := "")
                        return Release;
    --  Takes a release and replaces the given fields
 
@@ -116,27 +114,21 @@ package Alire.Releases with Preelaborate is
    --  Materialize conditions in a Release once the whatever properties are
    --  known. At present dependencies, properties, and availability.
 
-   function Project (R : Release) return Crate_Name;
+   function Name (R : Release) return Crate_Name;
 
-   function Project_Str (R : Release) return String is (+R.Project);
-
-   function Project_Base (R : Release) return String;
-   --  Project up to first dot, if any; which is needed for extension projects
-   --  in templates and so on.
+   function Name_Str (R : Release) return String is (+R.Name);
 
    function Description (R : Release) return Description_String;
    --  Returns the description for the crate, which is also stored as a
    --  property of the release.
 
    function Provides (R : Release) return Crate_Name;
-   --  The actual project name to be used during dependency resolution
-   --  (But nowhere else)
+   --  The actual name to be used during dependency resolution (but nowhere
+   --  else).
 
    function Forbids (R : Release;
                      P : Alire.Properties.Vector)
      return Conditional.Dependencies;
-
-   function Is_Extension (R : Release) return Boolean;
 
    function Notes   (R : Release) return Description_String;
    --  Specific to release
@@ -276,7 +268,7 @@ private
      and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
-      Project      : Crate_Name (1 .. Prj_Len);
+      Name         : Crate_Name (1 .. Prj_Len);
       Alias        : UString; -- I finally gave up on constraints
       Version      : Semantic_Versioning.Version;
       Origin       : Origins.Origin;
@@ -290,11 +282,11 @@ private
    use all type Conditional.Properties;
 
    function "<" (L, R : Release) return Boolean
-   is (L.Project < R.Project
+   is (L.Name < R.Name
          or else
-       (L.Project = R.Project and then L.Version < R.Version)
+       (L.Name = R.Name and then L.Version < R.Version)
          or else
-       (L.Project = R.Project
+       (L.Name = R.Name
            and then
         L.Version = R.Version
            and then
@@ -302,18 +294,12 @@ private
        )
       );
 
-   function Is_Extension (R : Release) return Boolean
-   is (R.Project_Base'Length < R.Project'Length);
-
-   function Project (R : Release) return Crate_Name
-   is (R.Project);
-
-   function Project_Base (R : Release) return String
-   is (Utils.Head (+R.Project, Extension_Separator));
+   function Name (R : Release) return Crate_Name
+   is (R.Name);
 
    function Provides (R : Release) return Crate_Name
    is (if UStrings.Length (R.Alias) = 0
-       then R.Project
+       then R.Name
        else +(+R.Alias));
 
    function Notes (R : Release) return Description_String
@@ -348,10 +334,10 @@ private
         (Alire.TOML_Keys.Description).First_Element.Image, ' '));
 
    function Milestone (R : Release) return Milestones.Milestone
-   is (Milestones.New_Milestone (R.Project, R.Version));
+   is (Milestones.New_Milestone (R.Name, R.Version));
 
    function Default_Executable (R : Release) return String
-   is (Utils.Replace (+R.Project, ":", "_") & OS_Lib.Exe_Suffix);
+   is (Utils.Replace (+R.Name, ":", "_") & OS_Lib.Exe_Suffix);
 
    function License (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
@@ -375,7 +361,7 @@ private
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String
-   is (Utils.Head (+R.Project, Extension_Separator) & "_" &
+   is (Utils.Head (+R.Name, Extension_Separator) & "_" &
          Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is
@@ -393,7 +379,7 @@ private
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency)
                        return Boolean
-   is (R.Project = Dep.Project and then Dep.Versions.Contains (R.Version));
+   is (R.Name = Dep.Crate and then Dep.Versions.Contains (R.Version));
 
    function Version_Image (R : Release) return String
    is (Semantic_Versioning.Image (R.Version));

@@ -16,11 +16,12 @@ package Alr.Commands.Init is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Creates a new project with alr metadata, or generate metadata");
+   is ("Creates a new working release with"
+       & " alire metadata, or generate metadata");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("{--bin|--lib} <project name>");
+   is ("{--bin|--lib} <crate name>");
 
 private
 

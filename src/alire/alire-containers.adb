@@ -10,7 +10,7 @@ package body Alire.Containers is
    procedure Insert (Dst : in out Release_Map; Src : Release_Map) is
    begin
       for E of Src loop
-         Dst.Insert (E.Project, E);
+         Dst.Insert (E.Name, E);
       end loop;
    end Insert;
 
@@ -25,8 +25,8 @@ package body Alire.Containers is
    begin
       return Result : Release_Map := Dst do
          for E of Src loop
-            Result.Insert (E.Project, E);
-            if E.Project /= E.Provides then
+            Result.Insert (E.Name, E);
+            if E.Name /= E.Provides then
                Result.Insert (E.Provides, E);
             end if;
          end loop;
@@ -66,7 +66,7 @@ package body Alire.Containers is
    is
    begin
       return New_Map : Release_Map := Map do
-         New_Map.Include (Release.Project, Release);
+         New_Map.Include (Release.Name, Release);
       end return;
    end Including;
 
@@ -79,7 +79,7 @@ package body Alire.Containers is
    is
       package Semver renames Semantic_Versioning;
       use Conditional.For_Dependencies;
-      use Project_Release_Maps;
+      use Crate_Release_Maps;
    begin
       return Deps : Conditional.Dependencies do
          for I in Map.Iterate loop
@@ -87,7 +87,7 @@ package body Alire.Containers is
                Deps :=
                  Deps and
                  Conditional.New_Dependency
-                   (Map (I).Project,
+                   (Map (I).Name,
                     Semver.Extended.To_Extended
                       (Semver.Basic.Exactly (Map (I).Version)));
             end if;
@@ -102,7 +102,7 @@ package body Alire.Containers is
    function To_Map (R : Releases.Release) return Release_Map is
    begin
       return M : Release_Map do
-         M.Include (R.Project, R);
+         M.Include (R.Name, R);
       end return;
    end To_Map;
 

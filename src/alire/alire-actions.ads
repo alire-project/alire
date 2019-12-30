@@ -10,16 +10,17 @@ package Alire.Actions with Preelaborate is
 
    --  TODO: probably should be a child of Alire.Properties for consistency.
 
-   type Moments is (
-                    Post_Fetch,   -- After being downloaded
-                    Post_Compile  -- After being compiled as the main project
-                   );
+   type Moments is
+     (
+      Post_Fetch,   -- After being downloaded
+      Post_Compile  -- After being compiled as the working release
+     );
 
    --  It's probable that there'll be a need to pre-compile every dependency
    --  after being downloaded, and then we will have the possibility of having
-   --  another moment post THAT compilation. But that compilation may depend on
-   --  configuration set by the main project... -_-'. We'll cross that bridge
-   --  once it proves necessary.
+   --  another moment post THAT compilation. But that compilation may depend
+   --  on configuration set by the working release... -_-'. We'll cross that
+   --  bridge once it proves necessary.
 
    type Action (<>) is abstract new Properties.Property with private;
 

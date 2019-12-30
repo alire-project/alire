@@ -10,7 +10,7 @@ package Alire.Milestones with Preelaborate is
                            Version : Semantic_Versioning.Version)
                            return Milestone;
 
-   function Project (M : Milestone) return Crate_Name;
+   function Crate (M : Milestone) return Crate_Name;
 
    function Version (M : Milestone) return Semantic_Versioning.Version;
 
@@ -35,12 +35,12 @@ private
                            return Milestone
      is (Name'Length, Name, Version);
 
-   function Project (M : Milestone) return Crate_Name is (M.Name);
+   function Crate (M : Milestone) return Crate_Name is (M.Name);
 
    function Version (M : Milestone) return Semantic_Versioning.Version
    is (M.Version);
 
    function Image (M : Milestone) return String is
-      (+M.Project & "=" & Image (M.Version));
+      (+M.Crate & "=" & Image (M.Version));
 
 end Alire.Milestones;

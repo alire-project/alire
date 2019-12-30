@@ -43,7 +43,7 @@ package body Alr.Commands.Search is
          then
             Found := Found + 1;
             Tab.New_Row;
-            Tab.Append (+R.Project);
+            Tab.Append (+R.Name);
             Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
                         (if Query.Is_Available (R) then " " else "U") &
                         (if Query.Is_Resolvable
@@ -188,7 +188,7 @@ package body Alr.Commands.Search is
       Define_Switch (Config,
                      Cmd.Full'Access,
                      "", "--full",
-                     "Show all versions of a project (newest only otherwise)");
+                     "Show all versions of a crate (newest only otherwise)");
 
       Define_Switch (Config,
                      Cmd.List'Access,

@@ -15,11 +15,11 @@ package body Alr.Commands.Update is
    -------------
 
    procedure Upgrade is
-      --  The part concerning only to the project
+      --  The part concerning only to the working release
    begin
       Requires_Full_Index;
 
-      Requires_Project;
+      Requires_Valid_Session;
 
       declare
          Needed  : constant Query.Solution :=
@@ -56,7 +56,7 @@ package body Alr.Commands.Update is
       if Session_State > Outside then
          Upgrade;
       else
-         Trace.Detail ("No project to update");
+         Trace.Detail ("No working release to update");
       end if;
    end Execute;
 

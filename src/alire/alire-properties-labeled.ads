@@ -17,13 +17,13 @@ package Alire.Properties.Labeled with Preelaborate is
       --  Free-form but short description
 
       Executable,
-      --  A resulting executable built by the project
+      --  A resulting executable built by the release
 
       Long_Description,
       --  Unlimited-length crate description
 
       Maintainer,
-      --  Info about the maintainer of the alr-packaged project
+      --  Info about the maintainer of the alr-packaged crate
 
       Maintainers_Logins,
       --  E-mails used by the maintainers of a crate to log in to GitHub

@@ -18,7 +18,7 @@ package Alr.Commands.Build is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("GPRbuild current project");
+   is ("GPRbuild current working release");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

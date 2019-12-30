@@ -20,7 +20,7 @@ package body Alr.Commands.Clean is
         "--relocate-build-tree=" & Alire.Paths.Build_Folder;
    begin
       if not Cmd.Cache then
-         Requires_Project;
+         Requires_Valid_Session;
 
          Trace.Detail ("Cleaning project and dependencies...");
          Spawn.Command ("gprclean",
@@ -43,7 +43,7 @@ package body Alr.Commands.Clean is
                --  This is expected if the crate has no dependencies
             end if;
          else
-            Trace.Info ("Not in a project or sandbox folder");
+            Trace.Info ("Not in a release or sandbox folder");
          end if;
       end if;
    end Execute;
@@ -76,7 +76,7 @@ package body Alr.Commands.Clean is
       Define_Switch (Config,
                      Cmd.Cache'Access,
                      Long_Switch => "--cache",
-                     Help        => "Delete cache of projects");
+                     Help        => "Delete cache of releases");
    end Setup_Switches;
 
 end Alr.Commands.Clean;

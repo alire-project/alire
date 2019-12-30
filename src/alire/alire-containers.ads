@@ -31,9 +31,9 @@ package Alire.Containers with Preelaborate is
                                              Releases."=");
    subtype Release_H is Release_Holders.Holder;
 
-   package Project_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+   package Crate_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Releases.Release, "<", Releases."=");
-   type Release_Map is new Project_Release_Maps.Map with null record;
+   type Release_Map is new Crate_Release_Maps.Map with null record;
 
    function Excluding (Map  : Release_Map;
                        Name : Crate_Name)
@@ -54,12 +54,12 @@ package Alire.Containers with Preelaborate is
    function Inserting (Dst : Release_Map;
                        Src : Releases.Release)
                        return Release_Map;
-   --  Those insert both under the actual project name and Provides, if
+   --  Those insert both under the actual crate name and Provides, if
    --  different.
 
    function To_Dependencies (Map : Release_Map)
                              return Conditional.Dependencies;
-   --  Will filter out duplicates under Provides key (only actual projects will
+   --  Will filter out duplicates under Provides key (only actual crates will
    --  remain).
 
    function To_Map (R : Releases.Release) return Release_Map;

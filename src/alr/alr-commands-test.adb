@@ -79,7 +79,6 @@ package body Alr.Commands.Test is
                  (Utils.String_Vectors.Empty_Vector with null record);
 
       Is_Available, Is_Resolvable : Boolean;
-      Skipping_Extensions         : Boolean := False;
 
       Timestamp                   : constant String :=
         Utils.Trim
@@ -110,28 +109,15 @@ package body Alr.Commands.Test is
             Reporters.End_Test
               (R, Testing.Unresolvable, Clock - Start, No_Log);
          elsif not R.Origin.Is_Native and then
-           not R.Is_Extension and then
            Ada.Directories.Exists (R.Unique_Folder) and then
            not Cmd.Redo
          then
             Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
-            Skipping_Extensions := True;
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
-         elsif not R.Origin.Is_Native and then
-           R.Is_Extension and then
-           Ada.Directories.Exists (R.Unique_Folder) and then
-           Skipping_Extensions
-         then
-            Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
-            Skipping_Extensions := True;
-            Trace.Detail
-              ("Skipping already tested extension " & R.Milestone.Image);
          else
             declare
                use Alire.Utils;
             begin
-               Skipping_Extensions := False;
-
                Output := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
                  ("alr",
                   Empty_Vector &
@@ -245,9 +231,9 @@ package body Alr.Commands.Test is
             for J in 1 .. Num_Arguments loop
                declare
                   Allowed  : constant Parsers.Allowed_Milestones :=
-                               Parsers.Project_Versions (Argument (J));
+                               Parsers.Crate_Versions (Argument (J));
                   Crate    : constant Alire.Crates.With_Releases.Crate :=
-                               Alire.Index.Crate (Allowed.Project);
+                               Alire.Index.Crate (Allowed.Crate);
                   Releases : constant Alire.Containers.Release_Set :=
                                Crate.Releases;
                begin
@@ -273,7 +259,7 @@ package body Alr.Commands.Test is
          for I in 1 .. Num_Arguments loop
             declare
                Cry_Me_A_River : constant Parsers.Allowed_Milestones :=
-                 Parsers.Project_Versions (Argument (I)) with Unreferenced;
+                 Parsers.Crate_Versions (Argument (I)) with Unreferenced;
             begin
                null; -- Just check that no exception is raised
             end;
@@ -283,7 +269,7 @@ package body Alr.Commands.Test is
       --  Validate exclusive options
       if Cmd.Full and then (Num_Arguments /= 0 or else Cmd.Search) then
          Trace.Always
-           ("Either use --full or specify project names, but not both");
+           ("Either use --full or specify crate names, but not both");
          raise Command_Failed;
       end if;
 
@@ -303,7 +289,7 @@ package body Alr.Commands.Test is
       if Test_All then
          if Cmd.Full then
             if Cmd.Last then
-               Trace.Detail ("Testing newest release of every project");
+               Trace.Detail ("Testing newest release of every crate");
             else
                Trace.Detail ("Testing all releases");
             end if;
@@ -320,7 +306,7 @@ package body Alr.Commands.Test is
       Find_Candidates;
 
       if Candidates.Is_Empty then
-         Trace.Info ("No releases for the requested projects");
+         Trace.Info ("No releases for the requested crates");
          raise Command_Failed;
       else
          Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
@@ -346,7 +332,7 @@ package body Alr.Commands.Test is
                 & " of each release building process will be available in"
                 & " respective <release>/alire/alr_test.log files.")
        .New_Line
-       .Append (Project_Version_Sets));
+       .Append (Crate_Version_Sets));
 
    --------------------
    -- Setup_Switches --

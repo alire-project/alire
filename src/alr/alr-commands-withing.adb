@@ -29,16 +29,16 @@ package body Alr.Commands.Withing is
    is
       use all type Alire.Conditional.Dependencies;
       Requested : constant Parsers.Allowed_Milestones :=
-        Parsers.Project_Versions (New_Dep);
+        Parsers.Crate_Versions (New_Dep);
    begin
-      if not Query.Exists (Requested.Project) then
+      if not Query.Exists (Requested.Crate) then
          Reportaise_Command_Failed
-           ("The requested project was not found in the catalog: " &
-            (+Requested.Project));
+           ("The requested crate was not found in the catalog: " &
+            (+Requested.Crate));
       end if;
 
       return Result : constant Alire.Conditional.Dependencies :=
-        Deps and Alire.Conditional.New_Dependency (Requested.Project,
+        Deps and Alire.Conditional.New_Dependency (Requested.Crate,
                                                    Requested.Versions)
       do
          if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties))
@@ -62,7 +62,7 @@ package body Alr.Commands.Withing is
       use all type Alire.Conditional.Dependencies;
       use all type Semantic_Versioning.Extended.Version_Set;
       Requested : constant Parsers.Allowed_Milestones :=
-        Parsers.Project_Versions (Old_Dep);
+        Parsers.Crate_Versions (Old_Dep);
    begin
       if Requested.Versions /= Semantic_Versioning.Extended.Any then
          Trace.Warning
@@ -73,10 +73,10 @@ package body Alr.Commands.Withing is
       return Filtered : Alire.Conditional.Dependencies do
          if Deps.Is_Iterable then
             for Dep of Deps loop
-               if Dep.Value.Project /= Requested.Project then
+               if Dep.Value.Crate /= Requested.Crate then
                   Filtered := Filtered and
                     Alire.Conditional.New_Dependency
-                      (Dep.Value.Project, Dep.Value.Versions);
+                      (Dep.Value.Crate, Dep.Value.Versions);
                end if;
             end loop;
          else
@@ -241,7 +241,7 @@ package body Alr.Commands.Withing is
 
    overriding procedure Execute (Cmd : in out Command) is
    begin
-      Requires_Project;
+      Requires_Valid_Session;
 
       --  No parameters: give current platform dependencies and BAIL OUT
       if not (Cmd.Del or else Cmd.From) and then Num_Arguments = 0 then
@@ -315,7 +315,7 @@ package body Alr.Commands.Withing is
                 & " dependencies in Ada code, the user *must* add the needed"
                 & " 'with'ed project files in their own GPR files.")
        .New_Line
-       .Append (Project_Version_Sets));
+       .Append (Crate_Version_Sets));
 
    --------------------
    -- Setup_Switches --

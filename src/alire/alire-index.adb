@@ -1,5 +1,3 @@
-with Ada.Containers.Indefinite_Ordered_Sets;
-
 package body Alire.Index is
 
    use all type Semantic_Versioning.Version;
@@ -59,20 +57,20 @@ package body Alire.Index is
    -- Exists --
    ------------
 
-   function Exists (Project : Crate_Name) return Boolean is
-     (Contents.Contains (Project));
+   function Exists (Name : Crate_Name) return Boolean is
+     (Contents.Contains (Name));
 
    ------------
    -- Exists --
    ------------
 
-   function Exists (Project : Crate_Name;
+   function Exists (Name : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean is
    begin
-      if Exists (Project) then
-         for R of Contents (Project).Releases loop
-            if R.Project = Project and then R.Version = Version then
+      if Exists (Name) then
+         for R of Contents (Name).Releases loop
+            if R.Name = Name and then R.Version = Version then
                return True;
             end if;
          end loop;
@@ -85,18 +83,18 @@ package body Alire.Index is
    -- Find --
    ----------
 
-   function Find (Project : Crate_Name;
+   function Find (Name : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release is
    begin
-      for R of Contents (Project).Releases loop
-         if R.Project = Project and then R.Version = Version then
+      for R of Contents (Name).Releases loop
+         if R.Name = Name and then R.Version = Version then
             return R;
          end if;
       end loop;
 
       raise Checked_Error with
         "Requested milestone not in index: "
-        & (+Project) & "=" & Semantic_Versioning.Image (Version);
+        & (+Name) & "=" & Semantic_Versioning.Image (Version);
    end Find;
 
    -------------------

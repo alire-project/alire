@@ -13,10 +13,10 @@ package Alr.Commands.Withing is
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("Manage project dependencies");
+     ("Manage release dependencies");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[{ [--del] <project>[versions]... | --from <gpr_file>... }]");
+     ("[{ [--del] <crate>[versions]... | --from <gpr_file>... }]");
 
 private
 
