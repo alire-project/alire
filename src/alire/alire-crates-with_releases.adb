@@ -3,7 +3,7 @@ with Alire.TOML_Keys;
 
 with TOML;
 
-package body Alire.Projects.With_Releases is
+package body Alire.Crates.With_Releases is
 
    package Keys is new Containers.Release_Sets.Generic_Keys
      (Semantic_Versioning.Version,
@@ -177,4 +177,4 @@ package body Alire.Projects.With_Releases is
       Keys.Replace (This.Releases, Release.Version, Release);
    end Replace;
 
-end Alire.Projects.With_Releases;
+end Alire.Crates.With_Releases;

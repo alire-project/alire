@@ -6,7 +6,7 @@ with Alire.Config;
 with Alire.Containers;
 with Alire.Index;
 with Alire.OS_Lib.Subprocess;
-with Alire.Projects.With_Releases;
+with Alire.Crates.With_Releases;
 with Alire.Utils;
 
 with Alr.Files;
@@ -246,7 +246,7 @@ package body Alr.Commands.Test is
                declare
                   Allowed  : constant Parsers.Allowed_Milestones :=
                                Parsers.Project_Versions (Argument (J));
-                  Crate    : constant Alire.Projects.With_Releases.Crate :=
+                  Crate    : constant Alire.Crates.With_Releases.Crate :=
                                Alire.Index.Crate (Allowed.Project);
                   Releases : constant Alire.Containers.Release_Set :=
                                Crate.Releases;

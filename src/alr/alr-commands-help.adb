@@ -2,7 +2,7 @@ with AAA.Enum_Tools;
 with AAA.Table_IO;
 with AAA.Text_IO;
 
-with Alire.Projects;
+with Alire.Crates;
 
 package body Alr.Commands.Help is
 
@@ -28,7 +28,7 @@ package body Alr.Commands.Help is
    is
      (case Topic is
          when Identifiers =>
-            Alire.Projects.Naming_Convention
+            Alire.Crates.Naming_Convention
      );
 
    ------------------

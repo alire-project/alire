@@ -4,8 +4,8 @@ pragma Unreferenced (Alire_Early_Elaboration);
 with Alire.Dependencies;
 with Alire.GPR;
 with Alire.Origins;
-with Alire.Projects.Containers;
-with Alire.Projects.With_Releases;
+with Alire.Crates.Containers;
+with Alire.Crates.With_Releases;
 with Alire.Properties;
 with Alire.Properties.Licenses;
 with Alire.Releases;
@@ -62,14 +62,14 @@ package Alire.Index is
       --  with the last seen.
      );
 
-   procedure Add (Crate  : Projects.With_Releases.Crate;
+   procedure Add (Crate  : Crates.With_Releases.Crate;
                   Policy : Addition_Policies := Merge_Priorizing_Existing);
 
    ---------------------
    --  BASIC QUERIES  --
    ---------------------
 
-   function Crate (Name : Crate_Name) return Projects.With_Releases.Crate
+   function Crate (Name : Crate_Name) return Crates.With_Releases.Crate
      with Pre =>
        Exists (Name) or else
        raise Checked_Error with "Requested crate not in index: " & (+Name);
@@ -96,6 +96,6 @@ package Alire.Index is
 
    --  Direct access
 
-   function All_Crates return access constant Projects.Containers.Maps.Map;
+   function All_Crates return access constant Crates.Containers.Maps.Map;
 
 end Alire.Index;

@@ -4,7 +4,7 @@ with Alire.Containers;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Platform;
-with Alire.Projects.With_Releases;
+with Alire.Crates.With_Releases;
 with Alire.Releases;
 
 with Alr.Platform;
@@ -104,7 +104,7 @@ package body Alr.Commands.Search is
          ------------------------
 
          procedure List_All_Or_Latest
-           (Crate : Alire.Projects.With_Releases.Crate) is
+           (Crate : Alire.Crates.With_Releases.Crate) is
          begin
             if Cmd.Full then
                for Release of Crate.Releases loop

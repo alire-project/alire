@@ -94,7 +94,7 @@ package body Alire.Releases is
    --------------
 
    function Renaming (Base     : Release;
-                      Provides : Projects.Named'Class) return Release is
+                      Provides : Crates.Named'Class) return Release is
       (Base.Renaming (Provides.Project));
 
    ---------------
@@ -527,7 +527,7 @@ package body Alire.Releases is
       declare
          Result : constant Outcome :=
                     TOML_Load.Load_Crate_Section
-                      (Projects.Release_Section,
+                      (Crates.Release_Section,
                        From,
                        This.Properties,
                        This.Dependencies,

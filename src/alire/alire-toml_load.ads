@@ -1,5 +1,5 @@
 with Alire.Conditional;
-with Alire.Projects;
+with Alire.Crates;
 with Alire.Requisites;
 with Alire.TOML_Adapters;
 
@@ -8,7 +8,7 @@ package Alire.TOML_Load with Preelaborate is
    --  Separate package to avoid a circularity, since this is used by both
    --  Crates and Releases.
 
-   function Load_Crate_Section (Section : Projects.Sections;
+   function Load_Crate_Section (Section : Crates.Sections;
                                 From    : TOML_Adapters.Key_Queue;
                                 Props   : in out Conditional.Properties;
                                 Deps    : in out Conditional.Dependencies;

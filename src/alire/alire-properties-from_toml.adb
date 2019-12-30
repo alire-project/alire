@@ -9,7 +9,7 @@ package body Alire.Properties.From_TOML is
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;
-                    Section : Projects.Sections)
+                    Section : Crates.Sections)
                     return Conditional.Properties
    is
       use type Conditional.Properties;

@@ -6,7 +6,7 @@ with Alire.Dependencies;
 with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Origins;
-with Alire.Projects;
+with Alire.Crates;
 with Alire.Properties;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
@@ -69,7 +69,7 @@ package Alire.Releases with Preelaborate is
                       Provides : Crate_Name) return Release;
 
    function Renaming (Base     : Release;
-                      Provides : Projects.Named'Class) return Release;
+                      Provides : Crates.Named'Class) return Release;
    --  Fills-in the "provides" field
    --  During resolution, a project that has a renaming will act as the
    --  "Provides" project, so both projects cannot be selected simultaneously.

@@ -1,8 +1,8 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 
-with Alire.Projects.With_Releases;
+with Alire.Crates.With_Releases;
 
-package Alire.Projects.Containers with Preelaborate is
+package Alire.Crates.Containers is
 
    use type With_Releases.Crate;
 
@@ -10,4 +10,4 @@ package Alire.Projects.Containers with Preelaborate is
      (Crate_Name,
       With_Releases.Crate);
 
-end Alire.Projects.Containers;
+end Alire.Crates.Containers;

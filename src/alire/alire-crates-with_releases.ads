@@ -5,7 +5,7 @@ with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
 
-package Alire.Projects.With_Releases with Preelaborate is
+package Alire.Crates.With_Releases with Preelaborate is
 
    type Crate (<>) is new General and Interfaces.Detomifiable
    with private;
@@ -50,4 +50,4 @@ private
          Releases  : Containers.Release_Set;
       end record;
 
-end Alire.Projects.With_Releases;
+end Alire.Crates.With_Releases;

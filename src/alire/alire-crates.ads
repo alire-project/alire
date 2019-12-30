@@ -7,7 +7,7 @@ with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
-package Alire.Projects with Preelaborate is
+package Alire.Crates with Preelaborate is
 
    --  TODO: Rename to Crates (Issue #113)
 
@@ -52,4 +52,4 @@ private
       Available    : Requisites.Tree;
    end record;
 
-end Alire.Projects;
+end Alire.Crates;
