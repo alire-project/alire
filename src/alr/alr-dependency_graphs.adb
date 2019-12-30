@@ -77,7 +77,7 @@ package body Alr.Dependency_Graphs is
    ----------------------
 
    function Has_Dependencies (This : Graph;
-                              Project : Alire.Project)
+                              Project : Alire.Crate_Name)
                               return Boolean
    is
    begin
@@ -154,7 +154,7 @@ package body Alr.Dependency_Graphs is
    -----------------------
 
    function Removing_Dependee (This    : Graph;
-                               Project : Alire.Project) return Graph is
+                               Project : Alire.Crate_Name) return Graph is
    begin
       return Result : Graph do
          for Dep of This loop

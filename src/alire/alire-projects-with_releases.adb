@@ -147,13 +147,13 @@ package body Alire.Projects.With_Releases is
    -- Name --
    ----------
 
-   function Name (This : Crate) return Alire.Project is (+(+This.Name));
+   function Name (This : Crate) return Crate_Name is (+(+This.Name));
 
    ---------------
    -- New_Crate --
    ---------------
 
-   function New_Crate (Name : Alire.Project) return Crate is
+   function New_Crate (Name : Crate_Name) return Crate is
      (Crate'(General with
              Len      => Name'Length,
              Name     => Name,

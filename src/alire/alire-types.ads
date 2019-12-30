@@ -25,7 +25,7 @@ package Alire.Types with Preelaborate is
      renames Conditional.For_Dependencies.Empty;
 
    function New_Dependency
-     (Name     : Alire.Project;
+     (Name     : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Platform_Dependencies
      renames Conditional.New_Dependency;

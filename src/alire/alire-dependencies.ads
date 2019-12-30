@@ -8,7 +8,7 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Dependencies with Preelaborate is
 
-   subtype Names is Alire.Project;
+   subtype Names is Crate_Name;
 
    --  A single dependency is a project name plus a version set
 
@@ -19,7 +19,7 @@ package Alire.Dependencies with Preelaborate is
    with private;
 
    function New_Dependency
-     (Project  : Alire.Project;
+     (Project  : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency;
 
@@ -59,12 +59,12 @@ private
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with record
-      Project    : Alire.Project (1 .. Name_Len);
+      Project    : Crate_Name (1 .. Name_Len);
       Versions   : Semantic_Versioning.Extended.Version_Set;
    end record;
 
    function New_Dependency
-     (Project  : Alire.Project;
+     (Project  : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency
    is (Project'Length, Project, Versions);

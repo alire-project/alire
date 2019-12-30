@@ -43,8 +43,8 @@ package body Alire.Index is
    -- Crate --
    -----------
 
-   function Crate (Name : Alire.Project) return Projects.With_Releases.Crate is
-     (Crates (Name));
+   function Crate (Name : Crate_Name) return Projects.With_Releases.Crate
+   is (Crates (Name));
 
    -----------------
    -- Crate_Count --
@@ -57,14 +57,14 @@ package body Alire.Index is
    -- Exists --
    ------------
 
-   function Exists (Project : Alire.Project) return Boolean is
+   function Exists (Project : Crate_Name) return Boolean is
      (Crates.Contains (Project));
 
    ------------
    -- Exists --
    ------------
 
-   function Exists (Project : Alire.Project;
+   function Exists (Project : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean is
    begin
@@ -83,7 +83,7 @@ package body Alire.Index is
    -- Find --
    ----------
 
-   function Find (Project : Alire.Project;
+   function Find (Project : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release is
    begin
       for R of Crates (Project).Releases loop

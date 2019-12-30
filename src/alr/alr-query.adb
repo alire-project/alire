@@ -38,7 +38,7 @@ package body Alr.Query is
    ----------------------
 
    function Dependency_Image
-     (Project  : Alire.Project;
+     (Project  : Alire.Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set;
       Policy   : Age_Policies := Newest)
       return String
@@ -52,7 +52,7 @@ package body Alr.Query is
    ------------
 
    function Exists
-     (Project : Alire.Project;
+     (Project : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any)
       return Boolean
@@ -74,7 +74,7 @@ package body Alr.Query is
    ----------
 
    function Find
-     (Project : Alire.Project;
+     (Project : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any;
       Policy  : Age_Policies)

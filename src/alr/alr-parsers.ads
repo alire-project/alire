@@ -5,7 +5,7 @@ with Semantic_Versioning.Extended;
 package Alr.Parsers with Preelaborate is
 
    type Allowed_Milestones (Len : Positive) is record
-      Project  : Alire.Project (1 .. Len);
+      Project  : Alire.Crate_Name (1 .. Len);
       Versions : Semantic_Versioning.Extended.Version_Set;
    end record;
 

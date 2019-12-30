@@ -23,13 +23,13 @@ package Alr.Dependency_Graphs is
    --  Remove dependencies that don't appear in the solution
 
    function Has_Dependencies (This    : Graph;
-                              Project : Alire.Project)
+                              Project : Alire.Crate_Name)
                               return Boolean;
    --  Say if Project has dependencies in the current graph (hence not
    --  installable yet).
 
    function Removing_Dependee (This    : Graph;
-                               Project : Alire.Project) return Graph;
+                               Project : Alire.Crate_Name) return Graph;
    --  Remove all dependencies with Project as the dependee project
 
    procedure Plot (This     : Graph;
@@ -52,7 +52,7 @@ private
      (L.Dependent < R.Dependent or else
         (L.Dependent = R.Dependent and then L.Dependee < R.Dependee));
 
-   function New_Dependency (Dependent, Dependee : Alire.Project)
+   function New_Dependency (Dependent, Dependee : Alire.Crate_Name)
                             return Dependency is
       (Dependent'Length, Dependee'Length, +Dependent, +Dependee);
 

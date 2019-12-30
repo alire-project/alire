@@ -47,7 +47,7 @@ package body Alire.Containers is
    ---------------
 
    function Excluding (Map  : Release_Map;
-                       Name : Alire.Project)
+                       Name : Crate_Name)
                        return Release_Map
    is
    begin

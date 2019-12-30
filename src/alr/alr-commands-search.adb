@@ -111,7 +111,7 @@ package body Alr.Commands.Search is
                   List_Release (Release);
                   Busy.Step;
                end loop;
-            else
+            elsif not Crate.Releases.Is_Empty then
                List_Release (Crate.Releases.Last_Element);
                Busy.Step;
             end if;

@@ -12,7 +12,7 @@ package body Alire is
    ---------
 
    overriding
-   function "=" (L, R : Project) return Boolean is
+   function "=" (L, R : Crate_Name) return Boolean is
      (Utils.To_Lower_Case (+L) = Utils.To_Lower_Case (+R));
 
    ---------
@@ -20,7 +20,7 @@ package body Alire is
    ---------
 
    overriding
-   function "<" (L, R : Project) return Boolean is
+   function "<" (L, R : Crate_Name) return Boolean is
      (Utils.To_Lower_Case (+L) < Utils.To_Lower_Case (+R));
 
    -------------------------

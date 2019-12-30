@@ -82,7 +82,7 @@ package body Alire.Releases is
    --------------
 
    function Renaming (Base     : Release;
-                      Provides : Alire.Project) return Release is
+                      Provides : Crate_Name) return Release is
    begin
       return Renamed : Release := Base do
          Renamed.Alias := +(+Provides);
@@ -157,13 +157,13 @@ package body Alire.Releases is
 
    function Replacing
      (Base               : Release;
-      Project            : Alire.Project      := "";
+      Project            : Alire.Crate_Name   := "";
       Notes              : Description_String := "")
       return Release
    is
-      New_Project : constant Alire.Project := (if Project = ""
-                                               then Base.Project
-                                               else Project);
+      New_Project : constant Alire.Crate_Name := (if Project = ""
+                                                  then Base.Project
+                                                  else Project);
       New_Notes   : constant Description_String := (if Notes = ""
                                                     then Base.Notes
                                                     else Notes);
@@ -218,7 +218,7 @@ package body Alire.Releases is
    -- New_Release --
    -----------------
 
-   function New_Release (Project            : Alire.Project;
+   function New_Release (Project            : Crate_Name;
                          Version            : Semantic_Versioning.Version;
                          Origin             : Origins.Origin;
                          Notes              : Description_String;
@@ -244,7 +244,7 @@ package body Alire.Releases is
    -------------------------
 
    function New_Working_Release
-     (Project      : Alire.Project;
+     (Project      : Crate_Name;
       Origin       : Origins.Origin := Origins.New_Filesystem ("..");
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;

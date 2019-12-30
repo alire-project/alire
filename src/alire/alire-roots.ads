@@ -38,7 +38,7 @@ package Alire.Roots with Preelaborate is
 
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
-   function New_Root (Name : Alire.Project;
+   function New_Root (Name : Crate_Name;
                       Path : Absolute_Path) return Root with
      Post => New_Root'Result.Is_Valid;
    --  New unreleased project (not indexed, working copy)
@@ -92,7 +92,7 @@ private
    function Invalid_Reason (This : Root) return String is
       (+This.Reason);
 
-   function New_Root (Name : Alire.Project;
+   function New_Root (Name : Crate_Name;
                       Path : Absolute_Path) return Root is
      (True,
       +Path,

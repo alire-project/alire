@@ -32,11 +32,11 @@ package Alire.Containers with Preelaborate is
    subtype Release_H is Release_Holders.Holder;
 
    package Project_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (Alire.Project, Releases.Release, "<", Releases."=");
+     (Crate_Name, Releases.Release, "<", Releases."=");
    type Release_Map is new Project_Release_Maps.Map with null record;
 
    function Excluding (Map  : Release_Map;
-                       Name : Alire.Project)
+                       Name : Crate_Name)
                        return Release_Map;
 
    function Including (Map     : Release_Map;

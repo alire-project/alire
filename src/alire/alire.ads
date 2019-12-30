@@ -66,19 +66,19 @@ package Alire with Preelaborate is
    --  single-threaded, it is not a problem right now.
    --  TODO: work around this in the big Project -> Crate_Name refactoring.
 
-   type Project is new String with
+   type Crate_Name is new String with
      Dynamic_Predicate =>
-       Is_Valid_Name (String (Project)),
+       Is_Valid_Name (String (Crate_Name)),
      Predicate_Failure => -- This is the buggy predicate requiring workarounds
        raise Alire.Checked_Error with Alire.Error_In_Name;
        --  Alire.* prefix needed for GNAT bug workaround.
 
    overriding
-   function "=" (L, R : Project) return Boolean;
+   function "=" (L, R : Crate_Name) return Boolean;
    --  Project names are case preserving but insensitive when compared.
 
    overriding
-   function "<" (L, R : Project) return Boolean;
+   function "<" (L, R : Crate_Name) return Boolean;
    --  Likewise, we do not want capitalization to influence ordering.
 
    subtype Restricted_Name is String with Dynamic_Predicate =>
@@ -88,8 +88,8 @@ package Alire with Preelaborate is
    --  A type used to limit some things that are given names by the user
    --  (e.g., remote index names).
 
-   function "+" (P : Project) return String  is (String (P));
-   function "+" (P : String)  return Project is (Project (P));
+   function "+" (P : Crate_Name) return String  is (String (P));
+   function "+" (P : String)  return Crate_Name is (Crate_Name (P));
 
    subtype Description_String is String with Dynamic_Predicate =>
      Description_String'Length <= Max_Description_Length;

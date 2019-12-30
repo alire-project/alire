@@ -18,7 +18,7 @@ package Alr with Preelaborate is
 
    --  Use some general types for the benefit of all child packages:
    pragma Warnings (Off);
-   use all type Alire.Project;
+   use all type Alire.Crate_Name;
    use all type Simple_Logging.Levels;
    pragma Warnings (On);
 

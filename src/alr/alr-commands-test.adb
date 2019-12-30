@@ -219,7 +219,7 @@ package body Alr.Commands.Test is
          -- Is_Match --
          --------------
 
-         function Is_Match (Name : Alire.Project) return Boolean is
+         function Is_Match (Name : Alire.Crate_Name) return Boolean is
            (for some I in 1 .. Num_Arguments =>
                Utils.Contains (+Name, Argument (I)));
 

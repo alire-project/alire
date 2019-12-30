@@ -23,7 +23,7 @@ package body Alr.Commands.Get is
    --------------
 
    procedure Retrieve (Cmd      : Command;
-                       Name     : Alire.Project;
+                       Name     : Alire.Crate_Name;
                        Versions : Semver.Extended.Version_Set)
    is
       Rel : constant Alire.Index.Release :=

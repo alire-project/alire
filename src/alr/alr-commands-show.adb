@@ -24,7 +24,7 @@ package body Alr.Commands.Show is
    ----------------------------------
 
    function Libgraph_Easy_Perl_Installed return Boolean is
-      Prj : constant Alire.Project := "libgraph_easy_perl_installed";
+      Prj : constant Alire.Crate_Name := "libgraph_easy_perl_installed";
       Ver : constant Semantic_Versioning.Version :=
          Semantic_Versioning.Parse ("0.0-rolling");
    begin
@@ -37,7 +37,7 @@ package body Alr.Commands.Show is
    -- Report --
    ------------
 
-   procedure Report (Name     : Alire.Project;
+   procedure Report (Name     : Alire.Crate_Name;
                      Versions : Semver.Extended.Version_Set;
                      Current  : Boolean;
                      --  session or command-line requested release
@@ -129,7 +129,7 @@ package body Alr.Commands.Show is
    -- Report_Jekyll --
    -------------------
 
-   procedure Report_Jekyll (Name     : Alire.Project;
+   procedure Report_Jekyll (Name     : Alire.Crate_Name;
                             Versions : Semver.Extended.Version_Set;
                             Current  : Boolean)
    is

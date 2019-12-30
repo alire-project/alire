@@ -33,7 +33,7 @@ package Alire.Releases with Preelaborate is
 
    function "<" (L, R : Release) return Boolean;
 
-   function New_Release (Project            : Alire.Project;
+   function New_Release (Project            : Crate_Name;
                          Version            : Semantic_Versioning.Version;
                          Origin             : Origins.Origin;
                          Notes              : Description_String;
@@ -44,7 +44,7 @@ package Alire.Releases with Preelaborate is
                          return Release;
 
    function New_Working_Release
-     (Project      : Alire.Project;
+     (Project      : Crate_Name;
       Origin       : Origins.Origin := Origins.New_Filesystem ("..");
 
       Dependencies : Conditional.Dependencies :=
@@ -66,7 +66,7 @@ package Alire.Releases with Preelaborate is
    --  Takes a release and merges given fields
 
    function Renaming (Base     : Release;
-                      Provides : Alire.Project) return Release;
+                      Provides : Crate_Name) return Release;
 
    function Renaming (Base     : Release;
                       Provides : Projects.Named'Class) return Release;
@@ -75,7 +75,7 @@ package Alire.Releases with Preelaborate is
    --  "Provides" project, so both projects cannot be selected simultaneously.
 
    function Replacing (Base               : Release;
-                       Project            : Alire.Project      := "";
+                       Project            : Alire.Crate_Name   := "";
                        Notes              : Description_String := "")
                        return Release;
    --  Takes a release and replaces the given fields
@@ -116,7 +116,7 @@ package Alire.Releases with Preelaborate is
    --  Materialize conditions in a Release once the whatever properties are
    --  known. At present dependencies, properties, and availability.
 
-   function Project (R : Release) return Alire.Project;
+   function Project (R : Release) return Crate_Name;
 
    function Project_Str (R : Release) return String is (+R.Project);
 
@@ -128,7 +128,7 @@ package Alire.Releases with Preelaborate is
    --  Returns the description for the crate, which is also stored as a
    --  property of the release.
 
-   function Provides (R : Release) return Alire.Project;
+   function Provides (R : Release) return Crate_Name;
    --  The actual project name to be used during dependency resolution
    --  (But nowhere else)
 
@@ -276,7 +276,7 @@ private
      and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
-      Project      : Alire.Project (1 .. Prj_Len);
+      Project      : Crate_Name (1 .. Prj_Len);
       Alias        : UString; -- I finally gave up on constraints
       Version      : Semantic_Versioning.Version;
       Origin       : Origins.Origin;
@@ -305,13 +305,13 @@ private
    function Is_Extension (R : Release) return Boolean
    is (R.Project_Base'Length < R.Project'Length);
 
-   function Project (R : Release) return Alire.Project
+   function Project (R : Release) return Crate_Name
    is (R.Project);
 
    function Project_Base (R : Release) return String
    is (Utils.Head (+R.Project, Extension_Separator));
 
-   function Provides (R : Release) return Alire.Project
+   function Provides (R : Release) return Crate_Name
    is (if UStrings.Length (R.Alias) = 0
        then R.Project
        else +(+R.Alias));

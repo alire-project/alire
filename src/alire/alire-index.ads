@@ -69,18 +69,18 @@ package Alire.Index is
    --  BASIC QUERIES  --
    ---------------------
 
-   function Crate (Name : Alire.Project) return Projects.With_Releases.Crate
+   function Crate (Name : Crate_Name) return Projects.With_Releases.Crate
      with Pre =>
        Exists (Name) or else
        raise Checked_Error with "Requested crate not in index: " & (+Name);
 
-   function Exists (Project : Alire.Project) return Boolean;
+   function Exists (Project : Crate_Name) return Boolean;
 
-   function Exists (Project : Alire.Project;
+   function Exists (Project : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean;
 
-   function Find (Project : Alire.Project;
+   function Find (Project : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release
      with Pre =>
        Exists (Project, Version) or else

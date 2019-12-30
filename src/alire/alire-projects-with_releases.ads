@@ -11,9 +11,9 @@ package Alire.Projects.With_Releases with Preelaborate is
    with private;
    --  A complete crate with its releases.
 
-   function New_Crate (Name : Alire.Project) return Crate;
+   function New_Crate (Name : Crate_Name) return Crate;
 
-   function Name (This : Crate) return Alire.Project;
+   function Name (This : Crate) return Crate_Name;
 
    procedure Add (This    : in out Crate;
                   Release : Releases.Release) with Pre =>
@@ -45,9 +45,9 @@ private
 
    type Crate (Len : Natural) is new General and
      Interfaces.Detomifiable with
-   record
-      Name     : Alire.Project (1 .. Len);
-      Releases : Containers.Release_Set;
-   end record;
+      record
+         Name      : Crate_Name (1 .. Len);
+         Releases  : Containers.Release_Set;
+      end record;
 
 end Alire.Projects.With_Releases;
