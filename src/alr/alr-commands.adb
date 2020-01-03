@@ -9,7 +9,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
-with Alire.Defaults;
 with Alire.Features.Index;
 with Alire.Index;
 with Alire.Roots;
@@ -406,10 +405,7 @@ package body Alr.Commands is
            ("No indexes configured, adding default community index");
          declare
             Outcome : constant Alire.Outcome :=
-                        Alire.Features.Index.Add
-                          (Origin => Alire.Defaults.Community_Index,
-                           Name   => Alire.Defaults.Community_Index_Name,
-                           Under  => Alire.Config.Indexes_Directory);
+                        Alire.Features.Index.Add_Or_Reset_Community;
          begin
             if not Outcome.Success then
                Reportaise_Command_Failed

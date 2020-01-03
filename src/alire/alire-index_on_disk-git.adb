@@ -29,8 +29,7 @@ package body Alire.Index_On_Disk.Git is
                Origin     => Origin,
                Name       => Name,
                Parent     => Parent,
-               Priority   => <>,
-               Has_Commit => VCSs.Commit (Origin) /= "");
+               Priority   => <>);
    end New_Handler;
 
    ------------
@@ -39,8 +38,15 @@ package body Alire.Index_On_Disk.Git is
 
    overriding
    function Update (This : Index) return Outcome is
-     (if This.Has_Commit
-      then Outcome_Success -- Trying to pull from a detached repo is a failure
-      else VCSs.Git.Handler.Update (This.Index_Directory));
+   begin
+      if VCSs.Git.Handler.Is_Detached (This.Index_Directory) then
+         --  Trying to pull from a detached repo is a failure
+         Trace.Detail ("Skipping update of detached index: " & This.Name);
+         return Outcome_Success;
+      else
+         Trace.Detail ("Updating index: " & This.Name);
+         return VCSs.Git.Handler.Update (This.Index_Directory);
+      end if;
+   end Update;
 
 end Alire.Index_On_Disk.Git;

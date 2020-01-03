@@ -23,8 +23,6 @@ package Alire.Index_On_Disk.Git is
 
 private
 
-   type Index is new Index_On_Disk.Index with record
-      Has_Commit : Boolean;
-   end record;
+   type Index is new Index_On_Disk.Index with null record;
 
 end Alire.Index_On_Disk.Git;

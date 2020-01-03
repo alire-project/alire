@@ -57,7 +57,12 @@ package Alire.Index_On_Disk is
    --  Descendants use this function to initialize a URL-specific handler
 
    function Add (This : Index) return Outcome is abstract;
-   --  Deploy the index on disk for the first time at <Parent>/<Name>/repo
+   --  Deploy the index on disk for the first time at <Parent>/<Name>/repo.
+   --  This version only writes the actual index contents.
+
+   function Add_With_Metadata (This : Index'Class) return Outcome;
+   --  Creates destination dir, writes metadata, adds the contents, and
+   --  verifies the result (the whole shebang).
 
    function Delete (This : Index'Class) return Outcome;
    --  Remove index from current configuration and delete its folder
