@@ -77,7 +77,7 @@ package body Alr.Bootstrap is
    begin
       return
         "(" & Session_State'Img & ") (" &
-        Utils.Trim (Alire.Index.Catalog.Length'Img) & " releases indexed)" &
+        Utils.Trim (Alire.Index.Release_Count'Img) & " releases indexed)" &
         (" (loaded in" & Milliseconds'Image (Milliseconds (Elapsed)) & "s)");
    end Status_Line;
 

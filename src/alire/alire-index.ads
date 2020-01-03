@@ -1,11 +1,11 @@
 private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
-with Alire.Conditional;
-with Alire.Containers;
 with Alire.Dependencies;
 with Alire.GPR;
 with Alire.Origins;
+with Alire.Projects.Containers;
+with Alire.Projects.With_Releases;
 with Alire.Properties;
 with Alire.Properties.Licenses;
 with Alire.Releases;
@@ -44,77 +44,58 @@ package Alire.Index is
    --  The index version understood by alire must match the one in the indexes
    --  being loaded.
 
-   ---------------
-   --  CATALOG  --
-   ---------------
-
-   Catalog : Containers.Release_Set;
-
-   type Catalog_Entry (<>) is tagged private;
-   --  Used to force the declaration of a single variable to refer to a
-   --  project in index specs.
-   --  TODO: when the Catalog global is removed, obsolesce this type that
-   --  currently only serves to add an entry to said set.
-
-   function Manually_Catalogued_Project
-     (Crate_Name, Description : String) return Catalog_Entry;
-   --  Helper to programmatically create entries
-
-   -----------------
-   -- Index types --
-   -----------------
-
-   subtype Release_Dependencies is Conditional.Dependencies;
-   subtype Release_Properties   is Conditional.Properties;
-   subtype Release_Requisites   is Requisites.Tree;
-
-   No_Dependencies : constant Release_Dependencies :=
-     Conditional.For_Dependencies.Empty;
-   No_Properties   : constant Release_Properties   :=
-     Conditional.For_Properties.Empty;
-   No_Requisites   : constant Requisites.Tree      :=
-     Requisites.Trees.Empty_Tree;
-   No_Origin       : constant Origins.Origin       :=
-     Origins.New_Filesystem ("/unavailable");
-   No_Version      : constant Semantic_Versioning.Version :=
-     Semantic_Versioning.Relaxed ("0");
-
    subtype Release is Alire.Releases.Release;
 
-   function Register
-     ( --  Mandatory
-       This               : Catalog_Entry;
-       Version            : Semantic_Versioning.Version;
-       Origin             : Origins.Origin;
-       -- we force naming beyond this point with this ugly guard:
-       XXXXXXXXXXXXXX     : Utils.XXX_XXX         := Utils.XXX_XXX_XXX;
-       --  Optional
-       Notes              : Description_String    := "";
-       Dependencies       : Release_Dependencies  := No_Dependencies;
-       Properties         : Release_Properties    := No_Properties;
-       Private_Properties : Release_Properties    := No_Properties;
-       Available_When     : Release_Requisites    := No_Requisites)
-      return Release;
-   --  Properties are generally interesting to the user
-   --  Private_Properties are only interesting to alr
+   ------------------------
+   --  INDEX POPULATION  --
+   ------------------------
+
+   type Addition_Policies is
+     (Merge_Priorizing_Existing
+      --  Merge two crates but the properties of the old one stand, new
+      --  properties are not added, and any existing releases will be kept
+      --  over ones with the same version in the new crate. This is the only
+      --  behavior existing since multiple indexes were introduced.
+
+      --  We might envision other policies, like not allowing releases from two
+      --  indexes at the same time, keeping only the first seen or overriding
+      --  with the last seen.
+     );
+
+   procedure Add (Crate  : Projects.With_Releases.Crate;
+                  Policy : Addition_Policies := Merge_Priorizing_Existing);
 
    ---------------------
    --  BASIC QUERIES  --
    ---------------------
+
+   function Crate (Name : Alire.Project) return Projects.With_Releases.Crate
+     with Pre =>
+       Exists (Name) or else
+       raise Checked_Error with "Requested crate not in index: " & (+Name);
+
+   function Exists (Project : Alire.Project) return Boolean;
 
    function Exists (Project : Alire.Project;
                     Version : Semantic_Versioning.Version)
                     return Boolean;
 
    function Find (Project : Alire.Project;
-                  Version : Semantic_Versioning.Version) return Release;
+                  Version : Semantic_Versioning.Version) return Release
+     with Pre =>
+       Exists (Project, Version) or else
+     raise Checked_Error with
+       "Requested milestone not in index: "
+       & (+Project) & "=" & Semantic_Versioning.Image (Version);
 
-private
+   --  Counts
 
-   type Catalog_Entry (Name_Len, Descr_Len : Natural) is
-   tagged record
-      Project      : Alire.Project (1 .. Name_Len);
-      Description  : Description_String (1 .. Descr_Len);
-   end record;
+   function Crate_Count return Natural;
+
+   function Release_Count return Natural;
+
+   --  Direct access
+
+   function All_Crates return access constant Projects.Containers.Maps.Map;
 
 end Alire.Index;

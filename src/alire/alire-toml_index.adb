@@ -498,10 +498,8 @@ package body Alire.TOML_Index is
    -----------------
 
    procedure Index_Crate (Path  : Relative_Path;
-                          Crate : Projects.With_Releases.Crate) is
-      Cat_Ent : constant Index.Catalog_Entry :=
-                  Index.Manually_Catalogued_Project
-                    (+Crate.Name, Crate.Description);
+                          Crate : in out Projects.With_Releases.Crate)
+   is
       use all type Origins.Kinds;
       use GNATCOLL;
       use all type VFS.Filesystem_String;
@@ -511,6 +509,7 @@ package body Alire.TOML_Index is
          --  This is delayed until this moment to keep many other
          --  packages Preelaborable.
          declare
+            use type Origins.Origin;
             Origin : constant Origins.Origin :=
                        Origins.Tweaks.Fixed_Origin (Path, R.Origin);
          begin
@@ -524,18 +523,13 @@ package body Alire.TOML_Index is
                end if;
             end if;
 
-            declare
-               Dummy : constant Index.Release := Cat_Ent.Register
-                 (Version        => R.Version,
-                  Origin         => Origin,
-                  Dependencies   => R.Dependencies,
-                  Properties     => R.Properties,
-                  Available_When => R.Available);
-            begin
-               null;
-            end;
+            if Origin /= R.Origin then
+               Crate.Replace (Release => R.Replacing (Origin));
+            end if;
          end;
       end loop;
+
+      Index.Add (Crate);
    end Index_Crate;
 
 end Alire.TOML_Index;

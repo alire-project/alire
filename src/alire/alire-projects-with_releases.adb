@@ -1,12 +1,35 @@
 with Alire.Properties.Labeled;
-with Alire.Releases;
 with Alire.TOML_Keys;
-
-with Semantic_Versioning;
 
 with TOML;
 
 package body Alire.Projects.With_Releases is
+
+   package Keys is new Containers.Release_Sets.Generic_Keys
+     (Semantic_Versioning.Version,
+      Alire.Releases.Version,
+      Semantic_Versioning."<");
+
+   ---------
+   -- Add --
+   ---------
+
+   procedure Add (This    : in out Crate;
+                  Release : Alire.Releases.Release) is
+   begin
+      This.Releases.Insert (Release);
+   end Add;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This    : Crate;
+                      Version : Semantic_Versioning.Version) return Boolean
+   is
+   begin
+      return Keys.Contains (This.Releases, Version);
+   end Contains;
 
    ---------------
    -- From_TOML --
@@ -141,6 +164,17 @@ package body Alire.Projects.With_Releases is
    --------------
 
    function Releases (This : Crate) return Containers.Release_Set is
-      (This.Releases);
+     (This.Releases);
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace (This    : in out Crate;
+                      Release : Alire.Releases.Release)
+   is
+   begin
+      Keys.Replace (This.Releases, Release.Version, Release);
+   end Replace;
 
 end Alire.Projects.With_Releases;

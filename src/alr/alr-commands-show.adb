@@ -10,7 +10,6 @@ with Alr.Platform;
 with Alr.Root;
 
 with Semantic_Versioning.Extended;
-with Alire.Projects;
 
 package body Alr.Commands.Show is
 
@@ -145,7 +144,7 @@ package body Alr.Commands.Show is
          Put_Line ("layout: crate");
          Put_Line (Rel.To_YAML);
          Put_Line ("---");
-         Put_Line (Alire.Projects.Descriptions (Rel.Project));
+         Put_Line (Rel.Description);
          Put_Line (Rel.Notes);
       end;
    exception

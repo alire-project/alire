@@ -15,10 +15,6 @@ package Alire.Projects with Preelaborate is
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Alire.Project, Description_String);
 
-   --  TODO: combine Index, Descriptions in a single data structure
-   Descriptions : Project_Description_Maps.Map;
-   --  Master list of known projects & descriptions
-
    function Naming_Convention return Utils.String_Vector;
    --  Return a description of the naming restrictions on crates/indexes.
 

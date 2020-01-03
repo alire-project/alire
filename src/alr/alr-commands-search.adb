@@ -1,12 +1,10 @@
 with AAA.Table_IO;
 
-with Ada.Strings.Fixed;
-
 with Alire.Containers;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Platform;
-with Alire.Projects;
+with Alire.Projects.With_Releases;
 with Alire.Releases;
 
 with Alr.Platform;
@@ -22,11 +20,9 @@ package body Alr.Commands.Search is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      use Ada.Strings.Fixed;
 
-      Found   : Natural := 0;
-
-      Tab : AAA.Table_IO.Table;
+      Found : Natural := 0;
+      Tab   : AAA.Table_IO.Table;
 
       ------------------
       -- List_Release --
@@ -40,7 +36,7 @@ package body Alr.Commands.Search is
              or else
              Utils.Contains (R.Notes, Cmd.Prop.all)
              or else
-             Utils.Contains (Alire.Projects.Descriptions (R.Project),
+             Utils.Contains (R.Description,
                              Cmd.Prop.all))
            and then
              (Cmd.Native or else not R.Origin.Is_Native)
@@ -61,7 +57,7 @@ package body Alr.Commands.Search is
                          then "+" & Alire.Origins.Deployers.New_Deployer
                              (R.Origin).Native_Version
                          else ""));
-            Tab.Append (Alire.Projects.Descriptions (R.Project));
+            Tab.Append (R.Description);
             Tab.Append (R.Notes);
          end if;
       end List_Release;
@@ -102,20 +98,30 @@ package body Alr.Commands.Search is
 
       declare
          Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
+
+         ------------------------
+         -- List_All_Or_Latest --
+         ------------------------
+
+         procedure List_All_Or_Latest
+           (Crate : Alire.Projects.With_Releases.Crate) is
+         begin
+            if Cmd.Full then
+               for Release of Crate.Releases loop
+                  List_Release (Release);
+                  Busy.Step;
+               end loop;
+            else
+               List_Release (Crate.Releases.Last_Element);
+               Busy.Step;
+            end if;
+         end List_All_Or_Latest;
+
       begin
          if Cmd.List then
             Trace.Detail ("Searching...");
-            for I in Alire.Index.Catalog.Iterate loop
-               if Cmd.Full
-                 or else
-                  I = Alire.Index.Catalog.Last
-                 or else
-                  Alire.Index.Catalog (I).Project /= Alire.Index.Catalog
-                                                       (Next (I)).Project
-               then
-                  List_Release (Alire.Index.Catalog (I));
-                  Busy.Step;
-               end if;
+            for Crate of Alire.Index.All_Crates.all loop
+               List_All_Or_Latest (Crate);
             end loop;
          else
             declare
@@ -123,14 +129,9 @@ package body Alr.Commands.Search is
             begin
                Trace.Detail ("Searching " & Utils.Quote (Pattern) & "...");
 
-               for I in Alire.Index.Catalog.Iterate loop
-                  if Count (+Alire.Index.Catalog (I).Project, Pattern) > 0 then
-                     if Cmd.Full or else I = Alire.Index.Catalog.Last or else
-                       Alire.Index.Catalog (I).Project /= Alire.Index.Catalog
-                                                            (Next (I)).Project
-                     then
-                        List_Release (Alire.Index.Catalog (I));
-                     end if;
+               for Crate of Alire.Index.All_Crates.all loop
+                  if Utils.Contains (+Crate.Name, Pattern) then
+                     List_All_Or_Latest (Crate);
                   end if;
                   Busy.Step;
                end loop;

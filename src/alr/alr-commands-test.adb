@@ -2,11 +2,12 @@ with Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;
 
+with Alire.Config;
 with Alire.Containers;
 with Alire.Index;
-with Alire.Utils;
 with Alire.OS_Lib.Subprocess;
-with Alire.Config;
+with Alire.Projects.With_Releases;
+with Alire.Utils;
 
 with Alr.Files;
 with Alr.Paths;
@@ -213,62 +214,57 @@ package body Alr.Commands.Test is
       ---------------------
 
       procedure Find_Candidates is
+
+         --------------
+         -- Is_Match --
+         --------------
+
+         function Is_Match (Name : Alire.Project) return Boolean is
+           (for some I in 1 .. Num_Arguments =>
+               Utils.Contains (+Name, Argument (I)));
+
       begin
-         for I in Alire.Index.Catalog.Iterate loop
-            if Test_All then
-               if not Cmd.Last
-                 or else
-                  I = Alire.Index.Catalog.Last
-                 or else
-                  Alire.Index.Catalog (I).Project /=
-                    Alire.Index.Catalog (Next (I)).Project
-               then
-                  Candidates.Include (Alire.Index.Catalog (I));
+
+         --  We must go over all crates when listing is requested, or when we
+         --  need to match the search term against crate names. Otherwise, we
+         --  can directly retrieve the given crates.
+
+         if Test_All or else Cmd.Search then
+            for Crate of Alire.Index.All_Crates.all loop
+               if Test_All or else Is_Match (Crate.Name) then
+                  if Cmd.Last then
+                     Candidates.Include (Crate.Releases.Last_Element);
+                  else
+                     for Release of Crate.Releases loop
+                        Candidates.Include (Release);
+                     end loop;
+                  end if;
                end if;
-            else
-               for J in 1 .. Num_Arguments loop
-                  declare
-                     R :  Alire.Index.Release renames Alire.Index.Catalog (I);
-                  begin
-                     if Cmd.Search then
-                        if Utils.Contains (+R.Project, Argument (J)) then
-                           if not Cmd.Last
-                             or else
-                              I = Alire.Index.Catalog.Last
-                             or else
-                              R.Project /=
-                                Alire.Index.Catalog (Next (I)).Project
-                           then
-                              Candidates.Include (R);
-                           end if;
+            end loop;
+         else
+            for J in 1 .. Num_Arguments loop
+               declare
+                  Allowed  : constant Parsers.Allowed_Milestones :=
+                               Parsers.Project_Versions (Argument (J));
+                  Crate    : constant Alire.Projects.With_Releases.Crate :=
+                               Alire.Index.Crate (Allowed.Project);
+                  Releases : constant Alire.Containers.Release_Set :=
+                               Crate.Releases;
+               begin
+                  for I in Releases.Iterate loop
+                     if Allowed.Versions.Contains (Releases (I).Version) then
+                        if not Cmd.Last or else
+                          I = Releases.Last or else
+                          not Allowed.Versions.Contains
+                            (Releases (Next (I)).Version)
+                        then
+                           Candidates.Include (Releases (I));
                         end if;
-                     else
-                        declare
-                           Allowed : constant Parsers.Allowed_Milestones :=
-                             Parsers.Project_Versions (Argument (J));
-                        begin
-                           if R.Project = Allowed.Project
-                             and then Allowed.Versions.Contains (R.Version)
-                           then
-                              if not Cmd.Last
-                                or else
-                                 I = Alire.Index.Catalog.Last
-                                or else
-                                 R.Project /=
-                                   Alire.Index.Catalog (Next (I)).Project
-                                or else
-                                 not Allowed.Versions.Contains
-                                      (Alire.Index.Catalog (Next (I)).Version)
-                              then
-                                 Candidates.Include (R);
-                              end if;
-                           end if;
-                        end;
                      end if;
-                  end;
-               end loop;
-            end if;
-         end loop;
+                  end loop;
+               end;
+            end loop;
+         end if;
       end Find_Candidates;
 
    begin
