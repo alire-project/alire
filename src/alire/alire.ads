@@ -159,6 +159,8 @@ package Alire with Preelaborate is
    function Outcome_Failure (Message : String) return Outcome with
      Pre  => Message'Length > 0,
      Post => not Outcome_Failure'Result.Success;
+   --  Calling this function generates a debug stack trace log, so it should
+   --  not be called until a failure is actually happening.
 
    function Outcome_Success return Outcome with
      Post => Outcome_Success'Result.Success;
@@ -219,10 +221,6 @@ private
    --  small overhead of always having the Message member is the price to pay.
 
    function Message (Result : Outcome) return String is (+Result.Message);
-
-   function Outcome_Failure (Message : String) return Outcome is
-     (Success => False,
-      Message => +Message);
 
    function Outcome_Success return Outcome is
      (Success => True,

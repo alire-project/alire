@@ -13,7 +13,7 @@ def run(i, error):
     prepare_env(config_dir, os.environ)
     prepare_indexes(
         config_dir, '.', {'bad_index_{}'.format(i): {'in_fixtures': False}})
-    p = run_alr('list', complain_on_error=False)
+    p = run_alr('list', complain_on_error=False, debug=False)
     assert_match(
         'ERROR: {}'
         '\nERROR: alr list unsuccessful\n$'.format(error),

@@ -16,7 +16,7 @@ for d in ('no-such-directory',
     rm('alr-config', recursive=True)
     prepare_indexes('alr-config', '.',
                     {'bad_index': {'dir': d, 'in_fixtures': False}})
-    p = run_alr('list', complain_on_error=False)
+    p = run_alr('list', complain_on_error=False, debug=False)
 
     path_excerpt = os.path.join('alr-config', 'indexes', 'bad_index',
                                 'index.toml')
