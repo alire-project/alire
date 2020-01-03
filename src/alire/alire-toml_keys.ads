@@ -9,7 +9,6 @@ package Alire.TOML_Keys with Preelaborate is
    Archive_Name   : constant String := "archive-name";
    Author         : constant String := "authors";
    Available      : constant String := "available";
-   Comment        : constant String := "comments";
    Compiler       : constant String := "compiler";
    Dependency     : constant String := "depends-on";
    Description    : constant String := "description";
@@ -20,6 +19,7 @@ package Alire.TOML_Keys with Preelaborate is
    GPR_Ext        : constant String := "gpr-externals";
    GPR_Set_Ext    : constant String := "gpr-set-externals";
    License        : constant String := "licenses";
+   Long_Descr     : constant String := "long-description";
    Maintainer     : constant String := "maintainers";
    Maint_Logins   : constant String := "maintainers-logins";
    Notes          : constant String := "notes";

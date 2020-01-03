@@ -17,6 +17,7 @@ package Alire.Properties.From_TOML with Preelaborate is
                           GPR_Externals,
                           GPR_Set_Externals,
                           Licenses,
+                          Long_Description,
                           Maintainers,
                           Maintainers_Logins,
                           Notes,
