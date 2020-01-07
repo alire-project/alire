@@ -13,10 +13,10 @@ package Alr.Commands.Get is
       Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-      ("Fetches a project");
+      ("Fetches a crate release");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("<project>[allowed versions]");
+     ("<crate>[allowed versions]");
 
 private
 

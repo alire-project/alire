@@ -10,7 +10,7 @@ package Alire.Types with Preelaborate is
    --  Recopilation of types for convenient use and documentation
 
    subtype Dependency is Dependencies.Dependency;
-   --  A single dependency on a single project+versions
+   --  A single dependency on a single crate+versions
 
    subtype Abstract_Dependencies is Conditional.Dependencies;
    --  Conditional dependencies as yet unmaterialized for a precise platform
@@ -25,7 +25,7 @@ package Alire.Types with Preelaborate is
      renames Conditional.For_Dependencies.Empty;
 
    function New_Dependency
-     (Name     : Alire.Project;
+     (Name     : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Platform_Dependencies
      renames Conditional.New_Dependency;

@@ -24,7 +24,7 @@ package body Alr.Commands.Show is
    ----------------------------------
 
    function Libgraph_Easy_Perl_Installed return Boolean is
-      Prj : constant Alire.Project := "libgraph_easy_perl_installed";
+      Prj : constant Alire.Crate_Name := "libgraph_easy_perl_installed";
       Ver : constant Semantic_Versioning.Version :=
          Semantic_Versioning.Parse ("0.0-rolling");
    begin
@@ -37,7 +37,7 @@ package body Alr.Commands.Show is
    -- Report --
    ------------
 
-   procedure Report (Name     : Alire.Project;
+   procedure Report (Name     : Alire.Crate_Name;
                      Versions : Semver.Extended.Version_Set;
                      Current  : Boolean;
                      --  session or command-line requested release
@@ -75,8 +75,8 @@ package body Alr.Commands.Show is
                                                       Native => <>));
             begin
                if Needed.Valid then
-                  if Needed.Releases.Contains (Rel.Project) then
-                     Needed.Releases.Delete (Rel.Project);
+                  if Needed.Releases.Contains (Rel.Name) then
+                     Needed.Releases.Delete (Rel.Name);
                   end if;
 
                   if not Needed.Releases.Is_Empty then
@@ -129,7 +129,7 @@ package body Alr.Commands.Show is
    -- Report_Jekyll --
    -------------------
 
-   procedure Report_Jekyll (Name     : Alire.Project;
+   procedure Report_Jekyll (Name     : Alire.Crate_Name;
                             Versions : Semver.Extended.Version_Set;
                             Current  : Boolean)
    is
@@ -162,15 +162,13 @@ package body Alr.Commands.Show is
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      --  asking for info, we could return the current project
-      --  We have internal data, but is it valid?
       if Num_Arguments = 0 then
          case Bootstrap.Session_State is
             when Outside =>
                Reportaise_Wrong_Arguments
-                 ("Cannot proceed without a project name");
+                 ("Cannot proceed without a crate name");
             when Broken =>
-               Requires_Project;
+               Requires_Valid_Session;
             when Bootstrap.Valid_Session_States =>
                null;
          end case;
@@ -183,24 +181,24 @@ package body Alr.Commands.Show is
       declare
          Allowed : constant Parsers.Allowed_Milestones :=
            (if Num_Arguments = 1
-            then Parsers.Project_Versions (Argument (1))
-            else Parsers.Project_Versions
+            then Parsers.Crate_Versions (Argument (1))
+            else Parsers.Crate_Versions
               (Root.Current.Release.Milestone.Image));
       begin
          --  Execute
          if Cmd.Jekyll then
-            Report_Jekyll (Allowed.Project,
+            Report_Jekyll (Allowed.Crate,
                            Allowed.Versions,
                            Num_Arguments = 0);
          else
-            Report (Allowed.Project,
+            Report (Allowed.Crate,
                     Allowed.Versions,
                     Num_Arguments = 0,
                     Cmd);
          end if;
       exception
          when Alire.Query_Unsuccessful =>
-            Trace.Info ("Project [" & Argument (1) &
+            Trace.Info ("Crate [" & Argument (1) &
                           "] does not exist in the catalog.");
       end;
    end Execute;
@@ -219,7 +217,7 @@ package body Alr.Commands.Show is
                 & " reported. With --solve, a full solution is resolved and"
                 & " reported in list and graph form.")
        .New_Line
-       .Append (Project_Version_Sets));
+       .Append (Crate_Version_Sets));
 
    --------------------
    -- Setup_Switches --

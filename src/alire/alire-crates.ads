@@ -1,5 +1,3 @@
-with Ada.Containers.Indefinite_Ordered_Maps;
-
 with Alire.Conditional;
 with Alire.Interfaces;
 with Alire.Properties;
@@ -7,20 +5,14 @@ with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
-package Alire.Projects with Preelaborate is
-
-   --  TODO: Rename to Crates (Issue #113)
-
-   package Project_Description_Maps
-   is new Ada.Containers.Indefinite_Ordered_Maps
-     (Alire.Project, Description_String);
+package Alire.Crates with Preelaborate is
 
    function Naming_Convention return Utils.String_Vector;
    --  Return a description of the naming restrictions on crates/indexes.
 
    type Named is limited interface;
 
-   function Project (N : Named) return Alire.Project is abstract;
+   function Name (N : Named) return Crate_Name is abstract;
 
    type Sections is (General_Section,  -- In [general]
                      Release_Section); -- In a release
@@ -52,4 +44,4 @@ private
       Available    : Requisites.Tree;
    end record;
 
-end Alire.Projects;
+end Alire.Crates;

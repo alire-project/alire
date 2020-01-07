@@ -22,7 +22,7 @@ package body Alr.Testing.Markdown is
       Create   (This.File.all, Out_File, Name & ".md");
       Put_Line (This.File.all, "#### " & BT (Commands.Version.Fingerprint));
       New_Line (This.File.all);
-      Put_Line (This.File.all, "| Status | Project | Version | Build time |");
+      Put_Line (This.File.all, "| Status | Crate | Version | Build time |");
       Put_Line (This.File.all, "| --- | --- | --- | --- |");
    end Start_Run;
 
@@ -69,7 +69,7 @@ package body Alr.Testing.Markdown is
               when Skip         => "SKIP",
               when Unavailable  => "UNAV",
               when Unresolvable => "DEPS") & " | " &
-            BT (+Rel.Milestone.Project) & " | " &
+            BT (+Rel.Milestone.Crate) & " | " &
             BT (Semantic_Versioning.Image
              (Rel.Milestone.Version)) & " | " &
             BT (CS (Elapsed)'Img) & " s |");

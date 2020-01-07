@@ -1,6 +1,6 @@
 with Alire.TOML_Load;
 
-package body Alire.Projects is
+package body Alire.Crates is
 
    ---------------
    -- From_TOML --
@@ -41,4 +41,4 @@ package body Alire.Projects is
                & " to" & Alire.Max_Name_Length'Img
                & " characters."));
 
-end Alire.Projects;
+end Alire.Crates;

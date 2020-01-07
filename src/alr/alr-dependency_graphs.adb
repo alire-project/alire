@@ -49,7 +49,7 @@ package body Alr.Dependency_Graphs is
       return Result : Graph := This do
          for Dep of Enumerate (R.Dependencies.Evaluate (Platform.Properties))
          loop
-            Result.Include (New_Dependency (R.Project, Dep.Project));
+            Result.Include (New_Dependency (R.Name, Dep.Crate));
          end loop;
       end return;
    end Including;
@@ -77,12 +77,12 @@ package body Alr.Dependency_Graphs is
    ----------------------
 
    function Has_Dependencies (This : Graph;
-                              Project : Alire.Project)
+                              Crate : Alire.Crate_Name)
                               return Boolean
    is
    begin
       for Dep of This loop
-         if +Dep.Dependent = Project then
+         if +Dep.Dependent = Crate then
             return True;
          end if;
       end loop;
@@ -154,11 +154,11 @@ package body Alr.Dependency_Graphs is
    -----------------------
 
    function Removing_Dependee (This    : Graph;
-                               Project : Alire.Project) return Graph is
+                               Crate : Alire.Crate_Name) return Graph is
    begin
       return Result : Graph do
          for Dep of This loop
-            if +Dep.Dependee /= Project then
+            if +Dep.Dependee /= Crate then
                Result.Include (Dep);
             end if;
          end loop;

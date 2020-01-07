@@ -11,7 +11,7 @@ package Alr.Commands.List is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("See full list or a subset of indexed projects");
+   is ("See full list or a subset of indexed crates");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

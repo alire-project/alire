@@ -12,7 +12,7 @@ package body Alire is
    ---------
 
    overriding
-   function "=" (L, R : Project) return Boolean is
+   function "=" (L, R : Crate_Name) return Boolean is
      (Utils.To_Lower_Case (+L) = Utils.To_Lower_Case (+R));
 
    ---------
@@ -20,7 +20,7 @@ package body Alire is
    ---------
 
    overriding
-   function "<" (L, R : Project) return Boolean is
+   function "<" (L, R : Crate_Name) return Boolean is
      (Utils.To_Lower_Case (+L) < Utils.To_Lower_Case (+R));
 
    -------------------------
@@ -97,7 +97,7 @@ package body Alire is
          Err := +"Identifier too long.";
       elsif S (S'First) = '_' then
          Err := +"Identifiers must not begin with an underscore.";
-      elsif (for some C of S => C not in Project_Character) then
+      elsif (for some C of S => C not in Crate_Character) then
          Err := +"Identifiers must be lowercase ASCII alphanumerical.";
       end if;
 

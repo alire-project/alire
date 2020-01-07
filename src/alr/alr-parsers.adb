@@ -5,11 +5,11 @@ package body Alr.Parsers is
 
    package Semver renames Semantic_Versioning;
 
-   ----------------------
-   -- Project_Versions --
-   ----------------------
+   --------------------
+   -- Crate_Versions --
+   --------------------
 
-   function Project_Versions (Spec : String) return Allowed_Milestones
+   function Crate_Versions (Spec : String) return Allowed_Milestones
    is
    --  Locate and identify the version operator
       use Ada.Strings;
@@ -27,7 +27,7 @@ package body Alr.Parsers is
    begin
       if Result.Valid then
          return M : Allowed_Milestones (Name'Length) do
-            M.Project  := +Name;
+            M.Crate  := +Name;
             M.Versions := Result.Set;
          end return;
       else
@@ -40,8 +40,8 @@ package body Alr.Parsers is
       when Alire.Checked_Error =>
          raise;
       when others =>
-         Trace.Error ("A project/version string was invalid");
+         Trace.Error ("A crate/version string was invalid");
          raise Command_Failed;
-   end Project_Versions;
+   end Crate_Versions;
 
 end Alr.Parsers;

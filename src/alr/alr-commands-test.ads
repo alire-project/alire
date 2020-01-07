@@ -20,7 +20,7 @@ package Alr.Commands.Test is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[project[versions]]...");
+   is ("[crate[versions]]...");
 
 private
 

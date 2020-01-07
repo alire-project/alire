@@ -24,7 +24,7 @@ package Alire.Conditional with Preelaborate is
    --  A plain tree without conditions or alternatives
 
    function New_Dependency
-     (Name     : Alire.Project;
+     (Name     : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependencies;
 
@@ -66,7 +66,7 @@ package Alire.Conditional with Preelaborate is
 private
 
    function New_Dependency
-     (Name     : Alire.Project;
+     (Name     : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependencies is
      (For_Dependencies.New_Value

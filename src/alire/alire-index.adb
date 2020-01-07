@@ -2,19 +2,19 @@ package body Alire.Index is
 
    use all type Semantic_Versioning.Version;
 
-   Crates : aliased Projects.Containers.Maps.Map;
+   Contents : aliased Alire.Crates.Containers.Maps.Map;
 
    ---------
    -- Add --
    ---------
 
-   procedure Add (Crate  : Projects.With_Releases.Crate;
+   procedure Add (Crate  : Crates.With_Releases.Crate;
                   Policy : Addition_Policies := Merge_Priorizing_Existing) is
       pragma Unreferenced (Policy);
    begin
       if Exists (Crate.Name) then
          declare
-            Old : Projects.With_Releases.Crate := Crates (Crate.Name);
+            Old : Crates.With_Releases.Crate := Contents (Crate.Name);
          begin
             for Release of Crate.Releases loop
                if Old.Contains (Release.Version) then
@@ -25,10 +25,10 @@ package body Alire.Index is
                end if;
             end loop;
 
-            Crates.Include (Crate.Name, Old);
+            Contents.Include (Crate.Name, Old);
          end;
       else
-         Crates.Insert (Crate.Name, Crate);
+         Contents.Insert (Crate.Name, Crate);
       end if;
    end Add;
 
@@ -36,41 +36,41 @@ package body Alire.Index is
    -- All_Crates --
    ----------------
 
-   function All_Crates return access constant Projects.Containers.Maps.Map is
-     (Crates'Access);
+   function All_Crates return access constant Crates.Containers.Maps.Map is
+     (Contents'Access);
 
    -----------
    -- Crate --
    -----------
 
-   function Crate (Name : Alire.Project) return Projects.With_Releases.Crate is
-     (Crates (Name));
+   function Crate (Name : Crate_Name) return Crates.With_Releases.Crate
+   is (Contents (Name));
 
    -----------------
    -- Crate_Count --
    -----------------
 
    function Crate_Count return Natural is
-     (Natural (Crates.Length));
+     (Natural (Contents.Length));
 
    ------------
    -- Exists --
    ------------
 
-   function Exists (Project : Alire.Project) return Boolean is
-     (Crates.Contains (Project));
+   function Exists (Name : Crate_Name) return Boolean is
+     (Contents.Contains (Name));
 
    ------------
    -- Exists --
    ------------
 
-   function Exists (Project : Alire.Project;
+   function Exists (Name : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean is
    begin
-      if Exists (Project) then
-         for R of Crates (Project).Releases loop
-            if R.Project = Project and then R.Version = Version then
+      if Exists (Name) then
+         for R of Contents (Name).Releases loop
+            if R.Name = Name and then R.Version = Version then
                return True;
             end if;
          end loop;
@@ -83,18 +83,18 @@ package body Alire.Index is
    -- Find --
    ----------
 
-   function Find (Project : Alire.Project;
+   function Find (Name : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release is
    begin
-      for R of Crates (Project).Releases loop
-         if R.Project = Project and then R.Version = Version then
+      for R of Contents (Name).Releases loop
+         if R.Name = Name and then R.Version = Version then
             return R;
          end if;
       end loop;
 
       raise Checked_Error with
         "Requested milestone not in index: "
-        & (+Project) & "=" & Semantic_Versioning.Image (Version);
+        & (+Name) & "=" & Semantic_Versioning.Image (Version);
    end Find;
 
    -------------------
@@ -104,7 +104,7 @@ package body Alire.Index is
    function Release_Count return Natural is
    begin
       return Count : Natural := 0 do
-         for Crate of Crates loop
+         for Crate of Contents loop
             Count := Count + Natural (Crate.Releases.Length);
          end loop;
       end return;

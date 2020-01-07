@@ -85,13 +85,8 @@ package Alr.Commands is
    procedure Requires_Full_Index (Force_Reload : Boolean := False);
    --  Unless Force_Reload, if the index is not empty we no nothing
 
-   procedure Requires_Project;
-   --  Checks and performs session is up to date, and that the project matches
-   --  to continue with it.
-   --  May trigger recompilation and respawn. In that case, it doesn't return
-   --  to the caller, but respawns.
-   --  If it returns, then we are running the updated alr executable for the
-   --  current session+project.
+   procedure Requires_Valid_Session;
+   --  Verifies that a valid working dir is in scope
 
    procedure Requires_Buildfile;
    --  Ensures that the build file exists, and if not generates one from
@@ -110,7 +105,7 @@ package Alr.Commands is
    --  Declared here so they are available to the help metacommand child
    --  package and Spawn.
 
-   function Project_Version_Sets return Alire.Utils.String_Vector;
+   function Crate_Version_Sets return Alire.Utils.String_Vector;
    --  Returns the instructions to restrict version sets, for use in
    --  Long_Description help functions.
 
@@ -138,9 +133,8 @@ package Alr.Commands is
 
    function Image (N : Cmd_Names) return String;
 
-   function Enter_Project_Folder return Alire.Directories.Destination;
-   --  If we have a compiled-in project, attempt to find its root above us
-   --  Does nothing if we don't have a project, or if the root is not found
+   function Enter_Working_Folder return Alire.Directories.Destination;
+   --  Attempt to find the root alire working dir if deeper inside it
 
 private
 

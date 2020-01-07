@@ -10,7 +10,7 @@ package body Alire.TOML_Load is
    -- Load_Crate_Section --
    ------------------------
 
-   function Load_Crate_Section (Section : Projects.Sections;
+   function Load_Crate_Section (Section : Crates.Sections;
                                 From    : TOML_Adapters.Key_Queue;
                                 Props   : in out Conditional.Properties;
                                 Deps    : in out Conditional.Dependencies;

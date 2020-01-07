@@ -16,7 +16,7 @@ package Alr.Commands.Clean is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("GPRclean current project and manage project cache");
+   is ("GPRclean working release and manage cached releases");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

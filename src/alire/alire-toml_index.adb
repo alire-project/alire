@@ -71,7 +71,7 @@ package body Alire.TOML_Index is
    Package_File_Suffix : constant String := ".toml";
    --  Suffix for the name of package description files
 
-   subtype Package_Name_Character is Project_Character
+   subtype Package_Name_Character is Crate_Character
       with Static_Predicate => Package_Name_Character /= Extension_Separator;
 
    ---------------
@@ -434,8 +434,8 @@ package body Alire.TOML_Index is
       --  Decode as Crate
 
       declare
-         Crate  : Projects.With_Releases.Crate :=
-                    Projects.With_Releases.New_Crate
+         Crate  : Crates.With_Releases.Crate :=
+                    Crates.With_Releases.New_Crate
                       (+Utils.To_Lower_Case (Package_Name));
       begin
          Result := Crate.From_TOML (TOML_Adapters.From
@@ -470,8 +470,8 @@ package body Alire.TOML_Index is
 
       --  Parse the TOML structure
       declare
-         Crate  : Projects.With_Releases.Crate :=
-                    Projects.With_Releases.New_Crate
+         Crate  : Crates.With_Releases.Crate :=
+                    Crates.With_Releases.New_Crate
                       (+Utils.To_Lower_Case (Name));
          Result : constant Load_Result :=
                     Crate.From_TOML
@@ -498,7 +498,7 @@ package body Alire.TOML_Index is
    -----------------
 
    procedure Index_Crate (Path  : Relative_Path;
-                          Crate : in out Projects.With_Releases.Crate)
+                          Crate : in out Crates.With_Releases.Crate)
    is
       use all type Origins.Kinds;
       use GNATCOLL;

@@ -15,9 +15,9 @@ package Alr.Checkout is
    --  if needed.
 
    procedure To_Folder (Solution : Query.Solution;
-                        Parent   : String := Paths.Projects_Folder);
+                        Parent   : String := Paths.Dependencies_Folder);
    --  Retrieves all releases into a folder, typically the main cache.
-   --  One project in the solution (typically the root project itself) can be
+   --  One release in the solution (typically the root release itself) can be
    --  ignored.
 
 end Alr.Checkout;

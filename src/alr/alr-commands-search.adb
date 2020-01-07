@@ -4,7 +4,7 @@ with Alire.Containers;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Platform;
-with Alire.Projects.With_Releases;
+with Alire.Crates.With_Releases;
 with Alire.Releases;
 
 with Alr.Platform;
@@ -43,7 +43,7 @@ package body Alr.Commands.Search is
          then
             Found := Found + 1;
             Tab.New_Row;
-            Tab.Append (+R.Project);
+            Tab.Append (+R.Name);
             Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
                         (if Query.Is_Available (R) then " " else "U") &
                         (if Query.Is_Resolvable
@@ -104,14 +104,14 @@ package body Alr.Commands.Search is
          ------------------------
 
          procedure List_All_Or_Latest
-           (Crate : Alire.Projects.With_Releases.Crate) is
+           (Crate : Alire.Crates.With_Releases.Crate) is
          begin
             if Cmd.Full then
                for Release of Crate.Releases loop
                   List_Release (Release);
                   Busy.Step;
                end loop;
-            else
+            elsif not Crate.Releases.Is_Empty then
                List_Release (Crate.Releases.Last_Element);
                Busy.Step;
             end if;
@@ -188,7 +188,7 @@ package body Alr.Commands.Search is
       Define_Switch (Config,
                      Cmd.Full'Access,
                      "", "--full",
-                     "Show all versions of a project (newest only otherwise)");
+                     "Show all versions of a crate (newest only otherwise)");
 
       Define_Switch (Config,
                      Cmd.List'Access,

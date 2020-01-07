@@ -8,22 +8,20 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Dependencies with Preelaborate is
 
-   subtype Names is Alire.Project;
-
-   --  A single dependency is a project name plus a version set
+   --  A single dependency is a crate name plus a version set
 
    type Dependency (<>) is
-     new Interfaces.Classificable -- since the project name is the key
+     new Interfaces.Classificable -- since the crate name is the key
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with private;
 
    function New_Dependency
-     (Project  : Alire.Project;
+     (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency;
 
-   function Project (Dep : Dependency) return Names;
+   function Crate (Dep : Dependency) return Crate_Name;
 
    function Versions (Dep : Dependency)
                       return Semantic_Versioning.Extended.Version_Set;
@@ -59,17 +57,17 @@ private
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with record
-      Project    : Alire.Project (1 .. Name_Len);
+      Crate      : Crate_Name (1 .. Name_Len);
       Versions   : Semantic_Versioning.Extended.Version_Set;
    end record;
 
    function New_Dependency
-     (Project  : Alire.Project;
+     (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency
-   is (Project'Length, Project, Versions);
+   is (Crate'Length, Crate, Versions);
 
-   function Project (Dep : Dependency) return Names is (Dep.Project);
+   function Crate (Dep : Dependency) return Crate_Name is (Dep.Crate);
 
    function Versions (Dep : Dependency)
                       return Semantic_Versioning.Extended.Version_Set
@@ -79,7 +77,7 @@ private
       (if Dep = Unavailable
       then "Unavailable"
       else
-         (Utils.To_Lower_Case (+Dep.Project)
+         (Utils.To_Lower_Case (+Dep.Crate)
           & Dep.Versions.Image));
 
    overriding
@@ -87,11 +85,11 @@ private
      (if Dep = Unavailable
       then "{}"
       else
-        ("{crate: """ & Utils.To_Lower_Case (+Dep.Project) &
+        ("{crate: """ & Utils.To_Lower_Case (+Dep.Crate) &
            """, version: """ & Dep.Versions.Image &
            """}"));
 
-   overriding function Key (Dep : Dependency) return String is (+Dep.Project);
+   overriding function Key (Dep : Dependency) return String is (+Dep.Crate);
 
    function Unavailable return Dependency
    is (New_Dependency ("alire",

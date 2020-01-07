@@ -7,10 +7,10 @@ package Alire.Roots with Preelaborate is
 
    --  Type used to encapsulate the information about the working context.
    --  Currently, this can either be:
-   --   - Nothing, when we are outside of a valid alire project folder
+   --   - Nothing, when we are outside of a valid alire folder
    --   - A release, when we are inside a descendent folder of a valid alire
-   --     project
-   --  A valid alire project is one containing an alire/project.toml file.
+   --     working dir
+   --  A valid alire working dir is one containing an alire/crate.toml file.
 
    type Root (<>) is tagged private;
 
@@ -38,10 +38,10 @@ package Alire.Roots with Preelaborate is
 
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
-   function New_Root (Name : Alire.Project;
+   function New_Root (Name : Crate_Name;
                       Path : Absolute_Path) return Root with
      Post => New_Root'Result.Is_Valid;
-   --  New unreleased project (not indexed, working copy)
+   --  New unreleased release (not indexed, working copy)
 
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path) return Root;
@@ -66,7 +66,7 @@ package Alire.Roots with Preelaborate is
 
    function Crate_File (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
-   --  The "$project.toml" file inside Working_Folder
+   --  The "$crate.toml" file inside Working_Folder
 
 private
 
@@ -92,7 +92,7 @@ private
    function Invalid_Reason (This : Root) return String is
       (+This.Reason);
 
-   function New_Root (Name : Alire.Project;
+   function New_Root (Name : Crate_Name;
                       Path : Absolute_Path) return Root is
      (True,
       +Path,
@@ -116,7 +116,7 @@ private
 
    function Crate_File (This : Root) return Absolute_Path is
      (This.Working_Folder /
-        This.Release.Constant_Reference.Project_Str &
+        This.Release.Constant_Reference.Name_Str &
         Paths.Crate_File_Extension_With_Dot);
 
    function Working_Folder (This : Root) return Absolute_Path is

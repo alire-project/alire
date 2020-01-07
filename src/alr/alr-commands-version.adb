@@ -34,9 +34,9 @@ package body Alr.Commands.Version is
 --        Trace.Always ("alr session hash is " & Session.Hash);
 
       declare
-         Guard : Folder_Guard (Enter_Project_Folder) with Unreferenced;
+         Guard : Folder_Guard (Enter_Working_Folder) with Unreferenced;
       begin
-         Trace.Always ("alr project root detection has settled on path: " &
+         Trace.Always ("alr root detection has settled on path: " &
                          OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img &
                          " GPR project files");

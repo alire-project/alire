@@ -51,8 +51,8 @@ package Alr.Paths is
    --  Alire.Environment.Source.
 
    Alr_Working_Folder : constant Relative_Path;
-   --  Folder within a working project that will contain metadata/build files,
-   --  3rd-party projects, and session.
+   --  Folder within a working release that will contain metadata/build files,
+   --  dependency releases, and session.
 
    Alr_Working_Cache_Folder : constant Relative_Path;
    --  Folder inside the working folder with transient files (can be safely
@@ -63,8 +63,8 @@ package Alr.Paths is
 
    --  Functions that return Paths-derived files
 
-   function Projects_Folder return Relative_Path;
-   --  $ALR_WORKING_FOLDER/projects
+   function Dependencies_Folder return Relative_Path;
+   --  Location in the working dir where dependencies are deployed
 
    --  Scripts paths/names
    Scripts_Graph_Easy : constant String := "graph-easy";
@@ -81,7 +81,8 @@ private
    Alr_Working_Cache_Folder : constant Relative_Path :=
      Alr_Working_Folder / "cache";
 
-   Alr_Working_Deps_Path    : constant Relative_Path := "cache" / "projects";
+   Alr_Working_Deps_Path    : constant Relative_Path := "cache" /
+                                                        "dependencies";
 
    --  Pseudo-constants (due to elaboration finished requirement)
    --  Or because they can be set after elaboration (e.g. via config switches)
@@ -92,7 +93,7 @@ private
    function Alr_Source_Folder return String
    is (OS_Lib.Getenv (Alire.Environment.Source, Alr_Config_Folder / "alire"));
 
-   function Projects_Folder      return String
-   is (Alr_Working_Cache_Folder / "projects");
+   function Dependencies_Folder return String
+   is (Alr_Working_Cache_Folder / "dependencies");
 
 end Alr.Paths;

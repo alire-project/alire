@@ -38,11 +38,11 @@ package body Alr.Query is
    ----------------------
 
    function Dependency_Image
-     (Project  : Alire.Project;
+     (Name     : Alire.Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set;
       Policy   : Age_Policies := Newest)
       return String
-   is ((+Project) &
+   is ((+Name) &
        (if Versions /= Semver.Extended.Any
         then " version " & Versions.Image
         else " with " & Utils.To_Mixed_Case (Policy'Img) & " version"));
@@ -52,14 +52,14 @@ package body Alr.Query is
    ------------
 
    function Exists
-     (Project : Alire.Project;
+     (Name : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any)
       return Boolean
    is
    begin
-      if Alire.Index.Exists (Project) then
-         for R of Index.Crate (Project).Releases loop
+      if Alire.Index.Exists (Name) then
+         for R of Index.Crate (Name).Releases loop
             if Allowed.Contains (R.Version) then
                return True;
             end if;
@@ -74,7 +74,7 @@ package body Alr.Query is
    ----------
 
    function Find
-     (Project : Alire.Project;
+     (Name : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any;
       Policy  : Age_Policies)
@@ -88,7 +88,7 @@ package body Alr.Query is
 
       function Check (R : Index.Release) return Boolean is
       begin
-         if R.Project = Project then
+         if R.Name = Name then
             if Allowed.Contains (R.Version) then
                return True;
             else
@@ -101,15 +101,15 @@ package body Alr.Query is
       end Check;
 
    begin
-      if Alire.Index.Exists (Project) then
+      if Alire.Index.Exists (Name) then
          if Policy = Newest then
-            for R of reverse Alire.Index.Crate (Project).Releases loop
+            for R of reverse Alire.Index.Crate (Name).Releases loop
                if Check (R) then
                   return R;
                end if;
             end loop;
          else
-            for R of Alire.Index.Crate (Project).Releases loop
+            for R of Alire.Index.Crate (Name).Releases loop
                if Check (R) then
                   return R;
                end if;
@@ -117,20 +117,20 @@ package body Alr.Query is
          end if;
       end if;
 
-      raise Query_Unsuccessful with "Release not found: " & (+Project);
+      raise Query_Unsuccessful with "Release not found: " & (+Name);
    end Find;
 
    ----------
    -- Find --
    ----------
 
-   function Find (Project : String;
+   function Find (Name : String;
                   Policy  : Age_Policies) return Release
    is
       Spec : constant Parsers.Allowed_Milestones :=
-        Parsers.Project_Versions (Project);
+        Parsers.Crate_Versions (Name);
    begin
-      return Find (Spec.Project,
+      return Find (Spec.Crate,
                    Spec.Versions,
                    Policy);
    end Find;
@@ -159,7 +159,7 @@ package body Alr.Query is
    --------------------
 
    procedure Print_Solution (Sol : Solution) is
-      use Containers.Project_Release_Maps;
+      use Containers.Crate_Release_Maps;
    begin
       Trace.Debug ("Resolved:");
       for Rel of Sol.Releases loop
@@ -191,8 +191,8 @@ package body Alr.Query is
          raise Constraint_Error with "Materialization requires exact versions";
       end if;
 
-      Sol.Insert (Dep.Project,
-                  Find (Dep.Project, Dep.Versions, Commands.Query_Policy));
+      Sol.Insert (Dep.Crate,
+                  Find (Dep.Crate, Dep.Versions, Commands.Query_Policy));
    end Add_Dep_Release;
 
    -----------------
@@ -231,7 +231,7 @@ package body Alr.Query is
          end loop;
 
          for Dep of Sol.Hints loop
-            if Dep.Project = Deps.Value.Project then
+            if Dep.Crate = Deps.Value.Crate then
 
                --  Hints are unmet dependencies, that may have in turn other
                --  dependencies. These are unknown at this point though, so we
@@ -306,6 +306,17 @@ package body Alr.Query is
    is
       use Alire.Conditional.For_Dependencies;
 
+      --  On the solver internal operation: the solver recursively tries all
+      --  possible dependency combinations, in depth-first order. This means
+      --  that, for a given dependency, all satisfying releases are attempted
+      --  in diferent exploration branches. Once a search branch finds a
+      --  complete solution, it is added to the following global pool of
+      --  solutions. Likewise, if a branch cannot complete a solution, it
+      --  simply stops its exploration. The search status in each branch is
+      --  carried in a number of lists/trees that are the arguments of the
+      --  Expand internal procedure (this could be bundled in a single State
+      --  record at some point):
+
       Solutions : Solution_Lists.List;
       --  We store here all valid solutions found. The solver is currently
       --  exhaustive in that it will not stop after the first solution, but
@@ -367,7 +378,7 @@ package body Alr.Query is
                --  are attempting to resolve, in which case we check if it is
                --  a valid candidate taking into account the following cases:
 
-               if Dep.Project = R.Project then
+               if Dep.Crate = R.Name then
 
                   --  A possibility is that the dependency was already frozen
                   --  previously (it was a dependency of an earlierly frozen
@@ -375,7 +386,7 @@ package body Alr.Query is
                   --  current dependency, we may continue along this branch,
                   --  with this dependency out of the picture.
 
-                  if Frozen.Contains (R.Project) then
+                  if Frozen.Contains (R.Name) then
                      if Dep.Versions.Contains (R.Version) then
                         --  Continue along this tree
                         Expand (Expanded,
@@ -416,7 +427,7 @@ package body Alr.Query is
                   elsif Cond_Ops.Contains (Forbidden, R) then
                      Trace.Debug
                        ("SOLVER: discarding tree because of" &
-                          " FORBIDDEN project: " &
+                          " FORBIDDEN release: " &
                           R.Milestone.Image &
                           " forbidden by some already in tree " &
                           Tree'(Expanded
@@ -452,7 +463,7 @@ package body Alr.Query is
                      Trace.Debug
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                           " to satisfy " & Dep.Image &
-                        (if R.Project /= R.Provides
+                        (if R.Name /= R.Provides
                            then " also providing " & (+R.Provides)
                            else "") &
                           " adding" &
@@ -481,9 +492,9 @@ package body Alr.Query is
                         not Is_Available (R)
                   then
                      Trace.Debug
-                       ("SOLVER: dependency HINTED: " & R.Project_Str &
+                       ("SOLVER: dependency HINTED: " & R.Name_Str &
                           " to satisfy " & Dep.Image &
-                        (if R.Project /= R.Provides
+                        (if R.Name /= R.Provides
                            then " also providing " & (+R.Provides)
                            else "") &
                           " adding" &
@@ -529,16 +540,18 @@ package body Alr.Query is
             end Check;
 
          begin
-            if Frozen.Contains (Dep.Project) then
-               --  Cut search once a project is frozen
-               Check (Frozen (Dep.Project));
-            elsif Index.Exists (Dep.Project) then
+            if Frozen.Contains (Dep.Crate) then
+               --  Cut search once a crate is frozen
+               Check (Frozen (Dep.Crate));
+
+            elsif Index.Exists (Dep.Crate) then
+
                if Options.Age = Newest then
-                  for R of reverse Index.Crate (Dep.Project).Releases loop
+                  for R of reverse Index.Crate (Dep.Crate).Releases loop
                      Check (R);
                   end loop;
                else
-                  for R of Index.Crate (Dep.Project).Releases loop
+                  for R of Index.Crate (Dep.Crate).Releases loop
                      Check (R);
                   end loop;
                end if;

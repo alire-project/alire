@@ -1,6 +1,6 @@
 with Alire.Actions;
 with Alire.Conditional;
-with Alire.Projects;
+with Alire.Crates;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
@@ -61,7 +61,7 @@ package Alire.Properties.From_TOML with Preelaborate is
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;
-                    Section : Projects.Sections)
+                    Section : Crates.Sections)
                     return Conditional.Properties;
    --  Takes a table of mixed properties and dispatches to each concrete
    --  property loader. Takes into account dynamic properties.
@@ -69,7 +69,7 @@ package Alire.Properties.From_TOML with Preelaborate is
    --  Following functions are wrappers on Loader that conform to the signature
    --  expected by the dynamic expression loaders.
 
-   use all type Projects.Sections;
+   use all type Crates.Sections;
 
    function General_Loader (From : TOML_Adapters.Key_Queue)
                             return Conditional.Properties is
@@ -80,7 +80,7 @@ package Alire.Properties.From_TOML with Preelaborate is
      (Loader (From, Release_Loaders, Release_Section));
 
    Section_Loaders : constant
-        array (Projects.Sections) of access
+        array (Crates.Sections) of access
         function (From : TOML_Adapters.Key_Queue)
         return Conditional.Properties
         := (General_Section => General_Loader'Access,

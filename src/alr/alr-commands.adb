@@ -311,25 +311,25 @@ package body Alr.Commands is
    end Display_Valid_Commands;
 
    --------------------------
-   -- Enter_Project_Folder --
+   -- Enter_Working_Folder --
    --------------------------
 
-   function Enter_Project_Folder return Alire.Directories.Destination is
+   function Enter_Working_Folder return Alire.Directories.Destination is
    begin
       declare
          Candidate_Folder : constant String :=
            Alire.Directories.Detect_Root_Path;
       begin
          if Candidate_Folder /= "" then
-            Trace.Detail ("Using candidate project root: " & Candidate_Folder);
+            Trace.Detail ("Using candidate alire root: " & Candidate_Folder);
             return new String'(Candidate_Folder);
          else
             Trace.Debug
-              ("Not entering project folder, no valid project root found");
+              ("Not entering working folder, no valid alire root found");
             return Alire.Directories.Stay_In_Current;
          end if;
       end;
-   end Enter_Project_Folder;
+   end Enter_Working_Folder;
 
    ------------------
    -- Query_Policy --
@@ -363,12 +363,12 @@ package body Alr.Commands is
    ------------------------
 
    procedure Requires_Buildfile is
-      Guard : OS_Lib.Folder_Guard (Enter_Project_Folder) with Unreferenced;
+      Guard : OS_Lib.Folder_Guard (Enter_Working_Folder) with Unreferenced;
       Root  : constant Alire.Roots.Root := Alr.Root.Current;
    begin
-      if Bootstrap.Session_State /= Project then
+      if Bootstrap.Session_State /= Release then
          Reportaise_Wrong_Arguments
-           ("Cannot generate build file when not in a project");
+           ("Cannot generate build file when not inside a working release");
       end if;
 
       if not GNAT.OS_Lib.Is_Regular_File (Root.Build_File) or else
@@ -425,11 +425,11 @@ package body Alr.Commands is
       end;
    end Requires_Full_Index;
 
-   ----------------------
-   -- Requires_Project --
-   ----------------------
+   ----------------------------
+   -- Requires_Valid_Session --
+   ----------------------------
 
-   procedure Requires_Project is
+   procedure Requires_Valid_Session is
       Checked : constant Alire.Roots.Root :=
         Alire.Roots.Check_Valid (Root.Current);
    begin
@@ -437,7 +437,7 @@ package body Alr.Commands is
          Reportaise_Command_Failed
            ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
       end if;
-   end Requires_Project;
+   end Requires_Valid_Session;
 
    --------------------
    -- Fill_Arguments --
@@ -669,8 +669,8 @@ package body Alr.Commands is
    ---------------------
 
    procedure Execute_By_Name (Cmd : Cmd_Names) is
-      Guard : Folder_Guard (Enter_Project_Folder) with Unreferenced;
-      --  If not in project no matter
+      Guard : Folder_Guard (Enter_Working_Folder) with Unreferenced;
+      --  If not in working dir no matter
    begin
       Log (Image (Cmd) & ":", Detail);
       Dispatch_Table (Cmd).Execute;
@@ -681,11 +681,11 @@ package body Alr.Commands is
          OS_Lib.Bailout (1);
    end Execute_By_Name;
 
-   --------------------------
-   -- Project_Version_Sets --
-   --------------------------
+   ------------------------
+   -- Crate_Version_Sets --
+   ------------------------
 
-   function Project_Version_Sets return Alire.Utils.String_Vector is
+   function Crate_Version_Sets return Alire.Utils.String_Vector is
    begin
       return Alire.Utils.Empty_Vector
         .Append ("Version selection syntax (global policy applies "
@@ -695,6 +695,6 @@ package body Alr.Commands is
         .Append ("crate=version" & ASCII.HT & "Exact version")
         .Append ("crate^version" & ASCII.HT & "Major-compatible version")
         .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
-   end Project_Version_Sets;
+   end Crate_Version_Sets;
 
 end Alr.Commands;
