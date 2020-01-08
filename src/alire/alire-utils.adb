@@ -358,6 +358,17 @@ package body Alire.Utils is
       return "";
    end Tail;
 
+   ----------
+   -- Tail --
+   ----------
+
+   function Tail (V : String_Vector) return String_Vector is
+   begin
+      return Result : String_Vector := V do
+         Result.Delete_First;
+      end return;
+   end Tail;
+
    -------------------
    -- To_Lower_Case --
    -------------------

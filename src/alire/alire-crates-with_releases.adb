@@ -24,6 +24,34 @@ package body Alire.Crates.With_Releases is
       This.Releases.Insert (Release);
    end Add;
 
+   ----------
+   -- Base --
+   ----------
+
+   function Base (This : Crate) return Alire.Releases.Release is
+      use type Conditional.Properties;
+      All_Props : constant Properties.Vector :=
+                    Conditional.Enumerate (This.Properties);
+      Props : Conditional.Properties;
+   begin
+      for Label in Properties.Labeled.Labels loop
+         if Properties.Labeled.Mandatory (Label) then
+            for Prop of Properties.Labeled.Filter (All_Props, Label) loop
+               Props := Props and Conditional.For_Properties.New_Value (Prop);
+            end loop;
+         end if;
+      end loop;
+
+      return Alire.Releases.New_Release
+        (Name         => This.Name,
+         Version      => Semantic_Versioning.Parse ("0"),
+         Origin       => Origins.New_Filesystem ("."),
+         Notes        => "",
+         Dependencies => Conditional.No_Dependencies,
+         Properties   =>  (Props),
+         Available    => Requisites.No_Requisites);
+   end Base;
+
    --------------
    -- Contains --
    --------------

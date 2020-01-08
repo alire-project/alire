@@ -2,6 +2,24 @@ with Alire.Errors;
 
 package body Alire.TOML_Adapters is
 
+   ----------------
+   -- Assert_Key --
+   ----------------
+
+   procedure Assert_Key (Queue : Key_Queue;
+                         Key   : String;
+                         Kind  : TOML.Any_Value_Kind) is
+   begin
+      if not Queue.Value.Has (Key) then
+         Queue.Checked_Error ("missing required field: " & Key);
+      elsif Queue.Value.Get (Key).Kind not in Kind then
+         Queue.Checked_Error ("field " & Key & ": expected a "
+                              & Kind'Img
+                              & " but got a "
+                              & Queue.Value.Get (Key).Kind'Img);
+      end if;
+   end Assert_Key;
+
    -------------------
    -- Checked_Error --
    -------------------
@@ -10,6 +28,23 @@ package body Alire.TOML_Adapters is
    begin
       raise Alire.Checked_Error with Errors.Set (Queue.Message (Message));
    end Checked_Error;
+
+   -----------------
+   -- Checked_Pop --
+   -----------------
+
+   function Checked_Pop (Queue : Key_Queue;
+                         Key   : String;
+                         Kind  : TOML.Any_Value_Kind)
+                         return TOML.TOML_Value is
+   begin
+      Queue.Assert_Key (Key, Kind);
+      return Value : TOML.TOML_Value do
+         if not Queue.Pop (Key, Value) then
+            raise Program_Error with ("missing key, but it was just checked?");
+         end if;
+      end return;
+   end Checked_Pop;
 
    ----------
    -- From --
