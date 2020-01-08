@@ -1,11 +1,11 @@
 with Ada.Directories;
 
 with Alire.Config;
-with Alire.Origins.Deployers.APT;
 with Alire.Origins.Deployers.External;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Deployers.Git;
 with Alire.Origins.Deployers.Hg;
+with Alire.Origins.Deployers.Native;
 with Alire.Origins.Deployers.Source_Archive;
 with Alire.Origins.Deployers.SVN;
 with Alire.Platform;
@@ -50,9 +50,7 @@ package body Alire.Origins.Deployers is
             return Source_Archive.Deployer'(Deployer'(Base => From)
                                             with null record);
          when Alire.Origins.Native =>
-            --  TODO: during native refactoring, deal with non-apt pkg managers
-            return APT.Deployer'(Deployer'(Base => From) with null record);
-
+            return Native.Platform_Deployer (From);
       end case;
    end New_Deployer;
 
@@ -97,17 +95,12 @@ package body Alire.Origins.Deployers is
    -- Install_Warning --
    ---------------------
 
-   procedure Install_Warning (From : Deployer'Class) is
+   procedure Install_Warning (Pkg : String) is
       use GNAT.IO;
-
-      Native_Name : constant String :=
-        From.Base.Package_Name (Platform.Distribution);
    begin
-      if From.Already_Installed then
-         Trace.Detail ("Package " & Native_Name & " is already installed");
-      elsif not Native_Proceed then
+      if not Native_Proceed then
          New_Line;
-         Put_Line ("The native package " & Native_Name &
+         Put_Line ("The native package " & Pkg &
                      " is about to be installed");
          Put_Line ("This action requires sudo privileges " &
                      "and might impact your system installation");
@@ -122,27 +115,21 @@ package body Alire.Origins.Deployers is
    --------------------
 
    function Install_Native (Release : Releases.Release) return Outcome is
-      From : constant Origin         := Release.Origin;
-      Orig : constant Deployer'Class := New_Deployer (From);
+      Pkg  : constant String                := Release.Origin.Package_Name;
+      Orig : constant Native.Deployer'Class :=
+               Native.Platform_Deployer (Release.Origin);
    begin
-      if From.All_Native_Names (Platform.Distribution) = Origins.Unavailable
-      then
-         return Outcome_Failure
-           ("No native package known in current platform for "
-            & Release.Milestone.Image);
-      elsif Orig.Already_Installed then
-         Trace.Detail (From.Package_Name (Platform.Distribution) &
-                         " already installed");
+      if Orig.Already_Installed then
+         Trace.Detail (Pkg & " already installed natively");
          return Outcome_Success;
       else
-         Install_Warning (Orig);
-         return Orig.Deploy (Folder => "");
+         Install_Warning (Pkg);
+         return Orig.Install;
       end if;
    exception
       when others =>
          return Outcome_Failure
-           ("Installation of " &
-              From.Package_Name (Platform.Distribution) & " failed");
+           ("Installation of " & Pkg & " failed");
    end Install_Native;
 
    ------------
