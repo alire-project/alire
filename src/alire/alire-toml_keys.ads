@@ -14,6 +14,7 @@ package Alire.TOML_Keys with Preelaborate is
    Description    : constant String := "description";
    Distribution   : constant String := "distribution";
    Executable     : constant String := "executables";
+   External       : constant String := "external";
    Forbidden      : constant String := "forbids";
    General        : constant String := "general";
    GPR_Ext        : constant String := "gpr-externals";

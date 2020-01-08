@@ -1,11 +1,12 @@
 with Alire.Interfaces;
 with Alire.Containers;
+with Alire.Externals;
 with Alire.Releases;
 with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
 
-package Alire.Crates.With_Releases with Preelaborate is
+package Alire.Crates.With_Releases is
 
    type Crate (<>) is new General and Interfaces.Detomifiable
    with private;
@@ -27,6 +28,8 @@ package Alire.Crates.With_Releases with Preelaborate is
 
    function Description (This : Crate) return Description_String;
 
+   function Externals (This : Crate) return Alire.Externals.List;
+
    function Releases (This : Crate) return Containers.Release_Set;
 
    overriding
@@ -47,6 +50,7 @@ private
      Interfaces.Detomifiable with
       record
          Name      : Crate_Name (1 .. Len);
+         Externals : Alire.Externals.List;
          Releases  : Containers.Release_Set;
       end record;
 
