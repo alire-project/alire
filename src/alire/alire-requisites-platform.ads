@@ -12,17 +12,9 @@ package Alire.Requisites.Platform with Preelaborate is
    package Ps   renames Platforms;
    package PrPl renames Properties.Platform;
 
-   use all type Ps.Compilers;
    use all type Tree;
 
    --  Packages used in new index, purely case-based.
-
-   package Compiler_TOML_Cases is new Cases
-     (Enum      => Ps.Compilers,
-      Property  => PrPl.Compilers.Property,
-      Element   => PrPl.Compilers.Element,
-      Name      => "Compiler",
-      TOML_Name => "compiler");
 
    package Distro_Cases is new Cases
      (Enum      => Ps.Distributions,
@@ -56,21 +48,6 @@ package Alire.Requisites.Platform with Preelaborate is
 
    package Op_System_Cases is new Conditional.For_Properties.Case_Statements
      (Ps.Operating_Systems, Op_Systems.Is_Equal_To);
-
-   package Compilers is new Comparables
-     (Ps.Compilers, Ps."<", Ps.Compilers'Image,
-      PrPl.Compilers.Property,
-      PrPl.Compilers.Element,
-      "Compiler");
-
-   use all type Compilers.Comparable;
-   function Compiler is new Compilers.Factory;
-
-   function Compiler_Is_Native return Tree is
-     (Compiler >= GNAT_FSF_Old and Compiler < GNAT_GPL_Old);
-
-   package Compiler_Cases is new Conditional.For_Properties.Case_Statements
-     (Ps.Compilers, Compilers.Is_Equal_To);
 
    package Distributions is new Comparables
      (Ps.Distributions, Ps."<", Ps.Distributions'Image,

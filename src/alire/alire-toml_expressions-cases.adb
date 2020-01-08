@@ -10,7 +10,6 @@ package body Alire.TOML_Expressions.Cases is
    --  MUST be called before attempting to load anything.
    --  Needed to keep the package in Preelaborable.
 
-   package Compilers         is new Enum_Cases (Platforms.Compilers);
    package Distributions     is new Enum_Cases (Platforms.Distributions);
    package Operating_Systems is new Enum_Cases (Platforms.Operating_Systems);
    package Word_Sizes        is new Enum_Cases (Platforms.Word_Sizes);
@@ -25,9 +24,6 @@ package body Alire.TOML_Expressions.Cases is
    generic
       with package Condtrees is new Conditional_Trees (<>);
    package Common_Cases is
-
-      package Compilers is
-        new Condtrees.Cases (Requisites.Platform.Compiler_TOML_Cases);
 
       package Distributions is
          new Condtrees.Cases (Requisites.Platform.Distro_Cases);
@@ -72,12 +68,6 @@ package body Alire.TOML_Expressions.Cases is
          Loaders   => Loader);
 
       --  Requisite loader instances:
-      package Compiler_Loader is new Tree_Builders
-        (Trees      => Trees,
-         Cases      => Compilers,
-         Enum_Array => Requisites.Platform.Compiler_TOML_Cases.Cases_Array,
-         New_Leaf   => Requisites.Platform.Compiler_TOML_Cases.New_Case,
-         Load       => Load_Instance);
       package Distro_Loader is new Tree_Builders
         (Trees      => Trees,
          Cases      => Distributions,
@@ -143,12 +133,6 @@ package body Alire.TOML_Expressions.Cases is
          Loaders   => Loader);
 
       --  Requisite loader instances:
-      package Compiler_Loader is new Tree_Builders
-        (Trees      => Trees,
-         Cases      => Compilers,
-         Enum_Array => Condcases.Compilers.Cases_Array,
-         New_Leaf   => Condcases.Compilers.New_Case,
-         Load       => Load_Instance);
       package Distro_Loader is new Tree_Builders
         (Trees      => Trees,
          Cases      => Distributions,
@@ -176,8 +160,7 @@ package body Alire.TOML_Expressions.Cases is
 
       procedure Set_Up_Loaders is
       begin
-         Loaders := (Compiler     => Compiler_Loader.Load_Cases'Access,
-                     Distribution => Distro_Loader.Load_Cases'Access,
+         Loaders := (Distribution => Distro_Loader.Load_Cases'Access,
                      OS           => OS_Loader.Load_Cases'Access,
                      Word_Size    => WS_Loader.Load_Cases'Access);
       end Set_Up_Loaders;
@@ -243,8 +226,7 @@ package body Alire.TOML_Expressions.Cases is
    begin
       Deps.Set_Up_Loaders;
       Props.Set_Up_Loaders;
-      Reqs.Loaders := (Compiler     => Reqs.Compiler_Loader.Load_Cases'Access,
-                       Distribution => Reqs.Distro_Loader.Load_Cases'Access,
+      Reqs.Loaders := (Distribution => Reqs.Distro_Loader.Load_Cases'Access,
                        OS           => Reqs.OS_Loader.Load_Cases'Access,
                        Word_Size    => Reqs.WS_Loader.Load_Cases'Access);
    end Set_Up_Loaders;

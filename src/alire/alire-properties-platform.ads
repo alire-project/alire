@@ -9,16 +9,6 @@ package Alire.Properties.Platform with Preelaborate is
 
    pragma Warnings (Off); -- unreferenced galore follows
 
-   function Compiler_Key (C : Platforms.Compilers) return String
-   is (TOML_Keys.Compiler);
-
-   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Compilers);
-   package Compilers is new Values (Platforms.Compilers,
-                                    Platforms.Compilers'Image,
-                                    Platforms.Compilers'Image,
-                                    Compiler_Key,
-                                    Tomify);
-
    function Distro_Key (D : Platforms.Distributions) return String
    is (TOML_Keys.Distribution);
 
@@ -59,9 +49,6 @@ package Alire.Properties.Platform with Preelaborate is
                                      Tomify);
 
    pragma Warnings (On);
-
-   function Compiler_Is (C : Platforms.Compilers) return Vector
-   renames Compilers.New_Vector;
 
    function Distribution_Is (D : Platforms.Distributions) return Vector
    renames Distributions.New_Vector;
