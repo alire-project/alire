@@ -94,8 +94,9 @@ package body Alr.Build_Env is
       Needed  : constant Query.Solution :=
         Query.Resolve
           (Root.Release.Dependencies.Evaluate (Platform.Properties),
-           Options => (Age    => Commands.Query_Policy,
-                       Native => <>));
+           Options => (Age       => Commands.Query_Policy,
+                       Detecting => <>,
+                       Hinting   => <>));
 
       Existing_Project_Path : GNAT.OS_Lib.String_Access;
 

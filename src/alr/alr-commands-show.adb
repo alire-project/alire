@@ -73,9 +73,11 @@ package body Alr.Commands.Show is
          if Cmd.Solve then
             declare
                Needed  : Query.Solution :=
-                           Query.Resolve (Rel.To_Dependency,
-                                          Options => (Age    => Query_Policy,
-                                                      Native => <>));
+                           Query.Resolve
+                             (Rel.To_Dependency,
+                              Options => (Age       => Query_Policy,
+                                          Detecting => <>,
+                                          Hinting   => <>));
             begin
                if Needed.Valid then
                   if Needed.Releases.Contains (Rel.Name) then
