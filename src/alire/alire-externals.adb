@@ -2,6 +2,7 @@ with AAA.Enum_Tools;
 
 with Alire.Crates;
 with Alire.Externals.From_Output;
+with Alire.Externals.Unindexed;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 
@@ -21,6 +22,8 @@ package body Alire.Externals is
 
       function From_TOML (Kind : Kinds) return External'Class is
         (case Kind is
+            when Hint           => Unindexed.External'
+                                     (External with null record),
             when Version_Output => From_Output.From_TOML (From));
 
       Kind : TOML.TOML_Value;
