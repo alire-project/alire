@@ -39,6 +39,13 @@ package Alire.Externals is
    --  Classwide helpers  --
    -------------------------
 
+   type Kinds is (Version_Output
+                  --  A external that detects the availability of a tool by
+                  --  running it to detect its version.
+                 );
+   --  These kinds are used during TOML loading, and exposed in the spec for
+   --  documentation purposes only.
+
    function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class;
 
 private

@@ -369,6 +369,7 @@ private
          Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is
+           when External       => "external",
            when Filesystem     => "filesystem",
            when Native         => "native",
            when Source_Archive => R.Origin.Short_Unique_Id,
