@@ -23,6 +23,11 @@ package Alire.Crates.With_Releases is
        "Crate already contains given release: "
        & Semantic_Versioning.Image (Release.Version);
 
+   function Base (This : Crate) return Releases.Release;
+   --  Returns a release sharing only this crate mandatory properties (see
+   --  Alire.Properties.Labeled.Mandatory) that can be used as template for
+   --  new releases in this crate (e.g., by externally detected releases).
+
    function Contains (This    : Crate;
                       Version : Semantic_Versioning.Version) return Boolean;
 

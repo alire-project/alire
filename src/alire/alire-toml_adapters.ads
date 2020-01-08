@@ -45,6 +45,13 @@ package Alire.TOML_Adapters with Preelaborate is
      No_Return;
    --  Raise a Checked error with Context & ": " & Message, using Alire.Errors.
 
+   function Checked_Pop (Queue : Key_Queue;
+                         Key   : String;
+                         Kind  : TOML.Any_Value_Kind)
+                         return TOML.TOML_Value;
+   --  Return the requested Key value, checking it matches type Kind. If type
+   --  mismatch or missing key raise a Checked_Error.
+
    function Pop (Queue : Key_Queue) return TOML.TOML_Value;
    --  Return a value discarding its key; if no values left No_TOML_Value is
    --  returned.
@@ -72,6 +79,11 @@ package Alire.TOML_Adapters with Preelaborate is
 
    function Unwrap (Queue : Key_Queue) return TOML.TOML_Value;
    --  Return the internal value as-is (with any already popped keys missing).
+
+   procedure Assert_Key (Queue : Key_Queue;
+                         Key   : String;
+                         Kind  : TOML.Any_Value_Kind);
+   --  Ensures that Key exists with given Kind type, or raises Checked_Error.
 
    function Report_Extra_Keys (Queue : Key_Queue) return Outcome;
    --  If Queue still contains pending keys, consider it's an error, return
