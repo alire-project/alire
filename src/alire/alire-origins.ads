@@ -29,7 +29,8 @@ package Alire.Origins with Preelaborate is
    --  The name of a package in every distro for a given version
 
    type Kinds is
-     (Filesystem,     -- Not really an origin, but a working copy of a release
+     (External,       -- A do-nothing origin, with some custom description
+      Filesystem,     -- Not really an origin, but a working copy of a release
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
       SVN,            -- Remote svn repo
@@ -94,6 +95,8 @@ package Alire.Origins with Preelaborate is
    subtype Hg_Commit  is String (1 .. 40);
 
    --  Constructors
+
+   function New_External (Description : String) return Origin;
 
    function New_Filesystem (Path : String) return Origin;
 
@@ -182,6 +185,9 @@ private
       Hashes : Hash_Vectors.Vector;
 
       case Kind is
+         when External =>
+            Description : Unbounded_String;
+
          when Filesystem =>
             Path : Unbounded_String;
 
@@ -208,6 +214,9 @@ private
    end record;
 
    function Image_Of_Hashes (This : Origin) return String;
+
+   function New_External (Description : String) return Origin is
+      (Data => (External, Description => +Description, Hashes => <>));
 
    function New_Filesystem (Path : String) return Origin is
      (Data => (Filesystem, Path => +Path, Hashes => <>));
@@ -269,7 +278,9 @@ private
           when Native         =>
              "native package from platform software manager",
           when Filesystem     =>
-             "path " & S (This.Data.Path))
+             "path " & S (This.Data.Path),
+          when External       =>
+             "external " & S (This.Data.Description))
       & (if This.Data.Hashes.Is_Empty
          then ""
          elsif This.Data.Hashes.Last_Index = 1
@@ -287,6 +298,7 @@ private
                 (Git            => Prefix_Git'Access,
                  Hg             => Prefix_Hg'Access,
                  SVN            => Prefix_SVN'Access,
+                 External       => null,
                  Filesystem     => Prefix_File'Access,
                  Native         => Prefix_Native'Access,
                  Source_Archive => null);

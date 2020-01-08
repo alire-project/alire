@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Config;
 with Alire.Origins.Deployers.APT;
+with Alire.Origins.Deployers.External;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Deployers.Git;
 with Alire.Origins.Deployers.Hg;
@@ -29,6 +30,10 @@ package body Alire.Origins.Deployers is
    function New_Deployer (From : Origin) return Deployer'Class is
    begin
       case From.Kind is
+         when Origins.External =>
+            return External.Deployer'(Deployer'(Base => From)
+                                      with null record);
+
          when Origins.Filesystem =>
             return Filesystem.Deployer'(Deployer'(Base => From)
                                         with null record);
