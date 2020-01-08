@@ -9,9 +9,6 @@ package Alire.Origins.Deployers is
    --     appropriated to the origin.
    --  3. Deploy: deploy the sources in its final location in compilable state.
 
-   --  The above steps do not apply to native origins, which are
-   --  custom-installed with a single call to Deployer.Native.Install.
-
    ------------
    -- Deploy --
    ------------
@@ -61,9 +58,6 @@ package Alire.Origins.Deployers is
    function Supports_Hashing (This : Deployer) return Boolean is (False);
    --  Deployers that support hashing must override and return True.
 
-   function Is_Native (This : Deployer) return Boolean;
-   --  Whether This targets a package from the system's package manager
-
 private
 
    type Deployer is tagged record
@@ -71,9 +65,6 @@ private
    end record;
 
    function Base (This : Deployer) return Origin is (This.Base);
-
-   function Is_Native (This : Deployer) return Boolean is
-     (This.Base.Is_Native);
 
    function Verify_Hashes (This : Deployer'Class;
                            Folder : String) return Outcome;

@@ -1,6 +1,5 @@
 with Ada.Directories;
 
-with Alire.Config;
 with Alire.Origins.Deployers.External;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Deployers.Git;
@@ -8,9 +7,6 @@ with Alire.Origins.Deployers.Hg;
 with Alire.Origins.Deployers.Native;
 with Alire.Origins.Deployers.Source_Archive;
 with Alire.Origins.Deployers.SVN;
-with Alire.Platform;
-
-with GNAT.IO;
 
 package body Alire.Origins.Deployers is
 
@@ -54,11 +50,11 @@ package body Alire.Origins.Deployers is
       end case;
    end New_Deployer;
 
-   -----------------------
-   -- Deploy_Not_Native --
-   -----------------------
+   ------------------
+   -- Deploy_Steps --
+   ------------------
 
-   function Deploy_Not_Native (From   : Origin;
+   function Deploy_Steps (From   : Origin;
                                Folder : String) return Outcome
    is
       The_Deployer  : constant Deployer'Class := New_Deployer (From);
@@ -87,50 +83,7 @@ package body Alire.Origins.Deployers is
          end if;
          return Outcome_Failure ("Deployment of " & From.Image
                                  & " to " & Folder & " failed");
-   end Deploy_Not_Native;
-
-   Native_Proceed : Boolean := False;
-
-   ---------------------
-   -- Install_Warning --
-   ---------------------
-
-   procedure Install_Warning (Pkg : String) is
-      use GNAT.IO;
-   begin
-      if not Native_Proceed then
-         New_Line;
-         Put_Line ("The native package " & Pkg &
-                     " is about to be installed");
-         Put_Line ("This action requires sudo privileges " &
-                     "and might impact your system installation");
-         New_Line;
-         Config.Enter_Or_Ctrl_C;
-         Native_Proceed := True;
-      end if;
-   end Install_Warning;
-
-   --------------------
-   -- Install_Native --
-   --------------------
-
-   function Install_Native (Release : Releases.Release) return Outcome is
-      Pkg  : constant String                := Release.Origin.Package_Name;
-      Orig : constant Native.Deployer'Class :=
-               Native.Platform_Deployer (Release.Origin);
-   begin
-      if Orig.Already_Installed then
-         Trace.Detail (Pkg & " already installed natively");
-         return Outcome_Success;
-      else
-         Install_Warning (Pkg);
-         return Orig.Install;
-      end if;
-   exception
-      when others =>
-         return Outcome_Failure
-           ("Installation of " & Pkg & " failed");
-   end Install_Native;
+   end Deploy_Steps;
 
    ------------
    -- Deploy --
@@ -139,19 +92,8 @@ package body Alire.Origins.Deployers is
    function Deploy (Release : Releases.Release;
                     Folder  : String := "") return Outcome
    is
-      From : constant Origin := Release.Origin;
    begin
-      if From.Is_Native then
-         if Platform.Distribution_Is_Known then
-            return Install_Native (Release);
-         else
-            return Outcome_Failure
-              ("Unknown distribution: cannot provide native package for "
-               & Release.Milestone.Image);
-         end if;
-      else
-         return Deploy_Not_Native (From, Folder);
-      end if;
+      return Deploy_Steps (Release.Origin, Folder);
    end Deploy;
 
    ------------
