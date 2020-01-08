@@ -6,6 +6,7 @@ with Alire.GPR;
 with Alire.Origins;
 with Alire.Crates.Containers;
 with Alire.Crates.With_Releases;
+with Alire.Properties;
 with Alire.Properties.Licenses;
 with Alire.Releases;
 with Alire.Requisites;
