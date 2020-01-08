@@ -36,6 +36,13 @@ package body Alire.Crates.With_Releases is
    end Contains;
 
    ---------------
+   -- Externals --
+   ---------------
+
+   function Externals (This : Crate) return Alire.Externals.List is
+     (This.Externals);
+
+   ---------------
    -- From_TOML --
    ---------------
 
@@ -45,6 +52,30 @@ package body Alire.Crates.With_Releases is
                        return Outcome
    is
       package Semver renames Semantic_Versioning;
+
+      --------------------
+      -- Load_Externals --
+      --------------------
+
+      procedure Load_Externals is
+         TOML_Externals : TOML.TOML_Value;
+         Has_Externals  : constant Boolean :=
+                            From.Pop (TOML_Keys.External, TOML_Externals);
+      begin
+         if Has_Externals then
+            if TOML_Externals.Kind not in TOML.TOML_Array then
+               From.Checked_Error ("external entries must be TOML arrays");
+            else
+               for I in 1 .. TOML_Externals.Length loop
+                  This.Externals.Append
+                    (Alire.Externals.From_TOML
+                       (From.Descend (TOML_Externals.Item (I),
+                                      "external index" & I'Img)));
+               end loop;
+            end if;
+         end if;
+      end Load_Externals;
+
    begin
       --  Process the general key
       declare
@@ -80,6 +111,10 @@ package body Alire.Crates.With_Releases is
             end if;
          end;
       end;
+
+      --  Process any external detectors
+
+      Load_Externals;
 
       --  Process remaining keys, that must be releases
       loop
@@ -163,9 +198,10 @@ package body Alire.Crates.With_Releases is
 
    function New_Crate (Name : Crate_Name) return Crate is
      (Crate'(General with
-             Len      => Name'Length,
-             Name     => Name,
-             Releases => <>));
+             Len       => Name'Length,
+             Name      => Name,
+             Externals => <>,
+             Releases  => <>));
 
    --------------
    -- Releases --
