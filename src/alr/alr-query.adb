@@ -4,7 +4,6 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Alire.Conditional.Operations;
 with Alire.Dependencies;
 with Alire.Origins.Deployers;
-with Alire.Platform;
 with Alire.Utils;
 
 with Alr.Commands;
@@ -140,19 +139,16 @@ package body Alr.Query is
    ------------------
 
    function Is_Available (R : Alire.Index.Release) return Boolean is
-     (R.Available.Check (Platform.Properties) and then
-          (not R.Origin.Is_Native or else
-               (Alire.Platform.Distribution_Is_Known
-                and then Origins.Deployers.New_Deployer (R.Origin).Exists)));
+     (R.Available.Check (Platform.Properties));
 
    -------------------
    -- Is_Resolvable --
    -------------------
 
-   function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean
-   is (Resolve (Deps,
-                Options => (Age    => Commands.Query_Policy,
-                            Native => <>)).Valid);
+   function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+                           Options : Query_Options := Default_Options)
+                           return Boolean
+   is (Resolve (Deps, Options).Valid);
 
    --------------------
    -- Print_Solution --
@@ -482,37 +478,6 @@ package body Alr.Query is
                              Forbidden and R.Forbids (Platform.Properties),
                              Hints);
 
-                  --  If native policy is Hint and we find a native compatible
-                  --  release, we accept it even if it is not available. If it
-                  --  is available we may treat it as a regular release (in
-                  --  the next case).
-
-                  elsif Options.Native = Hint and then
-                        R.Origin.Is_Native and then
-                        not Is_Available (R)
-                  then
-                     Trace.Debug
-                       ("SOLVER: dependency HINTED: " & R.Name_Str &
-                          " to satisfy " & Dep.Image &
-                        (if R.Name /= R.Provides
-                           then " also providing " & (+R.Provides)
-                           else "") &
-                          " adding" &
-                          R.Depends (Platform.Properties).Leaf_Count'Img &
-                          " dependencies to tree " &
-                          Tree'(Expanded
-                                and Current
-                                and Remaining
-                                and R.Depends
-                                  (Platform.Properties)).Image_One_Line);
-
-                     Expand (Expanded,
-                             Remaining and R.Depends (Platform.Properties),
-                             Empty,
-                             Frozen.Inserting (R),
-                             Forbidden and R.Forbids (Platform.Properties),
-                             Hints & Dep);
-
                   --  Finally, even a valid candidate may not satisfy version
                   --  restrictions, or not be available in the current
                   --  platform, in which case this search branch is
@@ -546,6 +511,17 @@ package body Alr.Query is
 
             elsif Index.Exists (Dep.Crate) then
 
+               --  Detect externals for this dependency now, so they are
+               --  available as regular releases. Note that if no release
+               --  fulfills the dependency, it will be resolved as a hint
+               --  below.
+
+               if Options.Detecting = Detect then
+                  Index.Add_Externals (Dep.Crate);
+               end if;
+
+               --  Check the releases now:
+
                if Options.Age = Newest then
                   for R of reverse Index.Crate (Dep.Crate).Releases loop
                      Check (R);
@@ -555,6 +531,30 @@ package body Alr.Query is
                      Check (R);
                   end loop;
                end if;
+
+               --  Beside normal releases, an external may exist for the
+               --  crate, in which case we hint the crate instead of failing
+               --  resolution (if the external failed to find its releases).
+
+               if Options.Hinting = Hint and then
+                 not Index.Crate (Dep.Crate).Externals.Is_Empty
+               then
+                  Trace.Debug
+                    ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
+                       " via EXTERNAL to satisfy " & Dep.Image &
+                       " withouth adding dependencies to tree " &
+                       Tree'(Expanded
+                       and Current
+                       and Remaining).Image_One_Line);
+
+                  Expand (Expanded,
+                          Remaining,
+                          Empty,
+                          Frozen,
+                          Forbidden,
+                          Hints & Dep);
+               end if;
+
             else
                Trace.Debug
                  ("SOLVER: discarding search branch because "

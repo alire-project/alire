@@ -10,10 +10,16 @@ package Alr.Query is
    type Age_Policies is (Oldest, Newest);
    --  When looking for releases within a crate, which one to try first.
 
-   type Native_Policies is (Hint, Fail);
-   --  * Hint: attempt to normally resolve native crates. When impossible,
-   --  store such crate as a hint and assume it is available.
-   --  * Fail: treat native crates normally and fail if unavailable.
+   type Detection_Policies is (Detect, Dont_Detect);
+   --  * Detect: externals will be detected and added to the index once needed.
+   --  * Dont_Detect: externals will remain undetected (faster).
+
+   type Hinting_Policies is (Hint, Fail);
+   --  * Hint: any crate with externals, detected or not, will as last resort
+   --  provide a hint.
+   --  * Fail: fail for any unsatisfiable crate. If Detect, externally detected
+   --  releases will be used normally; otherwise a crate with only externals
+   --  will always cause failure.
 
    subtype Dep_List is Alire.Containers.Dependency_Lists.List;
    --  Dependency lists are used to keep track of failed dependencies
@@ -94,8 +100,9 @@ package Alr.Query is
    --  availability checks.
 
    type Query_Options is record
-      Age    : Age_Policies    := Newest;
-      Native : Native_Policies := Hint;
+      Age       : Age_Policies       := Newest;
+      Detecting : Detection_Policies := Detect;
+      Hinting   : Hinting_Policies   := Hint;
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
@@ -104,7 +111,9 @@ package Alr.Query is
                      Options : Query_Options := Default_Options)
                      return Solution;
 
-   function Is_Resolvable (Deps : Types.Platform_Dependencies) return Boolean;
+   function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+                           Options : Query_Options := Default_Options)
+                           return Boolean;
    --  simplified call to Resolve, discarding result
 
    -------------------
