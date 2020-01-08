@@ -5,7 +5,6 @@ with Alire.Externals;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Crates.With_Releases;
-with Alire.Platform;
 with Alire.Releases;
 
 with Alr.Platform;
@@ -30,6 +29,7 @@ package body Alr.Commands.Search is
       ------------------
 
       procedure List_Release (R : Alire.Releases.Release) is
+         use Alr.Query;
       begin
          if (Cmd.Prop.all = ""
              or else
@@ -47,17 +47,15 @@ package body Alr.Commands.Search is
             Tab.Append (+R.Name);
             Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
                         (if Query.Is_Available (R) then " " else "U") &
-                        (if Query.Is_Resolvable
-                             (R.Depends (Platform.Properties))
-                           then " "
-                           else "X"));
-            Tab.Append (Semantic_Versioning.Image
-                        (R.Version) &
-                        (if R.Origin.Is_Native and then
-                           Alire.Platform.Distribution_Is_Known
-                         then "+" & Alire.Origins.Deployers.New_Deployer
-                             (R.Origin).Native_Version
-                         else ""));
+                        (if R.Origin.Is_Native then " " else
+                             (if Query.Is_Resolvable
+                                (R.Depends (Platform.Properties),
+                                 Options => (Age       => Query_Policy,
+                                             Detecting => Dont_Detect,
+                                             Hinting   => Hint))
+                              then " "
+                              else "X")));
+            Tab.Append (Semantic_Versioning.Image (R.Version));
             Tab.Append (R.Description);
             Tab.Append (R.Notes);
          end if;

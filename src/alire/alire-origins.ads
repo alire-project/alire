@@ -1,6 +1,5 @@
 with Alire.Hashes;
 with Alire.Interfaces;
-with Alire.Platforms;
 with Alire.TOML_Adapters;
 
 private with Ada.Containers.Indefinite_Vectors;
@@ -9,24 +8,6 @@ private with Ada.Strings.Unbounded;
 with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Origins with Preelaborate is
-
-   --------------------------------------------
-   --  supporting types for native packages  --
-   --------------------------------------------
-
-   --  These are used to represent native packages in a comfortable way in the
-   --  index
-
-   type Package_Names is tagged private;
-
-   function Image (This : Package_Names) return String;
-
-   function Unavailable return Package_Names;
-
-   function Packaged_As (Name : String) return Package_Names;
-
-   type Native_Packages is array (Platforms.Distributions) of Package_Names;
-   --  The name of a package in every distro for a given version
 
    type Kinds is
      (External,       -- A do-nothing origin, with some custom description
@@ -81,10 +62,8 @@ package Alire.Origins with Preelaborate is
    --  Guess the format of a source archive from its file name.
 
    function Is_Native (This : Origin) return Boolean is (This.Kind = Native);
-   function Package_Name (This         : Origin;
-                          Distribution : Platforms.Distributions)
-                          return String;
-   function All_Native_Names (This : Origin) return Native_Packages;
+   function Package_Name (This : Origin) return String
+     with Pre => This.Kind = Native;
 
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Source_Archive;
@@ -126,7 +105,9 @@ package Alire.Origins with Preelaborate is
    --  If Name is omitted, it is tentatively inferred from URL. If it cannot be
    --  inferred, this raises a Unknown_Source_Archive_Name_Error exception.
 
-   function New_Native (Packages : Native_Packages) return Origin;
+   function New_Native (Native_Package_Name : String) return Origin;
+   --  A native origin points to a single system package known to exist,
+   --  already detected by some External.
 
    function Image (This : Origin) return String;
 
@@ -201,7 +182,7 @@ private
             Archive_Format : Known_Source_Archive_Format;
 
          when Native =>
-            Packages : Native_Packages;
+            Package_Name : Unbounded_String;
       end case;
    end record;
 
@@ -234,8 +215,8 @@ private
    function New_SVN (URL : Alire.URL; Commit : String) return Origin is
      (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
 
-   function New_Native (Packages : Native_Packages) return Origin is
-     (Data => (Native, Packages => Packages, Hashes => <>));
+   function New_Native (Native_Package_Name : String) return Origin is
+     (Data => (Native, Package_Name => +Native_Package_Name, Hashes => <>));
 
    function Kind (This : Origin) return Kinds is (This.Data.Kind);
 
@@ -255,13 +236,8 @@ private
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
    is (This.Data.Archive_Format);
 
-   function Package_Name (This         : Origin;
-                          Distribution : Platforms.Distributions)
-                          return String is
-     (+This.Data.Packages (Distribution).Name);
-
-   function All_Native_Names (This : Origin) return Native_Packages is
-     (This.Data.Packages);
+   function Package_Name (This : Origin) return String is
+     (+This.Data.Package_Name);
 
    function S (Str : Unbounded_String) return String is (To_String (Str));
 
@@ -276,7 +252,8 @@ private
                                   else "")
        & "at " & S (This.Data.Archive_URL),
           when Native         =>
-             "native package from platform software manager",
+             "native package from platform software manager: "
+             & This.Package_Name,
           when Filesystem     =>
              "path " & S (This.Data.Path),
           when External       =>

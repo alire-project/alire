@@ -1,9 +1,7 @@
-with AAA.Table_IO;
 with Ada.Strings.Fixed;
 
 --  with Alire.Platform;
 with Alire.Defaults;
-with Alire.Platforms;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
@@ -434,25 +432,7 @@ package body Alire.Releases is
       end if;
 
       --  ORIGIN
-      if R.Origin.Is_Native then
-         Put_Line ("Origin (native package):");
-         declare
-            Table : AAA.Table_IO.Table;
-         begin
-            for Dist in Platforms.Distributions loop
-               if R.Origin.Package_Name (Dist) /= Origins.Unavailable.Image
-               then
-                  Table.New_Row;
-                  Table.Append ("   ");
-                  Table.Append (Utils.To_Mixed_Case (Dist'Img) & ":");
-                  Table.Append (R.Origin.Package_Name (Dist));
-               end if;
-            end loop;
-            Table.Print;
-         end;
-      else
-         Put_Line ("Origin: " & R.Origin.Image);
-      end if;
+      Put_Line ("Origin: " & R.Origin.Image);
 
       --  AVAILABILITY
       if not R.Available.Is_Empty then

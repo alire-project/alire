@@ -43,6 +43,9 @@ package Alire.Externals is
                   --  A placeholder for a knowingly-unavailable crate, that
                   --  will hopefully be added in the future.
 
+                  System,
+                  --  A installed system package, via apt, yum, etc.
+
                   Version_Output
                   --  A external that detects the availability of a tool by
                   --  running it to detect its version.

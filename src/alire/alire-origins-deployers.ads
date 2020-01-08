@@ -9,9 +9,8 @@ package Alire.Origins.Deployers is
    --     appropriated to the origin.
    --  3. Deploy: deploy the sources in its final location in compilable state.
 
-   --  TODO: during the native package reworking, clean up the functionality
-   --  that is only relevant for native packages from here and put it
-   --  elsewhere.
+   --  The above steps do not apply to native origins, which are
+   --  custom-installed with a single call to Deployer.Native.Install.
 
    ------------
    -- Deploy --
@@ -39,17 +38,8 @@ package Alire.Origins.Deployers is
 
    --  Derivations of Deployer override (some of) the following:
 
-   function Already_Installed (This : Deployer) return Boolean is (False)
-     with Pre'Class => This.Is_Native;
-   --  Say if a native package is already installed in this system. Unneeded
-   --  otherwise.
-
    function Base (This : Deployer) return Origin;
    --  Return the origin for which this deployer was created
-
-   function Exists (This : Deployer) return Boolean is (False)
-     with Pre'Class => This.Is_Native;
-   --  Says if a native package exists in this system. Unneeded otherwise.
 
    function Fetch (This   : Deployer;
                    Folder : String) return Outcome;
@@ -73,10 +63,6 @@ package Alire.Origins.Deployers is
 
    function Is_Native (This : Deployer) return Boolean;
    --  Whether This targets a package from the system's package manager
-
-   function Native_Version (This : Deployer) return String is ("native")
-     with Pre'Class => This.Is_Native;
-   --  Return the version number for the package
 
 private
 
