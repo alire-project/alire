@@ -1,3 +1,5 @@
+with Ada.Containers.Indefinite_Ordered_Sets;
+
 package body Alire.Index is
 
    use all type Semantic_Versioning.Version;
@@ -31,6 +33,42 @@ package body Alire.Index is
          Contents.Insert (Crate.Name, Crate);
       end if;
    end Add;
+
+   -----------------------
+   -- Add_All_Externals --
+   -----------------------
+
+   procedure Add_All_Externals is
+   begin
+      Trace.Detail ("Detecting external releases...");
+
+      for Crate of Contents loop
+         Add_Externals (Crate.Name);
+      end loop;
+   end Add_All_Externals;
+
+   package Name_Sets is
+     new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
+   Already_Detected : Name_Sets.Set;
+
+   -------------------
+   -- Add_Externals --
+   -------------------
+
+   procedure Add_Externals (Name : Crate_Name) is
+   begin
+      if Already_Detected.Contains (Name) then
+         Trace.Debug
+           ("Not redoing detection of externals for crate " & (+Name));
+      else
+         Already_Detected.Insert (Name);
+         Trace.Debug ("Looking for externals for crate: " & (+Name));
+         for Release of Contents (Name).Externals.Detect (Name) loop
+            Trace.Debug ("Adding external: " & Release.Milestone.Image);
+            Contents (Name).Add (Release);
+         end loop;
+      end if;
+   end Add_Externals;
 
    ----------------
    -- All_Crates --
