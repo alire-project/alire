@@ -16,8 +16,6 @@ package Alr.Platform is
    ----------------------------------
    --  Portably detectable properties
 
-   function Compiler return Alire.Platforms.Compilers;
-
    function Target return Alire.Platforms.Targets is (Alire.Platforms.Native);
    --  Paths for now
 
@@ -35,8 +33,6 @@ package Alr.Platform is
    function Operating_System return Alire.Platforms.Operating_Systems;
 
 private
-
-   use all type Alire.Platforms.Compilers;
 
    procedure Set (P : Platforms.Supported'Class);
 
