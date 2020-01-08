@@ -1,5 +1,8 @@
+with AAA.Table_IO;
+
 with Alire.Index;
 with Alire.Origins.Deployers;
+with Alire.Platform;
 with Alire.Platforms;
 with Alire.Roots;
 with Alire.Utils;
@@ -92,7 +95,7 @@ package body Alr.Commands.Show is
                   end if;
 
                   if not Needed.Hints.Is_Empty then
-                     Put_Line ("Dependencies (native):");
+                     Put_Line ("Dependencies (external):");
                      for Dep of Needed.Hints loop
                         Put_Line ("   " & Dep.Image);
                      end loop;
@@ -128,7 +131,57 @@ package body Alr.Commands.Show is
    exception
       when Alire.Query_Unsuccessful =>
          Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
+         if not Alire.Index.Crate (Name).Externals.Is_Empty then
+            Trace.Info ("There are external definitions for the crate. "
+                        & "Use --external to show them.");
+         end if;
    end Report;
+
+   ----------------------
+   -- Report_Externals --
+   ----------------------
+
+   procedure Report_Externals (Name : Alire.Crate_Name;
+                               Cmd  : Command) is
+      Table : AAA.Table_IO.Table;
+   begin
+      if Alire.Index.Crate (Name).Externals.Is_Empty then
+         Trace.Info ("No externals defined for the requested crate.");
+      else
+         Table
+           .Append ("Kind")
+           .Append ("Description")
+           .Append ("Details");
+
+         for External of Alire.Index.Crate (Name).Externals loop
+            Table.New_Row;
+            declare
+               Detail : constant Utils.String_Vector :=
+                          External.Detail
+                            (if Cmd.Native
+                             then Alire.Platform.Distribution
+                             else Alire.Platforms.Distro_Unknown);
+            begin
+               for I in Detail.First_Index .. Detail.Last_Index loop
+                  --  Skip last element, which is unknown distro
+                  Table
+                    .Append (if I = Detail.First_Index
+                             then External.Kind
+                             else "")
+                    .Append (if I = Detail.First_Index
+                             then External.Image
+                             else "")
+                    .Append (Detail (I));
+                  if I /= Detail.Last_Index then
+                     Table.New_Row;
+                  end if;
+               end loop;
+            end;
+         end loop;
+
+         Table.Print;
+      end if;
+   end Report_Externals;
 
    -------------------
    -- Report_Jekyll --
@@ -179,6 +232,11 @@ package body Alr.Commands.Show is
          end case;
       end if;
 
+      if Cmd.External and (Cmd.Detect or Cmd.Jekyll or Cmd.Solve) then
+         Reportaise_Wrong_Arguments
+           ("Switch --external can only be combined with --native");
+      end if;
+
       if Num_Arguments = 1 then
          Requires_Full_Index;
       end if;
@@ -190,11 +248,21 @@ package body Alr.Commands.Show is
             else Parsers.Crate_Versions
               (Root.Current.Release.Milestone.Image));
       begin
+         if Num_Arguments = 1 and not Alire.Index.Exists (Allowed.Crate) then
+            raise Alire.Query_Unsuccessful;
+         end if;
+
+         if Cmd.Detect then
+            Alire.Index.Add_Externals (Allowed.Crate);
+         end if;
+
          --  Execute
          if Cmd.Jekyll then
             Report_Jekyll (Allowed.Crate,
                            Allowed.Versions,
                            Num_Arguments = 0);
+         elsif Cmd.External then
+            Report_Externals (Allowed.Crate, Cmd);
          else
             Report (Allowed.Crate,
                     Allowed.Versions,
@@ -203,8 +271,8 @@ package body Alr.Commands.Show is
          end if;
       exception
          when Alire.Query_Unsuccessful =>
-            Trace.Info ("Crate [" & Argument (1) &
-                          "] does not exist in the catalog.");
+            Trace.Info ("Crate [" & (+Allowed.Crate) &
+                          "] does not exist in the index");
       end;
    end Execute;
 
@@ -222,6 +290,9 @@ package body Alr.Commands.Show is
                 & " reported. With --solve, a full solution is resolved and"
                 & " reported in list and graph form.")
        .New_Line
+       .Append ("With --external, the external definitions for a crate are"
+                & " shown, instead of information about a particular release")
+       .New_Line
        .Append (Crate_Version_Sets));
 
    --------------------
@@ -234,6 +305,16 @@ package body Alr.Commands.Show is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch (Config,
+                     Cmd.Detect'Access,
+                     "", "--external-detect",
+                     "Add detected externals to available releases");
+
+      Define_Switch (Config,
+                     Cmd.External'Access,
+                     "", "--external",
+                     "Show info about external definitions for a crate");
+
       Define_Switch (Config,
                      Cmd.Native'Access,
                      "", "--native", "Show info relevant to current platform");
