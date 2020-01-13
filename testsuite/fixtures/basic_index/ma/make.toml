@@ -4,7 +4,6 @@ maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 licenses = []
 
-[0]
-    [0.origin.'case(distribution)']
-    '...' = ""
-    # Unavailable in all platforms
+[[external]]
+kind = "system"
+origin = [] # No package name since we require it unavailable in tests
