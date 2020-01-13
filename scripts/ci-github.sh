@@ -38,7 +38,7 @@ fi
 
 echo ALR SEARCH:
 # List releases for the record
-alr search -q -d --list --native
+alr search -q -d --list --external
 echo ............................
 
 echo TESTSUITE:
