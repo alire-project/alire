@@ -13,6 +13,61 @@ package body Alire.Origins.Deployers.Source_Archive is
 
    package Dirs renames Ada.Directories;
 
+   procedure Untar (Src_File_Full_Name : Absolute_Path);
+   --  Extract the tar archive at Src_File_Full_Name in the current directory
+
+   -----------
+   -- Untar --
+   -----------
+
+   procedure Untar (Src_File_Full_Name : Absolute_Path) is
+
+      package Subprocess renames Alire.OS_Lib.Subprocess;
+
+      use type GNATCOLL.OS.OS_Type;
+
+   begin
+
+      case GNATCOLL.OS.Constants.OS is
+
+         when GNATCOLL.OS.Windows =>
+
+            --  On some versions of tar found on Windows, an option is required
+            --  to force e.g. C: to mean a local file location rather than the
+            --  net host C. Unfortunatly this not common to all tar on Windows,
+            --  so we first try to untar with the --force-local, and if that
+            --  fails, we retry without --force-local.
+
+            declare
+            begin
+               --  Try to untar with --force-local
+               Subprocess.Checked_Spawn
+                 ("tar", Empty_Vector &
+                    "--force-local" &
+                    "-x" &
+                    "-f" & Src_File_Full_Name);
+            exception
+
+               when Checked_Error =>
+
+                  --  In case of error, retry without the --force-local option
+                  Subprocess.Checked_Spawn
+                    ("tar", Empty_Vector &
+                       "-x" &
+                       "-f" & Src_File_Full_Name);
+            end;
+
+         when GNATCOLL.OS.Unix | GNATCOLL.OS.MacOS =>
+
+            --  On other platforms, just run tar without --force-local
+            Subprocess.Checked_Spawn
+              ("tar", Empty_Vector &
+                 "-x" &
+                 "-f" & Src_File_Full_Name);
+      end case;
+
+   end Untar;
+
    ------------
    -- Deploy --
    ------------
@@ -162,7 +217,7 @@ package body Alire.Origins.Deployers.Source_Archive is
                --  .. which means we need to preserve the full name of
                --  the source file, in case the given name is
                --  relative.
-               Src_File_Full_Name : constant String
+               Src_File_Full_Name : constant Absolute_Path
                  := +GNATCOLL.VFS.Full_Name
                    (GNATCOLL.VFS.Create_From_Base (+Src_File));
 
@@ -175,22 +230,9 @@ package body Alire.Origins.Deployers.Source_Archive is
                --  the current dir at the end of the scope.
                Guard : Directories.Guard (Directories.Enter (Dst_Dir))
                  with Unreferenced;
-
-               --  Option required on Windows to force e.g. C: to mean
-               --  a local file location rather than the net host C.
-               --  Not available as standard on MacOS.
-               Force_Local_Option : constant String_Vector :=
-                 (case GNATCOLL.OS.Constants.OS is
-                     when GNATCOLL.OS.Windows =>
-                        Empty_Vector & "--force-local",
-                     when others =>
-                        Empty_Vector);
             begin
-               Subprocess.Checked_Spawn
-                 ("tar", Empty_Vector &
-                    Force_Local_Option &
-                    "-x" &
-                    "-f" & Src_File_Full_Name);
+
+               Untar (Src_File_Full_Name);
 
                --  In case of success we keep the destination folder
                Dst_Guard.Keep;
