@@ -88,10 +88,6 @@ package Alr.Commands is
    procedure Requires_Valid_Session;
    --  Verifies that a valid working dir is in scope
 
-   procedure Requires_Buildfile;
-   --  Ensures that the build file exists, and if not generates one from
-   --  dependencies.
-
    ---------------------------
    --  command-line helpers --
    ---------------------------
@@ -125,7 +121,8 @@ package Alr.Commands is
                       Cmd_Test,
                       Cmd_Update,
                       Cmd_Version,
-                      Cmd_With);
+                      Cmd_With,
+                      Cmd_setenv);
    --  The Cmd_ prefix allows the use of the proper name in child packages
    --  which otherwise cause conflict.
    --  It is a bit ugly but also it makes clear when we are using this
@@ -137,8 +134,6 @@ package Alr.Commands is
    --  Attempt to find the root alire working dir if deeper inside it
 
 private
-
-   use all type Bootstrap.Session_States;
 
    --  Session shortcut
    function Session_State return Bootstrap.Session_States

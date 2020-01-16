@@ -11,12 +11,15 @@ with Alr.Commands.Update;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Query;
+with Alr.Bootstrap;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Get is
 
    package Semver renames Semantic_Versioning;
+
+   use all type Bootstrap.Session_States;
 
    --------------
    -- Retrieve --

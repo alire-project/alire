@@ -152,7 +152,6 @@ package body Alr.Checkout is
             --  current platform (this was also unimplemented in the old index)
             Templates.Generate_Prj_Alr (R.Whenever (Platform.Properties),
                                         Root.Crate_File);
-            Templates.Generate_Agg_Gpr (Root);
          end;
       end if;
    end Working_Copy;

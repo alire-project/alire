@@ -11,8 +11,11 @@ with Alr.Templates;
 with Alr.Utils;
 
 with GNATCOLL.VFS;
+with Alr.Bootstrap;
 
 package body Alr.Commands.Init is
+
+   use all type Bootstrap.Session_States;
 
    --------------
    -- Generate --
@@ -168,8 +171,6 @@ package body Alr.Commands.Init is
          Templates.Generate_Prj_Alr
            (Root.Release,
             Root.Crate_File);
-
-         Templates.Generate_Agg_Gpr (Root);
       end;
    end Generate;
 

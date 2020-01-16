@@ -1,7 +1,5 @@
 with Alire.Roots;
 
-with Alr.Query;
-
 package Alr.Templates is
 
    type Generation_Scenarios is
@@ -12,14 +10,6 @@ package Alr.Templates is
    --  In initial generation we know the only dependency is on Alire itself
    --  When pinning we are fixing to current resolved versions
    --  Otherwise who knows
-
-   procedure Generate_Agg_Gpr (Instance : Query.Instance;
-                               Root     : Alire.Roots.Root);
-   --  Generate the aggregate project file with given resolved dependencies
-
-   procedure Generate_Agg_Gpr (Root : Alire.Roots.Root);
-   --  Generate the aggregate project file solving the dependencies of the
-   --  given root.
 
    procedure Generate_Prj_Alr (Release  : Types.Release;
                                Filename : String);

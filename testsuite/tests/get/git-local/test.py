@@ -17,8 +17,6 @@ compare(list(filter
               contents('libfoo_1.0.0_9ddda32b'))),
         ['libfoo_1.0.0_9ddda32b/a',
          'libfoo_1.0.0_9ddda32b/alire',
-         'libfoo_1.0.0_9ddda32b/alire/alr_build.gpr',
-         'libfoo_1.0.0_9ddda32b/alire/alr_build.gpr.prev',
          'libfoo_1.0.0_9ddda32b/alire/libfoo.toml',
          'libfoo_1.0.0_9ddda32b/b',
          'libfoo_1.0.0_9ddda32b/b/x',

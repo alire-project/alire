@@ -31,9 +31,9 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
+with Alr.Commands.Setenv;
 with Alr.Platform;
 with Alr.Root;
-with Alr.Templates;
 
 with GNAT.Command_Line.Extra;
 with GNAT.OS_Lib;
@@ -65,7 +65,8 @@ package body Alr.Commands is
                        Cmd_Test     => new Test.Command,
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
-                       Cmd_With     => new Withing.Command);
+                       Cmd_With     => new Withing.Command,
+                       Cmd_setenv   => new Setenv.Command);
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 
@@ -357,28 +358,6 @@ package body Alr.Commands is
       Trace.Error (Message);
       raise Wrong_Command_Arguments with Message;
    end Reportaise_Wrong_Arguments;
-
-   ------------------------
-   -- Requires_Buildfile --
-   ------------------------
-
-   procedure Requires_Buildfile is
-      Guard : OS_Lib.Folder_Guard (Enter_Working_Folder) with Unreferenced;
-      Root  : constant Alire.Roots.Root := Alr.Root.Current;
-   begin
-      if Bootstrap.Session_State /= Release then
-         Reportaise_Wrong_Arguments
-           ("Cannot generate build file when not inside a working release");
-      end if;
-
-      if not GNAT.OS_Lib.Is_Regular_File (Root.Build_File) or else
-        OS_Lib.Is_Older (This => Root.Build_File,
-                         Than => Root.Crate_File)
-      then
-         Trace.Detail ("Generating alr buildfile: " & Root.Build_File);
-         Templates.Generate_Agg_Gpr (Root);
-      end if;
-   end Requires_Buildfile;
 
    ---------------------------
    -- Requires_Full_Index --
