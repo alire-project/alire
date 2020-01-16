@@ -6,8 +6,13 @@ with Alire.Utils;
 with Alr.Paths;
 with Alr.Root;
 with Alr.Spawn;
+with Alr.Bootstrap;
+with Alr.Platform;
+with Alr.Build_Env;
 
 package body Alr.Commands.Clean is
+
+   use all type Bootstrap.Session_States;
 
    -------------
    -- Execute --
@@ -20,17 +25,28 @@ package body Alr.Commands.Clean is
         "--relocate-build-tree=" & Alire.Paths.Build_Folder;
    begin
       if not Cmd.Cache then
+         Requires_Full_Index;
+
          Requires_Valid_Session;
 
+         Alr.Build_Env.Set (Alr.Root.Current);
+
          Trace.Detail ("Cleaning project and dependencies...");
-         Spawn.Command ("gprclean",
-                        Empty_Vector &
-                          "-r" &
-                          "-P" & Root.Current.Build_File &
-                          "--root-dir=." &
-                          Relocate &
-                          Scenario.As_Command_Line,
-                        Understands_Verbose => True);
+
+         --  Clean all the project files
+         for Gpr_File of Root.Current.Release.Project_Files
+           (Platform.Properties, With_Path => True)
+         loop
+
+            Spawn.Command ("gprclean",
+                           Empty_Vector &
+                             "-r" &
+                             "-P" & Gpr_File &
+                             "--root-dir=." &
+                             Relocate &
+                             Scenario.As_Command_Line,
+                           Understands_Verbose => True);
+         end loop;
       end if;
 
       if Cmd.Cache then

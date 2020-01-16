@@ -4,6 +4,8 @@ with Alire.Paths;
 with Alr.Actions;
 with Alr.Root;
 with Alr.Spawn;
+with Alr.Platform;
+with Alr.Build_Env;
 
 with GNAT.OS_Lib;
 
@@ -15,13 +17,24 @@ package body Alr.Commands.Build is
 
    procedure Do_Compile is
    begin
+      Requires_Full_Index;
+
       Requires_Valid_Session;
-      Requires_Buildfile;
+
+      Alr.Build_Env.Set (Alr.Root.Current);
 
       --  COMPILATION
       begin
-         Spawn.Gprbuild (Root.Current.Build_File,
-                         Extra_Args    => Scenario.As_Command_Line);
+
+         --  Build all the project files
+         for Gpr_File of Root.Current.Release.Project_Files
+           (Platform.Properties, With_Path => True)
+         loop
+
+            Spawn.Gprbuild (Gpr_File,
+                            Extra_Args    => Scenario.As_Command_Line);
+         end loop;
+
       exception
          when others =>
             Trace.Warning ("alr detected a compilation failure, " &

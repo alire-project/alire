@@ -8,12 +8,15 @@ with Alr.Dependency_Graphs;
 with Alr.Parsers;
 with Alr.Platform;
 with Alr.Root;
+with Alr.Bootstrap;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Show is
 
    package Semver renames Semantic_Versioning;
+
+   use all type Bootstrap.Session_States;
 
    function Libgraph_Easy_Perl_Installed return Boolean;
    --  Return whether the rolling version of libgraph_easy_perl_install is

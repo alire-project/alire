@@ -4,11 +4,13 @@ with Alr.Checkout;
 with Alr.Platform;
 with Alr.Query;
 with Alr.Root;
-with Alr.Templates;
 
 with GNAT.OS_Lib;
+with Alr.Bootstrap;
 
 package body Alr.Commands.Update is
+
+   use all type Bootstrap.Session_States;
 
    -------------
    -- Upgrade --
@@ -32,7 +34,6 @@ package body Alr.Commands.Update is
             Reportaise_Command_Failed ("Update failed");
          end if;
          Checkout.To_Folder (Needed);
-         Templates.Generate_Agg_Gpr (Needed.Releases, Root.Current);
          Trace.Detail ("Update completed");
       end;
    end Upgrade;
