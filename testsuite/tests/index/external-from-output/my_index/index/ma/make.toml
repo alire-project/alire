@@ -6,6 +6,6 @@ maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
 
 [[external]]
-kind = "output-version"
+kind = "version-output"
 version-command = [ "make", "--version" ]
 version-regexp = ".*Make ([\\d\\.]+).*"
