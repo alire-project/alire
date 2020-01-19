@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Actions;
 with Alire.Index;
 with Alire.Origins.Deployers;
+with Alire.Platform;
 
 with Alr.Actions;
 with Alr.Checkout;
@@ -119,6 +120,36 @@ package body Alr.Commands.Get is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
+
+      procedure Check_Unavailable_Native (Name : Alire.Crate_Name) is
+         --  Better user feedback if crate is only available through externals.
+         --  We distinguish if we are in a platform with native package manager
+         --  or not.
+      begin
+         if Alire.Index.Exists (Name) then
+            if Alire.Index.Crate (Name).Releases.Is_Empty then
+               if Alire.Index.Crate (Name).Externals.Is_Empty then
+                  Reportaise_Command_Failed
+                    ("No releases or externals found for the requested crate");
+               else
+                  if Alire.Platform.Distribution_Is_Known then
+                     Reportaise_Command_Failed
+                       ("No native package for the "
+                        & "requested crate was detected");
+                  else
+                     Reportaise_Command_Failed
+                       ("Unknown distribution: cannot use native package for "
+                        & " the requested crate");
+                  end if;
+               end if;
+            else
+               null; -- Normal exit
+            end if;
+         else
+            raise Alire.Query_Unsuccessful;
+         end if;
+      end Check_Unavailable_Native;
+
    begin
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
@@ -139,6 +170,8 @@ package body Alr.Commands.Get is
          end if;
 
          Requires_Full_Index;
+
+         Check_Unavailable_Native (Allowed.Crate);
 
          Retrieve (Cmd, Allowed.Crate, Allowed.Versions);
       exception
