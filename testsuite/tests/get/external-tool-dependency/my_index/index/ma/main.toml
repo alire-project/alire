@@ -1,0 +1,12 @@
+[general]
+description = "Main program"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+licenses = []
+
+['1.0']
+origin = "file://./../../crates/noop_1.0.tgz"
+origin-hashes = ["sha512:de676fbda9f16ba98fe1adc80e20dbd9b98a86352267825b55f1d719570adc0f92f1be2e96fd3df06aac4f6b5fee8686695e315be370cabe482edefc5a0570c5"]
+   
+   ['1.0'.depends-on]
+   make = "*"
