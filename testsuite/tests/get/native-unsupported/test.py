@@ -18,12 +18,12 @@ unknown = re.match('.*platform properties:.*DISTRO_UNKNOWN.*',
 
 # Run get on a native package and see what happens depending on platform
 p = run_alr('get', '--non-interactive', '--only', 'make',
-            complain_on_error=False)
+            complain_on_error=False, quiet=False)
 if unknown:
-    assert_match(".*Unknown distribution: cannot provide native package for.*",
+    assert_match(".*Unknown distribution: cannot use native package for.*",
                  p.out, flags=re.S)
 else:
-    assert_match(".*No native package known in current platform for make.*",
+    assert_match(".*No native package for the requested crate was detected.*",
                  p.out, flags=re.S)
 
 print('SUCCESS')
