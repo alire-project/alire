@@ -122,6 +122,10 @@ package Alire.Releases with Preelaborate is
    --  Returns the description for the crate, which is also stored as a
    --  property of the release.
 
+   function Long_Description (R : Release) return String;
+   --  Returns the long description for the crate, which is also stored as a
+   --  property of the release.
+
    function Provides (R : Release) return Crate_Name;
    --  The actual name to be used during dependency resolution (but nowhere
    --  else).
