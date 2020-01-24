@@ -17,9 +17,13 @@ assert_eq(
       'websites: ["example.com"]\n'
       'tags: ["tag1", "other-tag"]\n'
       'version: "1.0.1"\n'
+      'short_description: "\\"Hello, world!\\" demonstration project"\n'
       'dependencies: [{crate: "libhello", version: "^1.0"}]\n'
       '---\n'
-      '"Hello, world!" demonstration project\n'
+      'This is an example of long description in a multi-line string.\n'
+      '\n'
+      'Markdown formating `can` be used to have "nice" display on the website.\n'
+      '\n'
       '\n', p.out)
 
 print('SUCCESS')

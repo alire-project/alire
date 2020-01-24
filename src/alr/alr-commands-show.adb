@@ -144,7 +144,7 @@ package body Alr.Commands.Show is
          Put_Line ("layout: crate");
          Put_Line (Rel.To_YAML);
          Put_Line ("---");
-         Put_Line (Rel.Description);
+         Put_Line (Rel.Long_Description);
          Put_Line (Rel.Notes);
       end;
    exception

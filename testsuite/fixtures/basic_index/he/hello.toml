@@ -6,6 +6,11 @@ maintainers = ["alejandro@mosteo.com", "bob@example.com"]
 maintainers-logins = ["mylogin"]
 authors = ["Bob", "Alice"]
 tags = ["tag1", "other-tag"]
+long-description = """
+This is an example of long description in a multi-line string.
+
+Markdown formating `can` be used to have "nice" display on the website.
+"""
 
 ['1.0.1']
 origin = "file://../../crates/hello_1.0.1"
