@@ -648,6 +648,8 @@ package body Alire.Releases is
         "websites: " & Props_To_YAML (R.Website) & ASCII.LF &
         "tags: " & Props_To_YAML (R.Tag) & ASCII.LF &
         "version: " & Utils.YAML.YAML_Stringify (R.Version_Image) & ASCII.LF &
+        "short_description: " & Utils.YAML.YAML_Stringify (R.Description) &
+        ASCII.LF &
         "dependencies: " & R.Dependencies.To_YAML;
    end To_YAML;
 
@@ -685,5 +687,22 @@ package body Alire.Releases is
          null;
       end return;
    end Whenever;
+
+   ----------------------
+   -- Long_Description --
+   ----------------------
+
+   function Long_Description (R : Release) return String is
+      Descr : constant Alire.Properties.Vector :=
+        Conditional.Enumerate (R.Properties).Filter
+        (Alire.TOML_Keys.Long_Descr);
+   begin
+      if not Descr.Is_Empty then
+         --  Image returns "Description: Blah" so we have to cut.
+         return Utils.Tail (Descr.First_Element.Image, ' ');
+      else
+         return "";
+      end if;
+   end Long_Description;
 
 end Alire.Releases;
