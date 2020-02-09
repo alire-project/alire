@@ -1,7 +1,6 @@
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-
 with Alire.Containers;
 with Alire.Platforms;
+with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
@@ -11,7 +10,7 @@ package Alire.Externals is
    --  runtime. Hence, they cannot be catalogued in the index with a known
    --  version. Instead, they're listed under the 'external' array.
 
-   type External is interface;
+   type External is abstract tagged private;
 
    function Detect (This : External;
                     Name : Crate_Name) return Containers.Release_Set
@@ -38,14 +37,10 @@ package Alire.Externals is
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class;
 
-   --  Since a crate may have different externals, they'll need aggregation
+private
 
-   package Lists is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists (External'Class);
-
-   type List is new Lists.List with null record;
-
-   function Detect (This : List;
-                    Name : Crate_Name) return Containers.Release_Set;
+   type External is abstract tagged record
+      Available : Requisites.Tree;
+   end record;
 
 end Alire.Externals;

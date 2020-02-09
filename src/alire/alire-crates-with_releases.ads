@@ -1,6 +1,6 @@
 with Alire.Interfaces;
 with Alire.Containers;
-with Alire.Externals;
+with Alire.Externals.Lists;
 with Alire.Releases;
 with Alire.TOML_Adapters;
 
@@ -33,7 +33,7 @@ package Alire.Crates.With_Releases is
 
    function Description (This : Crate) return Description_String;
 
-   function Externals (This : Crate) return Alire.Externals.List;
+   function Externals (This : Crate) return Alire.Externals.Lists.List;
 
    function Releases (This : Crate) return Containers.Release_Set;
 
@@ -55,7 +55,7 @@ private
      Interfaces.Detomifiable with
       record
          Name      : Crate_Name (1 .. Len);
-         Externals : Alire.Externals.List;
+         Externals : Alire.Externals.Lists.List;
          Releases  : Containers.Release_Set;
       end record;
 

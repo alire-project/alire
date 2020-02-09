@@ -67,7 +67,7 @@ package body Alire.Crates.With_Releases is
    -- Externals --
    ---------------
 
-   function Externals (This : Crate) return Alire.Externals.List is
+   function Externals (This : Crate) return Alire.Externals.Lists.List is
      (This.Externals);
 
    ---------------
