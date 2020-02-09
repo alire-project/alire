@@ -6,7 +6,6 @@ with Alire.GPR;
 with Alire.Origins;
 with Alire.Crates.Containers;
 with Alire.Crates.With_Releases;
-with Alire.Properties;
 with Alire.Properties.Licenses;
 with Alire.Releases;
 with Alire.Requisites;
@@ -65,11 +64,11 @@ package Alire.Index is
    procedure Add (Crate  : Crates.With_Releases.Crate;
                   Policy : Addition_Policies := Merge_Priorizing_Existing);
 
-   procedure Add_All_Externals;
+   procedure Add_All_Externals (Env : Properties.Vector);
    --  Goes over the list of crates and applies external detection, indexing
    --  any found externals. This has effect only the first time it is called.
 
-   procedure Add_Externals (Name : Crate_Name);
+   procedure Add_Externals (Name : Crate_Name; Env : Properties.Vector);
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 

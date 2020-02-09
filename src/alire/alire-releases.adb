@@ -604,7 +604,7 @@ package body Alire.Releases is
 
       --  Dependencies
       if not R.Dependencies.Is_Empty then
-         Relinfo.Set (TOML_Keys.Dependency, R.Dependencies.To_TOML);
+         Relinfo.Set (TOML_Keys.Depends_On, R.Dependencies.To_TOML);
       end if;
 
       --  Forbidden

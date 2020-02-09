@@ -517,7 +517,7 @@ package body Alr.Query is
                --  below.
 
                if Options.Detecting = Detect then
-                  Index.Add_Externals (Dep.Crate);
+                  Index.Add_Externals (Dep.Crate, Platform.Properties);
                end if;
 
                --  Check the releases now:

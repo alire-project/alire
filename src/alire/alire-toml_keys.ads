@@ -10,7 +10,7 @@ package Alire.TOML_Keys with Preelaborate is
    Author         : constant String := "authors";
    Available      : constant String := "available";
    Compiler       : constant String := "compiler";
-   Dependency     : constant String := "depends-on";
+   Depends_On     : constant String := "depends-on";
    Description    : constant String := "description";
    Distribution   : constant String := "distribution";
    Executable     : constant String := "executables";

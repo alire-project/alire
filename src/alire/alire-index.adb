@@ -38,12 +38,12 @@ package body Alire.Index is
    -- Add_All_Externals --
    -----------------------
 
-   procedure Add_All_Externals is
+   procedure Add_All_Externals (Env : Properties.Vector) is
    begin
       Trace.Detail ("Detecting external releases...");
 
       for Crate of Contents loop
-         Add_Externals (Crate.Name);
+         Add_Externals (Crate.Name, Env);
       end loop;
    end Add_All_Externals;
 
@@ -55,7 +55,7 @@ package body Alire.Index is
    -- Add_Externals --
    -------------------
 
-   procedure Add_Externals (Name : Crate_Name) is
+   procedure Add_Externals (Name : Crate_Name; Env : Properties.Vector) is
    begin
       if Already_Detected.Contains (Name) then
          Trace.Debug
@@ -63,7 +63,7 @@ package body Alire.Index is
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
-         for Release of Contents (Name).Externals.Detect (Name) loop
+         for Release of Contents (Name).Externals.Detect (Name, Env) loop
             Trace.Debug ("Adding external: " & Release.Milestone.Image);
             Contents (Name).Add (Release);
          end loop;

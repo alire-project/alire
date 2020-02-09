@@ -1,6 +1,7 @@
 with Alire.Errors;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Expressions.Cases;
+with Alire.TOML_Keys;
 
 with TOML;
 
@@ -25,19 +26,21 @@ package body Alire.TOML_Load is
       TOML_Deps  : TOML.TOML_Value;
    begin
       --  Process Dependencies
-      if From.Pop ("depends-on", TOML_Deps) then
+      if From.Pop (TOML_Keys.Depends_On, TOML_Deps) then
          Deps := Deps and
            TOML_Expressions.Cases.Load_Dependencies
-             (TOML_Adapters.From (TOML_Deps, From.Message ("depends-on")));
+             (TOML_Adapters.From (TOML_Deps,
+                                  From.Message (TOML_Keys.Depends_On)));
       end if;
 
       --  TODO: Process Forbidden
 
       --  Process Available
-      if From.Pop ("available", TOML_Avail) then
+      if From.Pop (TOML_Keys.Available, TOML_Avail) then
          Avail := Avail and
            TOML_Expressions.Cases.Load_Requisites
-             (TOML_Adapters.From (TOML_Avail, From.Message ("available")));
+             (TOML_Adapters.From (TOML_Avail,
+                                  From.Message (TOML_Keys.Available)));
       end if;
 
       --  Process remaining keys, which must be properties
