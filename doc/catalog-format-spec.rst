@@ -132,8 +132,8 @@ And finally for other ``os`` values:
    libfoo = "^1.2"
 
 
-General info
-------------
+General Information
+-------------------
 
 Unless specified, all the entries must be static, i.e. they cannot depend on
 the context.
@@ -326,8 +326,8 @@ entries:
    [[general.actions.'case(os)'.'...']]
    # An explicit empty case alternative, which is not mandatory
 
-Release-specific info
----------------------
+Release-specific Information
+----------------------------
 
 Each release is materialized as an entry in the top-level object. The key is a
 string for the version number for the release, while the value is an object to
@@ -395,6 +395,38 @@ It can also contain the following entries: ``depends-on``, ``project-files``,
 are optional. For atomic values, these override the ones from ``general``, and
 for lists/mappings, they are interpreted as additions. In the latter case,
 conflicting entries are considered as errors.
+
+External Releases
+-----------------
+
+The above information applies to regular releases distributed from sources
+(that is, the Ada projects whose distribution is the main Alire goal). Some
+special supporting releases also exist that are described differently.
+
+A release is considered "external" when it is not built from sources and,
+furthermore, its semantic version cannot be known until run time. Hence, the
+availability and version of these releases is detected by ``alr``.
+
+Several definitions for these external releases may exist, and so they are
+defined in the index as a vector with key ``external``:
+
+.. code-block:: json
+
+    [[external]]
+    # Common entries to all externals
+    kind = "hint" # One of several predefined external kinds
+    hint = "Please install SDL in your platform from source or system packages"
+    # Specific external kind parameters might follow
+
+All external kinds can define these regular properties:
+
+*  ``available``: when defined, it restricts the external detection to the
+   given environment conditions.
+
+*  ``hint``: explanation for the user on how to make the external available. 
+   This explanation is show on request with ``alr show --external``, or after
+   ``alr get``, for any external dependency that could not be detected. This
+   property accepts dynamic expressions.
 
 Parameters
 ----------
