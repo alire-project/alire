@@ -1,5 +1,5 @@
-with Alire.TOML_Expressions.Cases;
-with Alire.TOML_Keys;
+with Alire.Crates;
+with Alire.TOML_Load;
 
 with TOML;
 
@@ -10,23 +10,32 @@ package body Alire.Externals is
    ---------------
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class is
-      use type Requisites.Tree;
-
-      TOML_Avail : TOML.TOML_Value;
       pragma Warnings (Off);
-      Result     : External'Class := From_TOML (From); -- Recursive until impl
+      Ext        : External'Class := From_TOML (From); -- Recursive until impl
       pragma Warnings (On);
+
+      Deps : Conditional.Dependencies;
+
+      Result : constant Outcome :=
+                     TOML_Load.Load_Crate_Section
+                       (Section => Crates.External_Section,
+                        From    => From,
+                        Props   => Ext.Properties,
+                        Deps    => Deps,
+                        Avail   => Ext.Available);
    begin
-      --  Process Available
-      if From.Pop (TOML_Keys.Available, TOML_Avail) then
-         Result.Available := Result.Available and
-           TOML_Expressions.Cases.Load_Requisites
-             (TOML_Adapters.From (TOML_Avail,
-                                  From.Message (TOML_Keys.Available)));
+      Assert (Result);
+
+      --  Ensure that no dependencies have been defined for the external. This
+      --  may be handy in the future, but until the need arises better not have
+      --  it complicating things.
+
+      if not Deps.Is_Empty then
+         From.Checked_Error ("externals cannot have dependencies");
       end if;
 
       raise Unimplemented; -- No concrete externals defined yet
-      return Result;
+      return Ext;
    end From_TOML;
 
 end Alire.Externals;

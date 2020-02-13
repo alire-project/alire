@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire;
 with Alire.Actions;
 with Alire.Containers;
+with Alire.Externals.Lists;
 with Alire.Origins.Deployers;
 with Alire.Roots;
 
@@ -60,6 +61,10 @@ package body Alr.Checkout is
    -- To_Folder --
    ---------------
 
+   ---------------
+   -- To_Folder --
+   ---------------
+
    procedure To_Folder (Solution : Query.Solution;
                         Parent   : String := Paths.Dependencies_Folder)
    is
@@ -77,6 +82,11 @@ package body Alr.Checkout is
            ("The following native dependencies are unavailable within Alire:");
          for Dep of Pending.Hints loop
             Trace.Warning ("   " & Dep.Image);
+            for Hint of Alire.Index.Crate (Dep.Crate)
+                        .Externals.Hints (Dep.Crate, Platform.Properties)
+            loop
+               Trace.Warning ("      Hint: ");
+            end loop;
          end loop;
          Trace.Warning
            ("They should be made available in the environment by the user.");

@@ -16,6 +16,7 @@ package Alire.Properties.From_TOML with Preelaborate is
                           Executables,
                           GPR_Externals,
                           GPR_Set_Externals,
+                          Hint,
                           Licenses,
                           Long_Description,
                           Maintainers,
@@ -31,11 +32,17 @@ package Alire.Properties.From_TOML with Preelaborate is
    --  We use these arrays to determine which properties may appear when
    --  loading a [general] section or a proper release.
 
+   External_Loaders : constant Loader_Array (Property_Keys) :=
+                        (Hint   => Labeled.From_TOML'Access,
+                         others => null);
+   --  This loader is used for properties common to all external classes
+
    General_Loaders : constant Loader_Array (Property_Keys) :=
                        (Actions  => Alire.Actions.From_TOML'Access,
                         GPR_Externals ..
                         GPR_Set_Externals
                                  => Scenarios.From_TOML'Access,
+                        Hint     => null, -- Only apply to externals
                         Licenses => Properties.Licenses.From_TOML'Access,
                         others   => Labeled.From_TOML'Access);
 
@@ -56,6 +63,7 @@ package Alire.Properties.From_TOML with Preelaborate is
      := (Actions           => Alire.Actions.From_TOML'Access,
          Executables       => Labeled.From_TOML_Executable_Cases'Access,
          GPR_Set_Externals => Scenarios.From_TOML_Cases'Access,
+         Hint              => Labeled.From_TOML_Hint_Cases'Access,
          Project_Files     => Labeled.From_TOML_Project_File_Cases'Access,
          others            => null);
 
@@ -71,6 +79,10 @@ package Alire.Properties.From_TOML with Preelaborate is
 
    use all type Crates.Sections;
 
+   function External_Loader (From : TOML_Adapters.Key_Queue)
+                             return Conditional.Properties is
+     (Loader (From, External_Loaders, External_Section));
+
    function General_Loader (From : TOML_Adapters.Key_Queue)
                             return Conditional.Properties is
      (Loader (From, General_Loaders, General_Section));
@@ -80,10 +92,11 @@ package Alire.Properties.From_TOML with Preelaborate is
      (Loader (From, Release_Loaders, Release_Section));
 
    Section_Loaders : constant
-        array (Crates.Sections) of access
-        function (From : TOML_Adapters.Key_Queue)
-        return Conditional.Properties
-        := (General_Section => General_Loader'Access,
-            Release_Section => Release_Loader'Access);
+     array (Crates.Sections) of access
+     function (From : TOML_Adapters.Key_Queue)
+     return Conditional.Properties
+     := (External_Section => External_Loader'Access,
+         General_Section  => General_Loader'Access,
+         Release_Section  => Release_Loader'Access);
 
 end Alire.Properties.From_TOML;

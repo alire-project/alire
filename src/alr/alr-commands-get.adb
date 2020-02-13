@@ -75,8 +75,7 @@ package body Alr.Commands.Get is
          end if;
       end;
 
-      --  Check if we are already in the fresh copy (may happen after
-      --  respawning).
+      --  Check if we are already in the fresh copy
       if Session_State > Outside then
          Reportaise_Command_Failed
            ("Cannot get a release inside another alr release, stopping.");

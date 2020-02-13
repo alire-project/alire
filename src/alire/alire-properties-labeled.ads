@@ -19,6 +19,9 @@ package Alire.Properties.Labeled with Preelaborate is
       Executable,
       --  A resulting executable built by the release
 
+      Hint,
+      --  A text to display to the user for externals that fail detection
+
       Long_Description,
       --  Unlimited-length crate description
 
@@ -52,6 +55,7 @@ package Alire.Properties.Labeled with Preelaborate is
                    (Author             => Multiple,
                     Description        => Unique,
                     Executable         => Multiple,
+                    Hint               => Unique,
                     Long_Description   => Unique,
                     Maintainer         => Multiple,
                     Maintainers_Logins => Multiple,
@@ -65,6 +69,7 @@ package Alire.Properties.Labeled with Preelaborate is
                  (Author             => False,
                   Description        => True,
                   Executable         => False,
+                  Hint               => False,
                   Long_Description   => False,
                   Maintainer         => True,
                   Maintainers_Logins => True,
@@ -112,6 +117,10 @@ package Alire.Properties.Labeled with Preelaborate is
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Conditional.Properties;
    --  Loads any labeled property. May raise Checked_Error.
+
+   function From_TOML_Hint_Cases (From : TOML_Adapters.Key_Queue)
+                                  return Conditional.Properties;
+   --  Loads a hint property; used during resolution of cases.
 
    function From_TOML_Executable_Cases (From : TOML_Adapters.Key_Queue)
                                         return Conditional.Properties;
@@ -174,6 +183,7 @@ private
           when Author             => TOML_Keys.Author,
           when Description        => TOML_Keys.Description,
           when Executable         => TOML_Keys.Executable,
+          when Hint               => TOML_Keys.Hint,
           when Long_Description   => TOML_Keys.Long_Descr,
           when Maintainer         => TOML_Keys.Maintainer,
           when Maintainers_Logins => TOML_Keys.Maint_Logins,
