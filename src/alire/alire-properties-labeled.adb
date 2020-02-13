@@ -115,6 +115,14 @@ package body Alire.Properties.Labeled is
       end if;
    end Loader_During_Case;
 
+   function From_TOML_Hint_Cases_Internal is
+     new Loader_During_Case (TOML_Keys.Hint);
+
+   function From_TOML_Hint_Cases
+     (From : TOML_Adapters.Key_Queue)
+      return Conditional.Properties
+      renames From_TOML_Hint_Cases_Internal;
+
    function From_TOML_Executable_Cases_Internal is
      new Loader_During_Case (TOML_Keys.Executable);
 

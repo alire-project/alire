@@ -1,5 +1,7 @@
+with Alire.Conditional;
 with Alire.Containers;
 with Alire.Platforms;
+with Alire.Properties;
 with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.Utils;
@@ -33,14 +35,17 @@ package Alire.Externals is
    function Kind (This : External) return String is abstract;
    --  Keyword for use in `alr show` and similar displays of information
 
-   --  Classwide helpers
+   -------------------------
+   --  Classwide helpers  --
+   -------------------------
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class;
 
 private
 
    type External is abstract tagged record
-      Available : Requisites.Tree;
+      Properties : Conditional.Properties;
+      Available  : Requisites.Tree;
    end record;
 
 end Alire.Externals;

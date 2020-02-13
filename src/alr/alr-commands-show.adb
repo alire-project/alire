@@ -4,6 +4,7 @@ with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
+with Alire.Properties;
 with Alire.Roots;
 with Alire.Utils;
 
@@ -87,6 +88,8 @@ package body Alr.Commands.Show is
                      Needed.Releases.Delete (Rel.Name);
                   end if;
 
+                  --  Show regular dependencies in solution
+
                   if not Needed.Releases.Is_Empty then
                      Put_Line ("Dependencies (solution):");
                      for Rel of Needed.Releases loop
@@ -94,10 +97,23 @@ package body Alr.Commands.Show is
                      end loop;
                   end if;
 
+                  --  Show unresolved hints, with their hinting message
+
                   if not Needed.Hints.Is_Empty then
                      Put_Line ("Dependencies (external):");
                      for Dep of Needed.Hints loop
                         Put_Line ("   " & Dep.Image);
+                        for Hint of
+                          Alire.Index.Crate (Dep.Crate)
+                          .Externals.Hints
+                            (Name => Dep.Crate,
+                             Env  =>
+                               (if Cmd.Native
+                                then Platform.Properties
+                                else Alire.Properties.No_Properties))
+                        loop
+                           Trace.Warning ("      Hint: ");
+                        end loop;
                      end loop;
                   end if;
 
