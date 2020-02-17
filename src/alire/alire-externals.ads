@@ -39,7 +39,11 @@ package Alire.Externals is
    --  Classwide helpers  --
    -------------------------
 
-   type Kinds is (Version_Output
+   type Kinds is (Hint,
+                  --  A placeholder for a knowingly-unavailable crate, that
+                  --  will hopefully be added in the future.
+
+                  Version_Output
                   --  A external that detects the availability of a tool by
                   --  running it to detect its version.
                  );
