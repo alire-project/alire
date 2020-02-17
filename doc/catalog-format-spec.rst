@@ -428,6 +428,20 @@ All external kinds can define these regular properties:
    ``alr get``, for any external dependency that could not be detected. This
    property accepts dynamic expressions.
 
+External kinds: hints
+^^^^^^^^^^^^^^^^^^^^^
+
+A plain undetectable external intended to simply serve as a hint. For crates
+that are known to be unavailable through Alire, it serves to provide a generic
+or customized hint to the user. It has no specific fields, other than the
+common ones just described. Its key is ``"hint"``:
+
+..  code-block:: json
+
+   [[external]]
+   kind = "hint" 
+   # Bare minimum external. Optionally, the hint/available fields can be used.
+
 External kinds: command-line tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
