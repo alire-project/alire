@@ -157,6 +157,12 @@ package Alire.Utils with Preelaborate is
    --  Split a string in substrings at Separator positions. A Separator at
    --  S'First or S'Last will result in an empty string also being included.
 
+   function Tail (V : String_Vector) return String_Vector with
+     Pre => not V.Is_Empty or else
+     raise Checked_Error with "Cannot take tail of empty vector";
+   --  Return V without its first element. Practical for spawns that take
+   --  String_Vector for arguments.
+
    not overriding
    function To_Vector (S : String) return String_Vector;
 

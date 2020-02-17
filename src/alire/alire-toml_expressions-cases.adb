@@ -200,7 +200,7 @@ package body Alire.TOML_Expressions.Cases is
    is
    begin
       Set_Up_Loaders;
-      return Deps.Load_Instance (TOML_Keys.Dependency,
+      return Deps.Load_Instance (TOML_Keys.Depends_On,
                                  From,
                                  Conditional.Deps_From_TOML'Access);
    end Load_Dependencies;

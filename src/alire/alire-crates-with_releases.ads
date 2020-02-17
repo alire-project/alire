@@ -1,11 +1,12 @@
 with Alire.Interfaces;
 with Alire.Containers;
+with Alire.Externals.Lists;
 with Alire.Releases;
 with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
 
-package Alire.Crates.With_Releases with Preelaborate is
+package Alire.Crates.With_Releases is
 
    type Crate (<>) is new General and Interfaces.Detomifiable
    with private;
@@ -22,10 +23,17 @@ package Alire.Crates.With_Releases with Preelaborate is
        "Crate already contains given release: "
        & Semantic_Versioning.Image (Release.Version);
 
+   function Base (This : Crate) return Releases.Release;
+   --  Returns a release sharing only this crate mandatory properties (see
+   --  Alire.Properties.Labeled.Mandatory) that can be used as template for
+   --  new releases in this crate (e.g., by externally detected releases).
+
    function Contains (This    : Crate;
                       Version : Semantic_Versioning.Version) return Boolean;
 
    function Description (This : Crate) return Description_String;
+
+   function Externals (This : Crate) return Alire.Externals.Lists.List;
 
    function Releases (This : Crate) return Containers.Release_Set;
 
@@ -47,6 +55,7 @@ private
      Interfaces.Detomifiable with
       record
          Name      : Crate_Name (1 .. Len);
+         Externals : Alire.Externals.Lists.List;
          Releases  : Containers.Release_Set;
       end record;
 

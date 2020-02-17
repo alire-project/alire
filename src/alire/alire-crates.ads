@@ -14,8 +14,9 @@ package Alire.Crates with Preelaborate is
 
    function Name (N : Named) return Crate_Name is abstract;
 
-   type Sections is (General_Section,  -- In [general]
-                     Release_Section); -- In a release
+   type Sections is (General_Section,   -- In [general]
+                     Release_Section,   -- In a release
+                     External_Section); -- In a [[external]]
 
    -------------
    -- General --

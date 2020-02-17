@@ -44,9 +44,8 @@ private
    end record;
 
    function New_Result (R : Result) return Outcome is
-     (OK         => True,
-      Success    => True,
-      Message    => <>,
+     (Alire.Outcome_Success with
+      OK         => True,
       The_Result => R);
 
    function Value (This : aliased Outcome) return Reference is
