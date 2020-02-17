@@ -428,6 +428,25 @@ All external kinds can define these regular properties:
    ``alr get``, for any external dependency that could not be detected. This
    property accepts dynamic expressions.
 
+External kinds: command-line tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This external kind is used to describe commands that can be run in the system,
+and that are able to provide their own version via some particular invocation.
+Their specific fields are (all mandatory):
+
+.. code-block:: json
+
+   kind = "version-output"  # Identifies this external kind
+
+   version-command = ["gnat", "--version"]
+   # Invocation that will provide the version when the tool is available
+
+   version-regexp  = "^GNAT ([\\d\\.]+).*|^GNAT Community ([\\d]{4}).*"
+   # TOML-escaped GNAT.Regpat-compatible regular expression. Parenthesized
+   # matches will cause the matched expression to be parsed as the Semantic
+   # Version of the tool.
+
 Parameters
 ----------
 
