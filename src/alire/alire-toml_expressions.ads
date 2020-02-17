@@ -42,8 +42,7 @@ package Alire.TOML_Expressions with Preelaborate is
    Case_Prefix : constant String := "case(";
    Dots        : constant String := "...";
 
-   type Case_Loader_Keys is (Compiler,
-                             Distribution,
+   type Case_Loader_Keys is (Distribution,
                              OS,
                              Word_Size);
    --  The variables that can be used in index cases. Must match the toml text.

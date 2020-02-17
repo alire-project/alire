@@ -285,6 +285,28 @@ package body Alire.Utils is
       end if;
    end Replace;
 
+   -------------
+   -- Shorten --
+   -------------
+
+   function Shorten (Text       : String;
+                     Max_Length : Natural;
+                     Trim_Side  : Halves := Head)
+                     return String
+   is
+      Ellipsis : constant String := "(...)";
+   begin
+      if Text'Length <= Max_Length then
+         return Text;
+      elsif Trim_Side = Head then
+         return Ellipsis
+                & Ada.Strings.Fixed.Tail (Text, Max_Length - Ellipsis'Length);
+      else
+         return Ada.Strings.Fixed.Head (Text, Max_Length - Ellipsis'Length)
+                & Ellipsis;
+      end if;
+   end Shorten;
+
    -----------
    -- Split --
    -----------

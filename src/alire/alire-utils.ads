@@ -76,6 +76,13 @@ package Alire.Utils with Preelaborate is
    --  Start the search according to From, and return Side at that point
    --  If not enough separators are seen then raises or whole string
 
+   function Shorten (Text       : String;
+                     Max_Length : Natural;
+                     Trim_Side  : Halves := Head)
+                     return String with
+     Pre => Max_Length >= 5;
+   --  Replaces the given end with "(...)" if the text is too long
+
    function To_Native (Path : Any_Path) return String;
 
    generic
