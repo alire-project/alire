@@ -30,6 +30,12 @@ package Alire.Origins.Deployers.System is
                     return Version_Outcomes.Outcome is abstract;
    --  Try and detect if a Base.Package exists in the system, installed or not
 
+   overriding
+   function Fetch (This          : Deployer;
+                   Unused_Folder : String)
+                   return Outcome is (Outcome_Success);
+   --  Fetching logic is delegated to the system package manager, we do nothing
+
    function Install (This : Deployer) return Outcome is abstract;
    --  Actually install the package in the system. Specific implementations
    --  must take care to be conservative about the user installation; e.g., do

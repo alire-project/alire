@@ -55,7 +55,7 @@ package body Alire.Origins.Deployers is
    ------------------
 
    function Deploy_Steps (From   : Origin;
-                               Folder : String) return Outcome
+                          Folder : String) return Outcome
    is
       The_Deployer  : constant Deployer'Class := New_Deployer (From);
       Result        : Outcome;
