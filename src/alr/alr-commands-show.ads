@@ -23,8 +23,8 @@ private
    type Command is new Commands.Command with record
       Detect   : aliased Boolean := False;
       External : aliased Boolean := False;
-      Native   : aliased Boolean := False;
       Solve    : aliased Boolean := False;
+      System   : aliased Boolean := False;
       Jekyll   : aliased Boolean := False;
    end record;
 

@@ -108,7 +108,7 @@ package body Alr.Commands.Test is
          elsif not Is_Resolvable then
             Reporters.End_Test
               (R, Testing.Unresolvable, Clock - Start, No_Log);
-         elsif not R.Origin.Is_Native and then
+         elsif not R.Origin.Is_System and then
            Ada.Directories.Exists (R.Unique_Folder) and then
            not Cmd.Redo
          then
@@ -131,7 +131,7 @@ package body Alr.Commands.Test is
                Trace.Detail (Output.Flatten (Newline));
 
                --  Check declared gpr/executables in place
-               if not R.Origin.Is_Native and then not Check_Files (R) then
+               if not R.Origin.Is_System and then not Check_Files (R) then
                   raise Child_Failed;
                end if;
 
@@ -152,7 +152,7 @@ package body Alr.Commands.Test is
 
          Make_Dir
            (Create (+R.Unique_Folder) / Create (+Paths.Alr_Working_Folder));
-         --  Might not exist for native/failed/skipped
+         --  Might not exist for system/failed/skipped
          Output.Write (R.Unique_Folder /
                          Paths.Alr_Working_Folder /
                            "alr_test_" & Timestamp & ".log");

@@ -1,5 +1,5 @@
 with Alire.Index;
-with Alire.Origins.Deployers.Native;
+with Alire.Origins.Deployers.System;
 with Alire.Platform;
 with Alire.Releases;
 with Alire.Requisites;
@@ -9,7 +9,7 @@ with Alire.TOML_Keys;
 
 with TOML;
 
-package body Alire.Externals.From_Native is
+package body Alire.Externals.From_System is
 
    ---------------------
    -- Candidate_Count --
@@ -36,27 +36,27 @@ package body Alire.Externals.From_Native is
    function Detect (This : External;
                     Name : Crate_Name) return Containers.Release_Set
    is
-      package Native renames Origins.Deployers.Native;
+      package System renames Origins.Deployers.System;
    begin
-      Trace.Detail ("Looking for native packages that provide crate "
+      Trace.Detail ("Looking for system packages that provide crate "
                     & (+Name));
       return Releases : Containers.Release_Set do
-         for Candidate of This.Native_Candidates (Platform.Distribution) loop
-            Trace.Debug ("Looking for native package " & Candidate);
+         for Candidate of This.System_Candidates (Platform.Distribution) loop
+            Trace.Debug ("Looking for system package " & Candidate);
             declare
-               Detector : constant Native.Deployer'Class :=
-                            Native.Platform_Deployer (Candidate);
-               Result   : constant Native.Version_Outcomes.Outcome :=
+               Detector : constant System.Deployer'Class :=
+                            System.Platform_Deployer (Candidate);
+               Result   : constant System.Version_Outcomes.Outcome :=
                             Detector.Detect;
             begin
                if Result.Success then
-                  Trace.Detail ("Success with native package " & Candidate);
+                  Trace.Detail ("Success with system package " & Candidate);
 
                   Releases.Insert
                     (Index.Crate (Name).Base
                      .Retagging (Result.Value)
-                     .Replacing (Origins.New_Native (Candidate))
-                     .Replacing (Notes => "Provided by native package: "
+                     .Replacing (Origins.New_System (Candidate))
+                     .Replacing (Notes => "Provided by system package: "
                                  & Candidate));
                end if;
             end;
@@ -96,7 +96,7 @@ package body Alire.Externals.From_Native is
          +Case_From.Keys (1) /= "case(distribution)"
          then
             From.Checked_Error
-              ("native origins can only be distribution-specific");
+              ("system origins can only be distribution-specific");
          end if;
 
          --  Get an array of TOML values that will each point to a distribution
@@ -145,7 +145,7 @@ package body Alire.Externals.From_Native is
    overriding
    function Image (This : External) return String is
      (Utils.Trim (Candidate_Count (This.Origin)'Img)
-      & " candidate native packages");
+      & " candidate system packages");
 
    ------------
    -- Detail --
@@ -174,4 +174,4 @@ package body Alire.Externals.From_Native is
       end if;
    end Detail;
 
-end Alire.Externals.From_Native;
+end Alire.Externals.From_System;

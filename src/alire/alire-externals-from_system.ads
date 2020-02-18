@@ -1,10 +1,10 @@
 private with Alire.Platforms;
 private with Alire.Utils;
 
-package Alire.Externals.From_Native is
+package Alire.Externals.From_System is
 
-   --  A natively-provided package, installed via a platform-specific method
-   --  such as apt, yum, etc. that can also inform us about the version.
+   --  A system-provided package, installed via a platform-specific method such
+   --  as apt, yum, etc. that can also inform us about the version.
 
    type External is new Externals.External with private;
 
@@ -21,7 +21,7 @@ package Alire.Externals.From_Native is
                     return Utils.String_Vector;
 
    overriding
-   function Kind (This : External) return String is ("Native package");
+   function Kind (This : External) return String is ("System package");
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return External;
    --  From must point to the table with the keys that describe the external.
@@ -47,7 +47,7 @@ private
       Origin : Packages;
    end record;
 
-   function Native_Candidates (This   : External;
+   function System_Candidates (This   : External;
                                Distro : Platforms.Distributions)
                                return Package_Vector
    is
@@ -55,4 +55,4 @@ private
       then This.Origin.Distro_Candidates (Distro)
       else This.Origin.Common_Candidates);
 
-end Alire.Externals.From_Native;
+end Alire.Externals.From_System;

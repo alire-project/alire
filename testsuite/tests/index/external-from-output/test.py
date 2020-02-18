@@ -17,8 +17,8 @@ assert_eq('Not found: make with Newest version\n'
 
 # External definition
 p = run_alr('show', 'make', '--external')
-assert_eq('Kind       Description    Details           \n'
-          'Executable make --version .*Make ([\d\.]+).*\n',
+assert_eq('Kind       Description    Details            Available\n'
+          'Executable make --version .*Make ([\\d\\.]+).* True     \n',
           p.out)
 
 # External detection

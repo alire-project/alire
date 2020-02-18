@@ -6,6 +6,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Properties;
+with Alire.Requisites.Booleans;
 with Alire.Roots;
 with Alire.Utils;
 
@@ -48,13 +49,13 @@ package body Alr.Commands.Show is
                       then Root.Current.Release
                       else Query.Find (Name, Versions, Query_Policy));
       begin
-         if Cmd.Native then
+         if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
          else
             Rel.Print;
          end if;
 
-         if Rel.Origin.Is_Native then
+         if Rel.Origin.Is_System then
                Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
@@ -92,7 +93,7 @@ package body Alr.Commands.Show is
                           .Externals.Hints
                             (Name => Dep.Crate,
                              Env  =>
-                               (if Cmd.Native
+                               (if Cmd.System
                                 then Platform.Properties
                                 else Alire.Properties.No_Properties))
                         loop
@@ -159,9 +160,14 @@ package body Alr.Commands.Show is
             declare
                Detail : constant Utils.String_Vector :=
                           External.Detail
-                            (if Cmd.Native
+                            (if Cmd.System
                              then Alire.Platform.Distribution
                              else Alire.Platforms.Distro_Unknown);
+               Available : constant Alire.Requisites.Tree :=
+                             (if Cmd.System
+                              then External.On_Platform
+                                (Platform.Properties).Available
+                              else External.Available);
             begin
                for I in Detail.First_Index .. Detail.Last_Index loop
                   --  Skip last element, which is unknown distro
@@ -173,12 +179,11 @@ package body Alr.Commands.Show is
                              then External.Image
                              else "")
                     .Append (Detail (I))
-                      .Append (if I = Detail.First_Index
-                               then (if Cmd.Native
-                                     then External.On_Platform
-                                          (Platform.Properties).Available.Image
-                                    else External.Available.Image)
-                               else "");
+                    .Append (if I = Detail.First_Index
+                             then Alire.Requisites.Default_To
+                                  (Available,
+                                   Alire.Requisites.Booleans.Always_True).Image
+                             else "");
                   if I /= Detail.Last_Index then
                      Table.New_Row;
                   end if;
@@ -242,7 +247,7 @@ package body Alr.Commands.Show is
 
       if Cmd.External and (Cmd.Detect or Cmd.Jekyll or Cmd.Solve) then
          Reportaise_Wrong_Arguments
-           ("Switch --external can only be combined with --native");
+           ("Switch --external can only be combined with --system");
       end if;
 
       if Num_Arguments = 1 then
@@ -324,8 +329,9 @@ package body Alr.Commands.Show is
                      "Show info about external definitions for a crate");
 
       Define_Switch (Config,
-                     Cmd.Native'Access,
-                     "", "--native", "Show info relevant to current platform");
+                     Cmd.System'Access,
+                     "", "--system",
+                     "Show info relevant to current environment");
 
       Define_Switch (Config,
                      Cmd.Solve'Access,
