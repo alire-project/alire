@@ -25,4 +25,6 @@ package Alire.Externals.Lists is
    --  properties and, for those that fail to detect, return their hint
    --  message if any. If Env is empty, return all hints unconditionally.
 
+   function To_List (This : External'Class) return List;
+
 end Alire.Externals.Lists;

@@ -69,4 +69,15 @@ package body Alire.Externals.Lists is
       end return;
    end Hints;
 
+   -------------
+   -- To_List --
+   -------------
+
+   function To_List (This : External'Class) return List is
+   begin
+      return L : List do
+         L.Append (This);
+      end return;
+   end To_List;
+
 end Alire.Externals.Lists;

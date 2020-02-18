@@ -11,14 +11,13 @@ package Alire.Externals.Unindexed is
      (Containers.Release_Sets.Empty_Set);
 
    overriding
-   function Image (This : External) return String is
-     ("Not yet available through the Alire project");
+   function Image (This : External) return String is ("Externally provided");
 
    overriding
    function Detail (This          : External;
                     Unused_Distro : Platforms.Distributions)
-                    return Utils.String_Vector is
-     (Utils.Empty_Vector.Append ("Must be provided by the user"));
+                    return Utils.String_Vector;
+   --  Return all custom hints or else a default message
 
    overriding
    function Kind (This : External) return String is ("Hint");
