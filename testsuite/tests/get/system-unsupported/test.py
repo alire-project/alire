@@ -15,7 +15,7 @@ import re
 p = run_alr('get', '--non-interactive', '--only', 'make',
             complain_on_error=False, quiet=False)
 
-if distro_is_known:
+if distro_is_known():
     assert_match(".*No system package for the requested crate was detected.*",
                  p.out, flags=re.S)
 else:
