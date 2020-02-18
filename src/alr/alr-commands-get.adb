@@ -133,8 +133,13 @@ package body Alr.Commands.Get is
                     ("No releases or externals found for the requested crate");
                else
                   if Alire.Platform.Distribution_Is_Known then
+                     for Hint of Alire.Index.Crate (Name)
+                       .Externals.Hints (Name, Platform.Properties)
+                     loop
+                        Trace.Info ("Hint: " & Hint);
+                     end loop;
                      Reportaise_Command_Failed
-                       ("No native package for the "
+                       ("No system package for the "
                         & "requested crate was detected");
                   else
                      Reportaise_Command_Failed

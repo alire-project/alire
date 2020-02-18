@@ -25,3 +25,10 @@ kind = "system"
    [external.origin.'case(distribution)']
    ubuntu = ["libhello"]
    debian = ["libhello~1"]
+
+[[external]]
+kind = "hint"
+   [external.available.'case(toolchain)']
+   system = false
+   user   = false
+   # Test toolchain env var

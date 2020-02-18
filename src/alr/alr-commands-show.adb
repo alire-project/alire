@@ -96,7 +96,7 @@ package body Alr.Commands.Show is
                                 then Platform.Properties
                                 else Alire.Properties.No_Properties))
                         loop
-                           Trace.Warning ("      Hint: ");
+                           Trace.Info ("      Hint: " & Hint);
                         end loop;
                      end loop;
                   end if;
@@ -151,7 +151,8 @@ package body Alr.Commands.Show is
          Table
            .Append ("Kind")
            .Append ("Description")
-           .Append ("Details");
+           .Append ("Details")
+           .Append ("Available");
 
          for External of Alire.Index.Crate (Name).Externals loop
             Table.New_Row;
@@ -171,7 +172,13 @@ package body Alr.Commands.Show is
                     .Append (if I = Detail.First_Index
                              then External.Image
                              else "")
-                    .Append (Detail (I));
+                    .Append (Detail (I))
+                      .Append (if I = Detail.First_Index
+                               then (if Cmd.Native
+                                     then External.On_Platform
+                                          (Platform.Properties).Available.Image
+                                    else External.Available.Image)
+                               else "");
                   if I /= Detail.Last_Index then
                      Table.New_Row;
                   end if;

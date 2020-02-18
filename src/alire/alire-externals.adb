@@ -4,12 +4,20 @@ with Alire.Crates;
 with Alire.Externals.From_Native;
 with Alire.Externals.From_Output;
 with Alire.Externals.Unindexed;
+with Alire.Requisites.Booleans;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 
 with TOML;
 
 package body Alire.Externals is
+
+   ---------------
+   -- Available --
+   ---------------
+
+   function Available (This : External'Class) return Requisites.Tree is
+     (This.Available);
 
    ---------------
    -- From_TOML --
@@ -97,5 +105,20 @@ package body Alire.Externals is
          From.Checked_Error
            ("invalid external description (see details with -d)");
    end From_TOML;
+
+   -----------------
+   -- On_Platform --
+   -----------------
+
+   function On_Platform (This : External'Class;
+                         Env  : Properties.Vector) return External'Class is
+   begin
+      return Ext : External'Class := This do
+         Ext.Available := (if Ext.Available.Check (Env)
+                           then Requisites.Booleans.Always_True
+                           else Requisites.Booleans.Always_False);
+         Ext.Properties := Ext.Properties.Evaluate (Env);
+      end return;
+   end On_Platform;
 
 end Alire.Externals;
