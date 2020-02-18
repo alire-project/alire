@@ -20,6 +20,7 @@ package body Alr.Platform is
    is (Platprop.Distribution_Is (Distribution) and
          Platprop.System_Is (Operating_System) and
          Platprop.Target_Is (Target) and
+         Platprop.Toolchain_Is (Toolchain) and
          Platprop.Word_Size_Is (Word_Size));
 
    ---------

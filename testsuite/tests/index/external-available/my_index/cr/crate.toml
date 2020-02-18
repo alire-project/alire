@@ -1,0 +1,13 @@
+[general]
+description = "A crate"
+licenses = []
+maintainers = ["somebody@somewhere.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "version-output"
+version-command = [ "make", "--version" ]
+version-regexp = ".*Make ([\\d\\.]+).*"
+available.'case(toolchain)'.'...' = false
+# Won't be ever attempted to be detected.
+# Still, we can use the expression for testing.

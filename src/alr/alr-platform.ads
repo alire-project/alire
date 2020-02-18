@@ -1,3 +1,4 @@
+with Alire.OS_Lib.Subprocess;
 with Alire.Platforms;
 with Alire.Properties;
 
@@ -31,6 +32,8 @@ package Alr.Platform is
    function Distribution return Alire.Platforms.Distributions;
 
    function Operating_System return Alire.Platforms.Operating_Systems;
+
+   function Toolchain return Alire.Platforms.Toolchains;
 
 private
 
@@ -68,6 +71,20 @@ private
 
    function Operating_System return Alire.Platforms.Operating_Systems
    is (Get.Operating_System);
+
+   ---------------
+   -- Toolchain --
+   ---------------
+
+   use all type Alire.Platforms.Distributions;
+
+   function Toolchain return Alire.Platforms.Toolchains is
+     (if
+        Distribution /= Distro_Unknown and then
+        Alire.OS_Lib.Subprocess.Locate_In_Path ("gprconfig") =
+          "/usr/bin/gprconfig"
+      then Alire.Platforms.System
+      else Alire.Platforms.User);
 
    ---------------
    -- Word_Size --

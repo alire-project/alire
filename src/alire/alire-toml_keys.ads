@@ -35,6 +35,7 @@ package Alire.TOML_Keys with Preelaborate is
    Provides       : constant String := "provides";
    Tag            : constant String := "tags";
    Target         : constant String := "target";
+   Toolchain      : constant String := "toolchain";
    Version_Cmd    : constant String := "version-command";
    Version_Regexp : constant String := "version-regexp";
    Website        : constant String := "website";

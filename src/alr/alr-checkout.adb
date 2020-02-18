@@ -85,7 +85,7 @@ package body Alr.Checkout is
             for Hint of Alire.Index.Crate (Dep.Crate)
                         .Externals.Hints (Dep.Crate, Platform.Properties)
             loop
-               Trace.Warning ("      Hint: ");
+               Trace.Warning ("      Hint: " & Hint);
             end loop;
          end loop;
          Trace.Warning

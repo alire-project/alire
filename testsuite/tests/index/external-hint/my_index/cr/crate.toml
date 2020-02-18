@@ -1,0 +1,11 @@
+[general]
+description = "A crate"
+licenses = []
+maintainers = ["somebody@somewhere.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "hint"
+   [external.hint.'case(toolchain)']
+   system = "This is a custom hint"
+   user   = "This is a custom hint"

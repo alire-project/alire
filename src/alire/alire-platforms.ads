@@ -31,4 +31,12 @@ package Alire.Platforms with Preelaborate is
                       (Debian | Ubuntu => Apt,
                        Distro_Unknown  => Packager_Unknown);
 
+   type Toolchains is (System,
+                       --  Provided through system packages, able to use other
+                       --  Ada system packages
+
+                       User
+                       --  Provided by the user
+                      );
+
 end Alire.Platforms;
