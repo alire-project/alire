@@ -4,19 +4,25 @@ Test the hinting with custom text in external definitions
 
 from glob import glob
 
-from drivers.alr import run_alr
-from drivers.asserts import assert_match
+from drivers.alr import distro_is_known, run_alr
+from drivers.asserts import assert_eq, assert_match
 
 import re
 import platform
 
 # 1st test: directly attempting to retrieve an external (this is doable for
-# system externals in supported platforms -- never in this test)
+# system externals in supported platforms -- never in this test). Depending on
+# whether the distro has a supported package manager we get two outcomes:
 
 p = run_alr('get', 'crate', quiet=False, complain_on_error=False)
 
-assert_match("Hint: This is a custom hint.*",
-             p.out, flags=re.S)
+if distro_is_known():
+    assert_match("Hint: This is a custom hint.*", p.out, flags=re.S)
+else:
+    assert_eq('ERROR: Unknown distribution: cannot use system package '
+              'for  the requested crate\n'
+              'ERROR: alr get unsuccessful\n',
+              p.out)
 
 # 2nd test: hint is displayed when the hint belongs to a dependency, on get
 
