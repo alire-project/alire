@@ -13,8 +13,6 @@ package Alire.Requisites.Platform with Preelaborate is
    package Ps   renames Platforms;
    package PrPl renames Properties.Platform;
 
-   use all type Tree;
-
    --  Packages used in new index, purely case-based.
 
    package Distro_Cases is new Cases
