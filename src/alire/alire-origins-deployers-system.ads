@@ -2,19 +2,19 @@ with Alire.Outcomes.Definite;
 
 with Semantic_Versioning;
 
-package Alire.Origins.Deployers.Native is
+package Alire.Origins.Deployers.System is
 
-   --  Native deployers are a particular case with specific subprograms
+   --  System deployers are a particular case with specific subprograms
    --  that are abstracted here. Children of this package provide concrete
    --  implementations for apt, yum, etc.
 
    --  The last step of the three in a regular deployer is hijacked to perform
-   --  the actual installation of the native package.
+   --  the actual installation of the system package.
 
    type Deployer is abstract new Deployers.Deployer with null record;
 
    function Already_Installed (This : Deployer) return Boolean is abstract;
-   --  Say if a native package is already installed in this system.
+   --  Say if a system package is already installed
 
    package Version_Outcomes is
      new Outcomes.Definite (Semantic_Versioning.Version);
@@ -22,7 +22,7 @@ package Alire.Origins.Deployers.Native is
    overriding
    function Deploy (This : Deployer; Folder : String) return Outcome;
    --  We use the last step in a normal deployment to actually dispatch to
-   --  each platform native tool installation process. Here we take advantage
+   --  each platform system tool installation process. Here we take advantage
    --  of the commonality with derived implementations to ask the user first
    --  for permission once.
 
@@ -41,9 +41,9 @@ package Alire.Origins.Deployers.Native is
    -------------
 
    function Platform_Deployer (From : Origins.Origin) return Deployer'Class
-     with Pre => From.Is_Native;
+     with Pre => From.Is_System;
 
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
-     (Platform_Deployer (Origins.New_Native (Package_Name)));
+     (Platform_Deployer (Origins.New_System (Package_Name)));
 
-end Alire.Origins.Deployers.Native;
+end Alire.Origins.Deployers.System;

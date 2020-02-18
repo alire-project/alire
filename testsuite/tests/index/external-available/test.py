@@ -20,7 +20,7 @@ assert_match(".*Executable make --version .*"
 
 # 2nd test: showing available information on current platform
 
-p = run_alr('show', 'crate', '--external', '--native')
+p = run_alr('show', 'crate', '--external', '--system')
 
 assert_match(".*Executable make --version .* False.*",
              p.out, flags=re.S)

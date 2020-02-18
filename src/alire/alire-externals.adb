@@ -1,8 +1,8 @@
 with AAA.Enum_Tools;
 
 with Alire.Crates;
-with Alire.Externals.From_Native;
 with Alire.Externals.From_Output;
+with Alire.Externals.From_System;
 with Alire.Externals.Unindexed;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Keys;
@@ -33,7 +33,7 @@ package body Alire.Externals is
         (case Kind is
             when Hint           => Unindexed.External'
                                      (External with null record),
-            when System         => From_Native.From_TOML (From),
+            when System         => From_System.From_TOML (From),
             when Version_Output => From_Output.From_TOML (From));
 
       Kind : TOML.TOML_Value;

@@ -16,7 +16,7 @@ package Alire.Origins with Preelaborate is
       Hg,             -- Remote hg repo
       SVN,            -- Remote svn repo
       Source_Archive, -- Remote source archive
-      Native          -- Native platform package
+      System          -- System package
      );
 
    type String_Access is access constant String;
@@ -61,9 +61,9 @@ package Alire.Origins with Preelaborate is
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name.
 
-   function Is_Native (This : Origin) return Boolean is (This.Kind = Native);
+   function Is_System (This : Origin) return Boolean is (This.Kind = System);
    function Package_Name (This : Origin) return String
-     with Pre => This.Kind = Native;
+     with Pre => This.Kind = System;
 
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Source_Archive;
@@ -105,8 +105,8 @@ package Alire.Origins with Preelaborate is
    --  If Name is omitted, it is tentatively inferred from URL. If it cannot be
    --  inferred, this raises a Unknown_Source_Archive_Name_Error exception.
 
-   function New_Native (Native_Package_Name : String) return Origin;
-   --  A native origin points to a single system package known to exist,
+   function New_System (System_Package_Name : String) return Origin;
+   --  A system origin points to a single system package known to exist,
    --  already detected by some External.
 
    function Image (This : Origin) return String;
@@ -181,7 +181,7 @@ private
             Archive_Name   : Unbounded_String;
             Archive_Format : Known_Source_Archive_Format;
 
-         when Native =>
+         when System =>
             Package_Name : Unbounded_String;
       end case;
    end record;
@@ -215,8 +215,8 @@ private
    function New_SVN (URL : Alire.URL; Commit : String) return Origin is
      (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
 
-   function New_Native (Native_Package_Name : String) return Origin is
-     (Data => (Native, Package_Name => +Native_Package_Name, Hashes => <>));
+   function New_System (System_Package_Name : String) return Origin is
+     (Data => (System, Package_Name => +System_Package_Name, Hashes => <>));
 
    function Kind (This : Origin) return Kinds is (This.Data.Kind);
 
@@ -251,8 +251,8 @@ private
                                   then S (This.Data.Archive_Name) & " "
                                   else "")
        & "at " & S (This.Data.Archive_URL),
-          when Native         =>
-             "native package from platform software manager: "
+          when System         =>
+             "system package from platform software manager: "
              & This.Package_Name,
           when Filesystem     =>
              "path " & S (This.Data.Path),
@@ -269,7 +269,6 @@ private
    Prefix_Hg     : aliased constant String := "hg+";
    Prefix_SVN    : aliased constant String := "svn+";
    Prefix_File   : aliased constant String := "file://";
-   Prefix_Native : aliased constant String := "native:";
 
    Prefixes : constant Prefix_Array :=
                 (Git            => Prefix_Git'Access,
@@ -277,7 +276,7 @@ private
                  SVN            => Prefix_SVN'Access,
                  External       => null,
                  Filesystem     => Prefix_File'Access,
-                 Native         => Prefix_Native'Access,
+                 System         => null,
                  Source_Archive => null);
 
 end Alire.Origins;

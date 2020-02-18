@@ -15,8 +15,8 @@ package Alire.Origins.Deployers is
 
    function Deploy (Release : Releases.Release;
                     Folder  : String := "") return Outcome with
-     Pre => Release.Origin.Is_Native or else
-            (not Release.Origin.Is_Native and then Folder /= "");
+     Pre => Release.Origin.Is_System or else
+            (not Release.Origin.Is_System and then Folder /= "");
    --  This subprogram is intended to be called with an origin and it will
    --  create and redispatch the necessary concrete Deployer implementation.
    --  Since it may fail during normal operation (e.g. network down) it

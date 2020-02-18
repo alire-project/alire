@@ -31,7 +31,7 @@ package Alr.Query is
 
    --  The dependency solver receives a list of dependencies and will return
    --  either a valid solution if one can be found (exploration is exhaustive).
-   --  Native dependencies are resolved in platforms with native packager
+   --  System dependencies are resolved in platforms with system packager
    --  support. Otherwise they're filed as "hints" but do not cause a failure
    --  in resolution. In this case, a warning will be provided for the user
    --  with a list of the dependencies that are externally required.
@@ -40,7 +40,7 @@ package Alr.Query is
       case Valid is
          when True  =>
             Releases : Instance; -- Resolved dependencies to be deployed
-            Hints    : Dep_List; -- Unresolved native dependencies
+            Hints    : Dep_List; -- Unresolved external dependencies
 
          when False =>
             null;
@@ -89,8 +89,8 @@ package Alr.Query is
 
    function Is_Available (R : Alire.Index.Release) return Boolean;
    --  The release knows the requisites on the platform; here we evaluate these
-   --  against the current platform. Current checks include the "available"
-   --  requisites and that the native package do exist. NOTE: it does not
+   --  against the current target. Current checks include the "available"
+   --  requisites and that the system package do exist. NOTE: it does not
    --  consider that dependencies can be resolved, only that it "could" be
    --  available.
 

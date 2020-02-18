@@ -31,7 +31,7 @@ assert_match
 
 # 3rd test: hint is displayed when showing the crate info
 
-p = run_alr('show', 'crate_master', '--solve', '--native', quiet=False)
+p = run_alr('show', 'crate_master', '--solve', '--system', quiet=False)
 
 assert_match(".*Dependencies \(external\):\n"
              "   crate\*\n"

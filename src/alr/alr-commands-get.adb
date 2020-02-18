@@ -40,8 +40,8 @@ package body Alr.Commands.Get is
          Trace.Error ("Could not resolve dependencies for: " &
                         Query.Dependency_Image (Name, Versions));
          Trace.Error ("This may happen when requesting a release that" &
-                        " requires native libraries, while using a GPL gnat");
-         Trace.Error ("In that case, try again with the native" &
+                        " requires system libraries, while using a GPL gnat");
+         Trace.Error ("In that case, try again with the system" &
                         " FSF gnat compiler");
          raise Command_Failed;
       end if;
@@ -65,8 +65,8 @@ package body Alr.Commands.Get is
               ("You can retrieve it without dependencies with --only");
          end if;
 
-         --  Check if it's native first and thus we need not to check out.
-         if R.Origin.Is_Native then
+         --  Check if it's system first and thus we need not to check out.
+         if R.Origin.Is_System then
             Result := Alire.Origins.Deployers.Deploy (R);
             if Result.Success then
                return;
@@ -121,9 +121,9 @@ package body Alr.Commands.Get is
 
    overriding procedure Execute (Cmd : in out Command) is
 
-      procedure Check_Unavailable_Native (Name : Alire.Crate_Name) is
+      procedure Check_Unavailable_External (Name : Alire.Crate_Name) is
          --  Better user feedback if crate is only available through externals.
-         --  We distinguish if we are in a platform with native package manager
+         --  We distinguish if we are in a platform with system package manager
          --  or not.
       begin
          if Alire.Index.Exists (Name) then
@@ -143,7 +143,7 @@ package body Alr.Commands.Get is
                         & "requested crate was detected");
                   else
                      Reportaise_Command_Failed
-                       ("Unknown distribution: cannot use native package for "
+                       ("Unknown distribution: cannot use system package for "
                         & " the requested crate");
                   end if;
                end if;
@@ -153,7 +153,7 @@ package body Alr.Commands.Get is
          else
             raise Alire.Query_Unsuccessful;
          end if;
-      end Check_Unavailable_Native;
+      end Check_Unavailable_External;
 
    begin
       if Num_Arguments > 1 then
@@ -176,7 +176,7 @@ package body Alr.Commands.Get is
 
          Requires_Full_Index;
 
-         Check_Unavailable_Native (Allowed.Crate);
+         Check_Unavailable_External (Allowed.Crate);
 
          Retrieve (Cmd, Allowed.Crate, Allowed.Versions);
       exception

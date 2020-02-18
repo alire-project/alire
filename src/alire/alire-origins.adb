@@ -182,7 +182,7 @@ package body Alire.Origins is
                   else
                      This := New_Filesystem (Path);
                   end if;
-               when External | Native | Source_Archive =>
+               when External | System | Source_Archive =>
                   raise Program_Error with "can't happen";
             end case;
 
@@ -304,9 +304,9 @@ package body Alire.Origins is
          when VCS_Kinds =>
             Table.Set (TOML_Keys.Origin, +(Prefixes (This.Kind).all &
                          This.URL & "@" & This.Commit));
-         when External | Native =>
+         when External | System =>
             raise Program_Error
-              with "external or native packages do not need to be exported";
+              with "external or system packages do not need to be exported";
 
          when Source_Archive =>
             Table.Set (TOML_Keys.Origin,       +This.Archive_URL);

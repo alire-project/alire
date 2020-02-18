@@ -33,7 +33,7 @@ assert_match(".*Dependencies .direct.:.*case OS is.*when Linux => .libhello\^1.*
              p.out, flags=re.S)
 
 # Check that evaluation for the current platform does work
-p = run_alr('show', 'hello', '--native')
+p = run_alr('show', 'hello', '--system')
 
 # And that, once resolved, the expected property is there:
 if platform.system() == 'Windows':

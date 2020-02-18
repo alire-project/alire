@@ -4,8 +4,8 @@ with Alire.Origins.Deployers.External;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Deployers.Git;
 with Alire.Origins.Deployers.Hg;
-with Alire.Origins.Deployers.Native;
 with Alire.Origins.Deployers.Source_Archive;
+with Alire.Origins.Deployers.System;
 with Alire.Origins.Deployers.SVN;
 
 package body Alire.Origins.Deployers is
@@ -45,8 +45,8 @@ package body Alire.Origins.Deployers is
          when Alire.Origins.Source_Archive =>
             return Source_Archive.Deployer'(Deployer'(Base => From)
                                             with null record);
-         when Alire.Origins.Native =>
-            return Native.Platform_Deployer (From);
+         when Alire.Origins.System =>
+            return System.Platform_Deployer (From);
       end case;
    end New_Deployer;
 

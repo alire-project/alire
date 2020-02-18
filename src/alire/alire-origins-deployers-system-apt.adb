@@ -4,7 +4,7 @@ with Alire.Errors;
 
 with GNAT.Regpat;
 
-package body Alire.Origins.Deployers.Native.Apt is
+package body Alire.Origins.Deployers.System.Apt is
 
    package Subprocess renames Alire.OS_Lib.Subprocess;
 
@@ -103,4 +103,4 @@ package body Alire.Origins.Deployers.Native.Apt is
          return Alire.Errors.Get (E);
    end Install;
 
-end Alire.Origins.Deployers.Native.Apt;
+end Alire.Origins.Deployers.System.Apt;

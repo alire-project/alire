@@ -1,6 +1,6 @@
-package Alire.Origins.Deployers.Native.Apt is
+package Alire.Origins.Deployers.System.Apt is
 
-   type Deployer is new Native.Deployer with null record;
+   type Deployer is new Deployers.System.Deployer with null record;
 
    overriding
    function Already_Installed (This : Deployer) return Boolean;
@@ -12,4 +12,4 @@ package Alire.Origins.Deployers.Native.Apt is
    overriding
    function Install (This : Deployer) return Outcome;
 
-end Alire.Origins.Deployers.Native.Apt;
+end Alire.Origins.Deployers.System.Apt;
