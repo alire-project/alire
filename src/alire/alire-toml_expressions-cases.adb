@@ -12,6 +12,7 @@ package body Alire.TOML_Expressions.Cases is
 
    package Distributions     is new Enum_Cases (Platforms.Distributions);
    package Operating_Systems is new Enum_Cases (Platforms.Operating_Systems);
+   package Toolchains        is new Enum_Cases (Platforms.Toolchains);
    package Word_Sizes        is new Enum_Cases (Platforms.Word_Sizes);
 
    ------------------------------------------------
@@ -30,6 +31,9 @@ package body Alire.TOML_Expressions.Cases is
 
       package Operating_Systems is
         new Condtrees.Cases (Requisites.Platform.OS_Cases);
+
+      package Toolchains is
+        new Condtrees.Cases (Requisites.Platform.Toolchain_Cases);
 
       package Word_Sizes is
         new Condtrees.Cases (Requisites.Platform.Word_Size_Cases);
@@ -79,6 +83,12 @@ package body Alire.TOML_Expressions.Cases is
          Cases      => Operating_Systems,
          Enum_Array => Requisites.Platform.OS_Cases.Cases_Array,
          New_Leaf   => Requisites.Platform.OS_Cases.New_Case,
+         Load       => Load_Instance);
+      package Toolchain_Loader is new Tree_Builders
+        (Trees      => Trees,
+         Cases      => Toolchains,
+         Enum_Array => Requisites.Platform.Toolchain_Cases.Cases_Array,
+         New_Leaf   => Requisites.Platform.Toolchain_Cases.New_Case,
          Load       => Load_Instance);
       package WS_Loader is new Tree_Builders
         (Trees      => Trees,
@@ -145,6 +155,12 @@ package body Alire.TOML_Expressions.Cases is
          Enum_Array => Condcases.Operating_Systems.Cases_Array,
          New_Leaf   => Condcases.Operating_Systems.New_Case,
          Load       => Load_Instance);
+      package Toolchain_Loader is new Tree_Builders
+        (Trees      => Trees,
+         Cases      => Toolchains,
+         Enum_Array => Condcases.Toolchains.Cases_Array,
+         New_Leaf   => Condcases.Toolchains.New_Case,
+         Load       => Load_Instance);
       package WS_Loader is new Tree_Builders
         (Trees      => Trees,
          Cases      => Word_Sizes,
@@ -162,6 +178,7 @@ package body Alire.TOML_Expressions.Cases is
       begin
          Loaders := (Distribution => Distro_Loader.Load_Cases'Access,
                      OS           => OS_Loader.Load_Cases'Access,
+                     Toolchain    => Toolchain_Loader.Load_Cases'Access,
                      Word_Size    => WS_Loader.Load_Cases'Access);
       end Set_Up_Loaders;
 
@@ -228,6 +245,7 @@ package body Alire.TOML_Expressions.Cases is
       Props.Set_Up_Loaders;
       Reqs.Loaders := (Distribution => Reqs.Distro_Loader.Load_Cases'Access,
                        OS           => Reqs.OS_Loader.Load_Cases'Access,
+                       Toolchain    => Reqs.Toolchain_Loader.Load_Cases'Access,
                        Word_Size    => Reqs.WS_Loader.Load_Cases'Access);
    end Set_Up_Loaders;
 

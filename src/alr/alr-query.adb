@@ -352,7 +352,7 @@ package body Alr.Query is
                                     Types.Platform_Dependencies;
                         Frozen    : Instance; -- Releases in current solution
                         Forbidden : Types.Forbidden_Dependencies;
-                        Hints     : Dep_List) -- Natives taken for granted
+                        Hints     : Dep_List) -- Externals that supply a dep
       is
 
          ------------------

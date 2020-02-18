@@ -439,7 +439,7 @@ common ones just described. Its key is ``"hint"``:
 ..  code-block:: json
 
    [[external]]
-   kind = "hint" 
+   kind = "hint" # Identifies this external kind
    # Bare minimum external. Optionally, the hint/available fields can be used.
 
 External kinds: command-line tools
@@ -451,7 +451,7 @@ Their specific fields are (all mandatory):
 
 .. code-block:: json
 
-   kind = "version-output"  # Identifies this external kind
+   kind = "version-output" # Identifies this external kind
 
    version-command = ["gnat", "--version"]
    # Invocation that will provide the version when the tool is available
@@ -460,6 +460,27 @@ Their specific fields are (all mandatory):
    # TOML-escaped GNAT.Regpat-compatible regular expression. Parenthesized
    # matches will cause the matched expression to be parsed as the Semantic
    # Version of the tool.
+
+External kinds: system packages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Systems that have their own package manager (e.g. Linux) can readily provide
+many complex dependencies still unpackaged as source code in Alire. Alire can
+use these on supported platforms (at this time, Debian & Ubuntu. Do not
+hesitate to contact us if you would like to maintain other ones distributions)
+during resolution.
+
+A system external gives a list of platform package names that supply the
+dependency natively. The platform package manager will be used to detect their
+availability and version. To that effect, the ``origin`` field is used (which
+can accept dynamic expressions in this context):
+
+.. code-block:: json
+
+   kind = "system" # Identifies this external kind
+   origin = ["libncursesada3", "libncursesada5"]
+   # As versions appear this list will grow. To speed up detection, dynamic
+   # expressions may become recommendable for certain system packages.
 
 Parameters
 ----------

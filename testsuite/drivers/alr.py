@@ -7,6 +7,8 @@ import os.path
 from e3.os.process import Run, quote_arg
 from e3.fs import mkdir
 
+import re
+
 
 TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))
@@ -14,6 +16,12 @@ TESTSUITE_ROOT = os.path.dirname(os.path.dirname(
 
 class CalledProcessError(Exception):
     pass
+
+
+def distro_is_known():
+    p = run_alr('version')
+    return not re.match('.*platform properties:.*DISTRO_UNKNOWN.*',
+                        p.out, flags=re.S)
 
 
 def prepare_env(config_dir, env):

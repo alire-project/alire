@@ -2,17 +2,20 @@ with AAA.Table_IO;
 
 with Alire.Index;
 with Alire.Origins.Deployers;
+with Alire.OS_Lib.Subprocess;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Properties;
+with Alire.Requisites.Booleans;
 with Alire.Roots;
 with Alire.Utils;
 
+with Alr.Bootstrap;
 with Alr.Dependency_Graphs;
 with Alr.Parsers;
+with Alr.Paths;
 with Alr.Platform;
 with Alr.Root;
-with Alr.Bootstrap;
 
 with Semantic_Versioning.Extended;
 
@@ -20,25 +23,14 @@ package body Alr.Commands.Show is
 
    package Semver renames Semantic_Versioning;
 
-   use all type Bootstrap.Session_States;
-
-   function Libgraph_Easy_Perl_Installed return Boolean;
-   --  Return whether the rolling version of libgraph_easy_perl_install is
-   --  installed.
-
    ----------------------------------
    -- Libgraph_Easy_Perl_Installed --
    ----------------------------------
 
    function Libgraph_Easy_Perl_Installed return Boolean is
-      Prj : constant Alire.Crate_Name := "libgraph_easy_perl_installed";
-      Ver : constant Semantic_Versioning.Version :=
-         Semantic_Versioning.Parse ("0.0-rolling");
-   begin
-      return Alire.Index.Exists (Prj, Ver)
-             and then Alire.Origins.Deployers.New_Deployer
-                        (Alire.Index.Find (Prj, Ver).Origin).Already_Installed;
-   end Libgraph_Easy_Perl_Installed;
+   --  Return whether the rolling version of libgraph_easy_perl_install is
+   --  installed.
+     (Alire.OS_Lib.Subprocess.Locate_In_Path (Paths.Scripts_Graph_Easy) /= "");
 
    ------------
    -- Report --
@@ -50,7 +42,6 @@ package body Alr.Commands.Show is
                      --  session or command-line requested release
                      Cmd      : Command)
    is
-      use all type Alire.Platforms.Distributions;
    begin
       declare
          Rel     : constant Types.Release  :=
@@ -58,20 +49,14 @@ package body Alr.Commands.Show is
                       then Root.Current.Release
                       else Query.Find (Name, Versions, Query_Policy));
       begin
-         if Cmd.Native then
+         if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
          else
             Rel.Print;
          end if;
 
-         if Rel.Origin.Is_Native then
-            if Platform.Distribution /= Alire.Platforms.Distro_Unknown then
-               Put_Line ("Platform version: "
-                         & Alire.Origins.Deployers.New_Deployer
-                           (Rel.Origin).Native_Version);
-            else
-               Put_Line ("Platform version unknown");
-            end if;
+         if Rel.Origin.Is_System then
+               Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
          if Cmd.Solve then
@@ -108,11 +93,11 @@ package body Alr.Commands.Show is
                           .Externals.Hints
                             (Name => Dep.Crate,
                              Env  =>
-                               (if Cmd.Native
+                               (if Cmd.System
                                 then Platform.Properties
                                 else Alire.Properties.No_Properties))
                         loop
-                           Trace.Warning ("      Hint: ");
+                           Trace.Info ("      Hint: " & Hint);
                         end loop;
                      end loop;
                   end if;
@@ -167,16 +152,22 @@ package body Alr.Commands.Show is
          Table
            .Append ("Kind")
            .Append ("Description")
-           .Append ("Details");
+           .Append ("Details")
+           .Append ("Available");
 
          for External of Alire.Index.Crate (Name).Externals loop
             Table.New_Row;
             declare
                Detail : constant Utils.String_Vector :=
                           External.Detail
-                            (if Cmd.Native
+                            (if Cmd.System
                              then Alire.Platform.Distribution
                              else Alire.Platforms.Distro_Unknown);
+               Available : constant Alire.Requisites.Tree :=
+                             (if Cmd.System
+                              then External.On_Platform
+                                (Platform.Properties).Available
+                              else External.Available);
             begin
                for I in Detail.First_Index .. Detail.Last_Index loop
                   --  Skip last element, which is unknown distro
@@ -187,7 +178,12 @@ package body Alr.Commands.Show is
                     .Append (if I = Detail.First_Index
                              then External.Image
                              else "")
-                    .Append (Detail (I));
+                    .Append (Detail (I))
+                    .Append (if I = Detail.First_Index
+                             then Alire.Requisites.Default_To
+                                  (Available,
+                                   Alire.Requisites.Booleans.Always_True).Image
+                             else "");
                   if I /= Detail.Last_Index then
                      Table.New_Row;
                   end if;
@@ -231,6 +227,7 @@ package body Alr.Commands.Show is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
+      use all type Alr.Bootstrap.Session_States;
    begin
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
@@ -250,7 +247,7 @@ package body Alr.Commands.Show is
 
       if Cmd.External and (Cmd.Detect or Cmd.Jekyll or Cmd.Solve) then
          Reportaise_Wrong_Arguments
-           ("Switch --external can only be combined with --native");
+           ("Switch --external can only be combined with --system");
       end if;
 
       if Num_Arguments = 1 then
@@ -332,8 +329,9 @@ package body Alr.Commands.Show is
                      "Show info about external definitions for a crate");
 
       Define_Switch (Config,
-                     Cmd.Native'Access,
-                     "", "--native", "Show info relevant to current platform");
+                     Cmd.System'Access,
+                     "", "--system",
+                     "Show info relevant to current environment");
 
       Define_Switch (Config,
                      Cmd.Solve'Access,

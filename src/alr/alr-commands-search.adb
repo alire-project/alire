@@ -5,7 +5,6 @@ with Alire.Externals;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Crates.With_Releases;
-with Alire.Platform;
 with Alire.Releases;
 
 with Alr.Platform;
@@ -30,6 +29,7 @@ package body Alr.Commands.Search is
       ------------------
 
       procedure List_Release (R : Alire.Releases.Release) is
+         use Alr.Query;
       begin
          if (Cmd.Prop.all = ""
              or else
@@ -40,24 +40,22 @@ package body Alr.Commands.Search is
              Utils.Contains (R.Description,
                              Cmd.Prop.all))
            and then
-             (Cmd.External or else not R.Origin.Is_Native)
+             (Cmd.External or else not R.Origin.Is_System)
          then
             Found := Found + 1;
             Tab.New_Row;
             Tab.Append (+R.Name);
-            Tab.Append ((if R.Origin.Is_Native then "N" else " ") &
+            Tab.Append ((if R.Origin.Is_System then "S" else " ") &
                         (if Query.Is_Available (R) then " " else "U") &
-                        (if Query.Is_Resolvable
-                             (R.Depends (Platform.Properties))
-                           then " "
-                           else "X"));
-            Tab.Append (Semantic_Versioning.Image
-                        (R.Version) &
-                        (if R.Origin.Is_Native and then
-                           Alire.Platform.Distribution_Is_Known
-                         then "+" & Alire.Origins.Deployers.New_Deployer
-                             (R.Origin).Native_Version
-                         else ""));
+                        (if R.Origin.Is_System then " " else
+                             (if Query.Is_Resolvable
+                                (R.Depends (Platform.Properties),
+                                 Options => (Age       => Query_Policy,
+                                             Detecting => Dont_Detect,
+                                             Hinting   => Hint))
+                              then " "
+                              else "X")));
+            Tab.Append (Semantic_Versioning.Image (R.Version));
             Tab.Append (R.Description);
             Tab.Append (R.Notes);
          end if;
@@ -219,7 +217,7 @@ package body Alr.Commands.Search is
                & " column with the following status flags is provided:")
       .New_Line
       .Append ("E: the release is externally provided.")
-      .Append ("N: the release is available through a system package.")
+      .Append ("S: the release is available through a system package.")
       .Append ("U: the release is not available in the current platform.")
       .Append ("X: the release has dependencies that cannot be resolved.")
       .New_Line
@@ -228,7 +226,7 @@ package body Alr.Commands.Search is
       .New_Line
       .Append ("Unresolvable releases (X) should not happen in platforms"
                & " with assigned maintainers. Common reasons are missing"
-               & " native dependencies that have been phased out by the"
+               & " system dependencies that have been phased out by the"
                & " platform without being updated yet in the community"
                & " index.")
      );

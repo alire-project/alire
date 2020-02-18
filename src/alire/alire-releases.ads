@@ -371,7 +371,7 @@ private
        (case R.Origin.Kind is
            when External       => "external",
            when Filesystem     => "filesystem",
-           when Native         => "native",
+           when System         => "system",
            when Source_Archive => R.Origin.Short_Unique_Id,
            when Git | Hg       => R.Origin.Short_Unique_Id,
            when SVN            => R.Origin.Commit));

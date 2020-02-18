@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Actions;
 with Alire.Index;
 with Alire.Origins.Deployers;
+with Alire.Platform;
 
 with Alr.Actions;
 with Alr.Checkout;
@@ -39,8 +40,8 @@ package body Alr.Commands.Get is
          Trace.Error ("Could not resolve dependencies for: " &
                         Query.Dependency_Image (Name, Versions));
          Trace.Error ("This may happen when requesting a release that" &
-                        " requires native libraries, while using a GPL gnat");
-         Trace.Error ("In that case, try again with the native" &
+                        " requires system libraries, while using a GPL gnat");
+         Trace.Error ("In that case, try again with the system" &
                         " FSF gnat compiler");
          raise Command_Failed;
       end if;
@@ -64,8 +65,8 @@ package body Alr.Commands.Get is
               ("You can retrieve it without dependencies with --only");
          end if;
 
-         --  Check if it's native first and thus we need not to check out.
-         if R.Origin.Is_Native then
+         --  Check if it's system first and thus we need not to check out.
+         if R.Origin.Is_System then
             Result := Alire.Origins.Deployers.Deploy (R);
             if Result.Success then
                return;
@@ -119,6 +120,41 @@ package body Alr.Commands.Get is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
+
+      procedure Check_Unavailable_External (Name : Alire.Crate_Name) is
+         --  Better user feedback if crate is only available through externals.
+         --  We distinguish if we are in a platform with system package manager
+         --  or not.
+      begin
+         if Alire.Index.Exists (Name) then
+            if Alire.Index.Crate (Name).Releases.Is_Empty then
+               if Alire.Index.Crate (Name).Externals.Is_Empty then
+                  Reportaise_Command_Failed
+                    ("No releases or externals found for the requested crate");
+               else
+                  if Alire.Platform.Distribution_Is_Known then
+                     for Hint of Alire.Index.Crate (Name)
+                       .Externals.Hints (Name, Platform.Properties)
+                     loop
+                        Trace.Info ("Hint: " & Hint);
+                     end loop;
+                     Reportaise_Command_Failed
+                       ("No system package for the "
+                        & "requested crate was detected");
+                  else
+                     Reportaise_Command_Failed
+                       ("Unknown distribution: cannot use system package for "
+                        & " the requested crate");
+                  end if;
+               end if;
+            else
+               null; -- Normal exit
+            end if;
+         else
+            raise Alire.Query_Unsuccessful;
+         end if;
+      end Check_Unavailable_External;
+
    begin
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
@@ -139,6 +175,8 @@ package body Alr.Commands.Get is
          end if;
 
          Requires_Full_Index;
+
+         Check_Unavailable_External (Allowed.Crate);
 
          Retrieve (Cmd, Allowed.Crate, Allowed.Versions);
       exception

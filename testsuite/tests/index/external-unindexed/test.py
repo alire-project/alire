@@ -9,7 +9,7 @@ import re
 
 p = run_alr('show', 'hello_world', '--external')
 assert_match('.*Hint.*'
-             'Not yet available through the Alire project.*'
+             'Externally provided.*'
              'Must be provided by the user.*',
              p.out, flags=re.S)
 
@@ -18,7 +18,7 @@ assert_match('.*hello_world.*'
              'E\ .*'     # single E means external, no detection attempted
              'external.*'
              'This is the regular short description.*'
-             'Not yet available through the Alire project.*',
+             'Externally provided.*',
              p.out, flags=re.S)
 
 p = run_alr('search', 'hello_world', '--external-detect')
@@ -26,7 +26,7 @@ assert_match('.*hello_world.*'
              'EU.*'     # EU means external, detection failed
              'external.*'
              'This is the regular short description.*'
-             'Not yet available through the Alire project.*',
+             'Externally provided.*',
              p.out, flags=re.S)
 
 print('SUCCESS')

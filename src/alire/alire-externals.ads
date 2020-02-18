@@ -39,9 +39,14 @@ package Alire.Externals is
    --  Classwide helpers  --
    -------------------------
 
+   function Available (This : External'Class) return Requisites.Tree;
+
    type Kinds is (Hint,
                   --  A placeholder for a knowingly-unavailable crate, that
                   --  will hopefully be added in the future.
+
+                  System,
+                  --  A installed system package, via apt, yum, etc.
 
                   Version_Output
                   --  A external that detects the availability of a tool by
@@ -51,6 +56,10 @@ package Alire.Externals is
    --  documentation purposes only.
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class;
+
+   function On_Platform (This : External'Class;
+                         Env  : Properties.Vector) return External'Class;
+   --  Evaluate Properties and Available fields under the given environment
 
 private
 

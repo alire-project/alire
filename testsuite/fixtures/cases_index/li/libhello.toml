@@ -4,12 +4,6 @@ licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 
-['1.0-cond_orig']
-   ['1.0-cond_orig'.origin.'case(distribution)']
-   ubuntu = "native:libhello"
-   debian = "native:libhello~1"
-   '...' = ""
-
 ['1.0-linuxonly']
 origin = "file://../../crates/libhello_1.0.0"
    ['1.0-linuxonly'.available.'case(os)']
@@ -25,3 +19,16 @@ available = false
 
 ['1.0']
 origin = "file://../../crates/libhello_1.0.0"
+
+[[external]]
+kind = "system"
+   [external.origin.'case(distribution)']
+   ubuntu = ["libhello"]
+   debian = ["libhello~1"]
+
+[[external]]
+kind = "hint"
+   [external.available.'case(toolchain)']
+   system = false
+   user   = false
+   # Test toolchain env var

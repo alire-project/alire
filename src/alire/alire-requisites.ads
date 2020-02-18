@@ -61,6 +61,12 @@ package Alire.Requisites with Preelaborate is
                                        Image_Class);
 
    subtype Tree is Trees.Tree;
+   use type Tree;
+
+   function Default_To (This : Tree; Default : Tree) return Tree with
+     Post => (if This.Is_Empty
+              then Default_To'Result = Default
+              else Default_To'Result = This);
 
    function No_Requisites return Trees.Tree is (Trees.Empty_Tree);
    --  Function instead of constant to keep Preelaborate

@@ -91,8 +91,6 @@ private
 
    function Factory return Comparable is (New_Comparable);
 
-   use all type Tree;
-
    function "/=" (L : Comparable; R : Value) return Tree is (not (L = R));
    function "/=" (L : Value; R : Comparable) return Tree is (not (L = R));
 

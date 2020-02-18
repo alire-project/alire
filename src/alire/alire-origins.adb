@@ -1,5 +1,3 @@
-with Alire.Errors;
-with Alire.TOML_Expressions;
 with Alire.TOML_Keys;
 with Alire.Utils;
 
@@ -163,7 +161,6 @@ package body Alire.Origins is
       use Utils;
       Commit : constant String := Tail (From, '@');
       URL    : constant String := Tail (Head (From, '@'), '+');
-      Pkg    : constant String := Tail (From, ':');
       Path   : constant String :=
                  From (From'First + Prefixes (Filesystem)'Length ..
                          From'Last);
@@ -185,9 +182,7 @@ package body Alire.Origins is
                   else
                      This := New_Filesystem (Path);
                   end if;
-               when Native         =>
-                  This := New_Native ((others => Packaged_As (Pkg)));
-               when External | Source_Archive =>
+               when External | System | Source_Archive =>
                   raise Program_Error with "can't happen";
             end case;
 
@@ -244,97 +239,10 @@ package body Alire.Origins is
                        From :        TOML_Adapters.Key_Queue)
                        return Outcome
    is
-
-      -------------------------
-      -- Package_From_String --
-      -------------------------
-
-      --  Extract, with error checking, the part after "native:", to create
-      --  a platform-specific package origin.
-
-      function Package_From_String (Val : TOML.TOML_Value;
-                                    Pkg : out Package_Names) return Outcome is
-      begin
-         --  A missing entry defaults to unavailable:
-         if Val.Is_Null then
-            Pkg := Unavailable;
-            return Outcome_Success;
-
-         --  Otherwise, it must be a "native:blah" strings:
-         elsif Val.Kind /= TOML.TOML_String then
-            return From.Failure ("expected ""native:name"" string for origin");
-         end if;
-
-         declare
-            Str : constant String := Val.As_String;
-         begin
-            if Str = "" then
-               Pkg := Unavailable;
-            elsif not Utils.Starts_With (Str, Prefix_Native) then
-               return From.Failure ("native origin string must start with """
-                                    & Prefix_Native
-                                    & """ but found: " & Str);
-            else
-               Pkg := Packaged_As (Utils.Tail (Str, ':'));
-            end if;
-
-            return Outcome_Success;
-         end;
-      end Package_From_String;
-
-      ---------------
-      -- From_Case --
-      ---------------
-
-      function From_Case (Case_From : TOML.TOML_Value) return Outcome is
-         package Distros is new TOML_Expressions.Enum_Cases
-           (Platforms.Distributions);
-      begin
-         if Case_From.Keys'Length /= 1 or else
-         +Case_From.Keys (1) /= "case(distribution)"
-         then
-            return From.Failure ("origins can only be distribution-specific");
-         end if;
-
-         --  Get an array of values that will be turned into origins:
-         declare
-            Distro_Origins : constant Distros.TOML_Array :=
-                               Distros.Load_Cases
-                                 (TOML_Adapters.From
-                                    (Case_From.Get (Case_From.Keys (1)),
-                                     From.Message ("case")));
-         begin
-            --  Load each origin
-            This := New_Native ((others => Unavailable));
-
-            for Distro in Distro_Origins'Range loop
-               declare
-                  Result : constant Outcome :=
-                             Package_From_String
-                               (Distro_Origins (Distro),
-                                This.Data.Packages (Distro));
-               begin
-                  if not Result.Success then
-                     return Result;
-                  end if;
-               end;
-            end loop;
-
-            return Outcome_Success;
-         end;
-      exception
-         when E : Checked_Error =>
-            return Errors.Get (E);
-      end From_Case;
-
       Value : TOML.TOML_Value;
    begin
       if not From.Pop (TOML_Keys.Origin, Value) then
          return From.Failure ("mandatory origin missing");
-
-      elsif Value.Kind = TOML.TOML_Table then
-         --  A table: a case origin.
-         return From_Case (Value);
 
       elsif Value.Kind = TOML.TOML_String then
          --  Plain string: regular origin
@@ -342,7 +250,7 @@ package body Alire.Origins is
                              Value.As_String,
                              From);
       else
-         return From.Failure ("expected string description or case table");
+         return From.Failure ("expected string description");
       end if;
    end From_TOML;
 
@@ -396,9 +304,9 @@ package body Alire.Origins is
          when VCS_Kinds =>
             Table.Set (TOML_Keys.Origin, +(Prefixes (This.Kind).all &
                          This.URL & "@" & This.Commit));
-         when External | Native =>
+         when External | System =>
             raise Program_Error
-              with "external or native packages do not need to be exported";
+              with "external or system packages do not need to be exported";
 
          when Source_Archive =>
             Table.Set (TOML_Keys.Origin,       +This.Archive_URL);

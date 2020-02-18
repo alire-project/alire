@@ -1,5 +1,14 @@
 package body Alire.Requisites is
 
+   ----------------
+   -- Default_To --
+   ----------------
+
+   function Default_To (This : Tree; Default : Tree) return Tree is
+     (if This.Is_Empty
+      then Default
+      else This);
+
    ---------------
    -- Satisfies --
    ---------------

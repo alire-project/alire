@@ -75,17 +75,18 @@ package body Alr.Checkout is
       Round     : Natural        := 0;
    begin
 
-      --  Notify about missing native dependencies:
+      --  Notify about missing external dependencies:
 
       if not Pending.Hints.Is_Empty then
          Trace.Warning
-           ("The following native dependencies are unavailable within Alire:");
+           ("The following external dependencies "
+            & "are unavailable within Alire:");
          for Dep of Pending.Hints loop
             Trace.Warning ("   " & Dep.Image);
             for Hint of Alire.Index.Crate (Dep.Crate)
                         .Externals.Hints (Dep.Crate, Platform.Properties)
             loop
-               Trace.Warning ("      Hint: ");
+               Trace.Warning ("      Hint: " & Hint);
             end loop;
          end loop;
          Trace.Warning

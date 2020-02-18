@@ -44,6 +44,7 @@ package Alire.TOML_Expressions with Preelaborate is
 
    type Case_Loader_Keys is (Distribution,
                              OS,
+                             Toolchain,
                              Word_Size);
    --  The variables that can be used in index cases. Must match the toml text.
 
