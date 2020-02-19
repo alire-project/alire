@@ -17,10 +17,10 @@ import platform
 p = run_alr('get', 'crate', quiet=False, complain_on_error=False)
 
 if distro_is_known():
-    assert_match("Hint: This is a custom hint.*", p.out, flags=re.S)
+    assert_match(".*Hint: This is a custom hint.*", p.out, flags=re.S)
 else:
-    assert_eq('ERROR: Unknown distribution: cannot use system package '
-              'for  the requested crate\n'
+    assert_eq('ERROR: No source release indexed for the requested crate, and '
+              'cannot use system packages in unknown distribution\n'
               'ERROR: alr get unsuccessful\n',
               p.out)
 
