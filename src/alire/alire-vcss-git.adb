@@ -60,7 +60,8 @@ package body Alire.VCSs.Git is
          begin
             OS_Lib.Subprocess.Checked_Spawn
               ("git",
-               Empty_Vector & "checkout" & Commit (From));
+               Empty_Vector & "checkout" & "-q" & Commit (From));
+            --  "-q" needed to avoid the "detached HEAD" warning from git
          end;
       end if;
 
