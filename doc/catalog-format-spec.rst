@@ -500,6 +500,6 @@ Parameters
   different OS. Currently supported values are: ``debian``, ``ubuntu``.
 * ``toolchain``: takes ``system`` value in distributions with the system Ada
   compiler first in PATH (GNAT FSF in Debian/Ubuntu), ``user`` otherwise
-  (GNAT CE editions, other cross-target toolchains).
+  (GNAT Community editions, other cross-target toolchains).
 * ``word-size``: architecture word size. Currently supported values are:
   ``bits-32``, ``bits-64``, ``bits-unknown``
