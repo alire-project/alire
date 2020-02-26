@@ -482,6 +482,15 @@ can accept dynamic expressions in this context):
    # As versions appear this list will grow. To speed up detection, dynamic
    # expressions may become recommendable for certain system packages.
 
+For Ada precompiled system libraries that require the platform compiler for
+linking (e.g., in Debian/Ubuntu), and that cannot be used with other GNAT 
+compilers, this should be expressed with the ``available`` property, e.g.:
+
+.. code-block:: json
+
+   available.'case(toolchain)'.user = false
+   # `available` defaults to true, so it is enough to flag the user toolchains
+
 Parameters
 ----------
 
@@ -489,7 +498,8 @@ Parameters
   and ``windows``.
 * ``distribution``: name of the Linux distribution, or ``none`` if running on a
   different OS. Currently supported values are: ``debian``, ``ubuntu``.
-* ``compiler``: name of the current compiler. Currently supported values are:
-  ``gnat-unknown``, ``gnat-fsf-old``, ``gnat-fsf-7.2``, ``gnat-fsf-7.3``,
-  ``gnat-gpl-old``, ``gnat-gpl-2017``, ``gnat-community-2018``.
-* ``word-size``: architecture word size. Currently supported values are: ``bits-32``, ``bits-64``, ``bits-unknown``
+* ``toolchain``: takes ``system`` value in distributions with the system Ada
+  compiler first in PATH (GNAT FSF in Debian/Ubuntu), ``user`` otherwise
+  (GNAT Community editions, other cross-target toolchains).
+* ``word-size``: architecture word size. Currently supported values are:
+  ``bits-32``, ``bits-64``, ``bits-unknown``
