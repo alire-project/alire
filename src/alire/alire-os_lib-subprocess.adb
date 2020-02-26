@@ -121,6 +121,26 @@ package body Alire.OS_Lib.Subprocess is
       Err_To_Out          : Boolean := False) return Utils.String_Vector
    is
       Output : Utils.String_Vector;
+   begin
+      Checked_Spawn_And_Capture (Command,
+                                 Arguments,
+                                 Output,
+                                 Understands_Verbose,
+                                 Err_To_Out);
+      return Output;
+   end Checked_Spawn_And_Capture;
+
+   -------------------------------
+   -- Checked_Spawn_And_Capture --
+   -------------------------------
+
+   procedure Checked_Spawn_And_Capture
+     (Command             : String;
+      Arguments           : Utils.String_Vector;
+      Output              : in out Utils.String_Vector;
+      Understands_Verbose : Boolean := False;
+      Err_To_Out          : Boolean := False)
+   is
       Code   : constant Integer :=
         Spawn_And_Capture (Output              => Output,
                            Command             => Command,
@@ -133,8 +153,6 @@ package body Alire.OS_Lib.Subprocess is
            with Errors.Set ("Command " & Image (Command, Arguments) &
                               " exited with code" & Code'Img &
                               " and output: " & Output.Flatten);
-      else
-         return Output;
       end if;
    end Checked_Spawn_And_Capture;
 

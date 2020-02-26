@@ -118,7 +118,7 @@ package body Alr.Commands.Test is
             declare
                use Alire.Utils;
             begin
-               Output := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+               Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
                  ("alr",
                   Empty_Vector &
                     "get" &
@@ -126,27 +126,37 @@ package body Alr.Commands.Test is
                     "-d" &
                     "-n" &
                     R.Milestone.Image,
+                  Output,
                   Err_To_Out => True);
-
-               Trace.Detail (Output.Flatten (Newline));
 
                --  Check declared gpr/executables in place
                if not R.Origin.Is_System and then not Check_Files (R) then
-                  raise Child_Failed;
+                  raise Child_Failed with "Declared executable(s) missing";
                end if;
 
                Reporters.End_Test (R, Testing.Pass, Clock - Start, Output);
+               Trace.Detail (Output.Flatten (Newline));
 
             exception
+               when E : Alire.Checked_Error =>
+                  Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
+                  Trace.Detail (Output.Flatten (Newline));
+
+                  Output.Append ("****** Checked Error raised during test:");
+                  Output.Append (Ada.Exceptions.Exception_Information (E));
+                  Output.Append ("****** TRACE END");
+
                when Child_Failed =>
                   Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
+                  Trace.Detail (Output.Flatten (Newline));
 
                when E : others =>
-                  Output.Prepend ("****** UNEXPECTED EXCEPTION FOLLOWS:");
-                  Output.Prepend (Ada.Exceptions.Exception_Information (E));
-                  Output.Prepend ("****** TRACE FOLLOWS:");
-
                   Reporters.End_Test (R, Testing.Error, Clock - Start, Output);
+                  Trace.Detail (Output.Flatten (Newline));
+
+                  Output.Append ("****** UNEXPECTED EXCEPTION FOLLOWS:");
+                  Output.Append (Ada.Exceptions.Exception_Information (E));
+                  Output.Append ("****** TRACE END");
             end;
          end if;
 
@@ -217,13 +227,15 @@ package body Alr.Commands.Test is
 
          if Test_All or else Cmd.Search then
             for Crate of Alire.Index.All_Crates.all loop
-               if Test_All or else Is_Match (Crate.Name) then
-                  if Cmd.Last then
-                     Candidates.Include (Crate.Releases.Last_Element);
-                  else
-                     for Release of Crate.Releases loop
-                        Candidates.Include (Release);
-                     end loop;
+               if not Crate.Releases.Is_Empty then
+                  if Test_All or else Is_Match (Crate.Name) then
+                     if Cmd.Last then
+                        Candidates.Include (Crate.Releases.Last_Element);
+                     else
+                        for Release of Crate.Releases loop
+                           Candidates.Include (Release);
+                        end loop;
+                     end if;
                   end if;
                end if;
             end loop;
