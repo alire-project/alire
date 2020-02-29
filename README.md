@@ -28,6 +28,8 @@ To install run the following as user in a terminal, or see below for more detail
 
 After a succesful build, you will have a `bin/alr` executable that you can put in your path if desired.
 
+> **Please note** the `--recursive` in the `git clone` command. It is crucial since it will clone all the projects `alr` depends on. If the command `gprbuild` gives you a lot of _unknown project file_, most probably you forgot the `--recursive`
+
 To see available crates per platform/compiler, see the [alire-crates-ci](https://github.com/alire-project/alire-crates-ci) companion repository.
 
 ## Design principles ##
@@ -55,6 +57,8 @@ At present, only the latest master version is recommended. To obtain it you need
 1. `gprbuild -j0 -p -P alr_env`
 
 The executable will be found in `bin/alr`.
+
+> **Please note** the `--recursive` in the `git clone` command. It is crucial since it will clone all the projects `alr` depends on. If the command `gprbuild` gives you a lot of _unknown project file_, most probably you forgot the `--recursive`
 
 ## First steps ##
 The following miniguide shows how to obtain and compile already packaged projects, and create your own. First, create or enter into some folder where you don't mind that new project folders are created by the `alr` tool
