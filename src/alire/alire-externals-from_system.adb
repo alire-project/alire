@@ -38,6 +38,13 @@ package body Alire.Externals.From_System is
    is
       package System renames Origins.Deployers.System;
    begin
+      --  No need to look for anything if the distro is unknown:
+      if not Platform.Distribution_Is_Known then
+         Trace.Detail ("Cannot look for system packages for crate " & (+Name)
+                       & "in unknown distribution");
+         return Containers.Release_Sets.Empty_Set;
+      end if;
+
       Trace.Detail ("Looking for system packages that provide crate "
                     & (+Name));
       return Releases : Containers.Release_Set do

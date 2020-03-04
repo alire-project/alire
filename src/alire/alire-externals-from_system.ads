@@ -48,7 +48,7 @@ private
    end record;
 
    function System_Candidates (This   : External;
-                               Distro : Platforms.Distributions)
+                               Distro : Platforms.Known_Distributions)
                                return Package_Vector
    is
      (if This.Origin.Is_Case
