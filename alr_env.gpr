@@ -18,24 +18,19 @@ aggregate project Alr_Env is
    for External ("LIBRARY_TYPE") use "static";
    for External ("BUILD") use "DEBUG";
 
-   Host_OS := external ("OS", "default");
-   --  On Windows an OS environment variable is defined, we can use it to
-   --  determine if we are compiling on Windows.
-   --
-   --  On macOS, the nearest equivalent is OSTYPE; however this is
-   --  e.g. "darwin18", so not useful here. Set "macOS" by hand.
+   type Any_OS is ("linux", "macos", "windows");
+   --  The three supported host OSs
+
+   Host_OS : Any_OS := external ("ALIRE_OS", "linux");
 
    --  ALIRE_OS is used in alire_common.gpr.
    --  GNATCOLL_OS is used in gnatcoll.gpr.
    case Host_OS is
-      when "Windows_NT" =>
-         for External ("ALIRE_OS") use "windows";
+      when "windows" =>
          for External ("GNATCOLL_OS") use "windows";
-      when "macOS"      =>
-         for External ("ALIRE_OS") use "osx";
+      when "macos"   =>
          for External ("GNATCOLL_OS") use "osx";
-      when others       =>
-         for External ("ALIRE_OS") use "unix";
+      when "linux"  =>
          for External ("GNATCOLL_OS") use "unix";
    end case;
 end Alr_Env;

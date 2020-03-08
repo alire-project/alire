@@ -13,8 +13,8 @@ project Alr is
 
    case Alire_Common.Host_Os is
       when "windows" => Src_Dirs := Src_Dirs & ("src/alr/os_windows");
-      when "osx"     => Src_Dirs := Src_Dirs & ("src/alr/os_macos");
-      when others    => Src_Dirs := Src_Dirs & ("src/alr/os_linux");
+      when "macos"   => Src_Dirs := Src_Dirs & ("src/alr/os_macos");
+      when "linux"   => Src_Dirs := Src_Dirs & ("src/alr/os_linux");
    end case;
 
    for Source_Dirs use Src_Dirs;

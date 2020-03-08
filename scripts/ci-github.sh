@@ -8,23 +8,33 @@ set -o nounset
 
 export PATH+=:${PWD}/bin
 
-# For Darwin, have to define OS=macOS for alr_env.gpr
-# Windows defines it anyway
-# Linux (undefined) selects the default
-
-[ `uname -s` == "Darwin" ] && export OS=macOS
-
-# Build alr
-gprbuild -j0 -p -P alr_env
 
 # For the record
 echo ENVIRONMENT:
-env | sort
+set | sort
 echo ............................
 
 echo GNAT VERSION:
 gnatls -v
 echo ............................
+
+echo GCC VERSION/MACHINE
+gcc -v
+gcc -dumpmachine
+echo ............................
+
+# Build alr
+case $OSTYPE in
+   linux-gnu) export ALIRE_OS=linux;;
+   msys)      export ALIRE_OS=windows;;
+   darwin*)   export ALIRE_OS=macos;;
+   *)
+      echo Unsupported host OS: OSTYPE=$OSTYPE
+      exit 1;;
+esac
+
+echo Building with ALIRE_OS=$ALIRE_OS ...
+gprbuild -j0 -p -P alr_env
 
 echo ALR VERSION:
 alr version
