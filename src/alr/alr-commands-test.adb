@@ -4,6 +4,7 @@ with Ada.Exceptions;
 
 with Alire.Config;
 with Alire.Containers;
+with Alire.Defaults;
 with Alire.Index;
 with Alire.OS_Lib.Subprocess;
 with Alire.Crates.With_Releases;
@@ -26,6 +27,8 @@ with GNAT.Command_Line;
 with GNATCOLL.VFS;
 
 package body Alr.Commands.Test is
+
+   Docker_Switch : constant String := "--docker";
 
    -----------------
    -- Check_Files --
@@ -66,8 +69,9 @@ package body Alr.Commands.Test is
    -- Do_Test --
    -------------
 
-   procedure Do_Test (Cmd      : Command;
-                      Releases : Alire.Containers.Release_Sets.Set)
+   procedure Do_Test (Cmd          : Command;
+                      Releases     : Alire.Containers.Release_Sets.Set;
+                      Docker_Image : String)
    is
       use Ada.Calendar;
       use GNATCOLL.VFS;
@@ -94,6 +98,53 @@ package body Alr.Commands.Test is
       procedure Test_Release (R : Types.Release) is
          Output : Utils.String_Vector;
          Start  : Time;
+
+         -------------------
+         -- Build_Release --
+         -------------------
+
+         procedure Build_Release is
+            use Ada.Directories;
+            use Alire.OS_Lib.Subprocess;
+            use Alire.Utils;
+
+            Alr_Args : constant String_Vector :=
+                         Empty_Vector &
+                         "get" &
+                         "--build" &
+                         "-d" &
+                         "-n" &
+                         R.Milestone.Image;
+
+         begin
+            if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+               Checked_Spawn_And_Capture
+                 ("sudo",
+                  Empty_Vector
+                  & "docker"
+                  & "run"
+                  & String'("-v" & Locate_In_Path ("alr") & ":/usr/bin/alr")
+                  --  Map executable
+                  & String'("-v" & Current_Directory & ":/work")
+                  --  Map working folder
+                  & "-w" & "/work"
+                  & "--user" & Alire.OS_Lib.Getenv ("UID", "1000")
+                  --  Map current user
+                  & Docker_Image
+                  & "alr"
+                  & "-c" & "/tmp/alire" -- Use writable config folder
+                  & Alr_Args,
+                  Output,
+                  Err_To_Out => True);
+            else
+               Checked_Spawn_And_Capture
+                 ("alr",
+                  Alr_Args,
+                  Output,
+                  Err_To_Out => True);
+            end if;
+         end Build_Release;
+
       begin
          Reporters.Start_Test (R);
 
@@ -115,19 +166,8 @@ package body Alr.Commands.Test is
             Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
-            declare
-               use Alire.Utils;
             begin
-               Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
-                 ("alr",
-                  Empty_Vector &
-                    "get" &
-                    "--build" &
-                    "-d" &
-                    "-n" &
-                    R.Milestone.Image,
-                  Output,
-                  Err_To_Out => True);
+               Build_Release;
 
                --  Check declared gpr/executables in place
                if not R.Origin.Is_System and then not Check_Files (R) then
@@ -203,6 +243,11 @@ package body Alr.Commands.Test is
 
       Candidates : Alire.Containers.Release_Sets.Set;
 
+      Docker_Image : constant String :=
+                       (if Cmd.Docker.all = ""
+                        then Alire.Defaults.Docker_Test_Image
+                        else Utils.Replace (Cmd.Docker.all, "=", ""));
+
       use Alire.Containers.Release_Sets;
 
       ---------------------
@@ -265,6 +310,38 @@ package body Alr.Commands.Test is
          end if;
       end Find_Candidates;
 
+      --------------------
+      -- Prepare_Docker --
+      --------------------
+
+      procedure Pull_Docker is
+         use Alire.OS_Lib.Subprocess;
+         use Alire.Utils;
+
+         Output : String_Vector;
+      begin
+         if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+
+            Trace.Info ("Running builds in docker image: " & Docker_Image);
+
+            Checked_Spawn_And_Capture
+              ("sudo",
+               Empty_Vector
+               & "docker"
+               & "pull"
+               & Docker_Image,
+               Output,
+               Err_To_Out => True);
+         end if;
+
+      exception
+         when Alire.Checked_Error =>
+            Reportaise_Command_Failed
+              ("Failed to pull docker image " & Docker_Image
+               & " with output: "
+               & Output.Flatten (Separator => "" & ASCII.LF));
+      end Pull_Docker;
+
    begin
       --  Validate command line
       if not Cmd.Search then
@@ -324,7 +401,9 @@ package body Alr.Commands.Test is
          Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
       end if;
 
-      Do_Test (Cmd, Candidates);
+      Pull_Docker;
+
+      Do_Test (Cmd, Candidates, Docker_Image);
    end Execute;
 
    ----------------------
@@ -361,6 +440,14 @@ package body Alr.Commands.Test is
          Cmd.Cont'Access,
          Long_Switch => "--continue",
          Help        => "Skip testing of releases already in folder");
+
+      Define_Switch
+        (Config,
+         Cmd.Docker'Access,
+         Long_Switch => Docker_Switch & "?", -- ? for optional image tag
+         Help        => "Test releases within docker IMAGE"
+                        & " (or alire/gnat:ubuntu-lts)",
+         Argument    => "=IMAGE");
 
       Define_Switch
         (Config,
