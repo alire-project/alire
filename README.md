@@ -7,7 +7,7 @@
 
 ALIRE: Ada LIbrary REpository.
 
-A catalog of ready-to-use Ada libraries plus a command-line tool (`alr`) to obtain, compile, and incorporate them into your own projects. It aims to fulfill a similar role to Rust's `cargo` or OCaml's `opam`.
+A catalog of ready-to-use Ada libraries plus a command-line tool (`alr`) to obtain, build, and incorporate them into your own projects. It aims to fulfill a similar role to Rust's `cargo` or OCaml's `opam`.
 
 ### Caveat emptor ###
 
@@ -57,7 +57,7 @@ At present, only the latest master version is recommended. To obtain it you need
 The executable will be found in `bin/alr`.
 
 ## First steps ##
-The following miniguide shows how to obtain and compile already packaged projects, and create your own. First, create or enter into some folder where you don't mind that new project folders are created by the `alr` tool
+The following miniguide shows how to obtain and build already packaged projects, and create your own. First, create or enter into some folder where you don't mind that new project folders are created by the `alr` tool
 
 Run `alr` without arguments to get a summary of available commands.
 
@@ -72,16 +72,16 @@ Follow these steps:
 
 1. Issue `alr get hello`
 2. Enter the new folder you'll find under your current directory: `cd hello*`
-3. Build and run the project with `alr run`. This will compile and then launch the resulting executable.
+3. Build and run the project with `alr run`. This will build and then launch the resulting executable.
 
-As a shorthand, you can use `alr get --compile hello` to get and compile the program in one step.
+As a shorthand, you can use `alr get --build hello` to get and build the program in one step.
 
 ### Creating a new project ###
 Alire allows you to initialize an empty GNAT binary or library project with ease:
 
 1. Issue `alr init --bin myproj` (you can use --lib for a library project).
 2. Enter the folder: `cd myproj`
-3. Check that it builds: `alr compile`
+3. Check that it builds: `alr build`
 4. Run it: `alr run`
 
 ## Dependencies and upgrading ##
