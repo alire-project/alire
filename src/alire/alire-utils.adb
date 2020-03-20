@@ -1,3 +1,5 @@
+with Ada.Command_Line;
+
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Maps;
 
@@ -48,6 +50,23 @@ package body Alire.Utils is
          end return;
       end if;
    end Append_To_Last_Line;
+
+   ---------------------------
+   -- Command_Line_Contains --
+   ---------------------------
+
+   function Command_Line_Contains (Prefix : String) return Boolean is
+   begin
+      for I in 1 .. Ada.Command_Line.Argument_Count loop
+         if Starts_With (Full_String => Ada.Command_Line.Argument (I),
+                         Substring   => Prefix)
+         then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Command_Line_Contains;
 
    --------------
    -- Contains --
