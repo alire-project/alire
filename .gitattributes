@@ -6,3 +6,7 @@
 *.adc text eol=lf
 *.ads text eol=lf
 *.gpr text eol=lf
+
+# Mark some misidentified files as always binaries
+*.pdf -text
+*.png -text
