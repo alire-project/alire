@@ -16,10 +16,11 @@ p = run_alr('get', '--non-interactive', '--only', 'make',
             complain_on_error=False, quiet=False)
 
 if distro_is_known():
-    assert_match(".*No system package for the requested crate was detected.*",
+    assert_match(".*No source release or system package available for the "
+                 "requested crate*",
                  p.out, flags=re.S)
 else:
-    assert_match(".*Unknown distribution: cannot use system package for.*",
+    assert_match(".*cannot use system packages in unknown distribution.*",
                  p.out, flags=re.S)
 
 
