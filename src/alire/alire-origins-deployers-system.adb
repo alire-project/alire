@@ -1,5 +1,6 @@
 with Alire.Config;
 with Alire.Origins.Deployers.System.Apt;
+with Alire.Origins.Deployers.System.Pacman;
 with Alire.Platform;
 with Alire.Platforms;
 
@@ -59,9 +60,12 @@ package body Alire.Origins.Deployers.System is
 
    function Platform_Deployer (From : Origins.Origin) return Deployer'Class is
      (case Platforms.Distro_Manager (Platform.Distribution) is
-         when others =>
+         when Platforms.Apt | Platforms.Packager_Unknown =>
             System.Apt.Deployer'(Deployers.Deployer'(Base => From)
-                                 with null record));
+                                 with null record),
+         when Platforms.Pacman =>
+            System.Pacman.Deployer'(Deployers.Deployer'(Base => From)
+                                    with null record));
       --  TODO: add here other native package managers as they get
       --  implemented.
 

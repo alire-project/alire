@@ -25,6 +25,7 @@ package Alire.Platforms with Preelaborate is
                        Bits_Unknown);
 
    type Package_Managers is (Apt,
+                             Pacman,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
