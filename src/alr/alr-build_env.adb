@@ -165,7 +165,7 @@ package body Alr.Build_Env is
    begin
       Alire.Trace.Detail ("Set environment variable: " &
                             Key & "=""" & Value & """");
-      GNAT.OS_Lib.Setenv (Key, Value);
+      OS_Lib.Setenv (Key, Value);
    end Set_Var;
 
    ---------
