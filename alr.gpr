@@ -23,7 +23,7 @@ project Alr is
    for Exec_Dir use "bin";
    for Main use ("alr-main.adb");
 
-   for Languages use ("Ada", "C");
+   for Languages use ("Ada");
 
    package Compiler renames Alire_Common.Compiler;
 
