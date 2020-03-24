@@ -1,35 +1,15 @@
-with Ada.Directories;
-
 with Alire.Utils;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
+with Alire.Origins;
+with Alire.Origins.Deployers;
 
 package body Alire.Platform is
 
    --  Windows implementation
 
+   Distrib_Detected : Boolean := False;
    Distrib : Platforms.Distributions := Platforms.Distro_Unknown;
-
-   Msys2_Default_Install : constant String :=
-     Alire.OS_Lib."/" (OS_Lib.Getenv ("HOMEDRIVE"), "msys64");
-
-   -------------------
-   -- Set_Msys2_Env --
-   -------------------
-
-   procedure Set_Msys2_Env (Install_Dir : Absolute_Path) is
-   begin
-      Setenv ("PATH", Getenv ("PATH") &
-                ";" & Install_Dir / "mingw64" / "bin" &
-                ";" & Install_Dir / "usr" / "bin" &
-                ";" & Install_Dir / "usr" / "local" / "bin");
-
-      Setenv ("LIBRARY_PATH", Getenv ("LIBRARY_PATH") &
-                ";" & Install_Dir / "mingw64" / "lib");
-
-      Setenv ("C_INCLUDE_PATH", Getenv ("C_INCLUDE_PATH") &
-                ";" & Install_Dir / "mingw64" / "include");
-   end Set_Msys2_Env;
 
    ------------------
    -- Detect_Msys2 --
@@ -51,11 +31,6 @@ package body Alire.Platform is
             null;
       end;
 
-      if Ada.Directories.Exists (Msys2_Default_Install) then
-         Set_Msys2_Env (Msys2_Default_Install);
-         return True;
-      end if;
-
       return False;
    end Detect_Msys2;
 
@@ -74,6 +49,8 @@ package body Alire.Platform is
 
    procedure Detect_Distrib is
    begin
+      Distrib_Detected := True;
+
       if Detect_Msys2 then
          Distrib := Platforms.Msys2;
          return;
@@ -88,9 +65,11 @@ package body Alire.Platform is
 
    function Distribution return Platforms.Distributions is
    begin
+      if not Distrib_Detected then
+         Detect_Distrib;
+      end if;
+
       return Distrib;
    end Distribution;
 
-begin
-   Detect_Distrib;
 end Alire.Platform;
