@@ -1,22 +1,27 @@
 with Ada.Directories;
 
 with Alire;
+with Alire.Errors;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
+with Alire.OS_Lib.Download;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
 with Alire.Utils;
 
 package body Alr.Platforms.Windows is
 
-   --  FIXME, temporary address for developement. Msys2 only distributes ZX
-   --  compressed archives that cannot be extracted without installing a
-   --  special tool.
-   Msys2_Install_Archive_URL : constant String :=
-     "https://github.com/Fabien-Chouteau/" &
-     "game_of_life/releases/download/v0/msys64.tar.gz";
+   Msys2_Installer     : constant String := "msys2-x86_64-latest.exe";
+   Msys2_Installer_URL : constant String :=
+     "http://repo.msys2.org/distrib/" & Msys2_Installer;
+
+   --  FIXME, temporary address for developement
+   Msys2_Installer_Script     : constant String := "auto-install.js";
+   Msys2_Installer_Script_URL : constant String :=
+     "https://raw.githubusercontent.com/Fabien-Chouteau/" &
+     "msys2-installer/patch-1/" & Msys2_Installer_Script;
 
    -------------------
    -- Set_Msys2_Env --
@@ -24,17 +29,40 @@ package body Alr.Platforms.Windows is
 
    procedure Set_Msys2_Env (Install_Dir : Alire.Absolute_Path) is
    begin
-      Setenv ("PATH", Getenv ("PATH") &
-                ";" & Install_Dir / "mingw64" / "bin" &
+      Setenv ("PATH", Install_Dir / "mingw64" / "bin" &
                 ";" & Install_Dir / "usr" / "bin" &
-                ";" & Install_Dir / "usr" / "local" / "bin");
+                ";" & Install_Dir / "usr" / "local" / "bin" &
+                ";" & Getenv ("PATH"));
 
-      Setenv ("LIBRARY_PATH", Getenv ("LIBRARY_PATH") &
-                ";" & Install_Dir / "mingw64" / "lib");
+      Setenv ("LIBRARY_PATH", Install_Dir / "mingw64" / "lib" &
+                ";" & Getenv ("LIBRARY_PATH"));
 
-      Setenv ("C_INCLUDE_PATH", Getenv ("C_INCLUDE_PATH") &
-                ";" & Install_Dir / "mingw64" / "include");
+      Setenv ("C_INCLUDE_PATH", Install_Dir / "mingw64" / "include" &
+                ";" & Getenv ("C_INCLUDE_PATH"));
    end Set_Msys2_Env;
+
+   ---------------------------
+   -- Install_Msys2_Package --
+   ---------------------------
+
+   procedure Install_Msys2_Package (Pck : String) is
+      use Alire.Utils;
+
+      Unused : String_Vector;
+   begin
+      Unused := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+        ("pacman", Alire.Utils.Empty_Vector &
+           "--needed" &
+           "--noconfirm" &
+           "-S" &
+           Pck,
+         Err_To_Out => True);
+
+   exception
+      when E : Alire.Checked_Error =>
+         Alr.Trace.Error ("Cannot install required tool from msys2: " & Pck);
+         Alr.Trace.Error ("Output: " & Alire.Errors.Get (E));
+   end Install_Msys2_Package;
 
    -------------------
    -- Install_Msys2 --
@@ -45,12 +73,8 @@ package body Alr.Platforms.Windows is
    is
       use Alire.Utils;
 
-      Bash : constant Alire.Absolute_Path :=
-        Install_Dir / "usr" / "bin" / "bash";
-
-      Deployer : constant Alire.Origins.Deployers.Deployer'Class :=
-        Alire.Origins.Deployers.New_Deployer
-          (Alire.Origins.New_Source_Archive (Msys2_Install_Archive_URL));
+      Install_Prefix : constant String :=
+        "InstallPrefix=" & Install_Dir;
 
       Result : Alire.Outcome;
    begin
@@ -59,50 +83,43 @@ package body Alr.Platforms.Windows is
                            "is about to be installed");
       Alr.Trace.Warning ("in " & Install_Dir & ".");
 
-      Result := Deployer.Fetch (Install_Dir);
-
+      Result := Alire.OS_Lib.Download.File (Msys2_Installer_URL,
+                                            Msys2_Installer,
+                                            Install_Dir);
       if not Result.Success then
          return Result;
       end if;
 
-      Result := Deployer.Deploy (Install_Dir);
-
+      Result := Alire.OS_Lib.Download.File (Msys2_Installer_Script_URL,
+                                            Msys2_Installer_Script,
+                                            Install_Dir);
       if not Result.Success then
          return Result;
       end if;
 
       begin
-         --  Run msys2's bash a first time to setup the environment
+         --  Run msys2's installer
          Alire.OS_Lib.Subprocess.Checked_Spawn
-           (Bash, Alire.Utils.Empty_Vector &
-              "--login" & "-c" & "exit");
+           (Install_Dir / Msys2_Installer,
+            Alire.Utils.Empty_Vector &
+              "--script" & (Install_Dir / Msys2_Installer_Script) &
+              "-v" &
+              Install_Prefix);
 
       exception
          when others =>
             return Alire.Outcome_Failure ("Cannot setup msys2 environment");
       end;
 
+      Set_Msys2_Env (Install_Dir);
+
+      --  Install required tools
+      Install_Msys2_Package ("git");
+      Install_Msys2_Package ("tar");
+      Install_Msys2_Package ("unzip");
+
       return Alire.Outcome_Success;
    end Install_Msys2;
-
-   ---------------------------
-   -- Install_Msys2_Package --
-   ---------------------------
-
-   procedure Install_Msys2_Package (Pck : String) is
-      use Alire.Utils;
-   begin
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("pacman", Alire.Utils.Empty_Vector &
-           "--needed" &
-           "--noconfirm" &
-           "-S" &
-           Pck);
-
-   exception
-      when others =>
-         Alr.Trace.Error ("Cannot install required tool from msys2: " & Pck);
-   end Install_Msys2_Package;
 
    -----------------
    -- Setup_Msys2 --
@@ -125,12 +142,6 @@ package body Alr.Platforms.Windows is
 
       --  Set the PATH and other enviroment variable for msys2
       Set_Msys2_Env (Install_Dir);
-
-      --  Install required tools
-      Install_Msys2_Package ("git");
-      Install_Msys2_Package ("tar");
-      Install_Msys2_Package ("unzip");
-
    end Setup_Msys2;
 
    ----------
