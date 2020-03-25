@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Errors;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
+with Alire.OS_Lib.Download;
 with Alire.VFS;
 with Alire.Utils;             use Alire.Utils;
 
@@ -109,31 +110,11 @@ package body Alire.Origins.Deployers.Source_Archive is
    -----------
 
    overriding
-   function Fetch (This   : Deployer; Folder : String) return Outcome is
-      use GNATCOLL.VFS;
-      Archive_Name : constant String := This.Base.Archive_Name;
-      Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
+   function Fetch (This : Deployer; Folder : String) return Outcome is
    begin
-      Trace.Debug ("Creating folder: " & Folder);
-      Create (+Folder).Make_Dir;
-
-      Trace.Detail ("Downloading archive: " & This.Base.Archive_URL);
-
-      OS_Lib.Subprocess.Checked_Spawn
-        ("curl",
-         Empty_Vector &
-           This.Base.Archive_URL &
-           "--location" &  -- allow for redirects at the remote host
-           (if Log_Level < Trace.Info
-            then Empty_Vector & "--silent"
-            else Empty_Vector & "--progress-bar") &
-           "--output" &
-           Archive_File);
-
-      return Outcome_Success;
-   exception
-      when E : others =>
-         return Alire.Errors.Get (E);
+      return OS_Lib.Download.File (URL      => This.Base.Archive_URL,
+                                   Filename => This.Base.Archive_Name,
+                                   Folder   => Folder);
    end Fetch;
 
    ------------
