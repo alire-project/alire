@@ -27,6 +27,7 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       use type GNATCOLL.OS.OS_Type;
 
+      Unused : String_Vector;
    begin
 
       case GNATCOLL.OS.Constants.OS is
@@ -42,29 +43,32 @@ package body Alire.Origins.Deployers.Source_Archive is
             declare
             begin
                --  Try to untar with --force-local
-               Subprocess.Checked_Spawn
+               Unused := Subprocess.Checked_Spawn_And_Capture
                  ("tar", Empty_Vector &
                     "--force-local" &
                     "-x" &
-                    "-f" & Src_File_Full_Name);
+                    "-f" & Src_File_Full_Name,
+                  Err_To_Out => True);
             exception
 
                when Checked_Error =>
 
                   --  In case of error, retry without the --force-local option
-                  Subprocess.Checked_Spawn
+                  Unused := Subprocess.Checked_Spawn_And_Capture
                     ("tar", Empty_Vector &
                        "-x" &
-                       "-f" & Src_File_Full_Name);
+                       "-f" & Src_File_Full_Name,
+                     Err_To_Out => True);
             end;
 
          when GNATCOLL.OS.Unix | GNATCOLL.OS.MacOS =>
 
             --  On other platforms, just run tar without --force-local
-            Subprocess.Checked_Spawn
+            Unused := Subprocess.Checked_Spawn_And_Capture
               ("tar", Empty_Vector &
                  "-x" &
-                 "-f" & Src_File_Full_Name);
+                 "-f" & Src_File_Full_Name,
+               Err_To_Out => True);
       end case;
 
    end Untar;
