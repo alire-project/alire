@@ -141,6 +141,11 @@ package body Alire.Origins.Deployers.Source_Archive is
                         (VFS.New_Virtual_File (VFS.From_FS (Dst_Dir)));
          Success  : Boolean;
       begin
+         if Natural (Contents.Length) = 0 then
+            raise Checked_Error with Errors.Set
+              ("No content where a single directory was expected: " & Dst_Dir);
+         end if;
+
          if Natural (Contents.Length) /= 1 or else
            not Contents.First_Element.Is_Directory
          then
