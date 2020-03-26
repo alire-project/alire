@@ -48,9 +48,11 @@ package body Alire.VCSs is
    -- Repo_And_Commit --
    ---------------------
 
-   function Repo_And_Commit (Origin : URL) return String is
-     (if Utils.Contains (Origin, "+http")
-      then Utils.Tail (Origin, '+')
-      else Origin);
+   function Repo_And_Commit (Origin : URL) return String
+   is (if Utils.Contains (Origin, "+http")
+       then Utils.Tail (Origin, '+')
+       elsif Utils.Starts_With (Origin, "file://")
+       then Origin (Origin'First + 7 .. Origin'Last)
+       else Origin);
 
 end Alire.VCSs;
