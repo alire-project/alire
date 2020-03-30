@@ -32,7 +32,6 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Commands.Setenv;
-with Alr.Platform;
 with Alr.Root;
 
 with GNAT.Command_Line.Extra;
@@ -207,8 +206,7 @@ package body Alr.Commands is
    procedure Create_Alire_Folders is
       use GNATCOLL.VFS;
    begin
-      Make_Dir (Create (+Platform.Config_Folder));
-      Make_Dir (Create (+Platform.Cache_Folder));
+      Make_Dir (Create (+Alire.Config.Path));
    end Create_Alire_Folders;
 
    -------------------

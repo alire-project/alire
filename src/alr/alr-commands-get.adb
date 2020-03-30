@@ -4,6 +4,7 @@ with Alire.Actions;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Platform;
+with Alire.Platforms;
 
 with Alr.Actions;
 with Alr.Checkout;
@@ -125,34 +126,75 @@ package body Alr.Commands.Get is
          --  Better user feedback if crate is only available through externals.
          --  We distinguish if we are in a platform with system package manager
          --  or not.
+         use all type Alire.Platforms.Toolchains;
       begin
-         if Alire.Index.Exists (Name) then
-            if Alire.Index.Crate (Name).Releases.Is_Empty then
-               if Alire.Index.Crate (Name).Externals.Is_Empty then
-                  Reportaise_Command_Failed
-                    ("No releases or externals found for the requested crate");
-               else
-                  if Alire.Platform.Distribution_Is_Known then
-                     for Hint of Alire.Index.Crate (Name)
-                       .Externals.Hints (Name, Platform.Properties)
-                     loop
-                        Trace.Info ("Hint: " & Hint);
-                     end loop;
-                     Reportaise_Command_Failed
-                       ("No system package for the "
-                        & "requested crate was detected");
-                  else
-                     Reportaise_Command_Failed
-                       ("Unknown distribution: cannot use system package for "
-                        & " the requested crate");
-                  end if;
-               end if;
-            else
-               null; -- Normal exit
-            end if;
-         else
-            raise Alire.Query_Unsuccessful;
+
+         --  Crate does not even exist
+
+         if not Alire.Index.Exists (Name) then
+            raise Alire.Query_Unsuccessful with "Crate not in index";
          end if;
+
+         --  Crate has regular source releases, which take precedence
+
+         if not Alire.Index.Crate (Name).Releases.Is_Empty then
+            return; -- A regular source crate will be used
+         end if;
+
+         --  Crate exists but has no releases nor externals (?). Theoretically
+         --  we shouldn't have those in the community index.
+
+         if Alire.Index.Crate (Name).Externals.Is_Empty then
+            Reportaise_Command_Failed
+              ("No releases or externals found for the requested crate");
+         end if;
+
+         --  Attempt detection of any defined externals, so they can be used
+         --  afterwards for crate retrieval.
+
+         Alire.Index.Add_Externals (Name, Platform.Properties);
+
+         --  If something was detected we are done
+
+         if not Alire.Index.Crate (Name).Releases.Is_Empty then
+            return; -- A detected external will be used
+         end if;
+
+         --  Otherwise emit appropriate information, according to environment
+
+         if Alire.Platform.Distribution_Is_Known then
+
+            --  At this point we are failing for sure. Warn if there are
+            --  external definitions to raise user awareness.
+
+            Trace.Info ("There are external definitions for the crate. "
+                        & "Use alr show --external to show them.");
+
+            --  Emit any hints that apply to the current platform
+
+            for Hint of Alire.Index.Crate (Name)
+              .Externals.Hints (Name, Platform.Properties)
+            loop
+               Trace.Info ("Hint: " & Hint);
+            end loop;
+
+            --  Also warn when the system Ada compiler could be used but isn't
+
+            if Platform.Toolchain = User then
+               Trace.Warning
+                 ("Ada packages from the distribution are unavailable when "
+                  & "not using the system compiler");
+            end if;
+
+            Reportaise_Command_Failed
+              ("No source release or system package available for the "
+               & "requested crate");
+         else
+            Reportaise_Command_Failed
+              ("No source release indexed for the requested crate, and "
+               & "cannot use system packages in unknown distribution");
+         end if;
+
       end Check_Unavailable_External;
 
    begin

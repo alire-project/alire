@@ -14,22 +14,29 @@ package body Alire.Origins.Deployers.System.Apt is
 
    overriding function Already_Installed (This : Deployer) return Boolean
    is
-      Output : constant Utils.String_Vector :=
-                 Subprocess.Checked_Spawn_And_Capture
-                   ("apt-cache",
-                    Empty_Vector & "policy"
-                    & This.Base.Package_Name);
+      Output : Utils.String_Vector;
    begin
+
+      --  The following call is faster than using apt and the output does not
+      --  depend on the system locale, so we can check the Status line safely.
+
+      Subprocess.Checked_Spawn_And_Capture
+                   ("dpkg",
+                    Empty_Vector & "-s" & This.Base.Package_Name,
+                    Output,
+                    Err_To_Out => True);
+
       for Line of Output loop
-         if Utils.Contains (Line, "Installed")
-           and then
-            not Utils.Contains (Line, "none")
-         then
+         if Line = "Status: install ok installed" then
             return True;
          end if;
       end loop;
 
       return False;
+   exception
+      when Checked_Error =>
+         --  This is normal for packages not installed:
+         return False;
    end Already_Installed;
 
    ------------
@@ -41,23 +48,27 @@ package body Alire.Origins.Deployers.System.Apt is
    is
       --  See www.debian.org/doc/debian-policy/ch-controlfields.html#version
       Regexp : constant String :=
-                 "Candidate: (?:[[:digit:]]:)*([\d\.]+).*";
+                 "Version: (?:[[:digit:]]:)*([\d\.]+).*";
 
-      Output : constant Utils.String_Vector :=
-                 Subprocess.Checked_Spawn_And_Capture
-                   ("apt-cache",
-                    Empty_Vector &
-                      "-q" &
-                      "policy" &
-                      This.Base.Package_Name);
+      --  The show command of apt-cache is locale independent, so we can check
+      --  the Version: field safely.
+
+      Output : Utils.String_Vector;
+
       use GNAT.Regpat;
       Matches : Match_Array (1 .. 1);
    begin
+      Subprocess.Checked_Spawn_And_Capture
+                   ("apt-cache",
+                    Empty_Vector &
+                      "-q" &
+                      "show" &
+                      This.Base.Package_Name,
+                    Output,
+                    Err_To_Out => True);
+
       for Line of Output loop
-         if Contains (To_Lower_Case (Line), "candidate:")
-           and then
-            not Contains (To_Lower_Case (Line), "none")
-         then
+         if Contains (Line, "Version:") then
             Trace.Debug ("Extracting native version from apt output: " & Line);
             Match (Regexp, Line, Matches);
             if Matches (1) /= No_Match then
@@ -78,6 +89,10 @@ package body Alire.Origins.Deployers.System.Apt is
       end loop;
 
       return Version_Outcomes.Outcome_Failure ("could not be detected");
+   exception
+      when Checked_Error =>
+         --  Expected for package names not in the system
+         return Version_Outcomes.Outcome_Failure ("does not exist in system");
    end Detect;
 
    -------------

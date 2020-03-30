@@ -7,6 +7,13 @@ private with Ada.Strings.Fixed;
 
 package Alire.Utils with Preelaborate is
 
+   function Command_Line_Contains (Prefix : String) return Boolean;
+   --  Say if any of the command-line arguments begins with Prefix. This is
+   --  needed for string arguments, that even when not supplied are initialized
+   --  to an empty string by GNAT.Command_Line. Thus, it is impossible to
+   --  distinguish by the switch value alone if the switch has been given
+   --  without an optional argument, or not given at all.
+
    function Could_Be_An_Email (Str       : String;
                                With_Name : Boolean) return Boolean;
    --  Minimally check that a string could be an email. Since well-formed
