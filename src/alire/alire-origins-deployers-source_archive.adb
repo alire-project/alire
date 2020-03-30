@@ -49,9 +49,12 @@ package body Alire.Origins.Deployers.Source_Archive is
                     "-x" &
                     "-f" & Src_File_Full_Name,
                   Err_To_Out => True);
+
             exception
 
-               when Checked_Error =>
+               when E : Checked_Error =>
+
+                  Trace.Debug ("tar --force-local failed: " & Errors.Get (E));
 
                   --  In case of error, retry without the --force-local option
                   Unused := Subprocess.Checked_Spawn_And_Capture
@@ -71,6 +74,12 @@ package body Alire.Origins.Deployers.Source_Archive is
                Err_To_Out => True);
       end case;
 
+   exception
+      when E : Checked_Error =>
+         Trace.Debug ("tar failed: " & Errors.Get (E));
+
+         --  Reraise current occurence
+         raise;
    end Untar;
 
    ------------
