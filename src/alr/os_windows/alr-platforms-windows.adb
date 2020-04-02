@@ -51,6 +51,7 @@ package body Alr.Platforms.Windows is
 
       Unused : String_Vector;
    begin
+      Alr.Trace.Info ("Installing " & Pck & " in msys2...");
       Unused := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
         ("pacman", Alire.Utils.Empty_Vector &
            "--needed" &
