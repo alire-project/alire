@@ -1,6 +1,8 @@
 with Ada.Text_IO;
 with Ada.Characters.Handling;
 
+with Interfaces.C_Streams;
+
 with Alire.Config;
 
 package body Alire.Utils.User_Input is
@@ -12,6 +14,20 @@ package body Alire.Utils.User_Input is
      (Yes    => 'Y',
       No     => 'N',
       Always => 'A');
+
+   ------------
+   -- Is_TTY --
+   ------------
+
+   function Is_TTY return Boolean is
+      use Interfaces.C_Streams;
+   begin
+      return isatty (fileno (stdin)) /= 0;
+   end Is_TTY;
+
+   -------------------------
+   -- Print_Valid_Answers --
+   -------------------------
 
    procedure Print_Valid_Answers (Valid : Answer_Set; Default : Answer_Kind) is
    begin
@@ -46,7 +62,7 @@ package body Alire.Utils.User_Input is
       loop
          TIO.Put_Line (Question);
 
-         if Alire.Config.Not_Interactive then
+         if Alire.Config.Not_Interactive or else not Is_TTY then
             return Use_Default;
          end if;
 
