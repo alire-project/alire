@@ -34,25 +34,39 @@ package body Alire.Origins.Deployers.System.Pacman is
    -- Already_Installed --
    -----------------------
 
-   overriding function Already_Installed (This : Deployer) return Boolean is
-
-      Regexp : constant String := "^.* ([0-9.\-]+) \[installed\]$";
-
-      Package_Line : constant String :=
-        Get_Package_Line (This.Base.Package_Name);
-
-      use GNAT.Regpat;
+   overriding
+   function Already_Installed (This : Deployer) return Boolean is
+      Pck : String renames This.Base.Package_Name;
    begin
-      if Package_Line /= "" then
-         Trace.Detail ("Extracting native version from pacman output: " &
-                         Package_Line);
 
-         if Match (Regexp, Package_Line) then
+      declare
+         Output : constant Utils.String_Vector :=
+           Subprocess.Checked_Spawn_And_Capture
+             ("pacman",
+              Empty_Vector &
+                "-Qqe" &
+                This.Base.Package_Name,
+              Err_To_Out => True);
+      begin
+         if not Output.Is_Empty
+           and then
+            Output.First_Element = Pck
+         then
             return True;
+         else
+            Trace.Detail ("Cannot find package '" & Pck &
+                            "' in pacman installed list: '" &
+                            Output.Flatten & "'");
+            return False;
          end if;
-      end if;
+      end;
 
-      return False;
+   exception
+      when E : Checked_Error =>
+         Trace.Detail (Errors.Get (E));
+         Trace.Detail ("Cannot find package '" & Pck &
+                         "' in pacman installed list.");
+         return False;
    end Already_Installed;
 
    ------------
