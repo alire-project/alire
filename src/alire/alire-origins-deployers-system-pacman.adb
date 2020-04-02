@@ -62,7 +62,7 @@ package body Alire.Origins.Deployers.System.Pacman is
    overriding
    function Detect (This : Deployer) return Version_Outcomes.Outcome is
 
-      Regexp : constant String := "^.* ([0-9.\-]+) .*$";
+      Regexp : constant String := "^.* ([0-9.]+)(-[0-9]+?) .*$";
 
       Package_Line : constant String :=
         Get_Package_Line (This.Base.Package_Name);
@@ -83,11 +83,9 @@ package body Alire.Origins.Deployers.System.Pacman is
               Version_Outcomes.New_Result
                 (Semantic_Versioning.Parse
                    (Package_Line (Matches (1).First .. Matches (1).Last),
-                    Relaxed => True)); -- Relaxed because some pacman
-                                       --  versions have extra version dash,
-                                       --  e.g. 1.2.3-4
+                    Relaxed => False));
          else
-            Trace.Debug
+            Trace.Detail
               ("Unexpected version format, could not identify version");
          end if;
       end if;
