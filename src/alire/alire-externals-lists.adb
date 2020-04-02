@@ -9,8 +9,11 @@ package body Alire.Externals.Lists is
 
    function Detect (This : List;
                     Name : Crate_Name;
-                    Env  : Properties.Vector) return Containers.Release_Set is
+                    Env  : Properties.Vector)
+                    return Containers.Release_Set
+   is
    begin
+      Trace.Info ("Looking for external crate: " & (+Name));
       return Detected : Containers.Release_Set do
          for External of This loop
             if External.Available.Check (Env) then
