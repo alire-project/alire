@@ -7,9 +7,10 @@ with Alire.Platform;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
+with Alire.Utils;
+with Alire.Utils.User_Input;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
-with Alire.Utils;
 
 package body Alr.Platforms.Windows is
 
@@ -64,6 +65,67 @@ package body Alr.Platforms.Windows is
          Alr.Trace.Error ("Output: " & Alire.Errors.Get (E));
    end Install_Msys2_Package;
 
+   ----------------------------------
+   -- Query_User_For_Msys2_Install --
+   ----------------------------------
+
+   function Query_User_For_Msys2_Install
+     (Install_Dir : Alire.Absolute_Path)
+      return Boolean
+   is
+      use Alire.Utils.User_Input;
+
+      Config : constant Alire.Absolute_Path :=
+        Config_Folder (Platforms.Windows.New_Platform);
+
+      Do_Not_Install_Path : constant Alire.Absolute_Path :=
+         Config / "do_not_install_msys2";
+
+   begin
+
+      if Ada.Directories.Exists (Do_Not_Install_Path) then
+
+         --  User already requested that msys2 should not be installed
+
+         Alr.Trace.Detail ("Alire is configured not to install msys2.");
+         Alr.Trace.Detail ("Delete '" & Do_Not_Install_Path & "'" &
+                             " if you want Alire to install msys2.");
+         return False;
+      end if;
+
+      Alr.Trace.Always ("Alire can use the msys2 Windows system package " &
+                          " manager to provide easy install");
+      Alr.Trace.Always ("of tools (git, unzip, make, etc.) as well as" &
+                          " libraries (libsdl, libusb, etc.)");
+
+      Alr.Trace.Always
+        ("The use of msys2 is recommend for a better user experience.");
+
+      Alr.Trace.Always ("(msys2 will be installed in '" & Install_Dir & "').");
+
+      if Query ("Do you want Alire to install msys2? (recommended)",
+                Valid    => (Yes | No => True, others => False),
+                Default  => Yes) = Yes
+      then
+
+         --  We can install
+         return True;
+      else
+
+         if Query ("Do you want Alire to remember this choice?",
+                   Valid    => (Yes | No => True, others => False),
+                   Default  => No) = Yes
+         then
+
+            --  Create a directory to remember the user choice
+            Ada.Directories.Create_Path (Do_Not_Install_Path);
+         end if;
+
+         --  We are not allowed to install
+         return False;
+      end if;
+   end Query_User_For_Msys2_Install;
+
    -------------------
    -- Install_Msys2 --
    -------------------
@@ -78,10 +140,9 @@ package body Alr.Platforms.Windows is
 
       Result : Alire.Outcome;
    begin
-
-      Alr.Trace.Warning ("The msys2 Windows system package manager " &
-                           "is about to be installed");
-      Alr.Trace.Warning ("in " & Install_Dir & ".");
+      if not Query_User_For_Msys2_Install (Install_Dir) then
+         return Alire.Outcome_Failure ("User does not want to install msys2");
+      end if;
 
       Result := Alire.OS_Lib.Download.File (Msys2_Installer_URL,
                                             Msys2_Installer,
@@ -135,6 +196,7 @@ package body Alr.Platforms.Windows is
          Result := Install_Msys2 (Install_Dir);
          if not Result.Success then
             Alr.Trace.Error (Result.Message);
+            return;
          end if;
       end if;
 
