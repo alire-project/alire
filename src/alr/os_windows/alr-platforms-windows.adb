@@ -141,7 +141,8 @@ package body Alr.Platforms.Windows is
       Result : Alire.Outcome;
    begin
       if not Query_User_For_Msys2_Install (Install_Dir) then
-         return Alire.Outcome_Failure ("User does not want to install msys2");
+         --  User does not want to install msys2
+         return Alire.Outcome_Success;
       end if;
 
       Result := Alire.OS_Lib.Download.File (Msys2_Installer_URL,
@@ -199,8 +200,6 @@ package body Alr.Platforms.Windows is
             return;
          end if;
       end if;
-
-      --  At this point msys2 should be installed
 
       --  Set the PATH and other enviroment variable for msys2
       Set_Msys2_Env (Install_Dir);
