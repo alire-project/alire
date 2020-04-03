@@ -31,11 +31,27 @@ package body Alr.Commands.Withing is
       Requested : constant Parsers.Allowed_Milestones :=
         Parsers.Crate_Versions (New_Dep);
    begin
+
+      --  Check that the requested dependency exists
+
       if not Query.Exists (Requested.Crate) then
          Reportaise_Command_Failed
            ("The requested crate was not found in the catalog: " &
             (+Requested.Crate));
       end if;
+
+      --  Verify the dependency is truly new
+
+      for Dep of Alire.Conditional.Enumerate (Deps) loop
+         if Dep.Crate = Requested.Crate then
+            Trace.Info
+              ("Not adding " & (+Requested.Crate)
+               & " because " & Dep.Image & " is already a dependency");
+         end if;
+         return Deps;
+      end loop;
+
+      --  Merge the dependency and ensure there is a solution
 
       return Result : constant Alire.Conditional.Dependencies :=
         Deps and Alire.Conditional.New_Dependency (Requested.Crate,
