@@ -1,14 +1,16 @@
-with Alire.Config;
 with Alire.Origins.Deployers.System.Apt;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Platform;
 with Alire.Platforms;
+with Alire.Utils.User_Input;
 
 with GNAT.IO;
 
 package body Alire.Origins.Deployers.System is
 
-   procedure Install_Warning (Pkg : String);
+   function Query_User (Pkg : String) return Boolean;
+
+   Always_Install : Boolean := False;
 
    ------------
    -- Deploy --
@@ -24,8 +26,12 @@ package body Alire.Origins.Deployers.System is
          Trace.Detail (Pkg & " already installed natively");
          return Outcome_Success;
       else
-         Install_Warning (Pkg);
-         return Tool.Install;
+         if Query_User (Pkg) then
+            return Tool.Install;
+         else
+            --  User rejected the installation
+            return Outcome_Success;
+         end if;
       end if;
    exception
       when others =>
@@ -33,26 +39,43 @@ package body Alire.Origins.Deployers.System is
            ("Installation of " & Pkg & " failed");
    end Deploy;
 
-   System_Proceed : Boolean := False;
+   ----------------
+   -- Query_User --
+   ----------------
 
-   ---------------------
-   -- Install_Warning --
-   ---------------------
-
-   procedure Install_Warning (Pkg : String) is
+   function Query_User (Pkg : String) return Boolean is
       use GNAT.IO;
+      use Utils.User_Input;
    begin
-      if not System_Proceed then
-         New_Line;
-         Put_Line ("The system package " & Pkg &
-                     " is about to be installed");
-         Put_Line ("This action requires sudo privileges " &
-                     "and might impact your system installation");
-         New_Line;
-         Config.Enter_Or_Ctrl_C;
-         System_Proceed := True;
+      Put_Line ("The system package '" & Pkg &
+                  "' is about to be installed.");
+
+      if Always_Install then
+         return True;
       end if;
-   end Install_Warning;
+
+      Put_Line ("This action might require admin privileges " &
+                  "and impact your system installation.");
+
+      case Query ("Do want Alire to install this system package?",
+                  Valid   => (Yes | No | Always => True),
+                  Default => Yes)
+      is
+         when Yes =>
+            return True;
+
+         when No =>
+            Trace.Warning ("Without this system package " &
+                             "the build is likely to fail.");
+            Continue_Or_Abort;
+            return False;
+
+         when Always =>
+            Always_Install := True;
+            return True;
+      end case;
+
+   end Query_User;
 
    -----------------------
    -- Platform_Deployer --

@@ -8,7 +8,13 @@ package Alire.Utils.User_Input is
                    Valid    : Answer_Set;
                    Default  : Answer_Kind)
                    return Answer_Kind;
+   --  If interactive, ask the user for one of the valid answer.
+   --  Otherwise return the Default answer.
 
    function Img (Kind : Answer_Kind) return String;
+
+   procedure Continue_Or_Abort;
+   --  If interactive, ask the user to press Enter or Ctrl-C to stop.
+   --  Output a log trace otherwise and continue.
 
 end Alire.Utils.User_Input;

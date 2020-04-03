@@ -52,7 +52,7 @@ package body Alire.Utils.User_Input is
             TIO.Put ("[" & Answer_Char (Kind) & "] " & Img (Kind) & "  ");
          end if;
       end loop;
-      TIO.Put_Line ("(default is " & Img (Default) & ")");
+      TIO.Put ("(default is " & Img (Default) & ") ");
    end Print_Valid_Answers;
 
    -----------
@@ -125,5 +125,21 @@ package body Alire.Utils.User_Input is
           when Yes    => "Yes",
           when No     => "No",
           when Always => "Always");
+
+   -----------------------
+   -- Continue_Or_Abort --
+   -----------------------
+
+   procedure Continue_Or_Abort is
+      Foo : String := "bar";
+      Bar : Integer;
+   begin
+      if Config.Not_Interactive then
+         Trace.Detail ("Non-interactive session, continuing");
+      else
+         TIO.Put_Line ("Press Enter to continue or Ctrl-C to abort");
+         TIO.Get_Line (Foo, Bar);
+      end if;
+   end Continue_Or_Abort;
 
 end Alire.Utils.User_Input;

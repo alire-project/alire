@@ -37,8 +37,4 @@ package Alire.Config is
    --  confirmation.
    --  TODO: remove global eventually
 
-   procedure Enter_Or_Ctrl_C;
-   --  If interactive, ask the user to press Enter or Ctrl-C to stop.
-   --  Output a log trace otherwise and continue.
-
 end Alire.Config;
