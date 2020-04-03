@@ -9,6 +9,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.Utils;
 with Alire.Utils.User_Input;
+with Alire.Origins.Deployers.System;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
 
@@ -47,18 +48,14 @@ package body Alr.Platforms.Windows is
    ---------------------------
 
    procedure Install_Msys2_Package (Pck : String) is
-      use Alire.Utils;
+      use Alire.Origins.Deployers.System;
 
-      Unused : String_Vector;
+      Result : Alire.Outcome;
+
    begin
-      Alr.Trace.Info ("Installing " & Pck & " in msys2...");
-      Unused := Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
-        ("pacman", Alire.Utils.Empty_Vector &
-           "--needed" &
-           "--noconfirm" &
-           "-S" &
-           Pck,
-         Err_To_Out => True);
+      Result := Platform_Deployer (Pck).Deploy (Folder => "unused");
+
+      Alire.Assert (Result);
 
    exception
       when E : Alire.Checked_Error =>
