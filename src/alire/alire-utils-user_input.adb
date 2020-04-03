@@ -25,6 +25,22 @@ package body Alire.Utils.User_Input is
       return isatty (fileno (stdin)) /= 0;
    end Is_TTY;
 
+   ---------------
+   -- Flush_TTY --
+   ---------------
+
+   procedure Flush_TTY is
+      C : Character;
+      Available : Boolean;
+   begin
+      loop
+         TIO.Get_Immediate (C, Available);
+         exit when not Available;
+      end loop;
+   exception
+      when TIO.End_Error => null;
+   end Flush_TTY;
+
    -------------------------
    -- Print_Valid_Answers --
    -------------------------
@@ -65,6 +81,10 @@ package body Alire.Utils.User_Input is
          if Alire.Config.Not_Interactive or else not Is_TTY then
             return Use_Default;
          end if;
+
+         --  Flush the input that the user may have entered by mistake before
+         --  the question is asked.
+         Flush_TTY;
 
          Print_Valid_Answers (Valid, Default);
 
