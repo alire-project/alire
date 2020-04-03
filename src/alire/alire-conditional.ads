@@ -1,5 +1,5 @@
 with Alire.Conditional_Trees;
-with Alire.Dependencies;
+with Alire.Dependencies.Containers;
 with Alire.Properties;
 with Alire.TOML_Adapters;
 
@@ -27,6 +27,10 @@ package Alire.Conditional with Preelaborate is
      (Name     : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependencies;
+
+   function Enumerate is new Conditional.For_Dependencies.Enumerate
+     (Alire.Dependencies.Containers.Lists.List,
+      Alire.Dependencies.Containers.Lists.Append);
 
    function No_Dependencies return Dependencies is (For_Dependencies.Empty);
 
