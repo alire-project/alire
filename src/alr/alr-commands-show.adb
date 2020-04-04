@@ -73,12 +73,21 @@ package body Alr.Commands.Show is
                      Needed.Releases.Delete (Rel.Name);
                   end if;
 
-                  --  Show regular dependencies in solution
+                  --  Show regular dependencies in solution. When requested,
+                  --  show also their origin kind.This is useful for crate
+                  --  testing to let us know that we need to update system
+                  --  repositories. It also raises awareness about the
+                  --  provenance of sources.
 
                   if not Needed.Releases.Is_Empty then
                      Put_Line ("Dependencies (solution):");
                      for Rel of Needed.Releases loop
-                        Put_Line ("   " & Rel.Milestone.Image);
+                        Put_Line ("   " & Rel.Milestone.Image
+                                  & (if Cmd.Detail
+                                    then " (origin: "
+                                         & Utils.To_Lower_Case
+                                             (Rel.Origin.Kind'Img) & ")"
+                                    else ""));
                      end loop;
                   end if;
 
@@ -318,6 +327,11 @@ package body Alr.Commands.Show is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch (Config,
+                     Cmd.Detail'Access,
+                     "", "--detail",
+                     "Show additional details about dependencies");
+
       Define_Switch (Config,
                      Cmd.Detect'Access,
                      "", "--external-detect",
