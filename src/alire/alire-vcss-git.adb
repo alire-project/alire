@@ -15,8 +15,7 @@ package body Alire.VCSs.Git is
       --  Make sure git is installed
       Utils.Tools.Check_Tool (Utils.Tools.Git);
 
-      OS_Lib.Subprocess.Checked_Spawn
-        ("git", Arguments, Understands_Verbose => True);
+      OS_Lib.Subprocess.Checked_Spawn ("git", Arguments);
    end Run_Git;
 
    -------------------------
@@ -30,8 +29,7 @@ package body Alire.VCSs.Git is
       --  Make sure git is installed
       Utils.Tools.Check_Tool (Utils.Tools.Git);
 
-      return OS_Lib.Subprocess.Checked_Spawn_And_Capture
-        ("git", Arguments, Understands_Verbose => True);
+      return OS_Lib.Subprocess.Checked_Spawn_And_Capture ("git", Arguments);
    end Run_Git_And_Capture;
 
    ------------
