@@ -11,7 +11,7 @@ package Alire.Origins.Deployers.System is
    --  The last step of the three in a regular deployer is hijacked to perform
    --  the actual installation of the system package.
 
-   type Deployer is abstract new Deployers.Deployer with null record;
+   type Deployer is abstract new Deployers.Deployer with private;
 
    function Already_Installed (This : Deployer) return Boolean is abstract;
    --  Say if a system package is already installed
@@ -42,6 +42,10 @@ package Alire.Origins.Deployers.System is
    --  not proceed if that would require removal of already installed packages.
    --  E.g., apt --no-remove option.
 
+   procedure Dont_Ask_Permission (This : in out Deployer);
+   --  This procedure tells the deployer not to ask user permission before
+   --  deployement.
+
    -------------
    -- Factory --
    -------------
@@ -51,5 +55,11 @@ package Alire.Origins.Deployers.System is
 
    function Platform_Deployer (Package_Name : String) return Deployer'Class is
      (Platform_Deployer (Origins.New_System (Package_Name)));
+
+private
+
+   type Deployer is abstract new Deployers.Deployer with record
+      Ask_Permission : Boolean := True;
+   end record;
 
 end Alire.Origins.Deployers.System;

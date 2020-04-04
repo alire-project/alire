@@ -10,8 +10,6 @@ with Alr.Platforms.Current;
 
 procedure Alr.Main is
 begin
-   Bootstrap.Check_Ada_Tools;
-
    Alr.Platform.Init (Alr.Platforms.Current.New_Platform);
 
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);

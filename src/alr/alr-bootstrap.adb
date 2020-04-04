@@ -12,33 +12,6 @@ with GNAT.Ctrl_C;
 
 package body Alr.Bootstrap is
 
-   ---------------------
-   -- Check_Ada_Tools --
-   ---------------------
-
-   procedure Check_Ada_Tools is
-   begin
-      Check_Tool ("gprbuild");
-
-      if not OS_Lib.Exists_In_Path ("git") then
-         Trace.Warning
-           ("git is not detected, alr will fail on most operations");
-      end if;
-   end Check_Ada_Tools;
-
-   ----------------
-   -- Check_Tool --
-   ----------------
-
-   procedure Check_Tool (Exec : String) is
-   begin
-      if not OS_Lib.Exists_In_Path (Exec) then
-         Trace.Error ("Required tool not detected: " & Exec);
-         Trace.Error ("alr cannot proceed");
-         OS_Lib.Bailout (1);
-      end if;
-   end Check_Tool;
-
    -----------------
    -- Interrupted --
    -----------------

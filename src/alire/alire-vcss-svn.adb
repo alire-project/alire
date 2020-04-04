@@ -2,6 +2,7 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils;             use Alire.Utils;
+with Alire.Utils.Tools;
 
 package body Alire.VCSs.SVN is
 
@@ -27,6 +28,9 @@ package body Alire.VCSs.SVN is
          else Empty_Vector);
    begin
       Trace.Detail ("Checking out [svn]: " & From);
+
+      --  Make sure svn is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Subversion);
 
       OS_Lib.Subprocess.Checked_Spawn
         ("svn",
@@ -59,6 +63,9 @@ package body Alire.VCSs.SVN is
          then Empty_Vector & "-q"
          else Empty_Vector);
    begin
+      --  Make sure svn is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Subversion);
+
       OS_Lib.Subprocess.Checked_Spawn
         ("svn", Empty_Vector & "update" & Extra);
       return Outcome_Success;
