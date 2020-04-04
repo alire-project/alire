@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire;
-with Alire.Errors;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.OS_Lib;
@@ -9,7 +8,6 @@ with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.Utils;
 with Alire.Utils.User_Input;
-with Alire.Origins.Deployers.System;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
 
@@ -43,26 +41,6 @@ package body Alr.Platforms.Windows is
                 ";" & Getenv ("C_INCLUDE_PATH"));
    end Set_Msys2_Env;
 
-   ---------------------------
-   -- Install_Msys2_Package --
-   ---------------------------
-
-   procedure Install_Msys2_Package (Pck : String) is
-      use Alire.Origins.Deployers.System;
-
-      Result : Alire.Outcome;
-
-   begin
-      Result := Platform_Deployer (Pck).Deploy (Folder => "unused");
-
-      Alire.Assert (Result);
-
-   exception
-      when E : Alire.Checked_Error =>
-         Alr.Trace.Error ("Cannot install required tool from msys2: " & Pck);
-         Alr.Trace.Error ("Output: " & Alire.Errors.Get (E));
-   end Install_Msys2_Package;
-
    ----------------------------------
    -- Query_User_For_Msys2_Install --
    ----------------------------------
@@ -91,7 +69,7 @@ package body Alr.Platforms.Windows is
          return False;
       end if;
 
-      Alr.Trace.Always ("Alire can use the msys2 Windows system package " &
+      Alr.Trace.Always ("Alire can use the msys2 Windows system package" &
                           " manager to provide easy install");
       Alr.Trace.Always ("of tools (git, unzip, make, etc.) as well as" &
                           " libraries (libsdl, libusb, etc.)");
@@ -170,13 +148,6 @@ package body Alr.Platforms.Windows is
          when others =>
             return Alire.Outcome_Failure ("Cannot setup msys2 environment");
       end;
-
-      Set_Msys2_Env (Install_Dir);
-
-      --  Install required tools
-      Install_Msys2_Package ("git");
-      Install_Msys2_Package ("tar");
-      Install_Msys2_Package ("unzip");
 
       return Alire.Outcome_Success;
    end Install_Msys2;
