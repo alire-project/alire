@@ -26,7 +26,8 @@ package body Alire.Origins.Deployers.System is
          Trace.Detail (Pkg & " already installed natively");
          return Outcome_Success;
       else
-         if Query_User (Pkg) then
+
+         if not This.Ask_Permission or else Query_User (Pkg) then
             return Tool.Install;
          else
             --  User rejected the installation
@@ -85,11 +86,20 @@ package body Alire.Origins.Deployers.System is
      (case Platforms.Distro_Manager (Platform.Distribution) is
          when Platforms.Apt | Platforms.Packager_Unknown =>
             System.Apt.Deployer'(Deployers.Deployer'(Base => From)
-                                 with null record),
+                                 with others => <>),
          when Platforms.Pacman =>
             System.Pacman.Deployer'(Deployers.Deployer'(Base => From)
-                                    with null record));
+                                    with others => <>));
       --  TODO: add here other native package managers as they get
       --  implemented.
+
+   -------------------------
+   -- Dont_Ask_Permission --
+   -------------------------
+
+   procedure Dont_Ask_Permission (This : in out Deployer) is
+   begin
+      This.Ask_Permission := False;
+   end Dont_Ask_Permission;
 
 end Alire.Origins.Deployers.System;

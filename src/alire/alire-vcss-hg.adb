@@ -3,8 +3,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Utils;             use Alire.Utils;
 with Alire.OS_Lib;
 with Alire.Errors;
-
-with GNAT.OS_Lib;
+with Alire.Utils.Tools;
 
 package body Alire.VCSs.Hg is
 
@@ -19,7 +18,7 @@ package body Alire.VCSs.Hg is
                    return Outcome
    is
       pragma Unreferenced (This);
-      use GNAT.OS_Lib;
+
       Extra : constant String_Vector :=
         Empty_Vector & (if Log_Level < Trace.Info
                         then "-q"
@@ -31,9 +30,9 @@ package body Alire.VCSs.Hg is
          else Empty_Vector);
 
    begin
-      if Locate_Exec_On_Path ("hg") = null then
-         return Outcome_Failure ("hg not found in path, aborting");
-      end if;
+
+      --  Make sure hg is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Mercurial);
 
       Trace.Detail ("Checking out [hg]: " & From);
 
@@ -70,6 +69,10 @@ package body Alire.VCSs.Hg is
                         then "-q"
                         else "-v");
    begin
+
+      --  Make sure hg is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Mercurial);
+
       OS_Lib.Subprocess.Checked_Spawn
         ("hg",
          Empty_Vector &

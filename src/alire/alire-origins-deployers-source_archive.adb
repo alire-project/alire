@@ -6,6 +6,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.VFS;
 with Alire.Utils;             use Alire.Utils;
+with Alire.Utils.Tools;
 
 with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
@@ -29,6 +30,9 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       Unused : String_Vector;
    begin
+
+      --  Make sure tar is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Tar);
 
       case GNATCOLL.OS.Constants.OS is
 
@@ -237,6 +241,10 @@ package body Alire.Origins.Deployers.Source_Archive is
                Dst_Guard.Keep;
             end;
          when Zip_Archive =>
+
+            --  Make sure unzip is installed
+            Utils.Tools.Check_Tool (Utils.Tools.Unzip);
+
             Subprocess.Checked_Spawn
               ("unzip", Empty_Vector & "-q" & Src_File & "-d" & Dst_Dir);
          when Unknown =>

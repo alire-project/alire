@@ -2,8 +2,37 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils;             use Alire.Utils;
+with Alire.Utils.Tools;
 
 package body Alire.VCSs.Git is
+
+   -------------
+   -- Run_Git --
+   -------------
+
+   procedure Run_Git (Arguments : Utils.String_Vector) is
+   begin
+      --  Make sure git is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Git);
+
+      OS_Lib.Subprocess.Checked_Spawn
+        ("git", Arguments, Understands_Verbose => True);
+   end Run_Git;
+
+   -------------------------
+   -- Run_Git_And_Capture --
+   -------------------------
+
+   function Run_Git_And_Capture (Arguments : Utils.String_Vector)
+                                 return Utils.String_Vector
+   is
+   begin
+      --  Make sure git is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Git);
+
+      return OS_Lib.Subprocess.Checked_Spawn_And_Capture
+        ("git", Arguments, Understands_Verbose => True);
+   end Run_Git_And_Capture;
 
    ------------
    -- Branch --
@@ -16,9 +45,7 @@ package body Alire.VCSs.Git is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
       Output : constant Utils.String_Vector :=
-                 OS_Lib.Subprocess.Checked_Spawn_And_Capture
-                   ("git",
-                    Empty_Vector & "branch");
+        Run_Git_And_Capture (Empty_Vector & "branch");
    begin
       for Line of Output loop
          if Line'Length > 0 and then Line (Line'First) = '*' then
@@ -49,18 +76,14 @@ package body Alire.VCSs.Git is
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
-      OS_Lib.Subprocess.Checked_Spawn
-        ("git",
-         Empty_Vector & "clone" & Extra & Repo (From) & Into);
+      Run_Git (Empty_Vector & "clone" & Extra & Repo (From) & Into);
 
       if Commit (From) /= "" then
          declare
             Guard : Directories.Guard (Directories.Enter (Into))
               with Unreferenced;
          begin
-            OS_Lib.Subprocess.Checked_Spawn
-              ("git",
-               Empty_Vector & "checkout" & "-q" & Commit (From));
+            Run_Git (Empty_Vector & "checkout" & "-q" & Commit (From));
             --  "-q" needed to avoid the "detached HEAD" warning from git
          end;
       end if;
@@ -81,9 +104,7 @@ package body Alire.VCSs.Git is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
       Output : constant Utils.String_Vector :=
-                 OS_Lib.Subprocess.Checked_Spawn_And_Capture
-                   ("git",
-                    Empty_Vector & "status");
+        Run_Git_And_Capture (Empty_Vector & "status");
    begin
 
       --  When a repo is in detached head state (e.g. after checking out a
@@ -111,7 +132,9 @@ package body Alire.VCSs.Git is
                  then Empty_Vector & "-q "
                  else Empty_Vector & "--progress");
    begin
-      OS_Lib.Subprocess.Checked_Spawn ("git", Empty_Vector & "pull" & Extra);
+
+      Run_Git (Empty_Vector & "pull" & Extra);
+
       return Outcome_Success;
    exception
       when E : others =>
