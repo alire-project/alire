@@ -4,6 +4,14 @@ package body Alire.Conditional_Trees is
 
    Tab : constant String := "   ";
 
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (Container : Tree; Value : Values) return Boolean is
+     (not Container.Is_Empty and then
+      (for some Leaf of Container.Root.Flatten.To_Tree => Leaf.Value = Value));
+
    ---------------------
    -- Image_Classwide --
    ---------------------

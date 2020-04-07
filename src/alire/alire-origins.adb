@@ -164,6 +164,7 @@ package body Alire.Origins is
       Path   : constant String :=
                  From (From'First + Prefixes (Filesystem)'Length ..
                          From'Last);
+      Parent_Crate : constant String := Trim (Tail (From, ':'));
    begin
       --  Check easy ones first (unique prefixes):
       for Kind in Prefixes'Range loop
@@ -174,6 +175,14 @@ package body Alire.Origins is
                when Git            => This := New_Git (URL, Commit);
                when Hg             => This := New_Hg (URL, Commit);
                when SVN            => This := New_SVN (URL, Commit);
+
+               when Child          =>
+                  if Parent_Crate = "" then
+                     return Parent.Failure
+                       ("empty parent crate given in child origin");
+                  else
+                     This := New_Child (Parent => +Parent_Crate);
+                  end if;
 
                when Filesystem     =>
                   if Path = "" then
@@ -298,6 +307,9 @@ package body Alire.Origins is
       Table : constant TOML.TOML_Value := TOML.Create_Table;
    begin
       case This.Kind is
+         when Child =>
+            Table.Set (TOML_Keys.Origin, +(Prefix_Child & (+This.Parent)));
+
          when Filesystem =>
             Table.Set (TOML_Keys.Origin, +("file://" & This.Path));
 

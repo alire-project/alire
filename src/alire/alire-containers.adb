@@ -1,3 +1,7 @@
+with Alire.Origins;
+with Alire.OS_Lib;
+with Alire.Paths;
+
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
@@ -69,6 +73,52 @@ package body Alire.Containers is
          New_Map.Include (Release.Name, Release);
       end return;
    end Including;
+
+   -------------------
+   -- Project_Paths --
+   -------------------
+
+   function Project_Paths (Map   : Release_Map;
+                           Base  : Absolute_Path;
+                           Root  : Releases.Release;
+                           Props : Properties.Vector)
+                        return Utils.String_Set
+   is
+      use all type Origins.Kinds;
+      use OS_Lib;
+
+      -------------------
+      -- Rel_Base_Path --
+      -------------------
+
+      function Rel_Base_Path (Release : Releases.Release) return Relative_Path
+      --  Returns the base path that applies to a release, depending on whether
+      --  it's a child, it's the root, or it's a regular one.
+      is (if Release.Origin.Kind = Child
+          then Rel_Base_Path (Map.Element (Release.Origin.Parent))
+          elsif Release.Name = Root.Name
+          then ".."
+          else Paths.Working_Deps_Path / Release.Unique_Folder);
+
+      Set : Utils.String_Set;
+   begin
+      for Rel of Map.Including (Root) loop
+
+         --  Add root dirs of dependencies
+
+         if Rel.Name /= Root.Name and then Rel.Origin.Kind /= Child then
+            Set.Include (Base / Paths.Working_Deps_Path / Rel.Unique_Folder);
+         end if;
+
+         --  Add extra project paths, for all releases
+
+         for Path of Rel.Project_Paths (Props) loop
+            Set.Include (Base / Rel_Base_Path (Rel) / Path);
+         end loop;
+      end loop;
+
+      return Set;
+   end Project_Paths;
 
    ---------------------
    -- To_Dependencies --

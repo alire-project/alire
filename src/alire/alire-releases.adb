@@ -16,6 +16,7 @@ package body Alire.Releases is
    package Semver renames Semantic_Versioning;
 
    use all type Alire.Properties.Labeled.Labels;
+   use type Conditional.Dependencies;
 
    --------------------
    -- All_Properties --
@@ -52,7 +53,6 @@ package body Alire.Releases is
       Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
       return Release
    is
-      use all type Conditional.Dependencies;
       use all type Requisites.Tree;
    begin
       return Extended : Release := Base do
@@ -288,6 +288,27 @@ package body Alire.Releases is
       end if;
    end On_Platform_Properties;
 
+   -----------------------
+   -- Parent_Dependency --
+   -----------------------
+
+   function Parent_Dependency (R : Release)
+                               return Alire.Dependencies.Dependency
+   is (Alire.Dependencies.New_Dependency
+       (R.Origin.Parent,
+        Semver.Extended.To_Extended
+          (Semver.Basic.Exactly (R.Version))));
+
+   --------------------------
+   -- Outward_Dependencies --
+   --------------------------
+
+   function Outward_Dependencies (R : Release) return Conditional.Dependencies
+   is (R.Dependencies and
+         (if R.Origin.Kind = Child
+          then Conditional.For_Dependencies.New_Value (Parent_Dependency (R))
+          else Conditional.No_Dependencies));
+
    ----------------------
    -- Props_To_Strings --
    ----------------------
@@ -446,9 +467,10 @@ package body Alire.Releases is
       end if;
 
       --  DEPENDENCIES
-      if not R.Dependencies.Is_Empty then
+      if not R.Outward_Dependencies.Is_Empty then
          Put_Line ("Dependencies (direct):");
-         R.Dependencies.Print ("   ", R.Dependencies.Contains_ORs);
+         R.Outward_Dependencies.Print
+           ("   ", R.Outward_Dependencies.Contains_ORs);
       end if;
    end Print;
 
@@ -512,6 +534,16 @@ package body Alire.Releases is
             return Result;
          end if;
       end;
+
+      --  If this is a child release, ensure that the parent dependency is not
+      --  given explicitly by the maintainer.
+
+      if This.Origin.Kind = Child and then
+         This.Dependencies.Contains (Parent_Dependency (This))
+      then
+         return Outcome_Failure
+           ("A child crate already implicitly depends on its parent");
+      end if;
 
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;

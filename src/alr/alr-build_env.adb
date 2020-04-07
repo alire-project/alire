@@ -3,14 +3,14 @@ with Ada.Text_IO;
 
 with GNAT.OS_Lib;
 
-with Alire.Utils;
-with Alire.Properties.Scenarios;
-with Alire.GPR;
 with Alire.Directories;
+with Alire.GPR;
+with Alire.Paths;
+with Alire.Properties.Scenarios;
+with Alire.Utils;
 
-with Alr.Platform;
-with Alr.Paths;
 with Alr.OS_Lib;
+with Alr.Platform;
 with Alr.Query;
 with Alr.Commands;
 
@@ -28,46 +28,20 @@ package body Alr.Build_Env is
                           Root     : Alire.Roots.Root)
                           return String
    is
-      use Alr.OS_Lib;
       use Ada.Strings.Unbounded;
+      use Alire.Directories.Operators;
 
       Result       : Unbounded_String;
-      All_Paths    : Alire.Utils.String_Vector;
-      Sorted_Paths : Alire.Utils.String_Set;
 
-      Working_Folder : constant Alire.Absolute_Path :=
-        Alire.Directories.Current / Paths.Alr_Working_Folder;
+      Sorted_Paths : constant Alire.Utils.String_Set :=
+                       Instance.Project_Paths
+                         (Base  => Alire.Directories.Current
+                                   / Alire.Paths.Working_Folder_Inside_Root,
+                          Root  => Root.Release,
+                          Props => Platform.Properties);
 
       First : Boolean := True;
    begin
-      --  First obtain all paths and then output them, if any needed
-      for Rel of Instance.Including (Root.Release) loop
-         if Rel.Name = Root.Release.Name then
-            --  All_Paths.Append (".");
-            null; -- That's the first path in aggregate projects anyway
-         else
-            All_Paths.Append (Working_Folder /
-                                Paths.Alr_Working_Deps_Path /
-                                  Rel.Unique_Folder);
-         end if;
-
-         --  Add non-root extra project paths, always
-         for Path of Rel.Project_Paths (Platform.Properties) loop
-            All_Paths.Append
-              (Working_Folder /
-                 (if Rel.Name = Root.Release.Name
-                  then ".."
-                  else Paths.Alr_Working_Deps_Path / Rel.Unique_Folder) /
-                 Path);
-         end loop;
-      end loop;
-
-      --  Sort and remove duplicates in paths (may come from extension
-      --  projects).
-      for Path of All_Paths loop
-         Sorted_Paths.Include (Path);
-      end loop;
-
       if not Sorted_Paths.Is_Empty then
          for Path of Sorted_Paths loop
 

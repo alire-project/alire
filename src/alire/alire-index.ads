@@ -17,7 +17,7 @@ with Semantic_Versioning;
 package Alire.Index is
 
    Community_Repo : constant URL :=
-                      "git+https://github.com/alire-project/alire-index";
+                      "git+https://github.com/mosteo/alire-index";
    --  Default index installed on first run
 
    Community_Name : constant Restricted_Name := "community";
@@ -35,7 +35,7 @@ package Alire.Index is
      and then Branch_String (Branch_String'Last) /= '-'
      and then (for some C of Branch_String => C = '-');
 
-   Community_Branch : constant String := "devel-0.2";
+   Community_Branch : constant String := "devel-0.3";
    --  The branch used for the community index
 
    Version : constant Semantic_Versioning.Version :=

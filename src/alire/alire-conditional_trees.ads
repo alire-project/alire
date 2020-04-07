@@ -288,6 +288,13 @@ package Alire.Conditional_Trees with Preelaborate is
 
    function To_Tree (N : Node'Class) return Tree;
 
+   ---------------
+   --  QUERIES  --
+   ---------------
+
+   function Contains (Container : Tree; Value : Values) return Boolean;
+   --  Say if the tree contains the value at any depth
+
 private
 
    type Node is abstract new Interfaces.Yamlable with null record;

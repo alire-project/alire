@@ -10,7 +10,8 @@ with TOML; use all type TOML.Any_Value_Kind;
 package Alire.Origins with Preelaborate is
 
    type Kinds is
-     (External,       -- A do-nothing origin, with some custom description
+     (Child,          -- A child crate that refers to its parent
+      External,       -- A do-nothing origin, with some custom description
       Filesystem,     -- Not really an origin, but a working copy of a release
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
@@ -68,12 +69,17 @@ package Alire.Origins with Preelaborate is
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Source_Archive;
 
+   function Parent (This : Origin) return Crate_Name with
+     Pre => This.Kind = Child;
+
    --  Helper types
 
    subtype Git_Commit is String (1 .. 40);
    subtype Hg_Commit  is String (1 .. 40);
 
    --  Constructors
+
+   function New_Child (Parent : Crate_Name) return Origin;
 
    function New_External (Description : String) return Origin;
 
@@ -166,6 +172,9 @@ private
       Hashes : Hash_Vectors.Vector;
 
       case Kind is
+         when Child =>
+            Parent : Unbounded_String;
+
          when External =>
             Description : Unbounded_String;
 
@@ -195,6 +204,9 @@ private
    end record;
 
    function Image_Of_Hashes (This : Origin) return String;
+
+   function New_Child (Parent : Crate_Name) return Origin is
+     (Data => (Child, Parent => +String (Parent), Hashes => <>));
 
    function New_External (Description : String) return Origin is
       (Data => (External, Description => +Description, Hashes => <>));
@@ -239,6 +251,9 @@ private
    function Package_Name (This : Origin) return String is
      (+This.Data.Package_Name);
 
+   function Parent (This : Origin) return Crate_Name is
+     (Crate_Name (+This.Data.Parent));
+
    function S (Str : Unbounded_String) return String is (To_String (Str));
 
    function Image (This : Origin) return String is
@@ -254,10 +269,12 @@ private
           when System         =>
              "system package from platform software manager: "
              & This.Package_Name,
-          when Filesystem     =>
-             "path " & S (This.Data.Path),
+          when Child          =>
+             "child of " & (+This.Parent),
           when External       =>
-             "external " & S (This.Data.Description))
+             "external " & S (This.Data.Description),
+          when Filesystem     =>
+             "path " & S (This.Data.Path))
       & (if This.Data.Hashes.Is_Empty
          then ""
          elsif This.Data.Hashes.Last_Index = 1
@@ -265,13 +282,15 @@ private
          else " with hashes " & This.Image_Of_Hashes)
      );
 
+   Prefix_Child  : aliased constant String := "crate:";
    Prefix_Git    : aliased constant String := "git+";
    Prefix_Hg     : aliased constant String := "hg+";
    Prefix_SVN    : aliased constant String := "svn+";
    Prefix_File   : aliased constant String := "file://";
 
    Prefixes : constant Prefix_Array :=
-                (Git            => Prefix_Git'Access,
+                (Child          => Prefix_Child'Access,
+                 Git            => Prefix_Git'Access,
                  Hg             => Prefix_Hg'Access,
                  SVN            => Prefix_SVN'Access,
                  External       => null,

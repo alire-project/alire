@@ -6,7 +6,9 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Milestones;
+with Alire.Properties;
 with Alire.Releases;
+with Alire.Utils;
 
 package Alire.Containers with Preelaborate is
 
@@ -56,6 +58,15 @@ package Alire.Containers with Preelaborate is
                        return Release_Map;
    --  Those insert both under the actual crate name and Provides, if
    --  different.
+
+   function Project_Paths (Map   : Release_Map;
+                           Base  : Absolute_Path;
+                           Root  : Releases.Release;
+                           Props : Properties.Vector)
+                           return Utils.String_Set;
+   --  Return a duplicate-free ordered set with all project paths defined by
+   --  releases in the map. Base must point to the alire working dir inside
+   --  the root crate dir.
 
    function To_Dependencies (Map : Release_Map)
                              return Conditional.Dependencies;

@@ -164,7 +164,9 @@ package Alire.Releases with Preelaborate is
    function Project_Paths (R : Release;
                            P : Alire.Properties.Vector)
                            return Utils.String_Set;
-   --  Deduced from Project_Files
+   --  Return the relative project paths defined by this release. If this is a
+   --  child project, these paths have to be composed with the parent root dir
+   --  instead of its own root dir.
 
    function Project_Files (R         : Release;
                            P         : Alire.Properties.Vector;
@@ -262,6 +264,8 @@ private
                             return Alire.Properties.Vector;
    --  Properties that R has under platform properties P
 
+   function Outward_Dependencies (R : Release) return Conditional.Dependencies;
+
    type Release (Prj_Len,
                  Notes_Len : Natural) is
      new Interfaces.Tomifiable
@@ -274,6 +278,10 @@ private
       Origin       : Origins.Origin;
       Notes        : Description_String (1 .. Notes_Len);
       Dependencies : Conditional.Dependencies;
+      --  Note on child releases: these are the explicit dependencies only. The
+      --  implicit dependency on the parent crate is injected only to the outer
+      --  world. Use Outwards_Dependencies if for some reason you need the full
+      --  list of dependencies in this body.
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Requisites.Tree;
@@ -306,12 +314,12 @@ private
    is (R.Notes);
 
    function Dependencies (R : Release) return Conditional.Dependencies
-   is (R.Dependencies);
+   is (R.Outward_Dependencies);
 
    function Dependencies (R : Release;
                           P : Alire.Properties.Vector)
                           return Conditional.Dependencies
-   is (R.Dependencies.Evaluate (P));
+   is (R.Outward_Dependencies.Evaluate (P));
 
    function Forbids (R : Release;
                      P : Alire.Properties.Vector)
@@ -365,6 +373,7 @@ private
          Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is
+           when Child          => "child",
            when External       => "external",
            when Filesystem     => "filesystem",
            when System         => "system",
