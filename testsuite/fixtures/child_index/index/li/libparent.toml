@@ -1,0 +1,8 @@
+[general]
+description = "Main lib"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+licenses = []
+
+[1]
+origin = "file://../../crates/libparent"

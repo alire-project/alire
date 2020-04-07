@@ -1,0 +1,9 @@
+[general]
+description = "Child lib"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+licenses = []
+
+[1]
+origin = "crate:libparent"
+project-files = ["child/libchild.gpr"]
