@@ -139,19 +139,15 @@ package Alire.Releases with Preelaborate is
 
    function Version (R : Release) return Semantic_Versioning.Version;
 
-   function Depends (R : Release) return Conditional.Dependencies;
-   function Dependencies (R : Release) return Conditional.Dependencies
-                          renames Depends;
+   function Dependencies (R : Release) return Conditional.Dependencies;
+   --  Retrieve dependencies as-is from the TOML description
 
-   function Properties (R : Release) return Conditional.Properties;
-
-   function Depends (R : Release;
-                     P : Alire.Properties.Vector)
-                     return Conditional.Dependencies;
-   --  Not really conditional anymore, but still a potential tree
    function Dependencies (R : Release;
                           P : Alire.Properties.Vector)
-                          return Conditional.Dependencies renames Depends;
+                          return Conditional.Dependencies;
+   --  Retrieve only the dependencies that apply on platform P
+
+   function Properties (R : Release) return Conditional.Properties;
 
    function Origin  (R : Release) return Origins.Origin;
    function Available (R : Release) return Requisites.Tree;
@@ -309,12 +305,12 @@ private
    function Notes (R : Release) return Description_String
    is (R.Notes);
 
-   function Depends (R : Release) return Conditional.Dependencies
+   function Dependencies (R : Release) return Conditional.Dependencies
    is (R.Dependencies);
 
-   function Depends (R : Release;
-                     P : Alire.Properties.Vector)
-                     return Conditional.Dependencies
+   function Dependencies (R : Release;
+                          P : Alire.Properties.Vector)
+                          return Conditional.Dependencies
    is (R.Dependencies.Evaluate (P));
 
    function Forbids (R : Release;

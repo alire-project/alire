@@ -49,7 +49,7 @@ package body Alr.Commands.Search is
                         (if Query.Is_Available (R) then " " else "U") &
                         (if R.Origin.Is_System then " " else
                              (if Query.Is_Resolvable
-                                (R.Depends (Platform.Properties),
+                                (R.Dependencies (Platform.Properties),
                                  Options => (Age       => Query_Policy,
                                              Detecting => Dont_Detect,
                                              Hinting   => Hint))
