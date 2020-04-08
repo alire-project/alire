@@ -222,7 +222,7 @@ package body Alr.Query is
 
                --  Check in turn that the release dependencies are satisfied
                --  too.
-               return Is_Complete (R.Depends (Platform.Properties), Sol);
+               return Is_Complete (R.Dependencies (Platform.Properties), Sol);
             end if;
          end loop;
 
@@ -463,20 +463,21 @@ package body Alr.Query is
                            then " also providing " & (+R.Provides)
                            else "") &
                           " adding" &
-                          R.Depends (Platform.Properties).Leaf_Count'Img &
+                          R.Dependencies (Platform.Properties).Leaf_Count'Img &
                           " dependencies to tree " &
                           Tree'(Expanded
                                 and Current
                                 and Remaining
-                                and R.Depends
+                                and R.Dependencies
                                   (Platform.Properties)).Image_One_Line);
 
-                     Expand (Expanded and R.To_Dependency,
-                             Remaining and R.Depends (Platform.Properties),
-                             Empty,
-                             Frozen.Inserting (R),
-                             Forbidden and R.Forbids (Platform.Properties),
-                             Hints);
+                     Expand
+                       (Expanded and R.To_Dependency,
+                        Remaining and R.Dependencies (Platform.Properties),
+                        Empty,
+                        Frozen.Inserting (R),
+                        Forbidden and R.Forbids (Platform.Properties),
+                        Hints);
 
                   --  Finally, even a valid candidate may not satisfy version
                   --  restrictions, or not be available in the current

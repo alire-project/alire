@@ -34,9 +34,9 @@ package body Alr.Commands.Get is
       Rel : constant Alire.Index.Release :=
         Query.Find (Name, Versions, Query_Policy);
    begin
-      if not Query.Is_Resolvable (Rel.Depends.Evaluate (Platform.Properties))
-        and then
-         not Cmd.Only
+      if not Query.Is_Resolvable
+               (Rel.Dependencies.Evaluate (Platform.Properties))
+         and then not Cmd.Only
       then
          Trace.Error ("Could not resolve dependencies for: " &
                         Query.Dependency_Image (Name, Versions));

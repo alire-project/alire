@@ -157,7 +157,7 @@ package body Alr.Commands.Test is
 
          Is_Available  := Query.Is_Available (R);
          Is_Resolvable := Query.Is_Resolvable
-           (R.Depends (Platform.Properties));
+           (R.Dependencies (Platform.Properties));
 
          if not Is_Available then
             Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);
