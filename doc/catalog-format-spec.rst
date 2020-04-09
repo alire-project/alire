@@ -339,30 +339,28 @@ following entries:
 
   .. code-block:: toml
 
-   # Clone a git repository
-   origin = "git+https://github.com/example-user/example-project"
+   # Clone a git repository at a particular revision (hash must be complete)
+   origin = "git+https://github.com/example-user/example-project@9c193975fddb24bb1c3b22108c3d0c1bb2d1bd10"
 
    # Download and extract a source archive
    origin = "https://example.org/archive.tar.gz"
 
-  If the package only maps a package from the system package manager, (for
-  instance ``make``), run:
+A single source that provides several project files with different dependencies
+can be split in a parent crate and one or more child crates. The parent crate
+is defined normally. Child crates point their origin to the corresponding
+parent:
 
-  .. code-block:: json
+  .. code-block:: toml
 
-   origin = "native:make"
+   origin = "crate:parent_crate_name"
 
-  Make the expression evaluate to an empty string to mean that the package is
-  not available, or just leave the alternative out. For instance, to state that
-  ``make`` is available on Debian/Ubuntu and not on the other platforms:
+Such a child crate has no sources of its own, but can add project files and
+dependencies as usual. There is an implicit dependency of the child on the
+parent with the same exact semantic version, so this dependency should not be
+added to the crate description.
 
-  .. code-block:: json
-
-   [origin.'case(distribution)']
-   'debian|ubuntu' = "native:make"
-
-* ``origin-hashes``: mandatory string array for git origins and source archives.
-  An array of "kind:digest" fields that specify a hash kind and its value.
+* ``origin-hashes``: mandatory string array source archives. An array of
+  "kind:digest" fields that specify a hash kind and its value.
   Kinds accepted are: sha512.
 
 * ``archive-name``: optional string. If ``origin`` points to a source archive,
@@ -464,11 +462,11 @@ Their specific fields are (all mandatory):
 External kinds: system packages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Systems that have their own package manager (e.g. Linux) can readily provide
-many complex dependencies still unpackaged as source code in Alire. Alire can
-use these on supported platforms (at this time, Debian & Ubuntu. Do not
-hesitate to contact us if you would like to maintain other ones distributions)
-during resolution.
+Systems that have their own package manager (e.g. many Linux distributions) can
+readily provide many complex dependencies still unpackaged as source code in
+Alire. Alire can use these on supported platforms (at this time, Debian &
+Ubuntu. Do not hesitate to contact us if you would like to maintain other
+distributions) during resolution.
 
 A system external gives a list of platform package names that supply the
 dependency natively. The platform package manager will be used to detect their
@@ -488,7 +486,8 @@ compilers, this should be expressed with the ``available`` property, e.g.:
 
 .. code-block:: json
 
-   available.'case(toolchain)'.user = false
+   [external.available.'case(toolchain)']
+   user = false
    # `available` defaults to true, so it is enough to flag the user toolchains
 
 Parameters
