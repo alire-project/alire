@@ -27,6 +27,15 @@ jobs:
       with:
         distrib: community
 
+    - name: Build alr
+      run: gprbuild -j0 -p -P alr_env
+
+    - name: alr first run to install msys2
+      run: ./bin/alr --non-interactive help get
+
+    - name: install tar from msys2 (Git tar in Actions VM does not seem to work)
+      run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S tar
+
     - name: Install Python 2.x (required for the testsuite)
       uses: actions/setup-python@v1
       with:
