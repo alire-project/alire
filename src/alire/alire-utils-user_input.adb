@@ -137,6 +137,7 @@ package body Alire.Utils.User_Input is
       if Config.Not_Interactive then
          Trace.Detail ("Non-interactive session, continuing");
       else
+         Flush_TTY;
          TIO.Put_Line ("Press Enter to continue or Ctrl-C to abort");
          TIO.Get_Line (Foo, Bar);
       end if;
