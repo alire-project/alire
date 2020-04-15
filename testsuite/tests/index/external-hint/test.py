@@ -19,7 +19,8 @@ p = run_alr('get', 'crate', quiet=False, complain_on_error=False)
 if distro_is_known():
     assert_match(".*Hint: This is a custom hint.*", p.out, flags=re.S)
 else:
-    assert_eq('ERROR: No source release indexed for the requested crate, and '
+    assert_eq('Looking for external crate: crate\n'
+              'ERROR: No source release indexed for the requested crate, and '
               'cannot use system packages in unknown distribution\n'
               'ERROR: alr get unsuccessful\n',
               p.out)

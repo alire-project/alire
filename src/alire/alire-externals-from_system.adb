@@ -45,11 +45,12 @@ package body Alire.Externals.From_System is
          return Containers.Release_Sets.Empty_Set;
       end if;
 
-      Trace.Detail ("Looking for system packages that provide crate "
-                    & (+Name));
+      Trace.Debug ("Looking for system packages that provide crate: "
+                   & (+Name));
+
       return Releases : Containers.Release_Set do
          for Candidate of This.System_Candidates (Platform.Distribution) loop
-            Trace.Debug ("Looking for system package " & Candidate);
+            Trace.Detail ("Looking for system package: " & Candidate);
             declare
                Detector : constant System.Deployer'Class :=
                             System.Platform_Deployer (Candidate);
@@ -57,7 +58,7 @@ package body Alire.Externals.From_System is
                             Detector.Detect;
             begin
                if Result.Success then
-                  Trace.Detail ("Success with system package " & Candidate);
+                  Trace.Detail ("Success with system package: " & Candidate);
 
                   Releases.Insert
                     (Index.Crate (Name).Base

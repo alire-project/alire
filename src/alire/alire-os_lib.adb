@@ -37,10 +37,10 @@ package body Alire.OS_Lib is
    -- Getenv --
    ------------
 
-   function Getenv (Var : String; Default : String := "") return String is
+   function Getenv (Name : String; Default : String := "") return String is
       use GNAT.OS_Lib;
 
-      Env_Access : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Var);
+      Env_Access : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv (Name);
       Env        : constant String := Env_Access.all;
    begin
       Free (Env_Access);
@@ -50,5 +50,15 @@ package body Alire.OS_Lib is
          return Env;
       end if;
    end Getenv;
+
+   ------------
+   -- Setenv --
+   ------------
+
+   procedure Setenv (Name : String; Value : String) is
+   begin
+      Trace.Debug ("Setenv " & Name & "=" & Value);
+      GNAT.OS_Lib.Setenv (Name, Value);
+   end Setenv;
 
 end Alire.OS_Lib;

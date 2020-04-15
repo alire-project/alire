@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Errors;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
+with Alire.OS_Lib.Download;
 with Alire.VFS;
 with Alire.Utils;             use Alire.Utils;
 
@@ -26,6 +27,7 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       use type GNATCOLL.OS.OS_Type;
 
+      Unused : String_Vector;
    begin
 
       case GNATCOLL.OS.Constants.OS is
@@ -41,31 +43,43 @@ package body Alire.Origins.Deployers.Source_Archive is
             declare
             begin
                --  Try to untar with --force-local
-               Subprocess.Checked_Spawn
+               Unused := Subprocess.Checked_Spawn_And_Capture
                  ("tar", Empty_Vector &
                     "--force-local" &
                     "-x" &
-                    "-f" & Src_File_Full_Name);
+                    "-f" & Src_File_Full_Name,
+                  Err_To_Out => True);
+
             exception
 
-               when Checked_Error =>
+               when E : Checked_Error =>
+
+                  Trace.Debug ("tar --force-local failed: " & Errors.Get (E));
 
                   --  In case of error, retry without the --force-local option
-                  Subprocess.Checked_Spawn
+                  Unused := Subprocess.Checked_Spawn_And_Capture
                     ("tar", Empty_Vector &
                        "-x" &
-                       "-f" & Src_File_Full_Name);
+                       "-f" & Src_File_Full_Name,
+                     Err_To_Out => True);
             end;
 
          when GNATCOLL.OS.Unix | GNATCOLL.OS.MacOS =>
 
             --  On other platforms, just run tar without --force-local
-            Subprocess.Checked_Spawn
+            Unused := Subprocess.Checked_Spawn_And_Capture
               ("tar", Empty_Vector &
                  "-x" &
-                 "-f" & Src_File_Full_Name);
+                 "-f" & Src_File_Full_Name,
+               Err_To_Out => True);
       end case;
 
+   exception
+      when E : Checked_Error =>
+         Trace.Debug ("tar failed: " & Errors.Get (E));
+
+         --  Reraise current occurence
+         raise;
    end Untar;
 
    ------------
@@ -109,31 +123,11 @@ package body Alire.Origins.Deployers.Source_Archive is
    -----------
 
    overriding
-   function Fetch (This   : Deployer; Folder : String) return Outcome is
-      use GNATCOLL.VFS;
-      Archive_Name : constant String := This.Base.Archive_Name;
-      Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
+   function Fetch (This : Deployer; Folder : String) return Outcome is
    begin
-      Trace.Debug ("Creating folder: " & Folder);
-      Create (+Folder).Make_Dir;
-
-      Trace.Detail ("Downloading archive: " & This.Base.Archive_URL);
-
-      OS_Lib.Subprocess.Checked_Spawn
-        ("curl",
-         Empty_Vector &
-           This.Base.Archive_URL &
-           "--location" &  -- allow for redirects at the remote host
-           (if Log_Level < Trace.Info
-            then Empty_Vector & "--silent"
-            else Empty_Vector & "--progress-bar") &
-           "--output" &
-           Archive_File);
-
-      return Outcome_Success;
-   exception
-      when E : others =>
-         return Alire.Errors.Get (E);
+      return OS_Lib.Download.File (URL      => This.Base.Archive_URL,
+                                   Filename => This.Base.Archive_Name,
+                                   Folder   => Folder);
    end Fetch;
 
    ------------
@@ -156,6 +150,11 @@ package body Alire.Origins.Deployers.Source_Archive is
                         (VFS.New_Virtual_File (VFS.From_FS (Dst_Dir)));
          Success  : Boolean;
       begin
+         if Natural (Contents.Length) = 0 then
+            raise Checked_Error with Errors.Set
+              ("No content where a single directory was expected: " & Dst_Dir);
+         end if;
+
          if Natural (Contents.Length) /= 1 or else
            not Contents.First_Element.Is_Directory
          then

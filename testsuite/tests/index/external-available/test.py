@@ -30,7 +30,8 @@ assert_match(".*Executable make --version .* False.*",
 
 p = run_alr('show', 'crate', '--external-detect', quiet=False)
 
-assert_match("Not found: crate with Newest version.*",
+assert_match("Looking for external crate: crate\n"
+             "Not found: crate with Newest version.*",
              p.out, flags=re.S)
 
 
