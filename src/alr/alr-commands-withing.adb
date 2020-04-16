@@ -47,8 +47,8 @@ package body Alr.Commands.Withing is
             Trace.Info
               ("Not adding " & (+Requested.Crate)
                & " because " & Dep.Image & " is already a dependency");
+            return Deps;
          end if;
-         return Deps;
       end loop;
 
       --  Merge the dependency and ensure there is a solution
