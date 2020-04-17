@@ -26,10 +26,22 @@ package body Alr.Commands.Init is
 
       package TIO renames Ada.Text_IO;
 
+      --  For hierarchical names we do not really know if the user wants the
+      --  full hierarchy of packages or not, since upper levels can come from
+      --  other crates. To have something that builds let's make thing simple
+      --  and replace '.' with '_'.
+
       For_Library : constant Boolean := not Cmd.Bin;
       Name        : constant String := Argument (1);
-      Lower_Name  : constant String := Utils.To_Lower_Case (Name);
-      Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
+      Lower_Name  : constant String :=
+                      Utils.Replace (Text  => Utils.To_Lower_Case (Name),
+                                     Match => "" & Alire.Display_Separator,
+                                     Subst => "_");
+      Mixed_Name  : constant String :=
+                      Utils.To_Mixed_Case
+                        (Utils.Replace (Text  => Name,
+                                        Match => "" & Alire.Display_Separator,
+                                        Subst => "_"));
 
       Directory     : constant Virtual_File :=
         (if Cmd.In_Place

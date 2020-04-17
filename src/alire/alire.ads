@@ -34,12 +34,6 @@ package Alire with Preelaborate is
    Max_Tag_Length         : constant := 15;
    --  Maximum length of a single element of the tags field
 
-   --  package BStrings is new Ada.Strings.Bounded.Generic_Bounded_Length
-   --       (Integer'Max (Max_Name_Length, Max_Description_Length));
-
-   Extension_Separator    : constant Character := '.';
-   --  Refers to extension releases! Nothing to do with files
-
    --  Strings that are used quite generally
 
    package UStrings renames Ada.Strings.Unbounded;
@@ -51,9 +45,15 @@ package Alire with Preelaborate is
    function "+" (S : UString) return String
    renames UStrings.To_String;
 
+   On_Disk_Separator : constant Character := '-'; -- Used for TOML filenames
+   Display_Separator : constant Character := '.'; -- Displayed to users
+   --  For hierarchical crate names the dot is allowed. This is translated to
+   --  '-' on disk, following GNAT default file naming convention which will
+   --  be familiar to users.
+
    subtype Crate_Character is Character
       with Static_Predicate => Crate_Character in
-         'a' .. 'z' | '0' .. '9' | '_' | Extension_Separator;
+         'a' .. 'z' | '0' .. '9' | '_' | Display_Separator;
 
    --------------------
    --  Crate Naming  --
@@ -81,6 +81,11 @@ package Alire with Preelaborate is
    function "<" (L, R : Crate_Name) return Boolean;
    --  Likewise, we do not want capitalization to influence ordering.
 
+   function Is_Hierarchical (Name : Crate_Name) return Boolean is
+     (for some Char of Name => Char = Display_Separator);
+   --  Dots in names translate to dashes in files, so this must be taken into
+   --  account in a few places.
+
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then
      Restricted_Name (Restricted_Name'First) /= '_' and then
@@ -99,7 +104,7 @@ package Alire with Preelaborate is
        Dynamic_Predicate =>
          Folder_String'Length > 0 and then
          (for all C of Folder_String => C in
-          'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Extension_Separator);
+          'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' | Display_Separator);
    --  Used for cross-platform folder names
 
    subtype Any_Path is String;

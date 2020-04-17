@@ -22,6 +22,9 @@ package Alire.TOML_Index is
    --  Load a file that must contain a single release.
    --  May raise Checked_Error if Filename hasn't proper contents.
 
+   function File_To_Crate (Filename : String) return Crate_Name;
+   --  Translate name on disk to proper crate name, by translating '-' into '.'
+
 private
 
    procedure Index_Crate (Path  : Relative_Path;

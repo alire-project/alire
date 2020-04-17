@@ -365,9 +365,16 @@ package body Alire.Releases is
       With_Paths : Utils.String_Vector :=
         Props_To_Strings (R.All_Properties (P), Project_File);
       Without    : Utils.String_Vector;
+
+      Default    : constant String :=
+                     Utils.Replace (Text  => R.Name_Str,
+                                    Match => "" & Display_Separator,
+                                    Subst => "_")
+                     & ".gpr";
+      --  Default project file is used only in case of missing explicit one(s)
    begin
       if With_Paths.Is_Empty then
-         With_Paths.Append (String'((+R.Name) & ".gpr"));
+         With_Paths.Append (Default);
       end if;
 
       if With_Path then

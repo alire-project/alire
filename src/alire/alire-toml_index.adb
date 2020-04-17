@@ -72,7 +72,7 @@ package body Alire.TOML_Index is
    --  Suffix for the name of package description files
 
    subtype Package_Name_Character is Crate_Character
-      with Static_Predicate => Package_Name_Character /= Extension_Separator;
+      with Static_Predicate => Package_Name_Character /= On_Disk_Separator;
 
    ---------------
    -- Set_Error --
@@ -100,6 +100,12 @@ package body Alire.TOML_Index is
    function Valid_Package_Name (Name : String) return Boolean is
    begin
       if Name'Length = 0 then
+         return False;
+      end if;
+
+      --  Reject dots other than the ".toml" one
+
+      if (for some Char of Name => Char = Display_Separator) then
          return False;
       end if;
 
@@ -235,6 +241,17 @@ package body Alire.TOML_Index is
          Set_Error (Result, Filename,
                     "malformed version string: " & Value.Get (Key).As_String);
    end Check_Index;
+
+   -------------------
+   -- File_To_Crate --
+   -------------------
+
+   function File_To_Crate (Filename : String) return Crate_Name is
+     (Crate_Name
+        (Utils.To_Lower_Case
+             (Utils.Replace (Text  => Filename,
+                             Match => "" & On_Disk_Separator,
+                             Subst => "" & Display_Separator))));
 
    ----------
    -- Load --
@@ -436,7 +453,7 @@ package body Alire.TOML_Index is
       declare
          Crate  : Crates.With_Releases.Crate :=
                     Crates.With_Releases.New_Crate
-                      (+Utils.To_Lower_Case (Package_Name));
+                      (File_To_Crate (Package_Name));
       begin
          Result := Crate.From_TOML (TOML_Adapters.From
                                     (Value,
@@ -472,7 +489,7 @@ package body Alire.TOML_Index is
       declare
          Crate  : Crates.With_Releases.Crate :=
                     Crates.With_Releases.New_Crate
-                      (+Utils.To_Lower_Case (Name));
+                      (File_To_Crate (Name));
          Result : constant Load_Result :=
                     Crate.From_TOML
                       (TOML_Adapters.From

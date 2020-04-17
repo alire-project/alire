@@ -61,10 +61,6 @@ package body Alr.Checkout is
    -- To_Folder --
    ---------------
 
-   ---------------
-   -- To_Folder --
-   ---------------
-
    procedure To_Folder (Solution : Query.Solution;
                         Parent   : String := Paths.Dependencies_Folder)
    is

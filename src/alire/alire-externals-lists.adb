@@ -13,7 +13,7 @@ package body Alire.Externals.Lists is
                     return Containers.Release_Set
    is
    begin
-      Trace.Info ("Looking for external crate: " & (+Name));
+      Trace.Debug ("Looking for external crate: " & (+Name));
       return Detected : Containers.Release_Set do
          for External of This loop
             if External.Available.Check (Env) then

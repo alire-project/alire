@@ -24,7 +24,7 @@ package body Alr.Templates is
       use GNATCOLL.VFS;
       F : constant Virtual_File := Create (+Filename, Normalize => True);
    begin
-      Trace.Debug ("Generating " & Release.Name_Str & ".toml file for "
+      Trace.Debug ("Generating " & Filename & " file for "
                    & Release.Milestone.Image & " with"
                    & Release.Dependencies.Leaf_Count'Img & " dependencies");
 

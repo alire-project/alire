@@ -1,6 +1,7 @@
 private with Alire.Containers;
 private with Alire.OS_Lib;
 private with Alire.Paths;
+private with Alire.Utils;
 with Alire.Releases;
 
 package Alire.Roots with Preelaborate is
@@ -116,7 +117,9 @@ private
 
    function Crate_File (This : Root) return Absolute_Path is
      (This.Working_Folder /
-        This.Release.Constant_Reference.Name_Str &
+        Utils.Replace (Text  => This.Release.Constant_Reference.Name_Str,
+                       Match => "" & Display_Separator,
+                       Subst => "" & On_Disk_Separator) &
         Paths.Crate_File_Extension_With_Dot);
 
    function Working_Folder (This : Root) return Absolute_Path is

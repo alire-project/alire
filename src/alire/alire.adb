@@ -91,23 +91,32 @@ package body Alire is
       Err : UString renames Last_Name_Error;
       use type UString;
    begin
-      if S'Length < Min_Name_Length then
-         Err := +"Identifier too short.";
-      elsif S'Length > Max_Name_Length then
-         Err := +"Identifier too long.";
-      elsif S (S'First) = '_' then
-         Err := +"Identifiers must not begin with an underscore.";
-      elsif (for some C of S => C not in Crate_Character) then
-         Err := +"Identifiers must be lowercase ASCII alphanumerical.";
-      end if;
+      --  Check that every subname between dots also compliant:
 
-      if +Err /= "" then
-         Err := Err
-           & " You can see the complete identifier naming rules"
-           & " with 'alr help identifiers'";
-      end if;
+      for Name of Utils.String_Vector'(Utils.Split (S, Display_Separator)) loop
 
-      return +Err = "";
+         if Name'Length < Min_Name_Length then
+            Err := +"Identifier too short: " & Name;
+         elsif Name'Length > Max_Name_Length then
+            Err := +"Identifier too long: " & Name;
+         elsif Name (Name'First) = '_' then
+            Err := +"Identifier must not begin with an underscore: " & Name;
+         elsif (for some C of S => C not in Crate_Character) then
+            Err := +"Identifier must be lowercase ASCII alphanumerical: "
+              & Name;
+         end if;
+
+         if +Err /= "" then
+            Err := Err
+              & ". You can see the complete identifier naming rules"
+              & " with 'alr help identifiers'";
+
+            return False;
+         end if;
+
+      end loop;
+
+      return True;
    end Is_Valid_Name;
 
    -------------------
