@@ -12,8 +12,7 @@ import re
 p = run_alr('get', 'libhello=0.9-test_unav_native',
             complain_on_error=True, quiet=False)
 
-assert_match('Looking for external crate: make\n'
-             'Warning: The following external dependencies are unavailable within Alire:\n'
+assert_match('Warning: The following external dependencies are unavailable within Alire:\n'
              'Warning:    make\*\n'
              'Warning: They should be made available in the environment by the user.\n',
              p.out, flags=re.S)

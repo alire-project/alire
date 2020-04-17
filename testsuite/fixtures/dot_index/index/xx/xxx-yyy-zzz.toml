@@ -1,0 +1,8 @@
+[general]
+description = "A crate"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+licenses = []
+
+[1]
+origin = "file://../../crates/xxx.yyy.zzz"

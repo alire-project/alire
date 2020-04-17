@@ -1,0 +1,4 @@
+driver: python-script
+indexes:
+    dot_index:
+        in_fixtures: true

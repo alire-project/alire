@@ -10,10 +10,10 @@ from drivers.asserts import assert_match
 
 import re
 
-assert_match(".*Identifiers must be lowercase ASCII alphanumerical.*",
+assert_match(".*Identifier must be lowercase ASCII alphanumerical.*",
              run_alr('show', 'HELLO', complain_on_error=False).out, flags=re.S)
 
-assert_match(".*Identifiers must be lowercase ASCII alphanumerical.*",
+assert_match(".*Identifier must be lowercase ASCII alphanumerical.*",
              run_alr('show', 'ññññ', complain_on_error=False).out, flags=re.S)
 
 assert_match(".*Identifier too short.*",
@@ -22,7 +22,7 @@ assert_match(".*Identifier too short.*",
 assert_match(".*Identifier too long.*",
              run_alr('show', 'x'*65, complain_on_error=False).out, flags=re.S)
 
-assert_match(".*Identifiers must not begin with an underscore.*",
+assert_match(".*Identifier must not begin with an underscore.*",
              run_alr('show', '_xxx', complain_on_error=False).out, flags=re.S)
 
 print('SUCCESS')
