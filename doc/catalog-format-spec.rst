@@ -7,6 +7,13 @@ Big picture
 Each project is described as a TOML file. For instance: ``aaa.toml`` for the
 AAA project, ``gnatcoll.toml`` for the package corresponding to GNATCOLL.
 
+Crate names may be hierarchical, such as ``aaa.bbb``, in which case the file
+follows GNAT naming convention and should be called ``aaa-bbb.toml``. This has
+no other repercussions, nor forces you to organize the Ada sources in a
+particular package hierarchy. Crate ```aaa``` might not even exist; if it does,
+```aaa.bbb``` does not depend on ```aaa``` (unless you mark it as such
+explicitly).
+
 Each TOML description contains an object that has a ``general`` table and then
 one table per release.
 
