@@ -80,7 +80,7 @@ package body Alire.Origins.Deployers.Source_Archive is
 
    exception
       when E : Checked_Error =>
-         Trace.Debug ("tar failed: " & Errors.Get (E));
+         Trace.Warning ("tar failed: " & Errors.Get (E, Clear => False));
 
          --  Reraise current occurence
          raise;
