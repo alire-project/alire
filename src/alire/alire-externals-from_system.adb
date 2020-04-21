@@ -120,6 +120,14 @@ package body Alire.Externals.From_System is
          begin
             for Distro in Distro_Origins'Range loop
                if Distro_Origins (Distro) /= TOML.No_TOML_Value then
+
+                  if Distro_Origins (Distro).Kind not in TOML.TOML_Array then
+                     From.Checked_Error
+                       ("case(distribution): "
+                        & "array of candidate packages expected, but got: "
+                        & Distro_Origins (Distro).Kind'Img);
+                  end if;
+
                   Result.Origin.Distro_Candidates (Distro) :=
                     TOML_Adapters.To_Vector (Distro_Origins (Distro));
                end if;
