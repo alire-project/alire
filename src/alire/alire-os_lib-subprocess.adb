@@ -1,7 +1,5 @@
 with Ada.Text_IO;
 
-with Alire.Errors;
-
 with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
@@ -118,43 +116,47 @@ package body Alire.OS_Lib.Subprocess is
      (Command             : String;
       Arguments           : Utils.String_Vector;
       Understands_Verbose : Boolean := False;
-      Err_To_Out          : Boolean := False) return Utils.String_Vector
+      Err_To_Out          : Boolean := False;
+      Valid_Exit_Codes    : Code_Array := (1 => 0)) return Utils.String_Vector
    is
-      Output : Utils.String_Vector;
+      Output    : Utils.String_Vector;
+      Exit_Code : constant Integer :=
+                    Spawn_And_Capture
+                      (Output              => Output,
+                       Command             => Command,
+                       Arguments           => Arguments,
+                       Understands_Verbose => Understands_Verbose,
+                       Err_To_Out          => Err_To_Out);
    begin
-      Checked_Spawn_And_Capture (Command,
-                                 Arguments,
-                                 Output,
-                                 Understands_Verbose,
-                                 Err_To_Out);
+      if (for some Code of Valid_Exit_Codes => Exit_Code = Code) then
+         Trace.Debug ("Command exited with valid code:" & Exit_Code'Img);
+         return Output;
+      end if;
+
+      Raise_Checked_Error
+        ("Command " & Image (Command, Arguments)
+         & " exited with code" & Exit_Code'Img
+         & " and output: " & Output.Flatten (Separator => "\n"));
+
       return Output;
    end Checked_Spawn_And_Capture;
 
-   -------------------------------
-   -- Checked_Spawn_And_Capture --
-   -------------------------------
+   ---------------------------------
+   -- Unchecked_Spawn_And_Capture --
+   ---------------------------------
 
-   procedure Checked_Spawn_And_Capture
+   function Unchecked_Spawn_And_Capture
      (Command             : String;
       Arguments           : Utils.String_Vector;
       Output              : in out Utils.String_Vector;
       Understands_Verbose : Boolean := False;
-      Err_To_Out          : Boolean := False)
-   is
-      Code   : constant Integer :=
-        Spawn_And_Capture (Output              => Output,
-                           Command             => Command,
-                           Arguments           => Arguments,
-                           Understands_Verbose => Understands_Verbose,
-                           Err_To_Out          => Err_To_Out);
-   begin
-      if Code /= 0 then
-         raise Checked_Error
-           with Errors.Set ("Command " & Image (Command, Arguments) &
-                              " exited with code" & Code'Img &
-                              " and output: " & Output.Flatten);
-      end if;
-   end Checked_Spawn_And_Capture;
+      Err_To_Out          : Boolean := False) return Integer
+   is (Spawn_And_Capture
+       (Output              => Output,
+        Command             => Command,
+        Arguments           => Arguments,
+        Understands_Verbose => Understands_Verbose,
+        Err_To_Out          => Err_To_Out));
 
    -----------
    -- Spawn --

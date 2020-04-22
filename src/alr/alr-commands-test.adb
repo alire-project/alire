@@ -116,9 +116,10 @@ package body Alr.Commands.Test is
                          "-n" &
                          R.Milestone.Image;
 
+            Exit_Code : Integer;
          begin
             if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-               Checked_Spawn_And_Capture
+               Exit_Code := Unchecked_Spawn_And_Capture
                  ("sudo",
                   Empty_Vector
                   & "docker"
@@ -137,11 +138,15 @@ package body Alr.Commands.Test is
                   Output,
                   Err_To_Out => True);
             else
-               Checked_Spawn_And_Capture
+               Exit_Code := Unchecked_Spawn_And_Capture
                  ("alr",
                   Alr_Args,
                   Output,
                   Err_To_Out => True);
+            end if;
+
+            if Exit_Code /= 0 then
+               raise Child_Failed;
             end if;
          end Build_Release;
 
@@ -318,13 +323,14 @@ package body Alr.Commands.Test is
          use Alire.OS_Lib.Subprocess;
          use Alire.Utils;
 
-         Output : String_Vector;
+         Output    : String_Vector;
+         Exit_Code : Integer;
       begin
          if Alire.Utils.Command_Line_Contains (Docker_Switch) then
 
             Trace.Info ("Running builds in docker image: " & Docker_Image);
 
-            Checked_Spawn_And_Capture
+            Exit_Code := Unchecked_Spawn_And_Capture
               ("sudo",
                Empty_Vector
                & "docker"
@@ -332,14 +338,14 @@ package body Alr.Commands.Test is
                & Docker_Image,
                Output,
                Err_To_Out => True);
-         end if;
 
-      exception
-         when Alire.Checked_Error =>
-            Reportaise_Command_Failed
-              ("Failed to pull docker image " & Docker_Image
-               & " with output: "
-               & Output.Flatten (Separator => "" & ASCII.LF));
+            if Exit_Code /= 0 then
+               Reportaise_Command_Failed
+                 ("Failed to pull docker image " & Docker_Image
+                  & " with output: "
+                  & Output.Flatten (Separator => "" & ASCII.LF));
+            end if;
+         end if;
       end Pull_Docker;
 
    begin

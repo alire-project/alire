@@ -17,11 +17,12 @@ package body Alire.Origins.Deployers.System.Pacman is
       Package_Match : constant String := "^" & Package_Name & "$";
 
       Output : constant Utils.String_Vector :=
-        Subprocess.Checked_Spawn_And_Capture
-          ("pacman",
-           Empty_Vector &
-             "-Ss" &
-             Package_Match);
+                 Subprocess.Checked_Spawn_And_Capture
+                   ("pacman",
+                    Empty_Vector &
+                      "-Ss" &
+                      Package_Match,
+                    Valid_Exit_Codes => (0, 1)); -- Returned when not found
    begin
       if not Output.Is_Empty then
          return Output.First_Element;
@@ -36,37 +37,28 @@ package body Alire.Origins.Deployers.System.Pacman is
 
    overriding
    function Already_Installed (This : Deployer) return Boolean is
-      Pck : String renames This.Base.Package_Name;
+      Pck    : String renames This.Base.Package_Name;
+
+      Output : constant Utils.String_Vector :=
+                 Subprocess.Checked_Spawn_And_Capture
+                   ("pacman",
+                    Empty_Vector &
+                      "-Qqe" &
+                      This.Base.Package_Name,
+                    Valid_Exit_Codes => (0, 1), -- Returned when not found
+                    Err_To_Out     => True);
    begin
-
-      declare
-         Output : constant Utils.String_Vector :=
-           Subprocess.Checked_Spawn_And_Capture
-             ("pacman",
-              Empty_Vector &
-                "-Qqe" &
-                This.Base.Package_Name,
-              Err_To_Out => True);
-      begin
-         if not Output.Is_Empty
-           and then
-            Output.First_Element = Pck
-         then
-            return True;
-         else
-            Trace.Detail ("Cannot find package '" & Pck &
-                            "' in pacman installed list: '" &
-                            Output.Flatten & "'");
-            return False;
-         end if;
-      end;
-
-   exception
-      when E : Checked_Error =>
-         Trace.Detail (Errors.Get (E));
+      if not Output.Is_Empty
+        and then
+          Output.First_Element = Pck
+      then
+         return True;
+      else
          Trace.Detail ("Cannot find package '" & Pck &
-                         "' in pacman installed list.");
+                         "' in pacman installed list: '" &
+                         Output.Flatten & "'");
          return False;
+      end if;
    end Already_Installed;
 
    ------------
