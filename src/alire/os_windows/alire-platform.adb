@@ -22,9 +22,8 @@ package body Alire.Platform is
       declare
          Unused : Utils.String_Vector;
       begin
-         OS_Lib.Subprocess.Checked_Spawn_And_Capture
+         Unused := OS_Lib.Subprocess.Checked_Spawn_And_Capture
            ("pacman", Utils.Empty_Vector & ("-V"),
-            Unused,
             Err_To_Out => True);
          return True;
       exception when others =>
