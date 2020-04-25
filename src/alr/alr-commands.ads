@@ -1,10 +1,10 @@
 with GNAT.Command_Line;
 
 with Alire.Directories;
+with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Bootstrap;
-with Alr.Query;
 
 private with Ada.Text_IO;
 
@@ -95,7 +95,7 @@ package Alr.Commands is
    function Is_Quiet return Boolean;
    --  Says if -q was in the command line
 
-   function Query_Policy return Query.Age_Policies;
+   function Query_Policy return Alire.Solver.Age_Policies;
    --  Current policy
 
    --  Declared here so they are available to the help metacommand child

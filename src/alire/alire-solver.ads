@@ -5,7 +5,7 @@ with Alire.Types;
 
 with Semantic_Versioning.Extended;
 
-package Alr.Query is
+package Alire.Solver is
 
    type Age_Policies is (Oldest, Newest);
    --  When looking for releases within a crate, which one to try first.
@@ -83,17 +83,6 @@ package Alr.Query is
                   Policy  : Age_Policies) return Release;
    --  Given a textual crate+set (see Parsers), find the release if it exists
 
-   ----------------------------------
-   --  Platform individual queries --
-   --  Only need a release and the platform properties
-
-   function Is_Available (R : Alire.Index.Release) return Boolean;
-   --  The release knows the requisites on the platform; here we evaluate these
-   --  against the current target. Current checks include the "available"
-   --  requisites and that the system package do exist. NOTE: it does not
-   --  consider that dependencies can be resolved, only that it "could" be
-   --  available.
-
    -----------------------
    --  Advanced queries --
    --  They may need to travel the full catalog, with multiple individual
@@ -108,10 +97,14 @@ package Alr.Query is
    Default_Options : constant Query_Options := (others => <>);
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+                     Props   : Properties.Vector;
                      Options : Query_Options := Default_Options)
                      return Solution;
+   --  Exhaustively look for a solution to the given dependencies, under the
+   --  given platform properties and lookup options.
 
    function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+                           Props   : Properties.Vector;
                            Options : Query_Options := Default_Options)
                            return Boolean;
    --  simplified call to Resolve, discarding result
@@ -127,4 +120,4 @@ package Alr.Query is
       Versions : Semantic_Versioning.Extended.Version_Set;
       Policy   : Age_Policies := Newest) return String;
 
-end Alr.Query;
+end Alire.Solver;

@@ -61,14 +61,14 @@ package body Alr.Checkout is
    -- To_Folder --
    ---------------
 
-   procedure To_Folder (Solution : Query.Solution;
+   procedure To_Folder (Solution : Alire.Solver.Solution;
                         Parent   : String := Paths.Dependencies_Folder)
    is
       Was_There : Boolean;
       Graph     : Dependency_Graphs.Graph :=
                     Dependency_Graphs.From_Solution (Solution);
-      Pending   : Query.Solution := Solution;
-      Round     : Natural        := 0;
+      Pending   : Alire.Solver.Solution   := Solution;
+      Round     : Natural                 := 0;
    begin
 
       --  Notify about missing external dependencies:

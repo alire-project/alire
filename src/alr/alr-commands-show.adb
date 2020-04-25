@@ -1,6 +1,7 @@
 with AAA.Table_IO;
 
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Platform;
@@ -8,11 +9,11 @@ with Alire.Platforms;
 with Alire.Properties;
 with Alire.Requisites.Booleans;
 with Alire.Roots;
+with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Bootstrap;
 with Alr.Dependency_Graphs;
-with Alr.Parsers;
 with Alr.Paths;
 with Alr.Platform;
 with Alr.Root;
@@ -21,6 +22,7 @@ with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Show is
 
+   package Query  renames Alire.Solver;
    package Semver renames Semantic_Versioning;
 
    ----------------------------------
@@ -64,6 +66,7 @@ package body Alr.Commands.Show is
                Needed  : Query.Solution :=
                            Query.Resolve
                              (Rel.To_Dependency,
+                              Platform.Properties,
                               Options => (Age       => Query_Policy,
                                           Detecting => <>,
                                           Hinting   => <>));
@@ -264,10 +267,10 @@ package body Alr.Commands.Show is
       end if;
 
       declare
-         Allowed : constant Parsers.Allowed_Milestones :=
+         Allowed : constant Alire.Milestones.Allowed_Milestones :=
            (if Num_Arguments = 1
-            then Parsers.Crate_Versions (Argument (1))
-            else Parsers.Crate_Versions
+            then Alire.Milestones.Crate_Versions (Argument (1))
+            else Alire.Milestones.Crate_Versions
               (Root.Current.Release.Milestone.Image));
       begin
          if Num_Arguments = 1 and not Alire.Index.Exists (Allowed.Crate) then

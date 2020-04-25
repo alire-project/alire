@@ -342,8 +342,10 @@ package body Alr.Commands is
    -- Query_Policy --
    ------------------
 
-   function Query_Policy return Query.Age_Policies is
-      (if Prefer_Oldest then Query.Oldest else Query.Newest);
+   function Query_Policy return Alire.Solver.Age_Policies is
+     (if Prefer_Oldest
+      then Alire.Solver.Oldest
+      else Alire.Solver.Newest);
 
    -------------------------------
    -- Reportaise_Command_Failed --

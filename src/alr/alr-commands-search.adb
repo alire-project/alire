@@ -6,9 +6,9 @@ with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Crates.With_Releases;
 with Alire.Releases;
+with Alire.Solver;
 
 with Alr.Platform;
-with Alr.Query;
 with Alr.Utils;
 
 with Semantic_Versioning;
@@ -29,7 +29,7 @@ package body Alr.Commands.Search is
       ------------------
 
       procedure List_Release (R : Alire.Releases.Release) is
-         use Alr.Query;
+         package Solver renames Alire.Solver; use Solver;
       begin
          if (Cmd.Prop.all = ""
              or else
@@ -45,16 +45,18 @@ package body Alr.Commands.Search is
             Found := Found + 1;
             Tab.New_Row;
             Tab.Append (+R.Name);
-            Tab.Append ((if R.Origin.Is_System then "S" else " ") &
-                        (if Query.Is_Available (R) then " " else "U") &
-                        (if R.Origin.Is_System then " " else
-                             (if Query.Is_Resolvable
-                                (R.Dependencies (Platform.Properties),
-                                 Options => (Age       => Query_Policy,
-                                             Detecting => Dont_Detect,
-                                             Hinting   => Hint))
-                              then " "
-                              else "X")));
+            Tab.Append
+              ((if R.Origin.Is_System then "S" else " ") &
+               (if R.Is_Available (Platform.Properties) then " " else "U") &
+               (if R.Origin.Is_System then " " else
+                      (if Solver.Is_Resolvable
+                         (R.Dependencies (Platform.Properties),
+                          Platform.Properties,
+                          Options => (Age       => Query_Policy,
+                                      Detecting => Dont_Detect,
+                                      Hinting   => Hint))
+                       then " "
+                       else "X")));
             Tab.Append (Semantic_Versioning.Image (R.Version));
             Tab.Append (R.Description);
             Tab.Append (R.Notes);

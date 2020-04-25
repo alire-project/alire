@@ -1,9 +1,9 @@
 with Alire.Index;
 with Alire.Properties;
 with Alire.Releases;
+with Alire.Solver;
 
 with Alr.Paths;
-with Alr.Query;
 
 package Alr.Checkout is
 
@@ -14,7 +14,7 @@ package Alr.Checkout is
    --  A working copy might not have alr and gpr files, that will be generated
    --  if needed.
 
-   procedure To_Folder (Solution : Query.Solution;
+   procedure To_Folder (Solution : Alire.Solver.Solution;
                         Parent   : String := Paths.Dependencies_Folder);
    --  Retrieves all releases into a folder, typically the main cache.
    --  One release in the solution (typically the root release itself) can be

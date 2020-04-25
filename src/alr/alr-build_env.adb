@@ -3,18 +3,20 @@ with Ada.Text_IO;
 
 with GNAT.OS_Lib;
 
-with Alire.Utils;
-with Alire.Properties.Scenarios;
-with Alire.GPR;
 with Alire.Directories;
+with Alire.GPR;
+with Alire.Properties.Scenarios;
+with Alire.Solver;
+with Alire.Utils;
 
+with Alr.Commands;
+with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Paths;
-with Alr.OS_Lib;
-with Alr.Query;
-with Alr.Commands;
 
 package body Alr.Build_Env is
+
+   package Query renames Alire.Solver;
 
    type Env_Var_Action_Callback is access procedure (Key, Val : String);
 
@@ -92,11 +94,12 @@ package body Alr.Build_Env is
                       Action   : not null Env_Var_Action_Callback)
    is
       Needed  : constant Query.Solution :=
-        Query.Resolve
-          (Root.Release.Dependencies.Evaluate (Platform.Properties),
-           Options => (Age       => Commands.Query_Policy,
-                       Detecting => <>,
-                       Hinting   => <>));
+                  Query.Resolve
+                    (Root.Release.Dependencies.Evaluate (Platform.Properties),
+                     Platform.Properties,
+                     Options => (Age       => Commands.Query_Policy,
+                                 Detecting => <>,
+                                 Hinting   => <>));
 
       Existing_Project_Path : GNAT.OS_Lib.String_Access;
 

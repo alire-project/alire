@@ -8,13 +8,13 @@ with Alire.Defaults;
 with Alire.Index;
 with Alire.OS_Lib.Subprocess;
 with Alire.Crates.With_Releases;
+with Alire.Milestones;
+with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Files;
 with Alr.Paths;
 with Alr.Platform;
-with Alr.Parsers;
-with Alr.Query;
 with Alr.Testing.Collections;
 with Alr.Testing.Console;
 with Alr.Testing.JUnit;
@@ -27,6 +27,8 @@ with GNAT.Command_Line;
 with GNATCOLL.VFS;
 
 package body Alr.Commands.Test is
+
+   package Query renames Alire.Solver;
 
    Docker_Switch : constant String := "--docker";
 
@@ -155,9 +157,10 @@ package body Alr.Commands.Test is
 
          Start := Clock;
 
-         Is_Available  := Query.Is_Available (R);
+         Is_Available  := R.Is_Available (Platform.Properties);
          Is_Resolvable := Query.Is_Resolvable
-           (R.Dependencies (Platform.Properties));
+           (R.Dependencies (Platform.Properties),
+            Platform.Properties);
 
          if not Is_Available then
             Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);
@@ -292,8 +295,8 @@ package body Alr.Commands.Test is
          else
             for J in 1 .. Num_Arguments loop
                declare
-                  Allowed  : constant Parsers.Allowed_Milestones :=
-                               Parsers.Crate_Versions (Argument (J));
+                  Allowed  : constant Alire.Milestones.Allowed_Milestones :=
+                               Alire.Milestones.Crate_Versions (Argument (J));
                   Crate    : constant Alire.Crates.With_Releases.Crate :=
                                Alire.Index.Crate (Allowed.Crate);
                   Releases : constant Alire.Containers.Release_Set :=
@@ -353,8 +356,9 @@ package body Alr.Commands.Test is
       if not Cmd.Search then
          for I in 1 .. Num_Arguments loop
             declare
-               Cry_Me_A_River : constant Parsers.Allowed_Milestones :=
-                 Parsers.Crate_Versions (Argument (I)) with Unreferenced;
+               Cry_Me_A_River : constant Alire.Milestones.Allowed_Milestones :=
+                                  Alire.Milestones.Crate_Versions
+                                    (Argument (I)) with Unreferenced;
             begin
                null; -- Just check that no exception is raised
             end;
