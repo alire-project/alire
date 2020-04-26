@@ -6,6 +6,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Milestones;
+with Alire.Properties;
 with Alire.Releases;
 
 package Alire.Containers with Preelaborate is
@@ -45,6 +46,9 @@ package Alire.Containers with Preelaborate is
    --  Finds the current release (if existing) and replaces/adds the new
    --  Release.
 
+   procedure Insert (Dst : in out Release_Map; Src : Releases.Release);
+   --  Insert a release under its name as key
+
    procedure Insert (Dst : in out Release_Map; Src : Release_Map);
 
    function Inserting (Dst : Release_Map;
@@ -61,6 +65,11 @@ package Alire.Containers with Preelaborate is
                              return Conditional.Dependencies;
    --  Will filter out duplicates under Provides key (only actual crates will
    --  remain).
+
+   function Whenever (Map   : Release_Map;
+                      Props : Properties.Vector) return Release_Map;
+   --  Replace every release with one that has no case expressions, using
+   --  environment Props.
 
    function To_Map (R : Releases.Release) return Release_Map;
 

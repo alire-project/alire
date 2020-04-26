@@ -6,6 +6,7 @@ with GNAT.OS_Lib;
 with Alire.Directories;
 with Alire.GPR;
 with Alire.Properties.Scenarios;
+with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
 
@@ -26,7 +27,7 @@ package body Alr.Build_Env is
    -- Project_Path --
    ------------------
 
-   function Project_Path (Instance : Query.Instance;
+   function Project_Path (Releases : Alire.Solutions.Release_Map;
                           Root     : Alire.Roots.Root)
                           return String
    is
@@ -43,7 +44,7 @@ package body Alr.Build_Env is
       First : Boolean := True;
    begin
       --  First obtain all paths and then output them, if any needed
-      for Rel of Instance.Including (Root.Release) loop
+      for Rel of Releases.Including (Root.Release) loop
          if Rel.Name = Root.Release.Name then
             --  All_Paths.Append (".");
             null; -- That's the first path in aggregate projects anyway
@@ -103,7 +104,7 @@ package body Alr.Build_Env is
 
       Existing_Project_Path : GNAT.OS_Lib.String_Access;
 
-      Full_Instance : Query.Instance;
+      Full_Instance : Alire.Solutions.Release_Map;
    begin
       if not Needed.Valid then
          raise Command_Failed;

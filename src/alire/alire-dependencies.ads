@@ -2,6 +2,7 @@ with Alire.Interfaces;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
+with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
 with TOML; use all type TOML.Any_Value_Kind;
@@ -19,6 +20,11 @@ package Alire.Dependencies with Preelaborate is
    function New_Dependency
      (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
+      return Dependency;
+
+   function New_Dependency
+     (Crate   : Crate_Name;
+      Version : Semantic_Versioning.Version)
       return Dependency;
 
    function Crate (Dep : Dependency) return Crate_Name;
@@ -66,6 +72,15 @@ private
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency
    is (Crate'Length, Crate, Versions);
+
+   function New_Dependency
+     (Crate   : Crate_Name;
+      Version : Semantic_Versioning.Version)
+      return Dependency
+   is (New_Dependency
+       (Crate,
+        Semantic_Versioning.Extended.To_Extended
+          (Semantic_Versioning.Basic.Exactly (Version))));
 
    function Crate (Dep : Dependency) return Crate_Name is (Dep.Crate);
 

@@ -14,10 +14,14 @@ package Alr.Checkout is
    --  A working copy might not have alr and gpr files, that will be generated
    --  if needed.
 
-   procedure To_Folder (Solution : Alire.Solver.Solution;
-                        Parent   : String := Paths.Dependencies_Folder);
-   --  Retrieves all releases into a folder, typically the main cache.
-   --  One release in the solution (typically the root release itself) can be
-   --  ignored.
+   procedure Dependencies
+     (Root     : Alire.Crate_Name;
+      Solution : Alire.Solver.Solution;
+      Root_Dir : Alire.Any_Path;
+      Deps_Dir : Alire.Absolute_Path := Paths.Dependencies_Folder);
+   --  Retrieves all releases in a solution into a folder, typically the main
+   --  cache. Also creates the lockfile for the solution at the appropriate
+   --  place inside Root_Dir. If a crate in Solution matches Root, it will
+   --  be ignored.
 
 end Alr.Checkout;

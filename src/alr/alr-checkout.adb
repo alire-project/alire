@@ -4,6 +4,7 @@ with Alire;
 with Alire.Actions;
 with Alire.Containers;
 with Alire.Externals.Lists;
+with Alire.Lockfiles;
 with Alire.Origins.Deployers;
 with Alire.Roots;
 
@@ -57,12 +58,15 @@ package body Alr.Checkout is
       end if;
    end Checkout;
 
-   ---------------
-   -- To_Folder --
-   ---------------
+   ------------------
+   -- Dependencies --
+   ------------------
 
-   procedure To_Folder (Solution : Alire.Solver.Solution;
-                        Parent   : String := Paths.Dependencies_Folder)
+   procedure Dependencies
+     (Root     : Alire.Crate_Name;
+      Solution : Alire.Solver.Solution;
+      Root_Dir : Alire.Any_Path;
+      Deps_Dir : Alire.Absolute_Path := Paths.Dependencies_Folder)
    is
       Was_There : Boolean;
       Graph     : Dependency_Graphs.Graph :=
@@ -89,6 +93,14 @@ package body Alr.Checkout is
            ("They should be made available in the environment by the user.");
       end if;
 
+      --  Store given solution on disk
+
+      Alire.Lockfiles.Write
+        (Solution,
+         Platform.Properties,
+         Alire.Lockfiles.File_Name (Name     => Root,
+                                    Root_Dir => Root_Dir));
+
       --  Deploy resolved dependencies:
 
       while not Pending.Releases.Is_Empty loop
@@ -105,9 +117,14 @@ package body Alr.Checkout is
                else
                   Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
                                  Rel.Milestone.Image);
-                  Checkout (Rel, Parent, Was_There);
                   Graph := Graph.Removing_Dependee (Rel.Name);
                   To_Remove.Include (Rel);
+                  if Rel.Name /= Root then
+                     Checkout (Rel, Deps_Dir, Was_There);
+                  else
+                     Trace.Debug
+                       ("Skipping checkout of root crate as dependency");
+                  end if;
                end if;
             end loop;
 
@@ -128,7 +145,7 @@ package body Alr.Checkout is
       end loop;
 
       return;
-   end To_Folder;
+   end Dependencies;
 
    ------------------
    -- Working_Copy --

@@ -2,6 +2,7 @@ with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with Alire.Conditional.Operations;
+with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
@@ -10,19 +11,33 @@ with Alire.Utils;
 package body Alire.Solver is
 
    package Solution_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Solution);
+     (Solution, Solutions."=");
 
    package Semver renames Semantic_Versioning;
 
    use all type Semver.Extended.Version_Set;
 
+   subtype Dependency_List is Solutions.Dependency_List;
+
+   subtype Release_Map is Alire.Containers.Release_Map;
+   --  Releases with a concrete version (source and detected external releases)
+
+   Empty_Deps : constant Dependency_List :=
+                  Alire.Containers.Dependency_Lists.Empty_List;
+
+   Empty_Map : constant Release_Map :=
+     (Alire.Containers.Crate_Release_Maps.Empty_Map with null record);
+
    ---------
    -- "&" --
    ---------
 
-   function "&" (L : Dep_List; R : Dependencies.Dependency) return Dep_List is
+   function "&" (L : Dependency_List;
+                 R : Dependencies.Dependency)
+                 return Dependency_List
+   is
    begin
-      return Result : Dep_List := L do
+      return Result : Dependency_List := L do
          Result.Append (R);
       end return;
    end "&";
@@ -166,7 +181,7 @@ package body Alire.Solver is
    ------------------------
    --  Declared for use with Materialize instance below.
 
-   procedure Add_Dep_Release (Sol   : in out Instance;
+   procedure Add_Dep_Release (Sol   : in out Release_Map;
                               Dep   :        Types.Dependency;
                               Count :        Count_Type := 1)
    is
@@ -185,7 +200,7 @@ package body Alire.Solver is
    -----------------
 
    function Materialize is new Alire.Conditional.For_Dependencies.Materialize
-     (Instance,
+     (Release_Map,
       Add_Dep_Release);
 
    -----------------
@@ -337,13 +352,23 @@ package body Alire.Solver is
       -- Expand --
       ------------
 
-      procedure Expand (Expanded,   --  Nodes firmly in requisite tree
-                        Current,    --  Next node to consider
-                        Remaining : --  Nodes pending to be considered
-                                    Types.Platform_Dependencies;
-                        Frozen    : Instance; -- Releases in current solution
+      procedure Expand (Expanded,
+                        --  Nodes firmly in requisite tree
+
+                        Current,
+                        --  Next node to consider
+
+                        Remaining : Types.Platform_Dependencies;
+                        --  Nodes pending to be considered
+
+                        Frozen    : Release_Map;
+                        --  Releases in current solution
+
                         Forbidden : Types.Forbidden_Dependencies;
-                        Hints     : Dep_List) -- Externals that supply a dep
+                        --  Releases that conflict with current solution
+
+                        Hints     : Dependency_List)
+                        --  Externals that supply a dependency
       is
 
          ------------------
@@ -626,14 +651,14 @@ package body Alire.Solver is
    begin
       if Deps.Is_Empty then
          return Solution'(Valid    => True,
-                          Releases => Empty_Instance,
+                          Releases => Empty_Map,
                           Hints    => Empty_Deps);
       end if;
 
       Expand (Expanded  => Empty,
               Current   => Deps,
               Remaining => Empty,
-              Frozen    => Empty_Instance,
+              Frozen    => Empty_Map,
               Forbidden => Empty,
               Hints     => Empty_Deps);
 
@@ -650,6 +675,7 @@ package body Alire.Solver is
                          then " and" & Solutions.First_Element.Hints.Length'Img
                          & " external hints"
                          else ""));
+
          return Solutions.First_Element;
       end if;
    end Resolve;

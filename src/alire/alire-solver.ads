@@ -1,11 +1,18 @@
-with Alire.Containers;
 with Alire.Index;
 with Alire.Properties;
+with Alire.Solutions;
+with Alire.TOML_Adapters;
 with Alire.Types;
 
 with Semantic_Versioning.Extended;
 
+with TOML;
+
 package Alire.Solver is
+
+   --------------
+   -- Policies --
+   --------------
 
    type Age_Policies is (Oldest, Newest);
    --  When looking for releases within a crate, which one to try first.
@@ -21,13 +28,9 @@ package Alire.Solver is
    --  releases will be used normally; otherwise a crate with only externals
    --  will always cause failure.
 
-   subtype Dep_List is Alire.Containers.Dependency_Lists.List;
-   --  Dependency lists are used to keep track of failed dependencies
-
-   subtype Instance is Alire.Containers.Release_Map;
-   --  A list of releases complying with a Solution
-
    subtype Release  is Types.Release;
+
+   subtype Solution is Solutions.Solution;
 
    --  The dependency solver receives a list of dependencies and will return
    --  either a valid solution if one can be found (exploration is exhaustive).
@@ -35,23 +38,6 @@ package Alire.Solver is
    --  support. Otherwise they're filed as "hints" but do not cause a failure
    --  in resolution. In this case, a warning will be provided for the user
    --  with a list of the dependencies that are externally required.
-
-   type Solution (Valid : Boolean) is tagged record
-      case Valid is
-         when True  =>
-            Releases : Instance; -- Resolved dependencies to be deployed
-            Hints    : Dep_List; -- Unresolved external dependencies
-
-         when False =>
-            null;
-      end case;
-   end record;
-
-   Empty_Deps : constant Dep_List :=
-                  Alire.Containers.Dependency_Lists.Empty_List;
-
-   Empty_Instance : constant Instance :=
-     (Alire.Containers.Crate_Release_Maps.Empty_Map with null record);
 
    ---------------------
    --  Basic queries  --
