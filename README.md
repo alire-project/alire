@@ -23,6 +23,7 @@ To install run the following as user in a terminal, or see below for more detail
 
 1. If running on macOS, `export OS=macOS`
 1. `git clone --recursive https://github.com/alire-project/alire.git`
+    1. Note the **--recursive** flag; otherwise compilation will fail.
 1. `cd alire`
 1. `gprbuild -j0 -p -P alr_env`
 
@@ -51,6 +52,7 @@ At present, only the latest master version is recommended. To obtain it you need
 
 1. If running on macOS, `export OS=macOS`
 1. `git clone --recursive https://github.com/alire-project/alire.git`
+    1. Note the **--recursive** flag; otherwise compilation will fail.
 1. `cd alire`
 1. `gprbuild -j0 -p -P alr_env`
 
