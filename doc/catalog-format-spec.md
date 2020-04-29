@@ -332,6 +332,9 @@ entries:
    - `post-compile`: the command is to be run right after GPRbuild has been
       run
 
+   - `test`: the command is run on demand for crate testing within the Alire 
+      ecosystem (using `alr test`).
+
    Actions accept dynamic expressions. For example:
 
    ```toml
