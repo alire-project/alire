@@ -202,10 +202,15 @@ package Alire.Releases with Preelaborate is
    --  NOTE: property retrieval functions do not distinguish between
    --  public/private, since that's merely informative for the users.
 
+   type Moment_Array is array (Alire.Properties.Actions.Moments) of Boolean;
+   --  Used to select which actions to retrieve
+
    function On_Platform_Actions (R : Release;
-                                 P : Alire.Properties.Vector)
+                                 P : Alire.Properties.Vector;
+                                 Moments : Moment_Array := (others => True))
                                  return Alire.Properties.Vector;
-   --  Get only Action properties for the platform
+   --  Get only Action properties for the platform that apply at specific
+   --  moments.
 
    function On_Platform_Properties
      (R             : Release;
@@ -419,11 +424,6 @@ private
            when Source_Archive => R.Origin.Short_Unique_Id,
            when Git | Hg       => R.Origin.Short_Unique_Id,
            when SVN            => R.Origin.Commit));
-
-   function On_Platform_Actions (R : Release;
-                                 P : Alire.Properties.Vector)
-                                 return Alire.Properties.Vector
-   is (R.On_Platform_Properties (P, Alire.Properties.Actions.Action'Tag));
 
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency)
