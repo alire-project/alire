@@ -1,16 +1,15 @@
 with Ada.Directories;
 
 with Alire;
-with Alire.Actions;
 with Alire.Containers;
 with Alire.Dependencies.Graphs;
 with Alire.Externals.Lists;
 with Alire.Lockfiles;
 with Alire.Origins.Deployers;
-with Alire.Solutions;
+with Alire.Properties.Actions.Executor;
 with Alire.Roots;
+with Alire.Solutions;
 
-with Alr.Actions;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Templates;
@@ -28,7 +27,7 @@ package body Alr.Checkout is
                        Was_There     : out Boolean;
                        Perform_Actions : Boolean := True)
    is
-      use all type Alire.Actions.Moments;
+      use all type Alire.Properties.Actions.Moments;
       use Alr.OS_Lib.Paths;
       Folder : constant String := Parent_Folder / R.Unique_Folder;
       Result : Alire.Outcome;
@@ -56,7 +55,10 @@ package body Alr.Checkout is
             use OS_Lib;
             Guard : Folder_Guard (Enter_Folder (Folder)) with Unreferenced;
          begin
-            Actions.Execute_Actions (R, Post_Fetch);
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release => R,
+               Env     => Platform.Properties,
+               Moment  => Post_Fetch);
          end;
       end if;
    end Checkout;

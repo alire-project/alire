@@ -8,6 +8,7 @@ with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Origins;
 with Alire.Crates;
+with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
@@ -422,7 +423,7 @@ private
    function On_Platform_Actions (R : Release;
                                  P : Alire.Properties.Vector)
                                  return Alire.Properties.Vector
-   is (R.On_Platform_Properties (P, Actions.Action'Tag));
+   is (R.On_Platform_Properties (P, Alire.Properties.Actions.Action'Tag));
 
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency)
