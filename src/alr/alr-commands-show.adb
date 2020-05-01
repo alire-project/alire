@@ -259,7 +259,7 @@ package body Alr.Commands.Show is
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Num_Arguments = 1 then
+      if Num_Arguments = 1 or else Cmd.Solve then
          Requires_Full_Index;
       end if;
 
