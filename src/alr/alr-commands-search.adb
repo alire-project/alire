@@ -118,7 +118,8 @@ package body Alr.Commands.Search is
       Tab.Append ("NOTES");
 
       declare
-         Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
+         Busy : Simple_Logging.Ongoing :=
+                  Simple_Logging.Activity ("Searching");
 
          ------------------------
          -- List_All_Or_Latest --

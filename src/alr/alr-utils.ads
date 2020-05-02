@@ -1,6 +1,3 @@
-private with Ada.Calendar;
-private with Ada.Finalization;
-
 with Alire.Utils;
 
 package Alr.Utils is
@@ -45,26 +42,8 @@ package Alr.Utils is
    function Contains (V : String_Vector; Subst : String) return Boolean;
    --  Any of the strings contains it
 
-   type Busy_Prompt (<>) is tagged limited private;
-   --  Busy prompt for a scope. Will only work in Info level
-
-   function Busy_Activity (Activity : String) return Busy_Prompt;
-
-   procedure Step (This : in out Busy_Prompt);
-   --  Say that progress was made
-
 private
 
    function Quote (S : String) return String is ("""" & S & """");
-
-   type Busy_Prompt (Len : Natural)
-   is new Ada.Finalization.Limited_Controlled
-   with record
-      Last     : Ada.Calendar.Time := Ada.Calendar.Time_Of (1976, 9, 6);
-      Activity : String (1 .. Len);
-      Pos      : Positive := 1;
-   end record;
-
-   overriding procedure Finalize (This : in out Busy_Prompt);
 
 end Alr.Utils;

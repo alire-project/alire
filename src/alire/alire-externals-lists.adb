@@ -1,6 +1,8 @@
 with Alire.Properties.Labeled;
 with Alire.TOML_Keys;
 
+with Simple_Logging;
+
 package body Alire.Externals.Lists is
 
    ------------
@@ -13,19 +15,32 @@ package body Alire.Externals.Lists is
                     return Containers.Release_Set
    is
    begin
-      Trace.Info ("Looking for external crate: " & (+Name));
-      return Detected : Containers.Release_Set do
-         for External of This loop
-            if External.Available.Check (Env) then
-               Trace.Debug ("Attempting detection of available external: "
-                            & (+Name));
-               Detected.Union (External.Detect (Name));
-            else
-               Trace.Debug ("Skipping detection of unavailable external: "
-                            & (+Name));
-            end if;
-         end loop;
-      end return;
+
+      --  Avoid the log message if there's nothing to detect
+
+      if This.Is_Empty then
+         return Containers.Release_Sets.Empty_Set;
+      end if;
+
+      declare
+         Busy : Simple_Logging.Ongoing := Simple_Logging.Activity
+           ("Looking for external crate: " & (+Name));
+      begin
+         return Detected : Containers.Release_Set do
+            for External of This loop
+               if External.Available.Check (Env) then
+                  Trace.Debug ("Attempting detection of available external: "
+                               & (+Name));
+                  Detected.Union (External.Detect (Name));
+               else
+                  Trace.Debug ("Skipping detection of unavailable external: "
+                               & (+Name));
+               end if;
+
+               Busy.Step;
+            end loop;
+         end return;
+      end;
    end Detect;
 
    -----------
