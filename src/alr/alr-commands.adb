@@ -84,6 +84,9 @@ package body Alr.Commands is
    Prefer_Oldest : aliased Boolean := False;
    --  Catches the --prefer-oldest policy switch
 
+   No_TTY : aliased Boolean := False;
+   --  Used to disable control characters in output
+
    -----------
    -- Image --
    -----------
@@ -174,6 +177,11 @@ package body Alr.Commands is
                      Alire.Config.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
+
+      Define_Switch (Config,
+                     No_TTY'Access,
+                     Long_Switch => "--no-tty",
+                     Help        => "Disables control characters in output");
 
       Define_Switch (Config,
                      Prefer_Oldest'Access,
@@ -591,6 +599,10 @@ package body Alr.Commands is
          Command_Line_Config_Path.all /= ""
       then
          Alire.Config.Set_Path (Command_Line_Config_Path.all);
+      end if;
+
+      if No_TTY then
+         Simple_Logging.Is_TTY := False;
       end if;
 
    exception
