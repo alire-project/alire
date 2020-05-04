@@ -68,13 +68,13 @@ package body Alr.Commands.Init is
             Put_Line ("   for Library_Version use ""0.0.0"";");
             Put_New_Line;
          end if;
-         Put_Line ("  for Source_Dirs use (""src"");");
-         Put_Line ("  for Object_Dir use ""obj"";");
+         Put_Line ("   for Source_Dirs use (""src"");");
+         Put_Line ("   for Object_Dir use ""obj"";");
          if For_Library then
-            Put_Line ("  for Library_Dir use ""lib"";");
+            Put_Line ("   for Library_Dir use ""lib"";");
          else
-            Put_Line ("  for Exec_Dir use ""bin"";");
-            Put_Line ("  for Main use (""" & Lower_Name & ".adb"");");
+            Put_Line ("   for Exec_Dir use ""bin"";");
+            Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");
          end if;
          Put_New_Line;
          Put_Line ("   package Builder is");
