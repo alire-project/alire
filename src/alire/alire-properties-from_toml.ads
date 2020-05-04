@@ -1,6 +1,7 @@
 with Alire.Actions;
 with Alire.Conditional;
 with Alire.Crates;
+with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
@@ -13,6 +14,7 @@ package Alire.Properties.From_TOML with Preelaborate is
    type Property_Keys is (Actions,
                           Authors,
                           Description,
+                          Environment,
                           Executables,
                           GPR_Externals,
                           GPR_Set_Externals,
@@ -29,8 +31,10 @@ package Alire.Properties.From_TOML with Preelaborate is
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
 
-   --  We use these arrays to determine which properties may appear when
-   --  loading a [general] section or a proper release.
+   --  We use these arrays to determine which properties may appear in each
+   --  crate section. These loaders will always receive a table of the form
+   --  prop_name = prop_value. Dynamic expressions are resolved prior to
+   --  dispatching to these loaders, so they need not to care.
 
    External_Loaders : constant Loader_Array (Property_Keys) :=
                         (Hint   => Labeled.From_TOML'Access,
@@ -38,16 +42,20 @@ package Alire.Properties.From_TOML with Preelaborate is
    --  This loader is used for properties common to all external classes
 
    General_Loaders : constant Loader_Array (Property_Keys) :=
-                       (Actions  => Alire.Actions.From_TOML'Access,
+                       (Actions     => Alire.Actions.From_TOML'Access,
+                        Environment => Properties.Environment.From_TOML'Access,
                         GPR_Externals ..
                         GPR_Set_Externals
-                                 => Scenarios.From_TOML'Access,
-                        Hint     => null, -- Only apply to externals
-                        Licenses => Properties.Licenses.From_TOML'Access,
-                        others   => Labeled.From_TOML'Access);
+                                    => Scenarios.From_TOML'Access,
+                        Hint        => null, -- Only apply to externals
+                        Licenses    => Properties.Licenses.From_TOML'Access,
+                        others      => Labeled.From_TOML'Access);
+   --  This loader is used in the [general] crate section
 
    Release_Loaders : constant Loader_Array (Property_Keys) :=
                        (Actions       => Alire.Actions.From_TOML'Access,
+                        Environment   =>
+                          Properties.Environment.From_TOML'Access,
                         Executables   => Labeled.From_TOML'Access,
                         GPR_Externals ..
                         GPR_Set_Externals
@@ -55,12 +63,14 @@ package Alire.Properties.From_TOML with Preelaborate is
                         Notes         => Labeled.From_TOML'Access,
                         Project_Files => Labeled.From_TOML'Access,
                         others        => null);
+   --  This loader applies to release sections
 
    --  The following array determines which properties accept dynamic
    --  expressions, per index semantics. All other properties must be static.
 
    Loaders_During_Case : constant array (Property_Keys) of Property_Loader
      := (Actions           => Alire.Actions.From_TOML'Access,
+         Environment       => Properties.Environment.From_TOML'Access,
          Executables       => Labeled.From_TOML_Executable_Cases'Access,
          GPR_Set_Externals => Scenarios.From_TOML_Cases'Access,
          Hint              => Labeled.From_TOML_Hint_Cases'Access,

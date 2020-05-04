@@ -13,6 +13,7 @@ package Alire.TOML_Keys with Preelaborate is
    Depends_On     : constant String := "depends-on";
    Description    : constant String := "description";
    Distribution   : constant String := "distribution";
+   Environment    : constant String := "environment";
    Executable     : constant String := "executables";
    External       : constant String := "external";
    External_Kind  : constant String := "kind";
