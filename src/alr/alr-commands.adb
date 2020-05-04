@@ -11,10 +11,12 @@ with Alire.Config;
 with Alire.Features.Index;
 with Alire.Index;
 with Alire.Lockfiles;
+with Alire.Platforms;
 with Alire.Roots;
 with Alire.Roots.Check_Valid;
 with Alire.Solutions;
 with Alire.Utils.Tables;
+with Alire.Utils.TTY;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -86,6 +88,9 @@ package body Alr.Commands is
 
    Prefer_Oldest : aliased Boolean := False;
    --  Catches the --prefer-oldest policy switch
+
+   No_Color : aliased Boolean := False;
+   --  Force-disable color output
 
    No_TTY : aliased Boolean := False;
    --  Used to disable control characters in output
@@ -180,6 +185,11 @@ package body Alr.Commands is
                      Alire.Config.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
+
+      Define_Switch (Config,
+                     No_Color'Access,
+                     Long_Switch => "--no-color",
+                     Help        => "Disables colors in output");
 
       Define_Switch (Config,
                      No_TTY'Access,
@@ -584,6 +594,20 @@ package body Alr.Commands is
       --  At this point the command and all unknown switches are in
       --  Raw_Arguments.
 
+      if No_TTY then
+         Simple_Logging.Is_TTY := False;
+      end if;
+
+      if Platform.Operating_System in Alire.Platforms.Windows or else
+        No_Color or else
+        No_TTY
+      then
+         Alire.Utils.TTY.Disable_Color;
+      else
+         Alire.Utils.TTY.Enable_Color (Force => False);
+         --  This may still not enable color if TTY is detected to be incapable
+      end if;
+
       if Raw_Arguments.Is_Empty then
          Trace.Error ("No command given");
          Display_Usage;
@@ -626,10 +650,6 @@ package body Alr.Commands is
          Command_Line_Config_Path.all /= ""
       then
          Alire.Config.Set_Path (Command_Line_Config_Path.all);
-      end if;
-
-      if No_TTY then
-         Simple_Logging.Is_TTY := False;
       end if;
 
    exception
