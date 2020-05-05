@@ -1,0 +1,16 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[general.environment]
+VAR1.append  = "abc"
+VAR2.prepend = "xyz"
+VAR3.set     = "pqr"
+
+[general.environment.'case(os)'.'...']
+CONDVAR.set = "uvw"
+
+[1]
+origin = "file://../blah.zip"
