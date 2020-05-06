@@ -12,6 +12,10 @@ package Alire.Properties.Environment with Preelaborate is
    function Action (This : Variable) return Actions;
 
    function Name (This : Variable) return String;
+   --  Returns the name as is. See Shell_Name below.
+
+   function Shell_Name (This : Variable) return String;
+   --  Returns the name as it appears in "shell" expressions: ${NAME}
 
    function Value (This : Variable) return String;
 

@@ -17,6 +17,9 @@ package body Alire.Properties.Environment is
    function Name (This : Variable) return String is
      (+This.Name);
 
+   function Shell_Name (This : Variable) return String is
+     ("${" & Name (This) & "}");
+
    -----------
    -- Value --
    -----------
@@ -31,9 +34,9 @@ package body Alire.Properties.Environment is
    function Image_RHS (This : Variable) return String is
      (Name (This)
       & (case This.Action is
-            when Append  => "=$" & Name (This)  & ":"  & Value (This),
-            when Prepend => "="  & Value (This) & ":$" & Name (This),
-            when Set     => "="  & Value (This)));
+            when Append  => "=" & Shell_Name (This)  & ":"  & Value (This),
+            when Prepend => "=" & Value (This) & ":" & Shell_Name (This),
+            when Set     => "=" & Value (This)));
 
    -----------
    -- Image --

@@ -294,14 +294,14 @@ entries:
 
    [environment]
    C_INCLUDE_PATH.append = "/usr/include/something"
-   PATH.prepend = "$CRATE_ROOT/bin"
-   MSYS.set = "$MSYS_ROOT"
+   PATH.prepend = "${CRATE_ROOT}/bin"
+   MSYS.set = "${MSYS_ROOT}"
 
   Other environment variables may appear in the value, and will be replaced.
   Furthermore, a few predefined variables are provided by Alire:
 
-  * ``$CRATE_ROOT`` is the deployment directory of the crate.
-  * ``$MSYS_ROOT`` is available on Windows to obtain the detected location of
+  * ``${CRATE_ROOT}`` is the deployment directory of the crate.
+  * ``${MSYS_ROOT}`` is available on Windows to obtain the detected location of
   an MSYS2 installation.
 
   Environment entries can use dynamic expressions:
@@ -309,7 +309,7 @@ entries:
   .. code-block:: toml
 
    [environment.'case(os)']
-   windows = { C_INCLUDE_PATH.append = "$MSYS_ROOT/mingw64/include/SDL2" }
+   windows = { C_INCLUDE_PATH.append = "${MSYS_ROOT}/mingw64/include/SDL2" }
 
 * ``executables``: optional list of strings. Each one is the simple name of an
   executable provided by the package. Executables are looked for by ``alr`` in the
