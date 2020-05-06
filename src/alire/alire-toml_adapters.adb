@@ -159,6 +159,38 @@ package body Alire.TOML_Adapters is
       return "";
    end Pop_Expr;
 
+   ----------------------
+   -- Pop_Single_Table --
+   ----------------------
+
+   function Pop_Single_Table (Queue : Key_Queue;
+                              Value : out TOML.TOML_Value;
+                              Kind  : TOML.Any_Value_Kind) return String
+   is
+      use TOML;
+   begin
+      if Queue.Value.Kind /= TOML_Table then
+         Queue.Checked_Error ("expected a table but got a "
+                              & Queue.Value.Kind'Img);
+      end if;
+
+      if Queue.Value.Keys'Length /= 1 then
+         Queue.Checked_Error ("expected a single entry in table, but got"
+                              & Queue.Value.Keys'Length'Img);
+      end if;
+
+      Value := Queue.Value.Get (Queue.Value.Keys (1));
+
+      if Value.Kind /= Kind then
+         Queue.Checked_Error ("expected a single entry of type "
+                              & Kind'Img & ", but got a " & Value.Kind'Img);
+      end if;
+
+      return Key : constant String := +Queue.Value.Keys (1) do
+         Queue.Value.Unset (Queue.Value.Keys (1));
+      end return;
+   end Pop_Single_Table;
+
    -----------------------
    -- Report_Extra_Keys --
    -----------------------

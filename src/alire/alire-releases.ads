@@ -1,3 +1,4 @@
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Tags;
 
 with Alire.Actions;
@@ -7,7 +8,7 @@ with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Origins;
 with Alire.Crates;
-with Alire.Properties;
+with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Requisites;
@@ -154,6 +155,14 @@ package Alire.Releases with Preelaborate is
 
    function Default_Executable (R : Release) return String;
    --  We encapsulate here the fixing of platform extension
+
+   package Env_Maps is new Ada.Containers.Indefinite_Ordered_Maps
+     (String, Alire.Properties.Environment.Variable,
+      "<",    Alire.Properties.Environment."=");
+
+   function Environment (R : Release;
+                         P : Alire.Properties.Vector) return Env_Maps.Map;
+   --  Retrieve env vars that are set by this release, key is the var name
 
    function Executables (R : Release;
                          P : Alire.Properties.Vector)

@@ -77,6 +77,14 @@ package Alire.TOML_Adapters with Preelaborate is
    --  or No_TOML_Value if not a table or does not contain such a key. The
    --  intended use is to process keys beginning with "case(" in the table.
 
+   function Pop_Single_Table (Queue : Key_Queue;
+                              Value : out TOML.TOML_Value;
+                              Kind  : TOML.Any_Value_Kind) return String;
+   --  For constructions like [parent.child.grandchild], where we known that
+   --  only one child can exist. Will raise Checked_Error if any of these
+   --  happens: Queue is not a table; Queue doesn't have exactly one key;
+   --  Value is not of the expected Kind. Returns the single Key.
+
    function Unwrap (Queue : Key_Queue) return TOML.TOML_Value;
    --  Return the internal value as-is (with any already popped keys missing).
 

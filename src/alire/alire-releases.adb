@@ -307,6 +307,23 @@ package body Alire.Releases is
    end Props_To_Strings;
 
    -----------------
+   -- Environment --
+   -----------------
+
+   function Environment (R : Release;
+                         P : Alire.Properties.Vector) return Env_Maps.Map
+   is
+      package Env renames Alire.Properties.Environment;
+   begin
+      return Map : Env_Maps.Map do
+         for Prop of R.On_Platform_Properties (P, Env.Variable'Tag) loop
+            Map.Insert (Env.Variable (Prop).Name,
+                        Env.Variable (Prop));
+         end loop;
+      end return;
+   end Environment;
+
+   -----------------
    -- Executables --
    ----------------
 
