@@ -14,7 +14,16 @@ package body Alr.Commands.Setenv is
 
       Requires_Valid_Session;
 
-      Alr.Build_Env.Print (Alr.Root.Current);
+      --  Temporarily raise the log level to avoid spurious status output that
+      --  would prevent directly sourcing the output. TODO: remove this once
+      --  the lockfile is used, that will make this unnecessary.
+      declare
+         Old_Level : constant Simple_Logging.Levels := Alire.Log_Level;
+      begin
+         Alire.Log_Level := Simple_Logging.Always;
+         Alr.Build_Env.Print (Alr.Root.Current);
+         Alire.Log_Level := Old_Level;
+      end;
    end Execute;
 
    -------------
