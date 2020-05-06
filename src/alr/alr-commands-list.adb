@@ -4,6 +4,8 @@ with Alire.Index;
 
 with Alr.Utils;
 
+with Simple_Logging;
+
 package body Alr.Commands.List is
 
    -------------
@@ -28,7 +30,8 @@ package body Alr.Commands.List is
       Requires_Full_Index;
 
       declare
-         Busy : Utils.Busy_Prompt := Utils.Busy_Activity ("Searching...");
+         Busy : Simple_Logging.Ongoing :=
+                  Simple_Logging.Activity ("Searching");
       begin
          for Crate of Alire.Index.All_Crates.all loop
             if Num_Arguments = 0 or else
