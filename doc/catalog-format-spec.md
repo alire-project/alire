@@ -70,7 +70,7 @@ construct (here to create a boolean):
     '...': false
 }}
 
-# Or in a more idiomatic TOML syntay
+# Or in a more idiomatic TOML syntax
 ['case(distribution)']
 'debian|ubuntu' = true
 '...' = false
