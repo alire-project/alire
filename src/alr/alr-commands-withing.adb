@@ -4,8 +4,10 @@ with Ada.Strings.Maps;
 with Ada.Text_IO;
 
 with Alire.Conditional;
+with Alire.Dependencies.Diffs;
 with Alire.Milestones;
 with Alire.Roots;
+with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils;
 
@@ -66,7 +68,7 @@ package body Alr.Commands.Withing is
             Reportaise_Command_Failed ("Adding " & New_Dep &
                                          " has no dependency solution");
          else
-            Trace.Detail ("Dependency " & New_Dep & " successfully added");
+            Trace.Detail ("Dependency " & New_Dep & " can be added");
          end if;
       end return;
    end Add;
@@ -82,7 +84,8 @@ package body Alr.Commands.Withing is
       use all type Alire.Conditional.Dependencies;
       use all type Semantic_Versioning.Extended.Version_Set;
       Requested : constant Alire.Milestones.Allowed_Milestones :=
-        Alire.Milestones.Crate_Versions (Old_Dep);
+                    Alire.Milestones.Crate_Versions (Old_Dep);
+      Found     : Boolean := False;
    begin
       if Requested.Versions /= Semantic_Versioning.Extended.Any then
          Trace.Warning
@@ -97,10 +100,19 @@ package body Alr.Commands.Withing is
                   Filtered := Filtered and
                     Alire.Conditional.New_Dependency
                       (Dep.Value.Crate, Dep.Value.Versions);
+               else
+                  --  Simply don't add the one we want to remove
+                  Found := True;
                end if;
             end loop;
          else
             Trace.Warning ("Skipping unsupported conditional dependency");
+         end if;
+
+         if not Found then
+            Trace.Warning
+              ("Crate slated for removal is not among direct dependencies: "
+               & (+Requested.Crate));
          end if;
       end return;
    end Del;
@@ -109,21 +121,49 @@ package body Alr.Commands.Withing is
    -- Replace_Current --
    ---------------------
 
-   procedure Replace_Current (Deps : Alire.Conditional.Dependencies) is
+   procedure Replace_Current (Old_Deps,
+                              New_Deps : Alire.Conditional.Dependencies)
+   is
    begin
+      Requires_Full_Index;
+
       --  Set, regenerate and update
       declare
          New_Root  : constant Alire.Roots.Root :=
            Alire.Roots.New_Root
-             (Root.Current.Release.Replacing (Dependencies => Deps),
+             (Root.Current.Release.Replacing (Dependencies => New_Deps),
               Root.Current.Path);
+         New_Solution : constant Alire.Solutions.Solution :=
+                          Alire.Solver.Resolve (New_Deps,
+                                                Platform.Properties);
       begin
+
+         --  Show changes to apply
+
+         Trace.Info ("Requested changes:");
+         Trace.Info ("");
+         Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
+         Trace.Info ("");
+
+         --  Show the effects on the solution
+
+         if not Root.Current.Solution.Changes (New_Solution)
+           .Print_And_Confirm (Changed_Only => not Alire.Detailed)
+         then
+            Trace.Info ("No changes applied.");
+            return;
+         end if;
+
+         --  Generate the new .toml file
+
          Templates.Generate_Prj_Alr (New_Root.Release,
                                      New_Root.Crate_File);
          Trace.Detail ("Regeneration finished, updating now");
       end;
 
-      Commands.Update.Execute;
+      --  And apply changes (will also generate new lockfile)
+
+      Commands.Update.Execute (Interactive => False);
    end Replace_Current;
 
    ---------
@@ -131,14 +171,18 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Add is
-      Deps : Alire.Conditional.Dependencies :=
-        Root.Current.Release.Dependencies;
+      Old_Deps : constant Alire.Conditional.Dependencies :=
+                   Root.Current.Release.Dependencies;
+      New_Deps : Alire.Conditional.Dependencies := Old_Deps;
+      use type Alire.Conditional.Dependencies;
    begin
       for I in 1 .. Num_Arguments loop
-         Deps := Add (Deps, Argument (I));
+         New_Deps := Add (New_Deps, Argument (I));
       end loop;
 
-      Replace_Current (Deps);
+      if Old_Deps /= New_Deps then
+         Replace_Current (Old_Deps, New_Deps);
+      end if;
    end Add;
 
    ---------
@@ -146,14 +190,20 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Del is
-      Deps : Alire.Conditional.Dependencies :=
-        Root.Current.Release.Dependencies;
+      Old_Deps : constant Alire.Conditional.Dependencies :=
+                   Root.Current.Release.Dependencies;
+      New_Deps : Alire.Conditional.Dependencies := Old_Deps;
+      use type Alire.Conditional.Dependencies;
    begin
       for I in 1 .. Num_Arguments loop
-         Deps := Del (Deps, Argument (I));
+         New_Deps := Del (New_Deps, Argument (I));
       end loop;
 
-      Replace_Current (Deps);
+      if Old_Deps /= New_Deps then
+         Replace_Current (Old_Deps, New_Deps);
+      else
+         Trace.Warning ("There are no changes to apply.");
+      end if;
    end Del;
 
    ----------
@@ -243,7 +293,12 @@ package body Alr.Commands.Withing is
          Check_File (Argument (I));
       end loop;
 
-      Replace_Current (Deps);
+      if not Deps.Is_Empty then
+         Replace_Current (Old_Deps => Alire.Conditional.No_Dependencies,
+                          New_Deps => Deps);
+      else
+         Trace.Warning ("No dependencies found.");
+      end if;
    end From;
 
    ----------

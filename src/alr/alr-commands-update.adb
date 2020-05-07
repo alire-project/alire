@@ -1,4 +1,5 @@
 with Alire.Paths;
+with Alire.Solutions.Diffs;
 with Alire.Solver;
 
 with Alr.Checkout;
@@ -18,7 +19,7 @@ package body Alr.Commands.Update is
    -- Upgrade --
    -------------
 
-   procedure Upgrade is
+   procedure Upgrade (Interactive : Boolean) is
       --  The part concerning only to the working release
    begin
       Requires_Full_Index;
@@ -26,6 +27,8 @@ package body Alr.Commands.Update is
       Requires_Valid_Session;
 
       declare
+         Old     : constant Query.Solution :=
+                     Root.Current.Solution;
          Needed  : constant Query.Solution :=
                      Query.Resolve
                        (Root.Current.Release.Dependencies.Evaluate
@@ -34,12 +37,35 @@ package body Alr.Commands.Update is
                         Options => (Age       => Query_Policy,
                                     Detecting => <>,
                                     Hinting   => <>));
+         Diff    : constant Alire.Solutions.Diffs.Diff :=
+                     Old.Changes (Needed);
       begin
          if not Needed.Valid then
-            Reportaise_Command_Failed ("Update failed");
+            Reportaise_Command_Failed
+              ("Could not solve dependencies, update failed");
          end if;
 
-         --  Requires_Valid_Session ensures we are at the root working dir
+         --  Early exit when there are no changes
+
+         if not Diff.Contains_Changes then
+            if Interactive then
+               Trace.Info ("Nothing to update.");
+            end if;
+
+            return;
+         end if;
+
+         --  Show changes and ask user to apply them
+
+         if Interactive then
+            if not Diff.Print_And_Confirm (Changed_Only => not Alire.Detailed)
+            then
+               Trace.Detail ("Update abandoned.");
+               return;
+            end if;
+         end if;
+
+         --  Apply the update
 
          Checkout.Dependencies (Root     => Root.Current.Release.Name,
                                 Solution => Needed,
@@ -56,17 +82,17 @@ package body Alr.Commands.Update is
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
    begin
-      Execute;
+      Execute (Interactive => True);
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   procedure Execute is
+   procedure Execute (Interactive : Boolean) is
    begin
       if Session_State > Outside then
-         Upgrade;
+         Upgrade (Interactive);
       else
          Trace.Detail ("No working release to update");
       end if;

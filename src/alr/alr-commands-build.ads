@@ -5,7 +5,8 @@ package Alr.Commands.Build is
    overriding
    procedure Execute (Cmd : in out Command);
 
-   procedure Execute;
+   function Execute return Boolean;
+   --  Returns True if compilation succeeded
 
    overriding
    function Long_Description (Cmd : Command)
