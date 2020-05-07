@@ -10,7 +10,6 @@ with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
 
-with Alr.Commands;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Paths;
@@ -94,13 +93,7 @@ package body Alr.Build_Env is
    procedure Gen_Env (Root     : Alire.Roots.Root;
                       Action   : not null Env_Var_Action_Callback)
    is
-      Needed  : constant Query.Solution :=
-                  Query.Resolve
-                    (Root.Release.Dependencies.Evaluate (Platform.Properties),
-                     Platform.Properties,
-                     Options => (Age       => Commands.Query_Policy,
-                                 Detecting => <>,
-                                 Hinting   => <>));
+      Needed  : constant Query.Solution := Root.Solution;
 
       Existing_Project_Path : GNAT.OS_Lib.String_Access;
 

@@ -1,5 +1,5 @@
 """
-Test a basic get-build-run workflow.
+Test the environment set for a basic crate
 """
 
 from glob import glob
@@ -16,7 +16,9 @@ import platform
 run_alr('get', 'hello')
 os.chdir(glob('hello*')[0])
 
-p = run_alr('setenv')
+# Run it not quietly to ensure that at normal level
+# the output is not broken by some log message
+p = run_alr('setenv', quiet=False)
 assert_eq(0, p.status)
 
 if platform.system() == 'Windows':
