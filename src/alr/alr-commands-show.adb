@@ -1,5 +1,3 @@
-with AAA.Table_IO;
-
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
@@ -10,7 +8,7 @@ with Alire.Properties;
 with Alire.Requisites.Booleans;
 with Alire.Roots;
 with Alire.Solver;
-with Alire.Utils;
+with Alire.Utils.Tables;
 
 with Alr.Bootstrap;
 with Alr.Dependency_Graphs;
@@ -169,7 +167,7 @@ package body Alr.Commands.Show is
 
    procedure Report_Externals (Name : Alire.Crate_Name;
                                Cmd  : Command) is
-      Table : AAA.Table_IO.Table;
+      Table : Alire.Utils.Tables.Table;
    begin
       if Alire.Index.Crate (Name).Externals.Is_Empty then
          Trace.Info ("No externals defined for the requested crate.");
@@ -216,7 +214,7 @@ package body Alr.Commands.Show is
             end;
          end loop;
 
-         Table.Print;
+         Table.Print (Always);
       end if;
    end Report_Externals;
 
