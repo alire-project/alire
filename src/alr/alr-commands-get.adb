@@ -132,7 +132,7 @@ package body Alr.Commands.Get is
 
       Trace.Info ("");
 
-      Trace.Log (Rel.Milestone.Image & " successfully retrieved"
+      Trace.Log (Rel.Milestone.TTY_Image & " successfully retrieved"
                  & (if Cmd.Build
                    then (if Build_OK
                          then " and built."

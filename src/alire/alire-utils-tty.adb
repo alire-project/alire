@@ -1,5 +1,3 @@
-with ANSI;
-
 with Simple_Logging.Decorators;
 
 package body Alire.Utils.TTY is
@@ -64,6 +62,32 @@ package body Alire.Utils.TTY is
       end if;
    end Enable_Color;
 
+   ------------
+   -- Format --
+   ------------
+
+   function Format (Text  : String;
+                    Fore  : ANSI.Colors := ANSI.Default;
+                    Back  : ANSI.Colors := ANSI.Default;
+                    Style : ANSI.Styles := ANSI.Default)
+                    return String
+   is
+      use ANSI;
+   begin
+      if not Use_Color then
+         return Text;
+      end if;
+
+      return
+        ((if Fore  /= Default then Foreground (Fore) else "")
+         & (if Back /= Default then Background (Fore) else "")
+         & (if Style /= Default then ANSI.Style (Style, On) else "")
+         & Text
+         & (if Fore  /= Default then Foreground (Default) else "")
+         & (if Back /= Default then Background (Default) else "")
+         & (if Style /= Default then ANSI.Style (Style, Off) else ""));
+   end Format;
+
    -----------------------
    -- Regular_Decorator --
    -----------------------
@@ -79,7 +103,11 @@ package body Alire.Utils.TTY is
    -----------------------
 
    function Verbose_Decorator (Level : Simple_Logging.Levels;
-                               Message : String) return String is
+                               Message : String) return String
+   is
+      use ANSI;
+   begin
+      return
      (case Level is
          when Always  => Message,
          when Error   =>
@@ -104,5 +132,6 @@ package body Alire.Utils.TTY is
                        Foreground => ANSI.Foreground (Grey)) & " "
             & ANSI.Wrap (Text       => Message,
                          Style      => Dim));
+   end Verbose_Decorator;
 
 end Alire.Utils.TTY;

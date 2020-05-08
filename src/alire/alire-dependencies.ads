@@ -8,12 +8,15 @@ with Semantic_Versioning.Extended;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
+private with Alire.Utils.TTY;
+
 package Alire.Dependencies with Preelaborate is
 
    --  A single dependency is a crate name plus a version set
 
    type Dependency (<>) is
      new Interfaces.Classificable -- since the crate name is the key
+     and Interfaces.Colorable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with private;
@@ -35,6 +38,9 @@ package Alire.Dependencies with Preelaborate is
 
    function Image (Dep : Dependency) return String;
    --  Standard-style version image, e.g. "make^3.1"
+
+   overriding
+   function TTY_Image (Dep : Dependency) return String;
 
    overriding
    function Key (Dep : Dependency) return String;
@@ -62,8 +68,11 @@ package Alire.Dependencies with Preelaborate is
 
 private
 
+   package TTY renames Utils.TTY;
+
    type Dependency (Name_Len : Natural) is
      new Interfaces.Classificable
+     and Interfaces.Colorable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with record
@@ -97,11 +106,17 @@ private
      (New_Dependency (Allowed.Crate, Allowed.Versions));
 
    function Image (Dep : Dependency) return String is
-      (if Dep = Unavailable
+     (if Dep = Unavailable
       then "Unavailable"
+      else (+Dep.Crate) & Dep.Versions.Image);
+
+   overriding
+   function TTY_Image (Dep : Dependency) return String is
+     (if Dep = Unavailable
+      then
+         TTY.Version ("Unavailable")
       else
-         (Utils.To_Lower_Case (+Dep.Crate)
-          & Dep.Versions.Image));
+        (TTY.Name (+Dep.Crate) & TTY.Version (Dep.Versions.Image)));
 
    overriding
    function To_YAML (Dep : Dependency) return String is

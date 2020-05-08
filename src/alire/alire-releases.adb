@@ -443,7 +443,7 @@ package body Alire.Releases is
       use GNAT.IO;
    begin
       --  MILESTONE
-      Put_Line (R.Milestone.Image & ": " & R.Description);
+      Put_Line (R.Milestone.TTY_Image & ": " & R.TTY_Description);
 
       if R.Provides /= R.Name then
          Put_Line ("Provides: " & (+R.Provides));

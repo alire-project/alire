@@ -12,7 +12,7 @@ package Alire.Conditional with Preelaborate is
    ------------------
 
    package For_Dependencies is new Conditional_Trees (Dependencies.Dependency,
-                                                      Dependencies.Image);
+                                                      Dependencies.TTY_Image);
    subtype Dependencies is For_Dependencies.Tree;
 
    subtype Platform_Dependencies is Conditional.Dependencies

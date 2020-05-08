@@ -7,6 +7,7 @@ with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
+with Alire.Utils.TTY;
 
 with Alr.Platform;
 with Alr.Utils;
@@ -14,6 +15,8 @@ with Alr.Utils;
 with Semantic_Versioning;
 
 package body Alr.Commands.Search is
+
+   package TTY renames Alire.Utils.TTY;
 
    -------------
    -- Execute --
@@ -23,6 +26,11 @@ package body Alr.Commands.Search is
 
       Found : Natural := 0;
       Tab   : Alire.Utils.Tables.Table;
+
+      Flag_System   : constant String := TTY.OK ("S");
+      Flag_Unav     : constant String := TTY.Error ("U");
+      Flag_Unsolv   : constant String := TTY.Error ("X");
+      Flag_External : constant String := TTY.Warn ("E");
 
       ------------------
       -- List_Release --
@@ -44,10 +52,11 @@ package body Alr.Commands.Search is
          then
             Found := Found + 1;
             Tab.New_Row;
-            Tab.Append (+R.Name);
+            Tab.Append (TTY.Name (+R.Name));
             Tab.Append
-              ((if R.Origin.Is_System then "S" else " ") &
-               (if R.Is_Available (Platform.Properties) then " " else "U") &
+              ((if R.Origin.Is_System then Flag_System else " ") &
+               (if R.Is_Available (Platform.Properties)
+                  then " " else Flag_Unav) &
                (if R.Origin.Is_System then " " else
                       (if Solver.Is_Resolvable
                          (R.Dependencies (Platform.Properties),
@@ -57,9 +66,9 @@ package body Alr.Commands.Search is
                                       Detecting => Solver.Dont_Detect,
                                       Hinting   => Solver.Hint))
                        then " "
-                       else "X")));
-            Tab.Append (Semantic_Versioning.Image (R.Version));
-            Tab.Append (R.Description);
+                       else Flag_Unsolv)));
+            Tab.Append (TTY.Version (Semantic_Versioning.Image (R.Version)));
+            Tab.Append (TTY.Description (R.Description));
             Tab.Append (R.Notes);
          end if;
       end List_Release;
@@ -74,11 +83,11 @@ package body Alr.Commands.Search is
          Found := Found + 1;
          Tab.New_Row;
          Tab.Append (+Name);
-         Tab.Append ("E" &
-                     (if Cmd.Detect then "U" else " ") &
+         Tab.Append (Flag_External &
+                     (if Cmd.Detect then Flag_Unav else " ") &
                        " ");
          Tab.Append ("external");
-         Tab.Append (Alire.Index.Crate (Name).Description);
+         Tab.Append (Alire.Index.Crate (Name).TTY_Description);
          Tab.Append (Ext.Image);
       end List_Undetected;
 
@@ -114,11 +123,11 @@ package body Alr.Commands.Search is
 
       Requires_Full_Index;
 
-      Tab.Append ("NAME");
-      Tab.Append ("STATUS");
-      Tab.Append ("VERSION");
-      Tab.Append ("DESCRIPTION");
-      Tab.Append ("NOTES");
+      Tab.Append (TTY.Bold ("NAME"));
+      Tab.Append (TTY.Bold ("STATUS"));
+      Tab.Append (TTY.Bold ("VERSION"));
+      Tab.Append (TTY.Bold ("DESCRIPTION"));
+      Tab.Append (TTY.Bold ("NOTES"));
 
       declare
          Busy : Simple_Logging.Ongoing :=

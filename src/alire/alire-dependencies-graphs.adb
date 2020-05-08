@@ -139,9 +139,9 @@ package body Alire.Dependencies.Graphs is
       Filtered : constant Graph := This.Filtering_Unused (Instance);
    begin
       for Dep of Filtered loop
-         Table.Append (Prefix & Instance (+Dep.Dependent).Milestone.Image);
+         Table.Append (Prefix & Instance (+Dep.Dependent).Milestone.TTY_Image);
          Table.Append ("-->");
-         Table.Append (Instance (+Dep.Dependee).Milestone.Image);
+         Table.Append (Instance (+Dep.Dependee).Milestone.TTY_Image);
          Table.New_Row;
       end loop;
 

@@ -5,10 +5,13 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
+with Alire.Utils.TTY;
 
 with Semantic_Versioning;
 
 package body Alire.Solutions is
+
+   package TTY renames Utils.TTY;
 
    -------------
    -- Changes --
@@ -79,9 +82,9 @@ package body Alire.Solutions is
       if not This.Releases.Is_Empty then
          Trace.Log ("Dependencies (solution):", Level);
          for Rel of This.Releases loop
-            Trace.Log ("   " & Rel.Milestone.Image
+            Trace.Log ("   " & Rel.Milestone.TTY_Image
                        & (if Rel.Is_Pinned
-                         then " (pinned)"
+                         then TTY.Emph (" (pinned)")
                          else "")
                        & (if Detailed then
                             " (origin: " &
@@ -97,7 +100,7 @@ package body Alire.Solutions is
       if not This.Hints.Is_Empty then
          Trace.Log ("Dependencies (external):", Level);
          for Dep of This.Hints loop
-            Trace.Log ("   " & Dep.Image, Level);
+            Trace.Log ("   " & Dep.TTY_Image, Level);
 
             --  Look for hints. If we are relying on workspace
             --  information the index may not be loaded, or have
@@ -110,7 +113,7 @@ package body Alire.Solutions is
                    (Name => Dep.Crate,
                     Env  => Alire.Properties.No_Properties)
                loop
-                  Trace.Log ("      Hint: " & Hint, Level);
+                  Trace.Log (TTY.Emph ("      Hint: ") & Hint, Level);
                end loop;
             end if;
          end loop;
@@ -151,8 +154,8 @@ package body Alire.Solutions is
          for Release of This.Releases loop
             if Release.Is_Pinned then
                Table
-                 .Append (+Release.Name)
-                 .Append (Release.Version.Image)
+                 .Append (Release.TTY_Name)
+                 .Append (TTY.Version (Release.Version.Image))
                  .New_Row;
             end if;
          end loop;
