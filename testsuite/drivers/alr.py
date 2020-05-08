@@ -59,6 +59,7 @@ def run_alr(*args, **kwargs):
         raise ValueError('Invalid argument: {}'.format(first_unknown_kwarg))
 
     argv = ['alr']
+    argv.append('-n') # always non-interactive
     if debug:
         argv.append('-d')
     if quiet:

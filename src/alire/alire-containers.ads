@@ -11,10 +11,25 @@ with Alire.Releases;
 
 package Alire.Containers with Preelaborate is
 
+   package Crate_Name_Sets is
+      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
+
    package Dependency_Lists
    is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Dependencies.Dependency,
       Dependencies."=");
+
+   package Dependency_Maps
+   is new Ada.Containers.Indefinite_Ordered_Maps
+     (Crate_Name, Dependencies.Dependency,
+      "<", Dependencies."=");
+
+   type Dependency_Map is new Dependency_Maps.Map with null record;
+
+   procedure Merge (This : in out Dependency_Map;
+                    Dep  :        Dependencies.Dependency);
+   --  If the dependency is already in map, create a combined dependency that
+   --  ANDs both.
 
    package Milestone_Sets
    is new Ada.Containers.Indefinite_Ordered_Sets (Milestones.Milestone,

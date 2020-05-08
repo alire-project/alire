@@ -79,6 +79,35 @@ package body Alire.Containers is
       end return;
    end Including;
 
+   -----------
+   -- Merge --
+   -----------
+
+   procedure Merge (This : in out Dependency_Map;
+                    Dep  :        Dependencies.Dependency)
+   is
+      use type Dependencies.Dependency;
+      use type Semantic_Versioning.Extended.Version_Set;
+   begin
+      if This.Contains (Dep.Crate) then
+         declare
+            Old : constant Dependencies.Dependency := This (Dep.Crate);
+         begin
+            if Old /= Dep then
+               --  Include should work to replace the dependency, but I'm
+               --  getting a tampering error using it (?)
+               This.Delete (Dep.Crate);
+               This.Insert (Dep.Crate,
+                            Dependencies.New_Dependency
+                              (Dep.Crate,
+                               Old.Versions and Dep.Versions));
+            end if;
+         end;
+      else
+         This.Insert (Dep.Crate, Dep);
+      end if;
+   end Merge;
+
    ---------------------
    -- To_Dependencies --
    ---------------------
