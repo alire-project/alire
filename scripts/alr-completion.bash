@@ -62,8 +62,10 @@ function _alr_completion() {
             ;;
         
         with)
-            # Only when the previous word is actually "with":
+            # When the previous word is "with", show any crate:
             [ "$prev" == "with" ] && COMPREPLY+=($(compgen -W "$(alr list | cut -f1 -d' ')" -- $curr))
+            # When the previous word is "--del", show direct dependencies:
+            [ "$prev" == "--del" ] && COMPREPLY+=($(compgen -W "$(alr with | tail +2 | grep -Eo -- '[_a-z0-9]+')" -- $curr))
             ;;
     esac
 } 
