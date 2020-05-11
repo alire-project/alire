@@ -132,26 +132,22 @@ package body Alr.Commands.Get is
       --  Final report
 
       Trace.Info ("");
+
       Trace.Log (Rel.Milestone.Image & " successfully retrieved"
                  & (if Cmd.Build
-                   then
-                     (if Build_OK
-                      then " and built."
-                      else " but its build failed.")
-                   else ".")
-                 & (if Diff.Contains_Changes
-                   then " Dependencies were solved as follows:"
-                   else " There are no dependencies."),
+                   then (if Build_OK
+                         then " and built."
+                         else " but its build failed.")
+                   else "."),
                  Level => (if not Cmd.Build or else Build_OK
                            then Info
                            else Warning));
 
       if Diff.Contains_Changes then
-         Trace.Log ("", -- Empty line for consistency with `with`, `update`
-                    Level => (if not Cmd.Build or else Build_OK
-                              then Info
-                              else Warning));
+         Trace.Info ("Dependencies were solved as follows:");
          Diff.Print (Changed_Only => False);
+      else
+         Trace.Info ("There are no dependencies.");
       end if;
 
    exception

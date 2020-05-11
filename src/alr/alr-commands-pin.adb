@@ -3,6 +3,7 @@ with Alire.Solver;
 with Alire.Solutions.Diffs;
 
 with Alr.Commands.Update;
+with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
@@ -39,8 +40,9 @@ package body Alr.Commands.Pin is
             --  need to bother the user with empty questions in that case.
 
             if Diff.Contains_Changes then
-               if not Diff.Print_And_Confirm (Changed_Only =>
-                                                 not Alire.Detailed)
+               if not User_Input.Confirm_Solution_Changes
+                 (Diff,
+                  Changed_Only => not Alire.Detailed)
                then
                   Trace.Detail ("Abandoning pinning.");
                end if;

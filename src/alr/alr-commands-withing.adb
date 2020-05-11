@@ -7,11 +7,12 @@ with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Milestones;
 with Alire.Roots;
-with Alire.Solutions.Diffs;
+with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Commands.Update;
+with Alr.Commands.User_Input;
 with Alr.Exceptions;
 with Alr.OS_Lib;
 with Alr.Platform;
@@ -143,12 +144,12 @@ package body Alr.Commands.Withing is
          Trace.Info ("Requested changes:");
          Trace.Info ("");
          Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
-         Trace.Info ("");
 
          --  Show the effects on the solution
 
-         if not Root.Current.Solution.Changes (New_Solution)
-           .Print_And_Confirm (Changed_Only => not Alire.Detailed)
+         if not User_Input.Confirm_Solution_Changes
+           (Root.Current.Solution.Changes (New_Solution),
+            Changed_Only => not Alire.Detailed)
          then
             Trace.Info ("No changes applied.");
             return;

@@ -3,6 +3,7 @@ with Alire.Solutions.Diffs;
 with Alire.Solver;
 
 with Alr.Checkout;
+with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
 
@@ -58,7 +59,9 @@ package body Alr.Commands.Update is
          --  Show changes and ask user to apply them
 
          if Interactive then
-            if not Diff.Print_And_Confirm (Changed_Only => not Alire.Detailed)
+            if not User_Input.Confirm_Solution_Changes
+              (Diff,
+               Changed_Only => not Alire.Detailed)
             then
                Trace.Detail ("Update abandoned.");
                return;
