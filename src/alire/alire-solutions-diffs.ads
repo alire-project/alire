@@ -27,15 +27,11 @@ package Alire.Solutions.Diffs is
    --  Says if there are, in fact, changes between both solutions
 
    procedure Print (This         : Diff;
-                    Changed_Only : Boolean);
-   --  Print a summary of changes between two solutions
-
-   function Print_And_Confirm
-     (This           : Diff;
-      Changed_Only   : Boolean)
-      return Boolean;
-   --  Present a summary of changes and ask the user for confirmation. Returns
-   --  True when the user answers positively.
+                    Changed_Only : Boolean;
+                    Prefix       : String       := "   ";
+                    Level        : Trace.Levels := Trace.Info);
+   --  Print a summary of changes between two solutions. Prefix is prepended to
+   --  every line.
 
 private
 

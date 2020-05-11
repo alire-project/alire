@@ -1,6 +1,5 @@
 with Alire.Containers;
 with Alire.Utils.Tables;
-with Alire.Utils.User_Input;
 
 package body Alire.Solutions.Diffs is
 
@@ -111,7 +110,9 @@ package body Alire.Solutions.Diffs is
    -----------
 
    procedure Print (This         : Diff;
-                    Changed_Only : Boolean)
+                    Changed_Only : Boolean;
+                    Prefix       : String       := "   ";
+                    Level        : Trace.Levels := Trace.Info)
    is
       use Change_Maps;
 
@@ -119,16 +120,22 @@ package body Alire.Solutions.Diffs is
 
       Table : Utils.Tables.Table;
    begin
+
+      --  Start with an empty line to separate from previous output
+
+      Trace.Log ("", Level);
+
       if not This.Latter_Valid then
-         Trace.Info ("   New solution is invalid.");
+         Trace.Log (Prefix & "New solution is invalid.", Level);
       elsif This.Latter_Valid and then not This.Former_Valid then
-         Trace.Info ("   New solution is valid.");
+         Trace.Log (Prefix & "New solution is valid.", Level);
       end if;
 
       --  Early exit if no changes
 
       if not This.Contains_Changes then
-         Trace.Info ("   No changes between former an new solution.");
+         Trace.Log (Prefix & "No changes between former an new solution.",
+                    Level);
          return;
       end if;
 
@@ -144,7 +151,7 @@ package body Alire.Solutions.Diffs is
                --  Show icon of change
 
                Table.Append
-                 ("   "
+                 (Prefix
                   & (case This.Change (Key (I)) is
                        when Added      => "✓",
                        when Removed    => "✗",
@@ -188,34 +195,7 @@ package body Alire.Solutions.Diffs is
          end;
       end loop;
 
-      Table.Print (Level => Info);
+      Table.Print (Level);
    end Print;
-
-   -----------------------
-   -- Print_And_Confirm --
-   -----------------------
-
-   function Print_And_Confirm
-     (This         : Diff;
-      Changed_Only : Boolean)
-      return Boolean
-   is
-      use Utils.User_Input;
-   begin
-      if This.Contains_Changes then
-         Trace.Info ("Changes to dependency solution:");
-         Trace.Info ("");
-         This.Print (Changed_Only => Changed_Only);
-         Trace.Info ("");
-      else
-         Trace.Info
-           ("There are no changes between the former and new solution.");
-      end if;
-
-      return Utils.User_Input.Query
-        (Question => "Do you want to proceed?",
-         Valid    => (Yes | No => True, others => False),
-         Default  => Yes) = Yes;
-   end Print_And_Confirm;
 
 end Alire.Solutions.Diffs;
