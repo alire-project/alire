@@ -519,3 +519,8 @@ available.'case(toolchain)'.user = false
 
  - `word-size`: architecture word size. Currently supported values are:
    `bits-32`, `bits-64`, `bits-unknown`
+
+## Further reading ##
+
+You can inspect [index files](https://github.com/alire-project/alire-index) to
+get an idea of how projects are included into the catalog.
