@@ -11,8 +11,10 @@ with Alire;
 with Alire.Config;
 with Alire.Features.Index;
 with Alire.Index;
+with Alire.Lockfiles;
 with Alire.Roots;
 with Alire.Roots.Check_Valid;
+with Alire.Solutions;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -32,6 +34,7 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Commands.Setenv;
+with Alr.Platform;
 with Alr.Root;
 
 with GNAT.Command_Line.Extra;
@@ -424,6 +427,27 @@ package body Alr.Commands is
          Reportaise_Command_Failed
            ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
       end if;
+
+      --  For workspaces created pre-lockfiles, we create one on the fly
+
+      if OS_Lib.Is_Regular_File (Checked.Lock_File) then
+         return;
+      end if;
+
+      --  Solve current root dependencies to create the lock file
+
+      Trace.Debug ("Missing lockfile, generating it on the fly...");
+
+      declare
+         Solution : constant Alire.Solutions.Solution :=
+                      Alire.Solver.Resolve
+                        (Checked.Release.Dependencies (Platform.Properties),
+                         Platform.Properties);
+      begin
+         Alire.Lockfiles.Write (Solution,
+                                Platform.Properties,
+                                Checked.Lock_File);
+      end;
    end Requires_Valid_Session;
 
    --------------------
