@@ -45,7 +45,15 @@ package body Alr.Commands.Show is
                      Cmd      : Command)
    is
    begin
+      if Current then
+         Trace.Debug ("Showing workspace definitions");
+      else
+         Trace.Debug ("Showing definitions from index releases");
+      end if;
+
       declare
+         --  Nested so a failure in Query.Find is caught below
+
          Rel     : constant Types.Release  :=
                      (if Current
                       then Root.Current.Release
@@ -63,18 +71,15 @@ package body Alr.Commands.Show is
 
          if Cmd.Solve then
             declare
-               Needed  : Query.Solution :=
+               Needed  : constant Query.Solution :=
                            Query.Resolve
-                             (Rel.To_Dependency,
+                             (Rel.Dependencies (Platform.Properties),
                               Platform.Properties,
                               Options => (Age       => Query_Policy,
                                           Detecting => <>,
                                           Hinting   => <>));
             begin
                if Needed.Valid then
-                  if Needed.Releases.Contains (Rel.Name) then
-                     Needed.Releases.Delete (Rel.Name);
-                  end if;
 
                   --  Show regular dependencies in solution. When requested,
                   --  show also their origin kind.This is useful for crate

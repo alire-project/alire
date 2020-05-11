@@ -650,6 +650,7 @@ package body Alire.Solver is
 
    begin
       if Deps.Is_Empty then
+         Trace.Debug ("Returning trivial solution for empty dependencies");
          return Solution'(Valid    => True,
                           Releases => Empty_Map,
                           Hints    => Empty_Deps);
