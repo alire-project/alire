@@ -63,18 +63,17 @@ package body Alr.Commands.Show is
 
          if Cmd.Solve then
             declare
-               Needed  : Query.Solution :=
-                           Query.Resolve
-                             (Rel.To_Dependency,
+               Needed : constant Query.Solution :=
+                          (if Current
+                           then Root.Current.Solution
+                           else Query.Resolve
+                             (Rel.Dependencies (Platform.Properties),
                               Platform.Properties,
                               Options => (Age       => Query_Policy,
                                           Detecting => <>,
-                                          Hinting   => <>));
+                                          Hinting   => <>)));
             begin
                if Needed.Valid then
-                  if Needed.Releases.Contains (Rel.Name) then
-                     Needed.Releases.Delete (Rel.Name);
-                  end if;
 
                   --  Show regular dependencies in solution. When requested,
                   --  show also their origin kind.This is useful for crate
@@ -100,17 +99,23 @@ package body Alr.Commands.Show is
                      Put_Line ("Dependencies (external):");
                      for Dep of Needed.Hints loop
                         Put_Line ("   " & Dep.Image);
-                        for Hint of
-                          Alire.Index.Crate (Dep.Crate)
-                          .Externals.Hints
-                            (Name => Dep.Crate,
-                             Env  =>
-                               (if Cmd.System
-                                then Platform.Properties
-                                else Alire.Properties.No_Properties))
-                        loop
-                           Trace.Info ("      Hint: " & Hint);
-                        end loop;
+
+                        --  Look for hints. If we are relying on workspace
+                        --  information the index may not be loaded, or have
+                        --  changed, so we need to ensure the crate is indexed.
+                        if Alire.Index.Exists (Dep.Crate) then
+                           for Hint of
+                             Alire.Index.Crate (Dep.Crate)
+                             .Externals.Hints
+                               (Name => Dep.Crate,
+                                Env  =>
+                                  (if Cmd.System
+                                   then Platform.Properties
+                                   else Alire.Properties.No_Properties))
+                           loop
+                              Trace.Info ("      Hint: " & Hint);
+                           end loop;
+                        end if;
                      end loop;
                   end if;
 
@@ -250,10 +255,8 @@ package body Alr.Commands.Show is
             when Outside =>
                Reportaise_Wrong_Arguments
                  ("Cannot proceed without a crate name");
-            when Broken =>
+            when others =>
                Requires_Valid_Session;
-            when Bootstrap.Valid_Session_States =>
-               null;
          end case;
       end if;
 
