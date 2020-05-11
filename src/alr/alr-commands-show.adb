@@ -255,10 +255,8 @@ package body Alr.Commands.Show is
             when Outside =>
                Reportaise_Wrong_Arguments
                  ("Cannot proceed without a crate name");
-            when Broken =>
+            when others =>
                Requires_Valid_Session;
-            when Bootstrap.Valid_Session_States =>
-               null;
          end case;
       end if;
 

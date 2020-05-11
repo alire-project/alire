@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Directories;
@@ -59,6 +60,12 @@ package body Alire.Lockfiles is
       when others =>
          if Is_Open (File) then
             Close (File);
+         end if;
+
+         --  Clean up
+
+         if Ada.Directories.Exists (Filename) then
+            Ada.Directories.Delete_File (Filename);
          end if;
 
          raise;

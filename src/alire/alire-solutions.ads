@@ -57,7 +57,8 @@ package Alire.Solutions is
 
    overriding
    function To_TOML (This : Solution) return TOML.TOML_Value with
-     Pre => (for all Release of This.Releases =>
+     Pre => not This.Valid or else
+           (for all Release of This.Releases =>
                Release.Dependencies.Is_Unconditional and then
                Release.Properties.Is_Unconditional);
    --  As previous one, but requires releases not to have dynamic expressions
