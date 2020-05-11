@@ -151,7 +151,11 @@ package Alire.Releases with Preelaborate is
    function Properties (R : Release) return Conditional.Properties;
 
    function Origin  (R : Release) return Origins.Origin;
+
    function Available (R : Release) return Requisites.Tree;
+   function Is_Available (R : Release;
+                          P : Alire.Properties.Vector) return Boolean;
+   --  Evaluate R.Availabel under platform properties P
 
    function Default_Executable (R : Release) return String;
    --  We encapsulate here the fixing of platform extension
@@ -335,6 +339,10 @@ private
 
    function Available (R : Release) return Requisites.Tree
    is (R.Available);
+
+   function Is_Available (R : Release;
+                          P : Alire.Properties.Vector) return Boolean
+   is (R.Available.Check (P));
 
    function Description (R : Release) return Description_String
    --  Image returns "Description: Blah" so we have to cut.

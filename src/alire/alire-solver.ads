@@ -1,11 +1,18 @@
-with Alire.Containers;
 with Alire.Index;
 with Alire.Properties;
+with Alire.Solutions;
+with Alire.TOML_Adapters;
 with Alire.Types;
 
 with Semantic_Versioning.Extended;
 
-package Alr.Query is
+with TOML;
+
+package Alire.Solver is
+
+   --------------
+   -- Policies --
+   --------------
 
    type Age_Policies is (Oldest, Newest);
    --  When looking for releases within a crate, which one to try first.
@@ -21,13 +28,9 @@ package Alr.Query is
    --  releases will be used normally; otherwise a crate with only externals
    --  will always cause failure.
 
-   subtype Dep_List is Alire.Containers.Dependency_Lists.List;
-   --  Dependency lists are used to keep track of failed dependencies
-
-   subtype Instance is Alire.Containers.Release_Map;
-   --  A list of releases complying with a Solution
-
    subtype Release  is Types.Release;
+
+   subtype Solution is Solutions.Solution;
 
    --  The dependency solver receives a list of dependencies and will return
    --  either a valid solution if one can be found (exploration is exhaustive).
@@ -35,23 +38,6 @@ package Alr.Query is
    --  support. Otherwise they're filed as "hints" but do not cause a failure
    --  in resolution. In this case, a warning will be provided for the user
    --  with a list of the dependencies that are externally required.
-
-   type Solution (Valid : Boolean) is tagged record
-      case Valid is
-         when True  =>
-            Releases : Instance; -- Resolved dependencies to be deployed
-            Hints    : Dep_List; -- Unresolved external dependencies
-
-         when False =>
-            null;
-      end case;
-   end record;
-
-   Empty_Deps : constant Dep_List :=
-                  Alire.Containers.Dependency_Lists.Empty_List;
-
-   Empty_Instance : constant Instance :=
-     (Alire.Containers.Crate_Release_Maps.Empty_Map with null record);
 
    ---------------------
    --  Basic queries  --
@@ -83,17 +69,6 @@ package Alr.Query is
                   Policy  : Age_Policies) return Release;
    --  Given a textual crate+set (see Parsers), find the release if it exists
 
-   ----------------------------------
-   --  Platform individual queries --
-   --  Only need a release and the platform properties
-
-   function Is_Available (R : Alire.Index.Release) return Boolean;
-   --  The release knows the requisites on the platform; here we evaluate these
-   --  against the current target. Current checks include the "available"
-   --  requisites and that the system package do exist. NOTE: it does not
-   --  consider that dependencies can be resolved, only that it "could" be
-   --  available.
-
    -----------------------
    --  Advanced queries --
    --  They may need to travel the full catalog, with multiple individual
@@ -108,10 +83,14 @@ package Alr.Query is
    Default_Options : constant Query_Options := (others => <>);
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+                     Props   : Properties.Vector;
                      Options : Query_Options := Default_Options)
                      return Solution;
+   --  Exhaustively look for a solution to the given dependencies, under the
+   --  given platform properties and lookup options.
 
    function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+                           Props   : Properties.Vector;
                            Options : Query_Options := Default_Options)
                            return Boolean;
    --  simplified call to Resolve, discarding result
@@ -127,4 +106,4 @@ package Alr.Query is
       Versions : Semantic_Versioning.Extended.Version_Set;
       Policy   : Age_Policies := Newest) return String;
 
-end Alr.Query;
+end Alire.Solver;

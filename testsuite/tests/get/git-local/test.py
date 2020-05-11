@@ -17,6 +17,7 @@ compare(list(filter
               contents('libfoo_1.0.0_9ddda32b'))),
         ['libfoo_1.0.0_9ddda32b/a',
          'libfoo_1.0.0_9ddda32b/alire',
+         'libfoo_1.0.0_9ddda32b/alire/libfoo.lock',
          'libfoo_1.0.0_9ddda32b/alire/libfoo.toml',
          'libfoo_1.0.0_9ddda32b/b',
          'libfoo_1.0.0_9ddda32b/b/x',

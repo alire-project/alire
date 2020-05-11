@@ -21,7 +21,7 @@ package body Alr.Dependency_Graphs is
    -- From_Instance --
    -------------------
 
-   function From_Solution (Sol : Query.Solution) return Graph is
+   function From_Solution (Sol : Alire.Solver.Solution) return Graph is
    begin
       return Result : Graph do
          for Rel of Sol.Releases loop

@@ -2,32 +2,42 @@ with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with Alire.Conditional.Operations;
+with Alire.Containers;
 with Alire.Dependencies;
+with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Utils;
 
-with Alr.Commands;
-with Alr.Parsers;
-with Alr.Platform;
-
-package body Alr.Query is
-
-   use Alire;
+package body Alire.Solver is
 
    package Solution_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Solution);
+     (Solution, Solutions."=");
 
    package Semver renames Semantic_Versioning;
 
    use all type Semver.Extended.Version_Set;
 
+   subtype Dependency_List is Solutions.Dependency_List;
+
+   subtype Release_Map is Alire.Containers.Release_Map;
+   --  Releases with a concrete version (source and detected external releases)
+
+   Empty_Deps : constant Dependency_List :=
+                  Alire.Containers.Dependency_Lists.Empty_List;
+
+   Empty_Map : constant Release_Map :=
+     (Alire.Containers.Crate_Release_Maps.Empty_Map with null record);
+
    ---------
    -- "&" --
    ---------
 
-   function "&" (L : Dep_List; R : Dependencies.Dependency) return Dep_List is
+   function "&" (L : Dependency_List;
+                 R : Dependencies.Dependency)
+                 return Dependency_List
+   is
    begin
-      return Result : Dep_List := L do
+      return Result : Dependency_List := L do
          Result.Append (R);
       end return;
    end "&";
@@ -126,29 +136,23 @@ package body Alr.Query is
    function Find (Name : String;
                   Policy  : Age_Policies) return Release
    is
-      Spec : constant Parsers.Allowed_Milestones :=
-        Parsers.Crate_Versions (Name);
+      Spec : constant Milestones.Allowed_Milestones :=
+        Milestones.Crate_Versions (Name);
    begin
       return Find (Spec.Crate,
                    Spec.Versions,
                    Policy);
    end Find;
 
-   ------------------
-   -- Is_Available --
-   ------------------
-
-   function Is_Available (R : Alire.Index.Release) return Boolean is
-     (R.Available.Check (Platform.Properties));
-
    -------------------
    -- Is_Resolvable --
    -------------------
 
    function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+                           Props   : Properties.Vector;
                            Options : Query_Options := Default_Options)
                            return Boolean
-   is (Resolve (Deps, Options).Valid);
+   is (Resolve (Deps, Props, Options).Valid);
 
    --------------------
    -- Print_Solution --
@@ -177,7 +181,7 @@ package body Alr.Query is
    ------------------------
    --  Declared for use with Materialize instance below.
 
-   procedure Add_Dep_Release (Sol   : in out Instance;
+   procedure Add_Dep_Release (Sol   : in out Release_Map;
                               Dep   :        Types.Dependency;
                               Count :        Count_Type := 1)
    is
@@ -188,7 +192,7 @@ package body Alr.Query is
       end if;
 
       Sol.Insert (Dep.Crate,
-                  Find (Dep.Crate, Dep.Versions, Commands.Query_Policy));
+                  Find (Dep.Crate, Dep.Versions, Newest));
    end Add_Dep_Release;
 
    -----------------
@@ -196,15 +200,16 @@ package body Alr.Query is
    -----------------
 
    function Materialize is new Alire.Conditional.For_Dependencies.Materialize
-     (Instance,
+     (Release_Map,
       Add_Dep_Release);
 
    -----------------
    -- Is_Complete --
    -----------------
 
-   function Is_Complete (Deps : Types.Platform_Dependencies;
-                         Sol  : Solution)
+   function Is_Complete (Deps  : Types.Platform_Dependencies;
+                         Props : Properties.Vector;
+                         Sol   : Solution)
                          return Boolean is
 
       use Alire.Conditional.For_Dependencies;
@@ -222,7 +227,7 @@ package body Alr.Query is
 
                --  Check in turn that the release dependencies are satisfied
                --  too.
-               return Is_Complete (R.Dependencies (Platform.Properties), Sol);
+               return Is_Complete (R.Dependencies (Props), Props, Sol);
             end if;
          end loop;
 
@@ -252,7 +257,7 @@ package body Alr.Query is
       function Check_And_Vector return Boolean is
       begin
          for I in Deps.Iterate loop
-            if not Is_Complete (Deps (I), Sol) then
+            if not Is_Complete (Deps (I), Props, Sol) then
                return False;
             end if;
          end loop;
@@ -266,7 +271,7 @@ package body Alr.Query is
       function Check_Or_Vector return Boolean is
       begin
          for I in Deps.Iterate loop
-            if Is_Complete (Deps (I), Sol) then
+            if Is_Complete (Deps (I), Props, Sol) then
                return True;
             end if;
          end loop;
@@ -297,6 +302,7 @@ package body Alr.Query is
    -------------
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+                     Props   : Properties.Vector;
                      Options : Query_Options := Default_Options)
                      return Solution
    is
@@ -335,7 +341,7 @@ package body Alr.Query is
          --  Note: these Deps may include more than the ones requested to
          --  solve, as indirect dependencies are progressively added.
       begin
-         if Is_Complete (Deps, Sol) then
+         if Is_Complete (Deps, Props, Sol) then
             Solutions.Append (Sol);
             Trace.Debug ("SOLVER: solution FOUND for " & Deps.Image_One_Line);
             Print_Solution (Sol);
@@ -346,13 +352,23 @@ package body Alr.Query is
       -- Expand --
       ------------
 
-      procedure Expand (Expanded,   --  Nodes firmly in requisite tree
-                        Current,    --  Next node to consider
-                        Remaining : --  Nodes pending to be considered
-                                    Types.Platform_Dependencies;
-                        Frozen    : Instance; -- Releases in current solution
+      procedure Expand (Expanded,
+                        --  Nodes firmly in requisite tree
+
+                        Current,
+                        --  Next node to consider
+
+                        Remaining : Types.Platform_Dependencies;
+                        --  Nodes pending to be considered
+
+                        Frozen    : Release_Map;
+                        --  Releases in current solution
+
                         Forbidden : Types.Forbidden_Dependencies;
-                        Hints     : Dep_List) -- Externals that supply a dep
+                        --  Releases that conflict with current solution
+
+                        Hints     : Dependency_List)
+                        --  Externals that supply a dependency
       is
 
          ------------------
@@ -434,7 +450,7 @@ package body Alr.Query is
                   --  frozen crates, it is incompatible and we can discard it:
 
                   elsif Cond_Ops.Contains_Some
-                    (R.Forbids (Platform.Properties), Frozen)
+                    (R.Forbids (Props), Frozen)
                   then
                      Trace.Debug
                        ("SOLVER: discarding tree because " &
@@ -454,7 +470,7 @@ package body Alr.Query is
 
                   elsif -- First time we see this crate in the current branch.
                     Dep.Versions.Contains (R.Version) and then
-                    Is_Available (R)
+                    R.Is_Available (Props)
                   then
                      Trace.Debug
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
@@ -463,21 +479,20 @@ package body Alr.Query is
                            then " also providing " & (+R.Provides)
                            else "") &
                           " adding" &
-                          R.Dependencies (Platform.Properties).Leaf_Count'Img &
+                          R.Dependencies (Props).Leaf_Count'Img &
                           " dependencies to tree " &
                           Tree'(Expanded
                                 and Current
                                 and Remaining
                                 and R.Dependencies
-                                  (Platform.Properties)).Image_One_Line);
+                                  (Props)).Image_One_Line);
 
-                     Expand
-                       (Expanded and R.To_Dependency,
-                        Remaining and R.Dependencies (Platform.Properties),
-                        Empty,
-                        Frozen.Inserting (R),
-                        Forbidden and R.Forbids (Platform.Properties),
-                        Hints);
+                     Expand (Expanded and R.To_Dependency,
+                             Remaining and R.Dependencies (Props),
+                             Empty,
+                             Frozen.Inserting (R),
+                             Forbidden and R.Forbids (Props),
+                             Hints);
 
                   --  Finally, even a valid candidate may not satisfy version
                   --  restrictions, or not be available in the current
@@ -518,7 +533,7 @@ package body Alr.Query is
                --  below.
 
                if Options.Detecting = Detect then
-                  Index.Add_Externals (Dep.Crate, Platform.Properties);
+                  Index.Add_Externals (Dep.Crate, Props);
                end if;
 
                --  Check the releases now:
@@ -606,7 +621,7 @@ package body Alr.Query is
                  (Deps,
                   Solution'(Valid    => True,
                             Releases => Materialize
-                              (Expanded, Platform.Properties),
+                              (Expanded, Props),
                             Hints    => Hints));
                return;
             else
@@ -636,14 +651,14 @@ package body Alr.Query is
    begin
       if Deps.Is_Empty then
          return Solution'(Valid    => True,
-                          Releases => Empty_Instance,
+                          Releases => Empty_Map,
                           Hints    => Empty_Deps);
       end if;
 
       Expand (Expanded  => Empty,
               Current   => Deps,
               Remaining => Empty,
-              Frozen    => Empty_Instance,
+              Frozen    => Empty_Map,
               Forbidden => Empty,
               Hints     => Empty_Deps);
 
@@ -660,8 +675,9 @@ package body Alr.Query is
                          then " and" & Solutions.First_Element.Hints.Length'Img
                          & " external hints"
                          else ""));
+
          return Solutions.First_Element;
       end if;
    end Resolve;
 
-end Alr.Query;
+end Alire.Solver;

@@ -13,6 +13,7 @@ assert_eq('', p.out)
 # Check folder contents
 compare(contents('main_1.0.0_filesystem/'),
         ['main_1.0.0_filesystem/alire',
+         'main_1.0.0_filesystem/alire/main.lock',
          'main_1.0.0_filesystem/alire/main.toml',
          'main_1.0.0_filesystem/noop.gpr',
          'main_1.0.0_filesystem/src',

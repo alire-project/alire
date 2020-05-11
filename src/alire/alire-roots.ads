@@ -1,9 +1,12 @@
 private with Alire.Containers;
+private with Alire.Lockfiles;
 private with Alire.OS_Lib;
 private with Alire.Paths;
-with Alire.Releases;
 
-package Alire.Roots with Preelaborate is
+with Alire.Releases;
+with Alire.Solutions;
+
+package Alire.Roots is
 
    --  Type used to encapsulate the information about the working context.
    --  Currently, this can either be:
@@ -54,19 +57,23 @@ package Alire.Roots with Preelaborate is
    function Release (This : Root) return Releases.Release with
      Pre => This.Is_Valid;
 
+   function Solution (This : Root) return Solutions.Solution with
+     Pre => This.Is_Valid;
+   --  Returns the solution stored in the lockfile
+
    --  files and folders derived from the root path (this obsoletes Alr.Paths)
 
    function Working_Folder (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
    --  The "alire" folder inside the root path
 
-   function Build_File (This : Root) return Absolute_Path with
-     Pre => This.Is_Valid;
-   --  The "alr_build.gpr" file inside Working_Folder
-
    function Crate_File (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
    --  The "$crate.toml" file inside Working_Folder
+
+   function Lock_File (This : Root) return Absolute_Path with
+     Pre => This.Is_Valid;
+   --  The "$crate.lock" file inside Working_Folder
 
 private
 
@@ -109,10 +116,15 @@ private
    function Release (This : Root) return Releases.Release is
      (This.Release.Constant_Reference);
 
+   function Solution (This : Root) return Solutions.Solution is
+     (Lockfiles.Read (This.Lock_File));
+
    use OS_Lib;
 
-   function Build_File (This : Root) return Absolute_Path is
-      (This.Working_Folder / "alr_build.gpr");
+   function Lock_File (This : Root) return Absolute_Path is
+     (Lockfiles.File_Name
+        (This.Release.Constant_Reference.Name,
+         +This.Path));
 
    function Crate_File (This : Root) return Absolute_Path is
      (This.Working_Folder /

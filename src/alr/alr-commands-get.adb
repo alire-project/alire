@@ -1,25 +1,25 @@
 with Ada.Directories;
 
 with Alire.Actions;
-with Alire.Directories;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
+with Alire.Solver;
 
 with Alr.Actions;
 with Alr.Checkout;
 with Alr.Commands.Build;
 with Alr.Commands.Update;
-with Alr.Parsers;
 with Alr.Platform;
-with Alr.Query;
 with Alr.Bootstrap;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Get is
 
+   package Query  renames Alire.Solver;
    package Semver renames Semantic_Versioning;
 
    use all type Bootstrap.Session_States;
@@ -40,8 +40,9 @@ package body Alr.Commands.Get is
         Query.Find (Name, Versions, Query_Policy);
    begin
       if not Query.Is_Resolvable
-               (Rel.Dependencies.Evaluate (Platform.Properties))
-         and then not Cmd.Only
+        (Rel.Dependencies.Evaluate (Platform.Properties),
+         Platform.Properties)
+        and then not Cmd.Only
       then
          Trace.Error ("Could not resolve dependencies for: " &
                         Query.Dependency_Image (Name, Versions));
@@ -53,21 +54,23 @@ package body Alr.Commands.Get is
       end if;
 
       declare
+         R : constant Alire.Index.Release :=
+               Query.Find (Name, Versions, Query_Policy);
          Result : Alire.Outcome;
       begin
          --  Check that itself is available (but overridable with --only)
-         if not Cmd.Only and then not Query.Is_Available (Rel) then
+         if not Cmd.Only and then not R.Is_Available (Platform.Properties) then
             Trace.Error
               ("The requested version ("
-               & Rel.Milestone.Image
+               & R.Milestone.Image
                & ") is not available");
             Reportaise_Command_Failed
               ("You can retrieve it without dependencies with --only");
          end if;
 
          --  Check if it's system first and thus we need not to check out.
-         if Rel.Origin.Is_System then
-            Result := Alire.Origins.Deployers.Deploy (Rel);
+         if R.Origin.Is_System then
+            Result := Alire.Origins.Deployers.Deploy (R);
             if Result.Success then
                return;
             else
@@ -84,21 +87,9 @@ package body Alr.Commands.Get is
 
       --  Check out requested crate release under current directory,
       --  but delay its post-fetch:
-      declare
-         Root_Dir : Alire.Directories.Temp_File :=
-                      Alire.Directories.With_Name (Rel.Unique_Folder);
-      begin
-         Checkout.Working_Copy (Rel,
-                                Ada.Directories.Current_Directory,
-                                Perform_Actions => False);
-
-         --  At this point, both crate and lock files must exist and
-         --  be correct, so the working session is correct. Errors with
-         --  dependencies can still occur, but these are outside of the
-         --  retrieved crate and might be corrected manipulating dependencies
-         --  and updating.
-         Root_Dir.Keep;
-      end;
+      Checkout.Working_Copy (Rel,
+                             Ada.Directories.Current_Directory,
+                             Perform_Actions => False);
 
       if Cmd.Only then
          Trace.Detail ("By your command, dependencies not resolved nor" &
@@ -219,8 +210,8 @@ package body Alr.Commands.Get is
       end if;
 
       declare
-         Allowed : constant Parsers.Allowed_Milestones :=
-           Parsers.Crate_Versions (Argument (1));
+         Allowed : constant Alire.Milestones.Allowed_Milestones :=
+           Alire.Milestones.Crate_Versions (Argument (1));
       begin
          if Cmd.Build and Cmd.Only then
             Reportaise_Wrong_Arguments

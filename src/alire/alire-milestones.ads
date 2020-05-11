@@ -1,4 +1,4 @@
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 package Alire.Milestones with Preelaborate is
 
@@ -15,6 +15,20 @@ package Alire.Milestones with Preelaborate is
    function Version (M : Milestone) return Semantic_Versioning.Version;
 
    function Image (M : Milestone) return String;
+
+   -----------------------
+   -- Milestone parsing --
+   -----------------------
+
+   type Allowed_Milestones (Len : Positive) is record
+      Crate    : Alire.Crate_Name (1 .. Len);
+      Versions : Semantic_Versioning.Extended.Version_Set;
+   end record;
+
+   function Crate_Versions (Spec : String) return Allowed_Milestones;
+   --  Either valid set or Constraint_Error
+   --  If no version was specified, Any version is returned
+   --  Syntax: name[extended version set expression]
 
 private
 

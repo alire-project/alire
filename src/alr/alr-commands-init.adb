@@ -1,11 +1,14 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Lockfiles;
+with Alire.Milestones;
 with Alire.Origins;
 with Alire.Releases;
 with Alire.Roots;
+with Alire.Solutions;
 
-with Alr.Parsers;
+with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
 with Alr.Utils;
@@ -171,6 +174,11 @@ package body Alr.Commands.Init is
          Templates.Generate_Prj_Alr
            (Root.Release,
             Root.Crate_File);
+
+         Alire.Lockfiles.Write
+           (Alire.Solutions.Empty_Valid_Solution,
+            Platform.Properties,
+            Root.Lock_File);
       end;
    end Generate;
 
@@ -198,8 +206,8 @@ package body Alr.Commands.Init is
 
       declare
          Name  : constant String := Argument (1);
-         Check : constant Parsers.Allowed_Milestones :=
-                   Parsers.Crate_Versions (Name)
+         Check : constant Alire.Milestones.Allowed_Milestones :=
+                   Alire.Milestones.Crate_Versions (Name)
                    with Unreferenced;
       begin
          if Utils.To_Lower_Case (Name)

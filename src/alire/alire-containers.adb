@@ -7,10 +7,19 @@ package body Alire.Containers is
    -- Insert --
    ------------
 
+   procedure Insert (Dst : in out Release_Map; Src : Releases.Release) is
+   begin
+      Dst.Insert (Src.Name, Src);
+   end Insert;
+
+   ------------
+   -- Insert --
+   ------------
+
    procedure Insert (Dst : in out Release_Map; Src : Release_Map) is
    begin
       for E of Src loop
-         Dst.Insert (E.Name, E);
+         Dst.Insert (E);
       end loop;
    end Insert;
 
@@ -105,5 +114,19 @@ package body Alire.Containers is
          M.Include (R.Name, R);
       end return;
    end To_Map;
+
+   --------------
+   -- Whenever --
+   --------------
+
+   function Whenever (Map   : Release_Map;
+                      Props : Properties.Vector) return Release_Map is
+   begin
+      return Result : Release_Map do
+         for Release of Map loop
+            Result.Insert (Release.Name, Release.Whenever (Props));
+         end loop;
+      end return;
+   end Whenever;
 
 end Alire.Containers;

@@ -4,13 +4,14 @@ with Ada.Strings.Maps;
 with Ada.Text_IO;
 
 with Alire.Conditional;
+with Alire.Milestones;
 with Alire.Roots;
+with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Commands.Update;
 with Alr.Exceptions;
 with Alr.OS_Lib;
-with Alr.Parsers;
 with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
@@ -18,6 +19,8 @@ with Alr.Templates;
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Withing is
+
+   package Query renames Alire.Solver;
 
    ---------
    -- Add --
@@ -28,8 +31,8 @@ package body Alr.Commands.Withing is
                  return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
-      Requested : constant Parsers.Allowed_Milestones :=
-        Parsers.Crate_Versions (New_Dep);
+      Requested : constant Alire.Milestones.Allowed_Milestones :=
+        Alire.Milestones.Crate_Versions (New_Dep);
    begin
 
       --  Check that the requested dependency exists
@@ -57,7 +60,8 @@ package body Alr.Commands.Withing is
         Deps and Alire.Conditional.New_Dependency (Requested.Crate,
                                                    Requested.Versions)
       do
-         if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties))
+         if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties),
+                                     Platform.Properties)
          then
             Reportaise_Command_Failed ("Adding " & New_Dep &
                                          " has no dependency solution");
@@ -77,8 +81,8 @@ package body Alr.Commands.Withing is
    is
       use all type Alire.Conditional.Dependencies;
       use all type Semantic_Versioning.Extended.Version_Set;
-      Requested : constant Parsers.Allowed_Milestones :=
-        Parsers.Crate_Versions (Old_Dep);
+      Requested : constant Alire.Milestones.Allowed_Milestones :=
+        Alire.Milestones.Crate_Versions (Old_Dep);
    begin
       if Requested.Versions /= Semantic_Versioning.Extended.Any then
          Trace.Warning

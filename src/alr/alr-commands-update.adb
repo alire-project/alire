@@ -1,8 +1,8 @@
 with Alire.Paths;
+with Alire.Solver;
 
 with Alr.Checkout;
 with Alr.Platform;
-with Alr.Query;
 with Alr.Root;
 
 with GNAT.OS_Lib;
@@ -11,6 +11,8 @@ with Alr.Bootstrap;
 package body Alr.Commands.Update is
 
    use all type Bootstrap.Session_States;
+
+   package Query renames Alire.Solver;
 
    -------------
    -- Upgrade --
@@ -28,6 +30,7 @@ package body Alr.Commands.Update is
                      Query.Resolve
                        (Root.Current.Release.Dependencies.Evaluate
                           (Platform.Properties),
+                        Platform.Properties,
                         Options => (Age       => Query_Policy,
                                     Detecting => <>,
                                     Hinting   => <>));
@@ -35,7 +38,13 @@ package body Alr.Commands.Update is
          if not Needed.Valid then
             Reportaise_Command_Failed ("Update failed");
          end if;
-         Checkout.To_Folder (Needed);
+
+         --  Requires_Valid_Session ensures we are at the root working dir
+
+         Checkout.Dependencies (Root     => Root.Current.Release.Name,
+                                Solution => Needed,
+                                Root_Dir => OS_Lib.Current_Folder);
+
          Trace.Detail ("Update completed");
       end;
    end Upgrade;

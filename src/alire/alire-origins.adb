@@ -164,6 +164,7 @@ package body Alire.Origins is
       Path   : constant String :=
                  From (From'First + Prefixes (Filesystem)'Length ..
                          From'Last);
+      Descr  : constant String := Tail (From, ':');
    begin
       --  Check easy ones first (unique prefixes):
       for Kind in Prefixes'Range loop
@@ -175,6 +176,8 @@ package body Alire.Origins is
                when Hg             => This := New_Hg (URL, Commit);
                when SVN            => This := New_SVN (URL, Commit);
 
+               when External       => This := New_External (Descr);
+
                when Filesystem     =>
                   if Path = "" then
                      return Parent.Failure
@@ -182,8 +185,11 @@ package body Alire.Origins is
                   else
                      This := New_Filesystem (Path);
                   end if;
-               when External | System | Source_Archive =>
+
+               when Source_Archive =>
                   raise Program_Error with "can't happen";
+
+               when System         => This := New_System (Descr);
             end case;
 
             if Hashed then
@@ -304,15 +310,19 @@ package body Alire.Origins is
          when VCS_Kinds =>
             Table.Set (TOML_Keys.Origin, +(Prefixes (This.Kind).all &
                          This.URL & "@" & This.Commit));
-         when External | System =>
-            raise Program_Error
-              with "external or system packages do not need to be exported";
+         when External =>
+            Table.Set (TOML_Keys.Origin,
+                       +(Prefixes (This.Kind).all & (+This.Data.Description)));
 
          when Source_Archive =>
             Table.Set (TOML_Keys.Origin,       +This.Archive_URL);
             if This.Archive_Name /= "" then
                Table.Set (TOML_Keys.Archive_Name, +This.Archive_Name);
             end if;
+
+         when System =>
+            Table.Set (TOML_Keys.Origin,
+                       +(Prefixes (This.Kind).all & This.Package_Name));
       end case;
 
       if not This.Data.Hashes.Is_Empty then

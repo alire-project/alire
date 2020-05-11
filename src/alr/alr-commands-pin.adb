@@ -1,12 +1,14 @@
 with Alire.Releases;
+with Alire.Solver;
 
 with Alr.Commands.Update;
 with Alr.Platform;
-with Alr.Query;
 with Alr.Root;
 with Alr.Templates;
 
 package body Alr.Commands.Pin is
+
+   package Solver renames Alire.Solver;
 
    -------------
    -- Execute --
@@ -20,12 +22,13 @@ package body Alr.Commands.Pin is
       Requires_Valid_Session;
 
       declare
-         Sol : constant Query.Solution :=
-           Query.Resolve (Root.Current.Release.Dependencies
-                            (Platform.Properties),
-                          Options => (Age       => Query_Policy,
-                                      Detecting => <>,
-                                      Hinting   => <>));
+         Sol : constant Solver.Solution :=
+                 Solver.Resolve
+                   (Root.Current.Release.Dependencies (Platform.Properties),
+                    Platform.Properties,
+                    Options => (Age       => Query_Policy,
+                                Detecting => <>,
+                                Hinting   => <>));
       begin
          if Sol.Valid then
             Templates.Generate_Prj_Alr

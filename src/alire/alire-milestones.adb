@@ -1,7 +1,7 @@
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 
-package body Alr.Parsers is
+package body Alire.Milestones is
 
    package Semver renames Semantic_Versioning;
 
@@ -11,7 +11,7 @@ package body Alr.Parsers is
 
    function Crate_Versions (Spec : String) return Allowed_Milestones
    is
-   --  Locate and identify the version operator
+      --  Locate and identify the version operator
       use Ada.Strings;
       use Ada.Strings.Fixed;
       use Ada.Strings.Maps;
@@ -34,14 +34,14 @@ package body Alr.Parsers is
          Trace.Error ("Invalid version set expression: "
                       & Spec (Op_Pos .. Spec'Last));
          Trace.Error (Result.Error);
-         raise Command_Failed with "Invalid version set expression";
+         raise Checked_Error with "Invalid version set expression";
       end if;
    exception
       when Alire.Checked_Error =>
          raise;
       when others =>
          Trace.Error ("A crate/version string was invalid");
-         raise Command_Failed;
+         raise Checked_Error;
    end Crate_Versions;
 
-end Alr.Parsers;
+end Alire.Milestones;

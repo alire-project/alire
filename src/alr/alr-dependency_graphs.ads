@@ -1,8 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
-
-with Alr.Query;
+with Alire.Solver;
 
 package Alr.Dependency_Graphs is
 
@@ -10,7 +9,7 @@ package Alr.Dependency_Graphs is
 
    function Empty_Graph return Graph;
 
-   function From_Solution (Sol : Query.Solution)
+   function From_Solution (Sol : Alire.Solver.Solution)
                            return Graph;
 
    function Including (This : Graph;

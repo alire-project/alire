@@ -25,6 +25,9 @@ package Alire.Origins with Preelaborate is
 
    subtype VCS_Kinds is Kinds range Git .. SVN;
 
+   subtype External_Kinds is Kinds
+     with Static_Predicate => External_Kinds in External | System;
+
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);
    subtype Known_Source_Archive_Format is
      Source_Archive_Format range Tarball .. Source_Archive_Format'Last;
@@ -64,6 +67,11 @@ package Alire.Origins with Preelaborate is
    function Is_System (This : Origin) return Boolean is (This.Kind = System);
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
+
+   function Is_Regular (This : Origin) return Boolean is
+     (This.Kind not in External | System);
+   --  A regular origin is one that is compiled from sources, instead of coming
+   --  from external definitions (detected or not).
 
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Source_Archive;
@@ -265,18 +273,20 @@ private
          else " with hashes " & This.Image_Of_Hashes)
      );
 
-   Prefix_Git    : aliased constant String := "git+";
-   Prefix_Hg     : aliased constant String := "hg+";
-   Prefix_SVN    : aliased constant String := "svn+";
-   Prefix_File   : aliased constant String := "file://";
+   Prefix_External : aliased constant String := "external:";
+   Prefix_Git      : aliased constant String := "git+";
+   Prefix_Hg       : aliased constant String := "hg+";
+   Prefix_SVN      : aliased constant String := "svn+";
+   Prefix_File     : aliased constant String := "file://";
+   Prefix_System   : aliased constant String := "system:";
 
    Prefixes : constant Prefix_Array :=
                 (Git            => Prefix_Git'Access,
                  Hg             => Prefix_Hg'Access,
                  SVN            => Prefix_SVN'Access,
-                 External       => null,
+                 External       => Prefix_External'Access,
                  Filesystem     => Prefix_File'Access,
-                 System         => null,
+                 System         => Prefix_System'Access,
                  Source_Archive => null);
 
 end Alire.Origins;
