@@ -3,6 +3,8 @@ with Alire.Interfaces;
 with Alire.Properties;
 with Alire.TOML_Adapters;
 
+limited with Alire.Solutions.Diffs;
+
 with TOML;
 
 package Alire.Solutions is
@@ -10,7 +12,7 @@ package Alire.Solutions is
    --  A solutions is a set of releases + externals that fulfills the
    --  transitive dependencies of the root crate.
 
-   subtype Dependency_List is Alire.Containers.Dependency_Lists.List;
+   subtype Dependency_Map is Alire.Containers.Dependency_Map;
 
    subtype Release_Map is Alire.Containers.Release_Map;
 
@@ -22,7 +24,7 @@ package Alire.Solutions is
             Releases : Release_Map;
             --  Resolved dependencies to be deployed
 
-            Hints    : Dependency_List;
+            Hints    : Dependency_Map;
             --  Unresolved external dependencies
 
          when False =>
@@ -32,6 +34,14 @@ package Alire.Solutions is
 
    Invalid_Solution     : constant Solution;
    Empty_Valid_Solution : constant Solution;
+
+   function Changes (Former, Latter : Solution) return Diffs.Diff;
+
+   function Required (This : Solution) return Containers.Crate_Name_Sets.Set;
+   --  Retrieve all required crates in the solution, no matter if they have
+   --  known releases or only hints. Will return an empty set for invalid
+   --  solutions. TODO: when we track reasons for solving failure, return
+   --  the required crates with their reason for non-solvability.
 
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Solution;
