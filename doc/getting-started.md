@@ -108,7 +108,7 @@ Even more details are obtained with:
 This last command will show generic information. To see the one that
 specifically applies to your platform:
 
-* `alr show --native <project>`
+* `alr show --system <project>`
 
 The list of projects and their descriptions are also available on the Alire
 website:
