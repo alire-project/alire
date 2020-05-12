@@ -53,7 +53,7 @@ which will be manually approved (see the [policies](policies.md) for details),
 the maintainers of a crate are the only people allowed to submit new releases
 or metadata modifications to the corresponding crate file.
 
-# Detailed steps
+## Detailed steps
 
 These steps describe how to submit a new crate. They are essentially the same
 for submitting a new release (in the latter case, the existing crate file must
