@@ -29,7 +29,7 @@ package body Alr.Commands.Search is
       ------------------
 
       procedure List_Release (R : Alire.Releases.Release) is
-         package Solver renames Alire.Solver; use Solver;
+         package Solver renames Alire.Solver;
       begin
          if (Cmd.Prop.all = ""
              or else
@@ -53,8 +53,8 @@ package body Alr.Commands.Search is
                          (R.Dependencies (Platform.Properties),
                           Platform.Properties,
                           Options => (Age       => Query_Policy,
-                                      Detecting => Dont_Detect,
-                                      Hinting   => Hint))
+                                      Detecting => Solver.Dont_Detect,
+                                      Hinting   => Solver.Hint))
                        then " "
                        else "X")));
             Tab.Append (Semantic_Versioning.Image (R.Version));

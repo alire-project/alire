@@ -71,13 +71,15 @@ package body Alr.Commands.Show is
 
          if Cmd.Solve then
             declare
-               Needed  : constant Query.Solution :=
-                           Query.Resolve
+               Needed : constant Query.Solution :=
+                          (if Current
+                           then Root.Current.Solution
+                           else Query.Resolve
                              (Rel.Dependencies (Platform.Properties),
                               Platform.Properties,
                               Options => (Age       => Query_Policy,
                                           Detecting => <>,
-                                          Hinting   => <>));
+                                          Hinting   => <>)));
             begin
                if Needed.Valid then
 
@@ -105,17 +107,23 @@ package body Alr.Commands.Show is
                      Put_Line ("Dependencies (external):");
                      for Dep of Needed.Hints loop
                         Put_Line ("   " & Dep.Image);
-                        for Hint of
-                          Alire.Index.Crate (Dep.Crate)
-                          .Externals.Hints
-                            (Name => Dep.Crate,
-                             Env  =>
-                               (if Cmd.System
-                                then Platform.Properties
-                                else Alire.Properties.No_Properties))
-                        loop
-                           Trace.Info ("      Hint: " & Hint);
-                        end loop;
+
+                        --  Look for hints. If we are relying on workspace
+                        --  information the index may not be loaded, or have
+                        --  changed, so we need to ensure the crate is indexed.
+                        if Alire.Index.Exists (Dep.Crate) then
+                           for Hint of
+                             Alire.Index.Crate (Dep.Crate)
+                             .Externals.Hints
+                               (Name => Dep.Crate,
+                                Env  =>
+                                  (if Cmd.System
+                                   then Platform.Properties
+                                   else Alire.Properties.No_Properties))
+                           loop
+                              Trace.Info ("      Hint: " & Hint);
+                           end loop;
+                        end if;
                      end loop;
                   end if;
 
