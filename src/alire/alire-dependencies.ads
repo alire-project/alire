@@ -1,4 +1,5 @@
 with Alire.Interfaces;
+with Alire.Milestones;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
@@ -37,6 +38,9 @@ package Alire.Dependencies with Preelaborate is
 
    overriding
    function Key (Dep : Dependency) return String;
+
+   function From_Milestones (Allowed : Milestones.Allowed_Milestones)
+                             return Dependency;
 
    function From_TOML (Key    : String;
                        Value  : TOML.TOML_Value) return Dependency with
@@ -87,6 +91,10 @@ private
    function Versions (Dep : Dependency)
                       return Semantic_Versioning.Extended.Version_Set
    is (Dep.Versions);
+
+   function From_Milestones (Allowed : Milestones.Allowed_Milestones)
+                             return Dependency is
+     (New_Dependency (Allowed.Crate, Allowed.Versions));
 
    function Image (Dep : Dependency) return String is
       (if Dep = Unavailable
