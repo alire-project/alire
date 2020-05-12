@@ -115,6 +115,15 @@ website:
 
 * [alire.ada.dev](https://alire.ada.dev)
 
+## Build environment
+
+To create a build environment, `alr` sets environment variables such as
+`GPR_PROJECT_PATH` before running `gprbuild`. If you want to run `gprbuild`
+yourself or inside an editor (GNATstudio), you can use the `setenv` command to
+print the build environment:
+
+* `alr setenv`
+
 ## Troubleshooting
 
 By default `alr` is quite terse and will hide the output of subprocesses,
