@@ -204,6 +204,9 @@ package Alire with Preelaborate is
    --  * Debug:   not shown by default, enabled with '-vv' switch, messages
    --             intended for developers or curious users, not user friendly.
 
+   function Detailed return Boolean;
+   --  True when Log_Level is Detail or Debug
+
    Log_Debug : aliased Boolean := False;
    --  This one enables special debug output, irrespectively of the log level.
 
@@ -227,5 +230,8 @@ private
       Message => +"");
 
    function Success (Result : Outcome) return Boolean is (Result.Success);
+
+   function Detailed return Boolean is
+     (Log_Level >= Detail);
 
 end Alire;

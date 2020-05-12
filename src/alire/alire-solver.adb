@@ -17,28 +17,26 @@ package body Alire.Solver is
 
    use all type Semver.Extended.Version_Set;
 
-   subtype Dependency_List is Solutions.Dependency_List;
+   subtype Dependency_Map is Solutions.Dependency_Map;
 
    subtype Release_Map is Alire.Containers.Release_Map;
    --  Releases with a concrete version (source and detected external releases)
 
-   Empty_Deps : constant Dependency_List :=
-                  Alire.Containers.Dependency_Lists.Empty_List;
+   Empty_Deps : constant Dependency_Map :=
+                  (Alire.Containers.Dependency_Maps.Empty_Map with
+                   null record);
 
    Empty_Map : constant Release_Map :=
-     (Alire.Containers.Crate_Release_Maps.Empty_Map with null record);
+                 (Alire.Containers.Crate_Release_Maps.Empty_Map with
+                  null record);
 
-   ---------
-   -- "&" --
-   ---------
-
-   function "&" (L : Dependency_List;
+   function "&" (L : Dependency_Map;
                  R : Dependencies.Dependency)
-                 return Dependency_List
+                 return Dependency_Map
    is
    begin
-      return Result : Dependency_List := L do
-         Result.Append (R);
+      return This : Dependency_Map := L do
+         This.Merge (R);
       end return;
    end "&";
 
@@ -367,7 +365,7 @@ package body Alire.Solver is
                         Forbidden : Types.Forbidden_Dependencies;
                         --  Releases that conflict with current solution
 
-                        Hints     : Dependency_List)
+                        Hints     : Dependency_Map)
                         --  Externals that supply a dependency
       is
 
@@ -650,6 +648,7 @@ package body Alire.Solver is
 
    begin
       if Deps.Is_Empty then
+         Trace.Debug ("Returning trivial solution for empty dependencies");
          return Solution'(Valid    => True,
                           Releases => Empty_Map,
                           Hints    => Empty_Deps);

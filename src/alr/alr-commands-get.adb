@@ -6,6 +6,7 @@ with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
+with Alire.Solutions.Diffs;
 with Alire.Solver;
 
 with Alr.Actions;
@@ -36,23 +37,14 @@ package body Alr.Commands.Get is
       --  resolve the release as part of the dependencies at this point so if
       --  the latest release is not solvable we get another one that is. We
       --  should warn in that case that newer releases exist.
-      Rel : constant Alire.Index.Release :=
-        Query.Find (Name, Versions, Query_Policy);
-   begin
-      if not Query.Is_Resolvable
-        (Rel.Dependencies.Evaluate (Platform.Properties),
-         Platform.Properties)
-        and then not Cmd.Only
-      then
-         Trace.Error ("Could not resolve dependencies for: " &
-                        Query.Dependency_Image (Name, Versions));
-         Trace.Error ("This may happen when requesting a release that" &
-                        " requires system libraries, while using a GPL gnat");
-         Trace.Error ("In that case, try again with the system" &
-                        " FSF gnat compiler");
-         raise Command_Failed;
-      end if;
+      Rel      : constant Alire.Index.Release :=
+                   Query.Find (Name, Versions, Query_Policy);
 
+      Diff     : Alire.Solutions.Diffs.Diff;
+      --  Used to present dependencies to the user
+
+      Build_OK : Boolean;
+   begin
       declare
          R : constant Alire.Index.Release :=
                Query.Find (Name, Versions, Query_Policy);
@@ -80,9 +72,33 @@ package body Alr.Commands.Get is
       end;
 
       --  Check if we are already in the fresh copy
+
       if Session_State > Outside then
          Reportaise_Command_Failed
            ("Cannot get a release inside another alr release, stopping.");
+      end if;
+
+      --  Check that the dependencies can be solved before retrieving anything
+
+      if not Cmd.Only then
+         declare
+            Solution : constant Alire.Solutions.Solution :=
+                         Query.Resolve
+                           (Rel.Dependencies (Platform.Properties),
+                            Platform.Properties);
+         begin
+            if Solution.Valid then
+               Diff := Alire.Solutions.Solution'
+                 (Valid  => True,
+                  others => <>).Changes (Solution);
+            else
+               Trace.Error ("Could not resolve dependencies for: " &
+                              Query.Dependency_Image (Name, Versions));
+               Trace.Error ("You can still retrieve the crate without "
+                            & "dependencies with --only.");
+               raise Command_Failed;
+            end if;
+         end;
       end if;
 
       --  Check out requested crate release under current directory,
@@ -102,16 +118,38 @@ package body Alr.Commands.Get is
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
            with Unreferenced;
       begin
-         Commands.Update.Execute;
+         Commands.Update.Execute (Interactive => False);
 
          --  Execute the checked out release post_fetch actions, now that
          --    dependencies are in place
          Actions.Execute_Actions (Rel, Alire.Actions.Post_Fetch);
 
          if Cmd.Build then
-            Commands.Build.Execute;
+            Build_OK := Commands.Build.Execute;
          end if;
       end;
+
+      --  Final report
+
+      Trace.Info ("");
+
+      Trace.Log (Rel.Milestone.Image & " successfully retrieved"
+                 & (if Cmd.Build
+                   then (if Build_OK
+                         then " and built."
+                         else " but its build failed.")
+                   else "."),
+                 Level => (if not Cmd.Build or else Build_OK
+                           then Info
+                           else Warning));
+
+      if Diff.Contains_Changes then
+         Trace.Info ("Dependencies were solved as follows:");
+         Diff.Print (Changed_Only => False);
+      else
+         Trace.Info ("There are no dependencies.");
+      end if;
+
    exception
       when Alire.Query_Unsuccessful =>
          Trace.Info ("Release [" & Query.Dependency_Image (Name, Versions) &

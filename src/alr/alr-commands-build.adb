@@ -15,7 +15,7 @@ package body Alr.Commands.Build is
    -- Do_Compile --
    ----------------
 
-   procedure Do_Compile is
+   function Do_Compile return Boolean is
    begin
       Requires_Full_Index;
 
@@ -37,9 +37,7 @@ package body Alr.Commands.Build is
 
       exception
          when others =>
-            Trace.Warning ("alr detected a compilation failure, " &
-                             "re-run with -vv -d for details");
-            raise;
+            return False;
       end;
 
       --  POST-COMPILE ACTIONS
@@ -50,11 +48,13 @@ package body Alr.Commands.Build is
          when others =>
             Trace.Warning ("A post-compile action failed, " &
                              "re-run with -vv -d for details");
-            raise;
+            return False;
       end;
 
       Trace.Detail ("Compilation finished successfully");
       Trace.Detail ("Use alr run --list to check available executables");
+
+      return True;
    end Do_Compile;
 
    -------------
@@ -64,18 +64,16 @@ package body Alr.Commands.Build is
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
    begin
-      Do_Compile;
+      if not Do_Compile then
+         Reportaise_Command_Failed ("Compilation failed.");
+      end if;
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   procedure Execute is
-      Cmd : Command;
-   begin
-      Execute (Cmd);
-   end Execute;
+   function Execute return Boolean is (Do_Compile);
 
    ----------------------
    -- Long_Description --

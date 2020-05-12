@@ -1,5 +1,4 @@
 with AAA.Enum_Tools;
-with AAA.Table_IO;
 with AAA.Text_IO;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -15,6 +14,7 @@ with Alire.Lockfiles;
 with Alire.Roots;
 with Alire.Roots.Check_Valid;
 with Alire.Solutions;
+with Alire.Utils.Tables;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -305,7 +305,7 @@ package body Alr.Commands is
 
    procedure Display_Valid_Commands is
       Tab   : constant String (1 .. 6) := (others => ' ');
-      Table : AAA.Table_IO.Table;
+      Table : Alire.Utils.Tables.Table;
    begin
       Put_Line ("Valid commands: ");
       New_Line;
@@ -317,7 +317,7 @@ package body Alr.Commands is
             Table.Append (Dispatch_Table (Cmd).Short_Description);
          end if;
       end loop;
-      Table.Print (Separator => "  ");
+      Table.Print (Always, Separator => "  ");
    end Display_Valid_Commands;
 
    --------------------------

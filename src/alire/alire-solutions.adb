@@ -1,8 +1,39 @@
 with Alire.Crates.With_Releases;
 with Alire.Dependencies;
 with Alire.Releases;
+with Alire.Solutions.Diffs;
 
 package body Alire.Solutions is
+
+   -------------
+   -- Changes --
+   -------------
+
+   function Changes (Former, Latter : Solution) return Diffs.Diff is
+     (Diffs.Between (Former, Latter));
+
+   --------------
+   -- Required --
+   --------------
+
+   function Required (This : Solution) return Containers.Crate_Name_Sets.Set is
+   begin
+      if not This.Valid then
+         return Containers.Crate_Name_Sets.Empty_Set;
+      end if;
+
+      --  Merge release and hint crates
+
+      return Set : Containers.Crate_Name_Sets.Set do
+         for Dep of This.Hints loop
+            Set.Include (Dep.Crate);
+         end loop;
+
+         for Rel of This.Releases loop
+            Set.Include (Rel.Name);
+         end loop;
+      end return;
+   end Required;
 
    ----------
    -- Keys --
@@ -117,7 +148,7 @@ package body Alire.Solutions is
       begin
          if Has_Externals then -- It's a table containing dependencies
             for I in 1 .. Externals.Keys'Length loop
-               This.Hints.Append
+               This.Hints.Merge
                  (Dependencies.From_TOML
                     (Key   => +Externals.Keys (I),
                      Value => Externals.Get (Externals.Keys (I))));

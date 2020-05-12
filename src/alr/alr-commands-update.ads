@@ -23,7 +23,10 @@ package Alr.Commands.Update is
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("");
 
-   procedure Execute;
+   procedure Execute (Interactive : Boolean);
+   --  Interactive serves to flag that the update is requested from somewhere
+   --  else within Alire, and is already confirmed by the user. So, when False,
+   --  not output of differences or confirmation will be presented.
 
 private
 

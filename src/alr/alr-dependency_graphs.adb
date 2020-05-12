@@ -1,6 +1,5 @@
-with AAA.Table_IO;
-
 with Alire.Conditional;
+with Alire.Utils.Tables;
 
 with Alr.OS_Lib;
 with Alr.Paths;
@@ -135,7 +134,7 @@ package body Alr.Dependency_Graphs is
                     Instance : Alire.Containers.Release_Map;
                     Prefix   : String := "")
    is
-      Table : AAA.Table_IO.Table;
+      Table : Alire.Utils.Tables.Table;
 
       Filtered : constant Graph := This.Filtering_Unused (Instance);
    begin
@@ -146,7 +145,7 @@ package body Alr.Dependency_Graphs is
          Table.New_Row;
       end loop;
 
-      Table.Print;
+      Table.Print (Always);
    end Print;
 
    -----------------------

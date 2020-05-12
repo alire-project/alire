@@ -6,6 +6,7 @@ with Alire.Containers;
 with Alire.Externals.Lists;
 with Alire.Lockfiles;
 with Alire.Origins.Deployers;
+with Alire.Solutions;
 with Alire.Roots;
 
 with Alr.Actions;
@@ -176,6 +177,14 @@ package body Alr.Checkout is
             --  current platform (this was also unimplemented in the old index)
             Templates.Generate_Prj_Alr (R.Whenever (Platform.Properties),
                                         Root.Crate_File);
+
+            --  Create also an invalid solution lockfile (since dependencies
+            --  are still unretrieved). Once they are checked out, the lockfile
+            --  will be replaced with the complete solution.
+            Alire.Lockfiles.Write
+              (Solution    => Alire.Solutions.Solution'(Valid => False),
+               Environment => Platform.Properties,
+               Filename    => Root.Lock_File);
          end;
       end if;
    end Working_Copy;
