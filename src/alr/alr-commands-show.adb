@@ -45,7 +45,15 @@ package body Alr.Commands.Show is
                      Cmd      : Command)
    is
    begin
+      if Current then
+         Trace.Debug ("Showing workspace definitions");
+      else
+         Trace.Debug ("Showing definitions from index releases");
+      end if;
+
       declare
+         --  Nested so a failure in Query.Find is caught below
+
          Rel     : constant Types.Release  :=
                      (if Current
                       then Root.Current.Release
