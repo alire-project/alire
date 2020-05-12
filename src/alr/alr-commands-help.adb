@@ -1,8 +1,8 @@
 with AAA.Enum_Tools;
-with AAA.Table_IO;
 with AAA.Text_IO;
 
 with Alire.Crates;
+with Alire.Utils.Tables;
 
 package body Alr.Commands.Help is
 
@@ -91,7 +91,7 @@ package body Alr.Commands.Help is
 
    procedure Display_Valid_Topics is
       Tab   : constant String (1 .. 6) := (others => ' ');
-      Table : AAA.Table_IO.Table;
+      Table : Alire.Utils.Tables.Table;
    begin
       Put_Line ("Help topics: ");
       New_Line;
@@ -101,7 +101,7 @@ package body Alr.Commands.Help is
          Table.Append (Alire.Utils.To_Lower_Case (Topic'Img));
          Table.Append (One_Liner_Summary (Topic));
       end loop;
-      Table.Print (Separator => "  ");
+      Table.Print (Always, Separator => "  ");
    end Display_Valid_Topics;
 
    -------------

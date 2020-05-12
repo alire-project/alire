@@ -1,5 +1,3 @@
-with AAA.Table_IO;
-
 with Alire.Containers;
 with Alire.Externals;
 with Alire.Index;
@@ -7,6 +5,7 @@ with Alire.Origins.Deployers;
 with Alire.Crates.With_Releases;
 with Alire.Releases;
 with Alire.Solver;
+with Alire.Utils.Tables;
 
 with Alr.Platform;
 with Alr.Utils;
@@ -22,7 +21,7 @@ package body Alr.Commands.Search is
    overriding procedure Execute (Cmd : in out Command) is
 
       Found : Natural := 0;
-      Tab   : AAA.Table_IO.Table;
+      Tab   : Alire.Utils.Tables.Table;
 
       ------------------
       -- List_Release --
@@ -200,7 +199,7 @@ package body Alr.Commands.Search is
       if Found = 0 then
          Log ("No hits              ");
       else
-         Tab.Print (Separator => "  ");
+         Tab.Print (Always, Separator => "  ");
       end if;
    end Execute;
 

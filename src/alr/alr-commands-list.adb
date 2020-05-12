@@ -1,6 +1,5 @@
-with AAA.Table_IO;
-
 with Alire.Index;
+with Alire.Utils.Tables;
 
 with Alr.Utils;
 
@@ -16,7 +15,7 @@ package body Alr.Commands.List is
       pragma Unreferenced (Cmd);
       use Alr.Utils;
 
-      Table  : AAA.Table_IO.Table;
+      Table  : Alire.Utils.Tables.Table;
       Search : constant String :=
                  (if Num_Arguments = 1
                   then Utils.To_Lower_Case (Argument (1))
@@ -50,7 +49,7 @@ package body Alr.Commands.List is
       if Found = 0 then
          Put_Line ("No hits");
       else
-         Table.Print (Separator => "  ");
+         Table.Print (Always, Separator => "  ");
       end if;
    end Execute;
 
