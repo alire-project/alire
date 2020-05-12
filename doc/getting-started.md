@@ -26,6 +26,15 @@ The executable will be found in `bin/alr`. You can add it to your PATH:
  * Linux/MacOS: `export PATH=$PATH:$PWD/bin`
  * Windows PowerShell: `$env:path += ";$pwd/bin"`
 
+## `Alr` on Windows
+
+On Windows, the first time you run `alr` the program will ask if you want to
+install [msys2](https://www.msys2.org/). This is recommended as `alr` will use
+`msys2` to automatically install required tools such as `git` or `make` that
+you would otherwise have to install manually. `msys2` will also provide
+external libraries required by some projects in the Alire index, allowing you
+to build more projects out of the box.
+
 ## First steps
 
 The following miniguide shows how to obtain and build already packaged
