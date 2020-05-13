@@ -38,6 +38,10 @@ package body Alire.Solutions is
    function Pins (This : Solution) return Conditional.Dependencies is
       use type Conditional.Dependencies;
    begin
+      if not This.Valid then
+         return Conditional.No_Dependencies;
+      end if;
+
       return Dependencies : Conditional.Dependencies do
          for Release of This.Releases loop
             if Release.Is_Pinned then
@@ -103,6 +107,10 @@ package body Alire.Solutions is
    function With_Pins (This, Src : Solution) return Solution is
    begin
       return This : Solution := With_Pins.This do
+         if not Src.Valid then
+            return;
+         end if;
+
          for Release of Src.Releases loop
             if Release.Is_Pinned then
                This.Releases (Release.Name).Pin;

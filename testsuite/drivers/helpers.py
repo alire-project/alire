@@ -5,6 +5,21 @@ Assorted helpers that are reused by several tests.
 import os.path
 
 
+# Check a file contains a concrete line
+def check_line_in(filename, line):
+    """
+    Assert that the `filename` tetx file contains at least one line that
+    contains `line`.
+    """
+    with open(filename, 'r') as f:
+        for l in f:
+            if l.rstrip() == line:
+                break
+        else:
+            assert False, 'Could not find {} in {}'.format(
+                repr(line), filename)
+
+
 # Return the entries (sorted) under a given folder, both folders and files
 def contents(dir):
     assert os.path.exists(dir), "Bad path for enumeration: {}".format(dir)

@@ -53,7 +53,8 @@ package Alire.Solutions is
    --  Return a copy of the solution with the new pinning status of Name
 
    function Pins (This : Solution) return Conditional.Dependencies;
-   --  Return all pinned releases as exact version dependencies
+   --  Return all pinned releases as exact version dependencies. Will return an
+   --  empty list for invalid solutions.
 
    function With_Pins (This, Src : Solution) return Solution;
    --  Copy pins from Src to This

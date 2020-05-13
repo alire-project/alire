@@ -649,8 +649,13 @@ package body Alire.Solver is
 
    begin
       if Deps.Is_Empty then
-         Trace.Debug ("Returning previous solution for empty dependencies");
-         return Current;
+         if Current.Valid then
+            Trace.Debug ("Returning previous solution for empty dependencies");
+            return Current;
+         else
+            Trace.Debug ("Returning trivial solution for empty dependencies");
+            return Alire.Solutions.Empty_Valid_Solution;
+         end if;
       end if;
 
       Expand (Expanded  => Empty,
