@@ -20,7 +20,7 @@ package Alr.Commands.Pin is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[[crate] | --all]");
+   is ("[[crate[=<version>]] | --all]");
 
 private
 

@@ -725,4 +725,22 @@ package body Alire.Releases is
       end if;
    end Long_Description;
 
+   ---------
+   -- Pin --
+   ---------
+
+   procedure Pin   (This : in out Release) is
+   begin
+      This.Pinned := True;
+   end Pin;
+
+   -----------
+   -- Unpin --
+   -----------
+
+   procedure Unpin (This : in out Release) is
+   begin
+      This.Pinned := False;
+   end Unpin;
+
 end Alire.Releases;

@@ -7,6 +7,7 @@ with Alire.Platforms;
 with Alire.Properties;
 with Alire.Requisites.Booleans;
 with Alire.Roots;
+with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
 
@@ -75,6 +76,7 @@ package body Alr.Commands.Show is
                            else Query.Resolve
                              (Rel.Dependencies (Platform.Properties),
                               Platform.Properties,
+                              Alire.Solutions.Empty_Valid_Solution,
                               Options => (Age       => Query_Policy,
                                           Detecting => <>,
                                           Hinting   => <>)));

@@ -24,9 +24,16 @@ package Alire.Conditional with Preelaborate is
    --  A plain tree without conditions or alternatives
 
    function New_Dependency
+     (Name    : Crate_Name;
+      Version : Semantic_Versioning.Version)
+      return Dependencies;
+   --  Dependency on a exact version
+
+   function New_Dependency
      (Name     : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependencies;
+   --  Dependency on a version set
 
    function Enumerate is new Conditional.For_Dependencies.Enumerate
      (Alire.Dependencies.Containers.Lists.List,
@@ -68,6 +75,13 @@ package Alire.Conditional with Preelaborate is
    --  These may raise Checked_Error.
 
 private
+
+   function New_Dependency
+     (Name    : Crate_Name;
+      Version : Semantic_Versioning.Version)
+      return Dependencies is
+     (For_Dependencies.New_Value
+        (Alire.Dependencies.New_Dependency (Name, Version)));
 
    function New_Dependency
      (Name     : Crate_Name;

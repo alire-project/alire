@@ -4,6 +4,7 @@ with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Crates.With_Releases;
 with Alire.Releases;
+with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
 
@@ -51,6 +52,7 @@ package body Alr.Commands.Search is
                       (if Solver.Is_Resolvable
                          (R.Dependencies (Platform.Properties),
                           Platform.Properties,
+                          Alire.Solutions.Empty_Valid_Solution,
                           Options => (Age       => Query_Policy,
                                       Detecting => Solver.Dont_Detect,
                                       Hinting   => Solver.Hint))

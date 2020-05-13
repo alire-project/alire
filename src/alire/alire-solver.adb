@@ -148,9 +148,10 @@ package body Alire.Solver is
 
    function Is_Resolvable (Deps    : Types.Platform_Dependencies;
                            Props   : Properties.Vector;
+                           Current : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean
-   is (Resolve (Deps, Props, Options).Valid);
+   is (Resolve (Deps, Props, Current, Options).Valid);
 
    --------------------
    -- Print_Solution --
@@ -301,6 +302,7 @@ package body Alire.Solver is
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
                      Props   : Properties.Vector;
+                     Current : Solution;
                      Options : Query_Options := Default_Options)
                      return Solution
    is
@@ -571,9 +573,9 @@ package body Alire.Solver is
 
             else
                Trace.Debug
-                 ("SOLVER: discarding search branch because "
-                  & "index LACKS the crate " & Dep.Image
-                  & "when the search tree was "
+                 ("SOLVER: discarding search branch because"
+                  & " index LACKS the crate " & Dep.Image
+                  & " when the search tree was "
                   & Tree'(Expanded
                     and Current
                     and Remaining).Image_One_Line);
@@ -647,12 +649,12 @@ package body Alire.Solver is
 
    begin
       if Deps.Is_Empty then
-         Trace.Debug ("Returning trivial solution for empty dependencies");
-         return Alire.Solutions.Empty_Valid_Solution;
+         Trace.Debug ("Returning previous solution for empty dependencies");
+         return Current;
       end if;
 
       Expand (Expanded  => Empty,
-              Current   => Deps,
+              Current   => Current.Pins and Deps,
               Remaining => Empty,
               Frozen    => Empty_Map,
               Forbidden => Empty,
@@ -672,7 +674,7 @@ package body Alire.Solver is
                          & " external hints"
                          else ""));
 
-         return Solutions.First_Element;
+         return Solutions.First_Element.With_Pins (Current);
       end if;
    end Resolve;
 

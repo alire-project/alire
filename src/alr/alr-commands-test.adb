@@ -9,6 +9,7 @@ with Alire.Index;
 with Alire.OS_Lib.Subprocess;
 with Alire.Crates.With_Releases;
 with Alire.Milestones;
+with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
 
@@ -160,7 +161,8 @@ package body Alr.Commands.Test is
          Is_Available  := R.Is_Available (Platform.Properties);
          Is_Resolvable := Query.Is_Resolvable
            (R.Dependencies (Platform.Properties),
-            Platform.Properties);
+            Platform.Properties,
+            Alire.Solutions.Empty_Valid_Solution);
 
          if not Is_Available then
             Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);

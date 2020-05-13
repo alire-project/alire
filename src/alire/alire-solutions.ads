@@ -1,3 +1,4 @@
+with Alire.Conditional;
 with Alire.Containers;
 with Alire.Interfaces;
 with Alire.Properties;
@@ -45,6 +46,17 @@ package Alire.Solutions is
    --  known releases or only hints. Will return an empty set for invalid
    --  solutions. TODO: when we track reasons for solving failure, return
    --  the required crates with their reason for non-solvability.
+
+   function Changing_Pin (This   : Solution;
+                          Name   : Crate_Name;
+                          Pinned : Boolean) return Solution;
+   --  Return a copy of the solution with the new pinning status of Name
+
+   function Pins (This : Solution) return Conditional.Dependencies;
+   --  Return all pinned releases as exact version dependencies
+
+   function With_Pins (This, Src : Solution) return Solution;
+   --  Copy pins from Src to This
 
    procedure Print_Pins (This : Solution);
    --  Dump a table with pins in this solution

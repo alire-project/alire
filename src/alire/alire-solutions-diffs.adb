@@ -36,6 +36,7 @@ package body Alire.Solutions.Diffs is
 
          elsif Sol.Releases.Contains (Crate) then
             return (Status  => Needed,
+                    Pinned  => Sol.Releases (Crate).Is_Pinned,
                     Version => Sol.Releases (Crate).Version);
 
          elsif Sol.Hints.Contains (Crate) then
@@ -81,7 +82,17 @@ package body Alire.Solutions.Diffs is
       Latter : Crate_Status renames This.Changes (Crate).Latter;
    begin
       if Former.Status = Latter.Status then
-         return Unchanged;
+         if Latter.Status = Needed then
+            if Latter.Pinned and then not Former.Pinned then
+               return Pinned;
+            elsif Former.Pinned and then not Latter.Pinned then
+               return Unpinned;
+            elsif Former.Pinned and then Latter.Pinned and then
+              Former.Version /= Latter.Version
+            then
+               null; -- Fall through so these are compared as unpinned releases
+            end if;
+         end if;
       end if;
 
       return
@@ -158,6 +169,8 @@ package body Alire.Solutions.Diffs is
                        when External   => "↪",
                        when Upgraded   => "⭧",
                        when Downgraded => "⭨",
+                       when Pinned     => "⊙", -- ⍟⟟⫯🞊⊙⊛
+                       when Unpinned   => "𐩒", -- 📍🖈○⚪⭘
                        when Unchanged  => "=",
                        when Unsolved   => "⚠"));
 
@@ -186,6 +199,8 @@ package body Alire.Solutions.Diffs is
                                           & Semver.Image (Former.Version),
                        when Downgraded => "downgraded from "
                                           & Semver.Image (Former.Version),
+                       when Pinned     => "pinned",
+                       when Unpinned   => "unpinned",
                        when Unchanged  => "unchanged",
                        when Unsolved   => "missing")
                   & ")");

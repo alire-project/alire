@@ -13,6 +13,43 @@ package body Alire.Solutions is
    function Changes (Former, Latter : Solution) return Diffs.Diff is
      (Diffs.Between (Former, Latter));
 
+   ------------------
+   -- Changing_Pin --
+   ------------------
+
+   function Changing_Pin (This   : Solution;
+                          Name   : Crate_Name;
+                          Pinned : Boolean) return Solution
+   is
+      --  This temporary works around a tampering check
+      New_Releases : constant Release_Map :=
+                       This.Releases.Including
+                         (This.Releases (Name).Replacing (Pinned => Pinned));
+   begin
+      return This : Solution := Changing_Pin.This do
+         This.Releases := New_Releases;
+      end return;
+   end Changing_Pin;
+
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Conditional.Dependencies is
+      use type Conditional.Dependencies;
+   begin
+      return Dependencies : Conditional.Dependencies do
+         for Release of This.Releases loop
+            if Release.Is_Pinned then
+               Dependencies :=
+                 Dependencies and
+                 Conditional.New_Dependency (Release.Name,
+                                             Release.Version);
+            end if;
+         end loop;
+      end return;
+   end Pins;
+
    ----------------
    -- Print_Pins --
    ----------------
@@ -58,6 +95,21 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Required;
+
+   ---------------
+   -- With_Pins --
+   ---------------
+
+   function With_Pins (This, Src : Solution) return Solution is
+   begin
+      return This : Solution := With_Pins.This do
+         for Release of Src.Releases loop
+            if Release.Is_Pinned then
+               This.Releases (Release.Name).Pin;
+            end if;
+         end loop;
+      end return;
+   end With_Pins;
 
    ----------
    -- Keys --

@@ -238,6 +238,11 @@ package Alire.Releases with Preelaborate is
    procedure Print (R : Release);
    --  Dump info to console
 
+   --  In place modifiers
+
+   procedure Pin   (This : in out Release);
+   procedure Unpin (This : in out Release);
+
    --  Search helpers
 
    function Property_Contains (R : Release; Str : String) return Boolean;
