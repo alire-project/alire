@@ -226,7 +226,7 @@ package body Alire.TOML_Expressions.Cases is
       Set_Up_Loaders;
       return Prop : constant Conditional.Properties :=
         Props.Load_Instance (Key, From, Loader.all'Access)
-        --  The Loader type is structurally equivalent, so we can circunvent
+        --  The Loader type is structurally equivalent, so we can circumvent
         --  the type check without consequences. This is merely for clarity.
       do
          if From.Unwrap.Kind = TOML.TOML_Table then
