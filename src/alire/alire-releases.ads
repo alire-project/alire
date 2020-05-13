@@ -155,7 +155,7 @@ package Alire.Releases with Preelaborate is
    function Available (R : Release) return Requisites.Tree;
    function Is_Available (R : Release;
                           P : Alire.Properties.Vector) return Boolean;
-   --  Evaluate R.Availabel under platform properties P
+   --  Evaluate R.Available under platform properties P
 
    function Default_Executable (R : Release) return String;
    --  We encapsulate here the fixing of platform extension
