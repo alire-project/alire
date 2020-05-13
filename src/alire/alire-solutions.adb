@@ -88,7 +88,8 @@ package body Alire.Solutions is
       ------------------
       --  Load a single release. From points to the crate name, which contains
       --  crate.general and crate.version tables.
-      function Read_Release (From : TOML_Value) return Releases.Release is
+      function Read_Release (From : TOML_Value) return Alire.Releases.Release
+      is
          Name  : constant String := +From.Keys (1);
          Crate : Crates.With_Releases.Crate :=
                    Crates.With_Releases.New_Crate (+Name);

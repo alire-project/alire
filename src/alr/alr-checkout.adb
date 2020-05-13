@@ -70,19 +70,19 @@ package body Alr.Checkout is
       Deps_Dir : Alire.Absolute_Path := Paths.Dependencies_Folder)
    is
       Was_There : Boolean;
-      Graph     : Dependency_Graphs.Graph :=
+      Graph     : Dependency_Graphs.Graph  :=
                     Dependency_Graphs.From_Solution (Solution);
-      Pending   : Alire.Solver.Solution   := Solution;
-      Round     : Natural                 := 0;
+      Pending   : Alire.Solutions.Release_Map := Solution.Releases;
+      Round     : Natural                     := 0;
    begin
 
       --  Notify about missing external dependencies:
 
-      if not Pending.Hints.Is_Empty then
+      if not Solution.Hints.Is_Empty then
          Trace.Warning
            ("The following external dependencies "
             & "are unavailable within Alire:");
-         for Dep of Pending.Hints loop
+         for Dep of Solution.Hints loop
             Trace.Warning ("   " & Dep.Image);
             for Hint of Alire.Index.Crate (Dep.Crate)
                         .Externals.Hints (Dep.Crate, Platform.Properties)
@@ -104,14 +104,14 @@ package body Alr.Checkout is
 
       --  Deploy resolved dependencies:
 
-      while not Pending.Releases.Is_Empty loop
+      while not Pending.Is_Empty loop
          Round := Round + 1;
 
          declare
             To_Remove : Alire.Containers.Release_Set;
          begin
             --  TODO: this can be done in parallel within each round
-            for Rel of Pending.Releases loop
+            for Rel of Pending loop
                if Graph.Has_Dependencies (Rel.Name) then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
                                  Rel.Milestone.Image);
@@ -132,14 +132,14 @@ package body Alr.Checkout is
             if To_Remove.Is_Empty then
                Trace.Error ("No release checked-out in round" & Round'Img);
                Trace.Error ("Remaining releases:"
-                            & Pending.Releases.Length'Img &
+                            & Pending.Length'Img &
                               "; Dependency graph:");
-               Graph.Print (Pending.Releases);
+               Graph.Print (Pending);
                raise Program_Error
                  with "No release checked-out in round" & Round'Img;
             else
                for Rel of To_Remove loop
-                  Pending.Releases.Exclude (Rel.Name);
+                  Pending.Exclude (Rel.Name);
                end loop;
             end if;
          end;
@@ -182,7 +182,7 @@ package body Alr.Checkout is
             --  are still unretrieved). Once they are checked out, the lockfile
             --  will be replaced with the complete solution.
             Alire.Lockfiles.Write
-              (Solution    => Alire.Solutions.Solution'(Valid => False),
+              (Solution    => Alire.Solutions.Invalid_Solution,
                Environment => Platform.Properties,
                Filename    => Root.Lock_File);
          end;

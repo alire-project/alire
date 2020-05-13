@@ -18,22 +18,25 @@ package Alire.Solutions is
 
    type Solution (Valid : Boolean) is
      new Interfaces.Tomifiable
-     and Interfaces.Detomifiable with record
-      case Valid is
-         when True  =>
-            Releases : Release_Map;
-            --  Resolved dependencies to be deployed
-
-            Hints    : Dependency_Map;
-            --  Unresolved external dependencies
-
-         when False =>
-            null;
-      end case;
-   end record;
+     and Interfaces.Detomifiable with private;
 
    Invalid_Solution     : constant Solution;
    Empty_Valid_Solution : constant Solution;
+
+   function New_Solution (Releases : Release_Map;
+                          Hints    : Dependency_Map)
+                          return Solution;
+   --  A new valid solution
+
+   function Releases (This : Solution) return Release_Map with
+     Pre => This.Valid;
+   --  Returns the regular releases that conform a solution
+
+   function Hints (This : Solution) return Dependency_Map with
+     Pre => This.Valid;
+   --  Returns dependencies that will have to be fulfilled externally. These
+   --  correspond to undetected externals; a detected external results in a
+   --  regular release and should require no user action.
 
    function Changes (Former, Latter : Solution) return Diffs.Diff;
 
@@ -75,7 +78,36 @@ package Alire.Solutions is
 
 private
 
+   type Solution (Valid : Boolean) is
+     new Interfaces.Tomifiable
+     and Interfaces.Detomifiable with record
+      case Valid is
+         when True  =>
+            Releases : Release_Map;
+            --  Resolved dependencies to be deployed
+
+            Hints    : Dependency_Map;
+            --  Unresolved external dependencies
+
+         when False =>
+            null;
+      end case;
+   end record;
+
    Invalid_Solution     : constant Solution := (Valid => False);
    Empty_Valid_Solution : constant Solution := (Valid => True, others => <>);
+
+   function New_Solution (Releases : Release_Map;
+                          Hints    : Dependency_Map)
+                          return Solution
+   is (Solution'(Valid    => True,
+                 Releases => Releases,
+                 Hints    => Hints));
+
+   function Hints (This : Solution) return Dependency_Map
+   is (This.Hints);
+
+   function Releases (This : Solution) return Release_Map
+   is (This.Releases);
 
 end Alire.Solutions;

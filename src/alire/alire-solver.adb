@@ -617,10 +617,9 @@ package body Alire.Solver is
                               Expanded.Image_One_Line);
                Check_Complete
                  (Deps,
-                  Solution'(Valid    => True,
-                            Releases => Materialize
-                              (Expanded, Props),
-                            Hints    => Hints));
+                  Alire.Solutions.New_Solution
+                    (Releases => Materialize (Expanded, Props),
+                     Hints    => Hints));
                return;
             else
                Expand (Expanded,
@@ -649,9 +648,7 @@ package body Alire.Solver is
    begin
       if Deps.Is_Empty then
          Trace.Debug ("Returning trivial solution for empty dependencies");
-         return Solution'(Valid    => True,
-                          Releases => Empty_Map,
-                          Hints    => Empty_Deps);
+         return Alire.Solutions.Empty_Valid_Solution;
       end if;
 
       Expand (Expanded  => Empty,
@@ -663,7 +660,7 @@ package body Alire.Solver is
 
       if Solutions.Is_Empty then
          Trace.Detail ("Dependency resolution failed");
-         return (Valid => False);
+         return Alire.Solutions.Invalid_Solution;
       else
          Trace.Detail ("Dependencies solvable in" &
                          Solutions.Length'Img & " ways");

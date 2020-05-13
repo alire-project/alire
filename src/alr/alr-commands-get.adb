@@ -88,9 +88,7 @@ package body Alr.Commands.Get is
                             Platform.Properties);
          begin
             if Solution.Valid then
-               Diff := Alire.Solutions.Solution'
-                 (Valid  => True,
-                  others => <>).Changes (Solution);
+               Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
             else
                Trace.Error ("Could not resolve dependencies for: " &
                               Query.Dependency_Image (Name, Versions));
