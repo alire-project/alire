@@ -176,11 +176,21 @@ package body Alire.Releases is
          Dependencies => Base.Dependencies,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
-         Available    => Base.Available)
+         Available    => Base.Available,
+
+         Pinned       => Base.Pinned)
       do
          null;
       end return;
    end Replacing;
+
+   ---------------
+   -- Replacing --
+   ---------------
+
+   function Replacing (Base   : Release;
+                       Pinned : Boolean) return Release
+   is ((Base with delta Pinned => Pinned));
 
    ---------------
    -- Retagging --
@@ -230,7 +240,9 @@ package body Alire.Releases is
        Dependencies => Dependencies,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
-       Available    => Available);
+       Available    => Available,
+
+       Pinned       => <>);
 
    -------------------------
    -- New_Working_Release --
@@ -256,7 +268,8 @@ package body Alire.Releases is
       Properties   => (if Properties = Conditional.For_Properties.Empty
                        then Default_Properties
                        else Properties),
-      Available    => Requisites.Booleans.Always_True);
+      Available    => Requisites.Booleans.Always_True,
+      Pinned       => False);
 
    ----------------------------
    -- On_Platform_Properties --
@@ -504,10 +517,18 @@ package body Alire.Releases is
                        From :        TOML_Adapters.Key_Queue)
                        return Outcome
    is
+      Value : TOML.TOML_Value;
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
 
+      --  Internal attributes (pinning)
+
+      if From.Pop (TOML_Keys.Pinned, Value) then
+         This.Pinned := Value.As_Boolean;
+      end if;
+
       --  Origin
+
       declare
          Result : constant Outcome := This.Origin.From_TOML (From);
       begin
@@ -515,6 +536,8 @@ package body Alire.Releases is
             return Result;
          end if;
       end;
+
+      --  Properties
 
       declare
          Result : constant Outcome :=
@@ -618,6 +641,12 @@ package body Alire.Releases is
          Relinfo.Set (TOML_Keys.Available, R.Available.To_TOML);
       end if;
 
+      --  Other internal properties (should only show up in the lockfile):
+
+      if R.Pinned then
+         Relinfo.Set (TOML_Keys.Pinned, TOML.Create_Boolean (True));
+      end if;
+
       --  Version release
       Root.Set (R.Version_Image, Relinfo);
 
@@ -664,26 +693,20 @@ package body Alire.Releases is
    function Whenever (R : Release;
                       P : Alire.Properties.Vector)
                       return Release
-   is
-   begin
-      return Solid : constant Release (R.Prj_Len, R.Notes_Len) :=
-        (Prj_Len      => R.Prj_Len,
-         Notes_Len    => R.Notes_Len,
-         Name         => R.Name,
-         Alias        => R.Alias,
-         Version      => R.Version,
-         Origin       => R.Origin,
-         Notes        => R.Notes,
-         Dependencies => R.Dependencies.Evaluate (P),
-         Forbidden    => R.Forbidden.Evaluate (P),
-         Properties   => R.Properties.Evaluate (P),
-         Available    => (if R.Available.Check (P)
-                          then Requisites.Booleans.Always_True
-                          else Requisites.Booleans.Always_False))
-      do
-         null;
-      end return;
-   end Whenever;
+   is (Prj_Len      => R.Prj_Len,
+       Notes_Len    => R.Notes_Len,
+       Name         => R.Name,
+       Alias        => R.Alias,
+       Version      => R.Version,
+       Origin       => R.Origin,
+       Notes        => R.Notes,
+       Dependencies => R.Dependencies.Evaluate (P),
+       Forbidden    => R.Forbidden.Evaluate (P),
+       Properties   => R.Properties.Evaluate (P),
+       Available    => (if R.Available.Check (P)
+                        then Requisites.Booleans.Always_True
+                        else Requisites.Booleans.Always_False),
+       Pinned       => R.Pinned);
 
    ----------------------
    -- Long_Description --

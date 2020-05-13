@@ -88,7 +88,6 @@ private
 
             Hints    : Dependency_Map;
             --  Unresolved external dependencies
-
          when False =>
             null;
       end case;
