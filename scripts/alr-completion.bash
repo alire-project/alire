@@ -2,7 +2,7 @@
 
 if ! builtin type -P alr &>/dev/null; then
     echo alr must be in PATH for completion to work
-    exit 1
+    return
 fi
 
 # Commands
