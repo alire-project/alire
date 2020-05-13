@@ -1,8 +1,12 @@
 with Alire.Crates.With_Releases;
-with Alire.Dependencies;
-with Alire.Releases;
+with Alire.Dependencies.Graphs;
+with Alire.Index;
+with Alire.OS_Lib.Subprocess;
+with Alire.Paths;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
+
+with Semantic_Versioning;
 
 package body Alire.Solutions is
 
@@ -31,6 +35,14 @@ package body Alire.Solutions is
       end return;
    end Changing_Pin;
 
+   ----------------------------------
+   -- Libgraph_Easy_Perl_Installed --
+   ----------------------------------
+
+   function Libgraph_Easy_Perl_Installed return Boolean
+   is (OS_Lib.Subprocess.Locate_In_Path (Paths.Scripts_Graph_Easy) /= "");
+   --  Return whether libgraph_easy_perl_install is in path
+
    ----------
    -- Pins --
    ----------
@@ -53,6 +65,78 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Pins;
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This     : Solution;
+                    Root     : Alire.Releases.Release;
+                    Env      : Properties.Vector;
+                    Detailed : Boolean;
+                    Level    : Trace.Levels) is
+   begin
+      if not This.Releases.Is_Empty then
+         Trace.Log ("Dependencies (solution):", Level);
+         for Rel of This.Releases loop
+            Trace.Log ("   " & Rel.Milestone.Image
+                       & (if Rel.Is_Pinned
+                         then " (pinned)"
+                         else "")
+                       & (if Detailed then
+                            " (origin: " &
+                            Utils.To_Lower_Case (Rel.Origin.Kind'Img) & ")"
+                         else
+                            ""),
+                       Level);
+         end loop;
+      end if;
+
+      --  Show unresolved hints, with their hinting message
+
+      if not This.Hints.Is_Empty then
+         Trace.Log ("Dependencies (external):", Level);
+         for Dep of This.Hints loop
+            Trace.Log ("   " & Dep.Image, Level);
+
+            --  Look for hints. If we are relying on workspace
+            --  information the index may not be loaded, or have
+            --  changed, so we need to ensure the crate is indexed.
+
+            if Index.Exists (Dep.Crate) then
+               for Hint of
+                 Alire.Index.Crate (Dep.Crate)
+                 .Externals.Hints
+                   (Name => Dep.Crate,
+                    Env  => Alire.Properties.No_Properties)
+               loop
+                  Trace.Log ("      Hint: " & Hint, Level);
+               end loop;
+            end if;
+         end loop;
+      end if;
+
+      if not (This.Releases.Is_Empty and then This.Hints.Is_Empty)
+      then
+         Trace.Log ("Dependencies (graph):", Level);
+         declare
+            Graph : constant Dependencies.Graphs.Graph :=
+                      Dependencies.Graphs.From_Solution (This, Env)
+                                         .Including (Root, Env);
+         begin
+            Graph.Print (This.Releases.Including (Root), Prefix => "   ");
+
+            if Libgraph_Easy_Perl_Installed then
+               Graph.Plot (This.Releases.Including (Root));
+            else
+               Trace.Log ("Cannot display graphical graph: " &
+                            Paths.Scripts_Graph_Easy & " not in path" &
+                            " (usually packaged as libgraph_easy_perl).",
+                          Level);
+            end if;
+         end;
+      end if;
+   end Print;
 
    ----------------
    -- Print_Pins --

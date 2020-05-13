@@ -6,6 +6,7 @@ with Ada.Text_IO;
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Milestones;
+with Alire.Releases;
 with Alire.Roots;
 with Alire.Solutions;
 with Alire.Solver;
@@ -308,9 +309,20 @@ package body Alr.Commands.Withing is
    -- List --
    ----------
 
-   procedure List is
+   procedure List (Cmd : Command) is
+      Root_Release : constant Alire.Releases.Release := Root.Current.Release;
    begin
-      Root.Current.Release.Dependencies (Platform.Properties).Print;
+      Put_Line ("Dependencies (direct):");
+      Root_Release.Dependencies.Print ("   ",
+                                       Root_Release.Dependencies.Contains_ORs);
+
+      if Cmd.Solve then
+         Requires_Full_Index; -- Load possible hints
+         Root.Current.Solution.Print (Root_Release,
+                                      Platform.Properties,
+                                      Detailed => True,
+                                      Level    => Always);
+      end if;
    end List;
 
    -------------
@@ -318,18 +330,31 @@ package body Alr.Commands.Withing is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
+      Flags : Natural := 0;
+
+      procedure Check (Flag : Boolean) is
+      begin
+         if Flag then
+            Flags := Flags + 1;
+         end if;
+
+         if Flags > 1 then
+            Reportaise_Wrong_Arguments
+              ("Only one simultaneous switch allowed.");
+         end if;
+      end Check;
+
    begin
       Requires_Valid_Session;
 
+      Check (Cmd.Del);
+      Check (Cmd.From);
+      Check (Cmd.Solve);
+
       --  No parameters: give current platform dependencies and BAIL OUT
       if not (Cmd.Del or else Cmd.From) and then Num_Arguments = 0 then
-         List;
+         List (Cmd);
          return;
-      end if;
-
-      if Cmd.Del and Cmd.From then
-         Reportaise_Wrong_Arguments
-           ("Simultaneous --del, --from are incompatible");
       end if;
 
       if Num_Arguments < 1 then
@@ -367,14 +392,19 @@ package body Alr.Commands.Withing is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector
    is (Alire.Utils.Empty_Vector
-       .Append ("Manages dependencies of the current crate or sandbox.")
+       .Append ("Inspect and manage dependencies.")
        .New_Line
-       .Append ("* From the command line:")
+       .Append ("* Inspecting dependencies:")
+       .Append ("Run without arguments prints current dependencies. Use"
+                & " --solve to print the solution in use for these"
+                & " dependencies.")
+       .New_Line
+       .Append ("* Adding dependencies from the command line:")
        .Append ("Dependencies are added by giving their name, and removed"
                 & " by using the --del flag. Dependencies cannot be"
                 & " simultaneously added and removed in a single invocation.")
        .New_Line
-       .Append ("* From a GPR file:")
+       .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
                 & " for comments that contain the sequence 'alr with'. "
                 & " These will be processed individually as if they had been"
@@ -414,6 +444,11 @@ package body Alr.Commands.Withing is
                      Cmd.From'Access,
                      "", "--from",
                      "Use dependencies declared within GPR project file");
+
+      Define_Switch (Config,
+                     Cmd.Solve'Access,
+                     "", "--solve",
+                     "Show complete solution to dependencies");
    end Setup_Switches;
 
 end Alr.Commands.Withing;

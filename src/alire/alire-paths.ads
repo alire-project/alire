@@ -11,6 +11,9 @@ package Alire.Paths with Preelaborate is
    function Build_Folder return Relative_Path;
    --  The folder where the out-of-tree global build is performed
 
+   Scripts_Graph_Easy            : constant String := "graph-easy";
+   --  Script for ASCII graphs
+
 private
 
    Crate_File_Extension_With_Dot : constant String := ".toml";

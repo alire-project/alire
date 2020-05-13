@@ -2,6 +2,7 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Interfaces;
 with Alire.Properties;
+with Alire.Releases;
 with Alire.TOML_Adapters;
 
 limited with Alire.Solutions.Diffs;
@@ -58,6 +59,15 @@ package Alire.Solutions is
 
    function With_Pins (This, Src : Solution) return Solution;
    --  Copy pins from Src to This
+
+   procedure Print (This     : Solution;
+                    Root     : Alire.Releases.Release;
+                    Env      : Properties.Vector;
+                    Detailed : Boolean;
+                    Level    : Trace.Levels);
+   --  Prints releases, and direct and transitive dependencies. Root is the
+   --  crate not in solution that introduces the direct dependencies. When
+   --  Detailed, extra information about origins is shown.
 
    procedure Print_Pins (This : Solution);
    --  Dump a table with pins in this solution

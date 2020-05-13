@@ -172,7 +172,7 @@ package body Alire.Solutions.Diffs is
 
       --  Early exit if no changes
 
-      if not This.Contains_Changes then
+      if Changed_Only and then not This.Contains_Changes then
          Trace.Log (Prefix & "No changes between former an new solution.",
                     Level);
          return;
