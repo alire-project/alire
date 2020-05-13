@@ -82,7 +82,7 @@ package body Alr.Commands.Show is
                if Needed.Valid then
 
                   --  Show regular dependencies in solution. When requested,
-                  --  show also their origin kind.This is useful for crate
+                  --  show also their origin kind. This is useful for crate
                   --  testing to let us know that we need to update system
                   --  repositories. It also raises awareness about the
                   --  provenance of sources.
