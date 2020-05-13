@@ -18,10 +18,22 @@ package body Alr.Commands.Pin is
 
    overriding procedure Execute (Cmd : in out Command)
    is
-      pragma Unreferenced (Cmd);
    begin
-      Requires_Full_Index;
+
+      --  Argument validation
+
+      if Cmd.Pin_All and then Num_Arguments /= 0 then
+         Reportaise_Wrong_Arguments ("--all must appear alone");
+      end if;
+
       Requires_Valid_Session;
+
+      --  Listing of pins
+
+      if not Cmd.Pin_All and then Num_Arguments = 0 then
+         Root.Current.Solution.Print_Pins;
+         return;
+      end if;
 
       declare
          Old : constant Solver.Solution := Root.Current.Solution;
@@ -67,7 +79,36 @@ package body Alr.Commands.Pin is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
-      .Append ("Pins dependencies to its resolved versions, and so prevent"
-              & " future update commands from upgrading them."));
+      .Append ("Pin releases to their current solution version."
+               & " A pinned release is not affected by automatic updates.")
+      .New_Line
+      .Append ("Without arguments, show existing pins.")
+      .New_Line
+      .Append ("Use --all to pin the whole current solution.")
+      .New_Line
+      .Append ("Specify a single crate to modify its pin.")
+     );
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding
+   procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+      use GNAT.Command_Line;
+   begin
+      Define_Switch (Config,
+                     Cmd.Pin_All'Access,
+                     Long_Switch => "--all",
+                     Help        => "Pin the complete solution");
+
+      Define_Switch (Config,
+                     Cmd.Unpin'Access,
+                     Long_Switch => "--unpin",
+                     Help        => "Unpin a release");
+   end Setup_Switches;
 
 end Alr.Commands.Pin;

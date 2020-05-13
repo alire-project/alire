@@ -46,6 +46,11 @@ package Alire.Solutions is
    --  solutions. TODO: when we track reasons for solving failure, return
    --  the required crates with their reason for non-solvability.
 
+   procedure Print_Pins (This : Solution);
+   --  Dump a table with pins in this solution
+
+   --  TOML-related subprograms
+
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Solution;
    --  Since Solution is unconstrained this allows loading of both

@@ -2,6 +2,7 @@ with Alire.Crates.With_Releases;
 with Alire.Dependencies;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
+with Alire.Utils.Tables;
 
 package body Alire.Solutions is
 
@@ -11,6 +12,29 @@ package body Alire.Solutions is
 
    function Changes (Former, Latter : Solution) return Diffs.Diff is
      (Diffs.Between (Former, Latter));
+
+   ----------------
+   -- Print_Pins --
+   ----------------
+
+   procedure Print_Pins (This : Solution) is
+      Table : Utils.Tables.Table;
+   begin
+      if not (for some Release of This.Releases => Release.Is_Pinned) then
+         Trace.Always ("There are no pins");
+      else
+         for Release of This.Releases loop
+            if Release.Is_Pinned then
+               Table
+                 .Append (+Release.Name)
+                 .Append (Release.Version.Image)
+                 .New_Row;
+            end if;
+         end loop;
+
+         Table.Print (Always);
+      end if;
+   end Print_Pins;
 
    --------------
    -- Required --
