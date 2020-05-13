@@ -235,7 +235,9 @@ package body Alr.Commands.Show is
       begin
          Put_Line ("---");
          Put_Line ("layout: crate");
-         Put_Line (Rel.To_YAML);
+         --  TODO: conditional expressions can't be exported yet, we report in
+         --  the interim the ones that apply to the current system.
+         Put_Line (Rel.Whenever (Platform.Properties).To_YAML);
          Put_Line ("---");
          Put_Line (Rel.Long_Description);
          Put_Line (Rel.Notes);
