@@ -348,7 +348,7 @@ package body Alr.Commands.Withing is
          Requires_Full_Index;
          From;
       else
-         raise Program_Error with "List should have already happended";
+         raise Program_Error with "List should have already happened";
       end if;
    exception
       when E : Constraint_Error =>
