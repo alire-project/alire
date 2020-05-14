@@ -4,7 +4,7 @@ package Alire.Defaults with Preelaborate is
    --  TODO: replace this constant with a function that returns random fortunes
 
    Docker_Test_Image : constant String := "alire/gnat:debian-stable";
-   --  Docker image to be used with `alr test --docker` unless overriden
+   --  Docker image to be used with `alr test --docker` unless overridden
 
    Maintainer  : constant String := "your@email.here";
 

@@ -47,7 +47,7 @@ package Alr.Paths is
 
    function Alr_Source_Folder return Absolute_Path;
    --  Folder inside Alr_Config_Folder containing a clone of the alr repo
-   --  This folder can be overriden via environment variable
+   --  This folder can be overridden via environment variable
    --  Alire.Environment.Source.
 
    Alr_Working_Folder : constant Relative_Path;
