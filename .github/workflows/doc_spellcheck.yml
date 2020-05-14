@@ -1,0 +1,13 @@
+name: Doc spellcheck
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - '**.txt'
+
+jobs:
+  spellcheck:
+    steps:
+    - name: Spellcheck Action
+      uses: rojopolis/spellcheck-github-actions@0.2.0
