@@ -18,7 +18,7 @@ package Alire.Utils with Preelaborate is
                                With_Name : Boolean) return Boolean;
    --  Minimally check that a string could be an email. Since well-formed
    --  emails can be perfectly fake, we don't make this exceptionally
-   --  foolprof. Complete regexps for email-compliant addresses are not
+   --  foolproof. Complete regexps for email-compliant addresses are not
    --  trivial (see RFC 5322). We settle for the following: "a@b.c",
    --  where a can be anything printable but whitespace. b, c, can be
    --  alphanumeric and hyphens, not starting/ending with the latter
