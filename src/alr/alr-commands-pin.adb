@@ -1,9 +1,8 @@
-with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Lockfiles;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
-with Alire.Solver;
+with Alire.Pinning;
 
 with Alr.Commands.Update;
 with Alr.Commands.User_Input;
@@ -32,33 +31,28 @@ package body Alr.Commands.Pin is
       ---------
 
       procedure Pin is
-         use type Alire.Conditional.Dependencies;
       begin
 
-         --  We let to re-pin because the requested version may be different.
-         --  Since two simultaneously pinned versions will always result in no
-         --  solution, and the clear intent is to update the pinned version,
-         --  we remove the existing pin for the solver call.
-
-         --  Verify that the requested version is solvable (it might not be if
-         --  the pin version does not exist or allows a complete solution).
+         --  We let to re-pin without checks because the requested version may
+         --  be different.
 
          Requires_Full_Index;
 
          declare
-            use Alire;
-            New_Solution : constant Solutions.Solution :=
-                             Solver.Resolve
-                               (Conditional.New_Dependency (Name, Version) and
+            New_Solution : constant Alire.Solutions.Solution :=
+                             Alire.Pinning.Pin
+                               (Crate        => Name,
+                                Version      => Version,
+                                Dependencies =>
                                   Root.Current.Release.Dependencies,
-                                Platform.Properties,
-                                Solution.Changing_Pin (Name, Pinned => False));
+                                Environment  => Platform.Properties,
+                                Solution     => Solution);
          begin
             if New_Solution.Valid then
-               Solution := New_Solution.Changing_Pin (Name, Pinned => True);
+               Solution := New_Solution;
             else
                Reportaise_Command_Failed
-                 ("Cannot find a solution with the requested pin version");
+                    ("Cannot find a solution with the requested pin version");
             end if;
          end;
       end Pin;
@@ -73,7 +67,24 @@ package body Alr.Commands.Pin is
             Reportaise_Command_Failed ("Requested crate is already unpinned");
          end if;
 
-         Solution := Solution.Changing_Pin (Name, Pinned => False);
+         Requires_Full_Index;
+
+         declare
+            New_Solution : constant Alire.Solutions.Solution :=
+                             Alire.Pinning.Unpin
+                               (Crate        => Name,
+                                Dependencies =>
+                                  Root.Current.Release.Dependencies,
+                                Environment  => Platform.Properties,
+                                Solution     => Solution);
+         begin
+            if New_Solution.Valid then
+               Solution := New_Solution;
+            else
+               Reportaise_Command_Failed
+                    ("Cannot find a solution without the pinned release");
+            end if;
+         end;
       end Unpin;
 
    begin
