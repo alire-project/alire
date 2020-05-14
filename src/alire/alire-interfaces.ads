@@ -51,6 +51,6 @@ package Alire.Interfaces with Preelaborate is
    type Yamlable is limited interface;
 
    function To_YAML (This : Yamlable) return String is abstract;
-   --  Return a YAML text repsentation of the object
+   --  Return a YAML text representation of the object
 
 end Alire.Interfaces;
