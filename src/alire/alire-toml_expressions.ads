@@ -112,7 +112,7 @@ package Alire.TOML_Expressions with Preelaborate is
                      From          : TOML_Adapters.Key_Queue;
                      Static_Loader : Static_Tree_Loader) return Tree;
       --  Entry point into loading expression trees. Identifies case(xx)
-      --  expressions, which are recursivley loaded using the Loaders, or using
+      --  expressions, which are recursively loaded using the Loaders, or using
       --  Static_Loader for final values. Parent is the "key" being loaded.
       --  From points to the RHS value or case expr May raise Checked_Error.
 
