@@ -647,19 +647,20 @@ package body Alire.Solver is
          end if;
       end Expand;
 
+      Full_Dependencies : constant Conditional.Dependencies :=
+                            Current.Pins and Deps;
+      --  Include pins before other dependencies. This ensures their dependency
+      --  can only be solved with the pinned version, and they are attempted
+      --  first to avoid wasteful trial-and-error with other versions.
+
    begin
-      if Deps.Is_Empty then
-         if Current.Valid then
-            Trace.Debug ("Returning previous solution for empty dependencies");
-            return Current;
-         else
-            Trace.Debug ("Returning trivial solution for empty dependencies");
-            return Alire.Solutions.Empty_Valid_Solution;
-         end if;
+      if Full_Dependencies.Is_Empty then
+         Trace.Debug ("Returning trivial solution for empty dependencies");
+         return Alire.Solutions.Empty_Valid_Solution;
       end if;
 
       Expand (Expanded  => Empty,
-              Current   => Current.Pins and Deps,
+              Current   => Full_Dependencies,
               Remaining => Empty,
               Frozen    => Empty_Map,
               Forbidden => Empty,
