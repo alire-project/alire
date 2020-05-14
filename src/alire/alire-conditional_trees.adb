@@ -172,7 +172,7 @@ package body Alire.Conditional_Trees is
       if This in Leaf_Node then
          Inner.Values.Append (This);
       elsif This in Vector_Node then
-         --  Flatten ofly if conjunction matches, otherwise just append
+         --  Flatten only if conjunction matches, otherwise just append
          --  subtree.
          if Vector_Node (This).Conjunction = Conj then
             for Child of Vector_Node (This).Values loop
