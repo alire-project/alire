@@ -22,7 +22,7 @@ package Alire.Utils with Preelaborate is
    --  trivial (see RFC 5322). We settle for the following: "a@b.c",
    --  where a can be anything printable but whitespace. b, c, can be
    --  alphanumeric and hyphens, not starting/ending with the latter
-   --  (https://en.wikipedia.org/wiki/Domain_name). Additionaly, if With_Name,
+   --  (https://en.wikipedia.org/wiki/Domain_name). Additionally, if With_Name,
    --  the email can be enclosed in "<...>", with anything before it a
    --  plaintext name.
 
