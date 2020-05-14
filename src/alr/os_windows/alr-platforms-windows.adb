@@ -17,7 +17,7 @@ package body Alr.Platforms.Windows is
    Msys2_Installer_URL : constant String :=
      "http://repo.msys2.org/distrib/" & Msys2_Installer;
 
-   --  FIXME, temporary address for developement
+   --  FIXME, temporary address for development
    Msys2_Installer_Script     : constant String := "auto-install.js";
    Msys2_Installer_Script_URL : constant String :=
      "https://raw.githubusercontent.com/Fabien-Chouteau/" &
