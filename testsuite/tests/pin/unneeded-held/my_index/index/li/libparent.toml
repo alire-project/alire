@@ -1,0 +1,11 @@
+[general]
+description = "Parent"
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[general.depends-on]
+libchild = "*"
+
+['1.0']
+origin = "file://."
