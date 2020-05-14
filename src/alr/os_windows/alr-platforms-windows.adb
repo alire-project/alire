@@ -170,7 +170,7 @@ package body Alr.Platforms.Windows is
          end if;
       end if;
 
-      --  Set the PATH and other enviroment variable for msys2
+      --  Set the PATH and other environment variable for msys2
       Set_Msys2_Env (Install_Dir);
    end Setup_Msys2;
 
