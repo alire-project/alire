@@ -14,7 +14,7 @@ package Alire.TOML_Expressions.Cases with Preelaborate is
                            Loader : Static_Loader)
                            return Conditional.Properties;
    --  Expects a "key = from" table.
-   --  To be used during resolution of a dynamic property expresion. Only a
+   --  To be used during resolution of a dynamic property expression. Only a
    --  particular property static value is accepted when in an expr
    --  (because the syntax is key.expr.values, and not expr.key.values, so
    --  key and values must agree). We explicitly pass a Loader for the property
