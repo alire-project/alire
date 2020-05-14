@@ -3,7 +3,7 @@ with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 package Alire.Paths with Preelaborate is
 
    Crate_File_Extension_With_Dot : constant String;
-   --  Until we decide a name, going to use crate per Amiard's suggesion
+   --  Until we decide a name, going to use crate per Amiard's suggestion
 
    Working_Folder_Inside_Root    : constant Relative_Path;
    --  This is the folder inside a crate where all alire products are created
