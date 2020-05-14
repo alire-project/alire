@@ -44,7 +44,7 @@ package Alire.Origins.Deployers.System is
 
    procedure Dont_Ask_Permission (This : in out Deployer);
    --  This procedure tells the deployer not to ask user permission before
-   --  deployement.
+   --  deployment.
 
    -------------
    -- Factory --
