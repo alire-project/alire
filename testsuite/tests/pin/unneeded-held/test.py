@@ -33,14 +33,15 @@ assert_eq('libchild 0.2.0\n',
 
 # Check that there are no dependencies
 p = run_alr('with')
-assert_eq('(empty)\n',
+assert_eq('Dependencies (direct):\n'
+          '   (empty)\n',
           p.out)
 
 # But the pinned release is still in the solution
-p = run_alr('show', '--solve')
+p = run_alr('with', '--solve')
 assert_match('.*'
              'Dependencies \(solution\):\n'
-             '   libchild=0\.2\.0\n'
+             '   libchild=0\.2\.0 \(pinned\) \(origin: filesystem\)\n'
              'Dependencies \(graph\):.*',
              p.out, flags=re.S)
 
