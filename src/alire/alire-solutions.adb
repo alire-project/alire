@@ -24,7 +24,7 @@ package body Alire.Solutions is
       --  This temporary works around a tampering check
       New_Releases : constant Release_Map :=
                        This.Releases.Including
-                         (This.Releases (Name).Replacing (Pinned => Pinned));
+                         (This.Releases (Name).With_Pin (Pinned));
    begin
       return This : Solution := Changing_Pin.This do
          This.Releases := New_Releases;

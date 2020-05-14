@@ -185,14 +185,6 @@ package body Alire.Releases is
    end Replacing;
 
    ---------------
-   -- Replacing --
-   ---------------
-
-   function Replacing (Base   : Release;
-                       Pinned : Boolean) return Release
-   is ((Base with delta Pinned => Pinned));
-
-   ---------------
    -- Retagging --
    ---------------
 
@@ -742,5 +734,13 @@ package body Alire.Releases is
    begin
       This.Pinned := False;
    end Unpin;
+
+   --------------
+   -- With_Pin --
+   --------------
+
+   function With_Pin (Base   : Release;
+                      Pinned : Boolean) return Release
+   is ((Base with delta Pinned => Pinned));
 
 end Alire.Releases;

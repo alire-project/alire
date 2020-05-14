@@ -97,9 +97,6 @@ package Alire.Releases with Preelaborate is
    function Replacing (Base   : Release;
                        Origin : Origins.Origin) return Release;
 
-   function Replacing (Base   : Release;
-                       Pinned : Boolean) return Release;
-
    function Retagging (Base    : Release;
                        Version : Semantic_Versioning.Version) return Release;
    --  Keep all data but version
@@ -113,6 +110,9 @@ package Alire.Releases with Preelaborate is
                         Forbidden : Conditional.Forbidden_Dependencies)
                         return Release;
    --  Add forbidden dependencies to a release
+
+   function With_Pin (Base   : Release;
+                      Pinned : Boolean) return Release;
 
    function Whenever (R : Release; P : Properties.Vector) return Release;
    --  Materialize conditions in a Release once the whatever properties are
