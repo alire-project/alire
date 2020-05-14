@@ -223,7 +223,7 @@ package body Alr.Commands.Search is
       .Append ("U: the release is not available in the current platform.")
       .Append ("X: the release has dependencies that cannot be resolved.")
       .New_Line
-      .Append ("The reasons for unavalaibility (U) can be ascertained with"
+      .Append ("The reasons for unavailability (U) can be ascertained with"
                & " 'alr show <crate>=<version>'.")
       .New_Line
       .Append ("Unresolvable releases (X) should not happen in platforms"

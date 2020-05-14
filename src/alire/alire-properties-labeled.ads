@@ -152,7 +152,7 @@ private
    not overriding
    procedure Validate (L    : Label;
                        From : TOML_Adapters.Key_Queue);
-   --  Check a just loaded label for validity (descr. lenght, email format...).
+   --  Check a just loaded label for validity (descr. length, email format...).
    --  If invalid, raise Checked_Error with appropriate context and message.
 
    function New_Label (Name : Labels; Value : String) return Label is

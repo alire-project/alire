@@ -23,7 +23,7 @@ package Alire.Crates with Preelaborate is
    -------------
 
    --  A crate contains mandatory information, some of it overridable by its
-   --  releases. See doc/catalog-format-spec.rst.
+   --  releases. See doc/catalog-format-spec.md.
 
    type General is new Interfaces.Detomifiable with private;
    --  The General portion of a Crate

@@ -13,7 +13,7 @@ package body Alire.Properties.Scenarios is
       Value : TOML.TOML_Value;
       Key   : constant String := From.Pop (Value);
 
-      --  This function both processes scenario declarations and th setting of
+      --  This function both processes scenario declarations and the setting of
       --  scenario variables, which are stored in the same type of property.
       --  The two following functions are devoted respectively to each case.
 

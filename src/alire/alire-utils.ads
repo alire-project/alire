@@ -122,7 +122,7 @@ package Alire.Utils with Preelaborate is
    -- String_Vectors --
    --------------------
 
-   --  To simplify somewhat managing lists of strigns
+   --  To simplify somewhat managing lists of strings
 
    package String_Vectors
    is new Ada.Containers.Indefinite_Vectors (Positive, String);

@@ -309,7 +309,7 @@ package body Alire.Solver is
       --  On the solver internal operation: the solver recursively tries all
       --  possible dependency combinations, in depth-first order. This means
       --  that, for a given dependency, all satisfying releases are attempted
-      --  in diferent exploration branches. Once a search branch finds a
+      --  in different exploration branches. Once a search branch finds a
       --  complete solution, it is added to the following global pool of
       --  solutions. Likewise, if a branch cannot complete a solution, it
       --  simply stops its exploration. The search status in each branch is
