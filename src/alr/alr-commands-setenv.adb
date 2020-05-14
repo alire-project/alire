@@ -36,8 +36,8 @@ package body Alr.Commands.Setenv is
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
       .Append ("Print the environment variables used to build the crate." &
-                 " This command can be used to setup a build enviroment, for" &
-                 " instance before starting an IDE"));
+                 " This command can be used to setup a build environment," &
+                 " for instance before starting an IDE"));
 
    --------------------
    -- Setup_Switches --
