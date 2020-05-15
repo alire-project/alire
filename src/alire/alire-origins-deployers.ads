@@ -48,7 +48,7 @@ package Alire.Origins.Deployers is
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest with
      Pre'Class => This.Supports_Hashing or else raise Program_Error;
    --  Called immediately after Fetch for each hash in the origin, Should
-   --  be overriden by all deployers that support hashing; it won't be called
+   --  be overridden by all deployers that support hashing; it won't be called
    --  otherwise. This function may raise exceptions that will be properly
    --  dealt with in the classwide Deploy.
 

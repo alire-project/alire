@@ -40,9 +40,9 @@ package body Alire.Origins.Deployers.Source_Archive is
 
             --  On some versions of tar found on Windows, an option is required
             --  to force e.g. C: to mean a local file location rather than the
-            --  net host C. Unfortunatly this not common to all tar on Windows,
-            --  so we first try to untar with the --force-local, and if that
-            --  fails, we retry without --force-local.
+            --  net host C. Unfortunately this not common to all tar on
+            --  Windows, so we first try to untar with the --force-local, and
+            --  if that fails, we retry without --force-local.
 
             declare
             begin

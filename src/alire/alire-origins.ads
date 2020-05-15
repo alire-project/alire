@@ -128,7 +128,7 @@ package Alire.Origins with Preelaborate is
       Parent : TOML_Adapters.Key_Queue := TOML_Adapters.Empty_Queue;
       Hashed : Boolean := True)
       return Outcome;
-   --  Parse a string and dispatch to the appropiate constructor.
+   --  Parse a string and dispatch to the appropriate constructor.
    --  Parent is an optional parent TOML table that may contain extra fields
    --  (e.g., source_archive in case of an https: origin).
    --  Hashed indicates if integrity hashes are expected, so this function can

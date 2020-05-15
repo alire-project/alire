@@ -324,7 +324,7 @@ package body Alire.Features.Index is
             Result : constant Outcome := Index.Update;
          begin
             if Result.Success then
-               Trace.Detail ("Updated succesfully: " & Index.Origin);
+               Trace.Detail ("Updated successfully: " & Index.Origin);
             else
                return Result;
             end if;

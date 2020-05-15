@@ -17,7 +17,7 @@ package body Alire.Origins.Deployers is
    function Compute_Hash (This   : Deployer;
                           Folder : String;
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest is
-     (raise Program_Error with "Should not be called unless overriden");
+     (raise Program_Error with "Should not be called unless overridden");
 
    ------------------
    -- New_Deployer --

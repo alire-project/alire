@@ -171,7 +171,7 @@ package Alire.Releases with Preelaborate is
    function Executables (R : Release;
                          P : Alire.Properties.Vector)
                          return Utils.String_Vector;
-   --  Only explicity declared ones
+   --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
 
    function Project_Paths (R : Release;

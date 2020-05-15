@@ -556,7 +556,7 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
                        " via EXTERNAL to satisfy " & Dep.Image &
-                       " withouth adding dependencies to tree " &
+                       " without adding dependencies to tree " &
                        Tree'(Expanded
                        and Current
                        and Remaining).Image_One_Line);
