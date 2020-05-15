@@ -6,6 +6,7 @@ aggregate project Alr_Env is
                          "deps/aaa",
                          "deps/ada-toml",
                          "deps/ajunitgen",
+                         "deps/ansi",
                          "deps/gnatcoll-slim",
                          "deps/semantic_versioning",
                          "deps/simple_logging",

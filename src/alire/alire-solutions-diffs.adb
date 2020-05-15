@@ -1,7 +1,10 @@
 with Alire.Containers;
 with Alire.Utils.Tables;
+with Alire.Utils.TTY;
 
 package body Alire.Solutions.Diffs is
+
+   package TTY renames Utils.TTY;
 
    use type Semantic_Versioning.Version;
 
@@ -130,14 +133,14 @@ package body Alire.Solutions.Diffs is
 
       if Former.Status = Needed and then Latter.Status = Needed then
          if Former.Version < Latter.Version then
-            return ", upgraded from " & Former.Version.Image;
+            return ", upgraded from " & TTY.Version (Former.Version.Image);
          elsif Former.Version = Latter.Version then
             return ", version unchanged";
          else
-            return ", downgraded from " & Former.Version.Image;
+            return ", downgraded from " & TTY.Version (Former.Version.Image);
          end if;
       elsif Former.Status = Needed and then Latter.Status /= Needed then
-         return " from " & Former.Version.Image;
+         return " from " & TTY.Version (Former.Version.Image);
       else
          --  Pinned, nothing else to say
          return "";
@@ -192,26 +195,26 @@ package body Alire.Solutions.Diffs is
                Table.Append
                  (Prefix
                   & (case This.Change (Key (I)) is
-                       when Added      => "✓",
-                       when Removed    => "✗",
-                       when External   => "↪",
-                       when Upgraded   => "⭧",
-                       when Downgraded => "⭨",
-                       when Pinned     => "⊙", -- ⍟⟟⫯🞊⊙⊛
-                       when Unpinned   => "𐩒", -- 📍🖈○⚪⭘
-                       when Unchanged  => "=",
-                       when Unsolved   => "⚠"));
+                       when Added      => TTY.OK ("✓"),
+                       when Removed    => TTY.Emph ("✗"),
+                       when External   => TTY.Warn ("↪"),
+                       when Upgraded   => TTY.OK ("⭧"),
+                       when Downgraded => TTY.Warn ("⭨"),
+                       when Pinned     => TTY.OK ("⊙"),
+                       when Unpinned   => TTY.Emph ("𐩒"),
+                       when Unchanged  => TTY.OK ("="),
+                       when Unsolved   => TTY.Error ("⚠")));
 
                --  Always show crate name
 
-               Table.Append (+Key (I));
+               Table.Append (TTY.Name (+Key (I)));
 
                --  Show most precise version available
 
                if Latter.Status in Hinted | Needed then
-                  Table.Append (Best_Version (Latter));
+                  Table.Append (TTY.Version (Best_Version (Latter)));
                else
-                  Table.Append (Best_Version (Former));
+                  Table.Append (TTY.Version (Best_Version (Former)));
                end if;
 
                --  Finally show an explanation of the change depending on
@@ -224,9 +227,9 @@ package body Alire.Solutions.Diffs is
                        when Removed    => "removed",
                        when External   => "external",
                        when Upgraded   => "upgraded from "
-                                         & Semver.Image (Former.Version),
+                                 & TTY.Version (Semver.Image (Former.Version)),
                        when Downgraded => "downgraded from "
-                                         & Semver.Image (Former.Version),
+                                 & TTY.Version (Semver.Image (Former.Version)),
                        when Pinned     => "pinned"
                                          & Pin_Change_Summary (Former, Latter),
                        when Unpinned   => "unpinned"

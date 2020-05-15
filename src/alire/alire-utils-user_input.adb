@@ -4,6 +4,7 @@ with Ada.Characters.Handling;
 with Interfaces.C_Streams;
 
 with Alire.Config;
+with Alire.Utils.TTY;
 
 package body Alire.Utils.User_Input is
 
@@ -49,10 +50,14 @@ package body Alire.Utils.User_Input is
    begin
       for Kind in Answer_Kind loop
          if Valid (Kind) then
-            TIO.Put ("[" & Answer_Char (Kind) & "] " & Img (Kind) & "  ");
+            TIO.Put ("["
+                     & (if Kind = Default
+                       then TTY.Bold ("" & Answer_Char (Kind))
+                       else           "" & Answer_Char (Kind))
+                     & "] " & Img (Kind) & "  ");
          end if;
       end loop;
-      TIO.Put ("(default is " & Img (Default) & ") ");
+      TIO.Put ("(default is " & TTY.Bold (Img (Default)) & ") ");
    end Print_Valid_Answers;
 
    -----------

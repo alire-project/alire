@@ -59,8 +59,8 @@ package body Alire.Dependencies.Diffs is
          for Dep of List loop
             Table
               .Append ("   " & Icon)
-              .Append (+Dep.Crate)
-              .Append (Dep.Versions.Image)
+              .Append (TTY.Name (+Dep.Crate))
+              .Append (TTY.Version (Dep.Versions.Image))
               .Append (Comment)
               .New_Row;
          end loop;
@@ -68,8 +68,8 @@ package body Alire.Dependencies.Diffs is
 
    begin
       if This.Contains_Changes then
-         Summarize (This.Added,   "(added)",   "✓");
-         Summarize (This.Removed, "(removed)", "✗");
+         Summarize (This.Added,   "(added)",   TTY.OK ("✓"));
+         Summarize (This.Removed, "(removed)", TTY.Emph ("✗"));
          Table.Print (Info);
       else
          Trace.Info ("   No changes.");

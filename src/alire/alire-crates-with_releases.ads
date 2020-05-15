@@ -16,6 +16,8 @@ package Alire.Crates.With_Releases is
 
    function Name (This : Crate) return Crate_Name;
 
+   function TTY_Name (This : Crate) return String;
+
    procedure Add (This    : in out Crate;
                   Release : Releases.Release) with Pre =>
      not This.Contains (Release.Version) or else
@@ -32,6 +34,8 @@ package Alire.Crates.With_Releases is
                       Version : Semantic_Versioning.Version) return Boolean;
 
    function Description (This : Crate) return Description_String;
+
+   function TTY_Description (This : Crate) return String;
 
    function Externals (This : Crate) return Alire.Externals.Lists.List;
 

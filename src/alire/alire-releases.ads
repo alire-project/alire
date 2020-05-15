@@ -21,6 +21,7 @@ with Semantic_Versioning;
 with TOML;
 
 private with Alire.OS_Lib;
+private with Alire.Utils.TTY;
 
 package Alire.Releases with Preelaborate is
 
@@ -122,9 +123,14 @@ package Alire.Releases with Preelaborate is
 
    function Name_Str (R : Release) return String is (+R.Name);
 
+   function TTY_Name (R : Release) return String;
+
    function Description (R : Release) return Description_String;
    --  Returns the description for the crate, which is also stored as a
    --  property of the release.
+
+   function TTY_Description (R : Release) return String;
+   --  Colorized description
 
    function Long_Description (R : Release) return String;
    --  Returns the long description for the crate, which is also stored as a
@@ -325,6 +331,9 @@ private
    function Name (R : Release) return Crate_Name
    is (R.Name);
 
+   function TTY_Name (R : Release) return String
+   is (Utils.TTY.Name (+R.Name));
+
    function Provides (R : Release) return Crate_Name
    is (if UStrings.Length (R.Alias) = 0
        then R.Name
@@ -364,6 +373,9 @@ private
    is (Utils.Tail
        (Conditional.Enumerate (R.Properties).Filter
         (Alire.TOML_Keys.Description).First_Element.Image, ' '));
+
+   function TTY_Description (R : Release) return String
+   is (Utils.TTY.Description (R.Description));
 
    function Is_Pinned (R : Release) return Boolean
    is (R.Pinned);

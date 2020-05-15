@@ -39,8 +39,8 @@ package body Alr.Commands.List is
             then
                Found := Found + 1;
                Table.New_Row;
-               Table.Append (+Crate.Name);
-               Table.Append (Crate.Description);
+               Table.Append (Crate.TTY_Name);
+               Table.Append (Crate.TTY_Description);
             end if;
             Busy.Step;
          end loop;

@@ -4,6 +4,7 @@ with Alire.Origins;
 with Alire.Properties.Labeled;
 with Alire.Requisites;
 with Alire.TOML_Keys;
+with Alire.Utils.TTY;
 
 with TOML;
 
@@ -214,11 +215,25 @@ package body Alire.Crates.With_Releases is
       end if;
    end Description;
 
+   ---------------------
+   -- TTY_Description --
+   ---------------------
+
+   function TTY_Description (This : Crate) return String
+   is (Utils.TTY.Description (This.Description));
+
    ----------
    -- Name --
    ----------
 
    function Name (This : Crate) return Crate_Name is (+(+This.Name));
+
+   --------------
+   -- TTY_Name --
+   --------------
+
+   function TTY_Name (This : Crate) return String
+   is (Utils.TTY.Name (+This.Name));
 
    ---------------
    -- New_Crate --

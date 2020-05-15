@@ -21,6 +21,15 @@ package Alire.Interfaces with Preelaborate is
 
    function Image (This : Imaginable) return String is abstract;
 
+   ---------------
+   -- Colorable --
+   ---------------
+
+   type Colorable is limited interface;
+   --  Types that can be displayed with ANSI colors/formatting
+
+   function TTY_Image (This : Colorable) return String is abstract;
+
    ----------------
    -- Tomifiable --
    ----------------
