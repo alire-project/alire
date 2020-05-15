@@ -1,0 +1,11 @@
+[general]
+description = "Child"
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+['0.1']
+origin = "file://."
+
+['0.2']
+origin = "file://."

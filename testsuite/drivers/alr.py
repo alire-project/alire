@@ -143,4 +143,4 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
 name = '{}'
 priority = {}
 url = '{}'
-            """.format(name, priority, files_dir))
+            """.format(name, priority, os.path.join(working_dir, files_dir)))

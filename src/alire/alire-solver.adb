@@ -148,9 +148,10 @@ package body Alire.Solver is
 
    function Is_Resolvable (Deps    : Types.Platform_Dependencies;
                            Props   : Properties.Vector;
+                           Current : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean
-   is (Resolve (Deps, Props, Options).Valid);
+   is (Resolve (Deps, Props, Current, Options).Valid);
 
    --------------------
    -- Print_Solution --
@@ -301,6 +302,7 @@ package body Alire.Solver is
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
                      Props   : Properties.Vector;
+                     Current : Solution;
                      Options : Query_Options := Default_Options)
                      return Solution
    is
@@ -571,9 +573,9 @@ package body Alire.Solver is
 
             else
                Trace.Debug
-                 ("SOLVER: discarding search branch because "
-                  & "index LACKS the crate " & Dep.Image
-                  & "when the search tree was "
+                 ("SOLVER: discarding search branch because"
+                  & " index LACKS the crate " & Dep.Image
+                  & " when the search tree was "
                   & Tree'(Expanded
                     and Current
                     and Remaining).Image_One_Line);
@@ -617,10 +619,9 @@ package body Alire.Solver is
                               Expanded.Image_One_Line);
                Check_Complete
                  (Deps,
-                  Solution'(Valid    => True,
-                            Releases => Materialize
-                              (Expanded, Props),
-                            Hints    => Hints));
+                  Alire.Solutions.New_Solution
+                    (Releases => Materialize (Expanded, Props),
+                     Hints    => Hints));
                return;
             else
                Expand (Expanded,
@@ -646,16 +647,20 @@ package body Alire.Solver is
          end if;
       end Expand;
 
+      Full_Dependencies : constant Conditional.Dependencies :=
+                            Current.Pins and Deps;
+      --  Include pins before other dependencies. This ensures their dependency
+      --  can only be solved with the pinned version, and they are attempted
+      --  first to avoid wasteful trial-and-error with other versions.
+
    begin
-      if Deps.Is_Empty then
+      if Full_Dependencies.Is_Empty then
          Trace.Debug ("Returning trivial solution for empty dependencies");
-         return Solution'(Valid    => True,
-                          Releases => Empty_Map,
-                          Hints    => Empty_Deps);
+         return Alire.Solutions.Empty_Valid_Solution;
       end if;
 
       Expand (Expanded  => Empty,
-              Current   => Deps,
+              Current   => Full_Dependencies,
               Remaining => Empty,
               Frozen    => Empty_Map,
               Forbidden => Empty,
@@ -663,7 +668,7 @@ package body Alire.Solver is
 
       if Solutions.Is_Empty then
          Trace.Detail ("Dependency resolution failed");
-         return (Valid => False);
+         return Alire.Solutions.Invalid_Solution;
       else
          Trace.Detail ("Dependencies solvable in" &
                          Solutions.Length'Img & " ways");
@@ -675,7 +680,7 @@ package body Alire.Solver is
                          & " external hints"
                          else ""));
 
-         return Solutions.First_Element;
+         return Solutions.First_Element.With_Pins (Current);
       end if;
    end Resolve;
 

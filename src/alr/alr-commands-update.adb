@@ -20,7 +20,8 @@ package body Alr.Commands.Update is
    -- Upgrade --
    -------------
 
-   procedure Upgrade (Interactive : Boolean) is
+   procedure Upgrade (Interactive : Boolean;
+                      Force       : Boolean := False) is
       --  The part concerning only to the working release
    begin
       Requires_Full_Index;
@@ -35,6 +36,7 @@ package body Alr.Commands.Update is
                        (Root.Current.Release.Dependencies.Evaluate
                           (Platform.Properties),
                         Platform.Properties,
+                        Old,
                         Options => (Age       => Query_Policy,
                                     Detecting => <>,
                                     Hinting   => <>));
@@ -48,7 +50,7 @@ package body Alr.Commands.Update is
 
          --  Early exit when there are no changes
 
-         if not Diff.Contains_Changes then
+         if not Force and not Diff.Contains_Changes then
             if Interactive then
                Trace.Info ("Nothing to update.");
             end if;
@@ -92,10 +94,12 @@ package body Alr.Commands.Update is
    -- Execute --
    -------------
 
-   procedure Execute (Interactive : Boolean) is
+   procedure Execute (Interactive : Boolean;
+                      Force       : Boolean := False) is
    begin
       if Session_State > Outside then
-         Upgrade (Interactive);
+         Upgrade (Interactive => Interactive,
+                  Force       => Force);
       else
          Trace.Detail ("No working release to update");
       end if;

@@ -85,12 +85,11 @@ package body Alr.Commands.Get is
             Solution : constant Alire.Solutions.Solution :=
                          Query.Resolve
                            (Rel.Dependencies (Platform.Properties),
-                            Platform.Properties);
+                            Platform.Properties,
+                            Alire.Solutions.Empty_Valid_Solution);
          begin
             if Solution.Valid then
-               Diff := Alire.Solutions.Solution'
-                 (Valid  => True,
-                  others => <>).Changes (Solution);
+               Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
             else
                Trace.Error ("Could not resolve dependencies for: " &
                               Query.Dependency_Image (Name, Versions));

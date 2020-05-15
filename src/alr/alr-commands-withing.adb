@@ -64,7 +64,8 @@ package body Alr.Commands.Withing is
                                                    Requested.Versions)
       do
          if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties),
-                                     Platform.Properties)
+                                     Platform.Properties,
+                                     Root.Current.Solution)
          then
             Reportaise_Command_Failed ("Adding " & New_Dep &
                                          " has no dependency solution");
@@ -136,7 +137,8 @@ package body Alr.Commands.Withing is
               Root.Current.Path);
          New_Solution : constant Alire.Solutions.Solution :=
                           Alire.Solver.Resolve (New_Deps,
-                                                Platform.Properties);
+                                                Platform.Properties,
+                                                Root.Current.Solution);
       begin
 
          --  Show changes to apply

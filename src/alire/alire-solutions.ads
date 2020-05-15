@@ -1,3 +1,4 @@
+with Alire.Conditional;
 with Alire.Containers;
 with Alire.Interfaces;
 with Alire.Properties;
@@ -18,22 +19,25 @@ package Alire.Solutions is
 
    type Solution (Valid : Boolean) is
      new Interfaces.Tomifiable
-     and Interfaces.Detomifiable with record
-      case Valid is
-         when True  =>
-            Releases : Release_Map;
-            --  Resolved dependencies to be deployed
-
-            Hints    : Dependency_Map;
-            --  Unresolved external dependencies
-
-         when False =>
-            null;
-      end case;
-   end record;
+     and Interfaces.Detomifiable with private;
 
    Invalid_Solution     : constant Solution;
    Empty_Valid_Solution : constant Solution;
+
+   function New_Solution (Releases : Release_Map;
+                          Hints    : Dependency_Map)
+                          return Solution;
+   --  A new valid solution
+
+   function Releases (This : Solution) return Release_Map with
+     Pre => This.Valid;
+   --  Returns the regular releases that conform a solution
+
+   function Hints (This : Solution) return Dependency_Map with
+     Pre => This.Valid;
+   --  Returns dependencies that will have to be fulfilled externally. These
+   --  correspond to undetected externals; a detected external results in a
+   --  regular release and should require no user action.
 
    function Changes (Former, Latter : Solution) return Diffs.Diff;
 
@@ -42,6 +46,23 @@ package Alire.Solutions is
    --  known releases or only hints. Will return an empty set for invalid
    --  solutions. TODO: when we track reasons for solving failure, return
    --  the required crates with their reason for non-solvability.
+
+   function Changing_Pin (This   : Solution;
+                          Name   : Crate_Name;
+                          Pinned : Boolean) return Solution;
+   --  Return a copy of the solution with the new pinning status of Name
+
+   function Pins (This : Solution) return Conditional.Dependencies;
+   --  Return all pinned releases as exact version dependencies. Will return an
+   --  empty list for invalid solutions.
+
+   function With_Pins (This, Src : Solution) return Solution;
+   --  Copy pins from Src to This
+
+   procedure Print_Pins (This : Solution);
+   --  Dump a table with pins in this solution
+
+   --  TOML-related subprograms
 
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Solution;
@@ -75,7 +96,35 @@ package Alire.Solutions is
 
 private
 
+   type Solution (Valid : Boolean) is
+     new Interfaces.Tomifiable
+     and Interfaces.Detomifiable with record
+      case Valid is
+         when True  =>
+            Releases : Release_Map;
+            --  Resolved dependencies to be deployed
+
+            Hints    : Dependency_Map;
+            --  Unresolved external dependencies
+         when False =>
+            null;
+      end case;
+   end record;
+
    Invalid_Solution     : constant Solution := (Valid => False);
    Empty_Valid_Solution : constant Solution := (Valid => True, others => <>);
+
+   function New_Solution (Releases : Release_Map;
+                          Hints    : Dependency_Map)
+                          return Solution
+   is (Solution'(Valid    => True,
+                 Releases => Releases,
+                 Hints    => Hints));
+
+   function Hints (This : Solution) return Dependency_Map
+   is (This.Hints);
+
+   function Releases (This : Solution) return Release_Map
+   is (This.Releases);
 
 end Alire.Solutions;

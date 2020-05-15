@@ -442,7 +442,8 @@ package body Alr.Commands is
          Solution : constant Alire.Solutions.Solution :=
                       Alire.Solver.Resolve
                         (Checked.Release.Dependencies (Platform.Properties),
-                         Platform.Properties);
+                         Platform.Properties,
+                         Alire.Solutions.Empty_Valid_Solution);
       begin
          Alire.Lockfiles.Write (Solution,
                                 Platform.Properties,

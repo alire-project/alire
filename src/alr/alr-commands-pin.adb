@@ -1,16 +1,125 @@
+with Alire.Dependencies;
+with Alire.Lockfiles;
 with Alire.Releases;
-with Alire.Solver;
 with Alire.Solutions.Diffs;
+with Alire.Pinning;
 
 with Alr.Commands.Update;
 with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
-with Alr.Templates;
+
+with Semantic_Versioning;
 
 package body Alr.Commands.Pin is
 
-   package Solver renames Alire.Solver;
+   package Semver renames Semantic_Versioning;
+
+   --------------------
+   -- Change_One_Pin --
+   --------------------
+
+   procedure Change_One_Pin (Cmd      :        Command;
+                             Solution : in out Alire.Solutions.Solution;
+                             Target   :        String)
+   is
+      Version : Semver.Version;
+      Name    : constant Alire.Crate_Name := +Utils.Head (Target, '=');
+
+      ---------
+      -- Pin --
+      ---------
+
+      procedure Pin is
+      begin
+
+         --  We let to re-pin without checks because the requested version may
+         --  be different.
+
+         Requires_Full_Index;
+
+         declare
+            New_Solution : constant Alire.Solutions.Solution :=
+                             Alire.Pinning.Pin
+                               (Crate        => Name,
+                                Version      => Version,
+                                Dependencies =>
+                                  Root.Current.Release.Dependencies,
+                                Environment  => Platform.Properties,
+                                Solution     => Solution);
+         begin
+            if New_Solution.Valid then
+               Solution := New_Solution;
+            else
+               Reportaise_Command_Failed
+                    ("Cannot find a solution with the requested pin version");
+            end if;
+         end;
+      end Pin;
+
+      -----------
+      -- Unpin --
+      -----------
+
+      procedure Unpin is
+      begin
+         if not Solution.Releases.Element (Name).Is_Pinned then
+            Reportaise_Command_Failed ("Requested crate is already unpinned");
+         end if;
+
+         Requires_Full_Index;
+
+         declare
+            New_Solution : constant Alire.Solutions.Solution :=
+                             Alire.Pinning.Unpin
+                               (Crate        => Name,
+                                Dependencies =>
+                                  Root.Current.Release.Dependencies,
+                                Environment  => Platform.Properties,
+                                Solution     => Solution);
+         begin
+            if New_Solution.Valid then
+               Solution := New_Solution;
+            else
+               Reportaise_Command_Failed
+                    ("Cannot find a solution without the pinned release");
+            end if;
+         end;
+      end Unpin;
+
+   begin
+
+      --  Sanity checks
+
+      if not Solution.Releases.Contains (Name) then
+         Reportaise_Command_Failed ("Cannot pin release not in solution: "
+                                    & (+Name));
+      end if;
+
+      --  Check if we are given a particular version
+
+      if Utils.Contains (Target, "=") then
+
+         if Cmd.Unpin then
+            Reportaise_Wrong_Arguments ("Unpinning does not require version");
+         end if;
+
+         Version := Semver.Parse (Utils.Tail (Target, '='),
+                                  Relaxed => False);
+
+         Trace.Debug ("Pin requested for exact version: " & Version.Image);
+      else
+         Version := Solution.Releases.Element (Name).Version;
+      end if;
+
+      --  Proceed to pin/unpin
+
+      if Cmd.Unpin then
+         Unpin;
+      else
+         Pin;
+      end if;
+   end Change_One_Pin;
 
    -------------
    -- Execute --
@@ -18,45 +127,84 @@ package body Alr.Commands.Pin is
 
    overriding procedure Execute (Cmd : in out Command)
    is
-      pragma Unreferenced (Cmd);
+
+      -------------
+      -- Confirm --
+      -------------
+
+      procedure Confirm (Old_Sol, New_Sol : Alire.Solutions.Solution) is
+         Diff : constant Alire.Solutions.Diffs.Diff :=
+                  Old_Sol.Changes (New_Sol);
+      begin
+         if Diff.Contains_Changes then
+            if Commands.User_Input.Confirm_Solution_Changes
+              (Diff, Changed_Only => not Alire.Detailed)
+            then
+               Alire.Lockfiles.Write (Solution    => New_Sol,
+                                      Environment => Platform.Properties,
+                                      Filename    => Root.Current.Lock_File);
+
+               --  We force the update because we have just stored the new
+               --  solution, so Update won't detect any changes.
+
+               Update.Execute (Interactive => False,
+                               Force       => True);
+            end if;
+         else
+            Trace.Info ("No changes to apply.");
+         end if;
+      end Confirm;
+
    begin
-      Requires_Full_Index;
+
+      --  Argument validation
+
+      if Cmd.Pin_All and then Num_Arguments /= 0 then
+         Reportaise_Wrong_Arguments ("--all must appear alone");
+      end if;
+
       Requires_Valid_Session;
 
+      --  Listing of pins
+
+      if not Cmd.Pin_All and then Num_Arguments = 0 then
+         Root.Current.Solution.Print_Pins;
+         return;
+      elsif Num_Arguments > 1 then
+         Reportaise_Wrong_Arguments ("Pin expects a single crate name");
+      end if;
+
+      --  Apply changes;
+
       declare
-         Old : constant Solver.Solution := Root.Current.Solution;
-         Sol : constant Solver.Solution :=
-                 Solver.Resolve
-                   (Root.Current.Release.Dependencies (Platform.Properties),
-                    Platform.Properties,
-                    Options => (Age       => Query_Policy,
-                                Detecting => <>,
-                                Hinting   => <>));
-         Diff : constant Alire.Solutions.Diffs.Diff := Old.Changes (Sol);
+         New_Sol : Alire.Solutions.Solution := Root.Current.Solution;
+         Old_Sol : constant Alire.Solutions.Solution := New_Sol;
       begin
-         if Sol.Valid then
 
-            --  Pinning not necessarily results in changes in the solution. No
-            --  need to bother the user with empty questions in that case.
+         if Cmd.Pin_All then
 
-            if Diff.Contains_Changes then
-               if not User_Input.Confirm_Solution_Changes
-                 (Diff,
-                  Changed_Only => not Alire.Detailed)
-               then
-                  Trace.Detail ("Abandoning pinning.");
-               end if;
+            if not New_Sol.Valid then
+               Reportaise_Command_Failed ("Cannot pin an invalid solution");
             end if;
 
-            Templates.Generate_Prj_Alr
-              (Root.Current.Release.Replacing
-                 (Dependencies => Sol.Releases.To_Dependencies));
+            for Release of New_Sol.Releases loop
+               if Release.Is_Pinned = Cmd.Unpin then
+                  Change_One_Pin (Cmd, New_Sol, Release.Name_Str);
+               end if;
+            end loop;
 
-            Update.Execute (Interactive => False);
          else
-            Reportaise_Command_Failed ("Could not resolve dependencies");
+            Change_One_Pin (Cmd, New_Sol, Argument (1));
          end if;
+
+         --  Consolidate changes
+
+         Confirm (Old_Sol, New_Sol);
       end;
+
+   exception
+      when Semver.Malformed_Input =>
+         Reportaise_Wrong_Arguments ("Improper version string");
    end Execute;
 
    ----------------------
@@ -67,7 +215,36 @@ package body Alr.Commands.Pin is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
-      .Append ("Pins dependencies to its resolved versions, and so prevent"
-              & " future update commands from upgrading them."));
+      .Append ("Pin releases to their current solution version."
+               & " A pinned release is not affected by automatic updates.")
+      .New_Line
+      .Append ("Without arguments, show existing pins.")
+      .New_Line
+      .Append ("Use --all to pin the whole current solution.")
+      .New_Line
+      .Append ("Specify a single crate to modify its pin.")
+     );
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding
+   procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+      use GNAT.Command_Line;
+   begin
+      Define_Switch (Config,
+                     Cmd.Pin_All'Access,
+                     Long_Switch => "--all",
+                     Help        => "Pin the complete solution");
+
+      Define_Switch (Config,
+                     Cmd.Unpin'Access,
+                     Long_Switch => "--unpin",
+                     Help        => "Unpin a release");
+   end Setup_Switches;
 
 end Alr.Commands.Pin;

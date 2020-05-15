@@ -2,6 +2,7 @@ with Alire.Crates.With_Releases;
 with Alire.Dependencies;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
+with Alire.Utils.Tables;
 
 package body Alire.Solutions is
 
@@ -11,6 +12,70 @@ package body Alire.Solutions is
 
    function Changes (Former, Latter : Solution) return Diffs.Diff is
      (Diffs.Between (Former, Latter));
+
+   ------------------
+   -- Changing_Pin --
+   ------------------
+
+   function Changing_Pin (This   : Solution;
+                          Name   : Crate_Name;
+                          Pinned : Boolean) return Solution
+   is
+      --  This temporary works around a tampering check
+      New_Releases : constant Release_Map :=
+                       This.Releases.Including
+                         (This.Releases (Name).With_Pin (Pinned));
+   begin
+      return This : Solution := Changing_Pin.This do
+         This.Releases := New_Releases;
+      end return;
+   end Changing_Pin;
+
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Conditional.Dependencies is
+      use type Conditional.Dependencies;
+   begin
+      if not This.Valid then
+         return Conditional.No_Dependencies;
+      end if;
+
+      return Dependencies : Conditional.Dependencies do
+         for Release of This.Releases loop
+            if Release.Is_Pinned then
+               Dependencies :=
+                 Dependencies and
+                 Conditional.New_Dependency (Release.Name,
+                                             Release.Version);
+            end if;
+         end loop;
+      end return;
+   end Pins;
+
+   ----------------
+   -- Print_Pins --
+   ----------------
+
+   procedure Print_Pins (This : Solution) is
+      Table : Utils.Tables.Table;
+   begin
+      if not (for some Release of This.Releases => Release.Is_Pinned) then
+         Trace.Always ("There are no pins");
+      else
+         for Release of This.Releases loop
+            if Release.Is_Pinned then
+               Table
+                 .Append (+Release.Name)
+                 .Append (Release.Version.Image)
+                 .New_Row;
+            end if;
+         end loop;
+
+         Table.Print (Always);
+      end if;
+   end Print_Pins;
 
    --------------
    -- Required --
@@ -34,6 +99,25 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Required;
+
+   ---------------
+   -- With_Pins --
+   ---------------
+
+   function With_Pins (This, Src : Solution) return Solution is
+   begin
+      return This : Solution := With_Pins.This do
+         if not Src.Valid then
+            return;
+         end if;
+
+         for Release of Src.Releases loop
+            if Release.Is_Pinned then
+               This.Releases (Release.Name).Pin;
+            end if;
+         end loop;
+      end return;
+   end With_Pins;
 
    ----------
    -- Keys --
@@ -88,7 +172,8 @@ package body Alire.Solutions is
       ------------------
       --  Load a single release. From points to the crate name, which contains
       --  crate.general and crate.version tables.
-      function Read_Release (From : TOML_Value) return Releases.Release is
+      function Read_Release (From : TOML_Value) return Alire.Releases.Release
+      is
          Name  : constant String := +From.Keys (1);
          Crate : Crates.With_Releases.Crate :=
                    Crates.With_Releases.New_Crate (+Name);

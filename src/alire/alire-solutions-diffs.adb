@@ -36,6 +36,7 @@ package body Alire.Solutions.Diffs is
 
          elsif Sol.Releases.Contains (Crate) then
             return (Status  => Needed,
+                    Pinned  => Sol.Releases (Crate).Is_Pinned,
                     Version => Sol.Releases (Crate).Version);
 
          elsif Sol.Hints.Contains (Crate) then
@@ -80,9 +81,22 @@ package body Alire.Solutions.Diffs is
       Former : Crate_Status renames This.Changes (Crate).Former;
       Latter : Crate_Status renames This.Changes (Crate).Latter;
    begin
-      if Former.Status = Latter.Status then
-         return Unchanged;
+
+      --  Changes in pinning take precedence
+
+      if Latter.Status = Needed and then Latter.Pinned and then
+        (Former.Status /= Needed or else not Former.Pinned)
+      then
+         return Pinned;
       end if;
+
+      if Former.Status = Needed and then Former.Pinned and then
+        (Latter.Status /= Needed or else not Latter.Pinned)
+      then
+         return Unpinned;
+      end if;
+
+      --  Other changes that don't involve pinning
 
       return
         (case Latter.Status is
@@ -104,6 +118,31 @@ package body Alire.Solutions.Diffs is
    function Contains_Changes (This : Diff) return Boolean is
      (This.Former_Valid /= This.Latter_Valid or else
       (for some Change of This.Changes => Change.Former /= Change.Latter));
+
+   ------------------------
+   -- Pin_Change_Summary --
+   ------------------------
+
+   function Pin_Change_Summary (Former, Latter : Crate_Status) return String
+   is
+   begin
+      --  Show what's going on with versions
+
+      if Former.Status = Needed and then Latter.Status = Needed then
+         if Former.Version < Latter.Version then
+            return ", upgraded from " & Former.Version.Image;
+         elsif Former.Version = Latter.Version then
+            return ", version unchanged";
+         else
+            return ", downgraded from " & Former.Version.Image;
+         end if;
+      elsif Former.Status = Needed and then Latter.Status /= Needed then
+         return " from " & Former.Version.Image;
+      else
+         --  Pinned, nothing else to say
+         return "";
+      end if;
+   end Pin_Change_Summary;
 
    -----------
    -- Print --
@@ -158,6 +197,8 @@ package body Alire.Solutions.Diffs is
                        when External   => "↪",
                        when Upgraded   => "⭧",
                        when Downgraded => "⭨",
+                       when Pinned     => "⊙", -- ⍟⟟⫯🞊⊙⊛
+                       when Unpinned   => "𐩒", -- 📍🖈○⚪⭘
                        when Unchanged  => "=",
                        when Unsolved   => "⚠"));
 
@@ -183,9 +224,13 @@ package body Alire.Solutions.Diffs is
                        when Removed    => "removed",
                        when External   => "external",
                        when Upgraded   => "upgraded from "
-                                          & Semver.Image (Former.Version),
+                                         & Semver.Image (Former.Version),
                        when Downgraded => "downgraded from "
-                                          & Semver.Image (Former.Version),
+                                         & Semver.Image (Former.Version),
+                       when Pinned     => "pinned"
+                                         & Pin_Change_Summary (Former, Latter),
+                       when Unpinned   => "unpinned"
+                                         & Pin_Change_Summary (Former, Latter),
                        when Unchanged  => "unchanged",
                        when Unsolved   => "missing")
                   & ")");

@@ -84,16 +84,19 @@ package Alire.Solver is
 
    function Resolve (Deps    : Alire.Types.Platform_Dependencies;
                      Props   : Properties.Vector;
+                     Current : Solution;
                      Options : Query_Options := Default_Options)
                      return Solution;
    --  Exhaustively look for a solution to the given dependencies, under the
-   --  given platform properties and lookup options.
+   --  given platform properties and lookup options. A current solution may
+   --  be given and pinned releases will be reused.
 
    function Is_Resolvable (Deps    : Types.Platform_Dependencies;
                            Props   : Properties.Vector;
+                           Current : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean;
-   --  simplified call to Resolve, discarding result
+   --  Simplified call to Resolve, discarding result
 
    -------------------
    -- Debug helpers --

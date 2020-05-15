@@ -10,6 +10,8 @@ package Alire.Solutions.Diffs is
       External,   -- A new external dependency
       Upgraded,   -- An upgraded release
       Downgraded, -- A downgraded release
+      Pinned,     -- A release being pinned
+      Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
       Unsolved    -- A missing dependency
      );
@@ -42,6 +44,7 @@ private
    type Crate_Status (Status : Install_Status := Unneeded) is record
       case Status is
          when Needed =>
+            Pinned   : Boolean;
             Version  : Semantic_Versioning.Version;
          when Hinted =>
             Versions : Semantic_Versioning.Extended.Version_Set;
