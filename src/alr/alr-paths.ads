@@ -66,9 +66,6 @@ package Alr.Paths is
    function Dependencies_Folder return Relative_Path;
    --  Location in the working dir where dependencies are deployed
 
-   --  Scripts paths/names
-   Scripts_Graph_Easy : constant String := "graph-easy";
-
 private
 
    function "/" (L, R : String) return String

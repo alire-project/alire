@@ -21,8 +21,9 @@ package Alr.Commands.Withing is
 private
 
    type Command is new Commands.Command with record
-      Del  : aliased Boolean := False;
-      From : aliased Boolean := False;
+      Del   : aliased Boolean := False;
+      From  : aliased Boolean := False;
+      Solve : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Withing;

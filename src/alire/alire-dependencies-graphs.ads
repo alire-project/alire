@@ -1,19 +1,23 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
-with Alire.Solver;
+with Alire.Properties;
+with Alire.Releases;
+with Alire.Solutions;
 
-package Alr.Dependency_Graphs is
+package Alire.Dependencies.Graphs is
 
    type Graph is tagged private;
 
    function Empty_Graph return Graph;
 
-   function From_Solution (Sol : Alire.Solver.Solution)
+   function From_Solution (Sol : Solutions.Solution;
+                           Env : Properties.Vector)
                            return Graph;
 
    function Including (This : Graph;
-                       R    : Types.Release) return Graph;
+                       R    : Releases.Release;
+                       Env  : Properties.Vector) return Graph;
    --  Add a release and ALL its potential direct dependencies (even OR'ed)
 
    function Filtering_Unused (This     : Graph;
@@ -60,4 +64,4 @@ private
 
    type Graph is new Dep_Sets.Set with null record;
 
-end Alr.Dependency_Graphs;
+end Alire.Dependencies.Graphs;

@@ -1,13 +1,10 @@
 with Alire.Conditional;
+with Alire.Directories;
+with Alire.OS_Lib.Subprocess;
+with Alire.Paths;
 with Alire.Utils.Tables;
 
-with Alr.OS_Lib;
-with Alr.Paths;
-with Alr.Platform;
-with Alr.Utils;
-with Alr.Utils.Temp_File;
-
-package body Alr.Dependency_Graphs is
+package body Alire.Dependencies.Graphs is
 
    -----------------
    -- Empty_Graph --
@@ -20,11 +17,12 @@ package body Alr.Dependency_Graphs is
    -- From_Instance --
    -------------------
 
-   function From_Solution (Sol : Alire.Solver.Solution) return Graph is
+   function From_Solution (Sol : Solutions.Solution;
+                           Env : Properties.Vector) return Graph is
    begin
       return Result : Graph do
          for Rel of Sol.Releases loop
-            Result := Result.Including (Rel);
+            Result := Result.Including (Rel, Env);
          end loop;
 
          Result := Result.Filtering_Unused (Sol.Releases);
@@ -36,7 +34,8 @@ package body Alr.Dependency_Graphs is
    ---------------
 
    function Including (This : Graph;
-                       R    : Types.Release)
+                       R    : Releases.Release;
+                       Env  : Properties.Vector)
                        return Graph
    is
 
@@ -46,7 +45,7 @@ package body Alr.Dependency_Graphs is
 
    begin
       return Result : Graph := This do
-         for Dep of Enumerate (R.Dependencies.Evaluate (Platform.Properties))
+         for Dep of Enumerate (R.Dependencies.Evaluate (Env))
          loop
             Result.Include (New_Dependency (R.Name, Dep.Crate));
          end loop;
@@ -118,11 +117,12 @@ package body Alr.Dependency_Graphs is
       Alt.Append (" }");
 
       declare
-         Tmp : constant Utils.Temp_File.File := Utils.Temp_File.New_File;
+         Tmp : Directories.Temp_File;
       begin
-         Source.Write (Tmp.Name, Separator => " ");
-         OS_Lib.Spawn_Raw (Paths.Scripts_Graph_Easy, "--as=boxart " &
-                             Tmp.Name);
+         Source.Write (Tmp.Filename, Separator => " ");
+         OS_Lib.Subprocess.Checked_Spawn
+           (Paths.Scripts_Graph_Easy,
+            Utils.Empty_Vector.Append ("--as=boxart").Append (Tmp.Filename));
       end;
    end Plot;
 
@@ -164,4 +164,4 @@ package body Alr.Dependency_Graphs is
       end return;
    end Removing_Dependee;
 
-end Alr.Dependency_Graphs;
+end Alire.Dependencies.Graphs;

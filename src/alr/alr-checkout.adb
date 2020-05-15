@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire;
 with Alire.Actions;
 with Alire.Containers;
+with Alire.Dependencies.Graphs;
 with Alire.Externals.Lists;
 with Alire.Lockfiles;
 with Alire.Origins.Deployers;
@@ -10,12 +11,13 @@ with Alire.Solutions;
 with Alire.Roots;
 
 with Alr.Actions;
-with Alr.Dependency_Graphs;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Templates;
 
 package body Alr.Checkout is
+
+   package Dependency_Graphs renames Alire.Dependencies.Graphs;
 
    --------------
    -- Checkout --
@@ -71,7 +73,8 @@ package body Alr.Checkout is
    is
       Was_There : Boolean;
       Graph     : Dependency_Graphs.Graph  :=
-                    Dependency_Graphs.From_Solution (Solution);
+                    Dependency_Graphs.From_Solution (Solution,
+                                                     Platform.Properties);
       Pending   : Alire.Solutions.Release_Map := Solution.Releases;
       Round     : Natural                     := 0;
    begin

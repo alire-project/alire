@@ -1,7 +1,6 @@
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
-with Alire.OS_Lib.Subprocess;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Properties;
@@ -12,8 +11,6 @@ with Alire.Solver;
 with Alire.Utils.Tables;
 
 with Alr.Bootstrap;
-with Alr.Dependency_Graphs;
-with Alr.Paths;
 with Alr.Platform;
 with Alr.Root;
 
@@ -23,15 +20,6 @@ package body Alr.Commands.Show is
 
    package Query  renames Alire.Solver;
    package Semver renames Semantic_Versioning;
-
-   ----------------------------------
-   -- Libgraph_Easy_Perl_Installed --
-   ----------------------------------
-
-   function Libgraph_Easy_Perl_Installed return Boolean is
-   --  Return whether the rolling version of libgraph_easy_perl_install is
-   --  installed.
-     (Alire.OS_Lib.Subprocess.Locate_In_Path (Paths.Scripts_Graph_Easy) /= "");
 
    ------------
    -- Report --
@@ -82,71 +70,10 @@ package body Alr.Commands.Show is
                                           Hinting   => <>)));
             begin
                if Needed.Valid then
-
-                  --  Show regular dependencies in solution. When requested,
-                  --  show also their origin kind. This is useful for crate
-                  --  testing to let us know that we need to update system
-                  --  repositories. It also raises awareness about the
-                  --  provenance of sources.
-
-                  if not Needed.Releases.Is_Empty then
-                     Put_Line ("Dependencies (solution):");
-                     for Rel of Needed.Releases loop
-                        Put_Line ("   " & Rel.Milestone.Image
-                                  & (if Cmd.Detail
-                                    then " (origin: "
-                                         & Utils.To_Lower_Case
-                                             (Rel.Origin.Kind'Img) & ")"
-                                    else ""));
-                     end loop;
-                  end if;
-
-                  --  Show unresolved hints, with their hinting message
-
-                  if not Needed.Hints.Is_Empty then
-                     Put_Line ("Dependencies (external):");
-                     for Dep of Needed.Hints loop
-                        Put_Line ("   " & Dep.Image);
-
-                        --  Look for hints. If we are relying on workspace
-                        --  information the index may not be loaded, or have
-                        --  changed, so we need to ensure the crate is indexed.
-                        if Alire.Index.Exists (Dep.Crate) then
-                           for Hint of
-                             Alire.Index.Crate (Dep.Crate)
-                             .Externals.Hints
-                               (Name => Dep.Crate,
-                                Env  =>
-                                  (if Cmd.System
-                                   then Platform.Properties
-                                   else Alire.Properties.No_Properties))
-                           loop
-                              Trace.Info ("      Hint: " & Hint);
-                           end loop;
-                        end if;
-                     end loop;
-                  end if;
-
-                  if not (Needed.Releases.Is_Empty and then
-                          Needed.Hints.Is_Empty)
-                  then
-                     Put_Line ("Dependencies (graph):");
-                     declare
-                        Graph : constant Dependency_Graphs.Graph :=
-                                  Dependency_Graphs
-                                    .From_Solution (Needed)
-                                    .Including (Rel);
-                     begin
-                        if Libgraph_Easy_Perl_Installed then --  plot
-                           Graph.Plot
-                             (Needed.Releases.Including (Rel));
-                        else          -- textual
-                           Graph.Print
-                             (Needed.Releases.Including (Rel),
-                              Prefix => "   ");
-                        end if;
-                     end;
-                  end if;
+                  Needed.Print (Rel,
+                                Platform.Properties,
+                                Cmd.Detail,
+                                Always);
                else
                   Put_Line ("Dependencies cannot be met");
                end if;
