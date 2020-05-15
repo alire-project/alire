@@ -58,8 +58,8 @@ libbar = "^2.0 & /=2.1.3" # Excluding a known bad version
 In some contexts, information can be dynamic: special encodings can be used to
 make data vary depending on the environment (OS, architecture, ...). The
 environment is represented as a set of specific variables which can have a
-specific set of values: see the Parameters section below for a comprehensive
-list.
+specific set of values: see the [Parameters](#parameters) section below for a
+comprehensive list.
 
 To create atomic values in an environment-dependent way, use the following
 construct (here to create a boolean):
@@ -105,6 +105,9 @@ libwinbar = "^3.0"
 ['case(os)'.'...']
 ```
 
+The `case(os)` part selects dependencies depending on the value of the `os`
+environment variable.
+
 If the `os` environment variable contains `linux`, this will create the
 following dependencies:
 
@@ -113,8 +116,8 @@ libfoo = "^1.2"
 libbar = "^2.0"
 ```
 
-The `case(os)` part selects dependencies depending on the value of the `os`
-environment variable.
+If the `os` environment variable contains `windows`, this will create the
+following dependencies:
 
 ```toml
 libfoo = "^1.2"
@@ -204,7 +207,7 @@ entries:
    ```
 
  - `tags`: optional array of strings. Flat list of topics covered by the crate.
-   Tags will help users find crates reletaed to their interests:
+   Tags will help users find crates related to their interests:
 
    ```toml
    tags = ["spark", "security"]
@@ -344,7 +347,7 @@ entries:
    # An explicit empty case alternative, which is not mandatory
    ```
 
-## Release-specific Information
+## Release-specific information
 
 Each release is materialized as an entry in the top-level object. The key is a
 string for the version number for the release, while the value is an object to
@@ -363,7 +366,7 @@ following entries:
    ```
 
    If the package only maps a package from the system package manager,
-   (for instance `make`), run:
+   (for instance `make`), use:
 
    ```toml
    origin = "native:make"
@@ -380,7 +383,7 @@ following entries:
 
  - `origin-hashes`: mandatory string array for git origins and source archives.
    An array of "kind:digest" fields that specify a hash kind and its value.
-   Kinds accepted are: sha512.
+   Kinds accepted are: `sha512`.
 
  - `archive-name`: optional string. If `origin` points to a source archive,
    this can specifiy the name of the file to download, which is needed in order
@@ -392,7 +395,7 @@ following entries:
    archive-hash = "sha512:bf6082573dc537836ea8506a2c9a75dc7837440c35c5b02a52add52e38293640d99e90a9706690591f8899b8b4935824b195f230b3aa1c4da10911e3caf954c04ac"
    ```
 
- - `available`: optional dynamic boolean expression. It is used the
+ - `available`: optional dynamic boolean expression. It is used in the
    following way:
 
    1. If it evaluates to `false`, the package is not available for the current
@@ -405,7 +408,7 @@ following entries:
    release. For instance:
 
    ```json
-   "notes": "Experimental version"
+   notes = "Experimental version"
    ```
 
 It can also contain the following entries: `depends-on`, `project-files`,
@@ -414,7 +417,7 @@ optional. For atomic values, these override the ones from `general`, and for
 lists/mappings, they are interpreted as additions. In the latter case,
 conflicting entries are considered as errors.
 
-## External Releases
+## External releases
 
 The above information applies to regular releases distributed from sources
 (that is, the Ada projects whose distribution is the main Alire goal). Some
@@ -441,9 +444,9 @@ All external kinds can define these regular properties:
    environment conditions.
 
  - `hint`: explanation for the user on how to make the external available. This
-   explanation is show on request with `alr show --external`, or after `alr
-   get`, for any external dependency that could not be detected. This property
-   accepts dynamic expressions.
+   explanation is shown on request with `alr show --external`, or after
+   `alr get`, for any external dependency that could not be detected. This
+   property accepts dynamic expressions.
 
 ### External kinds: hints
 
@@ -481,7 +484,7 @@ version-regexp  = "^GNAT ([\\d\\.]+).*|^GNAT Community ([\\d]{4}).*"
 Systems that have their own package manager (e.g. Linux) can readily provide
 many complex dependencies still unpackaged as source code in Alire. Alire can
 use these on supported platforms (at this time, Debian & Ubuntu. Do not
-hesitate to contact us if you would like to maintain other ones distributions)
+hesitate to contact us if you would like to maintain other distributions)
 during resolution.
 
 A system external gives a list of platform package names that supply the

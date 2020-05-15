@@ -95,8 +95,8 @@ be edited instead of created).
        through the GitHub web interface (or the
        [`hub`](https://github.com/github/hub) tool).
         1. The base branch you select for the pull request will determine where
-           your changes will become available; see the section on index
-           branches for details.
+           your changes will become available; see the section on [index
+           branches](#index-branches) for details.
 
 Once the pull request is verified and merged, the new crate or release will
 become available for normal use. The open source Ada ecosystem needs all the

@@ -26,7 +26,7 @@ The executable will be found in `bin/alr`. You can add it to your PATH:
  * Linux/MacOS: `export PATH=$PATH:$PWD/bin`
  * Windows PowerShell: `$env:path += ";$pwd/bin"`
 
-## `Alr` on Windows
+## `alr` on Windows
 
 On Windows, the first time you run `alr` the program will ask if you want to
 install [msys2](https://www.msys2.org/). This is recommended as `alr` will use
@@ -69,7 +69,7 @@ program in one step.
 Alire allows you to initialize an empty GNAT binary or library project with
 ease:
 
-1. Issue `alr init --bin myproj` (you can use --lib for a library project).
+1. Issue `alr init --bin myproj` (you can use `--lib` for a library project)
 1. Enter the folder: `cd myproj`
 1. Check that it builds: `alr build`
 1. Run it: `alr run`
@@ -77,7 +77,7 @@ ease:
 ## Dependencies and upgrading
 
 Alire keeps track of a project dependencies in the file
-`./alire/project_name.toml` file of your project. You may check the one just
+`./alire/project_name.toml` of your project. You may check the one just
 created in the previous example.
 
 This file can be managed through `alr`:
@@ -100,12 +100,12 @@ and then issue:
 
 ## Finding available projects
 
-For quick listing of projects and its description you can use the `list`
+For quick listing of projects and their descriptions you can use the `list`
 command:
 
 * `alr list [substring]`
 
-There's also a search command which provides more details:
+There's also a `search` command which provides more details:
 
 * `alr search <substring>` will look for `substring` in project names.
 * `alr search --list` will list the whole catalog.
@@ -128,7 +128,7 @@ website:
 
 To create a build environment, `alr` sets environment variables such as
 `GPR_PROJECT_PATH` before running `gprbuild`. If you want to run `gprbuild`
-yourself or inside an editor (GNATstudio), you can use the `setenv` command to
+yourself or inside an editor (GNAT Studio), you can use the `setenv` command to
 print the build environment:
 
 * `alr setenv`
