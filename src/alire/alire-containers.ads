@@ -12,7 +12,7 @@ with Alire.Releases;
 package Alire.Containers with Preelaborate is
 
    package Crate_Name_Sets is
-      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
+     new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
 
    package Dependency_Lists
    is new Ada.Containers.Indefinite_Doubly_Linked_Lists
