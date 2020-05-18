@@ -139,7 +139,7 @@ package body Alr.Checkout is
                Trace.Error ("Remaining releases:"
                             & Pending.Length'Img &
                               "; Dependency graph:");
-               Graph.Print (Pending);
+               Graph.Print (Alire.Solutions.New_Solution (Pending));
                raise Program_Error
                  with "No release checked-out in round" & Round'Img;
             else

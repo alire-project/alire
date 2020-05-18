@@ -26,6 +26,8 @@ package Alire.Containers with Preelaborate is
 
    type Dependency_Map is new Dependency_Maps.Map with null record;
 
+   Empty_Dependency_Map : constant Dependency_Map;
+
    procedure Merge (This : in out Dependency_Map;
                     Dep  :        Dependencies.Dependency);
    --  If the dependency is already in map, create a combined dependency that
@@ -94,6 +96,9 @@ package Alire.Containers with Preelaborate is
    renames Release_Holders.To_Holder;
 
 private
+
+   Empty_Dependency_Map : constant Dependency_Map :=
+                            (Dependency_Maps.Empty_Map with null record);
 
    Empty_Release_Map : constant Release_Map :=
                          (Crate_Release_Maps.Empty_Map with null record);
