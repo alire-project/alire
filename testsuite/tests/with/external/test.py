@@ -24,7 +24,9 @@ assert_match('Dependencies \(direct\):\n'
              '   make\*\n'
              'Dependencies \(external\):\n'
              '   make\*\n'
-             '.*',  # Skip graph
+             'Dependencies \(graph\):\n'
+             '   xxx=0.0.0 --> make\*\n'
+             '.*',  # skip plot or warning
              p.out, flags=re.S)
 
 
