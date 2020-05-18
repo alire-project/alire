@@ -1,13 +1,12 @@
-with Alire.Paths;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 
 with Alr.Checkout;
+with Alr.Commands.Index;
 with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
 
-with GNAT.OS_Lib;
 with Alr.Bootstrap;
 
 package body Alr.Commands.Update is
@@ -85,8 +84,11 @@ package body Alr.Commands.Update is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
    begin
+      if Cmd.Online then
+         Index.Update_All;
+      end if;
+
       Execute (Interactive => True);
    end Execute;
 
@@ -113,9 +115,23 @@ package body Alr.Commands.Update is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
-      .Append ("Resolves dependencies using the loaded indexes, and"
-               & " regenerates the aggregate project building file found in"
-               & " <crate>" & GNAT.OS_Lib.Directory_Separator
-               & Alire.Paths.Working_Folder_Inside_Root));
+      .Append ("Resolves unpinned dependencies using available indexes"));
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+      use GNAT.Command_Line;
+   begin
+      Define_Switch
+        (Config,
+         Cmd.Online'Access,
+         Long_Switch => "--online",
+         Help        => "Fetch index updates before attempting crate updates");
+   end Setup_Switches;
 
 end Alr.Commands.Update;

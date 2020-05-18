@@ -25,6 +25,9 @@ package Alr.Commands.Index is
      ("--add <url> --name <name> [--before <name>] | --del <name> | --list"
       & " | --update-all");
 
+   procedure Update_All;
+   --  Request update of configured indexes
+
 private
 
    type Command is new Commands.Command with record
