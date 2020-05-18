@@ -11,8 +11,7 @@ p = run_alr('show', 'hello_world',
 assert_match(
     'ERROR: Loading crate .*hello_world.toml: general: maintainers-logins: '
     'maintainers-logins must be a valid GitHub login, but got: mr.user\n'
-    'ERROR: Cannot read valid property from maintainers-logins\n'
-    'ERROR: alr show unsuccessful\n',
+    'ERROR: Cannot read valid property from maintainers-logins\n',
     p.out)
 
 print('SUCCESS')

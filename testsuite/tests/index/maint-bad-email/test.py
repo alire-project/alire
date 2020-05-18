@@ -11,8 +11,7 @@ p = run_alr('show', 'hello_world',
 assert_match(
     'ERROR: Loading crate .*hello_world.toml: general: maintainers: '
     'Maintainers must have a valid email, but got: Mr. User\n'
-    'ERROR: Cannot read valid property from maintainers\n'
-    'ERROR: alr show unsuccessful\n',
+    'ERROR: Cannot read valid property from maintainers\n',
     p.out)
 
 print('SUCCESS')

@@ -12,14 +12,13 @@ package Alire with Preelaborate is
    --  relation with user inputs (e.g., parsing of TOML files or other inputs).
    --  Used internally in Alire in conjunction with Alire.Errors to use the
    --  normal exception mechanisms, that produce less boilerplate, while using
-   --  Outcomes for results returned to clients. That is, a Checked_Error ought
-   --  not to propagate into Alr.* code.
+   --  Outcomes for results returned to clients.
 
    Query_Unsuccessful : exception;
    --  Raised by subprograms that return releases/dependencies when not
    --  found/impossible.
 
-   Unimplemented      : exception;
+   Unimplemented : exception;
    --  Features that are known to be missing and scheduled for near future
    --  implementation.
 

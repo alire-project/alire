@@ -15,8 +15,7 @@ def run(i, error):
         config_dir, '.', {'bad_index_{}'.format(i): {'in_fixtures': False}})
     p = run_alr('list', complain_on_error=False, debug=False)
     assert_match(
-        'ERROR: {}'
-        '\nERROR: alr list unsuccessful\n$'.format(error),
+        'ERROR: {}\n$'.format(error),
         p.out)
 
 
