@@ -1,7 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Tags;
 
-with Alire.Actions;
 with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Interfaces;

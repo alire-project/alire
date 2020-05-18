@@ -49,7 +49,8 @@ package body Alr.Commands.Get is
          Result : Alire.Outcome;
       begin
          --  Check that itself is available (but overridable with --only)
-         if not Cmd.Only and then not Rel.Is_Available (Platform.Properties) then
+         if not Cmd.Only and then not Rel.Is_Available (Platform.Properties)
+         then
             Trace.Error
               ("The requested version ("
                & Rel.Milestone.Image
