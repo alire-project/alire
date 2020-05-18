@@ -5,6 +5,7 @@ with Ada.Text_IO;
 
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
+with Alire.Index;
 with Alire.Milestones;
 with Alire.Releases;
 with Alire.Roots;
@@ -41,7 +42,7 @@ package body Alr.Commands.Withing is
 
       --  Check that the requested dependency exists
 
-      if not Query.Exists (Requested.Crate) then
+      if not Alire.Index.Exists (Requested.Crate) then
          Reportaise_Command_Failed
            ("The requested crate was not found in the catalog: " &
             (+Requested.Crate));
