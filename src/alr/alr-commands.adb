@@ -291,10 +291,15 @@ package body Alr.Commands is
          Define_Switch (Config, " ");
       end if;
 
-      Define_Switch (Config, "See global options with 'alr --help'",
-                     "", "", "", "");
+      --  Without the following line, GNAT.Display_Help causes a segfault for
+      --  reasons I'm unable to pinpoint. This way it prints a harmless blank
+      --  line that we want anyway.
+
+      Define_Switch (Config, " ", " ", " ", " ", " ");
 
       GNAT.Command_Line.Display_Help (Config);
+
+      Put_Line (" See global options with 'alr --help'");
 
       --  Format and print the long command description
       New_Line;
