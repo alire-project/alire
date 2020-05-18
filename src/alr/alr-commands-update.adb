@@ -32,8 +32,14 @@ package body Alr.Commands.Update is
 
       for Crate of Allowed loop
          if not Old.Releases.Contains (Crate) then
-            Reportaise_Wrong_Arguments ("Requested crate is not in solution: "
+            Reportaise_Wrong_Arguments ("Requested crate is not a dependency: "
                                         & Alire.Utils.TTY.Name (Crate));
+         end if;
+
+         if Old.Pins.Contains (Crate) then
+            Reportaise_Wrong_Arguments
+              ("Requested crate is pinned and cannot be updated: "
+               & Alire.Utils.TTY.Name (Crate));
          end if;
       end loop;
 
@@ -147,7 +153,14 @@ package body Alr.Commands.Update is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
-      .Append ("Resolves unpinned dependencies using available indexes"));
+      .Append ("Resolves unpinned dependencies using available indexes.")
+      .New_Line
+      .Append ("Invoked without arguments will consider all unpinned crates"
+               & " for updating.")
+      .New_Line
+      .Append ("One or more crates can be given as argument, in which case"
+               & " only these crates will be candidates for updating."
+               & " Requesting the update of a pinned crate is not allowed."));
 
    --------------------
    -- Setup_Switches --

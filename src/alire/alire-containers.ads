@@ -51,6 +51,8 @@ package Alire.Containers with Preelaborate is
      (Crate_Name, Releases.Release, "<", Releases."=");
    type Release_Map is new Crate_Release_Maps.Map with null record;
 
+   Empty_Release_Map : constant Release_Map;
+
    function Excluding (Map  : Release_Map;
                        Name : Crate_Name)
                        return Release_Map;
@@ -90,5 +92,10 @@ package Alire.Containers with Preelaborate is
 
    function To_Release_H (R : Releases.Release) return Release_H
    renames Release_Holders.To_Holder;
+
+private
+
+   Empty_Release_Map : constant Release_Map :=
+                         (Crate_Release_Maps.Empty_Map with null record);
 
 end Alire.Containers;
