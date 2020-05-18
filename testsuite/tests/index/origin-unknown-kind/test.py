@@ -10,7 +10,6 @@ p = run_alr('show', 'hello_world',
             complain_on_error=False, debug=False, quiet=False)
 assert_match(
     'ERROR: .* unknown origin: .*'
-    '\nERROR: alr show unsuccessful'
     '\n', p.out)
 
 print('SUCCESS')

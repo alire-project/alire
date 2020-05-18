@@ -22,7 +22,6 @@ for d in ('no-such-directory',
                                 'index.toml')
     assert_match('ERROR: Cannot load metadata from .*{}:'
                  ' Not a readable directory'
-                 '\nERROR: alr list unsuccessful'
                  '\n'
                  .format(re.escape(path_excerpt)),
                  p.out)

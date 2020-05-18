@@ -20,8 +20,7 @@ if distro_is_known():
     assert_match(".*Hint: This is a custom hint.*", p.out, flags=re.S)
 else:
     assert_eq('ERROR: No source release indexed for the requested crate, and '
-              'cannot use system packages in unknown distribution\n'
-              'ERROR: alr get unsuccessful\n',
+              'cannot use system packages in unknown distribution\n',
               p.out)
 
 # 2nd test: hint is displayed when the hint belongs to a dependency, on get
