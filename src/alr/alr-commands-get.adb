@@ -148,11 +148,6 @@ package body Alr.Commands.Get is
       else
          Trace.Info ("There are no dependencies.");
       end if;
-
-   exception
-      when Alire.Query_Unsuccessful =>
-         Trace.Info ("Release [" & Query.Dependency_Image (Name, Versions) &
-                       "] does not exist in the catalog.");
    end Retrieve;
 
    -------------
