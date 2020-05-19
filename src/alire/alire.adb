@@ -74,6 +74,17 @@ package body Alire is
       end if;
    end Assert;
 
+   ------------
+   -- Assert --
+   ------------
+
+   procedure Assert (Condition : Boolean; Or_Else : String) is
+   begin
+      if not Condition then
+         Raise_Checked_Error (Msg => Or_Else);
+      end if;
+   end Assert;
+
    -------------------
    -- Error_In_Name --
    -------------------

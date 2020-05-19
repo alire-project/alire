@@ -23,14 +23,21 @@ with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Withing is
 
+   Switch_URL : constant String := "--url";
+
    package Query renames Alire.Solver;
+
+   procedure Replace_Current
+     (Old_Deps,
+      New_Deps     : Alire.Conditional.Dependencies;
+      Old_Solution : Alire.Solutions.Solution := Root.Current.Solution);
 
    ---------
    -- Add --
    ---------
 
-   function Add (Deps    : Alire.Conditional.Dependencies;
-                 New_Dep : String)
+   function Add (Deps       : Alire.Conditional.Dependencies;
+                 New_Dep    : String)
                  return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
@@ -72,8 +79,55 @@ package body Alr.Commands.Withing is
          else
             Trace.Detail ("Dependency " & New_Dep & " can be added");
          end if;
+
       end return;
    end Add;
+
+   ------------------
+   -- Add_Softlink --
+   ------------------
+
+   procedure Add_Softlink (Cmd : Command) is
+      Requested : constant Alire.Milestones.Allowed_Milestones :=
+                    Alire.Milestones.Crate_Versions (Argument (1));
+      New_Dep   : constant Alire.Dependencies.Dependency :=
+                    Alire.Dependencies.From_Milestones (Requested);
+   begin
+      if Num_Arguments /= 1 then
+         Reportaise_Wrong_Arguments
+           ("Exactly one crate needed for external pinning.");
+      end if;
+
+      if not Root.Current.Solution.Valid then
+         Reportaise_Command_Failed
+           ("Cannot add pinned crates to already unsolvable dependencies");
+      end if;
+
+      declare
+         use Alire;
+         use type Conditional.Dependencies;
+         Old_Deps     : constant Conditional.Dependencies :=
+                          Root.Current.Release.Dependencies;
+         Old_Solution : constant Solutions.Solution := Root.Current.Solution;
+         New_Solution : constant Solutions.Solution :=
+                          Old_Solution
+                            .Depending_On (New_Dep)
+                            .Linking (Crate => New_Dep.Crate,
+                                      Path  => Cmd.URL.all);
+      begin
+
+         --  If we made here there were no errors adding the dependency
+         --  and storing the softlink. We can proceed to confirming the
+         --  replacement.
+
+         Replace_Current (Old_Deps     => Old_Deps,
+                          New_Deps     => Old_Deps and New_Dep,
+                          Old_Solution => New_Solution);
+         --  We use the New_Solution with the softlink as previous solution, so
+         --  the pinned directory is used by the solver.
+
+      end;
+   end Add_Softlink;
 
    ---------
    -- Del --
@@ -123,8 +177,10 @@ package body Alr.Commands.Withing is
    -- Replace_Current --
    ---------------------
 
-   procedure Replace_Current (Old_Deps,
-                              New_Deps : Alire.Conditional.Dependencies)
+   procedure Replace_Current
+     (Old_Deps,
+      New_Deps     : Alire.Conditional.Dependencies;
+      Old_Solution : Alire.Solutions.Solution := Root.Current.Solution)
    is
    begin
       Requires_Full_Index;
@@ -138,7 +194,7 @@ package body Alr.Commands.Withing is
          New_Solution : constant Alire.Solutions.Solution :=
                           Alire.Solver.Resolve (New_Deps,
                                                 Platform.Properties,
-                                                Root.Current.Solution);
+                                                Old_Solution);
       begin
 
          --  Show changes to apply
@@ -146,6 +202,15 @@ package body Alr.Commands.Withing is
          Trace.Info ("Requested changes:");
          Trace.Info ("");
          Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
+
+         --  In the event of a new invalid solution (this should not happen,
+         --  but as a safeguard we ensure it cannot be commited to disk) bail
+         --  out already.
+
+         if not New_Solution.Valid then
+            Reportaise_Command_Failed
+              ("No solution for the requested changes");
+         end if;
 
          --  Show the effects on the solution
 
@@ -351,12 +416,16 @@ package body Alr.Commands.Withing is
    begin
       Requires_Valid_Session;
 
+      if Cmd.URL.all /= "" then
+         Flags := Flags + 1;
+      end if;
+
       Check (Cmd.Del);
       Check (Cmd.From);
       Check (Cmd.Solve);
 
       --  No parameters: give current platform dependencies and BAIL OUT
-      if not (Cmd.Del or else Cmd.From) and then Num_Arguments = 0 then
+      if Num_Arguments = 0 and then (Flags = 0 or else Cmd.Solve) then
          List (Cmd);
          return;
       end if;
@@ -370,9 +439,17 @@ package body Alr.Commands.Withing is
          end if;
       end if;
 
-      if not (Cmd.Del or else Cmd.From) and then Num_Arguments > 0 then
-         Requires_Full_Index;
-         Add;
+      if not (Cmd.Del or else Cmd.From) then
+
+         --  Must be Add, but it could be regular or softlink
+
+         if Cmd.URL.all /= "" then
+            Add_Softlink (Cmd);
+         else
+            Requires_Full_Index;
+            Add;
+         end if;
+
       elsif Cmd.Del then
          Del;
       elsif Cmd.From then
@@ -402,6 +479,11 @@ package body Alr.Commands.Withing is
        .Append ("Dependencies are added by giving their name, and removed"
                 & " by using the --del flag. Dependencies cannot be"
                 & " simultaneously added and removed in a single invocation.")
+       .New_Line
+       .Append ("* Adding dependencies pinned to external sources:")
+       .Append ("When a single crate name is accompanied by an --url URL"
+                & " argument, the crate is always fulfilled for any required"
+                & " version by the sources found at URL.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
@@ -443,6 +525,13 @@ package body Alr.Commands.Withing is
                      Cmd.From'Access,
                      "", "--from",
                      "Use dependencies declared within GPR project file");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.URL'Access,
+         Long_Switch => Switch_URL & "=",
+         Argument    => "URL",
+         Help        => "Add a dependency pinned to some external source");
 
       Define_Switch (Config,
                      Cmd.Solve'Access,
