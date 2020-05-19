@@ -1,7 +1,6 @@
-with Alire.Actions;
 with Alire.Paths;
+with Alire.Properties.Actions.Executor;
 
-with Alr.Actions;
 with Alr.Root;
 with Alr.Spawn;
 with Alr.Platform;
@@ -42,8 +41,10 @@ package body Alr.Commands.Build is
 
       --  POST-COMPILE ACTIONS
       begin
-         Actions.Execute_Actions
-           (Root.Current.Release, Alire.Actions.Post_Compile);
+         Alire.Properties.Actions.Executor.Execute_Actions
+           (Release => Root.Current.Release,
+            Env     => Platform.Properties,
+            Moment  => Alire.Properties.Actions.Post_Compile);
       exception
          when others =>
             Trace.Warning ("A post-compile action failed, " &

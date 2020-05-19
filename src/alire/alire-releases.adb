@@ -263,6 +263,24 @@ package body Alire.Releases is
       Available    => Requisites.Booleans.Always_True,
       Pinned       => False);
 
+   function On_Platform_Actions (R : Release;
+                                 P : Alire.Properties.Vector;
+                                 Moments : Moment_Array := (others => True))
+                                 return Alire.Properties.Vector
+   is
+      use Alire.Properties.Actions;
+   begin
+      return Filtered : Alire.Properties.Vector do
+         for Prop of R.On_Platform_Properties
+           (P, Alire.Properties.Actions.Action'Tag)
+         loop
+            if Moments (Action'Class (Prop).Moment) then
+               Filtered.Append (Prop);
+            end if;
+         end loop;
+      end return;
+   end On_Platform_Actions;
+
    ----------------------------
    -- On_Platform_Properties --
    ----------------------------
