@@ -45,6 +45,10 @@ package Alire.Externals is
                   --  A placeholder for a knowingly-unavailable crate, that
                   --  will hopefully be added in the future.
 
+                  Softlink,
+                  --  A directory that is used in place, with indeterminate
+                  --  version.
+
                   System,
                   --  A installed system package, via apt, yum, etc.
 
