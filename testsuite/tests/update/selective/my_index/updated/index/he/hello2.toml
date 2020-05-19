@@ -1,0 +1,11 @@
+[general]
+description = """"Hello, world!" demonstration project"""
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+['0.2']
+origin = "file://."
+
+['0.1']
+origin = "file://."

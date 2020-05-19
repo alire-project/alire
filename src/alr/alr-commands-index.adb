@@ -15,8 +15,6 @@ package body Alr.Commands.Index is
 
    procedure Reset_Community;
 
-   procedure Update_All;
-
    ---------
    -- Add --
    ---------

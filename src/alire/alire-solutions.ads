@@ -57,6 +57,10 @@ package Alire.Solutions is
    --  Return all pinned releases as exact version dependencies. Will return an
    --  empty list for invalid solutions.
 
+   function Pins (This : Solution) return Release_Map;
+   --  Return all pinned release. Will return an empty map for invalid
+   --  solutions.
+
    function With_Pins (This, Src : Solution) return Solution;
    --  Copy pins from Src to This
 

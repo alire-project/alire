@@ -1,18 +1,17 @@
-with Alire.Paths;
+with Alire.Containers;
+with Alire.Errors;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
+with Alire.Utils.TTY;
+with Alire.Workspaces;
 
 with Alr.Checkout;
+with Alr.Commands.Index;
 with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
 
-with GNAT.OS_Lib;
-with Alr.Bootstrap;
-
 package body Alr.Commands.Update is
-
-   use all type Bootstrap.Session_States;
 
    package Query renames Alire.Solver;
 
@@ -21,22 +20,36 @@ package body Alr.Commands.Update is
    -------------
 
    procedure Upgrade (Interactive : Boolean;
-                      Force       : Boolean := False) is
-      --  The part concerning only to the working release
+                      Force       : Boolean := False;
+                      Allowed     : Alire.Containers.Crate_Name_Sets.Set :=
+                        Alire.Containers.Crate_Name_Sets.Empty_Set)
+   is
+      Old     : constant Query.Solution :=
+                  Root.Current.Solution;
    begin
+
+      --  Ensure requested crates are in solution first
+
+      for Crate of Allowed loop
+         if not Old.Releases.Contains (Crate) then
+            Reportaise_Wrong_Arguments ("Requested crate is not a dependency: "
+                                        & Alire.Utils.TTY.Name (Crate));
+         end if;
+
+         if Old.Pins.Contains (Crate) then
+            Reportaise_Wrong_Arguments
+              ("Requested crate is pinned and cannot be updated: "
+               & Alire.Utils.TTY.Name (Crate));
+         end if;
+      end loop;
+
       Requires_Full_Index;
 
-      Requires_Valid_Session;
-
       declare
-         Old     : constant Query.Solution :=
-                     Root.Current.Solution;
          Needed  : constant Query.Solution :=
-                     Query.Resolve
-                       (Root.Current.Release.Dependencies.Evaluate
-                          (Platform.Properties),
-                        Platform.Properties,
-                        Old,
+                     Alire.Workspaces.Update
+                       (Platform.Properties,
+                        Allowed,
                         Options => (Age       => Query_Policy,
                                     Detecting => <>,
                                     Hinting   => <>));
@@ -85,9 +98,37 @@ package body Alr.Commands.Update is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
+
+      -------------------
+      -- Parse_Allowed --
+      -------------------
+
+      function Parse_Allowed return Alire.Containers.Crate_Name_Sets.Set is
+      begin
+         return Set :  Alire.Containers.Crate_Name_Sets.Set do
+            for I in 1 .. Num_Arguments loop
+               Set.Include (Alire.Crate_Name (Argument (I)));
+            end loop;
+         end return;
+      exception
+         when E : Alire.Checked_Error =>
+            --  Bad crate names in the command line is an expected error, so
+            --  re-raise it under the proper exception to avoid the 'unexpected
+            --  error' message.
+            Reportaise_Wrong_Arguments (Alire.Errors.Get (E));
+            return Alire.Containers.Crate_Name_Sets.Empty_Set;
+      end Parse_Allowed;
+
    begin
-      Execute (Interactive => True);
+      Requires_Valid_Session;
+
+      if Cmd.Online then
+         Index.Update_All;
+      end if;
+
+      Upgrade (Interactive => True,
+               Force       => False,
+               Allowed     => Parse_Allowed);
    end Execute;
 
    -------------
@@ -95,14 +136,13 @@ package body Alr.Commands.Update is
    -------------
 
    procedure Execute (Interactive : Boolean;
-                      Force       : Boolean := False) is
+                      Force       : Boolean := False)
+   is
    begin
-      if Session_State > Outside then
-         Upgrade (Interactive => Interactive,
-                  Force       => Force);
-      else
-         Trace.Detail ("No working release to update");
-      end if;
+      Requires_Valid_Session;
+
+      Upgrade (Interactive => Interactive,
+               Force       => Force);
    end Execute;
 
    ----------------------
@@ -113,9 +153,30 @@ package body Alr.Commands.Update is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
-      .Append ("Resolves dependencies using the loaded indexes, and"
-               & " regenerates the aggregate project building file found in"
-               & " <crate>" & GNAT.OS_Lib.Directory_Separator
-               & Alire.Paths.Working_Folder_Inside_Root));
+      .Append ("Resolves unpinned dependencies using available indexes.")
+      .New_Line
+      .Append ("Invoked without arguments will consider all unpinned crates"
+               & " for updating.")
+      .New_Line
+      .Append ("One or more crates can be given as argument, in which case"
+               & " only these crates will be candidates for updating."
+               & " Requesting the update of a pinned crate is not allowed."));
+
+   --------------------
+   -- Setup_Switches --
+   --------------------
+
+   overriding procedure Setup_Switches
+     (Cmd    : in out Command;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+      use GNAT.Command_Line;
+   begin
+      Define_Switch
+        (Config,
+         Cmd.Online'Access,
+         Long_Switch => "--online",
+         Help        => "Fetch index updates before attempting crate updates");
+   end Setup_Switches;
 
 end Alr.Commands.Update;
