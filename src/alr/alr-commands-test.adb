@@ -4,11 +4,13 @@ with Ada.Exceptions;
 
 with Alire.Config;
 with Alire.Containers;
-with Alire.Defaults;
-with Alire.Index;
-with Alire.OS_Lib.Subprocess;
 with Alire.Crates.With_Releases;
+with Alire.Defaults;
+with Alire.Directories;
+with Alire.Index;
 with Alire.Milestones;
+with Alire.OS_Lib.Subprocess;
+with Alire.Properties.Actions.Executor;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
@@ -80,6 +82,8 @@ package body Alr.Commands.Test is
       use GNATCOLL.VFS;
       use OS_Lib.Paths;
 
+      Some_Failed : Boolean := False;
+
       Reporters : Testing.Collections.Collection;
 
       No_Log : constant Utils.String_Vector :=
@@ -102,56 +106,158 @@ package body Alr.Commands.Test is
          Output : Utils.String_Vector;
          Start  : Time;
 
-         -------------------
-         -- Build_Release --
-         -------------------
+         -----------------
+         -- Test_Action --
+         -----------------
 
-         procedure Build_Release is
+         procedure Test_Action is
             use Ada.Directories;
             use Alire.OS_Lib.Subprocess;
             use Alire.Utils;
 
-            Alr_Args : constant String_Vector :=
-                         Empty_Vector &
-                         "get" &
-                         "--build" &
-                         "-d" &
-                         "-n" &
-                         R.Milestone.Image;
+            Docker_Prefix : constant String_Vector :=
+                              Empty_Vector
+                              & "sudo"
+                              & "docker"
+                              & "run"
+                              & String'("-v"
+                                        & Locate_In_Path ("alr")
+                                        & ":/usr/bin/alr")
+                              --  Map executable
+                              & String'("-v" & Current_Directory & ":/work")
+                              --  Map working folder
+                              & "-w" & "/work"
+                              & "--user" & Alire.OS_Lib.Getenv ("UID", "1000")
+                              --  Map current user
+                              & Docker_Image;
 
-            Exit_Code : Integer;
+            Custom_Alr : constant String_Vector :=
+                           Empty_Vector
+                           & "alr" & "-c" & "/tmp/alire";
+            --  When running inside docker as regular user we need config to be
+            --  stored in a writable folder.
+
+            ------------------
+            -- Default_Test --
+            ------------------
+
+            procedure Default_Test is
+               Alr_Args : constant String_Vector :=
+                            Empty_Vector &
+                            "get" &
+                            "--build" &
+                            "-d" &
+                            "-n" &
+                            R.Milestone.Image;
+
+               Docker_Default : constant String_Vector :=
+                                  Docker_Prefix
+                                  & Custom_Alr
+                                  & Alr_Args;
+
+               Alr_Default : constant String_Vector := "alr" & Alr_Args;
+
+               Exit_Code : Integer;
+            begin
+               if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+                  Exit_Code := Unchecked_Spawn_And_Capture
+                    (Docker_Default.First_Element,
+                     Docker_Default.Tail,
+                     Output,
+                     Err_To_Out => True);
+               else
+                  Exit_Code := Unchecked_Spawn_And_Capture
+                    (Alr_Default.First_Element,
+                     Alr_Default.Tail,
+                     Output,
+                     Err_To_Out => True);
+               end if;
+
+               if Exit_Code /= 0 then
+                  raise Child_Failed;
+               end if;
+
+               --  Check declared gpr/executables in place
+               if not R.Origin.Is_System and then not Check_Files (R) then
+                  raise Child_Failed with "Declared executable(s) missing";
+               end if;
+            end Default_Test;
+
+            -----------------
+            -- Custom_Test --
+            -----------------
+
+            procedure Custom_Test is
+               Exit_Code : Integer;
+            begin
+
+               --  Fetch the crate
+
+               if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+                  Exit_Code := Unchecked_Spawn_And_Capture
+                    (Docker_Prefix.First_Element,
+                     Docker_Prefix.Tail
+                     & Custom_Alr & "get" & R.Name_Str,
+                     Output,
+                     Err_To_Out => True);
+               else
+                  Exit_Code := Unchecked_Spawn_And_Capture
+                    ("alr",
+                     Empty_Vector & "-d" & "-n" & "get" & R.Name_Str,
+                     Output,
+                     Err_To_Out => True);
+               end if;
+
+               if Exit_Code /= 0 then
+                  raise Child_Failed;
+               end if;
+
+               --  And run its actions in its working directory
+
+               declare
+                  Guard : Alire.Directories.Guard
+                    (Alire.Directories.Enter (R.Unique_Folder))
+                    with Unreferenced;
+               begin
+                  for Action of R.On_Platform_Actions
+                    (Platform.Properties,
+                     (Alire.Properties.Actions.Test   => True,
+                      others                          => False))
+                  loop
+                     Alire.Properties.Actions.Executor.Execute_Actions
+                       (Release    => R,
+                        Env        => Platform.Properties,
+                        Moment     => Alire.Properties.Actions.Test,
+                        Capture    => True,
+                        Err_To_Out => True,
+                        Code       => Exit_Code,
+                        Output     => Output,
+                        Prefix     =>
+                          (if Alire.Utils.Command_Line_Contains (Docker_Switch)
+                           then Docker_Prefix
+                           else Alire.Utils.Empty_Vector));
+
+                     if Exit_Code /= 0 then
+                        raise Child_Failed;
+                     end if;
+                  end loop;
+               end;
+            end Custom_Test;
+
          begin
-            if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-               Exit_Code := Unchecked_Spawn_And_Capture
-                 ("sudo",
-                  Empty_Vector
-                  & "docker"
-                  & "run"
-                  & String'("-v" & Locate_In_Path ("alr") & ":/usr/bin/alr")
-                  --  Map executable
-                  & String'("-v" & Current_Directory & ":/work")
-                  --  Map working folder
-                  & "-w" & "/work"
-                  & "--user" & Alire.OS_Lib.Getenv ("UID", "1000")
-                  --  Map current user
-                  & Docker_Image
-                  & "alr"
-                  & "-c" & "/tmp/alire" -- Use writable config folder
-                  & Alr_Args,
-                  Output,
-                  Err_To_Out => True);
-            else
-               Exit_Code := Unchecked_Spawn_And_Capture
-                 ("alr",
-                  Alr_Args,
-                  Output,
-                  Err_To_Out => True);
-            end if;
 
-            if Exit_Code /= 0 then
-               raise Child_Failed;
+            --  Run test actions if there are any, or a default get+build
+
+            if R.On_Platform_Actions
+              (Platform.Properties,
+               (Alire.Properties.Actions.Test   => True,
+                others                          => False)).Is_Empty
+            then
+               Default_Test;
+            else
+               Custom_Test;
             end if;
-         end Build_Release;
+         end Test_Action;
 
       begin
          Reporters.Start_Test (R);
@@ -167,6 +273,7 @@ package body Alr.Commands.Test is
          if not Is_Available then
             Reporters.End_Test (R, Testing.Unavailable, Clock - Start, No_Log);
          elsif not Is_Resolvable then
+            Some_Failed := True;
             Reporters.End_Test
               (R, Testing.Unresolvable, Clock - Start, No_Log);
          elsif not R.Origin.Is_System and then
@@ -177,12 +284,8 @@ package body Alr.Commands.Test is
             Trace.Detail ("Skipping already tested " & R.Milestone.Image);
          else
             begin
-               Build_Release;
-
-               --  Check declared gpr/executables in place
-               if not R.Origin.Is_System and then not Check_Files (R) then
-                  raise Child_Failed with "Declared executable(s) missing";
-               end if;
+               --  Perform default or custom actions
+               Test_Action;
 
                Reporters.End_Test (R, Testing.Pass, Clock - Start, Output);
                Trace.Detail (Output.Flatten (Newline));
@@ -191,6 +294,7 @@ package body Alr.Commands.Test is
                when E : Alire.Checked_Error =>
                   Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
                   Trace.Detail (Output.Flatten (Newline));
+                  Some_Failed := True;
 
                   Output.Append ("****** Checked Error raised during test:");
                   Output.Append (Ada.Exceptions.Exception_Information (E));
@@ -199,10 +303,12 @@ package body Alr.Commands.Test is
                when Child_Failed =>
                   Reporters.End_Test (R, Testing.Fail, Clock - Start, Output);
                   Trace.Detail (Output.Flatten (Newline));
+                  Some_Failed := True;
 
                when E : others =>
                   Reporters.End_Test (R, Testing.Error, Clock - Start, Output);
                   Trace.Detail (Output.Flatten (Newline));
+                  Some_Failed := True;
 
                   Output.Append ("****** UNEXPECTED EXCEPTION FOLLOWS:");
                   Output.Append (Ada.Exceptions.Exception_Information (E));
@@ -232,6 +338,10 @@ package body Alr.Commands.Test is
       end loop;
 
       Reporters.End_Run;
+
+      if Some_Failed then
+         Reportaise_Command_Failed ("Some releases failed to pass testing");
+      end if;
    end Do_Test;
 
    -------------

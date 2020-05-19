@@ -212,14 +212,14 @@ package body Alire.Solutions is
 
    function With_Pins (This, Src : Solution) return Solution is
    begin
-      return This : Solution := With_Pins.This do
+      return Result : Solution := This do
          if not Src.Valid then
             return;
          end if;
 
          for Release of Src.Releases loop
             if Release.Is_Pinned then
-               This.Releases (Release.Name).Pin;
+               Result.Releases.Reference (Release.Name).Pin;
             end if;
          end loop;
       end return;

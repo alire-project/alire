@@ -1,35 +1,8 @@
-with Alire.Conditional;
-with Alire.Properties;
-with Alire.TOML_Adapters;
-with Alire.TOML_Keys;
 with Alire.Utils;
 
-with TOML;
+package Alire.Properties.Actions.Runners with Preelaborate is
 
-package Alire.Actions with Preelaborate is
-
-   --  TODO: probably should be a child of Alire.Properties for consistency.
-
-   type Moments is
-     (
-      Post_Fetch,   -- After being downloaded
-      Post_Compile  -- After being compiled as the working release
-     );
-
-   --  It's probable that there'll be a need to pre-compile every dependency
-   --  after being downloaded, and then we will have the possibility of having
-   --  another moment post THAT compilation. But that compilation may depend
-   --  on configuration set by the working release... -_-'. We'll cross that
-   --  bridge once it proves necessary.
-
-   type Action (<>) is abstract new Properties.Property with private;
-
-   overriding function Key (This : Action) return String is (TOML_Keys.Action);
-
-   function Moment (This : Action) return Moments;
-
-   procedure Execute (This : Action;
-                      Implementer : access procedure (This : Action'Class));
+   --  A Run action executes custom commands
 
    type Run (<>) is new Action with private;
    --  Encapsulates the execution of an external command
@@ -44,17 +17,13 @@ package Alire.Actions with Preelaborate is
    function Command_Line   (This : Run) return Utils.String_Vector;
    function Working_Folder (This : Run) return String;
 
-   overriding function To_TOML (This : Run) return TOML.TOML_Value;
+   overriding
+   function To_TOML (This : Run) return TOML.TOML_Value;
 
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Conditional.Properties;
 
 private
-
-   type Action (Moment : Moments)
-   is abstract new Properties.Property with null record;
-
-   function Moment (This : Action) return Moments is (This.Moment);
 
    type Run (Moment : Moments; Folder_Len : Natural)
    is new Action (Moment) with record
@@ -90,4 +59,4 @@ private
    function Working_Folder (This : Run) return String
    is (This.Working_Folder);
 
-end Alire.Actions;
+end Alire.Properties.Actions.Runners;

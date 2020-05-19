@@ -11,8 +11,7 @@ p = run_alr('show', 'hello_world',
 assert_match(
     'ERROR: Loading crate .*hello_world.toml: general: tags: '
     'Tag string is empty\n'
-    'ERROR: Cannot read valid property from tags\n'
-    'ERROR: alr show unsuccessful\n',
+    'ERROR: Cannot read valid property from tags\n',
     p.out)
 
 print('SUCCESS')

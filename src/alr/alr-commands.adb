@@ -8,6 +8,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
+with Alire.Errors;
 with Alire.Features.Index;
 with Alire.Index;
 with Alire.Lockfiles;
@@ -690,8 +691,16 @@ package body Alr.Commands is
          Execute_By_Name (What_Command);
          Log ("alr " & What_Command & " done", Detail);
       exception
+         when E : Alire.Checked_Error =>
+            Trace.Error (Alire.Errors.Get (E, Clear => False));
+            if Alire.Log_Level = Debug then
+               raise;
+            else
+               OS_Lib.Bailout (1);
+            end if;
+
          when Child_Failed | Command_Failed =>
-            Trace.Error ("alr " & What_Command & " unsuccessful");
+            Trace.Detail ("alr " & What_Command & " unsuccessful");
             if Alire.Log_Level = Debug then
                raise;
             else
@@ -713,7 +722,6 @@ package body Alr.Commands is
 
    exception
       when Wrong_Command_Arguments =>
---          Display_Usage (Cmd);
          OS_Lib.Bailout (1);
    end Execute_By_Name;
 
