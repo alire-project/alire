@@ -69,6 +69,25 @@ package body Alire.Solutions is
       end return;
    end Pins;
 
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Release_Map is
+   begin
+      if not This.Valid then
+         return Containers.Empty_Release_Map;
+      end if;
+
+      return Map : Release_Map do
+         for Release of This.Releases loop
+            if Release.Is_Pinned then
+               Map.Insert (Release);
+            end if;
+         end loop;
+      end return;
+   end Pins;
+
    -----------
    -- Print --
    -----------

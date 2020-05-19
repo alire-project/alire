@@ -12,8 +12,7 @@ package Alr.Commands.Update is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
-   is null;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
    overriding
    function Short_Description (Cmd : Command) return String
@@ -21,7 +20,7 @@ package Alr.Commands.Update is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("");
+   is ("[crate]...");
 
    procedure Execute (Interactive : Boolean;
                       Force       : Boolean := False);
@@ -31,6 +30,8 @@ package Alr.Commands.Update is
 
 private
 
-   type Command is new Commands.Command with null record;
+   type Command is new Commands.Command with record
+      Online : aliased Boolean := False;
+   end record;
 
 end Alr.Commands.Update;

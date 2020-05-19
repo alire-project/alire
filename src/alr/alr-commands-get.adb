@@ -1,15 +1,15 @@
 with Ada.Directories;
 
-with Alire.Actions;
+with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
+with Alire.Properties.Actions.Executor;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 
-with Alr.Actions;
 with Alr.Checkout;
 with Alr.Commands.Build;
 with Alr.Commands.Update;
@@ -46,23 +46,22 @@ package body Alr.Commands.Get is
       Build_OK : Boolean;
    begin
       declare
-         R : constant Alire.Index.Release :=
-               Query.Find (Name, Versions, Query_Policy);
          Result : Alire.Outcome;
       begin
          --  Check that itself is available (but overridable with --only)
-         if not Cmd.Only and then not R.Is_Available (Platform.Properties) then
+         if not Cmd.Only and then not Rel.Is_Available (Platform.Properties)
+         then
             Trace.Error
               ("The requested version ("
-               & R.Milestone.Image
+               & Rel.Milestone.Image
                & ") is not available");
             Reportaise_Command_Failed
               ("You can retrieve it without dependencies with --only");
          end if;
 
          --  Check if it's system first and thus we need not to check out.
-         if R.Origin.Is_System then
-            Result := Alire.Origins.Deployers.Deploy (R);
+         if Rel.Origin.Is_System then
+            Result := Alire.Origins.Deployers.Deploy (Rel);
             if Result.Success then
                return;
             else
@@ -102,9 +101,21 @@ package body Alr.Commands.Get is
 
       --  Check out requested crate release under current directory,
       --  but delay its post-fetch:
-      Checkout.Working_Copy (Rel,
-                             Ada.Directories.Current_Directory,
-                             Perform_Actions => False);
+      declare
+         Root_Dir : Alire.Directories.Temp_File :=
+                      Alire.Directories.With_Name (Rel.Unique_Folder);
+      begin
+         Checkout.Working_Copy (Rel,
+                                Ada.Directories.Current_Directory,
+                                Perform_Actions => False);
+
+         --  At this point, both crate and lock files must exist and
+         --  be correct, so the working session is correct. Errors with
+         --  dependencies can still occur, but these are outside of the
+         --  retrieved crate and might be corrected manipulating dependencies
+         --  and updating.
+         Root_Dir.Keep;
+      end;
 
       if Cmd.Only then
          Trace.Detail ("By your command, dependencies not resolved nor" &
@@ -121,7 +132,10 @@ package body Alr.Commands.Get is
 
          --  Execute the checked out release post_fetch actions, now that
          --    dependencies are in place
-         Actions.Execute_Actions (Rel, Alire.Actions.Post_Fetch);
+         Alire.Properties.Actions.Executor.Execute_Actions
+           (Release => Rel,
+            Env     => Platform.Properties,
+            Moment  => Alire.Properties.Actions.Post_Fetch);
 
          if Cmd.Build then
             Build_OK := Commands.Build.Execute;

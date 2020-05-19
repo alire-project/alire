@@ -44,6 +44,8 @@ package Alire.Utils.TTY with Preelaborate is
 
    function Bold (Text : String) return String;
 
+   function Name (Crate : Crate_Name) return String;
+
    function Name (Text : String) return String;
    --  Bold Default for crate names
 
@@ -78,6 +80,9 @@ private
    function Bold (Text : String) return String is
      (Format (Text,
               Style => ANSI.Bright));
+
+   function Name (Crate : Crate_Name) return String is
+     (Name (+Crate));
 
    function Name (Text : String) return String is
      (Bold (Text));

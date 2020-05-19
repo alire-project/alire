@@ -12,7 +12,7 @@ with Alire.Releases;
 package Alire.Containers with Preelaborate is
 
    package Crate_Name_Sets is
-      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
+     new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
 
    package Dependency_Lists
    is new Ada.Containers.Indefinite_Doubly_Linked_Lists
@@ -50,6 +50,8 @@ package Alire.Containers with Preelaborate is
    package Crate_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Releases.Release, "<", Releases."=");
    type Release_Map is new Crate_Release_Maps.Map with null record;
+
+   Empty_Release_Map : constant Release_Map;
 
    function Excluding (Map  : Release_Map;
                        Name : Crate_Name)
@@ -90,5 +92,10 @@ package Alire.Containers with Preelaborate is
 
    function To_Release_H (R : Releases.Release) return Release_H
    renames Release_Holders.To_Holder;
+
+private
+
+   Empty_Release_Map : constant Release_Map :=
+                         (Crate_Release_Maps.Empty_Map with null record);
 
 end Alire.Containers;
