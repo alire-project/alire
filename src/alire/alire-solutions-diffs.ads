@@ -48,9 +48,9 @@ private
             Version  : Semantic_Versioning.Version;
          when Linked =>
             Path     : UString;
-         when Hinted =>
+         when Hinted | Unsolved =>
             Versions : Semantic_Versioning.Extended.Version_Set;
-         when Unneeded | Unsolved =>
+         when Unneeded =>
             null;
       end case;
    end record;

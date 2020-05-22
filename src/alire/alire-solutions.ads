@@ -395,7 +395,7 @@ private
    -----------------
 
    function Is_Complete (This : Solution) return Boolean
-   is (This.Composition in Empty | Releases);
+   is (This.Composition <= Releases);
 
    -------------
    -- Linking --
