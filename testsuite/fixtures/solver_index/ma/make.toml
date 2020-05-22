@@ -1,0 +1,9 @@
+[general]
+description = "Utility for directing compilation"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+licenses = []
+
+[[external]]
+kind = "system"
+origin = [] # No package name since we require it unavailable in tests
