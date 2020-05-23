@@ -19,9 +19,11 @@ package Alire.Pinning is
    --  must exist in the solution. Root dependencies are given, and a previous
    --  solution with possibly more pins. The resulting solution may be invalid.
 
-   function Pin_To (URL      : String;
-                    Solution : Solutions.Solution;
-                    Crate    : Crate_Name)
+   function Pin_To (Crate        : Crate_Name;
+                    URL          : String;
+                    Dependencies : Conditional.Dependencies;
+                    Environment  : Properties.Vector;
+                    Solution     : Solutions.Solution)
                     return Solutions.Solution with
      Pre => Solution.Depends_On (Crate) or else
      raise Checked_Error with

@@ -128,6 +128,11 @@ package Alire.Solutions is
                      return Solution;
    --  Add/merge dependency as missing in solution
 
+   function Missing (This  : Solution;
+                     Crate : Crate_Name)
+                     return Solution;
+   --  Fulfill an existing dependency as missing, or do nothing otherwise
+
    function Pinning (This    : Solution;
                      Crate   : Crate_Name;
                      Version : Semantic_Versioning.Version)
@@ -447,6 +452,20 @@ private
        else (Solved       => True,
              Dependencies =>
                 This.Dependencies.Including (States.New_State (Dep).Missing)));
+
+   -------------
+   -- Missing --
+   -------------
+
+   function Missing (This  : Solution;
+                     Crate : Crate_Name)
+                     return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Missing))
+       else This);
 
    -------------
    -- Pinning --

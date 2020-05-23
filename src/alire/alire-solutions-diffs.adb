@@ -132,6 +132,13 @@ package body Alire.Solutions.Diffs is
       (for some Change of This.Changes => Change.Former /= Change.Latter));
 
    ------------------------
+   -- Latter_Is_Complete --
+   ------------------------
+
+   function Latter_Is_Complete (This : Diff) return Boolean
+   is (This.Latter_Complete);
+
+   ------------------------
    -- Pin_Change_Summary --
    ------------------------
 

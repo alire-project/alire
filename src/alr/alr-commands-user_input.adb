@@ -8,7 +8,7 @@ package body Alr.Commands.User_Input is
 
    function Confirm_Solution_Changes
      (Changes        : Alire.Solutions.Diffs.Diff;
-      Changed_Only   : Boolean;
+      Changed_Only   : Boolean            := not Alire.Detailed;
       Level          : Alire.Trace.Levels := Info)
       return Boolean
    is
@@ -32,7 +32,9 @@ package body Alr.Commands.User_Input is
         (Question => "Do you want to proceed?",
          Valid    => (Yes | No => True,
                       others   => False),
-         Default  => Yes) = Yes;
+         Default  => (if Changes.Latter_Is_Complete or else Alire.Force
+                      then Yes
+                      else No)) = Yes;
    end Confirm_Solution_Changes;
 
 end Alr.Commands.User_Input;
