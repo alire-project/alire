@@ -20,10 +20,10 @@ package Alire.Dependencies.Graphs is
                        Env  : Properties.Vector) return Graph;
    --  Add a release and ALL its potential direct dependencies (even OR'ed)
 
-   function Filtering_Unused (This     : Graph;
-                              Instance : Alire.Containers.Release_Map)
+   function Filtering_Unused (This : Graph;
+                              Used : Alire.Containers.Crate_Name_Sets.Set)
                               return Graph;
-   --  Remove dependencies that don't appear in the solution
+   --  Remove dependencies that don't appear in the set of used releases
 
    function Has_Dependencies (This  : Graph;
                               Crate : Alire.Crate_Name)
@@ -36,11 +36,11 @@ package Alire.Dependencies.Graphs is
    --  Remove all dependencies with Crate as the dependee crate
 
    procedure Plot (This     : Graph;
-                   Instance : Alire.Containers.Release_Map);
+                   Solution : Solutions.Solution);
    --  Requires graph-easy in PATH
 
    procedure Print (This     : Graph;
-                    Instance : Alire.Containers.Release_Map;
+                    Solution : Solutions.Solution;
                     Prefix   : String := "");
    --  Print to terminal with the milestone info in Instance
 

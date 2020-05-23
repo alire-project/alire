@@ -38,6 +38,24 @@ package body Alire.Solutions is
       end return;
    end Changing_Pin;
 
+   ---------------
+   -- Including --
+   ---------------
+
+   function Including (This    : Solution;
+                       Release : Alire.Releases.Release)
+                       return Solution
+   is
+   begin
+      if This.Valid then
+         return Result : Solution := This do
+            Result.Releases.Include (Release.Name, Release);
+         end return;
+      else
+         return This;
+      end if;
+   end Including;
+
    ----------------------------------
    -- Libgraph_Easy_Perl_Installed --
    ----------------------------------
@@ -157,10 +175,10 @@ package body Alire.Solutions is
                       Dependencies.Graphs.From_Solution (This, Env)
                                          .Including (Root, Env);
          begin
-            Graph.Print (This.Releases.Including (Root), Prefix => "   ");
+            Graph.Print (This.Including (Root), Prefix => "   ");
 
             if Libgraph_Easy_Perl_Installed then
-               Graph.Plot (This.Releases.Including (Root));
+               Graph.Plot (This.Including (Root));
             else
                Trace.Log ("Cannot display graphical graph: " &
                             Paths.Scripts_Graph_Easy & " not in path" &

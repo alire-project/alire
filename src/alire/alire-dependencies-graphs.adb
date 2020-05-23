@@ -25,7 +25,7 @@ package body Alire.Dependencies.Graphs is
             Result := Result.Including (Rel, Env);
          end loop;
 
-         Result := Result.Filtering_Unused (Sol.Releases);
+         Result := Result.Filtering_Unused (Sol.Required);
       end return;
    end From_Solution;
 
@@ -56,14 +56,14 @@ package body Alire.Dependencies.Graphs is
    -- Filtering_Unused --
    ----------------------
 
-   function Filtering_Unused (This     : Graph;
-                              Instance : Alire.Containers.Release_Map)
+   function Filtering_Unused (This : Graph;
+                              Used : Alire.Containers.Crate_Name_Sets.Set)
                               return Graph
    is
    begin
       return Result : Graph do
          for Dep of This loop
-            if Instance.Contains (+Dep.Dependee) then
+            if Used.Contains (+Dep.Dependee) then
                Result.Include (Dep);
             end if;
          end loop;
@@ -88,12 +88,32 @@ package body Alire.Dependencies.Graphs is
       return False;
    end Has_Dependencies;
 
+   -----------
+   -- Label --
+   -----------
+
+   function Label (Crate    : Crate_Name;
+                   Solution : Solutions.Solution;
+                   TTY      : Boolean := False)
+                   return String
+   --  Get the proper label in the graph for a crate: milestone for releases,
+   --  dependency for hints.
+   is (if Solution.Releases.Contains (Crate)
+       then (if TTY
+             then Solution.Releases.Element (Crate).Milestone.TTY_Image
+             else Solution.Releases.Element (Crate).Milestone.Image)
+       elsif Solution.Hints.Contains (Crate)
+       then (if TTY
+             then Solution.Hints.Element (Crate).TTY_Image
+             else Solution.Hints.Element (Crate).Image)
+       else raise Program_Error with "crate should appear as release or hint");
+
    ----------
    -- Plot --
    ----------
 
    procedure Plot (This     : Graph;
-                   Instance : Alire.Containers.Release_Map)
+                   Solution : Solutions.Solution)
    is
       function B (Str : String) return String is ("[ " & Str & " ]");
       function Q (Str : String) return String is ("""" & Str & """");
@@ -101,18 +121,18 @@ package body Alire.Dependencies.Graphs is
       Source : Utils.String_Vector;
       Alt    : Utils.String_Vector;
 
-      Filtered : constant Graph := This.Filtering_Unused (Instance);
+      Filtered : constant Graph := This.Filtering_Unused (Solution.Required);
    begin
       Alt.Append ("graph dependencies {");
 
       for Dep of Filtered loop
-         Alt.Append (Q (Instance (+Dep.Dependent).Milestone.Image) &
+         Alt.Append (Q (Label (+Dep.Dependent, Solution)) &
                           " -> " &
-                          Q (Instance (+Dep.Dependee).Milestone.Image) & "; ");
+                          Q (Label (+Dep.Dependee, Solution)) & "; ");
 
-         Source.Append (B (Instance (+Dep.Dependent).Milestone.Image) &
+         Source.Append (B (Label (+Dep.Dependent, Solution)) &
                           " -> " &
-                          B (Instance (+Dep.Dependee).Milestone.Image));
+                          B (Label (+Dep.Dependee, Solution)));
       end loop;
       Alt.Append (" }");
 
@@ -131,17 +151,17 @@ package body Alire.Dependencies.Graphs is
    -----------
 
    procedure Print (This     : Graph;
-                    Instance : Alire.Containers.Release_Map;
+                    Solution : Solutions.Solution;
                     Prefix   : String := "")
    is
       Table : Alire.Utils.Tables.Table;
 
-      Filtered : constant Graph := This.Filtering_Unused (Instance);
+      Filtered : constant Graph := This.Filtering_Unused (Solution.Required);
    begin
       for Dep of Filtered loop
-         Table.Append (Prefix & Instance (+Dep.Dependent).Milestone.TTY_Image);
+         Table.Append (Prefix & Label (+Dep.Dependent, Solution, TTY => True));
          Table.Append ("-->");
-         Table.Append (Instance (+Dep.Dependee).Milestone.TTY_Image);
+         Table.Append (Label (+Dep.Dependee, Solution, TTY => True));
          Table.New_Row;
       end loop;
 

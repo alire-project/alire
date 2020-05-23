@@ -25,9 +25,10 @@ package Alire.Solutions is
    Invalid_Solution     : constant Solution;
    Empty_Valid_Solution : constant Solution;
 
-   function New_Solution (Releases : Release_Map;
-                          Hints    : Dependency_Map)
-                          return Solution;
+   function New_Solution
+     (Releases : Release_Map    := Containers.Empty_Release_Map;
+      Hints    : Dependency_Map := Containers.Empty_Dependency_Map)
+      return Solution;
    --  A new valid solution
 
    function Releases (This : Solution) return Release_Map with
@@ -55,6 +56,12 @@ package Alire.Solutions is
        This.Valid or else
        raise Checked_Error with "Cannot change pins in invalid solution";
    --  Return a copy of the solution with the new pinning status of Name
+
+   function Including (This    : Solution;
+                       Release : Alire.Releases.Release)
+                       return Solution;
+   --  Add a release to the solution, without doing anything with its
+   --  dependencies. If not This.Valid, result will also be invalid.
 
    function Pins (This : Solution) return Conditional.Dependencies;
    --  Return all pinned releases as exact version dependencies. Will return an
@@ -131,9 +138,10 @@ private
    Invalid_Solution     : constant Solution := (Valid => False);
    Empty_Valid_Solution : constant Solution := (Valid => True, others => <>);
 
-   function New_Solution (Releases : Release_Map;
-                          Hints    : Dependency_Map)
-                          return Solution
+   function New_Solution
+     (Releases : Release_Map    := Containers.Empty_Release_Map;
+      Hints    : Dependency_Map := Containers.Empty_Dependency_Map)
+      return Solution
    is (Solution'(Valid    => True,
                  Releases => Releases,
                  Hints    => Hints));
