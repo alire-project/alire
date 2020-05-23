@@ -50,7 +50,10 @@ package Alire.Solutions is
 
    function Changing_Pin (This   : Solution;
                           Name   : Crate_Name;
-                          Pinned : Boolean) return Solution;
+                          Pinned : Boolean) return Solution
+     with Pre =>
+       This.Valid or else
+       raise Checked_Error with "Cannot change pins in invalid solution";
    --  Return a copy of the solution with the new pinning status of Name
 
    function Pins (This : Solution) return Conditional.Dependencies;

@@ -98,6 +98,17 @@ package body Alire.Solutions is
                     Detailed : Boolean;
                     Level    : Trace.Levels) is
    begin
+
+      --  For invalid solutions be terse and gone
+
+      if not This.Valid then
+         Trace.Log ("Dependencies (solution):", Level);
+         Trace.Log ("   No solution", Level);
+         return;
+      end if;
+
+      --  Continue for valid solutions
+
       if not This.Releases.Is_Empty then
          Trace.Log ("Dependencies (solution):", Level);
          for Rel of This.Releases loop
@@ -167,7 +178,9 @@ package body Alire.Solutions is
    procedure Print_Pins (This : Solution) is
       Table : Utils.Tables.Table;
    begin
-      if not (for some Release of This.Releases => Release.Is_Pinned) then
+      if not This.Valid then
+         Trace.Always ("There is no solution, hence there are no pins");
+      elsif not (for some Release of This.Releases => Release.Is_Pinned) then
          Trace.Always ("There are no pins");
       else
          for Release of This.Releases loop
