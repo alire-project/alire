@@ -17,36 +17,36 @@ package body Alire.Pinning is
    is
       --  We solve forcing the new version, while preemptively removing any
       --  previous pin for the same crate, since two pins to different versions
-      --  would be unsolvable.
-
-      New_Solution : constant Solutions.Solution :=
-                       Solver.Resolve
-                         (Conditional.New_Dependency (Crate, Version) and
-                            Dependencies,
-                          Environment,
-                          Solution.Unpinning (Crate));
+      --  would be unsolvable. A link is also preemptively removed to prevent
+      --  simultaneous pinning and linking.
    begin
-      --  If the solution is valid, we enable the pin for the given release
-
-      if New_Solution.Valid then
-         return New_Solution.Pinning (Crate, Version);
-      else
-         return New_Solution;
-      end if;
+      return
+        Solver.Resolve
+          (Conditional.New_Dependency (Crate, Version) and Dependencies,
+           Environment,
+           Solution.Unpinning (Crate).Missing (Crate))
+            .Pinning (Crate, Version);
    end Pin;
 
    ------------
    -- Pin_To --
    ------------
 
-   function Pin_To (URL      : String;
-                    Solution : Solutions.Solution;
-                    Crate    : Crate_Name)
+   function Pin_To (Crate        : Crate_Name;
+                    URL          : String;
+                    Dependencies : Conditional.Dependencies;
+                    Environment  : Properties.Vector;
+                    Solution     : Solutions.Solution)
                     return Solutions.Solution
-   is (Solution
-       .Unpinning (Crate)
-       .Linking (Crate, URL));
-   --  Just in case it was already pinned to a version, we remove that
+   --  Just in case it was already pinned to a version, we remove that hidden
+   --  restriction, and re-solve so any old constraints in the dependencies
+   --  caused by the old pin disappear.
+   is (Solver.Resolve
+       (Dependencies,
+        Environment,
+        Solution
+        .Unpinning (Crate)
+        .Linking (Crate, URL)));
 
    -----------
    -- Unpin --
@@ -66,11 +66,9 @@ package body Alire.Pinning is
       return Solver.Resolve
         (Dependencies,
          Environment,
-         Solutions.Solution'
-           (if Solution.State (Crate).Is_Linked
-            then Solution.Missing (Solution.Dependency (Crate))
-            else Solution)
-         .Unpinning (Crate));
+         Solution
+         .Missing (Crate)     -- Clears any previous link
+         .Unpinning (Crate)); -- Clears any previous pin
    end Unpin;
 
 end Alire.Pinning;
