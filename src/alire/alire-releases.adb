@@ -759,6 +759,11 @@ package body Alire.Releases is
 
    function With_Pin (Base   : Release;
                       Pinned : Boolean) return Release
-   is ((Base with delta Pinned => Pinned));
+   is
+   begin
+      return Result : Release := Base do
+         Result.Pinned := Pinned;
+      end return;
+   end With_Pin;
 
 end Alire.Releases;
