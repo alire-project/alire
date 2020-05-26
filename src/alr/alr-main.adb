@@ -15,11 +15,6 @@ begin
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);
 
    Commands.Execute;
-
-   OS_Lib.Bailout (0);
-   --  There's something writing an empty line on finalization and I can't find
-   --  it. There's almost nothing controlled so it's puzzling. For now, this is
-   --  a temporary workaround.
 exception
    --  Ensure we do not show an exception trace to unsuspecting users
    when E : others =>
