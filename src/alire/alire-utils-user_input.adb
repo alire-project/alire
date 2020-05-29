@@ -3,7 +3,6 @@ with Ada.Characters.Handling;
 
 with Interfaces.C_Streams;
 
-with Alire.Config;
 with Alire.Utils.TTY;
 
 package body Alire.Utils.User_Input is
@@ -83,7 +82,7 @@ package body Alire.Utils.User_Input is
       loop
          TIO.Put_Line (Question);
 
-         if Alire.Config.Not_Interactive or else not Is_TTY then
+         if Not_Interactive or else not Is_TTY then
             return Use_Default;
          end if;
 
@@ -139,7 +138,7 @@ package body Alire.Utils.User_Input is
       Foo : String := "bar";
       Bar : Integer;
    begin
-      if Config.Not_Interactive then
+      if Not_Interactive then
          Trace.Detail ("Non-interactive session, continuing");
       else
          Flush_TTY;

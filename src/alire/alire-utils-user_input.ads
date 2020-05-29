@@ -1,5 +1,15 @@
 package Alire.Utils.User_Input is
 
+   -------------------
+   -- Interactivity --
+   -------------------
+
+   Not_Interactive : aliased Boolean := False;
+   --  When not Interactive, instead of asking the user something, use default.
+   --  Currently only used before the first call to `sudo apt` to ask for
+   --  confirmation.
+   --  TODO: remove global eventually
+
    type Answer_Kind is (Yes, No, Always);
 
    type Answer_Set is array (Answer_Kind) of Boolean;

@@ -99,16 +99,6 @@ package Alire.Config is
 
    function Indexes_Directory return Absolute_Path is (Path / "indexes");
 
-   -------------------
-   -- Interactivity --
-   -------------------
-
-   Not_Interactive : aliased Boolean := False;
-   --  When not Interactive, instead of asking the user something, use default.
-   --  Currently only used before the first call to `sudo apt` to ask for
-   --  confirmation.
-   --  TODO: remove global eventually
-
 private
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;

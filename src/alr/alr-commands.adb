@@ -18,6 +18,7 @@ with Alire.Roots.Check_Valid;
 with Alire.Solutions;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -185,7 +186,7 @@ package body Alr.Commands is
                      "Display general or command-specific help");
 
       Define_Switch (Config,
-                     Alire.Config.Not_Interactive'Access,
+                     Alire.Utils.User_Input.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
 
