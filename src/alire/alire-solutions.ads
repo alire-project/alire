@@ -1,5 +1,6 @@
 with Alire.Conditional;
 with Alire.Containers;
+with Alire.Dependencies.States.Maps;
 with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Releases;
@@ -7,72 +8,227 @@ with Alire.TOML_Adapters;
 
 limited with Alire.Solutions.Diffs;
 
+with Semantic_Versioning.Extended;
+
 with TOML;
 
 package Alire.Solutions is
 
-   --  A solutions is a set of releases + externals that fulfills the
-   --  transitive dependencies of the root crate.
+   subtype Dependency_Map   is Alire.Containers.Dependency_Map;
+   subtype Dependency_State is Dependencies.States.State;
+   subtype Name_Set         is Containers.Crate_Name_Sets.Set;
+   subtype Release_Map      is Alire.Containers.Release_Map;
+   subtype State_Map        is Dependencies.States.Maps.Map;
 
-   subtype Dependency_Map is Alire.Containers.Dependency_Map;
+   package States renames Dependencies.States;
 
-   subtype Release_Map is Alire.Containers.Release_Map;
+   --  Note in the following enum type that the only complete solutions are
+   --  Releases and Empty. This enum is mostly useful to classify solutions in
+   --  order of "goodness".
 
-   type Solution (Valid : Boolean) is
-     new Interfaces.Tomifiable
-     and Interfaces.Detomifiable with private;
+   type Compositions is
+     (Empty,
+      --  Trivial empty solution when no dependencies are needed
 
-   Invalid_Solution     : constant Solution;
-   Empty_Valid_Solution : constant Solution;
+      Releases,
+      --  Only proper (regular or detected) releases with a concrete version
+      --  and deployer; these should always build properly.
+
+      Mixed,
+      --  Releases + at least one undetected hint (i.e., build success is not
+      --  guaranteed).
+
+      Hints,
+      --  Only undetected hints, no proper releases at all
+
+      Partial,
+      --  There's at least one missing dependency, in the sense of not being
+      --  even an undetected hint. This means some unindexed crate is required,
+      --  or a version that does not exist, or a combination of dependencies
+      --  results in impossible (empty version intersection) version
+      --  requirements.
+
+      Unsolved
+      --  Solving hasn't even been attempted (e.g., when retrieving with
+      --  --only), so the solution has no dependencies but is still invalid.
+     );
+
+   type Solution is new Interfaces.Tomifiable with private;
+
+   --  A solution stores all dependencies required by some root crate. More
+   --  precisely, it stores the regular releases that fulfil some dependency
+   --  and the particular standing of a dependency (solved, hinted, missing...)
+   --  A solved dependency will be accompanied by the particular release that
+   --  fulfils it.
+
+   ------------------
+   -- Construction --
+   ------------------
+
+   function Empty_Invalid_Solution return Solution;
+   --  An unsolved empty solution. This is the only way to obtain an unsolved
+   --  solution. Any solution that has dependencies or is modified in any way
+   --  is considered to having been attempted to be solved.
+
+   function Empty_Valid_Solution return Solution;
 
    function New_Solution
-     (Releases : Release_Map    := Containers.Empty_Release_Map;
-      Hints    : Dependency_Map := Containers.Empty_Dependency_Map)
-      return Solution;
-   --  A new valid solution
+     (Env      : Properties.Vector := Properties.No_Properties;
+      Releases : Release_Map       := Containers.Empty_Release_Map;
+      Direct   : Dependency_Map    := Containers.Empty_Dependency_Map)
+      return Solution
+     with Pre => Releases.Is_Empty or else not Env.Is_Empty;
+   --  A new solution. Trivially, a Solution without dependencies is complete.
+   --  We can initialize it with solved releases and unsolved dependencies. In
+   --  both cases, these are marked as direct dependencies. The environment is
+   --  only needed when releases are given.
 
-   function Releases (This : Solution) return Release_Map with
-     Pre => This.Valid;
-   --  Returns the regular releases that conform a solution
+   function Depending_On (This : Solution;
+                          Dep  : Dependencies.Dependency)
+                          return Solution;
+   --  Add or merge a dependency without changing its state. For a new
+   --  dependency, it will be marked as Missing and with Unknown transitivity.
 
-   function Hints (This : Solution) return Dependency_Map with
-     Pre => This.Valid;
-   --  Returns dependencies that will have to be fulfilled externally. These
-   --  correspond to undetected externals; a detected external results in a
-   --  regular release and should require no user action.
+   function Hinting (This : Solution;
+                     Dep  : Dependencies.Dependency)
+                     return Solution;
+   --  Add/merge dependency as hinted in solution
+
+   function Including (This           : Solution;
+                       Release        : Alire.Releases.Release;
+                       Env            : Properties.Vector;
+                       Add_Dependency : Boolean := False)
+                       return Solution
+     with Pre => Add_Dependency or else This.Depends_On (Release.Name);
+   --  Add a release to the solution, marking its dependency as solved. Takes
+   --  care of adding forbidden dependencies and ensuring the Release does not
+   --  conflict with current solution (which would result in a Checked_Error).
+   --  Since from the release we can't know the actual complete dependency the
+   --  release is fulfilling, by default we don't create its dependency (it
+   --  must exist previously).
+
+   function Missing (This : Solution;
+                     Dep  : Dependencies.Dependency)
+                     return Solution;
+   --  Add/merge dependency as missing in solution
+
+   function Pinning (This    : Solution;
+                     Crate   : Crate_Name;
+                     Version : Semantic_Versioning.Version)
+                     return Solution;
+   --  Return a copy of the solution with the given crate pinned to a version.
+   --  If the crate was not in the original solution it will be added.
+
+   function Unpinning (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Unpin a crate. If the crate was not pinned or not in the solution
+   --  nothing will be done.
+
+   function With_Pins (This, Src : Solution) return Solution;
+   --  Copy pins from Src to This and return it
+
+   ----------------
+   -- Attributes --
+   ----------------
 
    function Changes (Former, Latter : Solution) return Diffs.Diff;
 
-   function Required (This : Solution) return Containers.Crate_Name_Sets.Set;
-   --  Retrieve all required crates in the solution, no matter if they have
-   --  known releases or only hints. Will return an empty set for invalid
-   --  solutions. TODO: when we track reasons for solving failure, return
-   --  the required crates with their reason for non-solvability.
+   function Composition (This : Solution) return Compositions;
 
-   function Changing_Pin (This   : Solution;
-                          Name   : Crate_Name;
-                          Pinned : Boolean) return Solution
-     with Pre =>
-       This.Valid or else
-       raise Checked_Error with "Cannot change pins in invalid solution";
-   --  Return a copy of the solution with the new pinning status of Name
+   function Contains_Release (This  : Solution;
+                              Crate : Crate_Name) return Boolean;
+   --  Say if Crate is among the solved releases for this solution. It will
+   --  return False if the solution does not even depend on Crate.
 
-   function Including (This    : Solution;
-                       Release : Alire.Releases.Release)
-                       return Solution;
-   --  Add a release to the solution, without doing anything with its
-   --  dependencies. If not This.Valid, result will also be invalid.
+   function Crates (This : Solution) return Name_Set;
+   --  Dependency name closure, independent of the status in the solution, as
+   --  found by the solver starting from the direct dependencies.
+
+   function Dependencies_That
+     (This  : Solution;
+      Check : not null access function (Dep : Dependency_State) return Boolean)
+      return Dependency_Map;
+   --  Retrieve all states that pass a boolean check
+
+   function Dependency (This  : Solution;
+                        Crate : Crate_Name)
+                        return Dependencies.Dependency
+     with Pre => This.Depends_On (Crate);
+   --  Return the specific dependency versions as currently stored
+
+   function Depends_On (This : Solution;
+                        Name : Crate_Name) return Boolean;
+   --  Says if the solution depends on the crate in some way
+
+   function Forbidden (This : Solution;
+                       Env  : Properties.Vector)
+                       return Dependency_Map;
+   --  Returns all forbidden dependencies by releases in solution
+
+   function Forbids (This    : Solution;
+                     Release : Alire.Releases.Release;
+                     Env     : Properties.Vector)
+                     return Boolean;
+   --  Check whether the solution forbids a release
+
+   function Hints (This : Solution) return Dependency_Map;
+   --  Return undetected externals in the solution
+
+   function Is_Better (This, Than : Solution) return Boolean;
+   --  Relative ordering to prioritize found solutions. We prefer decreasing
+   --  order of Composition (avoid undetected externals/missing dependencies).
+
+   function Is_Complete (This : Solution) return Boolean;
+   --  A solution is complete when it fulfills all dependencies via regular
+   --  releases, detected externals, or linked directories.
+
+   function Misses (This : Solution) return Dependency_Map;
+   --  Return crates for which there is neither hint nor proper versions
 
    function Pins (This : Solution) return Conditional.Dependencies;
-   --  Return all pinned releases as exact version dependencies. Will return an
-   --  empty list for invalid solutions.
+   --  Return all pinned dependencies as a dependency tree containing exact
+   --  versions.
 
-   function Pins (This : Solution) return Release_Map;
-   --  Return all pinned release. Will return an empty map for invalid
-   --  solutions.
+   function Pins (This : Solution) return Dependency_Map;
+   --  return all pinned dependencies as plain dependencies for a exact version
 
-   function With_Pins (This, Src : Solution) return Solution;
-   --  Copy pins from Src to This
+   function Releases (This : Solution) return Release_Map;
+   --  Returns the proper releases in the solution (regular and detected)
+
+   function Required (This : Solution) return State_Map'Class;
+   --  Returns all dependencies required to fulfill this solution,
+   --  independently of their solving state.
+
+   function State (This  : Solution;
+                   Crate : Crate_Name)
+                   return Dependency_State
+     with Pre => This.Depends_On (Crate);
+   --  Returns the solving state of a dependency in the solution
+
+   function Valid (This : Solution) return Boolean
+   is (This.Composition <= Hints);
+   --  Transitional function to limit changes in this patch (Valid was
+   --  previously a discriminant of Solution). A follow-up patch removes
+   --  the use of validity all around when it's not strictly necessary. We
+   --  currently consider hints to result in a valid solution, although this
+   --  is not a guarantee of buildability. The follow-up makes this distinction
+   --  moot (the user is better informed about what is available, externally
+   --  needed, or outright missing. TODO: deprecate this function in favor of
+   --  Is_Complete.
+
+   --------------
+   -- Mutation --
+   --------------
+
+   procedure Set (This         : in out Solution;
+                  Crate        : Crate_Name;
+                  Transitivity : States.Transitivities)
+     with Pre => This.Depends_On (Crate);
+
+   ---------
+   -- I/O --
+   ---------
 
    procedure Print (This     : Solution;
                     Root     : Alire.Releases.Release;
@@ -83,73 +239,213 @@ package Alire.Solutions is
    --  crate not in solution that introduces the direct dependencies. When
    --  Detailed, extra information about origins is shown.
 
+   procedure Print_Hints (This : Solution;
+                          Env  : Properties.Vector);
+   --  Display hints about any undetected externals in the solutions
+
    procedure Print_Pins (This : Solution);
    --  Dump a table with pins in this solution
 
-   --  TOML-related subprograms
+   -----------------
+   -- Persistence --
+   -----------------
 
    function From_TOML (From : TOML_Adapters.Key_Queue)
                        return Solution;
-   --  Since Solution is unconstrained this allows loading of both
-   --  valid/invalid solutions.
-
-   overriding
-   function From_TOML (This : in out Solution;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome
-     with Pre  => This.Valid,
-          Post => From_TOML'Result.Success;
-   --  As this function is used to load Alire-generated files, the only
-   --  possible outcome when properly used is Success. Any unexpected
-   --  situation will result in uncaught exception.
-
-   function To_TOML (This  : Solution;
-                     Props : Properties.Vector) return TOML.TOML_Value;
-   --  Stores a solution as a TOML file. Since dynamic expression export is
-   --  unimplemented yet, we use the given properties to localize to current
-   --  platform. TODO: export cases (this is the same limitation that exists
-   --  for the regular export of crate.toml)
 
    overriding
    function To_TOML (This : Solution) return TOML.TOML_Value with
-     Pre => not This.Valid or else
-           (for all Release of This.Releases =>
+     Pre => (for all Release of This.Releases =>
                Release.Dependencies.Is_Unconditional and then
                Release.Properties.Is_Unconditional);
-   --  As previous one, but requires releases not to have dynamic expressions
+   --  Requires releases not to have dynamic expressions. This is currently
+   --  guaranteed by the states storing static versions of releases.
+
+   -----------
+   -- Debug --
+   -----------
+
+   procedure Debug_Print (This : Solution);
 
 private
 
-   type Solution (Valid : Boolean) is
-     new Interfaces.Tomifiable
-     and Interfaces.Detomifiable with record
-      case Valid is
-         when True  =>
-            Releases : Release_Map;
-            --  Resolved dependencies to be deployed
+   type Solution is new Interfaces.Tomifiable with record
+      Dependencies : State_Map;
 
-            Hints    : Dependency_Map;
-            --  Unresolved external dependencies
-         when False =>
-            null;
-      end case;
+      Solved       : Boolean := False;
+      --  Has solving been attempted?
    end record;
 
-   Invalid_Solution     : constant Solution := (Valid => False);
-   Empty_Valid_Solution : constant Solution := (Valid => True, others => <>);
+   --  Begin of implementation
 
-   function New_Solution
-     (Releases : Release_Map    := Containers.Empty_Release_Map;
-      Hints    : Dependency_Map := Containers.Empty_Dependency_Map)
-      return Solution
-   is (Solution'(Valid    => True,
-                 Releases => Releases,
-                 Hints    => Hints));
+   -----------------
+   -- Composition --
+   -----------------
+
+   function Composition (This : Solution) return Compositions
+   is (if not This.Solved then
+          Unsolved
+       elsif This.Dependencies.Is_Empty then
+          Empty
+       elsif (for all Dep of This.Dependencies => Dep.Is_Solved) then
+          Releases
+       elsif (for all Dep of This.Dependencies => Dep.Is_Hinted) then
+          Hints
+       elsif (for some Dep of This.Dependencies => Dep.Is_Missing) then
+          Partial
+       else
+          Mixed);
+
+   ----------------------
+   -- Contains_Release --
+   ----------------------
+
+   function Contains_Release (This  : Solution;
+                              Crate : Crate_Name) return Boolean
+   is (This.Depends_On (Crate) and then This.State (Crate).Is_Solved);
+
+   ----------------
+   -- Dependency --
+   ----------------
+
+   function Dependency (This  : Solution;
+                        Crate : Crate_Name)
+                        return Alire.Dependencies.Dependency
+   is (This.Dependencies (Crate).As_Dependency);
+
+   ------------------
+   -- Depending_On --
+   ------------------
+
+   function Depending_On (This : Solution;
+                          Dep  : Dependencies.Dependency)
+                          return Solution
+   is (Solution'(Solved       => True,
+                 Dependencies => This.Dependencies.Merging (Dep)));
+
+   ----------------
+   -- Depends_On --
+   ----------------
+
+   function Depends_On (This : Solution;
+                        Name : Crate_Name) return Boolean
+   is (This.Dependencies.Contains (Name));
+
+   ----------------------------
+   -- Empty_Invalid_Solution --
+   ----------------------------
+
+   function Empty_Invalid_Solution return Solution
+   is (Solved => False,
+       others => <>);
+
+   --------------------------
+   -- Empty_Valid_Solution --
+   --------------------------
+
+   function Empty_Valid_Solution return Solution
+   is (Solved => True,
+       others => <>);
+
+   -------------
+   -- Hinting --
+   -------------
+
+   function Hinting (This : Solution;
+                     Dep  : Dependencies.Dependency)
+                     return Solution
+   is (if This.Depends_On (Dep.Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (This.State (Dep.Crate).Hinting))
+       else (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (States.New_State (Dep).Hinting)));
+
+   -----------
+   -- Hints --
+   -----------
 
    function Hints (This : Solution) return Dependency_Map
-   is (This.Hints);
+   is (This.Dependencies_That (States.Is_Hinted'Access));
 
-   function Releases (This : Solution) return Release_Map
-   is (This.Releases);
+   -----------------
+   -- Is_Complete --
+   -----------------
+
+   function Is_Complete (This : Solution) return Boolean
+   is (for all Dep of This.Dependencies => Dep.Is_Solved);
+
+   ------------
+   -- Misses --
+   ------------
+
+   function Misses (This : Solution) return Dependency_Map
+   is (This.Dependencies_That (States.Is_Missing'Access));
+
+   -------------
+   -- Missing --
+   -------------
+
+   function Missing (This : Solution;
+                     Dep  : Dependencies.Dependency)
+                     return Solution
+   is (if This.Depends_On (Dep.Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (This.State (Dep.Crate).Missing))
+       else (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (States.New_State (Dep).Missing)));
+
+   -------------
+   -- Pinning --
+   -------------
+
+   function Pinning (This    : Solution;
+                     Crate   : Crate_Name;
+                     Version : Semantic_Versioning.Version)
+                     return Solution
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including
+         (This.Dependencies (Crate).Pinning (Version)));
+
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Dependency_Map
+   is (This.Dependencies_That (States.Is_Pinned'Access));
+
+   --------------
+   -- Required --
+   --------------
+
+   function Required (This : Solution) return State_Map'Class
+   is (This.Dependencies);
+
+   -----------
+   -- State --
+   -----------
+
+   function State (This  : Solution;
+                   Crate : Crate_Name)
+                   return Dependency_State
+   is (This.Dependencies (Crate));
+
+   ---------------
+   -- Unpinning --
+   ---------------
+
+   function Unpinning (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unpinning))
+       else This);
 
 end Alire.Solutions;
