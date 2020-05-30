@@ -112,9 +112,6 @@ package Alire.Releases with Preelaborate is
                         return Release;
    --  Add forbidden dependencies to a release
 
-   function With_Pin (Base   : Release;
-                      Pinned : Boolean) return Release;
-
    function Whenever (R : Release; P : Properties.Vector) return Release;
    --  Materialize conditions in a Release once the whatever properties are
    --  known. At present dependencies, properties, and availability.
@@ -140,9 +137,13 @@ package Alire.Releases with Preelaborate is
    --  The actual name to be used during dependency resolution (but nowhere
    --  else).
 
-   function Forbids (R : Release;
-                     P : Alire.Properties.Vector)
-     return Conditional.Dependencies;
+   function Forbidden (R : Release) return Conditional.Dependencies;
+   --  Get all forbidden dependencies in platform-independen fashion
+
+   function Forbidden (R : Release;
+                       P : Alire.Properties.Vector)
+                       return Conditional.Dependencies;
+   --  Get platform-specific forbidden dependencies
 
    function Notes   (R : Release) return Description_String;
    --  Specific to release
@@ -156,8 +157,6 @@ package Alire.Releases with Preelaborate is
                           P : Alire.Properties.Vector)
                           return Conditional.Dependencies;
    --  Retrieve only the dependencies that apply on platform P
-
-   function Is_Pinned (R : Release) return Boolean;
 
    function Properties (R : Release) return Conditional.Properties;
 
@@ -249,11 +248,6 @@ package Alire.Releases with Preelaborate is
    procedure Print (R : Release);
    --  Dump info to console
 
-   --  In place modifiers
-
-   procedure Pin   (This : in out Release);
-   procedure Unpin (This : in out Release);
-
    --  Search helpers
 
    function Property_Contains (R : Release; Str : String) return Boolean;
@@ -311,11 +305,6 @@ private
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Requisites.Tree;
-
-      --  Internal data not intended for direct user exposure
-
-      Pinned       : Boolean := False;
-      --  A pinned release is never automatically updated
    end record;
 
    use all type Conditional.Properties;
@@ -355,9 +344,12 @@ private
                           return Conditional.Dependencies
    is (R.Dependencies.Evaluate (P));
 
-   function Forbids (R : Release;
-                     P : Alire.Properties.Vector)
-                     return Conditional.Dependencies
+   function Forbidden (R : Release) return Conditional.Dependencies
+   is (R.Forbidden);
+
+   function Forbidden (R : Release;
+                       P : Alire.Properties.Vector)
+                       return Conditional.Dependencies
    is (R.Forbidden.Evaluate (P));
 
    function Properties (R : Release) return Conditional.Properties
@@ -381,9 +373,6 @@ private
 
    function TTY_Description (R : Release) return String
    is (Utils.TTY.Description (R.Description));
-
-   function Is_Pinned (R : Release) return Boolean
-   is (R.Pinned);
 
    function Milestone (R : Release) return Milestones.Milestone
    is (Milestones.New_Milestone (R.Name, R.Version));

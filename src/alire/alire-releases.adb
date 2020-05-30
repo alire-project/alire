@@ -176,9 +176,7 @@ package body Alire.Releases is
          Dependencies => Base.Dependencies,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
-         Available    => Base.Available,
-
-         Pinned       => Base.Pinned)
+         Available    => Base.Available)
       do
          null;
       end return;
@@ -232,9 +230,7 @@ package body Alire.Releases is
        Dependencies => Dependencies,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
-       Available    => Available,
-
-       Pinned       => <>);
+       Available    => Available);
 
    -------------------------
    -- New_Working_Release --
@@ -260,8 +256,7 @@ package body Alire.Releases is
       Properties   => (if Properties = Conditional.For_Properties.Empty
                        then Default_Properties
                        else Properties),
-      Available    => Requisites.Booleans.Always_True,
-      Pinned       => False);
+      Available    => Requisites.Booleans.Always_True);
 
    function On_Platform_Actions (R : Release;
                                  P : Alire.Properties.Vector;
@@ -527,15 +522,8 @@ package body Alire.Releases is
                        From :        TOML_Adapters.Key_Queue)
                        return Outcome
    is
-      Value : TOML.TOML_Value;
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
-
-      --  Internal attributes (pinning)
-
-      if From.Pop (TOML_Keys.Pinned, Value) then
-         This.Pinned := Value.As_Boolean;
-      end if;
 
       --  Origin
 
@@ -651,12 +639,6 @@ package body Alire.Releases is
          Relinfo.Set (TOML_Keys.Available, R.Available.To_TOML);
       end if;
 
-      --  Other internal properties (should only show up in the lockfile):
-
-      if R.Pinned then
-         Relinfo.Set (TOML_Keys.Pinned, TOML.Create_Boolean (True));
-      end if;
-
       --  Version release
       Root.Set (R.Version_Image, Relinfo);
 
@@ -715,8 +697,7 @@ package body Alire.Releases is
        Properties   => R.Properties.Evaluate (P),
        Available    => (if R.Available.Check (P)
                         then Requisites.Booleans.Always_True
-                        else Requisites.Booleans.Always_False),
-       Pinned       => R.Pinned);
+                        else Requisites.Booleans.Always_False));
 
    ----------------------
    -- Long_Description --
@@ -734,36 +715,5 @@ package body Alire.Releases is
          return "";
       end if;
    end Long_Description;
-
-   ---------
-   -- Pin --
-   ---------
-
-   procedure Pin   (This : in out Release) is
-   begin
-      This.Pinned := True;
-   end Pin;
-
-   -----------
-   -- Unpin --
-   -----------
-
-   procedure Unpin (This : in out Release) is
-   begin
-      This.Pinned := False;
-   end Unpin;
-
-   --------------
-   -- With_Pin --
-   --------------
-
-   function With_Pin (Base   : Release;
-                      Pinned : Boolean) return Release
-   is
-   begin
-      return Result : Release := Base do
-         Result.Pinned := Pinned;
-      end return;
-   end With_Pin;
 
 end Alire.Releases;
