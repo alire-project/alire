@@ -50,9 +50,8 @@ package body Alr.Commands.Update is
                      Alire.Workspaces.Update
                        (Platform.Properties,
                         Allowed,
-                        Options => (Age       => Query_Policy,
-                                    Detecting => <>,
-                                    Hinting   => <>));
+                        Options => (Age    => Query_Policy,
+                                    others => <>));
          Diff    : constant Alire.Solutions.Diffs.Diff :=
                      Old.Changes (Needed);
       begin

@@ -65,8 +65,8 @@ private
      (Crate_Name, Crate_Changes);
 
    type Diff is tagged record
-      Former_Valid,
-      Latter_Valid   : Boolean := False;
+      Former_Complete,
+      Latter_Complete : Boolean := False;
       --  Empty solutions but with different validity still count as changes.
 
       Changes        : Change_Maps.Map;

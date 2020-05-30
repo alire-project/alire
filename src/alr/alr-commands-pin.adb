@@ -63,7 +63,7 @@ package body Alr.Commands.Pin is
 
       procedure Unpin is
       begin
-         if not Solution.Releases.Element (Name).Is_Pinned then
+         if not Solution.State (Name).Is_Pinned then
             Reportaise_Command_Failed ("Requested crate is already unpinned");
          end if;
 
@@ -91,8 +91,8 @@ package body Alr.Commands.Pin is
 
       --  Sanity checks
 
-      if not Solution.Releases.Contains (Name) then
-         Reportaise_Command_Failed ("Cannot pin release not in solution: "
+      if not Solution.Depends_On (Name) then
+         Reportaise_Command_Failed ("Cannot pin dependency not in solution: "
                                     & (+Name));
       end if;
 
@@ -187,9 +187,9 @@ package body Alr.Commands.Pin is
                Reportaise_Command_Failed ("Cannot pin an invalid solution");
             end if;
 
-            for Release of New_Sol.Releases loop
-               if Release.Is_Pinned = Cmd.Unpin then
-                  Change_One_Pin (Cmd, New_Sol, Release.Name_Str);
+            for Crate of New_Sol.Crates loop
+               if New_Sol.State (Crate).Is_Pinned = Cmd.Unpin then
+                  Change_One_Pin (Cmd, New_Sol, +Crate);
                end if;
             end loop;
 

@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
@@ -91,7 +92,8 @@ package body Alr.Commands.Get is
                Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
             else
                Trace.Error ("Could not resolve dependencies for: " &
-                              Query.Dependency_Image (Name, Versions));
+                              Alire.Dependencies.New_Dependency
+                              (Name, Versions).Image);
                Trace.Error ("You can still retrieve the crate without "
                             & "dependencies with --only.");
                raise Command_Failed;

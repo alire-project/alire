@@ -25,7 +25,7 @@ package body Alire.Dependencies.Graphs is
             Result := Result.Including (Rel, Env);
          end loop;
 
-         Result := Result.Filtering_Unused (Sol.Required);
+         Result := Result.Filtering_Unused (Sol.Crates);
       end return;
    end From_Solution;
 
@@ -102,10 +102,10 @@ package body Alire.Dependencies.Graphs is
        then (if TTY
              then Solution.Releases.Element (Crate).Milestone.TTY_Image
              else Solution.Releases.Element (Crate).Milestone.Image)
-       elsif Solution.Hints.Contains (Crate)
+       elsif Solution.Depends_On (Crate)
        then (if TTY
-             then Solution.Hints.Element (Crate).TTY_Image
-             else Solution.Hints.Element (Crate).Image)
+             then Solution.Dependency (Crate).TTY_Image
+             else Solution.Dependency (Crate).Image)
        else raise Program_Error with "crate should appear as release or hint");
 
    ----------
@@ -121,7 +121,7 @@ package body Alire.Dependencies.Graphs is
       Source : Utils.String_Vector;
       Alt    : Utils.String_Vector;
 
-      Filtered : constant Graph := This.Filtering_Unused (Solution.Required);
+      Filtered : constant Graph := This.Filtering_Unused (Solution.Crates);
    begin
       Alt.Append ("graph dependencies {");
 
@@ -156,7 +156,7 @@ package body Alire.Dependencies.Graphs is
    is
       Table : Alire.Utils.Tables.Table;
 
-      Filtered : constant Graph := This.Filtering_Unused (Solution.Required);
+      Filtered : constant Graph := This.Filtering_Unused (Solution.Crates);
    begin
       for Dep of Filtered loop
          Table.Append (Prefix & Label (+Dep.Dependent, Solution, TTY => True));

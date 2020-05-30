@@ -62,9 +62,8 @@ package body Alr.Commands.Search is
                          (R.Dependencies (Platform.Properties),
                           Platform.Properties,
                           Alire.Solutions.Empty_Valid_Solution,
-                          Options => (Age       => Query_Policy,
-                                      Detecting => Solver.Dont_Detect,
-                                      Hinting   => Solver.Hint))
+                          Options => (Age    => Query_Policy,
+                                      others => <>))
                        then " "
                        else Flag_Unsolv)));
             Tab.Append (TTY.Version (Semantic_Versioning.Image (R.Version)));

@@ -14,7 +14,7 @@ package Alire.Pinning is
                  Environment  : Properties.Vector;
                  Solution     : Solutions.Solution)
                  return Solutions.Solution
-     with Pre => Solution.Releases.Contains (Crate);
+     with Pre => Solution.Depends_On (Crate);
    --  Compute a new solution after applying the pin to the given crate, that
    --  must exist in the solution. Root dependencies are given, and a previous
    --  solution with possibly more pins. The resulting solution may be invalid.
@@ -24,8 +24,8 @@ package Alire.Pinning is
                    Environment  : Properties.Vector;
                    Solution     : Solutions.Solution)
                    return Solutions.Solution
-     with Pre => Solution.Releases.Contains (Crate) and then
-                 Solution.Releases.Element (Crate).Is_Pinned;
+     with Pre => Solution.Depends_On (Crate) and then
+                 Solution.State (Crate).Is_Pinned;
    --  Compute a new solution removing the pin of the given crate, that must
    --  be pinned and in the solution. The resulting solution might be invalid.
 
