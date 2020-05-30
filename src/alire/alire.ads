@@ -172,6 +172,13 @@ package Alire with Preelaborate is
    --  The exception stack trace will be dumped at debug level.
    --  If message is empty, message will be Ex exception message.
 
+   ----------------------
+   -- Error generation --
+   ----------------------
+
+   Force : aliased Boolean := False;
+   --  When True, recoverable errors are demoted to warnings and we keep going
+
    procedure Assert (Result : Outcome'Class);
    --  Does nothing for successful outcomes. Raises Checked_Error with the
    --  corresponding message set in Alire.Errors otherwise.
@@ -180,6 +187,10 @@ package Alire with Preelaborate is
    --  For errors where we do not return an Outcome_Failure, we log an error
    --  message (Msg) and raise Checked_Error. There is no limitation on the
    --  length of Msg.
+
+   procedure Recoverable_Error (Msg : String);
+   --  When Force, emit a warning and return normally. When not Force call
+   --  Raise_Checked_Error instead.
 
    ---------------
    --  LOGGING  --
