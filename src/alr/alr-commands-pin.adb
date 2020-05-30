@@ -140,9 +140,8 @@ package body Alr.Commands.Pin is
             if Commands.User_Input.Confirm_Solution_Changes
               (Diff, Changed_Only => not Alire.Detailed)
             then
-               Alire.Lockfiles.Write (Solution    => New_Sol,
-                                      Environment => Platform.Properties,
-                                      Filename    => Root.Current.Lock_File);
+               Alire.Lockfiles.Write (Solution => New_Sol,
+                                      Filename => Root.Current.Lock_File);
 
                --  We force the update because we have just stored the new
                --  solution, so Update won't detect any changes.

@@ -103,7 +103,6 @@ package body Alr.Checkout is
 
       Alire.Lockfiles.Write
         (Solution,
-         Platform.Properties,
          Alire.Lockfiles.File_Name (Name     => Root,
                                     Root_Dir => Root_Dir));
 
@@ -185,14 +184,13 @@ package body Alr.Checkout is
             Templates.Generate_Prj_Alr (R.Whenever (Platform.Properties),
                                         Root.Crate_File);
 
-            --  Create also an invalid solution lockfile (since dependencies
+            --  Create also an incomplete solution lockfile (since dependencies
             --  are still unretrieved). Once they are checked out, the lockfile
             --  will be replaced with the complete solution.
             Alire.Lockfiles.Write
               (Solution    => (if R.Dependencies (Platform.Properties).Is_Empty
                                then Alire.Solutions.Empty_Valid_Solution
                                else Alire.Solutions.Empty_Invalid_Solution),
-               Environment => Platform.Properties,
                Filename    => Root.Lock_File);
          end;
       end if;

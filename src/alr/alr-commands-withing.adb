@@ -15,7 +15,6 @@ with Alire.Utils;
 
 with Alr.Commands.Update;
 with Alr.Commands.User_Input;
-with Alr.Exceptions;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Root;
@@ -378,11 +377,6 @@ package body Alr.Commands.Withing is
       else
          raise Program_Error with "List should have already happened";
       end if;
-   exception
-      when E : Constraint_Error =>
-         Exceptions.Report ("In Withing.Execute:", E);
-         Reportaise_Command_Failed
-           ("Could not locate package containing releases of " & Argument (1));
    end Execute;
 
    ----------------------

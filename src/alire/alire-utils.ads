@@ -185,13 +185,6 @@ package Alire.Utils with Preelaborate is
                     Separator : String := ASCII.LF & "");
    --  Dump contents to a given file
 
-   -----------------
-   -- XXX_XXX_XXX --
-   -----------------
-
-   type XXX_XXX (<>) is limited private;
-   function XXX_XXX_XXX return XXX_XXX;
-
 private
 
    Empty_Vector : constant String_Vector :=
@@ -205,8 +198,5 @@ private
 
    function Trim (S : String) return String is
      (Ada.Strings.Fixed.Trim (S, Ada.Strings.Both));
-
-   type XXX_XXX is limited null record;
-   function XXX_XXX_XXX return XXX_XXX is (null record);
 
 end Alire.Utils;

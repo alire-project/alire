@@ -22,7 +22,6 @@ package Alire.Lockfiles is
    --  Check if given file is a valid lockfile
 
    procedure Write (Solution    : Solver.Solution;
-                    Environment : Properties.Vector;
                     Filename    : Any_Path);
    --  Write a solution to a file
 
