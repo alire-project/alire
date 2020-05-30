@@ -1,3 +1,4 @@
+with Alire.Dependencies;
 with Alire.Index;
 with Alire.Properties;
 with Alire.Solutions;
@@ -17,6 +18,9 @@ package Alire.Solver is
    type Age_Policies is (Oldest, Newest);
    --  When looking for releases within a crate, which one to try first.
 
+   type Completeness_Policies is (Only_Complete, Also_Incomplete);
+   --  Allow the solver to further explore incomplete solution space
+
    type Detection_Policies is (Detect, Dont_Detect);
    --  * Detect: externals will be detected and added to the index once needed.
    --  * Dont_Detect: externals will remain undetected (faster).
@@ -32,12 +36,14 @@ package Alire.Solver is
 
    subtype Solution is Solutions.Solution;
 
-   --  The dependency solver receives a list of dependencies and will return
-   --  either a valid solution if one can be found (exploration is exhaustive).
-   --  System dependencies are resolved in platforms with system packager
-   --  support. Otherwise they're filed as "hints" but do not cause a failure
-   --  in resolution. In this case, a warning will be provided for the user
-   --  with a list of the dependencies that are externally required.
+   --  The dependency solver (Resolve subprogram, below) receives a
+   --  dependency tree and will return the best solution found (exploration
+   --  is exhaustive), according to Solutions.Is_Better ordering. System
+   --  dependencies are resolved in platforms with system packager support.
+   --  Otherwise they're filed as "hints". In this case, a warning will
+   --  be provided for the user with a list of the dependencies that are
+   --  externally required. Note that a solution is always returned, but
+   --  it might not be complete.
 
    ---------------------
    --  Basic queries  --
@@ -63,11 +69,12 @@ package Alire.Solver is
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any;
       Policy  : Age_Policies)
-      return Release;
-
-   function Find (Name    : String;
-                  Policy  : Age_Policies) return Release;
-   --  Given a textual crate+set (see Parsers), find the release if it exists
+      return Release
+     with Pre =>
+       Exists (Name, Allowed) or else
+       raise Query_Unsuccessful
+         with "Release within requested version not found: "
+              & Dependencies.New_Dependency (Name, Allowed).Image;
 
    -----------------------
    --  Advanced queries --
@@ -75,9 +82,10 @@ package Alire.Solver is
    --  availability checks.
 
    type Query_Options is record
-      Age       : Age_Policies       := Newest;
-      Detecting : Detection_Policies := Detect;
-      Hinting   : Hinting_Policies   := Hint;
+      Age          : Age_Policies          := Newest;
+      Completeness : Completeness_Policies := Also_Incomplete;
+      Detecting    : Detection_Policies    := Detect;
+      Hinting      : Hinting_Policies      := Hint;
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
@@ -97,16 +105,5 @@ package Alire.Solver is
                            Options : Query_Options := Default_Options)
                            return Boolean;
    --  Simplified call to Resolve, discarding result
-
-   -------------------
-   -- Debug helpers --
-   -------------------
-
-   procedure Print_Solution (Sol : Solution);
-
-   function Dependency_Image
-     (Name     : Alire.Crate_Name;
-      Versions : Semantic_Versioning.Extended.Version_Set;
-      Policy   : Age_Policies := Newest) return String;
 
 end Alire.Solver;
