@@ -100,6 +100,7 @@ package body Alr.Build_Env is
       Full_Instance : Alire.Solutions.Release_Map;
    begin
       if not Needed.Valid then
+         Trace.Error ("Cannot generate environment for invalid solution");
          raise Command_Failed;
       end if;
 

@@ -31,7 +31,7 @@ package body Alr.Commands.Update is
       --  Ensure requested crates are in solution first
 
       for Crate of Allowed loop
-         if not Old.Releases.Contains (Crate) then
+         if not Old.Depends_On (Crate) then
             Reportaise_Wrong_Arguments ("Requested crate is not a dependency: "
                                         & Alire.Utils.TTY.Name (Crate));
          end if;

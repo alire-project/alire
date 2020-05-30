@@ -9,7 +9,7 @@ from drivers.asserts import assert_match
 
 import re
 
-p = run_alr('get', '--no-tty', 'libhello=0.9-test_unav_native',
+p = run_alr('get', 'libhello=0.9-test_unav_native',
             complain_on_error=True, quiet=False)
 
 assert_match('Warning: The following external dependencies are unavailable within Alire:\n'

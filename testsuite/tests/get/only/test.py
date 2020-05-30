@@ -20,12 +20,12 @@ p = run_alr('with', '--solve')
 assert_eq('Dependencies (direct):\n'
           '   libhello^1.0\n'
           'Dependencies (solution):\n'
-          '   No solution\n',
+          '   No solving attempted\n',
           p.out)
 
 # Verify that it has no pins
 p = run_alr('pin')
-assert_eq('There is no solution, hence there are no pins\n', p.out)
+assert_eq('There are no pins\n', p.out)
 
 # Verify that updating it fixes the solution
 run_alr('update')
