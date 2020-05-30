@@ -27,7 +27,7 @@ package Alire.Milestones with Preelaborate is
    -- Milestone parsing --
    -----------------------
 
-   type Allowed_Milestones (Len : Positive) is record
+   type Allowed_Milestones (Len : Positive) is tagged record
       Crate    : Alire.Crate_Name (1 .. Len);
       Versions : Semantic_Versioning.Extended.Version_Set;
    end record;
@@ -36,6 +36,9 @@ package Alire.Milestones with Preelaborate is
    --  Either valid set or Constraint_Error
    --  If no version was specified, Any version is returned
    --  Syntax: name[extended version set expression]
+
+   function Image (This : Allowed_Milestones) return String;
+   function TTY_Image (This : Allowed_Milestones) return String;
 
 private
 
@@ -73,5 +76,11 @@ private
      (TTY.Name (+M.Crate)
       & "="
       & TTY.Version (Image (M.Version)));
+
+   function Image (This : Allowed_Milestones) return String
+   is ((+This.Crate) & This.Versions.Image);
+
+   function TTY_Image (This : Allowed_Milestones) return String
+   is (TTY.Name (This.Crate) & TTY.Version (This.Versions.Image));
 
 end Alire.Milestones;
