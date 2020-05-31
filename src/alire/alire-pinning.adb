@@ -35,6 +35,16 @@ package body Alire.Pinning is
       end if;
    end Pin;
 
+   ------------
+   -- Pin_To --
+   ------------
+
+   function Pin_To (URL      : String;
+                    Solution : Solutions.Solution;
+                    Crate    : Crate_Name)
+                    return Solutions.Solution
+   is (Solution.Linking (Crate, URL));
+
    -----------
    -- Unpin --
    -----------
@@ -47,12 +57,17 @@ package body Alire.Pinning is
    is
    begin
       --  The unpin case is simpler since we need only to remove any previous
-      --  pin for the crate, and let the solver operate normally.
+      --  pin for the crate, and let the solver operate normally. Likewise for
+      --  a linked dependency.
 
       return Solver.Resolve
         (Dependencies,
          Environment,
-         Solution.Unpinning (Crate));
+         Solutions.Solution'
+           (if Solution.State (Crate).Is_Linked
+            then Solution.Missing (Solution.Dependency (Crate))
+            else Solution)
+         .Unpinning (Crate));
    end Unpin;
 
 end Alire.Pinning;

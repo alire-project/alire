@@ -3,6 +3,7 @@ with Alire.Lockfiles;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;
+with Alire.Utils.TTY;
 
 with Alr.Commands.Update;
 with Alr.Commands.User_Input;
@@ -14,6 +15,7 @@ with Semantic_Versioning;
 package body Alr.Commands.Pin is
 
    package Semver renames Semantic_Versioning;
+   package TTY renames Alire.Utils.TTY;
 
    --------------------
    -- Change_One_Pin --
@@ -46,7 +48,9 @@ package body Alr.Commands.Pin is
                                 Dependencies =>
                                   Root.Current.Release.Dependencies,
                                 Environment  => Platform.Properties,
-                                Solution     => Solution);
+                                Solution     =>
+                                  Solution.Missing -- Remove a possible link
+                                    (Solution.Dependency (Name)));
          begin
             if New_Solution.Valid then
                Solution := New_Solution;
@@ -63,7 +67,9 @@ package body Alr.Commands.Pin is
 
       procedure Unpin is
       begin
-         if not Solution.State (Name).Is_Pinned then
+         if not (Solution.State (Name).Is_Linked or else
+                 Solution.State (Name).Is_Pinned)
+         then
             Reportaise_Command_Failed ("Requested crate is already unpinned");
          end if;
 
@@ -92,7 +98,7 @@ package body Alr.Commands.Pin is
       --  Sanity checks
 
       if not Solution.Depends_On (Name) then
-         Reportaise_Command_Failed ("Cannot pin dependency not in solution: "
+         Reportaise_Command_Failed ("Cannot pin crate not in dependencies: "
                                     & (+Name));
       end if;
 
@@ -108,8 +114,12 @@ package body Alr.Commands.Pin is
                                   Relaxed => False);
 
          Trace.Debug ("Pin requested for exact version: " & Version.Image);
-      else
+      elsif Solution.Releases.Contains (Name) then
          Version := Solution.Releases.Element (Name).Version;
+      elsif not Cmd.Unpin then
+         Trace.Warning ("Cannot pin crate with no release"
+                        & " in current solution: " & TTY.Name (Name));
+         return;
       end if;
 
       --  Proceed to pin/unpin
@@ -160,6 +170,11 @@ package body Alr.Commands.Pin is
 
       if Cmd.Pin_All and then Num_Arguments /= 0 then
          Reportaise_Wrong_Arguments ("--all must appear alone");
+      elsif Cmd.URL.all /= "" and then
+        (Num_Arguments /= 1 or else Cmd.Pin_All or else Cmd.Unpin)
+      then
+         Reportaise_Wrong_Arguments
+           ("--url must be used alone with a crate name");
       end if;
 
       Requires_Valid_Session;
@@ -170,7 +185,8 @@ package body Alr.Commands.Pin is
          Root.Current.Solution.Print_Pins;
          return;
       elsif Num_Arguments > 1 then
-         Reportaise_Wrong_Arguments ("Pin expects a single crate name");
+         Reportaise_Wrong_Arguments
+           ("Pin expects a single crate or crate=version argument");
       end if;
 
       --  Apply changes;
@@ -182,6 +198,8 @@ package body Alr.Commands.Pin is
 
          if Cmd.Pin_All then
 
+            --  Change all pins
+
             if not New_Sol.Valid then
                Reportaise_Command_Failed ("Cannot pin an invalid solution");
             end if;
@@ -192,7 +210,17 @@ package body Alr.Commands.Pin is
                end if;
             end loop;
 
+         elsif Cmd.URL.all /= "" then
+
+            --  Pin to dir
+
+            New_Sol := Alire.Pinning.Pin_To
+              (Cmd.URL.all, Old_Sol, +Argument (1));
+
          else
+
+            --  Change a single pin
+
             Change_One_Pin (Cmd, New_Sol, Argument (1));
          end if;
 
@@ -214,7 +242,8 @@ package body Alr.Commands.Pin is
    function Long_Description (Cmd : Command)
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
-      .Append ("Pin releases to their current solution version."
+      .Append ("Pin releases to a particular version."
+               & " By default, the current solution version is used."
                & " A pinned release is not affected by automatic updates.")
       .New_Line
       .Append ("Without arguments, show existing pins.")
@@ -222,6 +251,11 @@ package body Alr.Commands.Pin is
       .Append ("Use --all to pin the whole current solution.")
       .New_Line
       .Append ("Specify a single crate to modify its pin.")
+      .New_Line
+      .Append ("Use the --url switch to "
+               & " force alr to use the URL target"
+               & " to fulfill a dependency locally"
+               & " instead of looking for indexed releases.")
      );
 
    --------------------
@@ -244,6 +278,13 @@ package body Alr.Commands.Pin is
                      Cmd.Unpin'Access,
                      Long_Switch => "--unpin",
                      Help        => "Unpin a release");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.URL'Access,
+         Long_Switch => "--url=",
+         Argument    => "URL",
+         Help        => "Use a directory to fulfill a dependency");
    end Setup_Switches;
 
 end Alr.Commands.Pin;
