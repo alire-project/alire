@@ -1,5 +1,7 @@
-private
-with Alire.Containers;
+private with AAA.Containers.Indefinite_Holders;
+
+private with Alire.Containers;
+with Alire.Externals.Softlinks;
 with Alire.Properties;
 with Alire.Releases;
 
@@ -29,6 +31,11 @@ package Alire.Dependencies.States is
 
    function Hinting (Base : State) return State;
    --  Change fulfilment to Hinted in copy of Base
+
+   function Linking (Base : State;
+                     Link : Externals.Softlinks.External)
+                     return State;
+   --  Returns a copy of Base fulfilled by Path
 
    function Merging (Base     : State;
                      Versions : Semantic_Versioning.Extended.Version_Set)
@@ -72,6 +79,8 @@ package Alire.Dependencies.States is
 
    function Is_Indirect (This : State) return Boolean;
 
+   function Is_Linked (This : State) return Boolean;
+
    function Is_Missing (This : State) return Boolean;
 
    function Is_Pinned (This : State) return Boolean;
@@ -81,6 +90,9 @@ package Alire.Dependencies.States is
    --  Case-specific info
 
    function Fulfilment (This : State) return Fulfilments;
+
+   function Link (This : State) return Externals.Softlinks.External
+     with Pre => This.Is_Linked;
 
    function Pin_Version (This : State) return Semantic_Versioning.Version
      with Pre => This.Is_Pinned;
@@ -123,18 +135,22 @@ private
                             Version : Semantic_Versioning.Version)
                             return State;
 
+   --  Helper types
+
+   package External_Holders is
+     new AAA.Containers.Indefinite_Holders (Externals.Softlinks.External);
+
+   type Link_Holder is new External_Holders.Holder with null record;
+
    overriding
    function New_Dependency
      (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return State;
 
-   -----------
-   -- State --
-   -----------
-
    type Fulfilment_Data (Fulfilment : Fulfilments := Missed) is record
       case Fulfilment is
+         when Linked => Target  : Link_Holder;
          when Solved => Release : Containers.Release_H;
          when others => null;
       end case;
@@ -146,6 +162,10 @@ private
          when False => null;
       end case;
    end record;
+
+   -----------
+   -- State --
+   -----------
 
    type State (Name_Len : Natural) is new Dependency (Name_Len) with record
       Fulfilled    : Fulfilment_Data;
@@ -208,6 +228,9 @@ private
           then This.Transitivity'Img & ","
           else "")
        & Utils.To_Lower_Case (This.Fulfilled.Fulfilment'Img)
+       & (if This.Fulfilled.Fulfilment = Linked
+          then ",target=" & This.Fulfilled.Target.Get.Path
+          else "")
        & (if This.Pinning.Pinned
           then ",pin=" & This.Pinning.Version.Image
           else "")
@@ -226,6 +249,9 @@ private
    function Is_Indirect (This : State) return Boolean
    is (This.Transitivity = Indirect);
 
+   function Is_Linked (This : State) return Boolean
+   is (This.Fulfilled.Fulfilment = Linked);
+
    function Is_Missing (This : State) return Boolean
    is (This.Fulfilled.Fulfilment = Missed);
 
@@ -234,6 +260,27 @@ private
 
    function Is_Solved (This : State) return Boolean
    is (This.Fulfilled.Fulfilment = Solved);
+
+   ----------
+   -- Link --
+   ----------
+
+   function Link (This : State) return Externals.Softlinks.External
+   is (This.Fulfilled.Target.Get);
+
+   -------------
+   -- Linking --
+   -------------
+
+   function Linking (Base : State;
+                     Link : Externals.Softlinks.External)
+                     return State
+   is (Base.As_Dependency with
+       Name_Len     => Base.Name_Len,
+       Fulfilled    => (Fulfilment => Linked,
+                        Target     => To_Holder (Link)),
+       Pinning      => Base.Pinning,
+       Transitivity => Base.Transitivity);
 
    -------------
    -- Merging --
@@ -369,6 +416,10 @@ private
              when Missed => TTY.Error (This.Fulfilled.Fulfilment'Img),
              when Hinted => TTY.Warn (This.Fulfilled.Fulfilment'Img),
              when others => This.Fulfilled.Fulfilment'Img)
+       & (if This.Fulfilled.Fulfilment = Linked
+          then "," & TTY.Emph ("target") & "="
+                   & TTY.URL (This.Fulfilled.Target.Get.Path)
+          else "")
        & (if This.Pinning.Pinned
           then "," & TTY.Emph ("pin")
                    & "=" & TTY.Version (This.Pinning.Version.Image)
