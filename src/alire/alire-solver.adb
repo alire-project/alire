@@ -345,7 +345,27 @@ package body Alire.Solver is
 
          begin
 
-            if Solution.Releases.Contains (Dep.Crate) then
+            if Current.Depends_On (Dep.Crate) and then
+               Current.State (Dep.Crate).Is_Linked
+            then
+
+               --  The dependency is softlinked in the starting solution, hence
+               --  we need not look further for releases.
+
+               Trace.Debug
+                 ("SOLVER: dependency LINKED to " &
+                    Current.State (Dep.Crate).Link.Path &
+                    " when tree is " &
+                    Tree'(Expanded and Target and Remaining).Image_One_Line);
+
+               Expand (Expanded  => Expanded and Dep,
+                       Target    => Remaining,
+                       Remaining => Empty,
+                       Solution  =>
+                         Solution.Linking (Dep.Crate,
+                                           Current.State (Dep.Crate).Link));
+
+            elsif Solution.Releases.Contains (Dep.Crate) then
 
                --  Cut search once a crate is frozen, by checking the
                --  compatibility of the already frozen release:
