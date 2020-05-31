@@ -37,7 +37,7 @@ package Alire.Solutions.Diffs is
 
 private
 
-   type Install_Status is (Unsolved, Unneeded, Hinted, Needed);
+   type Install_Status is (Unsolved, Unneeded, Hinted, Linked, Needed);
    --  Unsolved will apply to all crates when a solution is invalid. TODO: when
    --  reasons for solving failure are tracked, improve the diff output.
 
@@ -46,6 +46,8 @@ private
          when Needed =>
             Pinned   : Boolean;
             Version  : Semantic_Versioning.Version;
+         when Linked =>
+            Path     : UString;
          when Hinted =>
             Versions : Semantic_Versioning.Extended.Version_Set;
          when Unneeded | Unsolved =>
