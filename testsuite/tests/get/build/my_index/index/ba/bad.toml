@@ -1,0 +1,8 @@
+[general]
+description = "Bad crate"
+maintainers = ["jane@doe.com"]
+maintainers-logins = ["mylogin"]
+licenses = []
+
+['1.0']
+origin = "file://./../../crates/bad"
