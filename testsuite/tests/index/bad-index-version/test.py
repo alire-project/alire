@@ -8,7 +8,7 @@ from drivers.asserts import assert_match
 
 p = run_alr('list', complain_on_error=False)
 assert_match(
-    '.*index version is older than that expected by alr.*',
+    '.*index version \(0\.0\.0\) is older than that expected by alr \(.*\).*',
     p.out)
 
 print('SUCCESS')

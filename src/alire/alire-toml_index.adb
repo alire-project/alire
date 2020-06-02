@@ -213,11 +213,15 @@ package body Alire.TOML_Index is
 
          if Alire.Index.Version < Version then
             Set_Error (Result, Filename,
-                       "index version is newer than that expected by alr."
+                       "index version (" & Version.Image
+                       & ") is newer than that expected by alr ("
+                       & Alire.Index.Version.Image & ")."
                        & " You may have to update alr");
          elsif Version < Alire.Index.Version then
             Set_Error (Result, Filename,
-                       "index version is older than that expected by alr."
+                       "index version (" & Version.Image
+                       & ") is older than that expected by alr ("
+                       & Alire.Index.Version.Image & ")."
                        & " Please update your local index "
                        & "(alr index --update-all)");
          end if;
