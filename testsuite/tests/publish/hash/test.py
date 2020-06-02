@@ -28,7 +28,7 @@ hashes = [
 
 # Generate a test "crate" in the current folder with known contents and hash:
 for i in range(len(filenames)):
-    with open(filenames[i], "wb") as file:
+    with open(filenames[i], "w") as file:
         file.write(contents[i])
 
     # Hash and check
