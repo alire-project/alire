@@ -73,7 +73,7 @@ private
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with record
-      Crate      : Crate_Name (1 .. Name_Len);
+      Crate      : Crate_Name (Name_Len);
       Versions   : Semantic_Versioning.Extended.Version_Set;
    end record;
 
@@ -81,7 +81,7 @@ private
      (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency
-   is (Crate'Length, Crate, Versions);
+   is (Crate.Name'Length, Crate, Versions);
 
    function New_Dependency
      (Crate   : Crate_Name;

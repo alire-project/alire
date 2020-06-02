@@ -164,8 +164,8 @@ package body Alire.Releases is
    begin
 
       return Replacement : constant Release
-        (Base.Name'Length, New_Notes'Length) :=
-        (Prj_Len   => Base.Name'Length,
+        (Base.Name.Length, New_Notes'Length) :=
+        (Prj_Len   => Base.Name.Length,
          Notes_Len => New_Notes'Length,
          Name      => Base.Name,
          Notes     => New_Notes,
@@ -220,7 +220,7 @@ package body Alire.Releases is
                          Properties   : Conditional.Properties;
                          Available    : Alire.Requisites.Tree)
                          return Release
-   is (Prj_Len      => Name'Length,
+   is (Prj_Len      => Name.Length,
        Notes_Len    => Notes'Length,
        Name         => Name,
        Alias        => +"",
@@ -244,7 +244,7 @@ package body Alire.Releases is
       Properties   : Conditional.Properties   :=
         Conditional.For_Properties.Empty)
       return         Release is
-     (Prj_Len      => Name'Length,
+     (Prj_Len      => Name.Length,
       Notes_Len    => 0,
       Name         => Name,
       Alias        => +"",

@@ -106,7 +106,7 @@ package body Alr.Commands.Update is
       begin
          return Set :  Alire.Containers.Crate_Name_Sets.Set do
             for I in 1 .. Num_Arguments loop
-               Set.Include (Alire.Crate_Name (Argument (I)));
+               Set.Include (+Argument (I));
             end loop;
          end return;
       exception

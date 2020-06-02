@@ -296,7 +296,7 @@ private
      and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
-      Name         : Crate_Name (1 .. Prj_Len);
+      Name         : Crate_Name (Prj_Len);
       Alias        : UString; -- I finally gave up on constraints
       Version      : Semantic_Versioning.Version;
       Origin       : Origins.Origin;

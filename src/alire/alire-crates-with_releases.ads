@@ -58,7 +58,7 @@ private
    type Crate (Len : Natural) is new General and
      Interfaces.Detomifiable with
       record
-         Name      : Crate_Name (1 .. Len);
+         Name      : Crate_Name (Len);
          Externals : Alire.Externals.Lists.List;
          Releases  : Containers.Release_Set;
       end record;

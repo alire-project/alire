@@ -1,7 +1,7 @@
 with AAA.Debug;
 
 with Alire.Errors;
-with Alire.Utils;
+with Alire.Utils.TTY;
 
 with GNAT.IO;
 
@@ -19,7 +19,6 @@ package body Alire is
    -- "<" --
    ---------
 
-   overriding
    function "<" (L, R : Crate_Name) return Boolean is
      (Utils.To_Lower_Case (+L) < Utils.To_Lower_Case (+R));
 
@@ -79,16 +78,9 @@ package body Alire is
    -- Error_In_Name --
    -------------------
 
-   Last_Name_Error : UString;
-
-   function Error_In_Name return String is (+Last_Name_Error);
-
-   -------------------
-   -- Is_Valid_Name --
-   -------------------
-
-   function Is_Valid_Name (S : String) return Boolean is
-      Err : UString renames Last_Name_Error;
+   function Error_In_Name (S : String) return String
+   is
+      Err : UString;
       use type UString;
    begin
       if S'Length < Min_Name_Length then
@@ -107,8 +99,22 @@ package body Alire is
            & " with 'alr help identifiers'";
       end if;
 
-      return +Err = "";
-   end Is_Valid_Name;
+      return +Err;
+   end Error_In_Name;
+
+   -------------------
+   -- Is_Valid_Name --
+   -------------------
+
+   function Is_Valid_Name (S : String) return Boolean
+   is (Error_In_Name (S) = "");
+
+   ---------------
+   -- TTY_Image --
+   ---------------
+
+   function TTY_Image (This : Crate_Name) return String
+   is (Utils.TTY.Name (This.Name));
 
    -------------------
    -- Raise_Checked_Error --

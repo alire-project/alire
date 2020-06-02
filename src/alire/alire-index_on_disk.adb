@@ -183,7 +183,7 @@ package body Alire.Index_On_Disk is
 
    begin
       if not Is_Valid_Name (Name) then
-         Result := Outcome_Failure (Error_In_Name);
+         Result := Outcome_Failure (Error_In_Name (Name));
          return New_Invalid_Index;
       end if;
 

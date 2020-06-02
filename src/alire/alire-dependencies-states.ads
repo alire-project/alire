@@ -287,7 +287,7 @@ private
 
    function New_State (Base : Dependency) return State
    is (State'(Base with
-              Name_Len => Base.Crate'Length,
+              Name_Len => Base.Crate.Name'Length,
               others   => <>));
 
    -----------------
