@@ -26,3 +26,6 @@
 [submodule "deps/ansi"]
 	path = deps/ansi
 	url = https://github.com/mosteo/ansi-ada
+[submodule "deps/uri-ada"]
+	path = deps/uri-ada
+	url = https://github.com/mosteo/uri-ada.git

@@ -6,6 +6,7 @@ with "ansi";
 with "gnatcoll";
 with "semantic_versioning";
 with "simple_logging";
+with "uri";
 with "xml_ez_out";
 
 library project Alire is

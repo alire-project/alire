@@ -5,6 +5,7 @@ with "alire_common";
 with "ajunitgen";
 with "semantic_versioning";
 with "simple_logging";
+with "uri";
 with "xml_ez_out";
 
 project Alr is

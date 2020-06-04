@@ -10,6 +10,7 @@ aggregate project Alr_Env is
                          "deps/gnatcoll-slim",
                          "deps/semantic_versioning",
                          "deps/simple_logging",
+                         "deps/uri-ada",
                          "deps/xmlezout");
 
    for Project_Files use ("alr.gpr");
