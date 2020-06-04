@@ -57,7 +57,7 @@ fi
 
 $run_python --version
 $run_pip --version
-$run_pip install e3-testsuite
+$run_pip install --upgrade e3-testsuite
 echo Python search paths:
 $run_python -c "import sys; print('\n'.join(sys.path))"
 
