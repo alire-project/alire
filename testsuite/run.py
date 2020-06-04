@@ -23,6 +23,12 @@ class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
     test_driver_map = {'python-script': PythonScriptDriver}
 
+    def set_up(self):
+        super().set_up()
+
+        # Some tests rely on an initially empty GPR_PROJECT_PATH variable
+        os.environ.pop('GPR_PROJECT_PATH', None)
+
 
 if __name__ == '__main__':
     suite = Testsuite()
