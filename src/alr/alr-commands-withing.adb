@@ -12,13 +12,12 @@ with Alire.Roots;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
+with Alire.Workspace;
 
-with Alr.Commands.Update;
 with Alr.Commands.User_Input;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Root;
-with Alr.Templates;
 
 with Semantic_Versioning.Extended;
 
@@ -160,14 +159,19 @@ package body Alr.Commands.Withing is
 
          --  Generate the new .toml file
 
-         Templates.Generate_Prj_Alr (New_Root.Release,
-                                     New_Root.Crate_File);
+         Alire.Workspace.Generate_Manifest (New_Root.Release,
+                                             New_Root);
          Trace.Detail ("Regeneration finished, updating now");
+
+         --  And apply changes (will also generate new lockfile)
+
+         Alire.Workspace.Deploy_Dependencies
+           (Env      => Platform.Properties,
+            Root     => New_Root,
+            Solution => New_Solution);
+
       end;
 
-      --  And apply changes (will also generate new lockfile)
-
-      Commands.Update.Execute (Interactive => False);
    end Replace_Current;
 
    ---------

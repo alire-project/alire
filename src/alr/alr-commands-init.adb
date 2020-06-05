@@ -7,9 +7,9 @@ with Alire.Origins;
 with Alire.Releases;
 with Alire.Roots;
 with Alire.Solutions;
+with Alire.Workspace;
 
 with Alr.Root;
-with Alr.Templates;
 with Alr.Utils;
 
 with GNATCOLL.VFS;
@@ -18,6 +18,8 @@ with Alr.Bootstrap;
 package body Alr.Commands.Init is
 
    use all type Bootstrap.Session_States;
+
+   Sed_Pattern : constant String := "PROJECT_SKEL";
 
    --------------
    -- Generate --
@@ -170,9 +172,7 @@ package body Alr.Commands.Init is
       begin
          Make_Dir (Create (+Root.Working_Folder));
 
-         Templates.Generate_Prj_Alr
-           (Root.Release,
-            Root.Crate_File);
+         Alire.Workspace.Generate_Manifest (Root.Release, Root);
 
          Alire.Lockfiles.Write
            (Alire.Solutions.Empty_Valid_Solution,
@@ -208,12 +208,11 @@ package body Alr.Commands.Init is
                    Alire.Milestones.Crate_Versions (Name)
                    with Unreferenced;
       begin
-         if Utils.To_Lower_Case (Name)
-           = Utils.To_Lower_Case (Templates.Sed_Pattern)
+         if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
          then
-            Log ("The crate name is invalid, as it is used internally by"
-                 & " alr; please choose another name");
-            raise Command_Failed;
+            Reportaise_Command_Failed
+              ("The crate name is invalid, as it is used internally by"
+               & " alr; please choose another name");
          end if;
 
          if not Cmd.In_Place and then Ada.Directories.Exists (Name) then
