@@ -43,7 +43,7 @@ package body Alr.Commands.Get is
       Diff     : Alire.Solutions.Diffs.Diff;
       --  Used to present dependencies to the user
 
-      Build_OK : Boolean;
+      Build_OK : Boolean := False;
    begin
       declare
          Result : Alire.Outcome;
@@ -139,6 +139,8 @@ package body Alr.Commands.Get is
 
          if Cmd.Build then
             Build_OK := Commands.Build.Execute;
+         else
+            Build_OK := True;
          end if;
       end;
 
@@ -161,6 +163,11 @@ package body Alr.Commands.Get is
          Diff.Print (Changed_Only => False);
       else
          Trace.Info ("There are no dependencies.");
+      end if;
+
+      if not Build_OK then
+         raise Command_Failed with "Build ended with errors";
+         --  This is not displayed at default level, but ensures exit code /= 0
       end if;
    end Retrieve;
 
