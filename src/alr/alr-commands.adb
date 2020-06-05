@@ -18,9 +18,11 @@ with Alire.Roots.Check_Valid;
 with Alire.Solutions;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
+with Alr.Commands.Config;
 with Alr.Commands.Dev;
 with Alr.Commands.Get;
 with Alr.Commands.Help;
@@ -56,6 +58,7 @@ package body Alr.Commands is
    Dispatch_Table : constant array (Cmd_Names) of Command_Access :=
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
+                       Cmd_Config   => new Config.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Help     => new Help.Command,
@@ -183,7 +186,7 @@ package body Alr.Commands is
                      "Display general or command-specific help");
 
       Define_Switch (Config,
-                     Alire.Config.Not_Interactive'Access,
+                     Alire.Utils.User_Input.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
 

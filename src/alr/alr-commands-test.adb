@@ -2,7 +2,6 @@ with Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;
 
-with Alire.Config;
 with Alire.Containers;
 with Alire.Crates.With_Releases;
 with Alire.Defaults;
@@ -14,6 +13,7 @@ with Alire.Properties.Actions.Executor;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
+with Alire.Utils.User_Input;
 
 with Alr.Files;
 with Alr.Paths;
@@ -494,7 +494,7 @@ package body Alr.Commands.Test is
            (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      Alire.Config.Not_Interactive := True;
+      Alire.Utils.User_Input.Not_Interactive := True;
 
       --  Start testing
       if Test_All then
