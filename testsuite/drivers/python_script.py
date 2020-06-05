@@ -18,6 +18,8 @@ class PythonScriptDriver(ClassicTestDriver):
     "SUCCESS". Anything else results in the test failing.
     """
 
+    # This is a workaround for Windows, where attempting to use rlimit by e3-core
+    # causes permission errors. TODO: remove once e3-core has a proper solution.
     @property
     def default_process_timeout(self):
         return None
