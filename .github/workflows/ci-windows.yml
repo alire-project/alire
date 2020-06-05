@@ -36,13 +36,10 @@ jobs:
     - name: install tar from msys2 (Git tar in Actions VM does not seem to work)
       run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S tar
 
-    - name: Install Python 2.x (required for the testsuite)
-      uses: actions/setup-python@v1
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
       with:
-        python-version: '2.x'
-
-    - name: Install vcpython27 (required for some e3-testsuite deps)
-      run: choco install vcpython27
+        python-version: '3.x'
 
     - name: Run test script
       run: scripts/ci-github.sh

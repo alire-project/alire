@@ -24,8 +24,8 @@ jobs:
     strategy:
       matrix:
         tag: # Those are our dockerhub alire/gnat:tag machines
-            - centos-latest-community-2019
-            - community-current
+            - centos-latest-community-latest
+            - community-latest
             - debian-stable
             - ubuntu-lts
 

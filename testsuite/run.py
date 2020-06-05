@@ -13,32 +13,31 @@ import os.path
 
 import e3.testsuite
 import e3.testsuite.driver
+from e3.testsuite.result import TestStatus
 
 
 from drivers.python_script import PythonScriptDriver
 
 
 class Testsuite(e3.testsuite.Testsuite):
-    TEST_SUBDIR = 'tests'
-    DRIVERS = {'python-script': PythonScriptDriver}
+    tests_subdir = 'tests'
+    test_driver_map = {'python-script': PythonScriptDriver}
 
-    @property
-    def default_driver(self):
-        return 'decoder'
+    def set_up(self):
+        super().set_up()
+
+        # Some tests rely on an initially empty GPR_PROJECT_PATH variable
+        os.environ.pop('GPR_PROJECT_PATH', None)
 
 
 if __name__ == '__main__':
-    suite = Testsuite(os.path.dirname(__file__))
+    suite = Testsuite()
     suite.testsuite_main()
 
-    # Display statistics about test results: number of tests per status
-    stats = [(str(name).split('.')[1], count)
-             for name, count in suite.test_status_counters.items()
-             if count]
-    for name, count in sorted(stats):
-        print('{: <8} {}'.format(name + ':', count))
-
     # Exit with failure if some test didn't pass
-    for name, count in sorted(stats):
-        if name == 'FAIL' and count > 0:
+    for name, count in suite.test_status_counters.items():
+        if count > 0 and name not in (
+            TestStatus.PASS, TestStatus.XFAIL, TestStatus.XPASS,
+            TestStatus.SKIP
+        ):
             exit(1)

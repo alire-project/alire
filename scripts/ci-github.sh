@@ -45,19 +45,20 @@ echo TESTSUITE:
 # Run e3.testsuite
 echo
 cd testsuite
+
+# On Windows, python3/pip3 don't explicitly exist
 if [ "${OS:-}" == "Windows_NT" ]; then
-    # There is some mixup of Python versions between the one installed by
-    # Chocolatey and the one hosted in the github VM. To be looked into.
     run_python=python
     run_pip=pip
 else
-    run_python=python2
-    run_pip=pip2
+    run_python=python3
+    run_pip=pip3
 fi
 
-$run_python --version
-$run_pip --version
-$run_pip install e3-testsuite
+echo Python version: $($run_python --version)
+echo Pip version: $($run_pip --version)
+
+$run_pip install --upgrade e3-testsuite
 echo Python search paths:
 $run_python -c "import sys; print('\n'.join(sys.path))"
 
