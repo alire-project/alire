@@ -55,8 +55,7 @@ else
     run_pip=pip3
 fi
 
-echo Default python version: $(python --version)
-echo Python3 version: $(python3 --version || true)
+echo Python version: $($run_python --version)
 echo Pip version: $($run_pip --version)
 
 $run_pip install --upgrade e3-testsuite
