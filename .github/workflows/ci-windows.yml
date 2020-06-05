@@ -41,8 +41,8 @@ jobs:
       with:
         python-version: '3.x'
 
-#    - name: Install vcpython27 (required for some e3-testsuite deps)
-#      run: choco install vcpython27
+    - name: Install vcpython27 (required for some e3-testsuite deps)
+      run: choco install vcpython27
 
     - name: Run test script
       run: scripts/ci-github.sh
