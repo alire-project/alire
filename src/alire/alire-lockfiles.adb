@@ -41,6 +41,31 @@ package body Alire.Lockfiles is
       end;
    end Read;
 
+   --------------
+   -- Validity --
+   --------------
+
+   function Validity (File : Any_Path) return Validities is
+   begin
+      if not GNAT.OS_Lib.Is_Read_Accessible_File (File) then
+         return Missing;
+      end if;
+
+      --  Try to load to assess validity
+
+      declare
+         Unused : constant Solver.Solution := Read (File);
+      begin
+         return Valid;
+      end;
+
+   exception
+      when E : others =>
+         Trace.Debug ("Exception while loading lockfile is: ");
+         Log_Exception (E, Debug);
+         return Invalid;
+   end Validity;
+
    -----------
    -- Write --
    -----------

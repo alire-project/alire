@@ -3,6 +3,7 @@ with AAA.Text_IO;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
+with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
@@ -445,6 +446,8 @@ package body Alr.Commands is
    ----------------------------
 
    procedure Requires_Valid_Session is
+      use Alire;
+
       Checked : constant Alire.Roots.Root :=
         Alire.Roots.Check_Valid (Root.Current);
    begin
@@ -453,15 +456,27 @@ package body Alr.Commands is
            ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
       end if;
 
-      --  For workspaces created pre-lockfiles, we create one on the fly
+      --  For workspaces created pre-lockfiles, or with older format, recreate:
 
-      if OS_Lib.Is_Regular_File (Checked.Lock_File) then
-         return;
-      end if;
+      case Lockfiles.Validity (Checked.Lock_File) is
+         when Lockfiles.Valid =>
+            Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
+            return; -- OK
+         when Lockfiles.Invalid =>
+            Trace.Warning
+              ("This workspace was created with a previous alr version."
+               & " Internal data is going to be updated and, as a result,"
+               & " any existing pins will be unpinned and will need to be"
+               & " manually recreated.");
+            Alire.Directories.Backup_If_Existing (Checked.Lock_File);
+            Ada.Directories.Delete_File (Checked.Lock_File);
+         when Lockfiles.Missing =>
+            Trace.Debug ("Workspace has no lockfile at " & Checked.Lock_File);
+      end case;
 
       --  Solve current root dependencies to create the lock file
 
-      Trace.Debug ("Missing lockfile, generating it on the fly...");
+      Trace.Debug ("Generating lockfile on the fly...");
 
       declare
          Solution : constant Alire.Solutions.Solution :=
