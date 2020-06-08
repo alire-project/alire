@@ -110,18 +110,6 @@ package body Alire is
       return +Err = "";
    end Is_Valid_Name;
 
-   -------------------
-   -- Raise_Checked_Error --
-   -------------------
-
-   procedure Raise_Checked_Error (Msg : String) is
-   begin
-      if Log_Debug then
-         Err_Log (Msg);
-      end if;
-      raise Checked_Error with Errors.Set (Msg);
-   end Raise_Checked_Error;
-
    ---------------------
    -- Outcome_Failure --
    ---------------------
@@ -171,5 +159,30 @@ package body Alire is
                          Message => +Full_Msg);
       end if;
    end Outcome_From_Exception;
+
+   -------------------------
+   -- Raise_Checked_Error --
+   -------------------------
+
+   procedure Raise_Checked_Error (Msg : String) is
+   begin
+      if Log_Debug then
+         Err_Log (Msg);
+      end if;
+      raise Checked_Error with Errors.Set (Msg);
+   end Raise_Checked_Error;
+
+   -----------------------
+   -- Recoverable_Error --
+   -----------------------
+
+   procedure Recoverable_Error (Msg : String) is
+   begin
+      if Force then
+         Trace.Warning (Msg);
+      else
+         Raise_Checked_Error (Msg);
+      end if;
+   end Recoverable_Error;
 
 end Alire;

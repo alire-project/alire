@@ -180,6 +180,12 @@ package body Alr.Commands is
                      Command_Line_Config_Path'Access,
                      "-c=", "--config=",
                      "Override configuration folder location");
+
+      Define_Switch (Config,
+                     Alire.Force'Access,
+                     "-f", "--force",
+                     "Keep going after a recoverable troublesome situation");
+
       Define_Switch (Config,
                      Help_Switch'Access,
                      "-h", "--help",

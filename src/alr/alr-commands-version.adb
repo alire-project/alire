@@ -1,5 +1,5 @@
 with Alire.Properties;
-with Alire.Utils;
+with Alire.Utils.User_Input;
 
 with Alr.Files;
 with Alr.OS_Lib;
@@ -24,6 +24,11 @@ package body Alr.Commands.Version is
       Trace.Always ("alr build is " & Bootstrap.Status_Line);
       Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
       Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
+
+      Trace.Always
+        ("interaction flags are:"
+         & " force:" & Alire.Force'Img
+         & " not-interactive:" & Alire.Utils.User_Input.Not_Interactive'Img);
 
       if not Root.Current.Is_Valid then
          Trace.Always ("alr root is empty");
