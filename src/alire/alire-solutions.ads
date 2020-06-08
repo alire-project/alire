@@ -261,12 +261,6 @@ package Alire.Solutions is
    --  Requires releases not to have dynamic expressions. This is currently
    --  guaranteed by the states storing static versions of releases.
 
-   -----------
-   -- Debug --
-   -----------
-
-   procedure Debug_Print (This : Solution);
-
 private
 
    type Solution is new Interfaces.Tomifiable with record

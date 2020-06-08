@@ -72,7 +72,7 @@ private
    function New_Milestone (Name    : Crate_Name;
                            Version : Semantic_Versioning.Version)
                            return Milestone
-     is (Name.Name'Length, Name, Version);
+     is (Name.Length, Name, Version);
 
    function Crate (M : Milestone) return Crate_Name is (M.Name);
 

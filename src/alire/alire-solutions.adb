@@ -57,27 +57,6 @@ package body Alire.Solutions is
       end return;
    end Crates;
 
-   -----------------
-   -- Debug_Print --
-   -----------------
-
-   procedure Debug_Print (This : Solution) is
-   begin
-      Trace.Always ("SSSSSSSSSSSSSSS complete: " & This.Is_Complete'Img);
-
-      Trace.Always ("Releases:" & This.Releases.Length'Img);
-      for Rel of This.Releases loop
-         Trace.Always ("   " & Rel.Milestone.Image);
-      end loop;
-
-      Trace.Always ("Dependencies:" & This.Dependencies.Length'Img);
-      for Dep of This.Dependencies loop
-         Trace.Always ("   " & Dep.Image);
-      end loop;
-
-      Trace.Always ("sssssssssssssss");
-   end Debug_Print;
-
    ---------------
    -- Forbidden --
    ---------------
