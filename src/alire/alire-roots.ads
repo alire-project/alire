@@ -3,8 +3,10 @@ private with Alire.Lockfiles;
 private with Alire.OS_Lib;
 private with Alire.Paths;
 
+with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
+with Alire.Utils;
 
 package Alire.Roots is
 
@@ -42,17 +44,26 @@ package Alire.Roots is
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
    function New_Root (Name : Crate_Name;
-                      Path : Absolute_Path) return Root with
+                      Path : Absolute_Path;
+                      Env  : Properties.Vector) return Root with
      Post => New_Root'Result.Is_Valid;
    --  New unreleased release (not indexed, working copy)
 
    function New_Root (R    : Releases.Release;
-                      Path : Absolute_Path) return Root;
+                      Path : Absolute_Path;
+                      Env  : Properties.Vector) return Root;
    --  From existing release
    --  Path must point to the session folder (parent of alire metadata folder)
 
    function Path (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
+
+   function Project_Paths (This : Root)
+                           return Utils.String_Set with
+     Pre => This.Is_Valid;
+   --  Return all the paths that should be set in GPR_PROJECT_PATH for the
+   --  solution in this root. This includes al releases' paths and any linked
+   --  directories.
 
    function Release (This : Root) return Releases.Release with
      Pre => This.Is_Valid;
@@ -80,10 +91,11 @@ private
    type Root (Valid : Boolean) is tagged record
       case Valid is
          when True =>
-            Path    : UString;
-            Release : Containers.Release_H;
+            Environment : Properties.Vector;
+            Path        : UString;
+            Release     : Containers.Release_H;
          when False =>
-            Reason  : UString;
+            Reason      : UString;
       end case;
    end record;
 
@@ -100,14 +112,18 @@ private
       (+This.Reason);
 
    function New_Root (Name : Crate_Name;
-                      Path : Absolute_Path) return Root is
+                      Path : Absolute_Path;
+                      Env  : Properties.Vector) return Root is
      (True,
+      Env,
       +Path,
       Containers.To_Release_H (Releases.New_Working_Release (Name)));
 
    function New_Root (R : Releases.Release;
-                      Path : Absolute_Path) return Root is
+                      Path : Absolute_Path;
+                      Env  : Properties.Vector) return Root is
      (True,
+      Env,
       +Path,
       Containers.To_Release_H (R));
 

@@ -190,7 +190,8 @@ package body Alr.Commands.Withing is
          New_Root  : constant Alire.Roots.Root :=
            Alire.Roots.New_Root
              (Root.Current.Release.Replacing (Dependencies => New_Deps),
-              Root.Current.Path);
+              Root.Current.Path,
+              Platform.Properties);
          New_Solution : constant Alire.Solutions.Solution :=
                           Alire.Solver.Resolve (New_Deps,
                                                 Platform.Properties,

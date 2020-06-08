@@ -5,6 +5,10 @@ with Alire.TOML_Index;
 
 package body Alire.Root is
 
+   -------------
+   -- Current --
+   -------------
+
    function Current return Roots.Root is
       use Alire.Directories;
       Path      : constant String := Directories.Detect_Root_Path;
@@ -18,7 +22,8 @@ package body Alire.Root is
          begin
             return Roots.New_Root
               (TOML_Index.Load_Release_From_File (File),
-               Path);
+               Path,
+               Platform_Properties);
          exception
             when E : others =>
                Trace.Debug ("Exception while loading crate file is:");
@@ -37,5 +42,15 @@ package body Alire.Root is
               " at current or parent locations");
       end if;
    end Current;
+
+   Environment : Properties.Vector;
+
+   function Platform_Properties return Properties.Vector
+   is (Environment);
+
+   procedure Set_Platform_Properties (Env : Properties.Vector) is
+   begin
+      Environment := Env;
+   end Set_Platform_Properties;
 
 end Alire.Root;
