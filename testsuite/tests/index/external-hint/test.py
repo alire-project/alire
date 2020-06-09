@@ -39,7 +39,7 @@ assert_match
 p = run_alr('show', 'crate_master', '--solve', '--system', quiet=False)
 
 assert_match(".*Dependencies \(external\):\n"
-             "   crate\*\n"
+             "   crate\* \(direct,hinted\)\n"
              "      Hint: This is a custom hint\n.*",
              p.out, flags=re.S)
 

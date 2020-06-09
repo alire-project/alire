@@ -46,3 +46,15 @@ def check_line_in(filename, line):
         else:
             assert False, 'Could not find {} in {}'.format(
                 repr(line), filename)
+
+
+def path_separator():
+    return '/' if os.name != 'nt' else '\\'
+
+
+# Add a 'with "something";' at the top of a project file
+def with_project(file, project):
+    with open(file, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write('with "{}";'.format(project) + '\n' + content)
