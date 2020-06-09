@@ -14,8 +14,6 @@ with GNATCOLL.VFS;
 
 package body Alire.Workspace is
 
-   package States renames Dependencies.States;
-
    use type Conditional.Dependencies;
 
    -------------------------
@@ -42,20 +40,17 @@ package body Alire.Workspace is
 
       Alire.Lockfiles.Write (Solution, Root.Lock_File);
 
-      --  Mark any unsolved / hinted dependencies as already deployed (in
-      --  practice, we don't have to deploy them).
+      --  Mark any dependencies without a corresponding regular release as
+      --  already deployed (in practice, we don't have to deploy them, and
+      --  dependents don't need to wait for their deployment).
 
-      for Dep of Solution.Dependencies_That (States.Is_Missing'Access)
-      loop
-         Deployed.Include (Dep.Crate);
+      for Dep of Solution.Required loop
+         if not Dep.Is_Solved then
+            Deployed.Include (Dep.Crate);
+         end if;
       end loop;
 
-      for Dep of Solution.Dependencies_That (States.Is_Hinted'Access)
-      loop
-         Deployed.Include (Dep.Crate);
-      end loop;
-
-      --  Deploy resolved dependencies:
+      --  Deploy regular resolved dependencies:
 
       while not Pending.Is_Empty loop
          Round := Round + 1;
@@ -71,9 +66,10 @@ package body Alire.Workspace is
 
             for Rel of Pending loop
 
-               --  Identify releases that don't have undeployed dependencies.
-               --  Until we track who introduces what dependency, we fall back
-               --  to enumerating all dependencies of a release on platform.
+               --  In the 1st step of each round we identify releases that
+               --  don't have undeployed dependencies. Until we track who
+               --  introduces what dependency, we fall back to enumerating
+               --  all dependencies of a release on platform.
 
                if (for some Dep of Enum (Rel.Dependencies (Env)) =>
                      not Deployed.Contains (Dep.Crate))
@@ -94,6 +90,9 @@ package body Alire.Workspace is
                   end if;
                end if;
             end loop;
+
+            --  In the 2nd step of each round we mark as deployed all releases
+            --  that were deployed in the 1st step of the round.
 
             if To_Remove.Is_Empty then
                raise Program_Error
