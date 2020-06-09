@@ -43,7 +43,10 @@ package body Alire.Pinning is
                     Solution : Solutions.Solution;
                     Crate    : Crate_Name)
                     return Solutions.Solution
-   is (Solution.Linking (Crate, URL));
+   is (Solution
+       .Unpinning (Crate)
+       .Linking (Crate, URL));
+   --  Just in case it was already pinned to a version, we remove that
 
    -----------
    -- Unpin --
