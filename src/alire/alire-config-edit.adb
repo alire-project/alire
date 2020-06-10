@@ -117,15 +117,8 @@ package body Alire.Config.Edit is
 
          --  Conversion failed
 
-         if Str (Str'First) /= '"' then
-            --  Try again with double quotes to interpret the value as a TOML
-            --  string.
-            return To_TOML_Value ('"' & Str & '"');
-         else
-
-            --  Invalid TOML value
-            return No_TOML_Value;
-         end if;
+         --  Interpret as a string
+         return Create_String (Str);
       else
          return Result.Value.Get ("key");
       end if;
