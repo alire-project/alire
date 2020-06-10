@@ -362,7 +362,7 @@ package body Alire.Solutions is
                     Alire.Index.Crate (Dep.Crate)
                     .Externals.Hints
                       (Name => Dep.Crate,
-                       Env  => Alire.Properties.No_Properties)
+                       Env  => Env)
                   loop
                      Trace.Log (TTY.Emph ("      Hint: ") & Hint, Level);
                   end loop;
