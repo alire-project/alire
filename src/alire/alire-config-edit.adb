@@ -1,4 +1,5 @@
 with Ada.Text_IO;
+with Ada.Directories;
 
 with TOML; use TOML;
 
@@ -27,9 +28,13 @@ package body Alire.Config.Edit is
 
    procedure Write_Config_File (Table : TOML_Value; Path : Absolute_Path) is
       use Ada.Text_IO;
-
+      use Ada.Directories;
       File : File_Type;
    begin
+
+      --  Create the directory for the config file, in case it doesn't exists
+      Create_Path (Containing_Directory (Path));
+
       Create (File, Out_File, Path);
       Trace.Debug ("Write config: '" & TOML.Dump_As_String (Table) & "'");
       Put (File, TOML.Dump_As_String (Table));
