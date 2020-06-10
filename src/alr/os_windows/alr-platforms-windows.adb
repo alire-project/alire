@@ -25,8 +25,8 @@ package body Alr.Platforms.Windows is
    --  FIXME, temporary address for development
    Msys2_Installer_Script     : constant String := "auto-install.js";
    Msys2_Installer_Script_URL : constant String :=
-     "https://raw.githubusercontent.com/Fabien-Chouteau/" &
-     "msys2-installer/patch-1/" & Msys2_Installer_Script;
+     "https://raw.githubusercontent.com/msys2/msys2-installer/master/" &
+     Msys2_Installer_Script;
 
    -------------------
    -- Set_Msys2_Env --
