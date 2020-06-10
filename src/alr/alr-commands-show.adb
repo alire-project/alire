@@ -73,7 +73,7 @@ package body Alr.Commands.Show is
                              Platform.Properties,
                              Cmd.Detail,
                              Always);
-               if not Needed.Valid then
+               if not Needed.Is_Complete then
                   Put_Line ("Dependencies cannot be met");
                end if;
             end;

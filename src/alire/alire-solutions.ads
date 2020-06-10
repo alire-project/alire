@@ -236,17 +236,6 @@ package Alire.Solutions is
      with Pre => This.Depends_On (Crate);
    --  Returns the solving state of a dependency in the solution
 
-   function Valid (This : Solution) return Boolean
-   is (This.Composition <= Hints);
-   --  Transitional function to limit changes in this patch (Valid was
-   --  previously a discriminant of Solution). A follow-up patch removes
-   --  the use of validity all around when it's not strictly necessary. We
-   --  currently consider hints to result in a valid solution, although this
-   --  is not a guarantee of buildability. The follow-up makes this distinction
-   --  moot (the user is better informed about what is available, externally
-   --  needed, or outright missing. TODO: deprecate this function in favor of
-   --  Is_Complete.
-
    --------------
    -- Mutation --
    --------------
