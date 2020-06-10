@@ -6,9 +6,7 @@ with Alr.Commands;
 with Alr.Platform.Init;
 with Alr.Platforms.Current;
 
---  Make sure the last chance handler is in the closure
 with Last_Chance_Handler;
-pragma Unreferenced (Last_Chance_Handler);
 
 procedure Alr.Main is
 begin
@@ -17,4 +15,7 @@ begin
    Trace.Detail ("alr build is " & Bootstrap.Status_Line);
 
    Commands.Execute;
+exception
+   when E : others =>
+      Last_Chance_Handler (E);
 end Alr.Main;
