@@ -25,10 +25,11 @@ else:
 
 # 2nd test: hint is displayed when the hint belongs to a dependency, on get
 
-p = run_alr('get', 'crate_master', quiet=False)
+p = run_alr('get', 'crate_master', '--force', quiet=False)
 
 assert_match
-("Warning: The following native dependencies are unavailable within Alire:\n"
+(".*"  # Skip previous user interaction and warning about incomplete solution
+ "Warning: The following native dependencies are unavailable within Alire:\n"
  "Warning:    crate\*\n"
  "Warning:       Hint: This is a custom hint\n"
  "Warning: They should be made available in the environment by the user.\n",
@@ -38,9 +39,12 @@ assert_match
 
 p = run_alr('show', 'crate_master', '--solve', '--system', quiet=False)
 
-assert_match(".*Dependencies \(external\):\n"
+assert_match(".*"   # Skip previous crate info
+             "Dependencies \(external\):\n"
              "   crate\* \(direct,hinted\)\n"
-             "      Hint: This is a custom hint\n.*",
+             "      Hint: This is a custom hint\n"
+             "Dependencies \(graph\):\n"
+             ".*",  # Skip solution graph
              p.out, flags=re.S)
 
 print('SUCCESS')
