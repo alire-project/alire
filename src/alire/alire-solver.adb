@@ -103,7 +103,7 @@ package body Alire.Solver is
                            Current : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean
-   is (Resolve (Deps, Props, Current, Options).Valid);
+   is (Resolve (Deps, Props, Current, Options).Is_Complete);
 
    -------------
    -- Resolve --
