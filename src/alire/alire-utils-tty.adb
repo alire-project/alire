@@ -14,6 +14,12 @@ package body Alire.Utils.TTY is
                                Message : String) return String;
 
    -------------------
+   -- Color_Enabled --
+   -------------------
+
+   function Color_Enabled return Boolean is (Use_Color);
+
+   -------------------
    -- Disable_Color --
    -------------------
 

@@ -9,6 +9,12 @@ package Alire.Utils.TTY with Preelaborate is
    --  Re-expose for clients
    package ANSI renames Standard.ANSI;
 
+   --------------------
+   -- Color enabling --
+   --------------------
+
+   function Color_Enabled return Boolean;
+
    procedure Disable_Color;
    --  Disables color/formatting output even when TTY is capable
 

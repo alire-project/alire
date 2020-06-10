@@ -635,6 +635,9 @@ package body Alr.Commands is
       then
          Alire.Utils.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable
+
+         Simple_Logging.ASCII_Only := False;
+         --  Also use a fancier busy spinner
       end if;
 
       if Raw_Arguments.Is_Empty then
