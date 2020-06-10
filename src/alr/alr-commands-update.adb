@@ -18,16 +18,14 @@ package body Alr.Commands.Update is
    -- Upgrade --
    -------------
 
-   procedure Upgrade (Interactive : Boolean;
-                      Force       : Boolean := False;
-                      Allowed     : Alire.Containers.Crate_Name_Sets.Set :=
+   procedure Upgrade (Allowed     : Alire.Containers.Crate_Name_Sets.Set :=
                         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
       Old     : constant Query.Solution :=
                   Root.Current.Solution;
    begin
 
-      --  Ensure requested crates are in solution first
+      --  Ensure requested crates are in solution first.
 
       for Crate of Allowed loop
          if not Old.Depends_On (Crate) then
@@ -36,7 +34,9 @@ package body Alr.Commands.Update is
          end if;
 
          if Old.Pins.Contains (Crate) then
-            Reportaise_Wrong_Arguments
+            --  The solver will never update a pinned crate, so we may allow
+            --  this to be attempted but it will have no effect.
+            Alire.Recoverable_Error
               ("Requested crate is pinned and cannot be updated: "
                & Alire.Utils.TTY.Name (Crate));
          end if;
@@ -51,34 +51,27 @@ package body Alr.Commands.Update is
                         Allowed,
                         Options => (Age    => Query_Policy,
                                     others => <>));
-         Diff    : constant Alire.Solutions.Diffs.Diff :=
-                     Old.Changes (Needed);
+         Diff    : constant Alire.Solutions.Diffs.Diff := Old.Changes (Needed);
       begin
-         if not Needed.Valid then
-            Reportaise_Command_Failed
-              ("Could not solve dependencies, update failed");
-         end if;
 
          --  Early exit when there are no changes
 
-         if not Force and not Diff.Contains_Changes then
-            if Interactive then
-               Trace.Info ("Nothing to update.");
+         if not Alire.Force and not Diff.Contains_Changes then
+            if not Needed.Is_Complete then
+               Trace.Warning
+                 ("There are missing dependencies"
+                  & " (use `alr with --solve` for details).");
             end if;
 
+            Trace.Info ("Nothing to update.");
             return;
          end if;
 
          --  Show changes and ask user to apply them
 
-         if Interactive then
-            if not User_Input.Confirm_Solution_Changes
-              (Diff,
-               Changed_Only => not Alire.Detailed)
-            then
-               Trace.Detail ("Update abandoned.");
-               return;
-            end if;
+         if not User_Input.Confirm_Solution_Changes (Diff) then
+            Trace.Detail ("Update abandoned.");
+            return;
          end if;
 
          --  Apply the update
@@ -124,23 +117,7 @@ package body Alr.Commands.Update is
          Index.Update_All;
       end if;
 
-      Upgrade (Interactive => True,
-               Force       => False,
-               Allowed     => Parse_Allowed);
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   procedure Execute (Interactive : Boolean;
-                      Force       : Boolean := False)
-   is
-   begin
-      Requires_Valid_Session;
-
-      Upgrade (Interactive => Interactive,
-               Force       => Force);
+      Upgrade (Allowed => Parse_Allowed);
    end Execute;
 
    ----------------------
