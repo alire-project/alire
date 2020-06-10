@@ -626,15 +626,13 @@ package body Alr.Commands is
       --  Raw_Arguments.
 
       if No_TTY then
-         Simple_Logging.Is_TTY := False;
+         Alire.Is_TTY := False;
       end if;
 
-      if Platform.Operating_System in Alire.Platforms.Windows or else
-        No_Color or else
-        No_TTY
+      if Platform.Operating_System not in Alire.Platforms.Windows and then
+        not No_Color and then
+        not No_TTY
       then
-         Alire.Utils.TTY.Disable_Color;
-      else
          Alire.Utils.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable
       end if;

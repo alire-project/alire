@@ -5,7 +5,7 @@ with Alire;
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
 
-with GNATCOLL.Terminal;
+with Interfaces.C_Streams;
 
 with Simple_Logging.Filtering;
 
@@ -141,18 +141,9 @@ package body Alire_Early_Elaboration is
    -------------------
 
    procedure TTY_Detection is
-      use GNATCOLL.Terminal;
-      Info : Terminal_Info;
+      use Interfaces.C_Streams;
    begin
-      Init_For_Stdout (Info);
-
-      --  Internally, GNATCOLL uses _istty to ascertain color availability, so
-      --  this serves us too to check if output is being redirected, in which
-      --  case we don't want certain log output to be emitted.
-
-      if not Has_Colors (Info) then
-         Simple_Logging.Is_TTY := False;
-      end if;
+      Simple_Logging.Is_TTY := isatty (fileno (stdout)) /= 0;
    end TTY_Detection;
 
 begin
