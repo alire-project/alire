@@ -7,7 +7,6 @@ with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.Utils;
-with Alire.Utils.YAML;
 with Alire.Utils.User_Input;
 with Alire.Config;
 with Alire.Config.Edit;
@@ -153,7 +152,7 @@ package body Alr.Platforms.Windows is
          --  Save msys2 install dir in the global config
          Cfg.Edit.Set (Path  => Cfg.Filepath (Cfg.Global),
                        Key   => "msys2.install_dir",
-                       Value => Alire.Utils.YAML.YAML_Stringify (Install_Dir));
+                       Value => Install_Dir);
       end if;
 
       return Alire.Outcome_Success;
