@@ -1,12 +1,12 @@
 with Alire;
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
-with Alire.Errors;
 
 with Alr.Bootstrap;
 with Alr.Commands;
-with Alr.OS_Lib;
 with Alr.Platform.Init;
 with Alr.Platforms.Current;
+
+with Last_Chance_Handler;
 
 procedure Alr.Main is
 begin
@@ -16,11 +16,6 @@ begin
 
    Commands.Execute;
 exception
-   --  Ensure we do not show an exception trace to unsuspecting users
    when E : others =>
-      Alire.Log_Exception (E);
-      Trace.Error (Alire.Errors.Get (E));
-      Trace.Error ("alr encountered an unexpected error,"
-                   & " re-run with -d for details.");
-      OS_Lib.Bailout (1);
+      Last_Chance_Handler (E);
 end Alr.Main;
