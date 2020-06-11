@@ -3,6 +3,30 @@ with Semantic_Versioning.Extended;
 
 package body Alire.Containers is
 
+   ---------------
+   -- Enumerate --
+   ---------------
+
+   function Enumerate (These : Conditional.Dependencies) return Dependency_Map
+   is
+
+      procedure Append (C     : in out Dependency_Map;
+                        V     : Dependencies.Dependency;
+                        Count : Ada.Containers.Count_Type := 1)
+      is
+         pragma Unreferenced (Count);
+      begin
+         C.Include (V.Crate, V);
+      end Append;
+
+      function Internal is new Conditional.For_Dependencies.Enumerate
+        (Collection => Dependency_Map,
+         Append     => Append);
+
+   begin
+      return Internal (These);
+   end Enumerate;
+
    ------------
    -- Insert --
    ------------

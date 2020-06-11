@@ -470,9 +470,10 @@ package body Alr.Commands is
                          Platform.Properties,
                          Alire.Solutions.Empty_Valid_Solution);
       begin
-         Alire.Lockfiles.Write (Solution,
-                                Platform.Properties,
-                                Checked.Lock_File);
+         Alire.Lockfiles.Write
+           (Solution,
+            Platform.Properties,
+            Checked.Lock_File);
       end;
    end Requires_Valid_Session;
 

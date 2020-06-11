@@ -1,3 +1,5 @@
+with Ada.Containers;
+
 with Alire.Crates.With_Releases;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
@@ -13,6 +15,28 @@ package body Alire.Solutions is
 
    package TTY renames Utils.TTY;
 
+   use type Ada.Containers.Count_Type;
+   use type Semantic_Versioning.Version;
+
+   -----------------------
+   -- Dependencies_That --
+   -----------------------
+
+   function Dependencies_That
+     (This  : Solution;
+      Check : not null access function (Dep : Dependency_State) return Boolean)
+      return Dependency_Map
+   is
+   begin
+      return Map : Dependency_Map do
+         for Dep of This.Dependencies loop
+            if Check (Dep) then
+               Map.Insert (Dep.Crate, Dep.As_Dependency);
+            end if;
+         end loop;
+      end return;
+   end Dependencies_That;
+
    -------------
    -- Changes --
    -------------
@@ -20,41 +44,216 @@ package body Alire.Solutions is
    function Changes (Former, Latter : Solution) return Diffs.Diff is
      (Diffs.Between (Former, Latter));
 
-   ------------------
-   -- Changing_Pin --
-   ------------------
+   ------------
+   -- Crates --
+   ------------
 
-   function Changing_Pin (This   : Solution;
-                          Name   : Crate_Name;
-                          Pinned : Boolean) return Solution
-   is
-      --  This temporary works around a tampering check
-      New_Releases : constant Release_Map :=
-                       This.Releases.Including
-                         (This.Releases (Name).With_Pin (Pinned));
+   function Crates (This : Solution) return Containers.Crate_Name_Sets.Set is
    begin
-      return This : Solution := Changing_Pin.This do
-         This.Releases := New_Releases;
+      return Set : Containers.Crate_Name_Sets.Set do
+         for Dep of This.Dependencies loop
+            Set.Include (Dep.Crate);
+         end loop;
       end return;
-   end Changing_Pin;
+   end Crates;
+
+   ---------------
+   -- Forbidden --
+   ---------------
+
+   function Forbidden (This : Solution;
+                       Env  : Properties.Vector)
+                       return Dependency_Map
+   is
+   begin
+      return Map : Dependency_Map do
+         for Rel of This.Releases loop
+            for Dep of Rel.Forbidden (Env) loop
+               Map.Merge (Dep.Value);
+            end loop;
+         end loop;
+      end return;
+   end Forbidden;
+
+   -------------
+   -- Forbids --
+   -------------
+
+   function Forbids (This    : Solution;
+                     Release : Alire.Releases.Release;
+                     Env     : Properties.Vector)
+                     return Boolean
+   --  First check stored releases' forbids against new release, then check new
+   --  release's forbids agains solution releases.
+   is ((for some Rel of This.Releases =>
+          (for some Dep of Rel.Forbidden (Env) =>
+                Release.Satisfies (Dep.Value))
+        or else
+          (for some Dep of Release.Forbidden (Env) =>
+               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value)))));
 
    ---------------
    -- Including --
    ---------------
 
-   function Including (This    : Solution;
-                       Release : Alire.Releases.Release)
+   function Including (This           : Solution;
+                       Release        : Alire.Releases.Release;
+                       Env            : Properties.Vector;
+                       Add_Dependency : Boolean := False)
                        return Solution
    is
    begin
-      if This.Valid then
-         return Result : Solution := This do
-            Result.Releases.Include (Release.Name, Release);
-         end return;
-      else
-         return This;
-      end if;
+      return Result : Solution := This do
+         if Add_Dependency and then not This.Depends_On (Release.Name) then
+            Result := Result.Depending_On (Release.To_Dependency.Value);
+         end if;
+
+         --  Mark dependency solved and store its release
+
+         Result.Dependencies :=
+           Result.Dependencies.Including
+             (Result.State (Release.Name).Solving (Release.Whenever (Env)));
+         --  TODO: remove this Whenever once dynamic expr can be exported
+
+         --  Check that there's no conflict with current solution
+
+         if Result.Forbids (Release, Env) then
+            --  The solver should take care, so this is an unexpected error
+            raise Program_Error with
+              "release " & Release.Milestone.TTY_Image
+              & " is forbidden by solution";
+         end if;
+
+      end return;
    end Including;
+
+   ---------------
+   -- Is_Better --
+   ---------------
+
+   function Is_Better (This, Than : Solution) return Boolean is
+
+      type Comparison is (Better, Equivalent, Worse);
+
+      ----------------------
+      -- Compare_Versions --
+      ----------------------
+
+      function Compare_Versions (This, Than : Solution) return Comparison is
+      begin
+
+         --  Check releases in both only
+
+         for Rel of This.Releases loop
+            if Than.Contains_Release (Rel.Name) then
+               if Than.Releases.Element (Rel.Name).Version < Rel.Version then
+                  return Better;
+               elsif
+                 Rel.Version < Than.Releases.Element (Rel.Name).Version
+               then
+                  return Worse;
+               end if;
+            end if;
+         end loop;
+
+         return Equivalent;
+      end Compare_Versions;
+
+      -----------------------------
+      -- Lexicographical_Compare --
+      -----------------------------
+
+      function Lexicographical_Compare (This, Than : Solution) return Boolean
+      is
+      begin
+         for Crate of This.Crates.Union (Than.Crates) loop
+            if This.Depends_On (Crate) and then not Than.Depends_On (Crate)
+            then
+               return True;
+            elsif not This.Depends_On (Crate) and then Than.Depends_On (Crate)
+            then
+               return False;
+            end if;
+         end loop;
+
+         return False; -- Identical
+      end Lexicographical_Compare;
+
+   begin
+
+      --  Prefer better compositions
+
+      if This.Composition < Than.Composition then
+         return True;
+      elsif This.Composition > Than.Composition then
+         return False;
+      end if;
+
+      --  Within complete solutions, prefer higher versions
+
+      if This.Composition = Releases then
+         case Compare_Versions (This, Than) is
+            when Better     => return True;
+            when Worse      => return False;
+            when Equivalent =>
+               case Compare_Versions (This => Than, Than => This) is
+                  when Better     => return False;
+                  when Worse      => return True;
+                  when Equivalent => null;
+               end case;
+         end case;
+
+         --  Disambiguate prefering a complete solution with less releases
+
+         if This.Releases.Length < Than.Releases.Length then
+            return True;
+         elsif This.Releases.Length > Than.Releases.Length then
+            return False;
+         end if;
+
+         --  At this point they must be identical; just in case keep comparing
+
+      end if;
+
+      --  Prefer more fulfilled releases when the solution is incomplete.
+      --  The rationale is that fewer solved releases will mean more unknown
+      --  missing indirect depdendencies.
+
+      if This.Releases.Length > Than.Releases.Length then
+         return True;
+      elsif This.Releases.Length < Than.Releases.Length then
+         return False;
+      end if;
+
+      --  Prefer more undetected hints; at least we know these dependencies
+      --  exist in some platforms and can be made available somehow.
+
+      if This.Hints.Length > Than.Hints.Length then
+         return True;
+      elsif This.Hints.Length < Than.Hints.Length then
+         return False;
+      end if;
+
+      --  Prefer fewer missing crates, although at this point who knows what
+      --  indirect dependencies we are missing through undetected/missing
+      --  dependencies.
+
+      if This.Misses.Length < Than.Misses.Length then
+         return True;
+      elsif This.Misses.Length > Than.Misses.Length then
+         return False;
+      end if;
+
+      --  Final disambiguation by any known versions in [partial] solutions
+
+      case Compare_Versions (This, Than) is
+         when Better     => return True;
+         when Worse      => return False;
+         when Equivalent => return Lexicographical_Compare (This, Than);
+            --  Final way out is lexicographical ordering of crates, and first
+            --  one missing a crate in the other solution is worse.
+      end case;
+   end Is_Better;
 
    ----------------------------------
    -- Libgraph_Easy_Perl_Installed --
@@ -64,6 +263,31 @@ package body Alire.Solutions is
    is (OS_Lib.Subprocess.Locate_In_Path (Paths.Scripts_Graph_Easy) /= "");
    --  Return whether libgraph_easy_perl_install is in path
 
+   ------------------
+   -- New_Solution --
+   ------------------
+
+   function New_Solution
+     (Env      : Properties.Vector := Properties.No_Properties;
+      Releases : Release_Map       := Containers.Empty_Release_Map;
+      Direct   : Dependency_Map    := Containers.Empty_Dependency_Map)
+      return Solution
+   is
+   begin
+      return This : Solution := (Solved => True,
+                                 others => <>)
+      do
+         for Rel of Releases loop
+            This := This.Including (Rel, Env, Add_Dependency => True);
+         end loop;
+
+         for Dep of Direct loop
+            This := This.Depending_On (Dep);
+            This.Set (Dep.Crate, Dependencies.States.Direct);
+         end loop;
+      end return;
+   end New_Solution;
+
    ----------
    -- Pins --
    ----------
@@ -71,36 +295,12 @@ package body Alire.Solutions is
    function Pins (This : Solution) return Conditional.Dependencies is
       use type Conditional.Dependencies;
    begin
-      if not This.Valid then
-         return Conditional.No_Dependencies;
-      end if;
-
       return Dependencies : Conditional.Dependencies do
-         for Release of This.Releases loop
-            if Release.Is_Pinned then
+         for Dep of This.Dependencies loop
+            if Dep.Is_Pinned then
                Dependencies :=
                  Dependencies and
-                 Conditional.New_Dependency (Release.Name,
-                                             Release.Version);
-            end if;
-         end loop;
-      end return;
-   end Pins;
-
-   ----------
-   -- Pins --
-   ----------
-
-   function Pins (This : Solution) return Release_Map is
-   begin
-      if not This.Valid then
-         return Containers.Empty_Release_Map;
-      end if;
-
-      return Map : Release_Map do
-         for Release of This.Releases loop
-            if Release.Is_Pinned then
-               Map.Insert (Release);
+                 Conditional.New_Dependency (Dep.Crate, Dep.Versions);
             end if;
          end loop;
       end return;
@@ -117,21 +317,23 @@ package body Alire.Solutions is
                     Level    : Trace.Levels) is
    begin
 
-      --  For invalid solutions be terse and gone
+      --  Outta here if nothing to print
 
-      if not This.Valid then
+      if not This.Solved then
          Trace.Log ("Dependencies (solution):", Level);
-         Trace.Log ("   No solution", Level);
+         Trace.Log ("   No solving attempted", Level);
+         return;
+      elsif This.Dependencies.Is_Empty then
          return;
       end if;
 
-      --  Continue for valid solutions
+      --  Print all releases first, followed by the rest of dependencies
 
       if not This.Releases.Is_Empty then
          Trace.Log ("Dependencies (solution):", Level);
          for Rel of This.Releases loop
             Trace.Log ("   " & Rel.Milestone.TTY_Image
-                       & (if Rel.Is_Pinned
+                       & (if This.State (Rel.Name).Is_Pinned
                          then TTY.Emph (" (pinned)")
                          else "")
                        & (if Detailed then
@@ -143,42 +345,59 @@ package body Alire.Solutions is
          end loop;
       end if;
 
-      --  Show unresolved hints, with their hinting message
+      --  Show other dependencies with their status and hints
 
-      if not This.Hints.Is_Empty then
+      if This.Composition >= Mixed then
          Trace.Log ("Dependencies (external):", Level);
-         for Dep of This.Hints loop
-            Trace.Log ("   " & Dep.TTY_Image, Level);
+         for Dep of This.Dependencies loop
+            if not This.State (Dep.Crate).Is_Solved then
+               Trace.Log ("   " & Dep.As_Dependency.TTY_Image, Level);
 
-            --  Look for hints. If we are relying on workspace
-            --  information the index may not be loaded, or have
-            --  changed, so we need to ensure the crate is indexed.
+               --  Look for hints. If we are relying on workspace information
+               --  the index may not be loaded, or have changed, so we need to
+               --  ensure the crate is indexed.
 
-            if Index.Exists (Dep.Crate) then
-               for Hint of
-                 Alire.Index.Crate (Dep.Crate)
-                 .Externals.Hints
-                   (Name => Dep.Crate,
-                    Env  => Alire.Properties.No_Properties)
-               loop
-                  Trace.Log (TTY.Emph ("      Hint: ") & Hint, Level);
-               end loop;
+               if Index.Exists (Dep.Crate) then
+                  for Hint of
+                    Alire.Index.Crate (Dep.Crate)
+                    .Externals.Hints
+                      (Name => Dep.Crate,
+                       Env  => Alire.Properties.No_Properties)
+                  loop
+                     Trace.Log (TTY.Emph ("      Hint: ") & Hint, Level);
+                  end loop;
+               end if;
             end if;
          end loop;
       end if;
 
-      if not (This.Releases.Is_Empty and then This.Hints.Is_Empty)
-      then
+      --  Show forbidden, if any
+
+      if not This.Forbidden (Env).Is_Empty then
+         Trace.Log ("Dependencies (forbidden):", Level);
+         for Dep of This.Forbidden (Env) loop
+            Trace.Log ("   " & Dep.TTY_Image, Level);
+         end loop;
+      end if;
+
+      --  Textual and graphical dependency graph
+
+      if not This.Dependencies.Is_Empty then
          Trace.Log ("Dependencies (graph):", Level);
          declare
-            Graph : constant Dependencies.Graphs.Graph :=
-                      Dependencies.Graphs.From_Solution (This, Env)
-                                         .Including (Root, Env);
+            With_Root : constant Solution :=
+                          This.Including (Root, Env, Add_Dependency => True);
+            Graph : constant Alire.Dependencies.Graphs.Graph :=
+                      Alire.Dependencies.Graphs
+                        .From_Solution (With_Root, Env);
          begin
-            Graph.Print (This.Including (Root), Prefix => "   ");
+            Graph.Print (With_Root, Prefix => "   ");
+
+            --  Optional graphical if possible. TODO: remove this warning once
+            --  show once.
 
             if Libgraph_Easy_Perl_Installed then
-               Graph.Plot (This.Including (Root));
+               Graph.Plot (With_Root);
             else
                Trace.Log ("Cannot display graphical graph: " &
                             Paths.Scripts_Graph_Easy & " not in path" &
@@ -189,6 +408,34 @@ package body Alire.Solutions is
       end if;
    end Print;
 
+   -----------------
+   -- Print_Hints --
+   -----------------
+
+   procedure Print_Hints (This : Solution;
+                          Env  : Properties.Vector) is
+   begin
+      if not This.Hints.Is_Empty then
+
+         Trace.Warning
+           ("The following external dependencies "
+            & "are unavailable within Alire:");
+
+         for Dep of This.Hints loop
+            Trace.Warning ("   " & Dep.Image);
+
+            for Hint of Index.Crate (Dep.Crate)
+                             .Externals.Hints (Dep.Crate, Env)
+            loop
+               Trace.Warning ("      Hint: " & Hint);
+            end loop;
+         end loop;
+
+         Trace.Warning
+           ("They should be made available in the environment by the user.");
+      end if;
+   end Print_Hints;
+
    ----------------
    -- Print_Pins --
    ----------------
@@ -196,16 +443,14 @@ package body Alire.Solutions is
    procedure Print_Pins (This : Solution) is
       Table : Utils.Tables.Table;
    begin
-      if not This.Valid then
-         Trace.Always ("There is no solution, hence there are no pins");
-      elsif not (for some Release of This.Releases => Release.Is_Pinned) then
+      if This.Dependencies_That (States.Is_Pinned'Access).Is_Empty then
          Trace.Always ("There are no pins");
       else
-         for Release of This.Releases loop
-            if Release.Is_Pinned then
+         for Dep of This.Dependencies loop
+            if Dep.Is_Pinned then
                Table
-                 .Append (Release.TTY_Name)
-                 .Append (TTY.Version (Release.Version.Image))
+                 .Append (TTY.Name (Dep.Crate))
+                 .Append (TTY.Version (Dep.Pin_Version.Image))
                  .New_Row;
             end if;
          end loop;
@@ -215,27 +460,33 @@ package body Alire.Solutions is
    end Print_Pins;
 
    --------------
-   -- Required --
+   -- Releases --
    --------------
 
-   function Required (This : Solution) return Containers.Crate_Name_Sets.Set is
+   function Releases (This : Solution) return Release_Map is
    begin
-      if not This.Valid then
-         return Containers.Crate_Name_Sets.Empty_Set;
-      end if;
-
-      --  Merge release and hint crates
-
-      return Set : Containers.Crate_Name_Sets.Set do
-         for Dep of This.Hints loop
-            Set.Include (Dep.Crate);
-         end loop;
-
-         for Rel of This.Releases loop
-            Set.Include (Rel.Name);
+      return Result : Release_Map do
+         for Dep of This.Dependencies loop
+            if Dep.Is_Solved then
+               Result.Insert (Dep.Crate, Dep.Release);
+            end if;
          end loop;
       end return;
-   end Required;
+   end Releases;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (This         : in out Solution;
+                  Crate        : Crate_Name;
+                  Transitivity : Dependencies.States.Transitivities)
+   is
+   begin
+      This.Dependencies :=
+        This.Dependencies.Including
+          (This.State (Crate).Setting (Transitivity));
+   end Set;
 
    ---------------
    -- With_Pins --
@@ -244,13 +495,9 @@ package body Alire.Solutions is
    function With_Pins (This, Src : Solution) return Solution is
    begin
       return Result : Solution := This do
-         if not Src.Valid then
-            return;
-         end if;
-
-         for Release of Src.Releases loop
-            if Release.Is_Pinned then
-               Result.Releases.Reference (Release.Name).Pin;
+         for Dep of Src.Dependencies loop
+            if Dep.Is_Pinned then
+               Result.Dependencies.Include (Dep.Crate, Dep);
             end if;
          end loop;
       end return;
@@ -264,138 +511,54 @@ package body Alire.Solutions is
 
       --  TOML keys used locally for loading and saving of solutions
 
-      Advisory     : constant String := "advisory";
-      Context      : constant String := "context";
-      Dependencies : constant String := "dependency";
-      Externals    : constant String := "externals";
-      Valid        : constant String := "valid";
+      Advisory : constant String := "advisory";
+      Context  : constant String := "context";
+      Solved   : constant String := "solved";
+      State    : constant String := "state";
 
    end Keys;
 
+   use TOML;
+
+   --  The structure used to store a solution is:
+   --
+   --  [context]
+   --  advisory
+   --  solved = boolean
+   --  version  # TBD: for breaking changes
+   --
+   --  [[state]]
+   --  One per dependency in Solution.Dependencies
+
    ---------------
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue)
-                       return Solution
-   is
-      --  We are parsing an internally generated structure, so any errors in it
-      --  are unexpected.
+   function From_TOML (From : TOML_Adapters.Key_Queue) return Solution is
+
+      This : Solution;
+
    begin
       Trace.Debug ("Reading solution from TOML...");
-      if From.Unwrap.Get (Keys.Context).Get (Keys.Valid).As_Boolean then
-         return This : Solution (Valid => True) do
-            Assert (From_TOML (This, From));
-         end return;
-      else
-         Trace.Debug ("Read invalid solution from TOML");
-         return (Valid => False);
+
+      --  Context
+
+      This.Solved := From.Checked_Pop (Keys.Context, TOML_Table) -- [context]
+                         .Get (Keys.Solved).As_Boolean;          -- solved
+
+      --  Load dependency statuses
+      if From.Unwrap.Has (Keys.State) then
+         This.Dependencies :=
+           States.Maps.From_TOML
+             (From.Descend
+                (From.Checked_Pop (Keys.State, TOML_Array),
+                 "states"));
       end if;
+
+      From.Report_Extra_Keys;
+
+      return This;
    end From_TOML;
-
-   ---------------
-   -- From_TOML --
-   ---------------
-
-   overriding
-   function From_TOML (This : in out Solution;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome
-   is
-      use TOML;
-
-      ------------------
-      -- Read_Release --
-      ------------------
-      --  Load a single release. From points to the crate name, which contains
-      --  crate.general and crate.version tables.
-      function Read_Release (From : TOML_Value) return Alire.Releases.Release
-      is
-         Name  : constant String := +From.Keys (1);
-         Crate : Crates.With_Releases.Crate :=
-                   Crates.With_Releases.New_Crate (+Name);
-
-         --  We can proceed loading the crate normally
-         OK    : constant Outcome :=
-                   Crate.From_TOML
-                     (From_TOML.From.Descend
-                        (Value   => From.Get (Name),
-                         Context => "crate"));
-      begin
-
-         --  Double checks
-
-         if From.Keys'Length /= 1 then
-            From_TOML.From.Checked_Error ("too many keys in stored crate");
-         end if;
-
-         OK.Assert;
-
-         if Crate.Releases.Length not in 1 then
-            From_TOML.From.Checked_Error
-              ("expected a single release, but found"
-               & Crate.Releases.Length'Img);
-         end if;
-
-         return Crate.Releases.First_Element;
-      end Read_Release;
-
-   begin
-      if not From.Unwrap.Get (Keys.Context).Get (Keys.Valid).As_Boolean then
-         From.Checked_Error ("cannot load invalid solution");
-      end if;
-
-      Trace.Debug ("Reading valid solution from TOML...");
-
-      --  Load proper releases, stored as a crate with a single release
-
-      declare
-         Releases     : TOML_Value;
-         Has_Releases : constant Boolean :=
-                          From.Pop (Keys.Dependencies, Releases);
-      begin
-         if Has_Releases then -- must be an array
-            for I in 1 .. Releases.Length loop
-               This.Releases.Insert (Read_Release (Releases.Item (I)));
-            end loop;
-         end if;
-      end;
-
-      --  Load external dependencies
-
-      declare
-         Externals     : TOML_Value;
-         Has_Externals : constant Boolean :=
-                           From.Pop (Keys.Externals, Externals);
-      begin
-         if Has_Externals then -- It's a table containing dependencies
-            for I in 1 .. Externals.Keys'Length loop
-               This.Hints.Merge
-                 (Dependencies.From_TOML
-                    (Key   => +Externals.Keys (I),
-                     Value => Externals.Get (Externals.Keys (I))));
-            end loop;
-         end if;
-      end;
-
-      return Outcome_Success;
-   end From_TOML;
-
-   -------------
-   -- To_TOML --
-   -------------
-
-   function To_TOML (This : Solution;
-                     Props : Properties.Vector) return TOML.TOML_Value
-   is
-      Static_Solution : Solution := This;
-   begin
-      if This.Valid then
-         Static_Solution.Releases := This.Releases.Whenever (Props);
-      end if;
-
-      return To_TOML (Static_Solution);
-   end To_TOML;
 
    -------------
    -- To_TOML --
@@ -403,21 +566,7 @@ package body Alire.Solutions is
 
    overriding
    function To_TOML (This : Solution) return TOML.TOML_Value is
-      use TOML;
    begin
-
-      --  The structure used to store a solution is:
-      --
-      --  [context]
-      --  Validity, advisory
-      --
-      --  [[dependency.crate_name.version]]
-      --  Dependency release description
-      --
-      --  [externals]
-      --  crate_name = "version set"
-      --  ...
-
       return Root : constant TOML_Value := Create_Table do
 
          --  Output advisory and validity
@@ -426,50 +575,19 @@ package body Alire.Solutions is
             Context : constant TOML_Value := Create_Table;
          begin
             Root.Set (Keys.Context, Context);
+
             Context.Set
               (Keys.Advisory,
                Create_String
                  ("THIS IS AN AUTOGENERATED FILE. DO NOT EDIT MANUALLY"));
-            Context.Set (Keys.Valid, Create_Boolean (This.Valid));
+
+            Context.Set
+              (Keys.Solved, Create_Boolean (This.Solved));
          end;
 
-         --  Early exit when the solution is invalid
+         --  Output the dependency statuses
 
-         if not This.Valid then
-            return;
-         end if;
-
-         --  Output proper releases (except detected externals, which will be
-         --  output as external hints)
-
-         declare
-            Deps : constant TOML_Value := Create_Array (TOML_Table);
-         begin
-            for Dep of This.Releases loop
-               declare
-                  Release : constant TOML_Value := Create_Table;
-               begin
-                  Deps.Append (Release);
-                  Release.Set (Dep.Name_Str, Dep.To_TOML);
-               end;
-            end loop;
-
-            Root.Set (Keys.Dependencies, Deps);
-         end;
-
-         --  Output external releases
-
-         declare
-            Externals : constant TOML_Value := Create_Table;
-         begin
-            if not This.Hints.Is_Empty then
-               for Dep of This.Hints loop
-                  Externals.Set (+Dep.Crate, Dep.To_TOML);
-               end loop;
-
-               Root.Set (Keys.Externals, Externals);
-            end if;
-         end;
+         Root.Set (Keys.State, This.Dependencies.To_TOML);
 
       end return;
    end To_TOML;

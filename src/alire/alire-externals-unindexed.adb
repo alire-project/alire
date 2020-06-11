@@ -13,7 +13,7 @@ package body Alire.Externals.Unindexed is
    is
       Result : Utils.String_Vector;
    begin
-      for Hint of Lists.To_List (This).Hints ("unused_name") loop
+      for Hint of Lists.To_List (This).Hints (+"unused_name") loop
          Result.Append (Hint);
       end loop;
 

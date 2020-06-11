@@ -57,7 +57,7 @@ private
 
    function New_Dependency (Dependent, Dependee : Alire.Crate_Name)
                             return Dependency is
-      (Dependent'Length, Dependee'Length, +Dependent, +Dependee);
+      (Dependent.Length, Dependee.Length, +Dependent, +Dependee);
 
    package Dep_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Dependency);

@@ -4,6 +4,10 @@ with Alire.Utils.TTY;
 
 package body Alire.Solutions.Diffs is
 
+   --  TODO: with the new solution tracking of all dependencies status, this
+   --  type could be made much simpler, even not needing to preprocess the
+   --  solutions. To keep in mind for any future large refactoring needed here.
+
    package TTY renames Utils.TTY;
 
    use type Semantic_Versioning.Version;
@@ -34,17 +38,17 @@ package body Alire.Solutions.Diffs is
       function Make_Status (Crate : Crate_Name;
                             Sol   : Solution) return Crate_Status is
       begin
-         if not Sol.Valid then
-            return (Status => Unsolved);
-
-         elsif Sol.Releases.Contains (Crate) then
+         if Sol.Releases.Contains (Crate) then
             return (Status  => Needed,
-                    Pinned  => Sol.Releases (Crate).Is_Pinned,
-                    Version => Sol.Releases (Crate).Version);
+                    Pinned  => Sol.State (Crate).Is_Pinned,
+                    Version => Sol.State (Crate).Release.Version);
 
          elsif Sol.Hints.Contains (Crate) then
             return (Status   => Hinted,
-                    Versions => Sol.Hints (Crate).Versions);
+                    Versions => Sol.Dependency (Crate).Versions);
+
+         elsif Sol.Depends_On (Crate) then
+            return (Status => Unsolved);
 
          else
             return (Status => Unneeded);
@@ -55,14 +59,14 @@ package body Alire.Solutions.Diffs is
       --  Get all involved crates, before and after
 
       Crates : constant Containers.Crate_Name_Sets.Set :=
-                 Former.Required or Latter.Required;
+                 Former.Crates or Latter.Crates;
    begin
       return This : Diff do
 
          --  Solution validities
 
-         This.Former_Valid := Former.Valid;
-         This.Latter_Valid := Latter.Valid;
+         This.Former_Complete := Former.Is_Complete;
+         This.Latter_Complete := Latter.Is_Complete;
 
          --  Store changes for each crate
 
@@ -119,7 +123,7 @@ package body Alire.Solutions.Diffs is
    ----------------------
 
    function Contains_Changes (This : Diff) return Boolean is
-     (This.Former_Valid /= This.Latter_Valid or else
+     (This.Former_Complete /= This.Latter_Complete or else
       (for some Change of This.Changes => Change.Former /= Change.Latter));
 
    ------------------------
@@ -167,10 +171,12 @@ package body Alire.Solutions.Diffs is
 
       Trace.Log ("", Level);
 
-      if not This.Latter_Valid then
-         Trace.Log (Prefix & "New solution is invalid.", Level);
-      elsif This.Latter_Valid and then not This.Former_Valid then
-         Trace.Log (Prefix & "New solution is valid.", Level);
+      if not This.Latter_Complete then
+         Trace.Log (Prefix & "New solution is " & TTY.Warn ("invalid."),
+                    Level);
+      elsif This.Latter_Complete and then not This.Former_Complete then
+         Trace.Log (Prefix & "New solution is " & TTY.OK ("valid."),
+                    Level);
       end if;
 
       --  Early exit if no changes

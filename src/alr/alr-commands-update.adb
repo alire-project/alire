@@ -31,7 +31,7 @@ package body Alr.Commands.Update is
       --  Ensure requested crates are in solution first
 
       for Crate of Allowed loop
-         if not Old.Releases.Contains (Crate) then
+         if not Old.Depends_On (Crate) then
             Reportaise_Wrong_Arguments ("Requested crate is not a dependency: "
                                         & Alire.Utils.TTY.Name (Crate));
          end if;
@@ -50,9 +50,8 @@ package body Alr.Commands.Update is
                      Alire.Workspaces.Update
                        (Platform.Properties,
                         Allowed,
-                        Options => (Age       => Query_Policy,
-                                    Detecting => <>,
-                                    Hinting   => <>));
+                        Options => (Age    => Query_Policy,
+                                    others => <>));
          Diff    : constant Alire.Solutions.Diffs.Diff :=
                      Old.Changes (Needed);
       begin
@@ -107,7 +106,7 @@ package body Alr.Commands.Update is
       begin
          return Set :  Alire.Containers.Crate_Name_Sets.Set do
             for I in 1 .. Num_Arguments loop
-               Set.Include (Alire.Crate_Name (Argument (I)));
+               Set.Include (+Argument (I));
             end loop;
          end return;
       exception

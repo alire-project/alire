@@ -241,7 +241,7 @@ package body Alire.Crates.With_Releases is
 
    function New_Crate (Name : Crate_Name) return Crate is
      (Crate'(General with
-             Len       => Name'Length,
+             Len       => Name.Length,
              Name      => Name,
              Externals => <>,
              Releases  => <>));

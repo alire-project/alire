@@ -10,7 +10,7 @@ import re
 # Hint that an external exists
 p = run_alr('show', 'make',
             complain_on_error=False, quiet=False)
-assert_eq('Not found: make with Newest version\n'
+assert_eq('Not found: make*\n'
           'There are external definitions for the crate. '
           'Use --external to show them.\n',
           p.out)

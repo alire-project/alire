@@ -59,26 +59,23 @@ package Alire with Preelaborate is
    --------------------
 
    function Is_Valid_Name (S : String) return Boolean;
-   function Error_In_Name return String;
-   --  Returns the problem with the last checked crate name. This is a global,
-   --  thread-unsafe kludge for a GNAT bug already reported. Since alr is
-   --  single-threaded, it is not a problem right now.
-   --  TODO: remove this once the bug is fixed.
+   function Error_In_Name (S : String) return String;
+   --  Returns the problem with the crate name
 
-   type Crate_Name is new String with
-     Dynamic_Predicate =>
-       Is_Valid_Name (String (Crate_Name)),
-     Predicate_Failure => -- This is the buggy predicate requiring workarounds
-       raise Alire.Checked_Error with Alire.Error_In_Name;
-       --  Alire.* prefix needed for GNAT bug workaround.
+   type Crate_Name (<>) is tagged private;
 
    overriding
    function "=" (L, R : Crate_Name) return Boolean;
    --  Crate names are case preserving but insensitive when compared.
 
-   overriding
    function "<" (L, R : Crate_Name) return Boolean;
    --  Likewise, we do not want capitalization to influence ordering.
+
+   function Length (This : Crate_Name) return Positive;
+
+   function As_String (This : Crate_Name) return String;
+
+   function TTY_Image (This : Crate_Name) return String;
 
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then
@@ -87,8 +84,8 @@ package Alire with Preelaborate is
    --  A type used to limit some things that are given names by the user
    --  (e.g., remote index names).
 
-   function "+" (P : Crate_Name) return String  is (String (P));
-   function "+" (P : String)  return Crate_Name is (Crate_Name (P));
+   function "+" (P : Crate_Name) return String;
+   function "+" (P : String)  return Crate_Name;
 
    subtype Description_String is String with Dynamic_Predicate =>
      Description_String'Length <= Max_Description_Length;
@@ -224,6 +221,20 @@ package Alire with Preelaborate is
                             Level : Simple_Logging.Levels := Debug);
 
 private
+
+   type Crate_Name (Len : Natural) is tagged record
+      Name : String (1 .. Len);
+   end record;
+
+   function Length (This : Crate_Name) return Positive is (This.Len);
+
+   function As_String (This : Crate_Name) return String is (This.Name);
+
+   function "+" (P : Crate_Name) return String is (P.Name);
+   function "+" (P : String) return Crate_Name
+   is (if Is_Valid_Name (P)
+       then (P'Length, P)
+       else raise Checked_Error with Error_In_Name (P));
 
    type Outcome is tagged record
       Success : Boolean := False;

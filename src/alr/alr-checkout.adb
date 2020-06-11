@@ -139,7 +139,9 @@ package body Alr.Checkout is
                Trace.Error ("Remaining releases:"
                             & Pending.Length'Img &
                               "; Dependency graph:");
-               Graph.Print (Alire.Solutions.New_Solution (Pending));
+               Graph.Print (Alire.Solutions.New_Solution
+                              (Platform.Properties,
+                               Releases => Pending));
                raise Program_Error
                  with "No release checked-out in round" & Round'Img;
             else
@@ -187,7 +189,9 @@ package body Alr.Checkout is
             --  are still unretrieved). Once they are checked out, the lockfile
             --  will be replaced with the complete solution.
             Alire.Lockfiles.Write
-              (Solution    => Alire.Solutions.Invalid_Solution,
+              (Solution    => (if R.Dependencies (Platform.Properties).Is_Empty
+                               then Alire.Solutions.Empty_Valid_Solution
+                               else Alire.Solutions.Empty_Invalid_Solution),
                Environment => Platform.Properties,
                Filename    => Root.Lock_File);
          end;

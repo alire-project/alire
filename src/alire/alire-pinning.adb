@@ -24,12 +24,12 @@ package body Alire.Pinning is
                          (Conditional.New_Dependency (Crate, Version) and
                             Dependencies,
                           Environment,
-                          Solution.Changing_Pin (Crate, Pinned => False));
+                          Solution.Unpinning (Crate));
    begin
       --  If the solution is valid, we enable the pin for the given release
 
       if New_Solution.Valid then
-         return New_Solution.Changing_Pin (Crate, Pinned => True);
+         return New_Solution.Pinning (Crate, Version);
       else
          return New_Solution;
       end if;
@@ -52,7 +52,7 @@ package body Alire.Pinning is
       return Solver.Resolve
         (Dependencies,
          Environment,
-         Solution.Changing_Pin (Crate, Pinned => False));
+         Solution.Unpinning (Crate));
    end Unpin;
 
 end Alire.Pinning;

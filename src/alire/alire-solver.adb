@@ -1,58 +1,25 @@
 with Ada.Containers; use Ada.Containers;
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Ordered_Sets;
 
-with Alire.Conditional.Operations;
+with Alire.Conditional;
 with Alire.Containers;
-with Alire.Dependencies;
+with Alire.Dependencies.States;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
-with Alire.Utils;
+with Alire.Utils.TTY;
 
 package body Alire.Solver is
 
-   package Solution_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Solution, Solutions."=");
-
    package Semver renames Semantic_Versioning;
+   package TTY renames Utils.TTY;
 
+   use all type Dependencies.States.Transitivities;
    use all type Semver.Extended.Version_Set;
 
-   subtype Dependency_Map is Solutions.Dependency_Map;
-
-   subtype Release_Map is Alire.Containers.Release_Map;
-   --  Releases with a concrete version (source and detected external releases)
-
-   Empty_Deps : constant Dependency_Map :=
-                  (Alire.Containers.Dependency_Maps.Empty_Map with
-                   null record);
-
-   Empty_Map : constant Release_Map :=
-                 (Alire.Containers.Crate_Release_Maps.Empty_Map with
-                  null record);
-
-   function "&" (L : Dependency_Map;
-                 R : Dependencies.Dependency)
-                 return Dependency_Map
-   is
-   begin
-      return This : Dependency_Map := L do
-         This.Merge (R);
-      end return;
-   end "&";
-
-   ----------------------
-   -- Dependency_Image --
-   ----------------------
-
-   function Dependency_Image
-     (Name     : Alire.Crate_Name;
-      Versions : Semantic_Versioning.Extended.Version_Set;
-      Policy   : Age_Policies := Newest)
-      return String
-   is ((+Name) &
-       (if Versions /= Semver.Extended.Any
-        then " version " & Versions.Image
-        else " with " & Utils.To_Mixed_Case (Policy'Img) & " version"));
+   package Solution_Sets is new Ada.Containers.Indefinite_Ordered_Sets
+     (Element_Type => Solution,
+      "<"          => Solutions.Is_Better,
+      "="          => Solutions."=");
 
    ------------
    -- Exists --
@@ -95,13 +62,11 @@ package body Alire.Solver is
 
       function Check (R : Index.Release) return Boolean is
       begin
-         if R.Name = Name then
-            if Allowed.Contains (R.Version) then
-               return True;
-            else
-               Trace.Debug ("Skipping unsatisfactory version: " &
-                              Image (R.Version));
-            end if;
+         if Allowed.Contains (R.Version) then
+            return True;
+         else
+            Trace.Debug ("Skipping unsatisfactory version: " &
+                           Image (R.Version));
          end if;
 
          return False;
@@ -124,22 +89,9 @@ package body Alire.Solver is
          end if;
       end if;
 
-      raise Query_Unsuccessful with "Release not found: " & (+Name);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   function Find (Name : String;
-                  Policy  : Age_Policies) return Release
-   is
-      Spec : constant Milestones.Allowed_Milestones :=
-        Milestones.Crate_Versions (Name);
-   begin
-      return Find (Spec.Crate,
-                   Spec.Versions,
-                   Policy);
+      raise Checked_Error with
+        "Release within requested version not found: "
+        & Dependencies.New_Dependency (Name, Allowed).Image;
    end Find;
 
    -------------------
@@ -153,149 +105,6 @@ package body Alire.Solver is
                            return Boolean
    is (Resolve (Deps, Props, Current, Options).Valid);
 
-   --------------------
-   -- Print_Solution --
-   --------------------
-
-   procedure Print_Solution (Sol : Solution) is
-      use Containers.Crate_Release_Maps;
-   begin
-      Trace.Debug ("Resolved:");
-      for Rel of Sol.Releases loop
-         Log ("  " & Rel.Milestone.Image, Debug);
-      end loop;
-
-      if Sol.Hints.Is_Empty then
-         Trace.Debug ("No external hints needed.");
-      else
-         Trace.Debug ("Hinted:");
-         for Dep of Sol.Hints loop
-            Log ("  " & Dep.Image, Debug);
-         end loop;
-      end if;
-   end Print_Solution;
-
-   ------------------------
-   -- Add_Dep_As_Release --
-   ------------------------
-   --  Declared for use with Materialize instance below.
-
-   procedure Add_Dep_Release (Sol   : in out Release_Map;
-                              Dep   :        Types.Dependency;
-                              Count :        Count_Type := 1)
-   is
-      pragma Unreferenced (Count);
-   begin
-      if not Dep.Versions.Is_Single_Version then
-         raise Constraint_Error with "Materialization requires exact versions";
-      end if;
-
-      Sol.Insert (Dep.Crate,
-                  Find (Dep.Crate, Dep.Versions, Newest));
-   end Add_Dep_Release;
-
-   -----------------
-   -- Materialize --
-   -----------------
-
-   function Materialize is new Alire.Conditional.For_Dependencies.Materialize
-     (Release_Map,
-      Add_Dep_Release);
-
-   -----------------
-   -- Is_Complete --
-   -----------------
-
-   function Is_Complete (Deps  : Types.Platform_Dependencies;
-                         Props : Properties.Vector;
-                         Sol   : Solution)
-                         return Boolean is
-
-      use Alire.Conditional.For_Dependencies;
-
-      -----------------
-      -- Check_Value --
-      -----------------
-
-      function Check_Value return Boolean is
-      begin
-         for R of Sol.Releases loop
-            if R.Satisfies (Deps.Value) then
-               Trace.Debug ("SOLVER:CHECK " & R.Milestone.Image & " satisfies "
-                            & Deps.Image_One_Line);
-
-               --  Check in turn that the release dependencies are satisfied
-               --  too.
-               return Is_Complete (R.Dependencies (Props), Props, Sol);
-            end if;
-         end loop;
-
-         for Dep of Sol.Hints loop
-            if Dep.Crate = Deps.Value.Crate then
-
-               --  Hints are unmet dependencies, that may have in turn other
-               --  dependencies. These are unknown at this point though, so we
-               --  can only report that a Hint indeed matches a dependency.
-
-               Trace.Debug ("SOLVER:CHECK " & Dep.Image & " HINTS "
-                            & Deps.Image_One_Line);
-
-               return True;
-            end if;
-         end loop;
-
-         Trace.Debug ("SOLVER:CHECK Solution fails to satisfy " &
-                        Deps.Image_One_Line);
-         return False;
-      end Check_Value;
-
-      ----------------------
-      -- Check_And_Vector --
-      ----------------------
-
-      function Check_And_Vector return Boolean is
-      begin
-         for I in Deps.Iterate loop
-            if not Is_Complete (Deps (I), Props, Sol) then
-               return False;
-            end if;
-         end loop;
-         return True;
-      end Check_And_Vector;
-
-      ---------------------
-      -- Check_Or_Vector --
-      ---------------------
-
-      function Check_Or_Vector return Boolean is
-      begin
-         for I in Deps.Iterate loop
-            if Is_Complete (Deps (I), Props, Sol) then
-               return True;
-            end if;
-         end loop;
-         return False;
-      end Check_Or_Vector;
-
-   begin
-      if Deps.Is_Empty then
-         return True;
-      end if;
-
-      if Deps.Is_Value then
-         return Check_Value;
-      elsif Deps.Is_Vector then
-         if Deps.Conjunction = Anded then
-            return Check_And_Vector;
-         else
-            return Check_Or_Vector;
-         end if;
-      else
-         raise Program_Error
-              with "Requisites should be already evaluated at this point";
-      end if;
-   end Is_Complete;
-
    -------------
    -- Resolve --
    -------------
@@ -306,76 +115,84 @@ package body Alire.Solver is
                      Options : Query_Options := Default_Options)
                      return Solution
    is
+      Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies...");
+
       use Alire.Conditional.For_Dependencies;
 
       --  On the solver internal operation: the solver recursively tries all
       --  possible dependency combinations, in depth-first order. This means
       --  that, for a given dependency, all satisfying releases are attempted
-      --  in different exploration branches. Once a search branch finds a
-      --  complete solution, it is added to the following global pool of
-      --  solutions. Likewise, if a branch cannot complete a solution, it
-      --  simply stops its exploration. The search status in each branch is
-      --  carried in a number of lists/trees that are the arguments of the
-      --  Expand internal procedure (this could be bundled in a single State
-      --  record at some point):
+      --  in different exploration branches. Once a search branch exhausts
+      --  all dependencies, successfully solved or not, it is added to the
+      --  following global pool of solutions. The search status in each branch
+      --  is stored in a number of trees that are the arguments of the Expand
+      --  internal procedure, and in a Solution that is being incrementally
+      --  built.
 
-      Solutions : Solution_Lists.List;
-      --  We store here all valid solutions found. The solver is currently
-      --  exhaustive in that it will not stop after the first solution, but
-      --  will keep going until all possibilities are exhausted. This was done
-      --  for test purposes, to verify that the solver is indeed complete.
-      --  The solver is greedily guided by the Age_Policy, and the first found
-      --  solution is returned after the solving ends. It might be useful to
-      --  use some other criterion, like Pareto (e.g. returning the solution
-      --  where no release can be upgraded without degrading some other one).
-      --  On the other hand, if at some point resolution starts to take too
-      --  much time, it may be useful to be able to select the solver behavior
-      --  (e.g. stop after the first solution is found).
+      Solutions : Solution_Sets.Set;
+      --  We store here all solutions found. The solver is currently exhaustive
+      --  in that it will not stop after the first solution, but will keep
+      --  going until all possibilities are exhausted. If, at some point,
+      --  resolution starts to take too much time, it may be useful to be able
+      --  to select the solver behavior (e.g. stop after the first complete
+      --  solution is found).
 
-      --------------------
-      -- Check_Complete --
-      --------------------
+      Dupes : Natural := 0;
+      --  Some solutions are found twice when some dependencies are subsets of
+      --  other dependencies.
 
-      procedure Check_Complete (Deps : Types.Platform_Dependencies;
-                                Sol  : Solution) is
-         --  Note: these Deps may include more than the ones requested to
-         --  solve, as indirect dependencies are progressively added.
+      --------------
+      -- Complete --
+      --------------
+
+      function Complete return Natural is
       begin
-         if Is_Complete (Deps, Props, Sol) then
-            Solutions.Append (Sol);
-            Trace.Debug ("SOLVER: solution FOUND for " & Deps.Image_One_Line);
-            Print_Solution (Sol);
-         end if;
-      end Check_Complete;
+         return Count : Natural := 0 do
+            for Sol of Solutions loop
+               if Sol.Is_Complete then
+                  Count := Count + 1;
+               end if;
+            end loop;
+         end return;
+      end Complete;
+
+      -------------
+      -- Partial --
+      -------------
+
+      function Partial return Natural
+      is (Natural (Solutions.Length) - Complete);
 
       ------------
       -- Expand --
       ------------
 
       procedure Expand (Expanded,
-                        --  Nodes firmly in requisite tree
+                        --  Nodes already processed
 
-                        Current,
-                        --  Next node to consider
+                        Target,
+                        --  Next subtree to consider
 
                         Remaining : Types.Platform_Dependencies;
                         --  Nodes pending to be considered
 
-                        Frozen    : Release_Map;
-                        --  Releases in current solution
-
-                        Forbidden : Types.Forbidden_Dependencies;
-                        --  Releases that conflict with current solution
-
-                        Hints     : Dependency_Map)
-                        --  Externals that supply a dependency
+                        Solution  : Alire.Solutions.Solution
+                        --  Partial or complete solution that stores releases
+                        --  and dependencies processed up to now
+                       )
       is
 
          ------------------
          -- Expand_Value --
          ------------------
 
-         procedure Expand_Value (Dep : Types.Dependency) is
+         procedure Expand_Value (Dep : Dependencies.Dependency) is
+
+            --  Ensure the dependency exists in the solution, so the following
+            --  procedures can safely count on it being there:
+
+            Solution : constant Alire.Solutions.Solution :=
+                         Expand.Solution.Depending_On (Dep);
 
             -----------
             -- Check --
@@ -383,147 +200,170 @@ package body Alire.Solver is
 
             procedure Check (R : Release) is
                use Alire.Containers;
-               package Cond_Ops renames Conditional.Operations;
             begin
 
                --  We first check that the release matches the dependency we
-               --  are attempting to resolve, in which case we check if it is
-               --  a valid candidate taking into account the following cases:
+               --  are attempting to resolve, in which case we check whether
+               --  it is a valid candidate by taking into account the following
+               --  cases:
 
-               if Dep.Crate = R.Name then
+               --  A possibility is that the dependency was already frozen
+               --  previously (it was a dependency of an earlierly frozen
+               --  release). If the frozen version also satisfied the
+               --  current dependency, we may continue along this branch,
+               --  with this dependency out of the picture.
 
-                  --  A possibility is that the dependency was already frozen
-                  --  previously (it was a dependency of an earlierly frozen
-                  --  release). If the frozen version also satisfied the
-                  --  current dependency, we may continue along this branch,
-                  --  with this dependency out of the picture.
-
-                  if Frozen.Contains (R.Name) then
-                     if Dep.Versions.Contains (R.Version) then
-                        --  Continue along this tree
-                        Expand (Expanded,
-                                Remaining,
-                                Empty,
-                                Frozen,
-                                Forbidden,
-                                Hints);
-                     else
-                        Trace.Debug
-                          ("SOLVER: discarding tree because of " &
-                             "conflicting FROZEN release: " &
-                             R.Milestone.Image & " does not satisfy " &
-                             Dep.Image & " in tree " &
-                             Tree'(Expanded
-                                   and Current
-                                   and Remaining).Image_One_Line);
-                     end if;
-
-                  --  If the alias of the candidate release is already in the
-                  --  frozen list, the candidate is incompatible since another
-                  --  crate as already provided this dependency:
-
-                  elsif Frozen.Contains (R.Provides) then
+               if Solution.Releases.Contains (R.Name) then
+                  if R.Satisfies (Dep) then
+                     --  Continue along this tree
+                     Expand (Expanded  => Expanded,
+                             Target    => Remaining,
+                             Remaining => Empty,
+                             Solution  => Solution);
+                  else
                      Trace.Debug
                        ("SOLVER: discarding tree because of " &
-                          "conflicting PROVIDES release: " &
-                          R.Milestone.Image & " provides " & (+R.Provides) &
-                          " already in tree " &
+                          "conflicting FROZEN release: " &
+                          R.Milestone.Image & " does not satisfy " &
+                          Dep.Image & " in tree " &
                           Tree'(Expanded
-                                and Current
-                                and Remaining).Image_One_Line);
-
-                  --  If the candidate release is forbidden by a previously
-                  --  resolved dependency, the candidate release is
-                  --  incompatible and we may stop search along this branch.
-
-                  elsif Cond_Ops.Contains (Forbidden, R) then
-                     Trace.Debug
-                       ("SOLVER: discarding tree because of" &
-                          " FORBIDDEN release: " &
-                          R.Milestone.Image &
-                          " forbidden by some already in tree " &
-                          Tree'(Expanded
-                                and Current
-                                and Remaining).Image_One_Line);
-
-                  --  Conversely, if the candidate release forbids some of the
-                  --  frozen crates, it is incompatible and we can discard it:
-
-                  elsif Cond_Ops.Contains_Some
-                    (R.Forbids (Props), Frozen)
-                  then
-                     Trace.Debug
-                       ("SOLVER: discarding tree because " &
-                          "candidate FORBIDS frozen release: " &
-                          R.Milestone.Image &
-                          " forbids some already in tree " &
-                          Tree'(Expanded
-                                and Current
-                                and Remaining).Image_One_Line);
-
-                  --  After all these checks, the candidate release must belong
-                  --  to a crate that is still unfrozen, so it is a valid
-                  --  candidate. If it satisfies the dependency version set,
-                  --  and is available in the current platform, we freeze the
-                  --  crate to the candidate version and this dependency is
-                  --  done along this search branch:
-
-                  elsif -- First time we see this crate in the current branch.
-                    Dep.Versions.Contains (R.Version) and then
-                    R.Is_Available (Props)
-                  then
-                     Trace.Debug
-                       ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
-                          " to satisfy " & Dep.Image &
-                        (if R.Name /= R.Provides
-                           then " also providing " & (+R.Provides)
-                           else "") &
-                          " adding" &
-                          R.Dependencies (Props).Leaf_Count'Img &
-                          " dependencies to tree " &
-                          Tree'(Expanded
-                                and Current
-                                and Remaining
-                                and R.Dependencies
-                                  (Props)).Image_One_Line);
-
-                     Expand (Expanded and R.To_Dependency,
-                             Remaining and R.Dependencies (Props),
-                             Empty,
-                             Frozen.Inserting (R),
-                             Forbidden and R.Forbids (Props),
-                             Hints);
-
-                  --  Finally, even a valid candidate may not satisfy version
-                  --  restrictions, or not be available in the current
-                  --  platform, in which case this search branch is
-                  --  exhausted without success:
-
-                  else
-                     --  TODO: we could be more specific by actually
-                     --  identifying the reason for rejecting the release
-                     --  in the following log message:
-                     Trace.Debug
-                       ("SOLVER: discarding search branch because "
-                        & "candidate FAILS to fulfil version "
-                        & R.Milestone.Image
-                        & ", or is unavailable in target platform, "
-                        & "when the search tree was "
-                        & Tree'(Expanded
-                                and Current
+                                and Target
                                 and Remaining).Image_One_Line);
                   end if;
 
+               --  If the alias of the candidate release is already in the
+               --  frozen list, the candidate is incompatible since another
+               --  crate has already provided this dependency:
+
+               elsif Solution.Releases.Contains (R.Provides) then
+                  Trace.Debug
+                    ("SOLVER: discarding tree because of " &
+                       "conflicting PROVIDES release: " &
+                       R.Milestone.Image & " provides " & (+R.Provides) &
+                       " already in tree " &
+                       Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
+               --  If the candidate release is forbidden by a previously
+               --  resolved dependency, the candidate release is
+               --  incompatible and we may stop search along this branch.
+
+               elsif Solution.Forbids (R, Props)
+               then
+                  Trace.Debug
+                    ("SOLVER: discarding tree because of" &
+                       " FORBIDDEN release: " &
+                       R.Milestone.Image &
+                       " forbidden by current solution when tree is " &
+                       Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
+               --  After all these checks, the candidate release must belong to
+               --  a crate that is still unfrozen, so it is a valid new crate
+               --  and release to consider. First, check version compliance:
+
+               elsif not R.Satisfies (Dep) then
+                  Trace.Debug
+                    ("SOLVER: discarding search branch because "
+                     & R.Milestone.Image & " FAILS to fulfil dependency "
+                     & Dep.TTY_Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
+               --  Or it may be that, even being a valid version, it's not for
+               --  this environment.
+
+               elsif not R.Is_Available (Props) then
+
+                  Trace.Debug
+                    ("SOLVER: discarding search branch because "
+                     & R.Milestone.Image & " is UNAVAILABLE"
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
+               --  If we reached here, the release fulfils the dependency and
+               --  it's a first time seen, so we add it to the solution.
+
                else
-                  --  Not even same crate, this is related to the fixme below.
-                  null;
+                  Trace.Debug
+                    ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
+                       " to satisfy " & Dep.TTY_Image &
+                     (if R.Name /= R.Provides
+                        then " also providing " & (+R.Provides)
+                        else "") &
+                       " adding" &
+                       R.Dependencies (Props).Leaf_Count'Img &
+                       " dependencies to tree " &
+                       Tree'(Expanded
+                             and Target
+                             and Remaining
+                             and R.Dependencies (Props)).Image_One_Line);
+
+                  Expand (Expanded  => Expanded and R.To_Dependency,
+                          Target    => Remaining and R.Dependencies (Props),
+                          Remaining => Empty,
+                          Solution  => Solution.Including (R, Props));
                end if;
             end Check;
 
+            --------------------
+            -- Expand_Missing --
+            --------------------
+
+            procedure Expand_Missing (Dep : Alire.Dependencies.Dependency)
+            is
+            begin
+               if Options.Completeness = Also_Incomplete then
+
+                  Trace.Debug
+                    ("SOLVER: marking MISSING the crate " & Dep.Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
+                  Expand (Expanded  => Expanded,
+                          Target    => Remaining,
+                          Remaining => Empty,
+                          Solution  => Solution.Missing (Dep));
+
+               else
+                  Trace.Debug
+                    ("SOLVER: discarding solution MISSING crate " & Dep.Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+               end if;
+            end Expand_Missing;
+
          begin
-            if Frozen.Contains (Dep.Crate) then
-               --  Cut search once a crate is frozen
-               Check (Frozen (Dep.Crate));
+
+            if Solution.Releases.Contains (Dep.Crate) then
+
+               --  Cut search once a crate is frozen, by checking the
+               --  compatibility of the already frozen release:
+
+               Check (Solution.Releases.Element (Dep.Crate));
+
+            elsif
+              Current.Depends_On (Dep.Crate) and then
+              Current.State (Dep.Crate).Is_Pinned and then
+              Current.State (Dep.Crate).Is_Solved
+            then
+
+               --  For an existing pinned release, we try first to reuse the
+               --  stored release instead of looking for another release with
+               --  the same version (which will be the same one anyway for a
+               --  same index).
+
+               Check (Current.Releases.Element (Dep.Crate));
 
             elsif Index.Exists (Dep.Crate) then
 
@@ -538,47 +378,48 @@ package body Alire.Solver is
 
                --  Check the releases now:
 
-               if Options.Age = Newest then
-                  for R of reverse Index.Crate (Dep.Crate).Releases loop
-                     Check (R);
-                  end loop;
-               else
-                  for R of Index.Crate (Dep.Crate).Releases loop
-                     Check (R);
-                  end loop;
-               end if;
+               for R of reverse Index.Crate (Dep.Crate).Releases loop
+                  Check (R);
+               end loop;
 
                --  Beside normal releases, an external may exist for the
                --  crate, in which case we hint the crate instead of failing
                --  resolution (if the external failed to find its releases).
 
-               if Options.Hinting = Hint and then
-                 not Index.Crate (Dep.Crate).Externals.Is_Empty
-               then
+               if not Index.Crate (Dep.Crate).Externals.Is_Empty then
                   Trace.Debug
                     ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
                        " via EXTERNAL to satisfy " & Dep.Image &
                        " without adding dependencies to tree " &
                        Tree'(Expanded
-                       and Current
-                       and Remaining).Image_One_Line);
+                             and Target
+                             and Remaining).Image_One_Line);
 
-                  Expand (Expanded,
-                          Remaining,
-                          Empty,
-                          Frozen,
-                          Forbidden,
-                          Hints & Dep);
+                  Expand (Expanded  => Expanded,
+                          Target    => Remaining,
+                          Remaining => Empty,
+                          Solution  => Solution.Hinting (Dep));
+
                end if;
 
+               --  There may be a less bad solution if we leave this crate out
+
+               Expand_Missing (Dep);
+
             else
+
+               --  The crate plainly doesn't exist in our loaded catalog, so
+               --  mark it as missing an move on:
+
                Trace.Debug
-                 ("SOLVER: discarding search branch because"
-                  & " index LACKS the crate " & Dep.Image
+                 ("SOLVER: catalog LACKS the crate " & Dep.Image
                   & " when the search tree was "
                   & Tree'(Expanded
-                    and Current
-                    and Remaining).Image_One_Line);
+                          and Target
+                          and Remaining).Image_One_Line);
+
+               Expand_Missing (Dep);
+
             end if;
          end Expand_Value;
 
@@ -588,12 +429,10 @@ package body Alire.Solver is
 
          procedure Expand_And_Vector is
          begin
-            Expand (Expanded,
-                    Current.First_Child,
-                    Current.All_But_First_Children and Remaining,
-                    Frozen,
-                    Forbidden,
-                    Hints);
+            Expand (Expanded  => Expanded,
+                    Target    => Target.First_Child,
+                    Remaining => Target.All_But_First_Children and Remaining,
+                    Solution  => Solution);
          end Expand_And_Vector;
 
          ----------------------
@@ -602,48 +441,85 @@ package body Alire.Solver is
 
          procedure Expand_Or_Vector is
          begin
-            for I in Current.Iterate loop
-               Expand (Expanded,
-                       Current (I),
-                       Remaining,
-                       Frozen,
-                       Forbidden,
-                       Hints);
+            for I in Target.Iterate loop
+               Expand (Expanded  => Expanded,
+                       Target    => Target (I),
+                       Remaining => Remaining,
+                       Solution  => Solution);
             end loop;
          end Expand_Or_Vector;
 
+         --------------------
+         -- Store_Finished --
+         --------------------
+
+         procedure Store_Finished (Solution : Alire.Solutions.Solution) is
+            Pre_Length : constant Count_Type := Solutions.Length;
+         begin
+            Trace.Debug ("SOLVER: tree FULLY expanded as: "
+                         & Expanded.Image_One_Line
+                         & " complete: " & Solution.Is_Complete'Img
+                         & "; composition: " & Solution.Composition'Img);
+
+            Solutions.Include (Solution);
+
+            if Pre_Length = Solutions.Length then
+               Dupes := Dupes + 1;
+            end if;
+
+            Progress.Step ("Solving dependencies... "
+                           & Utils.Trim (Complete'Img) & "/"
+                           & Utils.Trim (Partial'Img) & "/"
+                           & Utils.Trim (Dupes'Image)
+                           & " (complete/partial/dupes)");
+         end Store_Finished;
+
       begin
-         if Current.Is_Empty then
+         if Target.Is_Empty then
+
+            --  This is a completed search branch, be the solution complete or
+            --  not.
+
             if Remaining.Is_Empty then
-               Trace.Debug ("SOLVER: tree FULLY expanded as: " &
-                              Expanded.Image_One_Line);
-               Check_Complete
-                 (Deps,
-                  Alire.Solutions.New_Solution
-                    (Releases => Materialize (Expanded, Props),
-                     Hints    => Hints));
+
+               Store_Finished (Solution);
                return;
+
             else
-               Expand (Expanded,
-                       Remaining,
-                       Empty,
-                       Frozen,
-                       Forbidden,
-                       Hints);
+
+               --  Take the remaining tree and make it the current target for
+               --  solving, since we already exhausted the previous target.
+
+               Expand (Expanded  => Expanded,
+                       Target    => Remaining,
+                       Remaining => Empty,
+                       Solution  => Solution);
             end if;
          end if;
 
-         if Current.Is_Value then
-            Expand_Value (Current.Value);
-         elsif Current.Is_Vector then
-            if Current.Conjunction = Anded then
+         if Target.Is_Value then
+
+            --  We are tackling a new dependency that may have been seen
+            --  previously. For that reason we need to: 1) Recheck releases in
+            --  the solution against this new dependency 2) Be sure to consider
+            --  the merged dependencies for this crate when looking for new
+            --  releases. 1) is done inside Expand_Value (the first check)
+
+            --  2 is done here: first add/merge new dep, then use it for expand
+
+            Expand_Value
+              (Solution.Depending_On (Target.Value) -- add or merge dependency
+               .Dependency (Target.Value.Crate));   -- and use it in expansion
+
+         elsif Target.Is_Vector then
+            if Target.Conjunction = Anded then
                Expand_And_Vector;
             else
                Expand_Or_Vector;
             end if;
          else
             raise Program_Error
-              with "Requisites should be evaluated prior to Resolve";
+              with "Dynamic dependency trees cannot be resolved";
          end if;
       end Expand;
 
@@ -653,34 +529,98 @@ package body Alire.Solver is
       --  can only be solved with the pinned version, and they are attempted
       --  first to avoid wasteful trial-and-error with other versions.
 
+      Solution : constant Alire.Solutions.Solution :=
+                   Alire.Solutions.Empty_Valid_Solution;
+      --  Valid solution in the sense that solving has been attempted
+
    begin
+
+      --  Get the trivial case out of the way
+
       if Full_Dependencies.Is_Empty then
          Trace.Debug ("Returning trivial solution for empty dependencies");
-         return Alire.Solutions.Empty_Valid_Solution;
+         return Solution;
       end if;
 
+      --  Otherwise expand the full dependencies
+
       Expand (Expanded  => Empty,
-              Current   => Full_Dependencies,
+              Target    => Full_Dependencies,
               Remaining => Empty,
-              Frozen    => Empty_Map,
-              Forbidden => Empty,
-              Hints     => Empty_Deps);
+              Solution  => Solution);
+
+      --  Once Expand returns the complete recursive exploration has ended.
+      --  There must exist at least one incomplete solution.
 
       if Solutions.Is_Empty then
-         Trace.Detail ("Dependency resolution failed");
-         return Alire.Solutions.Invalid_Solution;
+         if Options.Completeness = Only_Complete then
+            --  Reattempt so we can return an incomplete solution:
+            return Resolve
+              (Deps    => Deps,
+               Props   => Props,
+               Current => Current,
+               Options =>
+                 (Query_Options'(Age          => Options.Age,
+                                 Completeness => Also_Incomplete,
+                                 Detecting    => Options.Detecting,
+                                 Hinting      => Options.Hinting)));
+         else
+            raise Program_Error
+              with "solver should have found at least one incomplete solution";
+         end if;
       else
-         Trace.Detail ("Dependencies solvable in" &
-                         Solutions.Length'Img & " ways");
-         Trace.Detail ("Dependencies solved with"
-                       & Solutions.First_Element.Releases.Length'Img
-                       & " releases"
-                       & (if not Solutions.First_Element.Hints.Is_Empty
-                         then " and" & Solutions.First_Element.Hints.Length'Img
-                         & " external hints"
-                         else ""));
 
-         return Solutions.First_Element.With_Pins (Current);
+         --  Mark direct/indirect dependencies post-hoc
+
+         declare
+            Best_Solution : Alire.Solutions.Solution :=
+                              Solutions.First_Element.With_Pins (Current);
+         begin
+
+            --  Mark pins as direct dependencies
+
+            for Dep of Conditional.Dependencies'(Current.Pins) loop
+               Best_Solution.Set (Dep.Value.Crate, Direct);
+            end loop;
+
+            --  Mark direct dependencies
+
+            for Dep of Containers.Enumerate (Deps) loop
+               if Best_Solution.Depends_On (Dep.Crate) then
+                  Best_Solution.Set (Dep.Crate, Direct);
+               end if;
+            end loop;
+
+            --  Mark all not direct as indirect
+
+            for Crate of Best_Solution.Crates loop
+               if not Best_Solution.State (Crate).Is_Direct then
+                  Best_Solution.Set (Crate, Indirect);
+               end if;
+            end loop;
+
+            Trace.Detail ("Dependencies solvable in" &
+                            TTY.Emph (Solutions.Length'Img) & " ways"
+                          & " (complete:" & TTY.OK (Complete'Img)
+                          & "; partial:" & TTY.Warn (Partial'Img)
+                          & "; dupes:" & TTY.Bold (Dupes'Img) & ")");
+            Trace.Detail ("Dependencies solved with"
+                          & TTY.Emph (Best_Solution.Releases.Length'Img)
+                          & " releases"
+                          & (if not Best_Solution.Hints.Is_Empty
+                            then " and"
+                            & TTY.Warn (Best_Solution.Hints.Length'Img)
+                            & " external hints"
+                            else "")
+                          & (if not Best_Solution.Misses.Is_Empty
+                            then " and"
+                            & TTY.Error (Best_Solution.Misses.Length'Img)
+                            & " missing dependencies"
+                            else "")
+                         );
+
+            return Best_Solution;
+         end;
       end if;
    end Resolve;
 

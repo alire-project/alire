@@ -1,3 +1,4 @@
+with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
@@ -65,16 +66,14 @@ package body Alr.Commands.Show is
                              (Rel.Dependencies (Platform.Properties),
                               Platform.Properties,
                               Alire.Solutions.Empty_Valid_Solution,
-                              Options => (Age       => Query_Policy,
-                                          Detecting => <>,
-                                          Hinting   => <>)));
+                              Options => (Age    => Query_Policy,
+                                          others => <>)));
             begin
-               if Needed.Valid then
-                  Needed.Print (Rel,
-                                Platform.Properties,
-                                Cmd.Detail,
-                                Always);
-               else
+               Needed.Print (Rel,
+                             Platform.Properties,
+                             Cmd.Detail,
+                             Always);
+               if not Needed.Valid then
                   Put_Line ("Dependencies cannot be met");
                end if;
             end;
@@ -83,7 +82,9 @@ package body Alr.Commands.Show is
       end;
    exception
       when Alire.Query_Unsuccessful =>
-         Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
+         Trace.Info ("Not found: "
+                     & Alire.Dependencies.New_Dependency
+                       (Name, Versions).TTY_Image);
          if not Alire.Index.Crate (Name).Externals.Is_Empty then
             Trace.Info ("There are external definitions for the crate. "
                         & "Use --external to show them.");
@@ -173,7 +174,9 @@ package body Alr.Commands.Show is
       end;
    exception
       when Alire.Query_Unsuccessful =>
-         Trace.Info ("Not found: " & Query.Dependency_Image (Name, Versions));
+         Trace.Info ("Not found: "
+                     & Alire.Dependencies.New_Dependency
+                       (Name, Versions).TTY_Image);
    end Report_Jekyll;
 
    -------------

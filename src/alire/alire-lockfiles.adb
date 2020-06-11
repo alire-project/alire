@@ -49,12 +49,13 @@ package body Alire.Lockfiles is
                     Environment : Properties.Vector;
                     Filename    : Any_Path)
    is
+      pragma Unreferenced (Environment);
       use Ada.Text_IO;
       File : File_Type;
    begin
       Trace.Debug ("Dumping solution to " & Filename);
       Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (Solution.To_TOML (Environment), File);
+      TOML.File_IO.Dump_To_File (Solution.To_TOML, File);
       Close (File);
    exception
       when others =>

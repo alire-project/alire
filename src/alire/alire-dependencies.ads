@@ -63,9 +63,6 @@ package Alire.Dependencies with Preelaborate is
    overriding
    function To_YAML (Dep : Dependency) return String;
 
-   function Unavailable return Dependency;
-   --  Special never available dependency to beautify a bit textual outputs
-
 private
 
    package TTY renames Utils.TTY;
@@ -76,7 +73,7 @@ private
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with record
-      Crate      : Crate_Name (1 .. Name_Len);
+      Crate      : Crate_Name (Name_Len);
       Versions   : Semantic_Versioning.Extended.Version_Set;
    end record;
 
@@ -84,7 +81,7 @@ private
      (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return Dependency
-   is (Crate'Length, Crate, Versions);
+   is (Crate.Name'Length, Crate, Versions);
 
    function New_Dependency
      (Crate   : Crate_Name;
@@ -106,31 +103,18 @@ private
      (New_Dependency (Allowed.Crate, Allowed.Versions));
 
    function Image (Dep : Dependency) return String is
-     (if Dep = Unavailable
-      then "Unavailable"
-      else (+Dep.Crate) & Dep.Versions.Image);
+     ((+Dep.Crate) & Dep.Versions.Image);
 
    overriding
    function TTY_Image (Dep : Dependency) return String is
-     (if Dep = Unavailable
-      then
-         TTY.Version ("Unavailable")
-      else
-        (TTY.Name (+Dep.Crate) & TTY.Version (Dep.Versions.Image)));
+     (TTY.Name (+Dep.Crate) & TTY.Version (Dep.Versions.Image));
 
    overriding
    function To_YAML (Dep : Dependency) return String is
-     (if Dep = Unavailable
-      then "{}"
-      else
-        ("{crate: """ & Utils.To_Lower_Case (+Dep.Crate) &
-           """, version: """ & Dep.Versions.Image &
-           """}"));
+     ("{crate: """ & Utils.To_Lower_Case (+Dep.Crate) &
+        """, version: """ & Dep.Versions.Image &
+        """}");
 
    overriding function Key (Dep : Dependency) return String is (+Dep.Crate);
-
-   function Unavailable return Dependency
-   is (New_Dependency ("alire",
-                       Semantic_Versioning.Extended.Value ("0")));
 
 end Alire.Dependencies;

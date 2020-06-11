@@ -28,6 +28,10 @@ package Alire.Containers with Preelaborate is
 
    Empty_Dependency_Map : constant Dependency_Map;
 
+   function Enumerate (These : Conditional.Dependencies) return Dependency_Map;
+   --  Eliminate OR branches in These by recursive enumeration; that is, all OR
+   --  branches will appear in the result.
+
    procedure Merge (This : in out Dependency_Map;
                     Dep  :        Dependencies.Dependency);
    --  If the dependency is already in map, create a combined dependency that
