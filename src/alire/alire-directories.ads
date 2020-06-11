@@ -14,6 +14,9 @@ package Alire.Directories is
       function "/" (L, R : String) return String renames Directories."/";
    end Operators;
 
+   procedure Backup_If_Existing (File : Any_Path);
+   --  If File exists, move to file.prev
+
    procedure Copy (Src_Folder,
                    Dst_Parent_Folder : String;
                    Excluding         : String := "");
