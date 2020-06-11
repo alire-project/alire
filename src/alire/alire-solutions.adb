@@ -5,6 +5,7 @@ with Alire.Dependencies.Graphs;
 with Alire.Index;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
+with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
@@ -36,6 +37,33 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Dependencies_That;
+
+   ----------------
+   -- Dependency --
+   ----------------
+
+   function Dependency (This      : Solution;
+                        Dependent : Crate_Name;
+                        Dependee  : Crate_Name)
+                        return Dependencies.Dependency
+   is
+   begin
+      --  This is not particularly efficient. An Enumerate version that
+      --  returned a map would serve better here if this proves to be a
+      --  bottleneck in the future.
+
+      for Dep of
+        Conditional.Enumerate
+          (This.State (Dependent)
+               .Release.Dependencies (Root.Platform_Properties))
+      loop
+         if Dep.Crate = Dependee then
+            return Dep;
+         end if;
+      end loop;
+
+      raise Program_Error with "invalid dependency request (body)";
+   end Dependency;
 
    -------------
    -- Changes --
@@ -331,26 +359,31 @@ package body Alire.Solutions is
 
       if not This.Releases.Is_Empty then
          Trace.Log ("Dependencies (solution):", Level);
+
          for Rel of This.Releases loop
             Trace.Log ("   " & Rel.Milestone.TTY_Image
-                       & (if This.State (Rel.Name).Is_Pinned
+                       & (if This.State (Rel.Name).Is_Pinned or else
+                             This.State (Rel.Name).Is_Linked
                          then TTY.Emph (" (pinned)")
                          else "")
-                       & (if Detailed then
-                            " (origin: " &
-                            Utils.To_Lower_Case (Rel.Origin.Kind'Img) & ")"
-                         else
-                            ""),
+                       & (if Detailed
+                         then " (origin: "
+                             & (if This.State (Rel.Name).Is_Linked
+                                then TTY.URL (This.State (Rel.Name).Link.Path)
+                                else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
+                             & ")"
+                         else ""),
                        Level);
          end loop;
       end if;
 
       --  Show other dependencies with their status and hints
 
-      if (for some Dep of This.Dependencies => not Dep.Is_Solved) then
+      if (for some Dep of This.Dependencies => not Dep.Has_Release) then
          Trace.Log ("Dependencies (external):", Level);
          for Dep of This.Dependencies loop
-            if not This.State (Dep.Crate).Is_Solved then
+            if not This.State (Dep.Crate).Has_Release
+            then
                Trace.Log ("   " & Dep.TTY_Image, Level);
 
                --  Look for hints. If we are relying on workspace information

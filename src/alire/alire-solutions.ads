@@ -184,6 +184,17 @@ package Alire.Solutions is
      with Pre => This.Depends_On (Crate);
    --  Return the specific dependency versions as currently stored
 
+   function Dependency (This      : Solution;
+                        Dependent : Crate_Name;
+                        Dependee  : Crate_Name)
+                        return Dependencies.Dependency
+     with Pre =>
+       (This.State (Dependent).Has_Release and then This.Depends_On (Dependee))
+       or else raise Program_Error with "invalid dependency request";
+   --  The solver groups dependencies on a same crate by several dependents.
+   --  This function allows identifying the concrete dependency that a solved
+   --  release introduced in the solution.
+
    function Depends_On (This : Solution;
                         Name : Crate_Name) return Boolean;
    --  Says if the solution depends on the crate in some way

@@ -2,6 +2,7 @@ with Alire.Conditional;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
+with Alire.Root;
 with Alire.Utils.Tables;
 
 package body Alire.Dependencies.Graphs is
@@ -87,21 +88,51 @@ package body Alire.Dependencies.Graphs is
    -- Label --
    -----------
 
-   function Label (Crate    : Crate_Name;
-                   Solution : Solutions.Solution;
-                   TTY      : Boolean := False)
-                   return String
+   function Label_Dependee (Dependent : Crate_Name;
+                            Dependee  : Crate_Name;
+                            Solution  : Solutions.Solution;
+                            For_Plot  : Boolean)
+                            return String
    --  Get the proper label in the graph for a crate: milestone for releases,
    --  dependency for hints.
-   is (if Solution.Releases.Contains (Crate)
-       then (if TTY
-             then Solution.Releases.Element (Crate).Milestone.TTY_Image
-             else Solution.Releases.Element (Crate).Milestone.Image)
-       elsif Solution.Depends_On (Crate)
-       then (if TTY
-             then Solution.Dependency (Crate).TTY_Image
-             else Solution.Dependency (Crate).Image)
-       else raise Program_Error with "crate should appear as release or hint");
+   is
+   begin
+
+      --  For a solved dependency, return "crate=version (original dependency)"
+      --  For an unsolved dependency, return "crate^dependency". In the case of
+      --  For_Plot, omit the (original dependency).
+
+      if Solution.State (Dependee).Has_Release then
+         if For_Plot then
+            return Solution.State (Dependee).Release.Milestone.Image;
+         else
+            return Solution.State (Dependee).Release.Milestone.TTY_Image
+              & " ("
+              & TTY.Version
+               (Solution.Dependency (Dependent, Dependee).Versions.Image)
+              & ")";
+         end if;
+      else
+         if For_Plot then
+            return Solution.Dependency (Dependent, Dependee).Image;
+         else
+            return Solution.Dependency (Dependent, Dependee).TTY_Image;
+         end if;
+      end if;
+   end Label_Dependee;
+
+   ---------------------
+   -- Label_Dependent --
+   ---------------------
+
+   function Label_Dependent (Crate    : Crate_Name;
+                             Solution : Solutions.Solution;
+                             TTY      : Boolean := False)
+                             return String
+   is (if TTY then
+          Solution.State (Crate).Release.Milestone.TTY_Image
+       else
+          Solution.State (Crate).Release.Milestone.Image);
 
    ----------
    -- Plot --
@@ -121,13 +152,19 @@ package body Alire.Dependencies.Graphs is
       Alt.Append ("graph dependencies {");
 
       for Dep of Filtered loop
-         Alt.Append (Q (Label (+Dep.Dependent, Solution)) &
-                          " -> " &
-                          Q (Label (+Dep.Dependee, Solution)) & "; ");
+         Alt.Append (Q (Label_Dependent (+Dep.Dependent, Solution))
+                     & " -> "
+                     & Q (Label_Dependee (+Dep.Dependent,
+                                          +Dep.Dependee,
+                                          Solution,
+                                          For_Plot => True)) & "; ");
 
-         Source.Append (B (Label (+Dep.Dependent, Solution)) &
-                          " -> " &
-                          B (Label (+Dep.Dependee, Solution)));
+         Source.Append (B (Label_Dependent (+Dep.Dependent, Solution))
+                        & " -> "
+                        & B (Label_Dependee (+Dep.Dependent,
+                                             +Dep.Dependee,
+                                             Solution,
+                                             For_Plot => True)));
       end loop;
       Alt.Append (" }");
 
@@ -154,9 +191,12 @@ package body Alire.Dependencies.Graphs is
       Filtered : constant Graph := This.Filtering_Unused (Solution.Crates);
    begin
       for Dep of Filtered loop
-         Table.Append (Prefix & Label (+Dep.Dependent, Solution, TTY => True));
+         Table.Append
+           (Prefix & Label_Dependent (+Dep.Dependent, Solution, TTY => True));
          Table.Append ("-->");
-         Table.Append (Label (+Dep.Dependee, Solution, TTY => True));
+         Table.Append
+           (Label_Dependee
+              (+Dep.Dependent, +Dep.Dependee, Solution, For_Plot => False));
          Table.New_Row;
       end loop;
 
