@@ -14,11 +14,13 @@ package body Alr.Commands.Config is
                                             then Alire.Config.Global
                                             else Alire.Config.Local);
    begin
+
       --  Check no multi-action
       Enabled := Enabled + (if Cmd.List then 1 else 0);
       Enabled := Enabled + (if Cmd.Get then 1 else 0);
       Enabled := Enabled + (if Cmd.Set then 1 else 0);
       Enabled := Enabled + (if Cmd.Unset then 1 else 0);
+      Enabled := Enabled + (if Cmd.Builtins_Doc then 1 else 0);
 
       if Enabled > 1 then
          Reportaise_Wrong_Arguments ("Specify at most one subcommand");
@@ -32,6 +34,11 @@ package body Alr.Commands.Config is
       if Cmd.Show_Origin and then not Cmd.List then
          Reportaise_Wrong_Arguments
            ("--show-origin only valid with --list");
+      end if;
+
+      if Cmd.Builtins_Doc then
+         Alire.Config.Print_Builtins_Doc;
+         return;
       end if;
 
       if not Cmd.Global and then not Alire.Root.Current.Is_Valid then
@@ -105,7 +112,6 @@ package body Alr.Commands.Config is
             Alire.Config.Edit.Unset (Alire.Config.Filepath (Lvl), Key);
          end;
       end if;
-
    end Execute;
 
    ----------------------
@@ -134,8 +140,12 @@ package body Alr.Commands.Config is
                  " float, true is")
       .Append ("boolean. You can force a value to be set a string by using" &
                  " double-quotes, e.g.")
-      .Append ("""10.1"" or ""true"".")
-     );
+      .Append ("""10.1"" or ""true"". Extra type checking is used for" &
+                 " buitl-in options (see below).")
+      .New_Line
+      .Append ("Built-in configuration options:")
+      .New_Line
+      .Append (Alire.Config.Builtins_Info));
 
    --------------------
    -- Setup_Switches --
@@ -182,6 +192,13 @@ package body Alr.Commands.Config is
          Long_Switch => "--global",
          Help        => "Set and Unset global configuration instead" &
                          " of the local one");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Builtins_Doc'Access,
+         Long_Switch => "--builtins-doc",
+         Help        =>
+           "Print Markdown documention of the built-in configuration options");
 
    end Setup_Switches;
 

@@ -18,10 +18,6 @@ package body Alire.Config.Edit is
                            Val   : TOML_Value)
      with Pre => Table.Kind = TOML_Table;
 
-   function To_TOML_Value (Str : String) return TOML_Value;
-   --  Use the TOML parser to convert the string Str. If Str is not a valid
-   --  TOML value, No_TOML_Value is returned.
-
    -----------------------
    -- Write_Config_File --
    -----------------------
@@ -101,29 +97,6 @@ package body Alire.Config.Edit is
       end;
    end Add_In_Table;
 
-   -------------------
-   -- To_TOML_Value --
-   -------------------
-
-   function To_TOML_Value (Str : String) return TOML_Value is
-      Result : constant TOML.Read_Result := TOML.Load_String ("key=" & Str);
-   begin
-      if not Result.Success
-        or else
-         Result.Value.Kind /= TOML_Table
-        or else
-         not Result.Value.Has ("key")
-      then
-
-         --  Conversion failed
-
-         --  Interpret as a string
-         return Create_String (Str);
-      else
-         return Result.Value.Get ("key");
-      end if;
-   end To_TOML_Value;
-
    -----------
    -- Unset --
    -----------
@@ -152,6 +125,12 @@ package body Alire.Config.Edit is
    begin
       if To_Add.Is_Null then
          Raise_Checked_Error ("Invalid configuration value: '" & Value & "'");
+      end if;
+
+      if not Valid_Builtin (Key, To_Add) then
+         Raise_Checked_Error ("Invalid value '" & Value &
+                                "' for builtin configuration. " &
+                                Image (Kind_Of_Builtin (Key)) & " expected.");
       end if;
 
       if Table.Is_Null then
