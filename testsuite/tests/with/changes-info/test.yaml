@@ -1,0 +1,4 @@
+driver: python-script
+indexes:
+    solver_index:
+        in_fixtures: true

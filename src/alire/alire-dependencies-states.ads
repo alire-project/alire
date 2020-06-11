@@ -89,6 +89,9 @@ package Alire.Dependencies.States is
 
    function Is_Pinned (This : State) return Boolean;
 
+   function Is_User_Pinned (This : State) return Boolean;
+   --  From the POV of users, pinning to version or linking to dir is a pin
+
    function Is_Solved (This : State) return Boolean;
 
    --  Case-specific info
@@ -173,6 +176,20 @@ private
       end case;
    end record;
 
+   use type Releases.Release;
+
+   overriding function "=" (L, R : Fulfillment_Data) return Boolean
+   is (L.Fulfillment = R.Fulfillment and then
+         (case L.Fulfillment is
+             when Linked =>
+                L.Target.Element.Path = R.Target.Element.Path and then
+                 (L.Opt_Rel.Is_Empty = R.Opt_Rel.Is_Empty and then
+                   (L.Opt_Rel.Is_Empty or else
+                    L.Opt_Rel.Element = R.Opt_Rel.Element)),
+             when Solved =>
+                L.Release.Element = R.Release.Element,
+             when others => True));
+
    type Pinning_Data (Pinned : Boolean := False) is record
       case Pinned is
          when True  => Version : Semantic_Versioning.Version;
@@ -254,10 +271,10 @@ private
           else "")
        & Utils.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
-          then ",target=" & This.Fulfilled.Target.Get.Path
-                          & (if This.Has_Release
-                             then ",release"
-                             else "")
+          then ",pin=" & This.Fulfilled.Target.Get.Path
+                       & (if This.Has_Release
+                          then ",release"
+                          else "")
           else "")
        & (if This.Pinning.Pinned
           then ",pin=" & This.Pinning.Version.Image
@@ -288,6 +305,9 @@ private
 
    function Is_Solved (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved);
+
+   function Is_User_Pinned (This : State) return Boolean
+   is (This.Is_Pinned or else This.Is_Linked);
 
    ----------
    -- Link --
@@ -452,7 +472,7 @@ private
              when Hinted => TTY.Warn (This.Fulfilled.Fulfillment'Img),
              when others => This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
-          then "," & TTY.Emph ("target") & "="
+          then "," & TTY.Emph ("pin") & "="
                    & TTY.URL (This.Fulfilled.Target.Get.Path)
                    & (if This.Has_Release
                       then "," & TTY.OK ("release")

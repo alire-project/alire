@@ -603,8 +603,10 @@ package body Alire.Solver is
 
             --  Mark pins as direct dependencies
 
-            for Dep of Conditional.Dependencies'(Current.Pins) loop
-               Best_Solution.Set (Dep.Value.Crate, Direct);
+            for Dep of Best_Solution.Required loop
+               if Dep.Is_User_Pinned then
+                  Best_Solution.Set (Dep.Crate, Direct);
+               end if;
             end loop;
 
             --  Mark direct dependencies
