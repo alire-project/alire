@@ -4,14 +4,14 @@
 `unset` configuration options, either in a local or global context.
 
  Option names (keys) can use lowercase and uppercase alphanumeric characters
- from the latin alphabet. Underscores and dashes can also be used except as
+ from the Latin alphabet. Underscores and dashes can also be used except as
  first or last character. Dot '.' is used to specify sub-categories, e.g.
  'user.name' or 'user.email'.
 
- Option values can be integers, float, boolean (true or false) or strings. The
+ Option values can be integers, float, Boolean (true or false) or strings. The
  type detection is automatic, e.g. 10 is integer, 10.1 is float, true is
- boolean. You can force a value to be set a string by using double-quotes, e.g.
- "10.1" or "true". Extra type checking is used for buitl-in options (see below).
+ Boolean. You can force a value to be set a string by using double-quotes, e.g.
+ "10.1" or "true". Extra type checking is used for built-in options (see below).
 
  Specific config options:
                            
@@ -21,7 +21,7 @@
   - `--set` Set a configuration option
   - `--unset` Unset a configuration option
   - `--global` Set and Unset global configuration instead of the local one
-  - `--builtins-doc` Print Markdown documention of the built-in configuration options
+  - `--builtins-doc` Print Markdown list of built-in configuration options
  
  Examples:
 
@@ -41,9 +41,9 @@
 The `alr config` command allows you to set an get any combination of
 configuration option `key` and `value`. You can use this feature to store you
 own project related configuration, or implement tools that integrate in an
-`Alire` context. However, be carful when naming custom configuration options as
-`Alire` my use the same `key` in the future. We recomend using a distinctive
-sub-categorie name, for instance: `my_project.my_config_option`.
+`Alire` context. However, be careful when naming custom configuration options as
+`Alire` my use the same `key` in the future. We recommend using a distinctive
+sub-category name, for instance: `my_project.my_config_option`.
 
 ## Built-in configuration options
 

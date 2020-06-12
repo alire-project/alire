@@ -127,21 +127,21 @@ package body Alr.Commands.Config is
       .New_Line
       .Append ("Option names (keys) can use lowercase and uppercase" &
                  " alphanumeric characters")
-      .Append ("from the latin alphabet. Underscores and dashes can also be" &
+      .Append ("from the Latin alphabet. Underscores and dashes can also be" &
                  " used except as")
       .Append ("first or last character. Dot '.' is used to specify" &
                  " sub-categories, e.g.")
       .Append ("'user.name' or 'user.email'.")
       .New_Line
 
-      .Append ("Option values can be integers, float, boolean (true or" &
+      .Append ("Option values can be integers, float, Boolean (true or" &
                  " false) or strings. The")
       .Append ("type detection is automatic, e.g. 10 is integer, 10.1 is" &
                  " float, true is")
-      .Append ("boolean. You can force a value to be set a string by using" &
+      .Append ("Boolean. You can force a value to be set a string by using" &
                  " double-quotes, e.g.")
       .Append ("""10.1"" or ""true"". Extra type checking is used for" &
-                 " buitl-in options (see below).")
+                 " built-in options (see below).")
       .New_Line
       .Append ("Built-in configuration options:")
       .New_Line
@@ -198,7 +198,7 @@ package body Alr.Commands.Config is
          Output      => Cmd.Builtins_Doc'Access,
          Long_Switch => "--builtins-doc",
          Help        =>
-           "Print Markdown documention of the built-in configuration options");
+           "Print Markdown list of built-in configuration options");
 
    end Setup_Switches;
 
