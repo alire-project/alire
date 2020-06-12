@@ -8,7 +8,6 @@ with Alire.Releases;
 with Alire.Roots;
 with Alire.Solutions;
 
-with Alr.Platform;
 with Alr.Root;
 with Alr.Templates;
 with Alr.Utils;
@@ -177,7 +176,6 @@ package body Alr.Commands.Init is
 
          Alire.Lockfiles.Write
            (Alire.Solutions.Empty_Valid_Solution,
-            Platform.Properties,
             Root.Lock_File);
       end;
    end Generate;

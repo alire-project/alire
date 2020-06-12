@@ -70,11 +70,9 @@ package body Alire.Lockfiles is
    -- Write --
    -----------
 
-   procedure Write (Solution    : Solver.Solution;
-                    Environment : Properties.Vector;
-                    Filename    : Any_Path)
+   procedure Write (Solution : Solver.Solution;
+                    Filename : Any_Path)
    is
-      pragma Unreferenced (Environment);
       use Ada.Text_IO;
       File : File_Type;
    begin
