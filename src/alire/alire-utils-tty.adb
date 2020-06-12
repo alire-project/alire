@@ -5,9 +5,7 @@ package body Alire.Utils.TTY is
    use all type ANSI.Colors;
    use all type ANSI.Styles;
 
-   type States is (Disabled, Enabled, Default);
-
-   Status : States := Default;
+   Use_Color : Boolean := False; -- Err on the safe side
 
    function Regular_Decorator (Level   : Simple_Logging.Levels;
                                Message : String) return String;
@@ -15,15 +13,11 @@ package body Alire.Utils.TTY is
    function Verbose_Decorator (Level   : Simple_Logging.Levels;
                                Message : String) return String;
 
-   ---------------
-   -- Use_Color --
-   ---------------
+   -------------------
+   -- Color_Enabled --
+   -------------------
 
-   function Use_Color return Boolean is
-     (case Status is
-         when Enabled  => True,
-         when Disabled => False,
-         when Default  => Simple_Logging.Is_TTY);
+   function Color_Enabled return Boolean is (Use_Color);
 
    -------------------
    -- Disable_Color --
@@ -31,7 +25,7 @@ package body Alire.Utils.TTY is
 
    procedure Disable_Color is
    begin
-      Status := Disabled;
+      Use_Color := False;
    end Disable_Color;
 
    ------------------
@@ -43,8 +37,13 @@ package body Alire.Utils.TTY is
 
       --  Enable when appropriate
 
-      if Force or else Simple_Logging.Is_TTY then
-         Status := Enabled;
+      if Force or else Is_TTY then
+         Use_Color := True;
+         Trace.Debug ("Color output enabled");
+      else
+         Trace.Debug ("Color output was requested but not enabled:"
+                      & " force=" & Force'Img
+                      & "; Is_TTY=" & Is_TTY'Img);
       end if;
 
       --  Set debug colors. When Detail/Debug are also enabled, we add the

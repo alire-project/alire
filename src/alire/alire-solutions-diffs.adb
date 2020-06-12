@@ -198,18 +198,33 @@ package body Alire.Solutions.Diffs is
 
                --  Show icon of change
 
-               Table.Append
-                 (Prefix
-                  & (case This.Change (Key (I)) is
-                       when Added      => TTY.OK ("✓"),
-                       when Removed    => TTY.Emph ("✗"),
-                       when External   => TTY.Warn ("↪"),
-                       when Upgraded   => TTY.OK ("⭧"),
-                       when Downgraded => TTY.Warn ("⭨"),
-                       when Pinned     => TTY.OK ("⊙"),
-                       when Unpinned   => TTY.Emph ("𐩒"),
-                       when Unchanged  => TTY.OK ("="),
-                       when Unsolved   => TTY.Error ("⚠")));
+               if TTY.Color_Enabled then
+                  Table.Append
+                    (Prefix
+                     & (case This.Change (Key (I)) is
+                          when Added      => TTY.OK    ("✓"),
+                          when Removed    => TTY.Emph  ("✗"),
+                          when External   => TTY.Warn  ("↪"),
+                          when Upgraded   => TTY.OK    ("⭧"),
+                          when Downgraded => TTY.Warn  ("⭨"),
+                          when Pinned     => TTY.OK    ("⊙"),
+                          when Unpinned   => TTY.Emph  ("𐩒"),
+                          when Unchanged  => TTY.OK    ("="),
+                          when Unsolved   => TTY.Error ("⚠")));
+               else
+                  Table.Append
+                    (Prefix
+                     & (case This.Change (Key (I)) is
+                          when Added      => "+",
+                          when Removed    => "-",
+                          when External   => "~",
+                          when Upgraded   => "^",
+                          when Downgraded => "v",
+                          when Pinned     => ".",
+                          when Unpinned   => "o",
+                          when Unchanged  => "=",
+                          when Unsolved   => "!"));
+               end if;
 
                --  Always show crate name
 
