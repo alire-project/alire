@@ -224,7 +224,8 @@ package Alire.Solutions is
    --  return all pinned dependencies as plain dependencies for a exact version
 
    function Releases (This : Solution) return Release_Map;
-   --  Returns the proper releases in the solution (regular and detected)
+   --  Returns the proper releases in the solution (regular and detected
+   --  externals). This also includes releases found at a linked folder.
 
    function Required (This : Solution) return State_Map'Class;
    --  Returns all dependencies required to fulfill this solution,

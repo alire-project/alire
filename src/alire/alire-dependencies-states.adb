@@ -1,6 +1,33 @@
+with Alire.Roots;
+
 with Alire.Crates.With_Releases;
 
 package body Alire.Dependencies.States is
+
+   ----------------------
+   -- Optional_Release --
+   ----------------------
+
+   function Optional_Release (Crate     : Crate_Name;
+                              Workspace : Any_Path)
+                              return Containers.Release_H
+   is
+      Opt_Root : constant Roots.Root := Roots.Detect_Root (Workspace);
+   begin
+      if Opt_Root.Is_Valid then
+         if Opt_Root.Release.Name = Crate then
+            return Containers.To_Release_H (Opt_Root.Release);
+         else
+            Raise_Checked_Error ("crate mismatch: expected "
+                                 & Crate.TTY_Image
+                                 & " but found "
+                                 & Opt_Root.Release.Name.TTY_Image
+                                 & " at " & TTY.URL (Workspace));
+         end if;
+      else
+         return Containers.Release_Holders.Empty_Holder;
+      end if;
+   end Optional_Release;
 
    use TOML;
 
@@ -56,6 +83,8 @@ package body Alire.Dependencies.States is
                     (From.Descend
                          (Value   => From.Checked_Pop (Keys.Link, TOML_Table),
                           Context => Keys.Link)));
+               Data.Opt_Rel := Optional_Release (From_TOML.Crate,
+                                                 Data.Target.Element.Path);
 
             when Missed => null;
 

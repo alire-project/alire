@@ -41,6 +41,11 @@ package Alire.Roots is
    -- Valid roots --
    -----------------
 
+   function Detect_Root (Path : Any_Path) return Root;
+   --  Attempt to detect a root at the given path. The root will be valid if
+   --  path/alire exists, path/alire/*.toml is unique and loadable as a crate
+   --  containing a single release.
+
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
    function New_Root (Name : Crate_Name;

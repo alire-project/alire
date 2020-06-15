@@ -45,7 +45,7 @@ package body Alire.Workspace is
       --  dependents don't need to wait for their deployment).
 
       for Dep of Solution.Required loop
-         if not Dep.Is_Solved then
+         if not Dep.Has_Release then
             Deployed.Include (Dep.Crate);
          end if;
       end loop;
@@ -67,15 +67,21 @@ package body Alire.Workspace is
             for Rel of Pending loop
 
                --  In the 1st step of each round we identify releases that
-               --  don't have undeployed dependencies. Until we track who
-               --  introduces what dependency, we fall back to enumerating
-               --  all dependencies of a release on platform.
+               --  don't have undeployed dependencies. We also identify
+               --  releases that need not to be deployed (e.g. linked ones).
 
-               if (for some Dep of Enum (Rel.Dependencies (Env)) =>
-                     not Deployed.Contains (Dep.Crate))
+               if not Solution.State (Rel.Name).Is_Solved then
+                  Trace.Debug ("Round" & Round'Img & ": NOOP " &
+                                 Rel.Milestone.Image);
+
+                  To_Remove.Include (Rel);
+
+               elsif (for some Dep of Enum (Rel.Dependencies (Env)) =>
+                        not Deployed.Contains (Dep.Crate))
                then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
                                  Rel.Milestone.Image);
+
                else
                   Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
                                  Rel.Milestone.Image);
@@ -96,7 +102,7 @@ package body Alire.Workspace is
 
             if To_Remove.Is_Empty then
                raise Program_Error
-                 with "No release checked-out in round" & Round'Img;
+                 with "No release checked out in round" & Round'Img;
             else
                for Rel of To_Remove loop
                   Pending.Exclude (Rel.Name);

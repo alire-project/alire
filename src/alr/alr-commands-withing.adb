@@ -97,6 +97,20 @@ package body Alr.Commands.Withing is
                                       Path  => Cmd.URL.all);
       begin
 
+         --  Prevent double-add
+
+         if Old_Solution.Depends_On (New_Dep.Crate) then
+            Reportaise_Wrong_Arguments
+              ("Not adding " & New_Dep.Crate.TTY_Image & " because "
+               & Old_Solution.Dependency (New_Dep.Crate).TTY_Image
+               & " is already a dependency");
+         end if;
+
+         --  Report crate detection at target destination
+
+         User_Input.Report_Pinned_Crate_Detection (New_Dep.Crate,
+                                                   New_Solution);
+
          --  If we made here there were no errors adding the dependency
          --  and storing the softlink. We can proceed to confirming the
          --  replacement.
@@ -417,7 +431,12 @@ package body Alr.Commands.Withing is
          --  Must be Add, but it could be regular or softlink
 
          if Cmd.URL.all /= "" then
-            Add_Softlink (Cmd);
+            if Num_Arguments = 1 then
+               Add_Softlink (Cmd);
+            else
+               raise Alire.Unimplemented;
+               --  TODO: detect crate at given path, and use it
+            end if;
          else
             Requires_Full_Index;
             Add;

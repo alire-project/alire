@@ -359,7 +359,11 @@ package body Alire.Solver is
                     Tree'(Expanded and Target and Remaining).Image_One_Line);
 
                Expand (Expanded  => Expanded and Dep,
-                       Target    => Remaining,
+                       Target    => Remaining and
+                         (if Current.State (Dep.Crate).Has_Release
+                          then Current.State (Dep.Crate)
+                                      .Release.Dependencies (Props)
+                          else Empty),
                        Remaining => Empty,
                        Solution  =>
                          Solution.Linking (Dep.Crate,

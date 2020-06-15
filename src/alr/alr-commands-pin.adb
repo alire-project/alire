@@ -191,6 +191,11 @@ package body Alr.Commands.Pin is
                Platform.Properties,
                Old_Sol);
 
+            --  Report crate detection at target destination
+
+            User_Input.Report_Pinned_Crate_Detection (+Argument (1),
+                                                      New_Sol);
+
          else
 
             --  Change a single pin

@@ -472,7 +472,7 @@ package body Alire.Solutions is
    begin
       return Result : Release_Map do
          for Dep of This.Dependencies loop
-            if Dep.Is_Solved then
+            if Dep.Has_Release then
                Result.Insert (Dep.Crate, Dep.Release);
             end if;
          end loop;
