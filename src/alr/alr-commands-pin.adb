@@ -182,6 +182,8 @@ package body Alr.Commands.Pin is
 
             --  Pin to dir
 
+            Requires_Full_Index; -- Next statement recomputes a solution
+
             New_Sol := Alire.Pinning.Pin_To
               (+Argument (1),
                Cmd.URL.all,
