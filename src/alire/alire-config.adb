@@ -1,6 +1,6 @@
 with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
+with Ada.Text_IO;
 
 with GNAT.Regexp;
 
@@ -115,7 +115,7 @@ package body Alire.Config is
 
    function Defined (Key : Config_Key) return Boolean is
    begin
-      return Config_Map.Contains (To_Unbounded_String (Key));
+      return Config_Map.Contains (+Key);
    end Defined;
 
    -------------------
@@ -139,7 +139,7 @@ package body Alire.Config is
 
    begin
       if Defined (Key) then
-         return Config_Map.Element (To_Unbounded_String (Key));
+         return Config_Map.Element (+Key);
       else
          return No_Config_Value;
       end if;
@@ -332,6 +332,11 @@ package body Alire.Config is
                                  "' in configuration file '" &
                                  Source & "'");
                   Trace.Error ("'" & Key & "' is ignored");
+               elsif not Valid_Builtin (Key, Ent.Value) then
+                  Trace.Error ("Invalid value for builtin key '" & Key &
+                                 "' in configuration file '" &
+                                 Source & "'");
+                  Trace.Error ("'" & Key & "' is ignored");
                else
                   --  Insert the config value, potentially replacing a previous
                   --  definition.
@@ -400,6 +405,134 @@ package body Alire.Config is
 
       return No_TOML_Value;
    end Load_Config_File;
+
+   -------------------
+   -- To_TOML_Value --
+   -------------------
+
+   function To_TOML_Value (Str : String) return TOML_Value is
+      Result : constant TOML.Read_Result := TOML.Load_String ("key=" & Str);
+   begin
+      if not Result.Success
+        or else
+         Result.Value.Kind /= TOML_Table
+        or else
+         not Result.Value.Has ("key")
+      then
+
+         --  Conversion failed
+
+         --  Interpret as a string
+         return Create_String (Str);
+      else
+         return Result.Value.Get ("key");
+      end if;
+   end To_TOML_Value;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Kind : Builtin_Kind) return String
+   is (case Kind is
+          when Cfg_Int           => "Integer",
+          when Cfg_Float         => "Float",
+          when Cfg_Bool          => "Boolean",
+          when Cfg_String        => "String",
+          when Cfg_Absolute_Path => "Absolute path",
+          when Cfg_Email         => "Email address",
+          when Cfg_GitHub_Login  => "GitHub login");
+
+   ---------------------
+   -- Kind_Of_Builtin --
+   ---------------------
+
+   function Kind_Of_Builtin (Key : Config_Key) return Builtin_Kind is
+   begin
+      for Ent of Builtins loop
+         if To_String (Ent.Key) = Key then
+            return Ent.Kind;
+         end if;
+      end loop;
+
+      Raise_Checked_Error ("Kind is only valid for builtin config key");
+   end Kind_Of_Builtin;
+
+   -------------------
+   -- Builtins_Info --
+   -------------------
+
+   function Builtins_Info return Alire.Utils.String_Vector is
+      use Alire.Utils;
+      Results : Alire.Utils.String_Vector;
+   begin
+      for Ent of Builtins loop
+         Results.Append (String'("- " & To_String (Ent.Key) &
+                           " [" & Image (Ent.Kind) & "]"));
+         Results.Append (To_String (Ent.Help));
+         Results.Append ("");
+      end loop;
+      return Results;
+   end Builtins_Info;
+
+   ------------------------
+   -- Print_Builtins_Doc --
+   ------------------------
+
+   procedure Print_Builtins_Doc is
+      use Ada.Text_IO;
+   begin
+      for Ent of Builtins loop
+         Put (" - **`" & To_String (Ent.Key) & "`** ");
+         Put_Line ("[" & Image (Ent.Kind) & "]:");
+         Put_Line ("   " & To_String (Ent.Help));
+         New_Line;
+      end loop;
+   end Print_Builtins_Doc;
+
+   ----------------
+   -- Is_Builtin --
+   ----------------
+
+   function Is_Builtin (Key : Config_Key) return Boolean
+   is (for some Cfg of Builtins => To_String (Cfg.Key) = Key);
+
+   -------------------
+   -- Valid_Builtin --
+   -------------------
+
+   function Valid_Builtin (Key : Config_Key; Value : TOML_Value)
+                           return Boolean
+   is
+   begin
+      for Ent of Builtins loop
+         if To_String (Ent.Key) = Key then
+            case Ent.Kind is
+            when Cfg_Int =>
+               return Value.Kind = TOML_Integer;
+            when Cfg_Float =>
+               return Value.Kind = TOML_Float;
+            when Cfg_Bool =>
+               return Value.Kind = TOML_Boolean;
+            when Cfg_String =>
+               return Value.Kind = TOML_String;
+            when Cfg_Absolute_Path =>
+               return Value.Kind = TOML_String
+                 and then Check_Absolute_Path (Value.As_String);
+            when Cfg_Email =>
+               return Value.Kind = TOML_String
+                 and then Utils.Could_Be_An_Email (Value.As_String,
+                                                   With_Name => False);
+            when Cfg_GitHub_Login =>
+               return Value.Kind = TOML_String
+                 and then Utils.Is_Valid_GitHub_Username (Value.As_String);
+            end case;
+         end if;
+      end loop;
+
+      --  Not a builtin
+      return True;
+   end Valid_Builtin;
 
 begin
    Load_Config;

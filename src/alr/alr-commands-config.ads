@@ -28,12 +28,13 @@ package Alr.Commands.Config is
 private
 
    type Command is new Commands.Command with record
-      Show_Origin : aliased Boolean := False;
-      List        : aliased Boolean := False;
-      Get         : aliased Boolean := False;
-      Set         : aliased Boolean := False;
-      Unset       : aliased Boolean := False;
-      Global      : aliased Boolean := False;
+      Show_Origin  : aliased Boolean := False;
+      List         : aliased Boolean := False;
+      Get          : aliased Boolean := False;
+      Set          : aliased Boolean := False;
+      Unset        : aliased Boolean := False;
+      Global       : aliased Boolean := False;
+      Builtins_Doc : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Config;

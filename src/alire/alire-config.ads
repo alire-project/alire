@@ -99,6 +99,17 @@ package Alire.Config is
 
    function Indexes_Directory return Absolute_Path is (Path / "indexes");
 
+   ---------------
+   -- Built-ins --
+   ---------------
+
+   function Builtins_Info return Alire.Utils.String_Vector;
+   --  Return a String_Vector with the documentation of builtin configuration
+   --  options in text format.
+
+   procedure Print_Builtins_Doc;
+   --  Print a Markdown documentation for the built-in configuration options
+
 private
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
@@ -118,5 +129,62 @@ private
    function Get_With_Default_Gen (Key     : Config_Key;
                                   Default : Return_Type)
                                   return Return_Type;
+
+   function To_TOML_Value (Str : String) return TOML.TOML_Value;
+   --  Use the TOML parser to convert the string Str. If Str is not a valid
+   --  TOML value, No_TOML_Value is returned.
+
+   --------------
+   -- Builtins --
+   --------------
+
+   type Builtin_Kind is (Cfg_Int, Cfg_Float, Cfg_Bool,
+                         Cfg_String, Cfg_Absolute_Path,
+                         Cfg_Email, Cfg_GitHub_Login);
+
+   type Builtin_Entry is record
+      Key     : Ada.Strings.Unbounded.Unbounded_String;
+      Kind    : Builtin_Kind;
+      Help    : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
+   function Is_Builtin (Key : Config_Key) return Boolean;
+
+   function Valid_Builtin (Key : Config_Key; Value : TOML.TOML_Value)
+                           return Boolean;
+
+   function Image (Kind : Builtin_Kind) return String;
+
+   function Kind_Of_Builtin (Key : Config_Key) return Builtin_Kind
+     with Pre => Is_Builtin (Key);
+
+   function "+" (Source : String) return Ada.Strings.Unbounded.Unbounded_String
+                 renames Ada.Strings.Unbounded.To_Unbounded_String;
+
+   Builtins : constant array (Natural range <>) of Builtin_Entry :=
+     (
+      (+"user.name",
+       Cfg_String,
+       +("User full name. Used for the authors and " &
+          "maintainers field of a new crate.")),
+      (+"user.email",
+       Cfg_Email,
+       +("User email address. Used for the authors and" &
+           " maintainers field of a new crate.")),
+      (+"user.github_login",
+       Cfg_GitHub_Login,
+       +("User GitHub login/username. Used to for the maintainers-logins " &
+           "field of a new crate.")),
+
+      (+"msys2.do_not_install",
+       Cfg_Bool,
+       +("If true, Alire will not try to automatically" &
+          " install msys2 system package manager. (Windows only)")),
+
+      (+"msys2.install_dir",
+       Cfg_Absolute_Path,
+       +("Directory where Alire will detect and/or install" &
+           " msys2 system package manager. (Windows only) "))
+     );
 
 end Alire.Config;
