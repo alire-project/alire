@@ -277,7 +277,7 @@ package body Alire.Config is
    begin
       case Lvl is
          when Global =>
-            return Alire.Config.Path / "config.toml";
+            return Alire.Config.Path / "config";
          when Local =>
             declare
                Candidate : constant String :=
