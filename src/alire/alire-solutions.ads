@@ -270,6 +270,12 @@ package Alire.Solutions is
    --  crate not in solution that introduces the direct dependencies. When
    --  Detailed, extra information about origins is shown.
 
+   procedure Print_Graph (This     : Solution;
+                          Root     : Alire.Releases.Release;
+                          Env      : Properties.Vector);
+   --  Print an ASCII graph of dependencies using libgraph-easy-perl, if
+   --  installed, or default to Print_Tree.
+
    procedure Print_Hints (This : Solution;
                           Env  : Properties.Vector);
    --  Display hints about any undetected externals in the solutions

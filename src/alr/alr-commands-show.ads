@@ -16,7 +16,8 @@ package Alr.Commands.Show is
      ("See information about a release");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("<crate>[allowed versions]");
+     ("[<crate>[allowed versions]] [--system] [--external[-detect]"
+      & " | --graph | --jekyll | --solve | --tree");
 
 private
 
@@ -24,6 +25,7 @@ private
       Detail   : aliased Boolean := False;
       Detect   : aliased Boolean := False;
       External : aliased Boolean := False;
+      Graph    : aliased Boolean := False;
       Solve    : aliased Boolean := False;
       System   : aliased Boolean := False;
       Tree     : aliased Boolean := False;

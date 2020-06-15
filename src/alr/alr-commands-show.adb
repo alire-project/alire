@@ -57,7 +57,7 @@ package body Alr.Commands.Show is
                Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
-         if Cmd.Solve or else Cmd.Tree then
+         if Cmd.Graph or else Cmd.Solve or else Cmd.Tree then
             declare
                Needed : constant Query.Solution :=
                           (if Current
@@ -74,12 +74,18 @@ package body Alr.Commands.Show is
                                 Platform.Properties,
                                 Cmd.Detail,
                                 Always);
-               else
+               elsif Cmd.Tree then
                   if Needed.Crates.Length not in 0 then
                      Trace.Always ("Dependencies (tree):");
                      Needed.Print_Tree (Rel,
                                         Prefix     => "   ",
                                         Print_Root => False);
+                  end if;
+               elsif Cmd.Graph then
+                  if Needed.Crates.Length not in 0 then
+                     Trace.Always ("Dependencies (graph):");
+                     Needed.Print_Graph (Rel,
+                                         Platform.Properties);
                   end if;
                end if;
 
@@ -211,13 +217,15 @@ package body Alr.Commands.Show is
       end if;
 
       if Cmd.External and then
-        (Cmd.Detect or Cmd.Jekyll or Cmd.Solve or Cmd.Tree)
+        (Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve or Cmd.Tree)
       then
          Reportaise_Wrong_Arguments
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Num_Arguments = 1 or else Cmd.Solve  or else Cmd.Tree then
+      if Num_Arguments = 1 or else
+        Cmd.Graph or else Cmd.Solve or else Cmd.Tree
+      then
          Requires_Full_Index;
       end if;
 
@@ -299,6 +307,10 @@ package body Alr.Commands.Show is
                      Cmd.External'Access,
                      "", "--external",
                      "Show info about external definitions for a crate");
+
+      Define_Switch (Config,
+                     Cmd.Graph'Access,
+                     "", "--graph", "Print ASCII graph of dependencies");
 
       Define_Switch (Config,
                      Cmd.System'Access,

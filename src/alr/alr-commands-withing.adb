@@ -441,6 +441,7 @@ package body Alr.Commands.Withing is
 
       Check (Cmd.Del);
       Check (Cmd.From);
+      Check (Cmd.Graph);
       Check (Cmd.Solve);
       Check (Cmd.Tree);
 
@@ -451,6 +452,10 @@ package body Alr.Commands.Withing is
             return;
          elsif Cmd.Tree then
             Root.Current.Solution.Print_Tree (Root.Current.Release);
+            return;
+         elsif Cmd.Graph then
+            Root.Current.Solution.Print_Graph
+              (Root.Current.Release, Platform.Properties);
             return;
          end if;
       end if;
@@ -555,6 +560,11 @@ package body Alr.Commands.Withing is
                      Cmd.From'Access,
                      "", "--from",
                      "Use dependencies declared within GPR project file");
+
+      Define_Switch (Config,
+                     Cmd.Graph'Access,
+                     "", "--graph",
+                     "Show ASCII graph of dependencies");
 
       Define_Switch
         (Config      => Config,

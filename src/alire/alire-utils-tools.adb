@@ -9,12 +9,33 @@ package body Alire.Utils.Tools is
 
    Already_Detected : array (Tool_Kind) of Boolean := (others => False);
 
+   function Exec_For_Tool (Tool : Tool_Kind) return String;
+
+   ---------------
+   -- Available --
+   ---------------
+
+   function Available (Tool : Tool_Kind) return Boolean is
+   begin
+      if Already_Detected (Tool) then
+         return True;
+      end if;
+
+      if Locate_In_Path (Exec_For_Tool (Tool)) /= "" then
+         --  The tool is available
+         Already_Detected (Tool) := True;
+      end if;
+
+      return Already_Detected (Tool);
+   end Available;
+
    -------------------
    -- Exec_For_Tool --
    -------------------
 
    function Exec_For_Tool (Tool : Tool_Kind) return String
    is (case Tool is
+          when Easy_Graph => "graph-easy",
           when Git        => "git",
           when Tar        => "tar",
           when Unzip      => "unzip",
@@ -38,8 +59,12 @@ package body Alire.Utils.Tools is
 
          when Msys2 | Debian | Ubuntu =>
             return (case Tool is
+                       when Easy_Graph =>
+                         (if Distribution /= Msys2
+                          then "libgraph-easy-perl"
+                          else ""),
                        when Git | Tar | Unzip | Curl => Exec_For_Tool (Tool),
-                       when Mercurial => "mercurial",
+                       when Mercurial  => "mercurial",
                        when Subversion => "subversion");
       end case;
    end System_Package_For_Tool;
@@ -48,7 +73,7 @@ package body Alire.Utils.Tools is
    -- Install_From_Distrib --
    --------------------------
 
-   procedure Install_From_Distrib (Tool : Tool_Kind) is
+   procedure Install_From_Distrib (Tool : Tool_Kind; Fail : Boolean) is
       use Utils.User_Input;
 
       Pck : constant String := System_Package_For_Tool (Tool);
@@ -87,16 +112,27 @@ package body Alire.Utils.Tools is
             end;
          else
             --  Error when user rejected installation
-            Trace.Error ("Cannot proceed.");
-            Trace.Error ("Please install the tool and retry.");
+            if Fail then
+               Trace.Error ("Cannot proceed.");
+               Trace.Error ("Please install the tool and retry.");
+            else
+               Trace.Info ("Tool not installed.");
+               return;
+            end if;
          end if;
       else
          --  Error when Alire doesn't know how to install (unknown distro or
          --  tool not available in distro).
-         Trace.Error ("Cannot proceed.");
-         Trace.Error ("Alire is not able to install required tool: '" &
-                        Tool'Img & "'");
-         Trace.Error ("Please install the tool and retry.");
+         if Fail then
+            Trace.Error ("Cannot proceed.");
+            Trace.Error ("Alire is not able to install required tool: '" &
+                           Tool'Img & "'");
+            Trace.Error ("Please install the tool and retry.");
+         else
+            Trace.Warning ("Alire is not able to install tool: '" &
+                             Tool'Img & "'");
+            return;
+         end if;
       end if;
 
       OS_Lib.Bailout (1);
@@ -106,22 +142,16 @@ package body Alire.Utils.Tools is
    -- Check_Tool --
    ----------------
 
-   procedure Check_Tool (Tool : Tool_Kind) is
+   procedure Check_Tool (Tool : Tool_Kind; Fail : Boolean := True) is
    begin
 
-      if Already_Detected (Tool) then
-         return;
-      end if;
-
-      if Locate_In_Path (Exec_For_Tool (Tool)) /= "" then
-         --  The tool is available
-         Already_Detected (Tool) := True;
+      if Available (Tool) then
          return;
       end if;
 
       Trace.Info ("Cannot find required tool: " & Tool'Img);
 
-      Install_From_Distrib (Tool);
+      Install_From_Distrib (Tool, Fail);
    end Check_Tool;
 
 end Alire.Utils.Tools;

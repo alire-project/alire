@@ -4,11 +4,10 @@ with Alire.Crates.With_Releases;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
-with Alire.OS_Lib.Subprocess;
-with Alire.Paths;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
+with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 
 with Semantic_Versioning;
@@ -284,14 +283,6 @@ package body Alire.Solutions is
       end case;
    end Is_Better;
 
-   ----------------------------------
-   -- Libgraph_Easy_Perl_Installed --
-   ----------------------------------
-
-   function Libgraph_Easy_Perl_Installed return Boolean
-   is (OS_Lib.Subprocess.Locate_In_Path (Paths.Scripts_Graph_Easy) /= "");
-   --  Return whether libgraph_easy_perl_install is in path
-
    ------------------
    -- New_Solution --
    ------------------
@@ -426,21 +417,41 @@ package body Alire.Solutions is
                         .From_Solution (With_Root, Env);
          begin
             Graph.Print (With_Root, Prefix => "   ");
-
-            --  Optional graphical if possible. TODO: remove this warning once
-            --  show once.
-
-            if Libgraph_Easy_Perl_Installed then
-               Graph.Plot (With_Root);
-            else
-               Trace.Log ("Cannot display graphical graph: " &
-                            Paths.Scripts_Graph_Easy & " not in path" &
-                            " (usually packaged as libgraph_easy_perl).",
-                          Level);
-            end if;
          end;
       end if;
    end Print;
+
+   -----------------
+   -- Print_Graph --
+   -----------------
+
+   procedure Print_Graph (This     : Solution;
+                          Root     : Alire.Releases.Release;
+                          Env      : Properties.Vector)
+   is
+   begin
+      if This.Dependencies.Is_Empty then
+         Trace.Always ("There are no dependencies.");
+      else
+         Utils.Tools.Check_Tool (Utils.Tools.Easy_Graph, Fail => False);
+
+         if Utils.Tools.Available (Utils.Tools.Easy_Graph) then
+            declare
+               With_Root : constant Solution :=
+                             This.Including
+                               (Root, Env, Add_Dependency => True);
+               Graph     : constant Alire.Dependencies.Graphs.Graph :=
+                             Alire.Dependencies.Graphs
+                               .From_Solution (With_Root, Env);
+            begin
+               Graph.Plot (With_Root);
+            end;
+         else
+            Trace.Info ("Defaulting to tree view.");
+            This.Print_Tree (Root);
+         end if;
+      end if;
+   end Print_Graph;
 
    -----------------
    -- Print_Hints --

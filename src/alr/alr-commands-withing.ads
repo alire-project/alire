@@ -28,6 +28,7 @@ private
    type Command is new Commands.Command with record
       Del   : aliased Boolean := False;
       From  : aliased Boolean := False;
+      Graph : aliased Boolean := False;
       Solve : aliased Boolean := False;
       Tree  : aliased Boolean := False;
       URL   : aliased GNAT.Strings.String_Access;
