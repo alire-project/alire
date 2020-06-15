@@ -4,6 +4,24 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### New `alr with --versions` switch
+
+PR [#464](https://github.com/alire-project/alire/pull/464).
+
+A new `alr with --versions` switch is available to obtain version-focused
+information of dependencies. Namely, the combined dependencies on a crate are
+shown, with the release in the solution, and the last known version for the
+crate:
+```
+CRATE      DEPENDENCY      SOLVED  LATEST 
+a_project  (root)          0.0.0   unknown
+hello      ^1              1.0.1   4.0.0  
+libhello   (^1.0) & (~1.0) 1.0.1   2.0.0  
+superhello *               1.0.0   1.0.0  
+unobtanium *               missing unknown
+wip        *               /fake   unknown
+```
+
 ### New `alr with --graph` and `alr with --tree` switches
 
 PR [#465](https://github.com/alire-project/alire/pull/465).

@@ -444,8 +444,11 @@ package body Alr.Commands.Withing is
       Check (Cmd.Graph);
       Check (Cmd.Solve);
       Check (Cmd.Tree);
+      Check (Cmd.Versions);
 
-      --  No parameters: give current platform dependencies and BAIL OUT
+      --  No parameters: give requested info and return. There is still the
+      --  possibility of a `with --use` that is processed later.
+
       if Num_Arguments = 0 then
          if Flags = 0 or else Cmd.Solve then
             List (Cmd);
@@ -456,6 +459,10 @@ package body Alr.Commands.Withing is
          elsif Cmd.Graph then
             Root.Current.Solution.Print_Graph
               (Root.Current.Release, Platform.Properties);
+            return;
+         elsif Cmd.Versions then
+            Requires_Full_Index;
+            Root.Current.Solution.Print_Versions (Root.Current);
             return;
          end if;
       end if;
@@ -582,6 +589,11 @@ package body Alr.Commands.Withing is
                      Cmd.Tree'Access,
                      "", "--tree",
                      "Show complete dependency tree");
+
+      Define_Switch (Config,
+                     Cmd.Versions'Access,
+                     "", "--versions",
+                     "Show version status of dependencies");
    end Setup_Switches;
 
 end Alr.Commands.Withing;
