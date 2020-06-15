@@ -41,9 +41,9 @@
 The `alr config` command allows you to set an get any combination of
 configuration option `key` and `value`. You can use this feature to store you
 own project related configuration, or implement tools that integrate in an
-`Alire` context. However, be careful when naming custom configuration options as
-`Alire` my use the same `key` in the future. We recommend using a distinctive
-sub-category name, for instance: `my_project.my_config_option`.
+`Alire` context. However, be careful when naming custom configuration options
+as `Alire` may use the same `key` in the future. We recommend using a
+distinctive sub-category name, for instance: `my_project.my_config_option`.
 
 ## Built-in configuration options
 
