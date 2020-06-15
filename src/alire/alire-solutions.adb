@@ -1,6 +1,7 @@
 with Ada.Containers;
 
 with Alire.Crates.With_Releases;
+with Alire.Dependencies.Containers;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
 with Alire.OS_Lib.Subprocess;
@@ -496,6 +497,97 @@ package body Alire.Solutions is
          Table.Print (Always);
       end if;
    end Print_Pins;
+
+   ----------------
+   -- Print_Tree --
+   ----------------
+
+   procedure Print_Tree (This       : Solution;
+                         Root       : Alire.Releases.Release;
+                         Prefix     : String := "";
+                         Print_Root : Boolean := True)
+   is
+
+      Mid_Node  : constant String :=
+                    (if TTY.Color_Enabled then "├── " else "+-- ");
+      Last_Node : constant String :=
+                    (if TTY.Color_Enabled then "└── " else "+-- ");
+      Branch    : constant String :=
+                    (if TTY.Color_Enabled then "│   " else "|   ");
+      No_Branch : constant String := "    ";
+
+      procedure Print (Deps   : Dependencies.Containers.List;
+                       Prefix : String := "";
+                       Omit   : Boolean := False)
+        --  Omit is used to remove the top-level connectors, for when the tree
+        --  is printed without the root release.
+      is
+         Last : UString;
+         --  Used to store the last dependency name in a subtree, to be able to
+         --  use the proper ASCII connector. See just below.
+      begin
+
+         --  Find last printable dependency. This is related to OR trees, that
+         --  might cause the last in the enumeration to not really belong to
+         --  the solution.
+
+         for Dep of Deps loop
+            if This.Depends_On (Dep.Crate) then
+               Last := +(+Dep.Crate);
+            end if;
+         end loop;
+
+         --  Print each dependency for real
+
+         for Dep of Deps loop
+            if This.Depends_On (Dep.Crate) then
+               Trace.Always
+                 (Prefix
+                  --  The prefix is the possible "|" connectors from upper tree
+                  --  levels.
+
+                  --  Print the appropriate final connector for the node
+                  & (if Omit -- top-level, no prefix
+                    then ""
+                    else (if +Dep.Crate = +Last
+                          then Last_Node  -- A └── connector
+                          else Mid_Node)) -- A ├── connector
+
+                  --  For a dependency solved by a release, print exact
+                  --  version. Otherwise print the state of the dependency.
+                  & (if This.State (Dep.Crate).Has_Release
+                    then This.State (Dep.Crate).Release.Milestone.TTY_Image
+                    else This.State (Dep.Crate).TTY_Image)
+
+                  --  And dependency that introduces the crate in the solution
+                  & " (" & TTY.Emph (Dep.Versions.Image) & ")");
+
+               --  Recurse for further releases
+
+               if This.State (Dep.Crate).Has_Release then
+                  Print (Conditional.Enumerate
+                           (This.State (Dep.Crate).Release.Dependencies),
+                         Prefix =>
+                           Prefix
+                           --  Indent adding the proper running connector
+                           & (if Omit
+                              then ""
+                              else (if +Dep.Crate = +Last
+                                    then No_Branch  -- End of this connector
+                                    else Branch))); -- "│" over the subtree
+               end if;
+            end if;
+         end loop;
+      end Print;
+
+   begin
+      if Print_Root then
+         Trace.Always (Prefix & Root.Milestone.TTY_Image);
+      end if;
+      Print (Conditional.Enumerate (Root.Dependencies),
+             Prefix,
+             not Print_Root);
+   end Print_Tree;
 
    --------------
    -- Releases --

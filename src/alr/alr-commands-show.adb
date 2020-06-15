@@ -57,7 +57,7 @@ package body Alr.Commands.Show is
                Put_Line ("Platform package: " & Rel.Origin.Package_Name);
          end if;
 
-         if Cmd.Solve then
+         if Cmd.Solve or else Cmd.Tree then
             declare
                Needed : constant Query.Solution :=
                           (if Current
@@ -69,10 +69,20 @@ package body Alr.Commands.Show is
                               Options => (Age    => Query_Policy,
                                           others => <>)));
             begin
-               Needed.Print (Rel,
-                             Platform.Properties,
-                             Cmd.Detail,
-                             Always);
+               if Cmd.Solve then
+                  Needed.Print (Rel,
+                                Platform.Properties,
+                                Cmd.Detail,
+                                Always);
+               else
+                  if Needed.Crates.Length not in 0 then
+                     Trace.Always ("Dependencies (tree):");
+                     Needed.Print_Tree (Rel,
+                                        Prefix     => "   ",
+                                        Print_Root => False);
+                  end if;
+               end if;
+
                if not Needed.Is_Complete then
                   Put_Line ("Dependencies cannot be met");
                end if;
@@ -200,12 +210,14 @@ package body Alr.Commands.Show is
          end case;
       end if;
 
-      if Cmd.External and (Cmd.Detect or Cmd.Jekyll or Cmd.Solve) then
+      if Cmd.External and then
+        (Cmd.Detect or Cmd.Jekyll or Cmd.Solve or Cmd.Tree)
+      then
          Reportaise_Wrong_Arguments
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Num_Arguments = 1 or else Cmd.Solve then
+      if Num_Arguments = 1 or else Cmd.Solve  or else Cmd.Tree then
          Requires_Full_Index;
       end if;
 
@@ -296,6 +308,10 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Solve'Access,
                      "", "--solve", "Solve dependencies and report");
+
+      Define_Switch (Config,
+                     Cmd.Tree'Access,
+                     "", "--tree", "Show complete dependency tree");
 
       Define_Switch (Config,
                      Cmd.Jekyll'Access,

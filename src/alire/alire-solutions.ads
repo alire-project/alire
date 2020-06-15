@@ -277,6 +277,13 @@ package Alire.Solutions is
    procedure Print_Pins (This : Solution);
    --  Dump a table with pins in this solution
 
+   procedure Print_Tree (This       : Solution;
+                         Root       : Alire.Releases.Release;
+                         Prefix     : String := "";
+                         Print_Root : Boolean := True);
+   --  Print the solution in tree form. If Print_Root, Root is printed too;
+   --  otherwise the tree is a forest starting at Root direct dependencies.
+
    -----------------
    -- Persistence --
    -----------------

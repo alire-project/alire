@@ -26,6 +26,7 @@ private
       External : aliased Boolean := False;
       Solve    : aliased Boolean := False;
       System   : aliased Boolean := False;
+      Tree     : aliased Boolean := False;
       Jekyll   : aliased Boolean := False;
    end record;
 
