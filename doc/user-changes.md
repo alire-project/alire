@@ -4,6 +4,19 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Use crate metadata when pinning to a directory
+
+PR [#450](https://github.com/alire-project/alire/pull/450).
+
+When pinning a dependency to a directory (`alr pin|with <crate> --url`), detect
+if the target contains Alire metadata (as usual, in an `alire` subdir). In that
+case, use it to determine further dependencies and project file scopes. Also,
+the target dependency name is verified.
+
+For such a target directory, a shortcut `with` command is available since the
+crate name can be determined from the metadata: `alr with --url
+/path/to/target` (note the absence of a crate name).
+
 ### Allow working with incomplete solutions
 
 PR [#447](https://github.com/alire-project/alire/pull/447).

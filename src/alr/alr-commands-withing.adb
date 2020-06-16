@@ -73,17 +73,13 @@ package body Alr.Commands.Withing is
    -- Add_Softlink --
    ------------------
 
-   procedure Add_Softlink (Cmd : Command) is
+   procedure Add_Softlink (Dep_Spec : String;
+                           Path     : String) is
       Requested : constant Alire.Milestones.Allowed_Milestones :=
-                    Alire.Milestones.Crate_Versions (Argument (1));
+                    Alire.Milestones.Crate_Versions (Dep_Spec);
       New_Dep   : constant Alire.Dependencies.Dependency :=
                     Alire.Dependencies.From_Milestones (Requested);
    begin
-      if Num_Arguments /= 1 then
-         Reportaise_Wrong_Arguments
-           ("Exactly one crate needed for external pinning.");
-      end if;
-
       declare
          use Alire;
          use type Conditional.Dependencies;
@@ -94,7 +90,7 @@ package body Alr.Commands.Withing is
                           Old_Solution
                             .Depending_On (New_Dep)
                             .Linking (Crate => New_Dep.Crate,
-                                      Path  => Cmd.URL.all);
+                                      Path  => Path);
       begin
 
          --  Prevent double-add
@@ -123,6 +119,25 @@ package body Alr.Commands.Withing is
 
       end;
    end Add_Softlink;
+
+   ---------------------
+   -- Detect_Softlink --
+   ---------------------
+
+   procedure Detect_Softlink (Path : String) is
+      Root : constant Alire.Roots.Root := Alire.Roots.Detect_Root (Path);
+   begin
+      if Root.Is_Valid then
+         --  Add a dependency on ^(detected version) (i.e., safely upgradable)
+         Add_Softlink
+           (Dep_Spec => Root.Release.Name_Str
+                        & "^" & Root.Release.Version.Image,
+            Path     => Path);
+      else
+         Reportaise_Command_Failed
+           ("cannot add target: " & Root.Invalid_Reason);
+      end if;
+   end Detect_Softlink;
 
    ---------
    -- Del --
@@ -432,10 +447,10 @@ package body Alr.Commands.Withing is
 
          if Cmd.URL.all /= "" then
             if Num_Arguments = 1 then
-               Add_Softlink (Cmd);
+               Add_Softlink (Dep_Spec => Argument (1),
+                             Path     => Cmd.URL.all);
             else
-               raise Alire.Unimplemented;
-               --  TODO: detect crate at given path, and use it
+               Detect_Softlink (Cmd.URL.all);
             end if;
          else
             Requires_Full_Index;

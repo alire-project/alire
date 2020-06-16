@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Directories;
 with Alire.Root;
 with Alire.TOML_Index;
@@ -33,7 +35,7 @@ package body Alire.Roots is
                --  Crate loaded properly, we can return a valid root here
                Trace.Debug ("Valid root found at " & Path);
                return New_Root (R    => Release,
-                                Path => Path,
+                                Path => Ada.Directories.Full_Name (Path),
                                 Env  => Alire.Root.Platform_Properties);
             end;
          else
