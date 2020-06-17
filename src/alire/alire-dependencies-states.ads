@@ -148,8 +148,8 @@ private
       Versions : Semantic_Versioning.Extended.Version_Set)
       return State;
 
-   type Fulfilment_Data (Fulfilment : Fulfilments := Missed) is record
-      case Fulfilment is
+   type Fulfilment_Data (Fulfillment : Fulfilments := Missed) is record
+      case Fulfillment is
          when Linked => Target  : Link_Holder;
          when Solved => Release : Containers.Release_H;
          when others => null;
@@ -203,7 +203,7 @@ private
    ----------------
 
    function Fulfilment (This : State) return Fulfilments
-   is (This.Fulfilled.Fulfilment);
+   is (This.Fulfilled.Fulfillment);
 
    -------------
    -- Hinting --
@@ -212,7 +212,7 @@ private
    function Hinting (Base : State) return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
-       Fulfilled    => (Fulfilment => Hinted),
+       Fulfilled    => (Fulfillment => Hinted),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -227,8 +227,8 @@ private
          (if This.Transitivity /= Unknown
           then This.Transitivity'Img & ","
           else "")
-       & Utils.To_Lower_Case (This.Fulfilled.Fulfilment'Img)
-       & (if This.Fulfilled.Fulfilment = Linked
+       & Utils.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
+       & (if This.Fulfilled.Fulfillment = Linked
           then ",target=" & This.Fulfilled.Target.Get.Path
           else "")
        & (if This.Pinning.Pinned
@@ -244,22 +244,22 @@ private
    is (This.Transitivity = Direct);
 
    function Is_Hinted (This : State) return Boolean
-   is (This.Fulfilled.Fulfilment = Hinted);
+   is (This.Fulfilled.Fulfillment = Hinted);
 
    function Is_Indirect (This : State) return Boolean
    is (This.Transitivity = Indirect);
 
    function Is_Linked (This : State) return Boolean
-   is (This.Fulfilled.Fulfilment = Linked);
+   is (This.Fulfilled.Fulfillment = Linked);
 
    function Is_Missing (This : State) return Boolean
-   is (This.Fulfilled.Fulfilment = Missed);
+   is (This.Fulfilled.Fulfillment = Missed);
 
    function Is_Pinned (This : State) return Boolean
    is (This.Pinning.Pinned);
 
    function Is_Solved (This : State) return Boolean
-   is (This.Fulfilled.Fulfilment = Solved);
+   is (This.Fulfilled.Fulfillment = Solved);
 
    ----------
    -- Link --
@@ -277,8 +277,8 @@ private
                      return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
-       Fulfilled    => (Fulfilment => Linked,
-                        Target     => To_Holder (Link)),
+       Fulfilled    => (Fulfillment => Linked,
+                        Target      => To_Holder (Link)),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -303,7 +303,7 @@ private
    function Missing (Base : State) return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
-       Fulfilled    => (Fulfilment => Missed),
+       Fulfilled    => (Fulfillment => Missed),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -387,7 +387,7 @@ private
                      return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
-       Fulfilled    => (Fulfilment => Solved,
+       Fulfilled    => (Fulfillment => Solved,
                         Release    => Containers.Release_Holders
                                                 .To_Holder (Using)),
        Pinning      => Base.Pinning,
@@ -412,11 +412,11 @@ private
           then This.Transitivity'Img & ","
           else "")
        & Utils.To_Lower_Case
-         (case This.Fulfilled.Fulfilment is
-             when Missed => TTY.Error (This.Fulfilled.Fulfilment'Img),
-             when Hinted => TTY.Warn (This.Fulfilled.Fulfilment'Img),
-             when others => This.Fulfilled.Fulfilment'Img)
-       & (if This.Fulfilled.Fulfilment = Linked
+         (case This.Fulfilled.Fulfillment is
+             when Missed => TTY.Error (This.Fulfilled.Fulfillment'Img),
+             when Hinted => TTY.Warn (This.Fulfilled.Fulfillment'Img),
+             when others => This.Fulfilled.Fulfillment'Img)
+       & (if This.Fulfilled.Fulfillment = Linked
           then "," & TTY.Emph ("target") & "="
                    & TTY.URL (This.Fulfilled.Target.Get.Path)
           else "")

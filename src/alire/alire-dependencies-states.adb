@@ -47,7 +47,7 @@ package body Alire.Dependencies.States is
 
          --  Load particulars
 
-         case Data.Fulfilment is
+         case Data.Fulfillment is
             when Hinted => null;
 
             when Linked =>
@@ -127,9 +127,9 @@ package body Alire.Dependencies.States is
       procedure To_TOML (Data : Fulfilment_Data; Table : TOML_Value) is
       begin
          Table.Set (Keys.Fulfilment,
-                    +To_Lower_Case (This.Fulfilled.Fulfilment'Img));
+                    +To_Lower_Case (This.Fulfilled.Fulfillment'Img));
 
-         case Data.Fulfilment is
+         case Data.Fulfillment is
             when Hinted => null;
             when Linked =>
                Table.Set (Keys.Link, Data.Target.Get.To_TOML);

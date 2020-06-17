@@ -205,7 +205,7 @@ package body Alr.Commands.Withing is
          Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
 
          --  In the event of a new invalid solution (this should not happen,
-         --  but as a safeguard we ensure it cannot be commited to disk) bail
+         --  but as a safeguard we ensure it cannot be committed to disk) bail
          --  out already.
 
          if not New_Solution.Valid then
