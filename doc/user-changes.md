@@ -4,6 +4,19 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Allow working with incomplete solutions
+
+PR [#447](https://github.com/alire-project/alire/pull/447).
+
+Before this patch, any change in dependences that resulted in an incomplete
+solution caused a final "invalid solution" error. Now, any incomplete solution
+will be presented to the user with details about the unfulfilled dependencies.
+This solution can be accepted and worked with normally, although the user is
+responsible to provide in the environment any missing project files.
+
+This change affects all commands that compute a dependency solution, i.e.,
+`get`, `pin`, `update`, `with`.
+
 ### Use a directory to fulfill a dependency
 
 PR [#439](https://github.com/alire-project/alire/pull/439)
