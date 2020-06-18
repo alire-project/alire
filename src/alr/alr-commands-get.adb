@@ -10,8 +10,8 @@ with Alire.Platforms;
 with Alire.Properties.Actions.Executor;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
+with Alire.Workspace;
 
-with Alr.Checkout;
 with Alr.Commands.Build;
 with Alr.Commands.Update;
 with Alr.Platform;
@@ -44,8 +44,13 @@ package body Alr.Commands.Get is
       Diff     : Alire.Solutions.Diffs.Diff;
       --  Used to present dependencies to the user
 
-      Build_OK : Boolean := False;
+      Build_OK : Boolean;
    begin
+      Trace.Detail ("Using " & Rel.Milestone.TTY_Image
+                    & " for requested "
+                    & Alire.Dependencies.New_Dependency
+                      (Name, Versions).TTY_Image);
+
       declare
          Result : Alire.Outcome;
       begin
@@ -107,9 +112,11 @@ package body Alr.Commands.Get is
          Root_Dir : Alire.Directories.Temp_File :=
                       Alire.Directories.With_Name (Rel.Unique_Folder);
       begin
-         Checkout.Working_Copy (Rel,
-                                Ada.Directories.Current_Directory,
-                                Perform_Actions => False);
+         Alire.Workspace.Deploy_Root
+           (Rel,
+            Ada.Directories.Current_Directory,
+            Platform.Properties,
+            Perform_Actions => False);
 
          --  At this point, both crate and lock files must exist and
          --  be correct, so the working session is correct. Errors with
@@ -185,12 +192,6 @@ package body Alr.Commands.Get is
          --  or not.
          use all type Alire.Platforms.Toolchains;
       begin
-
-         --  Crate does not even exist
-
-         if not Alire.Index.Exists (Name) then
-            raise Alire.Query_Unsuccessful with "Crate not in index";
-         end if;
 
          --  Crate has regular source releases, which take precedence
 
@@ -275,14 +276,22 @@ package body Alr.Commands.Get is
 
          Requires_Full_Index;
 
+         if not Alire.Index.Exists (Allowed.Crate) then
+            Reportaise_Command_Failed
+              ("Crate [" & Argument (1) & "] does not exist in the catalog.");
+         end if;
+
          Check_Unavailable_External (Allowed.Crate);
 
+         --  Final checks pre-retrieval
+
+         if not Query.Exists (Allowed.Crate, Allowed.Versions) then
+            Reportaise_Command_Failed
+              ("Release within the requested versions ["
+               & Allowed.TTY_Image & "] does not exist in the catalog.");
+         end if;
+
          Retrieve (Cmd, Allowed.Crate, Allowed.Versions);
-      exception
-         when Alire.Query_Unsuccessful =>
-            Trace.Info ("Crate [" & Argument (1) &
-                          "] does not exist in the catalog.");
-            raise Command_Failed;
       end;
    end Execute;
 

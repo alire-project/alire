@@ -24,17 +24,4 @@ package body Alr.Files is
       return Natural (Candidates.Length);
    end Locate_Any_GPR_File;
 
-   ------------------------
-   -- Backup_If_Existing --
-   ------------------------
-
-   procedure Backup_If_Existing (File : String) is
-      use Ada.Directories;
-   begin
-      if Exists (File) then
-         Trace.Debug ("Backing up " & File);
-         Copy_File (File, File & ".prev", "mode=overwrite");
-      end if;
-   end Backup_If_Existing;
-
 end Alr.Files;

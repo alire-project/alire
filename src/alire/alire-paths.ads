@@ -8,6 +8,9 @@ package Alire.Paths with Preelaborate is
    Working_Folder_Inside_Root    : constant Relative_Path;
    --  This is the folder inside a crate where all alire products are created
 
+   function Dependency_Dir_Inside_Working_Folder return Relative_Path;
+   --  Relative path from Working_Folder to deployed dependencies
+
    function Build_Folder return Relative_Path;
    --  The folder where the out-of-tree global build is performed
 
@@ -19,6 +22,9 @@ private
    Crate_File_Extension_With_Dot : constant String := ".toml";
 
    Working_Folder_Inside_Root    : constant Relative_Path := "alire";
+
+   function Dependency_Dir_Inside_Working_Folder return Relative_Path
+   is ("cache" / "dependencies");
 
    function Build_Folder return Relative_Path is
      (Working_Folder_Inside_Root / "build");

@@ -19,7 +19,4 @@ package Alr.Files is
    --  Says if there's any *.gpr file in current folder (making the cwd a
    --  plausible alr working dir).
 
-   procedure Backup_If_Existing (File : String);
-   --  If File exists, move to file.prev
-
 end Alr.Files;

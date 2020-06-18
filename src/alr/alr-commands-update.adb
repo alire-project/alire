@@ -3,9 +3,8 @@ with Alire.Errors;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.TTY;
-with Alire.Workspaces;
+with Alire.Workspace;
 
-with Alr.Checkout;
 with Alr.Commands.Index;
 with Alr.Commands.User_Input;
 with Alr.Platform;
@@ -47,7 +46,7 @@ package body Alr.Commands.Update is
 
       declare
          Needed  : constant Query.Solution :=
-                     Alire.Workspaces.Update
+                     Alire.Workspace.Update
                        (Platform.Properties,
                         Allowed,
                         Options => (Age    => Query_Policy,
@@ -84,9 +83,9 @@ package body Alr.Commands.Update is
 
          --  Apply the update
 
-         Checkout.Dependencies (Root     => Root.Current.Release.Name,
-                                Solution => Needed,
-                                Root_Dir => OS_Lib.Current_Folder);
+         Alire.Workspace.Deploy_Dependencies
+           (Env      => Platform.Properties,
+            Solution => Needed);
 
          Trace.Detail ("Update completed");
       end;
