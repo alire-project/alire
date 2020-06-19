@@ -22,7 +22,7 @@ assert p.status != 0, "Build should fail"
 
 # Add normally and then pin, check that it builds
 run_alr('with', 'libhello')
-run_alr('pin', 'libhello', '--url', '../my_index/crates/libhello_1.0.0')
+run_alr('pin', 'libhello', '--use', '../my_index/crates/libhello_1.0.0')
 run_alr('build')
 
 # Check the pin shows in the solution

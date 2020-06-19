@@ -29,7 +29,7 @@ p = run_alr('pin', 'libhello=1.0')
 check_version_pin()
 
 # Repin to a folder
-run_alr('pin', 'libhello', '--url', '../my_index/crates/libhello_1.0.0')
+run_alr('pin', 'libhello', '--use', '../my_index/crates/libhello_1.0.0')
 
 # Check that it shows as such in the solution
 p = run_alr('show', '--solve')

@@ -20,7 +20,7 @@ package Alr.Commands.Withing is
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[{ [--del] <crate>[versions]..."
       & " | --from <gpr_file>..."
-      & " | <crate>[versions] --url </path/to/sources } ]");
+      & " | <crate>[versions] --use <path> } ]");
 
 private
 

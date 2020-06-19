@@ -23,7 +23,7 @@ with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Withing is
 
-   Switch_URL : constant String := "--url";
+   Switch_URL : constant String := "--use";
 
    package Query renames Alire.Solver;
 
@@ -482,9 +482,9 @@ package body Alr.Commands.Withing is
                 & " simultaneously added and removed in a single invocation.")
        .New_Line
        .Append ("* Adding dependencies pinned to external sources:")
-       .Append ("When a single crate name is accompanied by an --url URL"
+       .Append ("When a single crate name is accompanied by an --use PATH"
                 & " argument, the crate is always fulfilled for any required"
-                & " version by the sources found at URL.")
+                & " version by the sources found at PATH.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
@@ -531,7 +531,7 @@ package body Alr.Commands.Withing is
         (Config      => Config,
          Output      => Cmd.URL'Access,
          Long_Switch => Switch_URL & "=",
-         Argument    => "URL",
+         Argument    => "PATH",
          Help        => "Add a dependency pinned to some external source");
 
       Define_Switch (Config,

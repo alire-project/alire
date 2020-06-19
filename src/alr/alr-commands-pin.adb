@@ -174,7 +174,7 @@ package body Alr.Commands.Pin is
         (Num_Arguments /= 1 or else Cmd.Pin_All or else Cmd.Unpin)
       then
          Reportaise_Wrong_Arguments
-           ("--url must be used alone with a crate name");
+           ("--use must be used alone with a crate name");
       end if;
 
       Requires_Valid_Session;
@@ -252,8 +252,8 @@ package body Alr.Commands.Pin is
       .New_Line
       .Append ("Specify a single crate to modify its pin.")
       .New_Line
-      .Append ("Use the --url switch to "
-               & " force alr to use the URL target"
+      .Append ("Use the --use <PATH> switch to "
+               & " force alr to use the PATH target"
                & " to fulfill a dependency locally"
                & " instead of looking for indexed releases.")
      );
@@ -282,8 +282,8 @@ package body Alr.Commands.Pin is
       Define_Switch
         (Config      => Config,
          Output      => Cmd.URL'Access,
-         Long_Switch => "--url=",
-         Argument    => "URL",
+         Long_Switch => "--use=",
+         Argument    => "PATH",
          Help        => "Use a directory to fulfill a dependency");
    end Setup_Switches;
 

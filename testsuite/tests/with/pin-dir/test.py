@@ -21,7 +21,7 @@ p = run_alr('build', complain_on_error=False)
 assert p.status != 0, "Build should fail"
 
 # Add pinned, check that it builds
-run_alr('with', 'libhello', '--url', '../my_index/crates/libhello_1.0.0')
+run_alr('with', 'libhello', '--use', '../my_index/crates/libhello_1.0.0')
 run_alr('build')
 
 # Check the pin shows in the solution
