@@ -9,6 +9,7 @@ with Alire.Roots;
 with Alire.Solutions;
 with Alire.Workspace;
 
+with Alr.Platform;
 with Alr.Root;
 with Alr.Utils;
 
@@ -168,7 +169,9 @@ package body Alr.Commands.Init is
 
       declare
          Root : constant Alire.Roots.Root := Alire.Roots.New_Root
-           (+Name, Ada.Directories.Full_Name (+Directory.Full_Name));
+           (+Name,
+            Ada.Directories.Full_Name (+Directory.Full_Name),
+            Platform.Properties);
       begin
          Make_Dir (Create (+Root.Working_Folder));
 

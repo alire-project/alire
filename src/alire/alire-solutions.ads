@@ -1,6 +1,7 @@
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States.Maps;
+with Alire.Externals.Softlinks;
 with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Releases;
@@ -31,8 +32,9 @@ package Alire.Solutions is
       --  Trivial empty solution when no dependencies are needed
 
       Releases,
-      --  Only proper (regular or detected) releases with a concrete version
-      --  and deployer; these should always build properly.
+      --  Proper (regular or detected) releases with a concrete version and
+      --  deployer, and linked directories. These solutions should build
+      --  properly (if the linked dependencies are correct).
 
       Mixed,
       --  Releases + at least one undetected hint (i.e., build success is not
@@ -107,6 +109,20 @@ package Alire.Solutions is
    --  release is fulfilling, by default we don't create its dependency (it
    --  must exist previously).
 
+   function Linking (This  : Solution;
+                     Crate : Crate_Name;
+                     Link  : Externals.Softlinks.External)
+                     return Solution
+     with Pre => This.Depends_On (Crate);
+   --  Replace the fulfilment of Crate with a "softlinked" external
+
+   function Linking (This  : Solution;
+                     Crate : Crate_Name;
+                     Path  : Any_Path)
+                     return Solution
+     with Pre => This.Depends_On (Crate);
+   --  As previous but giving a path for simplicity
+
    function Missing (This : Solution;
                      Dep  : Dependencies.Dependency)
                      return Solution;
@@ -118,6 +134,12 @@ package Alire.Solutions is
                      return Solution;
    --  Return a copy of the solution with the given crate pinned to a version.
    --  If the crate was not in the original solution it will be added.
+
+   function Setting (This         : Solution;
+                     Crate        : Crate_Name;
+                     Transitivity : States.Transitivities)
+                     return Solution;
+   --  Change transitivity
 
    function Unpinning (This  : Solution;
                        Crate : Crate_Name)
@@ -182,6 +204,9 @@ package Alire.Solutions is
    function Is_Complete (This : Solution) return Boolean;
    --  A solution is complete when it fulfills all dependencies via regular
    --  releases, detected externals, or linked directories.
+
+   function Links (This : Solution) return Dependency_Map;
+   --  Return crates that are solved with a softlink
 
    function Misses (This : Solution) return Dependency_Map;
    --  Return crates for which there is neither hint nor proper versions
@@ -281,7 +306,9 @@ private
           Unsolved
        elsif This.Dependencies.Is_Empty then
           Empty
-       elsif (for all Dep of This.Dependencies => Dep.Is_Solved) then
+       elsif (for all Dep of This.Dependencies =>
+                 Dep.Is_Solved or else Dep.Is_Linked)
+       then
           Releases
        elsif (for all Dep of This.Dependencies => Dep.Is_Hinted) then
           Hints
@@ -368,7 +395,36 @@ private
    -----------------
 
    function Is_Complete (This : Solution) return Boolean
-   is (for all Dep of This.Dependencies => Dep.Is_Solved);
+   is (This.Composition in Empty | Releases);
+
+   -------------
+   -- Linking --
+   -------------
+
+   function Linking (This  : Solution;
+                     Crate : Crate_Name;
+                     Link  : Externals.Softlinks.External)
+                     return Solution
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including (This.State (Crate).Linking (Link)));
+
+   -------------
+   -- Linking --
+   -------------
+
+   function Linking (This  : Solution;
+                     Crate : Crate_Name;
+                     Path  : Any_Path)
+                     return Solution
+   is (This.Linking (Crate, Externals.Softlinks.New_Softlink (Path)));
+
+   -----------
+   -- Links --
+   -----------
+
+   function Links (This : Solution) return Dependency_Map
+   is (This.Dependencies_That (States.Is_Linked'Access));
 
    ------------
    -- Misses --
@@ -418,6 +474,19 @@ private
 
    function Required (This : Solution) return State_Map'Class
    is (This.Dependencies);
+
+   -------------
+   -- Setting --
+   -------------
+
+   function Setting (This         : Solution;
+                     Crate        : Crate_Name;
+                     Transitivity : States.Transitivities)
+                     return Solution
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including
+         (This.Dependencies (Crate).Setting (Transitivity)));
 
    -----------
    -- State --

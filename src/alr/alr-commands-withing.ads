@@ -1,3 +1,5 @@
+private with GNAT.Strings;
+
 package Alr.Commands.Withing is
 
    type Command is new Commands.Command with private;
@@ -16,7 +18,9 @@ package Alr.Commands.Withing is
      ("Manage release dependencies");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[{ [--del] <crate>[versions]... | --from <gpr_file>... }]");
+     ("[{ [--del] <crate>[versions]..."
+      & " | --from <gpr_file>..."
+      & " | <crate>[versions] --use <path> } ]");
 
 private
 
@@ -24,6 +28,7 @@ private
       Del   : aliased Boolean := False;
       From  : aliased Boolean := False;
       Solve : aliased Boolean := False;
+      URL   : aliased GNAT.Strings.String_Access;
    end record;
 
 end Alr.Commands.Withing;

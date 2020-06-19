@@ -8,6 +8,7 @@ package body Alire.Dependencies.States is
 
       Crate        : constant String := "crate";
       Fulfilment   : constant String := "fulfilment";
+      Link         : constant String := "link";
       Pin_Version  : constant String := "pin_version";
       Pinned       : constant String := "pinned";
       Release      : constant String := "release";
@@ -30,7 +31,56 @@ package body Alire.Dependencies.States is
       Versions : constant Semantic_Versioning.Extended.Version_Set :=
                    Semantic_Versioning.Extended.Value
                      (From.Checked_Pop (Keys.Versions,
-                                        TOML_String).As_String);
+                      TOML_String).As_String);
+
+      ---------------------
+      -- Load_Fulfilment --
+      ---------------------
+
+      function Load_Fulfilment return Fulfilment_Data is
+         Data  : Fulfilment_Data
+           (Fulfilments'Value
+              (From.Checked_Pop (Keys.Fulfilment, TOML_String).As_String));
+         Crate : Crates.With_Releases.Crate :=
+                   Crates.With_Releases.New_Crate (From_TOML.Crate);
+      begin
+
+         --  Load particulars
+
+         case Data.Fulfillment is
+            when Hinted => null;
+
+            when Linked =>
+               Data.Target.Hold
+                 (Externals.Softlinks.From_TOML
+                    (From.Descend
+                         (Value   => From.Checked_Pop (Keys.Link, TOML_Table),
+                          Context => Keys.Link)));
+
+            when Missed => null;
+
+            when Solved =>
+               Assert (Crate.From_TOML -- Load crate
+                       (From.Descend   -- from adapter that is under 'release'
+                          (From.Checked_Pop (Keys.Release, TOML_Table)
+                             .Get (+Crate.Name), -- get the release top entry
+                             "release: " & (+Crate.Name))));
+
+               if Crate.Releases.Length not in 1 then
+                  Raise_Checked_Error
+                    ("Expected one release per solved dependency"
+                     & " in lockfile, but got:" & Crate.Releases.Length'Img);
+               end if;
+
+               Data.Release :=
+                 Containers.Release_Holders.To_Holder
+                   (Crate.Releases.First_Element);
+
+         end case;
+
+         return Data;
+      end Load_Fulfilment;
+
    begin
       return This : State := New_Dependency (Crate, Versions) do
 
@@ -56,36 +106,8 @@ package body Alire.Dependencies.States is
 
          --  Fulfilling
 
-         declare
-            Data : Fulfilment_Data
-              (Fulfilments'Value
-                 (From.Checked_Pop (Keys.Fulfilment, TOML_String).As_String));
-            Crate : Crates.With_Releases.Crate :=
-                      Crates.With_Releases.New_Crate (This.Crate);
-         begin
+         This.Fulfilled := Load_Fulfilment;
 
-            --  Load the release for a solved dependency
-
-            if Data.Fulfilment = Solved then
-               Assert (Crate.From_TOML -- Load crate
-                       (From.Descend   -- from adapter that is under 'release'
-                          (From.Checked_Pop (Keys.Release, TOML_Table)
-                               .Get (+Crate.Name), -- get the release top entry
-                           "release: " & (+This.Crate))));
-
-               if Crate.Releases.Length not in 1 then
-                  Raise_Checked_Error
-                    ("Expected one release per solved dependency"
-                     & " in lockfile, but got:" & Crate.Releases.Length'Img);
-               end if;
-
-               Data.Release :=
-                 Containers.Release_Holders.To_Holder
-                   (Crate.Releases.First_Element);
-            end if;
-
-            This.Fulfilled := Data;
-         end;
       end return;
    end From_TOML;
 
@@ -97,6 +119,35 @@ package body Alire.Dependencies.States is
    is
       use TOML_Adapters;
       use Utils;
+
+      -------------
+      -- To_TOML --
+      -------------
+
+      procedure To_TOML (Data : Fulfilment_Data; Table : TOML_Value) is
+      begin
+         Table.Set (Keys.Fulfilment,
+                    +To_Lower_Case (This.Fulfilled.Fulfillment'Img));
+
+         case Data.Fulfillment is
+            when Hinted => null;
+            when Linked =>
+               Table.Set (Keys.Link, Data.Target.Get.To_TOML);
+
+            when Missed => null;
+            when Solved =>
+               declare
+                  Name : constant TOML_Value := Create_Table;
+                  --  This extra table is not really necessary, but it makes
+                  --  the output clearer and the tests simpler.
+               begin
+                  Name.Set (+This.Crate,
+                            This.Fulfilled.Release.Constant_Reference.To_TOML);
+                  Table.Set (Keys.Release, Name);
+               end;
+         end case;
+      end To_TOML;
+
    begin
       return Table : constant TOML_Value := Create_Table do
 
@@ -118,22 +169,8 @@ package body Alire.Dependencies.States is
 
          --  Fulfilment
 
-         declare
-            Name : constant TOML_Value := Create_Table;
-            --  This extra table is not really necessary, but it makes the
-            --  output clearer and the tests simpler.
-         begin
-            Table.Set (Keys.Fulfilment,
-                       +To_Lower_Case (This.Fulfilled.Fulfilment'Img));
+         To_TOML (This.Fulfilled, Table);
 
-            --  Release for a solved dependency
-
-            if This.Is_Solved then
-               Name.Set (+This.Crate,
-                         This.Fulfilled.Release.Constant_Reference.To_TOML);
-               Table.Set (Keys.Release, Name);
-            end if;
-         end;
       end return;
    end To_TOML;
 

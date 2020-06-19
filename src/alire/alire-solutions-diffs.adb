@@ -19,6 +19,7 @@ package body Alire.Solutions.Diffs is
    function Best_Version (Status : Crate_Status) return String is
      (case Status.Status is
          when Needed   => Semantic_Versioning.Image (Status.Version),
+         when Linked   => "file:" & (+Status.Path),
          when Hinted   => Status.Versions.Image,
          when Unneeded => "unneeded",
          when Unsolved => "unsolved");
@@ -42,7 +43,9 @@ package body Alire.Solutions.Diffs is
             return (Status  => Needed,
                     Pinned  => Sol.State (Crate).Is_Pinned,
                     Version => Sol.State (Crate).Release.Version);
-
+         elsif Sol.Links.Contains (Crate) then
+            return (Status => Linked,
+                    Path   => +Sol.State (Crate).Link.Path);
          elsif Sol.Hints.Contains (Crate) then
             return (Status   => Hinted,
                     Versions => Sol.Dependency (Crate).Versions);
@@ -113,6 +116,7 @@ package body Alire.Solutions.Diffs is
                   elsif Former.Version = Latter.Version then Unchanged
                   else Downgraded)
                else Added),
+            when Linked   => Pinned,
             when Hinted   => External,
             when Unneeded => Removed,
             when Unsolved => Unsolved);
@@ -232,7 +236,7 @@ package body Alire.Solutions.Diffs is
 
                --  Show most precise version available
 
-               if Latter.Status in Hinted | Needed then
+               if Latter.Status in Hinted | Linked | Needed then
                   Table.Append (TTY.Version (Best_Version (Latter)));
                else
                   Table.Append (TTY.Version (Best_Version (Former)));

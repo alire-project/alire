@@ -500,7 +500,7 @@ private
    --  Delayed implementation to avoid freezing:
 
    function Is_Iterable (This : Tree) return Boolean is
-      (This.Is_Value or else This.Is_Vector);
+      (This.Is_Empty or else This.Is_Value or else This.Is_Vector);
 
    function Leaf_Count (This : Tree) return Natural is
      (if This.Is_Empty

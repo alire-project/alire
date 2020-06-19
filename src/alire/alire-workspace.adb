@@ -187,7 +187,9 @@ package body Alire.Workspace is
               with Unreferenced;
             Root       : constant Alire.Roots.Root :=
               Alire.Roots.New_Root
-                 (Release.Name, Ada.Directories.Current_Directory);
+                              (Release.Name,
+                               Ada.Directories.Current_Directory,
+                               Env);
          begin
 
             Workspace.Generate_Manifest

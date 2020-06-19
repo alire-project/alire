@@ -58,6 +58,8 @@ package Alire.Utils.TTY with Preelaborate is
    function Description (Text : String) return String;
    --  Not bold cyan for crate descriptions
 
+   function URL (Text : String) return String;
+
    function Version (Text : String) return String;
    --  For versions/version sets, bold magenta
 
@@ -96,6 +98,8 @@ private
    function Description (Text : String) return String is
      (Format (Text,
               Fore  => ANSI.Light_Cyan));
+
+   function URL (Text : String) return String renames Version;
 
    function Version (Text : String) return String is
      (Format (Text,

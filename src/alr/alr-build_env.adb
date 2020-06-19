@@ -3,7 +3,6 @@ with Ada.Text_IO;
 
 with GNAT.OS_Lib;
 
-with Alire.Directories;
 with Alire.GPR;
 with Alire.Properties.Scenarios;
 with Alire.Solutions;
@@ -12,7 +11,6 @@ with Alire.Utils;
 
 with Alr.OS_Lib;
 with Alr.Platform;
-with Alr.Paths;
 
 package body Alr.Build_Env is
 
@@ -26,49 +24,16 @@ package body Alr.Build_Env is
    -- Project_Path --
    ------------------
 
-   function Project_Path (Releases : Alire.Solutions.Release_Map;
-                          Root     : Alire.Roots.Root)
+   function Project_Path (Root     : Alire.Roots.Root)
                           return String
    is
-      use Alr.OS_Lib;
       use Ada.Strings.Unbounded;
 
       Result       : Unbounded_String;
-      All_Paths    : Alire.Utils.String_Vector;
-      Sorted_Paths : Alire.Utils.String_Set;
-
-      Working_Folder : constant Alire.Absolute_Path :=
-        Alire.Directories.Current / Paths.Alr_Working_Folder;
+      Sorted_Paths : constant Alire.Utils.String_Set := Root.Project_Paths;
 
       First : Boolean := True;
    begin
-      --  First obtain all paths and then output them, if any needed
-      for Rel of Releases.Including (Root.Release) loop
-         if Rel.Name = Root.Release.Name then
-            --  All_Paths.Append (".");
-            null; -- That's the first path in aggregate projects anyway
-         else
-            All_Paths.Append (Working_Folder /
-                                Paths.Alr_Working_Deps_Path /
-                                  Rel.Unique_Folder);
-         end if;
-
-         --  Add non-root extra project paths, always
-         for Path of Rel.Project_Paths (Platform.Properties) loop
-            All_Paths.Append
-              (Working_Folder /
-                 (if Rel.Name = Root.Release.Name
-                  then ".."
-                  else Paths.Alr_Working_Deps_Path / Rel.Unique_Folder) /
-                 Path);
-         end loop;
-      end loop;
-
-      --  Sort and remove duplicates in paths (may come from extension
-      --  projects).
-      for Path of All_Paths loop
-         Sorted_Paths.Include (Path);
-      end loop;
 
       if not Sorted_Paths.Is_Empty then
          for Path of Sorted_Paths loop
@@ -110,13 +75,13 @@ package body Alr.Build_Env is
       if Existing_Project_Path.all'Length = 0 then
 
          --  The variable is not already defined
-         Action ("GPR_PROJECT_PATH", Project_Path (Needed.Releases, Root));
+         Action ("GPR_PROJECT_PATH", Project_Path (Root));
       else
 
          --  Append to the existing variable
          Action ("GPR_PROJECT_PATH",
                  Existing_Project_Path.all & Path_Separator &
-                   Project_Path (Needed.Releases, Root));
+                   Project_Path (Root));
       end if;
 
       GNAT.OS_Lib.Free (Existing_Project_Path);

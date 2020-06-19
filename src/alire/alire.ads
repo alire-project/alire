@@ -180,6 +180,9 @@ package Alire with Preelaborate is
    --  Does nothing for successful outcomes. Raises Checked_Error with the
    --  corresponding message set in Alire.Errors otherwise.
 
+   procedure Assert (Condition : Boolean; Or_Else : String);
+   --  Class Raise_Checked_Error (Or_Else) when Condition is false
+
    procedure Raise_Checked_Error (Msg : String) with No_Return;
    --  For errors where we do not return an Outcome_Failure, we log an error
    --  message (Msg) and raise Checked_Error. There is no limitation on the

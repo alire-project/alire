@@ -347,11 +347,11 @@ package body Alire.Solutions is
 
       --  Show other dependencies with their status and hints
 
-      if This.Composition >= Mixed then
+      if (for some Dep of This.Dependencies => not Dep.Is_Solved) then
          Trace.Log ("Dependencies (external):", Level);
          for Dep of This.Dependencies loop
             if not This.State (Dep.Crate).Is_Solved then
-               Trace.Log ("   " & Dep.As_Dependency.TTY_Image, Level);
+               Trace.Log ("   " & Dep.TTY_Image, Level);
 
                --  Look for hints. If we are relying on workspace information
                --  the index may not be loaded, or have changed, so we need to
@@ -443,11 +443,16 @@ package body Alire.Solutions is
    procedure Print_Pins (This : Solution) is
       Table : Utils.Tables.Table;
    begin
-      if This.Dependencies_That (States.Is_Pinned'Access).Is_Empty then
+      if This.Links.Is_Empty and then Dependency_Map'(This.Pins).Is_Empty then
          Trace.Always ("There are no pins");
       else
          for Dep of This.Dependencies loop
-            if Dep.Is_Pinned then
+            if Dep.Is_Linked then
+               Table
+                 .Append (TTY.Name (Dep.Crate))
+                 .Append (TTY.Version ("file:" & Dep.Link.Path))
+                 .New_Row;
+            elsif Dep.Is_Pinned then
                Table
                  .Append (TTY.Name (Dep.Crate))
                  .Append (TTY.Version (Dep.Pin_Version.Image))

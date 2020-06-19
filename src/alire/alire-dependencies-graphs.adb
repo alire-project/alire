@@ -38,14 +38,9 @@ package body Alire.Dependencies.Graphs is
                        Env  : Properties.Vector)
                        return Graph
    is
-
-      function Enumerate is new Alire.Conditional.For_Dependencies.Enumerate
-        (Alire.Containers.Dependency_Lists.List,
-         Alire.Containers.Dependency_Lists.Append);
-
    begin
       return Result : Graph := This do
-         for Dep of Enumerate (R.Dependencies.Evaluate (Env))
+         for Dep of Conditional.Enumerate (R.Dependencies.Evaluate (Env))
          loop
             Result.Include (New_Dependency (R.Name, Dep.Crate));
          end loop;

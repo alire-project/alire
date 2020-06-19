@@ -23,7 +23,7 @@ p = run_alr('with', '--solve')
 assert_match('Dependencies \(direct\):\n'
              '   make\*\n'
              'Dependencies \(external\):\n'
-             '   make\*\n'
+             '   make\* \(direct,hinted\)\n'
              'Dependencies \(graph\):\n'
              '   xxx=0.0.0 --> make\*\n'
              '.*',  # skip plot or warning

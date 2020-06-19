@@ -19,13 +19,22 @@ package Alire.Pinning is
    --  must exist in the solution. Root dependencies are given, and a previous
    --  solution with possibly more pins. The resulting solution may be invalid.
 
+   function Pin_To (URL      : String;
+                    Solution : Solutions.Solution;
+                    Crate    : Crate_Name)
+                    return Solutions.Solution with
+     Pre => Solution.Depends_On (Crate) or else
+     raise Checked_Error with
+       "Cannot pin crate not in dependencies: " & (+Crate);
+
    function Unpin (Crate        : Crate_Name;
                    Dependencies : Conditional.Dependencies;
                    Environment  : Properties.Vector;
                    Solution     : Solutions.Solution)
                    return Solutions.Solution
      with Pre => Solution.Depends_On (Crate) and then
-                 Solution.State (Crate).Is_Pinned;
+                  (Solution.State (Crate).Is_Linked or else
+                   Solution.State (Crate).Is_Pinned);
    --  Compute a new solution removing the pin of the given crate, that must
    --  be pinned and in the solution. The resulting solution might be invalid.
 
