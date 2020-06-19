@@ -7,6 +7,7 @@ with Alire.Properties.Scenarios;
 with Alire.OS_Lib;
 with Alire.GPR;
 with Alire.Utils;
+with Alire.Environment.Formatting;
 
 package body Alire.Environment is
 
@@ -74,21 +75,33 @@ package body Alire.Environment is
 
       --  Enviromemnt variables defined in the crate manifest
       for Act of Rel.Environment (Prop) loop
-         case Act.Action is
+         begin
+            declare
+               Value : constant String :=
+                 Formatting.Format (Rel, Act.Value, Is_Root_Release);
+            begin
+               case Act.Action is
 
-            when Properties.Environment.Set =>
+               when Properties.Environment.Set =>
 
-               This.Set (Act.Name, Act.Value, Origin & " (env)");
+                  This.Set (Act.Name, Value, Origin & " (env)");
 
-            when Properties.Environment.Append =>
+               when Properties.Environment.Append =>
 
-               This.Append (Act.Name, Act.Value, Origin & " (env)");
+                  This.Append (Act.Name, Value, Origin & " (env)");
 
-            when Properties.Environment.Prepend =>
+               when Properties.Environment.Prepend =>
 
-               This.Prepend (Act.Name, Act.Value, Origin & " (env)");
+                  This.Prepend (Act.Name, Value, Origin & " (env)");
 
-         end case;
+               end case;
+            end;
+         exception
+            when Formatting.Unknown_Formatting_Key =>
+               Raise_Checked_Error
+                 ("Unknown environment variable formatting key in var '" &
+                    Act.Name & " of '" & Origin & "'");
+         end;
       end loop;
 
       --  Environment variables for GPR external scenario variables

@@ -22,4 +22,11 @@ package body Alire.Platform is
    function Distribution return Platforms.Distributions is
       (Platforms.Distro_Unknown);
 
+   -----------------------
+   -- Distribution_Root --
+   -----------------------
+
+   function Distribution_Root return Absolute_Path
+   is ("/");
+
 end Alire.Platform;

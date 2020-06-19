@@ -1,6 +1,5 @@
 with Ada.Strings.Fixed;
 
---  with Alire.Platform;
 with Alire.Defaults;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;

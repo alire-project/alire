@@ -71,4 +71,11 @@ package body Alire.Platform is
       return Distrib;
    end Distribution;
 
+   -----------------------
+   -- Distribution_Root --
+   -----------------------
+
+   function Distribution_Root return Absolute_Path
+   is ("C:\");
+
 end Alire.Platform;
