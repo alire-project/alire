@@ -71,6 +71,10 @@ package Alire.Dependencies.States is
    function As_Dependency (This : State) return Dependencies.Dependency;
    --  Upcast for convenience, equivalent to Dependencies.Dependency (This)
 
+   function Has_Release (This : State) return Boolean;
+   --  Says if a release can be retrieved for this state (a solved dependency,
+   --  or a linked crate folder with alire context).
+
    --  Simple status identification
 
    function Is_Direct (This : State) return Boolean;
@@ -98,7 +102,7 @@ package Alire.Dependencies.States is
      with Pre => This.Is_Pinned;
 
    function Release (This : State) return Releases.Release
-     with Pre => This.Is_Solved;
+     with Pre => This.Has_Release;
 
    function Transitivity (This : State) return Transitivities;
 
@@ -119,6 +123,16 @@ package Alire.Dependencies.States is
 private
 
    use type Semantic_Versioning.Extended.Version_Set;
+
+   --  Helper functions
+
+   function Optional_Release (Crate     : Crate_Name;
+                              Workspace : Any_Path)
+                              return Containers.Release_H;
+   --  Detect if Workspace is a valid Alire crate for the given Crate, in which
+   --  case the returned release will be valid. Otherwise it will be empty. If
+   --  the crate found does not match Crate in name, a Checked_Error will be
+   --  raised.
 
    --  Base overridings
 
@@ -150,8 +164,11 @@ private
 
    type Fulfilment_Data (Fulfillment : Fulfilments := Missed) is record
       case Fulfillment is
-         when Linked => Target  : Link_Holder;
-         when Solved => Release : Containers.Release_H;
+         when Linked =>
+            Target  : Link_Holder;
+            Opt_Rel : Containers.Release_H; -- This might not be filled-in
+         when Solved =>
+            Release : Containers.Release_H; -- This is always valid
          when others => null;
       end case;
    end record;
@@ -205,6 +222,14 @@ private
    function Fulfilment (This : State) return Fulfilments
    is (This.Fulfilled.Fulfillment);
 
+   -----------------
+   -- Has_Release --
+   -----------------
+
+   function Has_Release (This : State) return Boolean
+   is (This.Is_Solved or else
+         (This.Is_Linked and then not This.Fulfilled.Opt_Rel.Is_Empty));
+
    -------------
    -- Hinting --
    -------------
@@ -230,6 +255,9 @@ private
        & Utils.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
           then ",target=" & This.Fulfilled.Target.Get.Path
+                          & (if This.Has_Release
+                             then ",release"
+                             else "")
           else "")
        & (if This.Pinning.Pinned
           then ",pin=" & This.Pinning.Version.Image
@@ -278,7 +306,9 @@ private
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
        Fulfilled    => (Fulfillment => Linked,
-                        Target      => To_Holder (Link)),
+                        Target      => To_Holder (Link),
+                        Opt_Rel     => Optional_Release (Base.Crate,
+                                                         Link.Path)),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -363,7 +393,12 @@ private
    -------------
 
    function Release (This : State) return Releases.Release
-   is (This.Fulfilled.Release.Element);
+   is (if This.Is_Solved then
+          This.Fulfilled.Release.Element
+       elsif This.Is_Linked then
+          This.Fulfilled.Opt_Rel.Element
+       else raise Program_Error
+         with "dependency has no release: " & This.Crate.TTY_Image);
 
    -------------
    -- Setting --
@@ -388,8 +423,8 @@ private
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
        Fulfilled    => (Fulfillment => Solved,
-                        Release    => Containers.Release_Holders
-                                                .To_Holder (Using)),
+                        Release     => Containers.Release_Holders
+                                                 .To_Holder (Using)),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -419,6 +454,9 @@ private
        & (if This.Fulfilled.Fulfillment = Linked
           then "," & TTY.Emph ("target") & "="
                    & TTY.URL (This.Fulfilled.Target.Get.Path)
+                   & (if This.Has_Release
+                      then "," & TTY.OK ("release")
+                      else "")
           else "")
        & (if This.Pinning.Pinned
           then "," & TTY.Emph ("pin")

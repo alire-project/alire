@@ -73,17 +73,13 @@ package body Alr.Commands.Withing is
    -- Add_Softlink --
    ------------------
 
-   procedure Add_Softlink (Cmd : Command) is
+   procedure Add_Softlink (Dep_Spec : String;
+                           Path     : String) is
       Requested : constant Alire.Milestones.Allowed_Milestones :=
-                    Alire.Milestones.Crate_Versions (Argument (1));
+                    Alire.Milestones.Crate_Versions (Dep_Spec);
       New_Dep   : constant Alire.Dependencies.Dependency :=
                     Alire.Dependencies.From_Milestones (Requested);
    begin
-      if Num_Arguments /= 1 then
-         Reportaise_Wrong_Arguments
-           ("Exactly one crate needed for external pinning.");
-      end if;
-
       declare
          use Alire;
          use type Conditional.Dependencies;
@@ -94,8 +90,22 @@ package body Alr.Commands.Withing is
                           Old_Solution
                             .Depending_On (New_Dep)
                             .Linking (Crate => New_Dep.Crate,
-                                      Path  => Cmd.URL.all);
+                                      Path  => Path);
       begin
+
+         --  Prevent double-add
+
+         if Old_Solution.Depends_On (New_Dep.Crate) then
+            Reportaise_Wrong_Arguments
+              ("Not adding " & New_Dep.Crate.TTY_Image & " because "
+               & Old_Solution.Dependency (New_Dep.Crate).TTY_Image
+               & " is already a dependency");
+         end if;
+
+         --  Report crate detection at target destination
+
+         User_Input.Report_Pinned_Crate_Detection (New_Dep.Crate,
+                                                   New_Solution);
 
          --  If we made here there were no errors adding the dependency
          --  and storing the softlink. We can proceed to confirming the
@@ -109,6 +119,25 @@ package body Alr.Commands.Withing is
 
       end;
    end Add_Softlink;
+
+   ---------------------
+   -- Detect_Softlink --
+   ---------------------
+
+   procedure Detect_Softlink (Path : String) is
+      Root : constant Alire.Roots.Root := Alire.Roots.Detect_Root (Path);
+   begin
+      if Root.Is_Valid then
+         --  Add a dependency on ^(detected version) (i.e., safely upgradable)
+         Add_Softlink
+           (Dep_Spec => Root.Release.Name_Str
+                        & "^" & Root.Release.Version.Image,
+            Path     => Path);
+      else
+         Reportaise_Command_Failed
+           ("cannot add target: " & Root.Invalid_Reason);
+      end if;
+   end Detect_Softlink;
 
    ---------
    -- Del --
@@ -417,7 +446,12 @@ package body Alr.Commands.Withing is
          --  Must be Add, but it could be regular or softlink
 
          if Cmd.URL.all /= "" then
-            Add_Softlink (Cmd);
+            if Num_Arguments = 1 then
+               Add_Softlink (Dep_Spec => Argument (1),
+                             Path     => Cmd.URL.all);
+            else
+               Detect_Softlink (Cmd.URL.all);
+            end if;
          else
             Requires_Full_Index;
             Add;

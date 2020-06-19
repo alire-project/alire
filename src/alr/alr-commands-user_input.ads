@@ -13,4 +13,10 @@ package Alr.Commands.User_Input is
    --  True when the user answers positively. Defaults to Yes when the new
    --  solution is complete, or when Alire.Force.
 
+   procedure Report_Pinned_Crate_Detection
+     (Crate    : Alire.Crate_Name;
+      Solution : Alire.Solutions.Solution);
+   --  When pinning a directory, report if the target already contains an
+   --  initialized crate or not. For reuse from several commands.
+
 end Alr.Commands.User_Input;
