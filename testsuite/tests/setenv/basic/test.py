@@ -22,13 +22,13 @@ p = run_alr('setenv', quiet=False)
 assert_eq(0, p.status)
 
 if platform.system() == 'Windows':
-    assert_match('export GPR_PROJECT_PATH="[A-Z]:\\\\.*\\\\alire\\\\cache\\\\dependencies\\\\libhello_1\.0\.0_filesystem"\n'
-                 'export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+    assert_match('export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+                 'export GPR_PROJECT_PATH="[A-Z]:\\\\.*\\\\alire\\\\cache\\\\dependencies\\\\libhello_1\.0\.0_filesystem"\n'
                  'export ALIRE="True"\n',
                  p.out, flags=re.S)
 else:
-    assert_match('export GPR_PROJECT_PATH="/.*/alire/cache/dependencies/libhello_1\.0\.0_filesystem"\n'
-                 'export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+    assert_match('export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+                 'export GPR_PROJECT_PATH="/.*/alire/cache/dependencies/libhello_1\.0\.0_filesystem"\n'
                  'export ALIRE="True"\n',
                  p.out, flags=re.S)
 

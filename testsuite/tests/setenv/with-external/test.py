@@ -12,7 +12,7 @@ import re
 import platform
 
 
-# Retrieve a crate with a external dependency
+# Retrieve a crate with an external dependency
 run_alr('get', 'libhello=0.9-test_unav_native', '--force')
 os.chdir('libhello_0.9.0_filesystem')
 
@@ -24,7 +24,6 @@ assert_eq(0, p.status)
 # Check the setenv output
 assert_match('warn: Generating incomplete environment'  # Note: this warning is
              ' because of missing dependencies\n'       # via stderr so it's OK
-             'export GPR_PROJECT_PATH=""\n'
              'export ALIRE="True"\n',
              p.out)
 

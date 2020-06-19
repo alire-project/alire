@@ -42,4 +42,6 @@ package Alire.Platforms with Preelaborate is
                        --  Provided by the user
                       );
 
+   type Shells is (Unix, PowerShell, WinCmd);
+
 end Alire.Platforms;

@@ -29,7 +29,7 @@ package body Alr.Commands.Clean is
 
          Requires_Valid_Session;
 
-         Alr.Build_Env.Set (Alr.Root.Current);
+         Alr.Build_Env.Export (Alr.Root.Current);
 
          Trace.Detail ("Cleaning project and dependencies...");
 
