@@ -22,7 +22,7 @@ package body Alire.Solutions.Diffs is
          when Linked   => "file:" & (+Status.Path),
          when Hinted   => Status.Versions.Image,
          when Unneeded => "unneeded",
-         when Unsolved => "unsolved");
+         when Unsolved => Status.Versions.Image);
 
    -------------
    -- Between --
@@ -51,7 +51,8 @@ package body Alire.Solutions.Diffs is
                     Versions => Sol.Dependency (Crate).Versions);
 
          elsif Sol.Depends_On (Crate) then
-            return (Status => Unsolved);
+            return (Status => Unsolved,
+                    Versions => Sol.Dependencies (Crate).Versions);
 
          else
             return (Status => Unneeded);
@@ -131,6 +132,13 @@ package body Alire.Solutions.Diffs is
       (for some Change of This.Changes => Change.Former /= Change.Latter));
 
    ------------------------
+   -- Latter_Is_Complete --
+   ------------------------
+
+   function Latter_Is_Complete (This : Diff) return Boolean
+   is (This.Latter_Complete);
+
+   ------------------------
    -- Pin_Change_Summary --
    ------------------------
 
@@ -176,10 +184,10 @@ package body Alire.Solutions.Diffs is
       Trace.Log ("", Level);
 
       if not This.Latter_Complete then
-         Trace.Log (Prefix & "New solution is " & TTY.Warn ("invalid."),
+         Trace.Log (Prefix & "New solution is " & TTY.Warn ("incomplete."),
                     Level);
       elsif This.Latter_Complete and then not This.Former_Complete then
-         Trace.Log (Prefix & "New solution is " & TTY.OK ("valid."),
+         Trace.Log (Prefix & "New solution is " & TTY.OK ("complete."),
                     Level);
       end if;
 
@@ -236,7 +244,7 @@ package body Alire.Solutions.Diffs is
 
                --  Show most precise version available
 
-               if Latter.Status in Hinted | Linked | Needed then
+               if Latter.Status in Unsolved | Hinted | Linked | Needed then
                   Table.Append (TTY.Version (Best_Version (Latter)));
                else
                   Table.Append (TTY.Version (Best_Version (Former)));

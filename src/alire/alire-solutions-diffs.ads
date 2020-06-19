@@ -28,6 +28,9 @@ package Alire.Solutions.Diffs is
    function Contains_Changes (This : Diff) return Boolean;
    --  Says if there are, in fact, changes between both solutions
 
+   function Latter_Is_Complete (This : Diff) return Boolean;
+   --  Says if the new solution is complete
+
    procedure Print (This         : Diff;
                     Changed_Only : Boolean;
                     Prefix       : String       := "   ";
@@ -48,9 +51,9 @@ private
             Version  : Semantic_Versioning.Version;
          when Linked =>
             Path     : UString;
-         when Hinted =>
+         when Hinted | Unsolved =>
             Versions : Semantic_Versioning.Extended.Version_Set;
-         when Unneeded | Unsolved =>
+         when Unneeded =>
             null;
       end case;
    end record;

@@ -1,11 +1,10 @@
 with Alire.Dependencies;
-with Alire.Lockfiles;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;
 with Alire.Utils.TTY;
+with Alire.Workspace;
 
-with Alr.Commands.Update;
 with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
@@ -40,25 +39,14 @@ package body Alr.Commands.Pin is
 
          Requires_Full_Index;
 
-         declare
-            New_Solution : constant Alire.Solutions.Solution :=
-                             Alire.Pinning.Pin
-                               (Crate        => Name,
-                                Version      => Version,
-                                Dependencies =>
-                                  Root.Current.Release.Dependencies,
-                                Environment  => Platform.Properties,
-                                Solution     =>
-                                  Solution.Missing -- Remove a possible link
-                                    (Solution.Dependency (Name)));
-         begin
-            if New_Solution.Valid then
-               Solution := New_Solution;
-            else
-               Reportaise_Command_Failed
-                    ("Cannot find a solution with the requested pin version");
-            end if;
-         end;
+         Solution := Alire.Pinning.Pin
+           (Crate        => Name,
+            Version      => Version,
+            Dependencies =>
+              Root.Current.Release.Dependencies,
+            Environment  => Platform.Properties,
+            Solution     => Solution);
+
       end Pin;
 
       -----------
@@ -75,22 +63,12 @@ package body Alr.Commands.Pin is
 
          Requires_Full_Index;
 
-         declare
-            New_Solution : constant Alire.Solutions.Solution :=
-                             Alire.Pinning.Unpin
-                               (Crate        => Name,
-                                Dependencies =>
-                                  Root.Current.Release.Dependencies,
-                                Environment  => Platform.Properties,
-                                Solution     => Solution);
-         begin
-            if New_Solution.Valid then
-               Solution := New_Solution;
-            else
-               Reportaise_Command_Failed
-                    ("Cannot find a solution without the pinned release");
-            end if;
-         end;
+         Solution := Alire.Pinning.Unpin
+           (Crate        => Name,
+            Dependencies =>
+              Root.Current.Release.Dependencies,
+            Environment  => Platform.Properties,
+            Solution     => Solution);
       end Unpin;
 
    begin
@@ -98,7 +76,7 @@ package body Alr.Commands.Pin is
       --  Sanity checks
 
       if not Solution.Depends_On (Name) then
-         Reportaise_Command_Failed ("Cannot pin crate not in dependencies: "
+         Reportaise_Command_Failed ("Cannot pin dependency not in solution: "
                                     & (+Name));
       end if;
 
@@ -114,11 +92,12 @@ package body Alr.Commands.Pin is
                                   Relaxed => False);
 
          Trace.Debug ("Pin requested for exact version: " & Version.Image);
-      elsif Solution.Releases.Contains (Name) then
-         Version := Solution.Releases.Element (Name).Version;
+      elsif Solution.State (Name).Is_Solved then
+         Version := Solution.State (Name).Release.Version;
       elsif not Cmd.Unpin then
-         Trace.Warning ("Cannot pin crate with no release"
-                        & " in current solution: " & TTY.Name (Name));
+         Trace.Warning ("An explicit version is required to pin a crate with"
+                        & " no release in the current solution: "
+                        & TTY.Name (Name));
          return;
       end if;
 
@@ -147,17 +126,10 @@ package body Alr.Commands.Pin is
                   Old_Sol.Changes (New_Sol);
       begin
          if Diff.Contains_Changes then
-            if Commands.User_Input.Confirm_Solution_Changes
-              (Diff, Changed_Only => not Alire.Detailed)
-            then
-               Alire.Lockfiles.Write (Solution => New_Sol,
-                                      Filename => Root.Current.Lock_File);
-
-               --  We force the update because we have just stored the new
-               --  solution, so Update won't detect any changes.
-
-               Update.Execute (Interactive => False,
-                               Force       => True);
+            if Commands.User_Input.Confirm_Solution_Changes (Diff) then
+               Alire.Workspace.Deploy_Dependencies
+                 (Env      => Platform.Properties,
+                  Solution => New_Sol);
             end if;
          else
             Trace.Info ("No changes to apply.");
@@ -200,10 +172,6 @@ package body Alr.Commands.Pin is
 
             --  Change all pins
 
-            if not New_Sol.Valid then
-               Reportaise_Command_Failed ("Cannot pin an invalid solution");
-            end if;
-
             for Crate of New_Sol.Crates loop
                if New_Sol.State (Crate).Is_Pinned = Cmd.Unpin then
                   Change_One_Pin (Cmd, New_Sol, +Crate);
@@ -215,7 +183,11 @@ package body Alr.Commands.Pin is
             --  Pin to dir
 
             New_Sol := Alire.Pinning.Pin_To
-              (Cmd.URL.all, Old_Sol, +Argument (1));
+              (+Argument (1),
+               Cmd.URL.all,
+               Root.Current.Release.Dependencies,
+               Platform.Properties,
+               Old_Sol);
 
          else
 

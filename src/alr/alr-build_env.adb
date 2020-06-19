@@ -1,12 +1,15 @@
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
+with GNAT.IO;
 with GNAT.OS_Lib;
 
+with Alire_Early_Elaboration;
 with Alire.GPR;
 with Alire.Properties.Scenarios;
 with Alire.Solutions;
 with Alire.Solver;
+with Alire.Utils.TTY;
 with Alire.Utils;
 
 with Alr.OS_Lib;
@@ -15,6 +18,7 @@ with Alr.Platform;
 package body Alr.Build_Env is
 
    package Query renames Alire.Solver;
+   package TTY renames Alire.Utils.TTY;
 
    type Env_Var_Action_Callback is access procedure (Key, Val : String);
 
@@ -64,9 +68,20 @@ package body Alr.Build_Env is
 
       Full_Instance : Alire.Solutions.Release_Map;
    begin
-      if not Needed.Valid then
-         Trace.Error ("Cannot generate environment for invalid solution");
-         raise Command_Failed;
+      if not Needed.Is_Complete then
+         Trace.Debug ("Generating incomplete environment"
+                      & " because of missing dependencies");
+
+         --  Normally we would generate a warning, but since that will pollute
+         --  the output making it unusable, for once we write directly to
+         --  stderr (unless quiet is in effect):
+
+         if not Alire_Early_Elaboration.Switch_Q then
+            GNAT.IO.Put_Line
+              (GNAT.IO.Standard_Error,
+               TTY.Warn ("warn:") & " Generating incomplete environment"
+               & " because of missing dependencies");
+         end if;
       end if;
 
       --  GPR_PROJECT_PATH

@@ -10,10 +10,10 @@ with Alire.Platforms;
 with Alire.Properties.Actions.Executor;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
+with Alire.Utils.User_Input;
 with Alire.Workspace;
 
 with Alr.Commands.Build;
-with Alr.Commands.Update;
 with Alr.Platform;
 with Alr.Bootstrap;
 
@@ -44,7 +44,8 @@ package body Alr.Commands.Get is
       Diff     : Alire.Solutions.Diffs.Diff;
       --  Used to present dependencies to the user
 
-      Build_OK : Boolean;
+      Build_OK : Boolean := False;
+      Solution : Alire.Solutions.Solution;
    begin
       Trace.Detail ("Using " & Rel.Milestone.TTY_Image
                     & " for requested "
@@ -87,21 +88,32 @@ package body Alr.Commands.Get is
 
       if not Cmd.Only then
          declare
-            Solution : constant Alire.Solutions.Solution :=
-                         Query.Resolve
-                           (Rel.Dependencies (Platform.Properties),
-                            Platform.Properties,
-                            Alire.Solutions.Empty_Valid_Solution);
+            use Alire.Utils.User_Input;
          begin
-            if Solution.Valid then
-               Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
-            else
-               Trace.Error ("Could not resolve dependencies for: " &
-                              Alire.Dependencies.New_Dependency
-                              (Name, Versions).Image);
-               Trace.Error ("You can still retrieve the crate without "
-                            & "dependencies with --only.");
-               raise Command_Failed;
+            Solution := Query.Resolve
+              (Rel.Dependencies (Platform.Properties),
+               Platform.Properties,
+               Alire.Solutions.Empty_Valid_Solution);
+            Diff := Alire.Solutions.New_Solution (Platform.Properties)
+              .Changes (Solution);
+
+            if not Solution.Is_Complete then
+               Diff.Print (Changed_Only => False,
+                           Level        => Warning);
+               Trace.Warning ("");
+               Trace.Warning ("Could not find a complete solution for "
+                              & Rel.Milestone.TTY_Image);
+
+               if Alire.Utils.User_Input.Query
+                 (Question =>
+                    "Build will fail unless externals are made available,"
+                    & " do you want to continue?",
+                  Valid    => (Yes | No => True, others => False),
+                  Default  => (if Alire.Force then Yes else No)) = No
+               then
+                  Trace.Info ("Crate retrieval abandoned.");
+                  raise Command_Failed;
+               end if;
             end if;
          end;
       end if;
@@ -123,6 +135,7 @@ package body Alr.Commands.Get is
          --  dependencies can still occur, but these are outside of the
          --  retrieved crate and might be corrected manipulating dependencies
          --  and updating.
+
          Root_Dir.Keep;
       end;
 
@@ -137,7 +150,9 @@ package body Alr.Commands.Get is
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
            with Unreferenced;
       begin
-         Commands.Update.Execute (Interactive => False);
+         Alire.Workspace.Deploy_Dependencies
+           (Env      => Platform.Properties,
+            Solution => Solution);
 
          --  Execute the checked out release post_fetch actions, now that
          --    dependencies are in place
@@ -157,7 +172,11 @@ package body Alr.Commands.Get is
 
       Trace.Info ("");
 
-      Trace.Log (Rel.Milestone.TTY_Image & " successfully retrieved"
+      Trace.Log (Rel.Milestone.TTY_Image
+                 & " successfully retrieved"
+                 & (if Solution.Is_Complete
+                    then ""
+                    else " with missing dependencies")
                  & (if Cmd.Build
                    then (if Build_OK
                          then " and built."

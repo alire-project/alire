@@ -25,8 +25,6 @@ package body Alr.Commands.Withing is
 
    Switch_URL : constant String := "--use";
 
-   package Query renames Alire.Solver;
-
    procedure Replace_Current
      (Old_Deps,
       New_Deps     : Alire.Conditional.Dependencies;
@@ -36,8 +34,8 @@ package body Alr.Commands.Withing is
    -- Add --
    ---------
 
-   function Add (Deps       : Alire.Conditional.Dependencies;
-                 New_Dep    : String)
+   function Add (Deps    : Alire.Conditional.Dependencies;
+                 New_Dep : String)
                  return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
@@ -48,8 +46,8 @@ package body Alr.Commands.Withing is
       --  Check that the requested dependency exists
 
       if not Alire.Index.Exists (Requested.Crate) then
-         Reportaise_Command_Failed
-           ("The requested crate was not found in the catalog: " &
+         Trace.Warning
+           ("The requested crate does not exist in the catalog: " &
             (+Requested.Crate));
       end if;
 
@@ -64,23 +62,11 @@ package body Alr.Commands.Withing is
          end if;
       end loop;
 
-      --  Merge the dependency and ensure there is a solution
+      --  Merge the dependency. Completeness of the solution will be presented
+      --  as a whole after all changes have been processed, in Replace_Current.
 
-      return Result : constant Alire.Conditional.Dependencies :=
-        Deps and Alire.Conditional.New_Dependency (Requested.Crate,
-                                                   Requested.Versions)
-      do
-         if not Query.Is_Resolvable (Result.Evaluate (Platform.Properties),
-                                     Platform.Properties,
-                                     Root.Current.Solution)
-         then
-            Reportaise_Command_Failed ("Adding " & New_Dep &
-                                         " has no dependency solution");
-         else
-            Trace.Detail ("Dependency " & New_Dep & " can be added");
-         end if;
-
-      end return;
+      return Deps and Alire.Conditional.New_Dependency (Requested.Crate,
+                                                        Requested.Versions);
    end Add;
 
    ------------------
@@ -96,11 +82,6 @@ package body Alr.Commands.Withing is
       if Num_Arguments /= 1 then
          Reportaise_Wrong_Arguments
            ("Exactly one crate needed for external pinning.");
-      end if;
-
-      if not Root.Current.Solution.Valid then
-         Reportaise_Command_Failed
-           ("Cannot add pinned crates to already unsolvable dependencies");
       end if;
 
       declare
@@ -203,15 +184,6 @@ package body Alr.Commands.Withing is
          Trace.Info ("Requested changes:");
          Trace.Info ("");
          Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
-
-         --  In the event of a new invalid solution (this should not happen,
-         --  but as a safeguard we ensure it cannot be committed to disk) bail
-         --  out already.
-
-         if not New_Solution.Valid then
-            Reportaise_Command_Failed
-              ("No solution for the requested changes");
-         end if;
 
          --  Show the effects on the solution
 

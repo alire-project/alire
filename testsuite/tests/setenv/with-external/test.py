@@ -13,7 +13,7 @@ import platform
 
 
 # Retrieve a crate with a external dependency
-run_alr('get', 'libhello=0.9-test_unav_native')
+run_alr('get', 'libhello=0.9-test_unav_native', '--force')
 os.chdir('libhello_0.9.0_filesystem')
 
 # Run it not quietly to ensure that at normal level
@@ -22,7 +22,9 @@ p = run_alr('setenv', quiet=False)
 assert_eq(0, p.status)
 
 # Check the setenv output
-assert_match('export GPR_PROJECT_PATH=""\n'
+assert_match('warn: Generating incomplete environment'  # Note: this warning is
+             ' because of missing dependencies\n'       # via stderr so it's OK
+             'export GPR_PROJECT_PATH=""\n'
              'export ALIRE="True"\n',
              p.out)
 
