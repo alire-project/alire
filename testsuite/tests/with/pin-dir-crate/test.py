@@ -19,7 +19,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Pin the hello crate as local dir dependency
-run_alr('with', 'hello', '--url', '..' + path_separator() + target)
+run_alr('with', 'hello', '--use', '..' + path_separator() + target)
 
 # Verify that hello dependencies are detected and used
 p = run_alr('with', '--solve')

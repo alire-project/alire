@@ -19,7 +19,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Try to pin the hello crate as local dir dependency
-p = run_alr('with', 'nothello', '--url', '..' + path_separator() + target,
+p = run_alr('with', 'nothello', '--use', '..' + path_separator() + target,
             complain_on_error=False)
 
 # Expected error

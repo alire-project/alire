@@ -21,7 +21,7 @@ os.chdir('xxx')
 
 # Add the directory as pinned crate, with autodetection (no crate given,
 # inferred from the crate metadata found at target).
-run_alr('with', '--url', '..' + path_separator() + target)
+run_alr('with', '--use', '..' + path_separator() + target)
 
 # Verify that hello^1 is a new dependency and also that hello dependencies are
 # in the solution.

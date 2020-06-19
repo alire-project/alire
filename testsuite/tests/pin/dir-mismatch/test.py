@@ -19,10 +19,10 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Add a dependency as pinned dir without metadata; this should succeed
-run_alr('with', 'nothello', '--url', '..')
+run_alr('with', 'nothello', '--use', '..')
 
 # Try to repin to a dir with valid crate metadata
-p = run_alr('with', 'nothello', '--url', '..' + path_separator() + target,
+p = run_alr('with', 'nothello', '--use', '..' + path_separator() + target,
             complain_on_error=False)
 
 # Expected error
