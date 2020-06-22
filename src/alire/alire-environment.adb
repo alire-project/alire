@@ -11,9 +11,6 @@ with Alire.Environment.Formatting;
 
 package body Alire.Environment is
 
-   function "+" (Str : String) return Unbounded_String
-                 renames To_Unbounded_String;
-
    ---------
    -- Add --
    ---------
