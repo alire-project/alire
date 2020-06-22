@@ -60,6 +60,10 @@ package Alire.Roots is
    --  From existing release
    --  Path must point to the session folder (parent of alire metadata folder)
 
+   function Environment (This : Root) return Properties.Vector with
+     Pre => This.Is_Valid;
+   --  Retrieve the environment stored within this root
+
    function Path (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
 
@@ -80,6 +84,15 @@ package Alire.Roots is
 
    function Release (This : Root) return Releases.Release with
      Pre => This.Is_Valid;
+
+   function Release (This : Root; Crate : Crate_Name) return Releases.Release
+     with Pre => This.Is_Valid and then
+     (Crate = This.Release.Name or else This.Solution.Depends_On (Crate));
+   --  Retrieve a release, that can be either the root or any in the solution
+
+   function Release_Base (This : Root; Crate : Crate_Name) return Any_Path with
+     Pre => This.Is_Valid;
+   --  Find the base folder in which a release can be found for the given root
 
    function Solution (This : Root) return Solutions.Solution with
      Pre => This.Is_Valid;
@@ -116,6 +129,9 @@ private
       end case;
    end record;
 
+   function Environment (This : Root) return Properties.Vector
+   is (This.Environment);
+
    function Is_Valid (This : Root) return Boolean is (This.Valid);
 
    function New_Invalid_Root return Root is
@@ -149,10 +165,29 @@ private
    function Release (This : Root) return Releases.Release is
      (This.Release.Constant_Reference);
 
-   function Solution (This : Root) return Solutions.Solution is
-     (Lockfiles.Read (This.Lock_File));
+   function Release (This  : Root;
+                     Crate : Crate_Name) return Releases.Release is
+     (if This.Release.Element.Name = Crate
+      then This.Release.Element
+      else This.Solution.State (Crate).Release);
 
    use OS_Lib;
+
+   function Release_Base (This : Root; Crate : Crate_Name) return Any_Path is
+     (if This.Release.Element.Name = Crate then
+         +This.Path
+      elsif This.Solution.State (Crate).Is_Solved then
+          (+This.Path)
+         / Paths.Working_Folder_Inside_Root
+         / Paths.Dependency_Dir_Inside_Working_Folder
+         / Release (This, Crate).Unique_Folder
+      elsif This.Solution.State (Crate).Is_Linked then
+         This.Solution.State (Crate).Link.Path
+      else
+         raise Program_Error with "release must be either solver or linked");
+
+   function Solution (This : Root) return Solutions.Solution is
+     (Lockfiles.Read (This.Lock_File));
 
    function Lock_File (This : Root) return Absolute_Path is
      (Lockfiles.File_Name
