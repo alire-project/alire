@@ -2,11 +2,10 @@ with Alire.Releases;
 
 package Alire.Environment.Formatting is
 
-   function Format (Rel             : Releases.Release;
-                    Value           : String;
-                    Is_Root_Release : Boolean)
+   function Format (Release_Dir : Any_Path;
+                    Value       : String)
                     return String;
-   --  Format the environment variable falue with ${} replacement patterns
+   --  Format the environment variable value with ${} replacement patterns
 
    Unknown_Formatting_Key : exception;
 

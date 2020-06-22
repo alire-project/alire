@@ -62,20 +62,36 @@ package body Alire.Environment is
    -- Load --
    ----------
 
+   procedure Load (This : in out Context;
+                   Root :        Alire.Roots.Root)
+   is
+   begin
+      for Rel of Root.Solution.Releases.Including (Root.Release) loop
+         This.Load (Root            => Root,
+                    Crate           => Rel.Name,
+                    Is_Root_Release => False);
+      end loop;
+   end Load;
+
+   ----------
+   -- Load --
+   ----------
+
    procedure Load (This            : in out Context;
-                   Rel             : Alire.Releases.Release;
-                   Prop            : Alire.Properties.Vector;
+                   Root            : Roots.Root;
+                   Crate           : Crate_Name;
                    Is_Root_Release : Boolean)
    is
+      Rel    : constant Releases.Release := Root.Release (Crate);
       Origin : constant String := Rel.Name_Str;
    begin
 
       --  Enviromemnt variables defined in the crate manifest
-      for Act of Rel.Environment (Prop) loop
+      for Act of Rel.Environment (Root.Environment) loop
          begin
             declare
                Value : constant String :=
-                 Formatting.Format (Rel, Act.Value, Is_Root_Release);
+                 Formatting.Format (Root.Release_Base (Rel.Name), Act.Value);
             begin
                case Act.Action is
 
@@ -102,7 +118,7 @@ package body Alire.Environment is
       end loop;
 
       --  Environment variables for GPR external scenario variables
-      for Property of Rel.On_Platform_Properties (Prop) loop
+      for Property of Rel.On_Platform_Properties (Root.Environment) loop
          if Property in Alire.Properties.Scenarios.Property'Class then
             declare
                use all type Alire.GPR.Variable_Kinds;

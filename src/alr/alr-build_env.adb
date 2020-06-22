@@ -11,8 +11,6 @@ with Alire.Environment;
 with Alire.Properties;
 with Alire.Releases;
 
-with Alr.Platform;
-
 package body Alr.Build_Env is
 
    package TTY renames Alire.Utils.TTY;
@@ -52,11 +50,7 @@ package body Alr.Build_Env is
          end if;
       end;
 
-      for Rel of Needed.Releases.Including (Root.Release) loop
-         Ctx.Load (Rel,
-                   Platform.Properties,
-                   Is_Root_Release => Rel.Name = Root.Release.Name);
-      end loop;
+      Ctx.Load (Root);
 
       Ctx.Set ("ALIRE", "True", "Alire");
    end Load_Context;
