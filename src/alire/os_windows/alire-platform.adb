@@ -1,3 +1,6 @@
+with Ada.Directories;
+with GNAT.OS_Lib;
+
 with Alire.Utils;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
@@ -32,6 +35,21 @@ package body Alire.Platform is
 
       return False;
    end Detect_Msys2;
+
+   -----------------------
+   -- Detect_Msys2_Root --
+   -----------------------
+
+   function Detect_Msys2_Root return Absolute_Path is
+      Result : constant String := OS_Lib.Subprocess.Locate_In_Path ("pacman");
+   begin
+      if Result /= "" then
+         return GNAT.OS_Lib.Normalize_Pathname
+           (Ada.Directories.Containing_Directory (Result) / ".." / "..");
+      else
+         Raise_Checked_Error ("Cannot locate pacman in msys2 distrib");
+      end if;
+   end Detect_Msys2_Root;
 
    ---------------------------
    -- Default_Config_Folder --
@@ -75,7 +93,17 @@ package body Alire.Platform is
    -- Distribution_Root --
    -----------------------
 
-   function Distribution_Root return Absolute_Path
-   is ("C:\");
+   function Distribution_Root return Absolute_Path is
+   begin
+      case Distribution is
+
+         when Platforms.Msys2 =>
+            return Detect_Msys2_Root;
+
+         when others =>
+            return OS_Lib.Getenv ("HOMEDRIVE");
+
+      end case;
+   end Distribution_Root;
 
 end Alire.Platform;
