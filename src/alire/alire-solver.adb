@@ -267,7 +267,7 @@ package body Alire.Solver is
                elsif not R.Satisfies (Dep) then
                   Trace.Debug
                     ("SOLVER: discarding search branch because "
-                     & R.Milestone.Image & " FAILS to fulfil dependency "
+                     & R.Milestone.Image & " FAILS to fulfill dependency "
                      & Dep.TTY_Image
                      & " when the search tree was "
                      & Tree'(Expanded
@@ -287,7 +287,7 @@ package body Alire.Solver is
                              and Target
                              and Remaining).Image_One_Line);
 
-               --  If we reached here, the release fulfils the dependency and
+               --  If we reached here, the release fulfills the dependency and
                --  it's a first time seen, so we add it to the solution.
 
                else

@@ -58,10 +58,10 @@ package Alire.Solutions is
    type Solution is new Interfaces.Tomifiable with private;
 
    --  A solution stores all dependencies required by some root crate. More
-   --  precisely, it stores the regular releases that fulfil some dependency
+   --  precisely, it stores the regular releases that fulfill some dependency
    --  and the particular standing of a dependency (solved, hinted, missing...)
    --  A solved dependency will be accompanied by the particular release that
-   --  fulfils it.
+   --  fulfills it.
 
    ------------------
    -- Construction --
