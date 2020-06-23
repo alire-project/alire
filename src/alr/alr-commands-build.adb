@@ -4,23 +4,36 @@ with Alire.Properties.Actions.Executor;
 with Alr.Root;
 with Alr.Spawn;
 with Alr.Platform;
-with Alr.Build_Env;
 
 with GNAT.OS_Lib;
 
 package body Alr.Commands.Build is
 
-   ----------------
-   -- Do_Compile --
-   ----------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Do_Compile return Boolean is
+   overriding procedure Execute (Cmd : in out Command) is
+      pragma Unreferenced (Cmd);
+   begin
+      if not Execute (Export_Build_Env => True) then
+         Reportaise_Command_Failed ("Compilation failed.");
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute (Export_Build_Env : Boolean) return Boolean is
    begin
       Requires_Full_Index;
 
       Requires_Valid_Session;
 
-      Alr.Build_Env.Export (Alr.Root.Current);
+      if Export_Build_Env then
+         Alr.Root.Current.Export_Build_Environment;
+      end if;
 
       --  COMPILATION
       begin
@@ -56,25 +69,7 @@ package body Alr.Commands.Build is
       Trace.Detail ("Use alr run --list to check available executables");
 
       return True;
-   end Do_Compile;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
-   begin
-      if not Do_Compile then
-         Reportaise_Command_Failed ("Compilation failed.");
-      end if;
    end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   function Execute return Boolean is (Do_Compile);
 
    ----------------------
    -- Long_Description --

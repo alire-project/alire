@@ -1,7 +1,7 @@
+with Alire.Environment;
 with Alire.Platforms;
 
 with Alr.Root;
-with Alr.Build_Env;
 
 package body Alr.Commands.Setenv is
 
@@ -26,18 +26,20 @@ package body Alr.Commands.Setenv is
 
       Requires_Valid_Session;
 
-      if Cmd.Details then
-         Alr.Build_Env.Print_Details (Alr.Root.Current);
-      elsif Cmd.Power_Shell then
-         Alr.Build_Env.Print_Shell (Alr.Root.Current,
-                                    Alire.Platforms.PowerShell);
-      elsif Cmd.Cmd_Shell then
-         Alr.Build_Env.Print_Shell (Alr.Root.Current,
-                                    Alire.Platforms.WinCmd);
-      else
-         Alr.Build_Env.Print_Shell (Alr.Root.Current,
-                                    Alire.Platforms.Unix);
-      end if;
+      declare
+         Context : constant Alire.Environment.Context :=
+                     Alr.Root.Current.Build_Context;
+      begin
+         if Cmd.Details then
+            Context.Print_Details;
+         elsif Cmd.Power_Shell then
+            Context.Print_Shell (Alire.Platforms.PowerShell);
+         elsif Cmd.Cmd_Shell then
+            Context.Print_Shell (Alire.Platforms.WinCmd);
+         else
+            Context.Print_Shell (Alire.Platforms.Unix);
+         end if;
+      end;
    end Execute;
 
    ----------------------

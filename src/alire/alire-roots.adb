@@ -1,12 +1,24 @@
 with Ada.Directories;
 
 with Alire.Directories;
+with Alire.Environment;
 with Alire.Root;
 with Alire.TOML_Index;
 
 with GNAT.OS_Lib;
 
 package body Alire.Roots is
+
+   -------------------
+   -- Build_Context --
+   -------------------
+
+   function Build_Context (This : Root) return Alire.Environment.Context is
+   begin
+      return Context : Alire.Environment.Context do
+         Context.Load (This);
+      end return;
+   end Build_Context;
 
    -----------------
    -- Detect_Root --
@@ -51,6 +63,17 @@ package body Alire.Roots is
       end;
    end Detect_Root;
 
+   ------------------------------
+   -- Export_Build_Environment --
+   ------------------------------
+
+   procedure Export_Build_Environment (This : Root) is
+      Context : Alire.Environment.Context;
+   begin
+      Context.Load (This);
+      Context.Export;
+   end Export_Build_Environment;
+
    -------------------
    -- Project_Paths --
    -------------------
@@ -58,7 +81,6 @@ package body Alire.Roots is
    function Project_Paths (This : Root) return Utils.String_Set
    is
       Paths : Utils.String_Set;
-      Base  : constant Any_Path := Path (This);
    begin
 
       --  Add root path from every release in the solution
@@ -67,25 +89,13 @@ package body Alire.Roots is
          if Rel.Name = Release (This).Name then
             null; -- The root project doesn't require its own path
          else
-            Paths.Include (Base
-                           / Alire.Paths.Working_Folder_Inside_Root
-                           / Alire.Paths.Dependency_Dir_Inside_Working_Folder
-                           / Rel.Unique_Folder);
+            Paths.Include (This.Release_Base (Rel.Name));
          end if;
 
          --  Add extra project paths
 
          for Path of Rel.Project_Paths (This.Environment) loop
-            if Rel.Name = Release (This).Name then
-               Paths.Include (Base / Path);
-            else
-               Paths.Include
-                 (Base
-                  / Alire.Paths.Working_Folder_Inside_Root
-                  / Alire.Paths.Dependency_Dir_Inside_Working_Folder
-                  / Rel.Unique_Folder
-                  / Path);
-            end if;
+            Paths.Include (This.Release_Base (Rel.Name) / Path);
          end loop;
       end loop;
 

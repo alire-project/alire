@@ -2,14 +2,22 @@ with GNAT.OS_Lib;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire_Early_Elaboration;
 with Alire.Properties.Environment; use Alire.Properties.Environment;
 with Alire.Properties.Scenarios;
 with Alire.OS_Lib;
 with Alire.GPR;
+with Alire.Roots;
+with Alire.Solutions;
 with Alire.Utils;
 with Alire.Environment.Formatting;
+with Alire.Utils.TTY;
+
+with GNAT.IO;
 
 package body Alire.Environment is
+
+   package TTY renames Utils.TTY;
 
    ---------
    -- Add --
@@ -65,12 +73,49 @@ package body Alire.Environment is
    procedure Load (This : in out Context;
                    Root :        Alire.Roots.Root)
    is
+      Solution : constant Solutions.Solution := Root.Solution;
    begin
-      for Rel of Root.Solution.Releases.Including (Root.Release) loop
+
+      --  Warnings when setting up an incomplete environment
+
+      if not Solution.Is_Complete then
+         Trace.Debug ("Generating incomplete environment"
+                      & " because of missing dependencies");
+
+         --  Normally we would generate a warning, but since that will pollute
+         --  the output making it unusable, for once we write directly to
+         --  stderr (unless quiet is in effect):
+
+         if not Alire_Early_Elaboration.Switch_Q then
+            GNAT.IO.Put_Line
+              (GNAT.IO.Standard_Error,
+               TTY.Warn ("warn:") & " Generating incomplete environment"
+               & " because of missing dependencies");
+         end if;
+      end if;
+
+      --  Project paths for all releases in the solution, implicitly defined by
+      --  supplied project files.
+
+      declare
+         Sorted_Paths : constant Alire.Utils.String_Set := Root.Project_Paths;
+      begin
+         if not Sorted_Paths.Is_Empty then
+            for Path of Sorted_Paths loop
+               This.Append ("GPR_PROJECT_PATH", Path, "crates");
+            end loop;
+         end if;
+      end;
+
+      --  Custom definitions provided by each release
+
+      for Rel of Solution.Releases.Including (Root.Release) loop
          This.Load (Root            => Root,
                     Crate           => Rel.Name,
                     Is_Root_Release => False);
       end loop;
+
+      This.Set ("ALIRE", "True", "Alire");
    end Load;
 
    ----------
@@ -232,7 +277,8 @@ package body Alire.Environment is
 
             when Properties.Environment.Set =>
                Raise_Checked_Error
-                 ("Trying to set an alredy defined environment variable");
+                 ("Trying to set an alredy defined environment variable: "
+                  & (+Key) & " is already defined as " & (+Value));
 
             when Properties.Environment.Append =>
                Value := Value & Separator & Act.Value;
@@ -269,6 +315,8 @@ package body Alire.Environment is
    procedure Export (This : Context) is
    begin
       for Var of This.Compile loop
+         Trace.Debug ("Exporting environment: "
+                      & (+Var.Key) & "=" & (+Var.Value));
          OS_Lib.Setenv (+Var.Key, +Var.Value);
       end loop;
    end Export;

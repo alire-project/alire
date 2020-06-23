@@ -3,6 +3,7 @@ private with Alire.Lockfiles;
 private with Alire.OS_Lib;
 private with Alire.Paths;
 
+limited with Alire.Environment;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
@@ -62,7 +63,14 @@ package Alire.Roots is
 
    function Environment (This : Root) return Properties.Vector with
      Pre => This.Is_Valid;
-   --  Retrieve the environment stored within this root
+   --  Retrieve the environment stored within this root. Environment here
+   --  refers to the platform properties.
+
+   function Build_Context (This : Root) return Alire.Environment.Context;
+
+   procedure Export_Build_Environment (This : Root) with
+     Pre => This.Is_Valid;
+   --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
    function Path (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;

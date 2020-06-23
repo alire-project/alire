@@ -3,7 +3,7 @@ with Ada.Strings.Unbounded;
 with Alire.Releases;
 with Alire.Properties;
 with Alire.Platforms;
-with Alire.Roots;
+limited with Alire.Roots;
 
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Vectors;
