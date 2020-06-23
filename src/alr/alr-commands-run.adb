@@ -129,7 +129,7 @@ package body Alr.Commands.Run is
 
          --  COMPILATION  --
          if not Cmd.No_Compile then
-            if not Commands.Build.Execute then
+            if not Commands.Build.Execute (Export_Build_Env => True) then
                Reportaise_Command_Failed ("Build failed");
             end if;
          end if;

@@ -155,14 +155,17 @@ package body Alr.Commands.Get is
             Solution => Solution);
 
          --  Execute the checked out release post_fetch actions, now that
-         --    dependencies are in place
+         --  dependencies are in place. The complete build environment has
+         --  been set up already by Deploy_Dependencies.
+
          Alire.Properties.Actions.Executor.Execute_Actions
            (Release => Rel,
             Env     => Platform.Properties,
             Moment  => Alire.Properties.Actions.Post_Fetch);
 
          if Cmd.Build then
-            Build_OK := Commands.Build.Execute;
+            Build_OK := Commands.Build.Execute (Export_Build_Env => False);
+            --  Environment is already set up
          else
             Build_OK := True;
          end if;
