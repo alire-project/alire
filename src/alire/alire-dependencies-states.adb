@@ -64,9 +64,9 @@ package body Alire.Dependencies.States is
       -- Load_Fulfilment --
       ---------------------
 
-      function Load_Fulfilment return Fulfilment_Data is
-         Data  : Fulfilment_Data
-           (Fulfilments'Value
+      function Load_Fulfilment return Fulfillment_Data is
+         Data  : Fulfillment_Data
+           (Fulfillments'Value
               (From.Checked_Pop (Keys.Fulfilment, TOML_String).As_String));
          Crate : Crates.With_Releases.Crate :=
                    Crates.With_Releases.New_Crate (From_TOML.Crate);
@@ -153,7 +153,7 @@ package body Alire.Dependencies.States is
       -- To_TOML --
       -------------
 
-      procedure To_TOML (Data : Fulfilment_Data; Table : TOML_Value) is
+      procedure To_TOML (Data : Fulfillment_Data; Table : TOML_Value) is
       begin
          Table.Set (Keys.Fulfilment,
                     +To_Lower_Case (This.Fulfilled.Fulfillment'Img));

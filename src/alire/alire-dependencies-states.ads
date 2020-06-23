@@ -11,10 +11,10 @@ package Alire.Dependencies.States is
    --  extra information goes into the lockfile and allows tracking the status
    --  of special dependencies (pins, links, missing) across solution changes.
 
-   type Fulfilments is (Missed,  -- Version not found, nor external definition
-                        Hinted,  -- Undetected external
-                        Linked,  -- Supplied for any version by a local dir
-                        Solved); -- Solved with a regular release/detected hint
+   type Fulfillments is (Missed,  -- Version not found, nor external definition
+                         Hinted,  -- Undetected external
+                         Linked,  -- Supplied for any version by a local dir
+                         Solved); -- Solved with an index release/detected hint
 
    type Transitivities is (Unknown,   -- Needed by limitations in the solver
                            Direct,    -- A dependency of the root release
@@ -59,7 +59,7 @@ package Alire.Dependencies.States is
                      Using : Releases.Release)
                      return State
      with Pre => Base.Crate = Using.Name;
-   --  Uses release to fulfil this dependency in a copy of Base
+   --  Uses release to fulfill this dependency in a copy of Base
 
    function Unpinning (Base : State) return State;
    --  Removes the pin in a copy of Base
@@ -93,7 +93,7 @@ package Alire.Dependencies.States is
 
    --  Case-specific info
 
-   function Fulfilment (This : State) return Fulfilments;
+   function Fulfilment (This : State) return Fulfillments;
 
    function Link (This : State) return Externals.Softlinks.External
      with Pre => This.Is_Linked;
@@ -162,7 +162,7 @@ private
       Versions : Semantic_Versioning.Extended.Version_Set)
       return State;
 
-   type Fulfilment_Data (Fulfillment : Fulfilments := Missed) is record
+   type Fulfillment_Data (Fulfillment : Fulfillments := Missed) is record
       case Fulfillment is
          when Linked =>
             Target  : Link_Holder;
@@ -185,7 +185,7 @@ private
    -----------
 
    type State (Name_Len : Natural) is new Dependency (Name_Len) with record
-      Fulfilled    : Fulfilment_Data;
+      Fulfilled    : Fulfillment_Data;
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
@@ -219,7 +219,7 @@ private
    -- Fulfilment --
    ----------------
 
-   function Fulfilment (This : State) return Fulfilments
+   function Fulfilment (This : State) return Fulfillments
    is (This.Fulfilled.Fulfillment);
 
    -----------------
