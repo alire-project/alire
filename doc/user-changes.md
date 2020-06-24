@@ -4,6 +4,20 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Show release-specific dependency sets in solutions
+
+PR [#453](https://github.com/alire-project/alire/pull/453).
+
+The dependency solution shown with the `--solve` switch now details for each
+release the particular version set with which a dependency is brought into the
+dependency closure. For example:
+
+```
+Dependencies (graph):
+   hello=1.0.1      --> libhello=1.0.1 (^1.0)
+   superhello=1.0.0 --> libhello=1.0.1 (~1.0)
+```
+
 ### Use crate metadata when pinning to a directory
 
 PR [#450](https://github.com/alire-project/alire/pull/450).
