@@ -315,8 +315,6 @@ package body Alire.Environment is
    procedure Export (This : Context) is
    begin
       for Var of This.Compile loop
-         Trace.Debug ("Exporting environment: "
-                      & (+Var.Key) & "=" & (+Var.Value));
          OS_Lib.Setenv (+Var.Key, +Var.Value);
       end loop;
    end Export;
