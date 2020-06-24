@@ -192,7 +192,7 @@ private
       elsif This.Solution.State (Crate).Is_Linked then
          This.Solution.State (Crate).Link.Path
       else
-         raise Program_Error with "release must be either solver or linked");
+         raise Program_Error with "release must be either solved or linked");
 
    function Solution (This : Root) return Solutions.Solution is
      (Lockfiles.Read (This.Lock_File));

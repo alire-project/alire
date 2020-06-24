@@ -32,7 +32,7 @@ package Alire.Environment is
 
    procedure Load (This : in out Context;
                    Root :        Alire.Roots.Root);
-   --  Load the enviroment variables of a releases found in the workspace
+   --  Load the environment variables of a releases found in the workspace
    --  Solution (GPR_PROJECT_PATH and custom variables) in the context.
 
    procedure Export (This : Context);
@@ -87,7 +87,7 @@ private
                    Root            : Roots.Root;
                    Crate           : Crate_Name;
                    Is_Root_Release : Boolean);
-   --  Load the enviroment variables of a release (GPR_PROJECT_PATH and custom
+   --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
    --  variables) in the context.
 
 end Alire.Environment;
