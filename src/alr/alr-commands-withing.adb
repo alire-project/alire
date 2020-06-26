@@ -18,6 +18,7 @@ with Alr.Commands.User_Input;
 with Alr.OS_Lib;
 with Alr.Platform;
 with Alr.Root;
+with Alr.Utils.Auto_GPR_With;
 
 with Semantic_Versioning.Extended;
 
@@ -464,6 +465,16 @@ package body Alr.Commands.Withing is
          From;
       else
          raise Program_Error with "List should have already happened";
+      end if;
+
+      if not Cmd.From then
+         for File of Root.Current.Release.Project_Files
+           (Root.Current.Environment, With_Path => True)
+         loop
+            Utils.Auto_GPR_With.Update
+              (Alire.Directories."/" (Root.Current.Path, File),
+               Root.Current.GPR_Project_Files (Exclude_Root => True));
+         end loop;
       end if;
    end Execute;
 

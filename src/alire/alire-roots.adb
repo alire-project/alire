@@ -100,4 +100,30 @@ package body Alire.Roots is
       return Paths;
    end Project_Paths;
 
+   -----------------------
+   -- GPR_Project_Files --
+   -----------------------
+
+   function GPR_Project_Files (This         : Root;
+                               Exclude_Root : Boolean)
+                               return Utils.String_Set
+   is
+      Files : Utils.String_Set;
+   begin
+
+      --  Add files from every release in the solution
+
+      for Rel of This.Solution.Releases.Including (Release (This)) loop
+
+         if not Exclude_Root or else Rel.Name /= Release (This).Name then
+            for File of Rel.Project_Files
+              (This.Environment, With_Path => False)
+            loop
+               Files.Include (File);
+            end loop;
+         end if;
+      end loop;
+      return Files;
+   end GPR_Project_Files;
+
 end Alire.Roots;
