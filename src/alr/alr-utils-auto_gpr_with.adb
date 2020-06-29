@@ -2,11 +2,62 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Directories;
 
 with Alire.Directories;
+with Alire.Utils.User_Input;
+with Alire.Config;
+with Alire.Config.Edit;
 
 package body Alr.Utils.Auto_GPR_With is
 
    Begin_Line : constant String := "-- begin auto-with --";
    End_Line   : constant String := "-- end auto-with --";
+
+   ----------------
+   -- Query_User --
+   ----------------
+
+   function Query_User return Boolean is
+      use Alire.Utils.User_Input;
+      use Alire.Config;
+
+      Result : Boolean;
+   begin
+      --  First check if user already configured the auto-gpr-with policy
+      if Defined ("auto-gpr-with") then
+
+         Result := Get ("auto-gpr-with", False);
+
+         if Result then
+            Trace.Info ("Auto-gpr-with enabled by configuration.");
+         else
+            Trace.Info ("Auto-gpr-with disabled by configuration.");
+         end if;
+
+         return Result;
+      end if;
+
+      --  If not, ask the user
+      Result := Query
+        (Question => "Do you want Alire to automatically update your project" &
+           " file with the new dependency solution?",
+         Valid    => (Yes | No => True, others => False),
+         Default  => Yes) = Yes;
+
+      --  Offer to save this choice in configuration
+      if Query
+        (Question => "Do you want Alire to remember this choice?",
+         Valid    => (Yes | No => True, others => False),
+         Default  => No) = Yes
+      then
+         Edit.Set (Alire.Config.Filepath (Global), "auto-gpr-with",
+                   (if Result then "true" else "false"));
+      end if;
+
+      if not Result then
+         Trace.Detail ("Auto-gpr-with rejected by user.");
+      end if;
+
+      return Result;
+   end Query_User;
 
    ------------
    -- Update --
@@ -21,6 +72,11 @@ package body Alr.Utils.Auto_GPR_With is
 
       Skip : Boolean := False;
    begin
+
+      if not Query_User then
+         return;
+      end if;
+
       Open (In_File, Ada.Text_IO.In_File, GPR_File);
       Create (Out_File, Ada.Text_IO.Out_File, Tmp.Filename);
 
