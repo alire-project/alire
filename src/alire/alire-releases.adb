@@ -385,7 +385,12 @@ package body Alire.Releases is
         Props_To_Strings (R.All_Properties (P), Project_File);
       Without    : Utils.String_Vector;
    begin
-      if With_Paths.Is_Empty then
+      if With_Paths.Is_Empty
+        and then
+         R.Origin.Kind not in Origins.External | Origins.System
+      then
+         --  Default project file if no one is specified by the crate. Only if
+         --  the create is not external nor system.
          With_Paths.Append (String'((+R.Name) & ".gpr"));
       end if;
 
