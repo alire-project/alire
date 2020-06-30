@@ -17,9 +17,9 @@ def assert_eq(expected, actual, label=None):
     if expected != actual:
         text = ['Unexpected {}:'.format(label or 'output'),
                 'Expecting:',
-                indent(str(expected)),
+                indent(repr(str(expected))),
                 'But got:',
-                indent(str(actual))]
+                indent(repr(str(actual)))]
         assert False, '\n'.join(text)
 
 
@@ -27,7 +27,7 @@ def assert_match(expected_re, actual, label=None, flags=0):
     if not re.match(expected_re, actual, flags=flags):
         text = ['Unexpected {}'.format(label or 'output'),
                 'Expecting a match on:',
-                indent(expected_re),
+                indent(repr(expected_re)),
                 'But got:',
-                indent(actual)]
+                indent(repr(actual))]
         assert False, '\n'.join(text)

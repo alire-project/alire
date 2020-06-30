@@ -72,7 +72,7 @@ def run_alr(*args, **kwargs):
         print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
         print('Exitted with status code {}'.format(p.status))
         print('Output:')
-        print(p.out)
+        print(repr(p.out))
         raise CalledProcessError('alr returned non-zero status code')
 
     # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
