@@ -5,6 +5,7 @@ with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
+with Alire.Properties.Bool;
 with Alire.TOML_Adapters;
 
 package Alire.Properties.From_TOML with Preelaborate is
@@ -26,7 +27,8 @@ package Alire.Properties.From_TOML with Preelaborate is
                           Notes,
                           Project_Files,
                           Website,
-                          Tags);
+                          Tags,
+                          Auto_GPR_With);
    --  These enum values must match the toml key they represent with '-' => '_'
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
@@ -49,6 +51,7 @@ package Alire.Properties.From_TOML with Preelaborate is
                                     => Scenarios.From_TOML'Access,
                         Hint        => null, -- Only apply to externals
                         Licenses    => Properties.Licenses.From_TOML'Access,
+                        Auto_GPR_With => Bool.From_TOML'Access,
                         others      => Labeled.From_TOML'Access);
    --  This loader is used in the [general] crate section
 
@@ -62,6 +65,7 @@ package Alire.Properties.From_TOML with Preelaborate is
                                       => Scenarios.From_TOML'Access,
                         Notes         => Labeled.From_TOML'Access,
                         Project_Files => Labeled.From_TOML'Access,
+                        Auto_GPR_With => Bool.From_TOML'Access,
                         others        => null);
    --  This loader applies to release sections
 

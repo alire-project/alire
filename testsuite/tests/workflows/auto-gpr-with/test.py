@@ -34,4 +34,11 @@ run_alr('build')
 p = run_alr('run')
 assert_eq('Hello, world!\n', p.out)
 
+# Get a dependency with auto-gpr-with=false
+run_alr('with', 'libhello_nogprwith')
+
+# Build again, the build would fail if the project file from libhello_nogprwith
+# is wrongly withed.
+run_alr('build')
+
 print('SUCCESS')

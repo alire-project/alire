@@ -4,6 +4,35 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Automatically 'with' GPR project files from dependencies
+
+PR [#458](https://github.com/alire-project/alire/pull/458).
+
+When adding or removing dependency with `alr with`, a list of `with` statement
+for each project files of the dependencies can be automatically added to the
+root project file:
+```
+-- begin auto-gpr-with --
+--  This section was automatically added by Alire
+with "libhello.gpr";
+-- end auto-gpr-with --
+
+project Test is
+...
+```
+
+This feature can be permanently enabled or disabled with a local or global
+configuration option:
+```bash
+alr config --global --set auto-gpr-with false
+```
+
+Crates with project files not compatible with this feature can disable it using
+the `auto-gpr-with` entry:
+```toml
+auto-gpr-with=false
+```
+
 ### Show release-specific dependency sets in solutions
 
 PR [#453](https://github.com/alire-project/alire/pull/453).

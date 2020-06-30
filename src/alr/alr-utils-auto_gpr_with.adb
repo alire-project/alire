@@ -8,8 +8,8 @@ with Alire.Config.Edit;
 
 package body Alr.Utils.Auto_GPR_With is
 
-   Begin_Line : constant String := "-- begin auto-with --";
-   End_Line   : constant String := "-- end auto-with --";
+   Begin_Line : constant String := "-- begin auto-gpr-with --";
+   End_Line   : constant String := "-- end auto-gpr-with --";
 
    ----------------
    -- Query_User --
@@ -80,13 +80,16 @@ package body Alr.Utils.Auto_GPR_With is
       Open (In_File, Ada.Text_IO.In_File, GPR_File);
       Create (Out_File, Ada.Text_IO.Out_File, Tmp.Filename);
 
-      --  First add the new auto-with section to the output file
-      Put_Line (Out_File, Begin_Line);
-      Put_Line (Out_File, "--  This section was automatically added by Alire");
-      for File of Withs loop
-         Put_Line (Out_File, "with """ & File & """;");
-      end loop;
-      Put_Line (Out_File, End_Line);
+      --  First add the new auto-with section to the output file, if any
+      if not Withs.Is_Empty then
+         Put_Line (Out_File, Begin_Line);
+         Put_Line (Out_File,
+                   "--  This section was automatically added by Alire");
+         for File of Withs loop
+            Put_Line (Out_File, "with """ & File & """;");
+         end loop;
+         Put_Line (Out_File, End_Line);
+      end if;
 
       --  Copy the content of the project file except the auto-with section,
       --  if any.

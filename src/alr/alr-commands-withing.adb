@@ -31,6 +31,21 @@ package body Alr.Commands.Withing is
       New_Deps     : Alire.Conditional.Dependencies;
       Old_Solution : Alire.Solutions.Solution := Root.Current.Solution);
 
+   -------------------
+   -- Auto_GPR_With --
+   -------------------
+
+   procedure Auto_GPR_With is
+   begin
+      for File of Root.Current.Release.Project_Files
+        (Root.Current.Environment, With_Path => True)
+      loop
+         Utils.Auto_GPR_With.Update
+           (Alire.Directories."/" (Root.Current.Path, File),
+            Root.Current.GPR_Project_Files (Exclude_Root => True));
+      end loop;
+   end Auto_GPR_With;
+
    ---------
    -- Add --
    ---------
@@ -238,6 +253,7 @@ package body Alr.Commands.Withing is
             Root     => New_Root,
             Solution => New_Solution);
 
+         Auto_GPR_With;
       end;
 
    end Replace_Current;
@@ -465,16 +481,6 @@ package body Alr.Commands.Withing is
          From;
       else
          raise Program_Error with "List should have already happened";
-      end if;
-
-      if not Cmd.From then
-         for File of Root.Current.Release.Project_Files
-           (Root.Current.Environment, With_Path => True)
-         loop
-            Utils.Auto_GPR_With.Update
-              (Alire.Directories."/" (Root.Current.Path, File),
-               Root.Current.GPR_Project_Files (Exclude_Root => True));
-         end loop;
       end if;
    end Execute;
 

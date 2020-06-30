@@ -1,3 +1,7 @@
 driver: python-script
 indexes:
-    basic_index: {}
+    basic_index:
+        in_fixtures: true
+    my_index:
+        in_fixtures: false
+        copy_crates_src: true

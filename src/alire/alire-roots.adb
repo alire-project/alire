@@ -115,7 +115,10 @@ package body Alire.Roots is
 
       for Rel of This.Solution.Releases.Including (Release (This)) loop
 
-         if not Exclude_Root or else Rel.Name /= Release (This).Name then
+         if (not Exclude_Root or else Rel.Name /= Release (This).Name)
+           and then
+            Rel.Auto_GPR_With
+         then
             for File of Rel.Project_Files
               (This.Environment, With_Path => False)
             loop
