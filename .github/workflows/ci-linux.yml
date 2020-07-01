@@ -9,7 +9,7 @@ on:
       - '**.txt'
 
 env:
-  alire_index: ""
+  alire_index: "git+https://github.com/alire-project/alire-index@devel-0.3"
   # Empty index: test with master of community index
   # Otherwise: test with particular commit/branch
   # e.g.: index: "git+https://github.com/alire-project/alire-index@deadbeef"
