@@ -10,21 +10,21 @@ from drivers.asserts import assert_eq
 
 
 # Get the "hello" project and enter its directory
-run_alr('init', '--bin', 'test')
-os.chdir(glob('test*')[0])
+run_alr('init', '--bin', 'myhello')
+os.chdir(glob('myhello*')[0])
 
 # Get the libhello dependency that should also add a with in update test.gpr
 run_alr('with', 'libhello')
 
 # Re-write the source code by using libhello
-with open("src/test.adb", "w") as text_file:
+with open("src/myhello.adb", "w") as text_file:
     text_file.write("""
 with Libhello;
 
-procedure Test is
+procedure Myhello is
 begin
    Libhello.Hello_World;
-end Test;
+end Myhello;
 """)
 
 # Build it
