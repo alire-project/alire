@@ -4,6 +4,8 @@ with Ada.Characters.Handling;
 with Interfaces.C_Streams;
 
 with Alire.Utils.TTY;
+with Alire.Config;
+with Alire.Config.Edit;
 
 package body Alire.Utils.User_Input is
 
@@ -150,6 +152,67 @@ package body Alire.Utils.User_Input is
           when No     => "No",
           when Always => "Always");
 
+   ------------------
+   -- Query_String --
+   ------------------
+
+   function Query_String (Question   : String;
+                          Default    : String;
+                          Validation : String_Validation_Access)
+                          return String
+   is
+      -----------------
+      -- Use_Default --
+      -----------------
+
+      function Use_Default return String is
+      begin
+         TIO.Put_Line ("Using default: '" & Default & "'");
+         return Default;
+      end Use_Default;
+
+      --------------
+      -- Is_Valid --
+      --------------
+
+      function Is_Valid (Str : String) return Boolean
+      is (Validation = null or else Validation (Str));
+
+   begin
+      loop
+         TIO.Put_Line (Question);
+
+         if Not_Interactive or else not Is_TTY then
+            return Use_Default;
+         end if;
+
+         TIO.Put_Line ("Default: '" & Default & "'");
+
+         --  Flush the input that the user may have entered by mistake before
+         --  the question is asked.
+         Flush_TTY;
+
+         --  Get user input
+         declare
+            Input : constant String := TIO.Get_Line;
+         begin
+
+            --  Empty line means the user pressed enter without any answer
+            if Input'Length = 0 and then Is_Valid (Default) then
+               return Use_Default;
+            end if;
+
+            if Is_Valid (Input) then
+
+               --  We got a valid answer
+               return Input;
+            end if;
+
+            TIO.Put_Line ("Invalid answer.");
+         end;
+      end loop;
+   end Query_String;
+
    -----------------------
    -- Continue_Or_Abort --
    -----------------------
@@ -234,5 +297,70 @@ package body Alire.Utils.User_Input is
          end;
       end loop;
    end Validated_Input;
+
+   ----------------------------
+   -- Config_Or_Query_String --
+   ----------------------------
+
+   function Config_Or_Query_String (Config_Key : String;
+                                    Question   : String;
+                                    Default    : String;
+                                    Validation : String_Validation_Access)
+                                    return String
+   is
+      use Alire.Config;
+   begin
+      if Config.Defined (Config_Key) then
+         return Config.Get (Config_Key, Default);
+      else
+         declare
+            Result : constant String :=
+              Query_String (Question, Default, Validation);
+         begin
+            if Result /= Default then
+               Edit.Set (Filepath (Global), Config_Key, Result);
+            end if;
+
+            return Result;
+         end;
+      end if;
+   end Config_Or_Query_String;
+
+   ---------------
+   -- User_Name --
+   ---------------
+
+   function User_Name return String
+   is (Config_Or_Query_String (Config_Key => "user.name",
+                               Question   => "User name",
+                               Default    => "Your Name",
+                               Validation => null));
+
+   -----------------------
+   -- User_GitHub_Login --
+   -----------------------
+
+   function User_GitHub_Login return String
+   is (Config_Or_Query_String (Config_Key => "user.github_login",
+                               Question   => "Your GitHub login",
+                               Default    => "github-username",
+                               Validation => Is_Valid_GitHub_Username'Access));
+
+   -----------------
+   -- Check_Email --
+   -----------------
+
+   function Check_Email (Str : String) return Boolean
+   is (Could_Be_An_Email (Str, With_Name => False));
+
+   ----------------
+   -- User_Email --
+   ----------------
+
+   function User_Email return String
+   is (Config_Or_Query_String (Config_Key => "user.email",
+                               Question   => "Your email address",
+                               Default    => "example@example.com",
+                               Validation => Check_Email'Access));
 
 end Alire.Utils.User_Input;
