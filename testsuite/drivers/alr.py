@@ -6,6 +6,7 @@ import os.path
 
 from e3.os.process import Run, quote_arg
 from e3.fs import mkdir
+from e3.testsuite.driver.classic import ProcessResult
 
 import re
 
@@ -48,7 +49,7 @@ def run_alr(*args, **kwargs):
     :param bool debug: If true (which is the default), append "-d" to the
         command line. This ensures uncaught exceptions are logged instead
         of presenting a sanitized error intended for final users.
-    :rtype: Run
+    :rtype: ProcessResult
     """
 
     complain_on_error = kwargs.pop('complain_on_error', True)
@@ -73,7 +74,11 @@ def run_alr(*args, **kwargs):
         print('Output:')
         print(p.out)
         raise CalledProcessError('alr returned non-zero status code')
-    return p
+
+    # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
+    # canonicalization is necessary to make output comparison work on all
+    # platforms.
+    return ProcessResult(p.status, p.out.replace('\r\n', '\n'))
 
 
 def fixtures_path(*args):
