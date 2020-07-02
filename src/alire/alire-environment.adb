@@ -111,8 +111,7 @@ package body Alire.Environment is
 
       for Rel of Solution.Releases.Including (Root.Release) loop
          This.Load (Root            => Root,
-                    Crate           => Rel.Name,
-                    Is_Root_Release => False);
+                    Crate           => Rel.Name);
       end loop;
 
       This.Set ("ALIRE", "True", "Alire");
@@ -124,14 +123,13 @@ package body Alire.Environment is
 
    procedure Load (This            : in out Context;
                    Root            : Roots.Root;
-                   Crate           : Crate_Name;
-                   Is_Root_Release : Boolean)
+                   Crate           : Crate_Name)
    is
       Rel    : constant Releases.Release := Root.Release (Crate);
       Origin : constant String := Rel.Name_Str;
    begin
 
-      --  Enviromemnt variables defined in the crate manifest
+      --  Environment variables defined in the crate manifest
       for Act of Rel.Environment (Root.Environment) loop
          begin
             declare
