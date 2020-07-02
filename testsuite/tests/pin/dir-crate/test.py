@@ -7,7 +7,7 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator
+from drivers.helpers import dir_separator
 from glob import glob
 
 # Retrieve a crate
@@ -25,7 +25,7 @@ run_alr('with', 'hello', '--force')
 # Pin the hello crate as local dir dependency. The version in the folder is
 # different to the one we had in the solution, so this should cause a downgrade
 # but with complete solution. Now hello=1 --> libhello=1.1.
-run_alr('pin', 'hello', '--use', '..' + path_separator() + target)
+run_alr('pin', 'hello', '--use', '..' + dir_separator() + target)
 
 # Verify that hello dependencies are detected and used, and are the ones
 # corresponding to the linked dir versions.

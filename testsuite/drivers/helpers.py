@@ -34,6 +34,10 @@ def check_line_in(filename, line):
 
 
 def path_separator():
+    return ':' if os.name != 'nt' else ';'
+
+
+def dir_separator():
     return '/' if os.name != 'nt' else '\\'
 
 

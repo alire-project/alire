@@ -7,7 +7,6 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator
 
 
 def verify_output(text):
