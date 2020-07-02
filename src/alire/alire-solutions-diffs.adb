@@ -10,158 +10,317 @@ package body Alire.Solutions.Diffs is
 
    package TTY renames Utils.TTY;
 
-   use type Semantic_Versioning.Version;
+   --  Define all changes we can detect, to simplify retrieving their
+   --  icon/text. These are not exclusive to each other.
+   type Changes is
+     (Added,      -- A new release
+      Removed,    -- A removed dependency of any kind
+      Hinted,     -- An undetected external dependency
+      Upgraded,   -- An upgraded release
+      Downgraded, -- A downgraded release
+      Pinned,     -- A release being pinned
+      Unpinned,   -- A release being unpinned
+      Unchanged,  -- An unchanged dependency/release
+      Missing    -- A missing dependency
+     );
 
-   ------------------
-   -- Best_Version --
-   ------------------
+   ----------
+   -- Icon --
+   ----------
 
-   function Best_Version (Status : Crate_Status) return String is
-     (case Status.Status is
-         when Needed   => Semantic_Versioning.Image (Status.Version),
-         when Linked   => "file:" & (+Status.Path),
-         when Hinted   => Status.Versions.Image,
-         when Unneeded => "unneeded",
-         when Unsolved => Status.Versions.Image);
+   function Icon (Change : Changes) return String
+   is (if TTY.Color_Enabled then
+         (case Change is
+             when Added      => TTY.OK    ("+"),
+             when Removed    => TTY.Emph  ("✗"),
+             when Hinted     => TTY.Warn  ("↪"),
+             when Upgraded   => TTY.OK    ("⭧"),
+             when Downgraded => TTY.Warn  ("⭨"),
+             when Pinned     => TTY.OK    ("⊙"),
+             when Unpinned   => TTY.Emph  ("𐩒"),
+             when Unchanged  => TTY.OK    ("="),
+             when Missing    => TTY.Error ("⚠"))
+       else
+         (case Change is
+               when Added      => "+",
+               when Removed    => "-",
+               when Hinted     => "~",
+               when Upgraded   => "^",
+               when Downgraded => "v",
+               when Pinned     => "·",
+               when Unpinned   => "o",
+               when Unchanged  => "=",
+               when Missing    => "!"));
+
+   --  This type is used to summarize every detected change
+   type Crate_Changes is record
+      Icon,
+      Best_Version : UString;
+      Detail       : Utils.String_Vector;
+   end record;
+
+   ----------------
+   -- Add_Change --
+   ----------------
+
+   procedure Add_Change (Change : in out Crate_Changes; Icon, Detail : String)
+   is
+      use UStrings;
+   begin
+      if Icon /= "" and then not Utils.Contains (+Change.Icon, Icon) then
+         Append (Change.Icon, Icon);
+      end if;
+
+      if Detail /= "" then
+         Change.Detail.Append (Detail);
+      end if;
+   end Add_Change;
 
    -------------
    -- Between --
    -------------
 
-   function Between (Former, Latter : Solution) return Diff is
-
-      use type Containers.Crate_Name_Sets.Set;
-
-      -----------------
-      -- Make_Status --
-      -----------------
-
-      function Make_Status (Crate : Crate_Name;
-                            Sol   : Solution) return Crate_Status is
-      begin
-         if Sol.Releases.Contains (Crate) then
-            return (Status  => Needed,
-                    Pinned  => Sol.State (Crate).Is_Pinned,
-                    Version => Sol.State (Crate).Release.Version);
-         elsif Sol.Links.Contains (Crate) then
-            return (Status => Linked,
-                    Path   => +Sol.State (Crate).Link.Path);
-         elsif Sol.Hints.Contains (Crate) then
-            return (Status   => Hinted,
-                    Versions => Sol.Dependency (Crate).Versions);
-
-         elsif Sol.Depends_On (Crate) then
-            return (Status => Unsolved,
-                    Versions => Sol.Dependencies (Crate).Versions);
-
-         else
-            return (Status => Unneeded);
-
-         end if;
-      end Make_Status;
-
-      --  Get all involved crates, before and after
-
-      Crates : constant Containers.Crate_Name_Sets.Set :=
-                 Former.Crates or Latter.Crates;
-   begin
-      return This : Diff do
-
-         --  Solution validities
-
-         This.Former_Complete := Former.Is_Complete;
-         This.Latter_Complete := Latter.Is_Complete;
-
-         --  Store changes for each crate
-
-         for Crate of Crates loop
-            This.Changes.Insert (Crate,
-                                 Crate_Changes'
-                                   (Former => Make_Status (Crate, Former),
-                                    Latter => Make_Status (Crate, Latter)));
-         end loop;
-
-      end return;
-   end Between;
-
-   ------------
-   -- Change --
-   ------------
-
-   function Change (This : Diff; Crate : Crate_Name) return Changes is
-      Former : Crate_Status renames This.Changes (Crate).Former;
-      Latter : Crate_Status renames This.Changes (Crate).Latter;
-   begin
-
-      --  Changes in pinning take precedence
-
-      if Latter.Status = Needed and then Latter.Pinned and then
-        (Former.Status /= Needed or else not Former.Pinned)
-      then
-         return Pinned;
-      end if;
-
-      if Former.Status = Needed and then Former.Pinned and then
-        (Latter.Status /= Needed or else not Latter.Pinned)
-      then
-         return Unpinned;
-      end if;
-
-      --  Other changes that don't involve pinning
-
-      return
-        (case Latter.Status is
-            when Needed =>
-              (if Former.Status = Needed then
-                 (if Former.Version < Latter.Version then Upgraded
-                  elsif Former.Version = Latter.Version then Unchanged
-                  else Downgraded)
-               else Added),
-            when Linked   => Pinned,
-            when Hinted   => External,
-            when Unneeded => Removed,
-            when Unsolved => Unsolved);
-   end Change;
+   function Between (Former, Latter : Solution) return Diff
+   is (Former => Former, Latter => Latter);
 
    ----------------------
    -- Contains_Changes --
    ----------------------
 
-   function Contains_Changes (This : Diff) return Boolean is
-     (This.Former_Complete /= This.Latter_Complete or else
-      (for some Change of This.Changes => Change.Former /= Change.Latter));
+   function Contains_Changes (This : Diff) return Boolean
+   is (This.Former /= This.Latter);
+
+   ------------------
+   -- Find_Changes --
+   ------------------
+
+   function Find_Changes (This : Diff; Crate : Crate_Name) return Crate_Changes
+   is
+      Chg : Crate_Changes;
+
+      use UStrings;
+      use all type Dependencies.States.Fulfillments;
+      use all type Dependencies.States.Transitivities;
+      use all type Semantic_Versioning.Version;
+
+      Has_Former : constant Boolean := This.Former.Depends_On (Crate);
+      Has_Latter : constant Boolean := This.Latter.Depends_On (Crate);
+
+      function Former return Dependencies.States.State
+      is (This.Former.State (Crate));
+
+      function Latter return Dependencies.States.State
+      is (This.Latter.State (Crate));
+
+      -------------------
+      -- Add_Or_Remove --
+      -------------------
+
+      procedure Add_Or_Remove is
+      begin
+         if not Has_Former and then Has_Latter then
+            Add_Change (Chg, Icon (Added), "new");
+         elsif Has_Former and then not Has_Latter then
+            Add_Change (Chg, Icon (Removed), "removed");
+         end if;
+      end Add_Or_Remove;
+
+      -------------------
+      -- Fulfil_Change --
+      -------------------
+
+      procedure Fulfil_Change is
+
+         -----------------
+         -- Gains_State --
+         -----------------
+
+         function Gains_State (Fulfilment : Dependencies.States.Fulfillments)
+                            return Boolean
+         is ((not Has_Former or else Former.Fulfilment not in Fulfilment)
+             and then Has_Latter and then Latter.Fulfilment in Fulfilment);
+
+      begin
+         --  New hint
+         if Gains_State (Hinted) then
+            Add_Change (Chg, Icon (Hinted), TTY.Warn ("external"));
+
+         --  Changed linked dir target
+         elsif Has_Latter and then Latter.Is_Linked and then
+           (not Has_Former or else not Former.Is_Linked or else
+            Former.Link.Path /= Latter.Link.Path)
+         then
+            Add_Change (Chg, Icon (Pinned),
+                        "pin=" & TTY.URL (Latter.Link.Path));
+
+         --  New unsolvable
+         elsif Gains_State (Missed) then
+            Add_Change (Chg, Icon (Missing), TTY.Error ("missing"));
+
+         --  From hint to proper release
+         elsif Has_Former and then Former.Is_Hinted and then
+           Gains_State (Solved)
+         then
+            --  The crate was formerly in the solution, but not as regular
+            --  release. Pinning is reported separately, so warn only when
+            --  it was formerly an external.
+            Add_Change (Chg, Icon (Added), TTY.OK ("solved"));
+         end if;
+      end Fulfil_Change;
+
+      --------------------------
+      -- transitivity_changed --
+      --------------------------
+
+      procedure Transitivity_Changed is
+      begin
+
+         --  Inform only when changing from direct to indirect or viceversa.
+         --  A new direct dependency merits no highlight since it is trivially
+         --  expected.
+
+         if (not Has_Former or else Former.Transitivity = Direct) and then
+           Has_Latter and then Latter.Transitivity = Indirect
+         then
+            Add_Change (Chg, "", "indirect");
+         elsif Has_Former and then Has_Latter and then
+           Former.Transitivity /= Latter.Transitivity
+         then
+            Add_Change (Chg, "",
+                        Utils.To_Lower_Case (Latter.Transitivity'Img));
+         end if;
+      end Transitivity_Changed;
+
+      ------------------------
+      -- Pinned_Or_Unpinned --
+      ------------------------
+
+      procedure Pinned_Or_Unpinned is
+      begin
+         if (not Has_Former or else not Former.Is_User_Pinned) and then
+           Has_Latter and then Latter.Is_User_Pinned
+         then
+            --  The actual pin change will be shown via version/target
+            Add_Change (Chg, Icon (Pinned), "");
+         elsif Has_Former and then Former.Is_User_Pinned and then
+           Has_Latter and then not Latter.Is_User_Pinned
+         then
+            Add_Change (Chg, Icon (Unpinned), "unpinned");
+         end if;
+
+         --  Report pin version when new/changed. Link target already reported
+         --  in Fulfil_Change.
+         if Has_Latter and then Latter.Is_Pinned and then
+           (not Has_Former or else not Former.Is_Pinned or else
+            Former.Pin_Version /= Latter.Pin_Version)
+         then
+            Add_Change (Chg, Icon (Pinned),
+                        "pin=" & TTY.Version (Latter.Pin_Version.Image));
+         end if;
+      end Pinned_Or_Unpinned;
+
+      ---------------------
+      -- Up_Or_Downgrade --
+      ---------------------
+
+      procedure Up_Or_Downgrade is
+      begin
+         if Has_Former and then Former.Has_Release and then
+           Has_Latter and then Latter.Has_Release
+         then
+            if Former.Release.Version < Latter.Release.Version then
+               Add_Change
+                 (Chg,
+                  Icon (Upgraded),
+                  "upgraded from "
+                  & TTY.Version (Former.Release.Version.Image));
+            elsif Latter.Release.Version < Former.Release.Version then
+               Add_Change
+                 (Chg,
+                  Icon (Downgraded),
+                  "downgraded from "
+                  & TTY.Version (Former.Release.Version.Image));
+            end if;
+
+         end if;
+      end Up_Or_Downgrade;
+
+      --------------------------------
+      -- Determine_Relevant_Version --
+      --------------------------------
+
+      procedure Determine_Relevant_Version is
+
+         ------------------
+         -- Best_Version --
+         ------------------
+
+         function Best_Version (State : Dependencies.States.State)
+                                return String
+         is (if State.Has_Release then
+                TTY.Version (State.Release.Version.Image)
+             elsif State.Is_Linked then -- linked dir without alire metadata
+                TTY.Warn ("unknown")
+             elsif State.Is_Hinted then -- undetected external, show dep
+                TTY.Version (State.Versions.Image)
+             else -- Not used, but just in case, the crate is in missing state:
+                TTY.Error (State.Versions.Image));
+
+      begin
+         --  Default to unknown
+
+         Chg.Best_Version := +TTY.Error ("unknown");
+
+         --  Find something better
+
+         if Has_Latter then
+            Chg.Best_Version := +Best_Version (Latter);
+         elsif Has_Former then
+            --  Crate is gone, so it has no current version, show the one
+            --  disappearing from the solutions.
+            Chg.Best_Version := +Best_Version (Former);
+         else
+            raise Program_Error with "crate is neither in former or latter";
+         end if;
+
+      end Determine_Relevant_Version;
+
+   begin
+
+      --  Go through possible changes and add each marker
+
+      Add_Or_Remove;
+
+      Pinned_Or_Unpinned;
+
+      Fulfil_Change;
+
+      Transitivity_Changed;
+
+      Up_Or_Downgrade;
+
+      Determine_Relevant_Version;
+
+      --  Final fill-in for no changes
+
+      if Length (Chg.Icon) = 0 then
+         Add_Change (Chg, Icon (Unchanged), "");
+      end if;
+
+      if Chg.Detail.Is_Empty then
+         Add_Change (Chg, "", "unchanged");
+      end if;
+
+      return Chg;
+
+   end Find_Changes;
 
    ------------------------
    -- Latter_Is_Complete --
    ------------------------
 
    function Latter_Is_Complete (This : Diff) return Boolean
-   is (This.Latter_Complete);
-
-   ------------------------
-   -- Pin_Change_Summary --
-   ------------------------
-
-   function Pin_Change_Summary (Former, Latter : Crate_Status) return String
-   is
-   begin
-      --  Show what's going on with versions
-
-      if Former.Status = Needed and then Latter.Status = Needed then
-         if Former.Version < Latter.Version then
-            return ", upgraded from " & TTY.Version (Former.Version.Image);
-         elsif Former.Version = Latter.Version then
-            return ", version unchanged";
-         else
-            return ", downgraded from " & TTY.Version (Former.Version.Image);
-         end if;
-      elsif Former.Status = Needed and then Latter.Status /= Needed then
-         return " from " & TTY.Version (Former.Version.Image);
-      else
-         --  Pinned, nothing else to say
-         return "";
-      end if;
-   end Pin_Change_Summary;
+   is (This.Latter.Is_Complete);
 
    -----------
    -- Print --
@@ -172,111 +331,62 @@ package body Alire.Solutions.Diffs is
                     Prefix       : String       := "   ";
                     Level        : Trace.Levels := Trace.Info)
    is
-      use Change_Maps;
-
-      package Semver renames Semantic_Versioning;
-
       Table : Utils.Tables.Table;
+      Changed    : Boolean := False;
    begin
 
       --  Start with an empty line to separate from previous output
 
       Trace.Log ("", Level);
 
-      if not This.Latter_Complete then
+      if not This.Latter.Is_Complete then
          Trace.Log (Prefix & "New solution is " & TTY.Warn ("incomplete."),
                     Level);
-      elsif This.Latter_Complete and then not This.Former_Complete then
+      elsif This.Latter.Is_Complete and then not This.Former.Is_Complete then
          Trace.Log (Prefix & "New solution is " & TTY.OK ("complete."),
                     Level);
       end if;
 
-      --  Early exit if no changes
-
-      if Changed_Only and then not This.Contains_Changes then
-         Trace.Log (Prefix & "No changes between former an new solution.",
-                    Level);
-         return;
-      end if;
-
       --  Detailed changes otherwise
 
-      for I in This.Changes.Iterate loop
+      for Crate of This.Former.Crates.Union (This.Latter.Crates) loop
          declare
-            Former : Crate_Status renames This.Changes (I).Former;
-            Latter : Crate_Status renames This.Changes (I).Latter;
+            Changes : constant Crate_Changes := Find_Changes (This, Crate);
          begin
-            if not Changed_Only or else Former /= Latter then
+
+            if not Changed_Only or else
+              Changes.Detail.Flatten /= "unchanged"
+            then
+               Changed := Changed or True;
 
                --  Show icon of change
 
-               if TTY.Color_Enabled then
-                  Table.Append
-                    (Prefix
-                     & (case This.Change (Key (I)) is
-                          when Added      => TTY.OK    ("✓"),
-                          when Removed    => TTY.Emph  ("✗"),
-                          when External   => TTY.Warn  ("↪"),
-                          when Upgraded   => TTY.OK    ("⭧"),
-                          when Downgraded => TTY.Warn  ("⭨"),
-                          when Pinned     => TTY.OK    ("⊙"),
-                          when Unpinned   => TTY.Emph  ("𐩒"),
-                          when Unchanged  => TTY.OK    ("="),
-                          when Unsolved   => TTY.Error ("⚠")));
-               else
-                  Table.Append
-                    (Prefix
-                     & (case This.Change (Key (I)) is
-                          when Added      => "+",
-                          when Removed    => "-",
-                          when External   => "~",
-                          when Upgraded   => "^",
-                          when Downgraded => "v",
-                          when Pinned     => ".",
-                          when Unpinned   => "o",
-                          when Unchanged  => "=",
-                          when Unsolved   => "!"));
-               end if;
+               Table.Append (Prefix & (+Changes.Icon));
 
                --  Always show crate name
 
-               Table.Append (TTY.Name (+Key (I)));
+               Table.Append (TTY.Name (Crate));
 
                --  Show most precise version available
 
-               if Latter.Status in Unsolved | Hinted | Linked | Needed then
-                  Table.Append (TTY.Version (Best_Version (Latter)));
-               else
-                  Table.Append (TTY.Version (Best_Version (Former)));
-               end if;
+               Table.Append (+Changes.Best_Version);
 
                --  Finally show an explanation of the change depending on
                --  status changes.
 
-               Table.Append
-                 ("("
-                  & (case This.Change (Key (I)) is
-                       when Added      => "new",
-                       when Removed    => "removed",
-                       when External   => "external",
-                       when Upgraded   => "upgraded from "
-                                 & TTY.Version (Semver.Image (Former.Version)),
-                       when Downgraded => "downgraded from "
-                                 & TTY.Version (Semver.Image (Former.Version)),
-                       when Pinned     => "pinned"
-                                         & Pin_Change_Summary (Former, Latter),
-                       when Unpinned   => "unpinned"
-                                         & Pin_Change_Summary (Former, Latter),
-                       when Unchanged  => "unchanged",
-                       when Unsolved   => "missing")
-                  & ")");
+               Table.Append ("(" & Changes.Detail.Flatten (",") & ")");
 
                Table.New_Row;
             end if;
          end;
       end loop;
 
-      Table.Print (Level);
+      if Changed then
+         Table.Print (Level);
+      else
+         Trace.Log (Prefix & "No changes between former an new solution.",
+                    Level);
+      end if;
    end Print;
 
 end Alire.Solutions.Diffs;

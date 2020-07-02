@@ -36,7 +36,7 @@ p = run_alr('show', '--solve')
 s = re.escape(path_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\* \(direct,linked'
-             ',target=.*' + s + 'my_index' + s +
+             ',pin=.*' + s + 'my_index' + s +
              'crates' + s + 'libhello_1.0.0\).*',
              p.out, flags=re.S)
 
