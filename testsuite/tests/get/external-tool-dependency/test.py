@@ -10,23 +10,27 @@ from drivers.helpers import compare, contents
 
 from subprocess import check_output
 
-# Identify make version we are going to see reported
-regex = re.compile("GNU Make ([0-9.]+).*")
-out = check_output(['make', '--version'], universal_newlines=True)
-version = regex.match(out).group(1)
-while version.count('.') < 2:  # ensure a complete version, e.g., 4.1.0
-    version = version + '.0'
-
 # Should silently retrieve everything
 p = run_alr('get', 'main')
 assert_eq('', p.out)
 
+dir_content = contents('main_1.0.0_filesystem/')
+
+# The directrory for the external dependencies 'make' contains a version number
+# that can be different depending on the platform or version of the
+# distribution. We search through the content to find that directory and use it
+# in the expected output.
+make_dep_dir = "__MAKE_DEPENDENCY_DIR_NOT_FOUND_"
+for elt in dir_content:
+    if re.match('^.*/alire/cache/dependencies/make_.*_external$', elt):
+        make_dep_dir = elt
+
 # Check folder contents
-compare(contents('main_1.0.0_filesystem/'),
+compare(dir_content,
         ['main_1.0.0_filesystem/alire',
          'main_1.0.0_filesystem/alire/cache',
          'main_1.0.0_filesystem/alire/cache/dependencies',
-         'main_1.0.0_filesystem/alire/cache/dependencies/make_' + version + '_external',
+         make_dep_dir,
          'main_1.0.0_filesystem/alire/main.lock',
          'main_1.0.0_filesystem/alire/main.toml',
          'main_1.0.0_filesystem/noop.gpr',
