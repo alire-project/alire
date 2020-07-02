@@ -7,7 +7,7 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator
+from drivers.helpers import dir_separator
 from glob import glob
 
 # Retrieve a crate
@@ -19,7 +19,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Pin the hello crate as local dir dependency
-run_alr('with', 'hello', '--use', '..' + path_separator() + target)
+run_alr('with', 'hello', '--use', '..' + dir_separator() + target)
 
 # Verify that hello dependencies are detected and used
 p = run_alr('with', '--solve')

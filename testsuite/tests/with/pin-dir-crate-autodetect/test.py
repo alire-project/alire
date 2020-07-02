@@ -8,7 +8,7 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator
+from drivers.helpers import dir_separator
 from glob import glob
 
 # Retrieve a crate
@@ -21,7 +21,7 @@ os.chdir('xxx')
 
 # Add the directory as pinned crate, with autodetection (no crate given,
 # inferred from the crate metadata found at target).
-run_alr('with', '--use', '..' + path_separator() + target)
+run_alr('with', '--use', '..' + dir_separator() + target)
 
 # Verify that hello^1 is a new dependency and also that hello dependencies are
 # in the solution.
