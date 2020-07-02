@@ -36,11 +36,11 @@ package Alire.Environment is
    --  Solution (GPR_PROJECT_PATH and custom variables) in the context.
 
    procedure Export (This : Context);
-   --  Export the enviroment variables built from the variables previously
+   --  Export the environment variables built from the variables previously
    --  loaded and defined in the context.
 
    procedure Print_Shell (This : Context; Kind : Platforms.Shells);
-   --  Print the shell commands that can be used to export the enviroment
+   --  Print the shell commands that can be used to export the environment
    --  variables.
 
    procedure Print_Details (This : Context);
@@ -57,7 +57,7 @@ private
    type Var_Array is array (Natural range <>) of Var;
 
    function Compile (This : Context) return Var_Array;
-   --  Return an array of enviroment variable key/value built from the
+   --  Return an array of environment variable key/value built from the
    --  variables previously loaded and defined in the context.
 
    type Env_Action is record
