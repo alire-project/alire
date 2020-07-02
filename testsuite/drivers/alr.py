@@ -4,6 +4,7 @@ Helpers to run alr in the testsuite.
 
 import os.path
 
+from shutil import copytree
 from e3.os.process import Run, quote_arg
 from e3.fs import mkdir
 from e3.testsuite.driver.classic import ProcessResult
@@ -128,6 +129,9 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
         in_fixtures = desc.pop('in_fixtures', True)
         check_type('"in_fixtures"', 'a boolean', in_fixtures, bool)
 
+        copy_crates_src = desc.pop('copy_crates_src', False)
+        check_type('"copy_crates_src"', 'a boolean', copy_crates_src, bool)
+
         priority = desc.pop('priority', 1)
         check_type('"priority"', 'an integer', priority, int)
 
@@ -139,6 +143,10 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
         files_dir = (fixtures_path(files_dir)
                      if in_fixtures else
                      files_dir)
+
+        if copy_crates_src:
+            crates_dir = fixtures_path('crates')
+            copytree(crates_dir, os.path.join (working_dir, name, 'crates'))
 
         # Finally create the index description in the config directory
         index_dir = os.path.join(indexes_dir, name)

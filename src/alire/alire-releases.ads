@@ -245,6 +245,8 @@ package Alire.Releases with Preelaborate is
 
    function Tag (R : Release) return Alire.Properties.Vector;
 
+   function Auto_GPR_With (R : Release) return Boolean;
+
    procedure Print (R : Release);
    --  Dump info to console
 

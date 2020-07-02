@@ -63,6 +63,11 @@ package body Alire.Properties.Labeled is
             --  (since they get converted into individual properties).
          begin
             for I in 1 .. Val.Length loop
+
+               if Val.Item (I).Kind /= TOML_String then
+                  raise Checked_Error with "Expected String value for " & Key;
+               end if;
+
                declare
                   L : constant Label := New_Label
                     (Key_To_Label (Key),

@@ -70,12 +70,24 @@ package Alire.Roots is
    --  solution in this root. This includes al releases' paths and any linked
    --  directories.
 
+   function GPR_Project_Files (This         : Root;
+                               Exclude_Root : Boolean)
+                               return Utils.String_Set with
+     Pre => This.Is_Valid;
+   --  Return all the gprbuild project files defined for the solution in this
+   --  root. If Exclude_Root is True, the project files of the root crate are
+   --  excluded from the result.
+
    function Release (This : Root) return Releases.Release with
      Pre => This.Is_Valid;
 
    function Solution (This : Root) return Solutions.Solution with
      Pre => This.Is_Valid;
    --  Returns the solution stored in the lockfile
+
+   function Environment (This : Root) return Properties.Vector with
+     Pre => This.Is_Valid;
+   --  Properties of the Root
 
    --  files and folders derived from the root path (this obsoletes Alr.Paths)
 
@@ -154,5 +166,8 @@ private
 
    function Working_Folder (This : Root) return Absolute_Path is
       ((+This.Path) / "alire");
+
+   function Environment (This : Root) return Properties.Vector
+   is (This.Environment);
 
 end Alire.Roots;

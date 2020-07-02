@@ -5,6 +5,7 @@ with Alire.Defaults;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
+with Alire.Properties.Bool;
 
 with GNAT.IO; -- To keep preelaborable
 
@@ -258,6 +259,10 @@ package body Alire.Releases is
                        else Properties),
       Available    => Requisites.Booleans.Always_True);
 
+   -------------------------
+   -- On_Platform_Actions --
+   -------------------------
+
    function On_Platform_Actions (R : Release;
                                  P : Alire.Properties.Vector;
                                  Moments : Moment_Array := (others => True))
@@ -380,7 +385,12 @@ package body Alire.Releases is
         Props_To_Strings (R.All_Properties (P), Project_File);
       Without    : Utils.String_Vector;
    begin
-      if With_Paths.Is_Empty then
+      if With_Paths.Is_Empty
+        and then
+         R.Origin.Kind not in Origins.External | Origins.System
+      then
+         --  Default project file if no one is specified by the crate. Only if
+         --  the create is not external nor system.
          With_Paths.Append (String'((+R.Name) & ".gpr"));
       end if;
 
@@ -422,6 +432,23 @@ package body Alire.Releases is
          end loop;
       end return;
    end Project_Paths;
+
+   -------------------
+   -- Auto_GPR_With --
+   -------------------
+
+   function Auto_GPR_With (R : Release) return Boolean is
+      Vect : constant Alire.Properties.Vector :=
+        Conditional.Enumerate (R.Properties).Filter
+        (Alire.TOML_Keys.Auto_GPR_With);
+   begin
+      if not Vect.Is_Empty then
+         return Alire.Properties.Bool.Property (Vect.First_Element).Value;
+      else
+         --  The default is to enable auto-gpr-with
+         return True;
+      end if;
+   end Auto_GPR_With;
 
    ------------------------
    -- Labeled_Properties --
