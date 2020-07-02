@@ -63,7 +63,7 @@ echo Python search paths:
 $run_python -c "import sys; print('\n'.join(sys.path))"
 
 echo Running test suite now:
-$run_python ./run.py || { echo Test suite failures, unstable build!; exit 1; }
+$run_python ./run.py -E || { echo Test suite failures, unstable build!; exit 1; }
 cd ..
 echo ............................
 
