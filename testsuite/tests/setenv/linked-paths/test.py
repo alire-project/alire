@@ -20,7 +20,7 @@ run_alr("with", "--use=../my_index/crates/crate_1234")
 # Check paths are proper (base and one extra nested)
 p = run_alr("setenv")
 assert_match(('export GPR_PROJECT_PATH=".*/my_index/crates/crate_1234' +
-             path_separator() + '.*/my_index/crates/crate_1234/nested/"\n' +
+             path_separator() + '.*/my_index/crates/crate_1234/nested"\n' +
              'export ALIRE="True"\n').replace('/', re.escape(dir_separator())),
              p.out)
 
