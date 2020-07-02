@@ -14,6 +14,7 @@ package Alire.Properties.From_TOML with Preelaborate is
 
    type Property_Keys is (Actions,
                           Authors,
+                          Auto_GPR_With,
                           Description,
                           Environment,
                           Executables,
@@ -27,8 +28,7 @@ package Alire.Properties.From_TOML with Preelaborate is
                           Notes,
                           Project_Files,
                           Website,
-                          Tags,
-                          Auto_GPR_With);
+                          Tags);
    --  These enum values must match the toml key they represent with '-' => '_'
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;

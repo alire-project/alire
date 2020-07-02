@@ -352,9 +352,9 @@ entries:
 
  - `auto-gpr-with`: Boolean value that specifies if the project files of a
    crate can be automatically 'withed' by the root project file (default is
-   true). This feature is meant to simply the process of using dependencies in
-   Alire. However, not all project files are supposed to be withed, some can be
-   extended for instance, in that case a crate can disable the feature by
+   true). This feature is meant to simplify the process of using dependencies
+   in Alire. However, not all project files are supposed to be withed, some can
+   be extended for instance, in that case a crate can disable the feature by
    setting `auto-gpr-with=false`.
 
 ## Release-specific information

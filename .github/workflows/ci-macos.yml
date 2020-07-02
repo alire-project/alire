@@ -37,7 +37,7 @@ jobs:
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
-        INDEX: "git+https://github.com/alire-project/alire-index@devel-0.3"
+        INDEX: ""
 
     - name: Upload logs (if failed)
       if: failure()
