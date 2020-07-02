@@ -85,8 +85,7 @@ private
 
    procedure Load (This            : in out Context;
                    Root            : Roots.Root;
-                   Crate           : Crate_Name;
-                   Is_Root_Release : Boolean);
+                   Crate           : Crate_Name);
    --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
    --  variables) in the context.
 
