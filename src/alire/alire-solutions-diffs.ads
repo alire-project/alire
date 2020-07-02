@@ -8,9 +8,6 @@ package Alire.Solutions.Diffs is
    function Between (Former, Latter : Solution) return Diff;
    --  Create a Diff from two solutions
 
-   --  function Change (This : Diff; Crate : Crate_Name) return Changes;
-   --  Summary of what happened with a crate
-
    function Contains_Changes (This : Diff) return Boolean;
    --  Says if there are, in fact, changes between both solutions
 
