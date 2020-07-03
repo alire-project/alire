@@ -137,7 +137,10 @@ package body Alire.Roots is
       --  normalization, a path separator in the last position is removed.
       return Result : Utils.String_Set do
          for Path of Paths loop
-            if Path'Length /= 0 and then Path (Path'Last) = '/' then
+            if Path'Length /= 0
+              and then
+               Path (Path'Last) = GNAT.OS_Lib.Directory_Separator
+            then
                Result.Include (Path (Path'First .. Path'Last - 1));
             else
                Result.Include (Path);

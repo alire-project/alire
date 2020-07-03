@@ -22,12 +22,14 @@ p = run_alr('setenv', quiet=False)
 assert_eq(0, p.status)
 
 expected_gpr_path = []
-if platform.system() == 'Windows':
-    expected_gpr_path += ['[A-Z]:\\\\.*\\\\hello_1.0.1_filesystem']
-    expected_gpr_path += ['[A-Z]:\\\\.*\\\\alire\\\\cache\\\\dependencies\\\\libhello_1\.0\.0_filesystem']
-else:
-    expected_gpr_path += ['/.*/hello_1.0.1_filesystem']
-    expected_gpr_path += ['/.*/alire/cache/dependencies/libhello_1\.0\.0_filesystem']
+expected_gpr_path += [['.*', 'hello_1.0.1_filesystem']]
+expected_gpr_path += [['.*', 'alire', 'cache', 'dependencies', 'libhello_1\.0\.0_filesystem']]
+
+for i, path in enumerate(expected_gpr_path):
+    if platform.system() == 'Windows':
+        expected_gpr_path[i] = "\\\\".join(path)
+    else:
+        expected_gpr_path[i] = "/".join(path)
 
 expected_gpr_path = os.pathsep.join(expected_gpr_path)
 

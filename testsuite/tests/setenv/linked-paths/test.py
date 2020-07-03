@@ -5,6 +5,7 @@ properly added to the environment
 
 import os
 import re
+import platform
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
@@ -17,11 +18,22 @@ os.chdir("xxx")
 # Link a folder with also contains crate definitions
 run_alr("with", "--use=../my_index/crates/crate_1234")
 
+expected_gpr_path = []
+expected_gpr_path += [['.*', 'my_index', 'crates', 'crate_1234']]
+expected_gpr_path += [['.*', 'my_index', 'crates', 'crate_1234', 'nested']]
+expected_gpr_path += [['.*', 'xxx']]
+
+for i, path in enumerate(expected_gpr_path):
+    if platform.system() == 'Windows':
+        expected_gpr_path[i] = "\\\\".join(path)
+    else:
+        expected_gpr_path[i] = "/".join(path)
+
+expected_gpr_path = os.pathsep.join(expected_gpr_path)
+
 # Check paths are proper (base and one extra nested)
 p = run_alr("setenv")
-assert_match(('export GPR_PROJECT_PATH=".*/my_index/crates/crate_1234' +
-              path_separator() + '.*/my_index/crates/crate_1234/nested' +
-              path_separator() + '.*/xxx"\n' +
+assert_match(('export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n' +
               'export ALIRE="True"\n').replace('/', re.escape(dir_separator())),
              p.out)
 
