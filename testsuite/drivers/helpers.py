@@ -13,6 +13,15 @@ def contents(dir):
                    for name in dirs + files])
 
 
+# Return the content of a text file
+def content_of(filename):
+    out = ''
+    with open(filename, 'r') as f:
+        for l in f:
+            out += l
+    return out
+
+
 # Assert two values are equal or format the differences
 def compare(found, wanted):
     assert found == wanted, 'Got:    {}\nWanted: {}'.format(found, wanted)
@@ -29,8 +38,8 @@ def check_line_in(filename, line):
             if l.rstrip() == line:
                 break
         else:
-            assert False, 'Could not find {} in {}'.format(
-                repr(line), filename)
+            assert False, 'Could not find {} in {}:\n{}'.format(
+                repr(line), filename, content_of (filename))
 
 
 def path_separator():
