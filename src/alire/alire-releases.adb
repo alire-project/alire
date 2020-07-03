@@ -432,6 +432,10 @@ package body Alire.Releases is
                --  To match the output of root crate paths and Ada.Directories
                --  full path normalization, a path separator in the last
                --  position is not included.
+            else
+
+               --  The project file is at the root of the release
+               Paths.Include ("");
             end if;
          end loop;
       end return;
