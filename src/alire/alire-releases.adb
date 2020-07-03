@@ -428,10 +428,7 @@ package body Alire.Releases is
          for File of Files loop
             if Contains (File, "/") then
                Paths.Include
-                 (File (File'First .. Fixed.Index (File, "/", Backward) - 1));
-               --  To match the output of root crate paths and Ada.Directories
-               --  full path normalization, a path separator in the last
-               --  position is not included.
+                 (File (File'First .. Fixed.Index (File, "/", Backward)));
             else
 
                --  The project file is at the root of the release
