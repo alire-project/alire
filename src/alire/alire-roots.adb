@@ -141,7 +141,17 @@ package body Alire.Roots is
          end loop;
       end loop;
 
-      return Paths;
+      --  To match the output of root crate paths and Ada.Directories full path
+      --  normalization, a path separator in the last position is removed.
+      return Result : Utils.String_Set do
+         for Path of Paths loop
+            if Path'Length /= 0 and then Path (Path'Last) = '/' then
+               Result.Include (Path (Path'First .. Path'Last - 1));
+            else
+               Result.Include (Path);
+            end if;
+         end loop;
+      end return;
    end Project_Paths;
 
    --------------
