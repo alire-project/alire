@@ -24,6 +24,7 @@ assert_eq(0, p.status)
 # Check the setenv output
 assert_match('warn: Generating incomplete environment'  # Note: this warning is
              ' because of missing dependencies\n'       # via stderr so it's OK
+             'export GPR_PROJECT_PATH=".*/libhello_0.9.0_filesystem"\n'
              'export ALIRE="True"\n',
              p.out)
 
