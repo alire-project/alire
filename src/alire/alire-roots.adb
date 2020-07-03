@@ -117,16 +117,8 @@ package body Alire.Roots is
       Paths : Utils.String_Set;
    begin
 
-      --  Add root path from every release in the solution
-
       for Rel of This.Solution.Releases.Including (Release (This)) loop
-         if Rel.Name = Release (This).Name then
-            null; -- The root project doesn't require its own path
-         else
-            Paths.Include (This.Release_Base (Rel.Name));
-         end if;
-
-         --  Add extra project paths
+         --  Add project paths from each release
 
          for Path of Rel.Project_Paths (This.Environment) loop
             Paths.Include (This.Release_Base (Rel.Name) / Path);
