@@ -397,12 +397,14 @@ package body Alire.Releases is
          return With_Paths;
       else
          for File of With_Paths loop
-            --  Has path or not
-            if Tail (File, '/') = "" then
-               Without.Append (File); -- As is
-            else
-               Without.Append (Tail (File, '/'));
-            end if;
+
+            --  Basename
+            Without.Append (Split (Text => File,
+                                   Separator => '/',
+                                   Side      => Tail,
+                                   From      => Tail,
+                                   Raises    => False));
+
          end loop;
 
          return Without;
