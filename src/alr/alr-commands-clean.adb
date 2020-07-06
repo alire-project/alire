@@ -8,7 +8,6 @@ with Alr.Root;
 with Alr.Spawn;
 with Alr.Bootstrap;
 with Alr.Platform;
-with Alr.Build_Env;
 
 package body Alr.Commands.Clean is
 
@@ -29,7 +28,7 @@ package body Alr.Commands.Clean is
 
          Requires_Valid_Session;
 
-         Alr.Build_Env.Export (Alr.Root.Current);
+         Alr.Root.Current.Export_Build_Environment;
 
          Trace.Detail ("Cleaning project and dependencies...");
 

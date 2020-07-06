@@ -5,8 +5,10 @@ package Alr.Commands.Build is
    overriding
    procedure Execute (Cmd : in out Command);
 
-   function Execute return Boolean;
-   --  Returns True if compilation succeeded
+   function Execute (Export_Build_Env : Boolean) return Boolean;
+   --  Returns True if compilation succeeded. For invocations after some other
+   --  command that already has set up the build environment we need to avoid
+   --  redoing it, or it results in "variable already set" errors.
 
    overriding
    function Long_Description (Cmd : Command)

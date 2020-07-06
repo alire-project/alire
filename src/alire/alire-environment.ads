@@ -3,6 +3,7 @@ with Ada.Strings.Unbounded;
 with Alire.Releases;
 with Alire.Properties;
 with Alire.Platforms;
+limited with Alire.Roots;
 
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Vectors;
@@ -29,19 +30,17 @@ package Alire.Environment is
    procedure Prepend (This : in out Context; Name, Value, Origin : String);
    --  Prepend a value to a variable in the context
 
-   procedure Load (This            : in out Context;
-                   Rel             : Alire.Releases.Release;
-                   Prop            : Alire.Properties.Vector;
-                   Is_Root_Release : Boolean);
-   --  Load the enviroment variables of a release (GPR_PROJECT_PATH and custom
-   --  variables) in the context.
+   procedure Load (This : in out Context;
+                   Root :        Alire.Roots.Root);
+   --  Load the environment variables of a releases found in the workspace
+   --  Solution (GPR_PROJECT_PATH and custom variables) in the context.
 
    procedure Export (This : Context);
-   --  Export the enviroment variables built from the variables previously
+   --  Export the environment variables built from the variables previously
    --  loaded and defined in the context.
 
    procedure Print_Shell (This : Context; Kind : Platforms.Shells);
-   --  Print the shell commands that can be used to export the enviroment
+   --  Print the shell commands that can be used to export the environment
    --  variables.
 
    procedure Print_Details (This : Context);
@@ -58,7 +57,7 @@ private
    type Var_Array is array (Natural range <>) of Var;
 
    function Compile (This : Context) return Var_Array;
-   --  Return an array of enviroment variable key/value built from the
+   --  Return an array of environment variable key/value built from the
    --  variables previously loaded and defined in the context.
 
    type Env_Action is record
@@ -83,5 +82,11 @@ private
    end record;
 
    procedure Add (This : in out Context; Name : String; Action : Env_Action);
+
+   procedure Load (This            : in out Context;
+                   Root            : Roots.Root;
+                   Crate           : Crate_Name);
+   --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
+   --  variables) in the context.
 
 end Alire.Environment;

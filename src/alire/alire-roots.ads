@@ -1,8 +1,6 @@
 private with Alire.Containers;
-private with Alire.Lockfiles;
-private with Alire.OS_Lib;
-private with Alire.Paths;
 
+limited with Alire.Environment;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
@@ -60,6 +58,17 @@ package Alire.Roots is
    --  From existing release
    --  Path must point to the session folder (parent of alire metadata folder)
 
+   function Environment (This : Root) return Properties.Vector with
+     Pre => This.Is_Valid;
+   --  Retrieve the environment stored within this root. Environment here
+   --  refers to the platform properties.
+
+   function Build_Context (This : Root) return Alire.Environment.Context;
+
+   procedure Export_Build_Environment (This : Root) with
+     Pre => This.Is_Valid;
+   --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
+
    function Path (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
 
@@ -81,13 +90,18 @@ package Alire.Roots is
    function Release (This : Root) return Releases.Release with
      Pre => This.Is_Valid;
 
+   function Release (This : Root; Crate : Crate_Name) return Releases.Release
+     with Pre => This.Is_Valid and then
+     (Crate = This.Release.Name or else This.Solution.Depends_On (Crate));
+   --  Retrieve a release, that can be either the root or any in the solution
+
+   function Release_Base (This : Root; Crate : Crate_Name) return Any_Path with
+     Pre => This.Is_Valid;
+   --  Find the base folder in which a release can be found for the given root
+
    function Solution (This : Root) return Solutions.Solution with
      Pre => This.Is_Valid;
    --  Returns the solution stored in the lockfile
-
-   function Environment (This : Root) return Properties.Vector with
-     Pre => This.Is_Valid;
-   --  Properties of the Root
 
    --  files and folders derived from the root path (this obsoletes Alr.Paths)
 
@@ -115,59 +129,5 @@ private
             Reason      : UString;
       end case;
    end record;
-
-   function Is_Valid (This : Root) return Boolean is (This.Valid);
-
-   function New_Invalid_Root return Root is
-     (Valid => False, Reason => +"");
-
-   function With_Reason (This : Root; Reason : String) return Root is
-     (Valid  => False,
-      Reason => +Reason);
-
-   function Invalid_Reason (This : Root) return String is
-      (+This.Reason);
-
-   function New_Root (Name : Crate_Name;
-                      Path : Absolute_Path;
-                      Env  : Properties.Vector) return Root is
-     (True,
-      Env,
-      +Path,
-      Containers.To_Release_H (Releases.New_Working_Release (Name)));
-
-   function New_Root (R : Releases.Release;
-                      Path : Absolute_Path;
-                      Env  : Properties.Vector) return Root is
-     (True,
-      Env,
-      +Path,
-      Containers.To_Release_H (R));
-
-   function Path (This : Root) return Absolute_Path is (+This.Path);
-
-   function Release (This : Root) return Releases.Release is
-     (This.Release.Constant_Reference);
-
-   function Solution (This : Root) return Solutions.Solution is
-     (Lockfiles.Read (This.Lock_File));
-
-   use OS_Lib;
-
-   function Lock_File (This : Root) return Absolute_Path is
-     (Lockfiles.File_Name
-        (This.Release.Constant_Reference.Name,
-         +This.Path));
-
-   function Crate_File (This : Root) return Absolute_Path is
-     (This.Working_Folder /
-        This.Release.Constant_Reference.Name_Str &
-        Paths.Crate_File_Extension_With_Dot);
-
-   function Working_Folder (This : Root) return Absolute_Path is
-      ((+This.Path) / "alire");
-
-   function Environment (This : Root) return Properties.Vector
-   is (This.Environment);
 
 end Alire.Roots;

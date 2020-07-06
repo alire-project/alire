@@ -7,7 +7,7 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator
+from drivers.helpers import dir_separator
 from glob import glob
 
 # Retrieve a crate
@@ -22,7 +22,7 @@ os.chdir('xxx')
 run_alr('with', 'nothello', '--use', '..')
 
 # Try to repin to a dir with valid crate metadata
-p = run_alr('with', 'nothello', '--use', '..' + path_separator() + target,
+p = run_alr('with', 'nothello', '--use', '..' + dir_separator() + target,
             complain_on_error=False)
 
 # Expected error

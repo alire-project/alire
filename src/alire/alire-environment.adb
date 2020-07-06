@@ -2,14 +2,22 @@ with GNAT.OS_Lib;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Alire_Early_Elaboration;
 with Alire.Properties.Environment; use Alire.Properties.Environment;
 with Alire.Properties.Scenarios;
 with Alire.OS_Lib;
 with Alire.GPR;
+with Alire.Roots;
+with Alire.Solutions;
 with Alire.Utils;
 with Alire.Environment.Formatting;
+with Alire.Utils.TTY;
+
+with GNAT.IO;
 
 package body Alire.Environment is
+
+   package TTY renames Utils.TTY;
 
    ---------
    -- Add --
@@ -62,20 +70,71 @@ package body Alire.Environment is
    -- Load --
    ----------
 
-   procedure Load (This            : in out Context;
-                   Rel             : Alire.Releases.Release;
-                   Prop            : Alire.Properties.Vector;
-                   Is_Root_Release : Boolean)
+   procedure Load (This : in out Context;
+                   Root :        Alire.Roots.Root)
    is
+      Solution : constant Solutions.Solution := Root.Solution;
+   begin
+
+      --  Warnings when setting up an incomplete environment
+
+      if not Solution.Is_Complete then
+         Trace.Debug ("Generating incomplete environment"
+                      & " because of missing dependencies");
+
+         --  Normally we would generate a warning, but since that will pollute
+         --  the output making it unusable, for once we write directly to
+         --  stderr (unless quiet is in effect):
+
+         if not Alire_Early_Elaboration.Switch_Q then
+            GNAT.IO.Put_Line
+              (GNAT.IO.Standard_Error,
+               TTY.Warn ("warn:") & " Generating incomplete environment"
+               & " because of missing dependencies");
+         end if;
+      end if;
+
+      --  Project paths for all releases in the solution, implicitly defined by
+      --  supplied project files.
+
+      declare
+         Sorted_Paths : constant Alire.Utils.String_Set := Root.Project_Paths;
+      begin
+         if not Sorted_Paths.Is_Empty then
+            for Path of Sorted_Paths loop
+               This.Append ("GPR_PROJECT_PATH", Path, "crates");
+            end loop;
+         end if;
+      end;
+
+      --  Custom definitions provided by each release
+
+      for Rel of Solution.Releases.Including (Root.Release) loop
+         This.Load (Root            => Root,
+                    Crate           => Rel.Name);
+      end loop;
+
+      This.Set ("ALIRE", "True", "Alire");
+   end Load;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (This            : in out Context;
+                   Root            : Roots.Root;
+                   Crate           : Crate_Name)
+   is
+      Rel    : constant Releases.Release := Root.Release (Crate);
       Origin : constant String := Rel.Name_Str;
    begin
 
-      --  Enviromemnt variables defined in the crate manifest
-      for Act of Rel.Environment (Prop) loop
+      --  Environment variables defined in the crate manifest
+      for Act of Rel.Environment (Root.Environment) loop
          begin
             declare
                Value : constant String :=
-                 Formatting.Format (Rel, Act.Value, Is_Root_Release);
+                 Formatting.Format (Root.Release_Base (Rel.Name), Act.Value);
             begin
                case Act.Action is
 
@@ -102,7 +161,7 @@ package body Alire.Environment is
       end loop;
 
       --  Environment variables for GPR external scenario variables
-      for Property of Rel.On_Platform_Properties (Prop) loop
+      for Property of Rel.On_Platform_Properties (Root.Environment) loop
          if Property in Alire.Properties.Scenarios.Property'Class then
             declare
                use all type Alire.GPR.Variable_Kinds;
@@ -216,7 +275,8 @@ package body Alire.Environment is
 
             when Properties.Environment.Set =>
                Raise_Checked_Error
-                 ("Trying to set an alredy defined environment variable");
+                 ("Trying to set an alredy defined environment variable: "
+                  & (+Key) & " is already defined as " & (+Value));
 
             when Properties.Environment.Append =>
                Value := Value & Separator & Act.Value;

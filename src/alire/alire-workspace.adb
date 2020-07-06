@@ -33,12 +33,16 @@ package body Alire.Workspace is
       Round     : Natural := 0;
    begin
 
-      Solution.Print_Hints (Env);
-
       --  Store given solution on disk to ensure consistency between deployed
       --  dependencies and stored lockfile.
 
       Alire.Lockfiles.Write (Solution, Root.Lock_File);
+
+      --  Prepare environment for any post-fetch actions. This must be done
+      --  after the lockfile on disk is written, since the root will read
+      --  dependencies from there.
+
+      Root.Export_Build_Environment;
 
       --  Mark any dependencies without a corresponding regular release as
       --  already deployed (in practice, we don't have to deploy them, and
@@ -111,6 +115,12 @@ package body Alire.Workspace is
             end if;
          end;
       end loop;
+
+      --  Show hints for missing externals to the user after all the noise of
+      --  dependency post-fetch compilations.
+
+      Solution.Print_Hints (Env);
+
    end Deploy_Dependencies;
 
    --------------------

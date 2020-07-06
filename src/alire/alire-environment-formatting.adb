@@ -1,9 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire.OS_Lib;
-with Alire.Directories;
 with Alire.Platform;
-with Alire.Paths;
 
 package body Alire.Environment.Formatting is
 
@@ -54,9 +51,8 @@ package body Alire.Environment.Formatting is
    -- Format --
    ------------
 
-   function Format (Rel             : Releases.Release;
-                    Value           : String;
-                    Is_Root_Release : Boolean)
+   function Format (Release_Dir : Any_Path;
+                    Value       : String)
                     return String
    is
       -------------
@@ -66,12 +62,7 @@ package body Alire.Environment.Formatting is
       procedure Replace (Str : in out Unbounded_String;
                          From, To : Positive)
       is
-         use Alire.OS_Lib;
-
          Id : constant String := Slice (Str, From + 2, To - 1);
-
-         Working_Folder : constant Alire.Absolute_Path :=
-           Alire.Directories.Current;
       begin
 
          if Id = "DISTRIB_ROOT" then
@@ -80,12 +71,7 @@ package body Alire.Environment.Formatting is
          elsif Id = "CRATE_ROOT" then
             Replace_Slice
               (Str, From, To,
-               Working_Folder /
-                 (if Is_Root_Release
-                  then ".."
-                  else Alire.Paths.Working_Folder_Inside_Root
-                  / Alire.Paths.Dependency_Dir_Inside_Working_Folder
-                  / Rel.Unique_Folder));
+               Release_Dir);
 
          elsif Id = "_ALIRE_TEST_" then
             --  This is used to test the env var formatting feature

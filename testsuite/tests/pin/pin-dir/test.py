@@ -7,7 +7,7 @@ import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import path_separator, with_project
+from drivers.helpers import dir_separator, with_project
 
 # Initialize a workspace, enter, and add a regular dependency
 run_alr('init', '--bin', 'xxx')
@@ -29,7 +29,7 @@ run_alr('build')
 p = run_alr('with', '--solve')
 # For this match we don't know where the test is temporarily put, so we skip
 # over some parts of the output
-s = re.escape(path_separator())  # platform-dependent
+s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\* \(direct,linked'
              ',pin=.*' + s + 'my_index' + s +
