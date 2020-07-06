@@ -21,9 +21,16 @@ os.chdir('libhello_0.9.0_filesystem')
 p = run_alr('setenv', quiet=False)
 assert_eq(0, p.status)
 
+expected_gpr_path=""
+if platform.system() == 'Windows':
+    expected_gpr_path = '.*\\\\libhello_0.9.0_filesystem'
+else:
+    expected_gpr_path = '.*/libhello_0.9.0_filesystem'
+
 # Check the setenv output
 assert_match('warn: Generating incomplete environment'  # Note: this warning is
              ' because of missing dependencies\n'       # via stderr so it's OK
+             'export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n'
              'export ALIRE="True"\n',
              p.out)
 

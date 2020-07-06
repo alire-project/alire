@@ -1,0 +1,12 @@
+[general]
+description = "gpr file in subdirs"
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+# The dirX folder do not exist. This is not a problem since we won't try to
+# compile this code.
+project-files=["dir1/dir2/dir3/gpr_in_subdir.gpr"]
+
+['1.0']
+origin = "file://../../crates/libhello_1.0.0"

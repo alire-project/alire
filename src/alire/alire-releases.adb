@@ -397,12 +397,14 @@ package body Alire.Releases is
          return With_Paths;
       else
          for File of With_Paths loop
-            --  Has path or not
-            if Tail (File, '/') = "" then
-               Without.Append (File); -- As is
-            else
-               Without.Append (Tail (File, '/'));
-            end if;
+
+            --  Basename
+            Without.Append (Split (Text => File,
+                                   Separator => '/',
+                                   Side      => Tail,
+                                   From      => Tail,
+                                   Raises    => False));
+
          end loop;
 
          return Without;
@@ -426,10 +428,11 @@ package body Alire.Releases is
          for File of Files loop
             if Contains (File, "/") then
                Paths.Include
-                 (File (File'First .. Fixed.Index (File, "/", Backward) - 1));
-               --  To match the output of root crate paths and Ada.Directories
-               --  full path normalization, a path separator in the last
-               --  position is not included.
+                 (File (File'First .. Fixed.Index (File, "/", Backward)));
+            else
+
+               --  The project file is at the root of the release
+               Paths.Include ("");
             end if;
          end loop;
       end return;

@@ -117,16 +117,8 @@ package body Alire.Roots is
       Paths : Utils.String_Set;
    begin
 
-      --  Add root path from every release in the solution
-
       for Rel of This.Solution.Releases.Including (Release (This)) loop
-         if Rel.Name = Release (This).Name then
-            null; -- The root project doesn't require its own path
-         else
-            Paths.Include (This.Release_Base (Rel.Name));
-         end if;
-
-         --  Add extra project paths
+         --  Add project paths from each release
 
          for Path of Rel.Project_Paths (This.Environment) loop
             Paths.Include (This.Release_Base (Rel.Name) / Path);
@@ -141,7 +133,24 @@ package body Alire.Roots is
          end loop;
       end loop;
 
-      return Paths;
+      --  To match the output of root crate paths and Ada.Directories full path
+      --  normalization, a path separator in the last position is removed.
+      return Result : Utils.String_Set do
+         for Path of Paths loop
+            if Path'Length /= 0
+              and then
+
+              --  The paths provided by crates manifests are expected to use
+              --  UNIX directory separator. So we need to handle both UNIX and
+              --  OS separators.
+              Path (Path'Last) in '/' | GNAT.OS_Lib.Directory_Separator
+            then
+               Result.Include (Path (Path'First .. Path'Last - 1));
+            else
+               Result.Include (Path);
+            end if;
+         end loop;
+      end return;
    end Project_Paths;
 
    --------------
