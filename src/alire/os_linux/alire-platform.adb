@@ -67,4 +67,11 @@ package body Alire.Platform is
          return Distro_Unknown;
    end Distribution;
 
+   -----------------------
+   -- Distribution_Root --
+   -----------------------
+
+   function Distribution_Root return Absolute_Path
+   is ("/");
+
 end Alire.Platform;

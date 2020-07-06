@@ -12,6 +12,9 @@ package Alire.Platform is
 
    function Distribution return Platforms.Distributions;
 
+   function Distribution_Root return Absolute_Path;
+   --  Root directory of the distribution
+
    --------------------------------
    -- Portable derived utilities --
    --------------------------------

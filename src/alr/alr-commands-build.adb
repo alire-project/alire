@@ -20,7 +20,7 @@ package body Alr.Commands.Build is
 
       Requires_Valid_Session;
 
-      Alr.Build_Env.Set (Alr.Root.Current);
+      Alr.Build_Env.Export (Alr.Root.Current);
 
       --  COMPILATION
       begin

@@ -1,3 +1,5 @@
+with Alire.Platforms;
+
 with Alr.Root;
 with Alr.Build_Env;
 
@@ -8,23 +10,34 @@ package body Alr.Commands.Setenv is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
+      Enabled : Natural := 0;
    begin
+      --  Check no multi-action
+      Enabled := Enabled + (if Cmd.Details then 1 else 0);
+      Enabled := Enabled + (if Cmd.Unix_Shell then 1 else 0);
+      Enabled := Enabled + (if Cmd.Power_Shell then 1 else 0);
+      Enabled := Enabled + (if Cmd.Cmd_Shell then 1 else 0);
+
+      if Enabled > 1 then
+         Reportaise_Wrong_Arguments ("Specify at most one subcommand");
+      end if;
+
       Requires_Full_Index;
 
       Requires_Valid_Session;
 
-      Alr.Build_Env.Print (Alr.Root.Current);
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   procedure Execute is
-      Cmd : Command;
-   begin
-      Execute (Cmd);
+      if Cmd.Details then
+         Alr.Build_Env.Print_Details (Alr.Root.Current);
+      elsif Cmd.Power_Shell then
+         Alr.Build_Env.Print_Shell (Alr.Root.Current,
+                                    Alire.Platforms.PowerShell);
+      elsif Cmd.Cmd_Shell then
+         Alr.Build_Env.Print_Shell (Alr.Root.Current,
+                                    Alire.Platforms.WinCmd);
+      else
+         Alr.Build_Env.Print_Shell (Alr.Root.Current,
+                                    Alire.Platforms.Unix);
+      end if;
    end Execute;
 
    ----------------------
@@ -37,7 +50,12 @@ package body Alr.Commands.Setenv is
      (Alire.Utils.Empty_Vector
       .Append ("Print the environment variables used to build the crate." &
                  " This command can be used to setup a build environment," &
-                 " for instance before starting an IDE"));
+                 " for instance before starting an IDE.")
+      .New_Line
+      .Append ("Examples:")
+      .Append ("  - eval $(alr setenv --unix)")
+      .Append ("  - alr setenv --powershell | Invoke-Expression")
+     );
 
    --------------------
    -- Setup_Switches --
@@ -47,9 +65,25 @@ package body Alr.Commands.Setenv is
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is
-      pragma Unreferenced (Cmd, Config);
+      use GNAT.Command_Line;
    begin
-      null;
+      Define_Switch (Config,
+                     Cmd.Details'Access,
+                     "", "--details",
+                     "Print details about the environment variables and " &
+                       "their origin");
+      Define_Switch (Config,
+                     Cmd.Unix_Shell'Access,
+                     "", "--unix",
+                     "Use a UNIX shell format for the export (default)");
+      Define_Switch (Config,
+                     Cmd.Power_Shell'Access,
+                     "", "--powershell",
+                     "Use a Windows PowerShell format for the export");
+      Define_Switch (Config,
+                     Cmd.Cmd_Shell'Access,
+                     "", "--wincmd",
+                     "Use a Windows CMD shell format for the export");
    end Setup_Switches;
 
 end Alr.Commands.Setenv;

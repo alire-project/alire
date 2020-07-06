@@ -8,9 +8,15 @@ maintainers-logins = ["mylogin"]
 VAR1.append  = "abc"
 VAR2.prepend = "xyz"
 VAR3.set     = "pqr"
+VAR4.set     = "${_ALIRE_TEST_}"
+VAR5.set     = "${_ALIRE_TEST_"
+VAR6.set     = "\\${_ALIRE_TEST_}"
+VAR7.set     = "abc${_ALIRE_TEST_}abc"
+VAR8.set     = "abc\\${_ALIRE_TEST_}abc"
+VAR9.set     = "${_ALIRE_TEST_}${_ALIRE_TEST_}${_ALIRE_TEST_}"
 
 [general.environment.'case(os)'.'...']
 CONDVAR.set = "uvw"
 
 [1]
-origin = "file://../blah.zip"
+origin = "file://."
