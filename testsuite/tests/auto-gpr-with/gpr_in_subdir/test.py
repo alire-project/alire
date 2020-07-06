@@ -1,5 +1,5 @@
 """
-Test the GPR_PROJECT_PATH for a project file in sub dirs
+Test the with statement for a project file in sub dirs
 """
 
 from glob import glob
@@ -21,5 +21,9 @@ run_alr('with', 'libhello')
 run_alr('with', 'gpr_in_subdir')
 
 check_line_in('myhello.gpr', 'with "libhello.gpr";')
+
+# When the crate declares a project file: `dir1/dir2/dir3/prj.gpr`, the with
+# statement has to be `with "prj.gpr"`. Without the sub-dirs because
+# GPR_PROJECT_PATH is already set with dirs that contain the project file.
 check_line_in('myhello.gpr', 'with "gpr_in_subdir.gpr";')
 print('SUCCESS')
