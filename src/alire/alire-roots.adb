@@ -139,7 +139,11 @@ package body Alire.Roots is
          for Path of Paths loop
             if Path'Length /= 0
               and then
-               Path (Path'Last) = GNAT.OS_Lib.Directory_Separator
+
+              --  The paths provided by crates manifests are expected to use
+              --  UNIX directory separator. So we need to handle both UNIX and
+              --  OS separators.
+              Path (Path'Last) in '/' | GNAT.OS_Lib.Directory_Separator
             then
                Result.Include (Path (Path'First .. Path'Last - 1));
             else
