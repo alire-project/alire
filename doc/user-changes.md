@@ -4,6 +4,25 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### New `alr with --graph` and `alr with --tree` switches
+
+PR [#465](https://github.com/alire-project/alire/pull/465).
+
+The ASCII art dependency graph generated with `graph-easy`, that was printed at
+the end of `alr with --solve` output, is moved to its own `alr with --graph`
+switch. A fallback tree visualization is generated when `graph-easy` is
+unavailable. This new tree visualization can also be obtained with `alr with
+--tree`:
+```
+my_project=0.0.0
+├── hello=1.0.1 (^1)
+│   └── libhello=1.0.1 (^1.0)
+├── superhello=1.0.0 (*)
+│   └── libhello=1.0.1 (~1.0)
+├── unobtanium* (direct,missed) (*)
+└── wip* (direct,linked,pin=/fake) (*)
+```
+
 ### Automatically 'with' GPR project files from dependencies
 
 PR [#458](https://github.com/alire-project/alire/pull/458).
