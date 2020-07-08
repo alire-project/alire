@@ -666,7 +666,7 @@ package body Alire.Solutions is
             if Latest_Known then
                Table.Append (TTY.Version (Latest.Element.Version.Image));
             else -- For whatever reason the index hasn't a release
-               Table.Append (TTY.Warn ("unknown"));
+               Table.Append (TTY.Warn ("unindexed"));
             end if;
 
             Table.New_Row;

@@ -29,13 +29,13 @@ p = run_alr('with', '--versions')
 
 assert_match
 (re.escape
- ('CRATE      DEPENDENCY      SOLVED  LATEST \n'
-  'hello      ^1              1.0.1   4.0.0  \n'
-  'libhello   (^1.0) & (~1.0) 1.0.1   2.0.0  \n'
-  'superhello *               1.0.0   1.0.0  \n'
-  'unobtanium *               missing unknown\n'
-  'wip        *               ') + '.*fake' + re.escape('unknown\n'
-  'xxx        (root)          0.0.0   unknown\n'),
+ ('CRATE      DEPENDENCY      SOLVED  LATEST   \n'
+  'hello      ^1              1.0.1   4.0.0    \n'
+  'libhello   (^1.0) & (~1.0) 1.0.1   2.0.0    \n'
+  'superhello *               1.0.0   1.0.0    \n'
+  'unobtanium *               missing unindexed\n'
+  'wip        *               ') + '.*fake' + re.escape('unindexed\n'
+  'xxx        (root)          0.0.0   unindexed\n'),
   p.out)
 
 print('SUCCESS')
