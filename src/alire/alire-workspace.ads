@@ -13,8 +13,7 @@ package Alire.Workspace is
    use Alire.OS_Lib.Operators; -- "/" usable
 
    procedure Deploy_Dependencies
-     (Env      : Properties.Vector;
-      Root     : Roots.Root := Alire.Root.Current;
+     (Root     : Roots.Root := Alire.Root.Current;
       Solution : Solutions.Solution := Alire.Root.Current.Solution;
       Deps_Dir : Absolute_Path := Alire.Root.Current.Working_Folder /
                                   Paths.Dependency_Dir_Inside_Working_Folder);

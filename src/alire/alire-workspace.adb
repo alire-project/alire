@@ -21,8 +21,7 @@ package body Alire.Workspace is
    -------------------------
 
    procedure Deploy_Dependencies
-     (Env      : Properties.Vector;
-      Root     : Roots.Root := Alire.Root.Current;
+     (Root     : Roots.Root := Alire.Root.Current;
       Solution : Solutions.Solution := Alire.Root.Current.Solution;
       Deps_Dir : Absolute_Path := Alire.Root.Current.Working_Folder /
                                   Paths.Dependency_Dir_Inside_Working_Folder)
@@ -80,7 +79,8 @@ package body Alire.Workspace is
 
                   To_Remove.Include (Rel);
 
-               elsif (for some Dep of Enum (Rel.Dependencies (Env)) =>
+               elsif
+                 (for some Dep of Enum (Rel.Dependencies (Root.Environment)) =>
                         not Deployed.Contains (Dep.Crate))
                then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
@@ -93,7 +93,10 @@ package body Alire.Workspace is
                   To_Remove.Include (Rel);
 
                   if Rel.Name /= Root.Release.Name then
-                     Deploy_Release (Rel, Env, Deps_Dir, Was_There);
+                     Deploy_Release (Release         => Rel,
+                                     Env             => Root.Environment,
+                                     Parent_Folder   => Deps_Dir,
+                                     Was_There       => Was_There);
                   else
                      Trace.Debug
                        ("Skipping checkout of root crate as dependency");
@@ -119,7 +122,7 @@ package body Alire.Workspace is
       --  Show hints for missing externals to the user after all the noise of
       --  dependency post-fetch compilations.
 
-      Solution.Print_Hints (Env);
+      Solution.Print_Hints (Root.Environment);
 
    end Deploy_Dependencies;
 

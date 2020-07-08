@@ -76,9 +76,7 @@ package body Alr.Commands.Update is
 
          --  Apply the update
 
-         Alire.Workspace.Deploy_Dependencies
-           (Env      => Platform.Properties,
-            Solution => Needed);
+         Alire.Workspace.Deploy_Dependencies (Solution => Needed);
 
          Trace.Detail ("Update completed");
       end;

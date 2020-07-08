@@ -249,8 +249,7 @@ package body Alr.Commands.Withing is
          --  And apply changes (will also generate new lockfile)
 
          Alire.Workspace.Deploy_Dependencies
-           (Env      => Platform.Properties,
-            Root     => New_Root,
+           (Root     => New_Root,
             Solution => New_Solution);
 
          Auto_GPR_With;
