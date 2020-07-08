@@ -600,6 +600,82 @@ package body Alire.Solutions is
              not Print_Root);
    end Print_Tree;
 
+   --------------------
+   -- Print_Versions --
+   --------------------
+
+   procedure Print_Versions (This : Solution;
+                             Root : Roots.Root) is
+      use all type Dependencies.States.Fulfillments;
+      Table : Utils.Tables.Table;
+   begin
+      Table
+        .Append (TTY.Bold ("CRATE"))
+        .Append (TTY.Bold ("DEPENDENCY"))
+        .Append (TTY.Bold ("SOLVED"))
+        .Append (TTY.Bold ("LATEST"))
+        .New_Row;
+
+      for Dep of This.Including (Root.Release,
+                                 Root.Environment,
+                                 Add_Dependency => True).Required
+      loop
+         Table.Append (+Dep.Crate);
+
+         if Dep.Crate = Root.Release.Name then
+            Table.Append (TTY.Version ("(root)"));
+         else
+            Table.Append (TTY.Version (Dep.Versions.Image));
+         end if;
+
+         Index.Add_Externals (Dep.Crate, Root.Environment);
+         --  Detect externals for the crate, in case they add more versions
+
+         declare
+            Latest_Known : constant Boolean :=
+                             Index.Exists (Dep.Crate) and then
+                             not Index.Crate (Dep.Crate).Releases.Is_Empty;
+            Latest       : constant Containers.Release_H :=
+                             (if Latest_Known
+                              then Containers.To_Release_H
+                                (Index.Crate (Dep.Crate).Releases.Last_Element)
+                              else Containers.Release_Holders.Empty_Holder);
+         begin
+
+            --  Print release version, colored according to being latest
+
+            case Dep.Fulfilment is
+            when Solved =>
+               if not Latest_Known or else
+                 Dep.Release.Version < Latest.Element.Version
+               then
+                  Table.Append (TTY.Warn (Dep.Release.Version.Image));
+               else
+                  Table.Append (TTY.OK (Dep.Release.Version.Image));
+               end if;
+
+            when Linked =>
+               Table.Append (TTY.URL (Dep.Link.Path));
+
+            when others =>
+               Table.Append (TTY.Error ("missing"));
+            end case;
+
+            --  Display latest crate version, when known
+
+            if Latest_Known then
+               Table.Append (TTY.Version (Latest.Element.Version.Image));
+            else -- For whatever reason the index hasn't a release
+               Table.Append (TTY.Warn ("unindexed"));
+            end if;
+
+            Table.New_Row;
+         end;
+      end loop;
+
+      Table.Print (Always);
+   end Print_Versions;
+
    --------------
    -- Releases --
    --------------

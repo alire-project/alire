@@ -21,7 +21,7 @@ package Alr.Commands.Withing is
      ("[{ [--del] <crate>[versions]..."
       & " | --from <gpr_file>..."
       & " | <crate>[versions] --use <path> } ]"
-      & " | --tree");
+      & " | --solve | --tree | --versions");
 
 private
 
@@ -32,6 +32,7 @@ private
       Solve : aliased Boolean := False;
       Tree  : aliased Boolean := False;
       URL   : aliased GNAT.Strings.String_Access;
+      Versions : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Withing;

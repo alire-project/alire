@@ -5,6 +5,7 @@ with Alire.Externals.Softlinks;
 with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Releases;
+limited with Alire.Roots;
 with Alire.TOML_Adapters;
 
 limited with Alire.Solutions.Diffs;
@@ -289,6 +290,12 @@ package Alire.Solutions is
                          Print_Root : Boolean := True);
    --  Print the solution in tree form. If Print_Root, Root is printed too;
    --  otherwise the tree is a forest starting at Root direct dependencies.
+
+   procedure Print_Versions (This : Solution;
+                             Root : Roots.Root);
+   --  Print a table with the dependencies in the solutions, showing the wanted
+   --  dependencies, the solved version, and the latest existing version for a
+   --  crate.
 
    -----------------
    -- Persistence --

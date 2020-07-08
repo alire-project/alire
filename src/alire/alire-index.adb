@@ -60,6 +60,8 @@ package body Alire.Index is
       if Already_Detected.Contains (Name) then
          Trace.Debug
            ("Not redoing detection of externals for crate " & (+Name));
+      elsif not Exists (Name) then
+         Trace.Debug ("Skipping external detection for unindexed crate");
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
