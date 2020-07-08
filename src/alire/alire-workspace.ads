@@ -44,6 +44,11 @@ package Alire.Workspace is
    --  Compute a new solution for the workspace. If Allowed is not empty,
    --  crates not appearing in Allowed are held back at their current version.
 
+   procedure Update_And_Deploy_Dependencies
+     (Root    : Roots.Root           := Alire.Root.Current;
+      Options : Solver.Query_Options := Solver.Default_Options);
+   --  Call Update and Deploy_Dependencies in succession for the given root
+
 private
 
    procedure Deploy_Release

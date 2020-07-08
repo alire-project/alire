@@ -285,4 +285,20 @@ package body Alire.Workspace is
          Options => Options);
    end Update;
 
+   ------------------------------------
+   -- Update_And_Deploy_Dependencies --
+   ------------------------------------
+
+   procedure Update_And_Deploy_Dependencies
+     (Root    : Roots.Root           := Alire.Root.Current;
+      Options : Solver.Query_Options := Solver.Default_Options)
+   is
+   begin
+      Deploy_Dependencies
+        (Root     => Root,
+         Solution => Update (Environment => Root.Environment,
+                             Options     => Options),
+         Deps_Dir => Root.Dependencies_Dir);
+   end Update_And_Deploy_Dependencies;
+
 end Alire.Workspace;

@@ -461,6 +461,7 @@ package body Alr.Commands is
       case Lockfiles.Validity (Checked.Lock_File) is
          when Lockfiles.Valid =>
             Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
+            Checked.Sync_Solution_And_Deps; -- Check deps on disk are as solved
             return; -- OK
          when Lockfiles.Invalid =>
             Trace.Warning
@@ -486,6 +487,9 @@ package body Alr.Commands is
                          Alire.Solutions.Empty_Valid_Solution);
       begin
          Alire.Lockfiles.Write (Solution, Checked.Lock_File);
+
+         --  Ensure the solved releases are indeed on disk
+         Checked.Sync_Solution_And_Deps;
       end;
    end Requires_Valid_Session;
 
