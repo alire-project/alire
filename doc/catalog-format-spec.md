@@ -279,30 +279,32 @@ entries:
    windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
    ```
 
- - `environment`: optional table used to modify environment variables that
-   will apply at build time. Variables and values are specified with the form
+ - `environment`: optional table used to modify environment variables that will
+   apply at build time. Variables and values are specified with the form
    `VARIABLE.<action> = "value"`, where `<action>` is one of `append`,
    `prepend`, or `set`. For instance:
 
    ```toml
    [environment]
    C_INCLUDE_PATH.append = "/usr/include/something"
-   PATH.prepend = "${CRATE_ROOT}/bin"
-   MSYS.set = "${MSYS_ROOT}"
+   MY_PROJECT_ASSETS.set= "${CRATE_ROOT}/assets"
+   PATH.append = "${DISTRIB_ROOT}/usr/bin"
    ```
 
-   Other environment variables may appear in the value, and will be replaced.
-   Furthermore, a few predefined variables are provided by Alire:
+   Predefined variables are provided by Alire and will be replaced in the
+   value:
 
-   - `${CRATE_ROOT}` is the deployment directory of the crate.
-   - `${MSYS_ROOT}` is available on Windows to obtain the detected location of
-   an MSYS2 installation.
+   - `${CRATE_ROOT}` absolute path to the deployment directory of the crate.
+   - `${DISTRIB_ROOT}` absolute path to the root directory of the system
+     distribution. On UNIX systems it will be `/`, on Windows `msys2` it will
+     be the `msys2` installation directory (e.g.
+     `C:\Users\user_name\.cache\alire\msys2`).
 
    Environment entries can use dynamic expressions:
 
    ```toml
-   [environment.'case(os)']
-   windows = { C_INCLUDE_PATH.append = "${MSYS_ROOT}/mingw64/include/SDL2" }
+   [environment.'case(distribution)']
+   msys2 = { C_INCLUDE_PATH.append = "${DISTRIB_ROOT}/mingw64/include/SDL2" }
    ```
 
  - `executables`: optional list of strings. Each one is the simple name of an
