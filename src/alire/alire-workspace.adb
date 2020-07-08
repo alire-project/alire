@@ -6,6 +6,7 @@ with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Lockfiles;
 with Alire.Origins.Deployers;
+with Alire.OS_Lib;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.TOML_IO;
 with Alire.Workspace;
@@ -21,10 +22,9 @@ package body Alire.Workspace is
    -------------------------
 
    procedure Deploy_Dependencies
-     (Root     : Roots.Root := Alire.Root.Current;
+     (Root     : Roots.Root         := Alire.Root.Current;
       Solution : Solutions.Solution := Alire.Root.Current.Solution;
-      Deps_Dir : Absolute_Path := Alire.Root.Current.Working_Folder /
-                                  Paths.Dependency_Dir_Inside_Working_Folder)
+      Deps_Dir : Absolute_Path      := Alire.Root.Current.Dependencies_Dir)
    is
       Was_There : Boolean;
       Pending   : Alire.Solutions.Release_Map := Solution.Releases;
@@ -137,6 +137,7 @@ package body Alire.Workspace is
       Was_There       : out Boolean;
       Perform_Actions : Boolean := True)
    is
+      use Alire.OS_Lib.Operators;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / Release.Unique_Folder;
       Result : Alire.Outcome;

@@ -1,6 +1,4 @@
 with Alire.Containers;
-with Alire.OS_Lib;
-with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Root;
@@ -10,13 +8,10 @@ with Alire.Solutions;
 
 package Alire.Workspace is
 
-   use Alire.OS_Lib.Operators; -- "/" usable
-
    procedure Deploy_Dependencies
-     (Root     : Roots.Root := Alire.Root.Current;
+     (Root     : Roots.Root         := Alire.Root.Current;
       Solution : Solutions.Solution := Alire.Root.Current.Solution;
-      Deps_Dir : Absolute_Path := Alire.Root.Current.Working_Folder /
-                                  Paths.Dependency_Dir_Inside_Working_Folder);
+      Deps_Dir : Absolute_Path      := Alire.Root.Current.Dependencies_Dir);
    --  Deploy Release dependencies in Solution to Deps_Dir
 
    procedure Deploy_Root (Release         : Releases.Release;

@@ -258,12 +258,10 @@ package body Alire.Roots is
      (if This.Release.Element.Name = Crate then
          +This.Path
       elsif This.Solution.State (Crate).Is_Solved then
-          (+This.Path)
-      / Paths.Working_Folder_Inside_Root
-      / Paths.Dependency_Dir_Inside_Working_Folder
-      / Release (This, Crate).Unique_Folder
+         This.Dependencies_Dir
+         / Release (This, Crate).Unique_Folder
       elsif This.Solution.State (Crate).Is_Linked then
-           This.Solution.State (Crate).Link.Path
+         This.Solution.State (Crate).Link.Path
       else
          raise Program_Error with "release must be either solved or linked");
 
