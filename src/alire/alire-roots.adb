@@ -315,6 +315,7 @@ package body Alire.Roots is
                This.Solution.State (Rel.Name).Is_Solved and then
                not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
       then
+         Trace.Info ("Detected missing dependencies, updating workspace...");
          --  Some dependency is missing; redeploy. Should we clean first ???
          Workspace.Deploy_Dependencies
            (Root     => This,

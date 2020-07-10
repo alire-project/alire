@@ -19,6 +19,16 @@ package body Alire.Environment is
 
    package TTY renames Utils.TTY;
 
+   ---------------------
+   -- Already_Defines --
+   ---------------------
+
+   function Already_Defines (Existing, Value : String) return Boolean
+   --  Check that Value is a path-delimited identical value in Existing
+   is (for some Part of Utils.String_Vector'
+         (Utils.Split (Existing, GNAT.OS_Lib.Path_Separator)) =>
+          Part = Value);
+
    ---------
    -- Add --
    ---------
@@ -274,15 +284,33 @@ package body Alire.Environment is
             case Act.Kind is
 
             when Properties.Environment.Set =>
-               Raise_Checked_Error
-                 ("Trying to set an alredy defined environment variable: "
-                  & (+Key) & " is already defined as " & (+Value));
+               if Existing /= Act.Value then
+                  Raise_Checked_Error
+                    ("Trying to set an alredy defined environment variable: "
+                     & (+Key) & " is already defined as " & (+Value));
+               else
+                  Trace.Debug ("Skipping identical key value: " & (+Key));
+                  --  We can silently ignore the attempt to set to the same
+                  --  value. This is not ideal, but is more flexible for the
+                  --  cases where we may end exporting the same environment
+                  --  twice. Long-term, something like Boost.Process would be
+                  --  more robust to call subprocesses without pilfering our
+                  --  own environment.
+               end if;
 
             when Properties.Environment.Append =>
-               Value := Value & Separator & Act.Value;
+               if Already_Defines (Existing, +Act.Value) then
+                  Trace.Debug ("Skipping identical key value: " & (+Key));
+               else
+                  Value := Value & Separator & Act.Value;
+               end if;
 
             when Properties.Environment.Prepend =>
-               Value := Act.Value & Separator & Value;
+               if Already_Defines (Existing, +Act.Value) then
+                  Trace.Debug ("Skipping identical key value: " & (+Key));
+               else
+                  Value := Act.Value & Separator & Value;
+               end if;
             end case;
          end if;
       end loop;

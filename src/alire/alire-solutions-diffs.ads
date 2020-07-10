@@ -15,7 +15,7 @@ package Alire.Solutions.Diffs is
    --  Says if the new solution is complete
 
    procedure Print (This         : Diff;
-                    Changed_Only : Boolean;
+                    Changed_Only : Boolean      := not Alire.Detailed;
                     Prefix       : String       := "   ";
                     Level        : Trace.Levels := Trace.Info);
    --  Print a summary of changes between two solutions. Prefix is prepended to

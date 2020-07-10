@@ -9,6 +9,7 @@ with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.TOML_IO;
+with Alire.Solutions.Diffs;
 with Alire.Workspace;
 
 with GNATCOLL.VFS;
@@ -294,11 +295,19 @@ package body Alire.Workspace is
      (Root    : Roots.Root           := Alire.Root.Current;
       Options : Solver.Query_Options := Solver.Default_Options)
    is
+      Prev : constant Solutions.Solution := Root.Solution;
+      Next : constant Solutions.Solution :=
+               Update (Environment => Root.Environment,
+                       Options     => Options);
+      Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);
    begin
+      if Diff.Contains_Changes then
+         Diff.Print;
+      end if;
+
       Deploy_Dependencies
         (Root     => Root,
-         Solution => Update (Environment => Root.Environment,
-                             Options     => Options),
+         Solution => Next,
          Deps_Dir => Root.Dependencies_Dir);
    end Update_And_Deploy_Dependencies;
 

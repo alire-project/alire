@@ -327,7 +327,7 @@ package body Alire.Solutions.Diffs is
    -----------
 
    procedure Print (This         : Diff;
-                    Changed_Only : Boolean;
+                    Changed_Only : Boolean      := not Alire.Detailed;
                     Prefix       : String       := "   ";
                     Level        : Trace.Levels := Trace.Info)
    is
