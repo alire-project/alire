@@ -310,6 +310,7 @@ package body Alire.Roots is
       then
          Trace.Info ("Detected changes in manifest, updating workspace...");
          Workspace.Update_And_Deploy_Dependencies (This);
+         Trace.Info (""); -- Separate changes from what caused the sync
 
       elsif (for some Rel of This.Solution.Releases =>
                This.Solution.State (Rel.Name).Is_Solved and then

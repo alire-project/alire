@@ -4,6 +4,7 @@ with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.States;
 with Alire.Directories;
+with Alire.Index;
 with Alire.Lockfiles;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
@@ -279,6 +280,8 @@ package body Alire.Workspace is
             end if;
          end loop;
       end if;
+
+      Index.Load_All; -- Needed for the solver
 
       return Solver.Resolve
         (Deps    => Deps,

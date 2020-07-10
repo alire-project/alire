@@ -10,8 +10,6 @@ with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
 with Alire.Errors;
-with Alire.Features.Index;
-with Alire.Index;
 with Alire.Lockfiles;
 with Alire.Platforms;
 with Alire.Roots;
@@ -395,51 +393,6 @@ package body Alr.Commands is
       Trace.Error (Message);
       raise Wrong_Command_Arguments with Message;
    end Reportaise_Wrong_Arguments;
-
-   ---------------------------
-   -- Requires_Full_Index --
-   ---------------------------
-
-   procedure Requires_Full_Index (Force_Reload : Boolean := False) is
-      Result  : Alire.Outcome;
-      Indexes : Alire.Features.Index.Index_On_Disk_Set;
-   begin
-      if Alire.Index.Crate_Count /= 0 and then not Force_Reload then
-         Trace.Detail ("Index already loaded, loading skipped");
-         return;
-      end if;
-
-      Indexes := Alire.Features.Index.Find_All
-        (Alire.Config.Indexes_Directory, Result);
-      if not Result.Success then
-         Reportaise_Command_Failed (Alire.Message (Result));
-         return;
-      end if;
-
-      if Indexes.Is_Empty then
-         Trace.Detail
-           ("No indexes configured, adding default community index");
-         declare
-            Outcome : constant Alire.Outcome :=
-                        Alire.Features.Index.Add_Or_Reset_Community;
-         begin
-            if not Outcome.Success then
-               Reportaise_Command_Failed
-                 ("Could not add community index: " & Outcome.Message);
-               return;
-            end if;
-         end;
-      end if;
-
-      declare
-         Outcome : constant Alire.Outcome := Alire.Features.Index.Load_All
-           (From => Alire.Config.Indexes_Directory);
-      begin
-         if not Outcome.Success then
-            Reportaise_Command_Failed (Outcome.Message);
-         end if;
-      end;
-   end Requires_Full_Index;
 
    ----------------------------
    -- Requires_Valid_Session --

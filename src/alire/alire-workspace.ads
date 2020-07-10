@@ -38,6 +38,7 @@ package Alire.Workspace is
      with Pre => Root.Current.Is_Valid;
    --  Compute a new solution for the workspace. If Allowed is not empty,
    --  crates not appearing in Allowed are held back at their current version.
+   --  This function loads configured indexes from disk.
 
    procedure Update_And_Deploy_Dependencies
      (Root    : Roots.Root           := Alire.Root.Current;

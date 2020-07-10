@@ -73,6 +73,10 @@ package Alire.Index is
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
+   procedure Load_All (Force : Boolean := False);
+   --  If there are no crates loaded, load from all configured indexes. If
+   --  Force, load even if Crate_Count /= 0 already.
+
    ---------------------
    --  BASIC QUERIES  --
    ---------------------
@@ -102,7 +106,9 @@ package Alire.Index is
 
    function Release_Count return Natural;
 
-   --  Direct access
+   --  Direct access. TODO: instead of storing a hidden global catalog, make it
+   --  a proper type to be returned and manipulated via the functions in this
+   --  package.
 
    function All_Crates return access constant Crates.Containers.Maps.Map;
 
