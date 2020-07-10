@@ -74,15 +74,21 @@ package body Alire.VCSs.Git is
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
-      Run_Git (Empty_Vector & "clone" & Extra & Repo (From) & Into);
+      Run_Git (Empty_Vector & "clone" & "--recursive" &
+                 Extra & Repo (From) & Into);
 
       if Commit (From) /= "" then
          declare
             Guard : Directories.Guard (Directories.Enter (Into))
               with Unreferenced;
          begin
-            Run_Git (Empty_Vector & "checkout" & "-q" & Commit (From));
+            --  Checkout a specific commit.
             --  "-q" needed to avoid the "detached HEAD" warning from git
+            Run_Git (Empty_Vector & "checkout" & "-q" & Commit (From));
+
+            --  Update the submodules, if any
+            Run_Git (Empty_Vector & "submodule" & "update" &
+                       "--init" & "--recursive" & Extra);
          end;
       end if;
 
