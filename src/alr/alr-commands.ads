@@ -1,7 +1,6 @@
 with GNAT.Command_Line;
 
 with Alire.Directories;
-with Alire.Index;
 with Alire.Solver;
 with Alire.Utils;
 
@@ -83,8 +82,7 @@ package Alr.Commands is
    -- Supporting subprograms for commands --
    -----------------------------------------
 
-   procedure Requires_Full_Index (Force_Reload : Boolean := False)
-                                  renames Alire.Index.Load_All;
+   procedure Requires_Full_Index (Force_Reload : Boolean := False);
    --  Unless Force_Reload, if the index is not empty we no nothing
 
    procedure Requires_Valid_Session (Sync : Boolean := True);

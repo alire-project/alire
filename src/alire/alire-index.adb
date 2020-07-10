@@ -1,8 +1,5 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-with Alire.Config;
-with Alire.Features.Index;
-
 package body Alire.Index is
 
    use all type Semantic_Versioning.Version;
@@ -139,50 +136,6 @@ package body Alire.Index is
         "Requested milestone not in index: "
         & (+Name) & "=" & Semantic_Versioning.Image (Version);
    end Find;
-
-   --------------
-   -- Load_All --
-   --------------
-
-   procedure Load_All (Force : Boolean := False) is
-      Result  : Outcome;
-      Indexes : Features.Index.Index_On_Disk_Set;
-   begin
-      if Crate_Count /= 0 and then not Force then
-         Trace.Detail ("Index already loaded, loading skipped");
-         return;
-      end if;
-
-      Indexes := Features.Index.Find_All (Config.Indexes_Directory, Result);
-      if not Result.Success then
-         Raise_Checked_Error (Message (Result));
-         return;
-      end if;
-
-      if Indexes.Is_Empty then
-         Trace.Detail
-           ("No indexes configured, adding default community index");
-         declare
-            Outcome : constant Alire.Outcome :=
-                        Features.Index.Add_Or_Reset_Community;
-         begin
-            if not Outcome.Success then
-               Raise_Checked_Error
-                 ("Could not add community index: " & Message (Outcome));
-               return;
-            end if;
-         end;
-      end if;
-
-      declare
-         Outcome : constant Alire.Outcome := Features.Index.Load_All
-           (From => Alire.Config.Indexes_Directory);
-      begin
-         if not Outcome.Success then
-            Raise_Checked_Error (Message (Outcome));
-         end if;
-      end;
-   end Load_All;
 
    -------------------
    -- Release_Count --

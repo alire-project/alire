@@ -10,6 +10,7 @@ with Alire_Early_Elaboration;
 with Alire;
 with Alire.Config;
 with Alire.Errors;
+with Alire.Features.Index;
 with Alire.Lockfiles;
 with Alire.Platforms;
 with Alire.Roots;
@@ -394,6 +395,17 @@ package body Alr.Commands is
       raise Wrong_Command_Arguments with Message;
    end Reportaise_Wrong_Arguments;
 
+   -------------------------
+   -- Requires_Full_Index --
+   -------------------------
+
+   procedure Requires_Full_Index (Force_Reload : Boolean := False) is
+   begin
+      Alire.Features.Index.Setup_And_Load
+        (From  => Alire.Config.Indexes_Directory,
+         Force => Force_Reload);
+   end Requires_Full_Index;
+
    ----------------------------
    -- Requires_Valid_Session --
    ----------------------------
@@ -416,6 +428,7 @@ package body Alr.Commands is
             Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
 
             if Sync then
+               Requires_Full_Index;
                Checked.Sync_Solution_And_Deps;
                --  Check deps on disk match those in lockfile
             end if;
@@ -451,6 +464,7 @@ package body Alr.Commands is
          --  Ensure the solved releases are indeed on disk
 
          if Sync then
+            Requires_Full_Index;
             Checked.Sync_Solution_And_Deps;
          end if;
       end;

@@ -73,10 +73,6 @@ package Alire.Index is
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
-   procedure Load_All (Force : Boolean := False);
-   --  If there are no crates loaded, load from all configured indexes. If
-   --  Force, load even if Crate_Count /= 0 already.
-
    ---------------------
    --  BASIC QUERIES  --
    ---------------------

@@ -183,6 +183,52 @@ package body Alire.Features.Index is
          return Outcome_From_Exception (E);
    end Add_Or_Reset_Community;
 
+   --------------------
+   -- Setup_And_Load --
+   --------------------
+
+   procedure Setup_And_Load (From  : Absolute_Path;
+                             Force : Boolean := False)
+   is
+      Result  : Outcome;
+      Indexes : Features.Index.Index_On_Disk_Set;
+   begin
+      if Alire.Index.Crate_Count /= 0 and then not Force then
+         Trace.Detail ("Index already loaded, loading skipped");
+         return;
+      end if;
+
+      Indexes := Features.Index.Find_All (From, Result);
+      if not Result.Success then
+         Raise_Checked_Error (Message (Result));
+         return;
+      end if;
+
+      if Indexes.Is_Empty then
+         Trace.Detail
+           ("No indexes configured, adding default community index");
+         declare
+            Outcome : constant Alire.Outcome :=
+                        Features.Index.Add_Or_Reset_Community;
+         begin
+            if not Outcome.Success then
+               Raise_Checked_Error
+                 ("Could not add community index: " & Message (Outcome));
+               return;
+            end if;
+         end;
+      end if;
+
+      declare
+         Outcome : constant Alire.Outcome := Features.Index.Load_All
+           (From => Alire.Config.Indexes_Directory);
+      begin
+         if not Outcome.Success then
+            Raise_Checked_Error (Message (Outcome));
+         end if;
+      end;
+   end Setup_And_Load;
+
    --------------
    -- Find_All --
    --------------

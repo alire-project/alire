@@ -2,7 +2,7 @@ with Alire.Containers;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Root;
-with Alire.Roots;
+limited with Alire.Roots;
 with Alire.Solver;
 with Alire.Solutions;
 with Alire.Utils.User_Input;
