@@ -87,8 +87,10 @@ package Alr.Commands is
                                   renames Alire.Index.Load_All;
    --  Unless Force_Reload, if the index is not empty we no nothing
 
-   procedure Requires_Valid_Session;
-   --  Verifies that a valid working dir is in scope
+   procedure Requires_Valid_Session (Sync : Boolean := True);
+   --  Verifies that a valid working dir is in scope. If Sync, enforce that the
+   --  manifest, lockfile and dependencies on disk are in sync, by performing
+   --  an update.
 
    ---------------------------
    --  command-line helpers --

@@ -398,7 +398,7 @@ package body Alr.Commands is
    -- Requires_Valid_Session --
    ----------------------------
 
-   procedure Requires_Valid_Session is
+   procedure Requires_Valid_Session (Sync : Boolean := True) is
       use Alire;
 
       Checked : constant Alire.Roots.Root :=
@@ -414,8 +414,14 @@ package body Alr.Commands is
       case Lockfiles.Validity (Checked.Lock_File) is
          when Lockfiles.Valid =>
             Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
-            Checked.Sync_Solution_And_Deps; -- Check deps on disk are as solved
+
+            if Sync then
+               Checked.Sync_Solution_And_Deps;
+               --  Check deps on disk match those in lockfile
+            end if;
+
             return; -- OK
+
          when Lockfiles.Invalid =>
             Trace.Warning
               ("This workspace was created with a previous alr version."
@@ -424,6 +430,7 @@ package body Alr.Commands is
                & " manually recreated.");
             Alire.Directories.Backup_If_Existing (Checked.Lock_File);
             Ada.Directories.Delete_File (Checked.Lock_File);
+
          when Lockfiles.Missing =>
             Trace.Debug ("Workspace has no lockfile at " & Checked.Lock_File);
       end case;
@@ -442,7 +449,10 @@ package body Alr.Commands is
          Alire.Lockfiles.Write (Solution, Checked.Lock_File);
 
          --  Ensure the solved releases are indeed on disk
-         Checked.Sync_Solution_And_Deps;
+
+         if Sync then
+            Checked.Sync_Solution_And_Deps;
+         end if;
       end;
    end Requires_Valid_Session;
 
