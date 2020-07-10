@@ -3,10 +3,10 @@ with Alire.Errors;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 with Alire.Workspace;
 
 with Alr.Commands.Index;
-with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
 
@@ -69,7 +69,7 @@ package body Alr.Commands.Update is
 
          --  Show changes and ask user to apply them
 
-         if not User_Input.Confirm_Solution_Changes (Diff) then
+         if not Alire.Utils.User_Input.Confirm_Solution_Changes (Diff) then
             Trace.Detail ("Update abandoned.");
             return;
          end if;

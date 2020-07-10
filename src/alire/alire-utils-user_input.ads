@@ -1,3 +1,5 @@
+with Alire.Solutions.Diffs;
+
 package Alire.Utils.User_Input is
 
    -------------------
@@ -26,5 +28,14 @@ package Alire.Utils.User_Input is
    procedure Continue_Or_Abort;
    --  If interactive, ask the user to press Enter or Ctrl-C to stop.
    --  Output a log trace otherwise and continue.
+
+   function Confirm_Solution_Changes
+     (Changes        : Solutions.Diffs.Diff;
+      Changed_Only   : Boolean            := not Alire.Detailed;
+      Level          : Alire.Trace.Levels := Info)
+      return Boolean;
+   --  Present a summary of changes and ask the user for confirmation. Returns
+   --  True when the user answers positively. Defaults to Yes when the new
+   --  solution is complete, or when Alire.Force.
 
 end Alire.Utils.User_Input;

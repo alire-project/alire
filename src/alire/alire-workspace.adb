@@ -296,7 +296,8 @@ package body Alire.Workspace is
 
    procedure Update_And_Deploy_Dependencies
      (Root    : Roots.Root           := Alire.Root.Current;
-      Options : Solver.Query_Options := Solver.Default_Options)
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Confirm : Boolean              := not Utils.User_Input.Not_Interactive)
    is
       Prev : constant Solutions.Solution := Root.Solution;
       Next : constant Solutions.Solution :=
@@ -305,13 +306,15 @@ package body Alire.Workspace is
       Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);
    begin
       if Diff.Contains_Changes then
-         Diff.Print;
+         if not Confirm or else
+           Utils.User_Input.Confirm_Solution_Changes (Diff)
+         then
+            Deploy_Dependencies
+              (Root     => Root,
+               Solution => Next,
+               Deps_Dir => Root.Dependencies_Dir);
+         end if;
       end if;
-
-      Deploy_Dependencies
-        (Root     => Root,
-         Solution => Next,
-         Deps_Dir => Root.Dependencies_Dir);
    end Update_And_Deploy_Dependencies;
 
 end Alire.Workspace;

@@ -3,6 +3,7 @@ with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 with Alire.Workspace;
 
 with Alr.Commands.User_Input;
@@ -126,7 +127,7 @@ package body Alr.Commands.Pin is
                   Old_Sol.Changes (New_Sol);
       begin
          if Diff.Contains_Changes then
-            if Commands.User_Input.Confirm_Solution_Changes (Diff) then
+            if Alire.Utils.User_Input.Confirm_Solution_Changes (Diff) then
                Alire.Workspace.Deploy_Dependencies (Solution => New_Sol);
             end if;
          else

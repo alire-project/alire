@@ -5,6 +5,7 @@ with Alire.Root;
 with Alire.Roots;
 with Alire.Solver;
 with Alire.Solutions;
+with Alire.Utils.User_Input;
 
 package Alire.Workspace is
 
@@ -42,7 +43,8 @@ package Alire.Workspace is
 
    procedure Update_And_Deploy_Dependencies
      (Root    : Roots.Root           := Alire.Root.Current;
-      Options : Solver.Query_Options := Solver.Default_Options);
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
    --  Call Update and Deploy_Dependencies in succession for the given root
 
 private
