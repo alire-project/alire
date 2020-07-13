@@ -7,6 +7,9 @@ package Alr.Utils is
    function To_Lower_Case (S : String) return String
    renames Alire.Utils.To_Lower_Case;
 
+   function To_Upper_Case (S : String) return String
+   renames Alire.Utils.To_Upper_Case;
+
    function To_Mixed_Case (S : String) return String
    renames Alire.Utils.To_Mixed_Case;
 

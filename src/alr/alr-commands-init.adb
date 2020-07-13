@@ -34,6 +34,7 @@ package body Alr.Commands.Init is
       For_Library : constant Boolean := not Cmd.Bin;
       Name        : constant String := Argument (1);
       Lower_Name  : constant String := Utils.To_Lower_Case (Name);
+      Upper_Name  : constant String := Utils.To_Upper_Case (Name);
       Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
 
       Directory     : constant Virtual_File :=
@@ -77,6 +78,14 @@ package body Alr.Commands.Init is
          Put_Line ("   for Object_Dir use ""obj"";");
          if For_Library then
             Put_Line ("   for Library_Dir use ""lib"";");
+            Put_New_Line;
+            Put_Line ("   type Library_Type_Type is " &
+                        "(""relocatable"", ""static"", ""static-pic"");");
+            Put_Line ("   Library_Type : Library_Type_Type :=");
+            Put_Line ("     external (""" & Upper_Name & "_LIBRARY_TYPE"",");
+            Put_Line ("               external (""LIBRARY_TYPE"", " &
+                        """static""));");
+            Put_Line ("   for Library_Kind use Library_Type;");
          else
             Put_Line ("   for Exec_Dir use ""bin"";");
             Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");

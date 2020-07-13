@@ -422,6 +422,17 @@ package body Alire.Utils is
    end To_Lower_Case;
 
    -------------------
+   -- To_Upper_Case --
+   -------------------
+
+   function To_Upper_Case (S : String) return String is
+   begin
+      return SLC : String := S do
+         GNAT.Case_Util.To_Upper (SLC);
+      end return;
+   end To_Upper_Case;
+
+   -------------------
    -- To_Mixed_Case --
    -------------------
 

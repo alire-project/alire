@@ -35,6 +35,7 @@ package Alire.Utils with Preelaborate is
    function Quote (S : String) return String;
 
    function To_Lower_Case (S : String) return String;
+   function To_Upper_Case (S : String) return String;
    function To_Mixed_Case (S : String) return String;
 
    function Contains (Text : String; Sub : String) return Boolean;
