@@ -22,7 +22,7 @@ def check_child(version, output, pinned):
 
     # Verify lockfile
     check_line_in('alire/xxx.lock',
-                  '[state.release.libchild."' + version + '"]')
+                  '[solution.state.release.libchild."' + version + '"]')
 
     # Verify dependency folders
     assert os.path.exists('alire/cache/dependencies/libchild_' + version +

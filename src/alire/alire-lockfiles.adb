@@ -3,14 +3,24 @@ with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Paths;
-with Alire.Solutions;
-with Alire.TOML_Adapters;
 
 with TOML.File_IO;
 
 package body Alire.Lockfiles is
 
    use Directories.Operators;
+
+   ----------
+   -- Keys --
+   ----------
+
+   package Keys is
+
+      --  Key used internally for TOML serialization
+
+      Solution : constant String := "solution";
+
+   end Keys;
 
    ---------------
    -- File_Name --
@@ -20,26 +30,64 @@ package body Alire.Lockfiles is
                        Root_Dir : Any_Path) return Any_Path is
      (Root_Dir / Paths.Working_Folder_Inside_Root / (+Name) & ".lock");
 
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   overriding
+   function From_TOML (This : in out Contents;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome
+   is
+   begin
+      This.Solution :=
+        Solutions.From_TOML
+          (TOML_Adapters.From
+             (From.Checked_Pop
+                (Key  => Keys.Solution,
+                 Kind => TOML.TOML_Table),
+              Keys.Solution));
+
+      From.Report_Extra_Keys;
+
+      return Outcome_Success;
+   end From_TOML;
+
    ----------
    -- Read --
    ----------
 
-   function Read (Filename : Any_Path) return Solver.Solution is
+   function Read (Filename : Any_Path) return Contents is
    begin
-      Trace.Debug ("Reading solution from " & Filename);
+      Trace.Debug ("Reading persistent contents from " & Filename);
 
       declare
          Result : constant TOML.Read_Result :=
                     TOML.File_IO.Load_File (Filename);
       begin
          if Result.Success then
-            return Solutions.From_TOML
-              (TOML_Adapters.From (Result.Value, Filename & ":"));
+            return This : Contents do
+               Assert (This.From_TOML
+                 (TOML_Adapters.From (Result.Value, Filename & ":")));
+            end return;
          else
             Raise_Checked_Error (TOML.Format_Error (Result));
          end if;
       end;
    end Read;
+
+   -------------
+   -- To_TOML --
+   -------------
+
+   overriding
+   function To_TOML (This : Contents) return TOML.TOML_Value
+   is
+   begin
+      return Table : constant TOML.TOML_Value := TOML.Create_Table do
+         Table.Set (Keys.Solution, This.Solution.To_TOML);
+      end return;
+   end To_TOML;
 
    --------------
    -- Validity --
@@ -54,7 +102,7 @@ package body Alire.Lockfiles is
       --  Try to load to assess validity
 
       declare
-         Unused : constant Solver.Solution := Read (File);
+         Unused : constant Contents := Read (File);
       begin
          return Valid;
       end;
@@ -70,15 +118,20 @@ package body Alire.Lockfiles is
    -- Write --
    -----------
 
-   procedure Write (Solution : Solver.Solution;
+   procedure Write (Contents : Lockfiles.Contents;
                     Filename : Any_Path)
    is
       use Ada.Text_IO;
-      File : File_Type;
+      File  : File_Type;
    begin
-      Trace.Debug ("Dumping solution to " & Filename);
+      Trace.Debug ("Dumping lockfile contents to " & Filename);
+
       Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (Solution.To_TOML, File);
+      Put_Line (File,
+                "# THIS IS A MACHINE-GENERATED FILE. DO NOT EDIT MANUALLY.");
+      New_Line (File);
+
+      TOML.File_IO.Dump_To_File (Contents.To_TOML, File);
       Close (File);
    exception
       when others =>

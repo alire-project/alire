@@ -23,7 +23,7 @@ def check_child(version, output, pinned):
 
     # Verify lockfile
     check_line_in('alire/xxx.lock',
-                  '[state.release.libchild."' + version + '"]')
+                  '[solution.state.release.libchild."' + version + '"]')
 
 
 # Create a new "xxx" program project

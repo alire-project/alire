@@ -459,7 +459,7 @@ package body Alr.Commands is
                          Platform.Properties,
                          Alire.Solutions.Empty_Valid_Solution);
       begin
-         Alire.Lockfiles.Write (Solution, Checked.Lock_File);
+         Alire.Lockfiles.Write ((Solution => Solution), Checked.Lock_File);
 
          --  Ensure the solved releases are indeed on disk
 

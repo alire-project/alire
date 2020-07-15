@@ -187,7 +187,7 @@ package body Alr.Commands.Init is
          Alire.Workspace.Generate_Manifest (Root.Release, Root);
 
          Alire.Lockfiles.Write
-           (Alire.Solutions.Empty_Valid_Solution,
+           ((Solution => Alire.Solutions.Empty_Valid_Solution),
             Root.Lock_File);
       end;
    end Generate;
