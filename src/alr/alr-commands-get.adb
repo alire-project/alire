@@ -150,9 +150,7 @@ package body Alr.Commands.Get is
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
            with Unreferenced;
       begin
-         Alire.Workspace.Deploy_Dependencies
-           (Env      => Platform.Properties,
-            Solution => Solution);
+         Alire.Workspace.Deploy_Dependencies (Solution => Solution);
 
          --  Execute the checked out release post_fetch actions, now that
          --  dependencies are in place. The complete build environment has

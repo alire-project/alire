@@ -103,6 +103,14 @@ package Alire.Roots is
      Pre => This.Is_Valid;
    --  Returns the solution stored in the lockfile
 
+   procedure Sync_Solution_And_Deps (This : Root) with
+     Pre => This.Is_Valid;
+   --  Ensure that dependencies are up to date in regard to the lockfile and
+   --  manifest: if the manifest is newer than the lockfile, resolve again,
+   --  as dependencies may have been edited by hand. Otherwise, ensure that
+   --  releases in the lockfile are actually on disk (may be missing if cache
+   --  was deleted, or the crate was just cloned).
+
    --  files and folders derived from the root path (this obsoletes Alr.Paths)
 
    function Working_Folder (This : Root) return Absolute_Path with
@@ -112,6 +120,10 @@ package Alire.Roots is
    function Crate_File (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;
    --  The "$crate.toml" file inside Working_Folder
+
+   function Dependencies_Dir (This : Root) return Absolute_Path with
+     Pre => This.Is_Valid;
+   --  The folder where dependencies are checked out for this root
 
    function Lock_File (This : Root) return Absolute_Path with
      Pre => This.Is_Valid;

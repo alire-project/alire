@@ -102,7 +102,9 @@ package Alire.Index is
 
    function Release_Count return Natural;
 
-   --  Direct access
+   --  Direct access. TODO: instead of storing a hidden global catalog, make it
+   --  a proper type to be returned and manipulated via the functions in this
+   --  package.
 
    function All_Crates return access constant Crates.Containers.Maps.Map;
 

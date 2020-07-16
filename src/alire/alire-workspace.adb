@@ -6,8 +6,11 @@ with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Lockfiles;
 with Alire.Origins.Deployers;
+with Alire.OS_Lib;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.TOML_IO;
+with Alire.Roots;
+with Alire.Solutions.Diffs;
 with Alire.Workspace;
 
 with GNATCOLL.VFS;
@@ -21,11 +24,9 @@ package body Alire.Workspace is
    -------------------------
 
    procedure Deploy_Dependencies
-     (Env      : Properties.Vector;
-      Root     : Roots.Root := Alire.Root.Current;
+     (Root     : Roots.Root         := Alire.Root.Current;
       Solution : Solutions.Solution := Alire.Root.Current.Solution;
-      Deps_Dir : Absolute_Path := Alire.Root.Current.Working_Folder /
-                                  Paths.Dependency_Dir_Inside_Working_Folder)
+      Deps_Dir : Absolute_Path      := Alire.Root.Current.Dependencies_Dir)
    is
       Was_There : Boolean;
       Pending   : Alire.Solutions.Release_Map := Solution.Releases;
@@ -80,7 +81,8 @@ package body Alire.Workspace is
 
                   To_Remove.Include (Rel);
 
-               elsif (for some Dep of Enum (Rel.Dependencies (Env)) =>
+               elsif
+                 (for some Dep of Enum (Rel.Dependencies (Root.Environment)) =>
                         not Deployed.Contains (Dep.Crate))
                then
                   Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
@@ -93,7 +95,10 @@ package body Alire.Workspace is
                   To_Remove.Include (Rel);
 
                   if Rel.Name /= Root.Release.Name then
-                     Deploy_Release (Rel, Env, Deps_Dir, Was_There);
+                     Deploy_Release (Release         => Rel,
+                                     Env             => Root.Environment,
+                                     Parent_Folder   => Deps_Dir,
+                                     Was_There       => Was_There);
                   else
                      Trace.Debug
                        ("Skipping checkout of root crate as dependency");
@@ -119,7 +124,7 @@ package body Alire.Workspace is
       --  Show hints for missing externals to the user after all the noise of
       --  dependency post-fetch compilations.
 
-      Solution.Print_Hints (Env);
+      Solution.Print_Hints (Root.Environment);
 
    end Deploy_Dependencies;
 
@@ -134,6 +139,7 @@ package body Alire.Workspace is
       Was_There       : out Boolean;
       Perform_Actions : Boolean := True)
    is
+      use Alire.OS_Lib.Operators;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / Release.Unique_Folder;
       Result : Alire.Outcome;
@@ -281,5 +287,32 @@ package body Alire.Workspace is
          Current => Old,
          Options => Options);
    end Update;
+
+   ------------------------------------
+   -- Update_And_Deploy_Dependencies --
+   ------------------------------------
+
+   procedure Update_And_Deploy_Dependencies
+     (Root    : Roots.Root           := Alire.Root.Current;
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Confirm : Boolean              := not Utils.User_Input.Not_Interactive)
+   is
+      Prev : constant Solutions.Solution := Root.Solution;
+      Next : constant Solutions.Solution :=
+               Update (Environment => Root.Environment,
+                       Options     => Options);
+      Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);
+   begin
+      if Diff.Contains_Changes then
+         if not Confirm or else
+           Utils.User_Input.Confirm_Solution_Changes (Diff)
+         then
+            Deploy_Dependencies
+              (Root     => Root,
+               Solution => Next,
+               Deps_Dir => Root.Dependencies_Dir);
+         end if;
+      end if;
+   end Update_And_Deploy_Dependencies;
 
 end Alire.Workspace;

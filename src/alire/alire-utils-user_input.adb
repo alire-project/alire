@@ -147,4 +147,38 @@ package body Alire.Utils.User_Input is
       end if;
    end Continue_Or_Abort;
 
+   ------------------------------
+   -- Confirm_Solution_Changes --
+   ------------------------------
+
+   function Confirm_Solution_Changes
+     (Changes        : Alire.Solutions.Diffs.Diff;
+      Changed_Only   : Boolean            := not Alire.Detailed;
+      Level          : Alire.Trace.Levels := Info)
+      return Boolean
+   is
+      package UI renames Alire.Utils.User_Input;
+   begin
+      Trace.Log ("", Level);
+
+      if Changes.Contains_Changes then
+         Trace.Log ("Changes to dependency solution:", Level);
+         Changes.Print (Changed_Only => Changed_Only);
+      else
+         Trace.Log
+           ("There are no changes between the former and new solution.",
+            Level);
+      end if;
+
+      Trace.Log ("", Level);
+
+      return UI.Query
+        (Question => "Do you want to proceed?",
+         Valid    => (Yes | No => True,
+                      others   => False),
+         Default  => (if Changes.Latter_Is_Complete or else Alire.Force
+                      then Yes
+                      else No)) = Yes;
+   end Confirm_Solution_Changes;
+
 end Alire.Utils.User_Input;

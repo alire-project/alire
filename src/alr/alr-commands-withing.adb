@@ -11,7 +11,7 @@ with Alire.Releases;
 with Alire.Roots;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils;
+with Alire.Utils.User_Input;
 with Alire.Workspace;
 
 with Alr.Commands.User_Input;
@@ -232,7 +232,7 @@ package body Alr.Commands.Withing is
 
          --  Show the effects on the solution
 
-         if not User_Input.Confirm_Solution_Changes
+         if not Alire.Utils.User_Input.Confirm_Solution_Changes
            (Root.Current.Solution.Changes (New_Solution),
             Changed_Only => not Alire.Detailed)
          then
@@ -249,8 +249,7 @@ package body Alr.Commands.Withing is
          --  And apply changes (will also generate new lockfile)
 
          Alire.Workspace.Deploy_Dependencies
-           (Env      => Platform.Properties,
-            Root     => New_Root,
+           (Root     => New_Root,
             Solution => New_Solution);
 
          Auto_GPR_With;

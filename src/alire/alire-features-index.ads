@@ -28,6 +28,12 @@ package Alire.Features.Index is
    --  instead of proceeding with default behaviors, such as getting the
    --  community index.
 
+   procedure Setup_And_Load (From  : Absolute_Path;
+                             Force : Boolean := False);
+   --  If there are no crates loaded, load from all configured indexes at the
+   --  configured location. If Force, load even if some crates are already
+   --  loaded. If no index is configured, set up the default community index.
+
    function Load_All (From : Absolute_Path) return Outcome;
    --  Load all indexes available at the given location
 

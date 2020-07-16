@@ -1,3 +1,4 @@
+with Ada.Calendar;
 with Ada.Directories;
 
 with Alire.Directories;
@@ -7,6 +8,7 @@ with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Root;
 with Alire.TOML_Index;
+with Alire.Workspace;
 
 with GNAT.OS_Lib;
 
@@ -164,20 +166,44 @@ package body Alire.Roots is
       return Lockfiles.Read (This.Lock_File);
    end Solution;
 
+   -----------------
+   -- Environment --
+   -----------------
+
    function Environment (This : Root) return Properties.Vector
    is (This.Environment);
 
+   --------------
+   -- Is_Valid --
+   --------------
+
    function Is_Valid (This : Root) return Boolean is (This.Valid);
+
+   ----------------------
+   -- New_Invalid_Root --
+   ----------------------
 
    function New_Invalid_Root return Root is
      (Valid => False, Reason => +"");
+
+   -----------------
+   -- With_Reason --
+   -----------------
 
    function With_Reason (This : Root; Reason : String) return Root is
      (Valid  => False,
       Reason => +Reason);
 
+   --------------------
+   -- Invalid_Reason --
+   --------------------
+
    function Invalid_Reason (This : Root) return String is
      (+This.Reason);
+
+   --------------
+   -- New_Root --
+   --------------
 
    function New_Root (Name : Crate_Name;
                       Path : Absolute_Path;
@@ -187,6 +213,10 @@ package body Alire.Roots is
       +Path,
       Containers.To_Release_H (Releases.New_Working_Release (Name)));
 
+   --------------
+   -- New_Root --
+   --------------
+
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
@@ -195,10 +225,22 @@ package body Alire.Roots is
       +Path,
       Containers.To_Release_H (R));
 
+   ----------
+   -- Path --
+   ----------
+
    function Path (This : Root) return Absolute_Path is (+This.Path);
+
+   -------------
+   -- Release --
+   -------------
 
    function Release (This : Root) return Releases.Release is
      (This.Release.Constant_Reference);
+
+   -------------
+   -- Release --
+   -------------
 
    function Release (This  : Root;
                      Crate : Crate_Name) return Releases.Release is
@@ -208,30 +250,79 @@ package body Alire.Roots is
 
    use OS_Lib;
 
+   ------------------
+   -- Release_Base --
+   ------------------
+
    function Release_Base (This : Root; Crate : Crate_Name) return Any_Path is
      (if This.Release.Element.Name = Crate then
          +This.Path
       elsif This.Solution.State (Crate).Is_Solved then
-          (+This.Path)
-      / Paths.Working_Folder_Inside_Root
-      / Paths.Dependency_Dir_Inside_Working_Folder
-      / Release (This, Crate).Unique_Folder
+         This.Dependencies_Dir
+         / Release (This, Crate).Unique_Folder
       elsif This.Solution.State (Crate).Is_Linked then
-           This.Solution.State (Crate).Link.Path
+         This.Solution.State (Crate).Link.Path
       else
          raise Program_Error with "release must be either solved or linked");
+
+   ---------------
+   -- Lock_File --
+   ---------------
 
    function Lock_File (This : Root) return Absolute_Path is
      (Lockfiles.File_Name
         (This.Release.Constant_Reference.Name,
          +This.Path));
 
+   ----------------
+   -- Crate_File --
+   ----------------
+
    function Crate_File (This : Root) return Absolute_Path is
      (This.Working_Folder /
         This.Release.Constant_Reference.Name_Str &
         Paths.Crate_File_Extension_With_Dot);
 
+   ----------------------
+   -- Dependencies_Dir --
+   ----------------------
+
+   function Dependencies_Dir (This : Root) return Absolute_Path is
+      (This.Working_Folder / "cache" / "dependencies");
+
+   --------------------
+   -- Working_Folder --
+   --------------------
+
    function Working_Folder (This : Root) return Absolute_Path is
      ((+This.Path) / "alire");
+
+   ----------------------------
+   -- Sync_Solution_And_Deps --
+   ----------------------------
+
+   procedure Sync_Solution_And_Deps (This : Root) is
+      use Ada.Directories;
+      use type Ada.Calendar.Time;
+   begin
+      if Modification_Time (This.Crate_File) >
+        Modification_Time (This.Lock_File)
+      then
+         Trace.Info ("Detected changes in manifest, updating workspace...");
+         Workspace.Update_And_Deploy_Dependencies (This);
+         Trace.Info (""); -- Separate changes from what caused the sync
+
+      elsif (for some Rel of This.Solution.Releases =>
+               This.Solution.State (Rel.Name).Is_Solved and then
+               not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
+      then
+         Trace.Info ("Detected missing dependencies, updating workspace...");
+         --  Some dependency is missing; redeploy. Should we clean first ???
+         Workspace.Deploy_Dependencies
+           (Root     => This,
+            Solution => This.Solution,
+            Deps_Dir => This.Dependencies_Dir);
+      end if;
+   end Sync_Solution_And_Deps;
 
 end Alire.Roots;

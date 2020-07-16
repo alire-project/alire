@@ -1,23 +1,18 @@
 with Alire.Containers;
-with Alire.OS_Lib;
-with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Root;
-with Alire.Roots;
+limited with Alire.Roots;
 with Alire.Solver;
 with Alire.Solutions;
+with Alire.Utils.User_Input;
 
 package Alire.Workspace is
 
-   use Alire.OS_Lib.Operators; -- "/" usable
-
    procedure Deploy_Dependencies
-     (Env      : Properties.Vector;
-      Root     : Roots.Root := Alire.Root.Current;
+     (Root     : Roots.Root         := Alire.Root.Current;
       Solution : Solutions.Solution := Alire.Root.Current.Solution;
-      Deps_Dir : Absolute_Path := Alire.Root.Current.Working_Folder /
-                                  Paths.Dependency_Dir_Inside_Working_Folder);
+      Deps_Dir : Absolute_Path      := Alire.Root.Current.Dependencies_Dir);
    --  Deploy Release dependencies in Solution to Deps_Dir
 
    procedure Deploy_Root (Release         : Releases.Release;
@@ -44,6 +39,13 @@ package Alire.Workspace is
      with Pre => Root.Current.Is_Valid;
    --  Compute a new solution for the workspace. If Allowed is not empty,
    --  crates not appearing in Allowed are held back at their current version.
+   --  This function loads configured indexes from disk.
+
+   procedure Update_And_Deploy_Dependencies
+     (Root    : Roots.Root           := Alire.Root.Current;
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
+   --  Call Update and Deploy_Dependencies in succession for the given root
 
 private
 

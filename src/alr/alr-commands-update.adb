@@ -3,10 +3,10 @@ with Alire.Errors;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 with Alire.Workspace;
 
 with Alr.Commands.Index;
-with Alr.Commands.User_Input;
 with Alr.Platform;
 with Alr.Root;
 
@@ -69,16 +69,14 @@ package body Alr.Commands.Update is
 
          --  Show changes and ask user to apply them
 
-         if not User_Input.Confirm_Solution_Changes (Diff) then
+         if not Alire.Utils.User_Input.Confirm_Solution_Changes (Diff) then
             Trace.Detail ("Update abandoned.");
             return;
          end if;
 
          --  Apply the update
 
-         Alire.Workspace.Deploy_Dependencies
-           (Env      => Platform.Properties,
-            Solution => Needed);
+         Alire.Workspace.Deploy_Dependencies (Solution => Needed);
 
          Trace.Detail ("Update completed");
       end;
@@ -111,7 +109,9 @@ package body Alr.Commands.Update is
       end Parse_Allowed;
 
    begin
-      Requires_Valid_Session;
+      Requires_Valid_Session (Sync => False);
+      --  The user has explicitly requested an update, so it makes no sense to
+      --  sync previously, since the update would never find changes.
 
       if Cmd.Online then
          Index.Update_All;

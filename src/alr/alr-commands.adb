@@ -11,7 +11,6 @@ with Alire;
 with Alire.Config;
 with Alire.Errors;
 with Alire.Features.Index;
-with Alire.Index;
 with Alire.Lockfiles;
 with Alire.Platforms;
 with Alire.Roots;
@@ -396,56 +395,22 @@ package body Alr.Commands is
       raise Wrong_Command_Arguments with Message;
    end Reportaise_Wrong_Arguments;
 
-   ---------------------------
+   -------------------------
    -- Requires_Full_Index --
-   ---------------------------
+   -------------------------
 
    procedure Requires_Full_Index (Force_Reload : Boolean := False) is
-      Result  : Alire.Outcome;
-      Indexes : Alire.Features.Index.Index_On_Disk_Set;
    begin
-      if Alire.Index.Crate_Count /= 0 and then not Force_Reload then
-         Trace.Detail ("Index already loaded, loading skipped");
-         return;
-      end if;
-
-      Indexes := Alire.Features.Index.Find_All
-        (Alire.Config.Indexes_Directory, Result);
-      if not Result.Success then
-         Reportaise_Command_Failed (Alire.Message (Result));
-         return;
-      end if;
-
-      if Indexes.Is_Empty then
-         Trace.Detail
-           ("No indexes configured, adding default community index");
-         declare
-            Outcome : constant Alire.Outcome :=
-                        Alire.Features.Index.Add_Or_Reset_Community;
-         begin
-            if not Outcome.Success then
-               Reportaise_Command_Failed
-                 ("Could not add community index: " & Outcome.Message);
-               return;
-            end if;
-         end;
-      end if;
-
-      declare
-         Outcome : constant Alire.Outcome := Alire.Features.Index.Load_All
-           (From => Alire.Config.Indexes_Directory);
-      begin
-         if not Outcome.Success then
-            Reportaise_Command_Failed (Outcome.Message);
-         end if;
-      end;
+      Alire.Features.Index.Setup_And_Load
+        (From  => Alire.Config.Indexes_Directory,
+         Force => Force_Reload);
    end Requires_Full_Index;
 
    ----------------------------
    -- Requires_Valid_Session --
    ----------------------------
 
-   procedure Requires_Valid_Session is
+   procedure Requires_Valid_Session (Sync : Boolean := True) is
       use Alire;
 
       Checked : constant Alire.Roots.Root :=
@@ -461,7 +426,15 @@ package body Alr.Commands is
       case Lockfiles.Validity (Checked.Lock_File) is
          when Lockfiles.Valid =>
             Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
+
+            if Sync then
+               Requires_Full_Index;
+               Checked.Sync_Solution_And_Deps;
+               --  Check deps on disk match those in lockfile
+            end if;
+
             return; -- OK
+
          when Lockfiles.Invalid =>
             Trace.Warning
               ("This workspace was created with a previous alr version."
@@ -470,6 +443,7 @@ package body Alr.Commands is
                & " manually recreated.");
             Alire.Directories.Backup_If_Existing (Checked.Lock_File);
             Ada.Directories.Delete_File (Checked.Lock_File);
+
          when Lockfiles.Missing =>
             Trace.Debug ("Workspace has no lockfile at " & Checked.Lock_File);
       end case;
@@ -486,6 +460,13 @@ package body Alr.Commands is
                          Alire.Solutions.Empty_Valid_Solution);
       begin
          Alire.Lockfiles.Write (Solution, Checked.Lock_File);
+
+         --  Ensure the solved releases are indeed on disk
+
+         if Sync then
+            Requires_Full_Index;
+            Checked.Sync_Solution_And_Deps;
+         end if;
       end;
    end Requires_Valid_Session;
 
