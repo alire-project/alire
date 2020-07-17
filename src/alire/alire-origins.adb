@@ -172,8 +172,24 @@ package body Alire.Origins is
            Utils.Starts_With (From, Prefixes (Kind).all)
          then
             case Kind is
-               when Git            => This := New_Git (URL, Commit);
-               when Hg             => This := New_Hg (URL, Commit);
+               when Git            =>
+                  if Commit'Length /= Git_Commit'Length then
+                     Raise_Checked_Error
+                       ("invalid git commit id, " &
+                          "40 digits hexadecimal expected");
+                  end if;
+
+                  This := New_Git (URL, Commit);
+
+               when Hg             =>
+                  if Commit'Length /= Hg_Commit'Length then
+                     Raise_Checked_Error
+                       ("invalid hg revision number, " &
+                          "40 digits hexadecimal expected");
+                  end if;
+
+                  This := New_Hg (URL, Commit);
+
                when SVN            => This := New_SVN (URL, Commit);
 
                when External       => This := New_External (Descr);
