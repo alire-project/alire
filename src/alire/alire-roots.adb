@@ -163,7 +163,7 @@ package body Alire.Roots is
    begin
       --  TODO: This probably is a good target for caching unless file
       --  timestamp has changed.
-      return Lockfiles.Read (This.Lock_File);
+      return Lockfiles.Read (This.Lock_File).Solution;
    end Solution;
 
    -----------------

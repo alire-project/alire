@@ -37,7 +37,7 @@ package body Alire.Workspace is
       --  Store given solution on disk to ensure consistency between deployed
       --  dependencies and stored lockfile.
 
-      Alire.Lockfiles.Write (Solution, Root.Lock_File);
+      Alire.Lockfiles.Write ((Solution => Solution), Root.Lock_File);
 
       --  Prepare environment for any post-fetch actions. This must be done
       --  after the lockfile on disk is written, since the root will read
@@ -222,9 +222,9 @@ package body Alire.Workspace is
             --  will be replaced with the complete solution.
 
             Lockfiles.Write
-              (Solution    => (if Release.Dependencies (Env).Is_Empty
-                               then Alire.Solutions.Empty_Valid_Solution
-                               else Alire.Solutions.Empty_Invalid_Solution),
+              ((Solution    => (if Release.Dependencies (Env).Is_Empty
+                                then Alire.Solutions.Empty_Valid_Solution
+                                else Alire.Solutions.Empty_Invalid_Solution)),
                Filename    => Root.Lock_File);
          end;
       end if;
