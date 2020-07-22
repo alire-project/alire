@@ -1,6 +1,6 @@
 with Ada.Containers;
 
-with Alire.Crates.With_Releases;
+with Alire.Crates;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.Graphs;
 with Alire.Index;

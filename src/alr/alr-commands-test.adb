@@ -3,13 +3,14 @@ with Ada.Directories;
 with Ada.Exceptions;
 
 with Alire.Containers;
-with Alire.Crates.With_Releases;
+with Alire.Crates;
 with Alire.Defaults;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Executor;
+with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
@@ -102,7 +103,7 @@ package body Alr.Commands.Test is
       -- Test_Release --
       ------------------
 
-      procedure Test_Release (R : Types.Release) is
+      procedure Test_Release (R : Alire.Releases.Release) is
          Output : Utils.String_Vector;
          Start  : Time;
 
@@ -409,7 +410,7 @@ package body Alr.Commands.Test is
                declare
                   Allowed  : constant Alire.Milestones.Allowed_Milestones :=
                                Alire.Milestones.Crate_Versions (Argument (J));
-                  Crate    : constant Alire.Crates.With_Releases.Crate :=
+                  Crate    : constant Alire.Crates.Crate :=
                                Alire.Index.Crate (Allowed.Crate);
                   Releases : constant Alire.Containers.Release_Set :=
                                Crate.Releases;

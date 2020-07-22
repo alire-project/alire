@@ -31,6 +31,9 @@ package Alire.Properties.Labeled with Preelaborate is
       Maintainers_Logins,
       --  E-mails used by the maintainers of a crate to log in to GitHub
 
+      Name,
+      --  Crate name
+
       Notes,
       --  Specific information about a release
 
@@ -39,6 +42,9 @@ package Alire.Properties.Labeled with Preelaborate is
 
       Project_File,
       --  Buildable project files in the release, with full relative path
+
+      Version,
+      --  Semantic version of the release
 
       Website,
       --  A website other than the repository
@@ -59,27 +65,13 @@ package Alire.Properties.Labeled with Preelaborate is
                     Long_Description   => Unique,
                     Maintainer         => Multiple,
                     Maintainers_Logins => Multiple,
+                    Name               => Unique,
                     Notes              => Unique,
                     Path               => Multiple,
                     Project_File       => Multiple,
+                    Version            => Unique,
                     Website            => Unique,
                     Tag                => Multiple);
-
-   Mandatory : array (Labels) of Boolean :=
-                 (Author             => False,
-                  Description        => True,
-                  Executable         => False,
-                  Hint               => False,
-                  Long_Description   => False,
-                  Maintainer         => True,
-                  Maintainers_Logins => True,
-                  Notes              => False,
-                  Path               => False,
-                  Project_File       => False,
-                  Website            => False,
-                  Tag                => False);
-   --  Some properties are mandatory in the [general] section; we used this
-   --  array to check their presence.
 
    type Label (<>) is new
      Properties.Property and
@@ -187,11 +179,13 @@ private
           when Long_Description   => TOML_Keys.Long_Descr,
           when Maintainer         => TOML_Keys.Maintainer,
           when Maintainers_Logins => TOML_Keys.Maint_Logins,
+          when Name               => TOML_Keys.Name,
           when Notes              => TOML_Keys.Notes,
           when Path               => TOML_Keys.Path,
           when Project_File       => TOML_Keys.Project_File,
-          when Website            => TOML_Keys.Website,
-          when Tag                => TOML_Keys.Tag);
+          when Tag                => TOML_Keys.Tag,
+          when Version            => TOML_Keys.Version,
+          when Website            => TOML_Keys.Website);
 
    overriding
    function Key (L : Label) return String is (Key (L.Name));

@@ -1,6 +1,6 @@
 with Alire.Roots;
 
-with Alire.Crates.With_Releases;
+with Alire.Crates;
 
 package body Alire.Dependencies.States is
 
@@ -68,8 +68,6 @@ package body Alire.Dependencies.States is
          Data  : Fulfillment_Data
            (Fulfillments'Value
               (From.Checked_Pop (Keys.Fulfilment, TOML_String).As_String));
-         Crate : Crates.With_Releases.Crate :=
-                   Crates.With_Releases.New_Crate (From_TOML.Crate);
       begin
 
          --  Load particulars
@@ -89,22 +87,12 @@ package body Alire.Dependencies.States is
             when Missed => null;
 
             when Solved =>
-               Assert (Crate.From_TOML -- Load crate
-                       (From.Descend   -- from adapter that is under 'release'
-                          (From.Checked_Pop (Keys.Release, TOML_Table)
-                             .Get (+Crate.Name), -- get the release top entry
-                             "release: " & (+Crate.Name))));
-
-               if Crate.Releases.Length not in 1 then
-                  Raise_Checked_Error
-                    ("Expected one release per solved dependency"
-                     & " in lockfile, but got:" & Crate.Releases.Length'Img);
-               end if;
-
                Data.Release :=
                  Containers.Release_Holders.To_Holder
-                   (Crate.Releases.First_Element);
-
+                   (Releases.From_TOML
+                      (From.Descend
+                         (From.Checked_Pop (Keys.Release, TOML_Table),
+                          "release: " & (+Crate))));
          end case;
 
          return Data;
@@ -165,15 +153,8 @@ package body Alire.Dependencies.States is
 
             when Missed => null;
             when Solved =>
-               declare
-                  Name : constant TOML_Value := Create_Table;
-                  --  This extra table is not really necessary, but it makes
-                  --  the output clearer and the tests simpler.
-               begin
-                  Name.Set (+This.Crate,
-                            This.Fulfilled.Release.Constant_Reference.To_TOML);
-                  Table.Set (Keys.Release, Name);
-               end;
+               Table.Set (Keys.Release,
+                          This.Fulfilled.Release.Constant_Reference.To_TOML);
          end case;
       end To_TOML;
 

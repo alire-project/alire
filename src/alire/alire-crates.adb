@@ -1,34 +1,16 @@
+with Alire.Origins;
+with Alire.Properties.Labeled;
+with Alire.TOML_Keys;
 with Alire.TOML_Load;
+with Alire.Utils.TTY;
+
+with TOML;
 
 package body Alire.Crates is
 
-   ---------------
-   -- From_TOML --
-   ---------------
-
-   overriding
-   function From_TOML (This : in out General;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome
-   is
-      Result : constant Outcome :=
-                 TOML_Load.Load_Crate_Section
-                   (General_Section,
-                    From,
-                    This.Properties,
-                    This.Dependencies,
-                    This.Available);
-
-   begin
-      if not Result.Success then
-         return Result;
-      end if;
-
-      --  Check for remaining keys, which must be erroneous.
-      --  TODO: Should we instead emit a warning (or make it an option) to
-      --  allow for unforeseen future keys in the index?
-      return From.Report_Extra_Keys;
-   end From_TOML;
+   -----------------------
+   -- Naming_Convention --
+   -----------------------
 
    function Naming_Convention return Utils.String_Vector is
      (Utils.Empty_Vector
@@ -40,5 +22,235 @@ package body Alire.Crates is
       .Append ("Length must be of" & Alire.Min_Name_Length'Img
                & " to" & Alire.Max_Name_Length'Img
                & " characters."));
+
+   ----------
+   -- Keys --
+   ----------
+
+   package Keys is new Containers.Release_Sets.Generic_Keys
+     (Semantic_Versioning.Version,
+      Alire.Releases.Version,
+      Semantic_Versioning."<");
+
+   ---------
+   -- Add --
+   ---------
+
+   procedure Add (This    : in out Crate;
+                  Release : Alire.Releases.Release) is
+   begin
+      This.Releases.Insert (Release);
+   end Add;
+
+   ----------
+   -- Base --
+   ----------
+
+   function Base (This : Crate) return Alire.Releases.Release is
+   begin
+      return Alire.Releases.New_Release
+        (Name         => This.Name,
+         Version      => Semantic_Versioning.Parse ("0"),
+         Origin       => Origins.New_Filesystem ("."),
+         Notes        => "",
+         Dependencies => Conditional.No_Dependencies,
+         Properties   => This.Externals.Properties,
+         Available    => Requisites.No_Requisites);
+   end Base;
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (This    : Crate;
+                      Version : Semantic_Versioning.Version) return Boolean
+   is
+   begin
+      return Keys.Contains (This.Releases, Version);
+   end Contains;
+
+   ---------------
+   -- Externals --
+   ---------------
+
+   function Externals (This : Crate) return Alire.Externals.Lists.List is
+     (This.Externals.Detectors);
+
+   ----------------------------------
+   -- From_Manifest_With_Externals --
+   ----------------------------------
+
+   function From_Manifest_With_Externals (From : TOML_Adapters.Key_Queue)
+                                          return Crate
+   is
+   begin
+      From.Assert_Key (TOML_Keys.Name, TOML.TOML_String);
+
+      return This : Crate :=
+        New_Crate (+From.Unwrap.Get (TOML_Keys.Name).As_String)
+      do
+         This.Load_Externals (From);
+      end return;
+   end From_Manifest_With_Externals;
+
+   --------------------
+   -- Load_Externals --
+   --------------------
+
+   procedure Load_Externals (This : in out Crate;
+                             From :        TOML_Adapters.Key_Queue)
+   is
+      --------------------
+      -- Load_Externals --
+      --------------------
+
+      procedure Load_Externals_Array is
+         TOML_Externals : TOML.TOML_Value;
+         Has_Externals  : constant Boolean :=
+                            From.Pop (TOML_Keys.External, TOML_Externals);
+      begin
+         if Has_Externals then
+            if TOML_Externals.Kind not in TOML.TOML_Array then
+               From.Checked_Error ("external entries must be TOML arrays");
+            else
+               for I in 1 .. TOML_Externals.Length loop
+                  This.Externals.Detectors.Append
+                    (Alire.Externals.From_TOML
+                       (From.Descend (TOML_Externals.Item (I),
+                                      "external index" & I'Img)));
+               end loop;
+            end if;
+         end if;
+      end Load_Externals_Array;
+
+   begin
+      if From.Unwrap.Kind not in TOML.TOML_Table then
+         From.Checked_Error ("top-level section must be a table");
+      end if;
+
+      --  If externals are defined in multiple indexes we will see this
+      --  warning. This is not satisfactory and to be resolved with the
+      --  prioritization of indexes, which currently is a bit flaky.
+
+      if not This.Externals.Properties.Is_Empty then
+         Trace.Warning
+           ("Reloading external base properties"
+            & " (more than one external manifest found)");
+         This.Externals.Properties := Conditional.No_Properties;
+      end if;
+
+      --  Process any external detectors
+
+      Load_Externals_Array;
+
+      --  Load the shared section
+
+      declare
+         Unused_Deps  : Conditional.Dependencies;
+         Unused_Avail : Requisites.Tree;
+      begin
+         TOML_Load.Load_Crate_Section
+           (Section => External_Shared_Section,
+            From    => From,
+            Props   => This.Externals.Properties,
+            Deps    => Unused_Deps,
+            Avail   => Unused_Avail);
+      end;
+
+      From.Report_Extra_Keys;
+   end Load_Externals;
+
+   procedure Merge_Externals
+     (This   : in out Crate;
+      From   :        Crate;
+      Policy :        Policies.For_Index_Merging :=
+        Policies.Merge_Priorizing_Existing)
+   is
+      use type Alire.Externals.External'Class;
+   begin
+      --  Merge new external detectors
+
+      case Policy is
+         when Policies.Merge_Priorizing_Existing =>
+            if This.Externals.Detectors.Is_Empty then
+               This.Externals.Properties := From.Externals.Properties;
+            end if;
+
+            for Ext of From.Externals.Detectors loop
+               if not (for some Existing of This.Externals.Detectors =>
+                         Ext = Existing)
+               then
+                  This.Externals.Detectors.Append (Ext);
+               end if;
+            end loop;
+      end case;
+   end Merge_Externals;
+
+   -----------------
+   -- Description --
+   -----------------
+
+   function Description (This : Crate) return Description_String is
+      Descr : constant Properties.Vector :=
+                Properties.Labeled.Filter
+                  (Conditional.Enumerate (This.Externals.Properties),
+                   Properties.Labeled.Description);
+   begin
+      if not This.Releases.Is_Empty then
+         return This.Releases.Last_Element.Description;
+      elsif not Descr.Is_Empty then
+         return Properties.Labeled.Label (Descr.First_Element).Value;
+      else
+         return "Crate is empty and a description cannot thus be provided";
+      end if;
+   end Description;
+
+   ---------------------
+   -- TTY_Description --
+   ---------------------
+
+   function TTY_Description (This : Crate) return String
+   is (Utils.TTY.Description (This.Description));
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (This : Crate) return Crate_Name is (This.Name);
+
+   --------------
+   -- TTY_Name --
+   --------------
+
+   function TTY_Name (This : Crate) return String
+   is (Utils.TTY.Name (+This.Name));
+
+   ---------------
+   -- New_Crate --
+   ---------------
+
+   function New_Crate (Name : Crate_Name) return Crate is
+     (Crate'(Len       => Name.Length,
+             Name      => Name,
+             Externals => <>,
+             Releases  => <>));
+
+   --------------
+   -- Releases --
+   --------------
+
+   function Releases (This : Crate) return Containers.Release_Set is
+     (This.Releases);
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace (This    : in out Crate;
+                      Release : Alire.Releases.Release)
+   is
+   begin
+      Keys.Replace (This.Releases, Release.Version, Release);
+   end Replace;
 
 end Alire.Crates;
