@@ -27,6 +27,7 @@ package Alire.TOML_Keys with Preelaborate is
    Long_Descr     : constant String := "long-description";
    Maintainer     : constant String := "maintainers";
    Maint_Logins   : constant String := "maintainers-logins";
+   Name           : constant String := "name";
    Notes          : constant String := "notes";
    Origin         : constant String := "origin";
    Origin_Hashes  : constant String := "origin-hashes";
@@ -39,6 +40,7 @@ package Alire.TOML_Keys with Preelaborate is
    Tag            : constant String := "tags";
    Target         : constant String := "target";
    Toolchain      : constant String := "toolchain";
+   Version        : constant String := "version";
    Version_Cmd    : constant String := "version-command";
    Version_Regexp : constant String := "version-regexp";
    Website        : constant String := "website";

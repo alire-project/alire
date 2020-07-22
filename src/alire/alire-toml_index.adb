@@ -1,6 +1,4 @@
 with Ada.Directories;
-with Ada.Exceptions;
-with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Errors;
@@ -15,7 +13,8 @@ with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
 with Alire.Index;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
-with Alire.Utils;
+with Alire.TOML_Keys;
+with Alire.Utils.TTY;
 with Alire.VCSs.Git;
 
 with GNATCOLL.VFS;
@@ -28,9 +27,9 @@ with TOML.File_IO;
 
 package body Alire.TOML_Index is
 
-   package Dirs renames Ada.Directories;
-   package Exc renames Ada.Exceptions;
-   package TIO renames Ada.Text_IO;
+   package Dirs   renames Ada.Directories;
+   package Semver renames Semantic_Versioning;
+   package TTY    renames Utils.TTY;
 
    procedure Set_Error
      (Result            : out Load_Result;
@@ -39,11 +38,9 @@ package body Alire.TOML_Index is
       with Post => not Result.Success;
    --  Set Result to not successful and assign an error message to it
 
-   function Load_TOML_From_File
-     (Filename : String; Result : out Load_Result) return TOML.TOML_Value;
+   function Load_TOML_From_File (Filename : String) return TOML.TOML_Value;
    --  Load a TOML document from the content of the given Filename and return
-   --  it. In case of error, the result is not significant and Result.Success
-   --  is set to False. Otherwise, it is set to True.
+   --  it. May raise Checked_Error.
 
    procedure Check_Index (Index    : Index_On_Disk.Index'Class;
                           Root     : Any_Path;
@@ -52,27 +49,21 @@ package body Alire.TOML_Index is
    --  Check that Catalog_Dir contains a file called "index.toml" and that it
    --  describes a supported catalog.
 
-   procedure Load_Package_Directory
-     (Catalog_Dir, Package_Dir : String;
-      Result                   : out Load_Result)
-      with Pre => Result.Success;
-   --  Load packages from all *.toml files in Catalog_Dir/Package_Dir
+   procedure Load_Manifest (Item : Ada.Directories.Directory_Entry_Type;
+                            Stop : in out Boolean);
+   --  Check if entry is a candidate to manifest file, and in that case load
+   --  its contents. May raise Checked_Error.
 
    procedure Load_From_Catalog_Internal
-     (Catalog_Dir, Package_Name : String;
-      Result                    : out Load_Result);
-   --  Like Load_From_Catalog, but do not check the index
+     (File_Name : Absolute_Path;
+      Name      : Crate_Name;
+      Version   : String);
+   --  Do the actual loading of a file that pass tests based on name/location.
+   --  Name and version have been deduced from the file name and will be used
+   --  for double-checks.
 
-   function Package_Directory (Package_Name : String) return String is
-     (Package_Name (Package_Name'First .. Package_Name'First + 1));
-   --  Return the name of the directory that must contain the description of
-   --  the given package.
-
-   Package_File_Suffix : constant String := ".toml";
+   Package_File_Suffix : constant String := "toml";
    --  Suffix for the name of package description files
-
-   subtype Package_Name_Character is Crate_Character
-      with Static_Predicate => Package_Name_Character /= Extension_Separator;
 
    ---------------
    -- Set_Error --
@@ -131,17 +122,16 @@ package body Alire.TOML_Index is
    -- Load_TOML_From_File --
    -------------------------
 
-   function Load_TOML_From_File
-     (Filename : String; Result : out Load_Result) return TOML.TOML_Value
+   function Load_TOML_From_File (Filename : String) return TOML.TOML_Value
    is
       TOML_Result : constant TOML.Read_Result :=
         TOML.File_IO.Load_File (Filename);
    begin
       if TOML_Result.Success then
-         Result := Outcome_Success;
          return TOML_Result.Value;
       else
-         Set_Error (Result, Filename, TOML.Format_Error (TOML_Result));
+         Raise_Checked_Error ("Invalid TOML contents in " & Filename
+                              & ": " & TOML.Format_Error (TOML_Result));
          return TOML.No_TOML_Value;
       end if;
    end Load_TOML_From_File;
@@ -161,10 +151,7 @@ package body Alire.TOML_Index is
    begin
       --  Read "index.toml"
 
-      Value := Load_TOML_From_File (Filename, Result);
-      if not Result.Success then
-         return;
-      end if;
+      Value := Load_TOML_From_File (Filename);
 
       --  Ensure metadata structure is as expected
 
@@ -279,12 +266,6 @@ package body Alire.TOML_Index is
          end case;
       end Locate_Root;
 
-      Search : Dirs.Search_Type;
-      --  Look for all directories in Catalog_Dir. We will process only the
-      --  ones whose names contain exactly two characters in 'a' .. 'z' | '_'.
-
-      Dir_Entry : Dirs.Directory_Entry_Type;
-
       Root : constant Any_Path := Locate_Root (Result);
       --  Locate a dir containing a 'index.toml' metadata file inside the repo.
       --  This is the directory containing the actual crates.
@@ -301,154 +282,170 @@ package body Alire.TOML_Index is
          return;
       end if;
 
-      --  Go through all directories allowed to contain packages
+      --  Go through all directories looking for release manifests
 
       begin
-         Dirs.Start_Search
-           (Search    => Search,
-            Directory => Root,
-            Pattern   => "",
-            Filter    => (Dirs.Directory => True, others => False));
+         Alire.Directories.Traverse_Tree
+           (Start   => Root,
+            Doing   => Load_Manifest'Access,
+            Recurse => True);
       exception
-         when E : TIO.Use_Error | TIO.Name_Error =>
-            Set_Error (Result, Root, Exc.Exception_Name (E),
-                       "looking for packages");
+         when E : Checked_Error =>
+            Result := Outcome_From_Exception (E);
       end;
-
-      while Result.Success and then Dirs.More_Entries (Search) loop
-         Dirs.Get_Next_Entry (Search, Dir_Entry);
-         declare
-            Simple_Name : constant String := Dirs.Simple_Name (Dir_Entry);
-            First, Last : Character;
-         begin
-            if Simple_Name'Length = 2 then
-               First := Simple_Name (Simple_Name'First);
-               Last := Simple_Name (Simple_Name'Last);
-               if First in Package_Name_Character
-                  and then First not in '_'
-                  and then Last in Package_Name_Character
-               then
-                  Load_Package_Directory
-                    (Root, Simple_Name, Result);
-               end if;
-            end if;
-         end;
-      end loop;
-
-      Dirs.End_Search (Search);
    end Load;
 
-   ----------------------------
-   -- Load_Package_Directory --
-   ----------------------------
+   -------------------
+   -- Load_Manifest --
+   -------------------
 
-   procedure Load_Package_Directory
-     (Catalog_Dir, Package_Dir : String;
-      Result                   : out Load_Result)
+   procedure Load_Manifest (Item : Ada.Directories.Directory_Entry_Type;
+                            Stop : in out Boolean)
    is
-      Package_Dir_Full : constant String :=
-         Dirs.Compose (Catalog_Dir, Package_Dir);
-      --  Full name for the directory under which we must look for package
-      --  descriptions.
-
-      Search : Dirs.Search_Type;
-      --  Look for all files in Package_Dir_Full whose name matches "*.toml"
-      --  and try to load them as package descriptions.
-
-      Dir_Entry : Dirs.Directory_Entry_Type;
+      pragma Unreferenced (Stop);
+      use Ada.Directories;
    begin
+      if Kind (Item) /= Ordinary_File then
+         return;
+      end if;
+
+      Trace.Debug ("Checking manifest candidate file: " & Full_Name (Item));
+
+      --  We expect a <root>/cr/crate_name/crate_name-version.toml structure
+
+      declare
+         Path   : constant Absolute_Path := Full_Name (Item);
+         File   : constant Simple_File   := Simple_Name (Item);
+         Parent : constant Absolute_Path := Containing_Directory (Path);
+         Shelf  : constant Absolute_Path := Containing_Directory (Parent);
+
+         subtype Shelf_Name is String with
+           Dynamic_Predicate =>
+             Shelf_Name'Length = 2 and then
+             (for all Char of Shelf_Name => Char in Crate_Character) and then
+             Shelf_Name (Shelf_Name'First) /= '_';
       begin
-         Dirs.Start_Search
-           (Search    => Search,
-            Directory => Package_Dir_Full,
-            Pattern   => "",
-            Filter    => (Dirs.Ordinary_File => True, others => False));
-      exception
-         when E : TIO.Use_Error | TIO.Name_Error =>
-            Set_Error (Result, Package_Dir_Full, Exc.Exception_Name (E),
-                       "looking for packages");
-      end;
 
-      while Result.Success and then Dirs.More_Entries (Search) loop
-         Dirs.Get_Next_Entry (Search, Dir_Entry);
+         --  Skip the index metadata file
+
+         if File = "index.toml" then
+            return;
+         end if;
+
+         --  Basic checks
+
+         if Extension (File) /= Package_File_Suffix then
+            Raise_Checked_Error ("Unexpected file in index: " & Path);
+         end if;
+
+         if not Utils.Contains (File, "-") then
+            Raise_Checked_Error ("Malformed manifest file name: " & Path);
+         end if;
+
+         if Simple_Name (Shelf) not in Shelf_Name then
+            Raise_Checked_Error ("Malformed shelf folder name: " & Shelf);
+         end if;
+
          declare
-            Simple_Name : constant String := Dirs.Simple_Name (Dir_Entry);
+            --  Name/version deducted from file name, to double check
+            FS_Name    : constant Crate_Name := +Utils.Head (File, '-');
+            FS_Version : constant String :=
+                           Utils.Tail (Base_Name (File), '-');
          begin
-            if Utils.Ends_With (Simple_Name, Package_File_Suffix) then
-               declare
-                  Package_Name : String renames Simple_Name
-                    (Simple_Name'First
-                     .. Simple_Name'Last - Package_File_Suffix'Length);
-               begin
-                  --  Reject invalid package names
 
-                  if not Valid_Package_Name (Package_Name) then
-                     Set_Error (Result, Package_Dir_Full,
-                                "invalid package name: " & Simple_Name,
-                                "looking for packages");
-                     exit;
-                  end if;
+            --  Preliminary checks based on file name
 
-                  --  Reject files not in the appropriate directory
-
-                  if Package_Directory (Package_Name) /= Package_Dir then
-                     Set_Error (Result, Package_Dir_Full,
-                                "bad location for " & Simple_Name,
-                                "looking for packages");
-                     exit;
-                  end if;
-
-                  Load_From_Catalog_Internal
-                    (Catalog_Dir, Package_Name, Result);
-                  if not Result.Success then
-                     exit;
-                  end if;
-               end;
+            if not Utils.Starts_With
+              (Full_String => +FS_Name,
+               Substring   => Simple_Name (Shelf))
+            then
+               Raise_Checked_Error ("Mismatch between manifest and shelf: "
+                                    & Path);
             end if;
-         end;
-      end loop;
 
-      Dirs.End_Search (Search);
-   end Load_Package_Directory;
+            if +FS_Name /= Simple_Name (Parent) then
+               Raise_Checked_Error ("Mismatch between manifest and parent: "
+                                    & Path);
+            end if;
+
+            Load_From_Catalog_Internal (File_Name => Path,
+                                        Name      => FS_Name,
+                                        Version   => FS_Version);
+         end;
+      end;
+   end Load_Manifest;
 
    --------------------------------
    -- Load_From_Catalog_Internal --
    --------------------------------
 
    procedure Load_From_Catalog_Internal
-     (Catalog_Dir, Package_Name : String;
-      Result                    : out Load_Result)
+     (File_Name : Absolute_Path;
+      Name      : Crate_Name;
+      Version   : String)
    is
-      Filename : constant String :=
-         Dirs.Compose
-           (Dirs.Compose (Catalog_Dir, Package_Directory (Package_Name)),
-            Package_Name & ".toml");
+
+      -------------------
+      -- Error_In_File --
+      -------------------
+
+      function Error_In_File (Name, Error : String) return String
+      is ("Error loading " & Name & ": " & Error);
 
       Value    : TOML.TOML_Value;
    begin
-      Trace.Debug ("Loading " & Package_Name & " from " & Catalog_Dir);
+      Trace.Debug ("Loading "
+                   & TTY.Name (Name) & " " & TTY.Version (Version)
+                   & " from " & File_Name);
 
       --  Load the TOML file
 
-      Value := Load_TOML_From_File (Filename, Result);
-      if not Result.Success then
-         return;
+      Value := Load_TOML_From_File (File_Name);
+
+      --  Minimal name/version checks
+
+      Assert (Value.Kind = TOML.TOML_Table,
+              Error_In_File (File_Name, "Missing top-level table"));
+
+      Assert (Value.Has (TOML_Keys.Name),
+              Error_In_File (File_Name, "Missing name field"));
+
+      Assert (Value.Get (TOML_Keys.Name).As_String = +Name,
+              Error_In_File (File_Name, "External/internal name mismatch: "
+                & "External is " & (+Name) & ", internal is "
+                & Value.Get (TOML_Keys.Name).As_String));
+
+      if Version = "external" then
+         Assert (not Value.Has (TOML_Keys.Version),
+                 Error_In_File (File_Name,
+                   "Expected external definitions but found version field"));
+      else
+         Assert (Value.Has (TOML_Keys.Version),
+                 Error_In_File (File_Name, "Missing version field"));
+         declare
+            use type Semver.Version;
+            Internal : constant String :=
+                         Value.Get (TOML_Keys.Version).As_String;
+         begin
+            Assert (Semver.Parse (Version) = Semver.Parse (Internal),
+                    Error_In_File (File_Name,
+                      "Mismatched versions: file name says " & Version
+                      & " but contents say " & Internal));
+         end;
       end if;
 
-      --  Decode as Crate
+      --  Decode as crate
 
       declare
          Crate  : Crates.With_Releases.Crate :=
-                    Crates.With_Releases.New_Crate
-                      (+Utils.To_Lower_Case (Package_Name));
+                    Crates.With_Releases.New_Crate (Name);
       begin
-         Result := Crate.From_TOML (TOML_Adapters.From
-                                    (Value,
-                                      Context => "Loading crate " & Filename));
+         Assert (Crate.From_TOML
+           (TOML_Adapters.From
+              (Value,
+               Context => "Loading crate " & File_Name)));
 
-         if Result.Success then
-            Index_Crate (Filename, Crate);
-         end if;
+         Index_Crate (File_Name, Crate);
       end;
    end Load_From_Catalog_Internal;
 
@@ -464,14 +461,8 @@ package body Alire.TOML_Index is
       --  proper TOML name.
 
       --  Attempt to load the file
-      Result : Load_Result;
-      Value  : constant TOML.TOML_Value :=
-                 Load_TOML_From_File (Filename, Result);
+      Value  : constant TOML.TOML_Value := Load_TOML_From_File (Filename);
    begin
-      if not Result.Success then
-         raise Checked_Error with Errors.Set (Message (Result));
-      end if;
-
       --  Parse the TOML structure
       declare
          Crate  : Crates.With_Releases.Crate :=
