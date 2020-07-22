@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire.Directories;
-with Alire.Errors;
 with Alire.GPR;
 
 with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
@@ -14,6 +13,7 @@ with Alire.Index;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
 with Alire.TOML_Keys;
+with Alire.TOML_Load;
 with Alire.Utils.TTY;
 with Alire.VCSs.Git;
 
@@ -23,7 +23,6 @@ with Semantic_Versioning;
 
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
-with TOML.File_IO;
 
 package body Alire.TOML_Index is
 
@@ -37,10 +36,6 @@ package body Alire.TOML_Index is
       Context           : String := "")
       with Post => not Result.Success;
    --  Set Result to not successful and assign an error message to it
-
-   function Load_TOML_From_File (Filename : String) return TOML.TOML_Value;
-   --  Load a TOML document from the content of the given Filename and return
-   --  it. May raise Checked_Error.
 
    procedure Check_Index (Index    : Index_On_Disk.Index'Class;
                           Root     : Any_Path;
@@ -65,6 +60,10 @@ package body Alire.TOML_Index is
    Package_File_Suffix : constant String := "toml";
    --  Suffix for the name of package description files
 
+   External_File_Marker : constant String := "external";
+   --  External definition files, instead of crate-x.x.x.toml, are named
+   --  crate-external.toml.
+
    ---------------
    -- Set_Error --
    ---------------
@@ -84,58 +83,6 @@ package body Alire.TOML_Index is
                    (Full_Context & ": " & Message));
    end Set_Error;
 
-   ------------------------
-   -- Valid_Package_Name --
-   ------------------------
-
-   function Valid_Package_Name (Name : String) return Boolean is
-   begin
-      if Name'Length = 0 then
-         return False;
-      end if;
-
-      for I in Name'Range loop
-         if I in Name'First | Name'Last and then Name (I) = '_' then
-
-            --  Reject leading and trailing underscores
-
-            return False;
-
-         elsif I = Name'First and then Name (I) in '0' .. '9' then
-
-            --  Reject leading digits
-
-            return False;
-
-         elsif Name (I) = '_' and then Name (I - 1) = '_' then
-
-            --  Reject consecutive underscores
-
-            return False;
-         end if;
-      end loop;
-
-      return True;
-   end Valid_Package_Name;
-
-   -------------------------
-   -- Load_TOML_From_File --
-   -------------------------
-
-   function Load_TOML_From_File (Filename : String) return TOML.TOML_Value
-   is
-      TOML_Result : constant TOML.Read_Result :=
-        TOML.File_IO.Load_File (Filename);
-   begin
-      if TOML_Result.Success then
-         return TOML_Result.Value;
-      else
-         Raise_Checked_Error ("Invalid TOML contents in " & Filename
-                              & ": " & TOML.Format_Error (TOML_Result));
-         return TOML.No_TOML_Value;
-      end if;
-   end Load_TOML_From_File;
-
    -----------------
    -- Check_Index --
    -----------------
@@ -151,7 +98,7 @@ package body Alire.TOML_Index is
    begin
       --  Read "index.toml"
 
-      Value := Load_TOML_From_File (Filename);
+      Value := TOML_Load.Load_File (Filename);
 
       --  Ensure metadata structure is as expected
 
@@ -400,7 +347,7 @@ package body Alire.TOML_Index is
 
       --  Load the TOML file
 
-      Value := Load_TOML_From_File (File_Name);
+      Value := TOML_Load.Load_File (File_Name);
 
       --  Minimal name/version checks
 
@@ -434,97 +381,61 @@ package body Alire.TOML_Index is
          end;
       end if;
 
-      --  Decode as crate
+      --  Decode as release/externals
 
-      declare
-         Crate  : Crates.With_Releases.Crate :=
-                    Crates.With_Releases.New_Crate (Name);
-      begin
-         Assert (Crate.From_TOML
-           (TOML_Adapters.From
-              (Value,
-               Context => "Loading crate " & File_Name)));
-
-         Index_Crate (File_Name, Crate);
-      end;
+      if Version = External_File_Marker then
+         Index.Add
+           (Crates.From_Manifest_With_Externals
+              (TOML_Adapters.From
+                   (Value,
+                    Context =>
+                      "Loading externals from manifest " & File_Name)));
+      else
+         Index_Release
+           (File_Name, Releases.From_TOML
+              (TOML_Adapters.From
+                   (Value,
+                    Context => "Loading release from manifest " & File_Name)));
+      end if;
    end Load_From_Catalog_Internal;
 
-   ----------------------------
-   -- Load_Release_From_File --
-   ----------------------------
+   -------------------
+   -- Index_Release --
+   -------------------
 
-   function Load_Release_From_File (Filename : String) return Releases.Release
-   is
-      Name : constant String :=
-               Dirs.Base_Name (Dirs.Simple_Name (Filename));
-      --  This file is requested by Alire so we don't need to check that it's a
-      --  proper TOML name.
-
-      --  Attempt to load the file
-      Value  : constant TOML.TOML_Value := Load_TOML_From_File (Filename);
-   begin
-      --  Parse the TOML structure
-      declare
-         Crate  : Crates.With_Releases.Crate :=
-                    Crates.With_Releases.New_Crate
-                      (+Utils.To_Lower_Case (Name));
-         Result : constant Load_Result :=
-                    Crate.From_TOML
-                      (TOML_Adapters.From
-                         (Value,
-                          Context => "Loading crate " & Filename));
-      begin
-         if Result.Success then
-            if Natural (Crate.Releases.Length) = 1 then
-               return Crate.Releases.First_Element;
-            else
-               raise Checked_Error with Errors.Set
-                 ("File " & Filename & " should contain a single release but "
-                  & "contains" & Crate.Releases.Length'Img & " release(s)");
-            end if;
-         else
-            raise Checked_Error with Errors.Set (Message (Result));
-         end if;
-      end;
-   end Load_Release_From_File;
-
-   -----------------
-   -- Index_Crate --
-   -----------------
-
-   procedure Index_Crate (Path  : Relative_Path;
-                          Crate : in out Crates.With_Releases.Crate)
+   procedure Index_Release (Path : Relative_Path;
+                            Rel  : Releases.Release)
    is
       use all type Origins.Kinds;
       use GNATCOLL;
       use all type VFS.Filesystem_String;
+      Fixed : Releases.Release := Rel;
    begin
-      for R of Crate.Releases loop
-         --  Adjust and check a valid path for a local origin.
-         --  This is delayed until this moment to keep many other
-         --  packages Preelaborable.
-         declare
-            use type Origins.Origin;
-            Origin : constant Origins.Origin :=
-                       Origins.Tweaks.Fixed_Origin (Path, R.Origin);
-         begin
-            if Origin.Kind = Filesystem then
-               if not Origins.Deployers.Filesystem.Is_Valid_Local_Crate
-                 (VFS.Create (+Origin.Path))
-               then
-                  raise Checked_Error with
-                    ("Local origin path is not a valid directory: "
-                     & Origin.Path);
-               end if;
-            end if;
+      --  Adjust and check a valid path for a local origin.
+      --  This is delayed until this moment to keep many other
+      --  packages Preelaborable.
 
-            if Origin /= R.Origin then
-               Crate.Replace (Release => R.Replacing (Origin));
+      declare
+         use type Origins.Origin;
+         Origin : constant Origins.Origin :=
+                    Origins.Tweaks.Fixed_Origin (Path, Fixed.Origin);
+      begin
+         if Origin.Kind = Filesystem then
+            if not Origins.Deployers.Filesystem.Is_Valid_Local_Crate
+              (VFS.Create (+Origin.Path))
+            then
+               raise Checked_Error with
+                 ("Local origin path is not a valid directory: "
+                  & Origin.Path);
             end if;
-         end;
-      end loop;
+         end if;
 
-      Index.Add (Crate);
-   end Index_Crate;
+         if Origin /= Fixed.Origin then
+            Fixed := Fixed.Replacing (Origin);
+         end if;
+      end;
+
+      Index.Add (Fixed);
+   end Index_Release;
 
 end Alire.TOML_Index;

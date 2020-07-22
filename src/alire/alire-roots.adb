@@ -7,7 +7,6 @@ with Alire.Lockfiles;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Root;
-with Alire.TOML_Index;
 with Alire.Workspace;
 
 with GNAT.OS_Lib;
@@ -48,7 +47,7 @@ package body Alire.Roots is
          if Crate_File /= "" then
             declare
                Release : constant Releases.Release :=
-                          TOML_Index.Load_Release_From_File (Crate_File);
+                           Releases.From_Manifest (Crate_File);
             begin
                --  Crate loaded properly, we can return a valid root here
                Trace.Debug ("Valid root found at " & Path);

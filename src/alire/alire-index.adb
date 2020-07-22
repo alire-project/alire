@@ -10,28 +10,48 @@ package body Alire.Index is
    -- Add --
    ---------
 
-   procedure Add (Crate  : Crates.With_Releases.Crate;
-                  Policy : Addition_Policies := Merge_Priorizing_Existing) is
-      pragma Unreferenced (Policy);
+   procedure Add (Crate  : Crates.Crate;
+                  Policy : Policies.For_Index_Merging :=
+                    Policies.Merge_Priorizing_Existing) is
    begin
       if Exists (Crate.Name) then
          declare
-            Old : Crates.With_Releases.Crate := Contents (Crate.Name);
+            Old : Crates.Crate := Contents (Crate.Name);
          begin
-            for Release of Crate.Releases loop
-               if Old.Contains (Release.Version) then
-                  Trace.Debug ("Not registering release already indexed: "
-                               & Release.Milestone.Image);
-               else
-                  Old.Add (Release);
-               end if;
-            end loop;
+            case Policy is
+               when Policies.Merge_Priorizing_Existing =>
+                  for Release of Crate.Releases loop
+                     if Old.Contains (Release.Version) then
+                        Trace.Debug
+                          ("Not registering release already indexed: "
+                           & Release.Milestone.Image);
+                     else
+                        Old.Add (Release);
+                     end if;
+                  end loop;
+            end case;
+
+            Old.Merge_Externals (Crate, Policy);
 
             Contents.Include (Crate.Name, Old);
          end;
       else
          Contents.Insert (Crate.Name, Crate);
       end if;
+   end Add;
+
+   ---------
+   -- Add --
+   ---------
+
+   procedure Add (Release : Releases.Release;
+                  Policy : Policies.For_Index_Merging :=
+                    Policies.Merge_Priorizing_Existing)
+   is
+      Crate : Crates.Crate := Crates.New_Crate (Release.Name);
+   begin
+      Crate.Add (Release);
+      Add (Crate, Policy);
    end Add;
 
    -----------------------
@@ -83,7 +103,7 @@ package body Alire.Index is
    -- Crate --
    -----------
 
-   function Crate (Name : Crate_Name) return Crates.With_Releases.Crate
+   function Crate (Name : Crate_Name) return Crates.Crate
    is (Contents (Name));
 
    -----------------
