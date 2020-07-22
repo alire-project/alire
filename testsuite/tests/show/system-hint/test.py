@@ -10,7 +10,7 @@ from drivers.asserts import assert_match
 
 import re
 
-p = run_alr('show', 'libhello=0.9-test_unav_native', '--solve',
+p = run_alr('show', 'libhello=0.9-test-unav-native', '--solve',
             complain_on_error=True)
 
 assert_match('.*'

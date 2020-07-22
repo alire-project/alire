@@ -7,6 +7,6 @@ maintainers-logins = ["mylogin"]
 ['1.0']
 origin = "file://../../crates/libhello_1.0.0"
 
-['0.9-test_unav_native']
+['0.9-test-unav-native']
 origin = "file://../../crates/libhello_1.0.0"
 depends-on = { make = "*" }
