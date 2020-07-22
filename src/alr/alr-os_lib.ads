@@ -70,16 +70,6 @@ package Alr.OS_Lib is
    function Is_Folder (Path : Alire.Any_Path) return Boolean
    renames GNAT.OS_Lib.Is_Directory;
 
-   procedure Traverse_Folder (Folder  : String;
-                              Doing   : access procedure
-                                (Item : Ada.Directories.Directory_Entry_Type;
-                                 Stop : in out Boolean);
-                              Recurse : Boolean := False);
-   --  Traverse all items in a folder, optionally recursively
-   --  If recursively, the directory entry is passed before entering it
-   --  "." and ".." are ignored
-   --  If Stop, stop
-
 private
 
    Line_Separator : constant String := ASCII.LF & "";

@@ -490,7 +490,7 @@ package body Alr.Commands.Test is
       elsif Cmd.Redo then
          Trace.Detail ("Redoing tests");
       else
-         OS_Lib.Traverse_Folder
+         Alire.Directories.Traverse_Tree
            (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
