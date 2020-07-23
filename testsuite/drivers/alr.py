@@ -146,7 +146,9 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
 
         if copy_crates_src:
             crates_dir = fixtures_path('crates')
-            copytree(crates_dir, os.path.join (working_dir, name, 'crates'))
+            copytree(crates_dir, os.path.join(working_dir, 'crates'))
+            # Crates are adjacent to the index but outside it (otherwise the
+            # index loader detects spurious files).
 
         # Finally create the index description in the config directory
         index_dir = os.path.join(indexes_dir, name)

@@ -40,12 +40,15 @@ OS = "macos"
 
 [gpr-set-externals."case(os)".windows]
 OS = "windows"
+
 [available."case(os)"]
 "..." = false
 linux = true
+
 [available."case(os)".windows."case(word_size)"]
 "..." = false
 bits_64 = true
+
 [project-files."case(word-size)"]
 "..." = ["bye.gpr"]
 bits-32 = ["hello.gpr", "hello32.gpr"]

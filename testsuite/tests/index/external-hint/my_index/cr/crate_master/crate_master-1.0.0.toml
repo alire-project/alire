@@ -1,7 +1,7 @@
 description = "A crate with a dependency"
 name = "crate_master"
 version = "1.0.0"
-origin = "file://../../crates/noop_1.0-default.tgz"
+origin = "file://../../../crates/noop_1.0-default.tgz"
 licenses = []
 maintainers = ["somebody@somewhere.com"]
 maintainers-logins = ["mylogin"]
