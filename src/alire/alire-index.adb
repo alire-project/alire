@@ -54,28 +54,28 @@ package body Alire.Index is
       Add (Crate, Policy);
    end Add;
 
-   -----------------------
-   -- Add_All_Externals --
-   -----------------------
+   --------------------------
+   -- Detect_All_Externals --
+   --------------------------
 
-   procedure Add_All_Externals (Env : Properties.Vector) is
+   procedure Detect_All_Externals (Env : Properties.Vector) is
    begin
       Trace.Detail ("Detecting external releases...");
 
       for Crate of Contents loop
-         Add_Externals (Crate.Name, Env);
+         Detect_Externals (Crate.Name, Env);
       end loop;
-   end Add_All_Externals;
+   end Detect_All_Externals;
 
    package Name_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
    Already_Detected : Name_Sets.Set;
 
-   -------------------
-   -- Add_Externals --
-   -------------------
+   ----------------------
+   -- Detect_Externals --
+   ----------------------
 
-   procedure Add_Externals (Name : Crate_Name; Env : Properties.Vector) is
+   procedure Detect_Externals (Name : Crate_Name; Env : Properties.Vector) is
    begin
       if Already_Detected.Contains (Name) then
          Trace.Debug
@@ -90,7 +90,7 @@ package body Alire.Index is
             Contents (Name).Add (Release);
          end loop;
       end if;
-   end Add_Externals;
+   end Detect_Externals;
 
    ----------------
    -- All_Crates --

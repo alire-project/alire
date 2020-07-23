@@ -385,7 +385,7 @@ package body Alire.TOML_Index is
 
       if Version = External_File_Marker then
          Index.Add
-           (Crates.From_Manifest_With_Externals
+           (Crates.From_Externals_Manifest
               (TOML_Adapters.From
                    (Value,
                     Context =>

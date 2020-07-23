@@ -59,9 +59,16 @@ package Alire.Crates is
 
    function Externals (This : Crate) return Alire.Externals.Lists.List;
 
-   function From_Manifest_With_Externals (From : TOML_Adapters.Key_Queue)
+   function From_Externals_Manifest (From : TOML_Adapters.Key_Queue)
                                           return Crate;
-   --  Load a whole crate from a manifest containing only external definitions
+   --  Load a manifest containing only external definitions for a crate
+
+   procedure Load_Externals
+     (This   : in out Crate;
+      From   :        TOML_Adapters.Key_Queue;
+      Policy :        Policies.For_Index_Merging :=
+        Policies.Merge_Priorizing_Existing);
+   --  Load externals detectors into an existing crate
 
    procedure Merge_Externals
      (This   : in out Crate;
@@ -70,9 +77,6 @@ package Alire.Crates is
                         Policies.Merge_Priorizing_Existing);
    --  Merge external definitions from both crates, applying some index merging
    --  policy.
-
-   procedure Load_Externals (This : in out Crate;
-                             From :        TOML_Adapters.Key_Queue);
 
    function Releases (This : Crate) return Containers.Release_Set;
 

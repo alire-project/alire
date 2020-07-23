@@ -397,7 +397,7 @@ package body Alire.Solver is
                --  below.
 
                if Options.Detecting = Detect then
-                  Index.Add_Externals (Dep.Crate, Props);
+                  Index.Detect_Externals (Dep.Crate, Props);
                end if;
 
                --  Check the releases now:

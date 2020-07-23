@@ -76,11 +76,11 @@ package body Alire.Crates is
    function Externals (This : Crate) return Alire.Externals.Lists.List is
      (This.Externals.Detectors);
 
-   ----------------------------------
-   -- From_Manifest_With_Externals --
-   ----------------------------------
+   -----------------------------
+   -- From_Externals_Manifest --
+   -----------------------------
 
-   function From_Manifest_With_Externals (From : TOML_Adapters.Key_Queue)
+   function From_Externals_Manifest (From : TOML_Adapters.Key_Queue)
                                           return Crate
    is
    begin
@@ -91,14 +91,17 @@ package body Alire.Crates is
       do
          This.Load_Externals (From);
       end return;
-   end From_Manifest_With_Externals;
+   end From_Externals_Manifest;
 
    --------------------
    -- Load_Externals --
    --------------------
 
-   procedure Load_Externals (This : in out Crate;
-                             From :        TOML_Adapters.Key_Queue)
+   procedure Load_Externals
+     (This   : in out Crate;
+      From   :        TOML_Adapters.Key_Queue;
+      Policy :        Policies.For_Index_Merging :=
+        Policies.Merge_Priorizing_Existing)
    is
       --------------------
       -- Load_Externals --
@@ -128,17 +131,6 @@ package body Alire.Crates is
          From.Checked_Error ("top-level section must be a table");
       end if;
 
-      --  If externals are defined in multiple indexes we will see this
-      --  warning. This is not satisfactory and to be resolved with the
-      --  prioritization of indexes, which currently is a bit flaky.
-
-      if not This.Externals.Properties.Is_Empty then
-         Trace.Warning
-           ("Reloading external base properties"
-            & " (more than one external manifest found)");
-         This.Externals.Properties := Conditional.No_Properties;
-      end if;
-
       --  Process any external detectors
 
       Load_Externals_Array;
@@ -146,19 +138,33 @@ package body Alire.Crates is
       --  Load the shared section
 
       declare
-         Unused_Deps  : Conditional.Dependencies;
          Unused_Avail : Requisites.Tree;
+         Unused_Deps  : Conditional.Dependencies;
+         Properties   : Conditional.Properties;
       begin
          TOML_Load.Load_Crate_Section
            (Section => External_Shared_Section,
             From    => From,
-            Props   => This.Externals.Properties,
+            Props   => Properties,
             Deps    => Unused_Deps,
             Avail   => Unused_Avail);
+
+         case Policy is
+            when Policies.Merge_Priorizing_Existing =>
+               if This.Externals.Properties.Is_Empty then
+                  This.Externals.Properties := Properties;
+               else
+                  Trace.Debug ("Discarding new properties for externals base");
+               end if;
+         end case;
       end;
 
       From.Report_Extra_Keys;
    end Load_Externals;
+
+   ---------------------
+   -- Merge_Externals --
+   ---------------------
 
    procedure Merge_Externals
      (This   : in out Crate;
@@ -172,7 +178,7 @@ package body Alire.Crates is
 
       case Policy is
          when Policies.Merge_Priorizing_Existing =>
-            if This.Externals.Detectors.Is_Empty then
+            if This.Externals.Properties.Is_Empty then
                This.Externals.Properties := From.Externals.Properties;
             end if;
 

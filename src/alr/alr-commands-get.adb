@@ -230,7 +230,7 @@ package body Alr.Commands.Get is
          --  Attempt detection of any defined externals, so they can be used
          --  afterwards for crate retrieval.
 
-         Alire.Index.Add_Externals (Name, Platform.Properties);
+         Alire.Index.Detect_Externals (Name, Platform.Properties);
 
          --  If something was detected we are done
 

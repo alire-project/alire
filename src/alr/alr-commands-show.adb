@@ -242,7 +242,7 @@ package body Alr.Commands.Show is
          end if;
 
          if Cmd.Detect then
-            Alire.Index.Add_Externals (Allowed.Crate, Platform.Properties);
+            Alire.Index.Detect_Externals (Allowed.Crate, Platform.Properties);
          end if;
 
          --  Execute
