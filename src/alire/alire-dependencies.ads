@@ -59,6 +59,7 @@ package Alire.Dependencies with Preelaborate is
 
    overriding
    function To_TOML (Dep : Dependency) return TOML.TOML_Value;
+   --  Creates the RHS of the "crate = 'version'"
 
    overriding
    function To_YAML (Dep : Dependency) return String;

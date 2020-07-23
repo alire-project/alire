@@ -687,9 +687,14 @@ package body Alire.Releases is
       --  Origin
       Root := TOML.Merge (Root, R.Origin.To_TOML);
 
-      --  Dependencies
+      --  Dependencies, wrapped as an array
       if not R.Dependencies.Is_Empty then
-         Root.Set (TOML_Keys.Depends_On, R.Dependencies.To_TOML);
+         declare
+            Dep_Array : constant TOML.TOML_Value := TOML.Create_Array;
+         begin
+            Dep_Array.Append (R.Dependencies.To_TOML);
+            Root.Set (TOML_Keys.Depends_On, Dep_Array);
+         end;
       end if;
 
       --  Forbidden
