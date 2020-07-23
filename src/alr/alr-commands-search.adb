@@ -177,7 +177,7 @@ package body Alr.Commands.Search is
          procedure List_Crate (Crate : Alire.Crates.Crate) is
          begin
             if Cmd.Detect then
-               Alire.Index.Add_Externals (Crate.Name, Platform.Properties);
+               Alire.Index.Detect_Externals (Crate.Name, Platform.Properties);
             end if;
 
             List_All_Or_Latest (Crate);

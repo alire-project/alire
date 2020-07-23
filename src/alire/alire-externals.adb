@@ -83,14 +83,6 @@ package body Alire.Externals is
             Deps    => Deps,
             Avail   => Ext.Available);
 
-         --  Ensure that no dependencies have been defined for the external.
-         --  This may be handy in the future, but until the need arises
-         --  better not have it complicating things.
-
-         if not Deps.Is_Empty then
-            From.Checked_Error ("externals cannot have dependencies");
-         end if;
-
          From.Report_Extra_Keys; -- Table must be exhausted at this point
       end return;
 

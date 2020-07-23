@@ -565,6 +565,10 @@ package body Alire.Releases is
       return False;
    end Property_Contains;
 
+   -------------------
+   -- From_Manifest --
+   -------------------
+
    function From_Manifest (File_Name : Any_Path) return Release
    is
      (From_TOML
@@ -572,9 +576,9 @@ package body Alire.Releases is
              (TOML_Load.Load_File (File_Name),
               "Loading release from manifest: " & File_Name)));
 
-   -------------------
-   -- From_Manifest --
-   -------------------
+   ---------------
+   -- From_TOML --
+   ---------------
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return Release is
    begin
@@ -591,7 +595,6 @@ package body Alire.Releases is
    -- From_TOML --
    ---------------
 
-   overriding
    function From_TOML (This : in out Release;
                        From :        TOML_Adapters.Key_Queue)
                        return Outcome

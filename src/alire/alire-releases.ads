@@ -6,7 +6,6 @@ with Alire.Dependencies;
 with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Origins;
---  with Alire.Crates;
 with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
@@ -29,7 +28,6 @@ package Alire.Releases is
 
    type Release (<>) is
      new Interfaces.Tomifiable
-     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with private;
 
@@ -277,15 +275,7 @@ package Alire.Releases is
    function From_Manifest (File_Name : Any_Path) return Release;
 
    function From_TOML (From : TOML_Adapters.Key_Queue) return Release;
-   --  Load a release from a manifest
-
-   overriding
-   function From_TOML (This : in out Release;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome;
-   --  Fill in the release-specific parts. This expects the common information
-   --  from [general] to be already present in the release, since From points
-   --  to the release proper.
+   --  Load a release from a TOML table
 
    overriding
    function To_TOML (R : Release) return TOML.TOML_Value;
@@ -310,7 +300,6 @@ private
    type Release (Prj_Len,
                  Notes_Len : Natural) is
      new Interfaces.Tomifiable
-     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
@@ -323,6 +312,11 @@ private
       Properties   : Conditional.Properties;
       Available    : Requisites.Tree;
    end record;
+
+   function From_TOML (This : in out Release;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome;
+   --  Fill in an already existing release
 
    use all type Conditional.Properties;
 

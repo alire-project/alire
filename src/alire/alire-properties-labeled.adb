@@ -87,10 +87,12 @@ package body Alire.Properties.Labeled is
             end loop;
          end;
       end return;
-   --  exception
-   --     when E : others =>
-   --        Log_Exception (E);
-   --        From.Checked_Error ("Cannot read valid property from " & Key);
+   exception
+      when Checked_Error =>
+         raise; -- Let the more informative error raise
+      when E : others =>
+         Log_Exception (E);
+         From.Checked_Error ("Cannot read valid property from " & Key);
    end From_TOML;
 
    ------------------------

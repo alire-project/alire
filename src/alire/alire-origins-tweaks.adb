@@ -3,6 +3,8 @@ with Ada.Directories;
 with Alire.OS_Lib;
 with Alire.Utils;
 
+with Alire.URI;
+
 package body Alire.Origins.Tweaks is
 
    ------------------
@@ -45,8 +47,7 @@ package body Alire.Origins.Tweaks is
          end if;
 
          declare
-            Rel_Path : constant Relative_Path :=
-                         Tail (Tail (URL, '/'), '/'); -- TODO superflaky
+            Rel_Path : constant Relative_Path := URI.Local_Path (URL);
             Absolute : Origin := This;
          begin
             --  Check that path is indeed relative...
