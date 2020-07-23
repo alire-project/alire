@@ -1,0 +1,10 @@
+description = "Some external crate for testing"
+name = "extern"
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["example"]
+
+[[external]]
+kind = "system"
+[external.origin."case(distribution)"]
+"..." = ["make"]

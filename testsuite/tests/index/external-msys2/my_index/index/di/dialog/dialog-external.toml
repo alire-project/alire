@@ -1,0 +1,10 @@
+description = "Just for the test"
+name = "dialog"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mosteo"]
+
+[[external]]
+kind = "system"
+[external.origin."case(distribution)"]
+msys2 = ["dialog"]
