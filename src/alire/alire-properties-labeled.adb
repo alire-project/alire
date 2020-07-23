@@ -1,5 +1,3 @@
-with Alire.Errors;
-
 package body Alire.Properties.Labeled is
 
    ------------
@@ -190,12 +188,6 @@ package body Alire.Properties.Labeled is
          when others =>
             null;
       end case;
-
-   exception
-      when E : Checked_Error =>
-         --  Print the error for the user before raising:
-         Trace.Error (Errors.Get (E, Clear => False));
-         raise;
    end Validate;
 
 end Alire.Properties.Labeled;

@@ -19,10 +19,10 @@ private
 
    procedure Index_Release (Path : Relative_Path;
                             Rel  : Releases.Release);
-   --  Add the crate and its releases to the internal index.
-   --  Path is where on disk the Crate was loaded from. This is necessary
-   --  to fix relative paths in local origins, which at load time are relative
-   --  to the Crate location, but at runtime the current dir may be any other.
-   --  May raise Checked_Error if a release has an invalid path as origin.
+   --  Add the release to the global catalog. Path is where on disk the Crate
+   --  was loaded from. This is necessary to fix relative paths in local
+   --  origins, which at load time are relative to the manifest location, but
+   --  at runtime the current dir may be any other. May raise Checked_Error if
+   --  a release has an invalid path as origin.
 
 end Alire.TOML_Index;

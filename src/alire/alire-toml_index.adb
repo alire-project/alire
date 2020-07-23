@@ -389,13 +389,13 @@ package body Alire.TOML_Index is
               (TOML_Adapters.From
                    (Value,
                     Context =>
-                      "Loading externals from manifest " & File_Name)));
+                      "Loading externals from " & File_Name)));
       else
          Index_Release
            (File_Name, Releases.From_TOML
               (TOML_Adapters.From
                    (Value,
-                    Context => "Loading release from manifest " & File_Name)));
+                    Context => "Loading release from " & File_Name)));
       end if;
    end Load_From_Catalog_Internal;
 

@@ -255,7 +255,8 @@ package body Alire.Releases is
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
-      Available    => Requisites.Booleans.Always_True);
+      Available    => Requisites.Trees.Empty_Tree -- empty evaluates to True
+     );
 
    -------------------------
    -- On_Platform_Actions --

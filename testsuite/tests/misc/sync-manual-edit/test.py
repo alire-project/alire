@@ -22,7 +22,7 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'setenv']:
 
     # "Manually" add a dependency
     with open("alire/xxx.toml", "a") as file:
-        file.write('depends-on.libhello="1"')
+        file.write('[[depends-on]]\nlibhello="1"')
 
     # Make the lockfile "older" (otherwise timestamp is identical)
     os.utime('alire/xxx.lock', (0, 0))
