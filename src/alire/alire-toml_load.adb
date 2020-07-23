@@ -6,6 +6,21 @@ with TOML.File_IO;
 
 package body Alire.TOML_Load is
 
+   --  The following are entries in the manifest that are not loaded as
+   --  properties, but stored separately as complex types.
+
+   type Tables is (Available,
+                   Dependencies);
+
+   Allowed_Tables : constant array (Crates.Sections, Tables) of Boolean :=
+                      (Crates.Release_Section          =>
+                         (others => True),
+                       Crates.External_Shared_Section  =>
+                         (others => False),
+                       Crates.External_Private_Section =>
+                         (Available    => True,
+                          Dependencies => False));
+
    ------------------------
    -- Load_Crate_Section --
    ------------------------
@@ -16,6 +31,7 @@ package body Alire.TOML_Load is
                                  Deps    : in out Conditional.Dependencies;
                                  Avail   : in out Requisites.Tree)
    is
+      use TOML;
       use type Conditional.Dependencies;
       use type Conditional.Properties;
       use type Requisites.Tree;
@@ -42,28 +58,46 @@ package body Alire.TOML_Load is
 
       --  Process Dependencies
 
-      if From.Pop (TOML_Keys.Depends_On, TOML_Deps) then
-         Deps := Deps and
-           TOML_Expressions.Cases.Load_Dependencies
-             (TOML_Adapters.From (TOML_Deps,
-                                  From.Message (TOML_Keys.Depends_On)));
+      if Allowed_Tables (Section, Dependencies) then
+         if From.Pop (TOML_Keys.Depends_On, TOML_Deps) then
+            From.Assert (TOML_Deps.Kind = TOML_Array,
+                         "dependencies must be specified as array of tables");
+
+            for I in 1 .. TOML_Deps.Length loop
+               Deps := Deps and
+                 TOML_Expressions.Cases.Load_Dependencies
+                   (TOML_Adapters.From
+                      (TOML_Deps.Item (I),
+                       From.Message (TOML_Keys.Depends_On)
+                       & "(group" & I'Img & ")"));
+            end loop;
+         end if;
+      elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
+         From.Checked_Error ("found field not allowed in manifest section: "
+                             & TOML_Keys.Depends_On);
       end if;
 
       --  TODO: Process Forbidden
 
       --  Process Available
 
-      if From.Pop (TOML_Keys.Available, TOML_Avail) then
-         Avail := Avail and
-           TOML_Expressions.Cases.Load_Requisites
-             (TOML_Adapters.From (TOML_Avail,
-                                  From.Message (TOML_Keys.Available)));
+      if Allowed_Tables (Section, Available) then
+         if From.Pop (TOML_Keys.Available, TOML_Avail) then
+            Avail := Avail and
+              TOML_Expressions.Cases.Load_Requisites
+                (TOML_Adapters.From (TOML_Avail,
+                 From.Message (TOML_Keys.Available)));
+         end if;
+      elsif From.Unwrap.Has (TOML_Keys.Available) then
+         From.Checked_Error ("found field not allowed in manifest section: "
+                             & TOML_Keys.Available);
       end if;
 
       --  Process remaining keys, which must be properties
 
       Props := Props and
         Properties.From_TOML.Section_Loaders (Section) (From);
+
    end Load_Crate_Section;
 
    ---------------
