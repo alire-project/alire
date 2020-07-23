@@ -1,0 +1,7 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+origin = "http://blah.com/pkg.zip"
+licenses = []
+maintainers = ["Mr. User"]
+maintainers-logins = ["mylogin"]

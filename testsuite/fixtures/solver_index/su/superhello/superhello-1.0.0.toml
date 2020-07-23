@@ -1,0 +1,12 @@
+description = "A better hello"
+website = "example.com"
+name = "superhello"
+version = "1.0.0"
+origin = "file://."
+authors = ["Bob", "Alice"]
+licenses = ["GPL 3.0", "MIT"]
+maintainers = ["bob@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+libhello = "~1.0"

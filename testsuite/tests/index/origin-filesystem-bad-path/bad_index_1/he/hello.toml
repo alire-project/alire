@@ -1,8 +1,0 @@
-[general]
-description = """"Hello, world!" demonstration project"""
-licenses = []
-maintainers = ["alejandro@mosteo.com"]
-maintainers-logins = ["mylogin"]
-
-['1.0.0']
-origin = "file://"

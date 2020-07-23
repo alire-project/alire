@@ -1,0 +1,17 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "system"
+[external.origin."case(distribution)"]
+debian = ["libhello~1"]
+ubuntu = ["libhello"]
+
+[[external]]
+kind = "hint"
+[external.available."case(toolchain)"]
+system = false
+user = false

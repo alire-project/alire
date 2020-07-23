@@ -1,0 +1,7 @@
+description = "Child"
+name = "libchild"
+version = "0.2.0"
+origin = "file://."
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
