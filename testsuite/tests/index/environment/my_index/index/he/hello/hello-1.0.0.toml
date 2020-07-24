@@ -1,7 +1,6 @@
 description = "\"Hello, world!\" demonstration project"
 name = "hello"
 version = "1.0.0"
-origin = "file://."
 licenses = []
 maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
@@ -33,3 +32,6 @@ set = "abc\\${_ALIRE_TEST_}abc"
 set = "${_ALIRE_TEST_}${_ALIRE_TEST_}${_ALIRE_TEST_}"
 [environment."case(os)"."...".CONDVAR]
 set = "uvw"
+
+[origin]
+url = "file:."

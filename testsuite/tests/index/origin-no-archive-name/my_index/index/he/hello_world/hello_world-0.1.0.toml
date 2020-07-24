@@ -1,8 +1,10 @@
+archive-hash = "sha512:deadbeef"
 description = "\"Hello, world!\" demonstration project"
 name = "hello_world"
 version = "0.1.0"
-archive-hash = "sha512:deadbeef"
-origin = "http://example.com/"
 licenses = []
 maintainers = ["user@example.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "http://example.com/"

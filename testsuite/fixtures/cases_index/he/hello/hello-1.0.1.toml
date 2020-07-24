@@ -1,7 +1,6 @@
 description = "\"Hello, world!\" demonstration project"
 name = "hello"
 version = "1.0.1"
-origin = "file://../../../crates/hello_1.0.1"
 licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
@@ -22,6 +21,12 @@ command = ["make"]
 [[actions."case(os)".linux]]
 type = "post-compile"
 command = ["hello"]
+[available."case(os)"]
+"..." = false
+linux = true
+[available."case(os)".windows."case(word_size)"]
+"..." = false
+bits_64 = true
 [executables."case(word-size)"]
 "..." = "bye"
 bits-32 = "hello32"
@@ -40,16 +45,10 @@ OS = "macos"
 
 [gpr-set-externals."case(os)".windows]
 OS = "windows"
-
-[available."case(os)"]
-"..." = false
-linux = true
-
-[available."case(os)".windows."case(word_size)"]
-"..." = false
-bits_64 = true
-
 [project-files."case(word-size)"]
 "..." = ["bye.gpr"]
 bits-32 = ["hello.gpr", "hello32.gpr"]
 bits-64 = ["hello.gpr"]
+
+[origin]
+url = "file:../../../crates/hello_1.0.1"

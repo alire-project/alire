@@ -1,7 +1,9 @@
 description = "Bad crate"
 name = "bad"
 version = "1.0.0"
-origin = "file://./../../../crates/bad"
 licenses = []
 maintainers = ["jane@doe.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:./../../../crates/bad"

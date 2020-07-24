@@ -1,7 +1,9 @@
 description = "\"Hello, world!\" demonstration project"
 name = "hello_world"
 version = "0.1.0"
-origin = "foo+http://blah.com/pkg.html"
 licenses = []
 maintainers = ["user@example.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "foo+http://blah.com/pkg.html"

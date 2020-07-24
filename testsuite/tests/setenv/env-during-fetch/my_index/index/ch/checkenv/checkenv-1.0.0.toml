@@ -1,7 +1,6 @@
 description = "Sample crate"
 name = "checkenv"
 version = "1.0.0"
-origin = "file://../../../crates/checkenv"
 licenses = []
 maintainers = ["any@bo.dy"]
 maintainers-logins = ["someone"]
@@ -15,3 +14,6 @@ type = "post-fetch"
 command = ["./checkenv"]
 [environment.CHECKENV_TEST_VAR]
 set = "defined"
+
+[origin]
+url = "file:../../../crates/checkenv"
