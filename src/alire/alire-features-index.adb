@@ -388,11 +388,8 @@ package body Alire.Features.Index is
                          Origin_Img : URL)
                          return Hashing_Outcomes.Outcome
    is
-      Origin : Origins.Origin;
-      Create_Result : constant Outcome := Origins.From_String
-        (Origin, Origin_Img, Hashed => False);
+      Origin : constant Origins.Origin := Origins.From_String (Origin_Img);
    begin
-      Create_Result.Assert;
 
       --  Retrieve the given origin and compute its hash:
 

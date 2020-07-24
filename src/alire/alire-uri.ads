@@ -3,7 +3,7 @@ with Alire.Errors;
 private with Alire.Utils;
 private with URI;
 
-package Alire.URI is
+package Alire.URI with Preelaborate is
 
    --  Helpers to process URLs provided by the user. Note: there's already an
    --  Alire.URL type which is simply a String renaming without any additional
@@ -54,7 +54,7 @@ package Alire.URI is
    function Scheme (This : URL) return Schemes;
    --  Extract the Scheme part of a URL
 
-   function Local_Path (This : URL) return Any_Path
+   function Local_Path (This : URL) return String
      with Pre => Scheme (This) in None | File
      or else raise Checked_Error with Errors.Set
        ("Given URL does not seem to denote a path: " & This);
@@ -70,6 +70,8 @@ package Alire.URI is
    --  TODO: fix incorrectly emitted file:// paths in Origins so at least we
    --  are not generating improper URIs.
 
+   function Remote_Path (This : URL) return String;
+
 private
 
    package U renames Standard.URI;
@@ -80,8 +82,15 @@ private
    -- Local_Path --
    ----------------
 
-   function Local_Path (This : URL) return Any_Path
+   function Local_Path (This : URL) return String
    is (U.Permissive_Path (This));
+
+   -----------------
+   -- Remote_Path --
+   -----------------
+
+   function Remote_Path (This : URL) return String
+   is (U.Extract (This, U.Path));
 
    ------------
    -- Scheme --
