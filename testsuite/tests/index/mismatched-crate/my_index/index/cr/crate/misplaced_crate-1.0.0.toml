@@ -1,7 +1,9 @@
 description = "Sample crate"
 name = "crate"
 version = "1.0.0"
-origin = "file://../../../crates/crate"
 licenses = []
 maintainers = ["any@bo.dy"]
 maintainers-logins = ["someone"]
+
+[origin]
+url = "file:../../../crates/crate"

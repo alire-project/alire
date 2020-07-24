@@ -1,8 +1,7 @@
 description = "\"Hello, world!\" demonstration project"
-website = "example.com"
 name = "hello"
 version = "1.0.0"
-origin = "file://."
+website = "example.com"
 authors = ["Bob", "Alice"]
 licenses = ["GPL 3.0", "MIT"]
 maintainers = ["bob@example.com"]
@@ -10,3 +9,6 @@ maintainers-logins = ["mylogin"]
 
 [[depends-on]]
 libhello = "^1.0"
+
+[origin]
+url = "file:."

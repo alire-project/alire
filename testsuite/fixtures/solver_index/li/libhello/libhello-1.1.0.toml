@@ -1,7 +1,9 @@
 description = "\"Hello, world!\" demonstration project support library"
 name = "libhello"
 version = "1.1.0"
-origin = "file://."
 licenses = []
 maintainers = ["john@doe.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."

@@ -1,7 +1,9 @@
 description = "libhello"
 name = "libhello"
 version = "1.0.0"
-origin = "file://../../../crates/libhello_1.0.0"
 licenses = []
 maintainers = ["some@one.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:../../../crates/libhello_1.0.0"
