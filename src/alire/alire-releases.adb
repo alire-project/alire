@@ -653,7 +653,7 @@ package body Alire.Releases is
       use all type Alire.Properties.Labeled.Cardinalities;
       use all type Alire.Requisites.Tree;
       use TOML_Adapters;
-      Root : TOML.TOML_Value := R.Properties.To_TOML;
+      Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
       --  Name
       Root.Set (TOML_Keys.Name, +R.Name_Str);
@@ -689,7 +689,7 @@ package body Alire.Releases is
       end loop;
 
       --  Origin
-      Root := TOML.Merge (Root, R.Origin.To_TOML);
+      Root.Set (TOML_Keys.Origin, R.Origin.To_TOML);
 
       --  Dependencies, wrapped as an array
       if not R.Dependencies.Is_Empty then
