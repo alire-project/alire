@@ -1,7 +1,6 @@
 description = "\"Hello, world!\" demonstration project support library"
 name = "libhello"
 version = "1.0.0-gitbad"
-origin = "git+file://../../../crates/libhello_git@ce78e7706c9d3f97605df48d8befca5407f8d328"
 licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
@@ -9,4 +8,5 @@ maintainers-logins = ["mylogin"]
 [origin]
 url = "git+file:../../../crates/libhello_git"
 commit = "ce78e7706c9d3f97605df48d8befca5407f8d328"
-hashes = ["sha512:deadbeef"] # Bad hash on purpose
+# hashes = ["sha512:deadbeef"] # Bad hash on purpose
+# Hashes no longer accepted for vcs remotes

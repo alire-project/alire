@@ -57,7 +57,7 @@ def migrate(path):
 
     # Visit all nested TOML files. We do not check for proper placement.
     for file in glob.iglob(os.path.join(path, '**/*.toml'), recursive=True):
-        if "/index.toml" not in file and "external" not in file:
+        if "/index.toml" not in file and "-external.toml" not in file:
             fix_manifest(file)
 
     # Finalize by updating the index version

@@ -188,13 +188,20 @@ package body Alire.Origins is
                               Context => Keys.Origin);
       URL     : constant String :=
                  Table.Checked_Pop (Keys.URL, TOML_String).As_String;
-      VCS_URL : constant String := Utils.Tail (URL, '+');
+      VCS_URL : constant String :=
+                  (if Utils.Contains (URL, "file:")
+                   then Utils.Tail (URL, ':') -- Remove file: that confuses git
+                   else Utils.Tail (URL, '+')); -- remove prefix vcs+
       Scheme  : constant URI.Schemes := URI.Scheme (URL);
+      Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
    begin
       case Scheme is
+         when External =>
+            This := New_External (URI.Path (URL));
+
          when URI.File_Schemes =>
             if URI.Local_Path (URL) = "" then
-               From.Checked_Error ("empty path given in local origin: " & URL);
+               From.Checked_Error ("empty path given in local origin");
             end if;
             This := New_Filesystem (URI.Local_Path (URL));
 
@@ -247,24 +254,36 @@ package body Alire.Origins is
                      & Keys.Archive_Name & "'");
             end;
 
+         when System =>
+            This := New_System (URI.Path (URL));
+
          when Unknown          =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);
       end case;
 
       --  Check hashes existence appropriateness
 
-      if This.Kind = Source_Archive or else
-        (This.Kind = Filesystem and then
-         GNAT.OS_Lib.Is_Regular_File (This.Path))
-      then
-         return Add_Hashes (Table);
-      elsif Table.Unwrap.Has (Keys.Hashes) then
-         return Table.Failure
-           ("hashes cannot be provided for origins of kind "
-            & Utils.To_Mixed_Case (This.Kind'Img));
-      end if;
+      case This.Kind is
+         when Filesystem =>
+            if Hashed then
+               return Add_Hashes (Table);
+            end if;
+            --  Hashes are mandatory only for source archives. This is checked
+            --  on deployment, since at this moment we do not have the proper
+            --  absolute patch
 
-      return Outcome_Success;
+         when Source_Archive =>
+            return Add_Hashes (Table); -- mandatory
+
+         when others =>
+            if Hashed then
+               return Table.Failure
+                 ("hashes cannot be provided for origins of kind "
+                  & Utils.To_Mixed_Case (This.Kind'Img));
+            end if;
+      end case;
+
+      return Table.Report_Extra_Keys;
    end From_TOML;
 
    ---------------------
@@ -315,8 +334,9 @@ package body Alire.Origins is
             Table.Set (Keys.URL, +("file:" & This.Path));
 
          when VCS_Kinds =>
-            Table.Set (Keys.URL, +(Prefixes (This.Kind).all &
-                         This.URL & "#" & This.Commit));
+            Table.Set (Keys.URL, +(Prefixes (This.Kind).all & This.URL));
+            Table.Set (Keys.Commit, +This.Commit);
+
          when External =>
             Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all & (+This.Data.Description)));
