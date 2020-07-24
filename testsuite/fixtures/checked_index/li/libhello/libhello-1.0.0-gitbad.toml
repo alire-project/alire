@@ -8,4 +8,5 @@ maintainers-logins = ["mylogin"]
 [origin]
 url = "git+file:../../../crates/libhello_git"
 commit = "ce78e7706c9d3f97605df48d8befca5407f8d328"
-hashes = ["sha512:deadbeef"]
+# hashes = ["sha512:deadbeef"]
+# Hashes no longer accepted for vcs remotes

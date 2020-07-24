@@ -27,6 +27,9 @@ package Alire.URI with Preelaborate is
      (None,
       --  For URLs without scheme (to be interpreted as local paths)
 
+      External,
+      --  external: denotes a crate detected by some external definition
+
       File,
       --  A file: URI
 
@@ -40,6 +43,9 @@ package Alire.URI with Preelaborate is
 
       HTTP,
       --  Either http or https, since we don't differentiate treatment
+
+      System,
+      --  system:package is used to denote a native package from the platform
 
       Unknown
       --  Anything else
@@ -70,7 +76,8 @@ package Alire.URI with Preelaborate is
    --  TODO: fix incorrectly emitted file:// paths in Origins so at least we
    --  are not generating improper URIs.
 
-   function Remote_Path (This : URL) return String;
+   function Path (This : URL) return String;
+   --  The path as properly defined (without the authority, if any)
 
 private
 
@@ -85,11 +92,11 @@ private
    function Local_Path (This : URL) return String
    is (U.Permissive_Path (This));
 
-   -----------------
-   -- Remote_Path --
-   -----------------
+   ----------
+   -- Path --
+   ----------
 
-   function Remote_Path (This : URL) return String
+   function Path (This : URL) return String
    is (U.Extract (This, U.Path));
 
    ------------
@@ -99,6 +106,8 @@ private
    function Scheme (This : URL) return Schemes
    is (if U.Scheme (This) = "" then
           None
+       elsif L (U.Scheme (This)) = "external" then
+          External
        elsif L (U.Scheme (This)) = "file" then
           File
        elsif Utils.Starts_With (L (U.Scheme (This)), "git+") then
@@ -111,6 +120,8 @@ private
           HTTP
        elsif L (U.Scheme (This)) = "https" then
           HTTP
+       elsif L (U.Scheme (This)) = "system" then
+          System
        else
           Unknown);
 
