@@ -6,6 +6,7 @@ with Ada.Text_IO;
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Index;
+with Alire.Manifest;
 with Alire.Milestones;
 with Alire.Releases;
 with Alire.Roots;
@@ -222,13 +223,16 @@ package body Alr.Commands.Withing is
                           Alire.Solver.Resolve (New_Deps,
                                                 Platform.Properties,
                                                 Old_Solution);
+
+         Deps_Diff : constant Alire.Dependencies.Diffs.Diff :=
+                       Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps);
       begin
 
          --  Show changes to apply
 
          Trace.Info ("Requested changes:");
          Trace.Info ("");
-         Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
+         Deps_Diff.Print;
 
          --  Show the effects on the solution
 
@@ -240,11 +244,11 @@ package body Alr.Commands.Withing is
             return;
          end if;
 
-         --  Generate the new .toml file
+         --  Add changes to the manifest:
 
-         Alire.Workspace.Generate_Manifest (New_Root.Release,
-                                             New_Root);
-         Trace.Detail ("Regeneration finished, updating now");
+         Alire.Manifest.Append (Root.Current.Crate_File,
+                                Deps_Diff.Added);
+         Trace.Detail ("Manifest updated, fetching dependencies now");
 
          --  And apply changes (will also generate new lockfile)
 

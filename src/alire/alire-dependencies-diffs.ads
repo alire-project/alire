@@ -9,6 +9,10 @@ package Alire.Dependencies.Diffs is
 
    function Between (Former, Latter : Containers.Lists.List) return Diff;
 
+   function Added (This : Diff) return Containers.List;
+
+   function Removed (This : Diff) return Containers.List;
+
    function Contains_Changes (This : Diff) return Boolean;
 
    procedure Print (This : Diff);

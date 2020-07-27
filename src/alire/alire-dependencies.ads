@@ -39,6 +39,10 @@ package Alire.Dependencies with Preelaborate is
    function Image (Dep : Dependency) return String;
    --  Standard-style version image, e.g. "make^3.1"
 
+   function Manifest_Image (Dep : Dependency) return String;
+   --  Returns a line describing the dependency as it would appear in the
+   --  manifest, e.g.: my_crate = "^3.2.1"
+
    overriding
    function TTY_Image (Dep : Dependency) return String;
 
@@ -105,6 +109,9 @@ private
 
    function Image (Dep : Dependency) return String is
      ((+Dep.Crate) & Dep.Versions.Image);
+
+   function Manifest_Image (Dep : Dependency) return String is
+     ((+Dep.Crate) & " = " & '"' & Dep.Versions.Image & '"');
 
    overriding
    function TTY_Image (Dep : Dependency) return String is

@@ -2,6 +2,13 @@ with Alire.Utils.Tables;
 
 package body Alire.Dependencies.Diffs is
 
+   -----------
+   -- Added --
+   -----------
+
+   function Added (This : Diff) return Containers.List
+   is (This.Added);
+
    -------------
    -- Between --
    -------------
@@ -77,5 +84,12 @@ package body Alire.Dependencies.Diffs is
          Trace.Info ("   No changes.");
       end if;
    end Print;
+
+   -------------
+   -- Removed --
+   -------------
+
+   function Removed (This : Diff) return Containers.List
+   is (This.Removed);
 
 end Alire.Dependencies.Diffs;
