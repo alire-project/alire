@@ -15,3 +15,4 @@ kind = "hint"
 [external.available."case(toolchain)"]
 system = false
 user = false
+# Test toolchain case expressions

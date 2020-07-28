@@ -8,5 +8,6 @@ licenses = ["GPL 3.0", "MIT"]
 maintainers = ["bob@example.com"]
 maintainers-logins = ["mylogin"]
 
+# With missing dependencies
 [[depends-on]]
 libhello = "^3.0"

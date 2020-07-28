@@ -5,4 +5,4 @@ origin = "git+file://../../../crates/libhello_git@ce78e7706c9d3f97605df48d8befca
 licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
-origin-hashes = ["sha512:deadbeef"]
+origin-hashes = ["sha512:deadbeef"] # Bad hash on purpose

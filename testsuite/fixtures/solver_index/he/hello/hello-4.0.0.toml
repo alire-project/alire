@@ -8,6 +8,7 @@ licenses = ["GPL 3.0", "MIT"]
 maintainers = ["bob@example.com"]
 maintainers-logins = ["mylogin"]
 
+# With missing dependencies + missing external
 [[depends-on]]
 libhello = "^4.0"
 make = "*"

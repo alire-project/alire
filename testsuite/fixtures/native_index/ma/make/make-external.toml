@@ -6,4 +6,4 @@ maintainers-logins = ["mylogin"]
 
 [[external]]
 kind = "system"
-origin = []
+origin = [] # No package name since we require it unavailable in tests

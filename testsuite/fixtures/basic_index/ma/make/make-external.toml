@@ -6,4 +6,4 @@ maintainers-logins = ["mylogin"]
 
 [[external]]
 kind = "system"
-origin = []
+origin = [] # Empty on purpose to ensure unavailable in tests
