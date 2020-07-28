@@ -1,15 +1,12 @@
 // Run with:
-// ./msys2-x86_64-$(date +'%Y%m%d').exe --platform minimal --script auto-install.js -v
+// ./alire-x86_64-*.exe --platform minimal --script auto-install.js -v
 // To specify the installation directory, add InstallPrefix="C:\custom_install\path\"
-// Currently it gets stuck on the last page.
 // To see graphically what's happening, remove "--platform minimal"
 
 var install_dir = installer.value("InstallPrefix")
 
 function Controller()
 {
-    print("(print) Hello Installer World!\n");
-    console.log("(console.log) Hello Installer World!\n");
     installer.setDefaultPageVisible(QInstaller.Introduction, true);
 
     var page = gui.pageWidgetByObjectName( "ComponentSelectionPage" );
