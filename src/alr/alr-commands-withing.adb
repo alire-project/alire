@@ -415,7 +415,8 @@ package body Alr.Commands.Withing is
    begin
       Put_Line ("Dependencies (direct):");
       Root_Release.Dependencies.Print ("   ",
-                                       Root_Release.Dependencies.Contains_ORs);
+                                       Root_Release.Dependencies.Contains_ORs,
+                                       Sorted => True);
 
       if Cmd.Solve then
          Requires_Full_Index; -- Load possible hints
