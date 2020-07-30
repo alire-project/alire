@@ -68,6 +68,9 @@ package Alire.Dependencies with Preelaborate is
    overriding
    function To_YAML (Dep : Dependency) return String;
 
+   function Lexicographical_Sort (L, R : Dependency) return Boolean;
+   --  By name and then version set image
+
 private
 
    package TTY renames Utils.TTY;
@@ -124,5 +127,9 @@ private
         """}");
 
    overriding function Key (Dep : Dependency) return String is (+Dep.Crate);
+
+   function Lexicographical_Sort (L, R : Dependency) return Boolean
+   is (L.Crate < R.Crate or else
+       (L.Crate = R.Crate and then L.Versions.Image < R.Versions.Image));
 
 end Alire.Dependencies;

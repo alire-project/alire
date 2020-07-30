@@ -7,7 +7,7 @@ package Alire.Dependencies.Diffs is
 
    function Between (Former, Latter : Conditional.Dependencies) return Diff;
 
-   function Between (Former, Latter : Containers.Lists.List) return Diff;
+   function Between (Former, Latter : Containers.List) return Diff;
 
    function Added (This : Diff) return Containers.List;
 
@@ -20,8 +20,8 @@ package Alire.Dependencies.Diffs is
 private
 
    type Diff is tagged record
-      Added   : Containers.Lists.List;
-      Removed : Containers.Lists.List;
+      Added   : Containers.List;
+      Removed : Containers.List;
    end record;
 
 end Alire.Dependencies.Diffs;

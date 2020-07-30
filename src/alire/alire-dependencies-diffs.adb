@@ -13,7 +13,7 @@ package body Alire.Dependencies.Diffs is
    -- Between --
    -------------
 
-   function Between (Former, Latter : Containers.Lists.List) return Diff is
+   function Between (Former, Latter : Containers.List) return Diff is
    begin
       return This : Diff do
 
@@ -58,7 +58,7 @@ package body Alire.Dependencies.Diffs is
    procedure Print (This : Diff) is
       Table : Utils.Tables.Table;
 
-      procedure Summarize (List    : Containers.Lists.List;
+      procedure Summarize (List    : Containers.List;
                            Comment : String;
                            Icon    : String)
       is

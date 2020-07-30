@@ -1,3 +1,5 @@
+with Ada.Containers.Indefinite_Ordered_Maps;
+
 with GNAT.IO;
 
 package body Alire.Conditional_Trees is
@@ -435,14 +437,23 @@ package body Alire.Conditional_Trees is
    -----------
 
    overriding
-   procedure Print (This : Leaf_Node; Prefix : String; Verbose : Boolean) is
-      pragma Unreferenced (Verbose);
+   procedure Print (This    : Leaf_Node;
+                    Prefix  : String;
+                    Verbose : Boolean;
+                    Sorted  : Boolean := False) is
+      pragma Unreferenced (Verbose, Sorted);
    begin
       GNAT.IO.Put_Line (Prefix & Image (This.Value.Constant_Reference));
    end Print;
 
    overriding
-   procedure Print (This : Vector_Node; Prefix : String; Verbose : Boolean) is
+   procedure Print (This    : Vector_Node;
+                    Prefix  : String;
+                    Verbose : Boolean;
+                    Sorted  : Boolean)
+   is
+      package Maps is new Ada.Containers.Indefinite_Ordered_Maps (String,
+                                                                  Node'Class);
    begin
       if Verbose then
          case This.Conjunction is
@@ -451,22 +462,41 @@ package body Alire.Conditional_Trees is
          end case;
       end if;
 
-      for Child of This.Values loop
-         Print (Child, Prefix & (if Verbose then Tab else ""), Verbose);
-      end loop;
+      if Sorted then
+         declare
+            Map : Maps.Map;
+         begin
+            for Child of This.Values loop
+               Map.Insert (Child.Image, Child);
+            end loop;
+            for Child of Map loop
+               Print (Child,
+                      Prefix & (if Verbose then Tab else ""),
+                      Verbose, Sorted);
+            end loop;
+         end;
+      else
+         for Child of This.Values loop
+            Print (Child,
+                   Prefix & (if Verbose then Tab else ""),
+                   Verbose, Sorted);
+         end loop;
+      end if;
    end Print;
 
    overriding
    procedure Print (This    : Conditional_Node;
                     Prefix  : String;
-                    Verbose : Boolean) is
+                    Verbose : Boolean;
+                    Sorted  : Boolean)
+   is
       use GNAT.IO;
    begin
       Put_Line (Prefix & "when " & This.Condition.Image & ":");
-      Print (This.Then_Value.Root, Prefix & Tab, Verbose);
+      Print (This.Then_Value.Root, Prefix & Tab, Verbose, Sorted);
       if not This.Else_Value.Is_Empty then
          Put_Line (Prefix & "else:");
-         Print (This.Else_Value.Root, Prefix & Tab, Verbose);
+         Print (This.Else_Value.Root, Prefix & Tab, Verbose, Sorted);
       end if;
    end Print;
 
@@ -475,13 +505,14 @@ package body Alire.Conditional_Trees is
    -----------
 
    procedure Print (This   : Tree;
-                    Prefix : String := "";
-                    And_Or : Boolean := True) is
+                    Prefix : String  := "";
+                    And_Or : Boolean := True;
+                    Sorted : Boolean := False) is
    begin
       if This.Is_Empty then
          GNAT.IO.Put_Line (Prefix & "(empty)");
       else
-         Print (This.Root, Prefix, And_Or);
+         Print (This.Root, Prefix, And_Or, Sorted);
       end if;
    end Print;
 
