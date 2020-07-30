@@ -105,8 +105,12 @@ package Alire.Directories is
    --  modified and can be tested as the client sees fit. 3) If the new file is
    --  proper, the old one is renamed to .prev and the new one takes its place.
 
-   function New_Replacement (File : Any_Path) return Replacer;
-   --  Receives a file to be modified, and prepares a copy in a temporary
+   function New_Replacement (File   : Any_Path;
+                             Backup : Boolean := True)
+                             return Replacer;
+   --  Receives a file to be modified, and prepares a copy in a temporary. If
+   --  Backup, once the replacement is performed, the original file is kept as
+   --  ".prev".
 
    function Editable_Name (This : Replacer) return Any_Path;
    --  Obtain the editable copy
@@ -150,6 +154,7 @@ private
    type Replacer (Length : Positive) is tagged limited record
       Original  : Any_Path (1 .. Length);
       Temp_Copy : Temp_File;
+      Backup    : Boolean := True;
    end record;
 
 end Alire.Directories;
