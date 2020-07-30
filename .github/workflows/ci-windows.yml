@@ -74,16 +74,19 @@ jobs:
     - name: Upload installer
       uses: actions/upload-artifact@main
       with:
+        name: installer-release-package
         path: scripts/installer/alire-*.exe
 
     - name: Upload zip archive
       uses: actions/upload-artifact@main
       with:
+        name: zip-release-package
         path: scripts/installer/alire-*.zip
 
     - name: Upload tar archive
       uses: actions/upload-artifact@main
       with:
+        name: tar-release-package
         path: scripts/installer/alire-*.tar.xz
 
     - name: Upload logs (if failed)
