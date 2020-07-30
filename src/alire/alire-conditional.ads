@@ -36,8 +36,8 @@ package Alire.Conditional with Preelaborate is
    --  Dependency on a version set
 
    function Enumerate is new Conditional.For_Dependencies.Enumerate
-     (Alire.Dependencies.Containers.Lists.List,
-      Alire.Dependencies.Containers.Lists.Append);
+     (Alire.Dependencies.Containers.List,
+      Alire.Dependencies.Containers.Append);
 
    function No_Dependencies return Dependencies is (For_Dependencies.Empty);
 

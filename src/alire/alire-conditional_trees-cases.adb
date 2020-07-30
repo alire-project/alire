@@ -45,7 +45,10 @@ package body Alire.Conditional_Trees.Cases is
    function Leaf_Count (This : Case_Node) return Positive;
 
    overriding
-   procedure Print (This : Case_Node; Prefix : String; Verbose : Boolean)
+   procedure Print (This    : Case_Node;
+                    Prefix  : String;
+                    Verbose : Boolean;
+                    Sorted  : Boolean)
    is
       use GNAT.IO;
       Tab : constant String := "   ";
@@ -59,7 +62,7 @@ package body Alire.Conditional_Trees.Cases is
                         then This.Cases (I).Image_One_Line
                         else ""));
             if Verbose then
-               Print (This.Cases (I), Prefix & Tab & Tab, Verbose);
+               Print (This.Cases (I), Prefix & Tab & Tab, Verbose, Sorted);
             end if;
          end if;
       end loop;
