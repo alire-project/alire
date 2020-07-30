@@ -361,10 +361,13 @@ package body Alire.Directories is
    -- New_Replacement --
    ---------------------
 
-   function New_Replacement (File : Any_Path) return Replacer is
+   function New_Replacement (File   : Any_Path;
+                             Backup : Boolean := True)
+                             return Replacer is
    begin
       return This : constant Replacer := (Length    => File'Length,
                                           Original  => File,
+                                          Backup    => Backup,
                                           Temp_Copy => <>)
       do
          Ada.Directories.Copy_File (File, This.Temp_Copy.Filename);
@@ -380,7 +383,9 @@ package body Alire.Directories is
    begin
       --  Copy around, so never ceases to be a valid manifest in place
 
-      Ada.Directories.Copy_File (This.Original, Backup);
+      if This.Backup then
+         Ada.Directories.Copy_File (This.Original, Backup);
+      end if;
       Ada.Directories.Copy_File (This.Editable_Name, This.Original);
 
       --  The temporary copy will be cleaned up by This.Temp_Copy finalization

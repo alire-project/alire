@@ -179,22 +179,30 @@ package body Alr.Commands.Withing is
       return Filtered : Alire.Conditional.Dependencies do
          if Deps.Is_Iterable then
             for Dep of Deps loop
-               if Dep.Value.Crate /= Requested.Crate then
-                  Filtered := Filtered and
-                    Alire.Conditional.New_Dependency
-                      (Dep.Value.Crate, Dep.Value.Versions);
+               if Dep.Is_Value and then Dep.Value.Crate /= Requested.Crate then
+                  --  A regular static dependency
+                  Filtered := Filtered and Dep;
+               elsif not Dep.Is_Value then
+                  --  Something else (dynamic expression) that we cannot manage
+                  --  programmatically.
+                  Filtered := Filtered and Dep;
+                  Trace.Warning
+                    ("Skipping unsupported conditional dependency: "
+                     & Dep.Image_One_Line);
                else
                   --  Simply don't add the one we want to remove
                   Found := True;
                end if;
             end loop;
          else
-            Trace.Warning ("Skipping unsupported conditional dependency");
+            Trace.Warning ("Skipping unsupported conditional dependency: "
+                           & Deps.Image_One_Line);
          end if;
 
          if not Found then
             Trace.Warning
-              ("Crate slated for removal is not among direct dependencies: "
+              ("Crate slated for removal is not among"
+               & " direct static dependencies: "
                & (+Requested.Crate));
          end if;
       end return;
@@ -248,6 +256,8 @@ package body Alr.Commands.Withing is
 
          Alire.Manifest.Append (Root.Current.Crate_File,
                                 Deps_Diff.Added);
+         Alire.Manifest.Remove (Root.Current.Crate_File,
+                                Deps_Diff.Removed);
          Trace.Detail ("Manifest updated, fetching dependencies now");
 
          --  And apply changes (will also generate new lockfile)

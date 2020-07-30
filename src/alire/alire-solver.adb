@@ -98,7 +98,7 @@ package body Alire.Solver is
    -- Is_Resolvable --
    -------------------
 
-   function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+   function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;
                            Current : Solution;
                            Options : Query_Options := Default_Options)
@@ -109,7 +109,7 @@ package body Alire.Solver is
    -- Resolve --
    -------------
 
-   function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+   function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
                      Current : Solution;
                      Options : Query_Options := Default_Options)
@@ -569,7 +569,7 @@ package body Alire.Solver is
       --  Otherwise expand the full dependencies
 
       Expand (Expanded  => Empty,
-              Target    => Full_Dependencies,
+              Target    => Full_Dependencies.Evaluate (Props),
               Remaining => Empty,
               Solution  => Solution);
 
