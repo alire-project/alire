@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>Alire</Name>
+    <Version>@VERSION@</Version>
+    <Title>Alire</Title>
+    <Publisher>The Alire Developers</Publisher>
+    <StartMenuDir>Alire</StartMenuDir>
+    <InstallerApplicationIcon>../../alr_installer_icon</InstallerApplicationIcon>
+    <InstallerWindowIcon>../../alr_installer_icon</InstallerWindowIcon>
+</Installer>

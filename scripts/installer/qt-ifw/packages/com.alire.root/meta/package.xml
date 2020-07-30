@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<Package>
+  <DisplayName>Alire</DisplayName>
+  <Description>Ada/SPARK Source Package Manager</Description>
+  <Version>@VERSION@</Version>
+  <ReleaseDate>@DATE@</ReleaseDate>
+  <Default>true</Default>
+  <Script>installscript.js</Script>
+</Package>

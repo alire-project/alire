@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+
+_thisdir="$(dirname $0)"
+test "${_thisdir}" = "." && _thisdir=${PWD}
+_ifwroot="${_thisdir}"/qt-ifw
+_arch=$(uname -m)
+_date=$(date +'%Y%m%d')
+_dateqif=$(date +'%Y-%m-%d')
+_version=${ALR_INSTALL_OS}-$(git log -1 --pretty=format:%h)-${_date}
+_filename=alire-${_arch}-${_version}.exe
+_filename_tar=alire-${_arch}-${_version}.tar.xz
+_filename_zip=alire-${_arch}-${_version}.zip
+_log="${_thisdir}"/tmp/installer-${_arch}-${_version}.log
+if [ "${_arch}" = "x86_64" ]; then
+  _bitness=64
+else
+  _bitness=32
+fi
+_archivegen=archivegen
+_binarycreator=binarycreator
+_installerbase=$(which installerbase)
+_newalirebase="${_thisdir}"/tmp/newalire
+_newalire=${_newalirebase}/alire
+
+declare -a undo_commands
+
+_exitcode=5
+
+exit_with_undo() {
+  for _cmd in ${undo_commands[@]}; do
+    eval "${_cmd}" | tee -a "${_log}"
+  done
+  exit ${_exitcode}
+}
+
+exit_cleanly() {
+  _exitcode=$1; shift;
+  local _message=$1; shift;
+  echo "${_message}" | tee -a "${_log}"
+  exit_with_undo
+}
+
+do_seds() {
+  find "${_ifwroot}" \( -name "package.xml" -or -name "config.xml" \) -exec sed -i "s|@DATE@|${_dateqif}|g" "{}" \;
+  find "${_ifwroot}" \( -name "package.xml" -or -name "config.xml" \) -exec sed -i "s|@VERSION@|${_version}|g" "{}" \;
+  undo_commands+=("undo_seds")
+}
+
+undo_seds() {
+  find "${_ifwroot}" \( -name "package.xml" -or -name "config.xml" \) -exec sed -i "s|<ReleaseDate>${_dateqif}<|<ReleaseDate>@DATE@<|g" "{}" \;
+  find "${_ifwroot}" \( -name "package.xml" -or -name "config.xml" \) -exec sed -i "s|<Version>${_version}<|<Version>@VERSION@<|g" "{}" \;
+}
+
+create_archives() {
+  local _data="${_ifwroot}"/packages/com.alire.root/data
+  [ -d "${_data}" ] && rm -rf "${_data}"
+  mkdir -p "${_data}"
+
+  local _dirs="${_newalire}/"*
+  local _compress_cmd="${_archivegen} --compression 9 \"${_data}/alire.7z\" ${_dirs}"
+  pushd / > /dev/null
+    echo "Run: ${_compress_cmd} ..." | tee -a "${_log}"
+    eval "${_compress_cmd}" 2>&1 | tee -a "${_log}"
+    _result=$?
+    if [ "${_result}" -eq "0" ]; then
+          echo " archivegen succeeded. Created ${_data}/alire.7z" | tee -a "${_log}"
+    else
+          exit_cleanly "3" "archivegen failed. See ${_log}"
+    fi
+  popd > /dev/null
+
+  pushd "${_newalirebase}" > /dev/null
+    # Tar archive
+    local _compress_tar="/usr/bin/tar --transform='s/:/_/g' --dereference --hard-dereference -cJf \"${_thisdir}/${_filename_tar}\" alire"
+    echo "Run: ${_compress_tar} ..." | tee -a "${_log}"
+    eval "${_compress_tar}" 2>&1 | tee -a "${_log}"
+    _result=$?
+    if [ "${_result}" -eq "0" ]; then
+          echo " tar succeeded. Created " | tee -a "${_log}"
+    else
+          die "Alire tar compressing fail. See ${_log}"
+    fi
+
+	# ZIP archive
+    local _compress_zip="/usr/bin/zip -r \"${_thisdir}/${_filename_zip}\" alire"
+    echo "Run: ${_compress_zip} ..." | tee -a "${_log}"
+    eval "${_compress_zip}" 2>&1 | tee -a "${_log}"
+    _result=$?
+    if [ "${_result}" -eq "0" ]; then
+          echo " zip succeeded. Created " | tee -a "${_log}"
+    else
+          die "Alire zip compressing fail. See ${_log}"
+    fi
+
+  popd > /dev/null
+}
+
+# Add -v to get more information.
+make_installer() {
+  eval "\"${_binarycreator}\" \
+    -t \"${_installerbase}\" \
+    -p \"${_ifwroot}/packages\" \
+    -c \"${_ifwroot}/config/config.xml\" \
+    --offline-only \
+    \"${_filename}\" \
+    -v"  | tee -a "${_log}"
+}
+
+trap exit_with_undo 1 2 15
+
+create_chroot_system() {
+  [ -d "${_newalirebase}" ] && rm -rf "${_newalirebase}"
+  mkdir -p "${_newalire}"
+  pushd "${_newalire}" > /dev/null
+
+	mkdir -p bin/
+	cp -r "$ALR_INSTALL_DIR"/* .
+
+	mkdir -p share/alire/
+	cp "${_thisdir}/alr_icon.ico" share/alire/
+  popd > /dev/null
+}
+
+if [[ -z "$ALR_INSTALL_DIR" ]]
+then
+	echo "Please set \$ALR_INSTALL_DIR"
+	exit 1
+fi
+if [[ -z "$ALR_INSTALL_OS" ]]
+then
+	echo "Please set \$ALR_INSTALL_OS"
+	exit 1
+fi
+
+if ! [ -x "$(command -v ${_archivegen})" ]; then
+  echo "Error: ${_archivegen} is not installed." >&2
+  exit 1
+fi
+if ! [ -x "$(command -v ${_binarycreator})" ]; then
+  echo "Error: ${_binarycreator} is not installed." >&2
+  exit 1
+fi
+if ! [ -x "$(command -v ${_installerbase})" ]; then
+  echo "Error: ${_installerbase} is not installed." >&2
+  exit 1
+fi
+if ! [ -x "$(command -v zip)" ]; then
+  echo "Error: zip is not installed." >&2
+  exit 1
+fi
+if ! [ -x "$(command -v tar)" ]; then
+  echo "Error: tar is not installed." >&2
+  exit 1
+fi
+
+mkdir -p "${_newalire}"
+if [ -f "${_log}" ]; then
+  rm "${_log}"
+fi
+
+echo "Creating Alire install dir system ${_newalire}" | tee -a "${_log}"
+create_chroot_system
+
+do_seds
+create_archives
+make_installer
+
+ls -la
+
+exit_cleanly "0" "All done, see ${_filename}"

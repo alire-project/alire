@@ -48,6 +48,47 @@ jobs:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
 
+    - name: Install alr
+      run: gprinstall -p -P alr_env --prefix=${{ runner.temp }}/alr_install
+
+    - name: Install qt-installer-framework in msys2
+      run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S mingw64/mingw-w64-x86_64-qt-installer-framework
+
+    - name: Add msys2 /mingw64/bin to the path (for qt-installer-framework)
+      run: echo '::add-path::C:\Users\runneradmin\.cache\alire\msys64\mingw64\bin'
+
+    - name: Install zip in msys2
+      run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S zip
+
+    - name: Add msys2 /usr/bin to the path (for zip)
+      run: echo '::add-path::C:\Users\runneradmin\.cache\alire\msys64\usr\bin'
+
+    - name: Run installer build script
+      run: bash make-alire-installer
+      shell: bash
+      working-directory: scripts/installer/
+      env:
+        ALR_INSTALL_DIR: ${{ runner.temp }}/alr_install
+        ALR_INSTALL_OS: ${{ runner.os }}
+
+    - name: Upload installer
+      uses: actions/upload-artifact@main
+      with:
+        name: installer-release-package
+        path: scripts/installer/alire-*.exe
+
+    - name: Upload zip archive
+      uses: actions/upload-artifact@main
+      with:
+        name: zip-release-package
+        path: scripts/installer/alire-*.zip
+
+    - name: Upload tar archive
+      uses: actions/upload-artifact@main
+      with:
+        name: tar-release-package
+        path: scripts/installer/alire-*.tar.xz
+
     - name: Upload logs (if failed)
       if: failure()
       uses: actions/upload-artifact@master
