@@ -225,7 +225,12 @@ package body Alire.TOML_Adapters is
       end loop;
 
       if Errored then
-         return Outcome_Failure (+Message);
+         if Force then
+            Recoverable_Error (+Message);
+            return Outcome_Success;
+         else
+            return Outcome_Failure (+Message);
+         end if;
       else
          return Outcome_Success;
       end if;
@@ -238,7 +243,7 @@ package body Alire.TOML_Adapters is
    procedure Report_Extra_Keys (Queue : Key_Queue) is
       Result : constant Outcome := Queue.Report_Extra_Keys;
    begin
-      if not Result.Success then
+      if not Force and then not Result.Success then
          raise Alire.Checked_Error with Errors.Set (Message (Result));
       end if;
    end Report_Extra_Keys;
