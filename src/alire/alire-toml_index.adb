@@ -10,6 +10,7 @@ with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
 --  index, this seems a decent place to force inclusion in the build closure.
 
 with Alire.Index;
+with Alire.Manifest;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
 with Alire.TOML_Keys;
@@ -395,7 +396,8 @@ package body Alire.TOML_Index is
            (File_Name, Releases.From_TOML
               (TOML_Adapters.From
                    (Value,
-                    Context => "Loading release from " & File_Name)));
+                    Context => "Loading release from " & File_Name),
+               Manifest.Index));
       end if;
    end Load_From_Catalog_Internal;
 

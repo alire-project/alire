@@ -35,7 +35,7 @@ package body Alire.Manifest is
       Close (File);
 
       --  Attempt loading of the new file as a double check
-      if not Is_Valid (Replacer.Editable_Name) then
+      if not Is_Valid (Replacer.Editable_Name, Local) then
          raise Program_Error
            with Errors.Set ("Addition of dependencies to manifest failed");
       end if;
@@ -57,10 +57,10 @@ package body Alire.Manifest is
    -- Is_Valid --
    --------------
 
-   function Is_Valid (Name : Any_Path) return Boolean is
+   function Is_Valid (Name : Any_Path; Source : Sources) return Boolean is
    begin
       --  Check we are able to load the manifest file
-      if Releases.From_Manifest (Name).Version_Image /= "" then
+      if Releases.From_Manifest (Name, Source).Version_Image /= "" then
          Trace.Debug ("Checked valid manifest at " & Name);
          return True;
       else
@@ -254,7 +254,7 @@ package body Alire.Manifest is
 
       --  Attempt loading of the new file as a double check. This should never
       --  fail because we won't touch anything that's clearly removable.
-      if not Is_Valid (Replacer.Editable_Name) then
+      if not Is_Valid (Replacer.Editable_Name, Local) then
          raise Program_Error
            with Errors.Set ("Removal of dependencies in manifest failed");
       end if;
