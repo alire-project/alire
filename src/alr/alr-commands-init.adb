@@ -14,11 +14,8 @@ with Alr.Root;
 with Alr.Utils;
 
 with GNATCOLL.VFS;
-with Alr.Bootstrap;
 
 package body Alr.Commands.Init is
-
-   use all type Bootstrap.Session_States;
 
    Sed_Pattern : constant String := "PROJECT_SKEL";
 
@@ -235,7 +232,7 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen
          --  already.
-         if Session_State = Release then
+         if Root.Current.Exists then
             if Name = Root.Current.Release.Name_Str then
                Trace.Info ("Already in working copy, skipping initialization");
             else

@@ -4,9 +4,10 @@ with Ada.Text_IO;
 
 with GNAT.Regexp;
 
+with Alire.Directories;
 with Alire.Environment;
 with Alire.Platform;
-with Alire.Directories;
+with Alire.Root;
 
 with TOML.File_IO;
 
@@ -359,7 +360,7 @@ package body Alire.Config is
    begin
       for Lvl in Level loop
 
-         if Lvl /= Local or else Root.Current.Is_Valid then
+         if Lvl /= Local or else Root.Current.Exists then
 
             declare
                Config : constant TOML_Value :=

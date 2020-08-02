@@ -10,6 +10,13 @@ package body Alire.Root is
    -- Current --
    -------------
 
+   function Current return Roots.Optional.Root
+   is (Roots.Optional.Detect_Root (Directories.Detect_Root_Path));
+
+   -------------
+   -- Current --
+   -------------
+
    function Current return Roots.Root is
       use Alire.Directories;
       Path      : constant String := Directories.Detect_Root_Path;
@@ -27,14 +34,11 @@ package body Alire.Root is
                Platform_Properties);
          exception
             when E : others =>
-               Trace.Debug ("Exception while loading crate file is:");
-               Log_Exception (E, Debug);
-
-               return Roots.New_Invalid_Root.With_Reason
+               Raise_Checked_Error
                  ("Failed to load " & File & ": " & Errors.Get (E));
          end;
       else
-         return Roots.New_Invalid_Root.With_Reason
+         Raise_Checked_Error
            ("Could not detect a session folder" &
               " at current or parent locations");
       end if;

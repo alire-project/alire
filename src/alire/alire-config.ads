@@ -1,6 +1,5 @@
 with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 with Alire.Utils;
-with Alire.Root;
 
 with TOML;
 
@@ -69,8 +68,7 @@ package Alire.Config is
 
    type Level is (Global, Local);
 
-   function Filepath (Lvl : Level) return Absolute_Path
-     with Pre => Lvl /= Local or else Alire.Root.Current.Is_Valid;
+   function Filepath (Lvl : Level) return Absolute_Path;
    --  Return path of the configuration file coresponding to the given
    --  configuration level.
 

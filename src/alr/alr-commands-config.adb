@@ -41,7 +41,7 @@ package body Alr.Commands.Config is
          return;
       end if;
 
-      if not Cmd.Global and then not Alire.Root.Current.Is_Valid then
+      if not Cmd.Global and then not Alire.Root.Current.Success then
          Reportaise_Command_Failed
            ("Not in an Alire project directory." &
               " Use --global to edit the global configuration.");

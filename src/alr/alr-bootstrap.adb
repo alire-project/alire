@@ -27,14 +27,14 @@ package body Alr.Bootstrap is
    -- Session_State --
    -------------------
 
-   function Session_State return Session_States is
+   function Session_State return String is
    begin
-      if Root.Current.Is_Valid then
-         return Release;
-      elsif Alire.Directories.Detect_Root_Path /= "" then
-         return Broken;
+      if Alire.Directories.Detect_Root_Path = "" then
+         return "no workspace";
+      elsif Root.Current.Is_Stored then
+         return "valid workspace";
       else
-         return Outside;
+         return "broken workspace";
       end if;
    end Session_State;
 
@@ -49,7 +49,7 @@ package body Alr.Bootstrap is
         Ada.Calendar.Clock - Alire_Early_Elaboration.Start;
    begin
       return
-        "(" & Session_State'Img & ") (" &
+        "(" & Session_State & ") (" &
         Utils.Trim (Alire.Index.Release_Count'Img) & " releases indexed)" &
         (" (loaded in" & Milliseconds'Image (Milliseconds (Elapsed)) & "s)");
    end Status_Line;

@@ -1,6 +1,6 @@
 with Alire.Crates;
 with Alire.Manifest;
-with Alire.Roots;
+with Alire.Roots.Optional;
 
 package body Alire.Dependencies.States is
 
@@ -12,16 +12,17 @@ package body Alire.Dependencies.States is
                               Workspace : Any_Path)
                               return Containers.Release_H
    is
-      Opt_Root : constant Roots.Root := Roots.Detect_Root (Workspace);
+      Opt_Root : constant Roots.Optional.Root :=
+                   Roots.Optional.Detect_Root (Workspace);
    begin
-      if Opt_Root.Is_Valid then
-         if Opt_Root.Release.Name = Crate then
-            return Containers.To_Release_H (Opt_Root.Release);
+      if Opt_Root.Success then
+         if Opt_Root.Value.Release.Name = Crate then
+            return Containers.To_Release_H (Opt_Root.Value.Release);
          else
             Raise_Checked_Error ("crate mismatch: expected "
                                  & Crate.TTY_Image
                                  & " but found "
-                                 & Opt_Root.Release.Name.TTY_Image
+                                 & Opt_Root.Value.Release.Name.TTY_Image
                                  & " at " & TTY.URL (Workspace));
          end if;
       else

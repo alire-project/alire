@@ -25,6 +25,45 @@ package body Alire.Roots is
       end return;
    end Build_Context;
 
+   ------------------
+   -- Check_Stored --
+   ------------------
+
+   procedure Check_Stored (This : Root) is
+      Info : constant String := This.Storage_Error;
+   begin
+      if Info /= "" then
+         Raise_Checked_Error (Info);
+      end if;
+   end Check_Stored;
+
+   ---------------
+   -- Is_Stored --
+   ---------------
+
+   function Storage_Error (This : Root) return String is
+      use Ada.Directories;
+   begin
+      if not Exists (This.Working_Folder) then
+         return "alire subfolder not found";
+      elsif Kind (This.Working_Folder) /= Directory then
+         return
+           "Expected alire folder but found a: " &
+           Kind (This.Working_Folder)'Img;
+      elsif not Exists (This.Crate_File) then
+         return "Manifest file not found in alire folder";
+      elsif Kind (This.Crate_File) /= Ordinary_File then
+         return
+           "Expected ordinary manifest file but found a: "
+           & Kind (This.Crate_File)'Img;
+      elsif not Alire.Manifest.Is_Valid (This.Crate_File, Alire.Manifest.Local)
+      then
+         return "Manifest is not loadable: " & This.Crate_File;
+      else
+         return "";
+      end if;
+   end Storage_Error;
+
    -----------------
    -- Detect_Root --
    -----------------
@@ -36,8 +75,8 @@ package body Alire.Roots is
                      Path / Alire.Paths.Working_Folder_Inside_Root;
    begin
       if not Is_Directory (Alire_Path) then
-         Trace.Debug ("No alire folder while detecting root at " & Path);
-         return New_Invalid_Root.With_Reason ("No alire metadata directory");
+         Raise_Checked_Error
+           ("No alire folder while detecting root at " & Path);
       end if;
 
       declare
@@ -57,15 +96,8 @@ package body Alire.Roots is
                                 Env  => Alire.Root.Platform_Properties);
             end;
          else
-            Trace.Debug ("No crate file found at " & Alire_Path);
-            return New_Invalid_Root.With_Reason ("no crate file found");
+            Raise_Checked_Error ("No crate file found at " & Alire_Path);
          end if;
-      exception
-         when E : others =>
-            Trace.Debug ("Crate detection failed while loading toml file:");
-            Log_Exception (E);
-            return New_Invalid_Root.With_Reason
-              ("toml file found but not loadable: " & Crate_File);
       end;
    end Detect_Root;
 
@@ -174,42 +206,13 @@ package body Alire.Roots is
    is (This.Environment);
 
    --------------
-   -- Is_Valid --
-   --------------
-
-   function Is_Valid (This : Root) return Boolean is (This.Valid);
-
-   ----------------------
-   -- New_Invalid_Root --
-   ----------------------
-
-   function New_Invalid_Root return Root is
-     (Valid => False, Reason => +"");
-
-   -----------------
-   -- With_Reason --
-   -----------------
-
-   function With_Reason (This : Root; Reason : String) return Root is
-     (Valid  => False,
-      Reason => +Reason);
-
-   --------------------
-   -- Invalid_Reason --
-   --------------------
-
-   function Invalid_Reason (This : Root) return String is
-     (+This.Reason);
-
-   --------------
    -- New_Root --
    --------------
 
    function New_Root (Name : Crate_Name;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
-     (True,
-      Env,
+     (Env,
       +Path,
       Containers.To_Release_H (Releases.New_Working_Release (Name)));
 
@@ -220,8 +223,7 @@ package body Alire.Roots is
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
-     (True,
-      Env,
+     (Env,
       +Path,
       Containers.To_Release_H (R));
 

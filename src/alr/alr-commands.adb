@@ -14,7 +14,6 @@ with Alire.Features.Index;
 with Alire.Lockfiles;
 with Alire.Platforms;
 with Alire.Roots;
-with Alire.Roots.Check_Valid;
 with Alire.Solutions;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
@@ -413,13 +412,9 @@ package body Alr.Commands is
    procedure Requires_Valid_Session (Sync : Boolean := True) is
       use Alire;
 
-      Checked : constant Alire.Roots.Root :=
-        Alire.Roots.Check_Valid (Root.Current);
+      Checked : constant Alire.Roots.Root := Root.Current;
    begin
-      if not Checked.Is_Valid then
-         Reportaise_Command_Failed
-           ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
-      end if;
+      Checked.Check_Stored;
 
       --  For workspaces created pre-lockfiles, or with older format, recreate:
 
