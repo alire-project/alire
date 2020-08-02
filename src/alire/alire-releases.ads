@@ -4,6 +4,7 @@ with Ada.Tags;
 with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Interfaces;
+with Alire.Manifest;
 with Alire.Milestones;
 with Alire.Origins;
 with Alire.Properties.Actions;
@@ -272,9 +273,13 @@ package Alire.Releases is
    --  Return the dependency that represents this very release (crate=version),
    --  wrapped as a dependency tree with a single value.
 
-   function From_Manifest (File_Name : Any_Path) return Release;
+   function From_Manifest (File_Name : Any_Path;
+                           Source    : Manifest.Sources)
+                           return Release;
 
-   function From_TOML (From : TOML_Adapters.Key_Queue) return Release;
+   function From_TOML (From   : TOML_Adapters.Key_Queue;
+                       Source : Manifest.Sources)
+                       return Release;
    --  Load a release from a TOML table
 
    overriding
@@ -313,8 +318,9 @@ private
       Available    : Requisites.Tree;
    end record;
 
-   function From_TOML (This : in out Release;
-                       From :        TOML_Adapters.Key_Queue)
+   function From_TOML (This   : in out Release;
+                       From   :        TOML_Adapters.Key_Queue;
+                       Source :        Manifest.Sources)
                        return Outcome;
    --  Fill in an already existing release
 

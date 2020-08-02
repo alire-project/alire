@@ -4,6 +4,7 @@ with Ada.Directories;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Lockfiles;
+with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Root;
@@ -47,7 +48,7 @@ package body Alire.Roots is
          if Crate_File /= "" then
             declare
                Release : constant Releases.Release :=
-                           Releases.From_Manifest (Crate_File);
+                           Releases.From_Manifest (Crate_File, Manifest.Local);
             begin
                --  Crate loaded properly, we can return a valid root here
                Trace.Debug ("Valid root found at " & Path);
