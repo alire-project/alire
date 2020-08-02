@@ -701,6 +701,9 @@ package body Alire.Releases is
       use TOML_Adapters;
       Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
+      --  Metadata version
+      Root.Set (TOML_Keys.Metadata_Version, +Index.Version.Image);
+
       --  Name
       Root.Set (TOML_Keys.Name, +R.Name_Str);
 
