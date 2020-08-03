@@ -1,0 +1,11 @@
+description = "Shiny new project"
+maintainers = ["your@email.here"]
+maintainers-logins = ["github-username"]
+metadata-version = "0.2.0"
+name = "crate"
+version = "1.0.0"
+
+badproperty = "If this manifest were used this will cause an error"
+
+[origin]
+url = "file:.."
