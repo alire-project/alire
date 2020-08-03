@@ -288,6 +288,9 @@ package Alire.Releases is
    overriding
    function To_YAML (R : Release) return String;
 
+   procedure To_File (R : Release; Filename : String);
+   --  Directly write the release manifest to a file
+
    function Version_Image (R : Release) return String;
 
 private
