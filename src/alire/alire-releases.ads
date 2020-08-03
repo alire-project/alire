@@ -27,10 +27,7 @@ package Alire.Releases is
 
 --     subtype Dependency_Vector is Dependencies.Vectors.Vector;
 
-   type Release (<>) is
-     new Interfaces.Tomifiable
-     and Interfaces.Yamlable
-   with private;
+   type Release (<>) is new Interfaces.Yamlable with private;
 
    function "<" (L, R : Release) return Boolean;
 
@@ -282,13 +279,16 @@ package Alire.Releases is
                        return Release;
    --  Load a release from a TOML table
 
-   overriding
-   function To_TOML (R : Release) return TOML.TOML_Value;
+   function To_TOML (R      : Release;
+                     Format : Manifest.Sources)
+                     return TOML.TOML_Value;
 
    overriding
    function To_YAML (R : Release) return String;
 
-   procedure To_File (R : Release; Filename : String);
+   procedure To_File (R        : Release;
+                      Filename : String;
+                      Format   : Manifest.Sources);
    --  Directly write the release manifest to a file
 
    function Version_Image (R : Release) return String;
@@ -306,9 +306,8 @@ private
    --  Properties that R has under platform properties P
 
    type Release (Prj_Len,
-                 Notes_Len : Natural) is
-     new Interfaces.Tomifiable
-     and Interfaces.Yamlable
+                 Notes_Len : Natural)
+   is new Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
       Alias        : UString; -- I finally gave up on constraints
