@@ -636,7 +636,9 @@ package body Alire.Releases is
       --  Properties
 
       TOML_Load.Load_Crate_Section
-        (Crates.Release_Section,
+        ((case Source is
+            when Manifest.Index => Crates.Index_Release,
+            when Manifest.Local => Crates.Local_Release),
          From,
          This.Properties,
          This.Dependencies,
