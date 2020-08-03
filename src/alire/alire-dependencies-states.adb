@@ -155,8 +155,10 @@ package body Alire.Dependencies.States is
 
             when Missed => null;
             when Solved =>
-               Table.Set (Keys.Release,
-                          This.Fulfilled.Release.Constant_Reference.To_TOML);
+               Table.Set
+                 (Keys.Release,
+                  This.Fulfilled.Release.Constant_Reference.To_TOML
+                    (Manifest.Index));
          end case;
       end To_TOML;
 

@@ -5,6 +5,7 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Lockfiles;
+with Alire.Manifest;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Properties.Actions.Executor;
@@ -249,7 +250,7 @@ package body Alire.Workspace is
 
       Directories.Backup_If_Existing (Root.Crate_File);
 
-      Release.To_File (Root.Crate_File);
+      Release.To_File (Root.Crate_File, Manifest.Local);
    end Generate_Manifest;
 
    ------------
