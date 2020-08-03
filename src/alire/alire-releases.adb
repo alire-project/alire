@@ -1,4 +1,5 @@
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 
 with Alire.Crates;
 with Alire.Defaults;
@@ -13,6 +14,8 @@ with GNAT.IO; -- To keep preelaborable
 
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
+
+with TOML.File_IO;
 
 package body Alire.Releases is
 
@@ -689,6 +692,25 @@ package body Alire.Releases is
              (R.Name,
               Semver.Extended.To_Extended
                 (Semver.Basic.Exactly (R.Version)))));
+
+   -------------
+   -- To_File --
+   -------------
+
+   procedure To_File (R : Release; Filename : String) is
+      use Ada.Text_IO;
+      File : File_Type;
+   begin
+      Create (File, Out_File, Filename);
+      TOML.File_IO.Dump_To_File (R.To_TOML, File);
+      Close (File);
+   exception
+      when others =>
+         if Is_Open (File) then
+            Close (File);
+         end if;
+         raise;
+   end To_File;
 
    -------------
    -- To_TOML --
