@@ -1,7 +1,6 @@
 with Ada.Calendar;
 with Ada.Directories;
 
-with Alire.Directories;
 with Alire.Environment;
 with Alire.Lockfiles;
 with Alire.Manifest;
@@ -69,36 +68,27 @@ package body Alire.Roots is
    -----------------
 
    function Detect_Root (Path : Any_Path) return Root is
-      use Alire.OS_Lib;
       use GNAT.OS_Lib;
-      Alire_Path : constant Any_Path :=
-                     Path / Alire.Paths.Working_Folder_Inside_Root;
+      Possible_Root : constant Root :=
+                        New_Root (Name => +"unused",
+                                  Path => Path,
+                                  Env  => Properties.No_Properties);
    begin
-      if not Is_Directory (Alire_Path) then
-         Raise_Checked_Error
-           ("No alire folder while detecting root at " & Path);
+      if Is_Regular_File (Possible_Root.Crate_File) then
+         declare
+            Release : constant Releases.Release :=
+                        Releases.From_Manifest (Possible_Root.Crate_File,
+                                                Manifest.Local);
+         begin
+            --  Crate loaded properly, we can return a valid root here
+            Trace.Debug ("Valid root found at " & Path);
+            return New_Root (R    => Release,
+                             Path => Ada.Directories.Full_Name (Path),
+                             Env  => Alire.Root.Platform_Properties);
+         end;
+      else
+         Raise_Checked_Error ("No crate file found at " & Path);
       end if;
-
-      declare
-         Crate_File : constant String := Directories.Find_Single_File
-           (Path      => Alire_Path,
-            Extension => ".toml");
-      begin
-         if Crate_File /= "" then
-            declare
-               Release : constant Releases.Release :=
-                           Releases.From_Manifest (Crate_File, Manifest.Local);
-            begin
-               --  Crate loaded properly, we can return a valid root here
-               Trace.Debug ("Valid root found at " & Path);
-               return New_Root (R    => Release,
-                                Path => Ada.Directories.Full_Name (Path),
-                                Env  => Alire.Root.Platform_Properties);
-            end;
-         else
-            Raise_Checked_Error ("No crate file found at " & Alire_Path);
-         end if;
-      end;
    end Detect_Root;
 
    ------------------------------
@@ -281,9 +271,7 @@ package body Alire.Roots is
    ----------------
 
    function Crate_File (This : Root) return Absolute_Path is
-     (This.Working_Folder /
-        This.Release.Constant_Reference.Name_Str &
-        Paths.Crate_File_Extension_With_Dot);
+     (Path (This) / "alire" & Paths.Crate_File_Extension_With_Dot);
 
    ----------------------
    -- Dependencies_Dir --

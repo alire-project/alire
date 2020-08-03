@@ -1,7 +1,4 @@
 with Alire.Directories;
-with Alire.Errors;
-with Alire.Manifest;
-with Alire.Paths;
 with Alire.Releases;
 
 package body Alire.Root is
@@ -22,21 +19,7 @@ package body Alire.Root is
       Path      : constant String := Directories.Detect_Root_Path;
    begin
       if Path /= "" then
-         declare
-            File    : constant String :=
-              Directories.Find_Single_File
-                (Path      => Path / Paths.Working_Folder_Inside_Root,
-                 Extension => Paths.Crate_File_Extension_With_Dot);
-         begin
-            return Roots.New_Root
-              (Releases.From_Manifest (File, Manifest.Local),
-               Path,
-               Platform_Properties);
-         exception
-            when E : others =>
-               Raise_Checked_Error
-                 ("Failed to load " & File & ": " & Errors.Get (E));
-         end;
+         return Roots.Detect_Root (Path);
       else
          Raise_Checked_Error
            ("Could not detect a session folder" &
@@ -44,10 +27,18 @@ package body Alire.Root is
       end if;
    end Current;
 
+   -------------------------
+   -- Platform_Properties --
+   -------------------------
+
    Environment : Properties.Vector;
 
    function Platform_Properties return Properties.Vector
    is (Environment);
+
+   -----------------------------
+   -- Set_Platform_Properties --
+   -----------------------------
 
    procedure Set_Platform_Properties (Env : Properties.Vector) is
    begin
