@@ -2,7 +2,8 @@ with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Paths;
+with Alire.Properties;
+with Alire.Roots;
 
 package body Alire.Directories is
 
@@ -67,33 +68,36 @@ package body Alire.Directories is
    is
       use Ada.Directories;
 
-      function Is_Candidate_Folder return Boolean;
+      ---------------------------
+      -- Find_Candidate_Folder --
+      ---------------------------
 
-      -------------------------
-      -- Is_Candidate_Folder --
-      -------------------------
-
-      function Is_Candidate_Folder return Boolean is
+      function Find_Candidate_Folder (Path : Any_Path)
+                                      return Any_Path
+      is
+         Possible_Root : constant Roots.Root := Roots.New_Root
+           (Name => +"unused",
+            Path => Path,
+            Env  => Properties.No_Properties);
       begin
-         return Exists (Current / Paths.Working_Folder_Inside_Root) and then
-           Find_Single_File (Current / Paths.Working_Folder_Inside_Root,
-                             Paths.Crate_File_Extension_With_Dot) /= "";
-      end Is_Candidate_Folder;
-
-      G : Guard (Enter (Starting_At)) with Unreferenced;
-   begin
-      Trace.Debug ("Starting root search at " & Current);
-      loop
-         if Is_Candidate_Folder then
-            return Current;
+         Trace.Debug ("Looking for alire metadata at: " & Path);
+         if
+           Exists (Possible_Root.Crate_File) and then
+           Kind (Possible_Root.Crate_File) = Ordinary_File
+         then
+            return Path;
          else
-            Set_Directory (Containing_Directory (Current));
-            Trace.Debug ("Going up to " & Current);
+            return Find_Candidate_Folder (Containing_Directory (Path));
          end if;
-      end loop;
-   exception
-      when Use_Error =>
-         return ""; -- There's no containing folder (hence we're at root)
+      exception
+         when Use_Error =>
+            Trace.Debug
+              ("Root directory reached without finding alire metadata");
+            return ""; -- There's no containing folder (hence we're at root)
+      end Find_Candidate_Folder;
+
+   begin
+      return Find_Candidate_Folder (Starting_At);
    end Detect_Root_Path;
 
    ----------------------

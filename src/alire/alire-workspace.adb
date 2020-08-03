@@ -13,8 +13,6 @@ with Alire.Roots;
 with Alire.Solutions.Diffs;
 with Alire.Workspace;
 
-with GNATCOLL.VFS;
-
 package body Alire.Workspace is
 
    use type Conditional.Dependencies;
@@ -213,6 +211,11 @@ package body Alire.Workspace is
                                Env);
          begin
 
+            Ada.Directories.Create_Path (Root.Working_Folder);
+
+            --  Generate the authoritative manifest from index information for
+            --  eventual use of the gotten crate as a local workspace.
+
             Workspace.Generate_Manifest
               (Release.Whenever (Env), -- TODO: until dynamic export
                Root);
@@ -237,16 +240,10 @@ package body Alire.Workspace is
    procedure Generate_Manifest (Release : Releases.Release;
                                 Root    : Roots.Root := Alire.Root.Current)
    is
-      use GNATCOLL.VFS;
-      F : constant Virtual_File := Create (+Root.Crate_File,
-                                           Normalize => True);
    begin
       Trace.Debug ("Generating " & Release.Name_Str & ".toml file for "
                    & Release.Milestone.Image & " with"
                    & Release.Dependencies.Leaf_Count'Img & " dependencies");
-
-      --  Ensure working folder exists (might not upon first get)
-      F.Get_Parent.Make_Dir;
 
       Directories.Backup_If_Existing (Root.Crate_File);
 
