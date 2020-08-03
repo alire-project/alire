@@ -9,7 +9,8 @@ package body Alire.Roots.Optional is
       if Path /= "" then
          return New_Result (Roots.Detect_Root (Path));
       else
-         return Outcome_Failure ("No candidate folder given");
+         return Outcome_Failure ("No candidate folder given", Report => False);
+         --  No need to report in this case, this is normal use
       end if;
    exception
       when E : others =>
