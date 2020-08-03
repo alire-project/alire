@@ -1,0 +1,11 @@
+description = "Shiny new project"
+maintainers = ["your@email.here"]
+maintainers-logins = ["github-username"]
+metadata-version = "0.2.0"
+name = "crate"
+version = "1.0.0"
+
+# We check the following property is absent after `alr get` completes in the
+# regular manifest, but present in the *.upstream backup
+
+badproperty = "a malicious property that is not in the index metadata"
