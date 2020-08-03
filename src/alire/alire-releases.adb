@@ -642,13 +642,20 @@ package body Alire.Releases is
 
       --  Origin
 
-      declare
-         Result : constant Outcome := This.Origin.From_TOML (From);
-      begin
-         if not Result.Success then
-            return Result;
-         end if;
-      end;
+      case Source is
+         when Manifest.Index =>
+            declare
+               Result : constant Outcome := This.Origin.From_TOML (From);
+            begin
+               if not Result.Success then
+                  return Result;
+               end if;
+            end;
+         when Manifest.Local =>
+            This.Origin := Origins.New_Filesystem (".");
+            --  We don't require an origin for a local release, as the release
+            --  is already in place.
+      end case;
 
       --  Properties
 
@@ -697,12 +704,14 @@ package body Alire.Releases is
    -- To_File --
    -------------
 
-   procedure To_File (R : Release; Filename : String) is
+   procedure To_File (R        : Release;
+                      Filename : String;
+                      Format   : Manifest.Sources) is
       use Ada.Text_IO;
       File : File_Type;
    begin
       Create (File, Out_File, Filename);
-      TOML.File_IO.Dump_To_File (R.To_TOML, File);
+      TOML.File_IO.Dump_To_File (R.To_TOML (Format), File);
       Close (File);
    exception
       when others =>
@@ -716,7 +725,10 @@ package body Alire.Releases is
    -- To_TOML --
    -------------
 
-   overriding function To_TOML (R : Release) return TOML.TOML_Value is
+   function To_TOML (R      : Release;
+                     Format : Manifest.Sources)
+                     return TOML.TOML_Value
+   is
       package APL renames Alire.Properties.Labeled;
       use all type Alire.Properties.Labeled.Cardinalities;
       use all type Alire.Requisites.Tree;
@@ -760,7 +772,12 @@ package body Alire.Releases is
       end loop;
 
       --  Origin
-      Root.Set (TOML_Keys.Origin, R.Origin.To_TOML);
+      case Format is
+         when Manifest.Index =>
+            Root.Set (TOML_Keys.Origin, R.Origin.To_TOML);
+         when Manifest.Local =>
+            null;
+      end case;
 
       --  Dependencies, wrapped as an array
       if not R.Dependencies.Is_Empty then
