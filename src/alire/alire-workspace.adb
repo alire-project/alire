@@ -19,6 +19,25 @@ package body Alire.Workspace is
 
    use type Conditional.Dependencies;
 
+   ------------------------------
+   -- Backup_Upstream_Manifest --
+   ------------------------------
+
+   procedure Backup_Upstream_Manifest (Root : Roots.Root) is
+      use Ada.Directories;
+      use Alire.Directories.Operators;
+   begin
+      if Exists (Root.Crate_File) then
+         Trace.Debug ("Found upstream-packaged manifest, backing it up...");
+         Rename (Root.Crate_File,
+                 Root.Working_Folder /
+                   (Root.Release.Name_Str & ".toml.upstream"));
+      else
+         Trace.Debug
+           ("No upstream-packaged manifest found, nothing to do about it");
+      end if;
+   end Backup_Upstream_Manifest;
+
    -------------------------
    -- Deploy_Dependencies --
    -------------------------
@@ -212,6 +231,14 @@ package body Alire.Workspace is
                                Ada.Directories.Current_Directory,
                                Env);
          begin
+
+            --  Detect a pre-existing manifest (that was distributed with the
+            --  sources) and move it out of the way.
+
+            Backup_Upstream_Manifest (Root);
+
+            --  Generate the authoritative manifest from index information for
+            --  eventual use of the gotten crate as a local workspace.
 
             Workspace.Generate_Manifest
               (Release.Whenever (Env), -- TODO: until dynamic export
