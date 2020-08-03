@@ -24,8 +24,8 @@ package Alire.Lockfiles is
 
    function File_Name (Name     : Crate_Name;
                        Root_Dir : Any_Path) return Any_Path;
-   --  Return the location /path/to/crate/dir/alire/crate.lock, filename
-   --  included, given the root directory where the crate is deployed.
+   --  Return the location /path/to/crate/dir/alire.lock, filename included,
+   --  given the root directory where the crate is deployed.
 
    function Read (Filename : Any_Path) return Contents;
    --  Read contents from the given lockfile
