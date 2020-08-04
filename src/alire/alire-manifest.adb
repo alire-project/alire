@@ -1,10 +1,13 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Alire.Config;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Releases;
 with Alire.TOML_Keys;
 with Alire.Utils.Text_Files;
+
+with GNATCOLL.Email.Utils;
 
 package body Alire.Manifest is
 
@@ -261,5 +264,70 @@ package body Alire.Manifest is
 
       Replacer.Replace; -- All went well, keep the changes
    end Remove;
+
+   ---------------------
+   -- Replace_Private --
+   ---------------------
+
+   Private_Begin : constant String :=
+                     "# ALIRE PRIVATE CONTENTS BEGIN."
+                     & " DO NOT EDIT BEYOND THIS LINE.";
+   Private_End   : constant String :=
+                     "# ALIRE PRIVATE CONTENTS END.";
+
+   procedure Replace_Private (Name : Any_Path; Data : TOML.TOML_Value) is
+      use Utils;
+      File : Utils.Text_Files.File := Utils.Text_Files.Load (Name);
+      Priv : constant TOML.TOML_Value := TOML.Create_Table;
+   begin
+      Outer : for I in File.Lines.First_Index .. File.Lines.Last_Index loop
+         if File.Lines.Element (I) = Private_Begin or else
+           Starts_With (Replace (File.Lines.all (I), " ", ""),
+                        "[" & TOML_Keys.Privat & "]")
+         then
+            Trace.Debug ("Found private part in manifest, replacing it");
+
+            for J in I .. File.Lines.Last_Index loop
+               if File.Lines.Element (I) /= Private_End then
+                  File.Lines.Delete (I);
+               else
+                  File.Lines.Delete (I);
+                  exit Outer;
+               end if;
+            end loop;
+         end if;
+      end loop Outer;
+
+      File.Lines.Append ("");
+
+      --  Append the new TOML-formatted text. TOML-Ada uses LF to break lines.
+
+      File.Lines.Append (Private_Begin);
+      File.Lines.Append ("");
+
+      if Config.Get (Config.Builtin_Keys.Private_Encode, True) then
+         --  Manually dump the base64-encoded data
+         File.Lines.Append (String'("[" & TOML_Keys.Privat & "]"));
+         File.Lines.Append ("data="""""""); -- multiline string, """
+         declare
+            use GNATCOLL.Email.Utils;
+            Encoded : UString;
+         begin
+            Base64_Encode (Str           => TOML.Dump_As_String (Data),
+                           Charset       => "",
+                           Result        => Encoded);
+            File.Lines.Append (+Encoded);
+         end;
+         File.Lines.Append (""""""""); -- end multiline string, """
+         File.Lines.Append ("");
+      else
+         Priv.Set (TOML_Keys.Privat, Data);
+         File.Lines.Append
+           (String_Vector'(Split (TOML.Dump_As_String (Priv), ASCII.LF)));
+      end if;
+
+      File.Lines.Append (Private_End);
+
+   end Replace_Private;
 
 end Alire.Manifest;

@@ -110,6 +110,12 @@ package Alire.Config is
    procedure Print_Builtins_Doc;
    --  Print a Markdown documentation for the built-in configuration options
 
+   package Builtin_Keys is
+
+      Private_Encode : constant String := "private.encode";
+
+   end Builtin_Keys;
+
 private
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
@@ -190,8 +196,11 @@ private
        Cfg_Bool,
        +("If true, Alire will automatically add/edit a list of 'with' " &
            "statements in the root GPR project file based on the " &
-           "dependencies of the crate."))
+           "dependencies of the crate.")),
 
+      (+Builtin_Keys.Private_Encode,
+       Cfg_Bool,
+       +("If true, Alire will base64-encode its private manifest part."))
      );
 
 end Alire.Config;

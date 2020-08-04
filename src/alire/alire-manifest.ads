@@ -1,5 +1,7 @@
 with Alire.Dependencies.Containers;
 
+with TOML;
+
 package Alire.Manifest is
 
    type Sources is (Index, Local);
@@ -19,5 +21,8 @@ package Alire.Manifest is
 
    function Is_Valid (Name : Any_Path; Source : Sources) return Boolean;
    --  Check that the given Name is a loadable manifest
+
+   procedure Replace_Private (Name : Any_Path; Data : TOML.TOML_Value);
+   --  Create/Replace the private section in the manifest file
 
 end Alire.Manifest;

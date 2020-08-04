@@ -1,3 +1,5 @@
+with TOML;
+
 package Alire.Utils.Text_Files is
 
    --  A convenience type to hold a complete text file in memory as a vector of

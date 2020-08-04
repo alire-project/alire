@@ -1,14 +1,10 @@
-with Ada.Directories;
-with Ada.Text_IO;
-
-with Alire.Directories;
+with Alire.Manifest;
+with Alire.TOML_Keys;
 with Alire.TOML_Load;
 
-with TOML.File_IO;
+with GNATCOLL.Email.Utils;
 
 package body Alire.Lockfiles is
-
-   use Directories.Operators;
 
    ----------
    -- Keys --
@@ -23,14 +19,6 @@ package body Alire.Lockfiles is
    end Keys;
 
    ---------------
-   -- File_Name --
-   ---------------
-
-   function File_Name (Name     : Crate_Name;
-                       Root_Dir : Any_Path) return Any_Path
-   is (Root_Dir / "alire.lock");
-
-   ---------------
    -- From_TOML --
    ---------------
 
@@ -40,13 +28,34 @@ package body Alire.Lockfiles is
                        return Outcome
    is
    begin
-      This.Solution :=
-        Solutions.From_TOML
-          (TOML_Adapters.From
-             (From.Checked_Pop
-                (Key  => Keys.Solution,
-                 Kind => TOML.TOML_Table),
-              Keys.Solution));
+      --  Choose between plain/base64 encodings:
+      if From.Unwrap.Has ("data") then -- encoded
+         declare
+            use GNATCOLL.Email.Utils;
+            Data : constant String :=
+                     From.Checked_Pop ("data", TOML.TOML_String).As_String;
+            Decoded : UString;
+            Value   : TOML.TOML_Value;
+         begin
+            Base64_Decode
+              (Str    => Utils.Split (Data, ASCII.LF).Flatten (""),
+               Result => Decoded);
+            Value := TOML.Load_String (+Decoded).Value;
+            This.Solution :=
+              Solutions.From_TOML
+                (From.Descend
+                   (Value.Get (Keys.Solution),
+                    Keys.Solution));
+         end;
+      else
+         This.Solution :=
+           Solutions.From_TOML
+             (From.Descend
+                (From.Checked_Pop
+                   (Key  => Keys.Solution,
+                    Kind => TOML.TOML_Table),
+                 Keys.Solution));
+      end if;
 
       From.Report_Extra_Keys;
 
@@ -61,19 +70,21 @@ package body Alire.Lockfiles is
    begin
       Trace.Debug ("Reading persistent contents from " & Filename);
 
-      declare
-         Result : constant TOML.Read_Result :=
-                    TOML.File_IO.Load_File (Filename);
-      begin
-         if Result.Success then
-            return This : Contents do
-               Assert (This.From_TOML
-                 (TOML_Adapters.From (Result.Value, Filename & ":")));
-            end return;
-         else
-            Raise_Checked_Error (TOML_Load.Format_Error (Filename, Result));
-         end if;
-      end;
+      return This : Contents do
+         declare
+            TOML_Contents : constant TOML_Adapters.Key_Queue :=
+                              TOML_Adapters.From
+                                (TOML_Load.Load_File (Filename),
+                                 Context => Filename);
+         begin
+            Assert
+              (This.From_TOML
+                 (TOML_Contents.Descend
+                      (Value   => TOML_Contents.Checked_Pop
+                           (TOML_Keys.Privat, TOML.TOML_Table),
+                       Context => TOML_Keys.Privat)));
+         end;
+      end return;
    end Read;
 
    -------------
@@ -121,31 +132,9 @@ package body Alire.Lockfiles is
    procedure Write (Contents : Lockfiles.Contents;
                     Filename : Any_Path)
    is
-      use Ada.Text_IO;
-      File  : File_Type;
    begin
       Trace.Debug ("Dumping lockfile contents to " & Filename);
-
-      Create (File, Out_File, Filename);
-      Put_Line (File,
-                "# THIS IS A MACHINE-GENERATED FILE. DO NOT EDIT MANUALLY.");
-      New_Line (File);
-
-      TOML.File_IO.Dump_To_File (Contents.To_TOML, File);
-      Close (File);
-   exception
-      when others =>
-         if Is_Open (File) then
-            Close (File);
-         end if;
-
-         --  Clean up
-
-         if Ada.Directories.Exists (Filename) then
-            Ada.Directories.Delete_File (Filename);
-         end if;
-
-         raise;
+      Manifest.Replace_Private (Filename, Contents.To_TOML);
    end Write;
 
 end Alire.Lockfiles;

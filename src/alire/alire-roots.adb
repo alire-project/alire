@@ -242,9 +242,7 @@ package body Alire.Roots is
    ---------------
 
    function Lock_File (This : Root) return Absolute_Path is
-     (Lockfiles.File_Name
-        (This.Release.Constant_Reference.Name,
-         +This.Path));
+     (This.Crate_File);
 
    ----------------
    -- Crate_File --

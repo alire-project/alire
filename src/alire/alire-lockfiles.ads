@@ -2,6 +2,7 @@ with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Solutions;
 with Alire.TOML_Adapters;
+with Alire.Utils;
 
 with TOML;
 
@@ -22,20 +23,15 @@ package Alire.Lockfiles is
    end record;
    --  Information that goes in the lockfile
 
-   function File_Name (Name     : Crate_Name;
-                       Root_Dir : Any_Path) return Any_Path;
-   --  Return the location /path/to/crate/dir/alire.lock, filename included,
-   --  given the root directory where the crate is deployed.
-
    function Read (Filename : Any_Path) return Contents;
-   --  Read contents from the given lockfile
+   --  Read contents from the given toml file
 
    function Validity (File : Any_Path) return Validities;
    --  Check if given file is a valid lockfile
 
    procedure Write (Contents : Lockfiles.Contents;
                     Filename : Any_Path);
-   --  Write persistent contents to a file
+   --  Append/replace lockfile contents to the given toml file
 
    overriding
    function From_TOML (This : in out Contents;

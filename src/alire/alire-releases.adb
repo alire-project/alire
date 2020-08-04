@@ -626,6 +626,12 @@ package body Alire.Releases is
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
 
+      --  Drop the private part, if provided
+
+      if From.Unwrap.Has (TOML_Keys.Privat) then
+         From.Unwrap.Unset (TOML_Keys.Privat);
+      end if;
+
       --  Metadata version
 
       Has_Metadata_Version := From.Unwrap.Has (TOML_Keys.Metadata_Version);
