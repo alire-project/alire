@@ -31,7 +31,8 @@ package body Alire.Root is
                Log_Exception (E, Debug);
 
                return Roots.New_Invalid_Root.With_Reason
-                 ("Failed to load " & File & ": " & Errors.Get (E));
+                 (Errors.Wrap ("Failed to load " & File,
+                               Errors.Get (E)));
          end;
       else
          return Roots.New_Invalid_Root.With_Reason
