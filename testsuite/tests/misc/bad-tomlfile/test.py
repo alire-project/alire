@@ -20,7 +20,8 @@ with open("alire/xxx.toml", "a") as myfile:
 # Verify that the expected error is given
 p = run_alr('show', complain_on_error=False)
 
-assert_match('.*Cannot continue with invalid session: Failed to load.*',
+assert_match('.*Cannot continue with invalid session.*'
+             'Failed to load.*',
              p.out, flags=re.S)
 
 print('SUCCESS')
