@@ -382,7 +382,7 @@ package body Alr.Commands is
    procedure Reportaise_Command_Failed (Message : String) is
    begin
       Trace.Error (Message);
-      raise Command_Failed with Message;
+      raise Command_Failed with Alire.Errors.Set (Message);
    end Reportaise_Command_Failed;
 
    --------------------------------
@@ -392,7 +392,7 @@ package body Alr.Commands is
    procedure Reportaise_Wrong_Arguments (Message : String) is
    begin
       Trace.Error (Message);
-      raise Wrong_Command_Arguments with Message;
+      raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
    -------------------------
