@@ -639,13 +639,7 @@ package body Alire.Releases is
 
       --  Origin
 
-      declare
-         Result : constant Outcome := This.Origin.From_TOML (From);
-      begin
-         if not Result.Success then
-            return Result;
-         end if;
-      end;
+      This.Origin.From_TOML (From).Assert;
 
       --  Properties
 
@@ -670,12 +664,13 @@ package body Alire.Releases is
          case Source is
             when Manifest.Index =>
                raise Program_Error with
-                 "Cannot load manifest from index with proper version: "
-                 & Errors.Get (E);
+               Errors.Set
+                 ("Cannot load manifest from index with proper version: "
+                  & Errors.Get (E));
             when Manifest.Local =>
                raise Checked_Error with
-                 "Cannot load manifest, please review contents: "
-                 & Errors.Get (E);
+                 Errors.Set ("Cannot load manifest, please review contents: "
+                 & Errors.Get (E));
          end case;
    end From_TOML;
 
