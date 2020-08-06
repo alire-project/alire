@@ -51,6 +51,26 @@ package Alire.Errors with Preelaborate is
    --  Returns the error for Ex if it exists, or defaults to Exception_Message.
    --  The stored error is cleared.
 
+   procedure Pretty_Print (Error : String);
+   --  Split Error at LFs to prefix each sub-error in a new line with the
+   --  appropriate tracing prefix. Also, from the second line on, messages are
+   --  indented. This way, several top-level errors are easier to distinguish.
+   --  Finally, ':' is appended to every line but the last one if not already
+   --  in the text.
+
+   function Wrap (Upper, Lower : String) return String;
+   --  Compose a more general (Upper) error with a more detailed error (Lower).
+   --  These are later apt for pretty printing. Even if not pretty printed,
+   --  these merely show in two lines.
+
+   function Set (Wrapper : String;
+                 Wrapped : Ada.Exceptions.Exception_Occurrence)
+                 return String
+   is (Set (Wrap (Wrapper, Get (Wrapped))))
+   with Post => Is_Error_Id (Set'Result);
+   --  Convenience to concatenate two error messages: a new wrapping text and
+   --  an existing error within a exception being wrapped.
+
 private
 
    Id_Marker : constant String := "alire-stored-error:";

@@ -1,3 +1,4 @@
+with Alire.Errors;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Expressions.Cases;
 with Alire.TOML_Keys;
@@ -20,6 +21,17 @@ package body Alire.TOML_Load is
                        Crates.External_Private_Section =>
                          (Available    => True,
                           Dependencies => False));
+
+   ------------------
+   -- Format_Error --
+   ------------------
+
+   function Format_Error (Result : TOML.Read_Result) return String
+   is ((+Result.Message)
+       & " ("
+       & "line" & Result.Location.Line'Img
+       & ", column" & Result.Location.Column'Img
+       & ")");
 
    ------------------------
    -- Load_Crate_Section --
@@ -111,8 +123,9 @@ package body Alire.TOML_Load is
       if TOML_Result.Success then
          return TOML_Result.Value;
       else
-         Raise_Checked_Error ("Invalid TOML contents in " & File_Name
-                              & ": " & TOML.Format_Error (TOML_Result));
+         Raise_Checked_Error
+           (Errors.Wrap ("Invalid TOML contents in " & File_Name,
+                         Format_Error (TOML_Result)));
       end if;
    end Load_File;
 

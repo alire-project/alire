@@ -1,5 +1,3 @@
-with Alire.Errors;
-
 package body Alire.TOML_Adapters is
 
    ------------
@@ -87,7 +85,7 @@ package body Alire.TOML_Adapters is
    function Descend (Parent  : Key_Queue;
                      Value   : TOML.TOML_Value;
                      Context : String) return Key_Queue is
-     (From (Value, (+Parent.Context) & ": " & Context));
+     (From (Value, (+Parent.Context) & ASCII.LF & Context));
 
    ---------
    -- Pop --
@@ -210,7 +208,8 @@ package body Alire.TOML_Adapters is
    function Report_Extra_Keys (Queue : Key_Queue) return Outcome
    is
       use UStrings;
-      Message  : UString := Queue.Context & ": forbidden extra entries: ";
+      Message  : UString := +Errors.Wrap (+Queue.Context,
+                                          "forbidden extra entries: ");
       Is_First : Boolean := True;
       Errored  : Boolean := False;
    begin
