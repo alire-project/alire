@@ -1,11 +1,12 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Errors;
 with Alire.Lockfiles;
 with Alire.Milestones;
 with Alire.Origins;
 with Alire.Releases;
-with Alire.Roots;
+with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Workspace;
 
@@ -14,11 +15,8 @@ with Alr.Root;
 with Alr.Utils;
 
 with GNATCOLL.VFS;
-with Alr.Bootstrap;
 
 package body Alr.Commands.Init is
-
-   use all type Bootstrap.Session_States;
 
    Sed_Pattern : constant String := "PROJECT_SKEL";
 
@@ -219,6 +217,7 @@ package body Alr.Commands.Init is
          Check : constant Alire.Milestones.Allowed_Milestones :=
                    Alire.Milestones.Crate_Versions (Name)
                    with Unreferenced;
+         use all type Alire.Roots.Optional.States;
       begin
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
          then
@@ -235,15 +234,29 @@ package body Alr.Commands.Init is
 
          --  Create and enter folder for generation, if it didn't happen
          --  already.
-         if Session_State = Release then
-            if Name = Root.Current.Release.Name_Str then
-               Trace.Info ("Already in working copy, skipping initialization");
-            else
-               Trace.Error ("Cannot initialize a working release inside"
-                            & " another release, stopping.");
-               raise Command_Failed;
-            end if;
-         end if;
+         declare
+            Root : constant Alire.Roots.Optional.Root := Alr.Root.Current;
+         begin
+            case Root.Status is
+               when Valid =>
+                  if Name = Root.Value.Release.Name_Str then
+                     Trace.Info
+                       ("Already in working copy, skipping initialization");
+                  else
+                     Reportaise_Command_Failed
+                       ("Cannot initialize a working release inside"
+                        & " another release, stopping.");
+                  end if;
+               when Broken =>
+                  Reportaise_Command_Failed
+                    (Alire.Errors.Wrap
+                       ("Cannot initialize a working release inside"
+                        & " a workspace with invalid metadata",
+                        Root.Message));
+               when Outside =>
+                  null;
+            end case;
+         end;
 
          Generate (Cmd);
          Trace.Detail ("Initialization completed");
