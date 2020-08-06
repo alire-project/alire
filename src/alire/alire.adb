@@ -131,18 +131,22 @@ package body Alire is
    -- Outcome_Failure --
    ---------------------
 
-   function Outcome_Failure (Message : String) return Outcome is
+   function Outcome_Failure (Message : String;
+                             Report  : Boolean := True)
+                             return Outcome is
       Stack : constant String := AAA.Debug.Stack_Trace;
    begin
-      if Log_Debug then
-         Err_Log ("Generating Outcome_Failure with message: " & Message);
-         Err_Log ("Generating Outcome_Failure with call stack:");
-         Err_Log (Stack);
-      end if;
+      if Report then
+         if Log_Debug then
+            Err_Log ("Generating Outcome_Failure with message: " & Message);
+            Err_Log ("Generating Outcome_Failure with call stack:");
+            Err_Log (Stack);
+         end if;
 
-      Trace.Debug ("Generating Outcome_Failure with message: " & Message);
-      Trace.Debug ("Generating Outcome_Failure with call stack:");
-      Trace.Debug (Stack);
+         Trace.Debug ("Generating Outcome_Failure with message: " & Message);
+         Trace.Debug ("Generating Outcome_Failure with call stack:");
+         Trace.Debug (Stack);
+      end if;
 
       return (Success => False,
               Message => +Message);

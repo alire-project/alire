@@ -158,11 +158,14 @@ package Alire with Preelaborate is
 
    --  Constructors  --
 
-   function Outcome_Failure (Message : String) return Outcome with
+   function Outcome_Failure (Message : String;
+                             Report  : Boolean := True)
+                             return Outcome with
      Pre  => Message'Length > 0,
      Post => not Outcome_Failure'Result.Success;
-   --  Calling this function generates a debug stack trace log, so it should
-   --  not be called until a failure is actually happening.
+   --  Calling this function generates a debug stack trace log, unless Report
+   --  is set to False. For failures that are part of regular operation,
+   --  this is recommended to avoid "scares" in the debug output.
 
    function Outcome_Success return Outcome with
      Post => Outcome_Success'Result.Success;

@@ -576,11 +576,18 @@ package body Alire.Releases is
                            Source    : Manifest.Sources)
                            return Release
    is
-     (From_TOML
+   begin
+      return From_TOML
         (TOML_Adapters.From
-             (TOML_Load.Load_File (File_Name),
-              "Loading release from manifest: " & File_Name),
-         Source));
+           (TOML_Load.Load_File (File_Name),
+            "Loading release from manifest: " & File_Name),
+         Source);
+   exception
+      when E : others =>
+         --  As this file is edited manually, it may not load for many reasons
+         Raise_Checked_Error (Errors.Wrap ("Failed to load " & File_Name,
+                                           Errors.Get (E)));
+   end From_Manifest;
 
    ---------------
    -- From_TOML --
