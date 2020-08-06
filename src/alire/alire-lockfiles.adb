@@ -3,6 +3,7 @@ with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Paths;
+with Alire.TOML_Load;
 
 with TOML.File_IO;
 
@@ -71,7 +72,7 @@ package body Alire.Lockfiles is
                  (TOML_Adapters.From (Result.Value, Filename & ":")));
             end return;
          else
-            Raise_Checked_Error (TOML.Format_Error (Result));
+            Raise_Checked_Error (TOML_Load.Format_Error (Result));
          end if;
       end;
    end Read;

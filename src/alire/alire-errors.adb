@@ -114,4 +114,39 @@ package body Alire.Errors is
       end if;
    end Get;
 
+   ------------------
+   -- Pretty_Print --
+   ------------------
+
+   procedure Pretty_Print (Error : String) is
+      use Utils;
+      Lines : constant String_Vector := Split (Error, ASCII.LF);
+   begin
+      for I in Lines.First_Index .. Lines.Last_Index loop
+         declare
+            Line : constant String := Trim (Lines (I));
+         begin
+            Trace.Error ((if I > Lines.First_Index then "   " else "")
+                         --  Indentation
+
+                         & Line
+                         --  The error proper
+
+                         & (if I < Lines.Last_Index
+                              and then Line (Line'Last) /= ':'
+                           then ":"
+                           else "")
+                           --  Trailing ':' except for last line
+                        );
+         end;
+      end loop;
+   end Pretty_Print;
+
+   ----------
+   -- Wrap --
+   ----------
+
+   function Wrap (Upper, Lower : String) return String
+   is (Upper & ASCII.LF & Lower);
+
 end Alire.Errors;

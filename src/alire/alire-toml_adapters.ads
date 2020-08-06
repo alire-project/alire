@@ -1,3 +1,4 @@
+with Alire.Errors;
 with Alire.Utils;
 
 with TOML; use all type TOML.Any_Value_Kind;
@@ -174,7 +175,7 @@ private
    -------------
 
    function Message (Queue : Key_Queue; Message : String) return String is
-     (+Queue.Context & ": " & Message);
+     (Errors.Wrap (+Queue.Context, Message));
 
    -------------
    -- Descend --

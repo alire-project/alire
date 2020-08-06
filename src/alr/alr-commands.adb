@@ -381,7 +381,7 @@ package body Alr.Commands is
 
    procedure Reportaise_Command_Failed (Message : String) is
    begin
-      Trace.Error (Message);
+      Alire.Errors.Pretty_Print (Message);
       raise Command_Failed with Alire.Errors.Set (Message);
    end Reportaise_Command_Failed;
 
@@ -391,7 +391,7 @@ package body Alr.Commands is
 
    procedure Reportaise_Wrong_Arguments (Message : String) is
    begin
-      Trace.Error (Message);
+      Alire.Errors.Pretty_Print (Message);
       raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
@@ -418,7 +418,8 @@ package body Alr.Commands is
    begin
       if not Checked.Is_Valid then
          Reportaise_Command_Failed
-           ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
+           (Errors.Wrap ("Cannot continue with invalid session",
+                         Checked.Invalid_Reason));
       end if;
 
       --  For workspaces created pre-lockfiles, or with older format, recreate:
@@ -701,7 +702,7 @@ package body Alr.Commands is
          Log ("alr " & What_Command & " done", Detail);
       exception
          when E : Alire.Checked_Error =>
-            Trace.Error (Alire.Errors.Get (E, Clear => False));
+            Alire.Errors.Pretty_Print (Alire.Errors.Get (E, Clear => False));
             if Alire.Log_Level = Debug then
                raise;
             else
