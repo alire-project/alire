@@ -11,7 +11,7 @@ from drivers.asserts import assert_eq, assert_match
 # Check a few commands for unexpected output
 
 # Commands that require session
-assert_match(".*Cannot continue with invalid session:"  # skip logging prefix
+assert_match(".*Cannot continue with invalid session:.*"  # skip logging prefix
              " Could not detect a session folder"
              " at current or parent locations\n",
              run_alr('with', quiet=False, complain_on_error=False).out)
