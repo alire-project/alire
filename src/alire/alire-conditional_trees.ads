@@ -49,9 +49,15 @@ package Alire.Conditional_Trees with Preelaborate is
    function Image (This : Node) return String is abstract;
    --  Single-line image for single-line tree image (used by Requisites).
 
-   procedure Print (This : Node; Prefix : String; Verbose : Boolean)
+   procedure Print (This    : Node;
+                    Prefix  : String;
+                    Verbose : Boolean;
+                    Sorted  : Boolean)
    is abstract;
-   --  Multi-line printing to stdout with tabulation (used by Props and Deps).
+   --  Multi-line printing to stdout with tabulation (used by Props and
+   --  Deps). Sorting affects only multi-value nodes (vectors, cases) and is
+   --  interesting for dependencies (to show them alphabetically) but not for
+   --  properties (some of them have order, like actions).
 
    function Leaf_Count (This : Node) return Positive is abstract;
    --  Return leaves under this node; for non-leaf nodes, obtain recursively.
@@ -98,7 +104,8 @@ package Alire.Conditional_Trees with Preelaborate is
       with procedure Append (C     : in out Collection;
                              V     : Values;
                              Count : Count_Type := 1);
-
+      --  This Append must honor "append" semantics (i.e., don't reorder);
+      --  otherwise actions, that have a user-defined order, would break.
    function Materialize (This    : Tree;
                          Against : Properties.Vector)
                          return Collection with
@@ -147,8 +154,9 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Returns a Tree because it could result in an empty tree.
 
    procedure Print (This   : Tree;
-                    Prefix : String := "";
-                    And_Or : Boolean := True);
+                    Prefix : String  := "";
+                    And_Or : Boolean := True;
+                    Sorted : Boolean := False);
    --  Use And_Or = false when only And can appear, in which case there is no
    --  need to distinguish and the output is slightly more compact.
 
@@ -347,7 +355,10 @@ private
    function Leaf_Count (This : Leaf_Node) return Positive;
 
    overriding
-   procedure Print (This : Leaf_Node; Prefix : String; Verbose : Boolean);
+   procedure Print (This    : Leaf_Node;
+                    Prefix  : String;
+                    Verbose : Boolean;
+                    Sorted  : Boolean := False);
 
    overriding
    procedure To_TOML (This : Leaf_Node; Parent : TOML.TOML_Value);
@@ -439,7 +450,10 @@ private
    overriding function Image (V : Vector_Node) return String;
 
    overriding
-   procedure Print (This : Vector_Node; Prefix : String; Verbose : Boolean);
+   procedure Print (This    : Vector_Node;
+                    Prefix  : String;
+                    Verbose : Boolean;
+                    Sorted  : Boolean);
 
    overriding
    procedure To_TOML (This : Vector_Node; Parent : TOML.TOML_Value);
@@ -492,7 +506,8 @@ private
    overriding
    procedure Print (This    : Conditional_Node;
                     Prefix  : String;
-                    Verbose : Boolean);
+                    Verbose : Boolean;
+                    Sorted  : Boolean);
 
    overriding
    procedure To_TOML (This : Conditional_Node; Parent : TOML.TOML_Value);

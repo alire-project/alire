@@ -515,7 +515,9 @@ package body Alire.Releases is
       --  DEPENDENCIES
       if not R.Dependencies.Is_Empty then
          Put_Line ("Dependencies (direct):");
-         R.Dependencies.Print ("   ", R.Dependencies.Contains_ORs);
+         R.Dependencies.Print ("   ",
+                               Sorted => True,
+                               And_Or => R.Dependencies.Contains_ORs);
       end if;
    end Print;
 

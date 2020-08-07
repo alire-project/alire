@@ -2,11 +2,18 @@ with Alire.Utils.Tables;
 
 package body Alire.Dependencies.Diffs is
 
+   -----------
+   -- Added --
+   -----------
+
+   function Added (This : Diff) return Containers.List
+   is (This.Added);
+
    -------------
    -- Between --
    -------------
 
-   function Between (Former, Latter : Containers.Lists.List) return Diff is
+   function Between (Former, Latter : Containers.List) return Diff is
    begin
       return This : Diff do
 
@@ -51,7 +58,7 @@ package body Alire.Dependencies.Diffs is
    procedure Print (This : Diff) is
       Table : Utils.Tables.Table;
 
-      procedure Summarize (List    : Containers.Lists.List;
+      procedure Summarize (List    : Containers.List;
                            Comment : String;
                            Icon    : String)
       is
@@ -77,5 +84,12 @@ package body Alire.Dependencies.Diffs is
          Trace.Info ("   No changes.");
       end if;
    end Print;
+
+   -------------
+   -- Removed --
+   -------------
+
+   function Removed (This : Diff) return Containers.List
+   is (This.Removed);
 
 end Alire.Dependencies.Diffs;
