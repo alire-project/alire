@@ -5,6 +5,7 @@ with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Properties;
+with Alire.Releases;
 with Alire.Requisites.Booleans;
 with Alire.Roots;
 with Alire.Solutions;
@@ -42,7 +43,7 @@ package body Alr.Commands.Show is
       declare
          --  Nested so a failure in Query.Find is caught below
 
-         Rel     : constant Types.Release  :=
+         Rel     : constant Alire.Releases.Release  :=
                      (if Current
                       then Root.Current.Release
                       else Query.Find (Name, Versions, Query_Policy));
@@ -174,7 +175,7 @@ package body Alr.Commands.Show is
    is
    begin
       declare
-         Rel : constant Types.Release  :=
+         Rel : constant Alire.Releases.Release  :=
            (if Current
             then Root.Current.Release
             else Query.Find (Name, Versions, Query_Policy));
@@ -241,7 +242,7 @@ package body Alr.Commands.Show is
          end if;
 
          if Cmd.Detect then
-            Alire.Index.Add_Externals (Allowed.Crate, Platform.Properties);
+            Alire.Index.Detect_Externals (Allowed.Crate, Platform.Properties);
          end if;
 
          --  Execute

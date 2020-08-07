@@ -1,0 +1,35 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello"
+version = "1.0.0"
+origin = "file://."
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+[environment.VAR1]
+append = "abc"
+
+[environment.VAR2]
+prepend = "xyz"
+
+[environment.VAR3]
+set = "pqr"
+
+[environment.VAR4]
+set = "${_ALIRE_TEST_}"
+
+[environment.VAR5]
+set = "${_ALIRE_TEST_"
+
+[environment.VAR6]
+set = "\\${_ALIRE_TEST_}"
+
+[environment.VAR7]
+set = "abc${_ALIRE_TEST_}abc"
+
+[environment.VAR8]
+set = "abc\\${_ALIRE_TEST_}abc"
+
+[environment.VAR9]
+set = "${_ALIRE_TEST_}${_ALIRE_TEST_}${_ALIRE_TEST_}"
+[environment."case(os)"."...".CONDVAR]
+set = "uvw"

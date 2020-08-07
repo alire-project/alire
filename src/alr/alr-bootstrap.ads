@@ -1,4 +1,4 @@
-with Alire;
+with Alire.Types;
 
 package Alr.Bootstrap is
 
@@ -27,7 +27,7 @@ package Alr.Bootstrap is
    function Status_Line return String;
    --  One-liner reporting most interesting information
 
-   function No_Dependencies return Types.Platform_Dependencies
-     renames Types.No_Dependencies;
+   function No_Dependencies return Alire.Types.Platform_Dependencies
+     renames Alire.Types.No_Dependencies;
 
 end Alr.Bootstrap;

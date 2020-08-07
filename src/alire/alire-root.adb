@@ -1,7 +1,7 @@
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Paths;
-with Alire.TOML_Index;
+with Alire.Releases;
 
 package body Alire.Root is
 
@@ -21,7 +21,7 @@ package body Alire.Root is
                  Extension => Paths.Crate_File_Extension_With_Dot);
          begin
             return Roots.New_Root
-              (TOML_Index.Load_Release_From_File (File),
+              (Releases.From_Manifest (File),
                Path,
                Platform_Properties);
          exception

@@ -1,5 +1,4 @@
 with Alire;
-with Alire.Types;
 
 with Simple_Logging;
 
@@ -23,8 +22,6 @@ package Alr with Preelaborate is
    pragma Warnings (On);
 
    package Trace renames Simple_Logging;
-
-   package Types renames Alire.Types;
 
    function "+" (S : Alire.UString) return String
                  renames Alire.UStrings.To_String;

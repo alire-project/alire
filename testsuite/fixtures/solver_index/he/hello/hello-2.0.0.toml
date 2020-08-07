@@ -1,0 +1,14 @@
+description = "\"Hello, world!\" demonstration project"
+website = "example.com"
+name = "hello"
+version = "2.0.0"
+origin = "file://."
+authors = ["Bob", "Alice"]
+licenses = ["GPL 3.0", "MIT"]
+maintainers = ["bob@example.com"]
+maintainers-logins = ["mylogin"]
+
+# With regular and unavailable external (hint)
+[[depends-on]]
+libhello = "^2.0"
+make = "*"

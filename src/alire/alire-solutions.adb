@@ -1,6 +1,6 @@
 with Ada.Containers;
 
-with Alire.Crates.With_Releases;
+with Alire.Crates;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
@@ -628,7 +628,7 @@ package body Alire.Solutions is
             Table.Append (TTY.Version (Dep.Versions.Image));
          end if;
 
-         Index.Add_Externals (Dep.Crate, Root.Environment);
+         Index.Detect_Externals (Dep.Crate, Root.Environment);
          --  Detect externals for the crate, in case they add more versions
 
          declare

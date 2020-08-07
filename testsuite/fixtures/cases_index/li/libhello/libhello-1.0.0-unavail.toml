@@ -1,0 +1,8 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "1.0.0-unavail"
+available = false
+origin = "file://../../../crates/libhello_1.0.0"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]

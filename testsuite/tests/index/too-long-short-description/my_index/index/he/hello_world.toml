@@ -1,8 +1,0 @@
-[general]
-description = "This is a very very very very very very very very very very long description"
-licenses = []
-maintainers = ["example@example.com"]
-maintainers-logins = ["mylogin"]
-
-['0.1']
-origin = "http://blah.com/pkg.zip"

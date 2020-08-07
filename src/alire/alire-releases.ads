@@ -6,7 +6,6 @@ with Alire.Dependencies;
 with Alire.Interfaces;
 with Alire.Milestones;
 with Alire.Origins;
-with Alire.Crates;
 with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
@@ -23,17 +22,19 @@ with TOML;
 private with Alire.OS_Lib;
 private with Alire.Utils.TTY;
 
-package Alire.Releases with Preelaborate is
+package Alire.Releases is
 
 --     subtype Dependency_Vector is Dependencies.Vectors.Vector;
 
    type Release (<>) is
      new Interfaces.Tomifiable
-     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with private;
 
    function "<" (L, R : Release) return Boolean;
+
+   function Default_Properties return Conditional.Properties;
+   --  Returns the values in Defaults already wrapped as properties
 
    function New_Release (Name         : Crate_Name;
                          Version      : Semantic_Versioning.Version;
@@ -44,19 +45,23 @@ package Alire.Releases with Preelaborate is
                          Available    : Alire.Requisites.Tree)
                          return Release;
 
+   function New_Empty_Release (Name : Crate_Name) return Release;
+   --  Equivalent to calling New_Working_Release with default values BUT with
+   --  empty properties (i.e., defaults are not used).
+
    function New_Working_Release
      (Name         : Crate_Name;
-      Origin       : Origins.Origin := Origins.New_Filesystem ("..");
+      Origin       : Origins.Origin     := Origins.New_Filesystem ("..");
 
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
 
       Properties   : Conditional.Properties   :=
-        Conditional.For_Properties.Empty
+        Default_Properties
      )
-
       return         Release;
-   --  For working releases that may have incomplete information
+   --  For working releases that may have incomplete information. Note that the
+   --  default properties are used by default.
 
    function Extending
      (Base         : Release;
@@ -68,9 +73,6 @@ package Alire.Releases with Preelaborate is
 
    function Renaming (Base     : Release;
                       Provides : Crate_Name) return Release;
-
-   function Renaming (Base     : Release;
-                      Provides : Crates.Named'Class) return Release;
    --  Fills-in the "provides" field
    --  During resolution, a release that has a renaming will act as the
    --  "Provides" release, so both releases cannot be selected simultaneously.
@@ -157,6 +159,12 @@ package Alire.Releases with Preelaborate is
                           P : Alire.Properties.Vector)
                           return Conditional.Dependencies;
    --  Retrieve only the dependencies that apply on platform P
+
+   function Property (R   : Release;
+                      Key : Alire.Properties.Labeled.Labels)
+                      return String;
+   --  Return a property that must exist, be unique, platform-independent, and
+   --  and atomic label: description, version... Raise otherwise.
 
    function Properties (R : Release) return Conditional.Properties;
 
@@ -264,13 +272,10 @@ package Alire.Releases with Preelaborate is
    --  Return the dependency that represents this very release (crate=version),
    --  wrapped as a dependency tree with a single value.
 
-   overriding
-   function From_TOML (This : in out Release;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome;
-   --  Fill in the release-specific parts. This expects the common information
-   --  from [general] to be already present in the release, since From points
-   --  to the release proper.
+   function From_Manifest (File_Name : Any_Path) return Release;
+
+   function From_TOML (From : TOML_Adapters.Key_Queue) return Release;
+   --  Load a release from a TOML table
 
    overriding
    function To_TOML (R : Release) return TOML.TOML_Value;
@@ -295,7 +300,6 @@ private
    type Release (Prj_Len,
                  Notes_Len : Natural) is
      new Interfaces.Tomifiable
-     and Interfaces.Detomifiable
      and Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
@@ -308,6 +312,11 @@ private
       Properties   : Conditional.Properties;
       Available    : Requisites.Tree;
    end record;
+
+   function From_TOML (This : in out Release;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome;
+   --  Fill in an already existing release
 
    use all type Conditional.Properties;
 

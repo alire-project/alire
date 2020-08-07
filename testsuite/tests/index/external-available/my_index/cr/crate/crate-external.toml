@@ -1,0 +1,12 @@
+description = "A crate"
+name = "crate"
+licenses = []
+maintainers = ["somebody@somewhere.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "version-output"
+version-regexp = ".*Make ([\\d\\.]+).*"
+version-command = ["make", "--version"]
+[external.available."case(toolchain)"]
+"..." = false
