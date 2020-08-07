@@ -2,6 +2,7 @@ with Alire.Errors;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Expressions.Cases;
 with Alire.TOML_Keys;
+with Alire.Utils;
 
 with TOML.File_IO;
 
@@ -26,12 +27,12 @@ package body Alire.TOML_Load is
    -- Format_Error --
    ------------------
 
-   function Format_Error (Result : TOML.Read_Result) return String
-   is ((+Result.Message)
-       & " ("
-       & "line" & Result.Location.Line'Img
-       & ", column" & Result.Location.Column'Img
-       & ")");
+   function Format_Error (File   : Any_Path;
+                          Result : TOML.Read_Result) return String
+   is ((+Result.Message) & " at "
+        & File & ":"
+        & Utils.Trim (Result.Location.Line'Img) & ":"
+        & Utils.Trim (Result.Location.Column'Img));
 
    ------------------------
    -- Load_Crate_Section --
@@ -124,8 +125,8 @@ package body Alire.TOML_Load is
          return TOML_Result.Value;
       else
          Raise_Checked_Error
-           (Errors.Wrap ("Invalid TOML contents in " & File_Name,
-                         Format_Error (TOML_Result)));
+           (Errors.Wrap ("Invalid TOML contents in file",
+                         Format_Error (File_Name, TOML_Result)));
       end if;
    end Load_File;
 

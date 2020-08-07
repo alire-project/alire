@@ -72,7 +72,7 @@ package body Alire.Lockfiles is
                  (TOML_Adapters.From (Result.Value, Filename & ":")));
             end return;
          else
-            Raise_Checked_Error (TOML_Load.Format_Error (Result));
+            Raise_Checked_Error (TOML_Load.Format_Error (Filename, Result));
          end if;
       end;
    end Read;
