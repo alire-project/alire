@@ -1,7 +1,9 @@
 description = "\"Hello, world!\" demonstration project"
 name = "hello2"
 version = "0.2.0"
-origin = "file://."
 licenses = []
 maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."

@@ -1,10 +1,12 @@
 description = "Sample crate"
 name = "checkparent"
 version = "1.0.0"
-origin = "file://."
 licenses = []
 maintainers = ["any@bo.dy"]
 maintainers-logins = ["someone"]
 
 [[depends-on]]
 checkenv = "*"
+
+[origin]
+url = "file:."

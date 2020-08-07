@@ -3,7 +3,7 @@ with Alire.Errors;
 private with Alire.Utils;
 private with URI;
 
-package Alire.URI is
+package Alire.URI with Preelaborate is
 
    --  Helpers to process URLs provided by the user. Note: there's already an
    --  Alire.URL type which is simply a String renaming without any additional
@@ -27,6 +27,9 @@ package Alire.URI is
      (None,
       --  For URLs without scheme (to be interpreted as local paths)
 
+      External,
+      --  external: denotes a crate detected by some external definition
+
       File,
       --  A file: URI
 
@@ -41,6 +44,9 @@ package Alire.URI is
       HTTP,
       --  Either http or https, since we don't differentiate treatment
 
+      System,
+      --  system:package is used to denote a native package from the platform
+
       Unknown
       --  Anything else
      );
@@ -54,7 +60,7 @@ package Alire.URI is
    function Scheme (This : URL) return Schemes;
    --  Extract the Scheme part of a URL
 
-   function Local_Path (This : URL) return Any_Path
+   function Local_Path (This : URL) return String
      with Pre => Scheme (This) in None | File
      or else raise Checked_Error with Errors.Set
        ("Given URL does not seem to denote a path: " & This);
@@ -70,6 +76,9 @@ package Alire.URI is
    --  TODO: fix incorrectly emitted file:// paths in Origins so at least we
    --  are not generating improper URIs.
 
+   function Path (This : URL) return String;
+   --  The path as properly defined (without the authority, if any)
+
 private
 
    package U renames Standard.URI;
@@ -80,8 +89,15 @@ private
    -- Local_Path --
    ----------------
 
-   function Local_Path (This : URL) return Any_Path
+   function Local_Path (This : URL) return String
    is (U.Permissive_Path (This));
+
+   ----------
+   -- Path --
+   ----------
+
+   function Path (This : URL) return String
+   is (U.Extract (This, U.Path));
 
    ------------
    -- Scheme --
@@ -90,6 +106,8 @@ private
    function Scheme (This : URL) return Schemes
    is (if U.Scheme (This) = "" then
           None
+       elsif L (U.Scheme (This)) = "external" then
+          External
        elsif L (U.Scheme (This)) = "file" then
           File
        elsif Utils.Starts_With (L (U.Scheme (This)), "git+") then
@@ -102,6 +120,8 @@ private
           HTTP
        elsif L (U.Scheme (This)) = "https" then
           HTTP
+       elsif L (U.Scheme (This)) = "system" then
+          System
        else
           Unknown);
 
