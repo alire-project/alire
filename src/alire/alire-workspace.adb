@@ -63,7 +63,7 @@ package body Alire.Workspace is
          declare
             To_Remove : Alire.Containers.Release_Set;
             function Enum (Deps : Conditional.Dependencies)
-                           return Alire.Dependencies.Containers.Lists.List
+                           return Alire.Dependencies.Containers.List
                            renames Conditional.Enumerate;
          begin
 
