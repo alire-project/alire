@@ -38,11 +38,10 @@ package body Alire.Origins.Tweaks is
 
       function Fix_VCS return Origin is
          use Ada.Directories;
-         use Utils;
          URL : constant String := This.URL; -- Doesn't include @commit
       begin
          --  Check for "xxx+file://" or return as-is:
-         if not Starts_With (URL, Prefix_File) then
+         if URI.Scheme (URL) not in URI.File_Schemes then
             return This;
          end if;
 

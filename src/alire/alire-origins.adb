@@ -1,12 +1,21 @@
-with Alire.TOML_Keys;
+with Alire.URI;
 with Alire.Utils;
 
 package body Alire.Origins is
 
-   function Ends_With (S : String; Suffix : String) return Boolean is
-     (S'Length >= Suffix'Length
-      and then S (S'Last - Suffix'Length + 1 .. S'Last) = Suffix);
-   --  Return whether the S string ends with the given Suffix sub-string
+   ----------
+   -- Keys --
+   ----------
+
+   package Keys is -- TOML keys for serialization
+
+      Archive_Name : constant String := "archive-name";
+      Commit       : constant String := "commit";
+      Hashes       : constant String := "hashes";
+      Origin       : constant String := "origin";
+      URL          : constant String := "url";
+
+   end Keys;
 
    function URL_Basename (URL : Alire.URL) return String;
    --  Try to get a basename for the given URL. Return an empty string on
@@ -57,6 +66,7 @@ package body Alire.Origins is
    --------------------
 
    function Archive_Format (Name : String) return Source_Archive_Format is
+      use Utils;
    begin
       if Ends_With (Name, ".zip") then
          return Zip_Archive;
@@ -109,28 +119,40 @@ package body Alire.Origins is
    -- From_String --
    -----------------
 
-   --  Loads a statically defined origin from its textual description.
+   function From_String (Image : String) return Origin is
+      Scheme  : constant URI.Schemes := URI.Scheme (Image);
+   begin
+      case Scheme is
+         when URI.File_Schemes =>
+            return New_Filesystem (URI.Local_Path (Image));
+         when URI.HTTP =>
+            return New_Source_Archive (Image);
+         when others =>
+            Raise_Checked_Error ("Unsupported URL scheme: " & Image);
+      end case;
+   end From_String;
 
-   function From_String
-     (This   : out Origin;
-      From   : String;
-      Parent : TOML_Adapters.Key_Queue := TOML_Adapters.Empty_Queue;
-      Hashed : Boolean := True)
-      return Outcome
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   overriding
+   function From_TOML (This : in out Origin;
+                       From :        TOML_Adapters.Key_Queue)
+                       return Outcome
    is
 
       ----------------
       -- Add_Hashes --
       ----------------
 
-      function Add_Hashes (Mandatory : Boolean) return Outcome is
+      function Add_Hashes (Parent : TOML_Adapters.Key_Queue) return Outcome is
          Val : TOML.TOML_Value;
       begin
-         if Parent.Pop (TOML_Keys.Origin_Hashes, Val) then
+         if Parent.Pop (Keys.Hashes, Val) then
             if Val.Kind /= TOML.TOML_Array then
                return Parent.Failure
-                 (TOML_Keys.Origin_Hashes
-                  & " must be an array of hash values");
+                 (Keys.Hashes & " must be an array of hash values");
             end if;
 
             for I in 1 .. Val.Length loop
@@ -150,130 +172,118 @@ package body Alire.Origins is
                   This.Add_Hash (Hashes.Any_Hash (Hash));
                end;
             end loop;
-         elsif Hashed and then Mandatory then
+         else
             return Parent.Failure
-              ("missing mandatory " & TOML_Keys.Origin_Hashes & " field");
+              ("missing mandatory " & Keys.Hashes & " field");
          end if;
 
          return Outcome_Success;
       end Add_Hashes;
 
-      use Utils;
-      Commit : constant String := Tail (From, '@');
-      URL    : constant String := Tail (Head (From, '@'), '+');
-      Path   : constant String :=
-                 From (From'First + Prefixes (Filesystem)'Length ..
-                         From'Last);
-      Descr  : constant String := Tail (From, ':');
+      use TOML;
+      use all type URI.Schemes;
+      Archive : TOML_Value;
+      Table   : constant TOML_Adapters.Key_Queue :=
+                 From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
+                              Context => Keys.Origin);
+      URL     : constant String :=
+                 Table.Checked_Pop (Keys.URL, TOML_String).As_String;
+      VCS_URL : constant String :=
+                  (if Utils.Contains (URL, "file:")
+                   then Utils.Tail (URL, ':') -- Remove file: that confuses git
+                   else Utils.Tail (URL, '+')); -- remove prefix vcs+
+      Scheme  : constant URI.Schemes := URI.Scheme (URL);
+      Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
    begin
-      --  Check easy ones first (unique prefixes):
-      for Kind in Prefixes'Range loop
-         if Prefixes (Kind) /= null and then
-           Utils.Starts_With (From, Prefixes (Kind).all)
-         then
-            case Kind is
-               when Git            =>
-                  if Commit'Length /= Git_Commit'Length then
-                     Raise_Checked_Error
-                       ("invalid git commit id, " &
-                          "40 digits hexadecimal expected");
-                  end if;
+      case Scheme is
+         when External =>
+            This := New_External (URI.Path (URL));
 
-                  This := New_Git (URL, Commit);
-
-               when Hg             =>
-                  if Commit'Length /= Hg_Commit'Length then
-                     Raise_Checked_Error
-                       ("invalid hg revision number, " &
-                          "40 digits hexadecimal expected");
-                  end if;
-
-                  This := New_Hg (URL, Commit);
-
-               when SVN            => This := New_SVN (URL, Commit);
-
-               when External       => This := New_External (Descr);
-
-               when Filesystem     =>
-                  if Path = "" then
-                     return Parent.Failure
-                       ("empty path given in local origin");
-                  else
-                     This := New_Filesystem (Path);
-                  end if;
-
-               when Source_Archive =>
-                  raise Program_Error with "can't happen";
-
-               when System         => This := New_System (Descr);
-            end case;
-
-            if Hashed then
-               --  Add optional (for now) hashes:
-               return Add_Hashes (Mandatory => False);
-            else
-               return Outcome_Success;
+         when URI.File_Schemes =>
+            if URI.Local_Path (URL) = "" then
+               From.Checked_Error ("empty path given in local origin");
             end if;
-         end if;
-      end loop;
+            This := New_Filesystem (URI.Local_Path (URL));
 
-      --  By elimination it must be a source archive (or erroneous):
-      if not (Starts_With (From, "http://") or else
-              Starts_With (From, "https://"))
-      then
-         return Parent.Failure ("unknown origin: " & From);
-      else
-         declare
-            Archive : TOML.TOML_Value;
-         begin
+         when URI.VCS_Schemes  => null;
+            declare
+               Commit : constant String := Table.Checked_Pop
+                 (Keys.Commit, TOML_String).As_String;
+            begin
+               case Scheme is
+                  when Git =>
+                     if Commit'Length /= Git_Commit'Length then
+                        Raise_Checked_Error
+                          ("invalid git commit id, " &
+                             "40 digits hexadecimal expected");
+                     end if;
+                     This := New_Git (VCS_URL, Commit);
+                  when Hg =>
+                     if Commit'Length /= Hg_Commit'Length then
+                        Raise_Checked_Error
+                          ("invalid mercurial commit id, " &
+                             "40 digits hexadecimal expected");
+                     end if;
+                     This := New_Hg (VCS_URL, Commit);
+                  when SVN =>
+                     This := New_SVN (VCS_URL, Commit);
+                  when others =>
+                     raise Program_Error; -- Can't happen
+               end case;
+            end;
+
+         when HTTP             =>
             --  Optional filename checks:
-            if Parent.Pop (TOML_Keys.Archive_Name, Archive) then
+            if Table.Pop (Keys.Archive_Name, Archive) then
                if Archive.Kind /= TOML.TOML_String then
-                  return Parent.Failure ("archive name must be a string");
+                  return Table.Failure ("archive name must be a string");
                end if;
             end if;
 
             begin
                This := New_Source_Archive
-                 (URL  => From,
+                 (URL  => URL,
                   Name => (if Archive.Is_Present
                            then Archive.As_String
                            else ""));
             exception
                when Unknown_Source_Archive_Name_Error =>
-                  return Parent.Failure
+                  return Table.Failure
                     ("unable to determine archive name from URL: "
                      & "please specify one with '"
-                     & TOML_Keys.Archive_Name & "'");
+                     & Keys.Archive_Name & "'");
             end;
 
-            return Add_Hashes (Mandatory => True);
-         end;
-      end if;
-   end From_String;
+         when System =>
+            This := New_System (URI.Path (URL));
 
-   ---------------
-   -- From_TOML --
-   ---------------
+         when Unknown          =>
+            From.Checked_Error ("unsupported scheme in URL: " & URL);
+      end case;
 
-   overriding
-   function From_TOML (This : in out Origin;
-                       From :        TOML_Adapters.Key_Queue)
-                       return Outcome
-   is
-      Value : TOML.TOML_Value;
-   begin
-      if not From.Pop (TOML_Keys.Origin, Value) then
-         return From.Failure ("mandatory origin missing");
+      --  Check hashes existence appropriateness
 
-      elsif Value.Kind = TOML.TOML_String then
-         --  Plain string: regular origin
-         return From_String (This,
-                             Value.As_String,
-                             From);
-      else
-         return From.Failure ("expected string description");
-      end if;
+      case This.Kind is
+         when Filesystem =>
+            if Hashed then
+               return Add_Hashes (Table);
+            end if;
+            --  Hashes are mandatory only for source archives. This is checked
+            --  on deployment, since at this moment we do not have the proper
+            --  absolute patch
+
+         when Source_Archive =>
+            return Add_Hashes (Table); -- mandatory
+
+         when others =>
+            if Hashed then
+               return Table.Failure
+                 ("hashes cannot be provided for origins of kind "
+                  & Utils.To_Mixed_Case (This.Kind'Img));
+            end if;
+      end case;
+
+      return Table.Report_Extra_Keys;
    end From_TOML;
 
    ---------------------
@@ -321,23 +331,24 @@ package body Alire.Origins is
    begin
       case This.Kind is
          when Filesystem =>
-            Table.Set (TOML_Keys.Origin, +("file://" & This.Path));
+            Table.Set (Keys.URL, +("file:" & This.Path));
 
          when VCS_Kinds =>
-            Table.Set (TOML_Keys.Origin, +(Prefixes (This.Kind).all &
-                         This.URL & "@" & This.Commit));
+            Table.Set (Keys.URL, +(Prefixes (This.Kind).all & This.URL));
+            Table.Set (Keys.Commit, +This.Commit);
+
          when External =>
-            Table.Set (TOML_Keys.Origin,
+            Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all & (+This.Data.Description)));
 
          when Source_Archive =>
-            Table.Set (TOML_Keys.Origin,       +This.Archive_URL);
+            Table.Set (Keys.URL, +This.Archive_URL);
             if This.Archive_Name /= "" then
-               Table.Set (TOML_Keys.Archive_Name, +This.Archive_Name);
+               Table.Set (Keys.Archive_Name, +This.Archive_Name);
             end if;
 
          when System =>
-            Table.Set (TOML_Keys.Origin,
+            Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all & This.Package_Name));
       end case;
 
@@ -349,7 +360,7 @@ package body Alire.Origins is
                Hashes.Append (+String (Hash));
             end loop;
 
-            Table.Set (TOML_Keys.Origin_Hashes, Hashes);
+            Table.Set (Keys.Hashes, Hashes);
          end;
       end if;
 

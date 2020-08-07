@@ -1,7 +1,9 @@
 description = "This is a very very very very very very very very very very long description"
 name = "hello_world"
 version = "0.1.0"
-origin = "file://."
 licenses = []
 maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."

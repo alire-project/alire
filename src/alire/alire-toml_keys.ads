@@ -6,7 +6,6 @@ package Alire.TOML_Keys with Preelaborate is
    Action_Type    : constant String := "type";
    Action_Command : constant String := "command";
    Action_Folder  : constant String := "directory";
-   Archive_Name   : constant String := "archive-name";
    Author         : constant String := "authors";
    Auto_GPR_With  : constant String := "auto-gpr-with";
    Available      : constant String := "available";
@@ -30,8 +29,6 @@ package Alire.TOML_Keys with Preelaborate is
    Name           : constant String := "name";
    Notes          : constant String := "notes";
    Origin         : constant String := "origin";
-   Origin_Hashes  : constant String := "origin-hashes";
-   Origin_Source  : constant String := "archive-name";
    OS             : constant String := "os";
    Path           : constant String := "path";
    Pinned         : constant String := "pinned";
