@@ -3,6 +3,7 @@
 *.cgpr
 *.db
 *.db-???
+*.idea
 *.xml
 *.pyc
 
@@ -12,5 +13,6 @@ bin
 lib
 obj
 stress/*/
+venv
 
 testsuite/out
