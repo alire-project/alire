@@ -1,5 +1,3 @@
-with Alire.Errors;
-
 package body Alire.Properties.Labeled is
 
    ------------
@@ -90,9 +88,11 @@ package body Alire.Properties.Labeled is
          end;
       end return;
    exception
+      when Checked_Error =>
+         raise; -- Let the more informative error raise
       when E : others =>
          Log_Exception (E);
-         raise Checked_Error with "Cannot read valid property from " & Key;
+         From.Checked_Error ("Cannot read valid property from " & Key);
    end From_TOML;
 
    ------------------------
@@ -190,12 +190,6 @@ package body Alire.Properties.Labeled is
          when others =>
             null;
       end case;
-
-   exception
-      when E : Checked_Error =>
-         --  Print the error for the user before raising:
-         Trace.Error (Errors.Get (E, Clear => False));
-         raise;
    end Validate;
 
 end Alire.Properties.Labeled;

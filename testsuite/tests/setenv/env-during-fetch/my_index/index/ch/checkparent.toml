@@ -1,9 +1,0 @@
-[general]
-description = "Sample crate"
-licenses = []
-maintainers = ["any@bo.dy"]
-maintainers-logins = ["someone"]
-
-['1.0']
-origin = "file://."
-depends-on.checkenv = "*"

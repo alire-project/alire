@@ -5,7 +5,7 @@ with Alire.Dependencies;
 with Alire.GPR;
 with Alire.Origins;
 with Alire.Crates.Containers;
-with Alire.Crates.With_Releases;
+with Alire.Policies;
 with Alire.Properties;
 with Alire.Properties.Licenses;
 with Alire.Releases;
@@ -35,7 +35,7 @@ package Alire.Index is
      and then Branch_String (Branch_String'Last) /= '-'
      and then (for some C of Branch_String => C = '-');
 
-   Community_Branch : constant String := "devel-0.3";
+   Community_Branch : constant String := "tmp-0.1";
    --  The branch used for the community index
 
    Version : constant Semantic_Versioning.Version :=
@@ -50,26 +50,19 @@ package Alire.Index is
    --  INDEX POPULATION  --
    ------------------------
 
-   type Addition_Policies is
-     (Merge_Priorizing_Existing
-      --  Merge two crates but the properties of the old one stand, new
-      --  properties are not added, and any existing releases will be kept
-      --  over ones with the same version in the new crate. This is the only
-      --  behavior existing since multiple indexes were introduced.
+   procedure Add (Crate  : Crates.Crate;
+                  Policy : Policies.For_Index_Merging :=
+                    Policies.Merge_Priorizing_Existing);
 
-      --  We might envision other policies, like not allowing releases from two
-      --  indexes at the same time, keeping only the first seen or overriding
-      --  with the last seen.
-     );
+   procedure Add (Release : Releases.Release;
+                  Policy : Policies.For_Index_Merging :=
+                    Policies.Merge_Priorizing_Existing);
 
-   procedure Add (Crate  : Crates.With_Releases.Crate;
-                  Policy : Addition_Policies := Merge_Priorizing_Existing);
-
-   procedure Add_All_Externals (Env : Properties.Vector);
+   procedure Detect_All_Externals (Env : Properties.Vector);
    --  Goes over the list of crates and applies external detection, indexing
    --  any found externals. This has effect only the first time it is called.
 
-   procedure Add_Externals (Name : Crate_Name; Env : Properties.Vector);
+   procedure Detect_Externals (Name : Crate_Name; Env : Properties.Vector);
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
@@ -77,7 +70,7 @@ package Alire.Index is
    --  BASIC QUERIES  --
    ---------------------
 
-   function Crate (Name : Crate_Name) return Crates.With_Releases.Crate
+   function Crate (Name : Crate_Name) return Crates.Crate
      with Pre =>
        Exists (Name) or else
        raise Checked_Error with "Requested crate not in index: " & (+Name);

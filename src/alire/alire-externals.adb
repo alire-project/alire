@@ -76,25 +76,12 @@ package body Alire.Externals is
 
          --  Load common external fields
 
-         declare
-            Result : constant Outcome :=
-                     TOML_Load.Load_Crate_Section
-                       (Section => Crates.External_Section,
-                        From    => From,
-                        Props   => Ext.Properties,
-                        Deps    => Deps,
-                        Avail   => Ext.Available);
-         begin
-            Assert (Result);
-
-            --  Ensure that no dependencies have been defined for the external.
-            --  This may be handy in the future, but until the need arises
-            --  better not have it complicating things.
-         end;
-
-         if not Deps.Is_Empty then
-            From.Checked_Error ("externals cannot have dependencies");
-         end if;
+         TOML_Load.Load_Crate_Section
+           (Section => Crates.External_Private_Section,
+            From    => From,
+            Props   => Ext.Properties,
+            Deps    => Deps,
+            Avail   => Ext.Available);
 
          From.Report_Extra_Keys; -- Table must be exhausted at this point
       end return;

@@ -1,0 +1,10 @@
+description = "2nd-level crate"
+name = "tier3"
+version = "1.0.0"
+origin = "file://."
+licenses = []
+maintainers = ["john@doe.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+tier3 = "*"

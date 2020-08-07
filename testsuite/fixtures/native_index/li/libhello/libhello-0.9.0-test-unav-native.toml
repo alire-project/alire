@@ -1,0 +1,10 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "0.9.0-test-unav-native"
+origin = "file://../../../crates/libhello_1.0.0"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+make = "*"

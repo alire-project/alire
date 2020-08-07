@@ -1,0 +1,9 @@
+description = "auto-gpr-with=false"
+name = "libhello_nogprwith"
+version = "1.0.0"
+auto-gpr-with = false
+origin = "file://../../../crates/libhello_1.0.0"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+project-files = ["will_fail_if_withed.gpr"]

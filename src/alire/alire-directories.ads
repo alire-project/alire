@@ -44,6 +44,15 @@ package Alire.Directories is
    --  Finds a single file in a folder with the given extension and return its
    --  absolute path.  If more than one, or none, returns "".
 
+   procedure Traverse_Tree (Start   : Relative_Path;
+                            Doing   : access procedure
+                              (Item : Ada.Directories.Directory_Entry_Type;
+                               Stop : in out Boolean);
+                            Recurse : Boolean := False);
+   --  Traverse all items in a folder, optionally recursively If recursively,
+   --  the directory entry is passed before entering it "." and ".." are
+   --  ignored. If Stop is set to True, traversal will not continue.
+
    ----------------
    -- GUARD TYPE --
    ----------------

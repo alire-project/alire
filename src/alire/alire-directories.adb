@@ -301,6 +301,46 @@ package body Alire.Directories is
               Exception_Information (E));
    end Finalize;
 
+   -------------------
+   -- Traverse_Tree --
+   -------------------
+
+   procedure Traverse_Tree (Start   : Relative_Path;
+                            Doing   : access procedure
+                              (Item : Ada.Directories.Directory_Entry_Type;
+                               Stop : in out Boolean);
+                            Recurse : Boolean := False)
+   is
+      use Ada.Directories;
+
+      procedure Go_Down (Item : Directory_Entry_Type) is
+         Stop : Boolean := False;
+      begin
+         if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
+            Doing (Item, Stop);
+            if Stop then
+               return;
+            end if;
+
+            if Recurse and then Kind (Item) = Directory then
+               Traverse_Tree (Start / Simple_Name (Item), Doing, Recurse);
+            end if;
+         end if;
+      end Go_Down;
+
+   begin
+      Trace.Debug ("Traversing folder: " & Start);
+
+      Search (Start,
+              "",
+              (Directory => True, Ordinary_File => True, others => False),
+              Go_Down'Access);
+   end Traverse_Tree;
+
+   ---------------
+   -- With_Name --
+   ---------------
+
    function With_Name (Name : String) return Temp_File is
      (Temp_File'(Ada.Finalization.Limited_Controlled with
                  Keep => <>,

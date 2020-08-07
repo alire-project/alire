@@ -1,0 +1,9 @@
+description = "Utility for directing compilation"
+name = "make"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "system"
+origin = [] # No package name since we require it unavailable in tests

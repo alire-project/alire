@@ -2,6 +2,18 @@ with Alire.Errors;
 
 package body Alire.TOML_Adapters is
 
+   ------------
+   -- Assert --
+   ------------
+
+   procedure Assert (Queue : Key_Queue; Condition : Boolean; Message : String)
+   is
+   begin
+      if not Condition then
+         Queue.Checked_Error (Message);
+      end if;
+   end Assert;
+
    ----------------
    -- Assert_Key --
    ----------------

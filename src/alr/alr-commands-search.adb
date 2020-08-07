@@ -2,7 +2,7 @@ with Alire.Containers;
 with Alire.Externals;
 with Alire.Index;
 with Alire.Origins.Deployers;
-with Alire.Crates.With_Releases;
+with Alire.Crates;
 with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
@@ -137,7 +137,7 @@ package body Alr.Commands.Search is
          ------------------------
 
          procedure List_All_Or_Latest
-           (Crate : Alire.Crates.With_Releases.Crate) is
+           (Crate : Alire.Crates.Crate) is
          begin
             if Cmd.Full then
                for Release of Crate.Releases loop
@@ -154,7 +154,7 @@ package body Alr.Commands.Search is
          -- List_Externals --
          --------------------
 
-         procedure List_Externals (Crate : Alire.Crates.With_Releases.Crate)
+         procedure List_Externals (Crate : Alire.Crates.Crate)
          is
          begin
             if Cmd.External then
@@ -174,10 +174,10 @@ package body Alr.Commands.Search is
          -- List_Crate --
          ----------------
 
-         procedure List_Crate (Crate : Alire.Crates.With_Releases.Crate) is
+         procedure List_Crate (Crate : Alire.Crates.Crate) is
          begin
             if Cmd.Detect then
-               Alire.Index.Add_Externals (Crate.Name, Platform.Properties);
+               Alire.Index.Detect_Externals (Crate.Name, Platform.Properties);
             end if;
 
             List_All_Or_Latest (Crate);

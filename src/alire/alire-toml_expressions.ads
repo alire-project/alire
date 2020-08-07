@@ -114,7 +114,7 @@ package Alire.TOML_Expressions with Preelaborate is
       --  Entry point into loading expression trees. Identifies case(xx)
       --  expressions, which are recursively loaded using the Loaders, or using
       --  Static_Loader for final values. Parent is the "key" being loaded.
-      --  From points to the RHS value or case expr May raise Checked_Error.
+      --  From points to the RHS value or case expr. May raise Checked_Error.
 
    end Enum_Trees;
 
