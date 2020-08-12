@@ -3,7 +3,6 @@ with Ada.Strings.Fixed;
 with Alire.Crates;
 with Alire.Defaults;
 with Alire.Errors;
-with Alire.Index;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
@@ -610,32 +609,8 @@ package body Alire.Releases is
                        return Outcome
    is
       package Labeled renames Alire.Properties.Labeled;
-
-      Has_Metadata_Version : Boolean := False;
-      Metadata_Version     : Semver.Version;
-
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
-
-      --  Metadata version
-
-      Has_Metadata_Version := From.Unwrap.Has (TOML_Keys.Metadata_Version);
-      if Has_Metadata_Version then
-         Metadata_Version :=
-           Semver.Parse
-             (From.Checked_Pop
-                (TOML_Keys.Metadata_Version, TOML.TOML_String).As_String);
-
-         if Metadata_Version /= Index.Version then
-            Raise_Checked_Error
-              ("Mismatch between manifest version (" & Metadata_Version.Image
-               & ") and alr index version (" & Index.Version.Image & ")");
-         end if;
-      elsif Source in Manifest.Local then
-         Recoverable_Error
-           ("Local manifest file is for an old alr version"
-            & " (lacks " & TOML_Keys.Metadata_Version & " field)");
-      end if;
 
       --  Origin
 
@@ -696,8 +671,6 @@ package body Alire.Releases is
       use TOML_Adapters;
       Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
-      --  Metadata version
-      Root.Set (TOML_Keys.Metadata_Version, +Index.Version.Image);
 
       --  Name
       Root.Set (TOML_Keys.Name, +R.Name_Str);

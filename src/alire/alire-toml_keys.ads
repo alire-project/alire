@@ -26,7 +26,6 @@ package Alire.TOML_Keys with Preelaborate is
    Long_Descr     : constant String := "long-description";
    Maintainer     : constant String := "maintainers";
    Maint_Logins   : constant String := "maintainers-logins";
-   Metadata_Version : constant String := "metadata-version";
    Name           : constant String := "name";
    Notes          : constant String := "notes";
    Origin         : constant String := "origin";
