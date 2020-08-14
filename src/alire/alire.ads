@@ -194,8 +194,8 @@ package Alire with Preelaborate is
    --  message (Msg) and raise Checked_Error. There is no limitation on the
    --  length of Msg.
 
-   procedure Recoverable_Error (Msg : String);
-   --  When Force, emit a warning and return normally. When not Force call
+   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force);
+   --  When Recover, emit a warning and return normally. When not Recover call
    --  Raise_Checked_Error instead.
 
    ---------------

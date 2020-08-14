@@ -55,6 +55,7 @@ def run_alr(*args, **kwargs):
 
     complain_on_error = kwargs.pop('complain_on_error', True)
     debug = kwargs.pop('debug', True)
+    force = kwargs.pop('force', False)
     quiet = kwargs.pop('quiet', True)
     if kwargs:
         first_unknown_kwarg = sorted(kwargs)[0]
@@ -64,6 +65,8 @@ def run_alr(*args, **kwargs):
     argv.append('-n')  # always non-interactive
     if debug:
         argv.append('-d')
+    if force:
+        argv.append('-f')
     if quiet:
         argv.append('-q')
     argv.extend(args)

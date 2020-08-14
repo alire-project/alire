@@ -193,9 +193,9 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_Error (Msg : String) is
+   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
    begin
-      if Force then
+      if Recover then
          Trace.Warning (Msg);
       else
          Raise_Checked_Error (Msg);
