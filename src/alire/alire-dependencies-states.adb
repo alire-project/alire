@@ -1,6 +1,6 @@
-with Alire.Roots;
-
 with Alire.Crates;
+with Alire.Manifest;
+with Alire.Roots;
 
 package body Alire.Dependencies.States is
 
@@ -92,7 +92,8 @@ package body Alire.Dependencies.States is
                    (Releases.From_TOML
                       (From.Descend
                          (From.Checked_Pop (Keys.Release, TOML_Table),
-                          "release: " & (+Crate))));
+                          "release: " & (+Crate)),
+                       Manifest.Index));
          end case;
 
          return Data;

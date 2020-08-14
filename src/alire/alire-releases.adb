@@ -2,6 +2,7 @@ with Ada.Strings.Fixed;
 
 with Alire.Crates;
 with Alire.Defaults;
+with Alire.Errors;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
@@ -571,25 +572,30 @@ package body Alire.Releases is
    -- From_Manifest --
    -------------------
 
-   function From_Manifest (File_Name : Any_Path) return Release
+   function From_Manifest (File_Name : Any_Path;
+                           Source    : Manifest.Sources)
+                           return Release
    is
      (From_TOML
         (TOML_Adapters.From
              (TOML_Load.Load_File (File_Name),
-              "Loading release from manifest: " & File_Name)));
+              "Loading release from manifest: " & File_Name),
+         Source));
 
    ---------------
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue) return Release is
+   function From_TOML (From : TOML_Adapters.Key_Queue;
+                       Source : Manifest.Sources)
+                       return Release is
    begin
-      From.Assert_Key (TOML_Keys.Name,        TOML.TOML_String);
+      From.Assert_Key (TOML_Keys.Name, TOML.TOML_String);
 
       return This : Release := New_Empty_Release
-        (Name       => +From.Unwrap.Get (TOML_Keys.Name).As_String)
+        (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
-         Assert (This.From_TOML (From));
+         Assert (This.From_TOML (From, Source));
       end return;
    end From_TOML;
 
@@ -597,8 +603,9 @@ package body Alire.Releases is
    -- From_TOML --
    ---------------
 
-   function From_TOML (This : in out Release;
-                       From :        TOML_Adapters.Key_Queue)
+   function From_TOML (This   : in out Release;
+                       From   :        TOML_Adapters.Key_Queue;
+                       Source :        Manifest.Sources)
                        return Outcome
    is
       package Labeled renames Alire.Properties.Labeled;
@@ -607,13 +614,7 @@ package body Alire.Releases is
 
       --  Origin
 
-      declare
-         Result : constant Outcome := This.Origin.From_TOML (From);
-      begin
-         if not Result.Success then
-            return Result;
-         end if;
-      end;
+      This.Origin.From_TOML (From).Assert;
 
       --  Properties
 
@@ -633,6 +634,19 @@ package body Alire.Releases is
 
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;
+   exception
+      when E : others =>
+         case Source is
+            when Manifest.Index =>
+               raise Program_Error with
+               Errors.Set
+                 ("Cannot load manifest from index with proper version: "
+                  & Errors.Get (E));
+            when Manifest.Local =>
+               raise Checked_Error with
+                 Errors.Set ("Cannot load manifest, please review contents: "
+                 & Errors.Get (E));
+         end case;
    end From_TOML;
 
    -------------------
@@ -657,6 +671,7 @@ package body Alire.Releases is
       use TOML_Adapters;
       Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
+
       --  Name
       Root.Set (TOML_Keys.Name, +R.Name_Str);
 
