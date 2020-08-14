@@ -48,6 +48,11 @@ package Alire.TOML_Adapters with Preelaborate is
      No_Return;
    --  Raise a Checked error with Context & ": " & Message, using Alire.Errors.
 
+   procedure Recoverable_Error (Queue   : Key_Queue;
+                                Message : String;
+                                Recover : Boolean := Alire.Force);
+   --  As Checked_Error, but emit a warning instead when Recover is True
+
    function Checked_Pop (Queue : Key_Queue;
                          Key   : String;
                          Kind  : TOML.Any_Value_Kind)
