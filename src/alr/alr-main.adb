@@ -4,10 +4,9 @@ with Alire.Root;
 
 with Alr.Bootstrap;
 with Alr.Commands;
+with Alr.Last_Chance_Handler;
 with Alr.Platform.Init;
 with Alr.Platforms.Current;
-
-with Last_Chance_Handler;
 
 procedure Alr.Main is
 begin
