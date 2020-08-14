@@ -10,6 +10,10 @@ package Alire.TOML_Load is
    --  Separate package to avoid a circularity, since this is used by both
    --  Crates and Releases.
 
+   function Format_Error (File   : Any_Path;
+                          Result : TOML.Read_Result) return String with
+     Pre => not Result.Success;
+
    function Load_File (File_Name : Any_Path) return TOML.TOML_Value;
    --  Will raise Checked_Error if file contents aren't valid TOML
 
