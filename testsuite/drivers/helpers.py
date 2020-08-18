@@ -13,13 +13,21 @@ def contents(dir):
                    for name in dirs + files])
 
 
-# Return the content of a text file
+# Return the content of a text file as a single string with embedded newlines
 def content_of(filename):
     out = ''
     with open(filename, 'r') as f:
         for l in f:
             out += l
     return out
+
+
+def lines_of(filename):
+    """
+    Return the contents of a file as an array of lines (with line breaks)
+    """
+    with open(filename, 'r') as f:
+        return f.readlines()
 
 
 # Assert two values are equal or format the differences

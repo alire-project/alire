@@ -15,8 +15,14 @@ package Alire.Crates is
    function Naming_Convention return Utils.String_Vector;
    --  Return a description of the naming restrictions on crates/indexes.
 
-   type Sections is (Release_Section,
-                     --  Top-level table, with all info about a release
+   type Sections is (Index_Release,
+                     --  Top-level table, with all info about a release to be
+                     --  stored in an index.
+
+                     Local_Release,
+                     --  Top-level table, with info for the working copy of a
+                     --  release. This allows regular users not dealing with
+                     --  packaging to see fewer fields.
 
                      External_Shared_Section,
                      --  Top-level table, with only info valid for externals

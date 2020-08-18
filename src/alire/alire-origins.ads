@@ -164,7 +164,7 @@ private
    function Packaged_As (Name : String) return Package_Names
    is (Name => +Name);
 
-   type Origin_Data (Kind : Kinds := Kinds'First) is record
+   type Origin_Data (Kind : Kinds := External) is record
       Hashes : Hash_Vectors.Vector;
 
       case Kind is

@@ -1,4 +1,6 @@
+with Ada.Directories;
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 
 with Alire.Crates;
 with Alire.Defaults;
@@ -12,6 +14,8 @@ with GNAT.IO; -- To keep preelaborable
 
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
+
+with TOML.File_IO;
 
 package body Alire.Releases is
 
@@ -581,7 +585,8 @@ package body Alire.Releases is
         (TOML_Adapters.From
            (TOML_Load.Load_File (File_Name),
             "Loading release from manifest: " & File_Name),
-         Source);
+         Source,
+         File_Name);
    exception
       when E : others =>
          --  As this file is edited manually, it may not load for many reasons
@@ -593,8 +598,9 @@ package body Alire.Releases is
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue;
-                       Source : Manifest.Sources)
+   function From_TOML (From   : TOML_Adapters.Key_Queue;
+                       Source : Manifest.Sources;
+                       File   : Any_Path := "")
                        return Release is
    begin
       From.Assert_Key (TOML_Keys.Name, TOML.TOML_String);
@@ -602,7 +608,7 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
-         Assert (This.From_TOML (From, Source));
+         Assert (This.From_TOML (From, Source, File));
       end return;
    end From_TOML;
 
@@ -612,21 +618,36 @@ package body Alire.Releases is
 
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
-                       Source :        Manifest.Sources)
+                       Source :        Manifest.Sources;
+                       File   :        Any_Path := "")
                        return Outcome
    is
+      package Dirs    renames Ada.Directories;
       package Labeled renames Alire.Properties.Labeled;
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
 
       --  Origin
 
-      This.Origin.From_TOML (From).Assert;
+      case Source is
+         when Manifest.Index =>
+            This.Origin.From_TOML (From).Assert;
+         when Manifest.Local =>
+            This.Origin :=
+              Origins.New_Filesystem
+                (Dirs.Containing_Directory       -- workspace folder
+                   (Dirs.Containing_Directory    -- alire folder
+                      (Dirs.Full_Name (File)))); -- absolute path
+            --  We don't require an origin for a local release, as the release
+            --  is already in place.
+      end case;
 
       --  Properties
 
       TOML_Load.Load_Crate_Section
-        (Crates.Release_Section,
+        ((case Source is
+            when Manifest.Index => Crates.Index_Release,
+            when Manifest.Local => Crates.Local_Release),
          From,
          This.Properties,
          This.Dependencies,
@@ -667,10 +688,34 @@ package body Alire.Releases is
                 (Semver.Basic.Exactly (R.Version)))));
 
    -------------
+   -- To_File --
+   -------------
+
+   procedure To_File (R        : Release;
+                      Filename : String;
+                      Format   : Manifest.Sources) is
+      use Ada.Text_IO;
+      File : File_Type;
+   begin
+      Create (File, Out_File, Filename);
+      TOML.File_IO.Dump_To_File (R.To_TOML (Format), File);
+      Close (File);
+   exception
+      when others =>
+         if Is_Open (File) then
+            Close (File);
+         end if;
+         raise;
+   end To_File;
+
+   -------------
    -- To_TOML --
    -------------
 
-   overriding function To_TOML (R : Release) return TOML.TOML_Value is
+   function To_TOML (R      : Release;
+                     Format : Manifest.Sources)
+                     return TOML.TOML_Value
+   is
       package APL renames Alire.Properties.Labeled;
       use all type Alire.Properties.Labeled.Cardinalities;
       use all type Alire.Requisites.Tree;
@@ -712,7 +757,12 @@ package body Alire.Releases is
       end loop;
 
       --  Origin
-      Root.Set (TOML_Keys.Origin, R.Origin.To_TOML);
+      case Format is
+         when Manifest.Index =>
+            Root.Set (TOML_Keys.Origin, R.Origin.To_TOML);
+         when Manifest.Local =>
+            null;
+      end case;
 
       --  Dependencies, wrapped as an array
       if not R.Dependencies.Is_Empty then

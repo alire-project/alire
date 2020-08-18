@@ -27,10 +27,7 @@ package Alire.Releases is
 
 --     subtype Dependency_Vector is Dependencies.Vectors.Vector;
 
-   type Release (<>) is
-     new Interfaces.Tomifiable
-     and Interfaces.Yamlable
-   with private;
+   type Release (<>) is new Interfaces.Yamlable with private;
 
    function "<" (L, R : Release) return Boolean;
 
@@ -278,15 +275,24 @@ package Alire.Releases is
                            return Release;
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
-                       Source : Manifest.Sources)
-                       return Release;
-   --  Load a release from a TOML table
+                       Source : Manifest.Sources;
+                       File   : Any_Path := "")
+                       return Release
+     with Pre => Source not in Manifest.Local or else File /= "";
+   --  Load a release from a TOML table. We require the manifest file for local
+   --  manifests to be able to construct a local filesystem origin.
 
-   overriding
-   function To_TOML (R : Release) return TOML.TOML_Value;
+   function To_TOML (R      : Release;
+                     Format : Manifest.Sources)
+                     return TOML.TOML_Value;
 
    overriding
    function To_YAML (R : Release) return String;
+
+   procedure To_File (R        : Release;
+                      Filename : String;
+                      Format   : Manifest.Sources);
+   --  Directly write the release manifest to a file
 
    function Version_Image (R : Release) return String;
 
@@ -303,9 +309,8 @@ private
    --  Properties that R has under platform properties P
 
    type Release (Prj_Len,
-                 Notes_Len : Natural) is
-     new Interfaces.Tomifiable
-     and Interfaces.Yamlable
+                 Notes_Len : Natural)
+   is new Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
       Alias        : UString; -- I finally gave up on constraints
@@ -320,9 +325,12 @@ private
 
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
-                       Source :        Manifest.Sources)
-                       return Outcome;
-   --  Fill in an already existing release
+                       Source :        Manifest.Sources;
+                       File   :        Any_Path := "")
+                       return Outcome
+     with Pre => Source not in Manifest.Local or else File /= "";
+   --  Fill in an already existing release. We require the manifest file
+   --  location for local releases to be able to construct a local file origin.
 
    use all type Conditional.Properties;
 

@@ -162,3 +162,15 @@ name = '{}'
 priority = {}
 url = '{}'
             """.format(name, priority, os.path.join(working_dir, files_dir)))
+
+
+def init_local_crate(name="xxx", binary=True):
+    """
+    Initialize a local crate and enter its folder for further testing.
+
+    :param str name: Name of the crate
+
+    :param bool binary: Initialize as --bin or --lib
+    """
+    run_alr("init", name, "--bin" if binary else "--lib")
+    os.chdir(name)
