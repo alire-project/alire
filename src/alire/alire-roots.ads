@@ -8,6 +8,8 @@ with Alire.Utils;
 
 package Alire.Roots is
 
+   Crate_File_Name : constant String := "alire.toml";
+
    --  Type used to encapsulate the information about the working context.
    --  A valid alire working dir is one containing an alire/crate.toml file.
 

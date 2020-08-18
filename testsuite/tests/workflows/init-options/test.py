@@ -12,8 +12,8 @@ from drivers.helpers import compare, contents
 # Plain init
 run_alr('init', '--bin', 'xxx')
 compare(contents('xxx'), ['xxx/alire',
-                          'xxx/alire/xxx.lock',
-                          'xxx/alire/xxx.toml',
+                          'xxx/alire.lock',
+                          'xxx/alire.toml',
                           'xxx/src',
                           'xxx/src/xxx.adb',
                           'xxx/xxx.gpr'])
@@ -21,16 +21,16 @@ compare(contents('xxx'), ['xxx/alire',
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
 compare(contents('yyy'), ['yyy/alire',
-                          'yyy/alire/yyy.lock',
-                          'yyy/alire/yyy.toml'])
+                          'yyy/alire.lock',
+                          'yyy/alire.toml'])
 
 # Init in place
 os.mkdir('zzz')
 os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
 compare(contents('.'), ['./alire',
-                        './alire/zzz.lock',
-                        './alire/zzz.toml'])
+                        './alire.lock',
+                        './alire.toml'])
 
 
 print('SUCCESS')

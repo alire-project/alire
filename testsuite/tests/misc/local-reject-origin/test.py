@@ -10,7 +10,7 @@ from os.path import join
 init_local_crate("xxx")
 
 # Add manually the origin, and verify that it cannot be loaded
-with open(join("alire", "xxx.toml"), "a") as file:
+with open("alire.toml", "a") as file:
     file.write("\n[origin]\n")
 
 p = run_alr("show", complain_on_error=False)

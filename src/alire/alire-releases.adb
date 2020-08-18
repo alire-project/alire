@@ -244,7 +244,7 @@ package body Alire.Releases is
 
    function New_Working_Release
      (Name         : Crate_Name;
-      Origin       : Origins.Origin           := Origins.New_Filesystem ("..");
+      Origin       : Origins.Origin           := Origins.New_Filesystem (".");
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
       Properties   : Conditional.Properties   :=
@@ -635,9 +635,8 @@ package body Alire.Releases is
          when Manifest.Local =>
             This.Origin :=
               Origins.New_Filesystem
-                (Dirs.Containing_Directory       -- workspace folder
-                   (Dirs.Containing_Directory    -- alire folder
-                      (Dirs.Full_Name (File)))); -- absolute path
+                (Dirs.Containing_Directory   -- same folder as manifest file's
+                   (Dirs.Full_Name (File))); -- absolute path
             --  We don't require an origin for a local release, as the release
             --  is already in place.
       end case;

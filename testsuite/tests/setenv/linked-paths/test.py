@@ -15,7 +15,7 @@ from drivers.helpers import dir_separator, path_separator
 run_alr("init", "--bin", "xxx")
 os.chdir("xxx")
 
-# Link a folder with also contains crate definitions
+# Link a folder which also contains crate metadata
 run_alr("with", "--use=../my_index/crates/crate_1234")
 
 expected_gpr_path = []

@@ -49,7 +49,7 @@ package Alire.Releases is
 
    function New_Working_Release
      (Name         : Crate_Name;
-      Origin       : Origins.Origin     := Origins.New_Filesystem ("..");
+      Origin       : Origins.Origin     := Origins.New_Filesystem (".");
 
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;

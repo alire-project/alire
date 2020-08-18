@@ -10,7 +10,7 @@ from os.path import join
 
 
 def assert_no_origin(crate):
-    assert "origin" not in content_of(join("alire", crate + ".toml")), \
+    assert "origin" not in content_of("alire.toml"), \
         "found unexpected contents in manifest of crate " + crate
 
 

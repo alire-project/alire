@@ -1,13 +1,11 @@
 with Ada.Calendar;
 with Ada.Directories;
 
-with Alire.Directories;
 with Alire.Environment;
 with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.OS_Lib;
-with Alire.Paths;
-with Alire.Root;
+with Alire.Roots.Optional;
 with Alire.Workspace;
 
 with GNAT.OS_Lib;
@@ -251,7 +249,7 @@ package body Alire.Roots is
    ----------------
 
    function Crate_File (This : Root) return Absolute_Path is
-     (Path (This) / "alire" & Paths.Crate_File_Extension_With_Dot);
+     (Path (This) / Crate_File_Name);
 
    ----------------------
    -- Dependencies_Dir --

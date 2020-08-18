@@ -3,8 +3,9 @@ with Ada.Directories;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Manifest;
-with Alire.Paths;
 with Alire.Root;
+
+with GNAT.OS_Lib;
 
 package body Alire.Roots.Optional is
 
@@ -21,38 +22,36 @@ package body Alire.Roots.Optional is
 
    function Detect_Root (Path : Any_Path) return Optional.Root is
       use Directories.Operators;
+      Crate_File : constant Any_Path := Path / Crate_File_Name;
    begin
       if Path /= "" then
-         declare
-            Crate_File : constant String := Directories.Find_Single_File
-              (Path      => Path / Alire.Paths.Working_Folder_Inside_Root,
-               Extension => ".toml");
-         begin
-            if Crate_File /= "" then
-               begin
-                  return This : constant Root :=
-                    Outcome_Success
-                      (Roots.New_Root
-                         (R    => Releases.From_Manifest (Crate_File,
-                          Manifest.Local),
-                          Path => Ada.Directories.Full_Name (Path),
-                          Env  => Alire.Root.Platform_Properties))
-                  do
-                     --  Crate loaded properly, we can return a valid root here
-                     Trace.Debug ("Valid root found at " & Path);
-                  end return;
-               exception
-                  when E : others =>
-                     return Outcome_Failure
-                       (Errors.Get (E),
-                        Broken,
-                        Report => False);
-               end;
-            else
-               return Root_Not_Detected;
-            end if;
-         end;
+         if GNAT.OS_Lib.Is_Regular_File (Crate_File) then
+            begin
+               return This : constant Root :=
+                 Outcome_Success
+                   (Roots.New_Root
+                      (R    => Releases.From_Manifest (Crate_File,
+                                                       Manifest.Local),
+                       Path => Ada.Directories.Full_Name (Path),
+                       Env  => Alire.Root.Platform_Properties))
+               do
+                  --  Crate loaded properly, we can return a valid root here
+                  Trace.Debug ("Valid root found at " & Path);
+               end return;
+            exception
+               when E : others =>
+                  Trace.Debug ("Unloadable root found at " & Path);
+                  return Outcome_Failure
+                    (Errors.Get (E),
+                     Broken,
+                     Report => False);
+            end;
+         else
+            Trace.Debug ("No root found at " & Path);
+            return Root_Not_Detected;
+         end if;
       else
+         Trace.Debug ("No root can be detected because given path is empty");
          return Root_Not_Detected;
          --  This happens when detection of session folders in parent folders
          --  has been already attempted by the caller, so it ends calling here
