@@ -48,13 +48,20 @@ package Alire.Properties.From_TOML is
                      Name   => True,
                      others => False),
 
-                  Crates.Release_Section          =>
+                  Crates.Index_Release           =>
                     (Description        |
                      Maintainers        |
                      Maintainers_Logins |
                      Name               |
                      Version => True,
-                     others  => False));
+                     others  => False),
+
+                  Crates.Local_Release           =>
+                    (Description        |
+                     Name               |
+                     Version => True,
+                     others  => False)
+                 );
 
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
 
@@ -140,9 +147,13 @@ package Alire.Properties.From_TOML is
                             return Conditional.Properties is
      (Loader (From, External_Shared_Loaders, External_Shared_Section));
 
-   function Release_Loader (From : TOML_Adapters.Key_Queue)
-                            return Conditional.Properties is
-     (Loader (From, Release_Loaders, Release_Section));
+   function Index_Release_Loader (From : TOML_Adapters.Key_Queue)
+                                  return Conditional.Properties is
+     (Loader (From, Release_Loaders, Index_Release));
+
+   function Local_Release_Loader (From : TOML_Adapters.Key_Queue)
+                                  return Conditional.Properties is
+     (Loader (From, Release_Loaders, Local_Release));
 
    Section_Loaders : constant
      array (Crates.Sections) of access
@@ -150,6 +161,7 @@ package Alire.Properties.From_TOML is
      return Conditional.Properties
      := (External_Private_Section => External_Private_Loader'Access,
          External_Shared_Section  => External_Shared_Loader'Access,
-         Release_Section          => Release_Loader'Access);
+         Index_Release            => Index_Release_Loader'Access,
+         Local_Release            => Local_Release_Loader'Access);
 
 end Alire.Properties.From_TOML;

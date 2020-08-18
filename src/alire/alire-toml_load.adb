@@ -12,16 +12,20 @@ package body Alire.TOML_Load is
    --  properties, but stored separately as complex types.
 
    type Tables is (Available,
-                   Dependencies);
+                   Dependencies,
+                   Origin);
 
    Allowed_Tables : constant array (Crates.Sections, Tables) of Boolean :=
-                      (Crates.Release_Section          =>
+                      (Crates.Index_Release            =>
                          (others => True),
+                       Crates.Local_Release            =>
+                         (Origin => False,
+                          others => True),
                        Crates.External_Shared_Section  =>
                          (others => False),
                        Crates.External_Private_Section =>
-                         (Available    => True,
-                          Dependencies => False));
+                         (Available => True,
+                          others    => False));
 
    ------------------
    -- Format_Error --
