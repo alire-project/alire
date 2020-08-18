@@ -275,9 +275,12 @@ package Alire.Releases is
                            return Release;
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
-                       Source : Manifest.Sources)
-                       return Release;
-   --  Load a release from a TOML table
+                       Source : Manifest.Sources;
+                       File   : Any_Path := "")
+                       return Release
+     with Pre => Source not in Manifest.Local or else File /= "";
+   --  Load a release from a TOML table. We require the manifest file for local
+   --  manifests to be able to construct a local filesystem origin.
 
    function To_TOML (R      : Release;
                      Format : Manifest.Sources)
@@ -322,9 +325,12 @@ private
 
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
-                       Source :        Manifest.Sources)
-                       return Outcome;
-   --  Fill in an already existing release
+                       Source :        Manifest.Sources;
+                       File   :        Any_Path := "")
+                       return Outcome
+     with Pre => Source not in Manifest.Local or else File /= "";
+   --  Fill in an already existing release. We require the manifest file
+   --  location for local releases to be able to construct a local file origin.
 
    use all type Conditional.Properties;
 

@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
@@ -584,7 +585,8 @@ package body Alire.Releases is
         (TOML_Adapters.From
            (TOML_Load.Load_File (File_Name),
             "Loading release from manifest: " & File_Name),
-         Source);
+         Source,
+         File_Name);
    exception
       when E : others =>
          --  As this file is edited manually, it may not load for many reasons
@@ -596,8 +598,9 @@ package body Alire.Releases is
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue;
-                       Source : Manifest.Sources)
+   function From_TOML (From   : TOML_Adapters.Key_Queue;
+                       Source : Manifest.Sources;
+                       File   : Any_Path := "")
                        return Release is
    begin
       From.Assert_Key (TOML_Keys.Name, TOML.TOML_String);
@@ -605,7 +608,7 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
-         Assert (This.From_TOML (From, Source));
+         Assert (This.From_TOML (From, Source, File));
       end return;
    end From_TOML;
 
@@ -615,9 +618,11 @@ package body Alire.Releases is
 
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
-                       Source :        Manifest.Sources)
+                       Source :        Manifest.Sources;
+                       File   :        Any_Path := "")
                        return Outcome
    is
+      package Dirs    renames Ada.Directories;
       package Labeled renames Alire.Properties.Labeled;
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
@@ -628,7 +633,11 @@ package body Alire.Releases is
          when Manifest.Index =>
             This.Origin.From_TOML (From).Assert;
          when Manifest.Local =>
-            This.Origin := Origins.New_Filesystem (".");
+            This.Origin :=
+              Origins.New_Filesystem
+                (Dirs.Containing_Directory       -- workspace folder
+                   (Dirs.Containing_Directory    -- alire folder
+                      (Dirs.Full_Name (File)))); -- absolute path
             --  We don't require an origin for a local release, as the release
             --  is already in place.
       end case;
