@@ -4,8 +4,6 @@ with Alire.Directories;
 with Alire.Solver;
 with Alire.Utils;
 
-with Alr.Bootstrap;
-
 private with Ada.Text_IO;
 
 private with Alire.GPR;
@@ -137,10 +135,6 @@ package Alr.Commands is
    --  Attempt to find the root alire working dir if deeper inside it
 
 private
-
-   --  Session shortcut
-   function Session_State return Bootstrap.Session_States
-   renames Bootstrap.Session_State;
 
    --  Facilities for command/argument identification. These are available to
    --  commands.

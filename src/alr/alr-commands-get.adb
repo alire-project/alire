@@ -8,6 +8,7 @@ with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Properties.Actions.Executor;
+with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.User_Input;
@@ -15,7 +16,6 @@ with Alire.Workspace;
 
 with Alr.Commands.Build;
 with Alr.Platform;
-with Alr.Bootstrap;
 
 with Semantic_Versioning.Extended;
 
@@ -23,8 +23,6 @@ package body Alr.Commands.Get is
 
    package Query  renames Alire.Solver;
    package Semver renames Semantic_Versioning;
-
-   use all type Bootstrap.Session_States;
 
    --------------
    -- Retrieve --
@@ -79,7 +77,7 @@ package body Alr.Commands.Get is
 
       --  Check if we are already in the fresh copy
 
-      if Session_State > Outside then
+      if not Alire.Root.Current.Outside then
          Reportaise_Command_Failed
            ("Cannot get a release inside another alr release, stopping.");
       end if;

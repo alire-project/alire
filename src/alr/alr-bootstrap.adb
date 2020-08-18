@@ -1,11 +1,10 @@
 with Ada.Calendar;
 
-with Alire.Directories;
 with Alire_Early_Elaboration;
 with Alire.Index;
+with Alire.Root;
 
 with Alr.OS_Lib;
-with Alr.Root;
 with Alr.Utils;
 
 with GNAT.Ctrl_C;
@@ -23,21 +22,6 @@ package body Alr.Bootstrap is
       OS_Lib.Bailout (1);
    end Interrupted;
 
-   -------------------
-   -- Session_State --
-   -------------------
-
-   function Session_State return Session_States is
-   begin
-      if Root.Current.Is_Valid then
-         return Release;
-      elsif Alire.Directories.Detect_Root_Path /= "" then
-         return Broken;
-      else
-         return Outside;
-      end if;
-   end Session_State;
-
    -----------------
    -- Status_Line --
    -----------------
@@ -49,7 +33,7 @@ package body Alr.Bootstrap is
         Ada.Calendar.Clock - Alire_Early_Elaboration.Start;
    begin
       return
-        "(" & Session_State'Img & ") (" &
+        "(" & Utils.To_Lower_Case (Alire.Root.Current.Status'Img) & ") (" &
         Utils.Trim (Alire.Index.Release_Count'Img) & " releases indexed)" &
         (" (loaded in" & Milliseconds'Image (Milliseconds (Elapsed)) & "s)");
    end Status_Line;

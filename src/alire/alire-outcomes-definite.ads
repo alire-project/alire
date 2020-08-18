@@ -20,7 +20,9 @@ package Alire.Outcomes.Definite with Preelaborate is
      raise Checked_Error with Errors.Set (This.Message);
 
    overriding
-   function Outcome_Failure (Message : String) return Outcome;
+   function Outcome_Failure (Message : String;
+                             Report  : Boolean := True)
+                             return Outcome;
 
    overriding
    function Outcome_Success return Outcome is
@@ -52,8 +54,9 @@ private
      (Ptr => This.The_Result'Access);
 
    overriding
-   function Outcome_Failure (Message : String) return Outcome is
-     (Alire.Outcome_Failure (Message) with OK => False);
+   function Outcome_Failure (Message : String;
+                             Report  : Boolean := True) return Outcome
+   is (Alire.Outcome_Failure (Message, Report) with OK => False);
 
    overriding
    function Outcome_From_Exception

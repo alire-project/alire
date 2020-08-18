@@ -7,12 +7,12 @@ with Alire.Platforms;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Requisites.Booleans;
-with Alire.Roots;
+with Alire.Root;
+with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
 
-with Alr.Bootstrap;
 with Alr.Platform;
 with Alr.Root;
 
@@ -201,20 +201,18 @@ package body Alr.Commands.Show is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      use all type Alr.Bootstrap.Session_States;
    begin
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
       if Num_Arguments = 0 then
-         case Bootstrap.Session_State is
-            when Outside =>
-               Reportaise_Wrong_Arguments
-                 ("Cannot proceed without a crate name");
-            when others =>
-               Requires_Valid_Session;
-         end case;
+         if Alire.Root.Current.Outside then
+            Reportaise_Wrong_Arguments
+              ("Cannot proceed without a crate name");
+         else
+            Requires_Valid_Session;
+         end if;
       end if;
 
       if Cmd.External and then

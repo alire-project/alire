@@ -1,6 +1,9 @@
 with Alire.Properties;
+with Alire.Roots.Optional;
+with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
+with Alr.Bootstrap;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Paths;
@@ -20,8 +23,10 @@ package body Alr.Commands.Version is
    overriding procedure Execute (Cmd : in out Command) is
       pragma Unreferenced (Cmd);
       use Ada.Text_IO;
+      Root : constant Alire.Roots.Optional.Root := Alr.Root.Current;
+      use all type Alire.Roots.Optional.States;
    begin
-      Trace.Always ("alr build is " & Bootstrap.Status_Line);
+      Trace.Always ("alr status is " & Bootstrap.Status_Line);
       Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
       Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
 
@@ -30,13 +35,15 @@ package body Alr.Commands.Version is
          & " force:" & Alire.Force'Img
          & " not-interactive:" & Alire.Utils.User_Input.Not_Interactive'Img);
 
-      if not Root.Current.Is_Valid then
-         Trace.Always ("alr root is empty");
-      else
-         Trace.Always ("alr root is " & Root.Current.Release.Milestone.Image);
-      end if;
-
---        Trace.Always ("alr session hash is " & Session.Hash);
+      case Root.Status is
+         when Outside =>
+            Trace.Always ("alr root is empty");
+         when Broken =>
+            Trace.Always ("alr root has invalid metadata: "
+                          & Alire.Utils.TTY.Error (Root.Message));
+         when Valid =>
+            Trace.Always ("alr root is " & Root.Value.Release.Milestone.Image);
+      end case;
 
       declare
          Guard : Folder_Guard (Enter_Working_Folder) with Unreferenced;
@@ -45,7 +52,8 @@ package body Alr.Commands.Version is
                          OS_Lib.Current_Folder);
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img &
                          " GPR project files");
-         Trace.Always ("alr session state is " & Session_State'Img);
+         Trace.Always
+           ("alr session state is [" & Root.Status'Img & "]");
       end;
 
       Log ("alr compiled on [" &
