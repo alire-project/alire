@@ -184,6 +184,10 @@ package body Alire.Directories is
          End_Search (Search);
          return "";
       end if;
+   exception
+      when Name_Error =>
+         Trace.Debug ("Search path does not exist: " & Path);
+         return "";
    end Find_Single_File;
 
    ----------------

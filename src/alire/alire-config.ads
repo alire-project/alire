@@ -1,6 +1,6 @@
 with Alire.OS_Lib; use Alire.OS_Lib.Operators;
-with Alire.Utils;
 with Alire.Root;
+with Alire.Utils;
 
 with TOML;
 

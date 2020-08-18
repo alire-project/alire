@@ -1,9 +1,14 @@
 with Alire.Properties;
-with Alire.Roots;
+with Alire.Roots.Optional;
 
 package Alire.Root is
 
    function Current return Roots.Root;
+   --  Returns the current root, that must exist, or raises Checked_Error
+
+   function Current return Roots.Optional.Root;
+   --  Returns an optional root, that may be empty if none detected, or broken
+   --  if the manifest is not loadable.
 
    --  TODO
    --  This global is a remain of when self-compilation existed

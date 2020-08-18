@@ -35,8 +35,7 @@ package Alire.Workspace is
                       Containers.Crate_Name_Sets.Empty_Set;
                     Options     : Solver.Query_Options :=
                       Solver.Default_Options)
-                    return Solutions.Solution
-     with Pre => Root.Current.Is_Valid;
+                    return Solutions.Solution;
    --  Compute a new solution for the workspace. If Allowed is not empty,
    --  crates not appearing in Allowed are held back at their current version.
    --  This function loads configured indexes from disk.

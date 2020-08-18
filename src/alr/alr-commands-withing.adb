@@ -142,9 +142,9 @@ package body Alr.Commands.Withing is
    ---------------------
 
    procedure Detect_Softlink (Path : String) is
-      Root : constant Alire.Roots.Root := Alire.Roots.Detect_Root (Path);
+      Root : constant Alire.Roots.Root := Alire.Roots.Load_Root (Path);
    begin
-      if Root.Is_Valid then
+      if Root.Is_Stored then
          --  Add a dependency on ^(detected version) (i.e., safely upgradable)
          Add_Softlink
            (Dep_Spec => Root.Release.Name_Str
@@ -152,7 +152,7 @@ package body Alr.Commands.Withing is
             Path     => Path);
       else
          Reportaise_Command_Failed
-           ("cannot add target: " & Root.Invalid_Reason);
+           ("cannot add target: " & Root.Storage_Error);
       end if;
    end Detect_Softlink;
 
