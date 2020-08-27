@@ -23,7 +23,7 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Install toolchain
-      uses: ada-actions/toolchain@dev
+      uses: ada-actions/toolchain@ce2020
       with:
         distrib: community
 
