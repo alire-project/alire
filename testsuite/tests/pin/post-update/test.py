@@ -16,14 +16,15 @@ def check_child(version, output, pinned):
     # Verify output
     assert_match('.*\n'
                  'Dependencies \(solution\):\n'
-                 '   libchild=' + version + (' \(pinned\)' if pinned else "") + '\n'
+                 '   libchild=' + version +
+                 (' \(pinned\)' if pinned else "") + '\n'
                  '   libparent=1\.0\.0\n'
                  '.*\n',
                  output, flags=re.S)
 
     # Verify lockfile
-    check_line_in('alire/xxx.lock', 'name = "libchild"')
-    check_line_in('alire/xxx.lock', f'version = "{version}"')
+    check_line_in('alire.lock', 'name = "libchild"')
+    check_line_in('alire.lock', f'version = "{version}"')
 
 
 # Create a new "xxx" program project
