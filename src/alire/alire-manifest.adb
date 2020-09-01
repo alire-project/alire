@@ -2,6 +2,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Errors;
+with Alire.Paths;
 with Alire.Releases;
 with Alire.TOML_Keys;
 with Alire.Utils.Text_Files;
@@ -17,7 +18,10 @@ package body Alire.Manifest is
    procedure Append (Name : Any_Path;
                      Deps : Dependencies.Containers.List) is
       Replacer : constant Directories.Replacer :=
-                   Directories.New_Replacement (Name);
+                   Directories.New_Replacement
+                     (Name,
+                      Backup     => True,
+                      Backup_Dir => Paths.Working_Folder_Inside_Root);
       File     : File_Type;
    begin
       if Deps.Is_Empty then
@@ -235,7 +239,10 @@ package body Alire.Manifest is
       end Remove;
 
       Replacer : constant Directories.Replacer :=
-                   Directories.New_Replacement (Name);
+                   Directories.New_Replacement
+                     (Name,
+                      Backup     => True,
+                      Backup_Dir => Paths.Working_Folder_Inside_Root);
    begin
       if Deps.Is_Empty then
          return;

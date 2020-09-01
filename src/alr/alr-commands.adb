@@ -12,6 +12,7 @@ with Alire.Config;
 with Alire.Errors;
 with Alire.Features.Index;
 with Alire.Lockfiles;
+with Alire.Paths;
 with Alire.Platforms;
 with Alire.Roots.Optional;
 with Alire.Solutions;
@@ -447,7 +448,9 @@ package body Alr.Commands is
                   & " Internal data is going to be updated and, as a result,"
                   & " any existing pins will be unpinned and will need to be"
                   & " manually recreated.");
-               Alire.Directories.Backup_If_Existing (Checked.Lock_File);
+               Alire.Directories.Backup_If_Existing
+                 (Checked.Lock_File,
+                  Base_Dir => Alire.Paths.Working_Folder_Inside_Root);
                Ada.Directories.Delete_File (Checked.Lock_File);
 
             when Lockfiles.Missing =>
