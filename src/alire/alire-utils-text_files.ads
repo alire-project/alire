@@ -6,22 +6,26 @@ package Alire.Utils.Text_Files is
 
    type File (<>) is tagged limited private;
 
-   function Load (From   : Any_Path;
-                  Backup : Boolean := True)
+   function Load (From       : Any_Path;
+                  Backup     : Boolean := True;
+                  Backup_Dir : Any_Path := "")
                   return File;
    --  Load a text file into memory. If Backup, when saving takes place the
-   --  original is renamed to ".prev".
+   --  original is renamed to ".prev". Backup_Dir optionally designates where
+   --  the backup file will be moved.
 
    function Lines (This : aliased in out File) return access String_Vector;
 
 private
 
-   type File (Length : Natural) is new Ada.Finalization.Limited_Controlled
+   type File (Length, Backup_Len : Natural) is
+     new Ada.Finalization.Limited_Controlled
    with record
-      Name   : Any_Path (1 .. Length);
-      Lines  : aliased String_Vector; -- The final contents
-      Orig   : String_Vector;         -- The original contents
-      Backup : Boolean := True;
+      Name       : Any_Path (1 .. Length);
+      Lines      : aliased String_Vector; -- The final contents
+      Orig       : String_Vector;         -- The original contents
+      Backup     : Boolean := True;
+      Backup_Dir : Any_Path (1 .. Backup_Len);
    end record;
 
    overriding
