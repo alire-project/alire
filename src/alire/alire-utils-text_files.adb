@@ -19,7 +19,9 @@ package body Alire.Utils.Text_Files is
 
       declare
          Replacer : Directories.Replacer :=
-                      Directories.New_Replacement (This.Name, This.Backup);
+                      Directories.New_Replacement (This.Name,
+                                                   This.Backup,
+                                                   This.Backup_Dir);
       begin
          Open (File, Out_File, Replacer.Editable_Name);
          for Line of This.Lines loop
@@ -41,17 +43,21 @@ package body Alire.Utils.Text_Files is
    -- Load --
    ----------
 
-   function Load (From   : Any_Path;
-                  Backup : Boolean := True)
+   function Load (From       : Any_Path;
+                  Backup     : Boolean := True;
+                  Backup_Dir : Any_Path := "")
                   return File
    is
       F : File_Type;
    begin
       return This : File := (Ada.Finalization.Limited_Controlled with
-                             Length => From'Length,
-                             Name   => From,
-                             Backup => Backup,
-                             others => <>)
+                             Length     => From'Length,
+                             Backup_Len => Backup_Dir'Length,
+                             Name       => From,
+                             Backup     => Backup,
+                             Backup_Dir => Backup_Dir,
+                             Lines      => <>,
+                             Orig       => <>)
       do
          Open (F, In_File, From);
          while not End_Of_File (F) loop

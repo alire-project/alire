@@ -8,6 +8,7 @@ with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
+with Alire.Paths;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots;
 with Alire.Solutions.Diffs;
@@ -206,15 +207,21 @@ package body Alire.Workspace is
          Working_Dir : Guard (Enter (Release.Unique_Folder))
            with Unreferenced;
       begin
+         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
+
          if GNAT.OS_Lib.Is_Regular_File (Roots.Crate_File_Name) then
             Trace.Debug ("Backing up bundled manifest file as *.upstream");
             declare
                Upstream_File : constant String :=
-                                 Roots.Crate_File_Name & ".upstream";
+                                 Paths.Working_Folder_Inside_Root /
+                                 (Roots.Crate_File_Name & ".upstream");
             begin
-               Alire.Directories.Backup_If_Existing (Upstream_File);
-               Ada.Directories.Rename (Old_Name => Roots.Crate_File_Name,
-                                       New_Name => Upstream_File);
+               Alire.Directories.Backup_If_Existing
+                 (Upstream_File,
+                  Base_Dir => Paths.Working_Folder_Inside_Root);
+               Ada.Directories.Rename
+                 (Old_Name => Roots.Crate_File_Name,
+                  New_Name => Upstream_File);
             end;
          end if;
       end;
@@ -266,7 +273,9 @@ package body Alire.Workspace is
                    & Release.Milestone.Image & " with"
                    & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
-      Directories.Backup_If_Existing (Root.Crate_File);
+      Directories.Backup_If_Existing
+        (Root.Crate_File,
+         Base_Dir => Paths.Working_Folder_Inside_Root);
 
       Release.To_File (Root.Crate_File, Manifest.Local);
    end Generate_Manifest;

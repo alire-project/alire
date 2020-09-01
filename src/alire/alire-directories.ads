@@ -14,8 +14,10 @@ package Alire.Directories is
       function "/" (L, R : String) return String renames Directories."/";
    end Operators;
 
-   procedure Backup_If_Existing (File : Any_Path);
-   --  If File exists, move to file.prev
+   procedure Backup_If_Existing (File     : Any_Path;
+                                 Base_Dir : Any_Path := "");
+   --  If File exists, copy to file.prev. If Base_Dir /= "", it is instead
+   --  copied to Base_Dir / Simple_Name (file) & ".prev"
 
    procedure Copy (Src_Folder,
                    Dst_Parent_Folder : String;
@@ -105,12 +107,13 @@ package Alire.Directories is
    --  modified and can be tested as the client sees fit. 3) If the new file is
    --  proper, the old one is renamed to .prev and the new one takes its place.
 
-   function New_Replacement (File   : Any_Path;
-                             Backup : Boolean := True)
+   function New_Replacement (File       : Any_Path;
+                             Backup     : Boolean := True;
+                             Backup_Dir : Any_Path := "")
                              return Replacer;
    --  Receives a file to be modified, and prepares a copy in a temporary. If
    --  Backup, once the replacement is performed, the original file is kept as
-   --  ".prev".
+   --  ".prev". Backup_Dir works as in Alire.Directories.Backup_If_Existing
 
    function Editable_Name (This : Replacer) return Any_Path;
    --  Obtain the editable copy
@@ -151,10 +154,11 @@ private
    overriding
    procedure Finalize (This : in out Temp_File);
 
-   type Replacer (Length : Positive) is tagged limited record
-      Original  : Any_Path (1 .. Length);
-      Temp_Copy : Temp_File;
-      Backup    : Boolean := True;
+   type Replacer (Length, Backup_Len : Natural) is tagged limited record
+      Original   : Any_Path (1 .. Length);
+      Temp_Copy  : Temp_File;
+      Backup     : Boolean := True;
+      Backup_Dir : Any_Path (1 .. Backup_Len);
    end record;
 
 end Alire.Directories;
