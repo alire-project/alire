@@ -9,7 +9,7 @@ with Alire.Index;
 with Alire.Manifest;
 with Alire.Milestones;
 with Alire.Releases;
-with Alire.Roots;
+with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.User_Input;
@@ -142,17 +142,26 @@ package body Alr.Commands.Withing is
    ---------------------
 
    procedure Detect_Softlink (Path : String) is
-      Root : constant Alire.Roots.Root := Alire.Roots.Load_Root (Path);
+      Root : constant Alire.Roots.Optional.Root :=
+               Alire.Roots.Optional.Detect_Root (Path);
    begin
-      if Root.Is_Stored then
-         --  Add a dependency on ^(detected version) (i.e., safely upgradable)
-         Add_Softlink
-           (Dep_Spec => Root.Release.Name_Str
-                        & "^" & Root.Release.Version.Image,
-            Path     => Path);
+      if Root.Is_Valid then
+         if Root.Value.Is_Stored then
+            --  Add a dependency on ^(detected version) (i.e., safely
+            --  upgradable)
+            Add_Softlink
+              (Dep_Spec => Root.Value.Release.Name_Str
+               & "^" & Root.Value.Release.Version.Image,
+               Path     => Path);
+         else
+            Reportaise_Command_Failed
+              ("cannot add target: " & Root.Value.Storage_Error);
+         end if;
       else
          Reportaise_Command_Failed
-           ("cannot add target: " & Root.Storage_Error);
+           ("cannot add target: crate metadata not found at " & Path
+            & " (give an explicit crate name argument to use a plain"
+            & " GNAT project as dependency)");
       end if;
    end Detect_Softlink;
 

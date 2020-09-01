@@ -9,7 +9,7 @@ from drivers.alr import run_alr
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import content_of
 
-manifest = "alire/xxx.toml"
+manifest = "alire.toml"
 
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')

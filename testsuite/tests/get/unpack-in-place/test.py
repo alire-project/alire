@@ -10,8 +10,8 @@ from drivers.helpers import compare, contents
 run_alr('get', 'libhello=1.0.0-tarball')
 compare(contents('libhello_1.0.0_filesystem'),
         ['libhello_1.0.0_filesystem/alire',
-         'libhello_1.0.0_filesystem/alire/libhello.lock',
-         'libhello_1.0.0_filesystem/alire/libhello.toml',
+         'libhello_1.0.0_filesystem/alire.lock',
+         'libhello_1.0.0_filesystem/alire.toml',
          'libhello_1.0.0_filesystem/libhello.gpr',
          'libhello_1.0.0_filesystem/src',
          'libhello_1.0.0_filesystem/src/libhello.adb',

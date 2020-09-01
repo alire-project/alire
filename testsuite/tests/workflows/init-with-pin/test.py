@@ -14,7 +14,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Make it depend on libhello
-session_file = os.path.join('alire', 'xxx.toml')
+session_file = os.path.join('alire.toml')
 run_alr('with', 'libhello')
 check_line_in(session_file,
               'libhello = "*"  # This line was added by `alr with`')

@@ -13,9 +13,9 @@ run_alr("init", "--bin", "xxx")
 chdir("xxx")
 
 # Add spurious metadata
-with open("alire/xxx.toml", "r") as file:
+with open("alire.toml", "r") as file:
     lines = file.readlines()
-with open("alire/xxx.toml", "w") as file:
+with open("alire.toml", "w") as file:
     file.write("fancy-new-feat = false\n")
     file.writelines(lines)
 

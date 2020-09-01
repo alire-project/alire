@@ -14,7 +14,7 @@ run_alr('init', '--bin', 'xxx')
 # And muck its tomlfile
 os.chdir('xxx')
 
-with open("alire/xxx.toml", "a") as myfile:
+with open("alire.toml", "a") as myfile:
     myfile.write("SHOULND'T BE HERE")
 
 # Verify that the expected error is given
