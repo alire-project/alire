@@ -76,48 +76,45 @@ ease:
 
 ## Dependencies and upgrading
 
-Alire keeps track of a project dependencies in the file
-`./alire/project_name.toml` of your project. You may check the one just
-created in the previous example.
+Alire keeps track of a project dependencies in the file `./alire.toml` of your
+project. You may check the one just created in the previous example.
 
 This file can be managed through `alr`:
 
 * `alr with project_name` adds a dependency. You can immediately 'with' its
-  GPR project files and packages in your code.
+  packages in your code.
 * `alr with --del project_name` removes a dependency.
-* `alr with --from yourproject.gpr` reads the given GPR file and adds
-   dependencies specified in comments as alr invocations. For example:
 
-    ```Ada
-    with "xstrings"; -- alr with xstrings
-    project My_Project is
-    ```
+Using `alr with` without arguments will show the current dependencies of your
+project. Using one of `--solve`, `--tree`, `--versions`, `--graph` will show
+different details about the complete solution needed to fulfill dependencies.
 
 Alternatively you can edit the file (example in the works) to add dependencies
 and then issue:
 
-* `alr update`, which will fetch any additional dependencies in your project.
+* `alr update`, which will fetch any modified dependencies in your project.
 
 ## Finding available projects
 
-For quick listing of projects and their descriptions you can use the `list`
+For quick listing of crates and their descriptions you can use the `list`
 command:
 
 * `alr list [substring]`
 
-There's also a `search` command which provides more details:
+There's also a `search` command which provides more details about specific
+releases:
 
-* `alr search <substring>` will look for `substring` in project names.
+* `alr search <substring>` will look for `substring` in crate names.
 * `alr search --list` will list the whole catalog.
 
 Even more details are obtained with:
 
-* `alr show <project>`
+* `alr show <crate>`
 
 This last command will show generic information. To see the one that
 specifically applies to your platform:
 
-* `alr show --system <project>`
+* `alr show --system <crate>`
 
 The list of projects and their descriptions are also available on the Alire
 website:
