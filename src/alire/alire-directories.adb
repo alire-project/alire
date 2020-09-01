@@ -11,12 +11,18 @@ package body Alire.Directories is
    -- Backup_If_Existing --
    ------------------------
 
-   procedure Backup_If_Existing (File : Any_Path) is
+   procedure Backup_If_Existing (File   : Any_Path;
+                                 Base_Dir : Any_Path := "")
+   is
       use Ada.Directories;
+      Dst : constant String := (if Base_Dir /= ""
+                                then Base_Dir / Simple_Name (File) & ".prev"
+                                else File & ".prev");
    begin
       if Exists (File) then
-         Trace.Debug ("Backing up " & File);
-         Copy_File (File, File & ".prev", "mode=overwrite");
+         Trace.Debug ("Backing up " & File
+                      & " with base dir: " & Base_Dir);
+         Copy_File (File, Dst, "mode=overwrite");
       end if;
    end Backup_If_Existing;
 
@@ -286,7 +292,6 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Temp_File) is
       use Ada.Directories;
-      use Ada.Exceptions;
    begin
       if This.Keep then
          return;
@@ -301,12 +306,6 @@ package body Alire.Directories is
             Delete_Tree (This.Filename);
          end if;
       end if;
-   exception
-      when E : others =>
-         Trace.Debug
-           ("Temp_File.Finalize: unexpected exception: " &
-              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-              Exception_Information (E));
    end Finalize;
 
    -------------------
@@ -369,14 +368,17 @@ package body Alire.Directories is
    -- New_Replacement --
    ---------------------
 
-   function New_Replacement (File   : Any_Path;
-                             Backup : Boolean := True)
+   function New_Replacement (File       : Any_Path;
+                             Backup     : Boolean := True;
+                             Backup_Dir : Any_Path := "")
                              return Replacer is
    begin
-      return This : constant Replacer := (Length    => File'Length,
-                                          Original  => File,
-                                          Backup    => Backup,
-                                          Temp_Copy => <>)
+      return This : constant Replacer := (Length     => File'Length,
+                                          Backup_Len => Backup_Dir'Length,
+                                          Original   => File,
+                                          Backup     => Backup,
+                                          Backup_Dir => Backup_Dir,
+                                          Temp_Copy  => <>)
       do
          Ada.Directories.Copy_File (File, This.Temp_Copy.Filename);
       end return;
@@ -387,12 +389,11 @@ package body Alire.Directories is
    -------------
 
    procedure Replace (This : in out Replacer) is
-      Backup : constant Any_Path := This.Original & ".prev";
    begin
       --  Copy around, so never ceases to be a valid manifest in place
 
       if This.Backup then
-         Ada.Directories.Copy_File (This.Original, Backup);
+         Backup_If_Existing (This.Original, This.Backup_Dir);
       end if;
       Ada.Directories.Copy_File (This.Editable_Name, This.Original);
 
