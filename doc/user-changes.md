@@ -6,6 +6,32 @@ stay on top of `alr` new features.
 
 ### New `alr with --versions` switch
 
+PR [#501](https://github.com/alire-project/alire/pull/501).
+
+The metadata information about a crate/release has been reworked to simplify
+user workflows and internal operation. Metadata is stored in the manifest file,
+which as of this PR is always called `alire.toml` and located at the root
+directory of an Alire-enabled workspace. A companion lock file, `alire.lock`,
+stores information about the dependency solution and overrides.
+
+These two files can be safely put under version control. The manifest, in
+particular, is intended to evolve with your Ada project, by being an up-to-date
+record of any necessary dependencies and other properties (version, project
+files, executables, maintainers, etc.).
+
+The manifest internal format has been simplified by eliminating the possibility
+of multiple releases from its contents, which removes some nesting, and
+removing or making optional some fields that only make sense at the time of
+publishing a crate to some index. Check the [catalog-format-spec.md] file for
+details.
+
+The `alire` directory continues to exist, and it is used to store the source
+code of dependencies, local configuration and backup files. It can be safely
+ignored for VCS, as its contents are either not critical or can be
+reconstructed from the manifest information.
+
+### New `alr with --versions` switch
+
 PR [#464](https://github.com/alire-project/alire/pull/464).
 
 A new `alr with --versions` switch is available to obtain version-focused

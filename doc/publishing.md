@@ -12,9 +12,9 @@ The community index is a collection of
 [TOML](https://github.com/toml-lang/toml) files stored in the
 [alire-index](https://github.com/alire-project/alire-index) repository, under
 the [index](https://github.com/alire-project/alire-index/blob/master/index)
-directory. Each file is named after the crate it contains. A crate contains the
-description of a project, with other metadata, and the list of available
-releases (identified by their [semantic version](https://semver.org/)).
+directory. Each file contains a release for a crate and is named after the
+crate and version it contains. A crate contains the description of a release,
+with other metadata.
 
 The complete specification of such TOML files is available in this
 [document](catalog-format-spec.md).
@@ -22,9 +22,7 @@ The complete specification of such TOML files is available in this
 ## New crates and releases
 
 Publishing a new crate is achieved through a pull-request against the index
-repository, in which the TOML file for the crate must be provided. Similarly, a
-new release is published by submitting a pull-request with the necessary
-modifications to the crate file.
+repository, in which the TOML file for the release must be provided.
 
 ### Index branches
 
@@ -55,9 +53,7 @@ or metadata modifications to the corresponding crate file.
 
 ## Detailed steps
 
-These steps describe how to submit a new crate. They are essentially the same
-for submitting a new release (in the latter case, the existing crate file must
-be edited instead of created).
+These steps describe how to submit a new release. 
 
 1. Prepare a source archive (zip, tar) with the release sources and project
    files.
@@ -78,14 +74,14 @@ be edited instead of created).
        conversation](https://github.community/t5/How-to-use-Git-and-GitHub/Ensuring-identical-tarballs-from-releases/m-p/34196/highlight/true#M8997)).
        In the future, `alr publish` will offer support to generate and upload
        such files more conveniently.
-1. Fill the crate file providing all the necessary information (`[general]`
-   section), dependencies (`depends-on`) and possibly excluded platforms
+1. Fill in the release manifest providing all the necessary information, 
+   dependencies (`depends-on`) and possibly excluded platforms
    (`available`). See, for example, the [hello
-   world](https://github.com/alire-project/alire-index/blob/master/index/he/hello.toml)
+   world](https://github.com/alire-project/alire-index/blob/master/index/he/hello/hello-1.0.1.toml)
    crate, or the [empty
    skeleton](https://github.com/alire-project/alire-index/blob/master/templates/skeleton.toml)
    template.
-1. Place the crate file in the appropriate directory of your locally checked
+1. Place the manifest file in the appropriate directory of your locally checked
    out index repository, and create a new pull request. The detailed substeps
    are the usual for submitting contributions in GitHub:
     1. Fork the community index to your GitHub account.
@@ -98,6 +94,6 @@ be edited instead of created).
            your changes will become available; see the section on [index
            branches](#index-branches) for details.
 
-Once the pull request is verified and merged, the new crate or release will
-become available for normal use. The open source Ada ecosystem needs all the
-help it can get, so happy contributing!
+Once the pull request is verified and merged, the new release will become
+available for normal use. The open source Ada ecosystem needs all the help it
+can get, so happy contributing!
