@@ -189,6 +189,7 @@ package body Alire.Workspace is
                           Generate_Files  : Boolean := True;
                           Perform_Actions : Boolean := True)
    is
+      use Directories;
       Was_There : Boolean with Unreferenced;
    begin
       Alire.Workspace.Deploy_Release
@@ -198,10 +199,30 @@ package body Alire.Workspace is
          Was_There       => Was_There,
          Perform_Actions => Perform_Actions);
 
+      --  Backup a potentially packaged manifest, so our authoritative manifest
+      --  from the index is always used.
+
+      declare
+         Working_Dir : Guard (Enter (Release.Unique_Folder))
+           with Unreferenced;
+      begin
+         if GNAT.OS_Lib.Is_Regular_File (Roots.Crate_File_Name) then
+            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            declare
+               Upstream_File : constant String :=
+                                 Roots.Crate_File_Name & ".upstream";
+            begin
+               Alire.Directories.Backup_If_Existing (Upstream_File);
+               Ada.Directories.Rename (Old_Name => Roots.Crate_File_Name,
+                                       New_Name => Upstream_File);
+            end;
+         end if;
+      end;
+
       --  And generate its working files, if they do not exist
+
       if Generate_Files then
          declare
-            use Directories;
             Working_Dir : Guard (Enter (Release.Unique_Folder))
               with Unreferenced;
             Root       : constant Alire.Roots.Root :=
@@ -225,10 +246,10 @@ package body Alire.Workspace is
             --  will be replaced with the complete solution.
 
             Lockfiles.Write
-              ((Solution    => (if Release.Dependencies (Env).Is_Empty
-                                then Alire.Solutions.Empty_Valid_Solution
-                                else Alire.Solutions.Empty_Invalid_Solution)),
-               Filename    => Root.Lock_File);
+              ((Solution => (if Release.Dependencies (Env).Is_Empty
+                             then Alire.Solutions.Empty_Valid_Solution
+                             else Alire.Solutions.Empty_Invalid_Solution)),
+               Filename  => Root.Lock_File);
          end;
       end if;
    end Deploy_Root;
