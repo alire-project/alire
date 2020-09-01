@@ -2,28 +2,19 @@
 
 ## Big picture
 
-Each project is described as a TOML file. For instance: `aaa.toml` for the AAA
-project, `gnatcoll.toml` for the package corresponding to GNATCOLL.
+Each release belonging to a crate is described as a TOML file. This file has
+minor differences depending on its location: a local manifest is found at the
+top-level directory of the sources of a project, in which case its named
+`alire.toml`, whereas a manifest found in an index (e.g., the community index),
+is named `<name>-<version>.toml`.
 
-Each TOML description contains an object that has a `general` table and then
-one table per release.
+Other than that, contents follow the same conventions and there are only slight
+differences (some fields are intended only for an index manifest, and cannot
+appear (or are optional) in a local manifest. These  differences are pointed
+out in the following descriptions, where necessary.
 
-```toml
-[general]
-...
-
-['1.0']
-...
-
-['1.1']
-...
-
-['2.0']
-...
-```
-
-`general` contains information common to all releases, then each release
-provides sources (`origin`) and can refine common information.
+Each TOML description file contains exactly one release, but for the special
+external definitions that are described in their own section. 
 
 ## Information encoding
 
@@ -61,8 +52,25 @@ environment is represented as a set of specific variables which can have a
 specific set of values: see the [Parameters](#parameters) section below for a
 comprehensive list.
 
-To create atomic values in an environment-dependent way, use the following
-construct (here to create a boolean):
+All properties that support dynamic expressions follow the same structure, in
+which the expression (case-like) is inserted between the key and its value.
+Where a static expression would be
+
+```toml
+key = "value"
+```
+
+one of its cases would be expressed by the following inline TOML table:
+
+```toml
+key.'case(var)'.var_value = "value"
+```
+
+Several expressions can be inserted between a property key and its value, which
+leads to combinatorial explosion if all cases have specific values. The
+equivalent to an `others` Ada clause in this format is a `'...'` entry.
+
+Here is an example of a conditional boolean value.
 
 ```toml
 {'case(distribution)' = {
@@ -78,7 +86,8 @@ construct (here to create a boolean):
 
 Depending on the value of the `distribution` environment variable, this will
 return `true` (its value is `debian` or `ubuntu`) or `false` (for other
-values).
+values). Note that these and following examples are not showing the
+left-hand-side property to which such a value would be assigned.
 
 A little variation allows to build environment-dependent composite data. For
 instance, to make the dependency on `libbar` above dynamic:
@@ -130,13 +139,16 @@ And finally for other `os` values:
 libfoo = "^1.2"
 ```
 
-## General Information
+## Release Information
 
-Unless specified, all the entries must be static, i.e. they cannot depend on
-the context.
+This section describes the actual properties that must or can appear in a
+manifest file to describe a release. Unless specified, all the entries must be
+static, i.e. they cannot depend on the context.
 
-The `general` entry must contain an object. It contains itself the following
-entries:
+ - `name`: mandatory string. The name of the crate this release belongs to. Use
+   `alr help identifiers` to see the rules such names must follow.
+
+ - `version`: mandatory string. The semantic version of the release.
 
  - `description`: mandatory string. One-line description about the package. For
    instance:
@@ -148,7 +160,7 @@ entries:
  - `long-description`: optional free-form string to provide information about
    this package, in addition to `description`, without length restrictions.
 
-- `authors`: optional array of strings. Flat list of human-readable names for
+ - `authors`: optional array of strings. Flat list of human-readable names for
    the authors, i.e. the people that wrote the software that is packaged. For
    instance:
 
@@ -157,25 +169,26 @@ entries:
               "Bob For Instance <bob@example.com>"]
    ```
 
- - `maintainers`: mandatory array of strings. Flat list of human-readable names
-   (optional) for the maintainers, with a contact email (mandatory); i.e. the
-   people that maintain the crate metadata in Alire. For instance:
+ - `maintainers`: mandatory (for indexing) array of strings. Flat list of
+   human-readable names (optional) for the maintainers, with a contact email
+   (mandatory); i.e. the people that maintain the crate metadata in Alire. For
+   instance:
 
    ```toml
    maintainers = ["alice@example.com",
                   "Bob For Instance <bob@athome.com>"]
    ```
 
- - `maintainers-logins`: mandatory array of strings. Flat list of github login
-   usernames used by the maintainers of the crate. This information is used to
-   authorize crate modifications. For instance:
+ - `maintainers-logins`: mandatory (for indexing) array of strings. Flat
+   list of github login usernames used by the maintainers of the crate. This
+   information is used to authorize crate modifications. For instance:
 
    ```toml
    maintainers-logins = ["alicehacks", "bobcoder"]
    ```
 
- - `licenses`: mandatory array of strings. Flat list of licenses for the
-   software that is packaged. The following licenses are allowed:
+ - `licenses`: mandatory (for indexing) array of strings. Flat list of licenses
+   for the software that is packaged. The following licenses are allowed:
 
    > -   `AFL 3.0`, `AGPL 3.0`, `Apache 2.0`, `Artistic 2.0`,
    >     `BSD 2-Clauses`, `BSD 3-Clauses Clear`, `BSD 3-Clauses`,
@@ -223,8 +236,7 @@ entries:
    '...' = false
    ```
 
- - `depends-on`: optional dynamic dependencies expression common to all
-   releases. For instance:
+ - `depends-on`: optional dynamic dependencies expression. For instance:
 
    ```toml
    [depends-on]
@@ -266,8 +278,8 @@ entries:
    TAG = ""
    ```
 
- - `gpr-set-externals`: optional table, giving a mapping from the name of
-   external variables to the values to use by default when building the
+ - `gpr-set-externals`: optional dynamic table, giving a mapping from the name
+   of external variables to the values to use by default when building the
    project. Expressions are accepted before the mapping. For instance:
 
    ```toml
@@ -279,9 +291,9 @@ entries:
    windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
    ```
 
- - `environment`: optional table used to modify environment variables that will
-   apply at build time. Variables and values are specified with the form
-   `VARIABLE.<action> = "value"`, where `<action>` is one of `append`,
+ - `environment`: optional dynamic table used to modify environment variables
+   that will apply at build time. Variables and values are specified with the
+   form `VARIABLE.<action> = "value"`, where `<action>` is one of `append`,
    `prepend`, or `set`. For instance:
 
    ```toml
@@ -307,17 +319,17 @@ entries:
    msys2 = { C_INCLUDE_PATH.append = "${DISTRIB_ROOT}/mingw64/include/SDL2" }
    ```
 
- - `executables`: optional list of strings. Each one is the simple name of an
-   executable provided by the package. Executables are looked for by `alr` in
-   the build tree and must not include a path. If only one executable is given,
-   it is considered the default for `alr run`. For instance:
+ - `executables`: optional dynamic list of strings. Each one is the simple name
+   of an executable provided by the package. Executables are looked for by
+   `alr` in the build tree and must not include a path. If only one executable is
+   given, it is considered the default for `alr run`. For instance:
 
    ```toml
    executables = ["my_main"]
    ```
 
- - `actions`: optional list of actions to perform when installing this package.
-   The general action syntax is:
+ - `actions`: optional dynamic list of actions to perform when installing this
+   package.  The general action syntax is:
 
    ```toml
    [[actions]]
@@ -352,29 +364,45 @@ entries:
    # An explicit empty case alternative, which is not mandatory
    ```
 
- - `auto-gpr-with`: Boolean value that specifies if the project files of a
-   crate can be automatically 'withed' by the root project file (default is
-   true). This feature is meant to simplify the process of using dependencies
-   in Alire. However, not all project files are supposed to be withed, some can
-   be extended for instance, in that case a crate can disable the feature by
-   setting `auto-gpr-with=false`.
+ - `auto-gpr-with`: optional Boolean value that specifies if the project files
+   of a crate can be automatically 'withed' by the root project file (default
+   is true). This feature is meant to simplify the process of using dependencies
+   in Alire. However, not all project files are supposed to be withed, some can be
+   extended for instance, in that case a crate can disable the feature by setting
+   `auto-gpr-with=false`.
 
-## Release-specific information
+ - `origin`: dynamic table. Mandatory for index manifests and forbidden in
+   workspace manifests. This table describes how sources are obtained, using
+   the following fields:
 
-Each release is materialized as an entry in the top-level object. The key is a
-string for the version number for the release, while the value is an object to
-contain the release-specific information. This object can contains the
-following entries:
+      - `url`: mandatory string which points to a source file or repository.
 
- - `origin`: mandatory dynamic string expression. URL used to fetch the sources
-   to build. For instance:
+      - `hashes`: mandatory string array for source archives.  An array
+        of "kind:digest" fields that specify a hash kind and its value.  Kinds
+        accepted are: `sha512`.
+
+      - `archive-name`: optional string. If `url` points to a source archive,
+        this can specify the name of the file to download, which is needed in
+        order to properly extract the sources, in case the URL does not identify it.
+
+      - `commit`: mandatory string for VCS origins that describes the
+        VCS-specific revision to be checked out (a git/hg hash, a svn
+        revision).
+
+   Examples of origin tables:
 
    ```toml
    # Clone a git repository
-   origin = "git+https://github.com/example-user/example-project"
+   [origin]
+   url = "git+https://github.com/example-user/example-project"
+   commit = "ec8b267bb8b777c6887059059924d823e9443439"
+   ```
 
+   ```toml
    # Download and extract a source archive
-   origin = "https://example.org/archive.tar.gz"
+   origin = "https://example.org/0123456789"
+   archive-name = "archive.tar.gz"
+   hashes = ["sha512:bf6082573dc537836ea8506a2c9a75dc7837440c35c5b02a52add52e38293640d99e90a9706690591f8899b8b4935824b195f230b3aa1c4da10911e3caf954c04ac"]
    ```
 
    If the package only maps a package from the system package manager,
@@ -393,28 +421,8 @@ following entries:
    'debian|ubuntu' = "native:make"
    ```
 
- - `origin-hashes`: mandatory string array for git origins and source archives.
-   An array of "kind:digest" fields that specify a hash kind and its value.
-   Kinds accepted are: `sha512`.
-
- - `archive-name`: optional string. If `origin` points to a source archive,
-   this can specifiy the name of the file to download, which is needed in order
-   to properly extract the sources. For instance:
-
-   ```toml
-   origin = "https://example.org/0123456789"
-   archive-name = "archive.tar.gz"
-   archive-hash = "sha512:bf6082573dc537836ea8506a2c9a75dc7837440c35c5b02a52add52e38293640d99e90a9706690591f8899b8b4935824b195f230b3aa1c4da10911e3caf954c04ac"
-   ```
-
- - `available`: optional dynamic boolean expression. It is used in the
-   following way:
-
-   1. If it evaluates to `false`, the package is not available for the current
-      platform.
-
-   1. Otherwise, the availability is determined by the `available` entry in the
-       `general` section.
+ - `available`: optional dynamic boolean expression.  If it evaluates to
+   `false`, the package is not available for the current platform.
 
  - `notes`: optional string. Provides miscellanous information about this
    release. For instance:
@@ -422,12 +430,6 @@ following entries:
    ```json
    notes = "Experimental version"
    ```
-
-It can also contain the following entries: `depends-on`, `project-files`,
-`gpr-externals`, `gpr-set-externals`, `executables`, `actions`. These are
-optional. For atomic values, these override the ones from `general`, and for
-lists/mappings, they are interpreted as additions. In the latter case,
-conflicting entries are considered as errors.
 
 ## External releases
 
@@ -440,7 +442,7 @@ furthermore, its semantic version cannot be known until run time. Hence, the
 availability and version of these releases is detected by `alr`.
 
 Several definitions for these external releases may exist, and so they are
-defined in the index as a vector with key `external`:
+defined in a manifest as a vector with key `external`:
 
 ```toml
 [[external]]
@@ -455,10 +457,10 @@ All external kinds can define these regular properties:
  - `available`: when defined, it restricts the external detection to the given
    environment conditions.
 
- - `hint`: explanation for the user on how to make the external available. This
-   explanation is shown on request with `alr show --external`, or after
-   `alr get`, for any external dependency that could not be detected. This
-   property accepts dynamic expressions.
+ - `hint`: optional dynamic string containing an explanation for the user on
+   how to make the external available. This explanation is shown on request
+   with `alr show --external`, or after `alr get`, for any external dependency
+   that could not be detected.
 
 ### External kinds: hints
 
