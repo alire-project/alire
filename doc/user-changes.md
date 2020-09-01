@@ -4,6 +4,10 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Replace `'...'` with `others` in manifest files
+
+PR [#502](https://github.com/alire-project/alire/pull/502).
+
 ### New `alr with --versions` switch
 
 PR [#501](https://github.com/alire-project/alire/pull/501).
