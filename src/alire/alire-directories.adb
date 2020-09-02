@@ -1,11 +1,52 @@
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
+with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with Alire.Properties;
 with Alire.Roots;
 
 package body Alire.Directories is
+
+   ------------------------
+   -- Report_Deprecation --
+   ------------------------
+
+   procedure Report_Deprecation with No_Return;
+   --  We give some minimal guidelines about what to do with the metadata
+   --  changes, and redirect to a wiki page for more details.
+
+   procedure Report_Deprecation is
+      Old_Manifest : constant String :=
+                       Directories.Find_Single_File ("alire", "toml");
+      use Ada.Text_IO; -- To bypass any -q or verbosity configuration
+   begin
+      New_Line;
+      Put_Line ("WARNING: Deprecated metadata possibly detected at "
+                & Old_Manifest);
+      New_Line;
+      Put_Line ("Due to recent changes to Alire's way of storing metadata,");
+      Put_Line ("you need to reinitialize or migrate the workspace.");
+      Put_Line
+        ("Please check here for details on how to migrate your metadata:");
+      New_Line;
+      Put_Line ("   https://github.com/alire-project/alire/wiki/"
+                & "2020-Metadata-format-migration");
+      Put_Line ("");
+      Put_Line ("How to reinitialize, in a nutshell:");
+      New_Line;
+      Put_Line ("   - Delete the old manifest file at 'alire/*.toml'");
+      Put_Line ("   - run one of");
+      Put_Line ("      $ alr init --in-place --bin <crate name>");
+      Put_Line ("      $ alr init --in-place --lib <crate name>");
+      Put_Line ("   - Re-add any necessary dependencies using one or more ");
+      Put_Line ("      $ alr with <dependency>");
+      New_Line;
+
+      --  This happens too early during elaboration and otherwise a stack trace
+      --  is produced, so:
+      GNAT.OS_Lib.OS_Exit (1);
+   end Report_Deprecation;
 
    ------------------------
    -- Backup_If_Existing --
@@ -92,6 +133,10 @@ package body Alire.Directories is
            Kind (Possible_Root.Crate_File) = Ordinary_File
          then
             return Path;
+         elsif GNAT.OS_Lib.Is_Directory ("alire") and then
+           Directories.Find_Single_File ("alire", "toml") /= ""
+         then
+            Report_Deprecation;
          else
             return Find_Candidate_Folder (Containing_Directory (Path));
          end if;
