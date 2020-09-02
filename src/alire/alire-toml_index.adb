@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Directories;
+with Alire.Errors;
 with Alire.GPR;
 
 with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
@@ -127,14 +128,19 @@ package body Alire.TOML_Index is
                             & VCSs.Git.Handler.Branch (Index.Index_Directory));
                Set_Error
                  (Result, Index.Index_Directory,
-                  "Mismatched branch in checked out community index. "
-                  & "Expected branch '" & Alire.Index.Community_Branch
-                  & "' but found '"
-                  & VCSs.Git.Handler.Branch (Index.Index_Directory)
-                  & "'. If you have updated alr, you may need to reset "
-                  & " the community index with 'alr index --reset-community'. "
-                  & "Note that this operation will delete any local changes to"
-                  & " the community index.");
+                  Errors.Wrap
+                    ("Mismatched branch in checked out community index",
+                     Errors.Wrap
+                       ("Expected branch '" & Alire.Index.Community_Branch
+                        & "' but found '"
+                        & VCSs.Git.Handler.Branch (Index.Index_Directory)
+                        & "'",
+                        Errors.Wrap
+                          ("If you have updated alr, you may need to reset "
+                           & " the community index with"
+                           & " 'alr index --reset-community'",
+                           "Note that this operation will delete any local"
+                           & " changes to the community index."))));
 
                return;
             end if;
