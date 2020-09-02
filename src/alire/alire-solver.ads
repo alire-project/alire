@@ -90,7 +90,7 @@ package Alire.Solver is
 
    Default_Options : constant Query_Options := (others => <>);
 
-   function Resolve (Deps    : Alire.Types.Platform_Dependencies;
+   function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
                      Current : Solution;
                      Options : Query_Options := Default_Options)
@@ -99,7 +99,7 @@ package Alire.Solver is
    --  given platform properties and lookup options. A current solution may
    --  be given and pinned releases will be reused.
 
-   function Is_Resolvable (Deps    : Types.Platform_Dependencies;
+   function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;
                            Current : Solution;
                            Options : Query_Options := Default_Options)

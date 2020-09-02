@@ -1,0 +1,9 @@
+description = "Good crate"
+name = "good"
+version = "1.0.0"
+licenses = []
+maintainers = ["john@doe.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:./../../../crates/good"

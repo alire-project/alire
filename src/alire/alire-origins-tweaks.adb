@@ -1,6 +1,9 @@
+with Ada.Directories;
+
+with Alire.OS_Lib;
 with Alire.Utils;
 
-with GNATCOLL.VFS;
+with Alire.URI;
 
 package body Alire.Origins.Tweaks is
 
@@ -11,28 +14,22 @@ package body Alire.Origins.Tweaks is
    function Fixed_Origin (TOML_Path : String;
                           This      : Origin) return Origin
    is
-      use GNATCOLL.VFS;
+      use OS_Lib.Operators;
 
       --------------------
       -- Fix_Filesystem --
       --------------------
 
       function Fix_Filesystem return Origin is
+         use Ada.Directories;
       begin
-         if Create (+This.Path).Is_Absolute_Path then
+         if Check_Absolute_Path (This.Path) then
             return This;
          end if;
 
-         declare
-            Base   : constant Virtual_File := Create (+TOML_Path);
-            Target : constant Virtual_File := Create (+This.Path);
-            Fixed  : Origins.Origin := This; -- Copy contents
-         begin
-            Fixed.Data.Path :=
-              +(+Full_Name (Base.Dir / Target, Normalize => True));
-
-            return Fixed;
-         end;
+         return Fixed : Origins.Origin := This do -- Copy contents
+            Fixed.Data.Path := +Full_Name (TOML_Path / This.Path);
+         end return;
       end Fix_Filesystem;
 
       -------------
@@ -40,36 +37,38 @@ package body Alire.Origins.Tweaks is
       -------------
 
       function Fix_VCS return Origin is
-         use Utils;
+         use Ada.Directories;
          URL : constant String := This.URL; -- Doesn't include @commit
       begin
          --  Check for "xxx+file://" or return as-is:
-         if not Starts_With (URL, Prefix_File) then
+         if URI.Scheme (URL) not in URI.File_Schemes then
             return This;
          end if;
 
          declare
-            Base     : constant Virtual_File := Create (+TOML_Path);
-            Rel_Path : constant Relative_Path :=
-                         Tail (Tail (URL, '/'), '/');
-            Target   : constant Virtual_File := Create (+Rel_Path);
+            Rel_Path : constant Relative_Path := URI.Local_Path (URL);
             Absolute : Origin := This;
          begin
             --  Check that path is indeed relative...
-            if Target.Is_Absolute_Path then
+            if Check_Absolute_Path (Rel_Path) then
                return This;
             end if;
 
             --  Rebuild the filesystem path as absolute for the VCS in hand:
             Absolute.Data.Repo_URL := + -- Unbounded string
-              (Prefix_File &
-                (+Full_Name (Base.Dir / Target, Normalize => True)));
+              (Prefix_File & Full_Name (TOML_Path / Rel_Path));
 
             return Absolute;
          end;
       end Fix_VCS;
 
    begin
+      --  If we receive the manifest file path instead of its parent folder:
+      if Ada.Directories.Kind (TOML_Path) in Ada.Directories.Ordinary_File then
+         return Fixed_Origin (Ada.Directories.Containing_Directory (TOML_Path),
+                              This);
+      end if;
+
       --  We must fix filesystem, or VCSs with a filesystem upstream (that are
       --  used in the testsuite).
       case This.Kind is

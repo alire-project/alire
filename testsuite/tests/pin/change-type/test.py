@@ -29,14 +29,14 @@ p = run_alr('pin', 'libhello=1.0')
 check_version_pin()
 
 # Repin to a folder
-run_alr('pin', 'libhello', '--use', '../my_index/crates/libhello_1.0.0')
+run_alr('pin', 'libhello', '--use', '../crates/libhello_1.0.0')
 
 # Check that it shows as such in the solution
 p = run_alr('show', '--solve')
 s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\* \(direct,linked'
-             ',pin=.*' + s + 'my_index' + s +
+             ',pin=.*' + s + 'pin__change-type' + s +
              'crates' + s + 'libhello_1.0.0\).*',
              p.out, flags=re.S)
 

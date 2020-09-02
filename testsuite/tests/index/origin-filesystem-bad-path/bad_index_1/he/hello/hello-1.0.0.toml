@@ -1,0 +1,9 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello"
+version = "1.0.0"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:"

@@ -1,0 +1,9 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = []
+maintainers = ["Mr. User"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."

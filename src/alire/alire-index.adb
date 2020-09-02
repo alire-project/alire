@@ -10,22 +10,28 @@ package body Alire.Index is
    -- Add --
    ---------
 
-   procedure Add (Crate  : Crates.With_Releases.Crate;
-                  Policy : Addition_Policies := Merge_Priorizing_Existing) is
-      pragma Unreferenced (Policy);
+   procedure Add (Crate  : Crates.Crate;
+                  Policy : Policies.For_Index_Merging :=
+                    Policies.Merge_Priorizing_Existing) is
    begin
       if Exists (Crate.Name) then
          declare
-            Old : Crates.With_Releases.Crate := Contents (Crate.Name);
+            Old : Crates.Crate := Contents (Crate.Name);
          begin
-            for Release of Crate.Releases loop
-               if Old.Contains (Release.Version) then
-                  Trace.Debug ("Not registering release already indexed: "
-                               & Release.Milestone.Image);
-               else
-                  Old.Add (Release);
-               end if;
-            end loop;
+            case Policy is
+               when Policies.Merge_Priorizing_Existing =>
+                  for Release of Crate.Releases loop
+                     if Old.Contains (Release.Version) then
+                        Trace.Debug
+                          ("Not registering release already indexed: "
+                           & Release.Milestone.Image);
+                     else
+                        Old.Add (Release);
+                     end if;
+                  end loop;
+            end case;
+
+            Old.Merge_Externals (Crate, Policy);
 
             Contents.Include (Crate.Name, Old);
          end;
@@ -34,28 +40,42 @@ package body Alire.Index is
       end if;
    end Add;
 
-   -----------------------
-   -- Add_All_Externals --
-   -----------------------
+   ---------
+   -- Add --
+   ---------
 
-   procedure Add_All_Externals (Env : Properties.Vector) is
+   procedure Add (Release : Releases.Release;
+                  Policy : Policies.For_Index_Merging :=
+                    Policies.Merge_Priorizing_Existing)
+   is
+      Crate : Crates.Crate := Crates.New_Crate (Release.Name);
+   begin
+      Crate.Add (Release);
+      Add (Crate, Policy);
+   end Add;
+
+   --------------------------
+   -- Detect_All_Externals --
+   --------------------------
+
+   procedure Detect_All_Externals (Env : Properties.Vector) is
    begin
       Trace.Detail ("Detecting external releases...");
 
       for Crate of Contents loop
-         Add_Externals (Crate.Name, Env);
+         Detect_Externals (Crate.Name, Env);
       end loop;
-   end Add_All_Externals;
+   end Detect_All_Externals;
 
    package Name_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
    Already_Detected : Name_Sets.Set;
 
-   -------------------
-   -- Add_Externals --
-   -------------------
+   ----------------------
+   -- Detect_Externals --
+   ----------------------
 
-   procedure Add_Externals (Name : Crate_Name; Env : Properties.Vector) is
+   procedure Detect_Externals (Name : Crate_Name; Env : Properties.Vector) is
    begin
       if Already_Detected.Contains (Name) then
          Trace.Debug
@@ -70,7 +90,7 @@ package body Alire.Index is
             Contents (Name).Add (Release);
          end loop;
       end if;
-   end Add_Externals;
+   end Detect_Externals;
 
    ----------------
    -- All_Crates --
@@ -83,7 +103,7 @@ package body Alire.Index is
    -- Crate --
    -----------
 
-   function Crate (Name : Crate_Name) return Crates.With_Releases.Crate
+   function Crate (Name : Crate_Name) return Crates.Crate
    is (Contents (Name));
 
    -----------------

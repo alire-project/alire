@@ -99,7 +99,13 @@ package Alire with Preelaborate is
    --  Used for cross-platform folder names
 
    subtype Any_Path is String;
-   --  Base type for paths in Alire
+   --  Base type for paths in Alire. These paths are always platform-dependent
+   --  and can be used directly with filesystem functions.
+
+   subtype Portable_Path is String with
+     Dynamic_Predicate => (for all Char of Portable_Path => Char /= '\');
+   --  A portable path always uses forward slashes. For use in the current
+   --  platform, it should be adapted first.
 
    --  To clarify constants/functions declared herein:
 
@@ -152,11 +158,14 @@ package Alire with Preelaborate is
 
    --  Constructors  --
 
-   function Outcome_Failure (Message : String) return Outcome with
+   function Outcome_Failure (Message : String;
+                             Report  : Boolean := True)
+                             return Outcome with
      Pre  => Message'Length > 0,
      Post => not Outcome_Failure'Result.Success;
-   --  Calling this function generates a debug stack trace log, so it should
-   --  not be called until a failure is actually happening.
+   --  Calling this function generates a debug stack trace log, unless Report
+   --  is set to False. For failures that are part of regular operation,
+   --  this is recommended to avoid "scares" in the debug output.
 
    function Outcome_Success return Outcome with
      Post => Outcome_Success'Result.Success;
@@ -181,15 +190,15 @@ package Alire with Preelaborate is
    --  corresponding message set in Alire.Errors otherwise.
 
    procedure Assert (Condition : Boolean; Or_Else : String);
-   --  Class Raise_Checked_Error (Or_Else) when Condition is false
+   --  Calls Raise_Checked_Error (Or_Else) when Condition is false
 
    procedure Raise_Checked_Error (Msg : String) with No_Return;
    --  For errors where we do not return an Outcome_Failure, we log an error
    --  message (Msg) and raise Checked_Error. There is no limitation on the
    --  length of Msg.
 
-   procedure Recoverable_Error (Msg : String);
-   --  When Force, emit a warning and return normally. When not Force call
+   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force);
+   --  When Recover, emit a warning and return normally. When not Recover call
    --  Raise_Checked_Error instead.
 
    ---------------

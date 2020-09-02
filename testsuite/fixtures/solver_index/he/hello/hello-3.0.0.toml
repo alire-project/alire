@@ -1,0 +1,15 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello"
+version = "3.0.0"
+website = "example.com"
+authors = ["Bob", "Alice"]
+licenses = ["GPL 3.0", "MIT"]
+maintainers = ["bob@example.com"]
+maintainers-logins = ["mylogin"]
+
+# With missing dependencies
+[[depends-on]]
+libhello = "^3.0"
+
+[origin]
+url = "file:."

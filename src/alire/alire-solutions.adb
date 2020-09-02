@@ -1,6 +1,6 @@
 with Ada.Containers;
 
-with Alire.Crates.With_Releases;
+with Alire.Crates;
 with Alire.Dependencies.Containers;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
@@ -527,7 +527,7 @@ package body Alire.Solutions is
                     (if TTY.Color_Enabled then "│   " else "|   ");
       No_Branch : constant String := "    ";
 
-      procedure Print (Deps   : Dependencies.Containers.List;
+      procedure Print (Deps   : Dependencies.Containers.Set;
                        Prefix : String := "";
                        Omit   : Boolean := False)
         --  Omit is used to remove the top-level connectors, for when the tree
@@ -577,7 +577,7 @@ package body Alire.Solutions is
 
                if This.State (Dep.Crate).Has_Release then
                   Print (Conditional.Enumerate
-                           (This.State (Dep.Crate).Release.Dependencies),
+                          (This.State (Dep.Crate).Release.Dependencies).To_Set,
                          Prefix =>
                            Prefix
                            --  Indent adding the proper running connector
@@ -595,7 +595,7 @@ package body Alire.Solutions is
       if Print_Root then
          Trace.Always (Prefix & Root.Milestone.TTY_Image);
       end if;
-      Print (Conditional.Enumerate (Root.Dependencies),
+      Print (Conditional.Enumerate (Root.Dependencies).To_Set,
              Prefix,
              not Print_Root);
    end Print_Tree;
@@ -628,7 +628,7 @@ package body Alire.Solutions is
             Table.Append (TTY.Version (Dep.Versions.Image));
          end if;
 
-         Index.Add_Externals (Dep.Crate, Root.Environment);
+         Index.Detect_Externals (Dep.Crate, Root.Environment);
          --  Detect externals for the crate, in case they add more versions
 
          declare

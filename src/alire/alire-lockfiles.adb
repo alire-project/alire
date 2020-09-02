@@ -2,7 +2,7 @@ with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Directories;
-with Alire.Paths;
+with Alire.TOML_Load;
 
 with TOML.File_IO;
 
@@ -27,8 +27,8 @@ package body Alire.Lockfiles is
    ---------------
 
    function File_Name (Name     : Crate_Name;
-                       Root_Dir : Any_Path) return Any_Path is
-     (Root_Dir / Paths.Working_Folder_Inside_Root / (+Name) & ".lock");
+                       Root_Dir : Any_Path) return Any_Path
+   is (Root_Dir / "alire.lock");
 
    ---------------
    -- From_TOML --
@@ -71,7 +71,7 @@ package body Alire.Lockfiles is
                  (TOML_Adapters.From (Result.Value, Filename & ":")));
             end return;
          else
-            Raise_Checked_Error (TOML.Format_Error (Result));
+            Raise_Checked_Error (TOML_Load.Format_Error (Filename, Result));
          end if;
       end;
    end Read;

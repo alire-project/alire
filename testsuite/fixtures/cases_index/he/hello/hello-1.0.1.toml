@@ -1,0 +1,54 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello"
+version = "1.0.1"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+libbye = "^1.0"
+[depends-on."case(os)"."..."]
+libhello = "^1.1"
+
+[depends-on."case(os)".linux]
+libhello = "^1.0"
+[[actions."case(os)"."..."]]
+
+[[actions."case(os)".linux]]
+type = "post-fetch"
+command = ["make"]
+
+[[actions."case(os)".linux]]
+type = "post-compile"
+command = ["hello"]
+[available."case(os)"]
+"..." = false
+linux = true
+[available."case(os)".windows."case(word_size)"]
+"..." = false
+bits_64 = true
+[executables."case(word-size)"]
+"..." = "bye"
+bits-32 = "hello32"
+bits-64 = "hello"
+
+[gpr-set-externals]
+BUILD = "debug"
+[gpr-set-externals."case(os)"."..."]
+OS = "other"
+
+[gpr-set-externals."case(os)".linux]
+OS = "linux"
+
+[gpr-set-externals."case(os)".macos]
+OS = "macos"
+
+[gpr-set-externals."case(os)".windows]
+OS = "windows"
+[project-files."case(word-size)"]
+"..." = ["bye.gpr"]
+bits-32 = ["hello.gpr", "hello32.gpr"]
+bits-64 = ["hello.gpr"]
+
+[origin]
+url = "file:../../../crates/hello_1.0.1"

@@ -1,6 +1,10 @@
+with Ada.Directories;
 with Ada.Strings.Fixed;
+with Ada.Text_IO;
 
+with Alire.Crates;
 with Alire.Defaults;
+with Alire.Errors;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
@@ -10,6 +14,8 @@ with GNAT.IO; -- To keep preelaborable
 
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
+
+with TOML.File_IO;
 
 package body Alire.Releases is
 
@@ -86,14 +92,6 @@ package body Alire.Releases is
          Renamed.Alias := +(+Provides);
       end return;
    end Renaming;
-
-   --------------
-   -- Renaming --
-   --------------
-
-   function Renaming (Base     : Release;
-                      Provides : Crates.Named'Class) return Release is
-      (Base.Renaming (Provides.Name));
 
    ---------------
    -- Replacing --
@@ -232,17 +230,25 @@ package body Alire.Releases is
        Properties   => Properties,
        Available    => Available);
 
+   -----------------------
+   -- New_Empty_Release --
+   -----------------------
+
+   function New_Empty_Release (Name : Crate_Name) return Release
+   is (New_Working_Release (Name         => Name,
+                            Properties   => Conditional.No_Properties));
+
    -------------------------
    -- New_Working_Release --
    -------------------------
 
    function New_Working_Release
      (Name         : Crate_Name;
-      Origin       : Origins.Origin := Origins.New_Filesystem ("..");
+      Origin       : Origins.Origin           := Origins.New_Filesystem (".");
       Dependencies : Conditional.Dependencies :=
         Conditional.For_Dependencies.Empty;
       Properties   : Conditional.Properties   :=
-        Conditional.For_Properties.Empty)
+        Default_Properties)
       return         Release is
      (Prj_Len      => Name.Length,
       Notes_Len    => 0,
@@ -253,10 +259,9 @@ package body Alire.Releases is
       Notes        => "",
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
-      Properties   => (if Properties = Conditional.For_Properties.Empty
-                       then Default_Properties
-                       else Properties),
-      Available    => Requisites.Booleans.Always_True);
+      Properties   => Properties,
+      Available    => Requisites.Trees.Empty_Tree -- empty evaluates to True
+     );
 
    -------------------------
    -- On_Platform_Actions --
@@ -515,9 +520,31 @@ package body Alire.Releases is
       --  DEPENDENCIES
       if not R.Dependencies.Is_Empty then
          Put_Line ("Dependencies (direct):");
-         R.Dependencies.Print ("   ", R.Dependencies.Contains_ORs);
+         R.Dependencies.Print ("   ",
+                               Sorted => True,
+                               And_Or => R.Dependencies.Contains_ORs);
       end if;
    end Print;
+
+   --------------
+   -- Property --
+   --------------
+
+   function Property (R   : Release;
+                      Key : Alire.Properties.Labeled.Labels)
+                      return String
+   is
+      use Alire.Properties.Labeled;
+      Target : constant Alire.Properties.Vector :=
+                 Filter (R.Properties, Key);
+   begin
+      if Target.Length not in 1 then
+         raise Constraint_Error with
+           "Unexpected property count:" & Target.Length'Img;
+      end if;
+
+      return Label (Target.First_Element).Value;
+   end Property;
 
    -----------------------
    -- Property_Contains --
@@ -545,46 +572,107 @@ package body Alire.Releases is
       return False;
    end Property_Contains;
 
+   -------------------
+   -- From_Manifest --
+   -------------------
+
+   function From_Manifest (File_Name : Any_Path;
+                           Source    : Manifest.Sources)
+                           return Release
+   is
+   begin
+      return From_TOML
+        (TOML_Adapters.From
+           (TOML_Load.Load_File (File_Name),
+            "Loading release from manifest: " & File_Name),
+         Source,
+         File_Name);
+   exception
+      when E : others =>
+         --  As this file is edited manually, it may not load for many reasons
+         Raise_Checked_Error (Errors.Wrap ("Failed to load " & File_Name,
+                                           Errors.Get (E)));
+   end From_Manifest;
+
    ---------------
    -- From_TOML --
    ---------------
 
-   overriding
-   function From_TOML (This : in out Release;
-                       From :        TOML_Adapters.Key_Queue)
+   function From_TOML (From   : TOML_Adapters.Key_Queue;
+                       Source : Manifest.Sources;
+                       File   : Any_Path := "")
+                       return Release is
+   begin
+      From.Assert_Key (TOML_Keys.Name, TOML.TOML_String);
+
+      return This : Release := New_Empty_Release
+        (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
+      do
+         Assert (This.From_TOML (From, Source, File));
+      end return;
+   end From_TOML;
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   function From_TOML (This   : in out Release;
+                       From   :        TOML_Adapters.Key_Queue;
+                       Source :        Manifest.Sources;
+                       File   :        Any_Path := "")
                        return Outcome
    is
+      package Dirs    renames Ada.Directories;
+      package Labeled renames Alire.Properties.Labeled;
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
 
       --  Origin
 
-      declare
-         Result : constant Outcome := This.Origin.From_TOML (From);
-      begin
-         if not Result.Success then
-            return Result;
-         end if;
-      end;
+      case Source is
+         when Manifest.Index =>
+            This.Origin.From_TOML (From).Assert;
+         when Manifest.Local =>
+            This.Origin :=
+              Origins.New_Filesystem
+                (Dirs.Containing_Directory   -- same folder as manifest file's
+                   (Dirs.Full_Name (File))); -- absolute path
+            --  We don't require an origin for a local release, as the release
+            --  is already in place.
+      end case;
 
       --  Properties
 
-      declare
-         Result : constant Outcome :=
-                    TOML_Load.Load_Crate_Section
-                      (Crates.Release_Section,
-                       From,
-                       This.Properties,
-                       This.Dependencies,
-                       This.Available);
-      begin
-         if not Result.Success then
-            return Result;
-         end if;
-      end;
+      TOML_Load.Load_Crate_Section
+        ((case Source is
+            when Manifest.Index => Crates.Index_Release,
+            when Manifest.Local => Crates.Local_Release),
+         From,
+         This.Properties,
+         This.Dependencies,
+         This.Available);
+
+      --  Consolidate/validate some properties as fields:
+
+      Assert (This.Name_Str = This.Property (Labeled.Name),
+              "Mismatched name property and given name at release creation");
+
+      This.Version := Semver.New_Version (This.Property (Labeled.Version));
 
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;
+   exception
+      when E : others =>
+         case Source is
+            when Manifest.Index =>
+               raise Program_Error with
+               Errors.Set
+                 ("Cannot load manifest from index with proper version: ", E);
+            when Manifest.Local =>
+               raise Checked_Error with
+               Errors.Set
+                 ("Cannot load manifest, please review contents: ", E);
+         end case;
    end From_TOML;
 
    -------------------
@@ -599,67 +687,95 @@ package body Alire.Releases is
                 (Semver.Basic.Exactly (R.Version)))));
 
    -------------
+   -- To_File --
+   -------------
+
+   procedure To_File (R        : Release;
+                      Filename : String;
+                      Format   : Manifest.Sources) is
+      use Ada.Text_IO;
+      File : File_Type;
+   begin
+      Create (File, Out_File, Filename);
+      TOML.File_IO.Dump_To_File (R.To_TOML (Format), File);
+      Close (File);
+   exception
+      when others =>
+         if Is_Open (File) then
+            Close (File);
+         end if;
+         raise;
+   end To_File;
+
+   -------------
    -- To_TOML --
    -------------
 
-   overriding function To_TOML (R : Release) return TOML.TOML_Value is
+   function To_TOML (R      : Release;
+                     Format : Manifest.Sources)
+                     return TOML.TOML_Value
+   is
       package APL renames Alire.Properties.Labeled;
       use all type Alire.Properties.Labeled.Cardinalities;
       use all type Alire.Requisites.Tree;
       use TOML_Adapters;
-      Root    : constant TOML.TOML_Value := TOML.Create_Table;
-      Relinfo :          TOML.TOML_Value := TOML.Create_Table;
+      Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
 
-      --  TODO: move generation of the [general] crate part to Alire.Crates.
+      --  Name
+      Root.Set (TOML_Keys.Name, +R.Name_Str);
 
-      --  General properties
-      declare
-         General : constant TOML.TOML_Value := R.Properties.To_TOML;
-      begin
+      --  Version
+      Root.Set (TOML_Keys.Version, +Semver.Image (R.Version));
 
-         --  Alias/Provides
-         if UStrings.Length (R.Alias) > 0 then
-            General.Set (TOML_Keys.Provides, +(+R.Alias));
+      --  Alias/Provides
+      if UStrings.Length (R.Alias) > 0 then
+         Root.Set (TOML_Keys.Provides, +(+R.Alias));
+      end if;
+
+      --  Notes
+      if R.Notes'Length > 0 then
+         Root.Set (TOML_Keys.Notes, +R.Notes);
+      end if;
+
+      --  Ensure atoms are atoms and arrays are arrays
+      for Label in APL.Cardinality'Range loop
+         if Root.Has (APL.Key (Label)) then
+            case APL.Cardinality (Label) is
+               when Unique   =>
+                  pragma Assert
+                    (Root.Get
+                       (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
+               when Multiple =>
+                  Root.Set
+                    (APL.Key (Label),
+                     TOML_Adapters.To_Array
+                       (Root.Get (APL.Key (Label))));
+            end case;
          end if;
-
-         --  Notes
-         if R.Notes'Length > 0 then
-            General.Set (TOML_Keys.Notes, +R.Notes);
-         end if;
-
-         --  Ensure atoms are atoms and arrays are arrays
-         for Label in APL.Cardinality'Range loop
-            if General.Has (APL.Key (Label)) then
-               case APL.Cardinality (Label) is
-                  when Unique   =>
-                     pragma Assert
-                       (General.Get
-                          (APL.Key (Label)).Kind in TOML.Atom_Value_Kind);
-                  when Multiple =>
-                     General.Set
-                       (APL.Key (Label),
-                        TOML_Adapters.To_Array
-                          (General.Get (APL.Key (Label))));
-               end case;
-            end if;
-         end loop;
-
-         --  Final assignment, always have general section.
-         Root.Set (TOML_Keys.General, General);
-      end;
+      end loop;
 
       --  Origin
-      Relinfo := TOML.Merge (Relinfo, R.Origin.To_TOML);
+      case Format is
+         when Manifest.Index =>
+            Root.Set (TOML_Keys.Origin, R.Origin.To_TOML);
+         when Manifest.Local =>
+            null;
+      end case;
 
-      --  Dependencies
+      --  Dependencies, wrapped as an array
       if not R.Dependencies.Is_Empty then
-         Relinfo.Set (TOML_Keys.Depends_On, R.Dependencies.To_TOML);
+         declare
+            Dep_Array : constant TOML.TOML_Value := TOML.Create_Array;
+         begin
+            Dep_Array.Append (R.Dependencies.To_TOML);
+            Root.Set (TOML_Keys.Depends_On, Dep_Array);
+         end;
       end if;
 
       --  Forbidden
       if not R.Forbidden.Is_Empty then
-         Relinfo.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+         Root.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
       end if;
 
       --  Available
@@ -668,11 +784,8 @@ package body Alire.Releases is
       then
          null; -- Do nothing, do not pollute .toml file
       else
-         Relinfo.Set (TOML_Keys.Available, R.Available.To_TOML);
+         Root.Set (TOML_Keys.Available, R.Available.To_TOML);
       end if;
-
-      --  Version release
-      Root.Set (R.Version_Image, Relinfo);
 
       return Root;
    end To_TOML;

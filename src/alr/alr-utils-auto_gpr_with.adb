@@ -3,8 +3,8 @@ with Ada.Directories;
 
 with Alire.Directories;
 with Alire.Utils.User_Input;
-with Alire.Config;
 with Alire.Config.Edit;
+with Alire.Paths;
 
 package body Alr.Utils.Auto_GPR_With is
 
@@ -118,7 +118,9 @@ package body Alr.Utils.Auto_GPR_With is
       Close (In_File);
       Close (Out_File);
 
-      Alire.Directories.Backup_If_Existing (GPR_File);
+      Alire.Directories.Backup_If_Existing
+        (GPR_File,
+         Base_Dir => Alire.Paths.Working_Folder_Inside_Root);
       Ada.Directories.Copy_File (Tmp.Filename, GPR_File);
    end Update;
 

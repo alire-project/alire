@@ -1,0 +1,9 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "2.0.0"
+licenses = []
+maintainers = ["john@doe.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."

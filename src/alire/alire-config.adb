@@ -4,9 +4,9 @@ with Ada.Text_IO;
 
 with GNAT.Regexp;
 
+with Alire.Directories;
 with Alire.Environment;
 with Alire.Platform;
-with Alire.Directories;
 
 with TOML.File_IO;
 
@@ -277,7 +277,7 @@ package body Alire.Config is
    begin
       case Lvl is
          when Global =>
-            return Alire.Config.Path / "config";
+            return Alire.Config.Path / "config.toml";
          when Local =>
             declare
                Candidate : constant String :=
@@ -286,7 +286,7 @@ package body Alire.Config is
                if Candidate /= "" then
                   --  This file cannot have a .toml extension or the root
                   --  detection will not work.
-                  return Candidate / "alire" / "config";
+                  return Candidate / "alire" / "config.toml";
                else
                   Raise_Checked_Error
                     ("Can only be used in an Alire directory");
@@ -360,7 +360,6 @@ package body Alire.Config is
       for Lvl in Level loop
 
          if Lvl /= Local or else Root.Current.Is_Valid then
-
             declare
                Config : constant TOML_Value :=
                  Load_Config_File (Filepath (Lvl));

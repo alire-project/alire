@@ -21,11 +21,11 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'setenv']:
     os.chdir('xxx')
 
     # "Manually" add a dependency
-    with open("alire/xxx.toml", "a") as file:
-        file.write('depends-on.libhello="1"')
+    with open("alire.toml", "a") as file:
+        file.write('[[depends-on]]\nlibhello="1"')
 
     # Make the lockfile "older" (otherwise timestamp is identical)
-    os.utime('alire/xxx.lock', (0, 0))
+    os.utime('alire.lock', (0, 0))
 
     # Run the command
     run_alr(cmd)

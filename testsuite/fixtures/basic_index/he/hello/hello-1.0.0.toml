@@ -1,0 +1,16 @@
+description = "\"Hello, world!\" demonstration project"
+long-description = "This is an example of long description in a multi-line string.\n\nMarkdown formating `can` be used to have \"nice\" display on the website.\n"
+name = "hello"
+version = "1.0.0"
+website = "example.com"
+authors = ["Bob", "Alice"]
+licenses = ["GPL 3.0", "MIT"]
+maintainers = ["alejandro@mosteo.com", "bob@example.com"]
+maintainers-logins = ["mylogin"]
+tags = ["tag1", "other-tag"]
+
+[[depends-on]]
+libhello = "^1.0"
+
+[origin]
+url = "file:../../../crates/hello_1.0.0"

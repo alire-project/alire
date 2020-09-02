@@ -5,7 +5,7 @@ with Alire.Releases;
 
 with Semantic_Versioning.Extended;
 
-package Alire.Types with Preelaborate is
+package Alire.Types is
 
    --  Recopilation of types for convenient use and documentation
 

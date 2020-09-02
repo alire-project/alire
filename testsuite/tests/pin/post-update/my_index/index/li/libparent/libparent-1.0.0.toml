@@ -1,0 +1,12 @@
+description = "Parent"
+name = "libparent"
+version = "1.0.0"
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+libchild = "*"
+
+[origin]
+url = "file:."

@@ -131,18 +131,22 @@ package body Alire is
    -- Outcome_Failure --
    ---------------------
 
-   function Outcome_Failure (Message : String) return Outcome is
+   function Outcome_Failure (Message : String;
+                             Report  : Boolean := True)
+                             return Outcome is
       Stack : constant String := AAA.Debug.Stack_Trace;
    begin
-      if Log_Debug then
-         Err_Log ("Generating Outcome_Failure with message: " & Message);
-         Err_Log ("Generating Outcome_Failure with call stack:");
-         Err_Log (Stack);
-      end if;
+      if Report then
+         if Log_Debug then
+            Err_Log ("Generating Outcome_Failure with message: " & Message);
+            Err_Log ("Generating Outcome_Failure with call stack:");
+            Err_Log (Stack);
+         end if;
 
-      Trace.Debug ("Generating Outcome_Failure with message: " & Message);
-      Trace.Debug ("Generating Outcome_Failure with call stack:");
-      Trace.Debug (Stack);
+         Trace.Debug ("Generating Outcome_Failure with message: " & Message);
+         Trace.Debug ("Generating Outcome_Failure with call stack:");
+         Trace.Debug (Stack);
+      end if;
 
       return (Success => False,
               Message => +Message);
@@ -193,9 +197,9 @@ package body Alire is
    -- Recoverable_Error --
    -----------------------
 
-   procedure Recoverable_Error (Msg : String) is
+   procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
    begin
-      if Force then
+      if Recover then
          Trace.Warning (Msg);
       else
          Raise_Checked_Error (Msg);

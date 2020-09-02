@@ -1,3 +1,4 @@
+with Alire.Errors;
 with Alire.Utils;
 
 with TOML; use all type TOML.Any_Value_Kind;
@@ -41,9 +42,17 @@ package Alire.TOML_Adapters with Preelaborate is
      Post => not Failure'Result.Success;
    --  Return a failed Outcome, using the Context & Message as information.
 
+   procedure Assert (Queue : Key_Queue; Condition : Boolean; Message : String);
+   --  If Condition is False, call Queue.Checked_Error (Message)
+
    procedure Checked_Error (Queue : Key_Queue; Message : String) with
      No_Return;
    --  Raise a Checked error with Context & ": " & Message, using Alire.Errors.
+
+   procedure Recoverable_Error (Queue   : Key_Queue;
+                                Message : String;
+                                Recover : Boolean := Alire.Force);
+   --  As Checked_Error, but emit a warning instead when Recover is True
 
    function Checked_Pop (Queue : Key_Queue;
                          Key   : String;
@@ -166,7 +175,7 @@ private
    -------------
 
    function Message (Queue : Key_Queue; Message : String) return String is
-     (+Queue.Context & ": " & Message);
+     (Errors.Wrap (+Queue.Context, Message));
 
    -------------
    -- Descend --

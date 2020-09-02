@@ -55,6 +55,7 @@ def run_alr(*args, **kwargs):
 
     complain_on_error = kwargs.pop('complain_on_error', True)
     debug = kwargs.pop('debug', True)
+    force = kwargs.pop('force', False)
     quiet = kwargs.pop('quiet', True)
     if kwargs:
         first_unknown_kwarg = sorted(kwargs)[0]
@@ -64,6 +65,8 @@ def run_alr(*args, **kwargs):
     argv.append('-n')  # always non-interactive
     if debug:
         argv.append('-d')
+    if force:
+        argv.append('-f')
     if quiet:
         argv.append('-q')
     argv.extend(args)
@@ -146,7 +149,9 @@ def prepare_indexes(config_dir, working_dir, index_descriptions):
 
         if copy_crates_src:
             crates_dir = fixtures_path('crates')
-            copytree(crates_dir, os.path.join (working_dir, name, 'crates'))
+            copytree(crates_dir, os.path.join(working_dir, 'crates'))
+            # Crates are adjacent to the index but outside it (otherwise the
+            # index loader detects spurious files).
 
         # Finally create the index description in the config directory
         index_dir = os.path.join(indexes_dir, name)
@@ -157,3 +162,15 @@ name = '{}'
 priority = {}
 url = '{}'
             """.format(name, priority, os.path.join(working_dir, files_dir)))
+
+
+def init_local_crate(name="xxx", binary=True):
+    """
+    Initialize a local crate and enter its folder for further testing.
+
+    :param str name: Name of the crate
+
+    :param bool binary: Initialize as --bin or --lib
+    """
+    run_alr("init", name, "--bin" if binary else "--lib")
+    os.chdir(name)

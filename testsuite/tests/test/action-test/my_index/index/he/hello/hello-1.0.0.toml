@@ -1,0 +1,17 @@
+description = "action test"
+name = "hello"
+version = "1.0.0"
+licenses = []
+maintainers = ["some@one.com"]
+maintainers-logins = ["mylogin"]
+
+[[actions]]
+type = "test"
+command = ["echo", "ABRACADABRA"]
+
+[[actions]]
+type = "test"
+command = ["gprbuild", "-p"]
+
+[origin]
+url = "file:../../../crates/hello_1.0.0"

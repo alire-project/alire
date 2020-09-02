@@ -5,15 +5,14 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Lockfiles;
+with Alire.Manifest;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
+with Alire.Paths;
 with Alire.Properties.Actions.Executor;
-with Alire.Releases.TOML_IO;
 with Alire.Roots;
 with Alire.Solutions.Diffs;
 with Alire.Workspace;
-
-with GNATCOLL.VFS;
 
 package body Alire.Workspace is
 
@@ -63,7 +62,7 @@ package body Alire.Workspace is
          declare
             To_Remove : Alire.Containers.Release_Set;
             function Enum (Deps : Conditional.Dependencies)
-                           return Alire.Dependencies.Containers.Lists.List
+                           return Alire.Dependencies.Containers.List
                            renames Conditional.Enumerate;
          begin
 
@@ -191,6 +190,7 @@ package body Alire.Workspace is
                           Generate_Files  : Boolean := True;
                           Perform_Actions : Boolean := True)
    is
+      use Directories;
       Was_There : Boolean with Unreferenced;
    begin
       Alire.Workspace.Deploy_Release
@@ -200,10 +200,36 @@ package body Alire.Workspace is
          Was_There       => Was_There,
          Perform_Actions => Perform_Actions);
 
+      --  Backup a potentially packaged manifest, so our authoritative manifest
+      --  from the index is always used.
+
+      declare
+         Working_Dir : Guard (Enter (Release.Unique_Folder))
+           with Unreferenced;
+      begin
+         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
+
+         if GNAT.OS_Lib.Is_Regular_File (Roots.Crate_File_Name) then
+            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            declare
+               Upstream_File : constant String :=
+                                 Paths.Working_Folder_Inside_Root /
+                                 (Roots.Crate_File_Name & ".upstream");
+            begin
+               Alire.Directories.Backup_If_Existing
+                 (Upstream_File,
+                  Base_Dir => Paths.Working_Folder_Inside_Root);
+               Ada.Directories.Rename
+                 (Old_Name => Roots.Crate_File_Name,
+                  New_Name => Upstream_File);
+            end;
+         end if;
+      end;
+
       --  And generate its working files, if they do not exist
+
       if Generate_Files then
          declare
-            use Directories;
             Working_Dir : Guard (Enter (Release.Unique_Folder))
               with Unreferenced;
             Root       : constant Alire.Roots.Root :=
@@ -212,6 +238,11 @@ package body Alire.Workspace is
                                Ada.Directories.Current_Directory,
                                Env);
          begin
+
+            Ada.Directories.Create_Path (Root.Working_Folder);
+
+            --  Generate the authoritative manifest from index information for
+            --  eventual use of the gotten crate as a local workspace.
 
             Workspace.Generate_Manifest
               (Release.Whenever (Env), -- TODO: until dynamic export
@@ -222,10 +253,10 @@ package body Alire.Workspace is
             --  will be replaced with the complete solution.
 
             Lockfiles.Write
-              ((Solution    => (if Release.Dependencies (Env).Is_Empty
-                                then Alire.Solutions.Empty_Valid_Solution
-                                else Alire.Solutions.Empty_Invalid_Solution)),
-               Filename    => Root.Lock_File);
+              ((Solution => (if Release.Dependencies (Env).Is_Empty
+                             then Alire.Solutions.Empty_Valid_Solution
+                             else Alire.Solutions.Empty_Invalid_Solution)),
+               Filename  => Root.Lock_File);
          end;
       end if;
    end Deploy_Root;
@@ -237,20 +268,16 @@ package body Alire.Workspace is
    procedure Generate_Manifest (Release : Releases.Release;
                                 Root    : Roots.Root := Alire.Root.Current)
    is
-      use GNATCOLL.VFS;
-      F : constant Virtual_File := Create (+Root.Crate_File,
-                                           Normalize => True);
    begin
       Trace.Debug ("Generating " & Release.Name_Str & ".toml file for "
                    & Release.Milestone.Image & " with"
                    & Release.Dependencies.Leaf_Count'Img & " dependencies");
 
-      --  Ensure working folder exists (might not upon first get)
-      F.Get_Parent.Make_Dir;
+      Directories.Backup_If_Existing
+        (Root.Crate_File,
+         Base_Dir => Paths.Working_Folder_Inside_Root);
 
-      Directories.Backup_If_Existing (Root.Crate_File);
-
-      Alire.Releases.TOML_IO.To_File (Release, Root.Crate_File);
+      Release.To_File (Root.Crate_File, Manifest.Local);
    end Generate_Manifest;
 
    ------------

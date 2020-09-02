@@ -1,21 +1,69 @@
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
+with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Paths;
+with Alire.Properties;
+with Alire.Roots;
 
 package body Alire.Directories is
+
+   ------------------------
+   -- Report_Deprecation --
+   ------------------------
+
+   procedure Report_Deprecation with No_Return;
+   --  We give some minimal guidelines about what to do with the metadata
+   --  changes, and redirect to a wiki page for more details.
+
+   procedure Report_Deprecation is
+      Old_Manifest : constant String :=
+                       Directories.Find_Single_File ("alire", "toml");
+      use Ada.Text_IO; -- To bypass any -q or verbosity configuration
+   begin
+      New_Line;
+      Put_Line ("WARNING: Deprecated metadata possibly detected at "
+                & Old_Manifest);
+      New_Line;
+      Put_Line ("Due to recent changes to Alire's way of storing metadata,");
+      Put_Line ("you need to reinitialize or migrate the workspace.");
+      Put_Line
+        ("Please check here for details on how to migrate your metadata:");
+      New_Line;
+      Put_Line ("   https://github.com/alire-project/alire/wiki/"
+                & "2020-Metadata-format-migration");
+      Put_Line ("");
+      Put_Line ("How to reinitialize, in a nutshell:");
+      New_Line;
+      Put_Line ("   - Delete the old manifest file at 'alire/*.toml'");
+      Put_Line ("   - run one of");
+      Put_Line ("      $ alr init --in-place --bin <crate name>");
+      Put_Line ("      $ alr init --in-place --lib <crate name>");
+      Put_Line ("   - Re-add any necessary dependencies using one or more ");
+      Put_Line ("      $ alr with <dependency>");
+      New_Line;
+
+      --  This happens too early during elaboration and otherwise a stack trace
+      --  is produced, so:
+      GNAT.OS_Lib.OS_Exit (1);
+   end Report_Deprecation;
 
    ------------------------
    -- Backup_If_Existing --
    ------------------------
 
-   procedure Backup_If_Existing (File : Any_Path) is
+   procedure Backup_If_Existing (File   : Any_Path;
+                                 Base_Dir : Any_Path := "")
+   is
       use Ada.Directories;
+      Dst : constant String := (if Base_Dir /= ""
+                                then Base_Dir / Simple_Name (File) & ".prev"
+                                else File & ".prev");
    begin
       if Exists (File) then
-         Trace.Debug ("Backing up " & File);
-         Copy_File (File, File & ".prev", "mode=overwrite");
+         Trace.Debug ("Backing up " & File
+                      & " with base dir: " & Base_Dir);
+         Copy_File (File, Dst, "mode=overwrite");
       end if;
    end Backup_If_Existing;
 
@@ -67,33 +115,42 @@ package body Alire.Directories is
    is
       use Ada.Directories;
 
-      function Is_Candidate_Folder return Boolean;
+      ---------------------------
+      -- Find_Candidate_Folder --
+      ---------------------------
 
-      -------------------------
-      -- Is_Candidate_Folder --
-      -------------------------
-
-      function Is_Candidate_Folder return Boolean is
+      function Find_Candidate_Folder (Path : Any_Path)
+                                      return Any_Path
+      is
+         Possible_Root : constant Roots.Root := Roots.New_Root
+           (Name => +"unused",
+            Path => Path,
+            Env  => Properties.No_Properties);
       begin
-         return Exists (Current / Paths.Working_Folder_Inside_Root) and then
-           Find_Single_File (Current / Paths.Working_Folder_Inside_Root,
-                             Paths.Crate_File_Extension_With_Dot) /= "";
-      end Is_Candidate_Folder;
-
-      G : Guard (Enter (Starting_At)) with Unreferenced;
-   begin
-      Trace.Debug ("Starting root search at " & Current);
-      loop
-         if Is_Candidate_Folder then
-            return Current;
+         Trace.Debug ("Looking for alire metadata at: " & Path);
+         if
+           Exists (Possible_Root.Crate_File) and then
+           Kind (Possible_Root.Crate_File) = Ordinary_File
+         then
+            return Path;
+         elsif GNAT.OS_Lib.Is_Directory ("alire") and then
+           Directories.Find_Single_File ("alire", "toml") /= "" and then
+           not Utils.Ends_With (Directories.Find_Single_File ("alire", "toml"),
+                                "config.toml")
+         then
+            Report_Deprecation;
          else
-            Set_Directory (Containing_Directory (Current));
-            Trace.Debug ("Going up to " & Current);
+            return Find_Candidate_Folder (Containing_Directory (Path));
          end if;
-      end loop;
-   exception
-      when Use_Error =>
-         return ""; -- There's no containing folder (hence we're at root)
+      exception
+         when Use_Error =>
+            Trace.Debug
+              ("Root directory reached without finding alire metadata");
+            return ""; -- There's no containing folder (hence we're at root)
+      end Find_Candidate_Folder;
+
+   begin
+      return Find_Candidate_Folder (Starting_At);
    end Detect_Root_Path;
 
    ----------------------
@@ -184,6 +241,10 @@ package body Alire.Directories is
          End_Search (Search);
          return "";
       end if;
+   exception
+      when Name_Error =>
+         Trace.Debug ("Search path does not exist: " & Path);
+         return "";
    end Find_Single_File;
 
    ----------------
@@ -278,7 +339,6 @@ package body Alire.Directories is
    overriding
    procedure Finalize (This : in out Temp_File) is
       use Ada.Directories;
-      use Ada.Exceptions;
    begin
       if This.Keep then
          return;
@@ -293,17 +353,98 @@ package body Alire.Directories is
             Delete_Tree (This.Filename);
          end if;
       end if;
-   exception
-      when E : others =>
-         Trace.Debug
-           ("Temp_File.Finalize: unexpected exception: " &
-              Exception_Name (E) & ": " & Exception_Message (E) & " -- " &
-              Exception_Information (E));
    end Finalize;
+
+   -------------------
+   -- Traverse_Tree --
+   -------------------
+
+   procedure Traverse_Tree (Start   : Relative_Path;
+                            Doing   : access procedure
+                              (Item : Ada.Directories.Directory_Entry_Type;
+                               Stop : in out Boolean);
+                            Recurse : Boolean := False)
+   is
+      use Ada.Directories;
+
+      procedure Go_Down (Item : Directory_Entry_Type) is
+         Stop : Boolean := False;
+      begin
+         if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
+            Doing (Item, Stop);
+            if Stop then
+               return;
+            end if;
+
+            if Recurse and then Kind (Item) = Directory then
+               Traverse_Tree (Start / Simple_Name (Item), Doing, Recurse);
+            end if;
+         end if;
+      end Go_Down;
+
+   begin
+      Trace.Debug ("Traversing folder: " & Start);
+
+      Search (Start,
+              "",
+              (Directory => True, Ordinary_File => True, others => False),
+              Go_Down'Access);
+   end Traverse_Tree;
+
+   ---------------
+   -- With_Name --
+   ---------------
 
    function With_Name (Name : String) return Temp_File is
      (Temp_File'(Ada.Finalization.Limited_Controlled with
                  Keep => <>,
                  Name => +Name));
+
+   --------------
+   -- REPLACER --
+   --------------
+
+   -------------------
+   -- Editable_Name --
+   -------------------
+
+   function Editable_Name (This : Replacer) return Any_Path
+   is (This.Temp_Copy.Filename);
+
+   ---------------------
+   -- New_Replacement --
+   ---------------------
+
+   function New_Replacement (File       : Any_Path;
+                             Backup     : Boolean := True;
+                             Backup_Dir : Any_Path := "")
+                             return Replacer is
+   begin
+      return This : constant Replacer := (Length     => File'Length,
+                                          Backup_Len => Backup_Dir'Length,
+                                          Original   => File,
+                                          Backup     => Backup,
+                                          Backup_Dir => Backup_Dir,
+                                          Temp_Copy  => <>)
+      do
+         Ada.Directories.Copy_File (File, This.Temp_Copy.Filename);
+      end return;
+   end New_Replacement;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace (This : in out Replacer) is
+   begin
+      --  Copy around, so never ceases to be a valid manifest in place
+
+      if This.Backup then
+         Backup_If_Existing (This.Original, This.Backup_Dir);
+      end if;
+      Ada.Directories.Copy_File (This.Editable_Name, This.Original);
+
+      --  The temporary copy will be cleaned up by This.Temp_Copy finalization
+   end Replace;
 
 end Alire.Directories;

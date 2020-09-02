@@ -5,7 +5,7 @@ package Alire.TOML_Expressions.Cases with Preelaborate is
 
    function Load_Dependencies (From : TOML_Adapters.Key_Queue)
                                return Conditional.Dependencies;
-   --  From is a "depends-on = ..." table.
+   --  From is the RHS of a "depends-on = { ... }" table.
 
    subtype Static_Loader is Conditional.Property_Loader;
 

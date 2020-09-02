@@ -1,0 +1,12 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "1.0.0-git"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "git+file:../../../crates/libhello_git"
+commit = "ce78e7706c9d3f97605df48d8befca5407f8d328"
+# hashes = ["sha512:f9d5a85fec4db46d5a2859057658c01ee4fe1ab412dab80bcbb426102b5dcb147ab7e0744e781d045e5d2b50ec3cb4f0990c8ce66e52cda37c88833d0f814500"]
+# Hashes no longer accepted for git origins

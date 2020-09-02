@@ -1,0 +1,11 @@
+description = "Do nothing"
+name = "noop"
+version = "1.0.0-multi"
+executables = ["noop", "noop2"]
+licenses = []
+maintainers = ["mr@lazy.com"]
+maintainers-logins = ["mrlazy"]
+
+[origin]
+url = "file:../../../crates/noop_1.0-multi.tgz"
+hashes = ["sha512:ce2fc754c166ead10e1fcc7bbd483cff0f95bf527ee78b443510f692b5f1cb95b21b48d65ee1dc6555dcc6bfd04e607e3a7cf510ac056cc209308aa4ec0be7cc"]

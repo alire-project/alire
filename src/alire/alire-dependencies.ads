@@ -39,6 +39,10 @@ package Alire.Dependencies with Preelaborate is
    function Image (Dep : Dependency) return String;
    --  Standard-style version image, e.g. "make^3.1"
 
+   function Manifest_Image (Dep : Dependency) return String;
+   --  Returns a line describing the dependency as it would appear in the
+   --  manifest, e.g.: my_crate = "^3.2.1"
+
    overriding
    function TTY_Image (Dep : Dependency) return String;
 
@@ -59,9 +63,13 @@ package Alire.Dependencies with Preelaborate is
 
    overriding
    function To_TOML (Dep : Dependency) return TOML.TOML_Value;
+   --  Creates the RHS of the "crate = 'version'"
 
    overriding
    function To_YAML (Dep : Dependency) return String;
+
+   function Lexicographical_Sort (L, R : Dependency) return Boolean;
+   --  By name and then version set image
 
 private
 
@@ -105,6 +113,9 @@ private
    function Image (Dep : Dependency) return String is
      ((+Dep.Crate) & Dep.Versions.Image);
 
+   function Manifest_Image (Dep : Dependency) return String is
+     ((+Dep.Crate) & " = " & '"' & Dep.Versions.Image & '"');
+
    overriding
    function TTY_Image (Dep : Dependency) return String is
      (TTY.Name (+Dep.Crate) & TTY.Version (Dep.Versions.Image));
@@ -116,5 +127,9 @@ private
         """}");
 
    overriding function Key (Dep : Dependency) return String is (+Dep.Crate);
+
+   function Lexicographical_Sort (L, R : Dependency) return Boolean
+   is (L.Crate < R.Crate or else
+       (L.Crate = R.Crate and then L.Versions.Image < R.Versions.Image));
 
 end Alire.Dependencies;

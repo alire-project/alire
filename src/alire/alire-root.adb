@@ -1,7 +1,5 @@
 with Alire.Directories;
-with Alire.Errors;
-with Alire.Paths;
-with Alire.TOML_Index;
+with Alire.Releases;
 
 package body Alire.Root is
 
@@ -9,44 +7,28 @@ package body Alire.Root is
    -- Current --
    -------------
 
-   function Current return Roots.Root is
-      use Alire.Directories;
-      Path      : constant String := Directories.Detect_Root_Path;
-   begin
-      if Path /= "" then
-         declare
-            File    : constant String :=
-              Directories.Find_Single_File
-                (Path      => Path / Paths.Working_Folder_Inside_Root,
-                 Extension => Paths.Crate_File_Extension_With_Dot);
-         begin
-            return Roots.New_Root
-              (TOML_Index.Load_Release_From_File (File),
-               Path,
-               Platform_Properties);
-         exception
-            when E : others =>
-               Trace.Debug ("Exception while loading crate file is:");
-               Log_Exception (E, Debug);
+   function Current return Roots.Optional.Root
+   is (Roots.Optional.Detect_Root (Directories.Detect_Root_Path));
 
-               Trace.Warning ("Could not load crate information from " & File);
-               Trace.Warning ("If this workspace was created with a previous"
-                              & " alr version you may need to recreate it.");
+   -------------
+   -- Current --
+   -------------
 
-               return Roots.New_Invalid_Root.With_Reason
-                 ("Failed to load " & File & ": " & Errors.Get (E));
-         end;
-      else
-         return Roots.New_Invalid_Root.With_Reason
-           ("Could not detect a session folder" &
-              " at current or parent locations");
-      end if;
-   end Current;
+   function Current return Roots.Root
+   is (Roots.Optional.Detect_Root (Directories.Detect_Root_Path).Value);
+
+   -------------------------
+   -- Platform_Properties --
+   -------------------------
 
    Environment : Properties.Vector;
 
    function Platform_Properties return Properties.Vector
    is (Environment);
+
+   -----------------------------
+   -- Set_Platform_Properties --
+   -----------------------------
 
    procedure Set_Platform_Properties (Env : Properties.Vector) is
    begin

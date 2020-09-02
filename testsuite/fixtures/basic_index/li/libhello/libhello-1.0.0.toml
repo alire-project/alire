@@ -1,0 +1,15 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "1.0.0"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[gpr-externals]
+TEST_GPR_EXTERNAL = ["gpr_ext_A", "gpr_ext_B", "gpr_ext_C"]
+
+[gpr-set-externals]
+TEST_GPR_EXTERNAL = "gpr_ext_B"
+
+[origin]
+url = "file:../../../crates/libhello_1.0.0"

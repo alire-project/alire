@@ -6,9 +6,10 @@ with Ada.Text_IO;
 with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Index;
+with Alire.Manifest;
 with Alire.Milestones;
 with Alire.Releases;
-with Alire.Roots;
+with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.User_Input;
@@ -141,17 +142,26 @@ package body Alr.Commands.Withing is
    ---------------------
 
    procedure Detect_Softlink (Path : String) is
-      Root : constant Alire.Roots.Root := Alire.Roots.Detect_Root (Path);
+      Root : constant Alire.Roots.Optional.Root :=
+               Alire.Roots.Optional.Detect_Root (Path);
    begin
       if Root.Is_Valid then
-         --  Add a dependency on ^(detected version) (i.e., safely upgradable)
-         Add_Softlink
-           (Dep_Spec => Root.Release.Name_Str
-                        & "^" & Root.Release.Version.Image,
-            Path     => Path);
+         if Root.Value.Is_Stored then
+            --  Add a dependency on ^(detected version) (i.e., safely
+            --  upgradable)
+            Add_Softlink
+              (Dep_Spec => Root.Value.Release.Name_Str
+               & "^" & Root.Value.Release.Version.Image,
+               Path     => Path);
+         else
+            Reportaise_Command_Failed
+              ("cannot add target: " & Root.Value.Storage_Error);
+         end if;
       else
          Reportaise_Command_Failed
-           ("cannot add target: " & Root.Invalid_Reason);
+           ("cannot add target: crate metadata not found at " & Path
+            & " (give an explicit crate name argument to use a plain"
+            & " GNAT project as dependency)");
       end if;
    end Detect_Softlink;
 
@@ -178,22 +188,30 @@ package body Alr.Commands.Withing is
       return Filtered : Alire.Conditional.Dependencies do
          if Deps.Is_Iterable then
             for Dep of Deps loop
-               if Dep.Value.Crate /= Requested.Crate then
-                  Filtered := Filtered and
-                    Alire.Conditional.New_Dependency
-                      (Dep.Value.Crate, Dep.Value.Versions);
+               if Dep.Is_Value and then Dep.Value.Crate /= Requested.Crate then
+                  --  A regular static dependency
+                  Filtered := Filtered and Dep;
+               elsif not Dep.Is_Value then
+                  --  Something else (dynamic expression) that we cannot manage
+                  --  programmatically.
+                  Filtered := Filtered and Dep;
+                  Trace.Warning
+                    ("Skipping unsupported conditional dependency: "
+                     & Dep.Image_One_Line);
                else
                   --  Simply don't add the one we want to remove
                   Found := True;
                end if;
             end loop;
          else
-            Trace.Warning ("Skipping unsupported conditional dependency");
+            Trace.Warning ("Skipping unsupported conditional dependency: "
+                           & Deps.Image_One_Line);
          end if;
 
          if not Found then
             Trace.Warning
-              ("Crate slated for removal is not among direct dependencies: "
+              ("Crate slated for removal is not among"
+               & " direct static dependencies: "
                & (+Requested.Crate));
          end if;
       end return;
@@ -222,13 +240,16 @@ package body Alr.Commands.Withing is
                           Alire.Solver.Resolve (New_Deps,
                                                 Platform.Properties,
                                                 Old_Solution);
+
+         Deps_Diff : constant Alire.Dependencies.Diffs.Diff :=
+                       Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps);
       begin
 
          --  Show changes to apply
 
          Trace.Info ("Requested changes:");
          Trace.Info ("");
-         Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps).Print;
+         Deps_Diff.Print;
 
          --  Show the effects on the solution
 
@@ -240,11 +261,13 @@ package body Alr.Commands.Withing is
             return;
          end if;
 
-         --  Generate the new .toml file
+         --  Add changes to the manifest:
 
-         Alire.Workspace.Generate_Manifest (New_Root.Release,
-                                             New_Root);
-         Trace.Detail ("Regeneration finished, updating now");
+         Alire.Manifest.Append (Root.Current.Crate_File,
+                                Deps_Diff.Added);
+         Alire.Manifest.Remove (Root.Current.Crate_File,
+                                Deps_Diff.Removed);
+         Trace.Detail ("Manifest updated, fetching dependencies now");
 
          --  And apply changes (will also generate new lockfile)
 
@@ -401,7 +424,8 @@ package body Alr.Commands.Withing is
    begin
       Put_Line ("Dependencies (direct):");
       Root_Release.Dependencies.Print ("   ",
-                                       Root_Release.Dependencies.Contains_ORs);
+                                       Root_Release.Dependencies.Contains_ORs,
+                                       Sorted => True);
 
       if Cmd.Solve then
          Requires_Full_Index; -- Load possible hints

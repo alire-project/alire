@@ -1,0 +1,6 @@
+name = "crate_1234"
+version = "0.0.0"
+description = "Shiny new project"
+maintainers = ["your@email.here"]
+maintainers-logins = ["github-username"]
+project-files = ["nested/project.gpr"]

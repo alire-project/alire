@@ -1,0 +1,11 @@
+description = "This is the regular short description"
+long-description = "This is the long crate description.\n\nThis can be a multiline string, and TOML parsers are free to use the platform end-of-line character during loading.\n"
+name = "hello_world"
+version = "0.1.0"
+licenses = []
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "http://blah.com/pkg.zip"
+hashes = ["sha512:deadbeef"]

@@ -1,0 +1,15 @@
+description = "\"Hello, world!\" demonstration project support library"
+name = "libhello"
+version = "1.0.0-linuxonly"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+[available."case(os)"]
+"..." = false
+linux = true
+[available."case(os)".windows."case(word_size)"]
+"..." = false
+bits_64 = true
+
+[origin]
+url = "file:../../../crates/libhello_1.0.0"

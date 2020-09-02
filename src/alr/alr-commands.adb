@@ -12,9 +12,9 @@ with Alire.Config;
 with Alire.Errors;
 with Alire.Features.Index;
 with Alire.Lockfiles;
+with Alire.Paths;
 with Alire.Platforms;
-with Alire.Roots;
-with Alire.Roots.Check_Valid;
+with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
@@ -381,8 +381,8 @@ package body Alr.Commands is
 
    procedure Reportaise_Command_Failed (Message : String) is
    begin
-      Trace.Error (Message);
-      raise Command_Failed with Message;
+      Alire.Errors.Pretty_Print (Message);
+      raise Command_Failed with Alire.Errors.Set (Message);
    end Reportaise_Command_Failed;
 
    --------------------------------
@@ -391,8 +391,8 @@ package body Alr.Commands is
 
    procedure Reportaise_Wrong_Arguments (Message : String) is
    begin
-      Trace.Error (Message);
-      raise Wrong_Command_Arguments with Message;
+      Alire.Errors.Pretty_Print (Message);
+      raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
    -------------------------
@@ -413,60 +413,71 @@ package body Alr.Commands is
    procedure Requires_Valid_Session (Sync : Boolean := True) is
       use Alire;
 
-      Checked : constant Alire.Roots.Root :=
-        Alire.Roots.Check_Valid (Root.Current);
+      Unchecked : constant Alire.Roots.Optional.Root := Root.Current;
    begin
-      if not Checked.Is_Valid then
-         Reportaise_Command_Failed
-           ("Cannot continue with invalid session: " & Checked.Invalid_Reason);
+      if not Unchecked.Is_Valid then
+         Raise_Checked_Error
+           (Alire.Errors.Wrap
+              ("Cannot continue with invalid session", Unchecked.Message));
       end if;
 
-      --  For workspaces created pre-lockfiles, or with older format, recreate:
+      Unchecked.Value.Check_Stored;
 
-      case Lockfiles.Validity (Checked.Lock_File) is
-         when Lockfiles.Valid =>
-            Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
+      declare
+         Checked : constant Roots.Root := Unchecked.Value;
+      begin
+
+         --  For workspaces created pre-lockfiles, or with older format,
+         --  recreate:
+
+         case Lockfiles.Validity (Checked.Lock_File) is
+            when Lockfiles.Valid =>
+               Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
+
+               if Sync then
+                  Requires_Full_Index;
+                  Checked.Sync_Solution_And_Deps;
+                  --  Check deps on disk match those in lockfile
+               end if;
+
+               return; -- OK
+
+            when Lockfiles.Invalid =>
+               Trace.Warning
+                 ("This workspace was created with a previous alr version."
+                  & " Internal data is going to be updated and, as a result,"
+                  & " any existing pins will be unpinned and will need to be"
+                  & " manually recreated.");
+               Alire.Directories.Backup_If_Existing
+                 (Checked.Lock_File,
+                  Base_Dir => Alire.Paths.Working_Folder_Inside_Root);
+               Ada.Directories.Delete_File (Checked.Lock_File);
+
+            when Lockfiles.Missing =>
+               Trace.Debug ("Workspace has no lockfile at "
+                            & Checked.Lock_File);
+         end case;
+
+         --  Solve current root dependencies to create the lock file
+
+         Trace.Debug ("Generating lockfile on the fly...");
+
+         declare
+            Solution : constant Alire.Solutions.Solution :=
+                         Alire.Solver.Resolve
+                           (Checked.Release.Dependencies (Platform.Properties),
+                            Platform.Properties,
+                            Alire.Solutions.Empty_Valid_Solution);
+         begin
+            Alire.Lockfiles.Write ((Solution => Solution), Checked.Lock_File);
+
+            --  Ensure the solved releases are indeed on disk
 
             if Sync then
                Requires_Full_Index;
                Checked.Sync_Solution_And_Deps;
-               --  Check deps on disk match those in lockfile
             end if;
-
-            return; -- OK
-
-         when Lockfiles.Invalid =>
-            Trace.Warning
-              ("This workspace was created with a previous alr version."
-               & " Internal data is going to be updated and, as a result,"
-               & " any existing pins will be unpinned and will need to be"
-               & " manually recreated.");
-            Alire.Directories.Backup_If_Existing (Checked.Lock_File);
-            Ada.Directories.Delete_File (Checked.Lock_File);
-
-         when Lockfiles.Missing =>
-            Trace.Debug ("Workspace has no lockfile at " & Checked.Lock_File);
-      end case;
-
-      --  Solve current root dependencies to create the lock file
-
-      Trace.Debug ("Generating lockfile on the fly...");
-
-      declare
-         Solution : constant Alire.Solutions.Solution :=
-                      Alire.Solver.Resolve
-                        (Checked.Release.Dependencies (Platform.Properties),
-                         Platform.Properties,
-                         Alire.Solutions.Empty_Valid_Solution);
-      begin
-         Alire.Lockfiles.Write ((Solution => Solution), Checked.Lock_File);
-
-         --  Ensure the solved releases are indeed on disk
-
-         if Sync then
-            Requires_Full_Index;
-            Checked.Sync_Solution_And_Deps;
-         end if;
+         end;
       end;
    end Requires_Valid_Session;
 
@@ -701,7 +712,7 @@ package body Alr.Commands is
          Log ("alr " & What_Command & " done", Detail);
       exception
          when E : Alire.Checked_Error =>
-            Trace.Error (Alire.Errors.Get (E, Clear => False));
+            Alire.Errors.Pretty_Print (Alire.Errors.Get (E, Clear => False));
             if Alire.Log_Level = Debug then
                raise;
             else

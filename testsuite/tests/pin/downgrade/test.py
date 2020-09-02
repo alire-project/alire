@@ -17,12 +17,13 @@ def check_child(version, output, pinned):
     # Verify output
     assert_match('.*\n'
                  'Dependencies \(solution\):\n'
-                 '   libchild=' + version + (" \(pinned\)" if pinned else "") + '.*\n',
+                 '   libchild=' + version +
+                 (" \(pinned\)" if pinned else "") + '.*\n',
                  output, flags=re.S)
 
     # Verify lockfile
-    check_line_in('alire/xxx.lock',
-                  '[solution.state.release.libchild."' + version + '"]')
+    check_line_in('alire.lock', 'name = "libchild"')
+    check_line_in('alire.lock', f'version = "{version}"')
 
     # Verify dependency folders
     assert os.path.exists('alire/cache/dependencies/libchild_' + version +

@@ -14,7 +14,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 BADLINE = "SHOULND'T BE HERE"
-FILE = "alire/xxx.lock"
+FILE = "alire.lock"
 
 with open(FILE, "a") as myfile:
     myfile.write(BADLINE)

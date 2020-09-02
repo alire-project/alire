@@ -6,12 +6,9 @@ with Alire.Utils;
 with Alr.Paths;
 with Alr.Root;
 with Alr.Spawn;
-with Alr.Bootstrap;
 with Alr.Platform;
 
 package body Alr.Commands.Clean is
-
-   use all type Bootstrap.Session_States;
 
    -------------
    -- Execute --
@@ -23,11 +20,9 @@ package body Alr.Commands.Clean is
       Relocate : constant String :=
         "--relocate-build-tree=" & Alire.Paths.Build_Folder;
    begin
+      Requires_Valid_Session;
+
       if not Cmd.Cache then
-         Requires_Full_Index;
-
-         Requires_Valid_Session;
-
          Alr.Root.Current.Export_Build_Environment;
 
          Trace.Detail ("Cleaning project and dependencies...");
@@ -49,16 +44,12 @@ package body Alr.Commands.Clean is
       end if;
 
       if Cmd.Cache then
-         if Bootstrap.Session_State > Outside then
-            if OS_Lib.Is_Folder (Paths.Alr_Working_Cache_Folder) then
-               Trace.Detail ("Deleting working copy cache...");
-               Ada.Directories.Delete_Tree (Paths.Alr_Working_Cache_Folder);
-            else
-               Trace.Detail ("Cache folder not present");
-               --  This is expected if the crate has no dependencies
-            end if;
+         if OS_Lib.Is_Folder (Paths.Alr_Working_Cache_Folder) then
+            Trace.Detail ("Deleting working copy cache...");
+            Ada.Directories.Delete_Tree (Paths.Alr_Working_Cache_Folder);
          else
-            Trace.Info ("Not in a release or sandbox folder");
+            Trace.Detail ("Cache folder not present");
+            --  This is expected if the crate has no dependencies
          end if;
       end if;
    end Execute;
