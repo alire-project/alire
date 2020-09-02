@@ -1,3 +1,4 @@
+with Alire.Index;
 with Alire.Properties;
 with Alire.Roots.Optional;
 with Alire.Utils.TTY;
@@ -68,6 +69,8 @@ package body Alr.Commands.Version is
          Put (" " & Prop.Image);
       end loop;
       New_Line;
+      Trace.Always ("community index required branch: "
+                    & Alire.Index.Community_Branch);
    end Execute;
 
    ----------------------
