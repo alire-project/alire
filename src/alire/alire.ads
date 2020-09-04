@@ -1,7 +1,9 @@
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
+pragma Warnings (Off);
 with GNAT.OS_Lib;
+pragma Warnings (On);
 
 with Simple_Logging;
 
