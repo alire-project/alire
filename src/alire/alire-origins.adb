@@ -132,6 +132,49 @@ package body Alire.Origins is
       end case;
    end From_String;
 
+   -------------
+   -- New_VCS --
+   -------------
+
+   function New_VCS (URL : Alire.URL; Commit : String) return Origin is
+      use all type URI.Schemes;
+      Scheme  : constant URI.Schemes := URI.Scheme (URL);
+      VCS_URL : constant String :=
+                  (if Utils.Contains (URL, "file:") then
+                      Utils.Tail (URL, ':') -- Remove file: that confuses git
+                   elsif Scheme in URI.VCS_Schemes then
+                      Utils.Tail (URL, '+') -- remove prefix vcs+
+                   elsif Scheme in URI.HTTP then -- A plain URL... check VCS
+                     (if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git")
+                      then URL
+                      else raise Checked_Error with
+                        "ambiguous VCS URL: " & URL)
+                   else
+                      raise Checked_Error with "unknown VCS URL: " & URL);
+
+   begin
+      case Scheme is
+         when Git | HTTP =>
+            if Commit'Length /= Git_Commit'Length then
+               Raise_Checked_Error
+                 ("invalid git commit id, " &
+                    "40 digits hexadecimal expected");
+            end if;
+            return New_Git (VCS_URL, Commit);
+         when Hg =>
+            if Commit'Length /= Hg_Commit'Length then
+               Raise_Checked_Error
+                 ("invalid mercurial commit id, " &
+                    "40 digits hexadecimal expected");
+            end if;
+            return New_Hg (VCS_URL, Commit);
+         when SVN =>
+            return New_SVN (VCS_URL, Commit);
+         when others =>
+            raise Program_Error; -- Can't happen
+      end case;
+   end New_VCS;
+
    ---------------
    -- From_TOML --
    ---------------
@@ -188,10 +231,6 @@ package body Alire.Origins is
                               Context => Keys.Origin);
       URL     : constant String :=
                  Table.Checked_Pop (Keys.URL, TOML_String).As_String;
-      VCS_URL : constant String :=
-                  (if Utils.Contains (URL, "file:")
-                   then Utils.Tail (URL, ':') -- Remove file: that confuses git
-                   else Utils.Tail (URL, '+')); -- remove prefix vcs+
       Scheme  : constant URI.Schemes := URI.Scheme (URL);
       Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
    begin
@@ -210,26 +249,7 @@ package body Alire.Origins is
                Commit : constant String := Table.Checked_Pop
                  (Keys.Commit, TOML_String).As_String;
             begin
-               case Scheme is
-                  when Git =>
-                     if Commit'Length /= Git_Commit'Length then
-                        Raise_Checked_Error
-                          ("invalid git commit id, " &
-                             "40 digits hexadecimal expected");
-                     end if;
-                     This := New_Git (VCS_URL, Commit);
-                  when Hg =>
-                     if Commit'Length /= Hg_Commit'Length then
-                        Raise_Checked_Error
-                          ("invalid mercurial commit id, " &
-                             "40 digits hexadecimal expected");
-                     end if;
-                     This := New_Hg (VCS_URL, Commit);
-                  when SVN =>
-                     This := New_SVN (VCS_URL, Commit);
-                  when others =>
-                     raise Program_Error; -- Can't happen
-               end case;
+               This := New_VCS (URL, Commit);
             end;
 
          when HTTP             =>

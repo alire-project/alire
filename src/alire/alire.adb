@@ -63,6 +63,15 @@ package body Alire is
       end if;
    end Log_Exception;
 
+   -----------------
+   -- Log_Success --
+   -----------------
+
+   procedure Log_Success (Text : String; Level : Trace.Levels := Info) is
+   begin
+      Trace.Log (Utils.TTY.Success (Text), Level);
+   end Log_Success;
+
    ------------
    -- Assert --
    ------------

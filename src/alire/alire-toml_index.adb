@@ -21,8 +21,6 @@ with Alire.VCSs.Git;
 
 with GNATCOLL.VFS;
 
-with Semantic_Versioning;
-
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
 
@@ -445,5 +443,25 @@ package body Alire.TOML_Index is
 
       Index.Add (Fixed);
    end Index_Release;
+
+   -------------------
+   -- Manifest_File --
+   -------------------
+
+   function Manifest_File (Crate   : Crate_Name;
+                           Version : Semantic_Versioning.Version)
+                           return String
+   is ((+Crate) & "-" & Version.Image & ".toml");
+
+   -------------------
+   -- Manifest_Path --
+   -------------------
+
+   function Manifest_Path (Crate : Crate_Name) return Relative_Path is
+      use Alire.Directories.Operators;
+      Name : constant String := +Crate;
+   begin
+      return "index" / Name (Name'First .. Name'First + 1) / Name;
+   end Manifest_Path;
 
 end Alire.TOML_Index;

@@ -1,5 +1,6 @@
 with Alire.Features.Index;
 with Alire.Hashes;
+with Alire.Publish;
 
 package body Alr.Commands.Publish is
 
@@ -15,8 +16,22 @@ package body Alr.Commands.Publish is
       if Cmd.Hash then
          Hash;
          return;
+
+      elsif Cmd.Prepare then
+         if Num_Arguments /= 1 then
+            Reportaise_Wrong_Arguments ("Origin URL argument required.");
+         else
+            Alire.Publish.Verify_And_Create_Index_Manifest
+              (Origin => Argument (1),
+               Commit => Cmd.Commit.all);
+         end if;
+
       else
-         Trace.Error ("No publishing subcommand given.");
+         Trace.Warning
+           ("No publishing subcommand given, defaulting to "
+            & Switch_Prepare & " ...");
+         Cmd.Prepare := True;
+         Execute (Cmd);
       end if;
    end Execute;
 
@@ -48,10 +63,23 @@ package body Alr.Commands.Publish is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch
+        (Config,
+         Cmd.Commit'Access,
+         "", "--commit=",
+         "Revision in a remote repository denoting the sources of a release",
+         Argument => "ID");
+
       Define_Switch (Config,
                      Cmd.Hash'Access,
                      "", "--hash",
                      "Compute hash of given origin");
+
+      Define_Switch
+        (Config,
+         Cmd.Hash'Access,
+         "", Switch_Prepare,
+         "Start the publishing assistant using a ready remote origin");
    end Setup_Switches;
 
 end Alr.Commands.Publish;

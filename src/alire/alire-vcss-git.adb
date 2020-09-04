@@ -74,7 +74,7 @@ package body Alire.VCSs.Git is
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
-      Run_Git (Empty_Vector & "clone" & "--recursive" &
+      Run_Git (Empty_Vector & "clone" & "--recursive" & "--depth=1" &
                  Extra & Repo (From) & Into);
 
       if Commit (From) /= "" then

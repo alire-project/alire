@@ -239,6 +239,9 @@ package Alire with Preelaborate is
    procedure Log_Exception (E     : Ada.Exceptions.Exception_Occurrence;
                             Level : Simple_Logging.Levels := Debug);
 
+   procedure Log_Success (Text : String; Level : Trace.Levels := Info);
+   --  Prepend Text with a green check mark, or "Success:" if no color/tty.
+
 private
 
    type Crate_Name (Len : Natural) is tagged record
