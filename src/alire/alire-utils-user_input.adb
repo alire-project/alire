@@ -15,6 +15,16 @@ package body Alire.Utils.User_Input is
       No     => 'N',
       Always => 'A');
 
+   -----------------
+   -- Answer_Kind --
+   -----------------
+
+   function Answer_String (Kind : Answer_Kind) return String
+   is (case Kind is
+       when Yes    => "yes",
+       when No     => "no",
+       when Always => "always");
+
    ------------
    -- Is_TTY --
    ------------
@@ -114,6 +124,16 @@ package body Alire.Utils.User_Input is
                   end if;
                end loop;
             end if;
+
+            --- Check if the user input the whole answer
+            for Kind in Answer_Kind loop
+               if Valid (Kind)
+                 and then
+                   Char.To_Lower (Input) = Answer_String (Kind)
+               then
+                  return Kind;
+               end if;
+            end loop;
 
             TIO.Put_Line ("Invalid answer.");
          end;
