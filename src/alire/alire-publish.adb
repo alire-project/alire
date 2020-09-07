@@ -24,6 +24,13 @@ package body Alire.Publish is
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
+   Trusted_Sites : constant Utils.String_Vector :=
+                     Utils.Empty_Vector
+                       .Append ("bitbucket.org")
+                       .Append ("github.com")
+                       .Append ("gitlab.com")
+                       .Append ("sf.net");
+
    type Data is limited record
       Origin : Origins.Origin := Origins.New_External ("undefined");
       --  We use external as "undefined" until a proper origin is provided.
@@ -192,6 +199,20 @@ package body Alire.Publish is
       end if;
 
       Log_Success ("Origin is of supported kind: " & Context.Origin.Kind'Img);
+
+      if Context.Origin.Kind in Origins.VCS_Kinds then
+         if (for some Site of Trusted_Sites =>
+               URI.Authority (Context.Origin.URL) = Site or else
+               Utils.Ends_With (URI.Authority (Context.Origin.URL),
+                                "." & Site))
+         then
+            Log_Success ("Origin is hosted on trusted site: "
+                         & URI.Authority (Context.Origin.URL));
+         else
+            Raise_Checked_Error ("Origin is hosted on unknown site: "
+                                 & URI.Authority (Context.Origin.URL));
+         end if;
+      end if;
 
    end Verify_Origin;
 
