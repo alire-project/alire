@@ -63,6 +63,13 @@ package Alire.Properties.From_TOML is
                      others  => False)
                  );
 
+   Recommended : array (Property_Keys) of Boolean :=
+                   (Authors  |
+                    Licenses |
+                    Tags     |
+                    Website => True,
+                    others  => False);
+
    type Loader_Array is array (Property_Keys range <>) of Property_Loader;
 
    --  We use the following arrays to determine which properties may appear

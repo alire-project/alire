@@ -460,6 +460,14 @@ package body Alire.Releases is
       end if;
    end Auto_GPR_With;
 
+   ------------------
+   -- Has_Property --
+   ------------------
+
+   function Has_Property (R : Release; Key : String) return Boolean
+   is (for some Prop of Conditional.Enumerate (R.Properties) =>
+          Prop.Key = Utils.To_Lower_Case (Key));
+
    ------------------------
    -- Labeled_Properties --
    ------------------------
