@@ -114,15 +114,20 @@ package body Alire.Publish is
                               (TOML_Manifest.Get
                                  (TOML_Keys.Version).As_String);
          Index_Manifest : constant Any_Path :=
-                            TOML_Index.Manifest_File (Name, Version);
+                            "alire" / "releases"
+                            / TOML_Index.Manifest_File (Name, Version);
          Index_File     : File_Type;
       begin
          TOML_Origin.Set (TOML_Keys.Origin, Context.Origin.To_TOML);
 
+         --  Prepare the destination dir for the generated index manifest:
+
+         Ada.Directories.Create_Path
+           (Ada.Directories.Containing_Directory (Index_Manifest));
+         Ada.Directories.Copy_File (User_Manifest, Index_Manifest);
+
          --  Take the user manifest and bundle it under the proper index
          --  manifest name with the origin we are being provided with:
-
-         Ada.Directories.Copy_File (User_Manifest, Index_Manifest);
 
          Open (Index_File, Append_File, Index_Manifest);
          New_Line (Index_File);
@@ -133,10 +138,11 @@ package body Alire.Publish is
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
          Log_Success
-           ("Please place it at " & TTY.URL (TOML_Index.Manifest_Path (Name))
-            & " in a clone of "
-            & TTY.URL (Utils.Tail (Index.Community_Repo, '+')) -- skip git+
-            & " to submit your pull request.");
+           ("Please upload this file to "
+            & TTY.URL
+              (Index.Community_Upload_URL
+               & "/" & TOML_Index.Manifest_Path (Name))
+            & " to create a pull request against the community index.");
 
       exception
          when others =>

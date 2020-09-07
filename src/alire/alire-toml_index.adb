@@ -457,11 +457,10 @@ package body Alire.TOML_Index is
    -- Manifest_Path --
    -------------------
 
-   function Manifest_Path (Crate : Crate_Name) return Relative_Path is
-      use Alire.Directories.Operators;
+   function Manifest_Path (Crate : Crate_Name) return Portable_Path is
       Name : constant String := +Crate;
    begin
-      return "index" / Name (Name'First .. Name'First + 1) / Name;
+      return "index/" & Name (Name'First .. Name'First + 1) & "/" & Name;
    end Manifest_Path;
 
 end Alire.TOML_Index;

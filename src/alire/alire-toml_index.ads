@@ -17,8 +17,9 @@ package Alire.TOML_Index is
                            return String;
    --  Get the proper file name for the manifest of an indexed crate
 
-   function Manifest_Path (Crate : Crate_Name) return Relative_Path;
-   --  Get the expected location of a crate manifest in an index
+   function Manifest_Path (Crate : Crate_Name) return Portable_Path;
+   --  Get the expected location of a crate manifest in an index. The result is
+   --  portable; that is, always uses forward slashes.
 
    procedure Load
      (Index    : Index_On_Disk.Index'Class;
