@@ -1,5 +1,3 @@
-with GNAT.Strings;
-
 package Alr.Commands.Publish is
 
    --  Publish lends a helping hand to automate submission of crates/releases.
@@ -33,17 +31,11 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("--hash <origin> | " & Switch_Prepare & " <URL> [--commit <id>]");
+   is (Switch_Prepare & " <URL> [commit]");
 
 private
 
    type Command is new Commands.Command with record
-      Commit  : aliased GNAT.Strings.String_Access;
-      --  The commit of a remote repository
-
-      Hash    : aliased Boolean := False;
-      --  Compute hash of given origin
-
       Prepare : aliased Boolean := False;
       --  Start the assistant with ready sources and manifest; only verify and
       --  add the origin.
