@@ -6,7 +6,9 @@ with Alire.Errors;
 with Alire.Hashes;
 with Alire.Index;
 with Alire.Origins.Deployers;
-with Alire.Roots;
+with Alire.Paths;
+with Alire.Root;
+with Alire.Roots.Optional;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
@@ -94,6 +96,7 @@ package body Alire.Publish is
       use Directories.Operators;
       User_Manifest : constant Any_Path :=
                        Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name;
+      Workspace     : constant Roots.Optional.Root := Root.Current;
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (User_Manifest) then
          Raise_Checked_Error
@@ -114,10 +117,23 @@ package body Alire.Publish is
                               (TOML_Manifest.Get
                                  (TOML_Keys.Version).As_String);
          Index_Manifest : constant Any_Path :=
-                            "alire" / "releases"
+                            (if Workspace.Is_Valid
+                             then Workspace.Value.Working_Folder
+                             else "." / Paths.Working_Folder_Inside_Root)
+                            / "releases"
                             / TOML_Index.Manifest_File (Name, Version);
          Index_File     : File_Type;
       begin
+         if Workspace.Is_Valid and then
+           Workspace.Value.Release.Name /= Name
+         then
+            Raise_Checked_Error
+              (Errors.Wrap
+                 ("Current workspace does not match the crate being published",
+                  "Working crate is " & TTY.Name (Workspace.Value.Release.Name)
+                  & ", publishing crate is " & TTY.Name (Name)));
+         end if;
+
          TOML_Origin.Set (TOML_Keys.Origin, Context.Origin.To_TOML);
 
          --  Prepare the destination dir for the generated index manifest:
