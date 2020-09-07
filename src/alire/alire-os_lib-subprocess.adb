@@ -1,5 +1,7 @@
 with Ada.Text_IO;
 
+with ANSI;
+
 with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
@@ -187,9 +189,13 @@ package body Alire.OS_Lib.Subprocess is
          Arg_List (I) := new String'(Full_Args (I));
       end loop;
 
+      Ada.Text_IO.Put (ANSI.Style (ANSI.Dim, Active => ANSI.On));
+
       Exit_Code := GNAT.OS_Lib.Spawn
         (Program_Name           => Locate_In_Path (Command),
          Args                   => Arg_List.all);
+
+      Ada.Text_IO.Put (ANSI.Style (ANSI.Dim, Active => ANSI.Off));
 
       Cleanup (Arg_List);
 
