@@ -3,6 +3,7 @@ with Ada.Text_IO;
 
 with Alire.Directories;
 with Alire.Errors;
+with Alire.Hashes;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.Roots;
@@ -51,17 +52,33 @@ package body Alire.Publish is
    procedure Deploy_Sources (Context : in out Data) is
       Deployer : constant Origins.Deployers.Deployer'Class :=
                    Origins.Deployers.New_Deployer (Context.Origin);
-      Tmp_Fetch_Dir : Directories.Temp_File;
    begin
-      if Context.Origin.Kind not in Origins.VCS_Kinds then
-         Raise_Checked_Error ("Source archives not yet implemented.");
+
+      --  Obtain source archive (or no-op for repositories):
+
+      Deployer.Fetch  (Context.Tmp_Deploy_Dir.Filename).Assert;
+
+      --  Compute hashes in supported origin kinds (e.g. source archives)
+
+      if Deployer.Supports_Hashing then
+         for Kind in Hashes.Kinds loop
+            declare
+               Hash : constant Hashes.Any_Hash :=
+                        Hashes.New_Hash
+                          (Kind,
+                           Deployer.Compute_Hash
+                             (Context.Tmp_Deploy_Dir.Filename, Kind));
+            begin
+               Log_Success ("Computed hash: " & String (Hash));
+               Context.Origin.Add_Hash (Hash);
+            end;
+         end loop;
       end if;
 
-      Deployer.Fetch  (Tmp_Fetch_Dir.Filename).Assert;
-
-      --  TODO: compute hash for source archives
+      --  Pull the repo/unpack source archive
 
       Deployer.Deploy (Context.Tmp_Deploy_Dir.Filename).Assert;
+
    end Deploy_Sources;
 
    -----------------------------

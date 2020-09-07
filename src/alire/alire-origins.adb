@@ -363,7 +363,9 @@ package body Alire.Origins is
 
          when Source_Archive =>
             Table.Set (Keys.URL, +This.Archive_URL);
-            if This.Archive_Name /= "" then
+            if This.Archive_Name /= "" and then
+              This.Archive_Name /= URL_Basename (This.Archive_URL)
+            then
                Table.Set (Keys.Archive_Name, +This.Archive_Name);
             end if;
 
