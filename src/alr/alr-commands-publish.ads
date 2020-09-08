@@ -31,7 +31,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is (Switch_Prepare & " <URL> [commit]");
+   is (Switch_Prepare & " [<URL> [commit]]");
 
 private
 

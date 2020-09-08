@@ -1,6 +1,9 @@
 with Alire.Publish;
+with Alire.URI;
 
 package body Alr.Commands.Publish is
+
+   package URI renames Alire.URI;
 
    -------------
    -- Execute --
@@ -8,20 +11,37 @@ package body Alr.Commands.Publish is
 
    overriding
    procedure Execute (Cmd : in out Command) is
+
+      function Revision return String
+      is (if Num_Arguments >= 2 then Argument (2) else "");
+
    begin
       if Cmd.Prepare then
          if Num_Arguments < 1 then
-            Reportaise_Wrong_Arguments ("Origin URL argument required.");
+            Alire.Publish.Local_Repository;
+
          elsif Num_Arguments > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");
+
          else
-            Alire.Publish.Verify_And_Create_Index_Manifest
-              (Origin => Argument (1),
-               Commit => (if Num_Arguments = 2
-                          then Argument (2)
-                          else ""));
+
+            --  Choose between local path or remote
+
+            declare
+               URL : constant String := Argument (1);
+            begin
+               if URI.Scheme (URL) in URI.File_Schemes then
+                  Alire.Publish.Local_Repository (Path     => URL,
+                                                  Revision => Revision);
+               else
+                  Alire.Publish.Verify_And_Create_Index_Manifest
+                    (Origin => URL,
+                     Commit => Revision); -- TODO: allow non-commits
+               end if;
+            end;
+
          end if;
 
       elsif Cmd.Print_Trusted then

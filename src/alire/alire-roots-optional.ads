@@ -20,6 +20,10 @@ package Alire.Roots.Optional is
      Implicit_Dereference => Ptr;
 
    function Detect_Root (Path : Any_Path) return Optional.Root;
+   --  Try to detect a root at the given Path
+
+   function Search_Root (From : Any_Path) return Optional.Root;
+   --  Try to detect a root at From or any ancestor folder
 
    function Status (This : Root) return States;
 

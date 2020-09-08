@@ -1,6 +1,15 @@
 with Alire.Origins;
+with Alire.URI;
 
 package Alire.Publish is
+
+   procedure Local_Repository (Path     : Any_Path := ".";
+                               Revision : String   := "") with
+     Pre => URI.Scheme (Path) in URI.File_Schemes;
+   --  Check that given Path is an up-to-date git repo with origin in the
+   --  whitelist. If so, proceed with remote repo verification. If no revision
+   --  given use the HEAD commit, otherwise use the revision (tag, branch,
+   --  commit) commit.
 
    procedure Verify_And_Create_Index_Manifest (Origin : URL;
                                                Commit : String := "");

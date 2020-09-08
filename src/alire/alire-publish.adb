@@ -20,9 +20,9 @@ with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
-with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.VCSs.Git;
 
 with Semantic_Versioning;
 
@@ -411,6 +411,66 @@ package body Alire.Publish is
          Steps (Current) (Context);
       end loop;
    end Start_At;
+
+   ----------------------
+   -- Local_Repository --
+   ----------------------
+
+   procedure Local_Repository (Path     : Any_Path := ".";
+                               Revision : String   := "")
+   is
+      Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
+      use all type VCSs.Git.States;
+      Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
+
+      ---------------
+      -- Git_Error --
+      ---------------
+
+      procedure Git_Error (Msg : String) is
+      begin
+         Raise_Checked_Error (Msg & " at " & TTY.URL (Path));
+      end Git_Error;
+
+   begin
+      if not Root.Is_Valid then
+         Raise_Checked_Error ("No Alire workspace found at " & TTY.URL (Path));
+      end if;
+
+      --  Do not continue if the local repo is dirty
+
+      case Git.Status (Root.Value.Path) is
+         when Clean =>
+            Log_Success ("Local repository is clean.");
+         when Ahead =>
+            Git_Error ("Repository has commits yet to be pushed");
+         when Dirty =>
+            Git_Error (TTY.Emph ("git status")
+                       & " reports working tree not clean");
+      end case;
+
+      --  If given a revision, extract commit and verify it exists locally
+
+      declare
+         Commit : constant String :=
+                    Git.Revision_Commit (Root.Value.Path,
+                                         (if Revision /= ""
+                                          then Revision
+                                          else "HEAD"));
+      begin
+         if Commit /= "" then
+            Log_Success ("Revision exists in local repository ("
+                         & TTY.Emph (Commit) & ").");
+         else
+            Raise_Checked_Error ("Revision not found in local repository: "
+                                 & TTY.Emph (Revision));
+         end if;
+
+         Verify_And_Create_Index_Manifest
+           (Origin => Git.Fetch_URL (Root.Value.Path),
+            Commit => Commit);
+      end;
+   end Local_Repository;
 
    --------------------------------------
    -- Verify_And_Create_Index_Manifest --
