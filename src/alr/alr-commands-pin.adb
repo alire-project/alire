@@ -1,4 +1,3 @@
-with Alire.Dependencies;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;

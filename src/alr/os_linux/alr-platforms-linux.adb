@@ -1,4 +1,3 @@
-with Alire.Origins.Deployers;
 with Alire.Platform;
 
 with Alr.OS_Lib;
