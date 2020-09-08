@@ -417,7 +417,7 @@ package body Alire.Publish is
    ----------------------
 
    procedure Local_Repository (Path     : Any_Path := ".";
-                               Revision : String   := "")
+                               Revision : String   := "HEAD")
    is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
       use all type VCSs.Git.States;
@@ -466,7 +466,7 @@ package body Alire.Publish is
                                  & TTY.Emph (Revision));
          end if;
 
-         Remote_Origin
+         Publish.Remote_Origin
            (URL => Git.Fetch_URL (Root.Value.Path),
             Commit => Commit);
       end;

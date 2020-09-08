@@ -4,12 +4,11 @@ with Alire.URI;
 package Alire.Publish is
 
    procedure Local_Repository (Path     : Any_Path := ".";
-                               Revision : String   := "") with
+                               Revision : String   := "HEAD") with
      Pre => URI.Scheme (Path) in URI.File_Schemes;
-   --  Check that given Path is an up-to-date git repo with URL in the
-   --  whitelist. If so, proceed with remote repo verification. If no revision
-   --  given use the HEAD commit, otherwise use the revision (tag, branch,
-   --  commit) commit.
+   --  Check that given Path is an up-to-date git repo. If so, proceed with
+   --  remote repo verification. If no revision given use the HEAD commit,
+   --  otherwise use the revision (tag, branch, commit) commit.
 
    procedure Remote_Origin (URL    : Alire.URL;
                             Commit : String := "");

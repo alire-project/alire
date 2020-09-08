@@ -84,7 +84,7 @@ package body Alire.VCSs.Git is
             Guard : Directories.Guard (Directories.Enter (Into))
               with Unreferenced;
          begin
-            --  Checkout a specific Rev.
+            --  Checkout a specific commit.
             --  "-q" needed to avoid the "detached HEAD" warning from git
             Run_Git (Empty_Vector & "checkout" & "-q" & Commit (From));
 
@@ -141,6 +141,7 @@ package body Alire.VCSs.Git is
                        Origin : String := "origin")
                        return URL
    is
+      pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
       Output : constant Utils.String_Vector :=
                  Run_Git_And_Capture (Empty_Vector & "config" & "--list");
@@ -168,8 +169,8 @@ package body Alire.VCSs.Git is
    begin
 
       --  When a repo is in detached head state (e.g. after checking out a
-      --  Rev instead of a branch), 'git status' will have as the first line
-      --  "HEAD detached at <Rev>". Other changes come next.
+      --  commit instead of a branch), 'git status' will have as the first line
+      --  "HEAD detached at <commit>". Other changes come next.
 
       return not Output.Is_Empty
         and then Utils.Contains (Output.First_Element, "HEAD detached");
@@ -180,6 +181,7 @@ package body Alire.VCSs.Git is
    ------------
 
    function Remote (This : VCS; Path : Directory_Path) return String is
+      pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
    begin
       return Run_Git_And_Capture (Empty_Vector & "remote").First_Element;
