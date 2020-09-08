@@ -466,23 +466,23 @@ package body Alire.Publish is
                                  & TTY.Emph (Revision));
          end if;
 
-         Verify_And_Create_Index_Manifest
-           (Origin => Git.Fetch_URL (Root.Value.Path),
+         Remote_Origin
+           (URL => Git.Fetch_URL (Root.Value.Path),
             Commit => Commit);
       end;
    end Local_Repository;
 
-   --------------------------------------
-   -- Verify_And_Create_Index_Manifest --
-   --------------------------------------
+   -------------------
+   -- Remote_Origin --
+   -------------------
 
-   procedure Verify_And_Create_Index_Manifest (Origin : URL;
-                                               Commit : String := "")
+   procedure Remote_Origin (URL    : Alire.URL;
+                            Commit : String := "")
    is
    begin
       --  Preliminary argument checks
 
-      if Utils.Ends_With (Utils.To_Lower_Case (Origin), ".git") and then
+      if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git") and then
         Commit = ""
       then
          Raise_Checked_Error
@@ -495,12 +495,12 @@ package body Alire.Publish is
          Context : Data :=
                      (Origin =>
                         (if Commit /= "" then
-                            Origins.New_VCS (Origin, Commit)
-                         elsif URI.Scheme (Origin) in URI.VCS_Schemes then
+                            Origins.New_VCS (URL, Commit)
+                         elsif URI.Scheme (URL) in URI.VCS_Schemes then
                             raise Checked_Error with
                               "A commit id is mandatory for a VCS origin"
                          else
-                            Origins.New_Source_Archive (Origin)),
+                            Origins.New_Source_Archive (URL)),
 
                       Tmp_Deploy_Dir => <>);
       begin
@@ -512,7 +512,7 @@ package body Alire.Publish is
            (Errors.Wrap
               ("Could not complete the publishing assistant",
                Errors.Get (E)));
-   end Verify_And_Create_Index_Manifest;
+   end Remote_Origin;
 
    -------------------------
    -- Print_Trusted_Sites --

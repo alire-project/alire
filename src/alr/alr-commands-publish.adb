@@ -36,8 +36,8 @@ package body Alr.Commands.Publish is
                   Alire.Publish.Local_Repository (Path     => URL,
                                                   Revision => Revision);
                else
-                  Alire.Publish.Verify_And_Create_Index_Manifest
-                    (Origin => URL,
+                  Alire.Publish.Remote_Origin
+                    (URL    => URL,
                      Commit => Revision); -- TODO: allow non-commits
                end if;
             end;
