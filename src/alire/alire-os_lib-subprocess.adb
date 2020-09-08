@@ -1,10 +1,12 @@
 with Ada.Text_IO;
 
-with ANSI;
+with Alire.Utils.TTY;
 
 with GNAT.OS_Lib;
 
 package body Alire.OS_Lib.Subprocess is
+
+   package TTY renames Utils.TTY;
 
    function To_Argument_List
      (Args : Utils.String_Vector)
@@ -181,6 +183,7 @@ package body Alire.OS_Lib.Subprocess is
 
       Exit_Code : Integer;
 
+      use TTY.ANSI;
    begin
       Trace.Detail ("Spawning: " & Image (Command, Full_Args));
 
@@ -189,13 +192,17 @@ package body Alire.OS_Lib.Subprocess is
          Arg_List (I) := new String'(Full_Args (I));
       end loop;
 
-      Ada.Text_IO.Put (ANSI.Style (ANSI.Dim, Active => ANSI.On));
+      if Is_TTY and then TTY.Color_Enabled then
+         Ada.Text_IO.Put (Style (Dim, On));
+      end if;
 
       Exit_Code := GNAT.OS_Lib.Spawn
         (Program_Name           => Locate_In_Path (Command),
          Args                   => Arg_List.all);
 
-      Ada.Text_IO.Put (ANSI.Style (ANSI.Dim, Active => ANSI.Off));
+      if Is_TTY and then TTY.Color_Enabled then
+         Ada.Text_IO.Put (Style (Dim, Off));
+      end if;
 
       Cleanup (Arg_List);
 
