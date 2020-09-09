@@ -4,7 +4,6 @@ with Ada.Text_IO;
 with Alire.Errors;
 with Alire.Lockfiles;
 with Alire.Milestones;
-with Alire.Origins;
 with Alire.Releases;
 with Alire.Roots.Optional;
 with Alire.Solutions;

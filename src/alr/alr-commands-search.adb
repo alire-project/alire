@@ -1,7 +1,6 @@
 with Alire.Containers;
 with Alire.Externals;
 with Alire.Index;
-with Alire.Origins.Deployers;
 with Alire.Crates;
 with Alire.Releases;
 with Alire.Solutions;

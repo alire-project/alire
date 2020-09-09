@@ -1,10 +1,8 @@
 with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
-with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
-with Alire.Properties;
 with Alire.Releases;
 with Alire.Requisites.Booleans;
 with Alire.Root;

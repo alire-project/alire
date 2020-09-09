@@ -1,5 +1,4 @@
 with Alire.Properties.Platform;
-with Alire.Utils;
 
 package body Alr.Platform is
 

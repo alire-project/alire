@@ -1,6 +1,5 @@
 --  with Alire.Platform;
 with Alire.Platforms;
-with Alire.Properties;
 
 package Alr.Platforms is
 
