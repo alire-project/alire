@@ -353,6 +353,10 @@ package body Alire.Directories is
             Delete_Tree (This.Filename);
          end if;
       end if;
+   exception
+      when E : others =>
+         Log_Exception (E, Trace.Error);
+         raise;
    end Finalize;
 
    -------------------

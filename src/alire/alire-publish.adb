@@ -246,12 +246,16 @@ package body Alire.Publish is
                                                Commit : String := "")
    is
    begin
+      --  Preliminare argument checks
+
       if Utils.Ends_With (Utils.To_Lower_Case (Origin), ".git") and then
         Commit = ""
       then
          Raise_Checked_Error
            ("URL seems to point to a repository, but no commit was provided.");
       end if;
+
+      --  Create origin, which will do more checks, and proceed
 
       declare
          Context : Data :=

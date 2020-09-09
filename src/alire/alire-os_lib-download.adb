@@ -1,3 +1,4 @@
+with Ada.Directories;
 
 with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
@@ -19,7 +20,8 @@ package body Alire.OS_Lib.Download is
    is
       use GNATCOLL.VFS;
 
-      Archive_File : constant Directory_Path := Folder / Filename;
+      Archive_File : constant Directory_Path :=
+                       Folder / Ada.Directories.Simple_Name (Filename);
    begin
 
       --  Make sure curl is installed

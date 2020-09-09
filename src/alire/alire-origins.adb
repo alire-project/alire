@@ -50,7 +50,7 @@ package body Alire.Origins is
                Separator := I;
                exit;
 
-            when '/' =>
+            when '/' | '\' =>
                Last_Slash := I;
 
             when others =>
@@ -171,7 +171,8 @@ package body Alire.Origins is
          when SVN =>
             return New_SVN (VCS_URL, Commit);
          when others =>
-            raise Program_Error; -- Can't happen
+            Raise_Checked_Error ("Expected a VCS origin but got: "
+                                 & Scheme'Image);
       end case;
    end New_VCS;
 
@@ -354,7 +355,14 @@ package body Alire.Origins is
             Table.Set (Keys.URL, +("file:" & This.Path));
 
          when VCS_Kinds =>
-            Table.Set (Keys.URL, +(Prefixes (This.Kind).all & This.URL));
+            Table.Set (Keys.URL,
+                       +(Prefixes (This.Kind).all
+                       & (if URI.Scheme (This.URL) in URI.None
+                           --  not needed for remote repos, but for testing
+                           --  ones used locally:
+                          then "file:"
+                          else "")
+                       & This.URL));
             Table.Set (Keys.Commit, +This.Commit);
 
          when External =>
