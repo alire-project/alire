@@ -201,7 +201,14 @@ package body Alire.Publish is
       Log_Success ("Origin is of supported kind: " & Context.Origin.Kind'Img);
 
       if Context.Origin.Kind in Origins.VCS_Kinds then
-         if (for some Site of Trusted_Sites =>
+
+         --  Check an VCS origin is from a trusted site, unless we are forcing
+         --  a local repository.
+
+         if (Force and then
+             URI.Scheme (Context.Origin.URL) in URI.File_Schemes)
+           or else
+            (for some Site of Trusted_Sites =>
                URI.Authority (Context.Origin.URL) = Site or else
                Utils.Ends_With (URI.Authority (Context.Origin.URL),
                                 "." & Site))
