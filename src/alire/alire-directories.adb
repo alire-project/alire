@@ -354,8 +354,13 @@ package body Alire.Directories is
          end if;
       end if;
    exception
+      when E : Use_Error =>
+         --  For unclear reasons, Windows has trouble removing a folder that
+         --  contains a git repository. Warn and continue until we know more.
+         Log_Exception (E);
+         Trace.Warning ("Could not delete temporary: " & This.Filename);
       when E : others =>
-         Log_Exception (E, Trace.Error);
+         Log_Exception (E);
          raise;
    end Finalize;
 
