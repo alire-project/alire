@@ -2,6 +2,9 @@
 Assorted helpers that are reused by several tests.
 """
 
+from subprocess import run
+from zipfile import ZipFile
+
 import os
 
 
@@ -64,3 +67,37 @@ def with_project(file, project):
         content = f.read()
         f.seek(0, 0)
         f.write('with "{}";'.format(project) + '\n' + content)
+
+
+def init_git_repo(path):
+    """
+    Initialize and commit everything inside a folder, returning the HEAD commit
+    """
+    start_cwd = os.getcwd()
+    os.chdir(path)
+    assert run(["git", "init", "."]).returncode == 0
+    assert run(["git", "config", "user.email", "alr@testing.com"]) \
+        .returncode == 0
+    assert run(["git", "config", "user.name", "Alire Testsuite"]) \
+        .returncode == 0
+    assert run(["git", "add", "."]).returncode == 0
+    assert run(["git", "commit", "-m", "repo created"]).returncode == 0
+    head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],
+                      capture_output=True).stdout.split()[0]
+    os.chdir(start_cwd)
+    return head_commit
+
+
+def zip_dir(path, filename):
+    """
+    Zip contents of path into filename
+    """
+    # The expected level of indirection from Alire crates:
+    nest = os.path.splitext(os.path.basename(filename))[0]
+
+    with ZipFile(filename, 'w') as zip:
+        for dir, subdirs, files in os.walk(path):
+            for file in files:
+                abs_file = os.path.join(dir, file)
+                zip.write(abs_file,
+                          os.path.join(nest, os.path.basename(abs_file)))

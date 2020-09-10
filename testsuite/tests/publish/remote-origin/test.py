@@ -4,9 +4,8 @@ Tests for proper publishing of a ready remote origin
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
-from drivers.helpers import contents, content_of
+from drivers.helpers import contents, content_of, init_git_repo, zip_dir
 from shutil import copyfile, rmtree
-from subprocess import run
 from zipfile import ZipFile
 
 import os
@@ -32,23 +31,10 @@ run_alr("init", "--bin", "xxx")
 rmtree(os.path.join("xxx", "alire"))
 
 # Create the zip
-with ZipFile("xxx.zip", 'w') as zip:
-    for dir, subdirs, files in os.walk("xxx"):
-        for file in files:
-            abs_file = os.path.join(dir, file)
-            zip.write(abs_file,
-                      os.path.join("xxx", os.path.basename(abs_file)))
+zip_dir("xxx", "xxx.zip")
 
 # Create repo with the sources
-os.chdir("xxx")
-assert run(["git", "init", "."]).returncode == 0
-assert run(["git", "config", "user.email", "alr@testing.com"]).returncode == 0
-assert run(["git", "config", "user.name", "Alire Testsuite"]).returncode == 0
-assert run(["git", "add", "."]).returncode == 0
-assert run(["git", "commit", "-m", "initiailze"]).returncode == 0
-head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],
-                  capture_output=True).stdout.split()[0]
-os.chdir("..")
+head_commit = init_git_repo("xxx")
 
 # A "remote" source archive. We force to allow the test to skip the remote
 # check. Curl requires an absolute path to work.
