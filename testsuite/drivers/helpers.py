@@ -85,7 +85,7 @@ def init_git_repo(path):
     head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],
                       capture_output=True).stdout.split()[0]
     os.chdir(start_cwd)
-    return head_commit
+    return head_commit.decode()
 
 
 def zip_dir(path, filename):
