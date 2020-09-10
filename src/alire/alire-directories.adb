@@ -357,6 +357,15 @@ package body Alire.Directories is
       when E : Use_Error =>
          --  For unclear reasons, Windows has trouble removing a folder that
          --  contains a git repository. Warn and continue until we know more.
+
+         --  The actual error, as reported by Python3:
+         --  PermissionError: [WinError 5] Access is denied:
+         --  'alr-fwrt.tmp\\.git\\objects\\1d\\'
+         --  '696bed4ef917b1adbdef18723016987ed62e41'
+
+         --  Since we are running tests as root, this might be that the file is
+         --  still open, but by whom?
+
          Log_Exception (E);
          Trace.Warning ("Could not delete temporary: " & This.Filename);
       when E : others =>

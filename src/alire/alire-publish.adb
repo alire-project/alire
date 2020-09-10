@@ -437,6 +437,11 @@ package body Alire.Publish is
          Raise_Checked_Error ("No Alire workspace found at " & TTY.URL (Path));
       end if;
 
+      if not Git.Is_Repository (Root.Value.Path) then
+         Trace.Always ("ROOT " & Root.Value.Path);
+         Git_Error ("no git repository found");
+      end if;
+
       --  Do not continue if the local repo is dirty
 
       case Git.Status (Root.Value.Path) is
@@ -466,9 +471,28 @@ package body Alire.Publish is
                                  & TTY.Emph (Revision));
          end if;
 
-         Publish.Remote_Origin
-           (URL => Git.Fetch_URL (Root.Value.Path),
-            Commit => Commit);
+         declare
+            Fetch_URL : constant String := Git.Fetch_URL (Root.Value.Path);
+         begin
+            --  To allow this call to succeed with local tests, we check
+            --  here. For a regular repository we will already have an HTTP
+            --  transport. A GIT transport is not wanted, because that one
+            --  requires the owner keys.
+            case URI.Scheme (Fetch_URL) is
+               when URI.VCS_Schemes =>
+                  Raise_Checked_Error
+                    ("The remote URL seems to require repository ownership: "
+                     & Fetch_URL);
+               when URI.None | URI.Unknown =>
+                  Publish.Remote_Origin (URL    => "git+file:" & Fetch_URL,
+                                         Commit => Commit);
+               when URI.File | URI.HTTP =>
+                  Publish.Remote_Origin (URL    => Fetch_URL,
+                                         Commit => Commit);
+               when others =>
+                  Raise_Checked_Error ("Unsupported scheme: " & Fetch_URL);
+            end case;
+         end;
       end;
    end Local_Repository;
 

@@ -1,3 +1,4 @@
+with Alire.Origins;
 with Alire.Publish;
 with Alire.URI;
 
@@ -30,11 +31,20 @@ package body Alr.Commands.Publish is
             --  Choose between local path or remote
 
             declare
+               use Alire.Origins;
                URL : constant String := Argument (1);
             begin
                if URI.Scheme (URL) in URI.File_Schemes then
-                  Alire.Publish.Local_Repository (Path     => URL,
-                                                  Revision => Revision);
+                  if Archive_Format (URI.Local_Path (URL)) /= Unknown then
+                     --  This is a local tarball posing as a remote. Will fail
+                     --  unless forced.
+                     Alire.Publish.Remote_Origin (URL    => URL,
+                                                  Commit => Revision);
+                  else
+                     --  Otherwise this is publishing based on local repo
+                     Alire.Publish.Local_Repository (Path     => URL,
+                                                     Revision => Revision);
+                  end if;
                else
                   Alire.Publish.Remote_Origin
                     (URL    => URL,

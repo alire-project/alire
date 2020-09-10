@@ -80,6 +80,11 @@ def init_git_repo(path):
         .returncode == 0
     assert run(["git", "config", "user.name", "Alire Testsuite"]) \
         .returncode == 0
+
+    # Workaround for Windows, where somehow we get undeletable files in temps:
+    with open(".gitignore", "wt") as file:
+        file.write("*.tmp\n")
+
     assert run(["git", "add", "."]).returncode == 0
     assert run(["git", "commit", "-m", "repo created"]).returncode == 0
     head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],

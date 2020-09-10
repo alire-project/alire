@@ -30,6 +30,11 @@ package Alire.VCSs.Git is
    --  Says if the repo checked out at Path is in a detached HEAD state.
 
    not overriding
+   function Is_Repository (This : VCS;
+                           Path : Directory_Path) return Boolean;
+   --  Check if a repo exists at Path
+
+   not overriding
    function Remote (This : VCS; Path : Directory_Path) return String;
    --  Retrieve current remote name (usually "origin")
 

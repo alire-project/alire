@@ -48,7 +48,7 @@ rmtree("alire")
 
 # Same test, using directly the source repository
 target = os.path.join(os.getcwd(), "xxx")
-run_alr("publish", f"git+file:{target}", head_commit.decode(), "--force")
+run_alr("publish", f"git+file:{target}", head_commit, "--force")
 verify_manifest()
 
 # Copy the new index manifest into the index

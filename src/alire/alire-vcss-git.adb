@@ -176,6 +176,21 @@ package body Alire.VCSs.Git is
         and then Utils.Contains (Output.First_Element, "HEAD detached");
    end Is_Detached;
 
+   function Is_Repository (This : VCS;
+                           Path : Directory_Path) return Boolean
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Unused : Utils.String_Vector;
+   begin
+      return
+        OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+          (Command             => "git",
+           Arguments           => Empty_Vector & "status",
+           Output              => Unused,
+           Err_To_Out          => True) = 0;
+   end Is_Repository;
+
    ------------
    -- Remote --
    ------------
@@ -183,8 +198,14 @@ package body Alire.VCSs.Git is
    function Remote (This : VCS; Path : Directory_Path) return String is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant Utils.String_Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "remote");
    begin
-      return Run_Git_And_Capture (Empty_Vector & "remote").First_Element;
+      if Output.Is_Empty then
+         Raise_Checked_Error ("No remote is configured");
+      else
+         return Output.First_Element;
+      end if;
    end Remote;
 
    ------------
