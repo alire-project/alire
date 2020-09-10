@@ -1,1 +1,4 @@
 driver: python-script
+indexes:
+    basic_index: {}
+    # Needed to prevent going online to fetch the community index
