@@ -114,13 +114,13 @@ Dependencies (graph):
 
 PR [#450](https://github.com/alire-project/alire/pull/450).
 
-When pinning a dependency to a directory (`alr pin|with <crate> --url`), detect
+When pinning a dependency to a directory (`alr pin|with <crate> --use`), detect
 if the target contains Alire metadata (as usual, in an `alire` subdir). In that
 case, use it to determine further dependencies and project file scopes. Also,
 the target dependency name is verified.
 
 For such a target directory, a shortcut `with` command is available since the
-crate name can be determined from the metadata: `alr with --url
+crate name can be determined from the metadata: `alr with --use
 /path/to/target` (note the absence of a crate name).
 
 ### Allow working with incomplete solutions
