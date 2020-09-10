@@ -90,14 +90,10 @@ def init_git_repo(path):
 
 def zip_dir(path, filename):
     """
-    Zip contents of path into filename
+    Zip contents of path into filename. Relative paths are preserved.
     """
-    # The expected level of indirection from Alire crates:
-    nest = os.path.splitext(os.path.basename(filename))[0]
-
     with ZipFile(filename, 'w') as zip:
         for dir, subdirs, files in os.walk(path):
             for file in files:
                 abs_file = os.path.join(dir, file)
-                zip.write(abs_file,
-                          os.path.join(nest, os.path.basename(abs_file)))
+                zip.write(abs_file, abs_file)
