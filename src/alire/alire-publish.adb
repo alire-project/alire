@@ -206,7 +206,10 @@ package body Alire.Publish is
          --  a local repository.
 
          if (Force and then
-             URI.Scheme (Context.Origin.URL) in URI.File_Schemes)
+             URI.Scheme (Context.Origin.URL) in URI.File_Schemes | URI.Unknown)
+             --  We are forcing, so we accept an unknown scheme (this happens
+             --  for local file on Windows, where drive letters are interpreted
+             --  as the scheme).
            or else
             (for some Site of Trusted_Sites =>
                URI.Authority (Context.Origin.URL) = Site or else
