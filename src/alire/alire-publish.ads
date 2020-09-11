@@ -9,4 +9,7 @@ package Alire.Publish is
    --  the current directory or raises Checked_Error with the appropriate error
    --  message set.
 
+   procedure Print_Trusted_Sites;
+   --  Print our list of allowed sites to host git releases
+
 end Alire.Publish;

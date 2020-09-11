@@ -39,6 +39,8 @@ private
       Prepare : aliased Boolean := False;
       --  Start the assistant with ready sources and manifest; only verify and
       --  add the origin.
+
+      Print_Trusted : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Publish;

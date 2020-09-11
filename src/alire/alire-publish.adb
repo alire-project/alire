@@ -311,4 +311,15 @@ package body Alire.Publish is
                Errors.Get (E)));
    end Verify_And_Create_Index_Manifest;
 
+   -------------------------
+   -- Print_Trusted_Sites --
+   -------------------------
+
+   procedure Print_Trusted_Sites is
+   begin
+      for Site of Trusted_Sites loop
+         Trace.Always (Site);
+      end loop;
+   end Print_Trusted_Sites;
+
 end Alire.Publish;
