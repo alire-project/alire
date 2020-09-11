@@ -70,18 +70,25 @@ For this common use case, you need:
 
 - A git repository that is clean an up-to-date with its remote.
    - The repository already contains the release you want to publish.
-- The repository must be also an Alire-enabled workspace:
+   - The commit with the release must exist both locally and at the remote.
+- The repository must also be an Alire-enabled workspace:
    - It contains a top-level `alire.toml` manifest describing the release.
 - The remote host must be one of a few trusted major open-source sites.
-   - `alr` will inform you if your host is not supported. Please contact us if you
-     think a site should be allowed.
-   - This is a temporary measure until more sophisticated publishing automation is
-     supported. See the next case for alternatives (you are not forced to
-change your code hosting, or even have an online repository).
+   - This requirement is motivated by vulnerabilities identified with SHA1,
+     whose migration to a stronger hash is [not yet complete]
+     (https://git-scm.com/docs/hash-function-transition/) in `git`.
+   - `alr` will inform you if your host is not supported. Please contact us if
+     you think a site should be allowed. The complete list can be consulted by
+running `alr publish --trusted-sites`.
+   - This is a temporary measure until more sophisticated publishing automation
+     is supported. See the [Remote Source Archive](#remote-source-archive) case
+for alternatives to this scenario (you are not forced to change your code
+hosting, or even have an online repository).
 
-By default, the last commit is used for the release. You can alternatively use
-another commit, tag, or branch. In any case, the git revision will be used to
-obtain a final commit. That is, a release cannot evolve with a branch.
+By default, the last commit is used for the release. You can alternatively
+provide another commit, tag, or branch. In any case, the git revision will be
+used to obtain a final commit. That is, a release cannot evolve with a branch,
+or be updated by moving a tag.
 
 - Within the repository, issue
 
@@ -89,7 +96,7 @@ obtain a final commit. That is, a release cannot evolve with a branch.
 
 to use the last commit. You can, alternatively, issue:
 
-`alr publish . <tag|branch>`
+`alr publish . <commit|tag|branch>`
 
 Note the path between `publish` and your non-commit revision. Likewise, you can
 run this command from outside your repository, as long as you supply the proper
@@ -101,18 +108,32 @@ file. This file must be submitted to the community index via a PR. A link for
 conveniently creating this PR will also be provided by `alr`:
 
 - Upload the generated index manifest file (`crate-version.toml`) to the
-  supplied page on github and create a pull-request.
+  supplied page link on github and create a pull-request.
 
 ### Starting with a remote repository, without local clone
 
 This case is analogous to the previous one, but you don't need the local
-repository. The only difference is that you must supply the remote URL and
-commit (not a tag or branch):
+repository. The same considerations about allowed hosts discussed in the
+previous scenario apply:
+
+- The repository already contains the commit with release you want to publish.
+- The repository must also be an Alire-enabled workspace:
+   - It contains a top-level `alire.toml` manifest describing the release.
+- The remote host must be one of a few trusted major open-source sites.
+   - This requirement is motivated by vulnerabilities identified with SHA1,
+     whose migration to a stronger hash is [not yet complete]
+     (https://git-scm.com/docs/hash-function-transition/) in `git`.
+   - `alr` will inform you if your host is not supported. Please contact us if
+     you think a site should be allowed. The complete list can be consulted by
+running `alr publish --trusted-sites`.
+
+The only difference when invoking `alr` is that you must supply the remote URL
+and commit (not a tag or branch). The commit must exist in the repository:
 
 `alr publish <URL> <commit>`
 
-The checks will be carried out and the outcome will be the same. The remote
-repository still needs to be among the allowed ones.
+The checks will be carried out and the outcome will be the same as in the
+previous scenario.
 
 ### Starting with a remote source archive
 
@@ -144,19 +165,16 @@ URL to do so.
 
 ### Starting with a local source folder
 
-Assisting with the creation an upload of a source archive from local sources, as
-a pre-step to the case just presented, is in our immediate roadmap.
+Assisting with the creation and upload of a source archive from local sources, as
+a pre-step to the case just presented, is in the roadmap.
 
 ### Support for complex projects whose sources become multiple Alire crates
 
 In case your project does not easily map to a single Alire crate (e.g., because
 you manage multiple project files with different dependencies, or there are
 other reasons to keep the sources together even if they generate several
-crates), at this time you will need to prepare individual online source
-archives (or repositories) and proceed from there.
-
-This is also an important scenario in our roadmap, so stay tuned for more
-publishing automation designed to support this use case.
+crates), you will need to prepare individual online source archives (or
+repositories) and proceed from there.
 
 ### Starting from other configurations
 
