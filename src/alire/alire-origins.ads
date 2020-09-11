@@ -64,6 +64,9 @@ package Alire.Origins with Preelaborate is
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name.
 
+   function Get_URL (This : Origin) return Alire.URL with
+     Pre => This.Kind in Filesystem | Source_Archive | VCS_Kinds;
+
    function Is_System (This : Origin) return Boolean is (This.Kind = System);
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
@@ -270,6 +273,13 @@ private
          then " with hash " & This.Image_Of_Hashes
          else " with hashes " & This.Image_Of_Hashes)
      );
+
+   function Get_URL (This : Origin) return Alire.URL
+   is (case This.Kind is
+          when Filesystem     => This.Path,
+          when Source_Archive => This.Archive_URL,
+          when VCS_Kinds      => This.URL,
+          when others         => raise Checked_Error with "Origin has no URL");
 
    Prefix_External : aliased constant String := "external:";
    Prefix_Git      : aliased constant String := "git+";

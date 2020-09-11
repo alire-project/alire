@@ -43,6 +43,8 @@ package body Alire.Publish is
                        .Append ("sf.net");
 
    type Data is limited record
+      Options : All_Options;
+
       Origin : Origins.Origin := Origins.New_External ("undefined");
       --  We use external as "undefined" until a proper origin is provided.
 
@@ -77,6 +79,11 @@ package body Alire.Publish is
         (Directories.Enter (Context.Tmp_Deploy_Dir.Filename))
         with Unreferenced;
    begin
+      if Context.Options.Skip_Build then
+         Trace.Warning ("Build check skipped.");
+         return;
+      end if;
+
       --  We need the alire folder, which usually will not be among sources
       if not Ada.Directories.Exists (Paths.Working_Folder_Inside_Root) then
          Ada.Directories.Create_Directory (Paths.Working_Folder_Inside_Root);
@@ -316,19 +323,23 @@ package body Alire.Publish is
    -------------------
 
    procedure Verify_Origin (Context : in out Data) is
+      URL : constant Alire.URL := Context.Origin.Get_URL;
    begin
 
       --  Ensure the origin is remote
 
-      if URI.Scheme
-        (case Context.Origin.Kind is
-            when Origins.VCS_Kinds      => Context.Origin.URL,
-            when Origins.Source_Archive => Context.Origin.Archive_URL,
-            when others => raise Program_Error with "unsupported remote")
-         not in URI.HTTP
-      then
+      if URI.Scheme (URL) not in URI.HTTP then
+         --  A git@ URL is private to the user and should not be used for
+         --  packaging:
+         if Utils.Starts_With (URL, "git@") then
+            Raise_Checked_Error
+              ("The origin cannot use a private git remote: " & URL);
+         end if;
+
+         --  Otherwise we assume this is a local path
+
          Recoverable_Error
-           ("The origin must be a definitive remote location");
+           ("The origin must be a definitive remote location, but is " & URL);
          --  For testing we may want to allow local URLs, or may be for
          --  internal use with network drives? So allow forcing it.
       end if;
@@ -341,21 +352,20 @@ package body Alire.Publish is
          --  a local repository.
 
          if (Force and then
-             URI.Scheme (Context.Origin.URL) in URI.File_Schemes | URI.Unknown)
+             URI.Scheme (URL) in URI.File_Schemes | URI.Unknown)
              --  We are forcing, so we accept an unknown scheme (this happens
              --  for local file on Windows, where drive letters are interpreted
              --  as the scheme).
            or else
             (for some Site of Trusted_Sites =>
-               URI.Authority (Context.Origin.URL) = Site or else
-               Utils.Ends_With (URI.Authority (Context.Origin.URL),
-                                "." & Site))
+               URI.Authority (URL) = Site or else
+               Utils.Ends_With (URI.Authority (URL), "." & Site))
          then
             Log_Success ("Origin is hosted on trusted site: "
-                         & URI.Authority (Context.Origin.URL));
+                         & URI.Authority (URL));
          else
             Raise_Checked_Error ("Origin is hosted on unknown site: "
-                                 & URI.Authority (Context.Origin.URL));
+                                 & URI.Authority (URL));
          end if;
       end if;
 
@@ -417,7 +427,8 @@ package body Alire.Publish is
    ----------------------
 
    procedure Local_Repository (Path     : Any_Path := ".";
-                               Revision : String   := "HEAD")
+                               Revision : String   := "HEAD";
+                               Options  : All_Options := (others => <>))
    is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
       use all type VCSs.Git.States;
@@ -484,11 +495,13 @@ package body Alire.Publish is
                     ("The remote URL seems to require repository ownership: "
                      & Fetch_URL);
                when URI.None | URI.Unknown =>
-                  Publish.Remote_Origin (URL    => "git+file:" & Fetch_URL,
-                                         Commit => Commit);
+                  Publish.Remote_Origin (URL     => "git+file:" & Fetch_URL,
+                                         Commit  => Commit,
+                                         Options => Options);
                when URI.File | URI.HTTP =>
-                  Publish.Remote_Origin (URL    => Fetch_URL,
-                                         Commit => Commit);
+                  Publish.Remote_Origin (URL     => Fetch_URL,
+                                         Commit  => Commit,
+                                         Options => Options);
                when others =>
                   Raise_Checked_Error ("Unsupported scheme: " & Fetch_URL);
             end case;
@@ -500,8 +513,9 @@ package body Alire.Publish is
    -- Remote_Origin --
    -------------------
 
-   procedure Remote_Origin (URL    : Alire.URL;
-                            Commit : String := "")
+   procedure Remote_Origin (URL     : Alire.URL;
+                            Commit  : String := "";
+                            Options : All_Options := (others => <>))
    is
    begin
       --  Preliminary argument checks
@@ -517,7 +531,9 @@ package body Alire.Publish is
 
       declare
          Context : Data :=
-                     (Origin =>
+                     (Options => Options,
+
+                      Origin =>
                         (if Commit /= "" then
                             Origins.New_VCS (URL, Commit)
                          elsif URI.Scheme (URL) in URI.VCS_Schemes then
