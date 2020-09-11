@@ -157,7 +157,7 @@ package body Alr.Commands.Init is
          Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
          Put_Line ("   end Binder;");
          Put_New_Line;
-         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Put (File, "end " & Mixed_Name & ";");
          pragma Style_Checks ("M80");
 
          TIO.Close (File);
@@ -174,7 +174,7 @@ package body Alr.Commands.Init is
          TIO.Create (File, TIO.Out_File, Filename);
          Put_Line ("package " & Mixed_Name & " is");
          Put_New_Line;
-         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Put (File, "end " & Mixed_Name & ";");
          TIO.Close (File);
       end Generate_Root_Package;
 
@@ -190,7 +190,7 @@ package body Alr.Commands.Init is
          Put_Line ("procedure " & Mixed_Name & " is");
          Put_Line ("begin");
          Put_Line ("   null;");
-         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Put (File, "end " & Mixed_Name & ";");
          TIO.Close (File);
       end Generate_Program_Main;
 
@@ -200,7 +200,9 @@ package body Alr.Commands.Init is
 
       procedure Put_New_Line is
       begin
-         TIO.New_Line (File);
+         --  We don't use TIO.New_Line here because we want always want UNIX
+         --  line ending for the generated code.
+         TIO.Put (File, ASCII.LF);
       end Put_New_Line;
 
       --------------
@@ -209,7 +211,10 @@ package body Alr.Commands.Init is
 
       procedure Put_Line (S : String) is
       begin
-         TIO.Put_Line (File, S);
+         --  We don't use TIO.Put_Line here because we want always want UNIX
+         --  line ending for the generated code.
+         TIO.Put (File, S);
+         TIO.Put (File, ASCII.LF);
       end Put_Line;
 
    begin
