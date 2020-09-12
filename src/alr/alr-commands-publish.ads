@@ -2,6 +2,8 @@ package Alr.Commands.Publish is
 
    --  Publish lends a helping hand to automate submission of crates/releases.
 
+   Switch_Prepare : constant String := "--prepare";
+
    type Command is new Commands.Command with private;
 
    overriding
@@ -29,12 +31,14 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("--hash <origin>");
+   is (Switch_Prepare & " <URL> [commit]");
 
 private
 
    type Command is new Commands.Command with record
-      Hash         : aliased Boolean := False; -- Compute hash of given origin
+      Prepare : aliased Boolean := False;
+      --  Start the assistant with ready sources and manifest; only verify and
+      --  add the origin.
    end record;
 
 end Alr.Commands.Publish;

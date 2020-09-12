@@ -44,6 +44,11 @@ package Alire.Index is
    --  The index version understood by alire must match the one in the indexes
    --  being loaded.
 
+   Community_Upload_URL : constant URL :=
+                            Utils.Tail (Community_Repo, '+')
+                            & "/upload/" & Community_Branch;
+   --  Base upload URL into our community index repository
+
    subtype Release is Alire.Releases.Release;
 
    ------------------------

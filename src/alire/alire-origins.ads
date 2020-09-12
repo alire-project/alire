@@ -97,6 +97,10 @@ package Alire.Origins with Preelaborate is
 
    function New_SVN (URL : Alire.URL; Commit : String) return Origin;
 
+   function New_VCS (URL : Alire.URL; Commit : String) return Origin;
+   --  Attempt to identify an origin kind from the transport (git+https). If no
+   --  VCS specified, look for ".git" extension.
+
    Unknown_Source_Archive_Name_Error : exception;
 
    function New_Source_Archive
