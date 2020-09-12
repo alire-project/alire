@@ -24,6 +24,9 @@ package body Alr.Commands.Publish is
                           else ""));
          end if;
 
+      elsif Cmd.Print_Trusted then
+         Alire.Publish.Print_Trusted_Sites;
+
       else
          Trace.Warning
            ("No publishing subcommand given, defaulting to "
@@ -44,6 +47,12 @@ package body Alr.Commands.Publish is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch
+        (Config,
+         Cmd.Print_Trusted'Access,
+         "", "--trusted-sites",
+         "Print a list of trusted git repository sites");
+
       Define_Switch
         (Config,
          Cmd.Prepare'Access,
