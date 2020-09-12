@@ -41,6 +41,9 @@ private
       --  add the origin.
 
       Print_Trusted : aliased Boolean := False;
+
+      Skip_Build : aliased Boolean := False;
+      --  Skip the build check
    end record;
 
 end Alr.Commands.Publish;

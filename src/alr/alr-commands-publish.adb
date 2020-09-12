@@ -16,10 +16,13 @@ package body Alr.Commands.Publish is
       function Revision return String
       is (if Num_Arguments >= 2 then Argument (2) else "");
 
+      Options : constant Alire.Publish.All_Options :=
+                  (Skip_Build => Cmd.Skip_Build);
+
    begin
       if Cmd.Prepare then
          if Num_Arguments < 1 then
-            Alire.Publish.Local_Repository;
+            Alire.Publish.Local_Repository (Options => Options);
 
          elsif Num_Arguments > 2 then
             Reportaise_Wrong_Arguments
@@ -38,17 +41,20 @@ package body Alr.Commands.Publish is
                   if Archive_Format (URI.Local_Path (URL)) /= Unknown then
                      --  This is a local tarball posing as a remote. Will fail
                      --  unless forced.
-                     Alire.Publish.Remote_Origin (URL    => URL,
-                                                  Commit => Revision);
+                     Alire.Publish.Remote_Origin (URL     => URL,
+                                                  Commit  => Revision,
+                                                  Options => Options);
                   else
                      --  Otherwise this is publishing based on local repo
                      Alire.Publish.Local_Repository (Path     => URL,
-                                                     Revision => Revision);
+                                                     Revision => Revision,
+                                                     Options  => Options);
                   end if;
                else
                   Alire.Publish.Remote_Origin
-                    (URL    => URL,
-                     Commit => Revision); -- TODO: allow non-commits
+                    (URL     => URL,
+                     Commit  => Revision, -- TODO: allow non-commits
+                     Options => Options);
                end if;
             end;
 
@@ -88,6 +94,12 @@ package body Alr.Commands.Publish is
          Cmd.Prepare'Access,
          "", Switch_Prepare,
          "Start the publishing assistant using a ready remote origin");
+
+      Define_Switch
+        (Config,
+         Cmd.Skip_Build'Access,
+         "", "--skip-build",
+         "Skip the build check step");
    end Setup_Switches;
 
 end Alr.Commands.Publish;
