@@ -296,6 +296,10 @@ package Alire.Releases is
 
    function Version_Image (R : Release) return String;
 
+   function Has_Property (R : Release; Key : String) return Boolean;
+   --  Say if the property exists in any branch of the property tree. Key is
+   --  case-insensitive.
+
 private
 
    use Semantic_Versioning;

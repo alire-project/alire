@@ -164,13 +164,16 @@ url = '{}'
             """.format(name, priority, os.path.join(working_dir, files_dir)))
 
 
-def init_local_crate(name="xxx", binary=True):
+def init_local_crate(name="xxx", binary=True, enter=True):
     """
     Initialize a local crate and enter its folder for further testing.
 
     :param str name: Name of the crate
 
     :param bool binary: Initialize as --bin or --lib
+
+    :param bool enter: Enter the created crate directory
     """
     run_alr("init", name, "--bin" if binary else "--lib")
-    os.chdir(name)
+    if enter:
+        os.chdir(name)

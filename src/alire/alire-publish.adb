@@ -1,19 +1,27 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Config;
+with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
+with Alire.Features.Index;
 with Alire.Hashes;
 with Alire.Index;
+with Alire.Manifest;
 with Alire.Origins.Deployers;
 with Alire.Paths;
+with Alire.Properties.From_TOML;
+with Alire.Releases;
 with Alire.Root;
 with Alire.Roots.Optional;
+with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.URI;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 
 with Semantic_Versioning;
 
@@ -23,6 +31,8 @@ package body Alire.Publish is
 
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
+
+   use Directories.Operators;
 
    Trusted_Sites : constant Utils.String_Vector :=
                      Utils.Empty_Vector
@@ -100,7 +110,6 @@ package body Alire.Publish is
    --  manifest.
 
    procedure Generate_Index_Manifest (Context : in out Data) is
-      use Directories.Operators;
       User_Manifest : constant Any_Path :=
                        Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name;
       Workspace     : constant Roots.Optional.Root := Root.Current;
@@ -176,6 +185,97 @@ package body Alire.Publish is
       end;
    end Generate_Index_Manifest;
 
+   ----------------------
+   -- Show_And_Confirm --
+   ----------------------
+
+   procedure Show_And_Confirm (Context : in out Data) with
+     Pre => GNAT.OS_Lib.Is_Regular_File
+       (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
+   --  Present the final release information for confirmation by the user,
+   --  after checking that no critical information is missing, or the release
+   --  already exists.
+
+   procedure Show_And_Confirm (Context : in out Data) is
+      Release : constant Releases.Release :=
+                  Releases
+                    .From_Manifest
+                      (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name,
+                       Manifest.Local)
+                    .Replacing (Origin => Context.Origin);
+      use all type Utils.User_Input.Answer_Kind;
+
+      Recommend : Utils.String_Vector; -- Optional
+      Missing   : Utils.String_Vector; -- Mandatory
+
+      function Tomify (S : String) return String renames TOML_Adapters.Tomify;
+   begin
+
+      --  Check not duplicated
+
+      Features.Index.Setup_And_Load (From  => Config.Indexes_Directory);
+      if Index.Exists (Release.Name, Release.Version) then
+         Raise_Checked_Error
+           ("Target release " & Release.Milestone.TTY_Image
+            & " already exist in a loaded index");
+      end if;
+
+      --  Present release information
+
+      Ada.Text_IO.New_Line;
+      Trace.Info ("The release to be published contains this information:");
+      Ada.Text_IO.New_Line;
+      Release.Print;
+
+      --  Detect missing recommended fields
+
+      for Key in Properties.From_TOML.Recommended'Range loop
+         if Properties.From_TOML.Recommended (Key) then
+            if not Release.Has_Property (Tomify (Key'Image)) then
+               Recommend.Append (Tomify (Key'Image));
+            end if;
+         end if;
+      end loop;
+
+      if not Recommend.Is_Empty then
+         Ada.Text_IO.New_Line;
+         Trace.Warning ("Missing optional recommended properties: "
+                        & TTY.Warn (Recommend.Flatten (", ")));
+      end if;
+
+      --  Detect missing mandatory. This isn't detected by the TOML
+      --  deserialization because we are still relying on the user manifest
+      --  (the index one isn't generated until the user gives the go-ahead).
+
+      for Key in Properties.From_TOML.Mandatory'Range (2) loop
+         if Properties.From_TOML.Mandatory (Crates.Index_Release, Key) then
+            if not Release.Has_Property (Tomify (Key'Image)) then
+               Missing.Append (Tomify (Key'Image));
+            end if;
+         end if;
+      end loop;
+
+      if not Missing.Is_Empty then
+         Ada.Text_IO.New_Line;
+         Raise_Checked_Error ("Missing required properties: "
+                              & TTY.Error (Missing.Flatten (", ")));
+      end if;
+
+      --  Final confirmation. We default to Yes if no recommended missing or
+      --  Force.
+
+      Ada.Text_IO.New_Line;
+      if Utils.User_Input.Query
+        ("Do you want to proceed with this information?",
+         Valid   => (Yes | No => True, others => False),
+         Default => (if Force or else Recommend.Is_Empty
+                     then Yes
+                     else No)) /= Yes
+      then
+         Raise_Checked_Error ("Abandoned by user");
+      end if;
+   end Show_And_Confirm;
+
    -------------------
    -- Verify_Origin --
    -------------------
@@ -230,20 +330,24 @@ package body Alire.Publish is
    -- STEPS SCAFFOLDING --
    -----------------------
 
+   --  Step names must be in order of execution:
    type Step_Names is
      (Step_Verify_Origin,
       Step_Deploy_Sources,
+      Step_Show_And_Confirm,
       Step_Generate_Index_Manifest);
 
    Steps : constant array (Step_Names) of Step_Subprogram :=
              (Step_Verify_Origin           => Verify_Origin'Access,
               Step_Deploy_Sources          => Deploy_Sources'Access,
+              Step_Show_And_Confirm        => Show_And_Confirm'Access,
               Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
           when Step_Verify_Origin           => "Verify origin URL",
           when Step_Deploy_Sources          => "Deploy sources",
+          when Step_Show_And_Confirm        => "User review",
           when Step_Generate_Index_Manifest => "Generate index manifest");
 
    --------------
@@ -257,6 +361,7 @@ package body Alire.Publish is
       --  Manage publishing steps up to exhaustion or error
    begin
       for Current in Step .. Up_To loop
+         Ada.Text_IO.New_Line;
          Trace.Info ("Publishing assistant: step"
                      & TTY.Emph (Integer'Image (Step_Names'Pos (Current) -
                                                 Step_Names'Pos (Step) + 1))
@@ -277,7 +382,7 @@ package body Alire.Publish is
                                                Commit : String := "")
    is
    begin
-      --  Preliminare argument checks
+      --  Preliminary argument checks
 
       if Utils.Ends_With (Utils.To_Lower_Case (Origin), ".git") and then
         Commit = ""
