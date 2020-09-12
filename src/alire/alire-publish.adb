@@ -10,6 +10,7 @@ with Alire.Hashes;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins.Deployers;
+with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Properties.From_TOML;
 with Alire.Releases;
@@ -58,6 +59,40 @@ package body Alire.Publish is
 
    --  The following procedures share the spec, in the case in the future we
    --  need to reorder/reuse/insert them as part of a navigable workflow.
+
+   -----------------
+   -- Check_Build --
+   -----------------
+
+   procedure Check_Build (Context : in out Data) with
+     Pre => GNAT.OS_Lib.Is_Directory (Context.Tmp_Deploy_Dir.Filename);
+   --  Check that the sources we are trying to publish can be built
+
+   procedure Check_Build (Context : in out Data) is
+      --  Enter the temporary as if it were a workspace (which it has to
+      --  be, as it contains the user manifest). Auto-update should retrieve
+      --  dependencies, and since we are not repacking, there's no problem
+      --  with altering contents under alire or regenerating the lock file.
+      Guard : Directories.Guard
+        (Directories.Enter (Context.Tmp_Deploy_Dir.Filename))
+        with Unreferenced;
+   begin
+      --  We need the alire folder, which usually will not be among sources
+      if not Ada.Directories.Exists (Paths.Working_Folder_Inside_Root) then
+         Ada.Directories.Create_Directory (Paths.Working_Folder_Inside_Root);
+      end if;
+
+      --  Unfortunately, building is one of the parts that still are hard to
+      --  extricate from Alr.*, so for now the simplest solution is to spawn
+      --  a child alr.
+      OS_Lib.Subprocess.Checked_Spawn
+        ("alr",
+         Utils.Empty_Vector
+         .Append ("--non-interactive")
+         .Append ("build"));
+
+      Log_Success ("Build succeeded.");
+   end Check_Build;
 
    --------------------
    -- Deploy_Sources --
@@ -334,12 +369,14 @@ package body Alire.Publish is
    type Step_Names is
      (Step_Verify_Origin,
       Step_Deploy_Sources,
+      Step_Check_Build,
       Step_Show_And_Confirm,
       Step_Generate_Index_Manifest);
 
    Steps : constant array (Step_Names) of Step_Subprogram :=
              (Step_Verify_Origin           => Verify_Origin'Access,
               Step_Deploy_Sources          => Deploy_Sources'Access,
+              Step_Check_Build             => Check_Build'Access,
               Step_Show_And_Confirm        => Show_And_Confirm'Access,
               Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
 
@@ -347,6 +384,7 @@ package body Alire.Publish is
    is (case Step is
           when Step_Verify_Origin           => "Verify origin URL",
           when Step_Deploy_Sources          => "Deploy sources",
+          when Step_Check_Build             => "Build release",
           when Step_Show_And_Confirm        => "User review",
           when Step_Generate_Index_Manifest => "Generate index manifest");
 
