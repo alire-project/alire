@@ -20,9 +20,9 @@ with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
-with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.VCSs.Git;
 
 with Semantic_Versioning;
 
@@ -412,17 +412,101 @@ package body Alire.Publish is
       end loop;
    end Start_At;
 
-   --------------------------------------
-   -- Verify_And_Create_Index_Manifest --
-   --------------------------------------
+   ----------------------
+   -- Local_Repository --
+   ----------------------
 
-   procedure Verify_And_Create_Index_Manifest (Origin : URL;
-                                               Commit : String := "")
+   procedure Local_Repository (Path     : Any_Path := ".";
+                               Revision : String   := "HEAD")
+   is
+      Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
+      use all type VCSs.Git.States;
+      Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
+
+      ---------------
+      -- Git_Error --
+      ---------------
+
+      procedure Git_Error (Msg : String) is
+      begin
+         Raise_Checked_Error (Msg & " at " & TTY.URL (Path));
+      end Git_Error;
+
+   begin
+      if not Root.Is_Valid then
+         Raise_Checked_Error ("No Alire workspace found at " & TTY.URL (Path));
+      end if;
+
+      if not Git.Is_Repository (Root.Value.Path) then
+         Trace.Always ("ROOT " & Root.Value.Path);
+         Git_Error ("no git repository found");
+      end if;
+
+      --  Do not continue if the local repo is dirty
+
+      case Git.Status (Root.Value.Path) is
+         when Clean =>
+            Log_Success ("Local repository is clean.");
+         when Ahead =>
+            Git_Error ("Repository has commits yet to be pushed");
+         when Dirty =>
+            Git_Error (TTY.Emph ("git status")
+                       & " reports working tree not clean");
+      end case;
+
+      --  If given a revision, extract commit and verify it exists locally
+
+      declare
+         Commit : constant String :=
+                    Git.Revision_Commit (Root.Value.Path,
+                                         (if Revision /= ""
+                                          then Revision
+                                          else "HEAD"));
+      begin
+         if Commit /= "" then
+            Log_Success ("Revision exists in local repository ("
+                         & TTY.Emph (Commit) & ").");
+         else
+            Raise_Checked_Error ("Revision not found in local repository: "
+                                 & TTY.Emph (Revision));
+         end if;
+
+         declare
+            Fetch_URL : constant String := Git.Fetch_URL (Root.Value.Path);
+         begin
+            --  To allow this call to succeed with local tests, we check
+            --  here. For a regular repository we will already have an HTTP
+            --  transport. A GIT transport is not wanted, because that one
+            --  requires the owner keys.
+            case URI.Scheme (Fetch_URL) is
+               when URI.VCS_Schemes =>
+                  Raise_Checked_Error
+                    ("The remote URL seems to require repository ownership: "
+                     & Fetch_URL);
+               when URI.None | URI.Unknown =>
+                  Publish.Remote_Origin (URL    => "git+file:" & Fetch_URL,
+                                         Commit => Commit);
+               when URI.File | URI.HTTP =>
+                  Publish.Remote_Origin (URL    => Fetch_URL,
+                                         Commit => Commit);
+               when others =>
+                  Raise_Checked_Error ("Unsupported scheme: " & Fetch_URL);
+            end case;
+         end;
+      end;
+   end Local_Repository;
+
+   -------------------
+   -- Remote_Origin --
+   -------------------
+
+   procedure Remote_Origin (URL    : Alire.URL;
+                            Commit : String := "")
    is
    begin
       --  Preliminary argument checks
 
-      if Utils.Ends_With (Utils.To_Lower_Case (Origin), ".git") and then
+      if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git") and then
         Commit = ""
       then
          Raise_Checked_Error
@@ -435,12 +519,12 @@ package body Alire.Publish is
          Context : Data :=
                      (Origin =>
                         (if Commit /= "" then
-                            Origins.New_VCS (Origin, Commit)
-                         elsif URI.Scheme (Origin) in URI.VCS_Schemes then
+                            Origins.New_VCS (URL, Commit)
+                         elsif URI.Scheme (URL) in URI.VCS_Schemes then
                             raise Checked_Error with
                               "A commit id is mandatory for a VCS origin"
                          else
-                            Origins.New_Source_Archive (Origin)),
+                            Origins.New_Source_Archive (URL)),
 
                       Tmp_Deploy_Dir => <>);
       begin
@@ -452,7 +536,7 @@ package body Alire.Publish is
            (Errors.Wrap
               ("Could not complete the publishing assistant",
                Errors.Get (E)));
-   end Verify_And_Create_Index_Manifest;
+   end Remote_Origin;
 
    -------------------------
    -- Print_Trusted_Sites --
