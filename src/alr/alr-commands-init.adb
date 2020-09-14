@@ -42,6 +42,7 @@ package body Alr.Commands.Init is
 
       File : TIO.File_Type;
 
+      procedure Create (Filename : String);
       procedure Put_New_Line;
       procedure Put_Line (S : String);
       --  Shortcuts to write to File
@@ -65,7 +66,7 @@ package body Alr.Commands.Init is
       begin
          --  Use more than 80 colums for more readable strings
          pragma Style_Checks ("M200");
-         TIO.Create (File, TIO.Out_File, Filename);
+         Create (Filename);
          Put_Line ("project " & Mixed_Name & " is");
          Put_New_Line;
          if For_Library then
@@ -171,7 +172,7 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Src_Directory / (+Lower_Name & ".ads"));
       begin
-         TIO.Create (File, TIO.Out_File, Filename);
+         Create (Filename);
          Put_Line ("package " & Mixed_Name & " is");
          Put_New_Line;
          TIO.Put (File, "end " & Mixed_Name & ";");
@@ -186,7 +187,7 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Src_Directory / (+Lower_Name & ".adb"));
       begin
-         TIO.Create (File, TIO.Out_File, Filename);
+         Create (Filename);
          Put_Line ("procedure " & Mixed_Name & " is");
          Put_Line ("begin");
          Put_Line ("   null;");
@@ -194,15 +195,23 @@ package body Alr.Commands.Init is
          TIO.Close (File);
       end Generate_Program_Main;
 
+      ------------
+      -- Create --
+      ------------
+
+      procedure Create (Filename : String) is
+      begin
+         --  We use TEXT_TRANSLATION=NO to have UNIX line ending for the
+         --  generated code.
+         TIO.Create (File, TIO.Out_File, Filename, "TEXT_TRANSLATION=NO");
+      end Create;
       ------------------
       -- Put_New_Line --
       ------------------
 
       procedure Put_New_Line is
       begin
-         --  We don't use TIO.New_Line here because we want always want UNIX
-         --  line ending for the generated code.
-         TIO.Put (File, ASCII.LF);
+         TIO.New_Line (File);
       end Put_New_Line;
 
       --------------
@@ -211,10 +220,7 @@ package body Alr.Commands.Init is
 
       procedure Put_Line (S : String) is
       begin
-         --  We don't use TIO.Put_Line here because we want always want UNIX
-         --  line ending for the generated code.
-         TIO.Put (File, S);
-         TIO.Put (File, ASCII.LF);
+         TIO.Put_Line (File, S);
       end Put_Line;
 
    begin
