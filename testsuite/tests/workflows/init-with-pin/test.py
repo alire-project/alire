@@ -36,15 +36,15 @@ assert_eq('libhello 1.0.0\n', p.out)
 # Build and run "xxx"
 with open(os.path.join('src', 'xxx.adb'), 'w') as f:
     f.write("""
-        with Ada.Text_IO;
-        with Libhello;
+with Ada.Text_IO;
+with libhello;
 
-        procedure XXX is
-        begin
-           Ada.Text_IO.Put_Line ("This is XXX...");
-           Libhello.Hello_World;
-        end XXX;
-    """)
+procedure XXX is
+begin
+   Ada.Text_IO.Put_Line ("This is XXX...");
+   libhello.Hello_World;
+end XXX;
+""")
 p = run_alr('run')
 assert_eq('This is XXX...\nHello, world!\n', p.out)
 

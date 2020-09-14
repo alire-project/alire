@@ -19,11 +19,11 @@ run_alr('with', 'libhello')
 # Re-write the source code by using libhello
 with open("src/myhello.adb", "w") as text_file:
     text_file.write("""
-with Libhello;
+with libhello;
 
 procedure Myhello is
 begin
-   Libhello.Hello_World;
+   libhello.Hello_World;
 end Myhello;
 """)
 

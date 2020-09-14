@@ -42,6 +42,7 @@ package body Alr.Commands.Init is
 
       File : TIO.File_Type;
 
+      procedure Create (Filename : String);
       procedure Put_New_Line;
       procedure Put_Line (S : String);
       --  Shortcuts to write to File
@@ -63,7 +64,9 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Directory / (+Lower_Name & ".gpr"));
       begin
-         TIO.Create (File, TIO.Out_File, Filename);
+         --  Use more than 80 colums for more readable strings
+         pragma Style_Checks ("M200");
+         Create (Filename);
          Put_Line ("project " & Mixed_Name & " is");
          Put_New_Line;
          if For_Library then
@@ -79,30 +82,86 @@ package body Alr.Commands.Init is
             Put_Line ("   type Library_Type_Type is " &
                         "(""relocatable"", ""static"", ""static-pic"");");
             Put_Line ("   Library_Type : Library_Type_Type :=");
-            Put_Line ("     external (""" & Upper_Name & "_LIBRARY_TYPE"",");
-            Put_Line ("               external (""LIBRARY_TYPE"", " &
-                        """static""));");
+            Put_Line ("     external (""" & Upper_Name & "_LIBRARY_TYPE"", external (""LIBRARY_TYPE"", ""static""));");
             Put_Line ("   for Library_Kind use Library_Type;");
          else
             Put_Line ("   for Exec_Dir use ""bin"";");
             Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");
          end if;
          Put_New_Line;
-         Put_Line ("   package Builder is");
-         Put_Line ("      for Switches (""ada"") use (""-j0"", ""-g"");");
-         Put_Line ("   end Builder;");
+         Put_Line ("   type Enabled_Kind is (""enabled"", ""disabled"");");
+         Put_Line ("   Compile_Checks : Enabled_Kind := External (""" & Upper_Name & "_COMPILE_CHECKS"", ""enabled"");");
+         Put_Line ("   Runtime_Checks : Enabled_Kind := External (""" & Upper_Name & "_RUNTIME_CHECKS"", ""enabled"");");
+         Put_Line ("   Style_Checks : Enabled_Kind := External (""" & Upper_Name & "_STYLE_CHECKS"", ""enabled"");");
+         Put_Line ("   Contracts_Checks : Enabled_Kind := External (""" & Upper_Name & "_CONTRACTS"", ""enabled"");");
+         Put_New_Line;
+         Put_Line ("   type Build_Kind is (""debug"", ""optimize"");");
+         Put_Line ("   Build_Mode : Build_Kind := External (""" & Upper_Name & "_BUILD_MODE"", ""debug"");");
+         Put_New_Line;
+         Put_Line ("   Compile_Checks_Switches := ();");
+         Put_Line ("   case Compile_Checks is");
+         Put_Line ("      when ""enabled"" =>");
+         Put_Line ("         Compile_Checks_Switches :=");
+         Put_Line ("           (""-gnatwa"",  -- All warnings");
+         Put_Line ("            ""-gnatVa"",  -- All validity checks");
+         Put_Line ("            ""-gnatwe""); -- Warnings as errors");
+         Put_Line ("      when others => null;");
+         Put_Line ("   end case;");
+         Put_New_Line;
+         Put_Line ("   Runtime_Checks_Switches := ();");
+         Put_Line ("   case Runtime_Checks is");
+         Put_Line ("      when ""enabled"" => null;");
+         Put_Line ("      when others =>");
+         Put_Line ("         Runtime_Checks_Switches :=");
+         Put_Line ("           (""-gnatp""); -- Supress checks");
+         Put_Line ("   end case;");
+         Put_New_Line;
+         Put_Line ("   Style_Checks_Switches := ();");
+         Put_Line ("   case Style_Checks is");
+         Put_Line ("      when ""enabled"" => null;");
+         Put_Line ("         Style_Checks_Switches :=");
+         Put_Line ("           (""-gnatyg"",   -- GNAT Style checks");
+         Put_Line ("            ""-gnaty-d"",  -- Disable no DOS line terminators");
+         Put_Line ("            ""-gnatyM80"", -- Maximum line length");
+         Put_Line ("            ""-gnatyO"");  -- Overriding subprograms explicitly marked as such");
+         Put_Line ("      when others => null;");
+         Put_Line ("   end case;");
+         Put_New_Line;
+         Put_Line ("   Contracts_Switches := ();");
+         Put_Line ("   case Contracts_Checks is");
+         Put_Line ("      when ""enabled"" => null;");
+         Put_Line ("         Contracts_Switches :=");
+         Put_Line ("           (""-gnata""); --  Enable assertions and contracts");
+         Put_Line ("      when others =>");
+         Put_Line ("   end case;");
+         Put_New_Line;
+         Put_Line ("   Build_Switches := ();");
+         Put_Line ("   case Build_Mode is");
+         Put_Line ("      when ""optimize"" =>");
+         Put_Line ("         Build_Switches := (""-O3"",     -- Optimization");
+         Put_Line ("                            ""-gnatn""); -- Enable inlining");
+         Put_Line ("      when ""debug"" =>");
+         Put_Line ("         Build_Switches := (""-g"",   -- Debug info");
+         Put_Line ("                            ""-Og""); -- No optimization");
+         Put_Line ("   end case;");
          Put_New_Line;
          Put_Line ("   package Compiler is");
-         Put_Line ("      for Switches (""ada"") use");
-         Put_Line ("        (""-gnatVa"", ""-gnatwa"", ""-g"", ""-O2"",");
-         Put_Line ("         ""-gnata"", ""-gnato"", ""-fstack-check"");");
+         Put_Line ("      for Default_Switches (""Ada"") use");
+         Put_Line ("        Compile_Checks_Switches &");
+         Put_Line ("        Build_Switches &");
+         Put_Line ("        Runtime_Checks_Switches &");
+         Put_Line ("        Style_Checks_Switches &");
+         Put_Line ("        Contracts_Switches &");
+         Put_Line ("        (""-gnatQ"");  -- Don't quit. Generate ALI and tree files even if illegalities");
          Put_Line ("   end Compiler;");
          Put_New_Line;
          Put_Line ("   package Binder is");
-         Put_Line ("      for Switches (""ada"") use (""-Es"");");
+         Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
          Put_Line ("   end Binder;");
          Put_New_Line;
-         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Put (File, "end " & Mixed_Name & ";");
+         pragma Style_Checks ("M80");
+
          TIO.Close (File);
       end Generate_Project_File;
 
@@ -114,10 +173,10 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Src_Directory / (+Lower_Name & ".ads"));
       begin
-         TIO.Create (File, TIO.Out_File, Filename);
+         Create (Filename);
          Put_Line ("package " & Mixed_Name & " is");
          Put_New_Line;
-         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Put (File, "end " & Mixed_Name & ";");
          TIO.Close (File);
       end Generate_Root_Package;
 
@@ -129,14 +188,22 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Src_Directory / (+Lower_Name & ".adb"));
       begin
-         TIO.Create (File, TIO.Out_File, Filename);
+         Create (Filename);
          Put_Line ("procedure " & Mixed_Name & " is");
          Put_Line ("begin");
          Put_Line ("   null;");
-         Put_Line ("end " & Mixed_Name & ";");
+         TIO.Put (File, "end " & Mixed_Name & ";");
          TIO.Close (File);
       end Generate_Program_Main;
 
+      ------------
+      -- Create --
+      ------------
+
+      procedure Create (Filename : String) is
+      begin
+         TIO.Create (File, TIO.Out_File, Filename);
+      end Create;
       ------------------
       -- Put_New_Line --
       ------------------
