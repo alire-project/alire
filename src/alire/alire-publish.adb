@@ -440,7 +440,11 @@ package body Alire.Publish is
 
       procedure Git_Error (Msg : String) is
       begin
-         Raise_Checked_Error (Msg & " at " & TTY.URL (Path));
+         if Path /= "." then
+            Raise_Checked_Error (TTY.URL (Path) & ": " & Msg);
+         else
+            Raise_Checked_Error (Msg);
+         end if;
       end Git_Error;
 
    begin
