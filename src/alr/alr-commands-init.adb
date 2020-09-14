@@ -121,6 +121,7 @@ package body Alr.Commands.Init is
          Put_Line ("      when ""enabled"" => null;");
          Put_Line ("         Style_Checks_Switches :=");
          Put_Line ("           (""-gnatyg"",   -- GNAT Style checks");
+         Put_Line ("            ""-gnaty-d"",  -- Disable no DOS line terminators");
          Put_Line ("            ""-gnatyM80"", -- Maximum line length");
          Put_Line ("            ""-gnatyO"");  -- Overriding subprograms explicitly marked as such");
          Put_Line ("      when others => null;");
@@ -201,9 +202,7 @@ package body Alr.Commands.Init is
 
       procedure Create (Filename : String) is
       begin
-         --  We use TEXT_TRANSLATION=NO to have UNIX line ending for the
-         --  generated code.
-         TIO.Create (File, TIO.Out_File, Filename, "TEXT_TRANSLATION=NO");
+         TIO.Create (File, TIO.Out_File, Filename);
       end Create;
       ------------------
       -- Put_New_Line --
