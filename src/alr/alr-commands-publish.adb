@@ -20,7 +20,10 @@ package body Alr.Commands.Publish is
                   (Skip_Build => Cmd.Skip_Build);
 
    begin
-      if Cmd.Prepare then
+      if Cmd.Print_Trusted then
+         Alire.Publish.Print_Trusted_Sites;
+
+      else
          if Num_Arguments < 1 then
             Alire.Publish.Local_Repository (Options => Options);
 
@@ -59,16 +62,6 @@ package body Alr.Commands.Publish is
             end;
 
          end if;
-
-      elsif Cmd.Print_Trusted then
-         Alire.Publish.Print_Trusted_Sites;
-
-      else
-         Trace.Warning
-           ("No publishing subcommand given, defaulting to "
-            & Switch_Prepare & " ...");
-         Cmd.Prepare := True;
-         Execute (Cmd);
       end if;
    end Execute;
 
@@ -88,12 +81,6 @@ package body Alr.Commands.Publish is
          Cmd.Print_Trusted'Access,
          "", "--trusted-sites",
          "Print a list of trusted git repository sites");
-
-      Define_Switch
-        (Config,
-         Cmd.Prepare'Access,
-         "", Switch_Prepare,
-         "Start the publishing assistant using a ready remote origin");
 
       Define_Switch
         (Config,

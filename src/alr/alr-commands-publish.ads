@@ -2,8 +2,6 @@ package Alr.Commands.Publish is
 
    --  Publish lends a helping hand to automate submission of crates/releases.
 
-   Switch_Prepare : constant String := "--prepare";
-
    type Command is new Commands.Command with private;
 
    overriding
@@ -40,15 +38,11 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[" & Switch_Prepare & "] [<URL> [commit]]");
+   is ("[--skip-build] [<URL> [commit]]");
 
 private
 
    type Command is new Commands.Command with record
-      Prepare : aliased Boolean := False;
-      --  Start the assistant with ready sources and manifest; only verify and
-      --  add the origin.
-
       Print_Trusted : aliased Boolean := False;
 
       Skip_Build : aliased Boolean := False;

@@ -440,7 +440,11 @@ package body Alire.Publish is
 
       procedure Git_Error (Msg : String) is
       begin
-         Raise_Checked_Error (Msg & " at " & TTY.URL (Path));
+         if Path /= "." then
+            Raise_Checked_Error (TTY.URL (Path) & ": " & Msg);
+         else
+            Raise_Checked_Error (Msg);
+         end if;
       end Git_Error;
 
    begin
@@ -459,10 +463,12 @@ package body Alire.Publish is
          when Clean =>
             Log_Success ("Local repository is clean.");
          when Ahead =>
-            Git_Error ("Repository has commits yet to be pushed");
+            Git_Error ("Your branch is ahead of remote" & ASCII.LF &
+                         "Please push local commits to the remove branch.");
          when Dirty =>
-            Git_Error (TTY.Emph ("git status")
-                       & " reports working tree not clean");
+            Git_Error (TTY.Emph ("git status") &
+                         " You have unstaged changes. " &
+                         "Please commit or stash them.");
       end case;
 
       --  If given a revision, extract commit and verify it exists locally

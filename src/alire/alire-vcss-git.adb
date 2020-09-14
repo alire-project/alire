@@ -224,25 +224,39 @@ package body Alire.VCSs.Git is
       --  report an 'Ahead' as 'Dirty'.
 
       Out_1 : constant Utils.String_Vector :=
-                 Run_Git_And_Capture (Empty_Vector & "status" & "--porcelain");
+        Run_Git_And_Capture (Empty_Vector & "status" & "--porcelain");
+
+      Untracked_File : Natural := 0;
+      Tracked_File   : Natural := 0;
    begin
 
-      --  Turns out the temporary file we use to capture the output of "git
-      --  status" makes git to return a dirty tree. We filter these out then.
+      for Line of Out_1 loop
+         if Contains (Line, "GNAT-TEMP-") then
+            --  Turns out the temporary file we use to capture the output of
+            --  "git status" makes git to return a dirty tree. We filter these
+            --  out then.
+            null;
+         elsif Starts_With (Line, "??") then
+            Untracked_File := Untracked_File + 1;
+         else
+            Tracked_File := Tracked_File + 1;
+         end if;
+      end loop;
 
-      if (for all Line of Out_1 => Contains (Line, "GNAT-TEMP-")) then
-         --  It's clean, but is it ahead of the remote?
-         if Run_Git_And_Capture (Empty_Vector
-                                 & "rev-list"
-                                 & String'(This.Remote (Repo) & "..HEAD"))
-                                .Is_Empty
+      if Tracked_File /= 0 then
+         --  There are added/modified tracked files
+         return Dirty;
+      else
+         if Run_Git_And_Capture
+           (Empty_Vector
+            & "rev-list"
+            & String'(This.Remote (Repo) & "..HEAD")).Is_Empty
          then
             return Clean;
          else
+            --  At least one local commit not pushed to the remote
             return Ahead;
          end if;
-      else
-         return Dirty;
       end if;
    end Status;
 
