@@ -4,6 +4,35 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### First publishing assistant
+
+PR [#527](https://github.com/alire-project/alire/pull/527).
+
+A new publishing assistant can be invoked with `alr publish [URL [commit]]`. At
+this time, the assistant requires that all necessary metadata for a release,
+excepting the `[origin]` table, is informed in the `alire.toml` file.
+
+The assistant has local and remote modes of operation. In the local mode, the
+user invokes the assistant from within a repository on its computer that is
+up-to-date with its remote, and that contains an Alire workspace. In this case,
+it is enough to run `alr publish`.
+
+In the remote mode, the user must prepare a source file or repository in their
+final online locations, and use `alr publish <URL> [<commit>]`, with the commit
+being mandatory for repositories and not needed for source archives.
+
+In all cases, `alr` will fetch the sources, perform a few checks on the
+completeness of the information, and generate a final metadata file, intended
+to be submitted to the community index via pull request. An upload link is
+provided for convenience that can be used to create this pull request.
+
+Complete information about this feature is available in the updated
+[Publishing](publishing.md) page.
+
+Other features of the assistant are that, in the local mode, a branch or tag
+can be specified to pinpoint a commit, and that the test build of the crate can
+be skipped with `--skip-build`.
+
 ### Move manifest and lock files to top-level folder
 
 PR [#501](https://github.com/alire-project/alire/pull/501).

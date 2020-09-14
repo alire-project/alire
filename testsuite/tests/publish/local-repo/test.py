@@ -50,7 +50,7 @@ with open("lasagna", "wt") as file:
 p = run_alr("--force", "publish", complain_on_error=False)
 assert_match(".*git status reports working tree not clean.*", p.out)
 
-# Even if changes are commited but not pushed
+# Even if changes are committed but not pushed
 assert run(["git", "add", "."]).returncode == 0
 assert run(["git", "commit", "-a", "-m", "please"]).returncode == 0
 p = run_alr("--force", "publish", complain_on_error=False)
