@@ -60,6 +60,8 @@ package Alire.URI with Preelaborate is
    function Scheme (This : URL) return Schemes;
    --  Extract the Scheme part of a URL
 
+   function Authority (This : URL) return String;
+
    function Local_Path (This : URL) return String
      with Pre => Scheme (This) in None | File
      or else raise Checked_Error with Errors.Set
@@ -84,6 +86,13 @@ private
    package U renames Standard.URI;
 
    function L (Str : String) return String renames Utils.To_Lower_Case;
+
+   ---------------
+   -- Authority --
+   ---------------
+
+   function Authority (This : URL) return String
+   is (U.Extract (This, U.Authority));
 
    ----------------
    -- Local_Path --

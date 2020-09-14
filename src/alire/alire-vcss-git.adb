@@ -29,7 +29,9 @@ package body Alire.VCSs.Git is
       --  Make sure git is installed
       Utils.Tools.Check_Tool (Utils.Tools.Git);
 
-      return OS_Lib.Subprocess.Checked_Spawn_And_Capture ("git", Arguments);
+      return
+        OS_Lib.Subprocess.Checked_Spawn_And_Capture
+          ("git", Arguments, Err_To_Out => True);
    end Run_Git_And_Capture;
 
    ------------
@@ -98,6 +100,61 @@ package body Alire.VCSs.Git is
          return Alire.Errors.Get (E);
    end Clone;
 
+   ---------------------
+   -- Revision_Commit --
+   ---------------------
+
+   function Revision_Commit (This   : VCS;
+                             Repo   : Directory_Path;
+                             Rev    : String)
+                             return String
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      declare
+         Output : constant Utils.String_Vector :=
+                 Run_Git_And_Capture
+                   (Empty_Vector
+                    & "log" & Rev
+                    & "-n1" & "--oneline" & "--no-abbrev-commit");
+      begin
+         --  Check expected output
+         if Output.Length in 1 then
+            return Head (Output.First_Element, ' ');
+         else
+            return "";
+         end if;
+      end;
+   exception
+      when others =>
+         --  git exits with code 128 for a non-existing Rev
+         return "";
+   end Revision_Commit;
+
+   ---------------
+   -- Fetch_URL --
+   ---------------
+
+   function Fetch_URL (This   : VCS;
+                       Repo   : Directory_Path;
+                       Origin : String := "origin")
+                       return URL
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : constant Utils.String_Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "config" & "--list");
+   begin
+      for Line of Output loop
+         if Starts_With (Line, "remote." & Origin & ".url") then
+            return Tail (Line, '=');
+         end if;
+      end loop;
+
+      return "";
+   end Fetch_URL;
+
    -----------------
    -- Is_Detached --
    -----------------
@@ -118,6 +175,76 @@ package body Alire.VCSs.Git is
       return not Output.Is_Empty
         and then Utils.Contains (Output.First_Element, "HEAD detached");
    end Is_Detached;
+
+   function Is_Repository (This : VCS;
+                           Path : Directory_Path) return Boolean
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Unused : Utils.String_Vector;
+   begin
+      return
+        OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+          (Command             => "git",
+           Arguments           => Empty_Vector & "status",
+           Output              => Unused,
+           Err_To_Out          => True) = 0;
+   end Is_Repository;
+
+   ------------
+   -- Remote --
+   ------------
+
+   function Remote (This : VCS; Path : Directory_Path) return String is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant Utils.String_Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "remote");
+   begin
+      if Output.Is_Empty then
+         Raise_Checked_Error ("No remote is configured");
+      else
+         return Output.First_Element;
+      end if;
+   end Remote;
+
+   ------------
+   -- Status --
+   ------------
+
+   function Status (This : VCS;
+                    Repo : Directory_Path)
+                    return States
+   is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+
+      --  Out_1 should be portable. Out_2 is used as last resort; I believe
+      --  git is not localized so it should always work but since it relies on
+      --  human output it might break at any time I guess. Worst case, we would
+      --  report an 'Ahead' as 'Dirty'.
+
+      Out_1 : constant Utils.String_Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "status" & "--porcelain");
+   begin
+
+      --  Turns out the temporary file we use to capture the output of "git
+      --  status" makes git to return a dirty tree. We filter these out then.
+
+      if (for all Line of Out_1 => Contains (Line, "GNAT-TEMP-")) then
+         --  It's clean, but is it ahead of the remote?
+         if Run_Git_And_Capture (Empty_Vector
+                                 & "rev-list"
+                                 & String'(This.Remote (Repo) & "..HEAD"))
+                                .Is_Empty
+         then
+            return Clean;
+         else
+            return Ahead;
+         end if;
+      else
+         return Dirty;
+      end if;
+   end Status;
 
    ------------
    -- Update --
@@ -144,5 +271,23 @@ package body Alire.VCSs.Git is
       when E : others =>
          return Alire.Errors.Get (E);
    end Update;
+
+   -----------------
+   -- Head_Commit --
+   -----------------
+
+   function Head_Commit (This : VCS;
+                            Repo : Directory_Path)
+                            return String
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : constant Utils.String_Vector :=
+                 Run_Git_And_Capture
+                   (Empty_Vector
+                    & "log" & "-n1" & "--oneline" & "--no-abbrev-commit");
+   begin
+      return Head (Output.First_Element, ' ');
+   end Head_Commit;
 
 end Alire.VCSs.Git;

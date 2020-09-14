@@ -27,12 +27,13 @@ class PythonScriptDriver(ClassicTestDriver):
     def run(self):
         env = dict(os.environ)
 
-        # If requested, prepare a default environment for Python scripts to
-        # run "alr".
+        # prepare a private environment for Python scripts to run "alr".
+        config_dir = os.path.join(self.test_env['working_dir'],
+                                  'alr-config')
+        prepare_env(config_dir, env)
+
+        # If requested, prepare indexes to be used by "alr".
         if 'indexes' in self.test_env:
-            config_dir = os.path.join(self.test_env['working_dir'],
-                                      'alr-config')
-            prepare_env(config_dir, env)
             prepare_indexes(config_dir,
                             self.test_env['working_dir'],
                             self.test_env.get('indexes', {}))

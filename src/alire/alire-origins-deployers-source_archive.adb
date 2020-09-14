@@ -5,6 +5,7 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.VFS;
+with Alire.URI;
 with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
 
@@ -116,7 +117,8 @@ package body Alire.Origins.Deployers.Source_Archive is
    function Compute_Hash (This   : Deployer;
                           Folder : String;
                           Kind   : Hashes.Kinds) return Hashes.Any_Digest is
-      Archive_Name : constant String := This.Base.Archive_Name;
+      Archive_Name : constant String := Dirs.Simple_Name
+        (This.Base.Archive_Name);
       Archive_File : constant String := Dirs.Compose (Folder, Archive_Name);
    begin
       return Hashes.Digest (Hashes.Hash_File (Kind, Archive_File));
@@ -129,9 +131,26 @@ package body Alire.Origins.Deployers.Source_Archive is
    overriding
    function Fetch (This : Deployer; Folder : String) return Outcome is
    begin
-      return OS_Lib.Download.File (URL      => This.Base.Archive_URL,
-                                   Filename => This.Base.Archive_Name,
-                                   Folder   => Folder);
+
+      --  If the file is local, do a simple copy. While curl seems to work in
+      --  linux also for local files, something funny is going on Windows which
+      --  is difficult to pinpoint.
+
+      if URI.Scheme (This.Base.Archive_URL) in URI.File_Schemes then
+         if not Dirs.Exists (Folder) then
+            Dirs.Create_Directory (Folder);
+         end if;
+
+         Ada.Directories.Copy_File
+           (URI.Local_Path (This.Base.Archive_URL),
+            Dirs.Compose (Folder, Dirs.Simple_Name (This.Base.Archive_Name)));
+
+         return Outcome_Success;
+      else
+         return OS_Lib.Download.File (URL      => This.Base.Archive_URL,
+                                      Filename => This.Base.Archive_Name,
+                                      Folder   => Folder);
+      end if;
    end Fetch;
 
    ------------

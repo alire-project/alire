@@ -36,6 +36,10 @@ package Alire.Utils.TTY with Preelaborate is
    -- Predefined formats --
    ------------------------
 
+   function Success (Text : String := "") return String;
+   --  Prepends Text (in normal formatting) with a green check mark, or a
+   --  simple Success: text if no tty or color enabled.
+
    function OK (Text : String) return String;
    --  Bold Light_Green
 
@@ -64,6 +68,11 @@ package Alire.Utils.TTY with Preelaborate is
    --  For versions/version sets, bold magenta
 
 private
+
+   function Success (Text : String := "") return String is
+     (if Color_Enabled and then Is_TTY
+      then OK ("✓") & " " & Text
+      else "Success: " & Text);
 
    function OK (Text : String) return String is
      (Format (Text,

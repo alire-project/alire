@@ -50,7 +50,7 @@ package body Alire.Origins is
                Separator := I;
                exit;
 
-            when '/' =>
+            when '/' | '\' =>
                Last_Slash := I;
 
             when others =>
@@ -132,6 +132,50 @@ package body Alire.Origins is
       end case;
    end From_String;
 
+   -------------
+   -- New_VCS --
+   -------------
+
+   function New_VCS (URL : Alire.URL; Commit : String) return Origin is
+      use all type URI.Schemes;
+      Scheme  : constant URI.Schemes := URI.Scheme (URL);
+      VCS_URL : constant String :=
+                  (if Utils.Contains (URL, "file:") then
+                      Utils.Tail (URL, ':') -- Remove file: that confuses git
+                   elsif Scheme in URI.VCS_Schemes then
+                      Utils.Tail (URL, '+') -- remove prefix vcs+
+                   elsif Scheme in URI.HTTP then -- A plain URL... check VCS
+                     (if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git")
+                      then URL
+                      else raise Checked_Error with
+                        "ambiguous VCS URL: " & URL)
+                   else
+                      raise Checked_Error with "unknown VCS URL: " & URL);
+
+   begin
+      case Scheme is
+         when Git | HTTP =>
+            if Commit'Length /= Git_Commit'Length then
+               Raise_Checked_Error
+                 ("invalid git commit id, " &
+                    "40 digits hexadecimal expected");
+            end if;
+            return New_Git (VCS_URL, Commit);
+         when Hg =>
+            if Commit'Length /= Hg_Commit'Length then
+               Raise_Checked_Error
+                 ("invalid mercurial commit id, " &
+                    "40 digits hexadecimal expected");
+            end if;
+            return New_Hg (VCS_URL, Commit);
+         when SVN =>
+            return New_SVN (VCS_URL, Commit);
+         when others =>
+            Raise_Checked_Error ("Expected a VCS origin but got: "
+                                 & Scheme'Image);
+      end case;
+   end New_VCS;
+
    ---------------
    -- From_TOML --
    ---------------
@@ -188,10 +232,6 @@ package body Alire.Origins is
                               Context => Keys.Origin);
       URL     : constant String :=
                  Table.Checked_Pop (Keys.URL, TOML_String).As_String;
-      VCS_URL : constant String :=
-                  (if Utils.Contains (URL, "file:")
-                   then Utils.Tail (URL, ':') -- Remove file: that confuses git
-                   else Utils.Tail (URL, '+')); -- remove prefix vcs+
       Scheme  : constant URI.Schemes := URI.Scheme (URL);
       Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
    begin
@@ -210,26 +250,7 @@ package body Alire.Origins is
                Commit : constant String := Table.Checked_Pop
                  (Keys.Commit, TOML_String).As_String;
             begin
-               case Scheme is
-                  when Git =>
-                     if Commit'Length /= Git_Commit'Length then
-                        Raise_Checked_Error
-                          ("invalid git commit id, " &
-                             "40 digits hexadecimal expected");
-                     end if;
-                     This := New_Git (VCS_URL, Commit);
-                  when Hg =>
-                     if Commit'Length /= Hg_Commit'Length then
-                        Raise_Checked_Error
-                          ("invalid mercurial commit id, " &
-                             "40 digits hexadecimal expected");
-                     end if;
-                     This := New_Hg (VCS_URL, Commit);
-                  when SVN =>
-                     This := New_SVN (VCS_URL, Commit);
-                  when others =>
-                     raise Program_Error; -- Can't happen
-               end case;
+               This := New_VCS (URL, Commit);
             end;
 
          when HTTP             =>
@@ -334,7 +355,14 @@ package body Alire.Origins is
             Table.Set (Keys.URL, +("file:" & This.Path));
 
          when VCS_Kinds =>
-            Table.Set (Keys.URL, +(Prefixes (This.Kind).all & This.URL));
+            Table.Set (Keys.URL,
+                       +(Prefixes (This.Kind).all
+                       & (if URI.Scheme (This.URL) in URI.None
+                           --  not needed for remote repos, but for testing
+                           --  ones used locally:
+                          then "file:"
+                          else "")
+                       & This.URL));
             Table.Set (Keys.Commit, +This.Commit);
 
          when External =>
@@ -343,7 +371,9 @@ package body Alire.Origins is
 
          when Source_Archive =>
             Table.Set (Keys.URL, +This.Archive_URL);
-            if This.Archive_Name /= "" then
+            if This.Archive_Name /= "" and then
+              This.Archive_Name /= URL_Basename (This.Archive_URL)
+            then
                Table.Set (Keys.Archive_Name, +This.Archive_Name);
             end if;
 

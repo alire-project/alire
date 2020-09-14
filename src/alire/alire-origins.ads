@@ -64,6 +64,9 @@ package Alire.Origins with Preelaborate is
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name.
 
+   function Get_URL (This : Origin) return Alire.URL with
+     Pre => This.Kind in Filesystem | Source_Archive | VCS_Kinds;
+
    function Is_System (This : Origin) return Boolean is (This.Kind = System);
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
@@ -96,6 +99,10 @@ package Alire.Origins with Preelaborate is
                     return Origin;
 
    function New_SVN (URL : Alire.URL; Commit : String) return Origin;
+
+   function New_VCS (URL : Alire.URL; Commit : String) return Origin;
+   --  Attempt to identify an origin kind from the transport (git+https). If no
+   --  VCS specified, look for ".git" extension.
 
    Unknown_Source_Archive_Name_Error : exception;
 
@@ -266,6 +273,13 @@ private
          then " with hash " & This.Image_Of_Hashes
          else " with hashes " & This.Image_Of_Hashes)
      );
+
+   function Get_URL (This : Origin) return Alire.URL
+   is (case This.Kind is
+          when Filesystem     => This.Path,
+          when Source_Archive => This.Archive_URL,
+          when VCS_Kinds      => This.URL,
+          when others         => raise Checked_Error with "Origin has no URL");
 
    Prefix_External : aliased constant String := "external:";
    Prefix_Git      : aliased constant String := "git+";
