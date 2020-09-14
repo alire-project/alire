@@ -7,6 +7,14 @@ package Alire.Publish is
       Skip_Build : Boolean := False;
    end record;
 
+   procedure Directory_Tar (Path     : Any_Path := ".";
+                            Revision : String   := "HEAD";
+                            Options  : All_Options := (others => <>));
+   --  Publish the release at the given directory, by creating a source archive
+   --  to be uploaded somewhere. Then proceed with Remote_Origin using the
+   --  uploaded archive. If a git repo is at Path, `git archive` will be
+   --  used; otherwise `tar` will be used.
+
    procedure Local_Repository (Path     : Any_Path := ".";
                                Revision : String   := "HEAD";
                                Options  : All_Options := (others => <>)) with

@@ -12,10 +12,12 @@ package Alire.TOML_Index is
 
    subtype Load_Result is Outcome;
 
-   function Manifest_File (Crate   : Crate_Name;
-                           Version : Semantic_Versioning.Version)
+   function Manifest_File (Crate          : Crate_Name;
+                           Version        : Semantic_Versioning.Version;
+                           With_Extension : Boolean := True)
                            return String;
-   --  Get the proper file name for the manifest of an indexed crate
+   --  Get the proper file name for the manifest of an indexed crate. If not
+   --  With_Extension, omit ".toml".
 
    function Manifest_Path (Crate : Crate_Name) return Portable_Path;
    --  Get the expected location of a crate manifest in an index. The result is

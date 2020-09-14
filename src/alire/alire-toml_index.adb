@@ -448,10 +448,13 @@ package body Alire.TOML_Index is
    -- Manifest_File --
    -------------------
 
-   function Manifest_File (Crate   : Crate_Name;
-                           Version : Semantic_Versioning.Version)
+   function Manifest_File (Crate          : Crate_Name;
+                           Version        : Semantic_Versioning.Version;
+                           With_Extension : Boolean := True)
                            return String
-   is ((+Crate) & "-" & Version.Image & ".toml");
+   is ((+Crate) & "-" & Version.Image & (if With_Extension
+                                         then ".toml"
+                                         else ""));
 
    -------------------
    -- Manifest_Path --

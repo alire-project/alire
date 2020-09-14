@@ -57,9 +57,9 @@ package body Alire.Roots is
       elsif not Alire.Manifest.Is_Valid (This.Crate_File, Alire.Manifest.Local)
       then
          return "Manifest is not loadable: " & This.Crate_File;
-      else
-         return "";
       end if;
+
+      return "";
    end Storage_Error;
 
    ---------------

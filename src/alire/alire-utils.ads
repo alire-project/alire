@@ -26,6 +26,10 @@ package Alire.Utils with Preelaborate is
    --  the email can be enclosed in "<...>", with anything before it a
    --  plaintext name.
 
+   type Boolean_Array is array (Positive range <>) of Boolean;
+
+   function Count_True (Booleans : Boolean_Array) return Natural;
+
    function Is_Valid_GitHub_Username (User : String) return Boolean;
    --  Check username is valid according to
    --  https://github.com/shinnn/github-username-regex

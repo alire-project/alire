@@ -20,8 +20,27 @@ package body Alr.Commands.Publish is
                   (Skip_Build => Cmd.Skip_Build);
 
    begin
+      if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 then
+         Reportaise_Wrong_Arguments
+           ("Given switches cannot be simultaneously set");
+      end if;
+
       if Cmd.Print_Trusted then
          Alire.Publish.Print_Trusted_Sites;
+
+      elsif Cmd.Tar then
+
+         if Num_Arguments > 2 then
+            Reportaise_Wrong_Arguments
+              ("Unknown extra arguments, only a mandatory URL"
+               & " and optional revision are expected");
+         end if;
+
+         Requires_Valid_Session;
+         Alire.Publish.Directory_Tar
+           (Path     => (if Num_Arguments >= 1 then Argument (1) else "."),
+            Revision => (if Num_Arguments >= 2 then Argument (2) else "HEAD"),
+            Options  => Options);
 
       else
          if Num_Arguments < 1 then
@@ -76,6 +95,13 @@ package body Alr.Commands.Publish is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch
+        (Config,
+         Cmd.Tar'Access,
+         "", "--tar",
+         "Start the publishing assistant to create a source archive"
+         & "from a local directory");
+
       Define_Switch
         (Config,
          Cmd.Print_Trusted'Access,
