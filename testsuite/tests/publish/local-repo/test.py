@@ -47,13 +47,15 @@ verify_manifest()
 with open("lasagna", "wt") as file:
     file.write("wanted\n")
 
+assert run(["git", "add", "lasagna"]).returncode == 0
+
 p = run_alr("--force", "publish", complain_on_error=False)
-assert_match(".*git status reports working tree not clean.*", p.out)
+assert_match(".*You have unstaged changes.*", p.out)
 
 # Even if changes are committed but not pushed
 assert run(["git", "add", "."]).returncode == 0
 assert run(["git", "commit", "-a", "-m", "please"]).returncode == 0
 p = run_alr("--force", "publish", complain_on_error=False)
-assert_match(".*Repository has commits yet to be pushed.*", p.out)
+assert_match(".*Your branch is ahead of remote.*", p.out)
 
 print('SUCCESS')
