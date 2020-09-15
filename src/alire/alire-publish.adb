@@ -453,7 +453,6 @@ package body Alire.Publish is
       end if;
 
       if not Git.Is_Repository (Root.Value.Path) then
-         Trace.Always ("ROOT " & Root.Value.Path);
          Git_Error ("no git repository found");
       end if;
 
@@ -489,7 +488,16 @@ package body Alire.Publish is
          end if;
 
          declare
-            Fetch_URL : constant String := Git.Fetch_URL (Root.Value.Path);
+            use Utils;
+            Raw_URL   : constant String := Git.Fetch_URL (Root.Value.Path);
+            --  The one reported by the repo, in its public form
+
+            Fetch_URL : constant String :=
+            --  With an added ".git", if it hadn't one. Not usable in local fs.
+                          Raw_URL
+                          & (if Ends_With (To_Lower_Case (Raw_URL), ".git")
+                             then ""
+                             else ".git");
          begin
             --  To allow this call to succeed with local tests, we check
             --  here. For a regular repository we will already have an HTTP
@@ -501,10 +509,14 @@ package body Alire.Publish is
                     ("The remote URL seems to require repository ownership: "
                      & Fetch_URL);
                when URI.None | URI.Unknown =>
-                  Publish.Remote_Origin (URL     => "git+file:" & Fetch_URL,
+                  Publish.Remote_Origin (URL     => "git+file:" & Raw_URL,
                                          Commit  => Commit,
                                          Options => Options);
-               when URI.File | URI.HTTP =>
+               when URI.File =>
+                  Publish.Remote_Origin (URL     => Raw_URL,
+                                         Commit  => Commit,
+                                         Options => Options);
+               when URI.HTTP =>
                   Publish.Remote_Origin (URL     => Fetch_URL,
                                          Commit  => Commit,
                                          Options => Options);
@@ -536,15 +548,24 @@ package body Alire.Publish is
       --  Create origin, which will do more checks, and proceed
 
       declare
+         use Utils;
          Context : Data :=
                      (Options => Options,
 
-                      Origin =>
+                      Origin  =>
+                        --  with commit
                         (if Commit /= "" then
                             Origins.New_VCS (URL, Commit)
-                         elsif URI.Scheme (URL) in URI.VCS_Schemes then
+
+                         --  without commit
+                         elsif URI.Scheme (URL) in URI.VCS_Schemes or else
+                            VCSs.Git.Known_Transformable_Hosts.Contains
+                              (URI.Authority (URL))
+                         then
                             raise Checked_Error with
                               "A commit id is mandatory for a VCS origin"
+
+                         --  plain archive
                          else
                             Origins.New_Source_Archive (URL)),
 
@@ -554,6 +575,7 @@ package body Alire.Publish is
       end;
    exception
       when E : Checked_Error | Origins.Unknown_Source_Archive_Format_Error =>
+         Log_Exception (E);
          Raise_Checked_Error
            (Errors.Wrap
               ("Could not complete the publishing assistant",

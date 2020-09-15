@@ -37,6 +37,9 @@ package Alire.URI with Preelaborate is
       --  Anything understood by git, expressed as git+<actual protocol>, e.g.:
       --  git+http[s], git+file
 
+      Pure_Git,
+      --  An actual git@host:path URI
+
       Hg,
       SVN,
       --  Same considerations as for Git
@@ -121,6 +124,8 @@ private
           File
        elsif Utils.Starts_With (L (U.Scheme (This)), "git+") then
           Git
+       elsif Utils.Starts_With (L (U.Scheme (This)), "git@") then
+          Pure_Git
        elsif Utils.Starts_With (L (U.Scheme (This)), "hg+") then
           Hg
        elsif Utils.Starts_With (L (U.Scheme (This)), "svn+") then

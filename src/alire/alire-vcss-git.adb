@@ -1,8 +1,8 @@
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
-with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
+with Alire.Utils.TTY;
 
 package body Alire.VCSs.Git is
 
@@ -138,7 +138,8 @@ package body Alire.VCSs.Git is
 
    function Fetch_URL (This   : VCS;
                        Repo   : Directory_Path;
-                       Origin : String := "origin")
+                       Origin : String := "origin";
+                       Public : Boolean := True)
                        return URL
    is
       pragma Unreferenced (This);
@@ -148,7 +149,15 @@ package body Alire.VCSs.Git is
    begin
       for Line of Output loop
          if Starts_With (Line, "remote." & Origin & ".url") then
-            return Tail (Line, '=');
+            declare
+               URL : constant Alire.URL := Tail (Line, '=');
+            begin
+               if Public then
+                  return Transform_To_Public (URL);
+               else
+                  return URL;
+               end if;
+            end;
          end if;
       end loop;
 
@@ -259,6 +268,30 @@ package body Alire.VCSs.Git is
          end if;
       end if;
    end Status;
+
+   -------------------------
+   -- Transform_To_Public --
+   -------------------------
+
+   function Transform_To_Public (Remote : String) return URL is
+      Domain : constant String := Head (Tail (Remote, '@'), ':');
+   begin
+      if Starts_With (Remote, "git@") and then
+        Known_Transformable_Hosts.Contains (Domain)
+      then
+         return  Public : constant URL :=
+           "https://" & Domain & "/" & Tail (Remote, ':')
+           & (if Ends_With (Remote, ".git")
+              then ""
+              else ".git")
+         do
+            Trace.Warning ("Private git " & TTY.URL (Remote)
+                           & " transformed to public " & TTY.URL (Public));
+         end return;
+      else
+         return Remote;
+      end if;
+   end Transform_To_Public;
 
    ------------
    -- Update --

@@ -7,7 +7,7 @@ private with Ada.Strings.Unbounded;
 
 with TOML; use all type TOML.Any_Value_Kind;
 
-package Alire.Origins with Preelaborate is
+package Alire.Origins is
 
    type Kinds is
      (External,       -- A do-nothing origin, with some custom description
