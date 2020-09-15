@@ -24,6 +24,8 @@ with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
 
+with GNATCOLL.OS.Constants;
+
 with Semantic_Versioning;
 
 with TOML.File_IO;
@@ -320,21 +322,33 @@ package body Alire.Publish is
 
       procedure Tar_Archive is
       begin
+         pragma Warnings (Off, "condition is always");
+         --  To silence our below check for macOS
+
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             Empty_Vector
             & "cfj"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
-            & "--exclude-vcs"                      -- exclude .git and the like
-            & "--exclude-vcs-ignores"   -- exclude from .gitignore and the like
-            & "--exclude-backups"                -- exclude .#* *~ #*# patterns
-            & "--anchored" & "--exclude='./alire'"      -- exclude alire folder
+            --  exclude .git and the like, with workaround for macOS bsd tar
+            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+               then Empty_Vector
+                    & "--exclude='./.git'"
+                    & "--exclude='./.hg'"
+                    & "--exclude='./.svn'"
+                    & String'("-s,^\./," & Milestone & "/,")
+                    --  Prepend empty milestone dir as required for our tars)
+              else Empty_Vector
+                    & "--exclude-backups"      -- exclude .#* *~ #*# patterns
+                    & "--exclude-vcs"          -- exclude .git, .hg, etc
+                    & "--exclude-vcs-ignores"  -- exclude from .gitignore, etc
+                    & String'("--transform=s,^\./," & Milestone & "/,"))
+                    --  Prepend empty milestone dir as required for our tars
 
-            & String'("--transform=s,^\./," & Milestone & "/,")
-            --  Prepend empty milestone dir as required for our tars
-
+            & "--exclude='./alire'" -- exclude top-level alire folder
             & ".");
+         pragma Warnings (On);
       end Tar_Archive;
 
    begin
