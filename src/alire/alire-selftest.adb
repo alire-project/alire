@@ -1,4 +1,5 @@
 with Alire.Utils;
+with Alire.VCSs.Git;
 
 package body Alire.Selftest is
 
@@ -93,6 +94,34 @@ package body Alire.Selftest is
       pragma Assert (not Valid ((1 .. 40 => 'a')));
    end Check_GitHub_Logins;
 
+   -----------------------
+   -- Check_Git_To_HTTP --
+   -----------------------
+
+   procedure Check_Git_To_HTTP is
+      use VCSs.Git;
+   begin
+      --  Proper transform starting without .git
+      pragma Assert (Transform_To_Public ("git@github.com:user/project") =
+                       "https://github.com/user/project.git");
+
+      --  Proper transform starting with .git
+      pragma Assert (Transform_To_Public ("git@github.com:user/project.git") =
+                       "https://github.com/user/project.git");
+
+      --  GitLab
+      pragma Assert (Transform_To_Public ("git@gitlab.com:user/project") =
+                       "https://gitlab.com/user/project.git");
+
+      --  Unknown site, not transformed
+      pragma Assert (Transform_To_Public ("git@ggithub.com:user/project") =
+                       "git@ggithub.com:user/project");
+
+      --  No-op for HTTPS
+      pragma Assert (Transform_To_Public ("https://github.com/user/project") =
+                       "https://github.com/user/project");
+   end Check_Git_To_HTTP;
+
    ---------
    -- Run --
    ---------
@@ -101,6 +130,7 @@ package body Alire.Selftest is
    begin
       Check_Email_Checks;
       Check_GitHub_Logins;
+      Check_Git_To_HTTP;
 
       Trace.Detail ("Self-checks passed");
    exception
