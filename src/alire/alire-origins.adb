@@ -1,5 +1,6 @@
 with Alire.URI;
-with Alire.Utils;
+with Alire.Utils.TTY;
+with Alire.VCSs.Git;
 
 package body Alire.Origins is
 
@@ -138,17 +139,23 @@ package body Alire.Origins is
 
    function New_VCS (URL : Alire.URL; Commit : String) return Origin is
       use all type URI.Schemes;
-      Scheme  : constant URI.Schemes := URI.Scheme (URL);
+      Scheme      : constant URI.Schemes := URI.Scheme (URL);
+      Transformed : constant Alire.URL := VCSs.Git.Transform_To_Public (URL);
       VCS_URL : constant String :=
                   (if Utils.Contains (URL, "file:") then
                       Utils.Tail (URL, ':') -- Remove file: that confuses git
+                   elsif Utils.Starts_With (URL, "git@") and then
+                      Transformed /= URL -- known and transformable
+                   then
+                      Transformed
                    elsif Scheme in URI.VCS_Schemes then
                       Utils.Tail (URL, '+') -- remove prefix vcs+
                    elsif Scheme in URI.HTTP then -- A plain URL... check VCS
                      (if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git")
                       then URL
-                      elsif URI.Authority (URL) = "github.com" then
-                         URL & ".git"
+                      elsif VCSs.Git.Known_Transformable_Hosts.Contains
+                        (URI.Authority (URL))
+                      then URL & ".git"
                       else raise Checked_Error with
                         "ambiguous VCS URL: " & URL)
                    else
@@ -156,6 +163,14 @@ package body Alire.Origins is
 
    begin
       case Scheme is
+         when Pure_Git =>
+            if Transformed /= URL then
+               return New_VCS (Transformed, Commit);
+            else
+               Raise_Checked_Error
+                 ("Attempting to use a private git@ URL with an unknown host: "
+                  & Utils.TTY.URL (URL));
+            end if;
          when Git | HTTP =>
             if Commit'Length /= Git_Commit'Length then
                Raise_Checked_Error
@@ -173,7 +188,7 @@ package body Alire.Origins is
          when SVN =>
             return New_SVN (VCS_URL, Commit);
          when others =>
-            Raise_Checked_Error ("Expected a VCS origin but got: "
+            Raise_Checked_Error ("Expected a VCS origin but got scheme: "
                                  & Scheme'Image);
       end case;
    end New_VCS;

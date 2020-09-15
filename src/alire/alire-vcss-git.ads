@@ -1,4 +1,9 @@
+with Alire.Utils;
+
 package Alire.VCSs.Git is
+
+   Known_Transformable_Hosts : constant Utils.String_Vector;
+   --  Known hosts that honor the git@ --> https:// transformation
 
    type VCS (<>) is new VCSs.VCS with private;
 
@@ -68,10 +73,21 @@ package Alire.VCSs.Git is
                          return String;
    --  Obtain the currently checked out Rev in the repository
 
+   function Transform_To_Public (Remote : String) return URL;
+   --  For a Known_Transformable_Host, return the https:// equivalent of a
+   --  git@... address. Otherwise return Remote unmodified.
+
 private
 
    type VCS is new VCSs.VCS with null record;
 
    function Handler return VCS is (null record);
+
+   use Utils;
+
+   Known_Transformable_Hosts : constant String_Vector :=
+                                 Empty_Vector
+                                 & "github.com"
+                                 & "gitlab.com";
 
 end Alire.VCSs.Git;
