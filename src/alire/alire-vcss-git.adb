@@ -3,6 +3,7 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
+with Alire.Utils.TTY;
 
 package body Alire.VCSs.Git is
 
@@ -141,6 +142,29 @@ package body Alire.VCSs.Git is
                        Origin : String := "origin")
                        return URL
    is
+
+      -------------------------
+      -- Transform_To_Public --
+      -------------------------
+      --  given a git@github.com:user/repo, return
+      --  https://github.com/user/repo.git
+      function Transform_To_Public (Remote : String) return URL is
+      begin
+         if Starts_With (Remote, "git@github") then
+            return  Public : constant URL :=
+              "https://github.com/" & Tail (Remote, ':')
+              & (if Ends_With (Remote, ".git")
+                 then ""
+                 else ".git")
+            do
+               Trace.Warning ("Private git " & TTY.URL (Remote)
+                              & " transformed to public " & TTY.URL (Public));
+            end return;
+         else
+            return Remote;
+         end if;
+      end Transform_To_Public;
+
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
       Output : constant Utils.String_Vector :=
@@ -148,7 +172,7 @@ package body Alire.VCSs.Git is
    begin
       for Line of Output loop
          if Starts_With (Line, "remote." & Origin & ".url") then
-            return Tail (Line, '=');
+            return Transform_To_Public (Tail (Line, '='));
          end if;
       end loop;
 
