@@ -17,8 +17,25 @@ assert_match(".*Expected a VCS origin but got.*", p.out)
 p = run_alr("publish", "fake.zip", "deadbeef", complain_on_error=False)
 assert_match(".*unknown VCS URL.*", p.out)
 
+# Missing commit for git remotes
+p = run_alr("publish", "git+http://github.com/repo",
+            complain_on_error=False)
+assert_match(".*commit id is mandatory for a VCS origin.*", p.out)
+
+# Detect github case and give more precise error. This serves also to check
+# that github remotes without leading git+ or trailing .git are accepted.
+p = run_alr("publish", "https://github.com/missingext",
+            complain_on_error=False)
+assert_match(".*commit id is mandatory for a VCS origin.*", p.out)
+
+# Bad commit length
+p = run_alr("publish", "git+http://github.com/repo", "deadbeef",
+            complain_on_error=False)
+assert_match(".*invalid git commit id, 40 digits hexadecimal expected.*",
+             p.out)
+
 # VCS without transport or extension
-p = run_alr("publish", "http://github.com/badrepo", "deadbeef",
+p = run_alr("publish", "http://somehost.com/badrepo", "deadbeef",
             complain_on_error=False)
 assert_match(".*ambiguous VCS URL.*", p.out)
 
