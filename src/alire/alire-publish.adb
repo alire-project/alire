@@ -453,7 +453,6 @@ package body Alire.Publish is
       end if;
 
       if not Git.Is_Repository (Root.Value.Path) then
-         Trace.Always ("ROOT " & Root.Value.Path);
          Git_Error ("no git repository found");
       end if;
 
@@ -542,7 +541,9 @@ package body Alire.Publish is
                       Origin =>
                         (if Commit /= "" then
                             Origins.New_VCS (URL, Commit)
-                         elsif URI.Scheme (URL) in URI.VCS_Schemes then
+                         elsif URI.Scheme (URL) in URI.VCS_Schemes or else
+                               URI.Authority (URL) = "github.com"
+                         then
                             raise Checked_Error with
                               "A commit id is mandatory for a VCS origin"
                          else

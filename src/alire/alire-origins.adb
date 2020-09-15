@@ -147,6 +147,8 @@ package body Alire.Origins is
                    elsif Scheme in URI.HTTP then -- A plain URL... check VCS
                      (if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git")
                       then URL
+                      elsif URI.Authority (URL) = "github.com" then
+                         URL & ".git"
                       else raise Checked_Error with
                         "ambiguous VCS URL: " & URL)
                    else
