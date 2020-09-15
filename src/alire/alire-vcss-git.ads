@@ -55,10 +55,12 @@ package Alire.VCSs.Git is
    not overriding
    function Fetch_URL (This   : VCS;
                        Repo   : Directory_Path;
-                       Origin : String := "origin")
+                       Origin : String := "origin";
+                       Public : Boolean := True)
                        return URL;
    --  Retrieve the "fetch" url of the given origin, or "" if no repo, no
-   --  origin, or any other unforeseen circumstance.
+   --  origin, or any other unforeseen circumstance. If Public, a git@github
+   --  private URL is transformed into its equivalent https:// public URL.
 
    not overriding
    function Head_Commit (This : VCS;

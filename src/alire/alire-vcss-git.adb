@@ -139,7 +139,8 @@ package body Alire.VCSs.Git is
 
    function Fetch_URL (This   : VCS;
                        Repo   : Directory_Path;
-                       Origin : String := "origin")
+                       Origin : String := "origin";
+                       Public : Boolean := True)
                        return URL
    is
 
@@ -172,7 +173,15 @@ package body Alire.VCSs.Git is
    begin
       for Line of Output loop
          if Starts_With (Line, "remote." & Origin & ".url") then
-            return Transform_To_Public (Tail (Line, '='));
+            declare
+               URL : constant Alire.URL := Tail (Line, '=');
+            begin
+               if Public then
+                  return Transform_To_Public (URL);
+               else
+                  return URL;
+               end if;
+            end;
          end if;
       end loop;
 
