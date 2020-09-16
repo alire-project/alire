@@ -201,4 +201,38 @@ package body Alire.Utils.User_Input is
                       else No)) = Yes;
    end Confirm_Solution_Changes;
 
+   ---------------------
+   -- Validated_Input --
+   ---------------------
+
+   function Validated_Input
+     (Question : String;
+      Prompt   : String;
+      Valid    : Answer_Set;
+      Default  : access function (User_Input : String) return Answer_Kind;
+      Confirm  : String := "Is this information correct?";
+      Is_Valid : access function (User_Input : String) return Boolean)
+      return Answer_With_Input
+   is
+   begin
+      TIO.Put_Line (Question);
+      loop
+         TIO.Put (Prompt);
+         declare
+            Input : constant String := TIO.Get_Line;
+         begin
+            if Is_Valid (Input) then
+               declare
+                  Result : Answer_With_Input := (Input'Length, Input, No);
+               begin
+                  Result.Answer := Query (Confirm, Valid, Default (Input));
+                  if Result.Answer /= No then
+                     return Result;
+                  end if;
+               end;
+            end if;
+         end;
+      end loop;
+   end Validated_Input;
+
 end Alire.Utils.User_Input;

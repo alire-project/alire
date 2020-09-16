@@ -84,7 +84,7 @@ package body Alire.Publish is
             Log_Success ("Local repository is clean.");
          when Ahead =>
             Git_Error ("Your branch is ahead of remote" & ASCII.LF &
-                         "Please push local commits to the remove branch.",
+                         "Please push local commits to the remote branch.",
                        Path);
          when Dirty =>
             Git_Error (TTY.Emph ("git status") &
@@ -293,9 +293,6 @@ package body Alire.Publish is
                           & (if Is_Repo
                              then ".tgz"
                              else ".tbz2"));
-      Remote_URL : UString;
-      Origin_OK  : Boolean := False;
-
       use Utils.User_Input;
 
       -----------------
@@ -362,39 +359,60 @@ package body Alire.Publish is
 
       Log_Success ("Source archive created successfully.");
 
-      Trace.Always ("Please upload the archive generated at "
-                    & TTY.URL (Archive)
-                    & " to its definitive online storage location.");
-      Trace.Always ("Once you have uploaded the file, enter its URL:");
+      declare
 
-      loop
-         Ada.Text_IO.Put ("Enter URL> ");
-         Remote_URL := +Ada.Text_IO.Get_Line;
-         Trace.Always ("");
-         Trace.Always ("The URL is: " & TTY.URL (+Remote_URL));
+         --------------
+         -- Is_Valid --
+         --------------
 
+         function Is_Valid (Remote_URL : String) return Boolean is
          begin
+            Trace.Always ("");
+            Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
+
             Context.Origin := Origins.New_Source_Archive
-              (+Remote_URL,
+              (Remote_URL,
                Ada.Directories.Simple_Name (Archive));
-            Origin_OK      := True;
+            --  This origin creation may raise if URL is improper
+
+            return True;
          exception
             when E : others =>
-               Origin_OK := False;
                Errors.Pretty_Print
                  (Errors.Wrap
                     ("The URL does not seem to be valid:",
                      Errors.Get (E)));
-         end;
+               return False;
+         end Is_Valid;
 
-         exit when Origin_OK and then Utils.User_Input.Query
-           (Question => "Is this information correct?",
-            Valid    => (Yes | No => True, others => False),
-            Default  => (if Force or else URI.Scheme (+Remote_URL) in URI.HTTP
-                         then Yes
-                         else No)) = Yes;
-      end loop;
+         -----------------
+         -- Get_Default --
+         -----------------
 
+         function Get_Default (Remote_URL : String)
+                               return User_Input.Answer_Kind
+         is (if Force or else URI.Scheme (Remote_URL) in URI.HTTP
+             then Yes
+             else No);
+
+         --  We don't use the following answer because the validation function
+         --  already stores the information we need.
+
+         Unused : constant User_Input.Answer_With_Input :=
+                    User_Input.Validated_Input
+                      (Question =>
+                          "Please upload the archive generated"
+                          & " at " & TTY.URL (Archive)
+                          & " to its definitive online storage location."
+                          & ASCII.LF
+                          & "Once you have uploaded the file, enter its URL:",
+                       Prompt   => "Enter URL> ",
+                       Valid    => (Yes | No => True, others => False),
+                       Default  => Get_Default'Access,
+                       Is_Valid => Is_Valid'Access);
+      begin
+         null; -- Nothing to do, everything happens at Answer_With_Input
+      end;
    end Prepare_Archive;
 
    ----------------------
