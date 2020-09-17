@@ -331,22 +331,24 @@ package body Alire.Publish is
             & "cfj"
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
+            & String'("--exclude=./alire")
+            --  Exclude top-level alire folder, before applying prefix
+
             --  exclude .git and the like, with workaround for macOS bsd tar
             & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
                then Empty_Vector
-                    & "--exclude='./.git'"
-                    & "--exclude='./.hg'"
-                    & "--exclude='./.svn'"
-                    & String'("-s,^\./," & Milestone & "/,")
+                    & "--exclude=./.git"
+                    & "--exclude=./.hg"
+                    & "--exclude=./.svn"
+                    & String'("-s,^./," & Milestone & "/,")
                     --  Prepend empty milestone dir as required for our tars)
               else Empty_Vector
                     & "--exclude-backups"      -- exclude .#* *~ #*# patterns
                     & "--exclude-vcs"          -- exclude .git, .hg, etc
                     & "--exclude-vcs-ignores"  -- exclude from .gitignore, etc
-                    & String'("--transform=s,^\./," & Milestone & "/,"))
+                    & String'("--transform=s,^./," & Milestone & "/,"))
                     --  Prepend empty milestone dir as required for our tars
 
-            & "--exclude='./alire'" -- exclude top-level alire folder
             & ".");
          pragma Warnings (On);
       end Tar_Archive;
