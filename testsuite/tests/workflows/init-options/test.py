@@ -30,7 +30,10 @@ os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
 compare(contents('.'), ['./alire',
                         './alire.lock',
-                        './alire.toml'])
+                        './alire.toml',
+                        'zzz/src',
+                        'zzz/src/xxx.adb',
+                        'zzz/zzz.gpr'])
 
 
 print('SUCCESS')

@@ -202,6 +202,11 @@ package body Alr.Commands.Init is
 
       procedure Create (Filename : String) is
       begin
+         if Ada.Directories.Exists (Filename) then
+            Reportaise_Command_Failed
+              (Filename & " already exists.");
+         end if;
+
          TIO.Create (File, TIO.Out_File, Filename);
       end Create;
       ------------------
@@ -223,10 +228,7 @@ package body Alr.Commands.Init is
       end Put_Line;
 
    begin
-      if Cmd.In_Place then
-         null; -- do nothing
-
-      elsif Cmd.No_Skel then
+      if Cmd.No_Skel then
          Directory.Make_Dir;
 
       else
@@ -272,10 +274,6 @@ package body Alr.Commands.Init is
          raise Command_Failed;
       end if;
 
-      if Cmd.In_Place then
-         Cmd.No_Skel := True;
-      end if;
-
       --  Validation finished
 
       declare
@@ -307,11 +305,13 @@ package body Alr.Commands.Init is
                when Valid =>
                   if Name = Root.Value.Release.Name_Str then
                      Trace.Info
-                       ("Already in working copy, skipping initialization");
+                       ("Already in working copy (" & Alr.Root.Current.Path &
+                          "), skipping initialization");
                   else
                      Reportaise_Command_Failed
                        ("Cannot initialize a working release inside"
-                        & " another release, stopping.");
+                        & " another release (" & Alr.Root.Current.Path &
+                          "), stopping.");
                   end if;
                when Broken =>
                   Reportaise_Command_Failed
