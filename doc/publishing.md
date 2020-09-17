@@ -165,8 +165,15 @@ URL to do so.
 
 ### Starting with a local source folder
 
-Assisting with the creation and upload of a source archive from local sources, as
-a pre-step to the case just presented, is in the roadmap.
+Invoking `alr publish --tar` inside an Alire workspace will result in the
+creation of a source archive at `${CRATE_ROOT}/alire/archives/`. This archive
+must be manually uploaded (for now) by the user to a publicly accessible
+hosting service.
+
+After the upload, the user can supply the URL to fetch this archive to the
+publishing assistant (which will be waiting for this information), and the
+assistant will resume as if it had been invoked with `alr publish <URL>`
+(see #starting-with-a-remote-source-archive).
 
 ### Support for complex projects whose sources become multiple Alire crates
 
