@@ -38,7 +38,7 @@ assert_match('.*'
 # Check environment variable formatting
 run_alr('get', 'hello')
 os.chdir(glob('hello*')[0])
-p = run_alr('setenv', '--unix')
+p = run_alr('printenv', '--unix')
 assert_match('.*'
              'export VAR1="abc"\n'
              'export VAR2="xyz"\n'

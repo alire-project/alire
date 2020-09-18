@@ -38,7 +38,7 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
-with Alr.Commands.Setenv;
+with Alr.Commands.Printenv;
 with Alr.Platform;
 with Alr.Root;
 
@@ -74,7 +74,7 @@ package body Alr.Commands is
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
                        Cmd_With     => new Withing.Command,
-                       Cmd_setenv   => new Setenv.Command);
+                       Cmd_Printenv => new Printenv.Command);
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 

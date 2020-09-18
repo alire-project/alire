@@ -3,7 +3,7 @@ with Alire.Platforms;
 
 with Alr.Root;
 
-package body Alr.Commands.Setenv is
+package body Alr.Commands.Printenv is
 
    -------------
    -- Execute --
@@ -55,8 +55,8 @@ package body Alr.Commands.Setenv is
                  " for instance before starting an IDE.")
       .New_Line
       .Append ("Examples:")
-      .Append ("  - eval $(alr setenv --unix)")
-      .Append ("  - alr setenv --powershell | Invoke-Expression")
+      .Append ("  - eval $(alr printenv --unix)")
+      .Append ("  - alr printenv --powershell | Invoke-Expression")
      );
 
    --------------------
@@ -88,4 +88,4 @@ package body Alr.Commands.Setenv is
                      "Use a Windows CMD shell format for the export");
    end Setup_Switches;
 
-end Alr.Commands.Setenv;
+end Alr.Commands.Printenv;

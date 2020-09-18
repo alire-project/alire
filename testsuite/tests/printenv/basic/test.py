@@ -18,7 +18,7 @@ os.chdir(glob('hello*')[0])
 
 # Run it not quietly to ensure that at normal level
 # the output is not broken by some log message
-p = run_alr('setenv', quiet=False)
+p = run_alr('printenv', quiet=False)
 assert_eq(0, p.status)
 
 expected_gpr_path = []

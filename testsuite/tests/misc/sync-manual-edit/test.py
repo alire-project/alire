@@ -14,7 +14,7 @@ target = 'alire/cache/dependencies/libhello_1.0.0_filesystem'
 
 # After manually adding a dependency run commands that require a valid session.
 # This should cause the expected dependency folder to exist
-for cmd in ['build', 'pin', 'run', 'show', 'with', 'setenv']:
+for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
 
     # Create a new project
     run_alr('init', '--bin', 'xxx')

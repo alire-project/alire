@@ -1,4 +1,4 @@
-package Alr.Commands.Setenv is
+package Alr.Commands.Printenv is
 
    type Command is new Commands.Command with private;
 
@@ -30,4 +30,4 @@ private
       Power_Shell : aliased Boolean := False;
       Cmd_Shell   : aliased Boolean := False;
    end record;
-end Alr.Commands.Setenv;
+end Alr.Commands.Printenv;

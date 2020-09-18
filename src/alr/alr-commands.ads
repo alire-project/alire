@@ -123,7 +123,7 @@ package Alr.Commands is
                       Cmd_Update,
                       Cmd_Version,
                       Cmd_With,
-                      Cmd_setenv);
+                      Cmd_Printenv);
    --  The Cmd_ prefix allows the use of the proper name in child packages
    --  which otherwise cause conflict.
    --  It is a bit ugly but also it makes clear when we are using this
