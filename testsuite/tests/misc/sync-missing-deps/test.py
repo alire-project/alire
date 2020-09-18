@@ -21,7 +21,7 @@ assert os.path.isdir(target), "Directory missing at expected location"
 
 # Run commands that require a valid session after deleting a dependency. All
 # should succeed and recreate the missing dependency folder.
-for cmd in ['build', 'pin', 'run', 'show', 'with', 'setenv']:
+for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
     # Delete folder
     rmtree(target)
 

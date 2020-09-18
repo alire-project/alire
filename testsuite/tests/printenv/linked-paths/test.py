@@ -32,7 +32,7 @@ for i, path in enumerate(expected_gpr_path):
 expected_gpr_path = os.pathsep.join(expected_gpr_path)
 
 # Check paths are proper (base and one extra nested)
-p = run_alr("setenv")
+p = run_alr("printenv")
 assert_match(('export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n' +
               'export ALIRE="True"\n').replace('/', re.escape(dir_separator())),
              p.out)
