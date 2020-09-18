@@ -1,7 +1,6 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Errors;
 with Alire.Lockfiles;
 with Alire.Milestones;
 with Alire.Releases;
@@ -10,10 +9,9 @@ with Alire.Solutions;
 with Alire.Workspace;
 
 with Alr.Platform;
-with Alr.Root;
 with Alr.Utils;
 
-with GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package body Alr.Commands.Init is
 
@@ -24,7 +22,6 @@ package body Alr.Commands.Init is
    --------------
 
    procedure Generate (Cmd : Command) is
-      use GNATCOLL.VFS;
 
       package TIO renames Ada.Text_IO;
 
@@ -281,7 +278,6 @@ package body Alr.Commands.Init is
          Check : constant Alire.Milestones.Allowed_Milestones :=
                    Alire.Milestones.Crate_Versions (Name)
                    with Unreferenced;
-         use all type Alire.Roots.Optional.States;
       begin
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
          then
@@ -289,40 +285,6 @@ package body Alr.Commands.Init is
               ("The crate name is invalid, as it is used internally by"
                & " alr; please choose another name");
          end if;
-
-         if not Cmd.In_Place and then Ada.Directories.Exists (Name) then
-            Log ("Folder " & Utils.Quote (Name)
-                 & " already exists, not proceeding.");
-            raise Command_Failed;
-         end if;
-
-         --  Create and enter folder for generation, if it didn't happen
-         --  already.
-         declare
-            Root : constant Alire.Roots.Optional.Root := Alr.Root.Current;
-         begin
-            case Root.Status is
-               when Valid =>
-                  if Name = Root.Value.Release.Name_Str then
-                     Trace.Info
-                       ("Already in working copy (" & Alr.Root.Current.Path &
-                          "), skipping initialization");
-                  else
-                     Reportaise_Command_Failed
-                       ("Cannot initialize a working release inside"
-                        & " another release (" & Alr.Root.Current.Path &
-                          "), stopping.");
-                  end if;
-               when Broken =>
-                  Reportaise_Command_Failed
-                    (Alire.Errors.Wrap
-                       ("Cannot initialize a working release inside"
-                        & " a workspace with invalid metadata",
-                        Root.Message));
-               when Outside =>
-                  null;
-            end case;
-         end;
 
          Generate (Cmd);
          Trace.Detail ("Initialization completed");
@@ -342,9 +304,7 @@ package body Alr.Commands.Init is
                & " directory, containing minimal sources for an executable"
                & " or library, as specified.")
       .New_Line
-      .Append ("--in-place is intended to be used inside the crate directory"
-               & " to regenerate alire metadata files, if for some reason"
-               & " they become missing or invalid.")
+      .Append ("--in-place is intended to be used inside the crate directory.")
      );
 
    --------------------
