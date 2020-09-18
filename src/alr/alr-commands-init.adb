@@ -330,7 +330,7 @@ package body Alr.Commands.Init is
       Define_Switch (Config,
                      Cmd.In_Place'Access,
                      "", "--in-place",
-                     "Create alr files in current folder (implies --no-skel)");
+                     "Create alr files in current folder");
 
       Define_Switch (Config,
                      Cmd.No_Skel'Access,
