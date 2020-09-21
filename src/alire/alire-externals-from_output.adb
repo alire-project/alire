@@ -19,41 +19,57 @@ package body Alire.Externals.From_Output is
    function Detect (This : External;
                     Name : Crate_Name) return Containers.Release_Set
    is
-      use GNAT.Regpat;
-      Matches : Match_Array (1 .. Match_Count'Last);
-      Output  : constant String :=
-                  OS_Lib.Subprocess.Checked_Spawn_And_Capture
-                    (This.Command.First_Element,
-                     This.Command.Tail).Flatten ("" & ASCII.LF);
-      --  ASCII.LF is used by Regpat for new lines
+      Location : GNAT.OS_Lib.String_Access :=
+                   GNAT.OS_Lib.Locate_Exec_On_Path
+                     (This.Command.First_Element);
    begin
-      return Releases : Containers.Release_Set do
-         Trace.Debug ("Looking for external in version string: " & Output);
-         Match (This.Regexp, Output, Matches);
+      if Location in null then
+         Trace.Debug
+           ("External not detected because executable is not in PATH: "
+            & This.Command.First_Element);
+         return Containers.Release_Sets.Empty_Set;
+      else
+         GNAT.OS_Lib.Free (Location);
+      end if;
 
-         for I in Matches'Range loop
-            if Matches (I) /= No_Match then
-               declare
-                  Version : constant String :=
-                              Output (Matches (I).First .. Matches (I).Last);
-                  Path    : constant Any_Path :=
-                              OS_Lib.Subprocess.Locate_In_Path
-                                (This.Command.First_Element);
-               begin
-                  Trace.Debug ("Identified external from version: " & Version);
+      declare
+         use GNAT.Regpat;
+         Matches : Match_Array (1 .. Match_Count'Last);
+         Output  : constant String :=
+                     OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                       (This.Command.First_Element,
+                        This.Command.Tail).Flatten ("" & ASCII.LF);
+         --  ASCII.LF is used by Regpat for new lines
+      begin
+         return Releases : Containers.Release_Set do
+            Trace.Debug ("Looking for external in version string: " & Output);
+            Match (This.Regexp, Output, Matches);
 
-                  Releases.Insert
-                    (Index.Crate (Name).Base
-                     .Retagging (Semantic_Versioning.Parse (Version))
-                     .Replacing (Origins.New_External ("path " & Path))
-                     .Replacing (Notes => "Detected at " -- prefix of length 12
-                                 & Utils.Shorten
-                                   (String (Path),
-                                    Max_Description_Length - 12)));
-               end;
-            end if;
-         end loop;
-      end return;
+            for I in Matches'Range loop
+               if Matches (I) /= No_Match then
+                  declare
+                     Version : constant String :=
+                                Output (Matches (I).First .. Matches (I).Last);
+                     Path    : constant Any_Path :=
+                                OS_Lib.Subprocess.Locate_In_Path
+                                  (This.Command.First_Element);
+                  begin
+                     Trace.Debug ("Identified external from version: "
+                                  & Version);
+
+                     Releases.Insert
+                       (Index.Crate (Name).Base
+                        .Retagging (Semantic_Versioning.Parse (Version))
+                        .Replacing (Origins.New_External ("path " & Path))
+                        .Replacing (Notes => "Detected at " -- length is 12
+                                    & Utils.Shorten
+                                      (String (Path),
+                                       Max_Description_Length - 12)));
+                  end;
+               end if;
+            end loop;
+         end return;
+      end;
    end Detect;
 
    ---------------
