@@ -27,6 +27,8 @@ package body Alr.Commands.Version is
       Root : constant Alire.Roots.Optional.Root := Alr.Root.Current;
       use all type Alire.Roots.Optional.States;
    begin
+      Trace.Always ("Alr version: " & Alr.Version);
+      Trace.Always ("Alire Library version: " & Alire.Version);
       Trace.Always ("alr status is " & Bootstrap.Status_Line);
       Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
       Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
