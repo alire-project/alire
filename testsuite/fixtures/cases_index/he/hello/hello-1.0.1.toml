@@ -19,7 +19,7 @@ type = "post-fetch"
 command = ["make"]
 
 [[actions."case(os)".linux]]
-type = "post-compile"
+type = "post-build"
 command = ["hello"]
 [available."case(os)"]
 "..." = false

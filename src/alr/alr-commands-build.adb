@@ -35,6 +35,19 @@ package body Alr.Commands.Build is
          Alr.Root.Current.Export_Build_Environment;
       end if;
 
+      --  PRE-BUILD ACTIONS
+      begin
+         Alire.Properties.Actions.Executor.Execute_Actions
+           (Release => Root.Current.Release,
+            Env     => Platform.Properties,
+            Moment  => Alire.Properties.Actions.Pre_Build);
+      exception
+         when others =>
+            Trace.Warning ("A pre-build action failed, " &
+                             "re-run with -vv -d for details");
+            return False;
+      end;
+
       --  COMPILATION
       begin
 
@@ -52,15 +65,15 @@ package body Alr.Commands.Build is
             return False;
       end;
 
-      --  POST-COMPILE ACTIONS
+      --  POST-BUILD ACTIONS
       begin
          Alire.Properties.Actions.Executor.Execute_Actions
            (Release => Root.Current.Release,
             Env     => Platform.Properties,
-            Moment  => Alire.Properties.Actions.Post_Compile);
+            Moment  => Alire.Properties.Actions.Post_Build);
       exception
          when others =>
-            Trace.Warning ("A post-compile action failed, " &
+            Trace.Warning ("A post-build action failed, " &
                              "re-run with -vv -d for details");
             return False;
       end;

@@ -6,9 +6,10 @@ package Alire.Properties.Actions with Preelaborate is
 
    type Moments is
      (
-      Post_Fetch,   -- After being downloaded
-      Post_Compile, -- After being compiled as the working release
-      Test          -- On demand for testing of releases
+      Post_Fetch, -- After being downloaded
+      Pre_Build,  -- Before being compiled as the working release
+      Post_Build, -- After being compiled as the working release
+      Test        -- On demand for testing of releases
      );
 
    type Action (<>) is abstract new Properties.Property with private;

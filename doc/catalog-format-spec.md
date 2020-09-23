@@ -343,7 +343,9 @@ static, i.e. they cannot depend on the context.
    - `post-fetch`: the command is to be run right after getting the package
       sources
 
-   - `post-compile`: the command is to be run right after GPRbuild has been
+   - `pre-build`: the command is to be run right before GPRbuild is run
+
+   - `post-build`: the command is to be run right after GPRbuild has been
       run
 
    - `test`: the command is run on demand for crate testing within the Alire 
