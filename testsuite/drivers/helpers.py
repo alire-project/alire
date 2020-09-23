@@ -41,7 +41,7 @@ def compare(found, wanted):
 # Check line appears in file
 def check_line_in(filename, line):
     """
-    Assert that the `filename` tetx file contains at least one line that
+    Assert that the `filename` text file contains at least one line that
     contains `line`.
     """
     with open(filename, 'r') as f:

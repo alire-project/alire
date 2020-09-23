@@ -23,7 +23,7 @@ package body Alire.Properties.Actions.Executor is
       Guard : Directories.Guard (Enter (This.Working_Folder))
         with Unreferenced;
       --  This presumes the action is being run from the crate root. This is
-      --  true for post-compile root crate actions, post-fetch deployments,
+      --  true for post-build root crate actions, post-fetch deployments,
       --  test runs...
 
       Cmd   : constant String_Vector := Prefix & This.Command_Line;
