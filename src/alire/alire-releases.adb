@@ -675,11 +675,13 @@ package body Alire.Releases is
             when Manifest.Index =>
                raise Program_Error with
                Errors.Set
-                 ("Cannot load manifest from index with proper version: ", E);
+                 ("Cannot load manifest " & This.Name_Str &
+                    " from index with proper version: ", E);
             when Manifest.Local =>
                raise Checked_Error with
                Errors.Set
-                 ("Cannot load manifest, please review contents: ", E);
+                 ("Cannot load manifest " & This.Name_Str &
+                    ", please review contents: ", E);
          end case;
    end From_TOML;
 
