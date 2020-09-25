@@ -24,12 +24,14 @@ with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
 with Alr.Commands.Dev;
+with Alr.Commands.Edit;
 with Alr.Commands.Get;
 with Alr.Commands.Help;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
 with Alr.Commands.List;
 with Alr.Commands.Pin;
+with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
@@ -38,7 +40,6 @@ with Alr.Commands.Test;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
-with Alr.Commands.Printenv;
 with Alr.Platform;
 with Alr.Root;
 
@@ -60,12 +61,14 @@ package body Alr.Commands is
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Config   => new Config.Command,
                        Cmd_Dev      => new Dev.Command,
+                       Cmd_Edit     => new Edit.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Help     => new Help.Command,
                        Cmd_Index    => new Index.Command,
                        Cmd_Init     => new Init.Command,
                        Cmd_List     => new List.Command,
                        Cmd_Pin      => new Pin.Command,
+                       Cmd_Printenv => new Printenv.Command,
                        Cmd_Publish  => new Publish.Command,
                        Cmd_Run      => new Run.Command,
                        Cmd_Search   => new Search.Command,
@@ -73,8 +76,7 @@ package body Alr.Commands is
                        Cmd_Test     => new Test.Command,
                        Cmd_Update   => new Update.Command,
                        Cmd_Version  => new Version.Command,
-                       Cmd_With     => new Withing.Command,
-                       Cmd_Printenv => new Printenv.Command);
+                       Cmd_With     => new Withing.Command);
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 

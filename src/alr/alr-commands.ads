@@ -109,12 +109,14 @@ package Alr.Commands is
                       Cmd_Clean,
                       Cmd_Config,
                       Cmd_Dev,
+                      Cmd_Edit,
                       Cmd_Get,
                       Cmd_Help,
                       Cmd_Index,
                       Cmd_Init,
                       Cmd_List,
                       Cmd_Pin,
+                      Cmd_Printenv,
                       Cmd_Publish,
                       Cmd_Run,
                       Cmd_Search,
@@ -122,8 +124,7 @@ package Alr.Commands is
                       Cmd_Test,
                       Cmd_Update,
                       Cmd_Version,
-                      Cmd_With,
-                      Cmd_Printenv);
+                      Cmd_With);
    --  The Cmd_ prefix allows the use of the proper name in child packages
    --  which otherwise cause conflict.
    --  It is a bit ugly but also it makes clear when we are using this

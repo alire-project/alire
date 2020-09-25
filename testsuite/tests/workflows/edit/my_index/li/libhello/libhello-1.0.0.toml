@@ -1,0 +1,11 @@
+auto-gpr-with = false
+description = "test"
+name = "libhello"
+version = "1.0.0"
+licenses = []
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+project-files = ["project1.gpr", "project2.gpr"]
+
+[origin]
+url = "file:."

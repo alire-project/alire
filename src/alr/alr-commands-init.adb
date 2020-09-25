@@ -76,6 +76,7 @@ package body Alr.Commands.Init is
          end if;
          Put_Line ("   for Source_Dirs use (""src"");");
          Put_Line ("   for Object_Dir use ""obj"";");
+         Put_Line ("   for Create_Missing_Dirs use ""True"";");
          if For_Library then
             Put_Line ("   for Library_Dir use ""lib"";");
             Put_New_Line;
