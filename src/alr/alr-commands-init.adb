@@ -53,6 +53,9 @@ package body Alr.Commands.Init is
       procedure Generate_Program_Main;
       --  Generate the procedure body for the program main of this crate
 
+      procedure Generate_Gitignore;
+      --  Generate or append .gitignore
+
       ---------------------------
       -- Generate_Project_File --
       ---------------------------
@@ -193,6 +196,26 @@ package body Alr.Commands.Init is
          TIO.Close (File);
       end Generate_Program_Main;
 
+      ------------------------
+      -- Generate_Gitignore --
+      ------------------------
+
+      procedure Generate_Gitignore is
+         Filename : constant String :=
+            +Full_Name (Directory / ".gitignore");
+      begin
+         if Ada.Directories.Exists (Filename) then
+            TIO.Open (File, TIO.Append_File, Filename);
+         else
+            TIO.Create (File, TIO.Out_File, Filename);
+         end if;
+
+         Put_Line ("obj/");
+         Put_Line ("lib/");
+         Put_Line ("alire/");
+         TIO.Close (File);
+      end Generate_Gitignore;
+
       ------------
       -- Create --
       ------------
@@ -237,6 +260,7 @@ package body Alr.Commands.Init is
          else
             Generate_Program_Main;
          end if;
+         Generate_Gitignore;
       end if;
 
       declare
