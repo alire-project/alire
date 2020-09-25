@@ -15,7 +15,8 @@ test_dir = os.getcwd()
 
 # Plain init
 run_alr('init', '--bin', 'xxx')
-compare(contents('xxx'), ['xxx/alire',
+compare(contents('xxx'), ['xxx/.gitignore',
+                          'xxx/alire',
                           'xxx/alire.lock',
                           'xxx/alire.toml',
                           'xxx/src',
@@ -25,7 +26,8 @@ compare(contents('xxx'), ['xxx/alire',
 # Plain init, existing empty dir
 os.mkdir('aaa')
 run_alr('init', '--bin', 'aaa')
-compare(contents('aaa'), ['aaa/aaa.gpr',
+compare(contents('aaa'), ['aaa/.gitignore',
+                          'aaa/aaa.gpr',
                           'aaa/alire',
                           'aaa/alire.lock',
                           'aaa/alire.toml',
@@ -58,7 +60,8 @@ os.chdir(test_dir)
 os.mkdir('zzz')
 os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
-compare(contents('.'), ['./alire',
+compare(contents('.'), ['./.gitignore',
+                        './alire',
                         './alire.lock',
                         './alire.toml',
                         './src',
