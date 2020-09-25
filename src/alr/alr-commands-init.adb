@@ -1,21 +1,28 @@
+with AAA.Text_IO;
+
 with Ada.Directories;
 with Ada.Text_IO;
 
-with Alire.Conditional;
+with Alire.Config;
 with Alire.Lockfiles;
 with Alire.Milestones;
-with Alire.Properties.Labeled;
+with Alire.Paths;
 with Alire.Releases;
 with Alire.Roots.Optional;
 with Alire.Solutions;
-with Alire.Workspace;
+with Alire.Utils.TTY;
+with Alire.Utils.User_Input.Query_Config;
 
-with Alr.Platform;
 with Alr.Utils;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
+with TOML;
+
 package body Alr.Commands.Init is
+
+   package TTY renames Alire.Utils.TTY;
+   package UI renames Alire.Utils.User_Input;
 
    Sed_Pattern : constant String := "PROJECT_SKEL";
 
@@ -46,6 +53,30 @@ package body Alr.Commands.Init is
       procedure Put_Line (S : String);
       --  Shortcuts to write to File
 
+      function Escape (S : String) return String
+      --  We trick the TOML exporter to get a valid escaped string
+      is
+         use Alire.Utils;
+         use TOML;
+         Table : constant TOML_Value := Create_Table;
+      begin
+         Table.Set ("key", TOML.Create_String (S));
+
+         --  Remove excess whitespace and quotation
+         return
+           Trim
+             (Trim
+                (Trim (Tail (TOML.Dump_As_String (Table), '=')),
+                 ASCII.LF),
+              '"');
+      end Escape;
+
+      function Q (S : String) return String is ("""" & S & """");
+      --  Quote string
+
+      function Arr (S : String) return String is ("[" & S & "]");
+      --  Wrap string into TOML array
+
       procedure Generate_Project_File;
       --  Generate a project file for this crate
 
@@ -57,6 +88,11 @@ package body Alr.Commands.Init is
 
       procedure Generate_Gitignore;
       --  Generate or append .gitignore
+
+      procedure Generate_Manifest;
+      --  Generates the initial manifest by hand. This is more legible than
+      --  exporting using To_TOML functions. We still use TOML encoding for
+      --  the generated strings to be on the safe side.
 
       ---------------------------
       -- Generate_Project_File --
@@ -219,6 +255,55 @@ package body Alr.Commands.Init is
          TIO.Close (File);
       end Generate_Gitignore;
 
+      -----------------------
+      -- Generate_Manifest --
+      -----------------------
+
+      procedure Generate_Manifest is
+         use Alire.Config;
+      begin
+         if not Defined (Keys.User_Email) or else
+           not Defined (Keys.User_Name) or else
+           not Defined (Keys.User_Github_Login)
+         then
+            AAA.Text_IO.Put_Paragraph
+              ("Alire needs some user information to initialize the crate"
+               & " author and maintainer, for eventual submission to"
+               & " the Alire community index. This information will be"
+               & " interactively requested now.");
+            TIO.New_Line;
+            TIO.Put_Line
+              ("You can edit this information at any time with 'alr config'");
+            TIO.New_Line;
+         end if;
+
+         declare
+            --  Retrieve initial values from config or user. Only the name may
+            --  require encoding, as emails and logins cannot contain strange
+            --  characters.
+            Login    : constant String := UI.Query_Config.User_GitHub_Login;
+            Username : constant String := Escape (UI.Query_Config.User_Name);
+            Email    : constant String := UI.Query_Config.User_Email;
+         begin
+            Create (+Full_Name (Directory / (+Alire.Roots.Crate_File_Name)));
+            Put_Line ("name = " & Q (Lower_Name));
+            Put_Line ("description = " & Q ("Shiny new project"));
+            Put_Line ("version = " & Q ("0.0.0"));
+            Put_New_Line;
+            Put_Line ("authors = " & Arr (Q (Username)));
+            Put_Line ("maintainers = "
+                      & Arr (Q (Username & " <" & Email & ">")));
+            Put_Line ("maintainers-logins = " & Arr (Q (Login)));
+         end;
+
+         if Cmd.Bin then
+            Put_New_Line;
+            Put_Line ("executables = " & Arr (Q (Lower_Name)));
+         end if;
+
+         TIO.Close (File);
+      end Generate_Manifest;
+
       ------------
       -- Create --
       ------------
@@ -232,6 +317,7 @@ package body Alr.Commands.Init is
 
          TIO.Create (File, TIO.Out_File, Filename);
       end Create;
+
       ------------------
       -- Put_New_Line --
       ------------------
@@ -251,11 +337,14 @@ package body Alr.Commands.Init is
       end Put_Line;
 
    begin
-      if Cmd.No_Skel then
-         Directory.Make_Dir;
+      --  Crate dir
+      Directory.Make_Dir;
 
-      else
-         Directory.Make_Dir;
+      --  Empty alire dir
+      Virtual_File'(Directory / (+Alire.Paths.Working_Folder_Inside_Root))
+        .Make_Dir;
+
+      if not Cmd.No_Skel then
          Generate_Project_File;
          Src_Directory.Make_Dir;
          if For_Library then
@@ -266,28 +355,14 @@ package body Alr.Commands.Init is
          Generate_Gitignore;
       end if;
 
-      declare
-         Root : Alire.Roots.Root := Alire.Roots.New_Root
-           (+Name,
-            Ada.Directories.Full_Name (+Directory.Full_Name),
-            Platform.Properties);
-         use Alire.Properties.Labeled;
-      begin
-         --  Set the default executable so it appears in the manifest
-         if Cmd.Bin then
-            Root.Extend (Properties =>
-                           Alire.Conditional.For_Properties.New_Value
-                             (New_Label (Executable, Name)));
-         end if;
+      Generate_Manifest;
 
-         Make_Dir (Create (+Root.Working_Folder));
+      Alire.Lockfiles.Write
+        ((Solution => Alire.Solutions.Empty_Valid_Solution),
+         Alire.Lockfiles.File_Name
+           (+Name, String (Filesystem_String'(Directory.Full_Name))));
 
-         Alire.Workspace.Generate_Manifest (Root.Release, Root);
-
-         Alire.Lockfiles.Write
-           ((Solution => Alire.Solutions.Empty_Valid_Solution),
-            Root.Lock_File);
-      end;
+      Alire.Log_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;
 
    -------------
@@ -322,7 +397,6 @@ package body Alr.Commands.Init is
          end if;
 
          Generate (Cmd);
-         Trace.Detail ("Initialization completed");
       end;
    end Execute;
 

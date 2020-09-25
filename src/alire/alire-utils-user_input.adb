@@ -178,17 +178,18 @@ package body Alire.Utils.User_Input is
 
    begin
       loop
-         TIO.Put_Line (Question);
+         TIO.Put_Line (Question & " (" & "default: '" & Default & "')");
 
          if Not_Interactive or else not Is_TTY then
             return Use_Default;
          end if;
 
-         TIO.Put_Line ("Default: '" & Default & "'");
-
          --  Flush the input that the user may have entered by mistake before
          --  the question is asked.
          Flush_TTY;
+
+         --  Print a prompt
+         TIO.Put ("> ");
 
          --  Get user input
          declare
