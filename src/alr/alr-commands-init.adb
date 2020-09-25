@@ -1,8 +1,10 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with Alire.Conditional;
 with Alire.Lockfiles;
 with Alire.Milestones;
+with Alire.Properties.Labeled;
 with Alire.Releases;
 with Alire.Roots.Optional;
 with Alire.Solutions;
@@ -264,11 +266,19 @@ package body Alr.Commands.Init is
       end if;
 
       declare
-         Root : constant Alire.Roots.Root := Alire.Roots.New_Root
+         Root : Alire.Roots.Root := Alire.Roots.New_Root
            (+Name,
             Ada.Directories.Full_Name (+Directory.Full_Name),
             Platform.Properties);
+         use Alire.Properties.Labeled;
       begin
+         --  Set the default executable so it appears in the manifest
+         if Cmd.Bin then
+            Root.Extend (Properties =>
+                           Alire.Conditional.For_Properties.New_Value
+                             (New_Label (Executable, Name)));
+         end if;
+
          Make_Dir (Create (+Root.Working_Folder));
 
          Alire.Workspace.Generate_Manifest (Root.Release, Root);
