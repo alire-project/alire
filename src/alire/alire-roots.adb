@@ -42,13 +42,21 @@ package body Alire.Roots is
    function Storage_Error (This : Root) return String is
       use Ada.Directories;
    begin
+
+      --  Checks on the alire folder
+
       if not Exists (This.Working_Folder) then
-         return "alire subfolder not found";
+         Trace.Debug ("No alire folder found under " & (+This.Path));
+         --  This ceased to be an error when the manifest was moved up
       elsif Kind (This.Working_Folder) /= Directory then
          return
            "Expected alire folder but found a: " &
            Kind (This.Working_Folder)'Img;
-      elsif not Exists (This.Crate_File) then
+      end if;
+
+      --  Checks on the manifest file
+
+      if not Exists (This.Crate_File) then
          return "Manifest file not found in alire folder";
       elsif Kind (This.Crate_File) /= Ordinary_File then
          return
@@ -57,9 +65,9 @@ package body Alire.Roots is
       elsif not Alire.Manifest.Is_Valid (This.Crate_File, Alire.Manifest.Local)
       then
          return "Manifest is not loadable: " & This.Crate_File;
-      else
-         return "";
       end if;
+
+      return "";
    end Storage_Error;
 
    ---------------

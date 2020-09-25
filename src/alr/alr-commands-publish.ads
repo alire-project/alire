@@ -25,6 +25,8 @@ package Alr.Commands.Publish is
                 & " issue `alr publish` after committing and pushing"
                 & " the new release version.")
        .New_Line
+       .Append ("Use --tar to create a source archive ready to be uploaded.")
+       .New_Line
        .Append ("See the above link for help with other scenarios."));
 
    overriding
@@ -38,7 +40,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [<URL> [commit]]");
+   is ("[--skip-build] [--tar] [<URL> [commit]]]");
 
 private
 
@@ -47,6 +49,9 @@ private
 
       Skip_Build : aliased Boolean := False;
       --  Skip the build check
+
+      Tar        : aliased Boolean := False;
+      --  Start the assistant from a local folder to be tar'ed and uploaded
    end record;
 
 end Alr.Commands.Publish;

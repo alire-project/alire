@@ -24,6 +24,8 @@ with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
 
+with GNATCOLL.OS.Constants;
+
 with Semantic_Versioning;
 
 with TOML.File_IO;
@@ -48,9 +50,51 @@ package body Alire.Publish is
       Origin : Origins.Origin := Origins.New_External ("undefined");
       --  We use external as "undefined" until a proper origin is provided.
 
+      Revision : UString := +"HEAD";
+      --  A particular revision for publishing from a git repo
+
+      Root   : Roots.Optional.Root;
+      --  Some steps require or can use a detected root
+
       Tmp_Deploy_Dir : Directories.Temp_File;
       --  Place to check the sources
    end record;
+
+   ---------------
+   -- Git_Error --
+   ---------------
+
+   procedure Git_Error (Msg : String; Path : Any_Path) is
+   begin
+      if Path /= "." then
+         Raise_Checked_Error (TTY.URL (Path) & ": " & Msg);
+      else
+         Raise_Checked_Error (Msg);
+      end if;
+   end Git_Error;
+
+   ---------------------
+   -- Check_Git_Clean --
+   ---------------------
+
+   procedure Check_Git_Clean (Path : Any_Path) is
+      use all type VCSs.Git.States;
+      Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
+   begin
+      case Git.Status (Path) is
+         when Clean =>
+            Log_Success ("Local repository is clean.");
+         when Ahead =>
+            Git_Error ("Your branch is ahead of remote" & ASCII.LF &
+                         "Please push local commits to the remote branch.",
+                       Path);
+         when Dirty =>
+            Git_Error (TTY.Emph ("git status") &
+                         " You have unstaged changes. " &
+                         "Please commit or stash them.",
+                       Path);
+      end case;
+   end Check_Git_Clean;
 
    -----------------
    -- STEP BODIES --
@@ -227,6 +271,166 @@ package body Alire.Publish is
       end;
    end Generate_Index_Manifest;
 
+   ---------------------
+   -- Prepare_Archive --
+   ---------------------
+
+   procedure Prepare_Archive (Context : in out Data) with
+     Pre => Context.Root.Is_Valid;
+
+   procedure Prepare_Archive (Context : in out Data) is
+      use Utils;
+      Target_Dir : constant Relative_Path :=
+                     Paths.Working_Folder_Inside_Root / "archives";
+      Root       : Roots.Root renames Context.Root.Value;
+      Milestone  : constant String :=
+                     TOML_Index.Manifest_File (Root.Release.Name,
+                                               Root.Release.Version,
+                                               With_Extension => False);
+      Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
+      Is_Repo    : constant Boolean := Git.Is_Repository (Root.Path);
+      Archive    : constant Relative_Path :=
+                     Target_Dir
+                       / (Milestone
+                          & (if Is_Repo
+                             then ".tgz"
+                             else ".tbz2"));
+      use Utils.User_Input;
+
+      -----------------
+      -- Git_Archive --
+      -----------------
+
+      procedure Git_Archive is
+      begin
+         OS_Lib.Subprocess.Checked_Spawn
+           ("git",
+            Empty_Vector
+            & "archive"
+            & "-o" & Archive
+            --  Destination file at alire/archives/crate-version.tar.gz
+
+            & String'("--prefix=" & Milestone & "/")
+            --  Prepend empty milestone dir name as required for our tars
+
+            & (+Context.Revision));
+      end Git_Archive;
+
+      -----------------
+      -- Tar_Archive --
+      -----------------
+
+      procedure Tar_Archive is
+      begin
+         pragma Warnings (Off, "condition is always");
+         --  To silence our below check for macOS
+
+         OS_Lib.Subprocess.Checked_Spawn
+           ("tar",
+            Empty_Vector
+            & "cfj"
+            & Archive --  Destination file at alire/archives/crate-version.tbz2
+
+            & String'("--exclude=./alire")
+            --  Exclude top-level alire folder, before applying prefix
+
+            --  exclude .git and the like, with workaround for macOS bsd tar
+            & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
+               then Empty_Vector
+                    & "--exclude=./.git"
+                    & "--exclude=./.hg"
+                    & "--exclude=./.svn"
+                    & String'("-s,^./," & Milestone & "/,")
+                    --  Prepend empty milestone dir as required for our tars)
+              else Empty_Vector
+                    & "--exclude-backups"      -- exclude .#* *~ #*# patterns
+                    & "--exclude-vcs"          -- exclude .git, .hg, etc
+                    & "--exclude-vcs-ignores"  -- exclude from .gitignore, etc
+                    & String'("--transform=s,^./," & Milestone & "/,"))
+                    --  Prepend empty milestone dir as required for our tars
+
+            & ".");
+         pragma Warnings (On);
+      end Tar_Archive;
+
+   begin
+      if Is_Repo then
+         Check_Git_Clean (Root.Path);
+      else
+         Trace.Warning ("Not in a git repository, assuming plain sources.");
+      end if;
+
+      --  Create a tarball with our required nested structure, and excluding
+      --  the alire folder and our own temporary.
+
+      if not Ada.Directories.Exists (Target_Dir) then
+         Ada.Directories.Create_Path (Target_Dir);
+      end if;
+
+      if Is_Repo then
+         Git_Archive;
+      else
+         Tar_Archive;
+      end if;
+
+      Log_Success ("Source archive created successfully.");
+
+      declare
+
+         --------------
+         -- Is_Valid --
+         --------------
+
+         function Is_Valid (Remote_URL : String) return Boolean is
+         begin
+            Trace.Always ("");
+            Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
+
+            Context.Origin := Origins.New_Source_Archive
+              (Remote_URL,
+               Ada.Directories.Simple_Name (Archive));
+            --  This origin creation may raise if URL is improper
+
+            return True;
+         exception
+            when E : others =>
+               Errors.Pretty_Print
+                 (Errors.Wrap
+                    ("The URL does not seem to be valid:",
+                     Errors.Get (E)));
+               return False;
+         end Is_Valid;
+
+         -----------------
+         -- Get_Default --
+         -----------------
+
+         function Get_Default (Remote_URL : String)
+                               return User_Input.Answer_Kind
+         is (if Force or else URI.Scheme (Remote_URL) in URI.HTTP
+             then Yes
+             else No);
+
+         --  We don't use the following answer because the validation function
+         --  already stores the information we need.
+
+         Unused : constant User_Input.Answer_With_Input :=
+                    User_Input.Validated_Input
+                      (Question =>
+                          "Please upload the archive generated"
+                          & " at " & TTY.URL (Archive)
+                          & " to its definitive online storage location."
+                          & ASCII.LF
+                          & "Once you have uploaded the file, enter its URL:",
+                       Prompt   => "Enter URL> ",
+                       Valid    => (Yes | No => True, others => False),
+                       Default  => Get_Default'Access,
+                       Is_Valid => Is_Valid'Access);
+      begin
+         null; -- Nothing to do, everything happens at Answer_With_Input
+      end;
+   end Prepare_Archive;
+
    ----------------------
    -- Show_And_Confirm --
    ----------------------
@@ -377,14 +581,16 @@ package body Alire.Publish is
 
    --  Step names must be in order of execution:
    type Step_Names is
-     (Step_Verify_Origin,
+     (Step_Prepare_Archive,
+      Step_Verify_Origin,
       Step_Deploy_Sources,
       Step_Check_Build,
       Step_Show_And_Confirm,
       Step_Generate_Index_Manifest);
 
    Steps : constant array (Step_Names) of Step_Subprogram :=
-             (Step_Verify_Origin           => Verify_Origin'Access,
+             (Step_Prepare_Archive         => Prepare_Archive'Access,
+              Step_Verify_Origin           => Verify_Origin'Access,
               Step_Deploy_Sources          => Deploy_Sources'Access,
               Step_Check_Build             => Check_Build'Access,
               Step_Show_And_Confirm        => Show_And_Confirm'Access,
@@ -392,6 +598,7 @@ package body Alire.Publish is
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
+          when Step_Prepare_Archive         => "Prepare remote source archive",
           when Step_Verify_Origin           => "Verify origin URL",
           when Step_Deploy_Sources          => "Deploy sources",
           when Step_Check_Build             => "Build release",
@@ -422,6 +629,31 @@ package body Alire.Publish is
       end loop;
    end Start_At;
 
+   -------------------
+   -- Directory_Tar --
+   -------------------
+
+   procedure Directory_Tar (Path     : Any_Path := ".";
+                            Revision : String   := "HEAD";
+                            Options  : All_Options := (others => <>))
+   is
+      Context : Data :=
+                  (Options        => Options,
+                   Origin         => <>,
+                   Revision       => +Revision,
+                   Root           =>
+                     Roots.Optional.Search_Root (Path),
+                   Tmp_Deploy_Dir => <>);
+
+      Guard   : Directories.Guard (Directories.Enter (Context.Root.Value.Path))
+        with Unreferenced;
+   begin
+      --  TODO: start with filling-in/checking the local manifest. For now,
+      --  start directly with the archive creation.
+
+      Start_At (Step_Prepare_Archive, Context);
+   end Directory_Tar;
+
    ----------------------
    -- Local_Repository --
    ----------------------
@@ -431,21 +663,7 @@ package body Alire.Publish is
                                Options  : All_Options := (others => <>))
    is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
-      use all type VCSs.Git.States;
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
-
-      ---------------
-      -- Git_Error --
-      ---------------
-
-      procedure Git_Error (Msg : String) is
-      begin
-         if Path /= "." then
-            Raise_Checked_Error (TTY.URL (Path) & ": " & Msg);
-         else
-            Raise_Checked_Error (Msg);
-         end if;
-      end Git_Error;
 
    begin
       if not Root.Is_Valid then
@@ -453,22 +671,12 @@ package body Alire.Publish is
       end if;
 
       if not Git.Is_Repository (Root.Value.Path) then
-         Git_Error ("no git repository found");
+         Git_Error ("no git repository found", Root.Value.Path);
       end if;
 
       --  Do not continue if the local repo is dirty
 
-      case Git.Status (Root.Value.Path) is
-         when Clean =>
-            Log_Success ("Local repository is clean.");
-         when Ahead =>
-            Git_Error ("Your branch is ahead of remote" & ASCII.LF &
-                         "Please push local commits to the remove branch.");
-         when Dirty =>
-            Git_Error (TTY.Emph ("git status") &
-                         " You have unstaged changes. " &
-                         "Please commit or stash them.");
-      end case;
+      Check_Git_Clean (Root.Value.Path);
 
       --  If given a revision, extract commit and verify it exists locally
 
@@ -568,6 +776,10 @@ package body Alire.Publish is
                          --  plain archive
                          else
                             Origins.New_Source_Archive (URL)),
+
+                      Revision => +Commit,
+
+                      Root => <>, -- Invalid root, as we are working remotely
 
                       Tmp_Deploy_Dir => <>);
       begin

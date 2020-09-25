@@ -61,6 +61,10 @@ package body Alire.Directories is
                                 else File & ".prev");
    begin
       if Exists (File) then
+         if not Exists (Base_Dir) then
+            Create_Directory (Base_Dir);
+         end if;
+
          Trace.Debug ("Backing up " & File
                       & " with base dir: " & Base_Dir);
          Copy_File (File, Dst, "mode=overwrite");

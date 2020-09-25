@@ -13,7 +13,7 @@ package Alire.Roots.Optional is
 
    --  Hit a GNAT bug trying to use Outcomes.Indefinite... using custom impl
 
-   type Root (<>) is new Outcome with private;
+   type Root is new Outcome with private;
 
    type Reference (Ptr : not null access constant Roots.Root)
    is limited null record with
@@ -47,13 +47,17 @@ package Alire.Roots.Optional is
 
 private
 
-   type Root (Status : States) is new Outcome with record
+   type Root_Data (Status : States := Outside) is record
       case Status is
          when Valid =>
             Value : aliased Roots.Root;
          when others =>
             null;
       end case;
+   end record;
+
+   type Root is new Outcome with record
+      Data : Root_Data;
    end record;
 
    overriding

@@ -164,6 +164,21 @@ package body Alire.Utils is
                     Data => Str);
    end Could_Be_An_Email;
 
+   ----------------
+   -- Count_True --
+   ----------------
+
+   function Count_True (Booleans : Boolean_Array) return Natural is
+   begin
+      return Set : Natural := 0 do
+         for Bool of Booleans loop
+            if Bool then
+               Set := Set + 1;
+            end if;
+         end loop;
+      end return;
+   end Count_True;
+
    ------------
    -- Crunch --
    ------------

@@ -14,7 +14,7 @@ package body Alire.Roots.Optional is
                             ("Could not detect a session folder"
                              & " at current or parent locations",
                              Report => False) with
-                          Status => Outside);
+                          Data => (Status => Outside));
 
    -----------------
    -- Detect_Root --
@@ -94,7 +94,7 @@ package body Alire.Roots.Optional is
    ------------
 
    function Status (This : Root) return States
-   is (This.Status);
+   is (This.Data.Status);
 
    -----------
    -- Value --
@@ -104,7 +104,7 @@ package body Alire.Roots.Optional is
    is
    begin
       This.Assert;
-      return Reference'(Ptr => This.Value'Access);
+      return Reference'(Ptr => This.Data.Value'Access);
    end Value;
 
    ---------------------
@@ -117,10 +117,10 @@ package body Alire.Roots.Optional is
                              return Root
    is (if Status = Outside then
           (Alire.Outcome_Failure (Message, Report)
-                  with Status => Outside)
+                  with Data => (Status => Outside))
        elsif Status = Broken then
           (Alire.Outcome_Failure (Message, Report)
-                  with Status => Broken)
+                  with Data => (Status => Broken))
        else
           raise Program_Error with "precondition not fulfilled");
 
@@ -130,7 +130,8 @@ package body Alire.Roots.Optional is
 
    function Outcome_Success (This : Roots.Root) return Optional.Root
    is (Alire.Outcome_Success with
-       Status => Valid,
-       Value  => This);
+         Data   =>
+           (Status => Valid,
+            Value  => This));
 
 end Alire.Roots.Optional;

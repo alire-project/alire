@@ -4,6 +4,15 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Assistance to generate and publish as tarball
+
+PR [#529](https://github.com/alire-project/alire/pull/529).
+
+By using `alr publish --tar`, the publishing assistant starts with the
+creation of a tarball of the sources in an Alire workspace. The user must
+upload this tarball to an online location, after which the assistant proceeds
+as if it had been invoked with `alr publish http[s]://url/to/tarball.tgz`.
+
 ### First publishing assistant
 
 PR [#527](https://github.com/alire-project/alire/pull/527).

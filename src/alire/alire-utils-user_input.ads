@@ -23,6 +23,29 @@ package Alire.Utils.User_Input is
    --  If interactive, ask the user for one of the valid answer.
    --  Otherwise return the Default answer.
 
+   type Answer_With_Input (Length : Natural) is record
+      Input  : String (1 .. Length);
+      Answer : Answer_Kind;
+   end record;
+
+   function Validated_Input
+     (Question : String;
+      Prompt   : String;
+      Valid    : Answer_Set;
+      Default  : access function (User_Input : String) return Answer_Kind;
+      Confirm  : String := "Is this information correct?";
+      Is_Valid : access function (User_Input : String) return Boolean)
+
+      return Answer_With_Input;
+   --  Interactive prompt for information from the user, with confirmation:
+   --  Put_Line (Question)
+   --  loop
+   --     Put (Prompt); Get_Line (User_Input);
+   --     if Is_Valid (User_Input) then
+   --        exit when Query (Confirm, Valid, Default (User_Input)) /= No;
+   --     end if;
+   --  end loop
+
    function Img (Kind : Answer_Kind) return String;
 
    procedure Continue_Or_Abort;
