@@ -1,5 +1,5 @@
 """
-Test a basic auto withing of gpr file.
+Test alr edit with two project files defined.
 """
 
 from glob import glob
