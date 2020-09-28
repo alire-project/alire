@@ -150,6 +150,67 @@ package body Alire.Utils.User_Input is
           when No     => "No",
           when Always => "Always");
 
+   ------------------
+   -- Query_String --
+   ------------------
+
+   function Query_String (Question   : String;
+                          Default    : String;
+                          Validation : String_Validation_Access)
+                          return String
+   is
+      -----------------
+      -- Use_Default --
+      -----------------
+
+      function Use_Default return String is
+      begin
+         TIO.Put_Line ("Using default: '" & Default & "'");
+         return Default;
+      end Use_Default;
+
+      --------------
+      -- Is_Valid --
+      --------------
+
+      function Is_Valid (Str : String) return Boolean
+      is (Validation = null or else Validation (Str));
+
+   begin
+      loop
+         TIO.Put_Line (Question);
+
+         if Not_Interactive or else not Is_TTY then
+            return Use_Default;
+         end if;
+
+         TIO.Put_Line ("Default: '" & Default & "'");
+
+         --  Flush the input that the user may have entered by mistake before
+         --  the question is asked.
+         Flush_TTY;
+
+         --  Get user input
+         declare
+            Input : constant String := TIO.Get_Line;
+         begin
+
+            --  Empty line means the user pressed enter without any answer
+            if Input'Length = 0 and then Is_Valid (Default) then
+               return Use_Default;
+            end if;
+
+            if Is_Valid (Input) then
+
+               --  We got a valid answer
+               return Input;
+            end if;
+
+            TIO.Put_Line ("Invalid answer.");
+         end;
+      end loop;
+   end Query_String;
+
    -----------------------
    -- Continue_Or_Abort --
    -----------------------

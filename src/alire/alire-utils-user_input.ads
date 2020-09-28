@@ -48,6 +48,21 @@ package Alire.Utils.User_Input is
 
    function Img (Kind : Answer_Kind) return String;
 
+   type String_Validation_Access is
+     access function (Str : String) return Boolean;
+
+   function Query_String (Question   : String;
+                          Default    : String;
+                          Validation : String_Validation_Access)
+                          return String
+     with Pre => Validation = null or else Validation (Default);
+   --  If interactive, ask the user to provide a valid string.
+   --  Otherwise return the Default value.
+   --
+   --  If Validation is null, any input is accepted.
+   --
+   --  The Default value has to be a valid input.
+
    procedure Continue_Or_Abort;
    --  If interactive, ask the user to press Enter or Ctrl-C to stop.
    --  Output a log trace otherwise and continue.
