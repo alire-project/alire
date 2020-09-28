@@ -301,4 +301,22 @@ package body Alire.Roots is
       end if;
    end Sync_Solution_And_Deps;
 
+   ------------
+   -- Extend --
+   ------------
+
+   procedure Extend
+     (This         : in out Root;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
+      Properties   : Conditional.Properties   := Conditional.No_Properties;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
+   is
+   begin
+      This.Release.Replace_Element
+        (This.Release.Element.Extending
+           (Dependencies,
+            Properties,
+            Available));
+   end Extend;
+
 end Alire.Roots;

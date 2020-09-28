@@ -1,8 +1,10 @@
 private with Alire.Containers;
 
 limited with Alire.Environment;
+with Alire.Conditional;
 with Alire.Properties;
 with Alire.Releases;
+with Alire.Requisites;
 with Alire.Solutions;
 with Alire.Utils;
 
@@ -52,6 +54,13 @@ package Alire.Roots is
 
    procedure Export_Build_Environment (This : Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
+
+   procedure Extend
+     (This         : in out Root;
+      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
+      Properties   : Conditional.Properties   := Conditional.No_Properties;
+      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites);
+   --  Add dependencies/properties/requisites to the root release
 
    function Path (This : Root) return Absolute_Path;
 
