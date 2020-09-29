@@ -184,12 +184,12 @@ package body Alire.Utils.User_Input is
             return Use_Default;
          end if;
 
+         --  Print a prompt
+         TIO.Put ("> ");
+
          --  Flush the input that the user may have entered by mistake before
          --  the question is asked.
          Flush_TTY;
-
-         --  Print a prompt
-         TIO.Put ("> ");
 
          --  Get user input
          declare
