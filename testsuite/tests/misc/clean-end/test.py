@@ -17,8 +17,8 @@ assert_match(".*Cannot continue with invalid session:.*"  # skip logging prefix
              run_alr('with', quiet=False, complain_on_error=False).out)
 
 # Commands within a trivial session
-assert_eq("",
-          run_alr('init', '--bin', 'xxx').out)
+assert_match(".*initialized successfully.*",
+             run_alr('init', '--bin', 'xxx', quiet=False).out)
 os.chdir('xxx')
 
 assert_eq("",

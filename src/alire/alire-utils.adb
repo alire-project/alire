@@ -1,7 +1,6 @@
 with Ada.Command_Line;
 
 with Ada.Streams.Stream_IO;
-with Ada.Strings.Maps;
 
 with GNAT.Case_Util;
 with GNAT.OS_Lib;
@@ -268,6 +267,14 @@ package body Alire.Utils is
       end return;
    end Indent;
 
+   -------------------------------
+   -- Is_Valid_Full_Person_Name --
+   -------------------------------
+
+   function Is_Valid_Full_Person_Name (Name : String) return Boolean
+   is (for all C of Name =>
+          C not in Character'Val (0) .. Character'Val (31) | '\');
+
    ------------------------------
    -- Is_Valid_GitHub_Username --
    ------------------------------
@@ -312,10 +319,10 @@ package body Alire.Utils is
       if First = 0 then
          return Text;
       else
-         return Replace
-           (Replace_Slice (Text, First, First + Match'Length - 1, Subst),
-            Match,
-            Subst);
+         return
+           Text (Text'First .. First - 1)
+           & Subst
+           & Replace (Text (First + Match'Length .. Text'Last), Match, Subst);
       end if;
    end Replace;
 

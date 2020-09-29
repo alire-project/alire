@@ -35,7 +35,8 @@ package Alr.Utils is
    --  If Str contains Separator, the rhs is returned
    --  Otherwise ""
 
-   function Trim (S : String) return String renames Alire.Utils.Trim;
+   function Trim (S : String; Target : Character := ' ')
+                  return String renames Alire.Utils.Trim;
 
    --  General containers
 

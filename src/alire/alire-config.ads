@@ -110,6 +110,17 @@ package Alire.Config is
    procedure Print_Builtins_Doc;
    --  Print a Markdown documentation for the built-in configuration options
 
+   package Keys is
+
+      --  A few predefined keys that are used in several places. This list is
+      --  not exhaustive.
+
+      User_Email        : constant Config_Key := "user.email";
+      User_Name         : constant Config_Key := "user.name";
+      User_Github_Login : constant Config_Key := "user.github_login";
+
+   end Keys;
+
 private
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
@@ -163,15 +174,15 @@ private
 
    Builtins : constant array (Natural range <>) of Builtin_Entry :=
      (
-      (+"user.name",
+      (+Keys.User_Name,
        Cfg_String,
        +("User full name. Used for the authors and " &
           "maintainers field of a new crate.")),
-      (+"user.email",
+      (+Keys.User_Email,
        Cfg_Email,
        +("User email address. Used for the authors and" &
            " maintainers field of a new crate.")),
-      (+"user.github_login",
+      (+Keys.User_Github_Login,
        Cfg_GitHub_Login,
        +("User GitHub login/username. Used to for the maintainers-logins " &
            "field of a new crate.")),

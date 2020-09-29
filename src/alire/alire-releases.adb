@@ -5,10 +5,10 @@ with Ada.Text_IO;
 with Alire.Crates;
 with Alire.Defaults;
 with Alire.Errors;
+with Alire.Properties.Bool;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
-with Alire.Properties.Bool;
 
 with GNAT.IO; -- To keep preelaborable
 
@@ -39,13 +39,7 @@ package body Alire.Releases is
    function Default_Properties return Conditional.Properties
    is (Conditional.For_Properties.New_Value
        (New_Label (Description,
-                   Defaults.Description)) and
-       Conditional.For_Properties.New_Value
-       (New_Label (Maintainer,
-                   Defaults.Maintainer)) and
-       Conditional.For_Properties.New_Value
-       (New_Label (Maintainers_Logins,
-                   Defaults.Maintainer_Login)));
+                   Defaults.Description)));
 
    ---------------
    -- Extending --

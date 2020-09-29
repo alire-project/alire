@@ -4,6 +4,7 @@ with Ada.Containers.Indefinite_Vectors;
 with Ada.Finalization;
 
 private with Ada.Strings.Fixed;
+private with Ada.Strings.Maps;
 
 package Alire.Utils with Preelaborate is
 
@@ -30,6 +31,9 @@ package Alire.Utils with Preelaborate is
 
    function Count_True (Booleans : Boolean_Array) return Natural;
 
+   function Is_Valid_Full_Person_Name (Name : String) return Boolean;
+   --  Validate that a name does not contain control/escape characters
+
    function Is_Valid_GitHub_Username (User : String) return Boolean;
    --  Check username is valid according to
    --  https://github.com/shinnn/github-username-regex
@@ -55,8 +59,8 @@ package Alire.Utils with Preelaborate is
    --  If Str contains Separator, the rhs is returned
    --  Otherwise ""
 
-   function Trim (S : String) return String;
-   --  Remove spaces at S extremes
+   function Trim (S : String; Target : Character := ' ') return String;
+   --  Remove Target at S extremes
 
    function Starts_With (Full_String, Substring : String) return Boolean is
      (Full_String'Length >= Substring'Length
@@ -75,6 +79,7 @@ package Alire.Utils with Preelaborate is
                      Match : String;
                      Subst : String)
                      return String;
+   --  Replace all occurrences of Match in Text with Subst
 
    type Halves is (Head, Tail);
 
@@ -201,7 +206,10 @@ private
    function Quote (S : String) return String is
      ("""" & S & """");
 
-   function Trim (S : String) return String is
-     (Ada.Strings.Fixed.Trim (S, Ada.Strings.Both));
+   function Trim (S : String; Target : Character := ' ') return String is
+     (Ada.Strings.Fixed.Trim
+        (S,
+         Left  => Ada.Strings.Maps.To_Set (Target),
+         Right => Ada.Strings.Maps.To_Set (Target)));
 
 end Alire.Utils;
