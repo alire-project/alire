@@ -7,6 +7,8 @@ on:
       - '**.md'
       - '**.rst'
       - '**.txt'
+  release:
+    types: [created]
 
 env:
   alire_index: ""
@@ -31,10 +33,9 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v1
-
-    - name: Check out submodules
-      run: git submodule update --init --recursive
+      uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Pull docker image
       run: docker pull alire/gnat:${{ matrix.tag }}
@@ -60,10 +61,68 @@ jobs:
         name: e3-log-${{ matrix.tag }}.zip
         path: testsuite/out
 
-# Not working (pending feedback from github):
-# Issue: https://github.com/actions/starter-workflows/issues/137
-# name: Build alr_env.gpr
-# uses: mosteo/actions/gprbuild@master
-# with:
-#   docker-image: ${{ matrix.tag }}
-#   project-file: alr_env.gpr
+    # Release steps start here. These only run during a release creation.
+
+    - name: Package binaries
+      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      run: zip alr-bin-${{ matrix.tag }}.zip bin/alr LICENSE.txt
+
+    - name: Retrieve upload URL for the release
+      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      id: get_release
+      uses: bruceadams/get-release@v1.2.1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Get release version
+      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      id: get_version
+      uses: battila7/get-version-action@v2
+
+    - name: Upload binary assets
+      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        asset_path: alr-bin-${{ matrix.tag }}.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ matrix.tag }}.zip
+        asset_content_type: application/zip
+
+    ############
+    # AppImage #
+    ############
+
+    - name: Install AppImage's linuxdeploy
+      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      uses: miurahr/install-linuxdeploy-action@releases/v1
+      with:
+        plugins: appimage
+
+    - name: Copy license into AppImage
+      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      run: |
+        mkdir -p AppDir
+        cp LICENSE.txt AppDir/
+
+    - name: Create AppImage
+      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      run: >
+        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr 
+        -d resources/alr.desktop -i resources/alr.png --output appimage
+
+    - name: Rename AppImage
+      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      run: mv alr*AppImage alr.AppImage
+
+    - name: Upload AppImage asset
+      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        asset_path: alr.AppImage
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}.AppImage
+        asset_content_type: application/x-elf
