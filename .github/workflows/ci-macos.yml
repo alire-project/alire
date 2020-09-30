@@ -39,6 +39,14 @@ jobs:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
 
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: alr-bin-macos.zip
+        path: |
+          bin/alr
+          LICENSE.txt
+
     - name: Upload logs (if failed)
       if: failure()
       uses: actions/upload-artifact@master

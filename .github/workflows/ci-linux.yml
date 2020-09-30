@@ -45,6 +45,14 @@ jobs:
         -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}"
         alire/gnat:${{ matrix.tag }} scripts/ci-github.sh
 
+    - name: Upload binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: alr-bin-${{ matrix.tag }}.zip
+        path: |
+          bin/alr
+          LICENSE.txt
+
     - name: Upload logs (if failed)
       if: failure()
       uses: actions/upload-artifact@master
