@@ -7,6 +7,8 @@ on:
       - '**.md'
       - '**.rst'
       - '**.txt'
+  release:
+    types: [created]
 
 jobs:
 
@@ -17,10 +19,9 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v1
-
-    - name: Check out submodules
-      run: git submodule update --init --recursive
+      uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Install toolchain
       uses: ada-actions/toolchain@ce2020
@@ -53,3 +54,32 @@ jobs:
       with:
         name: testsuite-log-macos.zip
         path: testsuite/out
+
+    # Release steps start here. These only run during a release creation.
+
+    - name: Retrieve upload URL for the release
+      if: github.event_name == 'release'
+      id: get_release
+      uses: bruceadams/get-release@v1.2.1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Get release version
+      id: get_version
+      if: github.event_name == 'release'
+      uses: battila7/get-version-action@v2
+
+    - name: Package release binaries
+      if: github.event_name == 'release'
+      run: zip alr-bin-macos.zip bin/alr LICENSE.txt
+
+    - name: Upload release assets
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        asset_path: alr-bin-macos.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-macos.zip
+        asset_content_type: application/zip
