@@ -4,6 +4,7 @@ with "alire_common";
 with "ajunitgen";
 with "ansi";
 with "gnatcoll";
+with "minirest";
 with "semantic_versioning";
 with "simple_logging";
 with "uri";

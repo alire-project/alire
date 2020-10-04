@@ -6,6 +6,7 @@ with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Features.Index;
+with Alire.GitHub;
 with Alire.Hashes;
 with Alire.Index;
 with Alire.Manifest;
@@ -21,7 +22,7 @@ with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.Utils.TTY;
-with Alire.Utils.User_Input;
+with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 
 with GNATCOLL.OS.Constants;
@@ -255,12 +256,28 @@ package body Alire.Publish is
          Log_Success
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
-         Log_Success
-           ("Please upload this file to "
-            & TTY.URL
-              (Index.Community_Upload_URL
-               & "/" & TOML_Index.Manifest_Path (Name))
-            & " to create a pull request against the community index.");
+
+         --  Show the upload URL in normal circumstances, or a more generic
+         --  message otherwise (when lacking a github login).
+
+         if Config.Defined (Config.Keys.User_Github_Login) then
+            Log_Info
+              ("Please upload this file to "
+               & TTY.URL
+                 (Index.Community_Host & "/"
+                  & Config.Get (Config.Keys.User_Github_Login, "") & "/"
+                  & Index.Community_Repo_Name
+                  & "/upload/"
+                  & Index.Community_Branch & "/"
+                  & TOML_Index.Manifest_Path (Name))
+               & " to create a pull request against the community index.");
+         else
+            Log_Info
+              ("Please create a pull request against the community index at "
+               & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
+               & " including this file at "
+               & TTY.URL (TOML_Index.Manifest_Path (Name)));
+         end if;
 
       exception
          when others =>
@@ -523,6 +540,80 @@ package body Alire.Publish is
    end Show_And_Confirm;
 
    -------------------
+   -- Verify_Github --
+   -------------------
+
+   procedure Verify_Github (Context : in out Data) is
+      pragma Unreferenced (Context);
+   begin
+
+      --  Early return if forcing
+
+      if Force then
+         Trace.Warning ("GitHub checks skipped");
+         return;
+      end if;
+
+      --  User has an account
+
+      if not Config.Defined (Config.Keys.User_Github_Login) then
+         Log_Info ("Publishing to the community index"
+                   & " requires a GitHub account.");
+      else
+         Log_Success ("User has a GitHub account: " & TTY.Emph
+                      (Utils.User_Input.Query_Config.User_GitHub_Login));
+      end if;
+
+      --  Check several remote GitHub items
+
+      declare
+         Login : constant String :=
+                   Utils.User_Input.Query_Config.User_GitHub_Login;
+      begin
+
+         --  User must exist
+
+         if not GitHub.User_Exists (Login) then
+            Raise_Checked_Error
+              ("Your GitHub login does not seem to exist: "
+               & TTY.Emph (Login));
+         end if;
+
+         --  It has to have its own fork of the repo
+
+         if not GitHub.Repo_Exists (Login, Index.Community_Repo_Name) then
+            Raise_Checked_Error
+              ("You must fork the community index to your GitHub account"
+               & ASCII.LF & "Please visit "
+               & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
+               & " and fork the repository.");
+         else
+            Log_Success ("User has forked the community repository");
+         end if;
+
+         --  The repo must contain the base branch, or otherwise GitHub
+         --  redirects to the main repository page with an error banner on top.
+
+         if not GitHub.Branch_Exists (User   => Login,
+                                      Repo   => Index.Community_Repo_Name,
+                                      Branch => Index.Community_Branch)
+         then
+            Raise_Checked_Error
+              ("Your index fork is missing the current base branch ("
+               & TTY.Emph (Index.Community_Branch) & ")"
+               & " for pull requests to the community repository" & ASCII.LF
+               & "Please synchronize this branch and try again" & ASCII.LF
+               & "Your fork URL is: "
+               & TTY.URL (Index.Community_Host
+                 & "/" & Login & "/" & Index.Community_Repo_Name));
+         else
+            Log_Success ("User's fork contains base branch: "
+                         & TTY.Emph (Index.Community_Branch));
+         end if;
+      end;
+   end Verify_Github;
+
+   -------------------
    -- Verify_Origin --
    -------------------
 
@@ -583,6 +674,7 @@ package body Alire.Publish is
    type Step_Names is
      (Step_Prepare_Archive,
       Step_Verify_Origin,
+      Step_Verify_Github,
       Step_Deploy_Sources,
       Step_Check_Build,
       Step_Show_And_Confirm,
@@ -591,6 +683,7 @@ package body Alire.Publish is
    Steps : constant array (Step_Names) of Step_Subprogram :=
              (Step_Prepare_Archive         => Prepare_Archive'Access,
               Step_Verify_Origin           => Verify_Origin'Access,
+              Step_Verify_Github           => Verify_Github'Access,
               Step_Deploy_Sources          => Deploy_Sources'Access,
               Step_Check_Build             => Check_Build'Access,
               Step_Show_And_Confirm        => Show_And_Confirm'Access,
@@ -600,6 +693,7 @@ package body Alire.Publish is
    is (case Step is
           when Step_Prepare_Archive         => "Prepare remote source archive",
           when Step_Verify_Origin           => "Verify origin URL",
+          when Step_Verify_Github           => "Verify GitHub infrastructure",
           when Step_Deploy_Sources          => "Deploy sources",
           when Step_Check_Build             => "Build release",
           when Step_Show_And_Confirm        => "User review",
