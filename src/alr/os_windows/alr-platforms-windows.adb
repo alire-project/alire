@@ -17,11 +17,11 @@ package body Alr.Platforms.Windows is
 
    package Cfg renames Alire.Config;
 
-   Msys2_Installer     : constant String := "msys2-x86_64-latest.exe";
+   Msys2_Installer     : constant String := "msys2-x86_64-20200903.exe";
    Msys2_Installer_URL : constant String :=
-     "http://repo.msys2.org/distrib/" & Msys2_Installer;
+     "https://github.com/msys2/msys2-installer/releases/download/2020-09-03/"
+     & Msys2_Installer;
 
-   --  FIXME, temporary address for development
    Msys2_Installer_Script     : constant String := "auto-install.js";
    Msys2_Installer_Script_URL : constant String :=
      "https://raw.githubusercontent.com/msys2/msys2-installer/master/" &
