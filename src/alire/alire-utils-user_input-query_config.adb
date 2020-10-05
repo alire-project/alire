@@ -36,7 +36,7 @@ package body Alire.Utils.User_Input.Query_Config is
 
    function User_Name return String
    is (Config_Or_Query_String (Config_Key => "user.name",
-                               Question   => "Please enter your user name:",
+                               Question   => "Please enter your full name:",
                                Default    => "Your Name",
                                Validation => null));
 
