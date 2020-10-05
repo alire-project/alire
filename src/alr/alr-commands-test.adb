@@ -569,7 +569,7 @@ package body Alr.Commands.Test is
          Cmd.Docker'Access,
          Long_Switch => Docker_Switch & "?", -- ? for optional image tag
          Help        => "Test releases within docker IMAGE"
-                        & " (or alire/gnat:ubuntu-lts)",
+                        & " (or " & Alire.Defaults.Docker_Test_Image & ")",
          Argument    => "=IMAGE");
 
       Define_Switch
