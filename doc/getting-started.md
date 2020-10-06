@@ -2,31 +2,32 @@
 
 ## Installation
 
-For the moment, only the latest development version is available. To obtain it
-you need to perform a manual clone and build of the project.
+You can download the last release of Alire at the [GitHub repository](https://github.com/alire-project/alire/releases).
 
-First you need a GNAT compiler. On Linux you can usually get it from your
+You will also need a GNAT compiler toolchain. On Linux you can usually get it from your
 distribution. Otherwise, and for Windows and MacOS you can download and install
 [GNAT Community](https://www.adacore.com/download).
 
-Then clone the git repository:
+## `alr` on Linux and macOS
 
-`git clone --recursive https://github.com/alire-project/alire.git`
+For Linux and macOS, `Alire` is simply provided in an archive. 
 
-Note the **--recursive** flag; otherwise compilation will fail.
+Once the archive is extracted you have to add `alr` in the environement `PATH`:
+```bash
+$ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
+```
 
-And build `alr`:
-
-1. If running on macOS, `export OS=macOS`
-1. `cd alire`
-1. `gprbuild -j0 -p -P alr_env`
-
-The executable will be found in `bin/alr`. You can add it to your PATH:
-
- * Linux/MacOS: `export PATH=$PATH:$PWD/bin`
- * Windows PowerShell: `$env:path += ";$pwd/bin"`
+You will also have to add your GNAT toolchain in the environement`PATH`.
 
 ## `alr` on Windows
+
+For Windows an installer is provided. The installer will create a shortcut to start `PowerShell` with `Alire` in the environement `PATH`.
+
+Inside the `PowerShell` you will also have to add your GNAT toolchain in the environement`PATH`.
+For instance with [GNAT Community](https://www.adacore.com/download) at the default location:
+```powershell
+PS> $env:Path += ";C:\GNAT\2020\bin\;C:\GNAT\2020-arm-elf\bin\"
+```
 
 On Windows, the first time you run `alr` the program will ask if you want to
 install [msys2](https://www.msys2.org/). This is recommended as `alr` will use
