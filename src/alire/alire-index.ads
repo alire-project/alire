@@ -16,8 +16,16 @@ with Semantic_Versioning;
 
 package Alire.Index is
 
+   Community_Host : constant String := "https://github.com";
+
+   Community_Organization : constant String := "alire-project";
+
+   Community_Repo_Name : constant String := "alire-index";
+
    Community_Repo : constant URL :=
-                      "git+https://github.com/alire-project/alire-index";
+                      "git+" & Community_Host
+                      & "/" & Community_Organization
+                      & "/" & Community_Repo_Name;
    --  Default index installed on first run
 
    Community_Name : constant Restricted_Name := "community";
@@ -43,11 +51,6 @@ package Alire.Index is
                  (Utils.Tail (Community_Branch, '-'));
    --  The index version understood by alire must match the one in the indexes
    --  being loaded.
-
-   Community_Upload_URL : constant URL :=
-                            Utils.Tail (Community_Repo, '+')
-                            & "/upload/" & Community_Branch;
-   --  Base upload URL into our community index repository
 
    subtype Release is Alire.Releases.Release;
 

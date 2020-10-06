@@ -1,9 +1,22 @@
+with Alire.Config.Edit;
 with Alire.Utils;
 with Alire.VCSs.Git;
+
+with TOML; use TOML;
 
 package body Alire.Selftest is
 
    --  Tests are Check_* procedures that end normally or raise some exception.
+
+   procedure Check_Config_Changes is
+      --  Ensure that configuration set in a run is also stored in memory
+      Key  : constant String := "test_key";
+      Val  : constant String := "nominal";
+   begin
+      Config.Edit.Set (Config.Filepath (Config.Global), Key, Val);
+      pragma Assert (Config.Defined (Key));
+      pragma Assert (Config.Get (Key, "snafu") = Val);
+   end Check_Config_Changes;
 
    ------------------------
    -- Check_Email_Checks --
@@ -128,6 +141,7 @@ package body Alire.Selftest is
 
    procedure Run is
    begin
+      Check_Config_Changes;
       Check_Email_Checks;
       Check_GitHub_Logins;
       Check_Git_To_HTTP;

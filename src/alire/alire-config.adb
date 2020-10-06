@@ -355,8 +355,9 @@ package body Alire.Config is
    -----------------
 
    procedure Load_Config is
-
    begin
+      Config_Map.Clear;
+
       for Lvl in Level loop
 
          if Lvl /= Local or else Root.Current.Is_Valid then

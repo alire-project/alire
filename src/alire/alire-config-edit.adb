@@ -142,6 +142,8 @@ package body Alire.Config.Edit is
       Add_In_Table (Table, Key, To_Add);
 
       Write_Config_File (Table, Path);
+
+      Load_Config; -- Reload with the new set value
    end Set;
 
 end Alire.Config.Edit;

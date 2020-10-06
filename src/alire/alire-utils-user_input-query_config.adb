@@ -36,7 +36,7 @@ package body Alire.Utils.User_Input.Query_Config is
 
    function User_Name return String
    is (Config_Or_Query_String (Config_Key => "user.name",
-                               Question   => "User name",
+                               Question   => "Please enter your full name:",
                                Default    => "Your Name",
                                Validation => null));
 
@@ -46,7 +46,7 @@ package body Alire.Utils.User_Input.Query_Config is
 
    function User_GitHub_Login return String
    is (Config_Or_Query_String (Config_Key => "user.github_login",
-                               Question   => "Your GitHub login",
+                               Question   => "Please enter your GitHub login:",
                                Default    => "github-username",
                                Validation => Is_Valid_GitHub_Username'Access));
 
@@ -62,9 +62,10 @@ package body Alire.Utils.User_Input.Query_Config is
    ----------------
 
    function User_Email return String
-   is (Config_Or_Query_String (Config_Key => "user.email",
-                               Question   => "Your email address",
-                               Default    => "example@example.com",
-                               Validation => Check_Email'Access));
+   is (Config_Or_Query_String
+       (Config_Key => "user.email",
+        Question   => "Please enter your email address:",
+        Default    => "example@example.com",
+        Validation => Check_Email'Access));
 
 end Alire.Utils.User_Input.Query_Config;

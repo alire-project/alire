@@ -36,6 +36,9 @@ package Alire.Utils.TTY with Preelaborate is
    -- Predefined formats --
    ------------------------
 
+   function Info (Text : String := "") return String;
+   --  Prepends Text with a Emph ("🛈") or "Note: " if no tty color enabled
+
    function Success (Text : String := "") return String;
    --  Prepends Text (in normal formatting) with a green check mark, or a
    --  simple Success: text if no tty or color enabled.
@@ -68,6 +71,11 @@ package Alire.Utils.TTY with Preelaborate is
    --  For versions/version sets, bold magenta
 
 private
+
+   function Info (Text : String := "") return String is
+     (if Color_Enabled and then Is_TTY
+      then Emph ("ⓘ") & " " & Text
+      else "Note: " & Text);
 
    function Success (Text : String := "") return String is
      (if Color_Enabled and then Is_TTY

@@ -29,3 +29,6 @@
 [submodule "deps/uri-ada"]
 	path = deps/uri-ada
 	url = https://github.com/mosteo/uri-ada.git
+[submodule "deps/minirest"]
+	path = deps/minirest
+	url = https://github.com/mosteo/minirest
