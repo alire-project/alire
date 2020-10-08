@@ -165,7 +165,7 @@ crate name can be determined from the metadata: `alr with --use
 
 PR [#447](https://github.com/alire-project/alire/pull/447).
 
-Before this patch, any change in dependences that resulted in an incomplete
+Before this patch, any change in dependencies that resulted in an incomplete
 solution caused a final "invalid solution" error. Now, any incomplete solution
 will be presented to the user with details about the unfulfilled dependencies.
 This solution can be accepted and worked with normally, although the user is

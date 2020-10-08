@@ -10,10 +10,10 @@ is named `<name>-<version>.toml`.
 
 Other than that, contents follow the same conventions and there are only slight
 differences (some fields are intended only for an index manifest, and cannot
-appear (or are optional) in a local manifest. These  differences are pointed
-out in the following descriptions, where necessary.
+appear, or are optional, in a local manifest). These differences are highlighted
+in the following descriptions, where necessary.
 
-Each TOML description file contains exactly one release, but for the special
+Each TOML description file contains exactly one release, except for the special
 external definitions that are described in their own section. 
 
 ## Information encoding
@@ -21,7 +21,7 @@ external definitions that are described in their own section.
 This section describes the various encodings used in this format to encode
 information.
 
-First, there are two kinds of data: atomic and composite data.
+First, there are two kinds of data: atomic and composite.
 
 Atomic data designates values that cannot be decomposed. There are only two
 atomic data types:
@@ -30,14 +30,14 @@ atomic data types:
  - booleans (`true`, `false`);
 
 We can then split composite data in two kinds: lists (TOML's arrays) and
-mappings (JSON's tables). Lists are just sequences of other values; for
+mappings (JSON's tables). Lists are just sequences of other values, for
 instance a list of strings:
 
 ```toml
 ["A", "B"]
 ```
 
-Mapping are the traditional sets of associations from keys (here, always
+Mappings are the traditional sets of associations from keys (here, always
 strings) to other values. For instance, the following represents a set of
 dependencies, with version constraints:
 
@@ -54,7 +54,7 @@ comprehensive list.
 
 All properties that support dynamic expressions follow the same structure, in
 which the expression (case-like) is inserted between the key and its value.
-Where a static expression would be
+For example, given a static expression:
 
 ```toml
 key = "value"
@@ -66,8 +66,8 @@ one of its cases would be expressed by the following inline TOML table:
 key.'case(var)'.var_value = "value"
 ```
 
-Several expressions can be inserted between a property key and its value, which
-leads to combinatorial explosion if all cases have specific values. The
+Several expressions can be inserted between a property key and its value,
+leading to a combinatorial explosion if all cases have specific values. The
 equivalent to an `others` Ada clause in this format is a `'...'` entry.
 
 Here is an example of a conditional boolean value.
@@ -86,10 +86,10 @@ Here is an example of a conditional boolean value.
 
 Depending on the value of the `distribution` environment variable, this will
 return `true` (its value is `debian` or `ubuntu`) or `false` (for other
-values). Note that these and following examples are not showing the
+values). Note that these and subsequent examples are not showing the
 left-hand-side property to which such a value would be assigned.
 
-A little variation allows to build environment-dependent composite data. For
+A little variation allows building environment-dependent composite data. For
 instance, to make the dependency on `libbar` above dynamic:
 
 ```toml
@@ -102,7 +102,7 @@ instance, to make the dependency on `libbar` above dynamic:
     }
 }
 
-# Or in a more idiomatic TOML syntay
+# Or in a more idiomatic TOML syntax
 libfoo = "^1.2"
 
 ['case(os)'.linux]
@@ -249,7 +249,7 @@ static, i.e. they cannot depend on the context.
    libwinbar = "^3.0"
    ```
 
-   Available constraint operators are the usual Ada ones (`=`, `/=`, `>`, `>=`,
+   Available constraint operators are the usual Ada relationals (`=`, `/=`, `>`, `>=`,
    `<`, `<=`) plus caret (`^`, any upwards version within the same major point)
    and tilde (\~, any upwards version within the same minor point). Logical
    operators for and (&), or (|) are accepted; see the `Semantic_Versioning`
@@ -366,12 +366,12 @@ static, i.e. they cannot depend on the context.
    # An explicit empty case alternative, which is not mandatory
    ```
 
- - `auto-gpr-with`: optional Boolean value that specifies if the project files
-   of a crate can be automatically 'withed' by the root project file (default
-   is true). This feature is meant to simplify the process of using dependencies
-   in Alire. However, not all project files are supposed to be withed, some can be
-   extended for instance, in that case a crate can disable the feature by setting
-   `auto-gpr-with=false`.
+ - `auto-gpr-with`: optional Boolean value that specifies if the project (gpr) files
+   of a crate can be automatically depended upon ('withed') directly by the root
+   project file. (The default is true.) This feature is meant to simplify the process
+   of using dependencies in Alire. However, not all project files are supposed to be
+   direct dependencies. Some are intended to be extended, for example, and in that
+   case a crate can disable the feature by setting `auto-gpr-with=false`.
 
  - `origin`: dynamic table. Mandatory for index manifests and forbidden in
    workspace manifests. This table describes how sources are obtained, using
@@ -414,7 +414,7 @@ static, i.e. they cannot depend on the context.
    origin = "native:make"
    ```
 
-   Make the expression evaluate to an empty string to mean that the package is
+   Have the expression evaluate to an empty string to indicate that the package is
    not available, or just leave the alternative out. For instance, to state
    that `make` is available on Debian/Ubuntu and not on the other platforms:
 
@@ -426,7 +426,7 @@ static, i.e. they cannot depend on the context.
  - `available`: optional dynamic boolean expression.  If it evaluates to
    `false`, the package is not available for the current platform.
 
- - `notes`: optional string. Provides miscellanous information about this
+ - `notes`: optional string. Provides miscellaneous information about this
    release. For instance:
 
    ```json
@@ -443,7 +443,7 @@ A release is considered "external" when it is not built from sources and,
 furthermore, its semantic version cannot be known until run time. Hence, the
 availability and version of these releases is detected by `alr`.
 
-Several definitions for these external releases may exist, and so they are
+Several definitions for these external releases may exist so they are
 defined in a manifest as a vector with key `external`:
 
 ```toml
@@ -460,13 +460,13 @@ All external kinds can define these regular properties:
    environment conditions.
 
  - `hint`: optional dynamic string containing an explanation for the user on
-   how to make the external available. This explanation is shown on request
+   how to make the external entity available. This explanation is shown on request
    with `alr show --external`, or after `alr get`, for any external dependency
    that could not be detected.
 
 ### External kinds: hints
 
-A plain undetectable external intended to simply serve as a hint. For
+A plain undetectable external kind intended to simply serve as a hint. For
 crates that are known to be unavailable through Alire, it serves to
 provide a generic or customized hint to the user. It has no specific
 fields, other than the common ones just described. Its key is `"hint"`:
@@ -512,10 +512,10 @@ accept dynamic expressions in this context):
 kind = "system" # Identifies this external kind
 origin = ["libncursesada3", "libncursesada5"]
 # As versions appear this list will grow. To speed up detection, dynamic
-# expressions may become recommendable for certain system packages.
+# expressions may become recommended for certain system packages.
 ```
 
-For Ada precompiled system libraries that require the platform compiler for
+For Ada pre-compiled system libraries that require the platform compiler for
 linking (e.g., in Debian/Ubuntu), and that cannot be used with other GNAT
 compilers, this should be expressed with the `available` property, e.g.:
 

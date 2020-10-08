@@ -185,9 +185,9 @@ repositories) and proceed from there.
 
 ### Starting from other configurations
 
-If your case does not fit well into any of the provided guidance we will be
-sure interested in hearing about it, and seeing how it can be brought into
-existing or new Alire workflows.
+If your case does not fit well into any of the situations above we definitely
+want to hear about it, to see how it can be brought into existing or new Alire
+workflows.
 
 ### Creating the PR via cloning.
 
@@ -208,4 +208,4 @@ link, you can follow the usual procedure to submit a PR to a github repository:
 
 Once the pull request is verified and merged, the new release will become
 available for normal use. The open source Ada ecosystem needs all the help it
-can get, so happy contributing!
+can get, so thank you for contributing!
