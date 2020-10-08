@@ -5,25 +5,25 @@
 You can download the last release of Alire at the [GitHub repository](https://github.com/alire-project/alire/releases).
 
 You will also need a GNAT compiler toolchain. On Linux you can usually get it from your
-distribution. Otherwise, and for Windows and MacOS you can download and install
+distribution. Otherwise, and for Windows and macOS you can download and install
 [GNAT Community](https://www.adacore.com/download).
 
 ## `alr` on Linux and macOS
 
 For Linux and macOS, `Alire` is simply provided in an archive. 
 
-Once the archive is extracted you have to add `alr` in the environement `PATH`:
+Once the archive is extracted you have to add `alr` in the environment `PATH`:
 ```bash
 $ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
 ```
 
-You will also have to add your GNAT toolchain in the environement`PATH`.
+You will also have to add your GNAT toolchain in the environment`PATH`.
 
 ## `alr` on Windows
 
-For Windows an installer is provided. The installer will create a shortcut to start `PowerShell` with `Alire` in the environement `PATH`.
+For Windows an installer is provided. The installer will create a shortcut to start `PowerShell` with `Alire` in the environment `PATH`.
 
-Inside the `PowerShell` you will also have to add your GNAT toolchain in the environement`PATH`.
+Inside the `PowerShell` you will also have to add your GNAT toolchain in the environment`PATH`.
 For instance with [GNAT Community](https://www.adacore.com/download) at the default location:
 ```powershell
 PS> $env:Path += ";C:\GNAT\2020\bin\;C:\GNAT\2020-arm-elf\bin\"
