@@ -1,0 +1,44 @@
+name: CI Docker
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+
+jobs:
+
+  build:
+    name: CI on ${{ matrix.tag }}
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        tag: # Those are our dockerhub alire/gnat:tag machines
+            - centos-latest-community-latest # Test unsupported package manager 
+            - debian-stable                  # Test current stable Debian compiler
+            - ubuntu-lts                     # Test current LTS Ubuntu compiler
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Pull docker image
+      run: docker pull alire/gnat:${{ matrix.tag }}
+
+    - name: Run test script
+      run: >
+        docker run -v${PWD}:/alire -w /alire
+        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh
+
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: e3-log-docker-${{ matrix.tag }}.zip
+        path: testsuite/out
