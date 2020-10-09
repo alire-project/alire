@@ -19,17 +19,9 @@ env:
 jobs:
 
   build:
-    name: CI on ${{ matrix.tag }}
+    name: CI on Linux
 
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        tag: # Those are our dockerhub alire/gnat:tag machines
-            - centos-latest-community-latest
-            - community-latest
-            - debian-stable
-            - ubuntu-lts
+    runs-on: ubuntu-18.04
 
     steps:
     - name: Check out repository
@@ -37,19 +29,27 @@ jobs:
       with:
         submodules: true
 
-    - name: Pull docker image
-      run: docker pull alire/gnat:${{ matrix.tag }}
+    - name: Install toolchain
+      uses: ada-actions/toolchain@ce2020
+      with:
+        distrib: community    
+    
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
 
     - name: Run test script
-      run: >
-        docker run -v${PWD}:/alire -w /alire
-        -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}"
-        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh
-
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+    
     - name: Upload binaries
       uses: actions/upload-artifact@v2
       with:
-        name: alr-bin-${{ matrix.tag }}.zip
+        name: alr-bin-linux.zip
         path: |
           bin/alr
           LICENSE.txt
@@ -58,36 +58,36 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@master
       with:
-        name: e3-log-${{ matrix.tag }}.zip
+        name: e3-log-linux.zip
         path: testsuite/out
 
     # Release steps start here. These only run during a release creation.
 
     - name: Package binaries
-      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
-      run: zip alr-bin-${{ matrix.tag }}.zip bin/alr LICENSE.txt
+      if: (github.event_name == 'release')
+      run: zip alr-bin-linux.zip bin/alr LICENSE.txt
 
     - name: Retrieve upload URL for the release
-      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      if: (github.event_name == 'release')
       id: get_release
       uses: bruceadams/get-release@v1.2.1
       env:
         GITHUB_TOKEN: ${{ github.token }}
 
     - name: Get release version
-      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      if: (github.event_name == 'release')
       id: get_version
       uses: battila7/get-version-action@v2
 
     - name: Upload binary assets
-      if: (github.event_name == 'release') && (matrix.tag != 'community-latest')
+      if: (github.event_name == 'release')
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
-        asset_path: alr-bin-${{ matrix.tag }}.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-${{ matrix.tag }}.zip
+        asset_path: alr-bin-linux.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-linux.zip
         asset_content_type: application/zip
 
     ############
@@ -95,29 +95,29 @@ jobs:
     ############
 
     - name: Install AppImage's linuxdeploy
-      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      if: (github.event_name == 'release')
       uses: miurahr/install-linuxdeploy-action@releases/v1
       with:
         plugins: appimage
 
     - name: Copy license into AppImage
-      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      if: (github.event_name == 'release')
       run: |
         mkdir -p AppDir
         cp LICENSE.txt AppDir/
 
     - name: Create AppImage
-      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      if: (github.event_name == 'release')
       run: >
         linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr 
         -d resources/alr.desktop -i resources/alr.png --output appimage
 
     - name: Rename AppImage
-      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      if: (github.event_name == 'release')
       run: mv alr*AppImage alr.AppImage
 
     - name: Upload AppImage asset
-      if: (github.event_name == 'release') && (matrix.tag == 'ubuntu-lts')
+      if: (github.event_name == 'release')
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
