@@ -66,8 +66,3 @@ echo Running test suite now:
 $run_python ./run.py -E || { echo Test suite failures, unstable build!; exit 1; }
 cd ..
 echo ............................
-
-# Check installer in stable branch
-if [ "$BRANCH" == "stable" ]; then
-    echo -e '\n\n/bin\ny' | ./install/alr-bootstrap.sh
-fi
