@@ -32,7 +32,7 @@ jobs:
     - name: Install toolchain
       uses: ada-actions/toolchain@ce2020
       with:
-        distrib: fsf
+        distrib: community
     
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
