@@ -128,7 +128,7 @@ jobs:
 
     - name: Package binaries
       if: github.event_name == 'release'
-      run: zip alr-bin-windows.zip bin/alr LICENSE.txt
+      run: zip alr-bin-windows.zip bin/alr.exe LICENSE.txt
 
     - name: Upload binary asset
       if: github.event_name == 'release'
