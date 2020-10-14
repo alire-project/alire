@@ -257,7 +257,7 @@ static, i.e. they cannot depend on the context.
    sets](https://github.com/alire-project/semantic_versioning#types).
 
  - `project-files`: optional list of strings. Each is a path, relative to the
-   root of the source directory, to a project file to be made available.
+   root of the source directory, to a `.gpr` project file to be made available.
    Expressions are accepted. For instance:
 
    ```toml
@@ -269,7 +269,7 @@ static, i.e. they cannot depend on the context.
    ```
 
  - `gpr-externals`: optional table, giving a mapping from the name of external
-   variables in the project files to sets of possible values (as array of
+   variables in the `.gpr` project files to sets of possible values (as array of
    strings), or an empty string if this set is infinite. For instance:
 
    ```toml
@@ -278,9 +278,10 @@ static, i.e. they cannot depend on the context.
    TAG = ""
    ```
 
- - `gpr-set-externals`: optional dynamic table, giving a mapping from the name
-   of external variables to the values to use by default when building the
-   project. Expressions are accepted before the mapping. For instance:
+ - `gpr-set-externals`: optional dynamic table, setting values of project 
+   external variables when building the project. This should not be used to
+   specify default values, the default values must be specified in the `.gpr`
+   project file. Expressions are accepted before the mapping. For instance:
 
    ```toml
    [gpr-set-externals]
