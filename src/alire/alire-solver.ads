@@ -18,8 +18,32 @@ package Alire.Solver is
    type Age_Policies is (Oldest, Newest);
    --  When looking for releases within a crate, which one to try first.
 
-   type Completeness_Policies is (Only_Complete, Also_Incomplete);
-   --  Allow the solver to further explore incomplete solution space
+   type Completeness_Policies is
+     (First_Complete,
+      --  Stop after finding the first complete solution. No incomplete
+      --  solutions will be attempted. Other complete solutions may exist
+      --  that are globally "newer".
+
+      All_Complete,
+      --  Only attempt to find complete solutions; the first unsatisfiable
+      --  dependency will result in abandoning that search branch. All
+      --  complete solutions will be found, and the best one according
+      --  to Solutions.Is_Better will be returned.
+
+      Some_Incomplete,
+      --  Explores a reasonable subset of incomplete solutions: unknown crates,
+      --  crates with no satisfying releases, crates with externals can appear
+      --  as missing in the solution.
+
+      All_Incomplete
+      --  All crates may appear as missing, even those that have satisfying
+      --  releases. All possible solutions and incomplete subsets are
+      --  eventually explored.
+
+     );
+   --  Allow the solver to further explore incomplete solution space. Each
+   --  value takes more time than the precedent one. All_Incomplete can take
+   --  a veeery long time when many crates/releases must be considered.
 
    type Detection_Policies is (Detect, Dont_Detect);
    --  * Detect: externals will be detected and added to the index once needed.
@@ -83,12 +107,27 @@ package Alire.Solver is
 
    type Query_Options is record
       Age          : Age_Policies          := Newest;
-      Completeness : Completeness_Policies := Also_Incomplete;
+      Completeness : Completeness_Policies := First_Complete;
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
+   --  A reasonable combo that will return the first complete solution found,
+   --  or otherwise consider a subset of incomplete solutions.
+
+   Exhaustive_Options : constant Query_Options :=
+                          (Completeness => All_Incomplete,
+                           others       => <>);
+   --  Explore the full solution space
+
+   Find_Best_Options  : constant Query_Options :=
+                          (Completeness => All_Complete,
+                           others       => <>);
+   --  Find all complete solutions and return the "best" one (see
+   --  Solutions.Is_Better). It does not yet make sense to use this setting
+   --  because with the current Is_Better implementation, the first complete
+   --  solution found is the one considered better anyway.
 
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;

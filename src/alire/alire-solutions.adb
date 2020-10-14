@@ -170,6 +170,9 @@ package body Alire.Solutions is
       function Compare_Versions (This, Than : Solution) return Comparison is
       begin
 
+         --  TODO: instead of using the first discrepancy, we should count all
+         --  differences and see which one is globally "newer".
+
          --  Check releases in both only
 
          for Rel of This.Releases loop

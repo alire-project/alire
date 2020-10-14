@@ -237,9 +237,12 @@ package body Alr.Commands.Withing is
               Root.Current.Path,
               Platform.Properties);
          New_Solution : constant Alire.Solutions.Solution :=
-                          Alire.Solver.Resolve (New_Deps,
-                                                Platform.Properties,
-                                                Old_Solution);
+                          Alire.Solver.Resolve
+                            (New_Deps,
+                             Platform.Properties,
+                             Old_Solution,
+                             Options => (Age    => Query_Policy,
+                                         others => <>));
 
          Deps_Diff : constant Alire.Dependencies.Diffs.Diff :=
                        Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps);
