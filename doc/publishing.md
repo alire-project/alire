@@ -209,3 +209,31 @@ link, you can follow the usual procedure to submit a PR to a github repository:
 Once the pull request is verified and merged, the new release will become
 available for normal use. The open source Ada ecosystem needs all the help it
 can get, so thank you for contributing!
+
+## ALR Badge
+
+If you like, you can even add a nice, shiny badge to your project page to link
+back to the [Alire website](https://alire.ada.dev). This can even serve as a
+reminder to republish your project once you created a new release, because
+the badge shows the latest version of your project that is known to Alire.
+It might take a while for the global Alire index to get updated after we
+accepted your pull request. Just be a bit patient, please.
+
+To add the badge, all you need to do is add the line
+
+```
+[![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/YOUR_PROJECT.json)](https://alire.ada.dev/crates/YOUR_PROJECT.html)
+```
+
+to your `README.md`. Of course, you need to replace the string `YOUR_PROJECT` with
+your actual project name.
+
+Here's an example:
+
+```
+[![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/hal.json)](https://alire.ada.dev/crates/hal.html)
+```
+
+This will be shown as:
+
+[![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/hal.json)](https://alire.ada.dev/crates/hal.html)
