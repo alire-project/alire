@@ -212,21 +212,23 @@ can get, so thank you for contributing!
 
 ## ALR Badge
 
-If you like, you can even add a nice, shiny badge to your project page to link
+If you like, you can add a nice, shiny badge to your project page which links
 back to the [Alire website](https://alire.ada.dev). This can even serve as a
-reminder to republish your project once you created a new release, because
+reminder to republish your project once you published a new release, because
 the badge shows the latest version of your project that is known to Alire.
-It might take a while for the global Alire index to get updated after we
-accepted your pull request. Just be a bit patient, please.
+
+The [Alire website](https://alire.ada.dev) is updated once a day, every day.
+Hence, after we accepted and merged your pull request, it might take up to a
+day for your changes to appear there, usually less.
 
 To add the badge, all you need to do is add the line
 
 ```
-[![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/YOUR_PROJECT.json)](https://alire.ada.dev/crates/YOUR_PROJECT.html)
+[![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/YOUR_CRATE.json)](https://alire.ada.dev/crates/YOUR_CRATE.html)
 ```
 
-to your `README.md`. Of course, you need to replace the string `YOUR_PROJECT` with
-your actual project name.
+to your `README.md`. Of course, you need to replace the string `YOUR_CRATE`  with
+your actual project's crate name.
 
 Here's an example:
 
