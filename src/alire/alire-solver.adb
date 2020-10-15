@@ -10,6 +10,9 @@ with Alire.Utils.TTY;
 
 package body Alire.Solver is
 
+   Solution_Found : exception;
+   --  Used to prematurely end search when a complete solution exists
+
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
@@ -20,6 +23,16 @@ package body Alire.Solver is
      (Element_Type => Solution,
       "<"          => Solutions.Is_Better,
       "="          => Solutions."=");
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Options : Query_Options) return String
+   is ("Age order: "        & TTY.Emph (Options.Age'Image)
+       & "; Completeness: " & TTY.Emph (Options.Completeness'Image)
+       & "; Externals: "    & TTY.Emph (Options.Detecting'Image)
+       & "; Hinting: "      & TTY.Emph (Options.Hinting'Image));
 
    ------------
    -- Exists --
@@ -315,11 +328,12 @@ package body Alire.Solver is
             --------------------
             -- Expand_Missing --
             --------------------
-
-            procedure Expand_Missing (Dep : Alire.Dependencies.Dependency)
+            --  Mark a crate as missing and continue exploring, depending on
+            --  configuration policies, or abandon this search branch.
+            procedure Expand_Missing (Dep    : Alire.Dependencies.Dependency)
             is
             begin
-               if Options.Completeness = Also_Incomplete then
+               if Options.Completeness > All_Complete then
 
                   Trace.Debug
                     ("SOLVER: marking MISSING the crate " & Dep.Image
@@ -342,6 +356,12 @@ package body Alire.Solver is
                              and Remaining).Image_One_Line);
                end if;
             end Expand_Missing;
+
+            Satisfiable : Boolean := False;
+            --  Mark that the dependency is satisfiable. When we refactor the
+            --  solver from recursive to priority queue (I guess we eventually
+            --  will have to), we should do this globally since this is
+            --  information common to all search states.
 
          begin
 
@@ -400,35 +420,76 @@ package body Alire.Solver is
                   Index.Detect_Externals (Dep.Crate, Props);
                end if;
 
-               --  Check the releases now:
+               --  Check the releases now, from newer to older (unless required
+               --  in reverse). We keep track that none is valid, as this is
+               --  a special case in which we're being asked an impossible
+               --  thing from the start, which we can use to enable a partial
+               --  solution without exploring the whole solution space:
 
-               for R of reverse Index.Crate (Dep.Crate).Releases loop
-                  Check (R);
-               end loop;
+               declare
+                  procedure Consider (R : Release) is
+                  begin
+                     Satisfiable := Satisfiable or else R.Satisfies (Dep);
+                     Check (R);
+                  end Consider;
+               begin
+                  if Options.Age = Newest then
+                     for R of reverse Index.Crate (Dep.Crate).Releases loop
+                        Consider (R);
+                     end loop;
+                  else
+                     for R of Index.Crate (Dep.Crate).Releases loop
+                        Consider (R);
+                     end loop;
+                  end if;
+               end;
 
                --  Beside normal releases, an external may exist for the
                --  crate, in which case we hint the crate instead of failing
                --  resolution (if the external failed to find its releases).
 
                if not Index.Crate (Dep.Crate).Externals.Is_Empty then
+                  if Options.Hinting = Hint then
+                     Trace.Debug
+                       ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
+                          " via EXTERNAL to satisfy " & Dep.Image &
+                          " without adding dependencies to tree " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+
+                     Expand (Expanded  => Expanded,
+                             Target    => Remaining,
+                             Remaining => Empty,
+                             Solution  => Solution.Hinting (Dep));
+                  else
+                     Trace.Debug
+                       ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
+                          " as HINTING is DISABLED, for dep " & Dep.Image &
+                          " having externals, when tree is " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+                  end if;
+               else
                   Trace.Debug
-                    ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
-                       " via EXTERNAL to satisfy " & Dep.Image &
-                       " without adding dependencies to tree " &
-                       Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
-
-                  Expand (Expanded  => Expanded,
-                          Target    => Remaining,
-                          Remaining => Empty,
-                          Solution  => Solution.Hinting (Dep));
-
+                       ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
+                          " for dep " & Dep.Image &
+                          " LACKING externals, when tree is " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
                end if;
 
-               --  There may be a less bad solution if we leave this crate out
+               --  There may be a less bad solution if we leave this crate out.
+               --  Also, if we know for certain it is not satisfiable, mark it
+               --  as so already to have the incomplete solution that would not
+               --  be found otherwise in the Some_Satisfiable setting.
 
-               Expand_Missing (Dep);
+               if not Satisfiable or else Options.Completeness = All_Incomplete
+               then
+                  Expand_Missing (Dep);
+               end if;
 
             else
 
@@ -496,6 +557,12 @@ package body Alire.Solver is
                            & Utils.Trim (Partial'Img) & "/"
                            & Utils.Trim (Dupes'Image)
                            & " (complete/partial/dupes)");
+
+            if Options.Completeness = First_Complete
+              and then Solution.Is_Complete
+            then
+               raise Solution_Found; -- break recursive search
+            end if;
          end Store_Finished;
 
       begin
@@ -559,6 +626,15 @@ package body Alire.Solver is
 
    begin
 
+      Trace.Detail ("Solving dependencies with options: " & Image (Options));
+
+      --  Warn if we foresee things taking a loong time...
+
+      if Options.Completeness = All_Incomplete then
+         Trace.Warning ("Exploring all possible solutions to dependencies,"
+                        & " this may take some time...");
+      end if;
+
       --  Get the trivial case out of the way
 
       if Full_Dependencies.Is_Empty then
@@ -568,29 +644,49 @@ package body Alire.Solver is
 
       --  Otherwise expand the full dependencies
 
-      Expand (Expanded  => Empty,
-              Target    => Full_Dependencies.Evaluate (Props),
-              Remaining => Empty,
-              Solution  => Solution);
+      begin
+         Expand (Expanded  => Empty,
+                 Target    => Full_Dependencies.Evaluate (Props),
+                 Remaining => Empty,
+                 Solution  => Solution);
+      exception
+         when Solution_Found =>
+            Trace.Debug ("Solution search ended with first complete solution");
+      end;
 
-      --  Once Expand returns the complete recursive exploration has ended.
-      --  There must exist at least one incomplete solution.
+      --  Once Expand returns, the recursive exploration has ended. Depending
+      --  on options, there must exist at least one incomplete solution, or we
+      --  can retry with a larger solution space.
 
       if Solutions.Is_Empty then
-         if Options.Completeness = Only_Complete then
-            --  Reattempt so we can return an incomplete solution:
+         if Options.Completeness < All_Incomplete then
+            Trace.Detail
+              ("No solution found with completeness policy of "
+               & Options.Completeness'Image
+               & "; attempting to find more incomplete solutions...");
+
+            --  Reattempt so we can return an incomplete solution
+
             return Resolve
               (Deps    => Deps,
                Props   => Props,
                Current => Current,
                Options =>
-                 (Query_Options'(Age          => Options.Age,
-                                 Completeness => Also_Incomplete,
-                                 Detecting    => Options.Detecting,
-                                 Hinting      => Options.Hinting)));
+                 (Query_Options'
+                      (Age          => Options.Age,
+                       Completeness =>
+                         (case Options.Completeness is
+                             when First_Complete | All_Complete =>
+                               Some_Incomplete,
+                             when Some_Incomplete               =>
+                               All_Incomplete,
+                             when All_Incomplete                =>
+                                raise Program_Error with "Unreachable code"),
+                       Detecting    => Options.Detecting,
+                       Hinting      => Options.Hinting)));
          else
-            raise Program_Error
-              with "solver should have found at least one incomplete solution";
+            Raise_Checked_Error
+              ("Solver failed to find any solution to fulfill dependencies.");
          end if;
       else
 
