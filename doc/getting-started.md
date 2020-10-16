@@ -126,10 +126,10 @@ website:
 
 To create a build environment, `alr` sets environment variables such as
 `GPR_PROJECT_PATH` before running `gprbuild`. If you want to run `gprbuild`
-yourself or inside an editor (GNAT Studio), you can use the `setenv` command to
-print the build environment:
+yourself or inside an editor (GNAT Studio), you can use the `printenv` command
+to print the build environment:
 
-* `alr setenv`
+* `alr printenv`
 
 ## Troubleshooting
 
