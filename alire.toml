@@ -9,9 +9,9 @@ description = "Command-line tool from the Alire project"
 # builds are uniquely identified without requiring manual editing or other
 # preprocessing. We could also include info about all dependencies exact
 # versions and environment used during the build.
-version = "0.7.1-dev"
+version = "0.8-dev"
 
-authors = ["Alejandro R. Mosteo", "Fabien Chouteau"]
+authors = ["Alejandro R. Mosteo", "Fabien Chouteau", "Pierre-Marie de Rodat"]
 maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
 maintainers-logins = ["mosteo", "Fabien-Chouteau"]
 
