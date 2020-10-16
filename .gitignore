@@ -4,11 +4,13 @@
 *.db
 *.db-???
 *.idea
+*.lock
 *.xml
 *.pyc
 
 .*sw?
 
+alire/
 bin
 lib
 obj
