@@ -3,6 +3,7 @@ with GNAT.OS_Lib;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alire_Early_Elaboration;
+with Alire.Errors;
 with Alire.Properties.Environment; use Alire.Properties.Environment;
 with Alire.Properties.Scenarios;
 with Alire.OS_Lib;
@@ -250,11 +251,10 @@ package body Alire.Environment is
                      Vect : Action_Vectors.Vector)
                      return Var
    is
-      Existing : constant String := OS_Lib.Getenv (+Key);
-
       Separator : constant Character := GNAT.OS_Lib.Path_Separator;
 
-      Value : Unbounded_String := +Existing;
+      Value : Unbounded_String := +OS_Lib.Getenv (+Key);
+      --  Pre-existing value, and new value when no conflict
    begin
 
       for Act of Vect loop
@@ -284,30 +284,35 @@ package body Alire.Environment is
             case Act.Kind is
 
             when Properties.Environment.Set =>
-               if Existing /= Act.Value then
-                  Raise_Checked_Error
-                    ("Trying to set an alredy defined environment variable: "
-                     & (+Key) & " is already defined as " & (+Value));
-               else
-                  Trace.Debug ("Skipping identical key value: " & (+Key));
+               if Value = Act.Value then
+                  Trace.Debug ("Skipping identical key value: "
+                               & (+Key) & "=" & (+Value));
                   --  We can silently ignore the attempt to set to the same
                   --  value. This is not ideal, but is more flexible for the
                   --  cases where we may end exporting the same environment
                   --  twice. Long-term, something like Boost.Process would be
                   --  more robust to call subprocesses without pilfering our
                   --  own environment.
+               else
+                  Raise_Checked_Error
+                    (Errors.Wrap
+                       ("Trying to set an alredy defined environment variable",
+                        (+Key) & " is already defined as '" & (+Value)
+                        & "' but new value is '" & (+Act.Value) & "'"));
                end if;
 
             when Properties.Environment.Append =>
-               if Already_Defines (Existing, +Act.Value) then
-                  Trace.Debug ("Skipping identical key value: " & (+Key));
+               if Already_Defines (+Value, +Act.Value) then
+                  Trace.Debug ("Skipping identical key value: "
+                               & (+Key) & "=" & (+Value));
                else
                   Value := Value & Separator & Act.Value;
                end if;
 
             when Properties.Environment.Prepend =>
-               if Already_Defines (Existing, +Act.Value) then
-                  Trace.Debug ("Skipping identical key value: " & (+Key));
+               if Already_Defines (+Value, +Act.Value) then
+                  Trace.Debug ("Skipping identical key value: "
+                               & (+Key) & "=" & (+Value));
                else
                   Value := Act.Value & Separator & Value;
                end if;
