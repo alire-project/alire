@@ -236,12 +236,13 @@ static, i.e. they cannot depend on the context.
    '...' = false
    ```
 
- - `depends-on`: optional dynamic dependencies expression. For instance:
+ - `depends-on`: optional array of dynamic dependencies expressions. For instance:
 
    ```toml
-   [depends-on]
+   [[depends-on]]  # A static dependency
    libfoo = "^1.2"
 
+   [[depends-on]]  # A dynamic dependency
    [depends-on.'case(os)'.linux]
    libbar = "^2.0"
 
