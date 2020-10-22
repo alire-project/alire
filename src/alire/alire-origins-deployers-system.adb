@@ -58,7 +58,7 @@ package body Alire.Origins.Deployers.System is
       Put_Line ("This action might require admin privileges " &
                   "and impact your system installation.");
 
-      case Query ("Do want Alire to install this system package?",
+      case Query ("Do you want Alire to install this system package?",
                   Valid   => (Yes | No | Always => True),
                   Default => Yes)
       is
