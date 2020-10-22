@@ -50,6 +50,9 @@ with GNATCOLL.VFS;
 
 package body Alr.Commands is
 
+   Error_No_Command : exception;
+   --  Local exception propagated when no command is given in command-line
+
    use GNAT.Command_Line;
 
    --  To add a command: update the dispatch table below
@@ -146,7 +149,7 @@ package body Alr.Commands is
    function What_Command return String is
    begin
       if Raw_Arguments.Is_Empty then
-         raise Constraint_Error with "No command given";
+         raise Error_No_Command;
       else
          return Raw_Arguments.First_Element;
       end if;
@@ -632,7 +635,6 @@ package body Alr.Commands is
       end if;
 
       if Raw_Arguments.Is_Empty then
-         Trace.Error ("No command given");
          Display_Usage;
          OS_Lib.Bailout (1);
       end if;
@@ -682,7 +684,7 @@ package body Alr.Commands is
          Ada.Text_IO.Put_Line
            ("Use ""alr help <command>"" for specific command help");
          OS_Lib.Bailout (1);
-      when Constraint_Error =>
+      when Constraint_Error | Error_No_Command =>
          if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
             Log ("Unrecognized global option: " & Raw_Arguments (1), Error);
          else
