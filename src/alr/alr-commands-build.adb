@@ -1,3 +1,4 @@
+with Alire.Errors;
 with Alire.Paths;
 with Alire.Properties.Actions.Executor;
 
@@ -61,7 +62,11 @@ package body Alr.Commands.Build is
          end loop;
 
       exception
-         when others =>
+         when E : Alire.Checked_Error =>
+            Trace.Error (Alire.Errors.Get (E, Clear => False));
+            return False;
+         when E : others =>
+            Alire.Log_Exception (E);
             return False;
       end;
 
