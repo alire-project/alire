@@ -25,6 +25,17 @@ abstract project Alire_Common is
       when "disabled" => Style_Check_Switches := ();
    end case;
 
+   type Any_Ada_Mode is ("current", "experimental");
+   Ada_Mode : Any_Ada_Mode := external ("ALIRE_ADA_MODE", "current");
+   --  Enables experimental Ada 202X features, that we don't normally want
+   --  because of backwards compatibility, for punctual tests.
+
+   Ada_Mode_Switches := ();
+   case Ada_Mode is
+      when "current"      => Ada_Mode_Switches := ();
+      when "experimental" => Ada_Mode_Switches := ("-gnat2020");
+   end case;
+
    package Compiler is
       case Build_Mode is
          when "debug" =>
@@ -40,6 +51,7 @@ abstract project Alire_Common is
 
                --  Enable all warnings and treat them as errors
                "-gnatwae")
+              & Ada_Mode_Switches
               & Style_Check_Switches;
 
             for Default_Switches ("C") use ("-g", "-O0", "-Wall");
@@ -57,6 +69,7 @@ abstract project Alire_Common is
                --  Enable lots of extra runtime checks
                "-gnatVa", "-gnatwa", "-gnato", "-fstack-check", "-gnata",
                "-gnatf", "-fPIC")
+              & Ada_Mode_Switches
               & Style_Check_Switches;
 
             for Default_Switches ("C") use ("-g", "-O2", "-Wall", "-fPIC");
