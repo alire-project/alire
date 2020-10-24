@@ -1,8 +1,24 @@
 with Alire.Crates;
 with Alire.Manifest;
+with Alire.Origins;
 with Alire.Roots.Optional;
 
 package body Alire.Dependencies.States is
+
+   overriding function "=" (L, R : Stored_Release) return Boolean
+   is
+      use type Milestones.Milestone;
+      use type Origins.Origin;
+   begin
+      return
+        (L.Is_Empty and then R.Is_Empty)
+        or else
+          (not L.Is_Empty and then not R.Is_Empty
+           and then
+           L.Constant_Reference.Milestone = R.Constant_Reference.Milestone
+           and then
+           L.Constant_Reference.Origin = R.Constant_Reference.Origin);
+   end "=";
 
    ----------------------
    -- Optional_Release --
@@ -10,14 +26,14 @@ package body Alire.Dependencies.States is
 
    function Optional_Release (Crate     : Crate_Name;
                               Workspace : Any_Path)
-                              return Containers.Release_H
+                              return Stored_Release
    is
       Opt_Root : constant Roots.Optional.Root :=
                    Roots.Optional.Detect_Root (Workspace);
    begin
       if Opt_Root.Is_Valid then
          if Opt_Root.Value.Release.Name = Crate then
-            return Containers.To_Release_H (Opt_Root.Value.Release);
+            return To_Holder (Opt_Root.Value.Release);
          else
             Raise_Checked_Error ("crate mismatch: expected "
                                  & Crate.TTY_Image
@@ -26,7 +42,7 @@ package body Alire.Dependencies.States is
                                  & " at " & TTY.URL (Workspace));
          end if;
       else
-         return Containers.Release_Holders.Empty_Holder;
+         return (Containers.Release_Holders.Empty_Holder with null record);
       end if;
    end Optional_Release;
 
@@ -89,7 +105,7 @@ package body Alire.Dependencies.States is
 
             when Solved =>
                Data.Release :=
-                 Containers.Release_Holders.To_Holder
+                 To_Holder
                    (Releases.From_TOML
                       (From.Descend
                          (From.Checked_Pop (Keys.Release, TOML_Table),

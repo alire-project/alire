@@ -90,6 +90,12 @@ package Alire.Roots is
    function Solution (This : Root) return Solutions.Solution;
    --  Returns the solution stored in the lockfile
 
+   function Is_Lockfile_Outdated (This : Root) return Boolean;
+   --  Says whether the manifest has been manually edited, and so the lockfile
+   --  requires being updated. This currently relies on timestamps, but (TODO)
+   --  conceivably we could use checksums to make it more robust against
+   --  automated changes within the same second.
+
    procedure Sync_Solution_And_Deps (This : Root);
    --  Ensure that dependencies are up to date in regard to the lockfile and
    --  manifest: if the manifest is newer than the lockfile, resolve again,
@@ -97,7 +103,13 @@ package Alire.Roots is
    --  releases in the lockfile are actually on disk (may be missing if cache
    --  was deleted, or the crate was just cloned).
 
-   --  files and folders derived from the root path (this obsoletes Alr.Paths)
+   procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root);
+   --  If the lockfile is older than the manifest, sync their timestamps, do
+   --  nothing otherwise. We want this when the manifest has been manually
+   --  edited but the solution hasn't changed (and so the lockfile hasn't been
+   --  regenerated). This way we know the lockfile is valid for the manifest.
+
+   --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
    function Working_Folder (This : Root) return Absolute_Path;
    --  The "alire" folder inside the root path

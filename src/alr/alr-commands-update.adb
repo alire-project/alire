@@ -53,7 +53,6 @@ package body Alr.Commands.Update is
                                     others => <>));
          Diff    : constant Alire.Solutions.Diffs.Diff := Old.Changes (Needed);
       begin
-
          --  Early exit when there are no changes
 
          if not Alire.Force and not Diff.Contains_Changes then
@@ -62,6 +61,9 @@ package body Alr.Commands.Update is
                  ("There are missing dependencies"
                   & " (use `alr with --solve` for details).");
             end if;
+
+            Root.Current.Sync_Manifest_And_Lockfile_Timestamps;
+            --  Just in case manual changes in manifest don't modify solution
 
             Trace.Info ("Nothing to update.");
             return;
