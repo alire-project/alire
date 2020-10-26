@@ -256,10 +256,13 @@ package body Alire.VCSs.Git is
          --  There are added/modified tracked files
          return Dirty;
       else
+         --  Retrieve revisions from remote branch tip up to our local HEAD. If
+         --  not empty, we are locally ahead.
          if Run_Git_And_Capture
            (Empty_Vector
             & "rev-list"
-            & String'(This.Remote (Repo) & "..HEAD")).Is_Empty
+            & String'(This.Remote (Repo) & "/" & This.Branch (Repo)
+                      &  "..HEAD")).Is_Empty
          then
             return Clean;
          else
