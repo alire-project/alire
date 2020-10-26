@@ -185,6 +185,16 @@ package body Alire.Publish is
 
       Deployer.Deploy (Context.Tmp_Deploy_Dir.Filename).Assert;
 
+      --  Check that the maintainer's manifest is at the expected location
+
+      if not GNAT.OS_Lib.Is_Regular_File
+        (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name)
+      then
+         Raise_Checked_Error
+           ("Remote sources are missing the '"
+            & Roots.Crate_File_Name & "' manifest file.");
+      end if;
+
    end Deploy_Sources;
 
    -----------------------------
