@@ -146,3 +146,83 @@ of the `testsuite` folder.
 
 Additionally, you can test in batch the building of crates in your platform
 with the `alr test` command. (See `alr test --help` output for instructions.)
+
+## Migrating an existing Ada/SPARK project to Alire
+
+First you have to decide on a crate name for your project, this name will have to follow the naming rules of Alire. You can find those rules using the command:
+```bash
+$ alr help identifiers
+```
+
+Avoid using `ada` as a prefix for your crate name, this will make the project harder to find in a list. `ada` suffix is ok when the project is a binding for an existing library (e.g. `sdlada`, `gtkada`).
+
+We will use the name `my_crate` as an example, and consider that the repository uses the same name.
+
+Clone your project repository and enter the directory:
+```bash
+$ git clone https://github.com/github_login/my_crate.git
+$ cd my_crate
+```
+
+At this point you have a choice:
+ 1. Let Alire generate a new GPR project file for you. This is recommended for most projects, and in particular if your project has simple code organization and GPR project file. One of the advantages is that Alire will create a GPR project file “standardized” for best integration in the ecosystem.
+
+ 1. Keep your existing GPR project file. This is recommended for projects with complex GPR project file(s).
+
+### 1: Using Alire GPR project file
+
+If you want Alire to generate a project you first have to delete the existing GPR project file:
+
+```bash
+$ rm *.gpr
+```
+
+And then use `alr init` command to create a skeleton for your crate:
+
+For a library:
+```bash
+$ alr init --in-place --lib my_crate
+```
+For an application:
+```bash
+$ alr init --in-place --bin my_crate
+```
+
+If this is your first time using `alr init`, you will have to provide some information like your name and GitHub login. 
+
+You can ignore the warnings such as `Cannot create '[...]/my_crate/src/my_crate.ads'`, Alire is trying to create a root package for your crate but you probably already have one.
+
+From this point you can edit the GPR project file to change the source dir or compilation flags, if needed.
+And then try to compile your crate with:
+```bash
+$ alr build 
+```
+
+### 2: Using your own GPR project file(s)
+
+If you want to keep the existing GPR project file, use `alr init` with the `--no-skel` option to skip the project skeleton creation:
+
+For a library:
+```bash
+$ alr init --in-place --no-skel --lib my_crate
+```
+For an application:
+```bash
+$ alr init --in-place --no-skel --bin my_crate
+```
+If this is your first time using `alr init`, you will have to provide some information like your name and GitHub login. 
+
+If your GPR project file does not match the crate name (i.e. `my_crate.gpr`), you have to add a 
+`project-files` field in your `alire.toml` manifest. For instance:
+```toml
+project-files = ["project_file.gpr"]
+```
+Although this is not recommended (see Best practices), you can have multiple GPR project files:
+```toml
+project-files = ["project_file_1.gpr", "project_file_2.gpr"]
+```
+
+You can now to compile your crate with:
+```bash
+$ alr build 
+```
