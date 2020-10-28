@@ -147,7 +147,7 @@ of the `testsuite` folder.
 Additionally, you can test in batch the building of crates in your platform
 with the `alr test` command. (See `alr test --help` output for instructions.)
 
-## Migrating an existing Ada/SPARK project to Alire
+## Migration of an existing Ada/SPARK project to Alire
 
 First you have to decide on a crate name for your project, this name will have to follow the naming rules of Alire. You can find those rules using the command:
 ```bash
