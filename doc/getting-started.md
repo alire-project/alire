@@ -222,7 +222,7 @@ Although this is not recommended (see Best practices), you can have multiple GPR
 project-files = ["project_file_1.gpr", "project_file_2.gpr"]
 ```
 
-You can now to compile your crate with:
+You can now compile your crate with:
 ```bash
 $ alr build 
 ```
