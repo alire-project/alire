@@ -50,8 +50,9 @@ major/minor/patch/build version changes), but not modified.
       [gnatcoll_postgres](https://alire.ada.dev/crates/gnatcoll_postgres)).
     
     - If your project is an application/executable/tool, some parts of the
-      application are potentially interesting on their own and would benefit
-      the ecosystem. For instance a parser for a standard file format.
+      application may be interesting on their own and could benefit the
+      ecosystem. For instance a parser for a standard file format would be
+      useful across projects.
 
  - GPR project file clashes: to prevent issues when combining the GPR project
    files of different crates, we recommend to follow the rules below:
@@ -83,3 +84,5 @@ major/minor/patch/build version changes), but not modified.
 
       for Library_Kind use Library_Type;
       ```
+      Having the `MY_CRATE_LIBRARY_TYPE` external will allow users to override
+      the value `LIBRARY_TYPE` just for this crate, if need be.
