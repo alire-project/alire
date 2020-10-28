@@ -132,6 +132,14 @@ package body Alire.Solver is
 
       use Alire.Conditional.For_Dependencies;
 
+      Unavailable_Crates : Containers.Crate_Name_Sets.Set;
+      Unavailable_Deps   : Utils.String_Sets.Set;
+      --  Some dependencies may be unavailable because the crate does not
+      --  exist, the requested releases do not exist, or the intersection of
+      --  versions is empty. In this case, we can prematurely end the search
+      --  instead of keeping looking for a valid combination, as these
+      --  dependencies will never be satisfied.
+
       --  On the solver internal operation: the solver recursively tries all
       --  possible dependency combinations, in depth-first order. This means
       --  that, for a given dependency, all satisfying releases are attempted
@@ -333,7 +341,10 @@ package body Alire.Solver is
             procedure Expand_Missing (Dep    : Alire.Dependencies.Dependency)
             is
             begin
-               if Options.Completeness > All_Complete then
+               if Options.Completeness > All_Complete or else
+                 Unavailable_Crates.Contains (Dep.Crate) or else
+                 Unavailable_Deps.Contains (Dep.Image)
+               then
 
                   Trace.Debug
                     ("SOLVER: marking MISSING the crate " & Dep.Image
@@ -409,6 +420,13 @@ package body Alire.Solver is
 
                Check (Current.Releases.Element (Dep.Crate));
 
+            elsif Unavailable_Deps.Contains (Dep.Image) then
+
+               --  A dependency known to be globally unavailable saves us
+               --  looking along this path again.
+
+               Expand_Missing (Dep);
+
             elsif Index.Exists (Dep.Crate) then
 
                --  Detect externals for this dependency now, so they are
@@ -481,6 +499,14 @@ package body Alire.Solver is
                           and Remaining).Image_One_Line);
                end if;
 
+               --  If the dependency has no valid releases at this point, we
+               --  can mark it as globally unavailable (no release in the index
+               --  fulfills it).
+
+               if not Satisfiable then
+                  Unavailable_Deps.Include (Dep.Image);
+               end if;
+
                --  There may be a less bad solution if we leave this crate out.
                --  Also, if we know for certain it is not satisfiable, mark it
                --  as so already to have the incomplete solution that would not
@@ -495,6 +521,8 @@ package body Alire.Solver is
 
                --  The crate plainly doesn't exist in our loaded catalog, so
                --  mark it as missing an move on:
+
+               Unavailable_Crates.Include (Dep.Crate);
 
                Trace.Debug
                  ("SOLVER: catalog LACKS the crate " & Dep.Image
@@ -539,6 +567,36 @@ package body Alire.Solver is
          --------------------
 
          procedure Store_Finished (Solution : Alire.Solutions.Solution) is
+
+            ------------------------------
+            -- Contains_All_Satisfiable --
+            ------------------------------
+            --  A solution may be incomplete but also may be only missing
+            --  impossible dependencies. In that case we can finish already, as
+            --  if the solution were complete. Otherwise, an e.g. missing crate
+            --  may force exploring all the combos of the rest of crates just
+            --  because it doesn't exist.
+            function Contains_All_Satisfiable return Boolean is
+               use all type Dependencies.States.Fulfillments;
+            begin
+               for Crate of Solution.Crates loop
+                  if Solution.State (Crate).Fulfilment = Missed
+                        --  So the dependency is not solved, but why?
+                    and then
+                      not Unavailable_Crates.Contains (Crate)
+                        --  Because it does not exist at all, so "complete"
+                    and then
+                      not Unavailable_Deps.Contains
+                        (Solution.Dependency (Crate).Image)
+                        --  Because no release fulfills it, so "complete"
+                  then
+                     return False;
+                  end if;
+               end loop;
+
+               return True;
+            end Contains_All_Satisfiable;
+
             Pre_Length : constant Count_Type := Solutions.Length;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
@@ -559,7 +617,7 @@ package body Alire.Solver is
                            & " (complete/partial/dupes)");
 
             if Options.Completeness = First_Complete
-              and then Solution.Is_Complete
+              and then Contains_All_Satisfiable
             then
                raise Solution_Found; -- break recursive search
             end if;
