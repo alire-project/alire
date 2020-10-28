@@ -11,7 +11,9 @@ from drivers.helpers import compare, contents
 test_dir = os.getcwd()
 
 # Invalid crate name
-#run_alr('init', '--bin', 'invalid-name')
+p = run_alr('init', '--bin', 'invalid-name',
+            complain_on_error=False)
+assert_match(".*Identifiers must be.*", p.out)
 
 # Plain init
 run_alr('init', '--bin', 'xxx')
@@ -42,12 +44,12 @@ compare(contents('yyy'), ['yyy/alire',
 
 # Init with existing crate
 os.chdir('yyy')
-run_alr('init', '--bin', '--no-skel', 'yyy')
+run_alr('init', '--bin', '--no-skel', 'yyy', quiet=False)
 
 # Init in place with existing crate FAIL (we do not overwrite files)
 os.chdir('yyy')
 p = run_alr('init', '--bin', '--in-place', '--no-skel', 'yyy',
-            complain_on_error=False)
+            complain_on_error=False, quiet=False)
 assert_match(".*alire.toml already exists.*", p.out)
 
 # Init in place with existing invalid crate will FAIL

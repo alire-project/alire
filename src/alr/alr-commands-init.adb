@@ -48,7 +48,9 @@ package body Alr.Commands.Init is
 
       File : TIO.File_Type;
 
-      procedure Create (Filename : String);
+      function Create (Filename : String) return Boolean;
+      --  Return False if the file already exists
+
       procedure Put_New_Line;
       procedure Put_Line (S : String);
       --  Shortcuts to write to File
@@ -104,7 +106,10 @@ package body Alr.Commands.Init is
       begin
          --  Use more than 80 colums for more readable strings
          pragma Style_Checks ("M200");
-         Create (Filename);
+         if not Create (Filename) then
+            Trace.Warning ("Cannot create '" & Filename & "'");
+            return;
+         end if;
          Put_Line ("project " & Mixed_Name & " is");
          Put_New_Line;
          if For_Library then
@@ -212,7 +217,9 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Src_Directory / (+Lower_Name & ".ads"));
       begin
-         Create (Filename);
+         if not Create (Filename) then
+            return;
+         end if;
          Put_Line ("package " & Mixed_Name & " is");
          Put_New_Line;
          TIO.Put (File, "end " & Mixed_Name & ";");
@@ -227,7 +234,9 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Src_Directory / (+Lower_Name & ".adb"));
       begin
-         Create (Filename);
+         if not Create (Filename) then
+            return;
+         end if;
          Put_Line ("procedure " & Mixed_Name & " is");
          Put_Line ("begin");
          Put_Line ("   null;");
@@ -284,8 +293,12 @@ package body Alr.Commands.Init is
             Login    : constant String := UI.Query_Config.User_GitHub_Login;
             Username : constant String := Escape (UI.Query_Config.User_Name);
             Email    : constant String := UI.Query_Config.User_Email;
+            Filename : constant String :=
+              +Full_Name (Directory / (+Alire.Roots.Crate_File_Name));
          begin
-            Create (+Full_Name (Directory / (+Alire.Roots.Crate_File_Name)));
+            if not Create (Filename) then
+               Reportaise_Command_Failed ("Cannot create '" & Filename & "'");
+            end if;
             Put_Line ("name = " & Q (Lower_Name));
             Put_Line ("description = " & Q ("Shiny new project"));
             Put_Line ("version = " & Q ("0.0.0"));
@@ -308,14 +321,16 @@ package body Alr.Commands.Init is
       -- Create --
       ------------
 
-      procedure Create (Filename : String) is
+      function Create (Filename : String) return Boolean is
       begin
          if Ada.Directories.Exists (Filename) then
-            Reportaise_Command_Failed
-              (Filename & " already exists.");
+            Trace.Warning (Filename & " already exists.");
+            return False;
          end if;
 
          TIO.Create (File, TIO.Out_File, Filename);
+
+         return True;
       end Create;
 
       ------------------
