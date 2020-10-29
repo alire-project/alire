@@ -127,11 +127,20 @@ private
 
    use type Semantic_Versioning.Extended.Version_Set;
 
+   type Stored_Release is new Containers.Release_H with null record;
+   --  New type to simplify comparison of optional stored releases
+
+   overriding function "=" (L, R : Stored_Release) return Boolean;
+   --  Comparing releases directly returns always false due to some internal
+   --  discrepancy not yet clear. For the purposes of comparing solutions, we
+   --  rely on the milestone and origin for solved releases, which is the kind
+   --  of uniqueness we want at this level.
+
    --  Helper functions
 
    function Optional_Release (Crate     : Crate_Name;
                               Workspace : Any_Path)
-                              return Containers.Release_H;
+                              return Stored_Release;
    --  Detect if Workspace is a valid Alire crate for the given Crate, in which
    --  case the returned release will be valid. Otherwise it will be empty. If
    --  the crate found does not match Crate in name, a Checked_Error will be
@@ -169,26 +178,12 @@ private
       case Fulfillment is
          when Linked =>
             Target  : Link_Holder;
-            Opt_Rel : Containers.Release_H; -- This might not be filled-in
+            Opt_Rel : Stored_Release; -- This might not be filled-in
          when Solved =>
-            Release : Containers.Release_H; -- This is always valid
+            Release : Stored_Release; -- This is always valid
          when others => null;
       end case;
    end record;
-
-   use type Releases.Release;
-
-   overriding function "=" (L, R : Fulfillment_Data) return Boolean
-   is (L.Fulfillment = R.Fulfillment and then
-         (case L.Fulfillment is
-             when Linked =>
-                L.Target.Element.Path = R.Target.Element.Path and then
-                 (L.Opt_Rel.Is_Empty = R.Opt_Rel.Is_Empty and then
-                   (L.Opt_Rel.Is_Empty or else
-                    L.Opt_Rel.Element = R.Opt_Rel.Element)),
-             when Solved =>
-                L.Release.Element = R.Release.Element,
-             when others => True));
 
    type Pinning_Data (Pinned : Boolean := False) is record
       case Pinned is
@@ -443,8 +438,7 @@ private
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
        Fulfilled    => (Fulfillment => Solved,
-                        Release     => Containers.Release_Holders
-                                                 .To_Holder (Using)),
+                        Release     => To_Holder (Using)),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 

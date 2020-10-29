@@ -246,21 +246,22 @@ package body Alire.Utils.User_Input is
       if Changes.Contains_Changes then
          Trace.Log ("Changes to dependency solution:", Level);
          Changes.Print (Changed_Only => Changed_Only);
+
+         Trace.Log ("", Level);
+
+         return UI.Query
+           (Question => "Do you want to proceed?",
+            Valid    => (Yes | No => True,
+                         others   => False),
+            Default  => (if Changes.Latter_Is_Complete or else Alire.Force
+                         then Yes
+                         else No)) = Yes;
       else
          Trace.Log
            ("There are no changes between the former and new solution.",
             Level);
+         return True;
       end if;
-
-      Trace.Log ("", Level);
-
-      return UI.Query
-        (Question => "Do you want to proceed?",
-         Valid    => (Yes | No => True,
-                      others   => False),
-         Default  => (if Changes.Latter_Is_Complete or else Alire.Force
-                      then Yes
-                      else No)) = Yes;
    end Confirm_Solution_Changes;
 
    ---------------------

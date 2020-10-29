@@ -334,6 +334,11 @@ package body Alire.Workspace is
          if not Confirm or else
            Utils.User_Input.Confirm_Solution_Changes (Diff)
          then
+            if not Confirm then
+               Trace.Info ("Changes to dependency solution:");
+               Diff.Print (Changed_Only => not Alire.Detailed);
+            end if;
+
             Deploy_Dependencies
               (Root     => Root,
                Solution => Next,

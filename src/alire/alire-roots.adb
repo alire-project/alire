@@ -273,19 +273,39 @@ package body Alire.Roots is
    function Working_Folder (This : Root) return Absolute_Path is
      ((+This.Path) / "alire");
 
+   --------------------------
+   -- Is_Lockfile_Outdated --
+   --------------------------
+
+   function Is_Lockfile_Outdated (This : Root) return Boolean is
+      use Ada.Directories;
+      use type Ada.Calendar.Time;
+   begin
+      return
+        Modification_Time (This.Crate_File) >
+        Modification_Time (This.Lock_File);
+   end Is_Lockfile_Outdated;
+
    ----------------------------
    -- Sync_Solution_And_Deps --
    ----------------------------
 
    procedure Sync_Solution_And_Deps (This : Root) is
-      use Ada.Directories;
-      use type Ada.Calendar.Time;
    begin
-      if Modification_Time (This.Crate_File) >
-        Modification_Time (This.Lock_File)
-      then
+      if This.Is_Lockfile_Outdated then
          Trace.Info ("Detected changes in manifest, updating workspace...");
-         Workspace.Update_And_Deploy_Dependencies (This);
+         Workspace.Update_And_Deploy_Dependencies (This, Confirm => False);
+         --  Don't ask for confirmation as this is an automatic update in
+         --  reaction to a manually edited manifest, and we need the lockfile
+         --  to match the manifest. As any change in dependencies will be
+         --  printed, the user will have to re-edit the manifest if not
+         --  satisfied with the result of the previous edition.
+
+         This.Sync_Manifest_And_Lockfile_Timestamps;
+         --  It may happend that the solution didn't change (edition of
+         --  manifest is not related to dependencies), in which case we need
+         --  to manually mark the lockfile as older.
+
          Trace.Info (""); -- Separate changes from what caused the sync
 
       elsif (for some Rel of This.Solution.Releases =>
@@ -300,6 +320,21 @@ package body Alire.Roots is
             Deps_Dir => This.Dependencies_Dir);
       end if;
    end Sync_Solution_And_Deps;
+
+   -------------------------------------------
+   -- Sync_Manifest_And_Lockfile_Timestamps --
+   -------------------------------------------
+
+   procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root) is
+      package OS renames GNAT.OS_Lib;
+   begin
+      if This.Is_Lockfile_Outdated then
+         Trace.Debug ("Touching lock file time after manifest manual edition");
+         OS.Set_File_Last_Modify_Time_Stamp
+           (This.Lock_File,
+            OS.File_Time_Stamp (This.Crate_File));
+      end if;
+   end Sync_Manifest_And_Lockfile_Timestamps;
 
    ------------
    -- Extend --
