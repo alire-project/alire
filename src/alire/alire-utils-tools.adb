@@ -57,7 +57,7 @@ package body Alire.Utils.Tools is
             --  Cannot have package for an unknown distribution
             return "";
 
-         when Msys2 | Debian | Ubuntu =>
+         when Msys2 | Debian | Ubuntu | Arch =>
             return (case Tool is
                        when Easy_Graph =>
                          (if Distribution /= Msys2
