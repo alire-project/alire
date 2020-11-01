@@ -41,30 +41,17 @@ package body Alire.Platform is
                   Normalized : constant String :=
                                  To_Lower_Case (Replace (Line, " ", ""));
                begin
-                  begin
-                     if Starts_With (Normalized, "id=") or else Starts_With (Normalized, "id_like=") then
-                        Cached_Distro :=
-                          Platforms.Distributions'Value
-                            (Tail (Normalized, '='));
-                        Distro_Cached := True;
-                        return Cached_Distro;
-                     end if;
-                  exception
-                     when others =>
-                        null; -- Not a known distro.
-                  end;
-                  begin
-                     if Starts_With (Normalized, "id_like=") then
-                        Cached_Distro :=
-                          Platforms.Distributions'Value
-                            (Tail (Normalized, '='));
-                        Distro_Cached := True;
-                        return Cached_Distro;
-                     end if;
-                  exception
-                     when others =>
-                        null; -- Not a known distro.
-                  end;
+                  if Starts_With (Normalized, "id=") or else
+                    Starts_With (Normalized, "id_like=")
+                  then
+                     Cached_Distro :=
+                       Platforms.Distributions'Value (Tail (Normalized, '='));
+                     Distro_Cached := True;
+                     return Cached_Distro;
+                  end if;
+               exception
+                  when others =>
+                     null; -- Not a known distro.
                end;
             end loop;
 
