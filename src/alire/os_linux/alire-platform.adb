@@ -42,7 +42,7 @@ package body Alire.Platform is
                                  To_Lower_Case (Replace (Line, " ", ""));
                begin
                   begin
-                     if Starts_With (Normalized, "id=") then
+                     if Starts_With (Normalized, "id=") or else Starts_With (Normalized, "id_like=") then
                         Cached_Distro :=
                           Platforms.Distributions'Value
                             (Tail (Normalized, '='));
