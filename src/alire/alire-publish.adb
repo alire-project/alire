@@ -776,7 +776,7 @@ package body Alire.Publish is
       when Broken =>
          Raise_Checked_Error
            (Errors.Wrap
-              ("Invalid workspace found at " & TTY.URL (Path),
+              ("Invalid metadata found at " & TTY.URL (Path),
                Root.Brokenness));
       when Valid => null;
       end case;
