@@ -64,7 +64,8 @@ package body Alire.Platform is
 
             --  If no supported distribution found, fallback to id_like key
             if Cached_Distro = Distro_Unknown then
-               Trace.Debug ("Unknown distro for key 'id', falling back to 'id_like'");
+               Trace.Debug
+                 ("Unknown distro for key 'id', falling back to 'id_like'");
                Cached_Distro := Get_Os_Release_Value_For_Key ("id_like");
             end if;
 
