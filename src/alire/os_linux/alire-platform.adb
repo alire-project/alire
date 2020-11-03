@@ -1,5 +1,6 @@
 with Alire.OS_Lib.Subprocess;
 with Alire.Utils;
+with GNAT.Regpat;
 
 package body Alire.Platform is
 
@@ -36,21 +37,52 @@ package body Alire.Platform is
                         Subprocess.Checked_Spawn_And_Capture
                 ("cat", Empty_Vector & "/etc/os-release");
 
-            function Get_Os_Release_Value_For_Key (Key : String)
+            function Get_Os_Release_Value_For_Key (Key : String;
+                                                   Multiple_Values : Boolean)
                                       return Alire.Platforms.Distributions is
+
+               use GNAT.Regpat;
+               Regexp : constant Pattern_Matcher :=
+                 Compile (Key & "\s*=\s*""?([^""]+)""?");
+               Matches : Match_Array (1 .. 1);
+
             begin
                for Line of Release loop
                   declare
                      Normalized : constant String :=
-                       To_Lower_Case (Replace (Line, " ", ""));
+                       To_Lower_Case (Line);
+
+                     Values : String_Vector;
                   begin
-                     if Starts_With (Normalized, Key & "=") then
-                        return Platforms.Distributions'Value
-                          (Tail (Normalized, '='));
+                     Match (Regexp, Normalized, Matches);
+                     if Matches (1) /= No_Match then
+                        if Multiple_Values then
+                           --  Generate Values from space separated items
+                           Values :=
+                             Split (
+                               Normalized
+                                 (Matches (1).First .. Matches (1).Last), ' ');
+
+                        else
+                           --  Generate Values from a single value
+                           Values :=
+                             To_Vector (
+                               Normalized
+                                 (Matches (1).First .. Matches (1).Last));
+                        end if;
+                        for Value of Values loop
+                           begin
+                              return Platforms.Distributions'Value
+                                (Value);
+                           exception
+                              when others =>
+                                 null; -- Not a known distro.
+                           end;
+                        end loop;
                      end if;
                   exception
                      when others =>
-                        exit; -- Not a known distro.
+                        null; -- Not a known distro.
                   end;
                end loop;
 
@@ -60,13 +92,17 @@ package body Alire.Platform is
 
          begin
             --  First try with id key
-            Cached_Distro := Get_Os_Release_Value_For_Key ("id");
+            Cached_Distro :=
+              Get_Os_Release_Value_For_Key (Key => "id",
+                                            Multiple_Values => False);
 
             --  If no supported distribution found, fallback to id_like key
             if Cached_Distro = Distro_Unknown then
                Trace.Debug
                  ("Unknown distro for key 'id', falling back to 'id_like'");
-               Cached_Distro := Get_Os_Release_Value_For_Key ("id_like");
+               Cached_Distro :=
+                 Get_Os_Release_Value_For_Key (Key => "id_like",
+                                               Multiple_Values => True);
             end if;
 
             --  Still an unsupported distribution ?
