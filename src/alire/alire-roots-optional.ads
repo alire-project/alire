@@ -37,6 +37,9 @@ package Alire.Roots.Optional is
    function Value (This : aliased Root) return Reference with
      Pre => This.Is_Valid;
 
+   function Brokenness (This : Root) return String with
+     Pre => This.Is_Broken;
+
    function Outcome_Failure (Message : String;
                              Status  : States;
                              Report  : Boolean)
@@ -51,6 +54,8 @@ private
       case Status is
          when Valid =>
             Value : aliased Roots.Root;
+         when Broken =>
+            Cause : UString;
          when others =>
             null;
       end case;

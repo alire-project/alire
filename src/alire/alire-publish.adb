@@ -768,11 +768,18 @@ package body Alire.Publish is
    is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
-
+      use all type Roots.Optional.States;
    begin
-      if not Root.Is_Valid then
+      case Root.Status is
+      when Outside =>
          Raise_Checked_Error ("No Alire workspace found at " & TTY.URL (Path));
-      end if;
+      when Broken =>
+         Raise_Checked_Error
+           (Errors.Wrap
+              ("Invalid workspace found at " & TTY.URL (Path),
+               Root.Brokenness));
+      when Valid => null;
+      end case;
 
       if not Git.Is_Repository (Root.Value.Path) then
          Git_Error ("no git repository found", Root.Value.Path);
