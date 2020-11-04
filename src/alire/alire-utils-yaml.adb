@@ -74,7 +74,7 @@ package body Alire.Utils.YAML is
          case C is
             when ASCII.LF              => Escape ('l');
             when ASCII.CR              => Escape ('c');
-            when '"' | ''' | '\'       => Escape (C);
+            when '"' | '\'             => Escape (C);
             when ASCII.HT              => Escape ('t');
             when ASCII.NUL .. ASCII.BS
                | ASCII.VT  .. ASCII.FF
