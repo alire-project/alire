@@ -336,6 +336,9 @@ package body Alire.Environment is
          Index := Index + 1;
       end loop;
 
+      --  Sort results for predictable output
+      Sort (Result);
+
       return Result;
    end Compile;
 
