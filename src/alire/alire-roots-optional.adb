@@ -16,6 +16,13 @@ package body Alire.Roots.Optional is
                              Report => False) with
                           Data => (Status => Outside));
 
+   ----------------
+   -- Brokenness --
+   ----------------
+
+   function Brokenness (This : Root) return String
+   is (+This.Data.Cause);
+
    -----------------
    -- Detect_Root --
    -----------------
@@ -120,7 +127,8 @@ package body Alire.Roots.Optional is
                   with Data => (Status => Outside))
        elsif Status = Broken then
           (Alire.Outcome_Failure (Message, Report)
-                  with Data => (Status => Broken))
+           with Data => (Status => Broken,
+                         Cause  => +Message))
        else
           raise Program_Error with "precondition not fulfilled");
 
