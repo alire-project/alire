@@ -42,8 +42,15 @@ package body Alire.Platform is
                                       return Alire.Platforms.Distributions is
 
                use GNAT.Regpat;
+
+               --  Regexp accepting lines not starting with '#' like:
+               --  key=value
+               --  key='value'
+               --  key='value1 value2'
+               --  key="value"
+               --  key="value1 value2"
                Regexp : constant Pattern_Matcher :=
-                 Compile (Key & "\s*=\s*""?([^""]+)""?");
+                 Compile ("^" & Key & "=[""']?([^""']+)[""']?");
                Matches : Match_Array (1 .. 1);
 
             begin
