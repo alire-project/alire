@@ -37,8 +37,7 @@ package body Alire.Platform is
                         Subprocess.Checked_Spawn_And_Capture
                 ("cat", Empty_Vector & "/etc/os-release");
 
-            function Get_Os_Release_Value_For_Key (Key : String;
-                                                   Multiple_Values : Boolean)
+            function Get_Os_Release_Value_For_Key (Key : String)
                                       return Alire.Platforms.Distributions is
 
                use GNAT.Regpat;
@@ -63,20 +62,12 @@ package body Alire.Platform is
                   begin
                      Match (Regexp, Normalized, Matches);
                      if Matches (1) /= No_Match then
-                        if Multiple_Values then
-                           --  Generate Values from space separated items
-                           Values :=
-                             Split (
-                               Normalized
-                                 (Matches (1).First .. Matches (1).Last), ' ');
+                        --  Generate Values from space separated items
+                        Values :=
+                          Split (
+                            Normalized
+                            (Matches (1).First .. Matches (1).Last), ' ');
 
-                        else
-                           --  Generate Values from a single value
-                           Values :=
-                             To_Vector (
-                               Normalized
-                                 (Matches (1).First .. Matches (1).Last));
-                        end if;
                         for Value of Values loop
                            begin
                               return Platforms.Distributions'Value
@@ -100,16 +91,14 @@ package body Alire.Platform is
          begin
             --  First try with id key
             Cached_Distro :=
-              Get_Os_Release_Value_For_Key (Key => "id",
-                                            Multiple_Values => False);
+              Get_Os_Release_Value_For_Key (Key => "id");
 
             --  If no supported distribution found, fallback to id_like key
             if Cached_Distro = Distro_Unknown then
                Trace.Debug
                  ("Unknown distro for key 'id', falling back to 'id_like'");
                Cached_Distro :=
-                 Get_Os_Release_Value_For_Key (Key => "id_like",
-                                               Multiple_Values => True);
+                 Get_Os_Release_Value_For_Key (Key => "id_like");
             end if;
 
             --  Still an unsupported distribution ?
