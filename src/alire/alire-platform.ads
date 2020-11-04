@@ -1,4 +1,5 @@
 with Alire.Platforms;
+with Alire.Environment;
 
 package Alire.Platform is
 
@@ -14,6 +15,9 @@ package Alire.Platform is
 
    function Distribution_Root return Absolute_Path;
    --  Root directory of the distribution
+
+   procedure Load_Environment (Ctx : in out Alire.Environment.Context);
+   --  Set environment variables from the platform
 
    --------------------------------
    -- Portable derived utilities --

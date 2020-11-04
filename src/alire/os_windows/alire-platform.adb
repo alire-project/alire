@@ -106,4 +106,34 @@ package body Alire.Platform is
       end case;
    end Distribution_Root;
 
+   ----------------------
+   -- Load_Environment --
+   ----------------------
+
+   procedure Load_Environment (Ctx : in out Alire.Environment.Context) is
+   begin
+      case Distribution is
+
+         when Platforms.Msys2 =>
+            declare
+               Root : constant Absolute_Path := Detect_Msys2_Root;
+            begin
+
+               Ctx.Append ("PATH", Root / "mingw64" / "bin", "msys2");
+               Ctx.Append ("PATH", Root / "usr" / "bin", "msys2");
+               Ctx.Append ("PATH", Root / "usr" / "local" / "bin", "msys2");
+
+               Ctx.Append ("LIBRARY_PATH", Root / "mingw64" / "lib", "msys2");
+
+               Ctx.Append ("C_INCLUDE_PATH", Root / "mingw64" / "include",
+                           "msys2");
+            end;
+
+         when others =>
+            null;
+
+      end case;
+
+   end Load_Environment;
+
 end Alire.Platform;

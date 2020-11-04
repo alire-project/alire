@@ -13,6 +13,7 @@ with Alire.Solutions;
 with Alire.Utils;
 with Alire.Environment.Formatting;
 with Alire.Utils.TTY;
+with Alire.Platform;
 
 with GNAT.IO;
 
@@ -86,6 +87,9 @@ package body Alire.Environment is
    is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
+
+      --  Load platform environment
+      Alire.Platform.Load_Environment (This);
 
       --  Warnings when setting up an incomplete environment
 

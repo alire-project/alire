@@ -30,8 +30,11 @@ else:
 # Check the printenv output
 assert_match('warn: Generating incomplete environment'  # Note: this warning is
              ' because of missing dependencies\n'       # via stderr so it's OK
+             '.*'
+             'export ALIRE="True"\n'
+             '.*'
              'export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n'
-             'export ALIRE="True"\n',
+             '.*',
              p.out)
 
 print('SUCCESS')

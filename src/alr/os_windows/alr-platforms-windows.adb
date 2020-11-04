@@ -33,16 +33,10 @@ package body Alr.Platforms.Windows is
 
    procedure Set_Msys2_Env (Install_Dir : Alire.Absolute_Path) is
    begin
-      Setenv ("PATH", Install_Dir / "mingw64" / "bin" &
-                ";" & Install_Dir / "usr" / "bin" &
+      --  Change PATH to have msys2 binaries available (unzip, curl, git, etc.)
+      Setenv ("PATH", Install_Dir / "usr" / "bin" &
                 ";" & Install_Dir / "usr" / "local" / "bin" &
                 ";" & Getenv ("PATH"));
-
-      Setenv ("LIBRARY_PATH", Install_Dir / "mingw64" / "lib" &
-                ";" & Getenv ("LIBRARY_PATH"));
-
-      Setenv ("C_INCLUDE_PATH", Install_Dir / "mingw64" / "include" &
-                ";" & Getenv ("C_INCLUDE_PATH"));
    end Set_Msys2_Env;
 
    ----------------------------------
