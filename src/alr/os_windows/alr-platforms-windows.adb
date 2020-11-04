@@ -1,5 +1,7 @@
 with Ada.Directories;
 
+with GNAT.OS_Lib;
+
 with Alire;
 with Alire.Origins.Deployers;
 with Alire.Platform;
@@ -33,16 +35,10 @@ package body Alr.Platforms.Windows is
 
    procedure Set_Msys2_Env (Install_Dir : Alire.Absolute_Path) is
    begin
-      Setenv ("PATH", Install_Dir / "mingw64" / "bin" &
-                ";" & Install_Dir / "usr" / "bin" &
+      --  Change PATH to have msys2 binaries available (unzip, curl, git, etc.)
+      Setenv ("PATH", Install_Dir / "usr" / "bin" &
                 ";" & Install_Dir / "usr" / "local" / "bin" &
                 ";" & Getenv ("PATH"));
-
-      Setenv ("LIBRARY_PATH", Install_Dir / "mingw64" / "lib" &
-                ";" & Getenv ("LIBRARY_PATH"));
-
-      Setenv ("C_INCLUDE_PATH", Install_Dir / "mingw64" / "include" &
-                ";" & Getenv ("C_INCLUDE_PATH"));
    end Set_Msys2_Env;
 
    ----------------------------------
@@ -170,7 +166,18 @@ package body Alr.Platforms.Windows is
 
       Cfg_Install_Dir : constant String :=
         Cfg.Get ("msys2.install_dir", Default_Install_Dir);
+
+      Pacman : constant String :=
+        Alire.OS_Lib.Subprocess.Locate_In_Path ("pacman");
+
    begin
+      if Pacman /= "" then
+         --  pacman already in PATH, no need to install msys2
+         Set_Msys2_Env (GNAT.OS_Lib.Normalize_Pathname
+                        (Ada.Directories.Containing_Directory
+                           (Pacman) / ".." / ".."));
+         return;
+      end if;
 
       if not Alire.Check_Absolute_Path (Cfg_Install_Dir) then
          --  This error is recoverable as msys2 is not required for alr to

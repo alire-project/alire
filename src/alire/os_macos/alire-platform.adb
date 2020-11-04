@@ -29,4 +29,11 @@ package body Alire.Platform is
    function Distribution_Root return Absolute_Path
    is ("/");
 
+   ----------------------
+   -- Load_Environment --
+   ----------------------
+
+   procedure Load_Environment (Ctx : in out Alire.Environment.Context)
+   is null;
+
 end Alire.Platform;

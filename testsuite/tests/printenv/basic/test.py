@@ -33,9 +33,12 @@ for i, path in enumerate(expected_gpr_path):
 
 expected_gpr_path = os.pathsep.join(expected_gpr_path)
 
-assert_match('export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+assert_match('export ALIRE="True"\n'
+             '.*'
              'export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n'
-             'export ALIRE="True"\n',
+             '.*'
+             'export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
+             '.*',
              p.out, flags=re.S)
 
 
