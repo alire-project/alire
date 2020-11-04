@@ -1,88 +1,11 @@
 with Alire.Containers;
 with Alire.Errors;
-with Alire.Solutions.Diffs;
-with Alire.Solver;
-with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
-with Alire.Workspace;
 
 with Alr.Commands.Index;
-with Alr.Platform;
 with Alr.Root;
 
 package body Alr.Commands.Update is
-
-   package Query renames Alire.Solver;
-
-   -------------
-   -- Upgrade --
-   -------------
-
-   procedure Upgrade (Allowed     : Alire.Containers.Crate_Name_Sets.Set :=
-                        Alire.Containers.Crate_Name_Sets.Empty_Set)
-   is
-      Old     : constant Query.Solution :=
-                  Root.Current.Solution;
-   begin
-
-      --  Ensure requested crates are in solution first.
-
-      for Crate of Allowed loop
-         if not Old.Depends_On (Crate) then
-            Reportaise_Wrong_Arguments ("Requested crate is not a dependency: "
-                                        & Alire.Utils.TTY.Name (Crate));
-         end if;
-
-         if Old.Pins.Contains (Crate) then
-            --  The solver will never update a pinned crate, so we may allow
-            --  this to be attempted but it will have no effect.
-            Alire.Recoverable_Error
-              ("Requested crate is pinned and cannot be updated: "
-               & Alire.Utils.TTY.Name (Crate));
-         end if;
-      end loop;
-
-      Requires_Full_Index;
-
-      declare
-         Needed  : constant Query.Solution :=
-                     Alire.Workspace.Update
-                       (Platform.Properties,
-                        Allowed,
-                        Options => (Age    => Query_Policy,
-                                    others => <>));
-         Diff    : constant Alire.Solutions.Diffs.Diff := Old.Changes (Needed);
-      begin
-         --  Early exit when there are no changes
-
-         if not Alire.Force and not Diff.Contains_Changes then
-            if not Needed.Is_Complete then
-               Trace.Warning
-                 ("There are missing dependencies"
-                  & " (use `alr with --solve` for details).");
-            end if;
-
-            Root.Current.Sync_Manifest_And_Lockfile_Timestamps;
-            --  Just in case manual changes in manifest don't modify solution
-
-            Trace.Info ("Nothing to update.");
-            return;
-         end if;
-
-         --  Show changes and ask user to apply them
-
-         if not Alire.Utils.User_Input.Confirm_Solution_Changes (Diff) then
-            Trace.Detail ("Update abandoned.");
-            return;
-         end if;
-
-         --  Apply the update
-
-         Alire.Workspace.Deploy_Dependencies (Solution => Needed);
-
-         Trace.Detail ("Update completed");
-      end;
-   end Upgrade;
 
    -------------
    -- Execute --
@@ -113,13 +36,19 @@ package body Alr.Commands.Update is
    begin
       Requires_Valid_Session (Sync => False);
       --  The user has explicitly requested an update, so it makes no sense to
-      --  sync previously, since the update would never find changes.
+      --  sync previously, or the update would never find changes.
 
       if Cmd.Online then
          Index.Update_All;
       end if;
 
-      Upgrade (Allowed => Parse_Allowed);
+      Requires_Full_Index;
+
+      Root.Current.Update_Dependencies
+        (Allowed => Parse_Allowed,
+         Options => (Age    => Query_Policy,
+                     others => <>),
+         Silent  => Alire.Utils.User_Input.Not_Interactive);
    end Execute;
 
    ----------------------

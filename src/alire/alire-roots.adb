@@ -6,11 +6,16 @@ with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
+with Alire.Solutions.Diffs;
+with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 with Alire.Workspace;
 
 with GNAT.OS_Lib;
 
 package body Alire.Roots is
+
+   package TTY renames Utils.TTY;
 
    -------------------
    -- Build_Context --
@@ -273,6 +278,13 @@ package body Alire.Roots is
    function Working_Folder (This : Root) return Absolute_Path is
      ((+This.Path) / "alire");
 
+   ------------------
+   -- Has_Lockfile --
+   ------------------
+
+   function Has_Lockfile (This : Root) return Boolean
+   is (Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid);
+
    --------------------------
    -- Is_Lockfile_Outdated --
    --------------------------
@@ -335,6 +347,76 @@ package body Alire.Roots is
             OS.File_Time_Stamp (This.Crate_File));
       end if;
    end Sync_Manifest_And_Lockfile_Timestamps;
+
+   -------------------------
+   -- Update_Dependencies --
+   -------------------------
+
+   procedure Update_Dependencies
+     (This    : Root;
+      Silent  : Boolean;
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Allowed : Containers.Crate_Name_Sets.Set :=
+        Alire.Containers.Crate_Name_Sets.Empty_Set)
+   is
+      Old     : constant Solutions.Solution := This.Solution;
+   begin
+
+      --  Ensure requested crates are in solution first.
+
+      for Crate of Allowed loop
+         if not Old.Depends_On (Crate) then
+            Raise_Checked_Error ("Requested crate is not a dependency: "
+                                 & TTY.Name (Crate));
+         end if;
+
+         if Old.Pins.Contains (Crate) then
+            --  The solver will never update a pinned crate, so we may allow
+            --  this to be attempted but it will have no effect.
+            Recoverable_Error
+              ("Requested crate is pinned and cannot be updated: "
+               & Alire.Utils.TTY.Name (Crate));
+         end if;
+      end loop;
+
+      declare
+         Needed : constant Solutions.Solution :=
+                    Workspace.Update (This.Environment, Allowed, Options);
+         Diff   : constant Solutions.Diffs.Diff := Old.Changes (Needed);
+      begin
+         --  Early exit when there are no changes
+
+         if not Alire.Force and not Diff.Contains_Changes then
+            if not Needed.Is_Complete then
+               Trace.Warning
+                 ("There are missing dependencies"
+                  & " (use `alr with --solve` for details).");
+            end if;
+
+            This.Sync_Manifest_And_Lockfile_Timestamps;
+            --  Just in case manual changes in manifest don't modify solution
+
+            Trace.Info ("Nothing to update.");
+
+            return;
+         end if;
+
+         --  Show changes and optionally ask user to apply them
+
+         if Silent then
+            Diff.Print;
+         elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+            Trace.Detail ("Update abandoned.");
+            return;
+         end if;
+
+         --  Apply the update
+
+         Workspace.Deploy_Dependencies (Solution => Needed);
+
+         Trace.Detail ("Update completed");
+      end;
+   end Update_Dependencies;
 
    ------------
    -- Extend --

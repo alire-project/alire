@@ -418,7 +418,26 @@ package body Alr.Commands is
    procedure Requires_Valid_Session (Sync : Boolean := True) is
       use Alire;
 
+      ------------------------------
+      -- Notify_Of_Initialization --
+      ------------------------------
+
+      procedure Notify_Of_Initialization is
+         --  Tell the user we are automatically computing the first solution
+         --  for the workspace. We don't want to say this when no Sync, as a
+         --  manually requested update is coming.
+      begin
+         if Sync then
+            Trace.Info
+              ("No dependency solution found, updating workspace...");
+         end if;
+      end Notify_Of_Initialization;
+
       Unchecked : constant Alire.Roots.Optional.Root := Root.Current;
+
+      Manual_Only : constant Boolean :=
+                      Alire.Config.Get
+                        (Alire.Config.Keys.Update_Manually, False);
    begin
       if not Unchecked.Is_Valid then
          Raise_Checked_Error
@@ -439,13 +458,35 @@ package body Alr.Commands is
             when Lockfiles.Valid =>
                Trace.Debug ("Lockfile at " & Checked.Lock_File & " is valid");
 
-               if Sync then
-                  Requires_Full_Index;
-                  Checked.Sync_Solution_And_Deps;
-                  --  Check deps on disk match those in lockfile
+               --  If only manual updates are allowed, exit already
+
+               if Manual_Only then
+                  Trace.Detail
+                    ("Skipping automatic dependency update"
+                     & " per configuration setting.");
+                  return;
                end if;
 
-               return; -- OK
+               if Sync then
+
+                  --  If the stored solution is not really solved and Sync is
+                  --  requested, we need to generate a proper solution anyway.
+
+                  if Checked.Solution.Is_Attempted then
+                     --  Check deps on disk match those in lockfile
+                     Requires_Full_Index;
+                     Checked.Sync_Solution_And_Deps;
+                     return;
+                  else
+                     Notify_Of_Initialization;
+                     --  And fall through
+                  end if;
+
+               else
+                  --  We have a lockfile with valid solution, which we never
+                  --  want to update automatically, so we are done here.
+                  return;
+               end if;
 
             when Lockfiles.Invalid =>
                Trace.Warning
@@ -459,30 +500,41 @@ package body Alr.Commands is
                Ada.Directories.Delete_File (Checked.Lock_File);
 
             when Lockfiles.Missing =>
-               Trace.Debug ("Workspace has no lockfile at "
-                            & Checked.Lock_File);
-         end case;
+               --  Notify the user. This may happen e.g. after first cloning.
+               Notify_Of_Initialization;
 
-         --  Solve current root dependencies to create the lock file
+               --  For the record, with the full path
+               Trace.Debug
+                 ("Workspace has no lockfile at " & Checked.Lock_File);
+         end case;
 
          Trace.Debug ("Generating lockfile on the fly...");
 
-         declare
-            Solution : constant Alire.Solutions.Solution :=
-                         Alire.Solver.Resolve
-                           (Checked.Release.Dependencies (Platform.Properties),
-                            Platform.Properties,
-                            Alire.Solutions.Empty_Valid_Solution);
-         begin
-            Alire.Lockfiles.Write ((Solution => Solution), Checked.Lock_File);
+         --  Update current root dependencies to create a complete lock file.
+         --  Before doing that, we need a trivial lock file as "old" solution.
 
-            --  Ensure the solved releases are indeed on disk
+         Alire.Lockfiles.Write
+           ((Solution => Alire.Solutions.Empty_Valid_Solution),
+            Checked.Lock_File);
 
-            if Sync then
-               Requires_Full_Index;
-               Checked.Sync_Solution_And_Deps;
-            end if;
-         end;
+         --  If only manual updates are allowed, exit already. Since this point
+         --  is only reached in case of missing/broken lockfile, it warrants
+         --  extra reporting.
+
+         if Manual_Only then
+            Trace.Info
+              ("Skipping automatic dependency update"
+               & " per configuration setting.");
+            return;
+         end if;
+
+         --  If Syncing has not been requested (because a manual sync is
+         --  upcoming) we are done. Otherwise, do a silent update.
+
+         if Sync then
+            Requires_Full_Index;
+            Checked.Update_Dependencies (Silent => True);
+         end if;
       end;
    end Requires_Valid_Session;
 

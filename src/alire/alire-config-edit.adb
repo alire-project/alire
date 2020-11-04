@@ -146,4 +146,22 @@ package body Alire.Config.Edit is
       Load_Config; -- Reload with the new set value
    end Set;
 
+   -----------------
+   -- Set_Locally --
+   -----------------
+
+   procedure Set_Locally (Key : Config_Key; Value : String) is
+   begin
+      Set (Filepath (Local), Key, Value);
+   end Set_Locally;
+
+   ------------------
+   -- Set_Globally --
+   ------------------
+
+   procedure Set_Globally (Key : Config_Key; Value : String) is
+   begin
+      Set (Filepath (Global), Key, Value);
+   end Set_Globally;
+
 end Alire.Config.Edit;

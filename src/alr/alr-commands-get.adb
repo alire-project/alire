@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Config.Edit;
 with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
@@ -137,17 +138,26 @@ package body Alr.Commands.Get is
          Root_Dir.Keep;
       end;
 
-      if Cmd.Only then
-         Trace.Detail ("By your command, dependencies not resolved nor" &
-                         " retrieved: compilation might fail");
-         return;
-      end if;
-
-      --  Check out rest of dependencies and optionally compile
       declare
          Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
            with Unreferenced;
       begin
+         --  When --only was used, mark as only to be updated manually and bail
+         --  out already.
+
+         if Cmd.Only then
+            Trace.Detail ("By your command, dependencies not resolved nor" &
+                            " retrieved: compilation might fail");
+            Trace.Info ("Because --only was used, automatic dependency" &
+                          " retrieval is disabled in this workspace:" &
+                          " use `alr update` to apply dependency changes");
+            Alire.Config.Edit.Set_Locally
+              (Alire.Config.Keys.Update_Manually, "true");
+            return;
+         end if;
+
+         --  Check out rest of dependencies and optionally compile
+
          Alire.Workspace.Deploy_Dependencies (Solution => Solution);
 
          --  Execute the checked out release post_fetch actions, now that
