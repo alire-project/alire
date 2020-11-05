@@ -3,21 +3,51 @@ with Ada.Containers;
 with Alire; use Alire;
 with Alire.Utils; use Alire.Utils;
 with Alire.OS_Lib.Subprocess;
+with Alire.Config;
 
 with Alr.Platform;
 with Alr.Root;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alr.Commands.Edit is
 
-   ----------------------
-   -- Start_GNATstudio --
-   ----------------------
+   ------------------
+   -- Start_Editor --
+   ------------------
 
-   procedure Start_GNATstudio (Prj : Relative_Path) is
+   procedure Start_Editor (Args : in out String_Vector; Prj : Relative_Path) is
+      Pattern : constant String := "${GPR_FILE}";
+
+      Cmd : constant String := Args.First_Element;
+
+      Replaced_Args : String_Vector;
    begin
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("gnatstudio", Empty_Vector & "-P" & Prj);
-   end Start_GNATstudio;
+
+      Args.Delete_First;
+
+      for Elt of Args loop
+
+         --  Replace pattern in Elt, if any
+         declare
+            Us    : Unbounded_String := +Elt;
+            Index : Natural;
+         begin
+            Index := Ada.Strings.Unbounded.Index (Us, Pattern);
+            if Index /= 0 then
+               Replace_Slice (Us,
+                              Low    => Index,
+                              High   => Index + Pattern'Length - 1,
+                              By     => Prj);
+            end if;
+
+            Replaced_Args.Append (+Us);
+         end;
+      end loop;
+
+      Trace.Info ("Editing crate with: ['" & Cmd & "' '" &
+                    Flatten (Replaced_Args, "', '") & "']");
+      Alire.OS_Lib.Subprocess.Checked_Spawn (Cmd, Replaced_Args);
+   end Start_Editor;
 
    -------------
    -- Execute --
@@ -26,20 +56,41 @@ package body Alr.Commands.Edit is
    overriding procedure Execute (Cmd : in out Command) is
       use Ada.Containers;
       use GNAT.Strings;
+      use Alire.Config;
+
+      Editor_Cmd  : constant String :=
+        Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
+
+      Args : String_Vector := Split (Editor_Cmd, ' ');
    begin
+      if Args.Is_Empty then
+         Reportaise_Command_Failed
+           ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
+      end if;
+
       Requires_Full_Index;
 
       Requires_Valid_Session;
 
       Alr.Root.Current.Export_Build_Environment;
 
-      if Alire.OS_Lib.Subprocess.Locate_In_Path ("gnatstudio") = "" then
-         Reportaise_Command_Failed
-           ("GNATstudio not available or not in PATH. " & ASCII.LF &
-              "You can download the Community edition at: " & ASCII.LF &
-              "https://www.adacore.com/download");
-         return;
-      end if;
+      declare
+         Exec : constant String := Args.First_Element;
+      begin
+         if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
+            if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
+
+               Reportaise_Command_Failed
+                 ("GNATstudio not available or not in PATH. " & ASCII.LF &
+                    "You can download the Community edition at: " & ASCII.LF &
+                    "https://www.adacore.com/download");
+            else
+               Reportaise_Command_Failed
+                 ("'" & Exec & "' not available or not in PATH.");
+            end if;
+            return;
+         end if;
+      end;
 
       declare
          Project_Files : constant Alire.Utils.String_Vector :=
@@ -51,7 +102,7 @@ package body Alr.Commands.Edit is
               ("No project file to open for this crate.");
 
          elsif Project_Files.Length = 1 then
-            Start_GNATstudio (Project_Files.First_Element);
+            Start_Editor (Args, Project_Files.First_Element);
 
          elsif Cmd.Prj = null
            or else
@@ -66,7 +117,7 @@ package body Alr.Commands.Edit is
               ("Please specify a project file with --project=.");
 
          else
-            Start_GNATstudio (Cmd.Prj.all);
+            Start_Editor (Args, Cmd.Prj.all);
          end if;
       end;
    end Execute;

@@ -26,4 +26,15 @@ else:
     p = run_alr('edit', complain_on_error=False)
     assert_match(".*Please specify a project file with --project=.*", p.out)
 
+# Set an editor that doesn't exist (different than GNATstudio)
+run_alr('config', '--set', 'editor.cmd', 'doesnt_exist arg1 ab${GPR_FILE}ab arg3')
+p = run_alr('edit', '--project=project1.gpr', complain_on_error=False)
+assert_match("ERROR: 'doesnt_exist' not available or not in PATH.*", p.out)
+print(p.out)
+
+# Use echo as an editor to check command line args
+run_alr('config', '--set', 'editor.cmd', 'echo arg1 ab${GPR_FILE}ab arg3')
+p = run_alr('edit', '--project=project1.gpr')
+assert_match("arg1 abproject1.gprab arg3", p.out)
+
 print('SUCCESS')

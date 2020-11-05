@@ -123,6 +123,8 @@ package Alire.Config is
       User_Name         : constant Config_Key := "user.name";
       User_Github_Login : constant Config_Key := "user.github_login";
 
+      Editor_Cmd  : constant Config_Key := "editor.cmd";
+
    end Keys;
 
 private
@@ -193,6 +195,13 @@ private
        Cfg_GitHub_Login,
        +("User GitHub login/username. Used to for the maintainers-logins " &
            "field of a new crate.")),
+
+      (+Keys.Editor_Cmd,
+       Cfg_String,
+       +("Editor command and arguments for editing crate code (alr edit)." &
+           " The executables and arguments are separated by a single space" &
+           " character. The token ${GPR_FILE} is replaced by" &
+           " a path to the project file to open.")),
 
       (+"msys2.do_not_install",
        Cfg_Bool,
