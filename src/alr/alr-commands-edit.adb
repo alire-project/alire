@@ -65,7 +65,7 @@ package body Alr.Commands.Edit is
    begin
       if Args.Is_Empty then
          Reportaise_Command_Failed
-           ("No editor defined in condig key '" & Keys.Editor_Cmd & "'.");
+           ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
       end if;
 
       Requires_Full_Index;
