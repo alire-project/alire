@@ -100,7 +100,7 @@ package body Alr.Commands.Publish is
          Cmd.Tar'Access,
          "", "--tar",
          "Start the publishing assistant to create a source archive"
-         & "from a local directory");
+         & " from a local directory");
 
       Define_Switch
         (Config,

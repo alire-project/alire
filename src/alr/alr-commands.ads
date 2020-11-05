@@ -86,7 +86,7 @@ package Alr.Commands is
    procedure Requires_Valid_Session (Sync : Boolean := True);
    --  Verifies that a valid working dir is in scope. If Sync, enforce that the
    --  manifest, lockfile and dependencies on disk are in sync, by performing
-   --  an update.
+   --  a silent update. If not Sync, only a minimal empty lockfile is created.
 
    ---------------------------
    --  command-line helpers --

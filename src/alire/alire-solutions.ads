@@ -214,6 +214,10 @@ package Alire.Solutions is
    function Hints (This : Solution) return Dependency_Map;
    --  Return undetected externals in the solution
 
+   function Is_Attempted (This : Solution) return Boolean with
+     Post => Is_Attempted'Result = (This.Composition /= Unsolved);
+   --  Say if a real attempt at solving has been done
+
    function Is_Better (This, Than : Solution) return Boolean;
    --  Relative ordering to prioritize found solutions. We prefer decreasing
    --  order of Composition (avoid undetected externals/missing dependencies).
@@ -415,6 +419,13 @@ private
 
    function Hints (This : Solution) return Dependency_Map
    is (This.Dependencies_That (States.Is_Hinted'Access));
+
+   ------------------
+   -- Is_Attempted --
+   ------------------
+
+   function Is_Attempted (This : Solution) return Boolean
+   is (This.Composition /= Unsolved);
 
    -----------------
    -- Is_Complete --

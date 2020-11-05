@@ -115,6 +115,10 @@ package Alire.Config is
       --  A few predefined keys that are used in several places. This list is
       --  not exhaustive.
 
+      Update_Manually   : constant Config_Key := "update-manually-only";
+      --  Used by `get --only` to flag a workspace to not autoupdate itself
+      --  despite having no solution in the lockfile.
+
       User_Email        : constant Config_Key := "user.email";
       User_Name         : constant Config_Key := "user.name";
       User_Github_Login : constant Config_Key := "user.github_login";
@@ -204,7 +208,14 @@ private
        Cfg_Bool,
        +("If true, Alire will automatically add/edit a list of 'with' " &
            "statements in the root GPR project file based on the " &
-           "dependencies of the crate."))
+           "dependencies of the crate.")),
+
+      (+Keys.Update_Manually,
+       Cfg_Bool,
+       +("If true, Alire will not attempt to update dependencies even after "
+         & "the manifest is manually edited, or when no valid solution has "
+         & "been ever computed. All updates have to be manually requested "
+         & "through `alr update`"))
 
      );
 
