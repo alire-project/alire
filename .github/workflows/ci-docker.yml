@@ -21,6 +21,7 @@ jobs:
             - centos-latest-community-latest # Test unsupported package manager 
             - debian-stable                  # Test current stable Debian compiler
             - ubuntu-lts                     # Test current LTS Ubuntu compiler
+            - arch-rolling                   # Test Arch compiler (closest to FSF?)
 
     steps:
     - name: Check out repository
