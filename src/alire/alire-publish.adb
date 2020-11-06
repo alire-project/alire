@@ -77,12 +77,20 @@ package body Alire.Publish is
    ---------------------
    -- Check_Git_Clean --
    ---------------------
-
-   procedure Check_Git_Clean (Path : Any_Path) is
+   --  Check that the repo is clean. If we need it only for generating an
+   --  archive, that is enough; otherwise, check that we are in sync with
+   --  the remote to which the origin will point to.
+   procedure Check_Git_Clean (Path : Any_Path; For_Archiving : Boolean) is
       use all type VCSs.Git.States;
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
    begin
       case Git.Status (Path) is
+         when No_Remote =>
+            if For_Archiving then
+               Log_Success ("Local repository is clean (without remote).");
+            else
+               Git_Error ("No remote configured", Path);
+            end if;
          when Clean =>
             Log_Success ("Local repository is clean.");
          when Ahead =>
@@ -304,6 +312,8 @@ package body Alire.Publish is
 
    procedure Prepare_Archive (Context : in out Data) with
      Pre => Context.Root.Is_Valid;
+   --  Prepare a tar file either using git archive (if git repo detected) or
+   --  plain tar otherwise.
 
    procedure Prepare_Archive (Context : in out Data) is
       use Utils;
@@ -382,7 +392,7 @@ package body Alire.Publish is
 
    begin
       if Is_Repo then
-         Check_Git_Clean (Root.Path);
+         Check_Git_Clean (Root.Path, For_Archiving => True);
       else
          Trace.Warning ("Not in a git repository, assuming plain sources.");
       end if;
@@ -787,7 +797,7 @@ package body Alire.Publish is
 
       --  Do not continue if the local repo is dirty
 
-      Check_Git_Clean (Root.Value.Path);
+      Check_Git_Clean (Root.Value.Path, For_Archiving => False);
 
       --  If given a revision, extract commit and verify it exists locally
 
