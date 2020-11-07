@@ -1,5 +1,6 @@
 with Alire.OS_Lib.Subprocess;
 with Alire.Utils;
+with GNAT.Regpat;
 
 package body Alire.Platform is
 
@@ -34,30 +35,79 @@ package body Alire.Platform is
             use Utils;
             Release : constant Utils.String_Vector :=
                         Subprocess.Checked_Spawn_And_Capture
-                          ("cat", Empty_Vector & "/etc/os-release");
+                ("cat", Empty_Vector & "/etc/os-release");
+
+            function Get_Os_Release_Value_For_Key (Key : String)
+                                      return Alire.Platforms.Distributions is
+
+               use GNAT.Regpat;
+
+               --  Regexp accepting lines not starting with '#' like:
+               --  key=value
+               --  key='value'
+               --  key='value1 value2'
+               --  key="value"
+               --  key="value1 value2"
+               Regexp : constant Pattern_Matcher :=
+                 Compile ("^" & Key & "=[""']?([^""']+)[""']?");
+               Matches : Match_Array (1 .. 1);
+
+            begin
+               for Line of Release loop
+                  declare
+                     Normalized : constant String :=
+                       To_Lower_Case (Line);
+
+                     Values : String_Vector;
+                  begin
+                     Match (Regexp, Normalized, Matches);
+                     if Matches (1) /= No_Match then
+                        --  Generate Values from space separated items
+                        Values :=
+                          Split (
+                            Normalized
+                            (Matches (1).First .. Matches (1).Last), ' ');
+
+                        for Value of Values loop
+                           begin
+                              return Platforms.Distributions'Value
+                                (Value);
+                           exception
+                              when others =>
+                                 null; -- Not a known distro.
+                           end;
+                        end loop;
+                     end if;
+                  exception
+                     when others =>
+                        null; -- Not a known distro.
+                  end;
+               end loop;
+
+               return Distro_Unknown;
+
+            end Get_Os_Release_Value_For_Key;
+
          begin
-            for Line of Release loop
-               declare
-                  Normalized : constant String :=
-                                 To_Lower_Case (Replace (Line, " ", ""));
-               begin
-                  if Starts_With (Normalized, "id=") then
-                     Cached_Distro :=
-                       Platforms.Distributions'Value (Tail (Normalized, '='));
-                     Distro_Cached := True;
-                     return Cached_Distro;
-                  end if;
-               exception
-                  when others =>
-                     exit; -- Not a known distro.
-               end;
-            end loop;
+            --  First try with id key
+            Cached_Distro :=
+              Get_Os_Release_Value_For_Key (Key => "id");
 
-            Trace.Debug ("Found unsupported distro: " & Release (1));
+            --  If no supported distribution found, fallback to id_like key
+            if Cached_Distro = Distro_Unknown then
+               Trace.Debug
+                 ("Unknown distro for key 'id', falling back to 'id_like'");
+               Cached_Distro :=
+                 Get_Os_Release_Value_For_Key (Key => "id_like");
+            end if;
 
-            Cached_Distro := Distro_Unknown;
+            --  Still an unsupported distribution ?
+            if Cached_Distro = Distro_Unknown then
+               Trace.Debug ("Found unsupported distro: " & Release (1));
+            end if;
+
             Distro_Cached := True;
-            return Distro_Unknown;
+            return Cached_Distro;
          end;
       end if;
    exception

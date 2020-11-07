@@ -16,6 +16,7 @@ package Alire.Platforms with Preelaborate is
    type Distributions is (Debian,
                           Ubuntu,
                           Msys2,
+                          Arch,
                           Distro_Unknown);
 
    subtype Known_Distributions is
@@ -31,7 +32,7 @@ package Alire.Platforms with Preelaborate is
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
      (Debian | Ubuntu => Apt,
-      Msys2           => Pacman,
+      Msys2 | Arch    => Pacman,
       Distro_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
