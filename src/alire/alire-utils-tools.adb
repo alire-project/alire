@@ -60,7 +60,7 @@ package body Alire.Utils.Tools is
          when Msys2 | Debian | Ubuntu | Arch =>
             return (case Tool is
                        when Easy_Graph =>
-                         (if Distribution /= Msys2
+                         (if Distribution /= Msys2 and Distribution /= Arch
                           then "libgraph-easy-perl"
                           else ""),
                        when Git | Tar | Unzip | Curl => Exec_For_Tool (Tool),
