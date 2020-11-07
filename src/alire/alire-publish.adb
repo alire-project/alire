@@ -61,6 +61,9 @@ package body Alire.Publish is
       --  Place to check the sources
    end record;
 
+   function Crate_File_Name (Context : Data) return String is
+      (+Context.Options.Crate_File_Name);
+
    ---------------
    -- Git_Error --
    ---------------
@@ -188,11 +191,11 @@ package body Alire.Publish is
       --  Check that the maintainer's manifest is at the expected location
 
       if not GNAT.OS_Lib.Is_Regular_File
-        (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name)
+        (Context.Tmp_Deploy_Dir.Filename / Crate_File_Name (Context))
       then
          Raise_Checked_Error
            ("Remote sources are missing the '"
-            & Roots.Crate_File_Name & "' manifest file.");
+            & Crate_File_Name (Context) & "' manifest file.");
       end if;
 
    end Deploy_Sources;
@@ -207,14 +210,15 @@ package body Alire.Publish is
    --  manifest.
 
    procedure Generate_Index_Manifest (Context : in out Data) is
+      File_Name : constant String := Crate_File_Name (Context);
       User_Manifest : constant Any_Path :=
-                       Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name;
+                       Context.Tmp_Deploy_Dir.Filename / File_Name;
       Workspace     : constant Roots.Optional.Root := Root.Current;
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (User_Manifest) then
          Raise_Checked_Error
            ("User manifest not found at expected location"
-            & " (${SRC_ROOT}/" & Roots.Crate_File_Name & ").");
+            & " (${SRC_ROOT}/" & Crate_File_Name (Context) & ").");
       end if;
 
       declare
@@ -464,16 +468,17 @@ package body Alire.Publish is
 
    procedure Show_And_Confirm (Context : in out Data) with
      Pre => GNAT.OS_Lib.Is_Regular_File
-       (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
+       (Context.Tmp_Deploy_Dir.Filename / Crate_File_Name (Context));
    --  Present the final release information for confirmation by the user,
    --  after checking that no critical information is missing, or the release
    --  already exists.
 
    procedure Show_And_Confirm (Context : in out Data) is
+      File_Name : constant String := Crate_File_Name (Context);
       Release : constant Releases.Release :=
                   Releases
                     .From_Manifest
-                      (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name,
+                      (Context.Tmp_Deploy_Dir.Filename / File_Name,
                        Manifest.Local)
                     .Replacing (Origin => Context.Origin);
       use all type Utils.User_Input.Answer_Kind;

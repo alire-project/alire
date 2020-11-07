@@ -1,10 +1,12 @@
 with Alire.Origins;
 with Alire.URI;
+with Alire.Roots;
 
 package Alire.Publish is
 
    type All_Options is record
       Skip_Build : Boolean := False;
+      Crate_File_Name : UString := +Roots.Crate_File_Name;
    end record;
 
    procedure Directory_Tar (Path     : Any_Path := ".";

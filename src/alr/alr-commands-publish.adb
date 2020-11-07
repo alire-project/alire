@@ -1,6 +1,7 @@
 with Alire.Origins;
 with Alire.Publish;
 with Alire.URI;
+with Alire.Roots;
 
 package body Alr.Commands.Publish is
 
@@ -17,7 +18,11 @@ package body Alr.Commands.Publish is
       is (if Num_Arguments >= 2 then Argument (2) else "");
 
       Options : constant Alire.Publish.All_Options :=
-                  (Skip_Build => Cmd.Skip_Build);
+        (Skip_Build => Cmd.Skip_Build,
+         Crate_File_Name => Alire."+"
+           ((if Cmd.Crate_File_Name.all /= ""
+            then Cmd.Crate_File_Name.all
+            else Alire.Roots.Crate_File_Name)));
 
    begin
       if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 then
@@ -113,6 +118,12 @@ package body Alr.Commands.Publish is
          Cmd.Skip_Build'Access,
          "", "--skip-build",
          "Skip the build check step");
+
+      Define_Switch
+        (Config,
+         Cmd.Crate_File_Name'Access,
+         "", "--crate=",
+         "Defines the crate file name to use");
    end Setup_Switches;
 
 end Alr.Commands.Publish;

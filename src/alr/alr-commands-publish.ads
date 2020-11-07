@@ -1,3 +1,4 @@
+private with GNAT.Strings;
 package Alr.Commands.Publish is
 
    --  Publish lends a helping hand to automate submission of crates/releases.
@@ -40,7 +41,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [--tar] [<URL> [commit]]]");
+   is ("[--skip-build] [--tar] [--crate <file>] [<URL> [commit]]]");
 
 private
 
@@ -49,6 +50,9 @@ private
 
       Skip_Build : aliased Boolean := False;
       --  Skip the build check
+
+      Crate_File_Name : aliased GNAT.Strings.String_Access;
+      --  The Crate file name to use.
 
       Tar        : aliased Boolean := False;
       --  Start the assistant from a local folder to be tar'ed and uploaded
