@@ -40,17 +40,23 @@ package Alire.VCSs.Git is
    --  Check if a repo exists at Path
 
    not overriding
-   function Remote (This : VCS; Path : Directory_Path) return String;
-   --  Retrieve current remote name (usually "origin")
+   function Remote (This    : VCS;
+                    Path    : Directory_Path;
+                    Checked : Boolean := True)
+                    return String;
+   --  Retrieve current remote name (usually "origin"). If checked, raise
+   --  Checked_Error when no remote configured. Otherwise, return "";
 
    overriding
    function Update (This : VCS;
                     Repo : Directory_Path)
                     return Outcome;
 
-   type States is (Clean, Ahead, Dirty);
-   --  Three states we are interested in for publishing: clean and up-to-date,
-   --  clean but not yet pushed, and dirty.
+   type States is (Dirty,     -- Uncommited local changes
+                   No_Remote, -- Clean, no remote configured
+                   Clean,     -- Clean, up to date with remote
+                   Ahead);    -- Clean, ahead of remote (needs pull)
+   --  States we are interested in for publishing
 
    not overriding
    function Status (This : VCS;

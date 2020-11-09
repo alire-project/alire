@@ -204,14 +204,21 @@ package body Alire.VCSs.Git is
    -- Remote --
    ------------
 
-   function Remote (This : VCS; Path : Directory_Path) return String is
+   function Remote (This    : VCS;
+                    Path    : Directory_Path;
+                    Checked : Boolean := True)
+                    return String is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
       Output : constant Utils.String_Vector :=
                  Run_Git_And_Capture (Empty_Vector & "remote");
    begin
       if Output.Is_Empty then
-         Raise_Checked_Error ("No remote is configured");
+         if Checked then
+            Raise_Checked_Error ("No remote is configured");
+         else
+            return "";
+         end if;
       else
          return Output.First_Element;
       end if;
@@ -258,17 +265,23 @@ package body Alire.VCSs.Git is
       else
          --  Retrieve revisions from remote branch tip up to our local HEAD. If
          --  not empty, we are locally ahead.
-         if Run_Git_And_Capture
-           (Empty_Vector
-            & "rev-list"
-            & String'(This.Remote (Repo) & "/" & This.Branch (Repo)
-                      &  "..HEAD")).Is_Empty
-         then
-            return Clean;
-         else
-            --  At least one local commit not pushed to the remote
-            return Ahead;
-         end if;
+         declare
+            Remote : constant String := This.Remote (Repo, Checked => False);
+         begin
+            if Remote = "" then
+               return No_Remote;
+            elsif Run_Git_And_Capture
+              (Empty_Vector
+               & "rev-list"
+               & String'(Remote & "/" & This.Branch (Repo)
+                 &  "..HEAD")).Is_Empty
+            then
+               return Clean;
+            else
+               --  At least one local commit not pushed to the remote
+               return Ahead;
+            end if;
+         end;
       end if;
    end Status;
 
