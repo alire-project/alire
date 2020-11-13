@@ -329,9 +329,10 @@ package body Alire.Publish is
       Archive    : constant Relative_Path :=
                      Target_Dir
                        / (Milestone
-                          & (if Is_Repo
-                             then ".tgz"
-                             else ".tbz2"));
+                          & (if Is_Repo or GNATCOLL.OS.Constants.OS
+                              in GNATCOLL.OS.Windows
+                            then ".tgz"
+                            else ".tbz2"));
       use Utils.User_Input;
 
       -----------------
@@ -364,8 +365,12 @@ package body Alire.Publish is
 
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
-            Empty_Vector
-            & "cfj"
+            (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
+              then Empty_Vector
+              & "-C" & ".." -- Change to the parent directory
+              & "-czf"
+              else Empty_Vector
+              & "cfj")
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
@@ -378,15 +383,22 @@ package body Alire.Publish is
                     & "--exclude=./.hg"
                     & "--exclude=./.svn"
                     & String'("-s,^./," & Milestone & "/,")
-                    --  Prepend empty milestone dir as required for our tars)
+                    --  Prepend empty milestone dir as required for our tars
+                    & "."
+               elsif GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
+               then Empty_Vector
+                    & "--exclude=*.git"
+                    & "--exclude=*.hg"
+                    & "--exclude=*.svn"
+                    & Ada.Directories.Simple_Name (Root.Path)
               else Empty_Vector
                     & "--exclude-backups"      -- exclude .#* *~ #*# patterns
                     & "--exclude-vcs"          -- exclude .git, .hg, etc
                     & "--exclude-vcs-ignores"  -- exclude from .gitignore, etc
-                    & String'("--transform=s,^./," & Milestone & "/,"))
+                    & String'("--transform=s,^./," & Milestone & "/,")
                     --  Prepend empty milestone dir as required for our tars
-
-            & ".");
+                    & ".")
+           );
          pragma Warnings (On);
       end Tar_Archive;
 
