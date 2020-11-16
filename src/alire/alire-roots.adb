@@ -404,6 +404,7 @@ package body Alire.Roots is
          --  Show changes and optionally ask user to apply them
 
          if Silent then
+            Trace.Info ("Dependencies automatically updated as follows:");
             Diff.Print;
          elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
             Trace.Detail ("Update abandoned.");
