@@ -20,6 +20,7 @@ jobs:
         tag: # Those are our dockerhub alire/gnat:tag machines
             - centos-latest-community-latest # Test unsupported package manager 
             - debian-stable                  # Test current stable Debian compiler
+            - fedora-latest                  # Test current Fedora compiler
             - ubuntu-lts                     # Test current LTS Ubuntu compiler
             - arch-rolling                   # Test Arch compiler (closest to FSF?)
 
