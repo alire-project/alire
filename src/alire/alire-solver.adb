@@ -138,7 +138,10 @@ package body Alire.Solver is
       --  exist, the requested releases do not exist, or the intersection of
       --  versions is empty. In this case, we can prematurely end the search
       --  instead of keeping looking for a valid combination, as these
-      --  dependencies will never be satisfied.
+      --  dependencies will never be satisfied. NOTE that these unavailable
+      --  impossibilites must be top-level DIRECT dependencies (i.e.,
+      --  introduced by the user), or otherwise it does make sense to explore
+      --  alternate solutions that may not require the impossible dependencies.
 
       --  On the solver internal operation: the solver recursively tries all
       --  possible dependency combinations, in depth-first order. This means
@@ -420,13 +423,6 @@ package body Alire.Solver is
 
                Check (Current.Releases.Element (Dep.Crate));
 
-            elsif Unavailable_Deps.Contains (Dep.Image) then
-
-               --  A dependency known to be globally unavailable saves us
-               --  looking along this path again.
-
-               Expand_Missing (Dep);
-
             elsif Index.Exists (Dep.Crate) then
 
                --  Detect externals for this dependency now, so they are
@@ -444,23 +440,27 @@ package body Alire.Solver is
                --  thing from the start, which we can use to enable a partial
                --  solution without exploring the whole solution space:
 
-               declare
-                  procedure Consider (R : Release) is
+               if not Unavailable_Deps.Contains (Dep.Image) then
+                  --  Don't bother checking what we known to not be available.
+                  --  We still want to go through to external hinting.
+                  declare
+                     procedure Consider (R : Release) is
+                     begin
+                        Satisfiable := Satisfiable or else R.Satisfies (Dep);
+                        Check (R);
+                     end Consider;
                   begin
-                     Satisfiable := Satisfiable or else R.Satisfies (Dep);
-                     Check (R);
-                  end Consider;
-               begin
-                  if Options.Age = Newest then
-                     for R of reverse Index.Crate (Dep.Crate).Releases loop
-                        Consider (R);
-                     end loop;
-                  else
-                     for R of Index.Crate (Dep.Crate).Releases loop
-                        Consider (R);
-                     end loop;
-                  end if;
-               end;
+                     if Options.Age = Newest then
+                        for R of reverse Index.Crate (Dep.Crate).Releases loop
+                           Consider (R);
+                        end loop;
+                     else
+                        for R of Index.Crate (Dep.Crate).Releases loop
+                           Consider (R);
+                        end loop;
+                     end if;
+                  end;
+               end if;
 
                --  Beside normal releases, an external may exist for the
                --  crate, in which case we hint the crate instead of failing
@@ -499,18 +499,7 @@ package body Alire.Solver is
                           and Remaining).Image_One_Line);
                end if;
 
-               --  If the dependency has no valid releases at this point, we
-               --  can mark it as globally unavailable (no release in the index
-               --  fulfills it).
-
-               if not Satisfiable then
-                  Unavailable_Deps.Include (Dep.Image);
-               end if;
-
                --  There may be a less bad solution if we leave this crate out.
-               --  Also, if we know for certain it is not satisfiable, mark it
-               --  as so already to have the incomplete solution that would not
-               --  be found otherwise in the Some_Satisfiable setting.
 
                if not Satisfiable or else Options.Completeness = All_Incomplete
                then
@@ -521,8 +510,6 @@ package body Alire.Solver is
 
                --  The crate plainly doesn't exist in our loaded catalog, so
                --  mark it as missing an move on:
-
-               Unavailable_Crates.Include (Dep.Crate);
 
                Trace.Debug
                  ("SOLVER: catalog LACKS the crate " & Dep.Image
@@ -580,7 +567,7 @@ package body Alire.Solver is
                use all type Dependencies.States.Fulfillments;
             begin
                for Crate of Solution.Crates loop
-                  if Solution.State (Crate).Fulfilment = Missed
+                  if Solution.State (Crate).Fulfilment in Missed | Hinted
                         --  So the dependency is not solved, but why?
                     and then
                       not Unavailable_Crates.Contains (Crate)
@@ -672,8 +659,49 @@ package body Alire.Solver is
          end if;
       end Expand;
 
+      --------------------------------------------
+      -- Detect_Unavailable_Direct_Dependencies --
+      --------------------------------------------
+      --  Direct (i.e., top-level) dependencies that are unsolvable do not
+      --  count towards marking a solution as incomplete (i.e., to force
+      --  keeping looking). These can be detected from the start, and
+      --  the solver will not try to find more solutions for one of
+      --  these impossible requests.
+      procedure Detect_Unavailable_Direct_Dependencies
+        (Direct : Conditional.Dependencies)
+      is
+      begin
+         if not Direct.Contains_ORs then
+            for Dep of Direct loop
+               if not Index.Exists (Dep.Value.Crate) then
+                  --  Crate totally unavailable
+                  Unavailable_Crates.Include (Dep.Value.Crate);
+                  Trace.Detail ("Direct dependency is not a known crate: "
+                                & TTY.Name (Dep.Value.Crate));
+               else
+                  --  Pre-populate external releases
+                  if Options.Detecting = Detect then
+                     Index.Detect_Externals (Dep.Value.Crate, Props);
+                  end if;
+
+                  if not Exists (Dep.Value.Crate, Dep.Value.Versions) then
+
+                     --  No valid releases for the crate
+                     Unavailable_Deps.Include (Dep.Value.Image);
+                     Trace.Detail
+                       ("Direct dependency has no fulfilling releases: "
+                        & TTY.Name (Dep.Value.Image));
+                  end if;
+               end if;
+            end loop;
+         else
+            Trace.Debug ("Alternate dependencies in tree, "
+                         & "speed optimizations disabled.");
+         end if;
+      end Detect_Unavailable_Direct_Dependencies;
+
       Full_Dependencies : constant Conditional.Dependencies :=
-                            Current.Pins and Deps;
+                            Tree'(Current.Pins and Deps).Evaluate (Props);
       --  Include pins before other dependencies. This ensures their dependency
       --  can only be solved with the pinned version, and they are attempted
       --  first to avoid wasteful trial-and-error with other versions.
@@ -700,11 +728,16 @@ package body Alire.Solver is
          return Solution;
       end if;
 
+      --  Preprocess direct dependencies to identify any impossible ones. If
+      --  the tree contains alternate dependencies this is not doable.
+
+      Detect_Unavailable_Direct_Dependencies (Full_Dependencies);
+
       --  Otherwise expand the full dependencies
 
       begin
          Expand (Expanded  => Empty,
-                 Target    => Full_Dependencies.Evaluate (Props),
+                 Target    => Full_Dependencies,
                  Remaining => Empty,
                  Solution  => Solution);
       exception
