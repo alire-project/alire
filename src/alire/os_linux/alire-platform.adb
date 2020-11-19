@@ -21,6 +21,8 @@ package body Alire.Platform is
    -- Distribution --
    ------------------
 
+   OS_Identity_File : constant String := "/etc/os-release";
+
    Cached_Distro : Alire.Platforms.Distributions;
    Distro_Cached : Boolean := False;
 
@@ -30,12 +32,16 @@ package body Alire.Platform is
    begin
       if Distro_Cached then
          return Cached_Distro;
+      elsif not GNAT.OS_Lib.Is_Regular_File (OS_Identity_File) then
+         Distro_Cached := True;
+         Cached_Distro := Distro_Unknown;
+         return Cached_Distro;
       else
          declare
             use Utils;
             Release : constant Utils.String_Vector :=
                         Subprocess.Checked_Spawn_And_Capture
-                ("cat", Empty_Vector & "/etc/os-release");
+                ("cat", Empty_Vector & OS_Identity_File);
 
             function Get_Os_Release_Value_For_Key (Key : String)
                                       return Alire.Platforms.Distributions is
