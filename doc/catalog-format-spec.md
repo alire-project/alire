@@ -187,29 +187,16 @@ static, i.e. they cannot depend on the context.
    maintainers-logins = ["alicehacks", "bobcoder"]
    ```
 
- - `licenses`: mandatory (for indexing) array of strings. Flat list of licenses
-   for the software that is packaged. The following licenses are allowed:
-
-   > -   `AFL 3.0`, `AGPL 3.0`, `Apache 2.0`, `Artistic 2.0`,
-   >     `BSD 2-Clauses`, `BSD 3-Clauses Clear`, `BSD 3-Clauses`,
-   >     `BSL 1.0`, `CC0 1.0`, `CC BY 4.0`, `CC BY-SA 4.0`, `ECL 2.0`,
-   >     `EPL 1.0`, `EPL 2.0`, `EUPL 1.1`, `EUPL 1.2`, `GPL 2.0`,
-   >     `GPL 3.0`, `ISC`, `LGPL 2.1`, `LGPL 3.0`, `LPPL 1.3c`, `MIT`,
-   >     `MPL 2.0`, `MS PL`, `MS RL`, `NCSA`, `OFL 1.1`, `OSL 3.0`,
-   >     `PostgreSQL`, `Unlicense`, `WTFPL`, `zlib`, `GMGPL 2.0`,
-   >     `GMGPL 3.0`, `Public Domain`.
-   > -   `Custom`, can be used for project specific licenses.
-
-   If the license is unknown or not in the list above, leave an empty array.
+ - `licenses`: optional string. A valid [SPDX expression](https://spdx.org/licenses/).
 
    ```toml
-   licenses = []
+   licenses = "MIT"
    ```
 
    For a double license:
 
    ```toml
-   licenses = ["GPL 3.0", "MIT"]
+   licenses = "GPL-3.0-only OR MIT"
    ```
 
  - `website`: optional string. URL to the original project's website. For
