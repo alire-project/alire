@@ -1,7 +1,6 @@
 description = "\"Hello, world!\" demonstration project"
 name = "hello"
 version = "1.0.1"
-licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 

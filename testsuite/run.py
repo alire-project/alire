@@ -9,6 +9,7 @@ interpreter with the e3-core and e3-testsuite packages (from PyPI) installed.
 
 from __future__ import absolute_import, print_function
 
+import sys
 import os.path
 
 import e3.testsuite
@@ -32,12 +33,4 @@ class Testsuite(e3.testsuite.Testsuite):
 
 if __name__ == '__main__':
     suite = Testsuite()
-    suite.testsuite_main()
-
-    # Exit with failure if some test didn't pass
-    for name, count in suite.test_status_counters.items():
-        if count > 0 and name not in (
-            TestStatus.PASS, TestStatus.XFAIL, TestStatus.XPASS,
-            TestStatus.SKIP
-        ):
-            exit(1)
+    sys.exit(suite.testsuite_main(sys.argv[1:] + ["--failure-exit-code=1"]))

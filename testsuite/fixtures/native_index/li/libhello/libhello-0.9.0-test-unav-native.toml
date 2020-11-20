@@ -1,7 +1,6 @@
 description = "\"Hello, world!\" demonstration project support library"
 name = "libhello"
 version = "0.9.0-test-unav-native"
-licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 

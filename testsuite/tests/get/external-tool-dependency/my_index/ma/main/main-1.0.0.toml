@@ -1,7 +1,7 @@
 description = "Main program"
 name = "main"
 version = "1.0.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 

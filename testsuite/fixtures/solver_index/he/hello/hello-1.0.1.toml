@@ -3,7 +3,7 @@ name = "hello"
 version = "1.0.1"
 website = "example.com"
 authors = ["Bob", "Alice"]
-licenses = ["GPL 3.0", "MIT"]
+licenses = "GPL-3.0-only OR MIT"
 maintainers = ["bob@example.com"]
 maintainers-logins = ["mylogin"]
 

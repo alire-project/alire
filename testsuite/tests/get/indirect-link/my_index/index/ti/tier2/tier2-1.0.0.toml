@@ -1,7 +1,7 @@
 description = "2nd-level crate"
 name = "tier2"
 version = "1.0.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["john@doe.com"]
 maintainers-logins = ["mylogin"]
 

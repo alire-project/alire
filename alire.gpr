@@ -9,6 +9,7 @@ with "semantic_versioning";
 with "simple_logging";
 with "uri";
 with "xml_ez_out";
+with "spdx";
 
 library project Alire is
 

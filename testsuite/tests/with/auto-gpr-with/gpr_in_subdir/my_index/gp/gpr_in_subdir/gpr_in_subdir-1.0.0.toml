@@ -1,7 +1,7 @@
 description = "gpr file in subdirs"
 name = "gpr_in_subdir"
 version = "1.0.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
 project-files = ["dir1/dir2/dir3/gpr_in_subdir.gpr"]

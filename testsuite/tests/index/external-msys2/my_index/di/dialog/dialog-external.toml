@@ -1,6 +1,6 @@
 description = "Just for the test"
 name = "dialog"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mosteo"]
 

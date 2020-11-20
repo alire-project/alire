@@ -1,7 +1,7 @@
 description = "A crate with a dependency"
 name = "crate_master"
 version = "1.0.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["somebody@somewhere.com"]
 maintainers-logins = ["mylogin"]
 

@@ -13,7 +13,7 @@ assert_eq(
       'crate: "hello"\n'
       'authors: ["Bob", "Alice"]\n'
       'maintainers: ["alejandro@mosteo.com", "bob@example.com"]\n'
-      'licenses: ["GPL 3.0", "MIT"]\n'
+      'licenses: ["GPL-3.0-only OR MIT"]\n'
       'websites: ["example.com"]\n'
       'tags: ["tag1", "other-tag"]\n'
       'version: "1.0.1"\n'

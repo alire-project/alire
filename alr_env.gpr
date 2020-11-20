@@ -12,7 +12,8 @@ aggregate project Alr_Env is
                          "deps/semantic_versioning",
                          "deps/simple_logging",
                          "deps/uri-ada",
-                         "deps/xmlezout");
+                         "deps/xmlezout",
+                         "deps/spdx");
 
    for Project_Files use ("alr.gpr");
 

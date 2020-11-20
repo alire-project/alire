@@ -1,7 +1,7 @@
 description = "action test"
 name = "hello"
 version = "1.0.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["some@one.com"]
 maintainers-logins = ["mylogin"]
 
