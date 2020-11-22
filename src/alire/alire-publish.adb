@@ -368,11 +368,12 @@ package body Alire.Publish is
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
             (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
-              then Empty_Vector
-              & "-C" & ".." -- Change to the parent directory
-              & "-czf"
-              else Empty_Vector
-              & "cfj")
+                 and Alire.Platform.Distribution /= Alire.Platforms.Msys2
+             then Empty_Vector
+                  & "-C" & ".." -- Change to the parent directory
+                  & "-czf"
+             else Empty_Vector
+                  & "cfj")
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
@@ -389,7 +390,7 @@ package body Alire.Publish is
                     & "."
               elsif GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
                 and Alire.Platform.Distribution /= Alire.Platforms.Msys2
-               then Empty_Vector
+              then Empty_Vector
                     & "--exclude=*.git"
                     & "--exclude=*.hg"
                     & "--exclude=*.svn"
