@@ -13,6 +13,8 @@ with Alire.Manifest;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
+with Alire.Platform;
+with Alire.Platforms;
 with Alire.Properties.From_TOML;
 with Alire.Releases;
 with Alire.Root;
@@ -330,8 +332,8 @@ package body Alire.Publish is
                      Target_Dir
                        / (Milestone
                           & (if Is_Repo
-                            then ".tgz"
-                            else ".tbz2"));
+                             then ".tgz"
+                             else ".tbz2"));
       use Utils.User_Input;
 
       -----------------
@@ -358,6 +360,7 @@ package body Alire.Publish is
       -----------------
 
       procedure Tar_Archive is
+         use type Alire.Platforms.Distributions;
       begin
          pragma Warnings (Off, "condition is always");
          --  To silence our below check for macOS
@@ -384,7 +387,8 @@ package body Alire.Publish is
                     & String'("-s,^./," & Milestone & "/,")
                     --  Prepend empty milestone dir as required for our tars
                     & "."
-               elsif GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
+              elsif GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
+                and Alire.Platform.Distribution /= Alire.Platforms.Msys2
                then Empty_Vector
                     & "--exclude=*.git"
                     & "--exclude=*.hg"
