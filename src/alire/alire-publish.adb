@@ -329,8 +329,7 @@ package body Alire.Publish is
       Archive    : constant Relative_Path :=
                      Target_Dir
                        / (Milestone
-                          & (if Is_Repo or GNATCOLL.OS.Constants.OS
-                              in GNATCOLL.OS.Windows
+                          & (if Is_Repo
                             then ".tgz"
                             else ".tbz2"));
       use Utils.User_Input;
