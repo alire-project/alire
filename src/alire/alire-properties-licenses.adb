@@ -39,7 +39,9 @@ package body Alire.Properties.Licenses is
           when Zlib               => "Zlib",
           when GMGPL_2_0          => "GPL-2.0-only WITH GCC-exception-2.0",
           when GMGPL_3_0          => "GPL-3.0-only WITH GCC-exception-3.1",
-          when Public_Domain | Custom | Unknown =>
+          when Public_Domain      => "custom-public-domain",
+          when Custom             => "custom-not-specified",
+          when Unknown            =>
              raise Checked_Error
                with Errors.Set ("Invalid legacy license conversion for '" &
                                   Legacy'Img & "'"));
@@ -50,7 +52,8 @@ package body Alire.Properties.Licenses is
 
    function New_License (From  : String) return License is
       Legacy   : constant Licensing.Licenses := Licensing.From_String (From);
-      SPDX_Exp : constant SPDX.Expression := SPDX.Parse (From);
+      SPDX_Exp : constant SPDX.Expression := SPDX.Parse (From,
+                                                         Allow_Custom => True);
    begin
 
       if From'Length > Max_SPDX_Expression_Length then
@@ -67,8 +70,8 @@ package body Alire.Properties.Licenses is
                    "': " & SPDX.Error (SPDX_Exp) &
                    " . SPDX expression expected (https://spdx.org/licenses/)");
          else
-            Trace.Warning ("Deprecated license indetifier '" & From &
-                             "'. Plese replace with an SPDX expression " &
+            Trace.Warning ("Deprecated license indentifier '" & From &
+                             "'. Please replace with an SPDX expression " &
                              "(https://spdx.org/licenses/)");
 
             --  Try again with a translation of Legacy identifiers to SPDX
