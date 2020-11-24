@@ -187,7 +187,9 @@ static, i.e. they cannot depend on the context.
    maintainers-logins = ["alicehacks", "bobcoder"]
    ```
 
- - `licenses`: optional string. A valid [SPDX expression](https://spdx.org/licenses/).
+ - `licenses`: mandatory (for indexing) string. A valid [SPDX
+   expression](https://spdx.org/licenses/). Custom license identifiers are
+   accepted with the format: `custom-[0-9a-zA-Z.-]+`
 
    ```toml
    licenses = "MIT"
@@ -197,6 +199,12 @@ static, i.e. they cannot depend on the context.
 
    ```toml
    licenses = "GPL-3.0-only OR MIT"
+   ```
+
+   For a custom license:
+
+   ```toml
+   licenses = "custom-my-license-1.2"
    ```
 
  - `website`: optional string. URL to the original project's website. For
