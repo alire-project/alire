@@ -17,6 +17,11 @@ export PATH+=:${PWD}/bin
 # Build alr
 gprbuild -j0 -p -P alr_env
 
+# Disable distro detection if supported
+if [ "${ALIRE_DISABLE_DISTRO:-}" == "true" ]; then
+   alr config --global --set distribution.disable_detection true
+fi
+
 # For the record
 echo ENVIRONMENT:
 env | sort

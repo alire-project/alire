@@ -125,6 +125,11 @@ package Alire.Config is
 
       Editor_Cmd  : constant Config_Key := "editor.cmd";
 
+      Distribution_Disable_Detection : constant Config_Key :=
+                                         "distribution.disable_detection";
+      --  When set to True, distro will be reported as unknown, and in turn no
+      --  native package manager will be used.
+
    end Keys;
 
 private
@@ -224,7 +229,12 @@ private
        +("If true, Alire will not attempt to update dependencies even after "
          & "the manifest is manually edited, or when no valid solution has "
          & "been ever computed. All updates have to be manually requested "
-         & "through `alr update`"))
+         & "through `alr update`")),
+
+      (+Keys.Distribution_Disable_Detection,
+       Cfg_Bool,
+       +("If true, Alire will report an unknown distribution and will not"
+         & " attempt to use the system package manager."))
 
      );
 

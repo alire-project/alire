@@ -34,14 +34,12 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Remove identifying file from OS
-      run: sudo rm -f /etc/os-release
-
     - name: Run test script
       run: scripts/ci-github.sh
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
+        ALIRE_DISABLE_DISTRO: true
     
     - name: Upload logs (if failed)
       if: failure()
