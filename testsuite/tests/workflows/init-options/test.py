@@ -52,12 +52,12 @@ p = run_alr('init', '--bin', '--in-place', '--no-skel', 'yyy',
             complain_on_error=False, quiet=False)
 assert_match(".*alire.toml already exists.*", p.out)
 
-# Init in place with existing invalid crate will FAIL
+# Init in place with existing invalid crate FAIL (we don't even try to load it)
 with open('alire.toml', 'w') as f:
     f.write("plop")
 p = run_alr('init', '--bin', '--in-place', '--no-skel', 'yyy',
-            complain_on_error=False)
-assert_match(".*Invalid TOML contents.*", p.out)
+            complain_on_error=False, quiet=False)
+assert_match(".*alire.toml already exists.*", p.out)
 
 os.chdir(test_dir)
 
