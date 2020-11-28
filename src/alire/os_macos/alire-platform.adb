@@ -19,7 +19,7 @@ package body Alire.Platform is
    -- Distribution --
    ------------------
 
-   function Distribution return Platforms.Distributions is
+   function Detected_Distribution return Platforms.Distributions is
       (Platforms.Distro_Unknown);
 
    -----------------------

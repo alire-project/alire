@@ -1,5 +1,5 @@
+with Alire.Directories;
 with Alire.OS_Lib; use Alire.OS_Lib.Operators;
-with Alire.Root;
 with Alire.Utils;
 
 with TOML;
@@ -70,7 +70,7 @@ package Alire.Config is
    type Level is (Global, Local);
 
    function Filepath (Lvl : Level) return Absolute_Path
-     with Pre => Lvl /= Local or else Alire.Root.Current.Is_Valid;
+     with Pre => Lvl /= Local or else Directories.Detect_Root_Path /= "";
    --  Return path of the configuration file coresponding to the given
    --  configuration level.
 
@@ -135,7 +135,9 @@ package Alire.Config is
 private
 
    procedure Load_Config;
-   --  Clear an reload all configuration
+   --  Clear an reload all configuration. Also set some values elsewhere used
+   --  to break circularities. Bottom line, this procedure must leave the
+   --  program-wide configuration ready.
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
    --  Load a TOML config file and return No_TOML_Value if the file is invalid

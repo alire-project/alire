@@ -1,4 +1,3 @@
-with Alire.Config;
 with Alire.OS_Lib.Subprocess;
 with Alire.Utils;
 with GNAT.Regpat;
@@ -27,16 +26,11 @@ package body Alire.Platform is
    Cached_Distro : Alire.Platforms.Distributions;
    Distro_Cached : Boolean := False;
 
-   function Distribution return Platforms.Distributions is
+   function Detected_Distribution return Platforms.Distributions is
       use Alire.OS_Lib;
       use all type Alire.Platforms.Distributions;
    begin
       if Distro_Cached then
-         return Cached_Distro;
-      elsif Config.Get (Config.Keys.Distribution_Disable_Detection, False) then
-         Trace.Debug ("Distribution detection disabled by configuration");
-         Distro_Cached := True;
-         Cached_Distro := Distro_Unknown;
          return Cached_Distro;
       elsif not GNAT.OS_Lib.Is_Regular_File (OS_Identity_File) then
          Trace.Debug ("Distribution identity file not found: "
@@ -129,7 +123,7 @@ package body Alire.Platform is
          Trace.Debug ("Unable to detect distribution:");
          Log_Exception (E);
          return Distro_Unknown;
-   end Distribution;
+   end Detected_Distribution;
 
    -----------------------
    -- Distribution_Root --
