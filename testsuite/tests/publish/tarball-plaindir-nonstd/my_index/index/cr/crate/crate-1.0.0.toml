@@ -1,0 +1,13 @@
+# NOTE: this crate is not used in the text, but we need at least one crate in
+# the index or the community index will get cloned due to empty in-memory
+# catalog.
+
+description = "Sample crate"
+name = "crate"
+version = "1.0.0"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+url = "file:../../../crates/crate"
