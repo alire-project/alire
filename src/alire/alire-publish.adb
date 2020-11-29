@@ -54,9 +54,6 @@ package body Alire.Publish is
       Revision : UString := +"HEAD";
       --  A particular revision for publishing from a git repo
 
-      --  Root   : Roots.Optional.Root;
-      --  Some steps require or can use a detected root
-
       Tmp_Deploy_Dir : Directories.Temp_File;
       --  Place to check the sources
    end record;
@@ -79,8 +76,7 @@ package body Alire.Publish is
    function Starting_Manifest (This : Data) return Any_Path
    is (if This.Options.Nonstandard_Manifest
        then This.Options.Manifest
-       else Root.Current.Path
-            / Roots.Crate_File_Name);
+       else Root.Current.Path / Roots.Crate_File_Name);
 
    -----------------------
    -- Packaged_Manifest --
@@ -147,12 +143,14 @@ package body Alire.Publish is
    -------------------
    -- Check_Release --
    -------------------
-   --
+   --  Checks the presence of recommended/mandatory fileds in the release
    procedure Check_Release (Release : Releases.Release) is
       use Utils.User_Input;
 
       Recommend : Utils.String_Vector; -- Optional
       Missing   : Utils.String_Vector; -- Mandatory
+
+      Caret_Pre_1 : Boolean := False; -- To warn about this
 
       function Tomify (S : String) return String renames TOML_Adapters.Tomify;
    begin
@@ -166,7 +164,7 @@ package body Alire.Publish is
             & " already exist in a loaded index");
       end if;
 
-      --  Present release information
+      --  Present release information to user
 
       Ada.Text_IO.New_Line;
       Trace.Info ("The release to be published contains this information:");
@@ -201,6 +199,8 @@ package body Alire.Publish is
          end if;
       end loop;
 
+      Caret_Pre_1 := Release.Check_Caret_Warning;
+
       if not Missing.Is_Empty then
          Ada.Text_IO.New_Line;
          Raise_Checked_Error ("Missing required properties: "
@@ -214,7 +214,8 @@ package body Alire.Publish is
       if Utils.User_Input.Query
         ("Do you want to proceed with this information?",
          Valid   => (Yes | No => True, others => False),
-         Default => (if Force or else Recommend.Is_Empty
+         Default => (if Force or else
+                         (Recommend.Is_Empty and then not Caret_Pre_1)
                      then Yes
                      else No)) /= Yes
       then
@@ -222,11 +223,61 @@ package body Alire.Publish is
       end if;
    end Check_Release;
 
+   -----------------
+   -- STEP BODIES --
+   -----------------
+
+   type Step_Subprogram is access
+     procedure (Context : in out Data);
+
+   --  The following procedures share the spec, in the case in the future we
+   --  need to reorder/reuse/insert them as part of a navigable workflow.
+
+   -----------------
+   -- Check_Build --
+   -----------------
+
+   procedure Check_Build (Context : in out Data) with
+     Pre => GNAT.OS_Lib.Is_Directory (Context.Tmp_Deploy_Dir.Filename);
+   --  Check that the sources we are trying to publish can be built
+
+   procedure Check_Build (Context : in out Data) is
+      --  Enter the temporary as if it were a workspace (which it has to
+      --  be, as it contains the user manifest). Auto-update should retrieve
+      --  dependencies, and since we are not repackaging, there's no problem
+      --  with altering contents under alire or regenerating the lock file.
+      Guard : Directories.Guard
+        (Directories.Enter (Context.Tmp_Deploy_Dir.Filename))
+        with Unreferenced;
+   begin
+      if Context.Options.Skip_Build then
+         Trace.Warning ("Build check skipped.");
+         return;
+      end if;
+
+      --  We need the alire folder, which usually will not be among sources
+      if not Ada.Directories.Exists (Paths.Working_Folder_Inside_Root) then
+         Ada.Directories.Create_Directory (Paths.Working_Folder_Inside_Root);
+      end if;
+
+      --  Unfortunately, building is one of the parts that still are hard to
+      --  extricate from Alr.*, so for now the simplest solution is to spawn
+      --  a child alr.
+      OS_Lib.Subprocess.Checked_Spawn
+        ("alr",
+         Utils.Empty_Vector
+         .Append ("--non-interactive")
+         .Append ("build"));
+
+      Log_Success ("Build succeeded.");
+   end Check_Build;
+
    -------------------------
    -- Check_User_Manifest --
    -------------------------
    --  Ensure that we are at a valid root, or else that the nonstadard manifest
-   --  file is loadable.
+   --  file is loadable. Either way, the contents of the release described by
+   --  the manifest are vetted for completeness.
    procedure Check_User_Manifest (Context : in out Data) is
       use all type Roots.Optional.States;
    begin
@@ -255,55 +306,6 @@ package body Alire.Publish is
       end if;
    end Check_User_Manifest;
 
-   -----------------
-   -- STEP BODIES --
-   -----------------
-
-   type Step_Subprogram is access
-     procedure (Context : in out Data);
-
-   --  The following procedures share the spec, in the case in the future we
-   --  need to reorder/reuse/insert them as part of a navigable workflow.
-
-   -----------------
-   -- Check_Build --
-   -----------------
-
-   procedure Check_Build (Context : in out Data) with
-     Pre => GNAT.OS_Lib.Is_Directory (Context.Tmp_Deploy_Dir.Filename);
-   --  Check that the sources we are trying to publish can be built
-
-   procedure Check_Build (Context : in out Data) is
-      --  Enter the temporary as if it were a workspace (which it has to
-      --  be, as it contains the user manifest). Auto-update should retrieve
-      --  dependencies, and since we are not repacking, there's no problem
-      --  with altering contents under alire or regenerating the lock file.
-      Guard : Directories.Guard
-        (Directories.Enter (Context.Tmp_Deploy_Dir.Filename))
-        with Unreferenced;
-   begin
-      if Context.Options.Skip_Build then
-         Trace.Warning ("Build check skipped.");
-         return;
-      end if;
-
-      --  We need the alire folder, which usually will not be among sources
-      if not Ada.Directories.Exists (Paths.Working_Folder_Inside_Root) then
-         Ada.Directories.Create_Directory (Paths.Working_Folder_Inside_Root);
-      end if;
-
-      --  Unfortunately, building is one of the parts that still are hard to
-      --  extricate from Alr.*, so for now the simplest solution is to spawn
-      --  a child alr.
-      OS_Lib.Subprocess.Checked_Spawn
-        ("alr",
-         Utils.Empty_Vector
-         .Append ("--non-interactive")
-         .Append ("build"));
-
-      Log_Success ("Build succeeded.");
-   end Check_Build;
-
    --------------------
    -- Deploy_Sources --
    --------------------
@@ -320,7 +322,7 @@ package body Alire.Publish is
 
       --  Obtain source archive (or no-op for repositories):
 
-      Deployer.Fetch  (Context.Tmp_Deploy_Dir.Filename).Assert;
+      Deployer.Fetch (Context.Tmp_Deploy_Dir.Filename).Assert;
 
       --  Compute hashes in supported origin kinds (e.g. source archives)
 
@@ -354,7 +356,8 @@ package body Alire.Publish is
       end if;
 
       --  For a non-standard manifest, move it in place (akin to how `alr get`
-      --  will regenerate it from the index).
+      --  will regenerate it from the index). Subsequent tests can then assume
+      --  a regularly deployed crate.
 
       if Context.Options.Nonstandard_Manifest then
          Ada.Directories.Copy_File
@@ -404,6 +407,7 @@ package body Alire.Publish is
          Index_File     : File_Type;
       begin
          if Workspace.Is_Valid and then
+           (not Context.Options.Nonstandard_Manifest) and then
            Workspace.Value.Release.Name /= Name
          then
             Raise_Checked_Error
@@ -585,7 +589,7 @@ package body Alire.Publish is
             Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
 
             Context.Origin := Origins.New_Source_Archive
-              (Remote_URL,
+              (Utils.Trim (Remote_URL), -- remove unwanted extra whitespaces
                Ada.Directories.Simple_Name (Archive));
             --  This origin creation may raise if URL is improper
 
@@ -644,85 +648,11 @@ package body Alire.Publish is
       Release : constant Releases.Release :=
                   Releases
                     .From_Manifest
-                      (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name,
+                      (Packaged_Manifest (Context),
                        Alire.Manifest.Local)
                     .Replacing (Origin => Context.Origin);
-      use all type Utils.User_Input.Answer_Kind;
-
-      Recommend : Utils.String_Vector; -- Optional
-      Missing   : Utils.String_Vector; -- Mandatory
-
-      Caret_Pre_1 : Boolean := False; -- To warn about this
-
-      function Tomify (S : String) return String renames TOML_Adapters.Tomify;
    begin
-
-      --  Check not duplicated
-
-      Features.Index.Setup_And_Load (From  => Config.Edit.Indexes_Directory);
-      if Index.Exists (Release.Name, Release.Version) then
-         Raise_Checked_Error
-           ("Target release " & Release.Milestone.TTY_Image
-            & " already exist in a loaded index");
-      end if;
-
-      --  Present release information
-
-      Ada.Text_IO.New_Line;
-      Trace.Info ("The release to be published contains this information:");
-      Ada.Text_IO.New_Line;
-      Release.Print;
-
-      --  Detect missing recommended fields
-
-      for Key in Properties.From_TOML.Recommended'Range loop
-         if Properties.From_TOML.Recommended (Key) then
-            if not Release.Has_Property (Tomify (Key'Image)) then
-               Recommend.Append (Tomify (Key'Image));
-            end if;
-         end if;
-      end loop;
-
-      if not Recommend.Is_Empty then
-         Ada.Text_IO.New_Line;
-         Trace.Warning ("Missing optional recommended properties: "
-                        & TTY.Warn (Recommend.Flatten (", ")));
-      end if;
-
-      --  Detect missing mandatory. This isn't detected by the TOML
-      --  deserialization because we are still relying on the user manifest
-      --  (the index one isn't generated until the user gives the go-ahead).
-
-      for Key in Properties.From_TOML.Mandatory'Range (2) loop
-         if Properties.From_TOML.Mandatory (Crates.Index_Release, Key) then
-            if not Release.Has_Property (Tomify (Key'Image)) then
-               Missing.Append (Tomify (Key'Image));
-            end if;
-         end if;
-      end loop;
-
-      Caret_Pre_1 := Release.Check_Caret_Warning;
-
-      if not Missing.Is_Empty then
-         Ada.Text_IO.New_Line;
-         Raise_Checked_Error ("Missing required properties: "
-                              & TTY.Error (Missing.Flatten (", ")));
-      end if;
-
-      --  Final confirmation. We default to Yes if no recommended missing or
-      --  Force.
-
-      Ada.Text_IO.New_Line;
-      if Utils.User_Input.Query
-        ("Do you want to proceed with this information?",
-         Valid   => (Yes | No => True, others => False),
-         Default => (if Force or else
-                         (Recommend.Is_Empty and then not Caret_Pre_1)
-                     then Yes
-                     else No)) /= Yes
-      then
-         Raise_Checked_Error ("Abandoned by user");
-      end if;
+      Check_Release (Release);
    end Show_And_Confirm;
 
    -------------------
