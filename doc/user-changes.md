@@ -82,6 +82,17 @@ accepted at all.
 
 ### Custom editor command for `alr edit`
 
+PR [#635](https://github.com/alire-project/alire/pull/635).
+
+The `alr publish` command now supports a new `--manifest <file>` switch, to
+help with packaging sources that provide several crates. Maintainers can now
+have several manifest files for the different crates, and select each one in
+turn for publishing. Sources management must still be done by properly
+isolating them in the corresponding `.gpr` project files (no help from `alr` in
+that regard).
+
+### Custom editor command for `alr edit`
+
 PR [#611](https://github.com/alire-project/alire/pull/611).
 
 The code editor launched by `alr edit` can now be configured instead of using
