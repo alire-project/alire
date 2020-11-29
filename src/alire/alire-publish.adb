@@ -51,6 +51,9 @@ package body Alire.Publish is
       Origin : Origins.Origin := Origins.New_External ("undefined");
       --  We use external as "undefined" until a proper origin is provided.
 
+      Path : UString := +".";
+      --  Where to find the local workspace
+
       Revision : UString := +"HEAD";
       --  A particular revision for publishing from a git repo
 
@@ -65,7 +68,7 @@ package body Alire.Publish is
    --  defaults to the current directory when using a nonstandard manifest.
    function Base_Path (This : Data) return Any_Path
    is (if This.Options.Nonstandard_Manifest
-       then "."
+       then +This.Path
        else Root.Current.Path);
 
    -----------------------
@@ -853,6 +856,7 @@ package body Alire.Publish is
       Context : Data :=
                   (Options        => Options,
                    Origin         => <>,
+                   Path           => +Path,
                    Revision       => +Revision,
                    Tmp_Deploy_Dir => <>);
 
@@ -1027,7 +1031,9 @@ package body Alire.Publish is
                          else
                             Origins.New_Source_Archive (URL)),
 
-                      Revision => +Commit,
+                      Path => <>, -- will remain unused
+
+                      Revision  => +Commit,
 
                       Tmp_Deploy_Dir => <>);
       begin
