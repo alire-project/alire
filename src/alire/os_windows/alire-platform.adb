@@ -80,14 +80,14 @@ package body Alire.Platform is
    -- Distribution --
    ------------------
 
-   function Distribution return Platforms.Distributions is
+   function Detected_Distribution return Platforms.Distributions is
    begin
       if not Distrib_Detected then
          Detect_Distrib;
       end if;
 
       return Distrib;
-   end Distribution;
+   end Detected_Distribution;
 
    -----------------------
    -- Distribution_Root --

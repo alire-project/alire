@@ -4,7 +4,6 @@ with Ada.Text_IO;
 
 with GNAT.Regexp;
 
-with Alire.Directories;
 with Alire.Environment;
 with Alire.Platform;
 
@@ -360,7 +359,7 @@ package body Alire.Config is
 
       for Lvl in Level loop
 
-         if Lvl /= Local or else Root.Current.Is_Valid then
+         if Lvl /= Local or else Directories.Detect_Root_Path /= "" then
             declare
                Config : constant TOML_Value :=
                  Load_Config_File (Filepath (Lvl));
@@ -371,6 +370,15 @@ package body Alire.Config is
             end;
          end if;
       end loop;
+
+      --  Set variables elsewhere
+
+      Platform.Disable_Distribution_Detection :=
+        Get (Keys.Distribution_Disable_Detection, False);
+      if Platform.Disable_Distribution_Detection then
+         Trace.Debug ("Distribution detection disabled by configuration");
+      end if;
+
    end Load_Config;
 
    ----------------------

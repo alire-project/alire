@@ -1,0 +1,49 @@
+# The purpose of this CI is to run tests in a platform where there is no
+# detected native package manager
+
+name: CI unsupported
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+
+jobs:
+
+  build:
+    name: CI on unsupported Linux
+
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install toolchain
+      uses: ada-actions/toolchain@ce2020
+      with:
+        distrib: community
+    
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        ALIRE_DISABLE_DISTRO: true
+    
+    - name: Upload logs (if failed)
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: e3-log-unsupported.zip
+        path: testsuite/out
