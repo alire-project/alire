@@ -10,7 +10,7 @@
 
 .*sw?
 
-alire/
+/alire/
 bin
 lib
 obj

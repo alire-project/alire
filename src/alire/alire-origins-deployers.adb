@@ -153,6 +153,8 @@ package body Alire.Origins.Deployers is
 
       return Outcome_Success;
    exception
+      when E : Checked_Error =>
+         return Outcome_From_Exception (E);
       when E : others =>
          --  May happen if Compute_Hash for some reason errs out.
          return Outcome_From_Exception

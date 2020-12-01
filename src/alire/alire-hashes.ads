@@ -45,13 +45,6 @@ package Alire.Hashes with Preelaborate is
 
 private
 
-   ------------
-   -- Digest --
-   ------------
-
-   function Digest (Hash : Any_Hash) return Any_Digest is
-     (Any_Digest (Utils.Tail (String (Hash), ':')));
-
    --------------------
    -- Hash_Functions --
    --------------------
