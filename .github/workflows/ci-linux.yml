@@ -96,7 +96,7 @@ jobs:
 
     - name: Install AppImage's linuxdeploy
       if: (github.event_name == 'release')
-      uses: miurahr/install-linuxdeploy-action@releases/v1
+      uses: miurahr/install-linuxdeploy-action@v1
       with:
         plugins: appimage
 
