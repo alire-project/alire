@@ -8,6 +8,7 @@ with Alire.Dependencies.Diffs;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Milestones;
+with Alire.OS_Lib;
 with Alire.Releases;
 with Alire.Roots.Optional;
 with Alire.Solutions;
@@ -42,7 +43,7 @@ package body Alr.Commands.Withing is
         (Root.Current.Environment, With_Path => True)
       loop
          Utils.Auto_GPR_With.Update
-           (Alire.Directories."/" (Root.Current.Path, File),
+           (Alire.OS_Lib."/" (Root.Current.Path, File),
             Root.Current.GPR_Project_Files (Exclude_Root => True));
       end loop;
    end Auto_GPR_With;
