@@ -176,7 +176,9 @@ package body Alire.OS_Lib.Subprocess is
       use GNAT.OS_Lib;
 
       Extra    : constant String_Vector :=
-        (if Understands_Verbose then Empty_Vector & "-v" else Empty_Vector);
+                   (if Understands_Verbose and then Log_Level > Info
+                    then Empty_Vector & "-v"
+                    else Empty_Vector);
 
       Full_Args : constant String_Vector := Extra & Arguments;
       Arg_List : Argument_List_Access := To_Argument_List (Full_Args);
