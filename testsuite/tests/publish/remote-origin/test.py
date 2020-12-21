@@ -2,7 +2,7 @@
 Tests for proper publishing of a ready remote origin
 """
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, index_version
 from drivers.asserts import assert_match
 from drivers.helpers import contents, content_of, init_git_repo, zip_dir
 from shutil import copyfile, rmtree
@@ -22,7 +22,7 @@ def verify_manifest():
 # create and add an index to check the manifest is loadable later on
 os.makedirs(os.path.join("my_index", "xx", "xxx"))
 with open(os.path.join("my_index", "index.toml"), "wt") as index_metadata:
-    index_metadata.write("version = '0.4'\n")
+    index_metadata.write(f"version = '{index_version()}'\n")
 run_alr("index", "--add", "my_index", "--name", "my_index")
 
 # Prepare a repo and a zipball to be used as "remote" targets for publishing
