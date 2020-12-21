@@ -169,6 +169,7 @@ priority = {}
 url = '{}'
             """.format(name, priority, os.path.join(working_dir, files_dir)))
 
+
 def index_branch():
     """
     Identify the expected index branch from `alr version`
@@ -178,6 +179,7 @@ def index_branch():
         if line.startswith("community index"):
             return line.split(':')[1].strip()
     raise Exception("Unexpected alr output, cannot find index version")
+
 
 def index_version():
     """
