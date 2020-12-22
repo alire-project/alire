@@ -68,7 +68,9 @@ package body Alire.Origins.Deployers.System.Pacman is
    overriding
    function Detect (This : Deployer) return Version_Outcomes.Outcome is
 
-      Regexp : constant String := "^.* ([0-9.]+)(-[0-9]+?) .*$";
+      Regexp : constant String := "^.* (?:\d+:)?([\d.]+)-?.*$";
+      --  repo/pkg opt_epoch:x.x.x.x-release_within_version something_extra
+      --  See https://wiki.archlinux.org/index.php/PKGBUILD#pkgver
 
       Package_Line : constant String :=
         Get_Package_Line (This.Base.Package_Name);
