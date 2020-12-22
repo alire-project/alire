@@ -170,6 +170,24 @@ url = '{}'
             """.format(name, priority, os.path.join(working_dir, files_dir)))
 
 
+def index_branch():
+    """
+    Identify the expected index branch from `alr version`
+    """
+    p = run_alr("version", quiet=False)
+    for line in p.out.splitlines():
+        if line.startswith("community index"):
+            return line.split(':')[1].strip()
+    raise Exception("Unexpected alr output, cannot find index version")
+
+
+def index_version():
+    """
+    Identify the expected index version from `alr version`
+    """
+    return index_branch().split('-')[1]
+
+
 def init_local_crate(name="xxx", binary=True, enter=True):
     """
     Initialize a local crate and enter its folder for further testing.

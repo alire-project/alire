@@ -20,7 +20,8 @@ package Alire.Platforms with Preelaborate is
                           Distro_Unknown);
 
    subtype Known_Distributions is
-     Distributions range Debian .. Distributions'Pred (Distributions'Last);
+     Distributions range Distributions'First ..
+                         Distributions'Pred (Distributions'Last);
 
    type Word_Sizes is (Bits_32,
                        Bits_64,

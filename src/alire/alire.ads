@@ -9,7 +9,9 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "0.8.0-dev";
+   Version : constant String := "0.8.1-dev";
+   --  0.8.1-dev: update to devel-0.5 index branch
+   --  0.8.0-dev: post-0.7-beta changes
 
    Checked_Error : exception;
    --  A Checked_Error is an explicitly diagnosed error condition, usually in
