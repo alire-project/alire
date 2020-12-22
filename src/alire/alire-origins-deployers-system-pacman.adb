@@ -91,7 +91,11 @@ package body Alire.Origins.Deployers.System.Pacman is
               Version_Outcomes.New_Result
                 (Semantic_Versioning.Parse
                    (Package_Line (Matches (1).First .. Matches (1).Last),
-                    Relaxed => False));
+                    Relaxed => True));
+              --  Versions in Arch can have more than tree numeric fields,
+              --  which runs amok of semantic versioning. If this happens,
+              --  the 4th and extra fields will go into the build part of
+              --  the version, due to Relaxed parsing.
          else
             Trace.Detail
               ("Unexpected version format, could not identify version");
