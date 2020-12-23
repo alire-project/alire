@@ -68,7 +68,9 @@ package body Alire.Origins.Deployers.System.Pacman is
    overriding
    function Detect (This : Deployer) return Version_Outcomes.Outcome is
 
-      Regexp : constant String := "^.* ([0-9.]+)(-[0-9]+?) .*$";
+      Regexp : constant String := "^.* (?:\d+:)?([\d.]+)-?.*$";
+      --  repo/pkg opt_epoch:x.x.x.x-release_within_version something_extra
+      --  See https://wiki.archlinux.org/index.php/PKGBUILD#pkgver
 
       Package_Line : constant String :=
         Get_Package_Line (This.Base.Package_Name);
@@ -89,7 +91,11 @@ package body Alire.Origins.Deployers.System.Pacman is
               Version_Outcomes.New_Result
                 (Semantic_Versioning.Parse
                    (Package_Line (Matches (1).First .. Matches (1).Last),
-                    Relaxed => False));
+                    Relaxed => True));
+              --  Versions in Arch can have more than tree numeric fields,
+              --  which runs amok of semantic versioning. If this happens,
+              --  the 4th and extra fields will go into the build part of
+              --  the version, due to Relaxed parsing.
          else
             Trace.Detail
               ("Unexpected version format, could not identify version");
