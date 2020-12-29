@@ -39,6 +39,13 @@ package Alire.TOML_Expressions with Preelaborate is
    --  be completely sure that indeed we do not need the strong typing for
    --  anything useful.
 
+   Strict_Enums : Boolean := False;
+   --  This ugly global enormously simplifies the detection of unexpected enum
+   --  values without huge rippling changes through all the generics. Since
+   --  these generics are due for a refactoring at some point, this should be
+   --  acceptable for the time being. TODO: remove this global during the case
+   --  expressions refactoring.
+
    Case_Prefix : constant String := "case(";
    Dots        : constant String := "...";
 

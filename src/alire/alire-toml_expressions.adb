@@ -174,8 +174,14 @@ package body Alire.TOML_Expressions is
                      Cases (E) := RHS;
                   exception
                      when others =>
-                        From.Checked_Error
-                          ("invalid enumeration value: " & E_Str);
+                        if Strict_Enums then
+                           From.Recoverable_Error
+                             ("invalid enumeration value: " & E_Str);
+                        else
+                           Trace.Debug
+                             (From.Message
+                                ("unknown enumeration value: " & E_Str));
+                        end if;
                   end;
                end loop;
             end;

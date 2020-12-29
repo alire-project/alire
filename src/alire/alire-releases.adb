@@ -7,6 +7,7 @@ with Alire.Defaults;
 with Alire.Errors;
 with Alire.Properties.Bool;
 with Alire.Requisites.Booleans;
+with Alire.TOML_Expressions;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 
@@ -628,6 +629,12 @@ package body Alire.Releases is
       package Labeled renames Alire.Properties.Labeled;
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
+
+      --  For local manifests we don't allow unknown enum values. For indexes
+      --  we do not complain, as that allows backward compatibility for new
+      --  configurations found in the index but unknown to this Alire. This way
+      --  local errors by the user are caught on the spot.
+      TOML_Expressions.Strict_Enums := Source in Manifest.Local;
 
       --  Origin
 
