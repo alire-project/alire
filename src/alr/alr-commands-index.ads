@@ -23,7 +23,7 @@ package Alr.Commands.Index is
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String is
      ("--add <url> --name <name> [--before <name>] | --del <name> | --list"
-      & " | --update-all");
+      & " | --update-all | --check");
 
    procedure Update_All;
    --  Request update of configured indexes
@@ -31,12 +31,13 @@ package Alr.Commands.Index is
 private
 
    type Command is new Commands.Command with record
-      Add  : aliased GNAT.Strings.String_Access;
-      Bfr  : aliased GNAT.Strings.String_Access;
-      Del  : aliased GNAT.Strings.String_Access;
-      Name : aliased GNAT.Strings.String_Access;
-      List : aliased Boolean := False;
-      Rset : aliased Boolean := False; -- Reset the community index
+      Add   : aliased GNAT.Strings.String_Access;
+      Bfr   : aliased GNAT.Strings.String_Access;
+      Del   : aliased GNAT.Strings.String_Access;
+      Name  : aliased GNAT.Strings.String_Access;
+      List  : aliased Boolean := False;
+      Rset  : aliased Boolean := False; -- Reset the community index
+      Check : aliased Boolean := False; -- Enable strict syntax in the index
 
       Update_All : aliased Boolean := False;
    end record;
