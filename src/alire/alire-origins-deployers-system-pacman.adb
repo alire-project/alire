@@ -43,10 +43,10 @@ package body Alire.Origins.Deployers.System.Pacman is
                  Subprocess.Checked_Spawn_And_Capture
                    ("pacman",
                     Empty_Vector &
-                      "-Qqe" &
+                      "-Qq" &
                       This.Base.Package_Name,
                     Valid_Exit_Codes => (0, 1), -- Returned when not found
-                    Err_To_Out     => True);
+                    Err_To_Out       => True);
    begin
       if not Output.Is_Empty
         and then
