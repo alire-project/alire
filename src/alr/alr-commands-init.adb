@@ -196,7 +196,8 @@ package body Alr.Commands.Init is
          Put_Line ("        Runtime_Checks_Switches &");
          Put_Line ("        Style_Checks_Switches &");
          Put_Line ("        Contracts_Switches &");
-         Put_Line ("        (""-gnatQ"");  -- Don't quit. Generate ALI and tree files even if illegalities");
+         Put_Line ("        (""-gnatw.X"", -- Disable warnings for No_Exception_Propagation");
+         Put_Line ("         ""-gnatQ"");  -- Don't quit. Generate ALI and tree files even if illegalities");
          Put_Line ("   end Compiler;");
          Put_New_Line;
          Put_Line ("   package Binder is");
