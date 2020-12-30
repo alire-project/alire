@@ -1,6 +1,6 @@
 with Alire.Origins.Deployers.System.Apt;
 with Alire.Origins.Deployers.System.Pacman;
-with Alire.Origins.Deployers.System.Rh_Rpm_Wrapper;
+with Alire.Origins.Deployers.System.RPM_Wrappers;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Utils.User_Input;
@@ -92,15 +92,15 @@ package body Alire.Origins.Deployers.System is
             System.Pacman.Deployer'(Deployers.Deployer'(Base => From)
                                     with others => <>),
          when Platforms.Yum =>
-            System.Rh_Rpm_Wrapper.Deployer'(Deployers.Deployer'(Base => From)
-                                            with Wrapper =>
-                                               System.Rh_Rpm_Wrapper.Yum,
-                                            others => <>),
+            System.RPM_Wrappers.Deployer'(Deployers.Deployer'(Base => From)
+                                          with Wrapper =>
+                                             System.RPM_Wrappers.Yum,
+                                          others       => <>),
          when Platforms.Dnf =>
-            System.Rh_Rpm_Wrapper.Deployer'(Deployers.Deployer'(Base => From)
-                                            with Wrapper =>
-                                               System.Rh_Rpm_Wrapper.Dnf,
-                                            others => <>));
+            System.RPM_Wrappers.Deployer'(Deployers.Deployer'(Base => From)
+                                          with Wrapper =>
+                                             System.RPM_Wrappers.Dnf,
+                                          others       => <>));
       --  TODO: add here other native package managers as they get
       --  implemented.
 

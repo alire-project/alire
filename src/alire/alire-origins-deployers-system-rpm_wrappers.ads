@@ -1,4 +1,4 @@
-package Alire.Origins.Deployers.System.Rh_Rpm_Wrapper is
+package Alire.Origins.Deployers.System.RPM_Wrappers is
 
    type Rpm_Wrapper is (Dnf, Yum); -- Command to execute (dnf, yum)
 
@@ -16,4 +16,4 @@ package Alire.Origins.Deployers.System.Rh_Rpm_Wrapper is
    overriding
    function Install (This : Deployer) return Outcome;
 
-end Alire.Origins.Deployers.System.Rh_Rpm_Wrapper;
+end Alire.Origins.Deployers.System.RPM_Wrappers;
