@@ -4,6 +4,19 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Switch to check for unknown enumeration values in the index
+
+PR [#656](https://github.com/alire-project/alire/pull/656).
+
+To allow backwards-compatible use of new supported environment configurations
+in the index, unknown values in dynamic case expressions are silently ignored
+when loading an index. In order to allow pinpointing these values (or truly
+wrong entries), a new switch `alr index --check` can be used that will reject
+an index containing unknown values.
+
+This error, either in indexes or a local manifest, can be downgraded to a
+warning with `--force`.
+
 ### Custom editor command for `alr edit`
 
 PR [#611](https://github.com/alire-project/alire/pull/611).
@@ -19,8 +32,6 @@ $ alr config --set --global editor.cmd "emacs ${GPR_FILE}"
 ```
 
 The default editor is still GNATstudio.
-
-
 
 ### Assistance to generate and publish as tarball
 

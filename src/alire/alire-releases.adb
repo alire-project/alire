@@ -7,6 +7,7 @@ with Alire.Defaults;
 with Alire.Errors;
 with Alire.Properties.Bool;
 with Alire.Requisites.Booleans;
+with Alire.TOML_Expressions;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 
@@ -626,8 +627,19 @@ package body Alire.Releases is
    is
       package Dirs    renames Ada.Directories;
       package Labeled renames Alire.Properties.Labeled;
+
+      Strict_Before : constant Boolean := TOML_Expressions.Strict_Enums;
+      --  Initial value of TOML_Expressions.Strict_Enums, to restore it after
+      --  loading this particular release.
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
+
+      --  For local manifests we don't allow unknown enum values. For indexes
+      --  we do not complain, as that allows backward compatibility for new
+      --  configurations found in the index but unknown to this Alire. This way
+      --  local errors by the user are caught on the spot.
+      TOML_Expressions.Strict_Enums :=
+        TOML_Expressions.Strict_Enums or else Source in Manifest.Local;
 
       --  Origin
 
@@ -661,10 +673,16 @@ package body Alire.Releases is
 
       This.Version := Semver.New_Version (This.Property (Labeled.Version));
 
+      --  Restore Strict-ness
+
+      TOML_Expressions.Strict_Enums := Strict_Before;
+
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;
    exception
       when E : others =>
+         TOML_Expressions.Strict_Enums := Strict_Before;
+
          case Source is
             when Manifest.Index =>
                raise Program_Error with

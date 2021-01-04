@@ -3,6 +3,7 @@ with AAA.Table_IO;
 with Alire.Config;
 with Alire.Features.Index;
 with Alire.Index_On_Disk;
+with Alire.TOML_Expressions;
 with Alire.Utils;
 
 package body Alr.Commands.Index is
@@ -10,6 +11,8 @@ package body Alr.Commands.Index is
    --  Forward declarations
 
    procedure Add (Cmd : Command);
+
+   procedure Check;
 
    procedure List;
 
@@ -79,16 +82,16 @@ package body Alr.Commands.Index is
 
    overriding
    procedure Execute (Cmd : in out Command) is
-      Enabled : Natural := 0;
    begin
       --  Check no multi-action
-      Enabled := Enabled + (if Cmd.Add.all /= "" then 1 else 0);
-      Enabled := Enabled + (if Cmd.Del.all /= "" then 1 else 0);
-      Enabled := Enabled + (if Cmd.List then 1 else 0);
-      Enabled := Enabled + (if Cmd.Update_All then 1 else 0);
-      Enabled := Enabled + (if Cmd.Rset then 1 else 0);
-
-      if Enabled /= 1 then
+      if Alire.Utils.Count_True
+        ((Cmd.Add.all /= "",
+          Cmd.Del.all /= "",
+          Cmd.Check,
+          Cmd.List,
+          Cmd.Rset,
+          Cmd.Update_All)) /= 1
+      then
          Reportaise_Wrong_Arguments ("Specify exactly one index subcommand");
       end if;
 
@@ -101,6 +104,8 @@ package body Alr.Commands.Index is
          Add (Cmd);
       elsif Cmd.Del.all /= "" then
          Delete (Cmd.Del.all);
+      elsif Cmd.Check then
+         Check;
       elsif Cmd.List then
          List;
       elsif Cmd.Update_All then
@@ -111,6 +116,17 @@ package body Alr.Commands.Index is
          Reportaise_Wrong_Arguments ("Specify an index subcommand");
       end if;
    end Execute;
+
+   -----------
+   -- Check --
+   -----------
+
+   procedure Check is
+   begin
+      Alire.TOML_Expressions.Strict_Enums := True;
+      Requires_Full_Index;
+      Alire.Log_Success ("No unknown values found in index contents.");
+   end Check;
 
    ----------
    -- List --
@@ -212,6 +228,13 @@ package body Alr.Commands.Index is
          Long_Switch => "--before=",
          Argument    => "NAME",
          Help        => "Priority order (defaults to last)");
+
+      GNAT.Command_Line.Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Check'Access,
+         Long_Switch => "--check",
+         Help        =>
+           "Check index contents for unknown configuration values");
 
       GNAT.Command_Line.Define_Switch
         (Config      => Config,
