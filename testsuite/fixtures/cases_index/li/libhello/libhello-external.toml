@@ -1,6 +1,5 @@
 description = "\"Hello, world!\" demonstration project support library"
 name = "libhello"
-licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 

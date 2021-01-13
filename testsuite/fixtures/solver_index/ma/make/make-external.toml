@@ -1,6 +1,5 @@
 description = "Utility for directing compilation"
 name = "make"
-licenses = []
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 

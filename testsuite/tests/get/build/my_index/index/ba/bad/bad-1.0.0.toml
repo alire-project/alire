@@ -1,7 +1,7 @@
 description = "Bad crate"
 name = "bad"
 version = "1.0.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["jane@doe.com"]
 maintainers-logins = ["mylogin"]
 

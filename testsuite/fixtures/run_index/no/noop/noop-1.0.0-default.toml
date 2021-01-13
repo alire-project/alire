@@ -1,7 +1,6 @@
 description = "Do nothing"
 name = "noop"
 version = "1.0.0-default"
-licenses = []
 maintainers = ["mr@lazy.com"]
 maintainers-logins = ["mrlazy"]
 

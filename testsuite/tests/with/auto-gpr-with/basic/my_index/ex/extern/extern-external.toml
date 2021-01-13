@@ -1,6 +1,6 @@
 description = "Some external crate for testing"
 name = "extern"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["example@example.com"]
 maintainers-logins = ["example"]
 

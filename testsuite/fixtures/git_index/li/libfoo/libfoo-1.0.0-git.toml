@@ -1,7 +1,6 @@
 description = "Custom repo to check proper retrieval of local git crates"
 name = "libfoo"
 version = "1.0.0-git"
-licenses = ["Public Domain"]
 maintainers = ["some@one.com"]
 maintainers-logins = ["mylogin"]
 

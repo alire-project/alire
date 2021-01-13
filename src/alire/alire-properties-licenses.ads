@@ -1,5 +1,4 @@
 with Alire.Conditional;
-with Alire.Errors;
 with Alire.Licensing;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
@@ -7,17 +6,15 @@ with Alire.Utils.YAML;
 
 with TOML;
 
-package Alire.Properties.Licenses with Preelaborate is
+private with Ada.Containers.Indefinite_Holders;
+private with SPDX;
+
+package Alire.Properties.Licenses is
 
    --  Licenses can be either a value from the enumeration of known licenses,
    --  or a free custom text.
 
-   type License is new Property with record
-      Known : Licensing.Licenses;
-   end record;
-
-   function New_License (Known : Licensing.Licenses) return License;
-   --  Creates a known license.
+   type License is new Property with private;
 
    function New_License (From  : String) return License;
    --  Verify that From is a known license name, and create it. In other cases
@@ -41,26 +38,29 @@ package Alire.Properties.Licenses with Preelaborate is
 
 private
 
+   Max_SPDX_Expression_Length : constant := 150;
+   --  SPDX the license expression can be arbitrary long, so we cap the
+   --  accepted size.
+
+   function "=" (A, B : SPDX.Expression) return Boolean
+   is (SPDX.Img (A) = SPDX.Img (B));
+
+   package SPDX_Holder is new Ada.Containers.Indefinite_Holders
+     (SPDX.Expression);
+
    use all type Licensing.Licenses;
 
-   function New_License (From  : String) return License
-   is (if Licensing.From_String (From) = Licensing.Unknown
-       then raise Checked_Error
-         with Errors.Set ("unknown license: '" & From & "'")
-       else New_License (Licensing.From_String (From)));
-
-   function New_License (Known : Licensing.Licenses) return License
-   is (License'(Known => Known));
+   type License is new Property with record
+      Holder : SPDX_Holder.Holder;
+   end record;
 
    overriding
    function Image (L : License) return String is
-     ("License: " & License_Labels (L.Known));
+     ("License: " & SPDX.Img (L.Holder.Element));
 
    overriding
-   function To_TOML (L : License) return TOML.TOML_Value is
-     (TOML_Adapters.To_Array
-        (TOML.Create_String
-             (+Licensing.License_Labels (L.Known))));
+   function To_TOML (L : License) return TOML.TOML_Value
+   is (TOML.Create_String (+SPDX.Img (L.Holder.Element)));
 
    overriding
    function To_YAML (L : License) return String is

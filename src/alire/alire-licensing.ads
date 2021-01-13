@@ -1,3 +1,6 @@
+--  Deprecated: This package provides a depracated version of license
+--  indentification and will be removed in a future release.
+
 package Alire.Licensing with Preelaborate is
 
    --  From https://github.com/github/choosealicense.com

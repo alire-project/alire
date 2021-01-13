@@ -1,7 +1,7 @@
 description = "\"Hello, world!\" demonstration project"
 name = "hello_world"
 version = "0.1.0"
-licenses = []
+licenses = "GPL-3.0-only"
 maintainers = ["example@example.com"]
 maintainers-logins = ["mylogin"]
 tags = ["invalid_tag"]
