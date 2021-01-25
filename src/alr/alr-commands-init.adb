@@ -162,7 +162,7 @@ package body Alr.Commands.Init is
          Put_New_Line;
          Put_Line ("   Style_Checks_Switches := ();");
          Put_Line ("   case Style_Checks is");
-         Put_Line ("      when ""enabled"" => null;");
+         Put_Line ("      when ""enabled"" =>");
          Put_Line ("         Style_Checks_Switches :=");
          Put_Line ("           (""-gnatyg"",   -- GNAT Style checks");
          Put_Line ("            ""-gnaty-d"",  -- Disable no DOS line terminators");
@@ -173,10 +173,10 @@ package body Alr.Commands.Init is
          Put_New_Line;
          Put_Line ("   Contracts_Switches := ();");
          Put_Line ("   case Contracts_Checks is");
-         Put_Line ("      when ""enabled"" => null;");
+         Put_Line ("      when ""enabled"" =>");
          Put_Line ("         Contracts_Switches :=");
          Put_Line ("           (""-gnata""); --  Enable assertions and contracts");
-         Put_Line ("      when others =>");
+         Put_Line ("      when others => null;");
          Put_Line ("   end case;");
          Put_New_Line;
          Put_Line ("   Build_Switches := ();");
