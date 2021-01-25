@@ -1,0 +1,6 @@
+with "config/hello_world_config";
+
+project Hello_World is
+   for Source_Dirs use ("src");
+   for Main use ("main.adb");
+end Hello_World;

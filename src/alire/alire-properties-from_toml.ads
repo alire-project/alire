@@ -1,6 +1,7 @@
 with Alire.Conditional;
 with Alire.Crates;
 with Alire.Properties.Actions;
+with Alire.Properties.Configurations;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
@@ -15,6 +16,8 @@ package Alire.Properties.From_TOML is
    type Property_Keys is (Actions,
                           Authors,
                           Auto_GPR_With,
+                          Config_Variables,
+                          Config_Settings,
                           Description,
                           Environment,
                           Executables,
@@ -93,33 +96,39 @@ package Alire.Properties.From_TOML is
                                 Maintainers_Logins |
                                 Name               |
                                 Tags               |
-                                Website => Labeled.From_TOML'Access,
+                                Website       => Labeled.From_TOML'Access,
                                 others  => null);
    --  This loader is used for properties a manifest containing externals may
    --  provide, shared by all external definitions found therein
 
    Release_Loaders : constant Loader_Array (Property_Keys) :=
-                       (Actions       => Properties.Actions.From_TOML'Access,
-                        Authors       => Labeled.From_TOML'Access,
-                        Auto_GPR_With => Bool.From_TOML'Access,
-                        Description   => Labeled.From_TOML'Access,
-                        Environment   =>
-                          Properties.Environment.From_TOML'Access,
-                        Executables   => Labeled.From_TOML'Access,
-                        GPR_Externals |
-                        GPR_Set_Externals
-                                      => Scenarios.From_TOML'Access,
-                        Hint          => null,
-                        Licenses      => Properties.Licenses.From_TOML'Access,
-                        Long_Description   |
-                        Maintainers        |
-                        Maintainers_Logins |
-                        Name               |
-                        Notes              |
-                        Project_Files      |
-                        Tags               |
-                        Version            |
-                        Website       => Labeled.From_TOML'Access);
+     (Actions       => Properties.Actions.From_TOML'Access,
+      Authors       => Labeled.From_TOML'Access,
+      Auto_GPR_With => Bool.From_TOML'Access,
+      Description   => Labeled.From_TOML'Access,
+
+      Config_Variables =>
+        Properties.Configurations.Definitions_From_TOML'Access,
+      Config_Settings  =>
+        Properties.Configurations.Assignements_From_TOML'Access,
+
+      Environment      =>
+        Properties.Environment.From_TOML'Access,
+      Executables   => Labeled.From_TOML'Access,
+      GPR_Externals |
+      GPR_Set_Externals
+                    => Scenarios.From_TOML'Access,
+      Hint          => null,
+      Licenses      => Properties.Licenses.From_TOML'Access,
+      Long_Description   |
+      Maintainers        |
+      Maintainers_Logins |
+      Name               |
+      Notes              |
+      Project_Files      |
+      Tags               |
+      Version            |
+      Website       => Labeled.From_TOML'Access);
    --  This loader applies to a normal release manifest
 
    --  The following array determines which properties accept dynamic
@@ -127,6 +136,12 @@ package Alire.Properties.From_TOML is
 
    Loaders_During_Case : constant array (Property_Keys) of Property_Loader
      := (Actions           => Properties.Actions.From_TOML'Access,
+
+         Config_Variables  =>
+           Properties.Configurations.Definitions_From_TOML'Access,
+         Config_Settings   =>
+           Properties.Configurations.Assignements_From_TOML'Access,
+
          Environment       => Properties.Environment.From_TOML'Access,
          Executables       => Labeled.From_TOML_Executable_Cases'Access,
          GPR_Set_Externals => Scenarios.From_TOML_Cases'Access,

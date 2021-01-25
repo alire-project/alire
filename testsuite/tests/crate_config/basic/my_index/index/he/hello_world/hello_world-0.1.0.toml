@@ -1,0 +1,13 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+executables=['main']
+
+[origin]
+url = "file:../../../hello_src"
+
+[[depends-on]]
+libcrate_config = "*"

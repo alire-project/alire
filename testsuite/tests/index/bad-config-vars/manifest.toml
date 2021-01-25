@@ -1,0 +1,14 @@
+# This manifest is a base modified and copied by the test to introduce
+# different invalid variable definitions.
+
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:."
+
+[config_variables]

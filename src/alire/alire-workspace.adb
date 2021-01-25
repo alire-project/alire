@@ -124,6 +124,9 @@ package body Alire.Workspace is
 
       Solution.Print_Hints (Root.Environment);
 
+      --  Update/Create configuration files
+      Root.Generate_Configuration;
+
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
       --  to dependencies is happening.
@@ -351,6 +354,10 @@ package body Alire.Workspace is
                Deps_Dir => Root.Dependencies_Dir);
          end if;
       end if;
+
+      --  Update/Create configuration files
+      Root.Generate_Configuration;
+
    end Update_And_Deploy_Dependencies;
 
 end Alire.Workspace;

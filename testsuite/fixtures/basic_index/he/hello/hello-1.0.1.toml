@@ -12,5 +12,18 @@ tags = ["tag1", "other-tag"]
 [[depends-on]]
 libhello = "^1.0"
 
+[config_variables]
+Var1={type="Boolean"}
+Var2={type="String", default="str"}
+Var3={type="Enum", values=["A", "B"], default="A"}
+Var4={type="Integer", default=0}
+Var5={type="Integer", first=-1, last=1, default=0}
+Var7={type="Real", default=0.0}
+Var6={type="Real", first=-1.0, last=1.0, default=0.0}
+
+[config_settings]
+hello.Var1=true # So far it is possible for a crate to set its own var
+libhello.Var1=false
+
 [origin]
 url = "file:../../../crates/hello_1.0.1"
