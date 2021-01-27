@@ -1,7 +1,6 @@
 with Ada.Containers;
 
 with Alire.OS_Lib;
-with Alire.Paths;
 
 with Alr.Commands.Build;
 with Alr.Files;
@@ -26,7 +25,7 @@ package body Alr.Commands.Run is
       use Ada.Text_IO;
 
       Found_At : constant Utils.String_Vector :=
-        Files.Locate_File_Under (Alire.Paths.Build_Folder,
+        Files.Locate_File_Under (Root.Current.Path,
                                  Exe_Name, Max_Depth => Max_Search_Depth);
    begin
       Put ("   " & Exe_Name);
@@ -59,7 +58,7 @@ package body Alr.Commands.Run is
 
       procedure List is
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
-           (Alire.Paths.Build_Folder,
+           (Root.Current.Path,
             Root.Current.Release.Default_Executable,
             Max_Depth => Max_Search_Depth);
          --  Candidate default executable
@@ -183,7 +182,7 @@ package body Alr.Commands.Run is
 
             Target_Exes : Utils.String_Vector :=
                             Files.Locate_File_Under
-                              (Alire.Paths.Build_Folder,
+                              (Root.Current.Path,
                                Target,
                                Max_Depth => Max_Search_Depth);
          begin

@@ -1,5 +1,4 @@
 with Alire.OS_Lib.Subprocess;
-with Alire.Paths;
 with Alire.Utils.TTY;
 
 with Alr.Commands;
@@ -36,9 +35,6 @@ package body Alr.Spawn is
                        Extra_Args   : Alire.Utils.String_Vector)
    is
       use Alire.Utils;
-
-      Relocate : constant String :=
-        "--relocate-build-tree=" & Alire.Paths.Build_Folder;
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path ("gprbuild") = "" then
          Alire.Raise_Checked_Error
@@ -54,9 +50,7 @@ package body Alr.Spawn is
                  --  Supress warnings on unused (may happen in prj_alr.ads)
                  Extra_Args &
                  "-P" &
-                 Project_File &
-                 "--root-dir=." &
-                 Relocate,
+                 Project_File,
                Understands_Verbose => True);
    end Gprbuild;
 

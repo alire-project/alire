@@ -1,12 +1,9 @@
 with Alire.Errors;
-with Alire.Paths;
 with Alire.Properties.Actions.Executor;
 
 with Alr.Root;
 with Alr.Spawn;
 with Alr.Platform;
-
-with GNAT.OS_Lib;
 
 package body Alr.Commands.Build is
 
@@ -98,12 +95,7 @@ package body Alr.Commands.Build is
                               return Alire.Utils.String_Vector is
      (Alire.Utils.Empty_Vector
       .Append ("Invokes gprbuild to compile all targets in the current"
-               & " crate. The project file in use is located at <crate>"
-               & GNAT.OS_Lib.Directory_Separator
-               & Alire.Paths.Working_Folder_Inside_Root & "."
-               & " The build is performed out-of-tree at <crate>"
-               & GNAT.OS_Lib.Directory_Separator
-               & Alire.Paths.Build_Folder));
+               & " crate."));
 
    --------------------
    -- Setup_Switches --
