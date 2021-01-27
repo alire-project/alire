@@ -12,11 +12,36 @@ with Alire.Paths;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots;
 with Alire.Solutions.Diffs;
-with Alire.Workspace;
+with Alire.Utils.TTY;
+with Alire.Warnings;
 
 package body Alire.Workspace is
 
    use type Conditional.Dependencies;
+
+   -------------------------
+   -- Check_Caret_Warning --
+   -------------------------
+   --  Warn of ^0.x dependencies that probably should be ~0.x
+   procedure Check_Caret_Warning (Root : Roots.Root) is
+      use Alire.Utils;
+      Warning_Id : constant String := "caret or tilde";
+   begin
+      for Dep of Root.Release.Flat_Dependencies loop
+         if Utils.Contains (Dep.Versions.Image, "^0") then
+            Warnings.Warn_Once
+              ("Possible tilde instead of caret intended for a 0.x version.",
+               Warning_Id & "1");
+            Warnings.Warn_Once
+              ("Alire interprets caret and tilde the same way "
+               & "for both pre/post-1 versions.",
+               Warning_Id & "2");
+            Warnings.Warn_Once
+              ("The suspicious dependency is: " & TTY.Version (Dep.Image),
+               Warning_Id & "3");
+         end if;
+      end loop;
+   end Check_Caret_Warning;
 
    -------------------------
    -- Deploy_Dependencies --
@@ -124,6 +149,12 @@ package body Alire.Workspace is
       --  dependency post-fetch compilations.
 
       Solution.Print_Hints (Root.Environment);
+
+      --  Check that the solution does not contain suspicious dependencies,
+      --  taking advantage that this procedure is called whenever a change
+      --  to dependencies is happening.
+
+      Check_Caret_Warning (Root);
 
    end Deploy_Dependencies;
 

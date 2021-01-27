@@ -42,6 +42,22 @@ package body Alire.Releases is
        (New_Label (Description,
                    Defaults.Description)));
 
+   -----------------------
+   -- Flat_Dependencies --
+   -----------------------
+
+   function Flat_Dependencies
+     (R : Release;
+      P : Alire.Properties.Vector := Alire.Properties.No_Properties)
+      return Alire.Dependencies.Containers.List
+   is
+      function Enumerate is new Conditional.For_Dependencies.Enumerate
+        (Alire.Dependencies.Containers.List,
+         Alire.Dependencies.Containers.Append);
+   begin
+      return Enumerate (R.Dependencies.Evaluate (P));
+   end Flat_Dependencies;
+
    ---------------
    -- Extending --
    ---------------
