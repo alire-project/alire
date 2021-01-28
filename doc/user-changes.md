@@ -4,6 +4,16 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Do not perform build relocations
+
+PR [#667](https://github.com/alire-project/alire/pull/667).
+
+GPRBuild machinery for build relocation is incompatible with some use cases, so
+now all builds are performed in place, using the locations given in project
+files. This should only have a user-visible impact for pinned dependencies,
+which will see changes in their build directory when Alire builds for dependent
+crates are run.
+
 ### Switch to check for unknown enumeration values in the index
 
 PR [#656](https://github.com/alire-project/alire/pull/656).
