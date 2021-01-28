@@ -338,15 +338,17 @@ static, i.e. they cannot depend on the context.
    source directory. `<kind>` can be either:
 
    - `post-fetch`: the command is to be run right after getting the package
-      sources
+      sources. This action is run for all releases in a workspace.
 
-   - `pre-build`: the command is to be run right before GPRbuild is run
+   - `pre-build`: the command is to be run right before GPRbuild is run. This
+      kind of action is run only for the root crate in a workspace.
 
    - `post-build`: the command is to be run right after GPRbuild has been
-      run
+      run. This kind of action is run only for the root crate in a workspace.
 
    - `test`: the command is run on demand for crate testing within the Alire 
-      ecosystem (using `alr test`).
+      ecosystem (using `alr test`). This kind of action is fun only for the
+      root crate being tested.
 
    Actions accept dynamic expressions. For example:
 
