@@ -491,6 +491,8 @@ package body Alire.Publish is
       Recommend : Utils.String_Vector; -- Optional
       Missing   : Utils.String_Vector; -- Mandatory
 
+      Caret_Pre_1 : Boolean := False; -- To warn about this
+
       function Tomify (S : String) return String renames TOML_Adapters.Tomify;
    begin
 
@@ -538,6 +540,8 @@ package body Alire.Publish is
          end if;
       end loop;
 
+      Caret_Pre_1 := Release.Check_Caret_Warning;
+
       if not Missing.Is_Empty then
          Ada.Text_IO.New_Line;
          Raise_Checked_Error ("Missing required properties: "
@@ -551,7 +555,8 @@ package body Alire.Publish is
       if Utils.User_Input.Query
         ("Do you want to proceed with this information?",
          Valid   => (Yes | No => True, others => False),
-         Default => (if Force or else Recommend.Is_Empty
+         Default => (if Force or else
+                         (Recommend.Is_Empty and then not Caret_Pre_1)
                      then Yes
                      else No)) /= Yes
       then

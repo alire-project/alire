@@ -2,6 +2,7 @@ with Ada.Directories;
 with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
+with Alire.Config;
 with Alire.Crates;
 with Alire.Defaults;
 with Alire.Errors;
@@ -10,6 +11,7 @@ with Alire.Requisites.Booleans;
 with Alire.TOML_Expressions;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
+with Alire.Warnings;
 
 with GNAT.IO; -- To keep preelaborable
 
@@ -57,6 +59,37 @@ package body Alire.Releases is
    begin
       return Enumerate (R.Dependencies.Evaluate (P));
    end Flat_Dependencies;
+
+   -------------------------
+   -- Check_Caret_Warning --
+   -------------------------
+   --  Warn of ^0.x dependencies that probably should be ~0.x
+   function Check_Caret_Warning (This : Release) return Boolean is
+      use Alire.Utils;
+      Warning_Id : constant String := "caret or tilde";
+      Newline    : constant String := ASCII.LF & "   ";
+   begin
+      for Dep of This.Flat_Dependencies loop
+         if Config.Get (Config.Keys.Warning_Caret, Default => True) and then
+           Utils.Contains (Dep.Versions.Image, "^0")
+         then
+            Warnings.Warn_Once
+              ("Possible tilde intended instead of caret for a 0.x version."
+               & Newline
+               & "Alire does not change the meaning of caret and tilde"
+               & " for pre/post-1.0 versions."
+               & Newline
+               & "The suspicious dependency is: " & TTY.Version (Dep.Image)
+               & Newline
+               & "You can disable this warning by setting the option "
+               & TTY.Emph (Config.Keys.Warning_Caret) & " to false.",
+               Warning_Id);
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Check_Caret_Warning;
 
    ---------------
    -- Extending --

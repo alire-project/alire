@@ -21,4 +21,11 @@ package body Alire.Warnings is
       end if;
    end Warn_Once;
 
+   --------------------
+   -- Already_Warned --
+   --------------------
+
+   function Already_Warned (ID : String) return Boolean
+   is (Already_Emitted.Contains (ID));
+
 end Alire.Warnings;

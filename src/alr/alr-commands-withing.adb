@@ -26,6 +26,8 @@ with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Withing is
 
+   package Semver renames Semantic_Versioning;
+
    Switch_URL : constant String := "--use";
 
    procedure Replace_Current
@@ -145,14 +147,18 @@ package body Alr.Commands.Withing is
    procedure Detect_Softlink (Path : String) is
       Root : constant Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Detect_Root (Path);
+      use all type Semver.Point;
    begin
       if Root.Is_Valid then
          if Root.Value.Is_Stored then
             --  Add a dependency on ^(detected version) (i.e., safely
-            --  upgradable)
+            --  upgradable) or ~(detected version) (if pre-1.0).
             Add_Softlink
               (Dep_Spec => Root.Value.Release.Name_Str
-               & "^" & Root.Value.Release.Version.Image,
+               & (if Semver.Major (Root.Value.Release.Version) = 0
+                  then "~"
+                  else "^")
+               & Root.Value.Release.Version.Image,
                Path     => Path);
          else
             Reportaise_Command_Failed
@@ -247,7 +253,20 @@ package body Alr.Commands.Withing is
 
          Deps_Diff : constant Alire.Dependencies.Diffs.Diff :=
                        Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps);
+
+         use Alire.Utils.User_Input;
       begin
+
+         --  First of all, warn about dubious caret
+
+         if New_Root.Release.Check_Caret_Warning and then
+           Query
+             (Question => "Do you want to continue with that dependency?",
+              Valid    => (Yes | No => True, others => False),
+              Default  => No) = No
+         then
+            Reportaise_Command_Failed ("Abandoned by user");
+         end if;
 
          --  Show changes to apply
 

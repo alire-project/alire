@@ -95,6 +95,9 @@ package Alire.Config with Preelaborate is
       --  When set to True, distro will be reported as unknown, and in turn no
       --  native package manager will be used.
 
+      Warning_Caret : constant Config_Key := "warning.caret";
+      --  Set to false to disable warnings about caret/tilde use for ^0 deps.
+
    end Keys;
 
 private
@@ -135,7 +138,64 @@ private
 
    function Image (Val : TOML.TOML_Value) return String;
 
-   type String_Access is access String;
-   Config_Path : String_Access;
+   function "+" (Source : String) return Ada.Strings.Unbounded.Unbounded_String
+                 renames Ada.Strings.Unbounded.To_Unbounded_String;
+
+   Builtins : constant array (Natural range <>) of Builtin_Entry :=
+     (
+      (+Keys.User_Name,
+       Cfg_String,
+       +("User full name. Used for the authors and " &
+          "maintainers field of a new crate.")),
+      (+Keys.User_Email,
+       Cfg_Email,
+       +("User email address. Used for the authors and" &
+           " maintainers field of a new crate.")),
+      (+Keys.User_Github_Login,
+       Cfg_GitHub_Login,
+       +("User GitHub login/username. Used to for the maintainers-logins " &
+           "field of a new crate.")),
+
+      (+Keys.Editor_Cmd,
+       Cfg_String,
+       +("Editor command and arguments for editing crate code (alr edit)." &
+           " The executables and arguments are separated by a single space" &
+           " character. The token ${GPR_FILE} is replaced by" &
+           " a path to the project file to open.")),
+
+      (+"msys2.do_not_install",
+       Cfg_Bool,
+       +("If true, Alire will not try to automatically" &
+          " install msys2 system package manager. (Windows only)")),
+
+      (+"msys2.install_dir",
+       Cfg_Absolute_Path,
+       +("Directory where Alire will detect and/or install" &
+           " msys2 system package manager. (Windows only)")),
+
+      (+"auto-gpr-with",
+       Cfg_Bool,
+       +("If true, Alire will automatically add/edit a list of 'with' " &
+           "statements in the root GPR project file based on the " &
+           "dependencies of the crate.")),
+
+      (+Keys.Update_Manually,
+       Cfg_Bool,
+       +("If true, Alire will not attempt to update dependencies even after "
+         & "the manifest is manually edited, or when no valid solution has "
+         & "been ever computed. All updates have to be manually requested "
+         & "through `alr update`")),
+
+      (+Keys.Distribution_Disable_Detection,
+       Cfg_Bool,
+       +("If true, Alire will report an unknown distribution and will not"
+         & " attempt to use the system package manager.")),
+
+      (+Keys.Warning_Caret,
+       Cfg_Bool,
+       +("If true, Alire will warn about the use of caret (^) "
+         & "for pre-1 dependencies."))
+
+     );
 
 end Alire.Config;

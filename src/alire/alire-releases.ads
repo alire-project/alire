@@ -309,6 +309,10 @@ package Alire.Releases is
    --  Say if the property exists in any branch of the property tree. Key is
    --  case-insensitive.
 
+   function Check_Caret_Warning (This : Release) return Boolean;
+   --  Check if this release contains a ^0.x dependency, and warn about it.
+   --  Returns whether a warning was emitted.
+
 private
 
    use Semantic_Versioning;
