@@ -10,7 +10,6 @@ with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.Utils;
 with Alire.Utils.User_Input;
-with Alire.Config;
 with Alire.Config.Edit;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
@@ -87,7 +86,7 @@ package body Alr.Platforms.Windows is
                    Default  => No) = Yes
          then
             --  Save user choice in the global config
-            Cfg.Edit.Set (Path  => Cfg.Filepath (Cfg.Global),
+            Cfg.Edit.Set (Path  => Cfg.Edit.Filepath (Cfg.Global),
                           Key   => "msys2.do_not_install",
                           Value => "true");
          end if;
@@ -146,7 +145,7 @@ package body Alr.Platforms.Windows is
 
       if not Cfg.Defined ("msys2.install_dir") then
          --  Save msys2 install dir in the global config
-         Cfg.Edit.Set (Path  => Cfg.Filepath (Cfg.Global),
+         Cfg.Edit.Set (Path  => Cfg.Edit.Filepath (Cfg.Global),
                        Key   => "msys2.install_dir",
                        Value => Install_Dir);
       end if;
