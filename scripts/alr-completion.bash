@@ -43,9 +43,9 @@ function _alr_completion() {
     # Command-specific completions
     $found &&\
     case $cmd in
-        get | list | show)
+        get | crates | show)
             # Suggest crate names
-            COMPREPLY+=($(compgen -W "$(alr list | cut -f1 -d' ')" -- $curr))
+            COMPREPLY+=($(compgen -W "$(alr crates | cut -f1 -d' ')" -- $curr))
             ;;
 
         index)
@@ -63,7 +63,7 @@ function _alr_completion() {
         
         with)
             # When the previous word is "with", show any crate:
-            [ "$prev" == "with" ] && COMPREPLY+=($(compgen -W "$(alr list | cut -f1 -d' ')" -- $curr))
+            [ "$prev" == "with" ] && COMPREPLY+=($(compgen -W "$(alr crates | cut -f1 -d' ')" -- $curr))
             # When the previous word is "--del", show direct dependencies:
             [ "$prev" == "--del" ] && COMPREPLY+=($(compgen -W "$(alr with | tail +2 | grep -Eo -- '[_a-z0-9]+')" -- $curr))
             ;;
