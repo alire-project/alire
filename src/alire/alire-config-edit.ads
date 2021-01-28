@@ -136,7 +136,12 @@ private
       (+Keys.Distribution_Disable_Detection,
        Cfg_Bool,
        +("If true, Alire will report an unknown distribution and will not"
-         & " attempt to use the system package manager."))
+         & " attempt to use the system package manager.")),
+
+      (+Keys.Warning_Caret,
+       Cfg_Bool,
+       +("If true, Alire will warn about the use of caret (^) "
+         & "for pre-1 dependencies."))
 
      );
 

@@ -13,6 +13,9 @@ package body Alire.Config.Edit is
    use Ada.Strings.Unbounded;
    use TOML;
 
+   type String_Access is access String;
+   Config_Path : String_Access;
+
    procedure Write_Config_File (Table : TOML_Value; Path : Absolute_Path)
      with Pre => Table.Kind = TOML_Table;
 
