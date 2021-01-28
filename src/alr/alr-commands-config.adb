@@ -37,7 +37,7 @@ package body Alr.Commands.Config is
       end if;
 
       if Cmd.Builtins_Doc then
-         Alire.Config.Print_Builtins_Doc;
+         Alire.Config.Edit.Print_Builtins_Doc;
          return;
       end if;
 
@@ -50,11 +50,11 @@ package body Alr.Commands.Config is
       if Cmd.List then
          case Num_Arguments is
             when 0 =>
-               Trace.Always (Alire.Config.List
+               Trace.Always (Alire.Config.Edit.List
                              (Filter => "*",
                               Show_Origin => Cmd.Show_Origin));
             when 1 =>
-               Trace.Always (Alire.Config.List
+               Trace.Always (Alire.Config.Edit.List
                              (Filter => Argument (1),
                               Show_Origin => Cmd.Show_Origin));
             when others =>
@@ -93,7 +93,7 @@ package body Alr.Commands.Config is
                  Key & "'");
             end if;
 
-            Alire.Config.Edit.Set (Alire.Config.Filepath (Lvl), Key, Val);
+            Alire.Config.Edit.Set (Alire.Config.Edit.Filepath (Lvl), Key, Val);
          end;
 
       elsif Cmd.Unset then
@@ -109,7 +109,7 @@ package body Alr.Commands.Config is
                  Key & "'");
             end if;
 
-            Alire.Config.Edit.Unset (Alire.Config.Filepath (Lvl), Key);
+            Alire.Config.Edit.Unset (Alire.Config.Edit.Filepath (Lvl), Key);
          end;
       end if;
    end Execute;
@@ -145,7 +145,7 @@ package body Alr.Commands.Config is
       .New_Line
       .Append ("Built-in configuration options:")
       .New_Line
-      .Append (Alire.Config.Builtins_Info));
+      .Append (Alire.Config.Edit.Builtins_Info));
 
    --------------------
    -- Setup_Switches --

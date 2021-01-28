@@ -1,6 +1,6 @@
 with Ada.Directories;
 
-with Alire.Config;
+with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Index;
@@ -151,7 +151,7 @@ package body Alire.Features.Index is
       Result : Outcome with Warnings => Off;
       --  Spurious warning to be silenced in Debian stable/Ubuntu LTS GNATs.
       Indexes : constant Sets.Set :=
-                  Find_All (Config.Indexes_Directory, Result);
+                  Find_All (Config.Edit.Indexes_Directory, Result);
       use Sets;
    begin
       Trace.Debug ("Resetting community index...");
@@ -164,7 +164,7 @@ package body Alire.Features.Index is
             return Add (Origin => Alire.Index.Community_Repo &
                           "@" & Alire.Index.Community_Branch,
                         Name   => Alire.Index.Community_Name,
-                        Under  => Config.Indexes_Directory,
+                        Under  => Config.Edit.Indexes_Directory,
                         Before => (if Has_Element (Next (I))
                                    then Indexes (Next (I)).Name
                                    else ""));
@@ -177,7 +177,7 @@ package body Alire.Features.Index is
       return Add (Origin => Alire.Index.Community_Repo &
                     "@" & Alire.Index.Community_Branch,
                   Name   => Alire.Index.Community_Name,
-                  Under  => Config.Indexes_Directory);
+                  Under  => Config.Edit.Indexes_Directory);
    exception
       when E : Checked_Error =>
          return Outcome_From_Exception (E);
@@ -221,7 +221,7 @@ package body Alire.Features.Index is
 
       declare
          Outcome : constant Alire.Outcome := Features.Index.Load_All
-           (From => Alire.Config.Indexes_Directory);
+           (From => Alire.Config.Edit.Indexes_Directory);
       begin
          if not Outcome.Success then
             Raise_Checked_Error (Message (Outcome));
