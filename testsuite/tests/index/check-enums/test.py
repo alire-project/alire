@@ -9,7 +9,7 @@ import glob
 import os
 
 # Verify that we can list the index, despite containing an unknown distro value
-run_alr("list")
+run_alr("crates")
 
 # Verify that checking the index strictly does fail
 p = run_alr("index", "--check", complain_on_error=False)

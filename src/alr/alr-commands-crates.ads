@@ -1,4 +1,4 @@
-package Alr.Commands.List is
+package Alr.Commands.Crates is
 
    type Command is new Commands.Command with null record;
 
@@ -17,4 +17,4 @@ package Alr.Commands.List is
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[<search term>]");
 
-end Alr.Commands.List;
+end Alr.Commands.Crates;

@@ -55,7 +55,7 @@ verify_manifest()
 copyfile(os.path.join("alire", "releases", "xxx-0.0.0.toml"),
          os.path.join("my_index", "xx", "xxx", "xxx-0.0.0.toml"))
 
-p = run_alr("list")
+p = run_alr("crates")
 assert "xxx" in p.out, "Crate not found in index contents"
 
 print('SUCCESS')

@@ -23,13 +23,13 @@ with Alire.Utils.User_Input;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
+with Alr.Commands.Crates;
 with Alr.Commands.Dev;
 with Alr.Commands.Edit;
 with Alr.Commands.Get;
 with Alr.Commands.Help;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
-with Alr.Commands.List;
 with Alr.Commands.Pin;
 with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
@@ -63,13 +63,13 @@ package body Alr.Commands is
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Config   => new Config.Command,
+                       Cmd_Crates   => new Crates.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Edit     => new Edit.Command,
                        Cmd_Get      => new Get.Command,
                        Cmd_Help     => new Help.Command,
                        Cmd_Index    => new Index.Command,
                        Cmd_Init     => new Init.Command,
-                       Cmd_List     => new List.Command,
                        Cmd_Pin      => new Pin.Command,
                        Cmd_Printenv => new Printenv.Command,
                        Cmd_Publish  => new Publish.Command,

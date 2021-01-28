@@ -5,7 +5,7 @@ with Alr.Utils;
 
 with Simple_Logging;
 
-package body Alr.Commands.List is
+package body Alr.Commands.Crates is
 
    -------------
    -- Execute --
@@ -67,4 +67,4 @@ package body Alr.Commands.List is
                & " when the information it provides is enough.")
      );
 
-end Alr.Commands.List;
+end Alr.Commands.Crates;
