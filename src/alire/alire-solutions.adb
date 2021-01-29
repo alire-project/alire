@@ -2,6 +2,7 @@ with Ada.Containers;
 
 with Alire.Crates;
 with Alire.Dependencies.Containers;
+with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
 with Alire.Root;
@@ -10,10 +11,9 @@ with Alire.Utils.Tables;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 
-with Semantic_Versioning;
-
 package body Alire.Solutions is
 
+   package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
    use type Ada.Containers.Count_Type;
@@ -805,5 +805,53 @@ package body Alire.Solutions is
 
       end return;
    end To_TOML;
+
+   -------------------------------
+   -- Restrict_New_Dependencies --
+   -------------------------------
+
+   function Restrict_New_Dependencies (Old_Deps,
+                                       New_Deps : Conditional.Dependencies;
+                                       New_Sol  : Solution)
+                                       return Conditional.Dependencies
+   is
+      Releases : constant Release_Map := New_Sol.Releases;
+
+      use type Conditional.Dependencies;
+      use type Semver.Extended.Version_Set;
+   begin
+      return Fixed_Deps : Conditional.Dependencies := Old_Deps do
+         for Added of Dependencies.Diffs.Between (Old_Deps, New_Deps).Added
+         loop
+
+            --  Keep as-is any version that is not "*", or is not solved
+
+            if Added.Versions /= Semver.Extended.Any or else
+              not Releases.Contains (Added.Crate)
+            then
+               Fixed_Deps := Fixed_Deps and Added;
+            else
+
+               --  Use either caret or tilde to narrow down the version
+
+               declare
+                  Fixed : constant Dependencies.Dependency :=
+                            Dependencies.New_Dependency
+                              (Added.Crate,
+                               Semver.Extended.Value
+                                 ((if Releases (Added.Crate).Version.Major in 0
+                                  then "~"
+                                  else "^")
+                                  & Releases (Added.Crate).Version.Image));
+               begin
+                  Trace.Detail ("Narrowing down dependency "
+                                & Added.TTY_Image & " as " & Fixed.TTY_Image);
+                  Fixed_Deps := Fixed_Deps and Fixed;
+               end;
+
+            end if;
+         end loop;
+      end return;
+   end Restrict_New_Dependencies;
 
 end Alire.Solutions;

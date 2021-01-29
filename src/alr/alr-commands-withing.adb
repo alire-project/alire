@@ -252,7 +252,12 @@ package body Alr.Commands.Withing is
                                          others => <>));
 
          Deps_Diff : constant Alire.Dependencies.Diffs.Diff :=
-                       Alire.Dependencies.Diffs.Between (Old_Deps, New_Deps);
+                       Alire.Dependencies.Diffs.Between
+                         (Old_Deps,
+                          Alire.Solutions.Restrict_New_Dependencies
+                            (Old_Deps,
+                             New_Deps,
+                             New_Solution));
 
          use Alire.Utils.User_Input;
       begin
