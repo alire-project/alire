@@ -1,10 +1,12 @@
-with Alire.Directories;
 with Alire.OS_Lib; use Alire.OS_Lib.Operators;
 with Alire.Utils;
 
 with TOML;
 
-package Alire.Config is
+private with Ada.Containers.Hashed_Maps;
+private with Ada.Strings.Unbounded.Hash;
+
+package Alire.Config with Preelaborate is
 
    function Is_Valid_Config_Key (Key : String) return Boolean
    is ((for all C of Key => C in '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' |
@@ -60,19 +62,7 @@ package Alire.Config is
    --  not as an Float, an error message is displayed and the Default value
    --  is returned.
 
-   function List (Filter      : String := ".*";
-                  Show_Origin : Boolean := False)
-                  return String;
-   --  Return a String that contains a list of configuration key/value as seen
-   --  by Alire. When Show_Origin is true, the configuration file where each
-   --  key was loaded is also listed.
-
    type Level is (Global, Local);
-
-   function Filepath (Lvl : Level) return Absolute_Path
-     with Pre => Lvl /= Local or else Directories.Detect_Root_Path /= "";
-   --  Return path of the configuration file coresponding to the given
-   --  configuration level.
 
    --  TODO: refactor this globals package into a type that can be
    --  passed around.
@@ -81,34 +71,9 @@ package Alire.Config is
    --  from command-line but set by someone else that has done the parsing.
    --  Right now the only client is alr.
 
-   -----------
-   -- Paths --
-   -----------
-
-   function Path return String;
-   --  The in-use global config folder path.
-   --  In order of decreasing precedence:
-   --  * A manually set path with Set_Path (below)
-   --  * An ALR_CONFIG env given folder
-   --  * Default per-platform path (see alire-platforms-*)
-
-   --  Detection happens during elaboration.
-
-   procedure Set_Path (Path : String);
-   --  Override global config folder path
-
-   function Indexes_Directory return Absolute_Path is (Path / "indexes");
-
    ---------------
    -- Built-ins --
    ---------------
-
-   function Builtins_Info return Alire.Utils.String_Vector;
-   --  Return a String_Vector with the documentation of builtin configuration
-   --  options in text format.
-
-   procedure Print_Builtins_Doc;
-   --  Print a Markdown documentation for the built-in configuration options
 
    package Keys is
 
@@ -134,15 +99,6 @@ package Alire.Config is
 
 private
 
-   procedure Load_Config;
-   --  Clear an reload all configuration. Also set some values elsewhere used
-   --  to break circularities. Bottom line, this procedure must leave the
-   --  program-wide configuration ready.
-
-   function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
-   --  Load a TOML config file and return No_TOML_Value if the file is invalid
-   --  or doesn't exist.
-
    generic
       type Return_Type (<>) is private;
       Expected_TOML_Kind : TOML.Any_Value_Kind;
@@ -161,83 +117,25 @@ private
    --  Use the TOML parser to convert the string Str. If Str is not a valid
    --  TOML value, No_TOML_Value is returned.
 
-   --------------
-   -- Builtins --
-   --------------
-
-   type Builtin_Kind is (Cfg_Int, Cfg_Float, Cfg_Bool,
-                         Cfg_String, Cfg_Absolute_Path,
-                         Cfg_Email, Cfg_GitHub_Login);
-
-   type Builtin_Entry is record
-      Key     : Ada.Strings.Unbounded.Unbounded_String;
-      Kind    : Builtin_Kind;
-      Help    : Ada.Strings.Unbounded.Unbounded_String;
+   type Config_Value is record
+      Source : Ada.Strings.Unbounded.Unbounded_String;
+      Value  : TOML.TOML_Value;
+      Lvl    : Level;
    end record;
 
-   function Is_Builtin (Key : Config_Key) return Boolean;
+   function No_Config_Value return Config_Value;
 
-   function Valid_Builtin (Key : Config_Key; Value : TOML.TOML_Value)
-                           return Boolean;
+   package Config_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Ada.Strings.Unbounded.Unbounded_String,
+      Element_Type    => Config_Value,
+      Hash            => Ada.Strings.Unbounded.Hash,
+      Equivalent_Keys => Ada.Strings.Unbounded."=");
 
-   function Image (Kind : Builtin_Kind) return String;
+   Config_Map : Config_Maps.Map;
 
-   function Kind_Of_Builtin (Key : Config_Key) return Builtin_Kind
-     with Pre => Is_Builtin (Key);
+   function Image (Val : TOML.TOML_Value) return String;
 
-   function "+" (Source : String) return Ada.Strings.Unbounded.Unbounded_String
-                 renames Ada.Strings.Unbounded.To_Unbounded_String;
-
-   Builtins : constant array (Natural range <>) of Builtin_Entry :=
-     (
-      (+Keys.User_Name,
-       Cfg_String,
-       +("User full name. Used for the authors and " &
-          "maintainers field of a new crate.")),
-      (+Keys.User_Email,
-       Cfg_Email,
-       +("User email address. Used for the authors and" &
-           " maintainers field of a new crate.")),
-      (+Keys.User_Github_Login,
-       Cfg_GitHub_Login,
-       +("User GitHub login/username. Used to for the maintainers-logins " &
-           "field of a new crate.")),
-
-      (+Keys.Editor_Cmd,
-       Cfg_String,
-       +("Editor command and arguments for editing crate code (alr edit)." &
-           " The executables and arguments are separated by a single space" &
-           " character. The token ${GPR_FILE} is replaced by" &
-           " a path to the project file to open.")),
-
-      (+"msys2.do_not_install",
-       Cfg_Bool,
-       +("If true, Alire will not try to automatically" &
-          " install msys2 system package manager. (Windows only)")),
-
-      (+"msys2.install_dir",
-       Cfg_Absolute_Path,
-       +("Directory where Alire will detect and/or install" &
-           " msys2 system package manager. (Windows only)")),
-
-      (+"auto-gpr-with",
-       Cfg_Bool,
-       +("If true, Alire will automatically add/edit a list of 'with' " &
-           "statements in the root GPR project file based on the " &
-           "dependencies of the crate.")),
-
-      (+Keys.Update_Manually,
-       Cfg_Bool,
-       +("If true, Alire will not attempt to update dependencies even after "
-         & "the manifest is manually edited, or when no valid solution has "
-         & "been ever computed. All updates have to be manually requested "
-         & "through `alr update`")),
-
-      (+Keys.Distribution_Disable_Detection,
-       Cfg_Bool,
-       +("If true, Alire will report an unknown distribution and will not"
-         & " attempt to use the system package manager."))
-
-     );
+   type String_Access is access String;
+   Config_Path : String_Access;
 
 end Alire.Config;

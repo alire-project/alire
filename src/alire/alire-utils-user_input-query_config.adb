@@ -22,7 +22,7 @@ package body Alire.Utils.User_Input.Query_Config is
               Query_String (Question, Default, Validation);
          begin
             if Result /= Default then
-               Edit.Set (Filepath (Global), Config_Key, Result);
+               Edit.Set (Config.Edit.Filepath (Global), Config_Key, Result);
             end if;
 
             return Result;
