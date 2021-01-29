@@ -4,12 +4,14 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-### The command `alr list` has been renamed to `alr crates`
+### The command `alr list` has been renamed to `alr search --crates`
 
 PR [#671](https://github.com/alire-project/alire/pull/671).
 
-As `alr list` operated on crates, and `alr search` on releases, the former has
-been renamed to more closely reflect its object of operation.
+To consolidate search functionality under the single `alr search` command, the
+old behavior of `alr list` can now be achieved with `alr search --crates`. By
+default, `alr search` looks into releases, but now it can look too into crates
+with the new `--crates` switch.
 
 ### Switch to check for unknown enumeration values in the index
 
