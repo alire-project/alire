@@ -66,7 +66,6 @@ package body Alire.Releases is
    --  Warn of ^0.x dependencies that probably should be ~0.x
    function Check_Caret_Warning (This : Release) return Boolean is
       use Alire.Utils;
-      Warning_Id : constant String := "caret or tilde";
       Newline    : constant String := ASCII.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
@@ -83,7 +82,7 @@ package body Alire.Releases is
                & Newline
                & "You can disable this warning by setting the option "
                & TTY.Emph (Config.Keys.Warning_Caret) & " to false.",
-               Warning_Id);
+               Warnings.Caret_Or_Tilde);
             return True;
          end if;
       end loop;

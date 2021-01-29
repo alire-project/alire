@@ -8,15 +8,15 @@ package body Alire.Warnings is
    -- Warn_Once --
    ---------------
 
-   procedure Warn_Once (Text : String;
-                        ID   : String := "";
+   procedure Warn_Once (Text  : String;
+                        Id    : Warning_Id := "";
                         Level : Trace.Levels := Trace.Warning)
    is
    begin
-      if ID = "" then
-         Warn_Once (Text, Text, Level);
-      elsif not Already_Emitted.Contains (ID) then
-         Already_Emitted.Include (ID);
+      if Id = "" then
+         Warn_Once (Text, Warning_Id (Text), Level);
+      elsif not Already_Emitted.Contains (String (Id)) then
+         Already_Emitted.Include (String (Id));
          Trace.Log (Text, Level);
       end if;
    end Warn_Once;
@@ -25,7 +25,7 @@ package body Alire.Warnings is
    -- Already_Warned --
    --------------------
 
-   function Already_Warned (ID : String) return Boolean
-   is (Already_Emitted.Contains (ID));
+   function Already_Warned (Id : Warning_Id) return Boolean
+   is (Already_Emitted.Contains (String (Id)));
 
 end Alire.Warnings;
