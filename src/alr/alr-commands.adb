@@ -23,7 +23,6 @@ with Alire.Utils.User_Input;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
-with Alr.Commands.Crates;
 with Alr.Commands.Dev;
 with Alr.Commands.Edit;
 with Alr.Commands.Get;
@@ -63,7 +62,6 @@ package body Alr.Commands is
                       (Cmd_Build    => new Build.Command,
                        Cmd_Clean    => new Clean.Command,
                        Cmd_Config   => new Config.Command,
-                       Cmd_Crates   => new Crates.Command,
                        Cmd_Dev      => new Dev.Command,
                        Cmd_Edit     => new Edit.Command,
                        Cmd_Get      => new Get.Command,

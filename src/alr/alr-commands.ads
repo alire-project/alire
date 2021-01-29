@@ -108,7 +108,6 @@ package Alr.Commands is
    type Cmd_Names is (Cmd_Build,
                       Cmd_Clean,
                       Cmd_Config,
-                      Cmd_Crates,
                       Cmd_Dev,
                       Cmd_Edit,
                       Cmd_Get,
