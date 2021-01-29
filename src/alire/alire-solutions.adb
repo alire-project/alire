@@ -819,10 +819,18 @@ package body Alire.Solutions is
 
       use type Conditional.Dependencies;
       use type Semver.Extended.Version_Set;
+      Diff : constant Dependencies.Diffs.Diff :=
+               Dependencies.Diffs.Between (Old_Deps, New_Deps);
    begin
+
+      --  Do nothing when deps are being removed.
+
+      if not Diff.Removed.Is_Empty then
+         return New_Deps;
+      end if;
+
       return Fixed_Deps : Conditional.Dependencies := Old_Deps do
-         for Added of Dependencies.Diffs.Between (Old_Deps, New_Deps).Added
-         loop
+         for Added of Diff.Added loop
 
             --  Keep as-is any version that is not "*", or is not solved
 
