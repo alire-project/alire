@@ -1,6 +1,5 @@
 with Ada.Directories;
 
-with Alire.Paths;
 with Alire.Utils;
 
 with Alr.Paths;
@@ -17,8 +16,6 @@ package body Alr.Commands.Clean is
    overriding
    procedure Execute (Cmd : in out Command) is
       use Alire.Utils;
-      Relocate : constant String :=
-        "--relocate-build-tree=" & Alire.Paths.Build_Folder;
    begin
       Requires_Valid_Session;
 
@@ -36,8 +33,6 @@ package body Alr.Commands.Clean is
                            Empty_Vector &
                              "-r" &
                              "-P" & Gpr_File &
-                             "--root-dir=." &
-                             Relocate &
                              Scenario.As_Command_Line,
                            Understands_Verbose => True);
          end loop;

@@ -48,7 +48,7 @@ package body Alr.Utils.Auto_GPR_With is
          Valid    => (Yes | No => True, others => False),
          Default  => No) = Yes
       then
-         Edit.Set (Alire.Config.Filepath (Global), "auto-gpr-with",
+         Edit.Set (Alire.Config.Edit.Filepath (Global), "auto-gpr-with",
                    (if Result then "true" else "false"));
       end if;
 

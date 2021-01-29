@@ -13,6 +13,16 @@ old behavior of `alr list` can now be achieved with `alr search --crates`. By
 default, `alr search` looks into releases, but now it can look too into crates
 with the new `--crates` switch.
 
+### Do not perform build relocations
+
+PR [#667](https://github.com/alire-project/alire/pull/667).
+
+GPRBuild machinery for build relocation is incompatible with some use cases, so
+now all builds are performed in place, using the locations given in project
+files. This should only have a user-visible impact for pinned dependencies,
+which will see changes in their build directory when Alire builds for dependent
+crates are run.
+
 ### Switch to check for unknown enumeration values in the index
 
 PR [#656](https://github.com/alire-project/alire/pull/656).

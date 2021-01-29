@@ -1,7 +1,7 @@
 with Ada.Directories;
 
 with Alire;
-with Alire.Config;
+with Alire.Config.Edit;
 with Alire.Environment;
 
 with Alr.Defaults;
@@ -85,7 +85,7 @@ private
    --  Or because they can be set after elaboration (e.g. via config switches)
 
    function Alr_Config_Folder return String
-   is (Alire.Config.Path);
+   is (Alire.Config.Edit.Path);
 
    function Alr_Source_Folder return String
    is (OS_Lib.Getenv (Alire.Environment.Source, Alr_Config_Folder / "alire"));

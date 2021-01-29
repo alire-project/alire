@@ -8,7 +8,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
 with Alire;
-with Alire.Config;
+with Alire.Config.Edit;
 with Alire.Errors;
 with Alire.Features.Index;
 with Alire.Lockfiles;
@@ -240,7 +240,7 @@ package body Alr.Commands is
    procedure Create_Alire_Folders is
       use GNATCOLL.VFS;
    begin
-      Make_Dir (Create (+Alire.Config.Path));
+      Make_Dir (Create (+Alire.Config.Edit.Path));
    end Create_Alire_Folders;
 
    -------------------
@@ -405,7 +405,7 @@ package body Alr.Commands is
    procedure Requires_Full_Index (Force_Reload : Boolean := False) is
    begin
       Alire.Features.Index.Setup_And_Load
-        (From  => Alire.Config.Indexes_Directory,
+        (From  => Alire.Config.Edit.Indexes_Directory,
          Force => Force_Reload);
    end Requires_Full_Index;
 
@@ -724,7 +724,7 @@ package body Alr.Commands is
       if Command_Line_Config_Path     /= null and then
          Command_Line_Config_Path.all /= ""
       then
-         Alire.Config.Set_Path (Command_Line_Config_Path.all);
+         Alire.Config.Edit.Set_Path (Command_Line_Config_Path.all);
       end if;
 
    exception

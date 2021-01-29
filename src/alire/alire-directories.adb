@@ -140,7 +140,8 @@ package body Alire.Directories is
          elsif GNAT.OS_Lib.Is_Directory ("alire") and then
            Directories.Find_Single_File ("alire", "toml") /= "" and then
            not Utils.Ends_With (Directories.Find_Single_File ("alire", "toml"),
-                                "config.toml")
+                                "config.toml") and then
+           not GNAT.OS_Lib.Is_Regular_File ("alire" / "alr_env.gpr")
          then
             Report_Deprecation;
          else
