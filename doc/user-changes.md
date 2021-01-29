@@ -4,6 +4,18 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Narrow down versions for dependencies given without restrictions
+
+PR [#675](https://github.com/alire-project/alire/pull/675).
+
+When a user requests a dependency without narrowing down its version set (e.g.,
+`alr with foo`), the solved version will be used to instead add an
+"update-safe" dependency (e.g., `foo^1.x`, `foo~0.x`). To truly request any
+version, this can be explicitly entered as `alr with 'foo>=0'`.
+
+This behavior can be disabled by setting the `solver.autonarrow` configuration
+option to false.
+
 ### The command `alr list` has been renamed to `alr search --crates`
 
 PR [#671](https://github.com/alire-project/alire/pull/671).
