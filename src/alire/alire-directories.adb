@@ -3,6 +3,7 @@ with Ada.Numerics.Discrete_Random;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with Alire.OS_Lib.Subprocess;
 with Alire.Properties;
 with Alire.Roots;
 
@@ -347,6 +348,22 @@ package body Alire.Directories is
    begin
       if This.Keep then
          return;
+      end if;
+
+      --  Force writability of folder when in Windows, as some tools (e.g. git)
+      --  that create read-only files will cause a Use_Error
+
+      if Kind (This.Filename) = Directory and then
+        GNAT.OS_Lib.Directory_Separator = '\'
+      then
+         Trace.Debug ("Forcing writability of temporary dir " & This.Filename);
+         OS_Lib.Subprocess.Checked_Spawn
+           ("attrib",
+            Utils.Empty_Vector
+            .Append ("-R") -- Remove read-only
+            .Append ("/D") -- On dirs
+            .Append ("/S") -- Recursively
+            .Append (This.Filename & "\*"));
       end if;
 
       if Exists (This.Filename) then
