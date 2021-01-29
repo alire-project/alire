@@ -14,7 +14,8 @@ os.chdir('xxx')
 p = run_alr('with', 'libhello')
 p = run_alr('with', 'libhello', quiet=False)
 
-assert_eq('Not adding libhello because libhello* is already a dependency\n',
-          p.out)
+assert_eq(
+    'Not adding libhello because libhello^1.0.0 is already a dependency\n',
+    p.out)
 
 print('SUCCESS')

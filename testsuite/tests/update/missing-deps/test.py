@@ -19,11 +19,14 @@ run_alr('pin', '--force', 'libhello=3')
 # See that updating succeeds
 run_alr('update')
 
-# Check that the solution is still the expected one
+# Check that the solution is still the expected one, and also that the original
+# dependency is included in the restrictions
 p = run_alr('with', '--solve')
-assert_match('.*Dependencies \(external\):\n'
-             '   libhello=3.0.0.*',
-             p.out, flags=re.S)
+assert_match(
+    '.*Dependencies \(external\):\n'
+    '   ' +
+    re.escape('libhello(=3.0.0) & (^2.0.0) (direct,missed,pin=3.0.0)') + '.*',
+    p.out, flags=re.S)
 
 
 print('SUCCESS')

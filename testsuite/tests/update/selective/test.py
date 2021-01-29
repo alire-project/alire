@@ -14,7 +14,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Make it depend on hello1 and hello2
-run_alr('with', 'hello1', 'hello2')
+run_alr('with', 'hello1>0', 'hello2>0')
 
 # Verify solution depends on 0.1 versions
 p = run_alr('with', '--solve')

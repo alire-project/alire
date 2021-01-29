@@ -18,7 +18,7 @@ os.chdir('xxx')
 p = run_alr('with', 'libhello', quiet=False)
 assert_match(re.escape("""Requested changes:
 
-   + libhello * (add)
+   + libhello ^2.0.0 (add)
 
 Changes to dependency solution:
 
@@ -76,7 +76,7 @@ p = run_alr('with', '--del', 'libhello', quiet=False)
 assert_match(".*" +
              re.escape("""Requested changes:
 
-   - libhello * (remove)
+   - libhello ^2.0.0 (remove)
 
 Changes to dependency solution:
 
@@ -89,7 +89,7 @@ p = run_alr('with', 'hello', quiet=False)
 assert_match(".*" +
              re.escape("""Requested changes:
 
-   + hello * (add)
+   + hello ^1.0.1 (add)
 
 Changes to dependency solution:
 
@@ -104,7 +104,7 @@ p = run_alr('with', 'libhello', quiet=False)
 assert_match(".*" +
              re.escape("""Requested changes:
 
-   + libhello * (add)
+   + libhello ^1.1.0 (add)
 
 Changes to dependency solution:
 
@@ -118,7 +118,7 @@ p = run_alr('with', '--del', 'libhello', quiet=False)
 assert_match(".*" +
              re.escape("""Requested changes:
 
-   - libhello * (remove)
+   - libhello ^1.1.0 (remove)
 
 Changes to dependency solution:
 
