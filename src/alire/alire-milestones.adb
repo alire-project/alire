@@ -16,7 +16,7 @@ package body Alire.Milestones is
       use Ada.Strings.Fixed;
       use Ada.Strings.Maps;
 
-      Op_Pos  : constant Natural := Index (Spec, To_Set ("=^~<>/("), Inside);
+      Op_Pos  : constant Natural := Index (Spec, To_Set ("*=^~<>/("), Inside);
       Name    : constant String  := (if Op_Pos > Spec'First
                                      then Spec (Spec'First .. Op_Pos - 1)
                                      else Spec);
