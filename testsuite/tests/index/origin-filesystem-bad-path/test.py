@@ -13,7 +13,7 @@ def run(i, error):
     prepare_env(config_dir, os.environ)
     prepare_indexes(
         config_dir, '.', {'bad_index_{}'.format(i): {'in_fixtures': False}})
-    p = run_alr("crates", complain_on_error=False, debug=False)
+    p = run_alr("search", "--crates", complain_on_error=False, debug=False)
     assert_match(
         'ERROR: {}\n'
         'ERROR: alr encountered an unexpected error,'
