@@ -25,7 +25,7 @@ os.system('git ' + gitconfig + ' commit -q -m initialize')
 os.chdir(start)
 
 # Run the test. No alr version should use 'master' for the community index
-p = run_alr('list',  # Causes loading of the index
+p = run_alr("search", "--crates",  # Causes loading of the index
             complain_on_error=False)
 
 assert_match('.*Mismatched branch in checked out community index.*',

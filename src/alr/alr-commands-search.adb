@@ -1,6 +1,6 @@
 with Alire.Containers;
 with Alire.Externals;
-with Alire.Index;
+with Alire.Index.Search;
 with Alire.Crates;
 with Alire.Releases;
 with Alire.Solutions;
@@ -91,6 +91,39 @@ package body Alr.Commands.Search is
 
       use Alire.Containers.Release_Sets;
    begin
+
+      --  First, simpler case of search into crates
+
+      if Cmd.Crates then
+
+         --  Search into crates
+
+         if Alire.Utils.Count_True
+           ((Cmd.Detect, Cmd.External, Cmd.Full, Cmd.Prop.all /= "")) > 0
+         then
+            Reportaise_Wrong_Arguments
+              ("Extra switches are incompatible with --crates");
+         end if;
+
+         if Cmd.List and then Num_Arguments /= 0 then
+            Reportaise_Wrong_Arguments
+              ("Search substring and --list are incompatible");
+         end if;
+
+         Requires_Full_Index;
+
+         Alire.Index.Search.Print_Crates
+           (Substring => (case Num_Arguments is
+                             when 0      => "",
+                             when 1      => Argument (1),
+                             when others =>
+                                raise Wrong_Command_Arguments with
+                                  "Only one search substring supported"));
+         return;
+      end if;
+
+      --  Remaining processing is for releases
+
       if Cmd.Detect then
          Cmd.External := True;
       end if;
@@ -186,11 +219,17 @@ package body Alr.Commands.Search is
 
       begin
          if Cmd.List then
+
+            --  List releases
+
             Trace.Detail ("Searching...");
             for Crate of Alire.Index.All_Crates.all loop
                List_Crate (Crate);
             end loop;
          else
+
+            --  Search into releases
+
             declare
                Pattern : constant String := Argument (1);
             begin
@@ -224,7 +263,9 @@ package body Alr.Commands.Search is
                & " with --property), and shows the most recent release"
                & " of matching crates (unless --full is specified).")
       .New_Line
-      .Append ("Besides version, description and release notes, a status"
+      .Append ("Use --crates to get a simple list of only crate names and "
+               & " descriptions. Otherwise,"
+               & " besides version, description and release notes, a status"
                & " column with the following status flags is provided:")
       .New_Line
       .Append ("E: the release is externally provided.")
@@ -252,6 +293,12 @@ package body Alr.Commands.Search is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch
+        (Config,
+         Cmd.Crates'Access,
+         "", "--crates",
+         "Restrict search and output to crate names and descriptions");
+
       Define_Switch
         (Config,
          Cmd.Detect'Access,

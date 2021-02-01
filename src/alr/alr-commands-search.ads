@@ -17,7 +17,7 @@ package Alr.Commands.Search is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("<search term> | --list");
+   is ("<search term> | [--crates] [--full] --list");
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
@@ -26,6 +26,7 @@ package Alr.Commands.Search is
 private
 
    type Command is new Commands.Command with record
+      Crates   : aliased Boolean := False;
       Detect   : aliased Boolean := False;
       Full     : aliased Boolean := False;
       List     : aliased Boolean := False;
