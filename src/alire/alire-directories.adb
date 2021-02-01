@@ -4,6 +4,7 @@ with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with Alire.OS_Lib.Subprocess;
+with Alire.Platform;
 with Alire.Properties;
 with Alire.Roots;
 
@@ -353,9 +354,7 @@ package body Alire.Directories is
       --  Force writability of folder when in Windows, as some tools (e.g. git)
       --  that create read-only files will cause a Use_Error
 
-      if Kind (This.Filename) = Directory and then
-        GNAT.OS_Lib.Directory_Separator = '\'
-      then
+      if Kind (This.Filename) = Directory and then Platform.On_Windows then
          Trace.Debug ("Forcing writability of temporary dir " & This.Filename);
          OS_Lib.Subprocess.Checked_Spawn
            ("attrib",
