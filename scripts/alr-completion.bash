@@ -11,6 +11,9 @@ _alr_commands=$(alr | sed -n '/Valid commands:/,/Help topics:/p' | tail -n +3 | 
 # Long global switches
 _alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
 
+# Crate names
+_alr_crates=$(alr search --crates | cut -f1 -d' ')
+
 # Command-aware long switches
 function _alr_completion() {
     curr=$2
@@ -43,9 +46,9 @@ function _alr_completion() {
     # Command-specific completions
     $found &&\
     case $cmd in
-        get | list | show)
+        get | show)
             # Suggest crate names
-            COMPREPLY+=($(compgen -W "$(alr list | cut -f1 -d' ')" -- $curr))
+            COMPREPLY+=($(compgen -W "$_alr_crates" -- $curr))
             ;;
 
         index)
@@ -63,7 +66,7 @@ function _alr_completion() {
         
         with)
             # When the previous word is "with", show any crate:
-            [ "$prev" == "with" ] && COMPREPLY+=($(compgen -W "$(alr list | cut -f1 -d' ')" -- $curr))
+            [ "$prev" == "with" ] && COMPREPLY+=($(compgen -W "$_alr_crates" -- $curr))
             # When the previous word is "--del", show direct dependencies:
             [ "$prev" == "--del" ] && COMPREPLY+=($(compgen -W "$(alr with | tail +2 | grep -Eo -- '[_a-z0-9]+')" -- $curr))
             ;;

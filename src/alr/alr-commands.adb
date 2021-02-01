@@ -29,7 +29,6 @@ with Alr.Commands.Get;
 with Alr.Commands.Help;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
-with Alr.Commands.List;
 with Alr.Commands.Pin;
 with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
@@ -69,7 +68,6 @@ package body Alr.Commands is
                        Cmd_Help     => new Help.Command,
                        Cmd_Index    => new Index.Command,
                        Cmd_Init     => new Init.Command,
-                       Cmd_List     => new List.Command,
                        Cmd_Pin      => new Pin.Command,
                        Cmd_Printenv => new Printenv.Command,
                        Cmd_Publish  => new Publish.Command,

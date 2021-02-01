@@ -114,7 +114,6 @@ package Alr.Commands is
                       Cmd_Help,
                       Cmd_Index,
                       Cmd_Init,
-                      Cmd_List,
                       Cmd_Pin,
                       Cmd_Printenv,
                       Cmd_Publish,
