@@ -1,4 +1,5 @@
 with Alire.Errors;
+with Alire.Warnings;
 
 package body Alire.Properties.Licenses is
 
@@ -95,7 +96,7 @@ package body Alire.Properties.Licenses is
       Value : constant TOML.TOML_Value := From.Pop;
    begin
       if Value.Kind = TOML_Array then
-         Trace.Warning
+         Warnings.Warn_Once
            (From.Message
               ("Array of license in manifest is deprecated. " &
                  "License should be a single string containing a " &

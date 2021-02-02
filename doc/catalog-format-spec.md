@@ -247,8 +247,17 @@ static, i.e. they cannot depend on the context.
 
    Available constraint operators are the usual Ada relationals (`=`, `/=`, `>`, `>=`,
    `<`, `<=`) plus caret (`^`, any upwards version within the same major point)
-   and tilde (\~, any upwards version within the same minor point). Logical
-   operators for and (&), or (|) are accepted; see the `Semantic_Versioning`
+   and tilde (\~, any upwards version within the same minor point). 
+
+   **Note that caret and tilde do not have any special behavior for pre-1
+   versions.** This means, for example, that `^0.2` will still mean any release
+   below `1.0`. The Semver specification does not make any promises about the
+   compatibility of pre-1 versions, and there are differing interpretations of
+   these operators out there for such versions. Bear in mind this when expressing
+   your restrictions; for pre-1 versions you most likely want to use `~0.x`
+   constraints (compatibility within a minor version).
+
+   Logical operators for and (&), or (|) are accepted; see the `Semantic_Versioning`
    project documentation on [extended version
    sets](https://github.com/alire-project/semantic_versioning#types).
 

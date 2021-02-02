@@ -331,6 +331,7 @@ package body Alire.Roots is
             Solution => This.Solution,
             Deps_Dir => This.Dependencies_Dir);
       end if;
+
    end Sync_Solution_And_Deps;
 
    -------------------------------------------
