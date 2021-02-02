@@ -2,7 +2,7 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Tags;
 
 with Alire.Conditional;
-with Alire.Dependencies;
+with Alire.Dependencies.Containers;
 with Alire.Interfaces;
 with Alire.Manifest;
 with Alire.Milestones;
@@ -158,6 +158,15 @@ package Alire.Releases is
                           return Conditional.Dependencies;
    --  Retrieve only the dependencies that apply on platform P
 
+   function Flat_Dependencies
+     (R : Release;
+      P : Alire.Properties.Vector := Alire.Properties.No_Properties)
+      return Alire.Dependencies.Containers.List;
+   --  Remove any and/or nodes and return dependencies as a simple list. This
+   --  is useful whenever you need to inspect all direct dependencies, no
+   --  matter how they will be solved. If P is not empty, this function
+   --  also works for platform-dependent dependencies only.
+
    function Property (R   : Release;
                       Key : Alire.Properties.Labeled.Labels)
                       return String;
@@ -299,6 +308,10 @@ package Alire.Releases is
    function Has_Property (R : Release; Key : String) return Boolean;
    --  Say if the property exists in any branch of the property tree. Key is
    --  case-insensitive.
+
+   function Check_Caret_Warning (This : Release) return Boolean;
+   --  Check if this release contains a ^0.x dependency, and warn about it.
+   --  Returns whether a warning was emitted.
 
 private
 

@@ -13,6 +13,15 @@ old behavior of `alr list` can now be achieved with `alr search --crates`. By
 default, `alr search` looks into releases, but now it can look too into crates
 with the new `--crates` switch.
 
+### Document caret/tilde use for pre-1.0 versions, and warn about it
+
+PR [#669](https://github.com/alire-project/alire/pull/669).
+
+Alire does not change the meaning of caret (^) and tilde (~) operators for
+pre/post-1.0 versions. This interpretation has been clarified in the catalog
+specification, and `alr` will warn about any suspicious usage. This warning may
+be disabled by the user with the new `warning.caret` configuration option.
+
 ### Do not perform build relocations
 
 PR [#667](https://github.com/alire-project/alire/pull/667).

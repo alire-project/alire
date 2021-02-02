@@ -95,6 +95,9 @@ package Alire.Config with Preelaborate is
       --  When set to True, distro will be reported as unknown, and in turn no
       --  native package manager will be used.
 
+      Warning_Caret : constant Config_Key := "warning.caret";
+      --  Set to false to disable warnings about caret/tilde use for ^0 deps.
+
    end Keys;
 
 private
@@ -135,7 +138,7 @@ private
 
    function Image (Val : TOML.TOML_Value) return String;
 
-   type String_Access is access String;
-   Config_Path : String_Access;
+   function "+" (Source : String) return Ada.Strings.Unbounded.Unbounded_String
+                 renames Ada.Strings.Unbounded.To_Unbounded_String;
 
 end Alire.Config;

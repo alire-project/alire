@@ -12,7 +12,6 @@ with Alire.Paths;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots;
 with Alire.Solutions.Diffs;
-with Alire.Workspace;
 
 package body Alire.Workspace is
 
@@ -124,6 +123,13 @@ package body Alire.Workspace is
       --  dependency post-fetch compilations.
 
       Solution.Print_Hints (Root.Environment);
+
+      --  Check that the solution does not contain suspicious dependencies,
+      --  taking advantage that this procedure is called whenever a change
+      --  to dependencies is happening.
+
+      pragma Assert (Root.Release.Check_Caret_Warning or else True);
+      --  We don't care about the return value here
 
    end Deploy_Dependencies;
 
