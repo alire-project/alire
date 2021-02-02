@@ -106,7 +106,7 @@ package body Alr.Platforms.Windows is
       use Alire.Utils;
 
       Install_Prefix : constant String :=
-        "InstallPrefix=" & Install_Dir;
+        "InstallDir=" & Install_Dir;
 
       Result : Alire.Outcome;
    begin
