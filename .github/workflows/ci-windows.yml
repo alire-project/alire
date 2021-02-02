@@ -34,6 +34,21 @@ jobs:
     - name: alr first run to install msys2
       run: ./bin/alr --non-interactive help get
 
+    - name: ls
+      run: dir C:\Users\runneradmin\
+
+    - name: ls
+      run: dir C:\Users\runneradmin\.cache
+
+    - name: ls
+      run: dir C:\Users\runneradmin\.cache\alire
+
+    - name: ls
+      run: dir C:\Users\runneradmin\.cache\alire\msys64
+
+    - name: ls
+      run: dir C:\Users\runneradmin\.cache\alire\msys64\bin
+
     - name: install tar from msys2 (Git tar in Actions VM does not seem to work)
       run: C:\Users\runneradmin\.cache\alire\msys64\usr\bin\pacman --noconfirm -S tar
 
