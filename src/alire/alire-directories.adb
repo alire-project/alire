@@ -3,6 +3,8 @@ with Ada.Numerics.Discrete_Random;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with Alire.OS_Lib.Subprocess;
+with Alire.Platform;
 with Alire.Properties;
 with Alire.Roots;
 
@@ -349,6 +351,20 @@ package body Alire.Directories is
          return;
       end if;
 
+      --  Force writability of folder when in Windows, as some tools (e.g. git)
+      --  that create read-only files will cause a Use_Error
+
+      if Kind (This.Filename) = Directory and then Platform.On_Windows then
+         Trace.Debug ("Forcing writability of temporary dir " & This.Filename);
+         OS_Lib.Subprocess.Checked_Spawn
+           ("attrib",
+            Utils.Empty_Vector
+            .Append ("-R") -- Remove read-only
+            .Append ("/D") -- On dirs
+            .Append ("/S") -- Recursively
+            .Append (This.Filename & "\*"));
+      end if;
+
       if Exists (This.Filename) then
          if Kind (This.Filename) = Ordinary_File then
             Trace.Debug ("Deleting temporary file " & This.Filename & "...");
@@ -359,20 +375,6 @@ package body Alire.Directories is
          end if;
       end if;
    exception
-      when E : Use_Error =>
-         --  For unclear reasons, Windows has trouble removing a folder that
-         --  contains a git repository. Warn and continue until we know more.
-
-         --  The actual error, as reported by Python3:
-         --  PermissionError: [WinError 5] Access is denied:
-         --  'alr-fwrt.tmp\\.git\\objects\\1d\\'
-         --  '696bed4ef917b1adbdef18723016987ed62e41'
-
-         --  Since we are running tests as root, this might be that the file is
-         --  still open, but by whom?
-
-         Log_Exception (E);
-         Trace.Warning ("Could not delete temporary: " & This.Filename);
       when E : others =>
          Log_Exception (E);
          raise;

@@ -1,6 +1,8 @@
 with Alire.Platforms;
 with Alire.Environment;
 
+private with GNATCOLL.OS.Constants;
+
 package Alire.Platform is
 
    --  Alr.Platforms will be progressively migrated in here as needed.
@@ -34,13 +36,30 @@ package Alire.Platform is
    --  via config.
 
    function Distribution_Is_Known return Boolean is
-      (Platforms."/=" (Distribution, Platforms.Distro_Unknown));
+     (Platforms."/=" (Distribution, Platforms.Distro_Unknown));
+
+   function On_Windows return Boolean;
+   --  Say if we are on Windows, until the OS detection is moved here from
+   --  Alr.Platform.
 
 private
+
+   ------------------
+   -- Distribution --
+   ------------------
 
    function Distribution return Platforms.Distributions
    is (if Disable_Distribution_Detection
        then Platforms.Distro_Unknown
        else Detected_Distribution);
+
+   ----------------
+   -- On_Windows --
+   ----------------
+
+   pragma Warnings (Off, "condition is always"); -- Silence warning of OS check
+   function On_Windows return Boolean
+   is (GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows);
+   pragma Warnings (On);
 
 end Alire.Platform;
