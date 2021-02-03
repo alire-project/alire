@@ -35,7 +35,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Make it depend on child (there are 0.1 and 0.2, so 0.2 used initially)
-run_alr('with', 'libchild')
+run_alr('with', 'libchild>0')
 p = run_alr('show', '--solve')
 check_child('0.2.0', p.out, pinned=False)
 

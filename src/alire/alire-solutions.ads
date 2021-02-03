@@ -316,6 +316,19 @@ package Alire.Solutions is
    --  Requires releases not to have dynamic expressions. This is currently
    --  guaranteed by the states storing static versions of releases.
 
+   ---------------
+   -- Utilities --
+   ---------------
+
+   function Restrict_New_Dependencies (Old_Deps,
+                                       New_Deps : Conditional.Dependencies;
+                                       New_Sol  : Solution)
+                                       return Conditional.Dependencies;
+   --  Take new dependencies in a tree, see how they've been solved, and
+   --  replace "any" dependencies with the proper tilde or caret, depending on
+   --  what was found in the solution. E.g., if the user provided lib=*, and it
+   --  is solved as lib=2.0, replace lib=* with lib^2.0 in the result.
+
 private
 
    type Solution is new Interfaces.Tomifiable with record

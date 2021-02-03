@@ -35,6 +35,11 @@ package Alire.Conditional with Preelaborate is
       return Dependencies;
    --  Dependency on a version set
 
+   function New_Dependency (Dep : Alire.Dependencies.Dependency)
+                            return Conditional.Dependencies
+                            renames For_Dependencies.New_Value;
+   --  Convert a plain dependency into a tree containing a single leaf
+
    function Enumerate is new Conditional.For_Dependencies.Enumerate
      (Alire.Dependencies.Containers.List,
       Alire.Dependencies.Containers.Append);

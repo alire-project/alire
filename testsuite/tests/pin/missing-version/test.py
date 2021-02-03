@@ -14,7 +14,7 @@ from glob import glob
 #    xxx=0.0.0 -> hello=1.0.1 --> libhello=1.1.0
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
-run_alr('with', 'hello')
+run_alr('with', 'hello>0')
 
 # 1st test: pin to an existing version that brings in missing dependencies.
 # Pinning hello=3 brings in a libhello^3 dependency that is unavailable, so:
@@ -37,7 +37,7 @@ run_alr('pin', '--force', 'hello=5')
 # Check solution is as expected
 p = run_alr('with', '--solve')
 assert_match('.*Dependencies \(external\):\n'
-             '   hello=5\.0\.0.*',
+             '   hello\(=5\.0\.0\).*',
              p.out, flags=re.S)
 
 

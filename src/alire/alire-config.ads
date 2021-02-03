@@ -80,6 +80,17 @@ package Alire.Config with Preelaborate is
       --  A few predefined keys that are used in several places. This list is
       --  not exhaustive.
 
+      Editor_Cmd  : constant Config_Key := "editor.cmd";
+
+      Distribution_Disable_Detection : constant Config_Key :=
+                                         "distribution.disable_detection";
+      --  When set to True, distro will be reported as unknown, and in turn no
+      --  native package manager will be used.
+
+      Solver_Autonarrow : constant Config_Key := "solver.autonarrow";
+      --  When true, `alr with` will substitute "any" dependencies by the
+      --  appropriate caret/tilde.
+
       Update_Manually   : constant Config_Key := "update-manually-only";
       --  Used by `get --only` to flag a workspace to not autoupdate itself
       --  despite having no solution in the lockfile.
@@ -87,13 +98,6 @@ package Alire.Config with Preelaborate is
       User_Email        : constant Config_Key := "user.email";
       User_Name         : constant Config_Key := "user.name";
       User_Github_Login : constant Config_Key := "user.github_login";
-
-      Editor_Cmd  : constant Config_Key := "editor.cmd";
-
-      Distribution_Disable_Detection : constant Config_Key :=
-                                         "distribution.disable_detection";
-      --  When set to True, distro will be reported as unknown, and in turn no
-      --  native package manager will be used.
 
       Warning_Caret : constant Config_Key := "warning.caret";
       --  Set to false to disable warnings about caret/tilde use for ^0 deps.

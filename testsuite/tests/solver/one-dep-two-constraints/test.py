@@ -28,7 +28,7 @@ run_alr('with', 'superhello')
 p = run_alr('with', '--solve')
 assert_match('.*'  # skip solution
              'Dependencies \(graph\):\n'
-             '   hello=1.0.1      --> libhello=1.0.1 \(\^1.0\)\n'
+             '   hello=1.0.1      --> libhello=1.0.1 \(\^1.0\)\s*\n'
              '   superhello=1.0.0 --> libhello=1.0.1 \(~1.0\).*',
              p.out, flags=re.S)
 

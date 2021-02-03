@@ -13,7 +13,7 @@ from glob import glob
 # Add a dependency and force it missing by pinning it to non-existing version
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
-run_alr('with', 'libhello')   # This causes libhello=1.1
+run_alr('with', 'libhello^1')   # This causes libhello=1.1
 run_alr('pin', 'libhello=1')  # Downgrade to 1.0
 
 # Check that updating without specific crate does not err

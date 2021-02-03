@@ -20,7 +20,7 @@ def check_version_pin():
 # Initialize a workspace, enter, and add a regular dependency
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
-run_alr('with', 'libhello')
+run_alr('with', 'libhello^1')
 
 # Pin to a version
 p = run_alr('pin', 'libhello=1.0')
@@ -35,7 +35,7 @@ run_alr('pin', 'libhello', '--use', '../crates/libhello_1.0.0')
 p = run_alr('show', '--solve')
 s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
-             'libhello\* \(direct,linked'
+             'libhello\^1 \(direct,linked'
              ',pin=.*' + s + 'pin__change-type' + s +
              'crates' + s + 'libhello_1.0.0\).*',
              p.out, flags=re.S)

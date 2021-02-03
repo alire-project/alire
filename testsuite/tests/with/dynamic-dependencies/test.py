@@ -23,13 +23,13 @@ with open(manifest, 'a') as file:
                'superhello = "*"')
 
 # Check adding a dependency
-run_alr('with', 'hello')
-assert 'hello = "*"  # This line was added by `alr with`' \
+run_alr('with', 'hello^1')
+assert 'hello = "^1"  # This line was added by `alr with`' \
        in content_of(manifest)
 
 # Check removal
 run_alr('with', '--del', 'hello')
-assert 'hello = "*"  # This line was added by `alr with`' \
+assert 'hello = "^1"  # This line was added by `alr with`' \
        not in content_of(manifest)
 
 # Check that the dependency that precedes the dynamic expression is removable

@@ -13,11 +13,11 @@ from drivers.helpers import check_line_in
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
-# Make it depend on libhello
+# Make it depend on libhello, it is auto-narrowed down to ^1
 session_file = os.path.join('alire.toml')
 run_alr('with', 'libhello')
 check_line_in(session_file,
-              'libhello = "*"  # This line was added by `alr with`')
+              'libhello = "^1.0.0"  # This line was added by `alr with`')
 
 # Add the corresponding "with" line in xxx.gpr.
 #

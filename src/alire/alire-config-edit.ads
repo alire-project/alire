@@ -138,6 +138,11 @@ private
        +("If true, Alire will report an unknown distribution and will not"
          & " attempt to use the system package manager.")),
 
+      (+Keys.Solver_Autonarrow,
+       Cfg_Bool,
+       +("If true, `alr with` will replace 'any' dependencies with the"
+         & " appropriate caret/tilde dependency.")),
+
       (+Keys.Warning_Caret,
        Cfg_Bool,
        +("If true, Alire will warn about the use of caret (^) "

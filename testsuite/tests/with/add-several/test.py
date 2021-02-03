@@ -13,14 +13,14 @@ import re
 
 p = run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
-p = run_alr('with', 'libhello')
-p = run_alr('with', 'hello')
+p = run_alr('with', 'libhello^1')
+p = run_alr('with', 'hello^1')
 p = run_alr('show')
 
 assert_match('.*\n'
              'Dependencies \(direct\):\n'
-             '   hello\*\n'
-             '   libhello\*\n',
+             '   hello\^1\n'
+             '   libhello\^1\n',
              p.out, flags=re.S)
 
 print('SUCCESS')
