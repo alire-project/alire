@@ -25,7 +25,7 @@ package body Alr.Platforms.Windows is
 
    Msys2_Installer_Script     : constant String := "auto-install.js";
    Msys2_Installer_Script_URL : constant String :=
-     "https://raw.githubusercontent.com/msys2/msys2-installer/master/" &
+     "https://raw.githubusercontent.com/msys2/msys2-installer/a588bcc/" &
      Msys2_Installer_Script;
 
    -------------------
