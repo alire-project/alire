@@ -57,6 +57,23 @@ an index containing unknown values.
 This error, either in indexes or a local manifest, can be downgraded to a
 warning with `--force`.
 
+### Switch manifest `licenses` field to SPDX expressions
+
+PR [#629](https://github.com/alire-project/alire/pull/629).
+
+The `licenses` in crate manifests now expects a valid [SPDX
+expression](https://spdx.org/licenses/). Custom license identifiers are
+accepted with the format: `custom-[0-9a-zA-Z.-]+`.
+
+Example: 
+```toml 
+licenses = "MIT OR custom-my-own-license"
+```
+
+For the `1.x` release, usage of the previous `licenses` format is obsolete and
+will trigger a warning. In furtures major releases this format will not be
+accepted at all.
+
 ### Custom editor command for `alr edit`
 
 PR [#611](https://github.com/alire-project/alire/pull/611).
