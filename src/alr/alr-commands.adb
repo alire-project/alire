@@ -4,6 +4,7 @@ with AAA.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
@@ -644,9 +645,8 @@ package body Alr.Commands is
       -- Check_For_Help --
       --------------------
 
-      function Check_For_Help return Boolean is
+      function Check_First_Nonswitch return Integer is
          use Ada.Command_Line;
-         Help_Requested  : Boolean := False;
          First_Nonswitch : Integer := 0;
          --  Used to store the first argument that doesn't start with '-';
          --  that would be the command for which help is being asked.
@@ -655,40 +655,60 @@ package body Alr.Commands is
             declare
                Arg : constant String := Ada.Command_Line.Argument (I);
             begin
-               if Arg = "-h" or else Arg = "--help" then
-                  Help_Requested := True;
-               elsif First_Nonswitch = 0 and then  Arg (Arg'First) /= '-' then
+               if First_Nonswitch = 0 and then Arg (Arg'First) /= '-' then
                   First_Nonswitch := I;
                end if;
             end;
          end loop;
 
-         --  Show either general or specific help
-         if Help_Requested then
-            if First_Nonswitch > 0 then
-               Commands.Help.Display_Help
-                 (Ada.Command_Line.Argument (First_Nonswitch));
-               OS_Lib.Bailout (0);
-            else
-               null;
-               --  Nothing to do; later on GNAT switch processing will catch
-               --  the -h/--help and display the general help.
-            end if;
-         end if;
+         return First_Nonswitch;
+      end Check_First_Nonswitch;
 
-         return Help_Requested;
+      function Check_For_Help return Boolean is
+         use Ada.Command_Line;
+      begin
+         return (for some I in 1 .. Argument_Count =>
+                   Ada.Command_Line.Argument (I) in "-h" | "--help");
       end Check_For_Help;
+
+      function Get_Arguments return GNAT.OS_Lib.Argument_List_Access is
+         use Ada.Command_Line;
+
+         package SU renames Ada.Strings.Unbounded;
+
+         Arguments : SU.Unbounded_String;
+      begin
+         for I in 1 .. Argument_Count loop
+            declare
+               Arg : constant String := Ada.Command_Line.Argument (I);
+            begin
+               if Arg not in "-h" | "--help" then
+                  SU.Append (Arguments, (if I = 1 then "" else " ") & Arg);
+               end if;
+            end;
+         end loop;
+
+         return GNAT.OS_Lib.Argument_String_To_List (SU.To_String (Arguments));
+      end Get_Arguments;
 
       use all type GNAT.OS_Lib.String_Access;
 
-      Global_Config  : Command_Line_Configuration;
-      Command_Config : Command_Line_Configuration;
-      Help_Requested : Boolean;
+      Global_Config   : Command_Line_Configuration;
+      Command_Config  : Command_Line_Configuration;
+
+      Help_Requested  : Boolean;
+      First_Nonswitch : Integer;
+
+      Arguments        : GNAT.OS_Lib.Argument_List_Access;
+      Arguments_Parser : Opt_Parser;
    begin
       --  GNAT switch handling intercepts -h/--help. To have the same output
       --  for 'alr -h command' and 'alr help command', we do manual handling
       --  first in search of a -h/--help:
-      Help_Requested := Check_For_Help;
+      Help_Requested  := Check_For_Help;
+      First_Nonswitch := Check_First_Nonswitch;
+
+      Arguments := Get_Arguments;
 
       --  If the above call returned, we continue with regular switch handling.
 
@@ -705,8 +725,10 @@ package body Alr.Commands is
          Define_Switch (Global_Config, "*");
       end if;
 
-      Initialize_Option_Scan;
-      Getopt (Global_Config, Callback => Fill_Arguments'Access);
+      Initialize_Option_Scan (Arguments_Parser, Arguments);
+      Getopt (Global_Config,
+              Callback => Fill_Arguments'Access,
+              Parser   => Arguments_Parser);
 
       --  At this point the command and all unknown switches are in
       --  Raw_Arguments.
@@ -724,6 +746,19 @@ package body Alr.Commands is
 
          Simple_Logging.ASCII_Only := False;
          --  Also use a fancier busy spinner
+      end if;
+
+      --  Show either general or specific help
+      if Help_Requested then
+         if First_Nonswitch > 0 then
+            Commands.Help.Display_Help
+               (Ada.Command_Line.Argument (First_Nonswitch));
+            OS_Lib.Bailout (0);
+         else
+            null;
+            --  Nothing to do; later on GNAT switch processing will catch
+            --  the -h/--help and display the general help.
+         end if;
       end if;
 
       if Raw_Arguments.Is_Empty then
