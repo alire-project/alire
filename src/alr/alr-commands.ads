@@ -131,6 +131,36 @@ package Alr.Commands is
 
    function Image (N : Cmd_Names) return String;
 
+   type Group_Names is
+     (Group_General,
+      Group_Build,
+      Group_Index,
+      Group_Release,
+      Group_Publish);
+
+   function Image (Name : Group_Names) return String;
+
+   Group_Commands : constant array (Cmd_Names) of Group_Names :=
+     (Cmd_Config |
+      Cmd_Help |
+      Cmd_Printenv |
+      Cmd_Version => Group_General,
+      Cmd_Build |
+      Cmd_Clean |
+      Cmd_Dev |
+      Cmd_Edit |
+      Cmd_Run |
+      Cmd_Test    => Group_Build,
+      Cmd_Index   => Group_Index,
+      Cmd_Get |
+      Cmd_Init |
+      Cmd_Pin |
+      Cmd_Search |
+      Cmd_Show |
+      Cmd_Update |
+      Cmd_With    => Group_Release,
+      Cmd_Publish => Group_Publish);
+
    function Enter_Working_Folder return Alire.Directories.Destination;
    --  Attempt to find the root alire working dir if deeper inside it
 

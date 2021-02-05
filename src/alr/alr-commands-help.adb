@@ -3,8 +3,11 @@ with AAA.Text_IO;
 
 with Alire.Crates;
 with Alire.Utils.Tables;
+with Alire.Utils.TTY;
 
 package body Alr.Commands.Help is
+
+   package TTY renames Alire.Utils.TTY;
 
    type Help_Topics is (Identifiers);
    --  Enumeration used to index available help topics.
@@ -45,9 +48,8 @@ package body Alr.Commands.Help is
       begin
          for Line of Text loop
             AAA.Text_IO.Put_Paragraph (Line,
-                                       Line_Prefix => " ");
+                                       Line_Prefix => "   ");
          end loop;
-         New_Line;
       end Format;
 
       --------------
@@ -61,9 +63,7 @@ package body Alr.Commands.Help is
          Display_Usage (What_Command (Keyword));
 
       elsif Is_Topic (Keyword) then
-         New_Line;
-         Put_Line (Help_Topics'Value (Keyword)'Img);
-         New_Line;
+         Put_Line (TTY.Bold (Help_Topics'Value (Keyword)'Img));
          Format (Description (Identifiers));
 
       else
@@ -90,15 +90,15 @@ package body Alr.Commands.Help is
    --------------------------
 
    procedure Display_Valid_Topics is
-      Tab   : constant String (1 .. 6) := (others => ' ');
+      Tab   : constant String (1 .. 1) := (others => ' ');
       Table : Alire.Utils.Tables.Table;
    begin
-      Put_Line ("Help topics: ");
-      New_Line;
+      Put_Line (TTY.Bold ("TOPICS"));
       for Topic in Help_Topics'Range loop
          Table.New_Row;
          Table.Append (Tab);
-         Table.Append (Alire.Utils.To_Lower_Case (Topic'Img));
+         Table.Append (TTY.Description
+                         (Alire.Utils.To_Lower_Case (Topic'Img)));
          Table.Append (One_Liner_Summary (Topic));
       end loop;
       Table.Print (Always, Separator => "  ");
@@ -113,7 +113,34 @@ package body Alr.Commands.Help is
       pragma Unreferenced (Cmd);
    begin
       if Num_Arguments /= 1 then
-         Trace.Error ("Please specific a single help keyword:");
+         if Num_Arguments > 1 then
+            Trace.Error ("Please specify a single help keyword");
+            New_Line;
+         end if;
+
+         Put_Line (TTY.Bold ("USAGE"));
+         Put_Line ("   " & TTY.Underline ("alr") & " " &
+           TTY.Underline ("help") & " [<command>|<topic>]");
+
+         New_Line;
+         Put_Line (TTY.Bold ("ARGUMENTS"));
+         declare
+            Tab   : constant String (1 .. 1) := (others => ' ');
+            Table : Alire.Utils.Tables.Table;
+         begin
+            Table.New_Row;
+            Table.Append (Tab);
+            Table.Append (TTY.Description ("<command>"));
+            Table.Append ("Command for which to show a description");
+
+            Table.New_Row;
+            Table.Append (Tab);
+            Table.Append (TTY.Description ("<topic>"));
+            Table.Append ("Topic for which to show a description");
+
+            Table.Print (Always, Separator => "  ");
+         end;
+
          Display_Valid_Keywords;
          OS_Lib.Bailout (1);
       end if;

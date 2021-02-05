@@ -49,6 +49,8 @@ with GNATCOLL.VFS;
 
 package body Alr.Commands is
 
+   package TTY renames Alire.Utils.TTY;
+
    Error_No_Command : exception;
    --  Local exception propagated when no command is given in command-line
 
@@ -110,6 +112,12 @@ package body Alr.Commands is
       Pre : constant String := To_Lower (N'Img);
    begin
       return Pre (Pre'First + 4 .. Pre'Last);
+   end Image;
+
+   function Image (Name : Group_Names) return String is
+      Pre : constant String := To_Lower (Name'Image);
+   begin
+      return Pre (Pre'First + 6 .. Pre'Last);
    end Image;
 
    ----------------
@@ -247,21 +255,41 @@ package body Alr.Commands is
    -- Display_Usage --
    -------------------
 
-   procedure Display_Usage is
+   procedure Display_Usage (Displayed_Error : Boolean := False) is
    begin
+      if not Displayed_Error then
+         Put_Line ("Alr " & TTY.Version (Alr.Version));
+         New_Line;
+      end if;
+
+      Put_Line (TTY.Bold ("USAGE"));
+      Put_Line ("   " & TTY.Underline ("alr") & " [global options] " &
+                  "<command> [command options] [<arguments>]");
       New_Line;
-      Put_Line ("Ada Library Repository manager");
-      Put_Line ("USAGE: alr [global options] " &
-                  "command [command options] [arguments]");
+      Put_Line ("   " & TTY.Underline ("alr") & " " &
+                        TTY.Underline ("help") &
+                        " [<command>|<topic>]");
 
       New_Line;
+      Put_Line (TTY.Bold ("ARGUMENTS"));
+      declare
+         Tab   : constant String (1 .. 1) := (others => ' ');
+         Table : Alire.Utils.Tables.Table;
+      begin
+         Table.New_Row;
+         Table.Append (Tab);
+         Table.Append (TTY.Description ("<command>"));
+         Table.Append ("Command to execute");
+
+         Table.New_Row;
+         Table.Append (Tab);
+         Table.Append (TTY.Description ("<arguments>"));
+         Table.Append ("List of arguments for the command");
+
+         Table.Print (Always, Separator => "  ");
+      end;
 
       Help.Display_Valid_Keywords;
-
-      New_Line;
-      Put_Line ("Use ""alr help <keyword>"" " &
-                  "for more information about a command or topic.");
-      New_Line;
    end Display_Usage;
 
    -------------------
@@ -273,17 +301,19 @@ package body Alr.Commands is
       Canary1 : Command_Line_Configuration;
       Canary2 : Command_Line_Configuration;
    begin
+      Put_Line (TTY.Bold ("SUMMARY"));
+      Put_Line ("   " & Dispatch_Table (Cmd).Short_Description);
+
       New_Line;
-      Put_Line ("SUMMARY");
-      New_Line;
-      Put_Line (" " & Dispatch_Table (Cmd).Short_Description);
+      Put_Line (TTY.Bold ("USAGE"));
+      Put ("   ");
 
       --  Prepare command-line summary
       Set_Usage (Config,
                  "[global options] " &
                    Image (Cmd) & " [command options] " &
                    Dispatch_Table (Cmd).Usage_Custom_Parameters,
-                 Help => " ");
+                 Help => "");
 
       --  We use the following two canaries to detect if a command is adding
       --  its own switches, in which case we need to show their specific help.
@@ -311,20 +341,18 @@ package body Alr.Commands is
 
       GNAT.Command_Line.Display_Help (Config);
 
-      Put_Line (" See global options with 'alr --help'");
+      Put_Line ("   See global options with 'alr --help'");
 
       --  Format and print the long command description
       New_Line;
-      Put_Line ("DESCRIPTION");
-      New_Line;
+      Put_Line (TTY.Bold ("DESCRIPTION"));
 
       for Line of Dispatch_Table (Cmd).Long_Description loop
          AAA.Text_IO.Put_Paragraph (Line,
-                                    Line_Prefix => " ");
+                                    Line_Prefix => "   ");
          --  GNATCOLL.Paragraph_Filling seems buggy at the moment, otherwise
          --  it would be the logical choice.
       end loop;
-      New_Line;
    end Display_Usage;
 
    ----------------------------
@@ -332,19 +360,33 @@ package body Alr.Commands is
    ----------------------------
 
    procedure Display_Valid_Commands is
-      Tab   : constant String (1 .. 6) := (others => ' ');
+      Tab   : constant String (1 .. 1) := (others => ' ');
       Table : Alire.Utils.Tables.Table;
+
+      use Alr.Utils;
    begin
-      Put_Line ("Valid commands: ");
-      New_Line;
-      for Cmd in Cmd_Names'Range loop
-         if Cmd /= Cmd_Dev then
+      Put_Line (TTY.Bold ("COMMANDS"));
+
+      for Group in Group_Names loop
+         if Group /= Group_Names'First then
             Table.New_Row;
             Table.Append (Tab);
-            Table.Append (Image (Cmd));
-            Table.Append (Dispatch_Table (Cmd).Short_Description);
          end if;
+
+         Table.New_Row;
+         Table.Append (Tab);
+         Table.Append (TTY.Underline (To_Mixed_Case (Image (Group))));
+         for Cmd in Cmd_Names'Range loop
+            if Cmd /= Cmd_Dev and Group = Group_Commands (Cmd) then
+               Table.New_Row;
+               Table.Append (Tab);
+               Table.Append (TTY.Description (Image (Cmd)));
+               Table.Append (Tab);
+               Table.Append (Dispatch_Table (Cmd).Short_Description);
+            end if;
+         end loop;
       end loop;
+
       Table.Print (Always, Separator => "  ");
    end Display_Valid_Commands;
 
@@ -740,7 +782,8 @@ package body Alr.Commands is
          else
             Log ("Unrecognized command: " & Raw_Arguments (1), Error);
          end if;
-         Display_Usage;
+         New_Line;
+         Display_Usage (Displayed_Error => True);
          OS_Lib.Bailout (1);
       when Wrong_Command_Arguments =>
          --  Raised in here, so no need to raise up unless in debug mode
