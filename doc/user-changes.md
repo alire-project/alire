@@ -71,7 +71,7 @@ licenses = "MIT OR custom-my-own-license"
 ```
 
 For the `1.x` release, usage of the previous `licenses` format is obsolete and
-will trigger a warning. In furture major releases this format will not be
+will trigger a warning. In future major releases this format will not be
 accepted at all.
 
 ### Custom editor command for `alr edit`
