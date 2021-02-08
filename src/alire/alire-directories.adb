@@ -354,7 +354,10 @@ package body Alire.Directories is
       --  Force writability of folder when in Windows, as some tools (e.g. git)
       --  that create read-only files will cause a Use_Error
 
-      if Kind (This.Filename) = Directory and then Platform.On_Windows then
+      if Exists (This.Filename) and then
+        Kind (This.Filename) = Directory and then
+        Platform.On_Windows
+      then
          Trace.Debug ("Forcing writability of temporary dir " & This.Filename);
          OS_Lib.Subprocess.Checked_Spawn
            ("attrib",
