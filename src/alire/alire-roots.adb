@@ -97,6 +97,38 @@ package body Alire.Roots is
    -- GPR_Project_Files --
    -----------------------
 
+   function GPR_Project_Files (This    : Root;
+                               Include : Components_Array := (others => True))
+                               return Utils.String_Set
+   is
+      Sol : Solutions.Solution renames This.Solution;
+   begin
+      return Files : Utils.String_Set do
+         for Rel of This.Solution.Releases.Including (Release (This)) loop
+            if (Include (Root_Release) and then Rel.Name = Release (This).Name)
+              or else
+                (Include (Direct_Dependencies) and then
+                 Sol.Depends_On (Rel.Name) and then
+                 Sol.State (Rel.Name).Is_Direct)
+              or else
+                (Include (Indirect_Dependencies) and then
+                 Sol.Depends_On (Rel.Name) and then
+                 Sol.State (Rel.Name).Is_Indirect)
+            then
+               for File of Rel.Project_Files (This.Environment,
+                                              With_Path => False)
+               loop
+                  Files.Include (File);
+               end loop;
+            end if;
+         end loop;
+      end return;
+   end GPR_Project_Files;
+
+   -----------------------
+   -- GPR_Project_Files --
+   -----------------------
+
    function GPR_Project_Files (This         : Root;
                                Exclude_Root : Boolean)
                                return Utils.String_Set

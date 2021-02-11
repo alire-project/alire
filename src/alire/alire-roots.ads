@@ -78,6 +78,18 @@ package Alire.Roots is
    --  root. If Exclude_Root is True, the project files of the root crate are
    --  excluded from the result.
 
+   type Solution_Components is (Root_Release,
+                                Direct_Dependencies,
+                                Indirect_Dependencies);
+
+   type Components_Array is array (Solution_Components) of Boolean;
+
+   function GPR_Project_Files (This    : Root;
+                               Include : Components_Array := (others => True))
+                               return Utils.String_Set;
+   --  Return project file names (without any relative path) for the specified
+   --  releases in the solution to this root.
+
    function Release (This : Root) return Releases.Release;
 
    function Release (This : Root; Crate : Crate_Name) return Releases.Release

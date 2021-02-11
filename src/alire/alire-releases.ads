@@ -208,7 +208,9 @@ package Alire.Releases is
                            P         : Alire.Properties.Vector;
                            With_Path : Boolean)
                            return Utils.String_Vector;
-   --  with relative path on demand
+   --  With relative path on demand. With path refers to the relative
+   --  paths specified in the manifest, not to the actual path on disk of
+   --  a checked-out release.
 
    function Unique_Folder (R : Release) return Folder_String;
 
