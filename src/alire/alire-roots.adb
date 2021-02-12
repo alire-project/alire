@@ -93,6 +93,36 @@ package body Alire.Roots is
       Context.Export;
    end Export_Build_Environment;
 
+   ------------------
+   -- Direct_Withs --
+   ------------------
+
+   function Direct_Withs (This      : Root;
+                          Dependent : Releases.Release)
+                          return Utils.String_Set
+   is
+      Sol : Solutions.Solution renames This.Solution;
+   begin
+      return Files : Utils.String_Set do
+
+         --  Traverse direct dependencies of the given release
+
+         for Dep of Dependent.Flat_Dependencies (This.Environment) loop
+
+            --  For dependencies that appear in the solution as releases, get
+            --  their project files in the current environment.
+
+            if Sol.Releases.Contains (Dep.Crate) then
+               for File of Sol.Releases.Element (Dep.Crate).Project_Files
+                 (This.Environment, With_Path => False)
+               loop
+                  Files.Include (File);
+               end loop;
+            end if;
+         end loop;
+      end return;
+   end Direct_Withs;
+
    -----------------------
    -- GPR_Project_Files --
    -----------------------

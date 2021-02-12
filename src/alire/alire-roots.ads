@@ -53,6 +53,11 @@ package Alire.Roots is
 
    function Build_Context (This : Root) return Alire.Environment.Context;
 
+   function Direct_Withs (This      : Root;
+                          Dependent : Releases.Release)
+                          return Utils.String_Set;
+   --  Returns project file names of direct dependencies of the given dependent
+
    procedure Export_Build_Environment (This : Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
