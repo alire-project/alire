@@ -256,9 +256,14 @@ package body Alr.Commands is
    -- Display_Global_Options --
    ----------------------------
 
-   procedure Display_Options (Config : Command_Line_Configuration) is
+   procedure Display_Options
+     (Config : Command_Line_Configuration;
+      Title  : String)
+   is
       Tab     : constant String (1 .. 1) := (others => ' ');
       Table   : Alire.Utils.Tables.Table;
+
+      Has_Printable_Rows : Boolean := False;
 
       function Without_Arg (Value : String) return String is
          Required_Character : constant Character := Value (Value'Last);
@@ -308,22 +313,26 @@ package body Alr.Commands is
          end if;
 
          Table.Append (Help);
+
+         Has_Printable_Rows := True;
       end Print_Row;
    begin
       GNAT.Command_Line.Extra.For_Each_Switch
         (Config, Print_Row'Access);
-      Table.Print (Always, Separator => "  ");
+
+      if Has_Printable_Rows then
+         New_Line;
+         Put_Line (TTY.Bold (Title));
+
+         Table.Print (Always, Separator => "  ");
+      end if;
    end Display_Options;
 
    procedure Display_Global_Options is
       Global_Config   : Command_Line_Configuration;
    begin
       Set_Global_Switches (Global_Config);
-
-      New_Line;
-      Put_Line (TTY.Bold ("GLOBAL OPTIONS"));
-
-      Display_Options (Global_Config);
+      Display_Options (Global_Config, "GLOBAL OPTIONS");
    end Display_Global_Options;
 
    -------------------
@@ -408,9 +417,7 @@ package body Alr.Commands is
 
       Define_Switch (Config, " ", " ", " ", " ", " ");
 
-      New_Line;
-      Put_Line (TTY.Bold ("OPTIONS"));
-      Display_Options (Config);
+      Display_Options (Config, "OPTIONS");
 
       Display_Global_Options;
 
