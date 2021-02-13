@@ -196,6 +196,8 @@ private
 
    procedure Display_Usage (Cmd : Cmd_Names);
 
+   procedure Display_Global_Options;
+
    procedure Display_Valid_Commands;
 
    procedure Execute_By_Name (Cmd : Cmd_Names);

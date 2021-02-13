@@ -68,6 +68,7 @@ package body Alr.Commands.Help is
 
       else
          Trace.Error ("No help found for: " & Keyword);
+         Display_Global_Options;
          Display_Valid_Keywords;
          OS_Lib.Bailout (1);
       end if;
@@ -140,6 +141,8 @@ package body Alr.Commands.Help is
 
             Table.Print (Always, Separator => "  ");
          end;
+
+         Display_Global_Options;
 
          Display_Valid_Keywords;
          OS_Lib.Bailout (1);

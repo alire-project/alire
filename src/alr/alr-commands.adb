@@ -252,6 +252,80 @@ package body Alr.Commands is
       Make_Dir (Create (+Alire.Config.Edit.Path));
    end Create_Alire_Folders;
 
+   ----------------------------
+   -- Display_Global_Options --
+   ----------------------------
+
+   procedure Display_Options (Config : Command_Line_Configuration) is
+      Tab     : constant String (1 .. 1) := (others => ' ');
+      Table   : Alire.Utils.Tables.Table;
+
+      function Without_Arg (Value : String) return String is
+         Required_Character : constant Character := Value (Value'Last);
+      begin
+         return
+            (if Required_Character in '=' | ':' | '!' | '?' then
+               Value (Value'First .. Value'Last - 1)
+             else
+               Value);
+      end Without_Arg;
+
+      function With_Arg (Value, Arg : String) return String is
+         Required_Character : constant Character := Value (Value'Last);
+      begin
+         return
+            (if Required_Character in '=' | ':' | '!' | '?' then
+               Alire.Utils.Replace
+                 (Value,
+                  "" & Required_Character,
+                  (case Required_Character is
+                     when '=' => "=" & Arg,
+                     when ':' => "[ ] " & Arg,
+                     when '!' => Arg,
+                     when '?' => "[" & Arg & "]",
+                     when others => raise Program_Error))
+            else Value);
+      end With_Arg;
+
+      procedure Print_Row (Short_Switch, Long_Switch, Arg, Help : String) is
+         Has_Short : constant Boolean := Short_Switch not in " " | "";
+         Has_Long  : constant Boolean := Long_Switch not in " " | "";
+      begin
+         if (not Has_Short and not Has_Long) or Help = "" then
+            return;
+         end if;
+
+         Table.New_Row;
+         Table.Append (Tab);
+
+         if Has_Short and Has_Long then
+            Table.Append (TTY.Description (Without_Arg (Short_Switch)) &
+              " (" & With_Arg (Long_Switch, Arg) & ")");
+         elsif not Has_Short and Has_Long then
+            Table.Append (TTY.Description (With_Arg (Long_Switch, Arg)));
+         elsif Has_Short and not Has_Long then
+            Table.Append (TTY.Description (With_Arg (Short_Switch, Arg)));
+         end if;
+
+         Table.Append (Help);
+      end Print_Row;
+   begin
+      GNAT.Command_Line.Extra.For_Each_Switch
+        (Config, Print_Row'Access);
+      Table.Print (Always, Separator => "  ");
+   end Display_Options;
+
+   procedure Display_Global_Options is
+      Global_Config   : Command_Line_Configuration;
+   begin
+      Set_Global_Switches (Global_Config);
+
+      New_Line;
+      Put_Line (TTY.Bold ("GLOBAL OPTIONS"));
+
+      Display_Options (Global_Config);
+   end Display_Global_Options;
+
    -------------------
    -- Display_Usage --
    -------------------
@@ -290,6 +364,8 @@ package body Alr.Commands is
          Table.Print (Always, Separator => "  ");
       end;
 
+      Display_Global_Options;
+
       Help.Display_Valid_Keywords;
    end Display_Usage;
 
@@ -308,13 +384,12 @@ package body Alr.Commands is
       New_Line;
       Put_Line (TTY.Bold ("USAGE"));
       Put ("   ");
-
-      --  Prepare command-line summary
-      Set_Usage (Config,
-                 "[global options] " &
-                   Image (Cmd) & " [command options] " &
-                   Dispatch_Table (Cmd).Usage_Custom_Parameters,
-                 Help => "");
+      Put_Line
+        (TTY.Underline ("alr") &
+           " " &
+         TTY.Underline (Image (Cmd)) &
+         " [options] " &
+         Dispatch_Table (Cmd).Usage_Custom_Parameters);
 
       --  We use the following two canaries to detect if a command is adding
       --  its own switches, in which case we need to show their specific help.
@@ -324,14 +399,7 @@ package body Alr.Commands is
       Dispatch_Table (Cmd).Setup_Switches (Canary1);
 
       if Get_Switches (Canary1) /= Get_Switches (Canary2) then
-         --  Ugly hack that goes by GNAT
-         Define_Switch (Config, "Specific " & Image (Cmd) & " options::",
-                        "", "", "", "");
-         Define_Switch (Config, " ");
-
          Dispatch_Table (Cmd).Setup_Switches (Config);
-
-         Define_Switch (Config, " ");
       end if;
 
       --  Without the following line, GNAT.Display_Help causes a segfault for
@@ -340,9 +408,11 @@ package body Alr.Commands is
 
       Define_Switch (Config, " ", " ", " ", " ", " ");
 
-      GNAT.Command_Line.Display_Help (Config);
+      New_Line;
+      Put_Line (TTY.Bold ("OPTIONS"));
+      Display_Options (Config);
 
-      Put_Line ("   See global options with 'alr --help'");
+      Display_Global_Options;
 
       --  Format and print the long command description
       New_Line;
@@ -710,12 +780,6 @@ package body Alr.Commands is
 
       Arguments := Get_Arguments;
 
-      --  If the above call returned, we continue with regular switch handling.
-
-      Set_Usage (Global_Config,
-                 "[global options] <command> [command options] [arguments]",
-                 Help => " ");
-
       Set_Global_Switches (Global_Config);
 
       --  To avoid erroring on command-specific switches we add the wildcard.
@@ -732,6 +796,8 @@ package body Alr.Commands is
 
       --  At this point the command and all unknown switches are in
       --  Raw_Arguments.
+
+      GNAT.OS_Lib.Free (Arguments);
 
       if No_TTY then
          Alire.Is_TTY := False;
