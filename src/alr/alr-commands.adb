@@ -4,6 +4,7 @@ with AAA.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
@@ -48,6 +49,8 @@ with GNAT.OS_Lib;
 with GNATCOLL.VFS;
 
 package body Alr.Commands is
+
+   package TTY renames Alire.Utils.TTY;
 
    Error_No_Command : exception;
    --  Local exception propagated when no command is given in command-line
@@ -110,6 +113,12 @@ package body Alr.Commands is
       Pre : constant String := To_Lower (N'Img);
    begin
       return Pre (Pre'First + 4 .. Pre'Last);
+   end Image;
+
+   function Image (Name : Group_Names) return String is
+      Pre : constant String := To_Lower (Name'Image);
+   begin
+      return Pre (Pre'First + 6 .. Pre'Last);
    end Image;
 
    ----------------
@@ -243,25 +252,130 @@ package body Alr.Commands is
       Make_Dir (Create (+Alire.Config.Edit.Path));
    end Create_Alire_Folders;
 
+   ----------------------------
+   -- Display_Global_Options --
+   ----------------------------
+
+   procedure Display_Options
+     (Config : Command_Line_Configuration;
+      Title  : String)
+   is
+      Tab     : constant String (1 .. 1) := (others => ' ');
+      Table   : Alire.Utils.Tables.Table;
+
+      Has_Printable_Rows : Boolean := False;
+
+      function Without_Arg (Value : String) return String is
+         Required_Character : constant Character := Value (Value'Last);
+      begin
+         return
+            (if Required_Character in '=' | ':' | '!' | '?' then
+               Value (Value'First .. Value'Last - 1)
+             else
+               Value);
+      end Without_Arg;
+
+      function With_Arg (Value, Arg : String) return String is
+         Required_Character : constant Character := Value (Value'Last);
+      begin
+         return
+            (if Required_Character in '=' | ':' | '!' | '?' then
+               Alire.Utils.Replace
+                 (Value,
+                  "" & Required_Character,
+                  (case Required_Character is
+                     when '=' => "=" & Arg,
+                     when ':' => "[ ] " & Arg,
+                     when '!' => Arg,
+                     when '?' => "[" & Arg & "]",
+                     when others => raise Program_Error))
+            else Value);
+      end With_Arg;
+
+      procedure Print_Row (Short_Switch, Long_Switch, Arg, Help : String) is
+         Has_Short : constant Boolean := Short_Switch not in " " | "";
+         Has_Long  : constant Boolean := Long_Switch not in " " | "";
+      begin
+         if (not Has_Short and not Has_Long) or Help = "" then
+            return;
+         end if;
+
+         Table.New_Row;
+         Table.Append (Tab);
+
+         if Has_Short and Has_Long then
+            Table.Append (TTY.Description (Without_Arg (Short_Switch)) &
+              " (" & With_Arg (Long_Switch, Arg) & ")");
+         elsif not Has_Short and Has_Long then
+            Table.Append (TTY.Description (With_Arg (Long_Switch, Arg)));
+         elsif Has_Short and not Has_Long then
+            Table.Append (TTY.Description (With_Arg (Short_Switch, Arg)));
+         end if;
+
+         Table.Append (Help);
+
+         Has_Printable_Rows := True;
+      end Print_Row;
+   begin
+      GNAT.Command_Line.Extra.For_Each_Switch
+        (Config, Print_Row'Access);
+
+      if Has_Printable_Rows then
+         New_Line;
+         Put_Line (TTY.Bold (Title));
+
+         Table.Print (Always, Separator => "  ");
+      end if;
+   end Display_Options;
+
+   procedure Display_Global_Options is
+      Global_Config   : Command_Line_Configuration;
+   begin
+      Set_Global_Switches (Global_Config);
+      Display_Options (Global_Config, "GLOBAL OPTIONS");
+   end Display_Global_Options;
+
    -------------------
    -- Display_Usage --
    -------------------
 
-   procedure Display_Usage is
+   procedure Display_Usage (Displayed_Error : Boolean := False) is
    begin
+      if not Displayed_Error then
+         Put_Line ("Alr " & TTY.Version (Alr.Version));
+         New_Line;
+      end if;
+
+      Put_Line (TTY.Bold ("USAGE"));
+      Put_Line ("   " & TTY.Underline ("alr") & " [global options] " &
+                  "<command> [command options] [<arguments>]");
       New_Line;
-      Put_Line ("Ada Library Repository manager");
-      Put_Line ("USAGE: alr [global options] " &
-                  "command [command options] [arguments]");
+      Put_Line ("   " & TTY.Underline ("alr") & " " &
+                        TTY.Underline ("help") &
+                        " [<command>|<topic>]");
 
       New_Line;
+      Put_Line (TTY.Bold ("ARGUMENTS"));
+      declare
+         Tab   : constant String (1 .. 1) := (others => ' ');
+         Table : Alire.Utils.Tables.Table;
+      begin
+         Table.New_Row;
+         Table.Append (Tab);
+         Table.Append (TTY.Description ("<command>"));
+         Table.Append ("Command to execute");
+
+         Table.New_Row;
+         Table.Append (Tab);
+         Table.Append (TTY.Description ("<arguments>"));
+         Table.Append ("List of arguments for the command");
+
+         Table.Print (Always, Separator => "  ");
+      end;
+
+      Display_Global_Options;
 
       Help.Display_Valid_Keywords;
-
-      New_Line;
-      Put_Line ("Use ""alr help <keyword>"" " &
-                  "for more information about a command or topic.");
-      New_Line;
    end Display_Usage;
 
    -------------------
@@ -273,17 +387,18 @@ package body Alr.Commands is
       Canary1 : Command_Line_Configuration;
       Canary2 : Command_Line_Configuration;
    begin
-      New_Line;
-      Put_Line ("SUMMARY");
-      New_Line;
-      Put_Line (" " & Dispatch_Table (Cmd).Short_Description);
+      Put_Line (TTY.Bold ("SUMMARY"));
+      Put_Line ("   " & Dispatch_Table (Cmd).Short_Description);
 
-      --  Prepare command-line summary
-      Set_Usage (Config,
-                 "[global options] " &
-                   Image (Cmd) & " [command options] " &
-                   Dispatch_Table (Cmd).Usage_Custom_Parameters,
-                 Help => " ");
+      New_Line;
+      Put_Line (TTY.Bold ("USAGE"));
+      Put ("   ");
+      Put_Line
+        (TTY.Underline ("alr") &
+           " " &
+         TTY.Underline (Image (Cmd)) &
+         " [options] " &
+         Dispatch_Table (Cmd).Usage_Custom_Parameters);
 
       --  We use the following two canaries to detect if a command is adding
       --  its own switches, in which case we need to show their specific help.
@@ -293,14 +408,7 @@ package body Alr.Commands is
       Dispatch_Table (Cmd).Setup_Switches (Canary1);
 
       if Get_Switches (Canary1) /= Get_Switches (Canary2) then
-         --  Ugly hack that goes by GNAT
-         Define_Switch (Config, "Specific " & Image (Cmd) & " options::",
-                        "", "", "", "");
-         Define_Switch (Config, " ");
-
          Dispatch_Table (Cmd).Setup_Switches (Config);
-
-         Define_Switch (Config, " ");
       end if;
 
       --  Without the following line, GNAT.Display_Help causes a segfault for
@@ -309,22 +417,20 @@ package body Alr.Commands is
 
       Define_Switch (Config, " ", " ", " ", " ", " ");
 
-      GNAT.Command_Line.Display_Help (Config);
+      Display_Options (Config, "OPTIONS");
 
-      Put_Line (" See global options with 'alr --help'");
+      Display_Global_Options;
 
       --  Format and print the long command description
       New_Line;
-      Put_Line ("DESCRIPTION");
-      New_Line;
+      Put_Line (TTY.Bold ("DESCRIPTION"));
 
       for Line of Dispatch_Table (Cmd).Long_Description loop
          AAA.Text_IO.Put_Paragraph (Line,
-                                    Line_Prefix => " ");
+                                    Line_Prefix => "   ");
          --  GNATCOLL.Paragraph_Filling seems buggy at the moment, otherwise
          --  it would be the logical choice.
       end loop;
-      New_Line;
    end Display_Usage;
 
    ----------------------------
@@ -332,19 +438,33 @@ package body Alr.Commands is
    ----------------------------
 
    procedure Display_Valid_Commands is
-      Tab   : constant String (1 .. 6) := (others => ' ');
+      Tab   : constant String (1 .. 1) := (others => ' ');
       Table : Alire.Utils.Tables.Table;
+
+      use Alr.Utils;
    begin
-      Put_Line ("Valid commands: ");
-      New_Line;
-      for Cmd in Cmd_Names'Range loop
-         if Cmd /= Cmd_Dev then
+      Put_Line (TTY.Bold ("COMMANDS"));
+
+      for Group in Group_Names loop
+         if Group /= Group_Names'First then
             Table.New_Row;
             Table.Append (Tab);
-            Table.Append (Image (Cmd));
-            Table.Append (Dispatch_Table (Cmd).Short_Description);
          end if;
+
+         Table.New_Row;
+         Table.Append (Tab);
+         Table.Append (TTY.Underline (To_Mixed_Case (Image (Group))));
+         for Cmd in Cmd_Names'Range loop
+            if Cmd /= Cmd_Dev and Group = Group_Commands (Cmd) then
+               Table.New_Row;
+               Table.Append (Tab);
+               Table.Append (TTY.Description (Image (Cmd)));
+               Table.Append (Tab);
+               Table.Append (Dispatch_Table (Cmd).Short_Description);
+            end if;
+         end loop;
       end loop;
+
       Table.Print (Always, Separator => "  ");
    end Display_Valid_Commands;
 
@@ -602,9 +722,8 @@ package body Alr.Commands is
       -- Check_For_Help --
       --------------------
 
-      function Check_For_Help return Boolean is
+      function Check_First_Nonswitch return Integer is
          use Ada.Command_Line;
-         Help_Requested  : Boolean := False;
          First_Nonswitch : Integer := 0;
          --  Used to store the first argument that doesn't start with '-';
          --  that would be the command for which help is being asked.
@@ -613,46 +732,60 @@ package body Alr.Commands is
             declare
                Arg : constant String := Ada.Command_Line.Argument (I);
             begin
-               if Arg = "-h" or else Arg = "--help" then
-                  Help_Requested := True;
-               elsif First_Nonswitch = 0 and then  Arg (Arg'First) /= '-' then
+               if First_Nonswitch = 0 and then Arg (Arg'First) /= '-' then
                   First_Nonswitch := I;
                end if;
             end;
          end loop;
 
-         --  Show either general or specific help
-         if Help_Requested then
-            if First_Nonswitch > 0 then
-               Commands.Help.Display_Help
-                 (Ada.Command_Line.Argument (First_Nonswitch));
-               OS_Lib.Bailout (0);
-            else
-               null;
-               --  Nothing to do; later on GNAT switch processing will catch
-               --  the -h/--help and display the general help.
-            end if;
-         end if;
+         return First_Nonswitch;
+      end Check_First_Nonswitch;
 
-         return Help_Requested;
+      function Check_For_Help return Boolean is
+         use Ada.Command_Line;
+      begin
+         return (for some I in 1 .. Argument_Count =>
+                   Ada.Command_Line.Argument (I) in "-h" | "--help");
       end Check_For_Help;
+
+      function Get_Arguments return GNAT.OS_Lib.Argument_List_Access is
+         use Ada.Command_Line;
+
+         package SU renames Ada.Strings.Unbounded;
+
+         Arguments : SU.Unbounded_String;
+      begin
+         for I in 1 .. Argument_Count loop
+            declare
+               Arg : constant String := Ada.Command_Line.Argument (I);
+            begin
+               if Arg not in "-h" | "--help" then
+                  SU.Append (Arguments, (if I = 1 then "" else " ") & Arg);
+               end if;
+            end;
+         end loop;
+
+         return GNAT.OS_Lib.Argument_String_To_List (SU.To_String (Arguments));
+      end Get_Arguments;
 
       use all type GNAT.OS_Lib.String_Access;
 
-      Global_Config  : Command_Line_Configuration;
-      Command_Config : Command_Line_Configuration;
-      Help_Requested : Boolean;
+      Global_Config   : Command_Line_Configuration;
+      Command_Config  : Command_Line_Configuration;
+
+      Help_Requested  : Boolean;
+      First_Nonswitch : Integer;
+
+      Arguments        : GNAT.OS_Lib.Argument_List_Access;
+      Arguments_Parser : Opt_Parser;
    begin
       --  GNAT switch handling intercepts -h/--help. To have the same output
       --  for 'alr -h command' and 'alr help command', we do manual handling
       --  first in search of a -h/--help:
-      Help_Requested := Check_For_Help;
+      Help_Requested  := Check_For_Help;
+      First_Nonswitch := Check_First_Nonswitch;
 
-      --  If the above call returned, we continue with regular switch handling.
-
-      Set_Usage (Global_Config,
-                 "[global options] <command> [command options] [arguments]",
-                 Help => " ");
+      Arguments := Get_Arguments;
 
       Set_Global_Switches (Global_Config);
 
@@ -663,11 +796,15 @@ package body Alr.Commands is
          Define_Switch (Global_Config, "*");
       end if;
 
-      Initialize_Option_Scan;
-      Getopt (Global_Config, Callback => Fill_Arguments'Access);
+      Initialize_Option_Scan (Arguments_Parser, Arguments);
+      Getopt (Global_Config,
+              Callback => Fill_Arguments'Access,
+              Parser   => Arguments_Parser);
 
       --  At this point the command and all unknown switches are in
       --  Raw_Arguments.
+
+      GNAT.OS_Lib.Free (Arguments);
 
       if No_TTY then
          Alire.Is_TTY := False;
@@ -682,6 +819,19 @@ package body Alr.Commands is
 
          Simple_Logging.ASCII_Only := False;
          --  Also use a fancier busy spinner
+      end if;
+
+      --  Show either general or specific help
+      if Help_Requested then
+         if First_Nonswitch > 0 then
+            Commands.Help.Display_Help
+               (Ada.Command_Line.Argument (First_Nonswitch));
+            OS_Lib.Bailout (0);
+         else
+            null;
+            --  Nothing to do; later on GNAT switch processing will catch
+            --  the -h/--help and display the general help.
+         end if;
       end if;
 
       if Raw_Arguments.Is_Empty then
@@ -740,7 +890,8 @@ package body Alr.Commands is
          else
             Log ("Unrecognized command: " & Raw_Arguments (1), Error);
          end if;
-         Display_Usage;
+         New_Line;
+         Display_Usage (Displayed_Error => True);
          OS_Lib.Bailout (1);
       when Wrong_Command_Arguments =>
          --  Raised in here, so no need to raise up unless in debug mode

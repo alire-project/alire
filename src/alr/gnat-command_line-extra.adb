@@ -47,4 +47,20 @@ package body GNAT.Command_Line.Extra is
       return True;
    end Verify_No_Duplicates;
 
+   procedure For_Each_Switch
+     (Config : Command_Line_Configuration;
+      Callback : not null access procedure
+        (Switch, Long_Switch, Argument, Help : String))
+   is
+      use all type GNAT.Strings.String_Access;
+   begin
+      for S of Config.Switches.all loop
+         Callback
+           ((if S.Switch /= null then S.Switch.all else ""),
+            (if S.Long_Switch /= null then S.Long_Switch.all else ""),
+            (if S.Argument /= null then S.Argument.all else "ARG"),
+            (if S.Help /= null then S.Help.all else ""));
+      end loop;
+   end For_Each_Switch;
+
 end GNAT.Command_Line.Extra;

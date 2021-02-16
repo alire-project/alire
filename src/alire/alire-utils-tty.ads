@@ -47,7 +47,7 @@ package Alire.Utils.TTY with Preelaborate is
    --  Bold Light_Green
 
    function Emph (Text : String) return String;
-   --  Something to highligth not negatively, bold cyan
+   --  Something to highlight not negatively, bold cyan
 
    function Error (Text : String) return String;
    --  Bold Red
@@ -56,6 +56,8 @@ package Alire.Utils.TTY with Preelaborate is
    --  Bold Yellow
 
    function Bold (Text : String) return String;
+
+   function Underline (Text : String) return String;
 
    function Name (Crate : Crate_Name) return String;
 
@@ -105,6 +107,10 @@ private
    function Bold (Text : String) return String is
      (Format (Text,
               Style => ANSI.Bright));
+
+   function Underline (Text : String) return String is
+     (Format (Text,
+              Style => ANSI.Underline));
 
    function Name (Crate : Crate_Name) return String is
      (Name (+Crate));
