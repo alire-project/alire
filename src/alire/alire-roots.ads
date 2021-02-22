@@ -1,6 +1,8 @@
+private with AAA.Caches.Files;
+
 limited with Alire.Environment;
-with Alire.Conditional;
 with Alire.Containers;
+private with Alire.Lockfiles;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Requisites;
@@ -35,6 +37,11 @@ package Alire.Roots is
    --  From existing release
    --  Path must point to the session folder (parent of alire metadata folder)
 
+   procedure Set (This     : in out Root;
+                  Solution : Solutions.Solution) with
+     Post => This.Has_Lockfile;
+   --  Set Solution as the new solution for This, also storing it on disk
+
    procedure Check_Stored (This : Root);
    --  Check that the Root information exists on disk (paths exist, manifest
    --  file is at expected place...); otherwise Checked_Error. Does not check
@@ -56,22 +63,15 @@ package Alire.Roots is
    procedure Export_Build_Environment (This : Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
-   procedure Extend
-     (This         : in out Root;
-      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
-      Properties   : Conditional.Properties   := Conditional.No_Properties;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites);
-   --  Add dependencies/properties/requisites to the root release
-
    function Path (This : Root) return Absolute_Path;
 
-   function Project_Paths (This : Root)
+   function Project_Paths (This : in out Root)
                            return Utils.String_Set;
    --  Return all the paths that should be set in GPR_PROJECT_PATH for the
    --  solution in this root. This includes al releases' paths and any linked
    --  directories.
 
-   function GPR_Project_Files (This         : Root;
+   function GPR_Project_Files (This         : in out Root;
                                Exclude_Root : Boolean)
                                return Utils.String_Set;
    --  Return all the gprbuild project files defined for the solution in this
@@ -80,15 +80,19 @@ package Alire.Roots is
 
    function Release (This : Root) return Releases.Release;
 
-   function Release (This : Root; Crate : Crate_Name) return Releases.Release
+   function Release (This  : in out Root;
+                     Crate : Crate_Name)
+                     return Releases.Release
      with Pre =>
      (Crate = This.Release.Name or else This.Solution.Depends_On (Crate));
    --  Retrieve a release, that can be either the root or any in the solution
 
-   function Release_Base (This : Root; Crate : Crate_Name) return Any_Path;
+   function Release_Base (This  : in out Root;
+                          Crate : Crate_Name)
+                          return Any_Path;
    --  Find the base folder in which a release can be found for the given root
 
-   function Solution (This : Root) return Solutions.Solution with
+   function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;
    --  Returns the solution stored in the lockfile
 
@@ -103,7 +107,7 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   procedure Sync_Solution_And_Deps (This : Root);
+   procedure Sync_Solution_And_Deps (This : in out Root);
    --  Ensure that dependencies are up to date in regard to the lockfile and
    --  manifest: if the manifest is newer than the lockfile, resolve again,
    --  as dependencies may have been edited by hand. Otherwise, ensure that
@@ -116,8 +120,11 @@ package Alire.Roots is
    --  edited but the solution hasn't changed (and so the lockfile hasn't been
    --  regenerated). This way we know the lockfile is valid for the manifest.
 
+   procedure Deploy_Dependencies (This : in out Root);
+   --  Download all dependencies not already on disk from This.Solution
+
    procedure Update_Dependencies
-     (This    : Root;
+     (This    : in out Root;
       Silent  : Boolean;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
@@ -142,10 +149,23 @@ package Alire.Roots is
 
 private
 
+   function Load_Solution (Lockfile : String) return Solutions.Solution
+   is (Lockfiles.Read (Lockfile).Solution);
+
+   procedure Write_Solution (Solution : Solutions.Solution;
+                             Lockfile : String);
+   --  Wrapper for use with Cached_Solutions
+
+   package Cached_Solutions is new AAA.Caches.Files
+     (Cached => Solutions.Solution,
+      Load   => Load_Solution,
+      Write  => Write_Solution);
+
    type Root is tagged record
-      Environment : Properties.Vector;
-      Path        : UString;
-      Release     : Containers.Release_H;
+      Environment     : Properties.Vector;
+      Path            : UString;
+      Release         : Containers.Release_H;
+      Cached_Solution : Cached_Solutions.Cache;
    end record;
 
 end Alire.Roots;

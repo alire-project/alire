@@ -9,12 +9,6 @@ with Alire.Utils.User_Input;
 
 package Alire.Workspace is
 
-   procedure Deploy_Dependencies
-     (Root     : Roots.Root         := Alire.Root.Current;
-      Solution : Solutions.Solution := Alire.Root.Current.Solution;
-      Deps_Dir : Absolute_Path      := Alire.Root.Current.Dependencies_Dir);
-   --  Deploy Release dependencies in Solution to Deps_Dir
-
    procedure Deploy_Root (Release         : Releases.Release;
                           Parent_Folder   : Any_Path;
                           Env             : Properties.Vector;

@@ -1,8 +1,9 @@
 with Ada.Calendar;
 with Ada.Directories;
 
+with Alire.Conditional;
+with Alire.Dependencies.Containers;
 with Alire.Environment;
-with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
@@ -39,6 +40,113 @@ package body Alire.Roots is
          Raise_Checked_Error (Info);
       end if;
    end Check_Stored;
+
+   -------------------------
+   -- Deploy_Dependencies --
+   -------------------------
+
+   procedure Deploy_Dependencies (This : in out Roots.Root)
+   is
+      Was_There : Boolean;
+      Pending   : Alire.Solutions.Release_Map := This.Solution.Releases;
+      Deployed  : Containers.Crate_Name_Sets.Set;
+      Round     : Natural := 0;
+   begin
+
+      --  Prepare environment for any post-fetch actions. This must be done
+      --  after the lockfile on disk is written, since the root will read
+      --  dependencies from there.
+
+      This.Export_Build_Environment;
+
+      --  Mark any dependencies without a corresponding regular release as
+      --  already deployed (in practice, we don't have to deploy them, and
+      --  dependents don't need to wait for their deployment).
+
+      for Dep of This.Solution.Required loop
+         if not Dep.Has_Release then
+            Deployed.Include (Dep.Crate);
+         end if;
+      end loop;
+
+      --  Deploy regular resolved dependencies:
+
+      while not Pending.Is_Empty loop
+         Round := Round + 1;
+
+         declare
+            To_Remove : Alire.Containers.Release_Set;
+            function Enum (Deps : Conditional.Dependencies)
+                           return Alire.Dependencies.Containers.List
+                           renames Conditional.Enumerate;
+         begin
+
+            --  TODO: this can be done in parallel within each round
+
+            for Rel of Pending loop
+
+               --  In the 1st step of each round we identify releases that
+               --  don't have undeployed dependencies. We also identify
+               --  releases that need not to be deployed (e.g. linked ones).
+
+               if not This.Solution.State (Rel.Name).Is_Solved then
+                  Trace.Debug ("Round" & Round'Img & ": NOOP " &
+                                 Rel.Milestone.Image);
+
+                  To_Remove.Include (Rel);
+
+               elsif
+                 (for some Dep of Enum (Rel.Dependencies (This.Environment)) =>
+                        not Deployed.Contains (Dep.Crate))
+               then
+                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
+                                 Rel.Milestone.Image);
+
+               else
+                  Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
+                                 Rel.Milestone.Image);
+
+                  To_Remove.Include (Rel);
+
+                  if Rel.Name /= Release (This).Name then
+                     Rel.Deploy (Env           => This.Environment,
+                                 Parent_Folder => This.Dependencies_Dir,
+                                 Was_There     => Was_There);
+                  else
+                     Trace.Debug
+                       ("Skipping checkout of root crate as dependency");
+                  end if;
+               end if;
+            end loop;
+
+            --  In the 2nd step of each round we mark as deployed all releases
+            --  that were deployed in the 1st step of the round.
+
+            if To_Remove.Is_Empty then
+               raise Program_Error
+                 with "No release checked out in round" & Round'Img;
+            else
+               for Rel of To_Remove loop
+                  Pending.Exclude (Rel.Name);
+                  Deployed.Include (Rel.Name);
+               end loop;
+            end if;
+         end;
+      end loop;
+
+      --  Show hints for missing externals to the user after all the noise of
+      --  dependency post-fetch compilations.
+
+      This.Solution.Print_Hints (This.Environment);
+
+      --  Check that the solution does not contain suspicious dependencies,
+      --  taking advantage that this procedure is called whenever a change
+      --  to dependencies is happening.
+
+      pragma Assert (Release (This).Check_Caret_Warning or else True);
+      --  We don't care about the return value here
+
+   end Deploy_Dependencies;
 
    ---------------
    -- Is_Stored --
@@ -97,7 +205,7 @@ package body Alire.Roots is
    -- GPR_Project_Files --
    -----------------------
 
-   function GPR_Project_Files (This         : Root;
+   function GPR_Project_Files (This         : in out Root;
                                Exclude_Root : Boolean)
                                return Utils.String_Set
    is
@@ -126,7 +234,7 @@ package body Alire.Roots is
    -- Project_Paths --
    -------------------
 
-   function Project_Paths (This : Root) return Utils.String_Set
+   function Project_Paths (This : in out Root) return Utils.String_Set
    is
       use Alire.OS_Lib;
       Paths : Utils.String_Set;
@@ -168,16 +276,23 @@ package body Alire.Roots is
       end return;
    end Project_Paths;
 
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (This     : in out Root;
+                  Solution : Solutions.Solution)
+   is
+   begin
+      This.Cached_Solution.Set (Solution, This.Lock_File);
+   end Set;
+
    --------------
    -- Solution --
    --------------
 
-   function Solution (This : Root) return Solutions.Solution is
-   begin
-      --  TODO: This probably is a good target for caching unless file
-      --  timestamp has changed.
-      return Lockfiles.Read (This.Lock_File).Solution;
-   end Solution;
+   function Solution (This : in out Root) return Solutions.Solution
+   is (This.Cached_Solution.Element (This.Lock_File));
 
    -----------------
    -- Environment --
@@ -192,10 +307,8 @@ package body Alire.Roots is
 
    function New_Root (Name : Crate_Name;
                       Path : Absolute_Path;
-                      Env  : Properties.Vector) return Root is
-     (Env,
-      +Path,
-      Containers.To_Release_H (Releases.New_Working_Release (Name)));
+                      Env  : Properties.Vector) return Root
+   is (New_Root (Releases.New_Working_Release (Name), Path, Env));
 
    --------------
    -- New_Root --
@@ -204,9 +317,10 @@ package body Alire.Roots is
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
-     (Env,
-      +Path,
-      Containers.To_Release_H (R));
+     (Environment     => Env,
+      Path            => +Path,
+      Release         => Containers.To_Release_H (R),
+      Cached_Solution => <>);
 
    ----------
    -- Path --
@@ -225,7 +339,7 @@ package body Alire.Roots is
    -- Release --
    -------------
 
-   function Release (This  : Root;
+   function Release (This  : in out Root;
                      Crate : Crate_Name) return Releases.Release is
      (if This.Release.Element.Name = Crate
       then This.Release.Element
@@ -237,16 +351,22 @@ package body Alire.Roots is
    -- Release_Base --
    ------------------
 
-   function Release_Base (This : Root; Crate : Crate_Name) return Any_Path is
-     (if This.Release.Element.Name = Crate then
-         +This.Path
+   function Release_Base (This  : in out  Root;
+                          Crate : Crate_Name)
+                          return Any_Path
+   is
+      Deps_Dir : constant Any_Path := This.Dependencies_Dir;
+   begin
+      if This.Release.Element.Name = Crate then
+         return +This.Path;
       elsif This.Solution.State (Crate).Is_Solved then
-         This.Dependencies_Dir
-         / Release (This, Crate).Unique_Folder
+         return Deps_Dir / Release (This, Crate).Unique_Folder;
       elsif This.Solution.State (Crate).Is_Linked then
-         This.Solution.State (Crate).Link.Path
+         return This.Solution.State (Crate).Link.Path;
       else
-         raise Program_Error with "release must be either solved or linked");
+         raise Program_Error with "release must be either solved or linked";
+      end if;
+   end Release_Base;
 
    ---------------
    -- Lock_File --
@@ -278,6 +398,18 @@ package body Alire.Roots is
    function Working_Folder (This : Root) return Absolute_Path is
      ((+This.Path) / "alire");
 
+   --------------------
+   -- Write_Solution --
+   --------------------
+
+   procedure Write_Solution (Solution : Solutions.Solution;
+                             Lockfile : String)
+   is
+   begin
+      Lockfiles.Write (Contents => (Solution => Solution),
+                       Filename => Lockfile);
+   end Write_Solution;
+
    ------------------
    -- Has_Lockfile --
    ------------------
@@ -302,7 +434,7 @@ package body Alire.Roots is
    -- Sync_Solution_And_Deps --
    ----------------------------
 
-   procedure Sync_Solution_And_Deps (This : Root) is
+   procedure Sync_Solution_And_Deps (This : in out Root) is
    begin
       if This.Is_Lockfile_Outdated then
          Trace.Info ("Detected changes in manifest, updating workspace...");
@@ -326,10 +458,7 @@ package body Alire.Roots is
       then
          Trace.Info ("Detected missing dependencies, updating workspace...");
          --  Some dependency is missing; redeploy. Should we clean first ???
-         Workspace.Deploy_Dependencies
-           (Root     => This,
-            Solution => This.Solution,
-            Deps_Dir => This.Dependencies_Dir);
+         This.Deploy_Dependencies;
       end if;
 
    end Sync_Solution_And_Deps;
@@ -354,7 +483,7 @@ package body Alire.Roots is
    -------------------------
 
    procedure Update_Dependencies
-     (This    : Root;
+     (This    : in out Root;
       Silent  : Boolean;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
@@ -414,28 +543,11 @@ package body Alire.Roots is
 
          --  Apply the update
 
-         Workspace.Deploy_Dependencies (Solution => Needed);
+         This.Set (Solution => Needed);
+         This.Deploy_Dependencies;
 
          Trace.Detail ("Update completed");
       end;
    end Update_Dependencies;
-
-   ------------
-   -- Extend --
-   ------------
-
-   procedure Extend
-     (This         : in out Root;
-      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
-      Properties   : Conditional.Properties   := Conditional.No_Properties;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
-   is
-   begin
-      This.Release.Replace_Element
-        (This.Release.Element.Extending
-           (Dependencies,
-            Properties,
-            Available));
-   end Extend;
 
 end Alire.Roots;
