@@ -491,8 +491,17 @@ package body Alire.Roots is
    -- Has_Lockfile --
    ------------------
 
-   function Has_Lockfile (This : Root) return Boolean
-   is (Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid);
+   function Has_Lockfile (This        : Root;
+                          Check_Valid : Boolean := False)
+                          return Boolean
+   is (This.Cached_Solution.Has_Element
+         --  The following validity check is very expensive. This shortcut
+         --  speeds up things greatly and both should be in sync if things
+         --  are as they should.
+       or else
+         (if Check_Valid
+          then Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid
+          else Ada.Directories.Exists (This.Lock_File)));
 
    --------------------------
    -- Is_Lockfile_Outdated --

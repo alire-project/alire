@@ -83,7 +83,7 @@ package Alire.Roots is
    function Project_Paths (This : in out Root)
                            return Utils.String_Set;
    --  Return all the paths that should be set in GPR_PROJECT_PATH for the
-   --  solution in this root. This includes al releases' paths and any linked
+   --  solution in this root. This includes all releases' paths and any linked
    --  directories.
 
    function GPR_Project_Files (This         : in out Root;
@@ -111,9 +111,11 @@ package Alire.Roots is
      Pre => This.Has_Lockfile;
    --  Returns the solution stored in the lockfile
 
-   function Has_Lockfile (This : Root) return Boolean;
+   function Has_Lockfile (This        : Root;
+                          Check_Valid : Boolean := False)
+                          return Boolean;
    --  Check the corresponding lockfile storing a solution for the root
-   --  dependencies exists and is loadable.
+   --  dependencies exists and (optionally, expensive) whether is loadable.
 
    function Is_Lockfile_Outdated (This : Root) return Boolean
      with Pre => This.Has_Lockfile;
@@ -154,8 +156,7 @@ package Alire.Roots is
       Silent  : Boolean;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
-        Alire.Containers.Crate_Name_Sets.Empty_Set)
-       with Pre => This.Has_Lockfile;
+        Alire.Containers.Crate_Name_Sets.Empty_Set);
    --  Resolve and update all or given crates in a root. When silent, run
    --  as in non-interactive mode as this is an automatically-triggered update.
 
@@ -174,13 +175,13 @@ package Alire.Roots is
    --  The "alire" folder inside the root path
 
    function Crate_File (This : Root) return Absolute_Path;
-   --  The "$crate.toml" file inside Working_Folder
+   --  The "/path/to/alire.toml" file inside Working_Folder
 
    function Dependencies_Dir (This : Root) return Absolute_Path;
    --  The folder where dependencies are checked out for this root
 
    function Lock_File (This : Root) return Absolute_Path;
-   --  The "$crate.lock" file inside Working_Folder
+   --  The "/path/to/alire.lock" file inside Working_Folder
 
 private
 

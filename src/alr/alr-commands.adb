@@ -534,7 +534,7 @@ package body Alr.Commands is
    -- Requires_Valid_Session --
    ----------------------------
 
-   procedure Requires_Valid_Session (Cmd          : in out Command'Class;
+   procedure Requires_Valid_Session (Cmd  : in out Command'Class;
                                      Sync : Boolean := True) is
       use Alire;
 
@@ -559,6 +559,17 @@ package body Alr.Commands is
                       Alire.Config.Get
                         (Alire.Config.Keys.Update_Manually, False);
    begin
+
+      --  If the root has been already loaded, then all following checks have
+      --  been already performed, and we are done:
+
+      if Cmd.Optional_Root.Is_Valid then
+         Trace.Debug ("Workspace is valid [already loaded]");
+         return;
+      end if;
+
+      Trace.Debug ("Workspace is being checked and loaded for the first time");
+
       Unchecked := Alire.Root.Current;
 
       if not Unchecked.Is_Valid then
