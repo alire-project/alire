@@ -15,7 +15,7 @@ with Alire.Features.Index;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Platforms;
-with Alire.Roots.Optional;
+with Alire.Root;
 with Alire.Solutions;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
@@ -41,7 +41,6 @@ with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
 with Alr.Platform;
-with Alr.Root;
 
 with GNAT.Command_Line.Extra;
 with GNAT.OS_Lib;
@@ -522,7 +521,9 @@ package body Alr.Commands is
    -- Requires_Full_Index --
    -------------------------
 
-   procedure Requires_Full_Index (Force_Reload : Boolean := False) is
+   procedure Requires_Full_Index (Cmd          : in out Command'Class;
+                                  Force_Reload : Boolean := False) is
+      pragma Unreferenced (Cmd);
    begin
       Alire.Features.Index.Setup_And_Load
         (From  => Alire.Config.Edit.Indexes_Directory,
@@ -533,7 +534,8 @@ package body Alr.Commands is
    -- Requires_Valid_Session --
    ----------------------------
 
-   procedure Requires_Valid_Session (Sync : Boolean := True) is
+   procedure Requires_Valid_Session (Cmd          : in out Command'Class;
+                                     Sync : Boolean := True) is
       use Alire;
 
       ------------------------------
@@ -551,12 +553,14 @@ package body Alr.Commands is
          end if;
       end Notify_Of_Initialization;
 
-      Unchecked : constant Alire.Roots.Optional.Root := Root.Current;
+      Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
                       Alire.Config.Get
                         (Alire.Config.Keys.Update_Manually, False);
    begin
+      Unchecked := Alire.Root.Current;
+
       if not Unchecked.Is_Valid then
          Raise_Checked_Error
            (Alire.Errors.Wrap
@@ -566,7 +570,7 @@ package body Alr.Commands is
       Unchecked.Value.Check_Stored;
 
       declare
-         Checked : constant Roots.Root := Unchecked.Value;
+         Checked : Roots.Root := Unchecked.Value;
       begin
 
          --  For workspaces created pre-lockfiles, or with older format,
@@ -592,7 +596,7 @@ package body Alr.Commands is
 
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
-                     Requires_Full_Index;
+                     Cmd.Requires_Full_Index;
                      Checked.Sync_Solution_And_Deps;
                      return;
                   else
@@ -650,7 +654,7 @@ package body Alr.Commands is
          --  upcoming) we are done. Otherwise, do a silent update.
 
          if Sync then
-            Requires_Full_Index;
+            Cmd.Requires_Full_Index;
             Checked.Update_Dependencies (Silent => True);
          end if;
       end;
@@ -965,5 +969,31 @@ package body Alr.Commands is
         .Append ("crate^version" & ASCII.HT & "Major-compatible version")
         .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
    end Crate_Version_Sets;
+
+   ----------
+   -- Root --
+   ----------
+
+   function Root (Cmd : in out Command'Class)
+                  return Alire.Roots.Optional.Reference
+   is
+   begin
+      if not Cmd.Optional_Root.Is_Valid then
+         Cmd.Requires_Valid_Session;
+      end if;
+
+      return Cmd.Optional_Root.Value;
+   end Root;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (Cmd  : in out Command'Class;
+                  Root : Alire.Roots.Root)
+   is
+   begin
+      Cmd.Optional_Root := Alire.Roots.Optional.Outcome_Success (Root);
+   end Set;
 
 end Alr.Commands;

@@ -8,7 +8,6 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Origins.Deployers;
-with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
 with Alire.Requisites.Booleans;

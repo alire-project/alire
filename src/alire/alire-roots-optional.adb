@@ -111,7 +111,9 @@ package body Alire.Roots.Optional is
    is
    begin
       This.Assert;
-      return Reference'(Ptr => This.Data.Value'Access);
+      --  The following Unrestricted_Access cannot fail as we just asserted
+      --  the value is stored.
+      return Reference'(Ptr => This.Data.Value'Unrestricted_Access);
    end Value;
 
    ---------------------

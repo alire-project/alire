@@ -15,9 +15,12 @@ package Alire.Roots.Optional is
 
    type Root is new Outcome with private;
 
-   type Reference (Ptr : not null access constant Roots.Root)
+   type Reference (Ptr : not null access Roots.Root)
    is limited null record with
      Implicit_Dereference => Ptr;
+
+   --  NOTE: Detecting and loading roots is expensive, so it should be done as
+   --  few times as possible. Once a valid root is obtained, just reuse it.
 
    function Detect_Root (Path : Any_Path) return Optional.Root;
    --  Try to detect a root at the given Path

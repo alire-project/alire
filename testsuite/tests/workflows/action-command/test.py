@@ -1,5 +1,5 @@
 """
-Test invalid command TOML type
+Test pre-build/post-build/post-fetch executions
 """
 
 from drivers.alr import run_alr

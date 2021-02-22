@@ -36,7 +36,7 @@ package body Alr.Commands.Publish is
                & " and optional revision are expected");
          end if;
 
-         Requires_Valid_Session;
+         Cmd.Requires_Valid_Session;
          Alire.Publish.Directory_Tar
            (Path     => (if Num_Arguments >= 1 then Argument (1) else "."),
             Revision => (if Num_Arguments >= 2 then Argument (2) else "HEAD"),

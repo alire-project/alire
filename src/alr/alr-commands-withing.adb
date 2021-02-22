@@ -14,12 +14,10 @@ with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.User_Input;
-with Alire.Workspace;
 
 with Alr.Commands.User_Input;
 with Alr.OS_Lib;
 with Alr.Platform;
-with Alr.Root;
 with Alr.Utils.Auto_GPR_With;
 
 with Semantic_Versioning.Extended;
@@ -31,22 +29,23 @@ package body Alr.Commands.Withing is
    Switch_URL : constant String := "--use";
 
    procedure Replace_Current
-     (Old_Deps,
+     (Cmd          : in out Command;
+      Old_Deps,
       New_Deps     : Alire.Conditional.Dependencies;
-      Old_Solution : Alire.Solutions.Solution := Root.Current.Solution);
+      Old_Solution : Alire.Solutions.Solution);
 
    -------------------
    -- Auto_GPR_With --
    -------------------
 
-   procedure Auto_GPR_With is
+   procedure Auto_GPR_With (Cmd : in out Command) is
    begin
-      for File of Root.Current.Release.Project_Files
-        (Root.Current.Environment, With_Path => True)
+      for File of Cmd.Root.Release.Project_Files
+        (Cmd.Root.Environment, With_Path => True)
       loop
          Utils.Auto_GPR_With.Update
-           (Alire.OS_Lib."/" (Root.Current.Path, File),
-            Root.Current.GPR_Project_Files (Exclude_Root => True));
+           (Alire.OS_Lib."/" (Cmd.Root.Path, File),
+            Cmd.Root.GPR_Project_Files (Exclude_Root => True));
       end loop;
    end Auto_GPR_With;
 
@@ -93,7 +92,8 @@ package body Alr.Commands.Withing is
    -- Add_Softlink --
    ------------------
 
-   procedure Add_Softlink (Dep_Spec : String;
+   procedure Add_Softlink (Cmd      : in out Command;
+                           Dep_Spec : String;
                            Path     : String) is
       Requested : constant Alire.Milestones.Allowed_Milestones :=
                     Alire.Milestones.Crate_Versions (Dep_Spec);
@@ -104,8 +104,8 @@ package body Alr.Commands.Withing is
          use Alire;
          use type Conditional.Dependencies;
          Old_Deps     : constant Conditional.Dependencies :=
-                          Root.Current.Release.Dependencies;
-         Old_Solution : constant Solutions.Solution := Root.Current.Solution;
+                          Cmd.Root.Release.Dependencies;
+         Old_Solution : constant Solutions.Solution := Cmd.Root.Solution;
          New_Solution : constant Solutions.Solution :=
                           Old_Solution
                             .Depending_On (New_Dep)
@@ -131,7 +131,8 @@ package body Alr.Commands.Withing is
          --  and storing the softlink. We can proceed to confirming the
          --  replacement.
 
-         Replace_Current (Old_Deps     => Old_Deps,
+         Replace_Current (Cmd,
+                          Old_Deps     => Old_Deps,
                           New_Deps     => Old_Deps and New_Dep,
                           Old_Solution => New_Solution);
          --  We use the New_Solution with the softlink as previous solution, so
@@ -144,7 +145,7 @@ package body Alr.Commands.Withing is
    -- Detect_Softlink --
    ---------------------
 
-   procedure Detect_Softlink (Path : String) is
+   procedure Detect_Softlink (Cmd : in out Command; Path : String) is
       Root : constant Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Detect_Root (Path);
       use all type Semver.Point;
@@ -154,7 +155,8 @@ package body Alr.Commands.Withing is
             --  Add a dependency on ^(detected version) (i.e., safely
             --  upgradable) or ~(detected version) (if pre-1.0).
             Add_Softlink
-              (Dep_Spec => Root.Value.Release.Name_Str
+              (Cmd,
+               Dep_Spec => Root.Value.Release.Name_Str
                & (if Semver.Major (Root.Value.Release.Version) = 0
                   then "~"
                   else "^")
@@ -229,19 +231,20 @@ package body Alr.Commands.Withing is
    ---------------------
 
    procedure Replace_Current
-     (Old_Deps,
+     (Cmd          : in out Command;
+      Old_Deps,
       New_Deps     : Alire.Conditional.Dependencies;
-      Old_Solution : Alire.Solutions.Solution := Root.Current.Solution)
+      Old_Solution : Alire.Solutions.Solution)
    is
    begin
-      Requires_Full_Index;
+      Cmd.Requires_Full_Index;
 
       --  Set, regenerate and update
       declare
          New_Root  : constant Alire.Roots.Root :=
            Alire.Roots.New_Root
-             (Root.Current.Release.Replacing (Dependencies => New_Deps),
-              Root.Current.Path,
+             (Cmd.Root.Release.Replacing (Dependencies => New_Deps),
+              Cmd.Root.Path,
               Platform.Properties);
          New_Solution : constant Alire.Solutions.Solution :=
                           Alire.Solver.Resolve
@@ -282,7 +285,7 @@ package body Alr.Commands.Withing is
          --  Show the effects on the solution
 
          if not Alire.Utils.User_Input.Confirm_Solution_Changes
-           (Root.Current.Solution.Changes (New_Solution),
+           (Cmd.Root.Solution.Changes (New_Solution),
             Changed_Only => not Alire.Detailed)
          then
             Trace.Info ("No changes applied.");
@@ -291,19 +294,19 @@ package body Alr.Commands.Withing is
 
          --  Add changes to the manifest:
 
-         Alire.Manifest.Append (Root.Current.Crate_File,
+         Alire.Manifest.Append (Cmd.Root.Crate_File,
                                 Deps_Diff.Added);
-         Alire.Manifest.Remove (Root.Current.Crate_File,
+         Alire.Manifest.Remove (Cmd.Root.Crate_File,
                                 Deps_Diff.Removed);
          Trace.Detail ("Manifest updated, fetching dependencies now");
 
          --  And apply changes (will also generate new lockfile)
 
-         Alire.Workspace.Deploy_Dependencies
-           (Root     => New_Root,
-            Solution => New_Solution);
+         Cmd.Set (New_Root);
+         Cmd.Root.Set (Solution => New_Solution);
+         Cmd.Root.Deploy_Dependencies;
 
-         Auto_GPR_With;
+         Cmd.Auto_GPR_With;
       end;
 
    end Replace_Current;
@@ -312,9 +315,9 @@ package body Alr.Commands.Withing is
    -- Add --
    ---------
 
-   procedure Add is
+   procedure Add (Cmd : in out Command) is
       Old_Deps : constant Alire.Conditional.Dependencies :=
-                   Root.Current.Release.Dependencies;
+                   Cmd.Root.Release.Dependencies;
       New_Deps : Alire.Conditional.Dependencies := Old_Deps;
       use type Alire.Conditional.Dependencies;
    begin
@@ -323,7 +326,7 @@ package body Alr.Commands.Withing is
       end loop;
 
       if Old_Deps /= New_Deps then
-         Replace_Current (Old_Deps, New_Deps);
+         Cmd.Replace_Current (Old_Deps, New_Deps, Cmd.Root.Solution);
       end if;
    end Add;
 
@@ -331,9 +334,9 @@ package body Alr.Commands.Withing is
    -- Del --
    ---------
 
-   procedure Del is
+   procedure Del (Cmd : in out Command) is
       Old_Deps : constant Alire.Conditional.Dependencies :=
-                   Root.Current.Release.Dependencies;
+                   Cmd.Root.Release.Dependencies;
       New_Deps : Alire.Conditional.Dependencies := Old_Deps;
       use type Alire.Conditional.Dependencies;
    begin
@@ -342,7 +345,7 @@ package body Alr.Commands.Withing is
       end loop;
 
       if Old_Deps /= New_Deps then
-         Replace_Current (Old_Deps, New_Deps);
+         Cmd.Replace_Current (Old_Deps, New_Deps, Cmd.Root.Solution);
       else
          Trace.Warning ("There are no changes to apply.");
       end if;
@@ -352,7 +355,7 @@ package body Alr.Commands.Withing is
    -- From --
    ----------
 
-   procedure From is
+   procedure From (Cmd : in out Command) is
       use Ada.Text_IO;
       use Utils;
 
@@ -436,8 +439,10 @@ package body Alr.Commands.Withing is
       end loop;
 
       if not Deps.Is_Empty then
-         Replace_Current (Old_Deps => Alire.Conditional.No_Dependencies,
-                          New_Deps => Deps);
+         Cmd.Replace_Current
+           (Old_Deps     => Alire.Conditional.No_Dependencies,
+            New_Deps     => Deps,
+            Old_Solution => Alire.Solutions.Empty_Valid_Solution);
       else
          Trace.Warning ("No dependencies found.");
       end if;
@@ -447,8 +452,8 @@ package body Alr.Commands.Withing is
    -- List --
    ----------
 
-   procedure List (Cmd : Command) is
-      Root_Release : constant Alire.Releases.Release := Root.Current.Release;
+   procedure List (Cmd : in out Command) is
+      Root_Release : constant Alire.Releases.Release := Cmd.Root.Release;
    begin
       Put_Line ("Dependencies (direct):");
       Root_Release.Dependencies.Print ("   ",
@@ -456,11 +461,11 @@ package body Alr.Commands.Withing is
                                        Sorted => True);
 
       if Cmd.Solve then
-         Requires_Full_Index; -- Load possible hints
-         Root.Current.Solution.Print (Root_Release,
-                                      Platform.Properties,
-                                      Detailed => True,
-                                      Level    => Always);
+         Cmd.Requires_Full_Index; -- Load possible hints
+         Cmd.Root.Solution.Print (Root_Release,
+                                  Platform.Properties,
+                                  Detailed => True,
+                                  Level    => Always);
       end if;
    end List;
 
@@ -484,7 +489,7 @@ package body Alr.Commands.Withing is
       end Check;
 
    begin
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
       if Cmd.URL.all /= "" then
          Flags := Flags + 1;
@@ -505,15 +510,14 @@ package body Alr.Commands.Withing is
             List (Cmd);
             return;
          elsif Cmd.Tree then
-            Root.Current.Solution.Print_Tree (Root.Current.Release);
+            Cmd.Root.Solution.Print_Tree (Cmd.Root.Release);
             return;
          elsif Cmd.Graph then
-            Root.Current.Solution.Print_Graph
-              (Root.Current.Release, Platform.Properties);
+            Cmd.Root.Solution.Print_Graph
+              (Cmd.Root.Release, Platform.Properties);
             return;
          elsif Cmd.Versions then
-            Requires_Full_Index;
-            Root.Current.Solution.Print_Versions (Root.Current);
+            Cmd.Root.Solution.Print_Versions (Cmd.Root);
             return;
          end if;
       end if;
@@ -533,21 +537,23 @@ package body Alr.Commands.Withing is
 
          if Cmd.URL.all /= "" then
             if Num_Arguments = 1 then
-               Add_Softlink (Dep_Spec => Argument (1),
+               Add_Softlink (Cmd,
+                             Dep_Spec => Argument (1),
                              Path     => Cmd.URL.all);
             else
-               Detect_Softlink (Cmd.URL.all);
+               Detect_Softlink (Cmd,
+                                Cmd.URL.all);
             end if;
          else
-            Requires_Full_Index;
-            Add;
+            Cmd.Requires_Full_Index;
+            Cmd.Add;
          end if;
 
       elsif Cmd.Del then
-         Del;
+         Del (Cmd);
       elsif Cmd.From then
-         Requires_Full_Index;
-         From;
+         Cmd.Requires_Full_Index;
+         From (Cmd);
       else
          raise Program_Error with "List should have already happened";
       end if;

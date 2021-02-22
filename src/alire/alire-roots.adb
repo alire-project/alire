@@ -21,7 +21,8 @@ package body Alire.Roots is
    -- Build_Context --
    -------------------
 
-   function Build_Context (This : Root) return Alire.Environment.Context is
+   function Build_Context (This : in out Root) return Alire.Environment.Context
+   is
    begin
       return Context : Alire.Environment.Context do
          Context.Load (This);
@@ -44,11 +45,11 @@ package body Alire.Roots is
    -- Create_For_Release --
    ------------------------
 
-   procedure Create_For_Release (This            : Releases.Release;
-                                 Parent_Folder   : Any_Path;
-                                 Env             : Alire.Properties.Vector;
-                                 Generate_Files  : Boolean := True;
-                                 Perform_Actions : Boolean := True)
+   function Create_For_Release (This            : Releases.Release;
+                                Parent_Folder   : Any_Path;
+                                Env             : Alire.Properties.Vector;
+                                Perform_Actions : Boolean := True)
+                                return Root
    is
       use Directories;
       Was_There : Boolean with Unreferenced;
@@ -87,34 +88,34 @@ package body Alire.Roots is
 
       --  And generate its working files, if they do not exist
 
-      if Generate_Files then
-         declare
-            Working_Dir : Guard (Enter (This.Unique_Folder))
-              with Unreferenced;
-            Root        : Alire.Roots.Root :=
-              Alire.Roots.New_Root
-                              (This,
-                               Ada.Directories.Current_Directory,
-                               Env);
-         begin
+      declare
+         Working_Dir : Guard (Enter (This.Unique_Folder))
+           with Unreferenced;
+         Root        : Alire.Roots.Root :=
+                         Alire.Roots.New_Root
+                           (This,
+                            Ada.Directories.Current_Directory,
+                            Env);
+      begin
 
-            Ada.Directories.Create_Path (Root.Working_Folder);
+         Ada.Directories.Create_Path (Root.Working_Folder);
 
-            --  Generate the authoritative manifest from index information for
-            --  eventual use of the gotten crate as a local workspace.
+         --  Generate the authoritative manifest from index information for
+         --  eventual use of the gotten crate as a local workspace.
 
-            Root.Write_Manifest;
+         Root.Write_Manifest;
 
-            --  Create also a preliminary lockfile (since dependencies are
-            --  still unretrieved). Once they are checked out, the lockfile
-            --  will be replaced with the complete solution.
+         --  Create also a preliminary lockfile (since dependencies are
+         --  still unretrieved). Once they are checked out, the lockfile
+         --  will be replaced with the complete solution.
 
-            Root.Set
-              (Solution => (if This.Dependencies (Env).Is_Empty
-                            then Alire.Solutions.Empty_Valid_Solution
-                            else Alire.Solutions.Empty_Invalid_Solution));
-         end;
-      end if;
+         Root.Set
+           (Solution => (if This.Dependencies (Env).Is_Empty
+                         then Alire.Solutions.Empty_Valid_Solution
+                         else Alire.Solutions.Empty_Invalid_Solution));
+
+         return Root;
+      end;
    end Create_For_Release;
 
    -------------------------
@@ -270,7 +271,7 @@ package body Alire.Roots is
    -- Export_Build_Environment --
    ------------------------------
 
-   procedure Export_Build_Environment (This : Root) is
+   procedure Export_Build_Environment (This : in out Root) is
       Context : Alire.Environment.Context;
    begin
       Context.Load (This);
@@ -708,7 +709,8 @@ package body Alire.Roots is
         (This.Crate_File,
          Base_Dir => Paths.Working_Folder_Inside_Root);
 
-      Release.To_File (This.Crate_File, Manifest.Local);
+      Release.Whenever (This.Environment)
+             .To_File (This.Crate_File, Manifest.Local);
    end Write_Manifest;
 
 end Alire.Roots;

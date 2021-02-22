@@ -13,7 +13,6 @@ with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
 with Alire.Utils.User_Input;
-with Alire.Workspace;
 
 with Alr.Commands.Build;
 with Alr.Platform;
@@ -29,7 +28,7 @@ package body Alr.Commands.Get is
    -- Retrieve --
    --------------
 
-   procedure Retrieve (Cmd      : Command;
+   procedure Retrieve (Cmd      : in out Command;
                        Name     : Alire.Crate_Name;
                        Versions : Semver.Extended.Version_Set)
    is
@@ -93,8 +92,7 @@ package body Alr.Commands.Get is
               (Rel.Dependencies (Platform.Properties),
                Platform.Properties,
                Alire.Solutions.Empty_Valid_Solution);
-            Diff := Alire.Solutions.New_Solution (Platform.Properties)
-              .Changes (Solution);
+            Diff := Alire.Solutions.Empty_Valid_Solution.Changes (Solution);
 
             if not Solution.Is_Complete then
                Diff.Print (Changed_Only => False,
@@ -123,11 +121,19 @@ package body Alr.Commands.Get is
          Root_Dir : Alire.Directories.Temp_File :=
                       Alire.Directories.With_Name (Rel.Unique_Folder);
       begin
-         Alire.Workspace.Deploy_Root
-           (Rel,
-            Ada.Directories.Current_Directory,
-            Platform.Properties,
-            Perform_Actions => False);
+         --  Create the Root for the given release, and store it for possible
+         --  future use.
+
+         Cmd.Set
+           (Alire.Roots.Create_For_Release
+              (Rel,
+               Ada.Directories.Current_Directory,
+               Platform.Properties,
+               Perform_Actions => False));
+
+         --  Set the initial solution we just found
+
+         Cmd.Root.Set (Solution);
 
          --  At this point, both crate and lock files must exist and
          --  be correct, so the working session is correct. Errors with
@@ -158,7 +164,7 @@ package body Alr.Commands.Get is
 
          --  Check out rest of dependencies and optionally compile
 
-         Alire.Workspace.Deploy_Dependencies (Solution => Solution);
+         Cmd.Root.Deploy_Dependencies;
 
          --  Execute the checked out release post_fetch actions, now that
          --  dependencies are in place. The complete build environment has
@@ -170,7 +176,8 @@ package body Alr.Commands.Get is
             Moment  => Alire.Properties.Actions.Post_Fetch);
 
          if Cmd.Build then
-            Build_OK := Commands.Build.Execute (Export_Build_Env => False);
+            Build_OK := Commands.Build.Execute (Cmd,
+                                                Export_Build_Env => False);
             --  Environment is already set up
          else
             Build_OK := True;
@@ -302,7 +309,7 @@ package body Alr.Commands.Get is
               ("--only is incompatible with --build");
          end if;
 
-         Requires_Full_Index;
+         Cmd.Requires_Full_Index;
 
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed

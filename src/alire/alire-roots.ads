@@ -20,11 +20,11 @@ package Alire.Roots is
 
    type Root (<>) is tagged private;
 
-   procedure Create_For_Release (This            : Releases.Release;
-                                 Parent_Folder   : Any_Path;
-                                 Env             : Properties.Vector;
-                                 Generate_Files  : Boolean := True;
-                                 Perform_Actions : Boolean := True);
+   function Create_For_Release (This            : Releases.Release;
+                                Parent_Folder   : Any_Path;
+                                Env             : Properties.Vector;
+                                Perform_Actions : Boolean := True)
+                                return Root;
    --  Prepare a workspace with This release as the root one, with manifest and
    --  lock files. IOWs, does everything but deploying dependencies. Intended
    --  to be called before a root exists, to build it. After this call,
@@ -72,9 +72,10 @@ package Alire.Roots is
    --  Retrieve the environment stored within this root. Environment here
    --  refers to the platform properties.
 
-   function Build_Context (This : Root) return Alire.Environment.Context;
+   function Build_Context (This : in out Root)
+                           return Alire.Environment.Context;
 
-   procedure Export_Build_Environment (This : Root);
+   procedure Export_Build_Environment (This : in out Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
    function Path (This : Root) return Absolute_Path;

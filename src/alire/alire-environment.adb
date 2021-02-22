@@ -3,15 +3,15 @@ with GNAT.OS_Lib;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alire_Early_Elaboration;
+with Alire.Environment.Formatting;
 with Alire.Errors;
 with Alire.Properties.Environment; use Alire.Properties.Environment;
-with Alire.Properties.Scenarios;
 with Alire.OS_Lib;
 with Alire.GPR;
+with Alire.Properties.Scenarios;
 with Alire.Roots;
 with Alire.Solutions;
 with Alire.Utils;
-with Alire.Environment.Formatting;
 with Alire.Utils.TTY;
 with Alire.Platform;
 
@@ -83,7 +83,7 @@ package body Alire.Environment is
    ----------
 
    procedure Load (This : in out Context;
-                   Root :        Alire.Roots.Root)
+                   Root : in out Alire.Roots.Root)
    is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
@@ -137,7 +137,7 @@ package body Alire.Environment is
    ----------
 
    procedure Load (This            : in out Context;
-                   Root            : Roots.Root;
+                   Root            : in out Roots.Root;
                    Crate           : Crate_Name)
    is
       Rel    : constant Releases.Release := Root.Release (Crate);

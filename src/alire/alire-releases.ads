@@ -294,6 +294,8 @@ package Alire.Releases is
    function To_TOML (R      : Release;
                      Format : Manifest.Sources)
                      return TOML.TOML_Value;
+   --  Convert the manifest to TOML. This is done currently only for a concrete
+   --  platform, hence R.Whenever should have been already called.
 
    overriding
    function To_YAML (R : Release) return String;

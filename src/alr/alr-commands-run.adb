@@ -6,7 +6,6 @@ with Alr.Commands.Build;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Platform;
-with Alr.Root;
 with Alr.Utils;
 
 with GNAT.OS_Lib;
@@ -21,11 +20,12 @@ package body Alr.Commands.Run is
    -- Check_Report --
    ------------------
 
-   procedure Check_Report (Exe_Name : String) is
+   procedure Check_Report (Cmd      : in out Command;
+                           Exe_Name : String) is
       use Ada.Text_IO;
 
       Found_At : constant Utils.String_Vector :=
-        Files.Locate_File_Under (Root.Current.Path,
+        Files.Locate_File_Under (Cmd.Root.Path,
                                  Exe_Name, Max_Depth => Max_Search_Depth);
    begin
       Put ("   " & Exe_Name);
@@ -47,9 +47,9 @@ package body Alr.Commands.Run is
    overriding procedure Execute (Cmd : in out Command) is
       use type GNAT.Strings.String_Access;
 
-      Name       : constant String := Root.Current.Release.Name_Str;
+      Name       : constant String := Cmd.Root.Release.Name_Str;
       Declared   : constant Utils.String_Vector :=
-                     Root.Current.Release.Executables (Platform.Properties);
+                     Cmd.Root.Release.Executables (Platform.Properties);
 
       ----------
       -- List --
@@ -58,8 +58,8 @@ package body Alr.Commands.Run is
 
       procedure List is
          Candidates : constant Utils.String_Vector := Files.Locate_File_Under
-           (Root.Current.Path,
-            Root.Current.Release.Default_Executable,
+           (Cmd.Root.Path,
+            Cmd.Root.Release.Default_Executable,
             Max_Depth => Max_Search_Depth);
          --  Candidate default executable
       begin
@@ -74,30 +74,30 @@ package body Alr.Commands.Run is
             else
                Put_Line ("However, the following default executables" &
                            " have been autodetected:");
-               Check_Report (Root.Current.Release.Default_Executable);
+               Check_Report (Cmd, Cmd.Root.Release.Default_Executable);
             end if;
 
          else
             Put_Line ("Crate " & Name & " builds these executables:");
             for Exe of Declared loop
-               Check_Report (Exe);
+               Check_Report (Cmd, Exe);
             end loop;
 
             --  Default one:
             if not Declared.Contains
-              (Root.Current.Release.Default_Executable)
+              (Cmd.Root.Release.Default_Executable)
               and then
                 not Candidates.Is_Empty
             then
                Put_Line ("In addition, the following default-named" &
                            " executables have been detected:");
-               Check_Report (Root.Current.Release.Default_Executable);
+               Check_Report (Cmd, Cmd.Root.Release.Default_Executable);
             end if;
          end if;
       end List;
 
    begin
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
       --  Validation
       if Cmd.List
@@ -118,7 +118,7 @@ package body Alr.Commands.Run is
       declare
          Declared : Utils.String_Vector;
       begin
-         Declared := Root.Current.Release.Executables (Platform.Properties);
+         Declared := Cmd.Root.Release.Executables (Platform.Properties);
 
          --  LISTING  --
          if Cmd.List then
@@ -128,7 +128,7 @@ package body Alr.Commands.Run is
 
          --  COMPILATION  --
          if not Cmd.No_Compile then
-            if not Commands.Build.Execute (Export_Build_Env => True) then
+            if not Commands.Build.Execute (Cmd, Export_Build_Env => True) then
                Reportaise_Command_Failed ("Build failed");
             end if;
          end if;
@@ -153,7 +153,7 @@ package body Alr.Commands.Run is
 
          if Num_Arguments = 1
            and then not Declared.Contains (Argument (1))
-           and then Argument (1) /= Root.Current.Release.Default_Executable
+           and then Argument (1) /= Cmd.Root.Release.Default_Executable
          then
             Reportaise_Wrong_Arguments
               ("The requested executable is not built by this release"
@@ -171,7 +171,7 @@ package body Alr.Commands.Run is
                else
                  (if Declared.Length = 1
                   then Declared.First_Element
-                  else Root.Current.Release.Default_Executable));
+                  else Cmd.Root.Release.Default_Executable));
 
             Target : constant String :=
               (if Alire.OS_Lib.Exe_Suffix /= ""
@@ -182,7 +182,7 @@ package body Alr.Commands.Run is
 
             Target_Exes : Utils.String_Vector :=
                             Files.Locate_File_Under
-                              (Root.Current.Path,
+                              (Cmd.Root.Path,
                                Target,
                                Max_Depth => Max_Search_Depth);
          begin

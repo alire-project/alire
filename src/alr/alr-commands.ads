@@ -1,6 +1,7 @@
 with GNAT.Command_Line;
 
 with Alire.Directories;
+with Alire.Roots.Optional;
 with Alire.Solver;
 with Alire.Utils;
 
@@ -28,7 +29,7 @@ package Alr.Commands is
    -- Command --
    -------------
 
-   type Command is limited interface;
+   type Command is abstract tagged limited private;
    --  This type encapsulates configuration and execution of a specific
    --  command. It also has help-related subprograms. Help is structured as:
    --  1. SUMMARY, showing <one-liner explanation>
@@ -80,13 +81,26 @@ package Alr.Commands is
    -- Supporting subprograms for commands --
    -----------------------------------------
 
-   procedure Requires_Full_Index (Force_Reload : Boolean := False);
+   function Root (Cmd : in out Command'Class)
+                  return Alire.Roots.Optional.Reference;
+   --  Using this call will ensure the Root detection has been attempted
+
+   procedure Set (Cmd  : in out Command'Class;
+                  Root : Alire.Roots.Root);
+   --  Replace the current root in the command. Must be called by commands that
+   --  modify the root information (manifest or lockfile).
+
+   procedure Requires_Full_Index (Cmd          : in out Command'Class;
+                                  Force_Reload : Boolean := False);
    --  Unless Force_Reload, if the index is not empty we no nothing
 
-   procedure Requires_Valid_Session (Sync : Boolean := True);
-   --  Verifies that a valid working dir is in scope. If Sync, enforce that the
-   --  manifest, lockfile and dependencies on disk are in sync, by performing
-   --  a silent update. If not Sync, only a minimal empty lockfile is created.
+   procedure Requires_Valid_Session (Cmd          : in out Command'Class;
+                                     Sync         : Boolean := True);
+   --  Verifies that a valid working dir is in scope. After calling it,
+   --  Cmd.Root will be usable if alr was run inside a Root. If Sync, enforce
+   --  that the manifest, lockfile and dependencies on disk are in sync, by
+   --  performing a silent update. If not Sync, only a minimal empty lockfile
+   --  is created.
 
    ---------------------------
    --  command-line helpers --
@@ -165,6 +179,10 @@ package Alr.Commands is
    --  Attempt to find the root alire working dir if deeper inside it
 
 private
+
+   type Command is abstract tagged limited record
+      Optional_Root : Alire.Roots.Optional.Root;
+   end record;
 
    --  Facilities for command/argument identification. These are available to
    --  commands.

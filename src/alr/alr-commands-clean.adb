@@ -3,7 +3,6 @@ with Ada.Directories;
 with Alire.Utils;
 
 with Alr.Paths;
-with Alr.Root;
 with Alr.Spawn;
 with Alr.Platform;
 
@@ -17,15 +16,15 @@ package body Alr.Commands.Clean is
    procedure Execute (Cmd : in out Command) is
       use Alire.Utils;
    begin
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
       if not Cmd.Cache then
-         Alr.Root.Current.Export_Build_Environment;
+         Cmd.Root.Export_Build_Environment;
 
          Trace.Detail ("Cleaning project and dependencies...");
 
          --  Clean all the project files
-         for Gpr_File of Root.Current.Release.Project_Files
+         for Gpr_File of Cmd.Root.Release.Project_Files
            (Platform.Properties, With_Path => True)
          loop
 
