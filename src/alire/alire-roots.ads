@@ -3,21 +3,35 @@ private with AAA.Caches.Files;
 limited with Alire.Environment;
 with Alire.Containers;
 private with Alire.Lockfiles;
+with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Requisites;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils;
+with Alire.Utils.User_Input;
 
 package Alire.Roots is
 
-   Crate_File_Name : constant String := "alire.toml";
+   Crate_File_Name : String renames Paths.Crate_File_Name;
 
    --  Type used to encapsulate the information about the working context.
    --  A valid alire working dir is one containing an alire/crate.toml file.
 
    type Root (<>) is tagged private;
+
+   procedure Create_For_Release (This            : Releases.Release;
+                                 Parent_Folder   : Any_Path;
+                                 Env             : Properties.Vector;
+                                 Generate_Files  : Boolean := True;
+                                 Perform_Actions : Boolean := True);
+   --  Prepare a workspace with This release as the root one, with manifest and
+   --  lock files. IOWs, does everything but deploying dependencies. Intended
+   --  to be called before a root exists, to build it. After this call,
+   --  the Root is usable. For when retrieval is with --only (e.g., in a
+   --  platform where it is unavailable, but we want to inspect the sources),
+   --  Generate_Files and Perform_Actions allow disabling these operations that
+   --  make no sense for the Release on isolation.
 
    function Load_Root (Path : Any_Path) return Root;
    --  Attempt to detect a root at the given path. The root will be valid if
@@ -120,6 +134,17 @@ package Alire.Roots is
    --  edited but the solution hasn't changed (and so the lockfile hasn't been
    --  regenerated). This way we know the lockfile is valid for the manifest.
 
+   function Compute_Update
+     (This        : in out Root;
+      Allowed     : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set;
+      Options     : Solver.Query_Options := Solver.Default_Options)
+      return Solutions.Solution;
+   --  Compute a new solution for the workspace. If Allowed is not empty,
+   --  crates not appearing in Allowed are held back at their current version.
+   --  This function loads configured indexes from disk. No changes are
+   --  applied to This root.
+
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
@@ -132,6 +157,15 @@ package Alire.Roots is
        with Pre => This.Has_Lockfile;
    --  Resolve and update all or given crates in a root. When silent, run
    --  as in non-interactive mode as this is an automatically-triggered update.
+
+   procedure Update_And_Deploy_Dependencies
+     (This    : in out Roots.Root;
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
+   --  Call Update and Deploy_Dependencies in succession for the given root
+
+   procedure Write_Manifest (This : Root);
+   --  Generates the crate.toml manifest at the appropriate location for Root
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
