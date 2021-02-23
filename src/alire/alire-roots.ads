@@ -30,8 +30,8 @@ package Alire.Roots is
    --  to be called before a root exists, to build it. After this call,
    --  the Root is usable. For when retrieval is with --only (e.g., in a
    --  platform where it is unavailable, but we want to inspect the sources),
-   --  Generate_Files and Perform_Actions allow disabling these operations that
-   --  make no sense for the Release on isolation.
+   --  Perform_Actions allow disabling these operations that make no sense for
+   --  the Release on isolation.
 
    function Load_Root (Path : Any_Path) return Root;
    --  Attempt to detect a root at the given path. The root will be valid if
@@ -115,7 +115,7 @@ package Alire.Roots is
                           Check_Valid : Boolean := False)
                           return Boolean;
    --  Check the corresponding lockfile storing a solution for the root
-   --  dependencies exists and (optionally, expensive) whether is loadable.
+   --  dependencies exists and (optionally, expensive) whether it is loadable.
 
    function Is_Lockfile_Outdated (This : Root) return Boolean
      with Pre => This.Has_Lockfile;

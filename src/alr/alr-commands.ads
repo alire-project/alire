@@ -87,8 +87,9 @@ package Alr.Commands is
 
    procedure Set (Cmd  : in out Command'Class;
                   Root : Alire.Roots.Root);
-   --  Replace the current root in the command. Must be called by commands that
-   --  modify the root information (manifest or lockfile).
+   --  Replace the current root in use by the command. Modifying the root via
+   --  the Cmd.Root reference is valid and intended usage that does not require
+   --  resetting the root.
 
    procedure Requires_Full_Index (Cmd          : in out Command'Class;
                                   Force_Reload : Boolean := False);
