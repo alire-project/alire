@@ -5,8 +5,8 @@ if ! builtin type -P alr &>/dev/null; then
     return
 fi
 
-# Commands
-_alr_commands=$(alr | sed -n '/Valid commands:/,/Help topics:/p' | tail -n +3 | head -n -2 | awk '{ print $1 }' | xargs)
+# Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
+_alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
 
 # Long global switches
 _alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
