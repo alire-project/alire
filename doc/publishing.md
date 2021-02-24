@@ -180,14 +180,24 @@ assistant will resume as if it had been invoked with `alr publish <URL>`
 In case your project does not easily map to a single Alire crate (e.g., because
 you manage multiple project files with different dependencies, or there are
 other reasons to keep the sources together even if they generate several
-crates), the `alr publish` command provides a `--manifest <file>` switch to
-help with the process. You can have different manifests at custom locations
-(other than the expected `./alire.toml`) and provide each one in turn with the
-`--manifest` switch to create their respective crate.
+crates), you have several options.
+
+The simplest one would be to make each crate a subdirectory within the
+repository, with its corresponding Alire manifest, sources and project files.
+Then, you can use `alr publish --tar` normally inside each subdirectory.
 
 Another possibility would be to use a bit of scripting to create temporary
-subfolders with the necessary sources, project files, and expected `alire.toml`
-in the subfolder root, and using `alr publish --tar` normally.
+subfolders with the described organization, and again using `alr publish --tar`
+normally.
+
+Finally, the `alr publish` command provides a `--manifest <file>` switch to
+work in place with several crates. You can have different manifests at custom
+locations (other than the expected `./alire.toml`) and provide each one in turn
+with the `--manifest` switch to create their respective crate. In this case,
+`alr` temporarily uses the given file as the root manifest, so all sources will
+be packaged for each crate. This is a bit wasteful, but as long as each crate's
+project files are properly defined (no shared sources), this remains an option
+to split the sources into crates.
 
 ### Starting from other configurations
 
