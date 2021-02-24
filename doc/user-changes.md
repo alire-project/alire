@@ -81,8 +81,9 @@ accepted at all.
 PR [#611](https://github.com/alire-project/alire/pull/611).
 
 The code editor launched by `alr edit` can now be configured instead of using
-the hard-coded GNATstudio. Use `alr config --set --global editor.cmd "<BINARY>
-<ARGS>"` for custom editor and command line arguments. The token ${GPR_FILE} is
+the hard-coded GNATstudio. Use
+`alr config --set --global editor.cmd "<BINARY> <ARGS>"`
+for custom editor and command line arguments. The token ${GPR_FILE} is
 replaced by a path to the project file to open.
 
 For instance:
