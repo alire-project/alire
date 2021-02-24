@@ -4,6 +4,7 @@ with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Config;
+with Alire.Dependencies;
 with Alire.Lockfiles;
 with Alire.Milestones;
 with Alire.Paths;
@@ -401,9 +402,7 @@ package body Alr.Commands.Init is
 
       declare
          Name  : constant String := Argument (1);
-         Check : constant Alire.Milestones.Allowed_Milestones :=
-                   Alire.Milestones.Crate_Versions (Name)
-                   with Unreferenced;
+         Check : constant Alire.Crate_Name := +Name with Unreferenced;
       begin
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
          then

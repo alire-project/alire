@@ -301,8 +301,8 @@ package body Alr.Commands.Get is
       end if;
 
       declare
-         Allowed : constant Alire.Milestones.Allowed_Milestones :=
-           Alire.Milestones.Crate_Versions (Argument (1));
+         Allowed : constant Alire.Dependencies.Dependency :=
+           Alire.Dependencies.From_String (Argument (1));
       begin
          if Cmd.Build and Cmd.Only then
             Reportaise_Wrong_Arguments

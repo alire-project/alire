@@ -58,8 +58,8 @@ package body Alr.Commands.Withing is
                  return Alire.Conditional.Dependencies
    is
       use all type Alire.Conditional.Dependencies;
-      Requested : constant Alire.Milestones.Allowed_Milestones :=
-        Alire.Milestones.Crate_Versions (New_Dep);
+      Requested : constant Alire.Dependencies.Dependency :=
+        Alire.Dependencies.From_String (New_Dep);
    begin
 
       --  Check that the requested dependency exists
@@ -95,10 +95,8 @@ package body Alr.Commands.Withing is
    procedure Add_Softlink (Cmd      : in out Command;
                            Dep_Spec : String;
                            Path     : String) is
-      Requested : constant Alire.Milestones.Allowed_Milestones :=
-                    Alire.Milestones.Crate_Versions (Dep_Spec);
-      New_Dep   : constant Alire.Dependencies.Dependency :=
-                    Alire.Dependencies.From_Milestones (Requested);
+      New_Dep : constant Alire.Dependencies.Dependency :=
+                  Alire.Dependencies.From_String (Dep_Spec);
    begin
       --  Confirm target dir
 
@@ -193,8 +191,8 @@ package body Alr.Commands.Withing is
    is
       use all type Alire.Conditional.Dependencies;
       use all type Semantic_Versioning.Extended.Version_Set;
-      Requested : constant Alire.Milestones.Allowed_Milestones :=
-                    Alire.Milestones.Crate_Versions (Old_Dep);
+      Requested : constant Alire.Dependencies.Dependency :=
+                    Alire.Dependencies.From_String (Old_Dep);
       Found     : Boolean := False;
    begin
       if Requested.Versions /= Semantic_Versioning.Extended.Any then

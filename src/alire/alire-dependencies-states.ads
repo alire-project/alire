@@ -150,8 +150,8 @@ private
    --  Base overridings
 
    overriding
-   function From_Milestones (Unused : Milestones.Allowed_Milestones)
-                             return State;
+   function From_String (Unused_Spec : String) return State
+   is (raise Program_Error with "Not intended for use");
 
    overriding
    function From_TOML (Unused_Key   : String;
@@ -209,15 +209,6 @@ private
 
    function As_Dependency (This : State) return Dependencies.Dependency
    is (Dependencies.Dependency (This));
-
-   ---------------------
-   -- From_Milestones --
-   ---------------------
-
-   overriding
-   function From_Milestones (Unused : Milestones.Allowed_Milestones)
-                             return State
-   is (raise Unimplemented); -- not needed
 
    ---------------
    -- From_TOML --
