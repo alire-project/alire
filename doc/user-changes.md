@@ -6,7 +6,17 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
-No changes yet since the release of `1.0`.
+### Switch to help with publishing of multi-crate repositories
+
+PR [#635](https://github.com/alire-project/alire/pull/635).
+
+The `alr publish` command now supports a new `--manifest <file>` switch, to
+help with packaging sources that provide several crates. Maintainers can now
+prepare different manifest files for the corresponding crates, and select each
+one in turn for publishing, without the repository itself being an actual Alire
+crate.  Source management must still be taken care of by maintainers; sources
+should not be shared by project files in different crates intended to be
+simultaneously included.
 
 ## Release `1.0`
 
@@ -79,17 +89,6 @@ licenses = "MIT OR custom-my-own-license"
 For the `1.x` release, usage of the previous `licenses` format is obsolete and
 will trigger a warning. In future major releases this format will not be
 accepted at all.
-
-### Custom editor command for `alr edit`
-
-PR [#635](https://github.com/alire-project/alire/pull/635).
-
-The `alr publish` command now supports a new `--manifest <file>` switch, to
-help with packaging sources that provide several crates. Maintainers can now
-have several manifest files for the different crates, and select each one in
-turn for publishing. Sources management must still be done by properly
-isolating them in the corresponding `.gpr` project files (no help from `alr` in
-that regard).
 
 ### Custom editor command for `alr edit`
 
