@@ -807,12 +807,12 @@ package body Alire.Properties.Configurations is
             begin
                exit when Key = "";
 
-               if Key = TOML_Keys.Config_Vars then
+               if Key = "variables" then
                   Nested := Definitions_From_TOML
-                    (From.Descend (Key, Val, TOML_Keys.Config_Vars));
-               elsif Key = TOML_Keys.Config_Sets then
+                    (From.Descend (Key, Val, "variables"));
+               elsif Key = "settings" then
                   Nested := Assignments_From_TOML
-                    (From.Descend (Key, Val, TOML_Keys.Config_Vars));
+                    (From.Descend (Key, Val, "settings"));
                else
                   Raise_Checked_Error ("Unknown configuration entry: "
                                        & Key);

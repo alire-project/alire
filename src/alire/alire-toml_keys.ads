@@ -11,8 +11,8 @@ package Alire.TOML_Keys with Preelaborate is
    Available      : constant String := "available";
    Compiler       : constant String := "compiler";
    Configuration  : constant String := "configuration";
-   Config_Vars    : constant String := "variables";
-   Config_Sets    : constant String := "settings";
+   Config_Vars    : constant String := "configuration.variables";
+   Config_Sets    : constant String := "configuration.settings";
    Depends_On     : constant String := "depends-on";
    Description    : constant String := "description";
    Distribution   : constant String := "distribution";

@@ -5,6 +5,13 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.TOML_Adapters with Preelaborate is
 
+   function Create_Table (Key   : String;
+                          Value : TOML.TOML_Value)
+                          return TOML.TOML_Value with
+     Pre  => (for all Char of Key => Char /= '.'),
+     Post => Create_Table'Result.Kind in TOML.TOML_Table;
+   --  Create a table with a single key and value
+
    type Key_Queue is tagged private;
    --  Helper type that simplifies keeping track of processed keys during load.
    --  Also encapsulates a context that can be used to pinpoint errors better.

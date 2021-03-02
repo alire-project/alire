@@ -539,5 +539,7 @@ private
    --  dependencies)
    --  Array values with same key are consolidated in a single array
    --    (e.g., actions, which are created as an array of tables).
+   --  Keys containing one dot are split as nested tables. More than one dot
+   --  is an error.
 
 end Alire.Conditional_Trees;
