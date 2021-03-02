@@ -16,8 +16,7 @@ package Alire.Properties.From_TOML is
    type Property_Keys is (Actions,
                           Authors,
                           Auto_GPR_With,
-                          Config_Variables,
-                          Config_Settings,
+                          Configuration,
                           Description,
                           Environment,
                           Executables,
@@ -106,12 +105,8 @@ package Alire.Properties.From_TOML is
       Authors       => Labeled.From_TOML'Access,
       Auto_GPR_With => Bool.From_TOML'Access,
       Description   => Labeled.From_TOML'Access,
-
-      Config_Variables =>
-        Properties.Configurations.Definitions_From_TOML'Access,
-      Config_Settings  =>
-        Properties.Configurations.Assignements_From_TOML'Access,
-
+      Configuration =>
+        Properties.Configurations.Config_Entry_From_TOML'Access,
       Environment      =>
         Properties.Environment.From_TOML'Access,
       Executables   => Labeled.From_TOML'Access,
@@ -136,12 +131,8 @@ package Alire.Properties.From_TOML is
 
    Loaders_During_Case : constant array (Property_Keys) of Property_Loader
      := (Actions           => Properties.Actions.From_TOML'Access,
-
-         Config_Variables  =>
-           Properties.Configurations.Definitions_From_TOML'Access,
-         Config_Settings   =>
-           Properties.Configurations.Assignements_From_TOML'Access,
-
+         Configuration     =>
+           Properties.Configurations.Config_Entry_From_TOML'Access,
          Environment       => Properties.Environment.From_TOML'Access,
          Executables       => Labeled.From_TOML_Executable_Cases'Access,
          GPR_Set_Externals => Scenarios.From_TOML_Cases'Access,
