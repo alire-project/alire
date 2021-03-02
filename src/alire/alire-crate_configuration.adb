@@ -6,10 +6,7 @@ with Ada.Characters.Handling;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
 with Alire.Roots;
-with Alire.Utils.TTY;
 with Alire.Origins;
-
-with GNAT.IO;
 
 with Alire.Directories;
 
@@ -17,7 +14,6 @@ with TOML; use TOML;
 
 package body Alire.Crate_Configuration is
 
-   package TTY renames Utils.TTY;
    package TIO renames Ada.Text_IO;
 
    ----------
@@ -30,22 +26,9 @@ package body Alire.Crate_Configuration is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
 
-      --  Warnings when setting up an incomplete environment
-
       if not Solution.Is_Complete then
-         Trace.Debug ("Generating incomplete environment"
-                      & " because of missing dependencies");
-
-         --  Normally we would generate a warning, but since that will pollute
-         --  the output making it unusable, for once we write directly to
-         --  stderr (unless quiet is in effect):
-
-         if not Alire_Early_Elaboration.Switch_Q then
-            GNAT.IO.Put_Line
-              (GNAT.IO.Standard_Error,
-               TTY.Warn ("warn:") & " Generating incomplete environment"
-               & " because of missing dependencies");
-         end if;
+         Trace.Warning ("Generating possibly incomplete configuration"
+                        & " because of missing dependencies");
       end if;
 
       for Rel of Solution.Releases.Including (Root.Release) loop
@@ -74,22 +57,9 @@ package body Alire.Crate_Configuration is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
 
-      --  Warnings when setting up an incomplete environment
-
       if not Solution.Is_Complete then
-         Trace.Debug ("Generating incomplete environment"
+         Trace.Warning ("Generating possibly incomplete configuration"
                       & " because of missing dependencies");
-
-         --  Normally we would generate a warning, but since that will pollute
-         --  the output making it unusable, for once we write directly to
-         --  stderr (unless quiet is in effect):
-
-         if not Alire_Early_Elaboration.Switch_Q then
-            GNAT.IO.Put_Line
-              (GNAT.IO.Standard_Error,
-               TTY.Warn ("warn:") & " Generating incomplete environment"
-               & " because of missing dependencies");
-         end if;
       end if;
 
       for Rel of Solution.Releases.Including (Root.Release) loop
