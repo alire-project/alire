@@ -4,6 +4,10 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+## Release `1.1`
+
+No changes yet since the release of `1.0`.
+
 ## Release `1.0`
 
 ### Narrow down versions for dependencies given without restrictions

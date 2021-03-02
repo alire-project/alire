@@ -9,7 +9,8 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "1.0.0";
+   Version : constant String := "1.1.0-dev";
+   --  1.1.0-dev: begin post-1.0 changes
    --  1.0.0:     no changes since rc3
    --  1.0.0-rc3: added help colors PR
    --  1.0.0-rc2: move community index to stable-1.0 branch
