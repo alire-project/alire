@@ -640,6 +640,7 @@ package body Alire.Releases is
          File_Name);
    exception
       when E : others =>
+         Log_Exception (E);
          --  As this file is edited manually, it may not load for many reasons
          Raise_Checked_Error (Errors.Wrap ("Failed to load " & File_Name,
                                            Errors.Get (E)));
@@ -729,6 +730,8 @@ package body Alire.Releases is
       return From.Report_Extra_Keys;
    exception
       when E : others =>
+         Log_Exception (E);
+
          TOML_Expressions.Strict_Enums := Strict_Before;
 
          case Source is

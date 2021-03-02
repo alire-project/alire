@@ -734,7 +734,7 @@ package body Alire.Properties.Configurations is
    -- Assignements_From_TOML --
    ----------------------------
 
-   function Assignements_From_TOML (From : TOML_Adapters.Key_Queue)
+   function Assignments_From_TOML (From : TOML_Adapters.Key_Queue)
                                     return Conditional.Properties
    is
       use Conditional.For_Properties;
@@ -781,6 +781,52 @@ package body Alire.Properties.Configurations is
             Raw.Unset (Item.Key);
          end loop;
       end return;
-   end Assignements_From_TOML;
+   end Assignments_From_TOML;
+
+   ----------------------------
+   -- Config_Entry_From_TOML --
+   ----------------------------
+
+   function Config_Entry_From_TOML (From : TOML_Adapters.Key_Queue)
+                                    return Conditional.Properties
+   is
+      Config : constant TOML_Adapters.Key_Queue :=
+                 From.Descend
+                   (From.Checked_Pop
+                      (TOML_Keys.Configuration, TOML_Table),
+                    TOML_Keys.Configuration);
+
+   begin
+      return Props : Conditional.Properties do
+         while True loop
+            declare
+               Val    : TOML_Value;
+               Key    : constant String := Config.Pop (Val);
+               Nested : Conditional.Properties;
+               --  For nested tables under [configuration]
+            begin
+               exit when Key = "";
+
+               if Key = TOML_Keys.Config_Vars then
+                  Nested := Definitions_From_TOML
+                    (From.Descend (Key, Val, TOML_Keys.Config_Vars));
+               elsif Key = TOML_Keys.Config_Sets then
+                  Nested := Assignments_From_TOML
+                    (From.Descend (Key, Val, TOML_Keys.Config_Vars));
+               else
+                  Raise_Checked_Error ("Unknown configuration entry: "
+                                       & Key);
+               end if;
+
+               Props.Append (Nested);
+            end;
+         end loop;
+
+         if Props.Is_Empty then
+            Props := Conditional.New_Property
+              (Config_Entry'(Property with null record));
+         end if;
+      end return;
+   end Config_Entry_From_TOML;
 
 end Alire.Properties.Configurations;

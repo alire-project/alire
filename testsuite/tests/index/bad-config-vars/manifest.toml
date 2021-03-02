@@ -11,4 +11,4 @@ maintainers-logins = ["mylogin"]
 [origin]
 url = "file:."
 
-[config_variables]
+[configuration.variables]

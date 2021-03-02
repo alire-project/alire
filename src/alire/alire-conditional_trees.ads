@@ -202,7 +202,10 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Concatenation
 
    function "and" (L : Tree; R : Values) return Tree is
-      ("and" (L, New_Value (R)));
+     ("and" (L, New_Value (R)));
+
+   procedure Append (L : in out Tree; R : Tree);
+   --  Same as L := L and R;
 
    function "or" (L, R : Tree) return Tree;
 

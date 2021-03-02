@@ -252,6 +252,15 @@ package body Alire.Conditional_Trees is
       end if;
    end "or";
 
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (L : in out Tree; R : Tree) is
+   begin
+      L := L and R;
+   end Append;
+
    ----------------
    -- Leaf_Count --
    ----------------
