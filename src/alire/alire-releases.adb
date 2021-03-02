@@ -887,8 +887,10 @@ package body Alire.Releases is
         "short_description: " & Utils.YAML.YAML_Stringify (R.Description) &
         ASCII.LF &
         "dependencies: " & R.Dependencies.To_YAML & ASCII.LF &
-        "config_variables: " & Props_To_YAML (R.Config_Variables) & ASCII.LF &
-        "config_settings: " & Props_To_YAML (R.Config_Settings) & ASCII.LF;
+        "configuration.variables: " &
+           Props_To_YAML (R.Config_Variables) & ASCII.LF &
+        "configuration.settings: " &
+           Props_To_YAML (R.Config_Settings) & ASCII.LF;
    end To_YAML;
 
    -------------

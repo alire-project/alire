@@ -113,7 +113,7 @@ private
 
    overriding
    function Key (This : Config_Type_Definition) return String
-   is (TOML_Keys.Configuration & "." & TOML_Keys.Config_Vars);
+   is (TOML_Keys.Config_Vars);
 
    overriding
    function Image (This : Config_Type_Definition) return String;
@@ -129,7 +129,7 @@ private
 
    overriding
    function Key (This : Config_Value_Assignment) return String
-   is (TOML_Keys.Configuration & "." & Alire.TOML_Keys.Config_Sets);
+   is (Alire.TOML_Keys.Config_Sets);
 
    overriding
    function To_TOML (This : Config_Value_Assignment) return TOML.TOML_Value;
