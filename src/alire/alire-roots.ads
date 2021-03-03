@@ -1,7 +1,6 @@
 private with AAA.Caches.Files;
 
 limited with Alire.Environment;
-with Alire.Conditional;
 with Alire.Containers;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -69,6 +68,11 @@ package Alire.Roots is
    is (This.Storage_Error = "");
    --  Check that a root is properly stored (manifest on disk is loadable)
 
+   function Direct_Withs (This      : in out Root;
+                          Dependent : Releases.Release)
+                          return Utils.String_Set;
+   --  Obtain the project files required by Dependent in This.Solution
+
    function Environment (This : Root) return Properties.Vector;
    --  Retrieve the environment stored within this root. Environment here
    --  refers to the platform properties.
@@ -86,7 +90,6 @@ package Alire.Roots is
    --  Return all the paths that should be set in GPR_PROJECT_PATH for the
    --  solution in this root. This includes all releases' paths and any linked
    --  directories.
-
 
    function Release (This : Root) return Releases.Release;
 

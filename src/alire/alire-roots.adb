@@ -2,17 +2,15 @@ with Ada.Calendar;
 with Ada.Directories;
 
 with Alire.Conditional;
+with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
-with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.Utils.TTY;
-with Alire.Utils.User_Input;
-with Alire.Workspace;
 
 with GNAT.OS_Lib;
 
@@ -36,7 +34,7 @@ package body Alire.Roots is
    -- Direct_Withs --
    ------------------
 
-   function Direct_Withs (This      : Root;
+   function Direct_Withs (This      : in out Root;
                           Dependent : Releases.Release)
                           return Utils.String_Set
    is
@@ -69,7 +67,7 @@ package body Alire.Roots is
    -- Generate_Configuration --
    ----------------------------
 
-   procedure Generate_Configuration (This : Root) is
+   procedure Generate_Configuration (This : in out Root) is
       Conf : Alire.Crate_Configuration.Global_Config;
    begin
       Conf.Load (This);
@@ -264,7 +262,7 @@ package body Alire.Roots is
       This.Solution.Print_Hints (This.Environment);
 
       --  Update/Create configuration files
-      Root.Generate_Configuration;
+      This.Generate_Configuration;
 
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
@@ -692,7 +690,7 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
 
          --  Update/Create configuration files
-         Root.Generate_Configuration;
+         This.Generate_Configuration;
 
          Trace.Detail ("Update completed");
       end;
@@ -727,7 +725,7 @@ package body Alire.Roots is
       end if;
 
       --  Update/Create configuration files
-      Root.Generate_Configuration;
+      This.Generate_Configuration;
 
    end Update_And_Deploy_Dependencies;
 

@@ -15,10 +15,10 @@ package Alire.Crate_Configuration is
    type Global_Config is tagged limited private;
 
    procedure Load (This : in out Global_Config;
-                   Root :        Alire.Roots.Root);
+                   Root : in out Alire.Roots.Root);
 
    procedure Generate_Config_Files (This : Global_Config;
-                                    Root : Alire.Roots.Root);
+                                    Root : in out Alire.Roots.Root);
 
 private
 
@@ -48,11 +48,11 @@ private
    --  has no default value.
 
    procedure Load_Definitions (This            : in out Global_Config;
-                               Root            : Roots.Root;
+                               Root            : in out Roots.Root;
                                Crate           : Crate_Name);
 
    procedure Load_Settings (This            : in out Global_Config;
-                            Root            : Roots.Root;
+                            Root            : in out Roots.Root;
                             Crate           : Crate_Name);
 
    procedure Generate_Ada_Config (This     : Global_Config;

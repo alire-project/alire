@@ -21,7 +21,7 @@ package body Alire.Crate_Configuration is
    ----------
 
    procedure Load (This : in out Global_Config;
-                   Root :        Alire.Roots.Root)
+                   Root : in out Alire.Roots.Root)
    is
       Solution : constant Solutions.Solution := Root.Solution;
    begin
@@ -49,7 +49,7 @@ package body Alire.Crate_Configuration is
    ---------------------------
 
    procedure Generate_Config_Files (This : Global_Config;
-                                    Root : Alire.Roots.Root)
+                                    Root : in out Alire.Roots.Root)
    is
       use Alire.Directories;
       use Alire.Origins;
@@ -235,7 +235,7 @@ package body Alire.Crate_Configuration is
    ----------------------
 
    procedure Load_Definitions (This  : in out Global_Config;
-                               Root  : Roots.Root;
+                               Root  : in out Roots.Root;
                                Crate : Crate_Name)
    is
 
@@ -278,7 +278,7 @@ package body Alire.Crate_Configuration is
    -------------------
 
    procedure Load_Settings (This  : in out Global_Config;
-                            Root  : Roots.Root;
+                            Root  : in out Roots.Root;
                             Crate : Crate_Name)
    is
 
