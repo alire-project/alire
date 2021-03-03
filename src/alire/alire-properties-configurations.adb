@@ -751,7 +751,7 @@ package body Alire.Properties.Configurations is
       begin
          if Raw.Kind /= TOML_Table then
             Raise_Checked_Error
-              (TOML_Keys.Config_Sets & " assignements must be a table");
+              (TOML_Keys.Config_Values & " assignements must be a table");
          end if;
 
          Val.Crate := +Crate;
@@ -772,7 +772,7 @@ package body Alire.Properties.Configurations is
       Raw : constant TOML_Value := From.Pop;
    begin
       if Raw.Kind /= TOML_Table then
-         raise Checked_Error with TOML_Keys.Config_Sets & " must be a table";
+         raise Checked_Error with TOML_Keys.Config_Values & " must be a table";
       end if;
 
       return Props : Conditional.Properties do
@@ -807,10 +807,10 @@ package body Alire.Properties.Configurations is
             begin
                exit when Key = "";
 
-               if Key = "variables" then
+               if Key = Utils.Tail (TOML_Keys.Config_Vars, '.') then
                   Nested := Definitions_From_TOML
                     (From.Descend (Key, Val, "variables"));
-               elsif Key = "settings" then
+               elsif Key = Utils.Tail (TOML_Keys.Config_Values, '.') then
                   Nested := Assignments_From_TOML
                     (From.Descend (Key, Val, "settings"));
                else
