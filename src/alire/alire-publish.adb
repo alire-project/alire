@@ -51,15 +51,53 @@ package body Alire.Publish is
       Origin : Origins.Origin := Origins.New_External ("undefined");
       --  We use external as "undefined" until a proper origin is provided.
 
+      Path : UString := +".";
+      --  Where to find the local workspace
+
       Revision : UString := +"HEAD";
       --  A particular revision for publishing from a git repo
-
-      Root   : Roots.Optional.Root;
-      --  Some steps require or can use a detected root
 
       Tmp_Deploy_Dir : Directories.Temp_File;
       --  Place to check the sources
    end record;
+
+   ---------------
+   -- Base_Path --
+   ---------------
+   --  The workspace root path. To support out-of-alire packaging, this
+   --  defaults to the current directory when using a nonstandard manifest.
+   function Base_Path (This : Data) return Any_Path
+   is (if This.Options.Nonstandard_Manifest
+       then +This.Path
+       else Root.Current.Path);
+
+   -----------------------
+   -- Starting_Manifest --
+   -----------------------
+   --  The initial manifest in the workspace, at the standard location, or
+   --  overriden to be taken from somewhere else.
+   function Starting_Manifest (This : Data) return Any_Path
+   is (if This.Options.Nonstandard_Manifest
+       then This.Options.Manifest
+       else Root.Current.Path / Roots.Crate_File_Name);
+
+   -----------------------
+   -- Packaged_Manifest --
+   -----------------------
+   --  The manifest that we have in tmp folder during verification. This is
+   --  always named and placed at the expected location.
+   function Packaged_Manifest (This : Data) return Any_Path
+   is (This.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
+
+   -----------------
+   -- New_Options --
+   -----------------
+
+   function New_Options (Skip_Build : Boolean := False;
+                         Manifest   : String  := Roots.Crate_File_Name)
+                         return All_Options
+   is (Manifest_File => +Manifest,
+       Skip_Build    => Skip_Build);
 
    ---------------
    -- Git_Error --
@@ -105,6 +143,89 @@ package body Alire.Publish is
       end case;
    end Check_Git_Clean;
 
+   -------------------
+   -- Check_Release --
+   -------------------
+   --  Checks the presence of recommended/mandatory fileds in the release
+   procedure Check_Release (Release : Releases.Release) is
+      use Utils.User_Input;
+
+      Recommend : Utils.String_Vector; -- Optional
+      Missing   : Utils.String_Vector; -- Mandatory
+
+      Caret_Pre_1 : Boolean := False; -- To warn about this
+
+      function Tomify (S : String) return String renames TOML_Adapters.Tomify;
+   begin
+
+      --  Check not duplicated
+
+      Features.Index.Setup_And_Load (From  => Config.Edit.Indexes_Directory);
+      if Index.Exists (Release.Name, Release.Version) then
+         Raise_Checked_Error
+           ("Target release " & Release.Milestone.TTY_Image
+            & " already exist in a loaded index");
+      end if;
+
+      --  Present release information to user
+
+      Ada.Text_IO.New_Line;
+      Trace.Info ("The release to be published contains this information:");
+      Ada.Text_IO.New_Line;
+      Release.Print;
+
+      --  Detect missing recommended fields
+
+      for Key in Properties.From_TOML.Recommended'Range loop
+         if Properties.From_TOML.Recommended (Key) then
+            if not Release.Has_Property (Tomify (Key'Image)) then
+               Recommend.Append (Tomify (Key'Image));
+            end if;
+         end if;
+      end loop;
+
+      if not Recommend.Is_Empty then
+         Ada.Text_IO.New_Line;
+         Trace.Warning ("Missing optional recommended properties: "
+                        & TTY.Warn (Recommend.Flatten (", ")));
+      end if;
+
+      --  Detect missing mandatory. This isn't detected by the TOML
+      --  deserialization because we are still relying on the user manifest
+      --  (the index one isn't generated until the user gives the go-ahead).
+
+      for Key in Properties.From_TOML.Mandatory'Range (2) loop
+         if Properties.From_TOML.Mandatory (Crates.Index_Release, Key) then
+            if not Release.Has_Property (Tomify (Key'Image)) then
+               Missing.Append (Tomify (Key'Image));
+            end if;
+         end if;
+      end loop;
+
+      Caret_Pre_1 := Release.Check_Caret_Warning;
+
+      if not Missing.Is_Empty then
+         Ada.Text_IO.New_Line;
+         Raise_Checked_Error ("Missing required properties: "
+                              & TTY.Error (Missing.Flatten (", ")));
+      end if;
+
+      --  Final confirmation. We default to Yes if no recommended missing or
+      --  Force.
+
+      Ada.Text_IO.New_Line;
+      if Utils.User_Input.Query
+        ("Do you want to proceed with this information?",
+         Valid   => (Yes | No => True, others => False),
+         Default => (if Force or else
+                         (Recommend.Is_Empty and then not Caret_Pre_1)
+                     then Yes
+                     else No)) /= Yes
+      then
+         Raise_Checked_Error ("Abandoned by user");
+      end if;
+   end Check_Release;
+
    -----------------
    -- STEP BODIES --
    -----------------
@@ -126,7 +247,7 @@ package body Alire.Publish is
    procedure Check_Build (Context : in out Data) is
       --  Enter the temporary as if it were a workspace (which it has to
       --  be, as it contains the user manifest). Auto-update should retrieve
-      --  dependencies, and since we are not repacking, there's no problem
+      --  dependencies, and since we are not repackaging, there's no problem
       --  with altering contents under alire or regenerating the lock file.
       Guard : Directories.Guard
         (Directories.Enter (Context.Tmp_Deploy_Dir.Filename))
@@ -154,6 +275,40 @@ package body Alire.Publish is
       Log_Success ("Build succeeded.");
    end Check_Build;
 
+   -------------------------
+   -- Check_User_Manifest --
+   -------------------------
+   --  Ensure that we are at a valid root, or else that the nonstadard manifest
+   --  file is loadable. Either way, the contents of the release described by
+   --  the manifest are vetted for completeness.
+   procedure Check_User_Manifest (Context : in out Data) is
+      use all type Roots.Optional.States;
+   begin
+      if Context.Options.Nonstandard_Manifest then
+         Check_Release (Releases.From_Manifest
+                          (Starting_Manifest (Context),
+                           Alire.Manifest.Local));
+         --  Will have raised if the release is not loadable or incomplete
+      else
+         declare
+            Root : constant Roots.Optional.Root := Alire.Root.Current;
+         begin
+            case Root.Status is
+            when Outside =>
+               Raise_Checked_Error
+                 ("No Alire workspace found at current location");
+            when Broken =>
+               Raise_Checked_Error
+                 (Errors.Wrap
+                    ("Invalid metadata found at " & Root.Value.Path,
+                     Root.Brokenness));
+            when Valid =>
+               Check_Release (Root.Value.Release);
+            end case;
+         end;
+      end if;
+   end Check_User_Manifest;
+
    --------------------
    -- Deploy_Sources --
    --------------------
@@ -170,7 +325,7 @@ package body Alire.Publish is
 
       --  Obtain source archive (or no-op for repositories):
 
-      Deployer.Fetch  (Context.Tmp_Deploy_Dir.Filename).Assert;
+      Deployer.Fetch (Context.Tmp_Deploy_Dir.Filename).Assert;
 
       --  Compute hashes in supported origin kinds (e.g. source archives)
 
@@ -196,11 +351,21 @@ package body Alire.Publish is
       --  Check that the maintainer's manifest is at the expected location
 
       if not GNAT.OS_Lib.Is_Regular_File
-        (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name)
+        (Context.Tmp_Deploy_Dir.Filename / Context.Options.Manifest)
       then
          Raise_Checked_Error
            ("Remote sources are missing the '"
-            & Roots.Crate_File_Name & "' manifest file.");
+            & Context.Options.Manifest & "' manifest file.");
+      end if;
+
+      --  For a non-standard manifest, move it in place (akin to how `alr get`
+      --  will regenerate it from the index). Subsequent tests can then assume
+      --  a regularly deployed crate.
+
+      if Context.Options.Nonstandard_Manifest then
+         Ada.Directories.Copy_File
+           (Context.Tmp_Deploy_Dir.Filename / Context.Options.Manifest,
+            Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
       end if;
 
    end Deploy_Sources;
@@ -215,8 +380,7 @@ package body Alire.Publish is
    --  manifest.
 
    procedure Generate_Index_Manifest (Context : in out Data) is
-      User_Manifest : constant Any_Path :=
-                       Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name;
+      User_Manifest : constant Any_Path := Packaged_Manifest (Context);
       Workspace     : constant Roots.Optional.Root := Root.Current;
    begin
       if not GNAT.OS_Lib.Is_Read_Accessible_File (User_Manifest) then
@@ -246,6 +410,7 @@ package body Alire.Publish is
          Index_File     : File_Type;
       begin
          if Workspace.Is_Valid and then
+           (not Context.Options.Nonstandard_Manifest) and then
            Workspace.Value.Release.Name /= Name
          then
             Raise_Checked_Error
@@ -311,7 +476,8 @@ package body Alire.Publish is
    ---------------------
 
    procedure Prepare_Archive (Context : in out Data) with
-     Pre => Context.Root.Is_Valid;
+     Pre => Alire.Manifest.Is_Valid (Context.Options.Manifest,
+                                     Alire.Manifest.Local);
    --  Prepare a tar file either using git archive (if git repo detected) or
    --  plain tar otherwise.
 
@@ -319,13 +485,15 @@ package body Alire.Publish is
       use Utils;
       Target_Dir : constant Relative_Path :=
                      Paths.Working_Folder_Inside_Root / "archives";
-      Root       : Roots.Root renames Context.Root.Value;
+      Release    : constant Releases.Release :=
+                     Releases.From_Manifest (Context.Options.Manifest,
+                                             Alire.Manifest.Local);
       Milestone  : constant String :=
-                     TOML_Index.Manifest_File (Root.Release.Name,
-                                               Root.Release.Version,
+                     TOML_Index.Manifest_File (Release.Name,
+                                               Release.Version,
                                                With_Extension => False);
       Git        : constant VCSs.Git.VCS := VCSs.Git.Handler;
-      Is_Repo    : constant Boolean := Git.Is_Repository (Root.Path);
+      Is_Repo    : constant Boolean := Git.Is_Repository (Base_Path (Context));
       Archive    : constant Relative_Path :=
                      Target_Dir
                        / (Milestone
@@ -392,7 +560,7 @@ package body Alire.Publish is
 
    begin
       if Is_Repo then
-         Check_Git_Clean (Root.Path, For_Archiving => True);
+         Check_Git_Clean (Base_Path (Context), For_Archiving => True);
       else
          Trace.Warning ("Not in a git repository, assuming plain sources.");
       end if;
@@ -424,7 +592,7 @@ package body Alire.Publish is
             Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
 
             Context.Origin := Origins.New_Source_Archive
-              (Remote_URL,
+              (Utils.Trim (Remote_URL), -- remove unwanted extra whitespaces
                Ada.Directories.Simple_Name (Archive));
             --  This origin creation may raise if URL is improper
 
@@ -483,85 +651,11 @@ package body Alire.Publish is
       Release : constant Releases.Release :=
                   Releases
                     .From_Manifest
-                      (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name,
-                       Manifest.Local)
+                      (Packaged_Manifest (Context),
+                       Alire.Manifest.Local)
                     .Replacing (Origin => Context.Origin);
-      use all type Utils.User_Input.Answer_Kind;
-
-      Recommend : Utils.String_Vector; -- Optional
-      Missing   : Utils.String_Vector; -- Mandatory
-
-      Caret_Pre_1 : Boolean := False; -- To warn about this
-
-      function Tomify (S : String) return String renames TOML_Adapters.Tomify;
    begin
-
-      --  Check not duplicated
-
-      Features.Index.Setup_And_Load (From  => Config.Edit.Indexes_Directory);
-      if Index.Exists (Release.Name, Release.Version) then
-         Raise_Checked_Error
-           ("Target release " & Release.Milestone.TTY_Image
-            & " already exist in a loaded index");
-      end if;
-
-      --  Present release information
-
-      Ada.Text_IO.New_Line;
-      Trace.Info ("The release to be published contains this information:");
-      Ada.Text_IO.New_Line;
-      Release.Print;
-
-      --  Detect missing recommended fields
-
-      for Key in Properties.From_TOML.Recommended'Range loop
-         if Properties.From_TOML.Recommended (Key) then
-            if not Release.Has_Property (Tomify (Key'Image)) then
-               Recommend.Append (Tomify (Key'Image));
-            end if;
-         end if;
-      end loop;
-
-      if not Recommend.Is_Empty then
-         Ada.Text_IO.New_Line;
-         Trace.Warning ("Missing optional recommended properties: "
-                        & TTY.Warn (Recommend.Flatten (", ")));
-      end if;
-
-      --  Detect missing mandatory. This isn't detected by the TOML
-      --  deserialization because we are still relying on the user manifest
-      --  (the index one isn't generated until the user gives the go-ahead).
-
-      for Key in Properties.From_TOML.Mandatory'Range (2) loop
-         if Properties.From_TOML.Mandatory (Crates.Index_Release, Key) then
-            if not Release.Has_Property (Tomify (Key'Image)) then
-               Missing.Append (Tomify (Key'Image));
-            end if;
-         end if;
-      end loop;
-
-      Caret_Pre_1 := Release.Check_Caret_Warning;
-
-      if not Missing.Is_Empty then
-         Ada.Text_IO.New_Line;
-         Raise_Checked_Error ("Missing required properties: "
-                              & TTY.Error (Missing.Flatten (", ")));
-      end if;
-
-      --  Final confirmation. We default to Yes if no recommended missing or
-      --  Force.
-
-      Ada.Text_IO.New_Line;
-      if Utils.User_Input.Query
-        ("Do you want to proceed with this information?",
-         Valid   => (Yes | No => True, others => False),
-         Default => (if Force or else
-                         (Recommend.Is_Empty and then not Caret_Pre_1)
-                     then Yes
-                     else No)) /= Yes
-      then
-         Raise_Checked_Error ("Abandoned by user");
-      end if;
+      Check_Release (Release);
    end Show_And_Confirm;
 
    -------------------
@@ -695,9 +789,10 @@ package body Alire.Publish is
    -- STEPS SCAFFOLDING --
    -----------------------
 
-   --  Step names must be in order of execution:
+   --  Any sequence of steps can be selected by creating an array of step names
    type Step_Names is
-     (Step_Prepare_Archive,
+     (Step_Check_User_Manifest,
+      Step_Prepare_Archive,
       Step_Verify_Origin,
       Step_Verify_Github,
       Step_Deploy_Sources,
@@ -705,17 +800,22 @@ package body Alire.Publish is
       Step_Show_And_Confirm,
       Step_Generate_Index_Manifest);
 
-   Steps : constant array (Step_Names) of Step_Subprogram :=
-             (Step_Prepare_Archive         => Prepare_Archive'Access,
-              Step_Verify_Origin           => Verify_Origin'Access,
-              Step_Verify_Github           => Verify_Github'Access,
-              Step_Deploy_Sources          => Deploy_Sources'Access,
-              Step_Check_Build             => Check_Build'Access,
-              Step_Show_And_Confirm        => Show_And_Confirm'Access,
-              Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
+   type Step_Array is array (Positive range <>) of Step_Names;
+
+   Step_Calls : constant array (Step_Names)
+     of Step_Subprogram :=
+       (Step_Check_User_Manifest     => Check_User_Manifest'Access,
+        Step_Prepare_Archive         => Prepare_Archive'Access,
+        Step_Verify_Origin           => Verify_Origin'Access,
+        Step_Verify_Github           => Verify_Github'Access,
+        Step_Deploy_Sources          => Deploy_Sources'Access,
+        Step_Check_Build             => Check_Build'Access,
+        Step_Show_And_Confirm        => Show_And_Confirm'Access,
+        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
+          when Step_Check_User_Manifest     => "Verify user manifest",
           when Step_Prepare_Archive         => "Prepare remote source archive",
           when Step_Verify_Origin           => "Verify origin URL",
           when Step_Verify_Github           => "Verify GitHub infrastructure",
@@ -724,29 +824,26 @@ package body Alire.Publish is
           when Step_Show_And_Confirm        => "User review",
           when Step_Generate_Index_Manifest => "Generate index manifest");
 
-   --------------
-   -- Start_At --
-   --------------
-
-   procedure Start_At (Step    : Step_Names;
-                       Context : in out Data;
-                       Up_To   : Step_Names := Step_Names'Last)
+   ---------------
+   -- Run_Steps --
+   ---------------
+   --  Gives feedback on the current step and dispatchs to its actual code
+   procedure Run_Steps (Context : in out Data;
+                        Steps   : Step_Array)
    is
       --  Manage publishing steps up to exhaustion or error
    begin
-      for Current in Step .. Up_To loop
+      for Current in Steps'Range loop
          Ada.Text_IO.New_Line;
          Trace.Info ("Publishing assistant: step"
-                     & TTY.Emph (Integer'Image (Step_Names'Pos (Current) -
-                                                Step_Names'Pos (Step) + 1))
+                     & TTY.Emph (Integer'Image (Current))
                      & " of"
-                     & TTY.Emph (Integer'Image (Step_Names'Pos (Up_To) -
-                                                Step_Names'Pos (Step) + 1))
-                     & ": " & TTY.Emph (Step_Description (Current)));
+                     & TTY.Emph (Integer'Image (Steps'Last)
+                     & ": " & TTY.Emph (Step_Description (Steps (Current)))));
 
-         Steps (Current) (Context);
+         Step_Calls (Steps (Current)) (Context);
       end loop;
-   end Start_At;
+   end Run_Steps;
 
    -------------------
    -- Directory_Tar --
@@ -754,23 +851,27 @@ package body Alire.Publish is
 
    procedure Directory_Tar (Path     : Any_Path := ".";
                             Revision : String   := "HEAD";
-                            Options  : All_Options := (others => <>))
+                            Options  : All_Options := New_Options)
    is
       Context : Data :=
                   (Options        => Options,
                    Origin         => <>,
+                   Path           => +Path,
                    Revision       => +Revision,
-                   Root           =>
-                     Roots.Optional.Search_Root (Path),
                    Tmp_Deploy_Dir => <>);
 
-      Guard   : Directories.Guard (Directories.Enter (Context.Root.Value.Path))
+      Guard   : Directories.Guard (Directories.Enter (Base_Path (Context)))
         with Unreferenced;
    begin
-      --  TODO: start with filling-in/checking the local manifest. For now,
-      --  start directly with the archive creation.
-
-      Start_At (Step_Prepare_Archive, Context);
+      Run_Steps (Context,
+                 (Step_Check_User_Manifest,
+                  Step_Prepare_Archive,
+                  Step_Verify_Origin,
+                  Step_Verify_Github,
+                  Step_Deploy_Sources,
+                  Step_Check_Build,
+                  Step_Show_And_Confirm,
+                  Step_Generate_Index_Manifest));
    end Directory_Tar;
 
    ----------------------
@@ -779,7 +880,7 @@ package body Alire.Publish is
 
    procedure Local_Repository (Path     : Any_Path := ".";
                                Revision : String   := "HEAD";
-                               Options  : All_Options := (others => <>))
+                               Options  : All_Options := New_Options)
    is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
@@ -787,7 +888,13 @@ package body Alire.Publish is
    begin
       case Root.Status is
       when Outside =>
-         Raise_Checked_Error ("No Alire workspace found at " & TTY.URL (Path));
+         if Options.Nonstandard_Manifest then
+            Trace.Debug ("Using non-stardard manifest location: "
+                         & Options.Manifest);
+         else
+            Raise_Checked_Error ("No Alire workspace found at "
+                                 & TTY.URL (Path));
+         end if;
       when Broken =>
          Raise_Checked_Error
            (Errors.Wrap
@@ -796,48 +903,68 @@ package body Alire.Publish is
       when Valid => null;
       end case;
 
-      if not Git.Is_Repository (Root.Value.Path) then
-         Git_Error ("no git repository found", Root.Value.Path);
-      end if;
-
-      --  Do not continue if the local repo is dirty
-
-      Check_Git_Clean (Root.Value.Path, For_Archiving => False);
-
-      --  If given a revision, extract commit and verify it exists locally
-
       declare
-         Commit : constant String :=
-                    Git.Revision_Commit (Root.Value.Path,
-                                         (if Revision /= ""
-                                          then Revision
-                                          else "HEAD"));
+         Root_Path : constant Any_Path :=
+                       (if Options.Nonstandard_Manifest
+                        then Path
+                        else Root.Value.Path);
       begin
-         if Commit /= "" then
-            Log_Success ("Revision exists in local repository ("
-                         & TTY.Emph (Commit) & ").");
-         else
-            Raise_Checked_Error ("Revision not found in local repository: "
-                                 & TTY.Emph (Revision));
+
+         if not Git.Is_Repository (Root_Path) then
+            Git_Error ("no git repository found", Root_Path);
          end if;
 
-         declare
-            use Utils;
-            Raw_URL   : constant String := Git.Fetch_URL (Root.Value.Path);
-            --  The one reported by the repo, in its public form
+         --  Do not continue if the local repo is dirty
 
-            Fetch_URL : constant String :=
-            --  With an added ".git", if it hadn't one. Not usable in local fs.
-                          Raw_URL
-                          & (if Ends_With (To_Lower_Case (Raw_URL), ".git")
-                             then ""
-                             else ".git");
+         Check_Git_Clean (Root_Path, For_Archiving => False);
+
+         --  If not given a revision, check the local manifest contents
+         --  already. No matter what, it will be checked again on the
+         --  deployed sources step.
+
+         if Revision = "" or Revision = "HEAD" then
+            declare
+               Tmp_Context : Data := (Options => Options, others => <>);
+            begin
+               Check_User_Manifest (Tmp_Context);
+            end;
+         end if;
+
+         --  If given a revision, extract commit and verify it exists locally
+
+         declare
+            Commit : constant String :=
+                       Git.Revision_Commit (Root_Path,
+                                            (if Revision /= ""
+                                             then Revision
+                                             else "HEAD"));
          begin
-            --  To allow this call to succeed with local tests, we check
-            --  here. For a regular repository we will already have an HTTP
-            --  transport. A GIT transport is not wanted, because that one
-            --  requires the owner keys.
-            case URI.Scheme (Fetch_URL) is
+            if Commit /= "" then
+               Log_Success ("Revision exists in local repository ("
+                            & TTY.Emph (Commit) & ").");
+            else
+               Raise_Checked_Error ("Revision not found in local repository: "
+                                    & TTY.Emph (Revision));
+            end if;
+
+            declare
+               use Utils;
+               Raw_URL   : constant String := Git.Fetch_URL (Root_Path);
+               --  The one reported by the repo, in its public form
+
+               Fetch_URL : constant String :=
+               --  With an added ".git", if it hadn't one. Not usable in local
+               --  filesystem.
+                             Raw_URL
+                             & (if Ends_With (To_Lower_Case (Raw_URL), ".git")
+                                then ""
+                                else ".git");
+            begin
+               --  To allow this call to succeed with local tests, we check
+               --  here. For a regular repository we will already have an HTTP
+               --  transport. A GIT transport is not wanted, because that one
+               --  requires the owner keys.
+               case URI.Scheme (Fetch_URL) is
                when URI.VCS_Schemes =>
                   Raise_Checked_Error
                     ("The remote URL seems to require repository ownership: "
@@ -856,7 +983,8 @@ package body Alire.Publish is
                                          Options => Options);
                when others =>
                   Raise_Checked_Error ("Unsupported scheme: " & Fetch_URL);
-            end case;
+               end case;
+            end;
          end;
       end;
    end Local_Repository;
@@ -867,7 +995,7 @@ package body Alire.Publish is
 
    procedure Remote_Origin (URL     : Alire.URL;
                             Commit  : String := "";
-                            Options : All_Options := (others => <>))
+                            Options : All_Options := New_Options)
    is
    begin
       --  Preliminary argument checks
@@ -903,13 +1031,19 @@ package body Alire.Publish is
                          else
                             Origins.New_Source_Archive (URL)),
 
-                      Revision => +Commit,
+                      Path => <>, -- will remain unused
 
-                      Root => <>, -- Invalid root, as we are working remotely
+                      Revision  => +Commit,
 
                       Tmp_Deploy_Dir => <>);
       begin
-         Start_At (Step_Verify_Origin, Context);
+         Run_Steps (Context,
+                    (Step_Verify_Origin,
+                     Step_Verify_Github,
+                     Step_Deploy_Sources,
+                     Step_Check_Build,
+                     Step_Show_And_Confirm,
+                     Step_Generate_Index_Manifest));
       end;
    exception
       when E : Checked_Error | Origins.Unknown_Source_Archive_Format_Error =>

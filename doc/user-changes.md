@@ -6,6 +6,18 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Switch to help with publishing of multi-crate repositories
+
+PR [#635](https://github.com/alire-project/alire/pull/635).
+
+The `alr publish` command now supports a new `--manifest <file>` switch, to
+help with packaging sources that provide several crates. Maintainers can now
+prepare different manifest files for the corresponding crates, and select each
+one in turn for publishing, without the repository itself being an actual Alire
+crate.  Source management must still be taken care of by maintainers; sources
+should not be shared by project files in different crates intended to be
+simultaneously included.
+
 ### Configuration of crates
 
 PR [#699](https://github.com/alire-project/alire/pull/679).

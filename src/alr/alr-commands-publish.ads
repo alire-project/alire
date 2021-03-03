@@ -1,3 +1,5 @@
+private with GNAT.Strings;
+
 package Alr.Commands.Publish is
 
    --  Publish lends a helping hand to automate submission of crates/releases.
@@ -27,6 +29,8 @@ package Alr.Commands.Publish is
        .New_Line
        .Append ("Use --tar to create a source archive ready to be uploaded.")
        .New_Line
+       .Append ("Use --manifest to use metadata in a non-default file.")
+       .New_Line
        .Append ("See the above link for help with other scenarios."));
 
    overriding
@@ -40,11 +44,14 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [--tar] [<URL> [commit]]]");
+   is ("[--skip-build] [--tar] [--manifest <file>] [<URL> [commit]]]");
 
 private
 
    type Command is new Commands.Command with record
+      Manifest : aliased GNAT.Strings.String_Access;
+      --  A manifest to use instead of the default one.
+
       Print_Trusted : aliased Boolean := False;
 
       Skip_Build : aliased Boolean := False;
