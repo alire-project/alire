@@ -451,7 +451,7 @@ private
 
    function Config_Settings (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
-       (Alire.TOML_Keys.Config_Sets));
+       (Alire.TOML_Keys.Config_Values));
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String

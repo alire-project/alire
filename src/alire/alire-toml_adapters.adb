@@ -72,6 +72,20 @@ package body Alire.TOML_Adapters is
       end return;
    end Checked_Pop;
 
+   ------------------
+   -- Create_Table --
+   ------------------
+
+   function Create_Table (Key   : String;
+                          Value : TOML.TOML_Value)
+                          return TOML.TOML_Value
+   is
+   begin
+      return Table : constant TOML.TOML_Value := TOML.Create_Table do
+         Table.Set (Key, Value);
+      end return;
+   end Create_Table;
+
    ----------
    -- From --
    ----------
@@ -87,12 +101,8 @@ package body Alire.TOML_Adapters is
    function From (Key     : String;
                   Value   : TOML.TOML_Value;
                   Context : String) return Key_Queue
-   is
-      Table : constant TOML.TOML_Value := TOML.Create_Table;
-   begin
-      Table.Set (Key, Value);
-      return From (Table, Context);
-   end From;
+   is (From (Create_Table (Key, Value),
+             Context));
 
    -------------
    -- Descend --

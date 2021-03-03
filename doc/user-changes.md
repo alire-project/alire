@@ -6,7 +6,30 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
-No changes yet since the release of `1.0`.
+### Configuration of crates
+
+PR [#699](https://github.com/alire-project/alire/pull/679).
+PR [#673](https://github.com/alire-project/alire/pull/673).
+
+Pre-compilation parameterization of source files can be now achieved by
+declaring variables and initial constant values for these variables in the
+Alire manifests. This allows customizing code in both the root crate and
+dependencies. For example:
+
+```toml
+[configuration.variables]
+Device_Name = {type = "String", default = "no device name"}
+Debug_Level = {type = "Enum", values = ["Info", "Debug", "Warn", "Error"], default = "Warn"}
+Buffer_Size = {type = "Integer", first = 0, last = 1024, default = 256}
+
+[configuration.values]
+crate_1.var1 = 42
+crate_1.var2 = true
+crate_2.var1 = "Debug"
+```
+
+Check more examples and details in the catalog specification section ["Using
+configuration"](https://github.com/mosteo/alire/blob/master/doc/catalog-format-spec.md#using-crate-configuration).
 
 ## Release `1.0`
 

@@ -734,7 +734,7 @@ package body Alire.Properties.Configurations is
    -- Assignements_From_TOML --
    ----------------------------
 
-   function Assignements_From_TOML (From : TOML_Adapters.Key_Queue)
+   function Assignments_From_TOML (From : TOML_Adapters.Key_Queue)
                                     return Conditional.Properties
    is
       use Conditional.For_Properties;
@@ -751,7 +751,7 @@ package body Alire.Properties.Configurations is
       begin
          if Raw.Kind /= TOML_Table then
             Raise_Checked_Error
-              (TOML_Keys.Config_Sets & " assignements must be a table");
+              (TOML_Keys.Config_Values & " assignements must be a table");
          end if;
 
          Val.Crate := +Crate;
@@ -772,7 +772,7 @@ package body Alire.Properties.Configurations is
       Raw : constant TOML_Value := From.Pop;
    begin
       if Raw.Kind /= TOML_Table then
-         raise Checked_Error with TOML_Keys.Config_Sets & " must be a table";
+         raise Checked_Error with TOML_Keys.Config_Values & " must be a table";
       end if;
 
       return Props : Conditional.Properties do
@@ -781,6 +781,52 @@ package body Alire.Properties.Configurations is
             Raw.Unset (Item.Key);
          end loop;
       end return;
-   end Assignements_From_TOML;
+   end Assignments_From_TOML;
+
+   ----------------------------
+   -- Config_Entry_From_TOML --
+   ----------------------------
+
+   function Config_Entry_From_TOML (From : TOML_Adapters.Key_Queue)
+                                    return Conditional.Properties
+   is
+      Config : constant TOML_Adapters.Key_Queue :=
+                 From.Descend
+                   (From.Checked_Pop
+                      (TOML_Keys.Configuration, TOML_Table),
+                    TOML_Keys.Configuration);
+
+   begin
+      return Props : Conditional.Properties do
+         while True loop
+            declare
+               Val    : TOML_Value;
+               Key    : constant String := Config.Pop (Val);
+               Nested : Conditional.Properties;
+               --  For nested tables under [configuration]
+            begin
+               exit when Key = "";
+
+               if Key = Utils.Tail (TOML_Keys.Config_Vars, '.') then
+                  Nested := Definitions_From_TOML
+                    (From.Descend (Key, Val, "variables"));
+               elsif Key = Utils.Tail (TOML_Keys.Config_Values, '.') then
+                  Nested := Assignments_From_TOML
+                    (From.Descend (Key, Val, "settings"));
+               else
+                  Raise_Checked_Error ("Unknown configuration entry: "
+                                       & Key);
+               end if;
+
+               Props.Append (Nested);
+            end;
+         end loop;
+
+         if Props.Is_Empty then
+            Props := Conditional.New_Property
+              (Config_Entry'(Property with null record));
+         end if;
+      end return;
+   end Config_Entry_From_TOML;
 
 end Alire.Properties.Configurations;

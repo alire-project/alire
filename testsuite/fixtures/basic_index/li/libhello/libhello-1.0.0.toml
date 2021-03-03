@@ -4,7 +4,7 @@ version = "1.0.0"
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 
-[config_variables]
+[configuration.variables]
 Var1={type="Boolean", default=true}
 
 [gpr-externals]

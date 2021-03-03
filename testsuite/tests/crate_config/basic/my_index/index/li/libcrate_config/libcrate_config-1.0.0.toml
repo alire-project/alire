@@ -8,7 +8,7 @@ maintainers-logins = ["mylogin"]
 [origin]
 url = "file:../../../libcrate_config_src"
 
-[config_variables]
+[configuration.variables]
 Var_Bool = {type="Boolean", default=true}
 Var_String = {type="String", default="Test string."}
 Var_Int = {type="Integer", first=-42, last=42, default=-1}

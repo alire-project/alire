@@ -47,7 +47,7 @@ os.remove(os.path.join("my_index", "index", "he", "hello_world",
                        ".gitignore"))
 
 check_error('var1=["plop"]', 'variable definition must be a table')
-check_error('var1={}', "config_variables.var1:")
+check_error('var1={}', "configuration.variables.var1:")
 check_error('var1={}', "'type' missing")
 check_error('var1={type=42}', "'type' must be string")
 check_error('var1={type=""}', "Invalid configuration type '',"
