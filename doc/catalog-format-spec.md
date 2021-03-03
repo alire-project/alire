@@ -441,7 +441,7 @@ static, i.e. they cannot depend on the context.
    notes = "Experimental version"
    ```
 
- - `config_variables` optional table of crate configuration variable
+ - `configuration.variables` optional table of crate configuration variable
    definitions.
 
    For more information on crate configuration, see [Using crate
@@ -479,14 +479,14 @@ static, i.e. they cannot depend on the context.
 
    Example:
    ```toml
-   [config_variables]
+   [configuration.variables]
    Device_Name = {type = "String", default = "no device name"}
    Print_Debug = {type = "Boolean", default = false}
    Debug_Level = {type = "Enum", values = ["Info", "Debug", "Warn", "Error"], default = "Warn"}
    Buffer_Size = {type = "Integer", first = 0, last = 1024, default = 256}
    Max_Power   = {type = "Real", first = 0.0, last = 100.0, default = 50.0}
    ```
- - `config_settings` optional table of variables assignment:
+ - `configuration.values` optional table of variables assignment:
 
    The keys of the table are crate names, and entries are sub-tables of
    `variable_name` and `value`. The type of the value has to match the
@@ -494,7 +494,7 @@ static, i.e. they cannot depend on the context.
 
    Example:
    ```toml
-   [config_settings]
+   [configuration.values]
    crate_1.var1 = 42
    crate_1.var2 = true
    crate_2.var1 = "Debug"
@@ -621,7 +621,7 @@ would be best if this logging can be disabled/enabled at compile time.
 To achieve this, a crate maintainer can define a configuration variable in the
 crate manifest `alire.toml`. The definition will be like so:
 ```toml
-[config_variables]
+[configuration.variables]
 Enable_Logs = {type = "Boolean", default = false}
 ```
 A single variable of type `Boolean` with a default value of `false`.
@@ -646,7 +646,7 @@ If one of the crates depending on `test` sets the configuration variable to
 `true`, e.g.:
 
 ```toml
-[config_settings]
+[configuration.values]
 test.Enable_Logs = true
 ```
 
@@ -701,7 +701,7 @@ stack or on the heap depending on their project.
 Enumerations variables in crate configuration can be used to set a level of log
 verbosity:
 ```toml
-[config_variables]
+[configuration.variables]
 Log_Level = {type = "Enum", values = ["Info", "Debug", "Warn", "Error"], default = "Warn"}
 ```
 
@@ -710,7 +710,7 @@ Log_Level = {type = "Enum", values = ["Info", "Debug", "Warn", "Error"], default
 Integer variables can be used the define the size of a static buffer:
 
 ```toml
-[config_variables]
+[configuration.variables]
 Buffer_Size = {type = "Integer", first = 0, last = 1024, default = 256}
 ```
 This is useful in particular for embedded projects where compile time memory
@@ -721,7 +721,7 @@ usage is preferred over dynamic allocation.
 String variables can be used to define the URL of a website or service:
 
 ```toml
-[config_variables]
+[configuration.variables]
 URL_Name = {type = "String", default = "example.com"}
 ```
 
@@ -729,7 +729,7 @@ URL_Name = {type = "String", default = "example.com"}
 
 Real variables can be used for PID coefficients:
 ```toml
-[config_variables]
+[configuration.variables]
 Proportional = {type = "Real"}
 Integral = {type = "Real"}
 Derivative = {type = "Real"}
@@ -739,7 +739,7 @@ Derivative = {type = "Real"}
 Integer variable can be used to define The maximum length of file names in a
 file-system:
 ```toml
-[config_variables]
+[configuration.variables]
 Max_Filename_Length = {type = "Integer", first = 5, last = 128}
 ```
 
@@ -748,7 +748,7 @@ Max_Filename_Length = {type = "Integer", first = 5, last = 128}
 Crate configuration also generates a GPR project file, therefore it can be used
 to control which units are compiled in the project.
 ```toml
-[config_variables]
+[configuration.variables]
 Sort_Algorithm = {type = "Enum", values = ["bubble", "quick", "merge"]}
 ```
 
