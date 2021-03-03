@@ -441,6 +441,65 @@ static, i.e. they cannot depend on the context.
    notes = "Experimental version"
    ```
 
+ - `config_variables` optional table of crate configuration variable
+   definitions.
+
+   For more information on crate configuration, see [Using crate
+   configuration](#using-crate-configuration).
+
+   The keys of the table are names of the variables. Variable definitions
+   themselves are tables with the following entries:
+
+      - `type`: mandatory string which defines the type of the variable, it can
+        be:
+
+         - `String`: any string
+
+         - `Boolean`: either `True` or `False`
+
+         - `Enum`: enumeration type
+
+         - `Integer`: an integer value that can be encoded in 64-bit
+
+         - `Real`: a real value that can be encoded in IEEE 754 binary64
+
+      - `default`: optional default value for the variable. Will be used if no
+        crates explicitly set a value for this variable. Must be a valid value
+        for the type.
+
+      - `first`: (optional) for `Real` and `Integer` types only. Defines the
+         lower bound of valid values for the type (inclusive).
+
+      - `last`: (optional) for `Real` and `Integer` types only. Defines the
+         upper bound of valid values for the type (inclusive).
+
+      - `values`: mandatory for `Enum` types. An array of strings containing
+        all the possible values for the enumeration.
+
+
+   Example:
+   ```toml
+   [config_variables]
+   Device_Name = {type = "String", default = "no device name"}
+   Print_Debug = {type = "Boolean", default = false}
+   Debug_Level = {type = "Enum", values = ["Info", "Debug", "Warn", "Error"], default = "Warn"}
+   Buffer_Size = {type = "Integer", first = 0, last = 1024, default = 256}
+   Max_Power   = {type = "Real", first = 0.0, last = 100.0, default = 50.0}
+   ```
+ - `config_settings` optional table of variables assignment:
+
+   The keys of the table are crate names, and entries are sub-tables of
+   `variable_name` and `value`. The type of the value has to match the
+   definition of the variable type.
+
+   Example:
+   ```toml
+   [config_settings]
+   crate_1.var1 = 42
+   crate_1.var2 = true
+   crate_2.var1 = "Debug"
+   ```
+
 ## External releases
 
 The above information applies to regular releases distributed from sources
@@ -546,6 +605,171 @@ available.'case(toolchain)'.user = false
 
  - `word-size`: architecture word size. Currently supported values are:
    `bits-32`, `bits-64`, `bits-unknown`
+
+## Using crate configuration
+
+`Alire` provides a mechanism for crates to expose a list of variables that can
+be set by other crates depending on them. The configuration variables will then
+be converted to Ada, C and GPR source files that can be used to change the
+behavior or feature set of the code.
+
+Let's start with a simple example. A crate named `test` can print debug log on
+the console. However printing on the console has a performance impact, for an
+embedded project it can even have a significant code size impact. Therefore it
+would be best if this logging can be disabled/enabled at compile time.
+
+To achieve this, a crate maintainer can define a configuration variable in the
+crate manifest `alire.toml`. The definition will be like so:
+```toml
+[config_variables]
+Enable_Logs = {type = "Boolean", default = false}
+```
+A single variable of type `Boolean` with a default value of `false`.
+
+From this definition, `Alire` will generate various source files, including an
+Ada package specification:
+
+```ada
+package Test_Config is
+   Enable_Logs : constant Boolean := False;
+end Test_Config;
+```
+
+In the crate source code, this configuration package can be used like so:
+```ada
+   if Test_Config.Enable_Logs then
+      Print_Log ("This is a log message.");
+   end if;
+```
+
+If one of the crates depending on `test` sets the configuration variable to
+`true`, e.g.:
+
+```toml
+[config_settings]
+test.Enable_Logs = true
+```
+
+The constant value will change in the generated configuration package:
+```ada
+package Test_Config is
+   Enable_Logs : constant Boolean := True;
+end Test_Config;
+```
+Which will enable logging in the `test` crate.
+
+It is possible for multiple depending crates to set `test.Enable_Logs` to the
+same value, however if two depending crates set the variable to a different
+value then the configuration is invalid and `Alire` will print an error. If no
+depending crates set the `test.Enable_Logs` variable, then its default value is
+used.
+
+### When to use crate configuration?
+
+Usually when something has to be static or known at compiler-time, either for
+performance or memory usage.
+
+### When _not_ to use crate configuration?
+
+When the Ada languages provides a better alternative. There are many ways to
+provide an Ada API that will result in compile time optimization or static
+memory usage.
+
+For instance, discriminants are an effective way to let the user define the
+size of a buffer:
+
+```ada
+   type Buffered_Thing (Size : Positive) is private;
+private
+   type Buffer_Array is array (Positive range <>) of Unsigned_8;
+   type Buffered_Thing (Size : Positive) is record
+      Buf : Buffer_Array (1 .. Size);
+   end record;
+```
+
+With this definition, users are then able to allocate either statically, on the
+stack or on the heap depending on their project.
+
+```ada
+   Thing : Buffered_Thing (Size => 256);
+```
+
+### Use cases
+
+#### Log levels
+
+Enumerations variables in crate configuration can be used to set a level of log
+verbosity:
+```toml
+[config_variables]
+Log_Level = {type = "Enum", values = ["Info", "Debug", "Warn", "Error"], default = "Warn"}
+```
+
+#### Buffer size
+
+Integer variables can be used the define the size of a static buffer:
+
+```toml
+[config_variables]
+Buffer_Size = {type = "Integer", first = 0, last = 1024, default = 256}
+```
+This is useful in particular for embedded projects where compile time memory
+usage is preferred over dynamic allocation.
+
+#### Server URL
+
+String variables can be used to define the URL of a website or service:
+
+```toml
+[config_variables]
+URL_Name = {type = "String", default = "example.com"}
+```
+
+#### PID coefficients 
+
+Real variables can be used for PID coefficients:
+```toml
+[config_variables]
+Proportional = {type = "Real"}
+Integral = {type = "Real"}
+Derivative = {type = "Real"}
+```
+#### Worst case allocation
+
+Integer variable can be used to define The maximum length of file names in a
+file-system:
+```toml
+[config_variables]
+Max_Filename_Length = {type = "Integer", first = 5, last = 128}
+```
+
+#### Select algorithm in GPR project file
+
+Crate configuration also generates a GPR project file, therefore it can be used
+to control which units are compiled in the project.
+```toml
+[config_variables]
+Sort_Algorithm = {type = "Enum", values = ["bubble", "quick", "merge"]}
+```
+
+The generated GPR will look something like this:
+```ada
+project Test_Config is
+   type Sort_Algorith_Kind is ("bubble", "quick", "merge");
+   Sort_Algorith : Debug_Level_Kind := "quick";
+end Test_Config;
+```
+
+It can be used in the main GPR file like so:
+
+```ada
+   package Naming is
+      for Body ("Test.Sort") use "test-sort__" & Test_Config.Sort_Algorith;
+   end Naming;
+```
+With the files `test-sort__bubble.adb`, `test-sort__quick.adb` and
+`test-sort__merge.adb` each implementing a different algorithm.
+
 
 ## Further reading ##
 

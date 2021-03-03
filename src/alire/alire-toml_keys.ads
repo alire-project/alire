@@ -10,6 +10,8 @@ package Alire.TOML_Keys with Preelaborate is
    Auto_GPR_With  : constant String := "auto-gpr-with";
    Available      : constant String := "available";
    Compiler       : constant String := "compiler";
+   Config_Vars    : constant String := "config_variables";
+   Config_Sets    : constant String := "config_settings";
    Depends_On     : constant String := "depends-on";
    Description    : constant String := "description";
    Distribution   : constant String := "distribution";

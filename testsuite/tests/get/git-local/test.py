@@ -25,7 +25,11 @@ compare(list(filter
          'libfoo_1.0.0_9ddda32b/b/y/p',
          'libfoo_1.0.0_9ddda32b/b/y/q',
          'libfoo_1.0.0_9ddda32b/b/z',
-         'libfoo_1.0.0_9ddda32b/c'
+         'libfoo_1.0.0_9ddda32b/c',
+         'libfoo_1.0.0_9ddda32b/config',
+         'libfoo_1.0.0_9ddda32b/config/libfoo_config.ads',
+         'libfoo_1.0.0_9ddda32b/config/libfoo_config.gpr',
+         'libfoo_1.0.0_9ddda32b/config/libfoo_config.h'
          ])
 
 

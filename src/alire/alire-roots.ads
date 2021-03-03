@@ -53,8 +53,15 @@ package Alire.Roots is
 
    function Build_Context (This : Root) return Alire.Environment.Context;
 
+   function Direct_Withs (This      : Root;
+                          Dependent : Releases.Release)
+                          return Utils.String_Set;
+   --  Returns project file names of direct dependencies of the given dependent
+
    procedure Export_Build_Environment (This : Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
+
+   procedure Generate_Configuration (This : Root);
 
    procedure Extend
      (This         : in out Root;
@@ -71,12 +78,11 @@ package Alire.Roots is
    --  solution in this root. This includes al releases' paths and any linked
    --  directories.
 
-   function GPR_Project_Files (This         : Root;
-                               Exclude_Root : Boolean)
-                               return Utils.String_Set;
-   --  Return all the gprbuild project files defined for the solution in this
-   --  root. If Exclude_Root is True, the project files of the root crate are
-   --  excluded from the result.
+   type Solution_Components is (Root_Release,
+                                Direct_Dependencies,
+                                Indirect_Dependencies);
+
+   type Components_Array is array (Solution_Components) of Boolean;
 
    function Release (This : Root) return Releases.Release;
 

@@ -46,7 +46,7 @@ package body Alr.Commands.Withing is
       loop
          Utils.Auto_GPR_With.Update
            (Alire.OS_Lib."/" (Root.Current.Path, File),
-            Root.Current.GPR_Project_Files (Exclude_Root => True));
+            Root.Current.Direct_Withs (Root.Current.Release));
       end loop;
    end Auto_GPR_With;
 
