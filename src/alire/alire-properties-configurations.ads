@@ -16,7 +16,7 @@ package Alire.Properties.Configurations with Preelaborate is
    --  [configuration.variables]
    --  # Variables declared here
    --  test = { type = "Boolean" }
-   --  [configuration.settings]
+   --  [configuration.values]
    --  # Assignments made here
    --  crate.test = false
 
