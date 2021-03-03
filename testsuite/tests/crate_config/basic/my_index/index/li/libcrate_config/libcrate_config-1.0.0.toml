@@ -1,0 +1,16 @@
+description = "crate config demonstration project"
+name = "libcrate_config"
+version = "1.0.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:../../../libcrate_config_src"
+
+[configuration.variables]
+Var_Bool = {type="Boolean", default=true}
+Var_String = {type="String", default="Test string."}
+Var_Int = {type="Integer", first=-42, last=42, default=-1}
+Var_Real = {type="Real", first=-42.0, last=42.0, default=-1.0}
+Var_Enum = {type="Enum", values=["A", "B", "C"], default="B"}

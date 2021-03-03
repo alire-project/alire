@@ -1,5 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 
+with Alire.TOML_Adapters;
+
 with GNAT.IO;
 
 package body Alire.Conditional_Trees is
@@ -251,6 +253,15 @@ package body Alire.Conditional_Trees is
          return (To_Holder (Inner));
       end if;
    end "or";
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (L : in out Tree; R : Tree) is
+   begin
+      L := L and R;
+   end Append;
 
    ----------------
    -- Leaf_Count --
@@ -531,7 +542,23 @@ package body Alire.Conditional_Trees is
       --  dependencies)
       --  Array values with same key are consolidated in a single array
       --    (e.g., actions, which are created as an array of tables).
+
    begin
+
+      --  Get properties given as nested tables out of the way first, by
+      --  getting the top-level key and using the nested table as the
+      --  actual value.
+
+      if (for some Char of Key => Char = '.') then
+         Tree_TOML_Add (Table,
+                        Key => Utils.Head (Key, '.'),
+                        Val => TOML_Adapters.Create_Table
+                          (Utils.Tail (Key, '.'), Val));
+         return;
+      end if;
+
+      --  Regular processing of a top-level property
+
       pragma Assert (Table.Kind = TOML.TOML_Table);
       if Table.Has (Key) then
          declare
