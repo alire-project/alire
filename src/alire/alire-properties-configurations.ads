@@ -129,7 +129,7 @@ private
 
    overriding
    function Key (This : Config_Value_Assignment) return String
-   is (Alire.TOML_Keys.Config_Sets);
+   is (Alire.TOML_Keys.Config_Values);
 
    overriding
    function To_TOML (This : Config_Value_Assignment) return TOML.TOML_Value;

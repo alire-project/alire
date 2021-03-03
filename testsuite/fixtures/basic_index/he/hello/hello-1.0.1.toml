@@ -21,7 +21,7 @@ Var5={type="Integer", first=-1, last=1, default=0}
 Var7={type="Real", default=0.0}
 Var6={type="Real", first=-1.0, last=1.0, default=0.0}
 
-[configuration.settings]
+[configuration.values]
 hello.Var1=true # So far it is possible for a crate to set its own var
 libhello.Var1=false
 
