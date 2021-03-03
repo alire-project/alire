@@ -1,6 +1,7 @@
 private with AAA.Caches.Files;
 
 limited with Alire.Environment;
+with Alire.Conditional;
 with Alire.Containers;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -86,12 +87,6 @@ package Alire.Roots is
    --  solution in this root. This includes all releases' paths and any linked
    --  directories.
 
-   function GPR_Project_Files (This         : in out Root;
-                               Exclude_Root : Boolean)
-                               return Utils.String_Set;
-   --  Return all the gprbuild project files defined for the solution in this
-   --  root. If Exclude_Root is True, the project files of the root crate are
-   --  excluded from the result.
 
    function Release (This : Root) return Releases.Release;
 

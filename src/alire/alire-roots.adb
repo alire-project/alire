@@ -5,11 +5,14 @@ with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
+with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
+with Alire.Workspace;
 
 with GNAT.OS_Lib;
 
@@ -28,6 +31,50 @@ package body Alire.Roots is
          Context.Load (This);
       end return;
    end Build_Context;
+
+   ------------------
+   -- Direct_Withs --
+   ------------------
+
+   function Direct_Withs (This      : Root;
+                          Dependent : Releases.Release)
+                          return Utils.String_Set
+   is
+      Sol : Solutions.Solution renames This.Solution;
+   begin
+      return Files : Utils.String_Set do
+
+         --  Traverse direct dependencies of the given release
+
+         for Dep of Dependent.Flat_Dependencies (This.Environment) loop
+
+            --  For dependencies that appear in the solution as releases, get
+            --  their project files in the current environment.
+
+            if Sol.Releases.Contains (Dep.Crate)
+              and then
+                Sol.Releases.Element (Dep.Crate).Auto_GPR_With
+            then
+               for File of Sol.Releases.Element (Dep.Crate).Project_Files
+                 (This.Environment, With_Path => False)
+               loop
+                  Files.Include (File);
+               end loop;
+            end if;
+         end loop;
+      end return;
+   end Direct_Withs;
+
+   ----------------------------
+   -- Generate_Configuration --
+   ----------------------------
+
+   procedure Generate_Configuration (This : Root) is
+      Conf : Alire.Crate_Configuration.Global_Config;
+   begin
+      Conf.Load (This);
+      Conf.Generate_Config_Files (This);
+   end Generate_Configuration;
 
    ------------------
    -- Check_Stored --
@@ -216,6 +263,9 @@ package body Alire.Roots is
 
       This.Solution.Print_Hints (This.Environment);
 
+      --  Update/Create configuration files
+      Root.Generate_Configuration;
+
       --  Check that the solution does not contain suspicious dependencies,
       --  taking advantage that this procedure is called whenever a change
       --  to dependencies is happening.
@@ -277,35 +327,6 @@ package body Alire.Roots is
       Context.Load (This);
       Context.Export;
    end Export_Build_Environment;
-
-   -----------------------
-   -- GPR_Project_Files --
-   -----------------------
-
-   function GPR_Project_Files (This         : in out Root;
-                               Exclude_Root : Boolean)
-                               return Utils.String_Set
-   is
-      Files : Utils.String_Set;
-   begin
-
-      --  Add files from every release in the solution
-
-      for Rel of This.Solution.Releases.Including (Release (This)) loop
-
-         if (not Exclude_Root or else Rel.Name /= Release (This).Name)
-           and then
-            Rel.Auto_GPR_With
-         then
-            for File of Rel.Project_Files
-              (This.Environment, With_Path => False)
-            loop
-               Files.Include (File);
-            end loop;
-         end if;
-      end loop;
-      return Files;
-   end GPR_Project_Files;
 
    -------------------
    -- Project_Paths --
@@ -670,6 +691,9 @@ package body Alire.Roots is
          This.Set (Solution => Needed);
          This.Deploy_Dependencies;
 
+         --  Update/Create configuration files
+         Root.Generate_Configuration;
+
          Trace.Detail ("Update completed");
       end;
    end Update_Dependencies;
@@ -701,6 +725,10 @@ package body Alire.Roots is
             This.Deploy_Dependencies;
          end if;
       end if;
+
+      --  Update/Create configuration files
+      Root.Generate_Configuration;
+
    end Update_And_Deploy_Dependencies;
 
    --------------------

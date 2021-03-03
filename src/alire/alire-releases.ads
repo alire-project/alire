@@ -260,6 +260,9 @@ package Alire.Releases is
 
    function Tag (R : Release) return Alire.Properties.Vector;
 
+   function Config_Variables (R : Release) return Alire.Properties.Vector;
+   function Config_Settings (R : Release) return Alire.Properties.Vector;
+
    function Auto_GPR_With (R : Release) return Boolean;
 
    procedure Print (R : Release);
@@ -451,6 +454,14 @@ private
    function Tag (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
        (Alire.TOML_Keys.Tag));
+
+   function Config_Variables (R : Release) return Alire.Properties.Vector
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Config_Vars));
+
+   function Config_Settings (R : Release) return Alire.Properties.Vector
+   is (Conditional.Enumerate (R.Properties).Filter
+       (Alire.TOML_Keys.Config_Values));
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String

@@ -1,0 +1,10 @@
+description = "Shiny new project"
+maintainers = [
+"your@email.here",
+]
+maintainers-logins = [
+"github-username",
+]
+name = "crate"
+version = "0.0.0"
+

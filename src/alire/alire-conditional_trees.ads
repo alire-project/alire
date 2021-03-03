@@ -202,7 +202,10 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Concatenation
 
    function "and" (L : Tree; R : Values) return Tree is
-      ("and" (L, New_Value (R)));
+     ("and" (L, New_Value (R)));
+
+   procedure Append (L : in out Tree; R : Tree);
+   --  Same as L := L and R;
 
    function "or" (L, R : Tree) return Tree;
 
@@ -536,5 +539,7 @@ private
    --  dependencies)
    --  Array values with same key are consolidated in a single array
    --    (e.g., actions, which are created as an array of tables).
+   --  Keys containing one dot are split as nested tables. More than one dot
+   --  is an error.
 
 end Alire.Conditional_Trees;

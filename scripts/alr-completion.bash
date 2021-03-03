@@ -5,8 +5,8 @@ if ! builtin type -P alr &>/dev/null; then
     return
 fi
 
-# Commands
-_alr_commands=$(alr | sed -n '/Valid commands:/,/Help topics:/p' | tail -n +3 | head -n -2 | awk '{ print $1 }' | xargs)
+# Commands/Topics: all line-first words not starting with capital letter, after # COMMANDS
+_alr_commands=$(alr | grep COMMANDS -A 99 | awk '{print $1}' | grep -v '[[:upper:]]' | xargs)
 
 # Long global switches
 _alr_global_switches=$(alr -h | grep -Eo -- '--[[:alnum:]-]+' | xargs)
@@ -34,7 +34,7 @@ function _alr_completion() {
     # When no command found, suggest commands and long global switches.
     # Although global switches can be used even after the command is given, by
     # hidding them after the command we obtain clearer command-specific
-    # suggestions. 
+    # suggestions.
     $found || COMPREPLY+=($(compgen -W "$_alr_commands $_alr_global_switches" -- $curr))
 
     # When command found, always add the compatible command switches
@@ -56,6 +56,11 @@ function _alr_completion() {
             [ "$prev" == "--add" ] && compopt -o dirnames
             ;;
 
+        publish)
+            # Suggest files when using a non-standard manifest
+            [ "$prev" == "--manifest" ] && compopt -o filenames
+            ;;
+
         run)
             # Suggest only the executables explicitly declared by the release
             COMPREPLY+=($(compgen -W "$(alr run --list |\
@@ -63,7 +68,7 @@ function _alr_completion() {
                                         tail -n +2 |\
                                         awk '{print $1}')" -- $curr))
             ;;
-        
+
         with)
             # When the previous word is "with", show any crate:
             [ "$prev" == "with" ] && COMPREPLY+=($(compgen -W "$_alr_crates" -- $curr))
@@ -71,7 +76,7 @@ function _alr_completion() {
             [ "$prev" == "--del" ] && COMPREPLY+=($(compgen -W "$(alr with | tail +2 | grep -Eo -- '[_a-z0-9]+')" -- $curr))
             ;;
     esac
-} 
+}
 
 # Bind the function that performs context-aware completion
 complete -F _alr_completion alr

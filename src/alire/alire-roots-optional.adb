@@ -48,6 +48,7 @@ package body Alire.Roots.Optional is
             exception
                when E : others =>
                   Trace.Debug ("Unloadable root found at " & Path);
+                  Log_Exception (E);
                   return Outcome_Failure
                     (Errors.Get (E),
                      Broken,

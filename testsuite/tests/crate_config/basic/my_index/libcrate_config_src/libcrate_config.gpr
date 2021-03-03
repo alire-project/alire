@@ -1,0 +1,43 @@
+with "config/libcrate_config_config";
+
+project Libcrate_Config is
+   for Source_Dirs use ("src", "config");
+   for Languages use ("Ada", "C");
+   for Library_Name use "crate_config";
+   for Library_Kind use "static";
+
+   Src_Dirs := ("src", "config");
+
+   case Libcrate_Config_Config.Var_Bool is
+      when "True" => null;
+      when others =>
+         Src_Dirs := Src_Dirs & ("invalid value for Var_Bool");
+   end case;
+
+   case Libcrate_Config_Config.Var_String is
+      when "Test string." => null;
+      when others =>
+         Src_Dirs := Src_Dirs & ("invalid value for Var_String");
+   end case;
+
+   case Libcrate_Config_Config.Var_Enum is
+      when "B" => null;
+      when others =>
+         Src_Dirs := Src_Dirs & ("invalid value for Var_Enum");
+   end case;
+
+   case Libcrate_Config_Config.Var_Int is
+      when "-1" => null;
+      when others =>
+         Src_Dirs := Src_Dirs & ("invalid value for Var_Int");
+   end case;
+
+   case Libcrate_Config_Config.Var_Int_Last is
+      when "42" => null;
+      when others =>
+         Src_Dirs := Src_Dirs & ("invalid value for Var_Int_Last");
+   end case;
+
+   for Source_Dirs use Src_Dirs;
+
+end Libcrate_Config;

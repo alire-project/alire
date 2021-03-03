@@ -17,10 +17,17 @@ package body Alr.Commands.Publish is
       is (if Num_Arguments >= 2 then Argument (2) else "");
 
       Options : constant Alire.Publish.All_Options :=
-                  (Skip_Build => Cmd.Skip_Build);
+                  Alire.Publish.New_Options
+                    (Manifest   =>
+                       (if Cmd.Manifest.all /= ""
+                        then Cmd.Manifest.all
+                        else Alire.Roots.Crate_File_Name),
+                     Skip_Build => Cmd.Skip_Build);
 
    begin
-      if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 then
+      if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 or else
+        (Cmd.Manifest.all /= "" and then Cmd.Print_Trusted)
+      then
          Reportaise_Wrong_Arguments
            ("Given switches cannot be simultaneously set");
       end if;
@@ -95,6 +102,12 @@ package body Alr.Commands.Publish is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch
+        (Config,
+         Cmd.Manifest'Access,
+         "", "--manifest=",
+         "Selects a manifest file other than ./alire.toml");
+
       Define_Switch
         (Config,
          Cmd.Tar'Access,

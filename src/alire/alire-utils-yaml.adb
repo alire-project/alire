@@ -12,7 +12,7 @@ package body Alire.Utils.YAML is
         (T'Class (V.Element (Pos)).To_YAML &
          (if Pos = V.Last_Index
           then ""
-          else ", " & Image (V, Pos + 1)));
+          else "," & ASCII.LF & Image (V, Pos + 1)));
 
    begin
       if V.Is_Empty then

@@ -14,10 +14,12 @@ with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.User_Input;
+with Alire.Workspace;
 
 with Alr.Commands.User_Input;
 with Alr.OS_Lib;
 with Alr.Platform;
+with Alr.Root;
 with Alr.Utils.Auto_GPR_With;
 
 with Semantic_Versioning.Extended;
@@ -45,7 +47,7 @@ package body Alr.Commands.Withing is
       loop
          Utils.Auto_GPR_With.Update
            (Alire.OS_Lib."/" (Cmd.Root.Path, File),
-            Cmd.Root.GPR_Project_Files (Exclude_Root => True));
+            Cmd.Root.Direct_Withs (Cmd.Root.Current.Release));
       end loop;
    end Auto_GPR_With;
 

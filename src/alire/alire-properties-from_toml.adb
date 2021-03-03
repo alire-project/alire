@@ -63,8 +63,8 @@ package body Alire.Properties.From_TOML is
                         end if;
 
                         --  Actually load the property:
-                        Props := Props and Loaders (Prop)
-                          (From.Descend (Key, Val, Key));
+                        Props := Props and
+                          Loaders (Prop) (From.Descend (Key, Val, Key));
                      end if;
 
                   else
