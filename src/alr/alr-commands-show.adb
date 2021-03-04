@@ -1,10 +1,10 @@
+with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Platform;
 with Alire.Platforms;
 with Alire.Releases;
-with Alire.Requisites.Booleans;
 with Alire.Root;
 with Alire.Roots.Optional;
 with Alire.Solutions;
@@ -130,7 +130,7 @@ package body Alr.Commands.Show is
                             (if Cmd.System
                              then Alire.Platform.Distribution
                              else Alire.Platforms.Distro_Unknown);
-               Available : constant Alire.Requisites.Tree :=
+               Available : constant Alire.Conditional.Availability :=
                              (if Cmd.System
                               then External.On_Platform
                                 (Platform.Properties).Available
@@ -147,9 +147,7 @@ package body Alr.Commands.Show is
                              else "")
                     .Append (Detail (I))
                     .Append (if I = Detail.First_Index
-                             then Alire.Requisites.Default_To
-                                  (Available,
-                                   Alire.Requisites.Booleans.Always_True).Image
+                             then Available.Image_One_Line
                              else "");
                   if I /= Detail.Last_Index then
                      Table.New_Row;
