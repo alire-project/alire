@@ -55,7 +55,7 @@ package body Alire.Crates is
          Notes        => "",
          Dependencies => Conditional.No_Dependencies,
          Properties   => This.Externals.Properties,
-         Available    => Requisites.No_Requisites);
+         Available    => Conditional.Empty);
    end Base;
 
    --------------
@@ -138,7 +138,7 @@ package body Alire.Crates is
       --  Load the shared section
 
       declare
-         Unused_Avail : Requisites.Tree;
+         Unused_Avail : Conditional.Availability;
          Unused_Deps  : Conditional.Dependencies;
          Properties   : Conditional.Properties;
       begin

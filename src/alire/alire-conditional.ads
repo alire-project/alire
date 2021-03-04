@@ -3,6 +3,7 @@ with Alire.Dependencies.Containers;
 with Alire.Interfaces;
 with Alire.Properties;
 with Alire.TOML_Adapters;
+with Alire.TOML_Keys;
 
 with Semantic_Versioning.Extended;
 
@@ -104,7 +105,7 @@ package Alire.Conditional with Preelaborate is
    is (if This.Is_Available then "true" else "false");
 
    overriding
-   function Key (This : Available) return String is ("available");
+   function Key (This : Available) return String is (TOML_Keys.Available);
 
    overriding
    function To_TOML (This : Available) return TOML.TOML_Value
@@ -116,7 +117,19 @@ package Alire.Conditional with Preelaborate is
 
    package For_Available is new Conditional_Trees (Available, Image);
 
-   subtype Availability is For_Available.Tree;
+   type Availability is new For_Available.Tree with null record;
+
+   function Available_From_TOML (From : TOML_Adapters.Key_Queue)
+                                 return For_Available.Tree;
+   --  Expects a single table "available = true/false"
+
+   function Is_Available (This : Availability;
+                          Env  : Alire.Properties.Vector) return Boolean
+   is (This.Is_Empty
+       or else
+       This.Evaluate (Env).Is_Empty
+       or else
+       This.Evaluate (Env).Value.Is_Available);
 
 private
 

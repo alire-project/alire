@@ -51,7 +51,6 @@ package body Alire.TOML_Load is
       use TOML;
       use type Conditional.Dependencies;
       use type Conditional.Properties;
-      use type Requisites.Tree;
 
       TOML_Avail : TOML.TOML_Value;
       TOML_Deps  : TOML.TOML_Value;
@@ -98,17 +97,22 @@ package body Alire.TOML_Load is
 
       --  Process Available
 
-      if Allowed_Tables (Section, Available) then
-         if From.Pop (TOML_Keys.Available, TOML_Avail) then
-            Avail := Avail and
-              TOML_Expressions.Cases.Load_Requisites
-                (TOML_Adapters.From (TOML_Avail,
-                 From.Message (TOML_Keys.Available)));
+      declare
+         use Conditional;
+         --  use type Conditional.Availability fails to make "and" visible (?)
+      begin
+         if Allowed_Tables (Section, Available) then
+            if From.Pop (TOML_Keys.Available, TOML_Avail) then
+               Avail := Avail and
+                 TOML_Expressions.Cases.Load_Availability
+                   (TOML_Adapters.From (TOML_Avail,
+                    From.Message (TOML_Keys.Available)));
+            end if;
+         elsif From.Unwrap.Has (TOML_Keys.Available) then
+            From.Checked_Error ("found field not allowed in manifest section: "
+                                & TOML_Keys.Available);
          end if;
-      elsif From.Unwrap.Has (TOML_Keys.Available) then
-         From.Checked_Error ("found field not allowed in manifest section: "
-                             & TOML_Keys.Available);
-      end if;
+      end;
 
       --  Process remaining keys, which must be properties
 

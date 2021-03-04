@@ -323,7 +323,7 @@ package body Alire.Releases is
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
-      Available    => Conditional.For_Available.Empty
+      Available    => Conditional.Empty
      );
 
    -------------------------

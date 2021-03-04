@@ -39,7 +39,7 @@ package Alire.Externals is
    --  Classwide helpers  --
    -------------------------
 
-   function Available (This : External'Class) return Requisites.Tree;
+   function Available (This : External'Class) return Conditional.Availability;
 
    type Kinds is (Hint,
                   --  A placeholder for a knowingly-unavailable crate, that
@@ -69,7 +69,7 @@ private
 
    type External is abstract tagged record
       Properties : Conditional.Properties;
-      Available  : Requisites.Tree;
+      Available  : Conditional.Availability;
    end record;
 
 end Alire.Externals;
