@@ -1,9 +1,12 @@
 with Alire.Conditional_Trees;
 with Alire.Dependencies.Containers;
+with Alire.Interfaces;
 with Alire.Properties;
 with Alire.TOML_Adapters;
 
 with Semantic_Versioning.Extended;
+
+with TOML;
 
 package Alire.Conditional with Preelaborate is
 
@@ -78,6 +81,42 @@ package Alire.Conditional with Preelaborate is
    --  Function provided by each concrete Property class for TOML loading.
    --  From is always a table "prop-name = whatever".
    --  These may raise Checked_Error.
+
+   --------------------
+   --  Availability  --
+   --------------------
+
+   --  We reuse the conditional trees for availability. This was not possible
+   --  in the general Ada index, but it is now with the more limited case
+   --  expressions. This allows removing the separate hierarchy of code
+   --  that was formerly used only for availability.
+
+   type Available is
+     new Interfaces.Classificable
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable
+   with record
+      Is_Available : Boolean;
+   end record;
+   --  A wrapper on boolean to be able to store it in a conditional tree
+
+   function Image (This : Available) return String
+   is (if This.Is_Available then "true" else "false");
+
+   overriding
+   function Key (This : Available) return String is ("available");
+
+   overriding
+   function To_TOML (This : Available) return TOML.TOML_Value
+   is (TOML.Create_Boolean (This.Is_Available));
+
+   overriding
+   function To_YAML (This : Available) return String
+   is (This.Key & ": " & This.Image);
+
+   package For_Available is new Conditional_Trees (Available, Image);
+
+   subtype Availability is For_Available.Tree;
 
 private
 
