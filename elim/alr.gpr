@@ -1,10 +1,12 @@
 with "../deps/aaa/aaa";
 with "../deps/ada-toml/ada_toml";
+with "../deps/ansi/ansi";
 with "alire";
 with "../alire_common";
 with "ajunitgen";
 with "../deps/semantic_versioning/semantic_versioning";
 with "../deps/simple_logging/simple_logging";
+with "../deps/spdx/spdx";
 with "../deps/xmlezout/xml_ez_out";
 
 project Alr is
