@@ -3,6 +3,10 @@ with Alire.TOML_Adapters;
 
 package Alire.TOML_Expressions.Cases with Preelaborate is
 
+   function Load_Availability (From : TOML_Adapters.Key_Queue)
+                               return Conditional.Availability;
+   --  From is an "available = ..." table.
+
    function Load_Dependencies (From : TOML_Adapters.Key_Queue)
                                return Conditional.Dependencies;
    --  From is the RHS of a "depends-on = { ... }" table.
@@ -19,9 +23,5 @@ package Alire.TOML_Expressions.Cases with Preelaborate is
    --  (because the syntax is key.expr.values, and not expr.key.values, so
    --  key and values must agree). We explicitly pass a Loader for the property
    --  that is being resolved.
-
-   function Load_Availability (From : TOML_Adapters.Key_Queue)
-                               return Conditional.Availability;
-   --  From is an "available = ..." table.
 
 end Alire.TOML_Expressions.Cases;

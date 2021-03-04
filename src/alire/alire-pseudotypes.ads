@@ -1,4 +1,4 @@
-private package Alire.Pseudotypes with Preelaborate is
+package Alire.Pseudotypes with Preelaborate is
 
    --  Support for the distinct enums/types that may appear in a case
    --  expression. This was originally done with proper Ada enumerations, for
