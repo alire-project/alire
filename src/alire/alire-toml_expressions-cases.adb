@@ -1,6 +1,6 @@
 with Alire.Conditional_Trees.Cases;
 with Alire.Platforms;
-with Alire.Requisites.Platform;
+with Alire.Properties.Platform;
 with Alire.TOML_Keys;
 
 package body Alire.TOML_Expressions.Cases is
@@ -23,16 +23,16 @@ package body Alire.TOML_Expressions.Cases is
    package Common_Cases is
 
       package Distributions is
-         new Condtrees.Cases (Requisites.Platform.Distro_Cases);
+         new Condtrees.Cases (Properties.Platform.Distro_Cases);
 
       package Operating_Systems is
-        new Condtrees.Cases (Requisites.Platform.OS_Cases);
+        new Condtrees.Cases (Properties.Platform.OS_Cases);
 
       package Toolchains is
-        new Condtrees.Cases (Requisites.Platform.Toolchain_Cases);
+        new Condtrees.Cases (Properties.Platform.Toolchain_Cases);
 
       package Word_Sizes is
-        new Condtrees.Cases (Requisites.Platform.Word_Size_Cases);
+        new Condtrees.Cases (Properties.Platform.Word_Size_Cases);
 
    end Common_Cases;
 
