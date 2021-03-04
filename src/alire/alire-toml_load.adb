@@ -46,7 +46,7 @@ package body Alire.TOML_Load is
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;
-                                 Avail   : in out Requisites.Tree)
+                                 Avail   : in out Conditional.Availability)
    is
       use TOML;
       use type Conditional.Dependencies;

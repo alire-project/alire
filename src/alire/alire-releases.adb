@@ -10,7 +10,6 @@ with Alire.Errors;
 with Alire.Origins.Deployers;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
-with Alire.Requisites.Booleans;
 with Alire.TOML_Expressions;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
@@ -146,27 +145,6 @@ package body Alire.Releases is
       end if;
    end Deploy;
 
-   ---------------
-   -- Extending --
-   ---------------
-
-   function Extending
-     (Base         : Release;
-      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
-      Properties   : Conditional.Properties   := Conditional.No_Properties;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
-      return Release
-   is
-      use all type Conditional.Dependencies;
-      use all type Requisites.Tree;
-   begin
-      return Extended : Release := Base do
-         Extended.Dependencies := Base.Dependencies and Dependencies;
-         Extended.Properties   := Base.Properties   and Properties;
-         Extended.Available    := Base.Available    and Available;
-      end return;
-   end Extending;
-
    ----------------
    -- Forbidding --
    ----------------
@@ -229,20 +207,6 @@ package body Alire.Releases is
    begin
       return Replaced : Release := Base do
          Replaced.Properties := Properties;
-      end return;
-   end Replacing;
-
-   ---------------
-   -- Replacing --
-   ---------------
-
-   function Replacing
-     (Base         : Release;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
-      return Release is
-   begin
-      return Replaced : Release := Base do
-         Replaced.Available := Available;
       end return;
    end Replacing;
 
@@ -315,7 +279,7 @@ package body Alire.Releases is
                          Notes        : Description_String;
                          Dependencies : Conditional.Dependencies;
                          Properties   : Conditional.Properties;
-                         Available    : Alire.Requisites.Tree)
+                         Available    : Conditional.Availability)
                          return Release
    is (Prj_Len      => Name.Length,
        Notes_Len    => Notes'Length,
@@ -359,7 +323,7 @@ package body Alire.Releases is
       Dependencies => Dependencies,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
-      Available    => Requisites.Trees.Empty_Tree -- empty evaluates to True
+      Available    => Conditional.For_Available.Empty
      );
 
    -------------------------
@@ -615,7 +579,7 @@ package body Alire.Releases is
 
       --  AVAILABILITY
       if not R.Available.Is_Empty then
-         Put_Line ("Available when: " & R.Available.Image);
+         Put_Line ("Available when: " & R.Available.Value.Image);
       end if;
 
       --  PROPERTIES
@@ -846,7 +810,6 @@ package body Alire.Releases is
    is
       package APL renames Alire.Properties.Labeled;
       use all type Alire.Properties.Labeled.Cardinalities;
-      use all type Alire.Requisites.Tree;
       use TOML_Adapters;
       Root : constant TOML.TOML_Value := R.Properties.To_TOML;
    begin
@@ -909,7 +872,7 @@ package body Alire.Releases is
 
       --  Available
       if R.Available.Is_Empty or else
-         R.Available = Alire.Requisites.Booleans.Always_True
+         R.Available.Value.Is_Available
       then
          null; -- Do nothing, do not pollute .toml file
       else
@@ -973,9 +936,7 @@ package body Alire.Releases is
        Dependencies => R.Dependencies.Evaluate (P),
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
-       Available    => (if R.Available.Check (P)
-                        then Requisites.Booleans.Always_True
-                        else Requisites.Booleans.Always_False));
+       Available    => R.Available.Evaluate (P));
 
    ----------------------
    -- Long_Description --
