@@ -84,44 +84,12 @@ package body Alire.Conditional_Trees is
       then This
       else To_Tree (Vector_Node (This.Root).Values.First_Element));
 
-   ---------------------
-   -- New_Conditional --
-   ---------------------
-
-   function New_Conditional (If_X   : Requisites.Tree;
-                             Then_X : Tree;
-                             Else_X : Tree) return Tree is
-     (To_Holder (Conditional_Node'(Condition  => If_X,
-                                   Then_Value => Then_X,
-                                   Else_Value => Else_X)));
-
    --------------
    -- New_Leaf --
    --------------
 
    function New_Leaf (V : Values) return Tree is
      (To_Holder (Leaf_Node'(Value => Definite_Values.To_Holder (V))));
-
-   ---------------
-   -- Condition --
-   ---------------
-
-   function Condition (This : Tree) return Requisites.Tree is
-     (Conditional_Node (This.Root).Condition);
-
-   ----------------
-   -- True_Value --
-   ----------------
-
-   function True_Value (This : Tree) return Tree is
-      (Conditional_Node (This.Root).Then_Value);
-
-   -----------------
-   -- False_Value --
-   -----------------
-
-   function False_Value (This : Tree) return Tree is
-      (Conditional_Node (This.Root).Else_Value);
 
    -----------
    -- Empty --
@@ -418,28 +386,6 @@ package body Alire.Conditional_Trees is
          end if;
       end if;
    end Iterate_Children;
-
-   ---------------------
-   -- Case_Statements --
-   ---------------------
-
-   package body Case_Statements is
-
-      function Case_Is (Arr : Arrays) return Tree is
-         Case_Is : Tree := Arr (Arr'Last);
-         --  Since we get the whole array,
-         --    by exhaustion at worst the last must be true
-      begin
-         for I in reverse Arr'First .. Enum'Pred (Arr'Last) loop
-            Case_Is := New_Conditional (If_X   => Requisite_Equal (I),
-                                        Then_X => Arr (I),
-                                        Else_X => Case_Is);
-         end loop;
-
-         return Case_Is;
-      end Case_Is;
-
-   end Case_Statements;
 
    -----------
    -- Print --
