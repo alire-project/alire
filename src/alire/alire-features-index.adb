@@ -187,8 +187,9 @@ package body Alire.Features.Index is
    -- Setup_And_Load --
    --------------------
 
-   procedure Setup_And_Load (From  : Absolute_Path;
-                             Force : Boolean := False)
+   procedure Setup_And_Load (From   : Absolute_Path;
+                             Strict : Boolean;
+                             Force  : Boolean := False)
    is
       Result  : Outcome;
       Indexes : Features.Index.Index_On_Disk_Set;
@@ -221,7 +222,8 @@ package body Alire.Features.Index is
 
       declare
          Outcome : constant Alire.Outcome := Features.Index.Load_All
-           (From => Alire.Config.Edit.Indexes_Directory);
+           (From   => Alire.Config.Edit.Indexes_Directory,
+            Strict => Strict);
       begin
          if not Outcome.Success then
             Raise_Checked_Error (Message (Outcome));
@@ -313,7 +315,7 @@ package body Alire.Features.Index is
    -- Load_All --
    --------------
 
-   function Load_All (From : Absolute_Path) return Outcome
+   function Load_All (From : Absolute_Path; Strict : Boolean) return Outcome
    is
       Result  : Outcome;
       Indexes : constant Index_On_Disk_Set := Find_All (From, Result);
@@ -324,7 +326,7 @@ package body Alire.Features.Index is
 
       for Index of Indexes loop
          declare
-            Result : constant Outcome := Index.Load;
+            Result : constant Outcome := Index.Load (Strict);
          begin
             if not Result.Success then
                return Result;

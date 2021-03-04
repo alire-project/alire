@@ -522,12 +522,14 @@ package body Alr.Commands is
    -------------------------
 
    procedure Requires_Full_Index (Cmd          : in out Command'Class;
+                                  Strict       : Boolean := False;
                                   Force_Reload : Boolean := False) is
       pragma Unreferenced (Cmd);
    begin
       Alire.Features.Index.Setup_And_Load
-        (From  => Alire.Config.Edit.Indexes_Directory,
-         Force => Force_Reload);
+        (From   => Alire.Config.Edit.Indexes_Directory,
+         Strict => Strict,
+         Force  => Force_Reload);
    end Requires_Full_Index;
 
    ----------------------------
@@ -607,7 +609,7 @@ package body Alr.Commands is
 
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
-                     Cmd.Requires_Full_Index;
+                     Cmd.Requires_Full_Index (Strict => False);
                      Checked.Sync_Solution_And_Deps;
                      return;
                   else
@@ -665,7 +667,7 @@ package body Alr.Commands is
          --  upcoming) we are done. Otherwise, do a silent update.
 
          if Sync then
-            Cmd.Requires_Full_Index;
+            Cmd.Requires_Full_Index (Strict => False);
             Checked.Update_Dependencies (Silent => True);
          end if;
       end;

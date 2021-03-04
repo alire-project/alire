@@ -3,7 +3,6 @@ with Alire.Origins.Deployers.System;
 with Alire.Platform;
 with Alire.Releases;
 with Alire.TOML_Adapters;
-with Alire.TOML_Expressions;
 with Alire.TOML_Keys;
 
 with TOML;
@@ -92,12 +91,17 @@ package body Alire.Externals.From_System is
       ---------------
 
       function From_Case (Case_From : TOML.TOML_Value) return External is
-         package Distros is new TOML_Expressions.Enum_Cases
-           (Platforms.Known_Distributions);
+         --  FIX IN DOCS: native:package in regular origin instructions. That
+         --  does not exist anymore, only via externals. Probably the simplest
+         --  to fix this mess is to create a new instance of conditional
+         --  trees containing a system origin, and load normally with the
+         --  tree loader.
+         --  package Distros is new TOML_Expressions.Enum_Cases
+         --    (Platforms.Known_Distributions);
 
-         Result : External := (Externals.External with
-                               Origin => (Is_Case => True,
-                                          others  => <>));
+         --  Result : External := (Externals.External with
+         --                        Origin => (Is_Case => True,
+         --                                   others  => <>));
       begin
          if Case_From.Keys'Length /= 1 or else
          +Case_From.Keys (1) /= "case(distribution)"
@@ -109,31 +113,35 @@ package body Alire.Externals.From_System is
          --  Get an array of TOML values that will each point to a distribution
          --  specific array of candidate packages:
 
-         declare
-            use type TOML.TOML_Value;
-            Distro_Origins : constant Distros.TOML_Array :=
-                               Distros.Load_Cases
-                                 (TOML_Adapters.From
-                                    (Case_From.Get (Case_From.Keys (1)),
-                                     From.Message ("case")));
-         begin
-            for Distro in Distro_Origins'Range loop
-               if Distro_Origins (Distro) /= TOML.No_TOML_Value then
+         raise Unimplemented;
+         return From_Case (Case_From);
 
-                  if Distro_Origins (Distro).Kind not in TOML.TOML_Array then
-                     From.Checked_Error
-                       ("case(distribution): "
-                        & "array of candidate packages expected, but got: "
-                        & Distro_Origins (Distro).Kind'Img);
-                  end if;
-
-                  Result.Origin.Distro_Candidates (Distro) :=
-                    TOML_Adapters.To_Vector (Distro_Origins (Distro));
-               end if;
-            end loop;
-
-            return Result;
-         end;
+         --  declare
+         --     use type TOML.TOML_Value;
+         --     Distro_Origins : constant Distros.TOML_Array :=
+         --                        Distros.Load_Cases
+         --                          (TOML_Adapters.From
+         --                             (Case_From.Get (Case_From.Keys (1)),
+         --                              From.Message ("case")));
+         --  begin
+         --     for Distro in Distro_Origins'Range loop
+         --        if Distro_Origins (Distro) /= TOML.No_TOML_Value then
+         --
+         --           if Distro_Origins (Distro).Kind not in TOML.TOML_Array
+         --  then
+         --              From.Checked_Error
+         --                ("case(distribution): "
+         --                 & "array of candidate packages expected, but got: "
+         --                 & Distro_Origins (Distro).Kind'Img);
+         --           end if;
+         --
+         --           Result.Origin.Distro_Candidates (Distro) :=
+         --             TOML_Adapters.To_Vector (Distro_Origins (Distro));
+         --        end if;
+         --     end loop;
+         --
+         --     return Result;
+         --  end;
       end From_Case;
 
       Value : TOML.TOML_Value;

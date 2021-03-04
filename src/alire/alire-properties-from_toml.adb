@@ -1,6 +1,5 @@
 with AAA.Enum_Tools;
 
-with Alire.TOML_Expressions.Cases;
 with Alire.Utils;
 
 package body Alire.Properties.From_TOML is
@@ -11,11 +10,10 @@ package body Alire.Properties.From_TOML is
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;
-                    Section : Crates.Sections)
+                    Section : Crates.Sections;
+                    Strict  : Boolean)
                     return Conditional.Properties
    is
-      use type Conditional.Properties;
-      use type Conditional.Property_Loader;
    begin
       return Props : Conditional.Properties do
          loop
@@ -39,7 +37,7 @@ package body Alire.Properties.From_TOML is
                      Prop := Property_Keys'Value (TOML_Adapters.Adafy (Key));
 
                      --  Check that the property is expected in this section.
-                     if Loaders (Prop) = null then
+                     if Loaders (Prop) in null then
                         From.Recoverable_Error
                           ("property '" & Key
                            & "' must not appear in section "
@@ -47,25 +45,40 @@ package body Alire.Properties.From_TOML is
                         exit Process_Property;
                      end if;
 
-                     --  Divert to the expr resolver if prop can be dynamic:
-                     if Loaders_During_Case (Prop) /= null then
-                        Props := Props and
-                          TOML_Expressions.Cases.Load_Property
-                            (Key    => Key,
-                             From   => From.Descend (Val, "property"),
-                             Loader => Loaders_During_Case (Prop));
-                     else
-                        --  Ensure no dynamic expression in the incoming values
-                        if TOML_Expressions.Contains_Expression (Val) then
-                           From.Checked_Error
-                             ("property '" & Key
-                              & "' must not contain dynamic expressions");
-                        end if;
+                     --  Load property once we know its exact name, allowing
+                     --  expressions were appropriate.
+                     Props.Append
+                       (Prop_Loader.Load
+                          (From    => From.Descend
+                               (Key     => Key,
+                                Value   => Val,
+                                Context => Key),
+                           Loader  => Loaders (Prop),
+                           Resolve => Is_Dynamic (Prop),
+                           Strict  => Strict));
 
-                        --  Actually load the property:
-                        Props := Props and
-                          Loaders (Prop) (From.Descend (Key, Val, Key));
-                     end if;
+                     --  REMOVE AFTER REFACTOR. Keep for now to reproduce same
+                     --  messages
+                     --  --  Divert to the expr resolver if prop can be dynamic
+                     --  if Loaders_During_Case (Prop) /= null then
+                     --     Props := Props and
+                     --       TOML_Expressions.Cases.Load_Property
+                     --         (Key    => Key,
+                     --          From   => From.Descend (Val, "property"),
+                     --          Loader => Loaders_During_Case (Prop));
+                     --  else
+                     --     --  Ensure no dynamic expression in the incoming
+                     --         values
+                     --     if TOML_Expressions.Contains_Expression (Val) then
+                     --        From.Checked_Error
+                     --          ("property '" & Key
+                     --           & "' must not contain dynamic expressions");
+                     --     end if;
+                     --
+                     --     --  Actually load the property:
+                     --     Props := Props and
+                     --       Loaders (Prop) (From.Descend (Key, Val, Key));
+                     --  end if;
 
                   else
                      From.Recoverable_Error ("invalid property: " & Key);

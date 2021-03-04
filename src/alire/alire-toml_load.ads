@@ -16,7 +16,8 @@ package Alire.TOML_Load is
    function Load_File (File_Name : Any_Path) return TOML.TOML_Value;
    --  Will raise Checked_Error if file contents aren't valid TOML
 
-   procedure Load_Crate_Section (Section : Crates.Sections;
+   procedure Load_Crate_Section (Strict  : Boolean;
+                                 Section : Crates.Sections;
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;

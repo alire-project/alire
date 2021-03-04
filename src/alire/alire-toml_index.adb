@@ -30,6 +30,10 @@ package body Alire.TOML_Index is
    package Semver renames Semantic_Versioning;
    package TTY    renames Utils.TTY;
 
+   Strict : Boolean := False;
+   --  Allow or not unknown values in enums. This isn't easily moved to an
+   --  argument given the current design.
+
    procedure Set_Error
      (Result            : out Load_Result;
       Filename, Message : String;
@@ -44,15 +48,16 @@ package body Alire.TOML_Index is
    --  Check that Catalog_Dir contains a file called "index.toml" and that it
    --  describes a supported catalog.
 
-   procedure Load_Manifest (Item : Ada.Directories.Directory_Entry_Type;
-                            Stop : in out Boolean);
+   procedure Load_Manifest (Item   : Ada.Directories.Directory_Entry_Type;
+                            Stop   : in out Boolean);
    --  Check if entry is a candidate to manifest file, and in that case load
    --  its contents. May raise Checked_Error.
 
    procedure Load_From_Catalog_Internal
      (File_Name : Absolute_Path;
       Name      : Crate_Name;
-      Version   : String);
+      Version   : String;
+      Strict    : Boolean);
    --  Do the actual loading of a file that pass tests based on name/location.
    --  Name and version have been deduced from the file name and will be used
    --  for double-checks.
@@ -185,6 +190,7 @@ package body Alire.TOML_Index is
 
    procedure Load
      (Index    : Index_On_Disk.Index'Class;
+      Strict   : Boolean;
       Result   : out Load_Result)
    is
 
@@ -226,6 +232,8 @@ package body Alire.TOML_Index is
          return;
       end if;
 
+      TOML_Index.Strict := Load.Strict;
+
       Trace.Detail ("Loading full catalog from " & Root);
 
       Check_Index (Index, Root, Result);
@@ -251,8 +259,8 @@ package body Alire.TOML_Index is
    -- Load_Manifest --
    -------------------
 
-   procedure Load_Manifest (Item : Ada.Directories.Directory_Entry_Type;
-                            Stop : in out Boolean)
+   procedure Load_Manifest (Item   : Ada.Directories.Directory_Entry_Type;
+                            Stop   : in out Boolean)
    is
       pragma Unreferenced (Stop);
       use Ada.Directories;
@@ -322,7 +330,8 @@ package body Alire.TOML_Index is
 
             Load_From_Catalog_Internal (File_Name => Path,
                                         Name      => FS_Name,
-                                        Version   => FS_Version);
+                                        Version   => FS_Version,
+                                        Strict    => Strict);
          end;
       end;
    end Load_Manifest;
@@ -334,7 +343,8 @@ package body Alire.TOML_Index is
    procedure Load_From_Catalog_Internal
      (File_Name : Absolute_Path;
       Name      : Crate_Name;
-      Version   : String)
+      Version   : String;
+      Strict    : Boolean)
    is
 
       -------------------
@@ -394,7 +404,8 @@ package body Alire.TOML_Index is
               (TOML_Adapters.From
                    (Value,
                     Context =>
-                      "Loading externals from " & File_Name)));
+                      "Loading externals from " & File_Name),
+               Strict));
       else
          Index_Release
            (File_Name, Releases.From_TOML

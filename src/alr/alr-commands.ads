@@ -92,8 +92,10 @@ package Alr.Commands is
    --  resetting the root.
 
    procedure Requires_Full_Index (Cmd          : in out Command'Class;
+                                  Strict       : Boolean := False;
                                   Force_Reload : Boolean := False);
-   --  Unless Force_Reload, if the index is not empty we no nothing
+   --  Unless Force_Reload, if the index is not empty we no nothing. When
+   --  strict, don't allow unknown values in enums.
 
    procedure Requires_Valid_Session (Cmd          : in out Command'Class;
                                      Sync         : Boolean := True);

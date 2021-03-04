@@ -103,12 +103,13 @@ package body Alire.Index_On_Disk is
    -- Load --
    ----------
 
-   function Load (This : Index'Class) return Outcome
+   function Load (This : Index'Class; Strict : Boolean) return Outcome
    is
    begin
       return Result : Outcome := Outcome_Success do
          TOML_Index.Load
            (Index  => This,
+            Strict => Strict,
             Result => Result);
       end return;
    exception

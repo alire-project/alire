@@ -23,7 +23,9 @@ package body Alire.Externals is
    -- From_TOML --
    ---------------
 
-   function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class is
+   function From_TOML (From   : TOML_Adapters.Key_Queue;
+                       Strict : Boolean)
+                       return External'Class is
 
       ---------------
       -- From_TOML --
@@ -76,7 +78,8 @@ package body Alire.Externals is
          --  Load common external fields
 
          TOML_Load.Load_Crate_Section
-           (Section => Crates.External_Private_Section,
+           (Strict  => Strict,
+            Section => Crates.External_Private_Section,
             From    => From,
             Props   => Ext.Properties,
             Deps    => Deps,

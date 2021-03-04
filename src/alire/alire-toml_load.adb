@@ -1,6 +1,6 @@
+with Alire.Conditional_Trees.TOML_Load;
 with Alire.Errors;
 with Alire.Properties.From_TOML;
-with Alire.TOML_Expressions.Cases;
 with Alire.TOML_Keys;
 with Alire.Utils;
 
@@ -42,7 +42,8 @@ package body Alire.TOML_Load is
    -- Load_Crate_Section --
    ------------------------
 
-   procedure Load_Crate_Section (Section : Crates.Sections;
+   procedure Load_Crate_Section (Strict  : Boolean;
+                                 Section : Crates.Sections;
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;
@@ -74,39 +75,52 @@ package body Alire.TOML_Load is
 
       --  Process Dependencies
 
-      if Allowed_Tables (Section, Dependencies) then
-         if From.Pop (TOML_Keys.Depends_On, TOML_Deps) then
-            From.Assert (TOML_Deps.Kind = TOML_Array,
-                         "dependencies must be specified as array of tables");
+      declare
+         package Dep_Loader is new Conditional.For_Dependencies.TOML_Load;
+      begin
+         if Allowed_Tables (Section, Dependencies) then
+            if From.Pop (TOML_Keys.Depends_On, TOML_Deps) then
+               From.Assert
+                 (TOML_Deps.Kind = TOML_Array,
+                  "dependencies must be specified as array of tables");
 
-            for I in 1 .. TOML_Deps.Length loop
-               Deps := Deps and
-                 TOML_Expressions.Cases.Load_Dependencies
-                   (TOML_Adapters.From
-                      (TOML_Deps.Item (I),
-                       From.Message (TOML_Keys.Depends_On)
-                       & "(group" & I'Img & ")"));
-            end loop;
+               for I in 1 .. TOML_Deps.Length loop
+                  Deps := Deps and
+                    Dep_Loader.Load
+                      (From    => From.Descend
+                         (Key     => TOML_Keys.Depends_On,
+                          Value   => TOML_Deps.Item (I),
+                          Context => "(group" & I'Img & ")"),
+                       Loader  => Conditional.Deps_From_TOML'Access,
+                       Resolve => True,
+                       Strict  => Strict);
+               end loop;
+            end if;
+         elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
+            From.Checked_Error ("found field not allowed in manifest section: "
+                                & TOML_Keys.Depends_On);
          end if;
-      elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
-         From.Checked_Error ("found field not allowed in manifest section: "
-                             & TOML_Keys.Depends_On);
-      end if;
+      end;
 
       --  TODO: Process Forbidden
 
       --  Process Available
 
       declare
-         use Conditional;
-         --  use type Conditional.Availability fails to make "and" visible (?)
+         package Avail_Loader is new Conditional.For_Available.TOML_Load;
       begin
          if Allowed_Tables (Section, Available) then
             if From.Pop (TOML_Keys.Available, TOML_Avail) then
-               Avail := Avail and
-                 TOML_Expressions.Cases.Load_Availability
-                   (TOML_Adapters.From (TOML_Avail,
-                    From.Message (TOML_Keys.Available)));
+               Avail.Append
+                 (Conditional.Availability'
+                    (Avail_Loader.Load
+                         (From    => From.Descend
+                              (Key     => TOML_Keys.Available,
+                               Value   => TOML_Avail,
+                               Context => TOML_Keys.Available),
+                          Loader  => Conditional.Available_From_TOML'Access,
+                          Resolve => True,
+                          Strict  => Strict) with null record));
             end if;
          elsif From.Unwrap.Has (TOML_Keys.Available) then
             From.Checked_Error ("found field not allowed in manifest section: "
@@ -117,7 +131,7 @@ package body Alire.TOML_Load is
       --  Process remaining keys, which must be properties
 
       Props := Props and
-        Properties.From_TOML.Section_Loaders (Section) (From);
+        Properties.From_TOML.Section_Loaders (Section) (From, Strict);
 
    end Load_Crate_Section;
 

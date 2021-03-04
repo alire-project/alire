@@ -43,4 +43,15 @@ private
       Image : UString;
    end record;
 
+   function Is_Valid (This : Pseudotype; Value : String) return Boolean
+   is (raise Unimplemented);
+
+   function Name (This : Pseudotype) return String
+   is (raise Unimplemented);
+
+   function Base (This : Value) return Pseudotype'Class
+   is (raise Unimplemented);
+
+   function Image (This : Value) return String is (raise Unimplemented);
+
 end Alire.Pseudotypes;

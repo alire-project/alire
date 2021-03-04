@@ -40,4 +40,22 @@ private
 
    type Map is tagged null record;
 
+   function Empty (P : Pseudotype) return Map is (raise Unimplemented);
+
+   function Contains (M : Map; V : Value) return Boolean
+   is (raise Unimplemented);
+
+   function Element (M : Map; V : Value) return Elements
+   is (raise Unimplemented);
+
+   function Other (M : Map) return Elements is (raise Unimplemented);
+
+   function Has_Others (M : Map) return Boolean is (raise Unimplemented);
+
+   procedure Include (M : in out Map; V : Value; E : Elements)
+   is null;
+
+   procedure Set_Others (M : in out Map; E : Elements)
+   is null;
+
 end Alire.Pseudotypes.Maps;

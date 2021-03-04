@@ -1,4 +1,5 @@
 with Alire.Conditional;
+with Alire.Conditional_Trees.TOML_Load;
 with Alire.Crates;
 with Alire.Properties.Actions;
 with Alire.Properties.Configurations;
@@ -11,7 +12,9 @@ with Alire.TOML_Adapters;
 
 package Alire.Properties.From_TOML is
 
-   subtype Property_Loader is Conditional.Property_Loader;
+   package Prop_Loader is new Conditional.For_Properties.TOML_Load;
+
+   subtype Property_Loader is Prop_Loader.Static_Loader;
 
    type Property_Keys is (Actions,
                           Authors,
@@ -129,48 +132,56 @@ package Alire.Properties.From_TOML is
    --  The following array determines which properties accept dynamic
    --  expressions, per index semantics. All other properties must be static.
 
-   Loaders_During_Case : constant array (Property_Keys) of Property_Loader
-     := (Actions           => Properties.Actions.From_TOML'Access,
-         Configuration     =>
-           Properties.Configurations.Config_Entry_From_TOML'Access,
-         Environment       => Properties.Environment.From_TOML'Access,
-         Executables       => Labeled.From_TOML_Executable_Cases'Access,
-         GPR_Set_Externals => Scenarios.From_TOML_Cases'Access,
-         Hint              => Labeled.From_TOML_Hint_Cases'Access,
-         Project_Files     => Labeled.From_TOML_Project_File_Cases'Access,
-         others            => null);
+   Is_Dynamic : constant array (Property_Keys) of Boolean
+     := (Actions           |
+         Configuration     |
+         Environment       |
+         Executables       |
+         GPR_Set_Externals |
+         Hint              |
+         Project_Files => True,
+         others        => False);
 
    function Loader (From    : TOML_Adapters.Key_Queue;
                     Loaders : Loader_Array;
-                    Section : Crates.Sections)
+                    Section : Crates.Sections;
+                    Strict  : Boolean)
                     return Conditional.Properties;
    --  Takes a table of mixed properties and dispatches to each concrete
-   --  property loader. Takes into account dynamic properties.
+   --  property loader. Takes into account dynamic properties. Indirectly
+   --  called from Alire.TOML_Load to load each individual property, with
+   --  the appropriate static loaders for the section.
 
    --  Following functions are wrappers on Loader that conform to the signature
-   --  expected by the dynamic expression loaders.
+   --  expected by the dynamic expression loader. Merely used to associate the
+   --  appropriate section to the Loader.
 
    use all type Crates.Sections;
 
-   function External_Private_Loader (From : TOML_Adapters.Key_Queue)
+   function External_Private_Loader (From   : TOML_Adapters.Key_Queue;
+                                     Strict : Boolean)
                                      return Conditional.Properties is
-     (Loader (From, External_Private_Loaders, External_Private_Section));
+     (Loader
+        (From, External_Private_Loaders, External_Private_Section, Strict));
 
-   function External_Shared_Loader (From : TOML_Adapters.Key_Queue)
+   function External_Shared_Loader (From   : TOML_Adapters.Key_Queue;
+                                    Strict : Boolean)
                             return Conditional.Properties is
-     (Loader (From, External_Shared_Loaders, External_Shared_Section));
+     (Loader (From, External_Shared_Loaders, External_Shared_Section, Strict));
 
-   function Index_Release_Loader (From : TOML_Adapters.Key_Queue)
+   function Index_Release_Loader (From   : TOML_Adapters.Key_Queue;
+                                  Strict : Boolean)
                                   return Conditional.Properties is
-     (Loader (From, Release_Loaders, Index_Release));
+     (Loader (From, Release_Loaders, Index_Release, Strict));
 
-   function Local_Release_Loader (From : TOML_Adapters.Key_Queue)
+   function Local_Release_Loader (From   : TOML_Adapters.Key_Queue;
+                                  Strict : Boolean)
                                   return Conditional.Properties is
-     (Loader (From, Release_Loaders, Local_Release));
+     (Loader (From, Release_Loaders, Local_Release, Strict));
 
    Section_Loaders : constant
      array (Crates.Sections) of access
-     function (From : TOML_Adapters.Key_Queue)
+     function (From : TOML_Adapters.Key_Queue; Strict : Boolean)
      return Conditional.Properties
      := (External_Private_Section => External_Private_Loader'Access,
          External_Shared_Section  => External_Shared_Loader'Access,

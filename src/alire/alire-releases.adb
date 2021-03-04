@@ -10,7 +10,6 @@ with Alire.Errors;
 with Alire.Origins.Deployers;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
-with Alire.TOML_Expressions;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 with Alire.Warnings;
@@ -696,19 +695,8 @@ package body Alire.Releases is
    is
       package Dirs    renames Ada.Directories;
       package Labeled renames Alire.Properties.Labeled;
-
-      Strict_Before : constant Boolean := TOML_Expressions.Strict_Enums;
-      --  Initial value of TOML_Expressions.Strict_Enums, to restore it after
-      --  loading this particular release.
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
-
-      --  For local manifests we don't allow unknown enum values. For indexes
-      --  we do not complain, as that allows backward compatibility for new
-      --  configurations found in the index but unknown to this Alire. This way
-      --  local errors by the user are caught on the spot.
-      TOML_Expressions.Strict_Enums :=
-        TOML_Expressions.Strict_Enums or else Source in Manifest.Local;
 
       --  Origin
 
@@ -727,13 +715,14 @@ package body Alire.Releases is
       --  Properties
 
       TOML_Load.Load_Crate_Section
-        ((case Source is
-            when Manifest.Index => Crates.Index_Release,
-            when Manifest.Local => Crates.Local_Release),
-         From,
-         This.Properties,
-         This.Dependencies,
-         This.Available);
+        (Strict  => Source in Manifest.Local,
+         Section => (case Source is
+                        when Manifest.Index => Crates.Index_Release,
+                        when Manifest.Local => Crates.Local_Release),
+         From    => From,
+         Props   => This.Properties,
+         Deps    => This.Dependencies,
+         Avail   => This.Available);
 
       --  Consolidate/validate some properties as fields:
 
@@ -742,30 +731,25 @@ package body Alire.Releases is
 
       This.Version := Semver.New_Version (This.Property (Labeled.Version));
 
-      --  Restore Strict-ness
-
-      TOML_Expressions.Strict_Enums := Strict_Before;
-
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;
-   exception
-      when E : others =>
-         Log_Exception (E);
-
-         TOML_Expressions.Strict_Enums := Strict_Before;
-
-         case Source is
-            when Manifest.Index =>
-               raise Program_Error with
-               Errors.Set
-                 ("Cannot load manifest " & This.Name_Str &
-                    " from index with proper version: ", E);
-            when Manifest.Local =>
-               raise Checked_Error with
-               Errors.Set
-                 ("Cannot load manifest " & This.Name_Str &
-                    ", please review contents: ", E);
-         end case;
+   --  NOt needed anymore
+   --  exception
+   --     when E : others =>
+   --        Log_Exception (E);
+   --
+   --        case Source is
+   --           when Manifest.Index =>
+   --              raise Program_Error with
+   --              Errors.Set
+   --                ("Cannot load manifest " & This.Name_Str &
+   --                   " from index with proper version: ", E);
+   --           when Manifest.Local =>
+   --              raise Checked_Error with
+   --              Errors.Set
+   --                ("Cannot load manifest " & This.Name_Str &
+   --                   ", please review contents: ", E);
+   --        end case;
    end From_TOML;
 
    -------------------

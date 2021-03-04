@@ -1,6 +1,6 @@
 with Alire.Pseudotypes.Maps;
 
-generic
+private generic
 package Alire.Conditional_Trees.Case_Nodes is
 
    --  Non-generic (in the sense of the types used to index the cases)
@@ -15,7 +15,9 @@ package Alire.Conditional_Trees.Case_Nodes is
 
    subtype Map is Case_Maps.Map;
 
-   function New_Case (Cases : Map) return Tree;
+private
+
+   function New_Case (Unused_Cases : Map) return Tree is (raise Unimplemented);
    --  This function is needed by the case(xx) expression loaders. From a Map
    --  built from the TOML index a Tree is obtained that in reality is a case
    --  node.

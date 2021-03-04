@@ -160,7 +160,8 @@ package body Alire.Publish is
 
       --  Check not duplicated
 
-      Features.Index.Setup_And_Load (From  => Config.Edit.Indexes_Directory);
+      Features.Index.Setup_And_Load (From   => Config.Edit.Indexes_Directory,
+                                     Strict => True);
       if Index.Exists (Release.Name, Release.Version) then
          Raise_Checked_Error
            ("Target release " & Release.Milestone.TTY_Image
