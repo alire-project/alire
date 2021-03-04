@@ -69,7 +69,7 @@ private
 
    type External is abstract tagged record
       Properties : Conditional.Properties;
-      Available  : Conditional.Availability;
+      Available  : Conditional.Availability := Conditional.Available_Default;
    end record;
 
 end Alire.Externals;

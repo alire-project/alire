@@ -102,7 +102,7 @@ package Alire.Conditional with Preelaborate is
    --  A wrapper on boolean to be able to store it in a conditional tree
 
    function Image (This : Available) return String
-   is (if This.Is_Available then "true" else "false");
+   is (if This.Is_Available then "True" else "False");
 
    overriding
    function Key (This : Available) return String is (TOML_Keys.Available);
@@ -124,12 +124,14 @@ package Alire.Conditional with Preelaborate is
    --  Expects a single table "available = true/false"
 
    function Is_Available (This : Availability;
-                          Env  : Alire.Properties.Vector) return Boolean
-   is (This.Is_Empty
-       or else
-       This.Evaluate (Env).Is_Empty
-       or else
-       This.Evaluate (Env).Value.Is_Available);
+                          Env  : Alire.Properties.Vector)
+                          return Boolean;
+   --  Evaluate availability in an environment. In adition to evaluating the
+   --  tree for the environment, we then need to traverse the tree evaluating
+   --  the boolean expressions.
+
+   function Available_Default return Availability
+   is (New_Value (Available'(Is_Available => True)));
 
 private
 

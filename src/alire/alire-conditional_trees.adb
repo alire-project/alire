@@ -205,54 +205,52 @@ package body Alire.Conditional_Trees is
             when Ored =>  Result := Result or  Child.Flatten.To_Tree;
          end case;
       end loop;
+
       return Result.Root;
    end Flatten;
+
+   ----------
+   -- Join --
+   ----------
+
+   function Join (L, R : Tree; Op : Conjunctions) return Tree is
+      Inner : Vector_Node := (Conjunction => Op, Values => <>);
+   begin
+      if not L.Is_Empty then
+         Flatten (Inner, L.Constant_Reference, Op);
+      end if;
+
+      if not R.Is_Empty then
+         Flatten (Inner, R.Constant_Reference, Op);
+      end if;
+
+      if Inner.Values.Is_Empty then
+         return Empty;
+      else
+
+         --  Convert vector with single value into value
+
+         if Inner.Values.Length in 1 then
+            return Inner.Values.First_Element.To_Tree;
+         end if;
+
+         return To_Holder (Inner);
+      end if;
+   end Join;
 
    -----------
    -- "and" --
    -----------
 
-   function "and" (L, R : Tree) return Tree is
-      Inner : Vector_Node := (Conjunction => Anded, Values => <>);
-
-   begin
-      if not L.Is_Empty then
-         Flatten (Inner, L.Constant_Reference, Anded);
-      end if;
-
-      if not R.Is_Empty then
-         Flatten (Inner, R.Constant_Reference, Anded);
-      end if;
-
-      if Inner.Values.Is_Empty then
-         return Empty;
-      else
-         return (To_Holder (Inner));
-      end if;
-   end "and";
+   function "and" (L, R : Tree) return Tree
+   is (Join (L, R, Anded));
 
    ----------
    -- "or" --
    ----------
 
-   function "or" (L, R : Tree) return Tree is
-      Inner : Vector_Node := (Conjunction => Ored, Values => <>);
-
-   begin
-      if not L.Is_Empty then
-         Flatten (Inner, L.Constant_Reference, Ored);
-      end if;
-
-      if not R.Is_Empty then
-         Flatten (Inner, R.Constant_Reference, Ored);
-      end if;
-
-      if Inner.Values.Is_Empty then
-         return Empty;
-      else
-         return (To_Holder (Inner));
-      end if;
-   end "or";
+   function "or" (L, R : Tree) return Tree
+   is (Join (L, R, Ored));
 
    ------------
    -- Append --
@@ -683,9 +681,11 @@ package body Alire.Conditional_Trees is
    begin
       if Container.Is_Empty then
          return Forward_Iterator'(others => <>);
-      end if;
-
-      if Container.Constant_Reference not in Vector_Node then
+      elsif Container.Constant_Reference in Leaf_Node then
+         return Single : Forward_Iterator do
+            Single.Children.Append (Container.Element);
+         end return;
+      elsif Container.Constant_Reference not in Vector_Node then
          raise Constraint_Error
            with "Cannot iterate over non-vector conditional value";
       end if;

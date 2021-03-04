@@ -579,7 +579,7 @@ package body Alire.Releases is
 
       --  AVAILABILITY
       if not R.Available.Is_Empty then
-         Put_Line ("Available when: " & R.Available.Value.Image);
+         Put_Line ("Available when: " & R.Available.Image_One_Line);
       end if;
 
       --  PROPERTIES

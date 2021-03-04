@@ -54,6 +54,7 @@ package body Alire.TOML_Expressions.Cases is
    generic
       with package Condtrees is new Conditional_Trees (<>);
       with package Condcases is new Common_Cases (Condtrees);
+      with function Default return Condtrees.Tree;
    package Conditional_Instances is
 
       --  Given the common base of Dependencies and Properties, we can reuse
@@ -61,7 +62,7 @@ package body Alire.TOML_Expressions.Cases is
 
       package Trees is new Enum_Trees (Tree  => Condtrees.Tree,
                                        "and" => Condtrees."and",
-                                       Default => Condtrees.Empty);
+                                       Default => Default);
       --  I.e., Conditional.Dependencies & Conditional.Properties
 
       Loaders : array (Case_Loader_Keys) of Trees.Recursive_Case_Loader :=
@@ -120,8 +121,10 @@ package body Alire.TOML_Expressions.Cases is
    --  CASE DEPENDENCIES SCAFFOLDING  --
    -------------------------------------
 
-   package Deps is new Conditional_Instances (Conditional.For_Dependencies,
-                                              Cases_Deps);
+   package Deps is new Conditional_Instances
+     (Conditional.For_Dependencies,
+      Cases_Deps,
+      Conditional.For_Dependencies.Empty);
 
    -----------------------
    -- Load_Dependencies --
@@ -141,8 +144,16 @@ package body Alire.TOML_Expressions.Cases is
    --  CASE AVAILABILITY SCAFFOLDING  --
    -------------------------------------
 
-   package Avail is new Conditional_Instances (Conditional.For_Available,
-                                               Cases_Avail);
+   function Available_True return Conditional.For_Available.Tree
+   is (Conditional.For_Available.New_Leaf
+       (Conditional.Available'(Is_Available => True)));
+   --  We need an explicit default of available, or conditional expressions
+   --  show an ugly (empty).
+
+   package Avail is new Conditional_Instances
+     (Conditional.For_Available,
+      Cases_Avail,
+      Available_True);
 
    -----------------------
    -- Load_Availability --
@@ -164,8 +175,10 @@ package body Alire.TOML_Expressions.Cases is
    --  CASE PROPERTIES SCAFFOLDING  --
    -------------------------------------
 
-   package Props is new Conditional_Instances (Conditional.For_Properties,
-                                               Cases_Props);
+   package Props is new Conditional_Instances
+     (Conditional.For_Properties,
+      Cases_Props,
+      Conditional.For_Properties.Empty);
 
    -------------------
    -- Load_Property --
