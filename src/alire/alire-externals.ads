@@ -2,7 +2,6 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Platforms;
 with Alire.Properties;
-with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 

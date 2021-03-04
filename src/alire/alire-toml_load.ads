@@ -1,6 +1,5 @@
 with Alire.Conditional;
 with Alire.Crates;
-with Alire.Requisites;
 with Alire.TOML_Adapters;
 
 with TOML;

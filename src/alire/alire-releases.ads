@@ -11,7 +11,6 @@ with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
-with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils;

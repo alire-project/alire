@@ -32,10 +32,6 @@ package body Alire.Conditional_Trees is
    function To_YAML (V : Vector_Node) return String is
      (Non_Primitive.To_YAML (V.Values));
 
-   overriding
-   function To_YAML (V : Conditional_Node) return String is
-     (raise Unimplemented with "TODO YAML output to be defined");
-
    -----------
    -- Image --
    -----------
@@ -58,15 +54,6 @@ package body Alire.Conditional_Trees is
      ("(" & (if V.Conjunction = Anded
              then Non_Primitive.One_Liner_And (V.Values)
              else Non_Primitive.One_Liner_Or (V.Values)) & ")");
-
-   -----------
-   -- Image --
-   -----------
-
-   overriding function Image (V : Conditional_Node) return String is
-     ("if " & V.Condition.Image &
-        " then " & V.Then_Value.Image_One_Line &
-        " else " & V.Else_Value.Image_One_Line);
 
    -----------------
    -- Conjunction --
@@ -439,22 +426,6 @@ package body Alire.Conditional_Trees is
       end if;
    end Print;
 
-   overriding
-   procedure Print (This    : Conditional_Node;
-                    Prefix  : String;
-                    Verbose : Boolean;
-                    Sorted  : Boolean)
-   is
-      use GNAT.IO;
-   begin
-      Put_Line (Prefix & "when " & This.Condition.Image & ":");
-      Print (This.Then_Value.Root, Prefix & Tab, Verbose, Sorted);
-      if not This.Else_Value.Is_Empty then
-         Put_Line (Prefix & "else:");
-         Print (This.Else_Value.Root, Prefix & Tab, Verbose, Sorted);
-      end if;
-   end Print;
-
    -----------
    -- Print --
    -----------
@@ -561,12 +532,6 @@ package body Alire.Conditional_Trees is
       for Child of This.Values loop
          To_TOML (Child, Parent);
       end loop;
-   end To_TOML;
-
-   overriding
-   procedure To_TOML (This : Conditional_Node; Parent : TOML.TOML_Value) is
-   begin
-      raise Unimplemented;
    end To_TOML;
 
    overriding

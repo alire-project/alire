@@ -3,7 +3,6 @@ with Ada.Iterator_Interfaces;
 
 with Alire.Interfaces;
 with Alire.Properties;
-with Alire.Requisites;
 with Alire.Utils.YAML;
 
 private with Ada.Containers.Indefinite_Holders;
@@ -47,7 +46,7 @@ package Alire.Conditional_Trees with Preelaborate is
    --  available properties to remove conditional expressions.
 
    function Image (This : Node) return String is abstract;
-   --  Single-line image for single-line tree image (used by Requisites).
+   --  Single-line image for single-line tree image (used by Available).
 
    procedure Print (This    : Node;
                     Prefix  : String;
@@ -83,8 +82,8 @@ package Alire.Conditional_Trees with Preelaborate is
      Default_Iterator => Iterate,
      Iterator_Element => Tree,
      Constant_Indexing => Indexed_Element;
-   --  Recursive type that stores values, possibly with associated requisites.
-   --  Requisites must be satisfied by some environment property or else their
+   --  Recursive type that stores values, possibly with case expressions.
+   --  Cases must be satisfied by some environment property or else their
    --  associated values will be dropped from the tree. This structure is thus
    --  used to store conditional/dynamic properties and dependencies.
    --  Iteration is only over direct children, when the tree is AND/OR vector.
@@ -425,54 +424,6 @@ private
 
    function Is_Vector (This : Tree) return Boolean is
      (This.Root in Vector_Node);
-
-   ----------------------
-   -- Conditional Node --
-   ----------------------
-
-   type Conditional_Node is new Node with record
-      Condition  : Requisites.Tree;
-      Then_Value : Tree;
-      Else_Value : Tree;
-   end record;
-
-   overriding
-   function Contains_ORs (This : Conditional_Node) return Boolean is
-      (This.Then_Value.Contains_ORs or else This.Else_Value.Contains_ORs);
-
-   overriding
-   function Is_Conditional (N : Conditional_Node) return Boolean is (True);
-
-   overriding
-   function Image (V : Conditional_Node) return String;
-
-   overriding
-   function To_YAML (V : Conditional_Node) return String;
-
-   overriding
-   function Flatten (This : Conditional_Node) return Node'Class is
-     (Flatten (Tree'Class (This.Then_Value and This.Else_Value).Root));
-
-   overriding
-   function Leaf_Count (This : Conditional_Node) return Positive is
-     (This.Then_Value.Leaf_Count + This.Else_Value.Leaf_Count);
-
-   overriding
-   function Evaluate (This    : Conditional_Node;
-                      Against : Properties.Vector)
-                      return Tree'Class is
-     (if This.Condition.Check (Against)
-      then This.Then_Value.Evaluate (Against)
-      else This.Else_Value.Evaluate (Against));
-
-   overriding
-   procedure Print (This    : Conditional_Node;
-                    Prefix  : String;
-                    Verbose : Boolean;
-                    Sorted  : Boolean);
-
-   overriding
-   procedure To_TOML (This : Conditional_Node; Parent : TOML.TOML_Value);
 
    --  Delayed implementation to avoid freezing:
 
