@@ -144,16 +144,15 @@ package body Alire.TOML_Expressions.Cases is
    --  CASE AVAILABILITY SCAFFOLDING  --
    -------------------------------------
 
-   function Available_True return Conditional.For_Available.Tree
-   is (Conditional.For_Available.New_Leaf
-       (Conditional.Available'(Is_Available => True)));
-   --  We need an explicit default of available, or conditional expressions
-   --  show an ugly (empty).
+   function Available_Default return Conditional.For_Available.Tree
+   is (Conditional.For_Available.Tree (Conditional.Available_Default));
+   --  We need an explicit default for available, or conditional expressions
+   --  show an ugly (empty) in user output.
 
    package Avail is new Conditional_Instances
      (Conditional.For_Available,
       Cases_Avail,
-      Available_True);
+      Available_Default);
 
    -----------------------
    -- Load_Availability --

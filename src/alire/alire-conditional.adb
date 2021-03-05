@@ -1,7 +1,3 @@
------------------------
--- Alire.Conditional --
------------------------
-
 package body Alire.Conditional is
 
    -------------------------
@@ -65,7 +61,7 @@ package body Alire.Conditional is
                for Child of T loop
                   case T.Conjunction is
                      when Anded => Result := Result and Eval_Children (Child);
-                     when Ored => Result := Result or Eval_Children (Child);
+                     when Ored  => Result := Result or Eval_Children (Child);
                   end case;
                end loop;
             end return;
