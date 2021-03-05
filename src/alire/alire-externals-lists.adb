@@ -28,7 +28,7 @@ package body Alire.Externals.Lists is
       begin
          return Detected : Containers.Release_Set do
             for External of This loop
-               if External.Available.Check (Env) then
+               if External.Available.Is_Available (Env) then
                   Trace.Debug ("Attempting detection of available external: "
                                & (+Name));
                   Detected.Union (External.Detect (Name));
@@ -66,7 +66,7 @@ package body Alire.Externals.Lists is
                  TOML_Keys.Hint);
 
          elsif
-           External.Available.Check (Env) and then
+           External.Available.Is_Available (Env) and then
            External.Detect (Name).Is_Empty
          then
 

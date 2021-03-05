@@ -32,10 +32,6 @@ package body Alire.Conditional_Trees is
    function To_YAML (V : Vector_Node) return String is
      (Non_Primitive.To_YAML (V.Values));
 
-   overriding
-   function To_YAML (V : Conditional_Node) return String is
-     (raise Unimplemented with "TODO YAML output to be defined");
-
    -----------
    -- Image --
    -----------
@@ -59,15 +55,6 @@ package body Alire.Conditional_Trees is
              then Non_Primitive.One_Liner_And (V.Values)
              else Non_Primitive.One_Liner_Or (V.Values)) & ")");
 
-   -----------
-   -- Image --
-   -----------
-
-   overriding function Image (V : Conditional_Node) return String is
-     ("if " & V.Condition.Image &
-        " then " & V.Then_Value.Image_One_Line &
-        " else " & V.Else_Value.Image_One_Line);
-
    -----------------
    -- Conjunction --
    -----------------
@@ -84,44 +71,12 @@ package body Alire.Conditional_Trees is
       then This
       else To_Tree (Vector_Node (This.Root).Values.First_Element));
 
-   ---------------------
-   -- New_Conditional --
-   ---------------------
-
-   function New_Conditional (If_X   : Requisites.Tree;
-                             Then_X : Tree;
-                             Else_X : Tree) return Tree is
-     (To_Holder (Conditional_Node'(Condition  => If_X,
-                                   Then_Value => Then_X,
-                                   Else_Value => Else_X)));
-
    --------------
    -- New_Leaf --
    --------------
 
    function New_Leaf (V : Values) return Tree is
      (To_Holder (Leaf_Node'(Value => Definite_Values.To_Holder (V))));
-
-   ---------------
-   -- Condition --
-   ---------------
-
-   function Condition (This : Tree) return Requisites.Tree is
-     (Conditional_Node (This.Root).Condition);
-
-   ----------------
-   -- True_Value --
-   ----------------
-
-   function True_Value (This : Tree) return Tree is
-      (Conditional_Node (This.Root).Then_Value);
-
-   -----------------
-   -- False_Value --
-   -----------------
-
-   function False_Value (This : Tree) return Tree is
-      (Conditional_Node (This.Root).Else_Value);
 
    -----------
    -- Empty --
@@ -205,54 +160,52 @@ package body Alire.Conditional_Trees is
             when Ored =>  Result := Result or  Child.Flatten.To_Tree;
          end case;
       end loop;
+
       return Result.Root;
    end Flatten;
+
+   ----------
+   -- Join --
+   ----------
+
+   function Join (L, R : Tree; Op : Conjunctions) return Tree is
+      Inner : Vector_Node := (Conjunction => Op, Values => <>);
+   begin
+      if not L.Is_Empty then
+         Flatten (Inner, L.Constant_Reference, Op);
+      end if;
+
+      if not R.Is_Empty then
+         Flatten (Inner, R.Constant_Reference, Op);
+      end if;
+
+      if Inner.Values.Is_Empty then
+         return Empty;
+      else
+
+         --  Convert vector with single value into value
+
+         if Inner.Values.Length in 1 then
+            return Inner.Values.First_Element.To_Tree;
+         end if;
+
+         return To_Holder (Inner);
+      end if;
+   end Join;
 
    -----------
    -- "and" --
    -----------
 
-   function "and" (L, R : Tree) return Tree is
-      Inner : Vector_Node := (Conjunction => Anded, Values => <>);
-
-   begin
-      if not L.Is_Empty then
-         Flatten (Inner, L.Constant_Reference, Anded);
-      end if;
-
-      if not R.Is_Empty then
-         Flatten (Inner, R.Constant_Reference, Anded);
-      end if;
-
-      if Inner.Values.Is_Empty then
-         return Empty;
-      else
-         return (To_Holder (Inner));
-      end if;
-   end "and";
+   function "and" (L, R : Tree) return Tree
+   is (Join (L, R, Anded));
 
    ----------
    -- "or" --
    ----------
 
-   function "or" (L, R : Tree) return Tree is
-      Inner : Vector_Node := (Conjunction => Ored, Values => <>);
-
-   begin
-      if not L.Is_Empty then
-         Flatten (Inner, L.Constant_Reference, Ored);
-      end if;
-
-      if not R.Is_Empty then
-         Flatten (Inner, R.Constant_Reference, Ored);
-      end if;
-
-      if Inner.Values.Is_Empty then
-         return Empty;
-      else
-         return (To_Holder (Inner));
-      end if;
-   end "or";
+   function "or" (L, R : Tree) return Tree
+   is (Join (L, R, Ored));
 
    ------------
    -- Append --
@@ -421,28 +374,6 @@ package body Alire.Conditional_Trees is
       end if;
    end Iterate_Children;
 
-   ---------------------
-   -- Case_Statements --
-   ---------------------
-
-   package body Case_Statements is
-
-      function Case_Is (Arr : Arrays) return Tree is
-         Case_Is : Tree := Arr (Arr'Last);
-         --  Since we get the whole array,
-         --    by exhaustion at worst the last must be true
-      begin
-         for I in reverse Arr'First .. Enum'Pred (Arr'Last) loop
-            Case_Is := New_Conditional (If_X   => Requisite_Equal (I),
-                                        Then_X => Arr (I),
-                                        Else_X => Case_Is);
-         end loop;
-
-         return Case_Is;
-      end Case_Is;
-
-   end Case_Statements;
-
    -----------
    -- Print --
    -----------
@@ -492,22 +423,6 @@ package body Alire.Conditional_Trees is
                    Prefix & (if Verbose then Tab else ""),
                    Verbose, Sorted);
          end loop;
-      end if;
-   end Print;
-
-   overriding
-   procedure Print (This    : Conditional_Node;
-                    Prefix  : String;
-                    Verbose : Boolean;
-                    Sorted  : Boolean)
-   is
-      use GNAT.IO;
-   begin
-      Put_Line (Prefix & "when " & This.Condition.Image & ":");
-      Print (This.Then_Value.Root, Prefix & Tab, Verbose, Sorted);
-      if not This.Else_Value.Is_Empty then
-         Put_Line (Prefix & "else:");
-         Print (This.Else_Value.Root, Prefix & Tab, Verbose, Sorted);
       end if;
    end Print;
 
@@ -620,12 +535,6 @@ package body Alire.Conditional_Trees is
    end To_TOML;
 
    overriding
-   procedure To_TOML (This : Conditional_Node; Parent : TOML.TOML_Value) is
-   begin
-      raise Unimplemented;
-   end To_TOML;
-
-   overriding
    function To_TOML (This : Tree) return TOML.TOML_Value is
       Root_Table : constant TOML.TOML_Value := TOML.Create_Table;
    begin
@@ -683,9 +592,11 @@ package body Alire.Conditional_Trees is
    begin
       if Container.Is_Empty then
          return Forward_Iterator'(others => <>);
-      end if;
-
-      if Container.Constant_Reference not in Vector_Node then
+      elsif Container.Constant_Reference in Leaf_Node then
+         return Single : Forward_Iterator do
+            Single.Children.Append (Container.Element);
+         end return;
+      elsif Container.Constant_Reference not in Vector_Node then
          raise Constraint_Error
            with "Cannot iterate over non-vector conditional value";
       end if;

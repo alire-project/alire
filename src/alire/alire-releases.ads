@@ -11,7 +11,6 @@ with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
-with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils;
@@ -40,7 +39,7 @@ package Alire.Releases is
                          Notes        : Description_String;
                          Dependencies : Conditional.Dependencies;
                          Properties   : Conditional.Properties;
-                         Available    : Alire.Requisites.Tree)
+                         Available    : Conditional.Availability)
                          return Release;
 
    function New_Empty_Release (Name : Crate_Name) return Release;
@@ -61,14 +60,6 @@ package Alire.Releases is
    --  For working releases that may have incomplete information. Note that the
    --  default properties are used by default.
 
-   function Extending
-     (Base         : Release;
-      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
-      Properties   : Conditional.Properties   := Conditional.No_Properties;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
-      return Release;
-   --  Takes a release and merges given fields
-
    function Renaming (Base     : Release;
                       Provides : Crate_Name) return Release;
    --  Fills-in the "provides" field
@@ -88,11 +79,6 @@ package Alire.Releases is
    function Replacing
      (Base         : Release;
       Properties   : Conditional.Properties   := Conditional.No_Properties)
-      return Release;
-
-   function Replacing
-     (Base         : Release;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
       return Release;
 
    function Replacing (Base   : Release;
@@ -177,7 +163,7 @@ package Alire.Releases is
 
    function Origin  (R : Release) return Origins.Origin;
 
-   function Available (R : Release) return Requisites.Tree;
+   function Available (R : Release) return Conditional.Availability;
    function Is_Available (R : Release;
                           P : Alire.Properties.Vector) return Boolean;
    --  Evaluate R.Available under platform properties P
@@ -350,7 +336,7 @@ private
       Dependencies : Conditional.Dependencies;
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
-      Available    : Requisites.Tree;
+      Available    : Conditional.Availability;
    end record;
 
    function From_TOML (This   : in out Release;
@@ -413,12 +399,12 @@ private
    function Origin  (R : Release) return Origins.Origin
    is (R.Origin);
 
-   function Available (R : Release) return Requisites.Tree
+   function Available (R : Release) return Conditional.Availability
    is (R.Available);
 
    function Is_Available (R : Release;
                           P : Alire.Properties.Vector) return Boolean
-   is (R.Available.Check (P));
+   is (R.Available.Is_Available (P));
 
    function Description (R : Release) return Description_String
    --  Image returns "Description: Blah" so we have to cut.

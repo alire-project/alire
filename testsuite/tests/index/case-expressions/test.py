@@ -22,14 +22,14 @@ assert_match(".*Available when: .case OS is LINUX => True, MACOS => False, "
 
 # Properties
 
-assert_match(".*case Word_Size is .* when Bits_32 => .Executable: hello32.*",
+assert_match(".*case Word_Size is .* when Bits_32 => Executable: hello32.*",
              p.out, flags=re.S)
 
-assert_match(".*case OS is .* when Linux => .GPR External: OS := linux.*",
+assert_match(".*case OS is .* when Linux => GPR External: OS := linux.*",
              p.out, flags=re.S)
 
 # Dependencies
-assert_match(".*Dependencies .direct.:.*case OS is.*when Linux => .libhello\^1.*",
+assert_match(".*Dependencies .direct.:.*case OS is.*when Linux => libhello\^1.*",
              p.out, flags=re.S)
 
 # Check that evaluation for the current platform does work

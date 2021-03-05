@@ -1,9 +1,13 @@
 with Alire.Conditional_Trees;
 with Alire.Dependencies.Containers;
+with Alire.Interfaces;
 with Alire.Properties;
 with Alire.TOML_Adapters;
+with Alire.TOML_Keys;
 
 with Semantic_Versioning.Extended;
+
+with TOML;
 
 package Alire.Conditional with Preelaborate is
 
@@ -79,6 +83,56 @@ package Alire.Conditional with Preelaborate is
    --  From is always a table "prop-name = whatever".
    --  These may raise Checked_Error.
 
+   --------------------
+   --  Availability  --
+   --------------------
+
+   --  We reuse the conditional trees for availability. This was not possible
+   --  in the general Ada index, but it is now with the more limited case
+   --  expressions. This allows removing the separate hierarchy of code
+   --  that was formerly used only for availability.
+
+   type Available is
+     new Interfaces.Classificable
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable
+   with record
+      Is_Available : Boolean;
+   end record;
+   --  A wrapper on boolean to be able to store it in a conditional tree
+
+   function Image (This : Available) return String;
+
+   overriding
+   function Key (This : Available) return String;
+
+   overriding
+   function To_TOML (This : Available) return TOML.TOML_Value;
+
+   overriding
+   function To_YAML (This : Available) return String;
+
+   package For_Available is new Conditional_Trees (Available, Image);
+
+   type Availability is new For_Available.Tree with null record;
+   --  This is the actual type that encapsulates an expression tree
+
+   function Available_From_TOML (From : TOML_Adapters.Key_Queue)
+                                 return For_Available.Tree;
+   --  Expects a single table "available = true/false"
+
+   function Is_Available (This : Availability;
+                          Env  : Alire.Properties.Vector)
+                          return Boolean;
+   --  Evaluate availability in an environment. In adition to resolving the
+   --  tree for the environment, we then need to traverse the tree evaluating
+   --  the boolean expressions to arrive to a final boolean value. (Formerly
+   --  done via Boolean_Trees).
+
+   function Available_Default return Availability
+   is (New_Value (Available'(Is_Available => True)));
+   --  Availability default is True unless an expression is given
+
 private
 
    function New_Dependency
@@ -98,5 +152,19 @@ private
    function New_Property (Property : Alire.Properties.Property'Class)
                           return Properties is
      (For_Properties.New_Value (Property));
+
+   function Image (This : Available) return String
+   is (if This.Is_Available then "True" else "False");
+
+   overriding
+   function Key (This : Available) return String is (TOML_Keys.Available);
+
+   overriding
+   function To_TOML (This : Available) return TOML.TOML_Value
+   is (TOML.Create_Boolean (This.Is_Available));
+
+   overriding
+   function To_YAML (This : Available) return String
+   is (This.Key & ": " & This.Image);
 
 end Alire.Conditional;

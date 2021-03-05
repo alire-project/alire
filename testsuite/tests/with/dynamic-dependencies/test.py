@@ -45,9 +45,9 @@ p = run_alr('with', '--del', 'superhello',
 
 assert_match(".*" +
              re.escape("Skipping unsupported conditional dependency: "
-                       "(case OS is LINUX => (superhello*), "
-                       "MACOS => (superhello*), WINDOWS => (superhello*), "
-                       "OS_UNKNOWN => (superhello*))") +
+                       "(case OS is LINUX => superhello*, "
+                       "MACOS => superhello*, WINDOWS => superhello*, "
+                       "OS_UNKNOWN => superhello*)") +
              ".*" +
              re.escape("Crate slated for removal is not among"
                        " direct static dependencies: superhello") +

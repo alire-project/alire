@@ -6,7 +6,6 @@ private with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
-with Alire.Requisites;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.User_Input;

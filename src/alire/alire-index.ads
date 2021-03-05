@@ -9,7 +9,6 @@ with Alire.Policies;
 with Alire.Properties;
 with Alire.Properties.Licenses;
 with Alire.Releases;
-with Alire.Requisites;
 with Alire.Utils;
 
 with Semantic_Versioning;

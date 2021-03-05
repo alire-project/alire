@@ -30,7 +30,7 @@ package body Alire.Conditional_Trees.Cases is
    function Is_Conditional (This : Case_Node) return Boolean is (True);
 
    function Image_Case (Cases : Cases_Array;
-                        I     : Requisite_Cases.Enum) return String is
+                        I     : Enum) return String is
      (I'Img & " => " & Cases (I).Image_One_Line
       & (if I /= Cases'Last
          then ", " & Image_Case (Cases, Enum'Succ (I))
@@ -38,7 +38,7 @@ package body Alire.Conditional_Trees.Cases is
 
    overriding
    function Image (This : Case_Node) return String is
-     ("(case " & Requisite_Cases.Name & " is "
+     ("(case " & Enum_Cases.Name & " is "
       & Image_Case (This.Cases, This.Cases'First) & ")");
 
    overriding
@@ -53,7 +53,7 @@ package body Alire.Conditional_Trees.Cases is
       use GNAT.IO;
       Tab : constant String := "   ";
    begin
-      Put_Line (Prefix & "case " & Requisite_Cases.Name & " is");
+      Put_Line (Prefix & "case " & Enum_Cases.Name & " is");
       for I in This.Cases'Range loop
          if not This.Cases (I).Is_Empty then
             Put_Line (Prefix & Tab & "when "
@@ -75,7 +75,7 @@ package body Alire.Conditional_Trees.Cases is
    begin
       return Eval : Tree := Empty do
          for I in This.Cases'Range loop
-            if Requisite_Cases.Is_Satisfied (I, Against) then
+            if Enum_Cases.Is_Satisfied (I, Against) then
                Eval := Eval and This.Cases (I).Evaluate (Against);
             end if;
          end loop;

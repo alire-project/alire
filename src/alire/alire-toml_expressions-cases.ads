@@ -20,8 +20,8 @@ package Alire.TOML_Expressions.Cases with Preelaborate is
    --  key and values must agree). We explicitly pass a Loader for the property
    --  that is being resolved.
 
-   function Load_Requisites (From : TOML_Adapters.Key_Queue)
-                             return Requisites.Tree;
+   function Load_Availability (From : TOML_Adapters.Key_Queue)
+                               return Conditional.Availability;
    --  From is an "available = ..." table.
 
 end Alire.TOML_Expressions.Cases;

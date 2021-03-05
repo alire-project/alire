@@ -21,7 +21,7 @@ assert_eq(
       '"other-tag"]\n'
       'version: "1.0.1"\n'
       'short_description: "\\"Hello, world!\\" demonstration project"\n'
-      'dependencies: [{crate: "libhello", version: "^1.0"}]\n'
+      'dependencies: {crate: "libhello", version: "^1.0"}\n'
       'configuration_variables: [{name: \'Var1\', type: \'Boolean\'},\n'
       '{name: \'Var2\', type: \'String\', default: "str"},\n'
       '{name: \'Var3\', type: \'Enum (A, B)\', default: "A"},\n'

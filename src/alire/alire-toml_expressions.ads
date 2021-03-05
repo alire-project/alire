@@ -1,5 +1,4 @@
 with Alire.TOML_Adapters;
-with Alire.Requisites;
 
 with TOML;
 
@@ -84,6 +83,11 @@ package Alire.TOML_Expressions with Preelaborate is
       --  Warnings (Off) applied because it is unreferenced in this package,
       --  but used down the road by other instances.
    package Enum_Trees is
+
+      --  TODO: this was used to abstract the two kinds of trees mentioned in
+      --  the next paragraph. Now, only Conditional_Trees remain, so this is
+      --  unnecessary. To be removed when the case expressions are reworked
+      --  to remove generics.
 
       --  A tree of values that will be have leaves containing cases with
       --  values. Either Boolean_Trees, for requisites, or Conditional_Trees,

@@ -1,7 +1,6 @@
 with Alire.Conditional_Trees.Cases;
 with Alire.Platforms;
-with Alire.Requisites.Booleans;
-with Alire.Requisites.Platform;
+with Alire.Properties.Platform;
 with Alire.TOML_Keys;
 
 package body Alire.TOML_Expressions.Cases is
@@ -15,113 +14,47 @@ package body Alire.TOML_Expressions.Cases is
    package Toolchains        is new Enum_Cases (Platforms.Toolchains);
    package Word_Sizes        is new Enum_Cases (Platforms.Word_Sizes);
 
-   ------------------------------------------------
-   --  COMMON REQUISITES/PROPERTIES SCAFFOLDING  --
-   ------------------------------------------------
-
-   --  This generic saves duplication of instances for requisites and
-   --  properties.
+   --------------------------
+   --  COMMON SCAFFOLDING  --
+   --------------------------
 
    generic
       with package Condtrees is new Conditional_Trees (<>);
    package Common_Cases is
 
       package Distributions is
-         new Condtrees.Cases (Requisites.Platform.Distro_Cases);
+         new Condtrees.Cases (Properties.Platform.Distro_Cases);
 
       package Operating_Systems is
-        new Condtrees.Cases (Requisites.Platform.OS_Cases);
+        new Condtrees.Cases (Properties.Platform.OS_Cases);
 
       package Toolchains is
-        new Condtrees.Cases (Requisites.Platform.Toolchain_Cases);
+        new Condtrees.Cases (Properties.Platform.Toolchain_Cases);
 
       package Word_Sizes is
-        new Condtrees.Cases (Requisites.Platform.Word_Size_Cases);
+        new Condtrees.Cases (Properties.Platform.Word_Size_Cases);
 
    end Common_Cases;
 
    --  The following packages create the actual Case_Node classes for the
-   --  respective conditional trees of properties and dependencies.
-   --  These instances are later used in TOML loading of expressions.
+   --  respective conditional trees. These instances are later used in TOML
+   --  loading of expressions.
 
    package Cases_Deps  is new Common_Cases (Conditional.For_Dependencies);
    package Cases_Props is new Common_Cases (Conditional.For_Properties);
-
-   -----------------------------------
-   --  CASE REQUISITES SCAFFOLDING  --
-   -----------------------------------
-
-   package Reqs is
-
-      --  Requisites have differences in regard to Conditional_Trees that
-      --  make a common generic impossible (or not evident).
-
-      package Trees is new Enum_Trees
-        (Tree    => Requisites.Tree,
-         "and"   => Requisites.Trees."and",
-         Default => Requisites.Booleans.Always_True);
-
-      Loaders : array (Case_Loader_Keys) of Trees.Recursive_Case_Loader :=
-                  (others => null);
-
-      function Loader (Key : Case_Loader_Keys)
-                       return Trees.Recursive_Case_Loader is (Loaders (Key));
-
-      function Load_Instance is new Trees.Load
-        (Case_Keys => Case_Loader_Keys,
-         Loaders   => Loader);
-
-      --  Requisite loader instances:
-      package Distro_Loader is new Tree_Builders
-        (Trees      => Trees,
-         Cases      => Distributions,
-         Enum_Array => Requisites.Platform.Distro_Cases.Cases_Array,
-         New_Leaf   => Requisites.Platform.Distro_Cases.New_Case,
-         Load       => Load_Instance);
-      package OS_Loader is new Tree_Builders
-        (Trees      => Trees,
-         Cases      => Operating_Systems,
-         Enum_Array => Requisites.Platform.OS_Cases.Cases_Array,
-         New_Leaf   => Requisites.Platform.OS_Cases.New_Case,
-         Load       => Load_Instance);
-      package Toolchain_Loader is new Tree_Builders
-        (Trees      => Trees,
-         Cases      => Toolchains,
-         Enum_Array => Requisites.Platform.Toolchain_Cases.Cases_Array,
-         New_Leaf   => Requisites.Platform.Toolchain_Cases.New_Case,
-         Load       => Load_Instance);
-      package WS_Loader is new Tree_Builders
-        (Trees      => Trees,
-         Cases      => Word_Sizes,
-         Enum_Array => Requisites.Platform.Word_Size_Cases.Cases_Array,
-         New_Leaf   => Requisites.Platform.Word_Size_Cases.New_Case,
-         Load       => Load_Instance);
-
-   end Reqs;
-
-   ---------------------
-   -- Load_Requisites --
-   ---------------------
-
-   function Load_Requisites (From : TOML_Adapters.Key_Queue)
-                             return Requisites.Tree is
-   begin
-      Set_Up_Loaders;
-      return Reqs.Load_Instance (TOML_Keys.Available,
-                                 From,
-                                 Requisites.Booleans.From_TOML'Access);
-   end Load_Requisites;
+   package Cases_Avail is new Common_Cases (Conditional.For_Available);
 
    -------------------------------------------
    --  CASE CONDITIONAL COMMON SCAFFOLDING  --
    -------------------------------------------
 
-   --  The following actually provides all that is necessary to load cases of
-   --  dependencies or properties.
+   --  The following provides all that is necessary to load cases of
+   --  conditional trees (dependencies, properties, availability).
 
    generic
       with package Condtrees is new Conditional_Trees (<>);
       with package Condcases is new Common_Cases (Condtrees);
+      with function Default return Condtrees.Tree;
    package Conditional_Instances is
 
       --  Given the common base of Dependencies and Properties, we can reuse
@@ -129,7 +62,7 @@ package body Alire.TOML_Expressions.Cases is
 
       package Trees is new Enum_Trees (Tree  => Condtrees.Tree,
                                        "and" => Condtrees."and",
-                                       Default => Condtrees.Empty);
+                                       Default => Default);
       --  I.e., Conditional.Dependencies & Conditional.Properties
 
       Loaders : array (Case_Loader_Keys) of Trees.Recursive_Case_Loader :=
@@ -188,8 +121,10 @@ package body Alire.TOML_Expressions.Cases is
    --  CASE DEPENDENCIES SCAFFOLDING  --
    -------------------------------------
 
-   package Deps is new Conditional_Instances (Conditional.For_Dependencies,
-                                              Cases_Deps);
+   package Deps is new Conditional_Instances
+     (Conditional.For_Dependencies,
+      Cases_Deps,
+      Conditional.For_Dependencies.Empty);
 
    -----------------------
    -- Load_Dependencies --
@@ -206,11 +141,43 @@ package body Alire.TOML_Expressions.Cases is
    end Load_Dependencies;
 
    -------------------------------------
+   --  CASE AVAILABILITY SCAFFOLDING  --
+   -------------------------------------
+
+   function Available_Default return Conditional.For_Available.Tree
+   is (Conditional.For_Available.Tree (Conditional.Available_Default));
+   --  We need an explicit default for available, or conditional expressions
+   --  show an ugly (empty) in user output.
+
+   package Avail is new Conditional_Instances
+     (Conditional.For_Available,
+      Cases_Avail,
+      Available_Default);
+
+   -----------------------
+   -- Load_Availability --
+   -----------------------
+
+   function Load_Availability (From : TOML_Adapters.Key_Queue)
+                                return Conditional.Availability is
+   begin
+      Set_Up_Loaders;
+      return
+        (Avail.Load_Instance
+           (TOML_Keys.Available,
+            From,
+            Conditional.Available_From_TOML'Access)
+         with null record);
+   end Load_Availability;
+
+   -------------------------------------
    --  CASE PROPERTIES SCAFFOLDING  --
    -------------------------------------
 
-   package Props is new Conditional_Instances (Conditional.For_Properties,
-                                               Cases_Props);
+   package Props is new Conditional_Instances
+     (Conditional.For_Properties,
+      Cases_Props,
+      Conditional.For_Properties.Empty);
 
    -------------------
    -- Load_Property --
@@ -243,10 +210,7 @@ package body Alire.TOML_Expressions.Cases is
    begin
       Deps.Set_Up_Loaders;
       Props.Set_Up_Loaders;
-      Reqs.Loaders := (Distribution => Reqs.Distro_Loader.Load_Cases'Access,
-                       OS           => Reqs.OS_Loader.Load_Cases'Access,
-                       Toolchain    => Reqs.Toolchain_Loader.Load_Cases'Access,
-                       Word_Size    => Reqs.WS_Loader.Load_Cases'Access);
+      Avail.Set_Up_Loaders;
    end Set_Up_Loaders;
 
 end Alire.TOML_Expressions.Cases;
