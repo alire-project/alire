@@ -1,7 +1,6 @@
 with Alire.Errors;
 with Alire.Properties.Actions.Executor;
 
-with Alr.Root;
 with Alr.Spawn;
 with Alr.Platform;
 
@@ -12,9 +11,8 @@ package body Alr.Commands.Build is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
    begin
-      if not Execute (Export_Build_Env => True) then
+      if not Execute (Cmd, Export_Build_Env => True) then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -23,20 +21,21 @@ package body Alr.Commands.Build is
    -- Execute --
    -------------
 
-   function Execute (Export_Build_Env : Boolean) return Boolean is
+   function Execute (Cmd              : in out Commands.Command'Class;
+                     Export_Build_Env : Boolean) return Boolean is
    begin
-      Requires_Full_Index;
+      Cmd.Requires_Full_Index;
 
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
       if Export_Build_Env then
-         Alr.Root.Current.Export_Build_Environment;
+         Cmd.Root.Export_Build_Environment;
       end if;
 
       --  PRE-BUILD ACTIONS
       begin
          Alire.Properties.Actions.Executor.Execute_Actions
-           (Release => Root.Current.Release,
+           (Release => Cmd.Root.Release,
             Env     => Platform.Properties,
             Moment  => Alire.Properties.Actions.Pre_Build);
       exception
@@ -50,7 +49,7 @@ package body Alr.Commands.Build is
       begin
 
          --  Build all the project files
-         for Gpr_File of Root.Current.Release.Project_Files
+         for Gpr_File of Cmd.Root.Release.Project_Files
            (Platform.Properties, With_Path => True)
          loop
 
@@ -70,7 +69,7 @@ package body Alr.Commands.Build is
       --  POST-BUILD ACTIONS
       begin
          Alire.Properties.Actions.Executor.Execute_Actions
-           (Release => Root.Current.Release,
+           (Release => Cmd.Root.Release,
             Env     => Platform.Properties,
             Moment  => Alire.Properties.Actions.Post_Build);
       exception

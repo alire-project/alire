@@ -1,8 +1,6 @@
 with Alire.Environment;
 with Alire.Platforms;
 
-with Alr.Root;
-
 package body Alr.Commands.Printenv is
 
    -------------
@@ -22,13 +20,13 @@ package body Alr.Commands.Printenv is
          Reportaise_Wrong_Arguments ("Specify at most one subcommand");
       end if;
 
-      Requires_Full_Index;
+      Cmd.Requires_Full_Index;
 
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
       declare
          Context : constant Alire.Environment.Context :=
-                     Alr.Root.Current.Build_Context;
+                     Cmd.Root.Build_Context;
       begin
          if Cmd.Details then
             Context.Print_Details;

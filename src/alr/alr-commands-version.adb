@@ -8,7 +8,6 @@ with Alr.Bootstrap;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Paths;
-with Alr.Root;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -22,9 +21,7 @@ package body Alr.Commands.Version is
    -------------
 
    overriding procedure Execute (Cmd : in out Command) is
-      pragma Unreferenced (Cmd);
       use Ada.Text_IO;
-      Root : constant Alire.Roots.Optional.Root := Alr.Root.Current;
       use all type Alire.Roots.Optional.States;
    begin
       Trace.Always ("Alr version: " & Alr.Version);
@@ -38,14 +35,14 @@ package body Alr.Commands.Version is
          & " force:" & Alire.Force'Img
          & " not-interactive:" & Alire.Utils.User_Input.Not_Interactive'Img);
 
-      case Root.Status is
+      case Cmd.Optional_Root.Status is
          when Outside =>
             Trace.Always ("alr root is empty");
          when Broken =>
             Trace.Always ("alr root has invalid metadata: "
-                          & Alire.Utils.TTY.Error (Root.Message));
+                          & Alire.Utils.TTY.Error (Cmd.Optional_Root.Message));
          when Valid =>
-            Trace.Always ("alr root is " & Root.Value.Release.Milestone.Image);
+            Trace.Always ("alr root is " & Cmd.Root.Release.Milestone.Image);
       end case;
 
       declare
@@ -56,7 +53,7 @@ package body Alr.Commands.Version is
          Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img &
                          " GPR project files");
          Trace.Always
-           ("alr session state is [" & Root.Status'Img & "]");
+           ("alr session state is [" & Cmd.Optional_Root.Status'Img & "]");
       end;
 
       Log ("alr compiled on [" &

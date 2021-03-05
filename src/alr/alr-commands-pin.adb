@@ -3,11 +3,9 @@ with Alire.Solutions.Diffs;
 with Alire.Pinning;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
-with Alire.Workspace;
 
 with Alr.Commands.User_Input;
 with Alr.Platform;
-with Alr.Root;
 
 with Semantic_Versioning;
 
@@ -20,7 +18,7 @@ package body Alr.Commands.Pin is
    -- Change_One_Pin --
    --------------------
 
-   procedure Change_One_Pin (Cmd      :        Command;
+   procedure Change_One_Pin (Cmd      : in out Command;
                              Solution : in out Alire.Solutions.Solution;
                              Target   :        String)
    is
@@ -37,13 +35,12 @@ package body Alr.Commands.Pin is
          --  We let to re-pin without checks because the requested version may
          --  be different.
 
-         Requires_Full_Index;
+         Cmd.Requires_Full_Index;
 
          Solution := Alire.Pinning.Pin
            (Crate        => Name,
             Version      => Version,
-            Dependencies =>
-              Root.Current.Release.Dependencies,
+            Dependencies => Cmd.Root.Release.Dependencies,
             Environment  => Platform.Properties,
             Solution     => Solution);
 
@@ -61,12 +58,11 @@ package body Alr.Commands.Pin is
             Reportaise_Command_Failed ("Requested crate is already unpinned");
          end if;
 
-         Requires_Full_Index;
+         Cmd.Requires_Full_Index;
 
          Solution := Alire.Pinning.Unpin
            (Crate        => Name,
-            Dependencies =>
-              Root.Current.Release.Dependencies,
+            Dependencies => Cmd.Root.Release.Dependencies,
             Environment  => Platform.Properties,
             Solution     => Solution);
       end Unpin;
@@ -127,7 +123,8 @@ package body Alr.Commands.Pin is
       begin
          if Diff.Contains_Changes then
             if Alire.Utils.User_Input.Confirm_Solution_Changes (Diff) then
-               Alire.Workspace.Deploy_Dependencies (Solution => New_Sol);
+               Cmd.Root.Set (Solution => New_Sol);
+               Cmd.Root.Deploy_Dependencies;
             end if;
          else
             Trace.Info ("No changes to apply.");
@@ -147,12 +144,12 @@ package body Alr.Commands.Pin is
            ("--use must be used alone with a crate name");
       end if;
 
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
       --  Listing of pins
 
       if not Cmd.Pin_All and then Num_Arguments = 0 then
-         Root.Current.Solution.Print_Pins;
+         Cmd.Root.Solution.Print_Pins;
          return;
       elsif Num_Arguments > 1 then
          Reportaise_Wrong_Arguments
@@ -162,7 +159,7 @@ package body Alr.Commands.Pin is
       --  Apply changes;
 
       declare
-         New_Sol : Alire.Solutions.Solution := Root.Current.Solution;
+         New_Sol : Alire.Solutions.Solution := Cmd.Root.Solution;
          Old_Sol : constant Alire.Solutions.Solution := New_Sol;
       begin
 
@@ -180,12 +177,12 @@ package body Alr.Commands.Pin is
 
             --  Pin to dir
 
-            Requires_Full_Index; -- Next statement recomputes a solution
+            Cmd.Requires_Full_Index; -- Next statement recomputes a solution
 
             New_Sol := Alire.Pinning.Pin_To
               (+Argument (1),
                Cmd.URL.all,
-               Root.Current.Release.Dependencies,
+               Cmd.Root.Release.Dependencies,
                Platform.Properties,
                Old_Sol);
 

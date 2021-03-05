@@ -6,7 +6,6 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Config;
 
 with Alr.Platform;
-with Alr.Root;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alr.Commands.Edit is
@@ -68,11 +67,11 @@ package body Alr.Commands.Edit is
            ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
       end if;
 
-      Requires_Full_Index;
+      Cmd.Requires_Full_Index;
 
-      Requires_Valid_Session;
+      Cmd.Requires_Valid_Session;
 
-      Alr.Root.Current.Export_Build_Environment;
+      Cmd.Root.Export_Build_Environment;
 
       declare
          Exec : constant String := Args.First_Element;
@@ -94,7 +93,7 @@ package body Alr.Commands.Edit is
 
       declare
          Project_Files : constant Alire.Utils.String_Vector :=
-           Root.Current.Release.Project_Files
+           Cmd.Root.Release.Project_Files
              (Platform.Properties, With_Path => True);
       begin
          if Project_Files.Length = 0 then

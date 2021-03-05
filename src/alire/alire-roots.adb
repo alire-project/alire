@@ -1,16 +1,16 @@
 with Ada.Calendar;
 with Ada.Directories;
 
+with Alire.Conditional;
+with Alire.Crate_Configuration;
+with Alire.Dependencies.Containers;
+with Alire.Directories;
 with Alire.Environment;
-with Alire.Lockfiles;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.Utils.TTY;
-with Alire.Utils.User_Input;
-with Alire.Workspace;
-with Alire.Crate_Configuration;
 
 with GNAT.OS_Lib;
 
@@ -22,7 +22,8 @@ package body Alire.Roots is
    -- Build_Context --
    -------------------
 
-   function Build_Context (This : Root) return Alire.Environment.Context is
+   function Build_Context (This : in out Root) return Alire.Environment.Context
+   is
    begin
       return Context : Alire.Environment.Context do
          Context.Load (This);
@@ -33,7 +34,7 @@ package body Alire.Roots is
    -- Direct_Withs --
    ------------------
 
-   function Direct_Withs (This      : Root;
+   function Direct_Withs (This      : in out Root;
                           Dependent : Releases.Release)
                           return Utils.String_Set
    is
@@ -66,7 +67,7 @@ package body Alire.Roots is
    -- Generate_Configuration --
    ----------------------------
 
-   procedure Generate_Configuration (This : Root) is
+   procedure Generate_Configuration (This : in out Root) is
       Conf : Alire.Crate_Configuration.Global_Config;
    begin
       Conf.Load (This);
@@ -84,6 +85,193 @@ package body Alire.Roots is
          Raise_Checked_Error (Info);
       end if;
    end Check_Stored;
+
+   ------------------------
+   -- Create_For_Release --
+   ------------------------
+
+   function Create_For_Release (This            : Releases.Release;
+                                Parent_Folder   : Any_Path;
+                                Env             : Alire.Properties.Vector;
+                                Perform_Actions : Boolean := True)
+                                return Root
+   is
+      use Directories;
+      Was_There : Boolean with Unreferenced;
+   begin
+      This.Deploy
+        (Env             => Env,
+         Parent_Folder   => Parent_Folder,
+         Was_There       => Was_There,
+         Perform_Actions => Perform_Actions);
+
+      --  Backup a potentially packaged manifest, so our authoritative manifest
+      --  from the index is always used.
+
+      declare
+         Working_Dir : Guard (Enter (This.Unique_Folder))
+           with Unreferenced;
+      begin
+         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
+
+         if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
+            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            declare
+               Upstream_File : constant String :=
+                                 Paths.Working_Folder_Inside_Root /
+                                 (Paths.Crate_File_Name & ".upstream");
+            begin
+               Alire.Directories.Backup_If_Existing
+                 (Upstream_File,
+                  Base_Dir => Paths.Working_Folder_Inside_Root);
+               Ada.Directories.Rename
+                 (Old_Name => Paths.Crate_File_Name,
+                  New_Name => Upstream_File);
+            end;
+         end if;
+      end;
+
+      --  And generate its working files, if they do not exist
+
+      declare
+         Working_Dir : Guard (Enter (This.Unique_Folder))
+           with Unreferenced;
+         Root        : Alire.Roots.Root :=
+                         Alire.Roots.New_Root
+                           (This,
+                            Ada.Directories.Current_Directory,
+                            Env);
+      begin
+
+         Ada.Directories.Create_Path (Root.Working_Folder);
+
+         --  Generate the authoritative manifest from index information for
+         --  eventual use of the gotten crate as a local workspace.
+
+         Root.Write_Manifest;
+
+         --  Create also a preliminary lockfile (since dependencies are
+         --  still unretrieved). Once they are checked out, the lockfile
+         --  will be replaced with the complete solution.
+
+         Root.Set
+           (Solution => (if This.Dependencies (Env).Is_Empty
+                         then Alire.Solutions.Empty_Valid_Solution
+                         else Alire.Solutions.Empty_Invalid_Solution));
+
+         return Root;
+      end;
+   end Create_For_Release;
+
+   -------------------------
+   -- Deploy_Dependencies --
+   -------------------------
+
+   procedure Deploy_Dependencies (This : in out Roots.Root)
+   is
+      Was_There : Boolean;
+      Pending   : Alire.Solutions.Release_Map := This.Solution.Releases;
+      Deployed  : Containers.Crate_Name_Sets.Set;
+      Round     : Natural := 0;
+   begin
+
+      --  Prepare environment for any post-fetch actions. This must be done
+      --  after the lockfile on disk is written, since the root will read
+      --  dependencies from there.
+
+      This.Export_Build_Environment;
+
+      --  Mark any dependencies without a corresponding regular release as
+      --  already deployed (in practice, we don't have to deploy them, and
+      --  dependents don't need to wait for their deployment).
+
+      for Dep of This.Solution.Required loop
+         if not Dep.Has_Release then
+            Deployed.Include (Dep.Crate);
+         end if;
+      end loop;
+
+      --  Deploy regular resolved dependencies:
+
+      while not Pending.Is_Empty loop
+         Round := Round + 1;
+
+         declare
+            To_Remove : Alire.Containers.Release_Set;
+            function Enum (Deps : Conditional.Dependencies)
+                           return Alire.Dependencies.Containers.List
+                           renames Conditional.Enumerate;
+         begin
+
+            --  TODO: this can be done in parallel within each round
+
+            for Rel of Pending loop
+
+               --  In the 1st step of each round we identify releases that
+               --  don't have undeployed dependencies. We also identify
+               --  releases that need not to be deployed (e.g. linked ones).
+
+               if not This.Solution.State (Rel.Name).Is_Solved then
+                  Trace.Debug ("Round" & Round'Img & ": NOOP " &
+                                 Rel.Milestone.Image);
+
+                  To_Remove.Include (Rel);
+
+               elsif
+                 (for some Dep of Enum (Rel.Dependencies (This.Environment)) =>
+                        not Deployed.Contains (Dep.Crate))
+               then
+                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
+                                 Rel.Milestone.Image);
+
+               else
+                  Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
+                                 Rel.Milestone.Image);
+
+                  To_Remove.Include (Rel);
+
+                  if Rel.Name /= Release (This).Name then
+                     Rel.Deploy (Env           => This.Environment,
+                                 Parent_Folder => This.Dependencies_Dir,
+                                 Was_There     => Was_There);
+                  else
+                     Trace.Debug
+                       ("Skipping checkout of root crate as dependency");
+                  end if;
+               end if;
+            end loop;
+
+            --  In the 2nd step of each round we mark as deployed all releases
+            --  that were deployed in the 1st step of the round.
+
+            if To_Remove.Is_Empty then
+               raise Program_Error
+                 with "No release checked out in round" & Round'Img;
+            else
+               for Rel of To_Remove loop
+                  Pending.Exclude (Rel.Name);
+                  Deployed.Include (Rel.Name);
+               end loop;
+            end if;
+         end;
+      end loop;
+
+      --  Show hints for missing externals to the user after all the noise of
+      --  dependency post-fetch compilations.
+
+      This.Solution.Print_Hints (This.Environment);
+
+      --  Update/Create configuration files
+      This.Generate_Configuration;
+
+      --  Check that the solution does not contain suspicious dependencies,
+      --  taking advantage that this procedure is called whenever a change
+      --  to dependencies is happening.
+
+      pragma Assert (Release (This).Check_Caret_Warning or else True);
+      --  We don't care about the return value here
+
+   end Deploy_Dependencies;
 
    ---------------
    -- Is_Stored --
@@ -131,7 +319,7 @@ package body Alire.Roots is
    -- Export_Build_Environment --
    ------------------------------
 
-   procedure Export_Build_Environment (This : Root) is
+   procedure Export_Build_Environment (This : in out Root) is
       Context : Alire.Environment.Context;
    begin
       Context.Load (This);
@@ -142,7 +330,7 @@ package body Alire.Roots is
    -- Project_Paths --
    -------------------
 
-   function Project_Paths (This : Root) return Utils.String_Set
+   function Project_Paths (This : in out Root) return Utils.String_Set
    is
       use Alire.OS_Lib;
       Paths : Utils.String_Set;
@@ -184,16 +372,23 @@ package body Alire.Roots is
       end return;
    end Project_Paths;
 
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (This     : in out Root;
+                  Solution : Solutions.Solution)
+   is
+   begin
+      This.Cached_Solution.Set (Solution, This.Lock_File);
+   end Set;
+
    --------------
    -- Solution --
    --------------
 
-   function Solution (This : Root) return Solutions.Solution is
-   begin
-      --  TODO: This probably is a good target for caching unless file
-      --  timestamp has changed.
-      return Lockfiles.Read (This.Lock_File).Solution;
-   end Solution;
+   function Solution (This : in out Root) return Solutions.Solution
+   is (This.Cached_Solution.Element (This.Lock_File));
 
    -----------------
    -- Environment --
@@ -208,10 +403,8 @@ package body Alire.Roots is
 
    function New_Root (Name : Crate_Name;
                       Path : Absolute_Path;
-                      Env  : Properties.Vector) return Root is
-     (Env,
-      +Path,
-      Containers.To_Release_H (Releases.New_Working_Release (Name)));
+                      Env  : Properties.Vector) return Root
+   is (New_Root (Releases.New_Working_Release (Name), Path, Env));
 
    --------------
    -- New_Root --
@@ -220,9 +413,10 @@ package body Alire.Roots is
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
-     (Env,
-      +Path,
-      Containers.To_Release_H (R));
+     (Environment     => Env,
+      Path            => +Path,
+      Release         => Containers.To_Release_H (R),
+      Cached_Solution => <>);
 
    ----------
    -- Path --
@@ -241,7 +435,7 @@ package body Alire.Roots is
    -- Release --
    -------------
 
-   function Release (This  : Root;
+   function Release (This  : in out Root;
                      Crate : Crate_Name) return Releases.Release is
      (if This.Release.Element.Name = Crate
       then This.Release.Element
@@ -253,16 +447,22 @@ package body Alire.Roots is
    -- Release_Base --
    ------------------
 
-   function Release_Base (This : Root; Crate : Crate_Name) return Any_Path is
-     (if This.Release.Element.Name = Crate then
-         +This.Path
+   function Release_Base (This  : in out  Root;
+                          Crate : Crate_Name)
+                          return Any_Path
+   is
+      Deps_Dir : constant Any_Path := This.Dependencies_Dir;
+   begin
+      if This.Release.Element.Name = Crate then
+         return +This.Path;
       elsif This.Solution.State (Crate).Is_Solved then
-         This.Dependencies_Dir
-         / Release (This, Crate).Unique_Folder
+         return Deps_Dir / Release (This, Crate).Unique_Folder;
       elsif This.Solution.State (Crate).Is_Linked then
-         This.Solution.State (Crate).Link.Path
+         return This.Solution.State (Crate).Link.Path;
       else
-         raise Program_Error with "release must be either solved or linked");
+         raise Program_Error with "release must be either solved or linked";
+      end if;
+   end Release_Base;
 
    ---------------
    -- Lock_File --
@@ -294,12 +494,33 @@ package body Alire.Roots is
    function Working_Folder (This : Root) return Absolute_Path is
      ((+This.Path) / "alire");
 
+   --------------------
+   -- Write_Solution --
+   --------------------
+
+   procedure Write_Solution (Solution : Solutions.Solution;
+                             Lockfile : String)
+   is
+   begin
+      Lockfiles.Write (Contents => (Solution => Solution),
+                       Filename => Lockfile);
+   end Write_Solution;
+
    ------------------
    -- Has_Lockfile --
    ------------------
 
-   function Has_Lockfile (This : Root) return Boolean
-   is (Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid);
+   function Has_Lockfile (This        : Root;
+                          Check_Valid : Boolean := False)
+                          return Boolean
+   is (This.Cached_Solution.Has_Element
+         --  The following validity check is very expensive. This shortcut
+         --  speeds up things greatly and both should be in sync if things
+         --  are as they should.
+       or else
+         (if Check_Valid
+          then Lockfiles.Validity (This.Lock_File) in Lockfiles.Valid
+          else Ada.Directories.Exists (This.Lock_File)));
 
    --------------------------
    -- Is_Lockfile_Outdated --
@@ -318,11 +539,11 @@ package body Alire.Roots is
    -- Sync_Solution_And_Deps --
    ----------------------------
 
-   procedure Sync_Solution_And_Deps (This : Root) is
+   procedure Sync_Solution_And_Deps (This : in out Root) is
    begin
       if This.Is_Lockfile_Outdated then
          Trace.Info ("Detected changes in manifest, updating workspace...");
-         Workspace.Update_And_Deploy_Dependencies (This, Confirm => False);
+         This.Update_And_Deploy_Dependencies (Confirm => False);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -342,10 +563,7 @@ package body Alire.Roots is
       then
          Trace.Info ("Detected missing dependencies, updating workspace...");
          --  Some dependency is missing; redeploy. Should we clean first ???
-         Workspace.Deploy_Dependencies
-           (Root     => This,
-            Solution => This.Solution,
-            Deps_Dir => This.Dependencies_Dir);
+         This.Deploy_Dependencies;
       end if;
 
    end Sync_Solution_And_Deps;
@@ -365,12 +583,50 @@ package body Alire.Roots is
       end if;
    end Sync_Manifest_And_Lockfile_Timestamps;
 
+   --------------------
+   -- Compute_Update --
+   --------------------
+
+   function Compute_Update
+     (This        : in out Root;
+      Allowed     : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set;
+      Options     : Solver.Query_Options :=
+        Solver.Default_Options)
+      return Solutions.Solution
+   is
+      use type Conditional.Dependencies;
+
+      Old  : constant Solutions.Solution := This.Solution;
+      Deps : Conditional.Dependencies    :=
+               Release (This).Dependencies (This.Environment);
+   begin
+
+      --  Identify crates that must be held back
+
+      if not Allowed.Is_Empty then
+         for Release of Old.Releases loop
+            if not Allowed.Contains (Release.Name) then
+               Trace.Debug ("Forcing release in solution: "
+                            & Release.Version.Image);
+               Deps := Release.To_Dependency and Deps;
+            end if;
+         end loop;
+      end if;
+
+      return Solver.Resolve
+        (Deps    => Deps,
+         Props   => This.Environment,
+         Current => Old,
+         Options => Options);
+   end Compute_Update;
+
    -------------------------
    -- Update_Dependencies --
    -------------------------
 
    procedure Update_Dependencies
-     (This    : Root;
+     (This    : in out Root;
       Silent  : Boolean;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
@@ -397,8 +653,8 @@ package body Alire.Roots is
       end loop;
 
       declare
-         Needed : constant Solutions.Solution :=
-                    Workspace.Update (This.Environment, Allowed, Options);
+         Needed : constant Solutions.Solution   := This.Compute_Update
+                                                     (Allowed, Options);
          Diff   : constant Solutions.Diffs.Diff := Old.Changes (Needed);
       begin
          --  Early exit when there are no changes
@@ -430,28 +686,66 @@ package body Alire.Roots is
 
          --  Apply the update
 
-         Workspace.Deploy_Dependencies (Solution => Needed);
+         This.Set (Solution => Needed);
+         This.Deploy_Dependencies;
+
+         --  Update/Create configuration files
+         This.Generate_Configuration;
 
          Trace.Detail ("Update completed");
       end;
    end Update_Dependencies;
 
-   ------------
-   -- Extend --
-   ------------
+   ------------------------------------
+   -- Update_And_Deploy_Dependencies --
+   ------------------------------------
 
-   procedure Extend
-     (This         : in out Root;
-      Dependencies : Conditional.Dependencies := Conditional.No_Dependencies;
-      Properties   : Conditional.Properties   := Conditional.No_Properties;
-      Available    : Alire.Requisites.Tree    := Requisites.No_Requisites)
+   procedure Update_And_Deploy_Dependencies
+     (This    : in out Roots.Root;
+      Options : Solver.Query_Options := Solver.Default_Options;
+      Confirm : Boolean              := not Utils.User_Input.Not_Interactive)
    is
+      Prev : constant Solutions.Solution := This.Solution;
+      Next : constant Solutions.Solution :=
+               This.Compute_Update (Options => Options);
+      Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);
    begin
-      This.Release.Replace_Element
-        (This.Release.Element.Extending
-           (Dependencies,
-            Properties,
-            Available));
-   end Extend;
+      if Diff.Contains_Changes then
+         if not Confirm or else
+           Utils.User_Input.Confirm_Solution_Changes (Diff)
+         then
+            if not Confirm then
+               Trace.Info ("Changes to dependency solution:");
+               Diff.Print (Changed_Only => not Alire.Detailed);
+            end if;
+
+            This.Set (Solution => Next);
+            This.Deploy_Dependencies;
+         end if;
+      end if;
+
+      --  Update/Create configuration files
+      This.Generate_Configuration;
+
+   end Update_And_Deploy_Dependencies;
+
+   --------------------
+   -- Write_Manifest --
+   --------------------
+
+   procedure Write_Manifest (This : Root) is
+      Release : constant Releases.Release := Roots.Release (This);
+   begin
+      Trace.Debug ("Generating " & Release.Name_Str & ".toml file for "
+                   & Release.Milestone.Image & " with"
+                   & Release.Dependencies.Leaf_Count'Img & " dependencies");
+
+      Directories.Backup_If_Existing
+        (This.Crate_File,
+         Base_Dir => Paths.Working_Folder_Inside_Root);
+
+      Release.Whenever (This.Environment)
+             .To_File (This.Crate_File, Manifest.Local);
+   end Write_Manifest;
 
 end Alire.Roots;

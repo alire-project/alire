@@ -12,7 +12,7 @@ package body Alr.Commands.Index is
 
    procedure Add (Cmd : Command);
 
-   procedure Check;
+   procedure Check (Cmd : in out Command);
 
    procedure List;
 
@@ -105,7 +105,7 @@ package body Alr.Commands.Index is
       elsif Cmd.Del.all /= "" then
          Delete (Cmd.Del.all);
       elsif Cmd.Check then
-         Check;
+         Check (Cmd);
       elsif Cmd.List then
          List;
       elsif Cmd.Update_All then
@@ -121,10 +121,10 @@ package body Alr.Commands.Index is
    -- Check --
    -----------
 
-   procedure Check is
+   procedure Check (Cmd : in out Command) is
    begin
       Alire.TOML_Expressions.Strict_Enums := True;
-      Requires_Full_Index;
+      Cmd.Requires_Full_Index;
       Alire.Log_Success ("No unknown values found in index contents.");
    end Check;
 

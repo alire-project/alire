@@ -32,7 +32,7 @@ package Alire.Environment is
    --  Prepend a value to a variable in the context
 
    procedure Load (This : in out Context;
-                   Root :        Alire.Roots.Root);
+                   Root : in out Alire.Roots.Root);
    --  Load the environment variables of a releases found in the workspace
    --  Solution (GPR_PROJECT_PATH and custom variables) in the context.
 
@@ -93,7 +93,7 @@ private
    procedure Add (This : in out Context; Name : String; Action : Env_Action);
 
    procedure Load (This            : in out Context;
-                   Root            : Roots.Root;
+                   Root            : in out Roots.Root;
                    Crate           : Crate_Name);
    --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
    --  variables) in the context.

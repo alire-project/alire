@@ -1,6 +1,5 @@
 with Alire.Origins;
 with Alire.Publish;
-with Alire.Roots;
 with Alire.URI;
 
 package body Alr.Commands.Publish is

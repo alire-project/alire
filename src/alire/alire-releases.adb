@@ -4,9 +4,12 @@ with Ada.Text_IO;
 
 with Alire.Config;
 with Alire.Crates;
+with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
+with Alire.Origins.Deployers;
 with Alire.Properties.Bool;
+with Alire.Properties.Actions.Executor;
 with Alire.Requisites.Booleans;
 with Alire.TOML_Expressions;
 with Alire.TOML_Load;
@@ -89,6 +92,59 @@ package body Alire.Releases is
 
       return False;
    end Check_Caret_Warning;
+
+   ------------
+   -- Deploy --
+   ------------
+
+   procedure Deploy
+     (This            : Alire.Releases.Release;
+      Env             : Alire.Properties.Vector;
+      Parent_Folder   : String;
+      Was_There       : out Boolean;
+      Perform_Actions : Boolean := True)
+   is
+      use Alire.OS_Lib.Operators;
+      use all type Alire.Properties.Actions.Moments;
+      Folder : constant Any_Path := Parent_Folder / This.Unique_Folder;
+      Result : Alire.Outcome;
+   begin
+
+      --  Deploy if the target dir is not already there
+
+      if Ada.Directories.Exists (Folder) then
+         Was_There := True;
+         Trace.Detail ("Skipping checkout of already available " &
+                         This.Milestone.Image);
+      else
+         Was_There := False;
+         Trace.Detail ("About to deploy " & This.Milestone.Image);
+         Result := Alire.Origins.Deployers.Deploy (This, Folder);
+         if not Result.Success then
+            Raise_Checked_Error (Message (Result));
+         end if;
+
+         --  For deployers that do nothing, we ensure the folder exists so all
+         --  dependencies leave a trace in the cache/dependencies folder, and
+         --  a place from where to run their actions by default.
+
+         Ada.Directories.Create_Path (Folder);
+      end if;
+
+      --  Run actions on first retrieval
+
+      if Perform_Actions and then not Was_There then
+         declare
+            use Alire.Directories;
+            Work_Dir : Guard (Enter (Folder)) with Unreferenced;
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release => This,
+               Env     => Env,
+               Moment  => Post_Fetch);
+         end;
+      end if;
+   end Deploy;
 
    ---------------
    -- Extending --

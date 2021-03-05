@@ -3,7 +3,6 @@ with Alire.Errors;
 with Alire.Utils.User_Input;
 
 with Alr.Commands.Index;
-with Alr.Root;
 
 package body Alr.Commands.Update is
 
@@ -34,7 +33,7 @@ package body Alr.Commands.Update is
       end Parse_Allowed;
 
    begin
-      Requires_Valid_Session (Sync => False);
+      Cmd.Requires_Valid_Session (Sync => False);
       --  The user has explicitly requested an update, so it makes no sense to
       --  sync previously, or the update would never find changes.
 
@@ -42,9 +41,9 @@ package body Alr.Commands.Update is
          Index.Update_All;
       end if;
 
-      Requires_Full_Index;
+      Cmd.Requires_Full_Index;
 
-      Root.Current.Update_Dependencies
+      Cmd.Root.Update_Dependencies
         (Allowed => Parse_Allowed,
          Options => (Age    => Query_Policy,
                      others => <>),

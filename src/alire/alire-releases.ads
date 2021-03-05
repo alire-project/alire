@@ -297,6 +297,8 @@ package Alire.Releases is
    function To_TOML (R      : Release;
                      Format : Manifest.Sources)
                      return TOML.TOML_Value;
+   --  Convert the manifest to TOML. This is done currently only for a concrete
+   --  platform, hence R.Whenever should have been already called.
 
    overriding
    function To_YAML (R : Release) return String;
@@ -315,6 +317,14 @@ package Alire.Releases is
    function Check_Caret_Warning (This : Release) return Boolean;
    --  Check if this release contains a ^0.x dependency, and warn about it.
    --  Returns whether a warning was emitted.
+
+   procedure Deploy
+     (This            : Release;
+      Env             : Alire.Properties.Vector;
+      Parent_Folder   : String;
+      Was_There       : out Boolean;
+      Perform_Actions : Boolean := True);
+   --  Deploy the sources of this release under the given Parent_Folder
 
 private
 
