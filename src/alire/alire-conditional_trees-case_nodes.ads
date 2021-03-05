@@ -15,8 +15,6 @@ package Alire.Conditional_Trees.Case_Nodes is
 
    subtype Map is Case_Maps.Map;
 
-private
-
    function New_Case (Unused_Cases : Map) return Tree is (raise Unimplemented);
    --  This function is needed by the case(xx) expression loaders. From a Map
    --  built from the TOML index a Tree is obtained that in reality is a case

@@ -89,7 +89,7 @@ package Alire.TOML_Adapters with Preelaborate is
    function Pop_Expr (Queue  : Key_Queue;
                       Prefix : String;
                       Value  : out TOML.TOML_Value) return String;
-   --  Return a entry in the underlying table which key starts with Prefix,
+   --  Return a entry in the underlying table whose key starts with Prefix,
    --  or No_TOML_Value if not a table or does not contain such a key. The
    --  intended use is to process keys beginning with "case(" in the table.
 

@@ -14,9 +14,10 @@ package Alire.Conditional_Trees.TOML_Load is
                   Resolve : Boolean;
                   Strict  : Boolean)
                   return Tree;
-   --  Takes care of resolving any dynamic expressions. Currently, only
-   --  'case()' is understood. When resolve, dynamic expressions are resolved;
-   --  otherwise Checked_Error will be raised. When Resolve and Strict, unknown
-   --  values in cases are not allowed. If not Resolve, Strict is ignored.
+   --  Expects a "key = val" or "key.expr = val" table. Takes care of resolving
+   --  any dynamic expressions. Currently, only 'case()' is understood. When
+   --  resolve, dynamic expressions are resolved; otherwise Checked_Error will
+   --  be raised. When Resolve and Strict, unknown values in cases are not
+   --  allowed. If not Resolve, Strict is ignored.
 
 end Alire.Conditional_Trees.TOML_Load;

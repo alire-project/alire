@@ -1,3 +1,5 @@
+private with Ada.Containers.Indefinite_Ordered_Maps;
+
 with Alire.Errors;
 
 generic
@@ -12,13 +14,16 @@ package Alire.Pseudotypes.Maps with Preelaborate is
    function Empty (P : Pseudotype) return Map;
    --  Initialize a map for a particular type, containing no mapping
 
-   function Contains (M : Map; V : Value) return Boolean;
+   function Base (M : Map) return Pseudotype;
+   --  Retrieve the type for which this Map was declared
 
-   function Element (M : Map; V : Value) return Elements with
+   function Contains (M : Map; V : String) return Boolean;
+
+   function Element (M : Map; V : String) return Elements with
      Pre => M.Contains (V) or else M.Has_Others or else
      raise Checked_Error with
-       Errors.Set ("Map for " & V.Base.Name
-                   & " does not have a value for " & V.Image);
+       Errors.Set ("Map for " & M.Base.Name
+                   & " does not have a value for " & V);
    --  Get an element from the map
 
    function Other (M : Map) return Elements with
@@ -28,9 +33,10 @@ package Alire.Pseudotypes.Maps with Preelaborate is
    function Has_Others (M : Map) return Boolean;
    --  Say if a default has been set for this map
 
-   procedure Include (M : in out Map; V : Value; E : Elements) with
+   procedure Insert (M : in out Map; V : String; E : Elements) with
      Post => M.Element (V) = E;
-   --  Store the mapping V -> E in M, overwritting a previous one
+   --  Store the mapping V -> E in M. Will fail if the value is already stored.
+   --  If V = "...", M.Set_Others is called internally.
 
    procedure Set_Others (M : in out Map; E : Elements) with
      Post => M.Other = E;
@@ -38,21 +44,40 @@ package Alire.Pseudotypes.Maps with Preelaborate is
 
 private
 
-   type Map is tagged null record;
+   package Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps (String, Elements);
 
-   function Empty (P : Pseudotype) return Map is (raise Unimplemented);
+   type Map is tagged record
+      Valid   : Boolean := False;
+      Base    : Pseudotype;
+      Entries : Maps.Map;
+   end record;
 
-   function Contains (M : Map; V : Value) return Boolean
+   ----------
+   -- Base --
+   ----------
+
+   function Base (M : Map) return Pseudotype
+   is (if M.Valid
+       then M.Base
+       else raise Checked_Error with "Map is uninitialized");
+
+   function Empty (P : Pseudotype) return Map
+   is (Valid   => True,
+       Base    => P,
+       Entries => <>);
+
+   function Contains (M : Map; V : String) return Boolean
    is (raise Unimplemented);
 
-   function Element (M : Map; V : Value) return Elements
+   function Element (M : Map; V : String) return Elements
    is (raise Unimplemented);
 
    function Other (M : Map) return Elements is (raise Unimplemented);
 
    function Has_Others (M : Map) return Boolean is (raise Unimplemented);
 
-   procedure Include (M : in out Map; V : Value; E : Elements)
+   procedure Insert (M : in out Map; V : String; E : Elements)
    is null;
 
    procedure Set_Others (M : in out Map; E : Elements)
