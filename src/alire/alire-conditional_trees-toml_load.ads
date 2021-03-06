@@ -3,6 +3,8 @@ with Alire.TOML_Adapters;
 generic
 package Alire.Conditional_Trees.TOML_Load is
 
+   --  NOTE: this package must be instantiated at library level
+
    type Static_Loader is access
      function (From : TOML_Adapters.Key_Queue) return Tree;
    --  A function that receives a table "key = ...", with key being the name of

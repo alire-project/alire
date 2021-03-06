@@ -1,4 +1,4 @@
-with Ada.Containers; use Ada.Containers;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists; use Ada.Containers;
 with Ada.Iterator_Interfaces;
 
 with Alire.Interfaces;
@@ -257,6 +257,13 @@ package Alire.Conditional_Trees with Preelaborate is
    function Indexed_Element (Container : Tree; Pos : Cursor) return Tree;
 
    function To_Tree (N : Node'Class) return Tree;
+
+   package Value_Lists is
+     new Ada.Containers.Indefinite_Doubly_Linked_Lists (Values);
+
+   function As_List (This : Tree) return Value_Lists.List;
+   --  Default Enumerate implementation. Remember that this does not resolve
+   --  expressions; merely flattens all leaf nodes.
 
 private
 

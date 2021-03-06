@@ -300,6 +300,17 @@ package body Alire.Conditional_Trees is
       return Col;
    end Enumerate;
 
+   -------------
+   -- As_List --
+   -------------
+
+   function As_List (This : Tree) return Value_Lists.List is
+      function Enumerate is
+        new Conditional_Trees.Enumerate (Value_Lists.List, Value_Lists.Append);
+   begin
+      return Enumerate (This);
+   end As_List;
+
    --------------
    -- Evaluate --
    --------------
