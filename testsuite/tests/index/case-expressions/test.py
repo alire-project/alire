@@ -47,4 +47,16 @@ else:
     assert_match(".*GPR External: OS := linux.*",
                  p.out, flags=re.S)
 
+# Check that a case given as "x|y" is properly loaded and shown
+p = run_alr("show", "hello=0.9")
+assert_match(
+    '.*'
+    'Properties:\n'
+    '   Description: "Hello, world!" demonstration project\n'
+    '   case OS is\n'
+    '      when Linux => Executable: hello\n'
+    '      when Windows => Executable: hello\n'
+    '.*',
+    p.out)
+
 print('SUCCESS')

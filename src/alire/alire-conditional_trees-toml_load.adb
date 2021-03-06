@@ -49,36 +49,46 @@ package body Alire.Conditional_Trees.TOML_Load is
                declare
                   Item_Val : TOML_Value;
                   Item_Key : constant String := Case_Table.Pop (Item_Val);
+                  Values   : constant Utils.String_Vector :=
+                               Utils.Split (Item_Key, '|', Trim => True);
+                  --  A single item may store several cases separated by '|'
                begin
                   exit when Item_Key = "";
 
                   --  Do an initial vetting before loading
 
-                  if Item_Key /= Others_Key and then
-                    not Map.Base.Is_Valid (Item_Key)
-                  then
-                     if Strict then
-                        Case_Table.Recoverable_Error
-                          ("invalid enumeration value: " & Item_Key);
-                     else
-                        Trace.Debug
-                          (Case_Table.Message
-                             ("unknown enumeration value: " & Item_Key));
+                  for Value of Values loop
+                     if Value /= Others_Key and then
+                       not Map.Base.Is_Valid (Value)
+                     then
+                        if Strict then
+                           Case_Table.Recoverable_Error
+                             ("invalid enumeration value: " & Item_Key);
+                        else
+                           Trace.Debug
+                             (Case_Table.Message
+                                ("unknown enumeration value: " & Item_Key));
+                        end if;
                      end if;
-                  end if;
+                  end loop;
 
-                  --  Load the value and assign to the appropriate entry
+                  --  Load the value and assign to the appropriate entries
 
-                  Map.Insert
-                    (Item_Key,
-                     Load -- recursively load the item for this entry
-                       (From    => Case_Table.Descend
-                            (Key     => Root_Key,
-                             Value   => Item_Val,
-                             Context => Item_Key),
-                        Loader  => Loader,
-                        Resolve => Resolve,
-                        Strict  => Strict));
+                  declare
+                     Branch : constant Tree :=
+                                Load -- recursively load the branch
+                                  (From    => Case_Table.Descend
+                                     (Key     => Root_Key,
+                                      Value   => Item_Val,
+                                      Context => Item_Key),
+                                   Loader  => Loader,
+                                   Resolve => Resolve,
+                                   Strict  => Strict);
+                  begin
+                     for Value of Values loop
+                        Map.Insert (Value, Branch);
+                     end loop;
+                  end;
                end;
             end loop;
 

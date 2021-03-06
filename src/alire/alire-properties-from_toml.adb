@@ -30,7 +30,7 @@ package body Alire.Properties.From_TOML is
                end if;
 
                --  Extract property name from string
-               Trace.Debug ("Loading property key = " & Key);
+
                Process_Property : -- Single-pass loop to emulate Continue
                loop
                   if Is_Valid (Ada_Key) then
@@ -47,6 +47,7 @@ package body Alire.Properties.From_TOML is
 
                      --  Load property once we know its exact name, allowing
                      --  expressions were appropriate.
+
                      Props.Append
                        (Prop_Loader.Load
                           (From    => From.Descend
@@ -56,29 +57,6 @@ package body Alire.Properties.From_TOML is
                            Loader  => Loaders (Prop),
                            Resolve => Is_Dynamic (Prop),
                            Strict  => Strict));
-
-                     --  REMOVE AFTER REFACTOR. Keep for now to reproduce same
-                     --  messages
-                     --  --  Divert to the expr resolver if prop can be dynamic
-                     --  if Loaders_During_Case (Prop) /= null then
-                     --     Props := Props and
-                     --       TOML_Expressions.Cases.Load_Property
-                     --         (Key    => Key,
-                     --          From   => From.Descend (Val, "property"),
-                     --          Loader => Loaders_During_Case (Prop));
-                     --  else
-                     --     --  Ensure no dynamic expression in the incoming
-                     --         values
-                     --     if TOML_Expressions.Contains_Expression (Val) then
-                     --        From.Checked_Error
-                     --          ("property '" & Key
-                     --           & "' must not contain dynamic expressions");
-                     --     end if;
-                     --
-                     --     --  Actually load the property:
-                     --     Props := Props and
-                     --       Loaders (Prop) (From.Descend (Key, Val, Key));
-                     --  end if;
 
                   else
                      From.Recoverable_Error ("invalid property: " & Key);

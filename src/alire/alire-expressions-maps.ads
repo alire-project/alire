@@ -44,6 +44,7 @@ package Alire.Expressions.Maps with Preelaborate is
    --  Say if a default has been set for this map
 
    procedure Insert (M : in out Map; V : String; E : Elements) with
+     Pre  => V = TOML_Keys.Case_Others or else M.Base.Is_Valid (V),
      Post => M.Element (V) = E;
    --  Store the mapping V -> E in M. Will fail if the value is already stored.
    --  If V = "..." or "others", M.Set_Others is called internally.
