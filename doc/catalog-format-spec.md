@@ -415,22 +415,6 @@ static, i.e. they cannot depend on the context.
    hashes = ["sha512:bf6082573dc537836ea8506a2c9a75dc7837440c35c5b02a52add52e38293640d99e90a9706690591f8899b8b4935824b195f230b3aa1c4da10911e3caf954c04ac"]
    ```
 
-   If the package only maps a package from the system package manager,
-   (for instance `make`), use:
-
-   ```toml
-   origin = "native:make"
-   ```
-
-   Have the expression evaluate to an empty string to indicate that the package is
-   not available, or just leave the alternative out. For instance, to state
-   that `make` is available on Debian/Ubuntu and not on the other platforms:
-
-   ```toml
-   [origin.'case(distribution)']
-   'debian|ubuntu' = "native:make"
-   ```
-
  - `available`: optional dynamic boolean expression.  If it evaluates to
    `false`, the package is not available for the current platform.
 
