@@ -2,6 +2,7 @@ with Alire.Conditional_Trees.TOML_Load;
 with Alire.Index;
 with Alire.Origins.Deployers.System;
 with Alire.Platform;
+with Alire.Properties.Platform;
 with Alire.Releases;
 with Alire.Root;
 with Alire.TOML_Adapters;
@@ -133,7 +134,28 @@ package body Alire.Externals.From_System is
    function Detail (This   : External;
                     Distro : Platforms.Distributions)
                     return Utils.String_Vector
-   is (Utils.Empty_Vector.Append (This.Origin.Image_One_Line));
+   is
+      Result : Utils.String_Vector;
+      use Alire.Properties;
+   begin
+      for Distro in Platforms.Known_Distributions loop
+         declare
+            On_Distro : constant Conditional_Packages.Tree :=
+                          This.Origin.Evaluate
+                            (To_Vector
+                               (Properties.Platform.Distributions.New_Property
+                                  (Distro)));
+         begin
+            if not On_Distro.Is_Empty then
+               Result.Append
+                 (TOML_Adapters.Adafy (Distro'Image) & ": "
+                  & On_Distro.Image_One_Line);
+            end if;
+         end;
+      end loop;
+      Result.Append ("others: unavailable");
+      return Result;
+   end Detail;
 
    -----------
    -- Image --
