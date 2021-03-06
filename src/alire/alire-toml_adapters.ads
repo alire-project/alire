@@ -140,7 +140,7 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Create a table with a single key=val entry
 
    function Adafy (Key : String) return String;
-   --  Take a toml key and replace every '-' and '.' with a '_';
+   --  Take a toml key and replace every '-' and '.' with a '_'; Use Title_Case
 
    function Tomify (Image : String) return String;
    --  Take some enumeration image and turn it into a TOML-style key, replacing
@@ -208,12 +208,13 @@ private
    -----------
 
    function Adafy (Key : String) return String is
-     (Utils.Replace
+     (Utils.To_Mixed_Case
         (Utils.Replace
-             (Key,
-              Match => "-",
-              Subst => "_"),
-        Match => ".", Subst => "_"));
+             (Utils.Replace
+                  (Key,
+                   Match => "-",
+                   Subst => "_"),
+              Match => ".", Subst => "_")));
 
    ----------------------
    -- Tomify_As_String --

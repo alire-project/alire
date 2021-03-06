@@ -1,4 +1,3 @@
-with Alire.TOML_Adapters;
 with Alire.Utils;
 
 package body Alire.Expressions.Enums is
@@ -19,6 +18,8 @@ begin
          Values.Values.Insert (TOML_Adapters.Tomify (Enum_Value'Image));
       end loop;
 
-      Expressions.Types.Insert (Name, Values);
+      Expressions.Register (Var_Key    => Key,
+                            Var_Name   => Name,
+                            Var_Values => Values);
    end;
 end Alire.Expressions.Enums;

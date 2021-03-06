@@ -1,10 +1,7 @@
 with Alire.Expressions.Maps;
 
 private generic
-package Alire.Conditional_Trees.Case_Nodes is
-
-   --  Non-generic (in the sense of the types used to index the cases)
-   --  replacement of Conditional_Tree.Cases
+package Alire.Conditional_Trees.Case_Nodes with Preelaborate is
 
    --  This package provides the case-holding nodes in a conditional tree.
    --  Since clients retrieve such nodes as trees (New_Case below), the whole
@@ -15,9 +12,7 @@ package Alire.Conditional_Trees.Case_Nodes is
 
    subtype Map is Case_Maps.Map;
 
-   function New_Case (Unused_Cases : Map) return Tree is (raise Unimplemented);
-   --  This function is needed by the case(xx) expression loaders. From a Map
-   --  built from the TOML index a Tree is obtained that in reality is a case
-   --  node.
+   function New_Case (Cases : Map) return Tree;
+   --  Wrap an expression map as a case node for the conditional tree
 
 end Alire.Conditional_Trees.Case_Nodes;

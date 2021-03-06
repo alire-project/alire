@@ -1,6 +1,5 @@
-private with Ada.Containers.Indefinite_Ordered_Maps;
-
-with Alire.Errors;
+with Alire.Properties;
+with Alire.TOML_Keys;
 
 package Alire.Expressions with Preelaborate is
 
@@ -16,14 +15,25 @@ package Alire.Expressions with Preelaborate is
    --  enums are supported, but to support cases on configuration variables
    --  other types will be supported in the future.
 
-   function From (Name : String) return Variable;
-   --  Retrieve a previously declared type by its name
+   function From (Key : String) return Variable;
+   --  Retrieve a previously declared type by its TOML key
 
    function Is_Valid (This : Variable; Value : String) return Boolean;
    --  Says if Value is among the values in This
 
+   function Key (This : Variable) return String;
+   --  The key that is used in TOML files for this variable
+
    function Name (This : Variable) return String;
-   --  The name that was given to a Variable (see, e.g., Enums child package)
+   --  The Ada-like name of this variable
+
+   function Satisfies (Property : Properties.Property'Class;
+                       Var_Key  : String;
+                       Value    : String) return Boolean
+     with Pre => Value /= TOML_Keys.Case_Others and then
+                 Value /= "others";
+   --  Say if a property is satisfied by the value, which must match the
+   --  Variable and property type (keys must match). Doesn't accept defaults.
 
 private
 
@@ -33,14 +43,9 @@ private
    --  other types. Notably, this makes the whole thing thread-unsafe.
 
    type Variable is tagged record
+      Key  : UString;
       Name : UString;
    end record;
-
-   ----------
-   -- From --
-   ----------
-
-   function From (Name : String) return Variable is (Name => +Name);
 
    ------------
    -- Values --
@@ -52,25 +57,17 @@ private
    function Is_Valid (V : Values; Image : String) return Boolean is abstract;
    --  Say if a value, given as its string image, matches a value of a type
 
-   package Variable_Value_Maps is
-     new Ada.Containers.Indefinite_Ordered_Maps (String, Values'Class);
+   procedure Register (Var_Key    : String;
+                       Var_Name   : String;
+                       Var_Values : Values'Class);
+   --  Makes Alire aware of the existence of a variable usable in expressions
 
-   -----------
-   -- Types --
-   -----------
+   ---------
+   -- Key --
+   ---------
 
-   Types : Variable_Value_Maps.Map;
-   --  Stores all types that have been declared, with their values
-
-   --------------
-   -- Is_Valid --
-   --------------
-
-   function Is_Valid (This : Variable; Value : String) return Boolean
-   is (if not Types.Contains (Name (This))
-       then raise Checked_Error with
-         Errors.Set ("Expression variable '" & Name (This) & "' is unknown")
-       else Types (Name (This)).Is_Valid (Value));
+   function Key (This : Variable) return String
+   is (+This.Key);
 
    ----------
    -- Name --

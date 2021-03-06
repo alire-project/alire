@@ -1,7 +1,6 @@
 private with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Alire.Errors;
-private with Alire.TOML_Keys;
 
 generic
    type Elements (<>) is private;
@@ -27,6 +26,16 @@ package Alire.Expressions.Maps with Preelaborate is
                    & " does not have a value for " & V);
    --  Get an element from the map
 
+   type Key_Array is array (Positive range <>) of UString;
+
+   function Keys (M              : Map;
+                  Ada_Like       : Boolean;
+                  Exclude_Others : Boolean)
+                  return Key_Array;
+   --  Lazy solution to avoid full-fledged iteration. We don't expect to
+   --  have more than a few keys anyway. When Ada_Like, "..." is returned as
+   --  "others" instead. When Exclude_Others, only explicit keys are returned.
+
    function Other (M : Map) return Elements with
      Pre => M.Has_Others;
    --  Retrieve the default value for this map
@@ -37,7 +46,13 @@ package Alire.Expressions.Maps with Preelaborate is
    procedure Insert (M : in out Map; V : String; E : Elements) with
      Post => M.Element (V) = E;
    --  Store the mapping V -> E in M. Will fail if the value is already stored.
-   --  If V = "...", M.Set_Others is called internally.
+   --  If V = "..." or "others", M.Set_Others is called internally.
+
+   function Size (M     : Map;
+                  Count : access function (E : Elements) return Natural)
+                  return Natural;
+   --  Count how many elements are in the map, with custom Count function (as
+   --  elements may require recursive counting).
 
    procedure Set_Others (M : in out Map; E : Elements) with
      Post => M.Other = E;
@@ -52,6 +67,7 @@ private
       Valid   : Boolean := False;
       Base    : Variable;
       Entries : Maps.Map;
+      Other   : Maps.Map; -- At most one element, key irrelevant
    end record;
 
    ----------
@@ -70,7 +86,8 @@ private
    function Empty (P : Variable) return Map
    is (Valid   => True,
        Base    => P,
-       Entries => <>);
+       Entries => <>,
+       Other   => <>);
 
    --------------
    -- Contains --
@@ -86,20 +103,23 @@ private
    function Element (M : Map; V : String) return Elements
    is (if M.Contains (V)
        then M.Entries (V)
-       else M.Other);
+       else Other (M));
 
    -----------
    -- Other --
    -----------
 
    function Other (M : Map) return Elements
-   is (M.Entries (TOML_Keys.Case_Others));
+   is (if M.Other.Is_Empty
+       then raise Checked_Error with
+         Errors.Set ("default value in case not set")
+       else M.Other.First_Element);
 
    ----------------
    -- Has_Others --
    ----------------
 
    function Has_Others (M : Map) return Boolean
-   is (M.Entries.Contains (TOML_Keys.Case_Others));
+   is (not M.Other.Is_Empty);
 
 end Alire.Expressions.Maps;

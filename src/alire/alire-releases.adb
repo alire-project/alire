@@ -584,7 +584,9 @@ package body Alire.Releases is
       --  PROPERTIES
       if not R.Properties.Is_Empty then
          Put_Line ("Properties:");
-         R.Properties.Print ("   ", False);
+         R.Properties.Print ("   ",
+                             And_Or  => False,
+                             Verbose => Alire.Log_Level >= Detail);
       end if;
 
       --  DEPENDENCIES

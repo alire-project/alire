@@ -13,7 +13,8 @@ package body Alire.TOML_Load is
    --  Register predefined environment variables so they're recognized on load
 
    package OS_Expressions is new Expressions.Enums
-     (Name     => TOML_Keys.OS,
+     (Key      => TOML_Keys.OS,
+      Name     => "OS",
       Ada_Enum => Platforms.Operating_Systems) with Unreferenced;
 
    --  The following are entries in the manifest that are not loaded as

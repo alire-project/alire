@@ -41,7 +41,7 @@ package body Alire.Conditional_Trees.TOML_Load is
          is
             Var : constant Expressions.Variable :=
                     Expressions.From
-                      (Name => Head (Tail (Case_Key, '('), ')'));
+                      (Key => Head (Tail (Case_Key, '('), ')'));
             Map : Case_Nodes.Map := Case_Nodes.Case_Maps.Empty (Var);
             --  The map only accepts values matching the Variable
          begin

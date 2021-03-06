@@ -152,10 +152,11 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Check properties in conditional nodes to return the applicable elements.
    --  Returns a Tree because it could result in an empty tree.
 
-   procedure Print (This   : Tree;
-                    Prefix : String  := "";
-                    And_Or : Boolean := True;
-                    Sorted : Boolean := False);
+   procedure Print (This    : Tree;
+                    Prefix  : String  := "";
+                    Verbose : Boolean := False;
+                    And_Or  : Boolean := True;
+                    Sorted  : Boolean := False);
    --  Use And_Or = false when only And can appear, in which case there is no
    --  need to distinguish and the output is slightly more compact.
 

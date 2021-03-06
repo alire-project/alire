@@ -430,15 +430,16 @@ package body Alire.Conditional_Trees is
    -- Print --
    -----------
 
-   procedure Print (This   : Tree;
-                    Prefix : String  := "";
-                    And_Or : Boolean := True;
-                    Sorted : Boolean := False) is
+   procedure Print (This    : Tree;
+                    Prefix  : String  := "";
+                    Verbose : Boolean := False;
+                    And_Or  : Boolean := True;
+                    Sorted  : Boolean := False) is
    begin
       if This.Is_Empty then
          GNAT.IO.Put_Line (Prefix & "(empty)");
       else
-         Print (This.Root, Prefix, And_Or, Sorted);
+         Print (This.Root, Prefix, And_Or or Verbose, Sorted);
       end if;
    end Print;
 
