@@ -1,4 +1,17 @@
+with Alire.Errors;
+
 package body Alire.TOML_Adapters is
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding
+   procedure Finalize (This : in out Key_Queue) is
+   begin
+      --  Manually close this error scope
+      Errors.Close;
+   end Finalize;
 
    ------------
    -- Assert --
@@ -36,7 +49,7 @@ package body Alire.TOML_Adapters is
 
    procedure Checked_Error (Queue : Key_Queue; Message : String) is
    begin
-      raise Alire.Checked_Error with Errors.Set (Queue.Message (Message));
+      raise Alire.Checked_Error with Errors.Set (Message);
    end Checked_Error;
 
    -----------------------
@@ -49,7 +62,7 @@ package body Alire.TOML_Adapters is
    is
    begin
       if Recover then
-         Recoverable_Error (Queue.Message (Message), Recover);
+         Recoverable_Error (Message, Recover);
       else
          Queue.Checked_Error (Message);
       end if;
@@ -91,8 +104,15 @@ package body Alire.TOML_Adapters is
    ----------
 
    function From (Value   : TOML.TOML_Value;
-                  Context : String) return Key_Queue is
-     (Value, +Context);
+                  Context : String) return Key_Queue
+   is
+   begin
+      return This : constant Key_Queue :=
+        (Ada.Finalization.Limited_Controlled with Value => Value)
+      do
+         Errors.Open (Context);
+      end return;
+   end From;
 
    ----------
    -- From --
@@ -111,7 +131,7 @@ package body Alire.TOML_Adapters is
    function Descend (Parent  : Key_Queue;
                      Value   : TOML.TOML_Value;
                      Context : String) return Key_Queue is
-     (From (Value, (+Parent.Context) & ASCII.LF & Context));
+     (From (Value, Context));
 
    ---------
    -- Pop --
@@ -247,8 +267,7 @@ package body Alire.TOML_Adapters is
    function Report_Extra_Keys (Queue : Key_Queue) return Outcome
    is
       use UStrings;
-      Message  : UString := +Errors.Wrap (+Queue.Context,
-                                          "forbidden extra entries: ");
+      Message  : UString := +"forbidden extra entries: ";
       Is_First : Boolean := True;
       Errored  : Boolean := False;
    begin

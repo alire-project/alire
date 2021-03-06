@@ -1,3 +1,4 @@
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Alire.Utils;
@@ -72,7 +73,9 @@ package body Alire.Errors is
    function Set (Text : String) return String is
       Id : Positive;
    begin
-      Store.Set (Text, Id);
+      --  When we store an error, we do so with the current error stack
+      Store.Set (Stack (Text), Id);
+
       return Id_Marker & Utils.Trim (Id'Img);
    end Set;
 
@@ -148,5 +151,68 @@ package body Alire.Errors is
 
    function Wrap (Upper, Lower : String) return String
    is (Upper & ASCII.LF & Lower);
+
+   --------------------
+   -- ERROR STACKING --
+   --------------------
+
+   package String_Lists is
+     new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+
+   Error_Stack : String_Lists.List;
+
+   ----------
+   -- Open --
+   ----------
+
+   function Open (Text : String) return Scope is
+   begin
+      Error_Stack.Append (Text);
+      return (Ada.Finalization.Limited_Controlled with null record);
+   end Open;
+
+   ----------
+   -- Open --
+   ----------
+
+   procedure Open (Text : String) is
+   begin
+      Error_Stack.Append (Text);
+   end Open;
+
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close is
+   begin
+      Error_Stack.Delete_Last;
+   end Close;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding
+   procedure Finalize (This : in out Scope) is
+   begin
+      Close;
+   end Finalize;
+
+   -----------
+   -- Stack --
+   -----------
+
+   function Stack (Text : String) return String
+   is
+      Msg : UString;
+      use UStrings;
+   begin
+      for Item of Error_Stack loop
+         Append (Msg, Item & ASCII.LF);
+      end loop;
+
+      return +Msg & Text;
+   end Stack;
 
 end Alire.Errors;

@@ -1,3 +1,5 @@
+with Alire.TOML_Adapters;
+
 package body Alire.Dependencies is
 
    ---------------

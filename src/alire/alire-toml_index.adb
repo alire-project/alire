@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Directories;
 with Alire.Errors;
 with Alire.GPR;
+with Alire.TOML_Adapters;
 
 with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
 --  Hash implementation generics are not directly withed anywhere. Since they

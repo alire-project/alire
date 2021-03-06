@@ -1,4 +1,5 @@
 with Alire.Conditional_Trees.Case_Nodes;
+with Alire.Errors;
 with Alire.TOML_Keys;
 
 package body Alire.Conditional_Trees.TOML_Load is
@@ -66,7 +67,7 @@ package body Alire.Conditional_Trees.TOML_Load is
                              ("invalid enumeration value: " & Item_Key);
                         else
                            Trace.Debug
-                             (Case_Table.Message
+                             (Errors.Stack
                                 ("unknown enumeration value: " & Item_Key));
                         end if;
                      end if;

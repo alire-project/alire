@@ -4,6 +4,7 @@ private with Alire.Containers;
 with Alire.Externals.Softlinks;
 with Alire.Properties;
 with Alire.Releases;
+with Alire.TOML_Adapters;
 
 package Alire.Dependencies.States is
 
