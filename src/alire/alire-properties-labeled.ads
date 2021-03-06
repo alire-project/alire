@@ -110,18 +110,6 @@ package Alire.Properties.Labeled with Preelaborate is
                        return Conditional.Properties;
    --  Loads any labeled property. May raise Checked_Error.
 
-   --  function From_TOML_Hint_Cases (From : TOML_Adapters.Key_Queue)
-   --                                 return Conditional.Properties;
-   --  --  Loads a hint property; used during resolution of cases.
-   --
-   --  function From_TOML_Executable_Cases (From : TOML_Adapters.Key_Queue)
-   --                                       return Conditional.Properties;
-   --  --  Loads only executable properties; used during resolution of cases.
-   --
-   --  function From_TOML_Project_File_Cases (From : TOML_Adapters.Key_Queue)
-   --                                         return Conditional.Properties;
-   --  --  Loads only project-file properties; used during resolution of cases.
-
    generic
       Name : Labels;
    function Cond_New_Label (Value : String) return Conditional.Properties;

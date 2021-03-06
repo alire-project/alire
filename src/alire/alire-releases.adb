@@ -739,23 +739,6 @@ package body Alire.Releases is
 
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;
-   --  NOt needed anymore
-   --  exception
-   --     when E : others =>
-   --        Log_Exception (E);
-   --
-   --        case Source is
-   --           when Manifest.Index =>
-   --              raise Program_Error with
-   --              Errors.Set
-   --                ("Cannot load manifest " & This.Name_Str &
-   --                   " from index with proper version: ", E);
-   --           when Manifest.Local =>
-   --              raise Checked_Error with
-   --              Errors.Set
-   --                ("Cannot load manifest " & This.Name_Str &
-   --                   ", please review contents: ", E);
-   --        end case;
    end From_TOML;
 
    -------------------

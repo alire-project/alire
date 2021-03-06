@@ -12,8 +12,8 @@ package Alire.Expressions with Preelaborate is
    type Variable is tagged private;
    --  A Variable is a set of values belonging to a category. E.g.,
    --  Operating_System is formed by (Linux, Windows. MacOS). Currently, only
-   --  enums are supported, but to support cases on configuration variables
-   --  other types will be supported in the future.
+   --  enums are supported, but to allow cases on configuration variables
+   --  other types may be added in the future.
 
    function From (Key : String) return Variable;
    --  Retrieve a previously declared type by its TOML key
@@ -37,10 +37,11 @@ package Alire.Expressions with Preelaborate is
 
 private
 
-   --  Internally, the Variable is registered in a private storage (see Types
-   --  map below), whereas the Variable type simply stores the key to access
-   --  its declared values. This way it isn't onerous to store instances in
-   --  other types. Notably, this makes the whole thing thread-unsafe.
+   --  Internally, the Variable is registered in a private storage (see
+   --  Variables map in body), whereas the Variable type simply stores the
+   --  key to access its declared values. This way it isn't onerous to store
+   --  instances in every case node in the index. Incidentally, this makes the
+   --  whole thing thread-unsafe.
 
    type Variable is tagged record
       Key  : UString;

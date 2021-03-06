@@ -10,6 +10,10 @@ package body Alire.Expressions.Maps is
       if V = TOML_Keys.Case_Others or else V = "others" then
          M.Set_Others (E);
       else
+         if not M.Base.Is_Valid (V) and then Force then
+            Trace.Debug ("Storing unknown value '" & V & "' for enumeration '"
+                         & Key (M.Base) & "'");
+         end if;
          M.Entries.Insert (V, E);
       end if;
    end Insert;
