@@ -141,6 +141,7 @@ package Alire.TOML_Adapters with Preelaborate is
 
    function Adafy (Key : String) return String;
    --  Take a toml key and replace every '-' and '.' with a '_'; Use Title_Case
+   --  unless key = "others".
 
    function Tomify (Image : String) return String;
    --  Take some enumeration image and turn it into a TOML-style key, replacing
@@ -208,7 +209,10 @@ private
    -----------
 
    function Adafy (Key : String) return String is
-     (Utils.To_Mixed_Case
+     (if Utils.To_Lower_Case (Key) = "others"
+      then Utils.To_Lower_Case (Key)
+      else
+      Utils.To_Mixed_Case
         (Utils.Replace
              (Utils.Replace
                   (Key,

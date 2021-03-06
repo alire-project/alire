@@ -13,7 +13,7 @@ import os
 p = run_alr('show', 'hello')
 
 assert_match('.*'
-             '      when Linux => Environment: CONDVAR=uvw\n'
+             '      when others => Environment: CONDVAR=uvw\n'
              '.*'
              '   Environment: VAR1=\${VAR1}:abc\n'
              '   Environment: VAR2=xyz:\${VAR2}\n'

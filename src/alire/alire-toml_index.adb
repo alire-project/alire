@@ -412,7 +412,8 @@ package body Alire.TOML_Index is
               (TOML_Adapters.From
                    (Value,
                     Context => "Loading release from " & File_Name),
-               Manifest.Index));
+               Manifest.Index,
+               Strict));
       end if;
    end Load_From_Catalog_Internal;
 

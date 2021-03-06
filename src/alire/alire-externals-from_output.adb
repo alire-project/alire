@@ -87,6 +87,9 @@ package body Alire.Externals.From_Output is
       end if;
 
       return This : External do
+         This.Available := Conditional.Available_Default;
+         --  Always available to be checked. This avoids an (empty) in output
+
          This.Regstr  := +Regexp;
          This.Command :=
            TOML_Adapters.To_Vector

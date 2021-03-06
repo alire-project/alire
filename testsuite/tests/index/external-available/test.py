@@ -15,7 +15,7 @@ import platform
 p = run_alr('show', 'crate', '--external')
 
 assert_match(".*Executable make --version .*"
-             "(case Toolchain is SYSTEM => False, USER => False).*",
+             "(case Toolchain is others => False).*",
              p.out, flags=re.S)
 
 # 2nd test: showing available information on current platform

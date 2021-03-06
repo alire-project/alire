@@ -62,7 +62,7 @@ package body Alire.Conditional_Trees.Case_Nodes is
       for I in Keys'Range loop
          Append (Result,
                  String'(
-                 "when " & TOML_Adapters.Adafy (+Keys (I))
+                 TOML_Adapters.Adafy (+Keys (I))
                    & " => " & This.Element (+Keys (I)).Image_One_Line));
          if I /= Keys'Last then
             Append (Result, ", ");
@@ -98,7 +98,7 @@ package body Alire.Conditional_Trees.Case_Nodes is
       for Key of This.Cases.Keys (Ada_Like => True, Exclude_Others => False)
       loop
          Put_Line (Prefix & Tab & "when "
-                   & Utils.To_Mixed_Case (+Key) & " => "
+                   & TOML_Adapters.Adafy (+Key) & " => "
                    & (if not Verbose
                      then This.Cases.Element (+Key).Image_One_Line
                      else ""));
@@ -116,20 +116,45 @@ package body Alire.Conditional_Trees.Case_Nodes is
    overriding
    function Evaluate (This    : Case_Node;
                       Against : Properties.Vector)
-                      return Tree'Class is
+                      return Tree'Class
+   is
+      Var_Seen : Boolean := False;
+      Val_Seen : Boolean := False;
    begin
       return Eval : Tree := Empty do
          for Prop of Against loop
+
+            --  Mark that we have seen a property with a value for this case
+            if Prop.Key = This.Cases.Base.Key then
+               Var_Seen := True;
+            end if;
+
             for Value of This.Cases.Keys (Ada_Like       => False,
-                                          Exclude_Others => True) loop
+                                          Exclude_Others => True)
+            loop
                if Expressions.Satisfies (Property => Prop,
                                          Var_Key  => This.Cases.Base.Key,
                                          Value    => +Value)
                then
+                  Val_Seen := True; -- We take one of the explicit branches
                   Eval.Append (This.Cases.Element (+Value).Evaluate (Against));
                end if;
             end loop;
          end loop;
+
+         --  Use others clause?
+
+         if Var_Seen then
+            if not Val_Seen and then This.Cases.Has_Others then
+               Eval.Append (This.Cases.Other.Evaluate (Against));
+            end if;
+         else
+            Trace.Warning
+              ("Missing variable in environment: "
+               & This.Cases.Base.Key & "; 'other' expressions discarded");
+            --  Not sure if this may happen and what we should do in that case;
+            --  take the others branch or drop it as if the var was NaN
+         end if;
       end return;
    end Evaluate;
 

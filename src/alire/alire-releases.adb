@@ -649,7 +649,8 @@ package body Alire.Releases is
    -------------------
 
    function From_Manifest (File_Name : Any_Path;
-                           Source    : Manifest.Sources)
+                           Source    : Manifest.Sources;
+                           Strict    : Boolean)
                            return Release
    is
    begin
@@ -658,6 +659,7 @@ package body Alire.Releases is
            (TOML_Load.Load_File (File_Name),
             "Loading release from manifest: " & File_Name),
          Source,
+         Strict,
          File_Name);
    exception
       when E : others =>
@@ -673,6 +675,7 @@ package body Alire.Releases is
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
                        Source : Manifest.Sources;
+                       Strict : Boolean;
                        File   : Any_Path := "")
                        return Release is
    begin
@@ -681,7 +684,7 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
-         Assert (This.From_TOML (From, Source, File));
+         Assert (This.From_TOML (From, Source, Strict, File));
       end return;
    end From_TOML;
 
@@ -692,6 +695,7 @@ package body Alire.Releases is
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
                        Source :        Manifest.Sources;
+                       Strict :        Boolean;
                        File   :        Any_Path := "")
                        return Outcome
    is
@@ -717,7 +721,7 @@ package body Alire.Releases is
       --  Properties
 
       TOML_Load.Load_Crate_Section
-        (Strict  => Source in Manifest.Local,
+        (Strict  => Strict or else Source in Manifest.Local,
          Section => (case Source is
                         when Manifest.Index => Crates.Index_Release,
                         when Manifest.Local => Crates.Local_Release),

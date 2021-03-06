@@ -16,8 +16,9 @@ p = run_alr('show', 'hello')
 # Check a few substrings for more certainty:
 
 # Available
-assert_match(".*Available when: .case OS is LINUX => True, MACOS => False, "
-             "WINDOWS => .case Word_Size is BITS_32 => False, BITS_64 => True.*",
+assert_match(".*Available when: .case OS is Linux => True, "
+             "Windows => \(case Word_Size is Bits_64 => True, others => False\)"
+             ", others => False.*",
              p.out, flags=re.S)
 
 # Properties

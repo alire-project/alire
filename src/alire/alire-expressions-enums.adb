@@ -18,6 +18,7 @@ begin
          Values.Values.Insert (TOML_Adapters.Tomify (Enum_Value'Image));
       end loop;
 
+      Trace.Debug ("Registering variable for expressions: " & Key);
       Expressions.Register (Var_Key    => Key,
                             Var_Name   => Name,
                             Var_Values => Values);

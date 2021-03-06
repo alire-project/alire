@@ -456,9 +456,11 @@ package body Alr.Commands.Withing is
       Root_Release : constant Alire.Releases.Release := Cmd.Root.Release;
    begin
       Put_Line ("Dependencies (direct):");
-      Root_Release.Dependencies.Print ("   ",
-                                       Root_Release.Dependencies.Contains_ORs,
-                                       Sorted => True);
+      Root_Release.Dependencies.Print
+        (Prefix  => "   ",
+         Verbose => False,
+         And_Or  => Root_Release.Dependencies.Contains_ORs,
+         Sorted  => True);
 
       if Cmd.Solve then
          Cmd.Requires_Full_Index; -- Load possible hints
