@@ -1,6 +1,7 @@
 private with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Alire.Errors;
+private with Alire.TOML_Keys;
 
 generic
    type Elements (<>) is private;
@@ -62,25 +63,43 @@ private
        then M.Base
        else raise Checked_Error with "Map is uninitialized");
 
+   -----------
+   -- Empty --
+   -----------
+
    function Empty (P : Variable) return Map
    is (Valid   => True,
        Base    => P,
        Entries => <>);
 
+   --------------
+   -- Contains --
+   --------------
+
    function Contains (M : Map; V : String) return Boolean
-   is (raise Unimplemented);
+   is (M.Entries.Contains (V));
+
+   -------------
+   -- Element --
+   -------------
 
    function Element (M : Map; V : String) return Elements
-   is (raise Unimplemented);
+   is (if M.Contains (V)
+       then M.Entries (V)
+       else M.Other);
 
-   function Other (M : Map) return Elements is (raise Unimplemented);
+   -----------
+   -- Other --
+   -----------
 
-   function Has_Others (M : Map) return Boolean is (raise Unimplemented);
+   function Other (M : Map) return Elements
+   is (M.Entries (TOML_Keys.Case_Others));
 
-   procedure Insert (M : in out Map; V : String; E : Elements)
-   is null;
+   ----------------
+   -- Has_Others --
+   ----------------
 
-   procedure Set_Others (M : in out Map; E : Elements)
-   is null;
+   function Has_Others (M : Map) return Boolean
+   is (M.Entries.Contains (TOML_Keys.Case_Others));
 
 end Alire.Expressions.Maps;

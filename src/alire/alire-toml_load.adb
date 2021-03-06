@@ -1,5 +1,7 @@
 with Alire.Conditional_Trees.TOML_Load;
+with Alire.Expressions.Enums;
 with Alire.Errors;
+with Alire.Platforms;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Keys;
 with Alire.Utils;
@@ -7,6 +9,12 @@ with Alire.Utils;
 with TOML.File_IO;
 
 package body Alire.TOML_Load is
+
+   --  Register predefined environment variables so they're recognized on load
+
+   package OS_Expressions is new Expressions.Enums
+     (Name     => TOML_Keys.OS,
+      Ada_Enum => Platforms.Operating_Systems) with Unreferenced;
 
    --  The following are entries in the manifest that are not loaded as
    --  properties, but stored separately as complex types.

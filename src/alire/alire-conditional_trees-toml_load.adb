@@ -1,5 +1,4 @@
 with Alire.Conditional_Trees.Case_Nodes;
-with Alire.Expressions;
 with Alire.TOML_Keys;
 
 package body Alire.Conditional_Trees.TOML_Load is
