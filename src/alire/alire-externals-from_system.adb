@@ -98,10 +98,16 @@ package body Alire.Externals.From_System is
    function From_TOML (From : TOML_Adapters.Key_Queue) return External is
    begin
       return (Externals.External with
-              Origin => Loader.Load (From    => From,
-                                     Loader  => From_TOML_Static'Access,
-                                     Resolve => True,
-                                     Strict  => False));
+                Origin => Loader.Load
+                  (From    =>
+                   --  We detach the 'origin' entry by itself to avoid the
+                   --  expression parser to complain about too many entries.
+                     From.Descend (Key     => TOML_Keys.Origin,
+                                   Value   => From.Pop (TOML_Keys.Origin),
+                                   Context => TOML_Keys.Origin),
+                   Loader  => From_TOML_Static'Access,
+                   Resolve => True,
+                   Strict  => False));
    end From_TOML;
 
    -----------

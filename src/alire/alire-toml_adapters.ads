@@ -86,6 +86,9 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Remove Key from the given set of keys and set Value to the
    --  corresponding value in Queue. Return whether Key was present.
 
+   function Pop (Queue : Key_Queue; Key : String) return TOML.TOML_Value;
+   --  Pop a key, that must exist, without checking its type (see Checked_Pop);
+
    function Pop_Expr (Queue  : Key_Queue;
                       Prefix : String;
                       Value  : out TOML.TOML_Value) return String;

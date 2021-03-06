@@ -168,6 +168,19 @@ package body Alire.TOML_Adapters is
       end if;
    end Pop;
 
+   ---------
+   -- Pop --
+   ---------
+
+   function Pop (Queue : Key_Queue; Key : String) return TOML.TOML_Value is
+      Val : TOML.TOML_Value;
+   begin
+      if not Queue.Pop (Key, Val) then
+         Raise_Checked_Error ("Requested key not found: " & Key);
+      end if;
+      return Val;
+   end Pop;
+
    --------------
    -- Pop_Expr --
    --------------
