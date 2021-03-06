@@ -1,4 +1,4 @@
-with Alire.Pseudotypes.Maps;
+with Alire.Expressions.Maps;
 
 private generic
 package Alire.Conditional_Trees.Case_Nodes is
@@ -10,7 +10,7 @@ package Alire.Conditional_Trees.Case_Nodes is
    --  Since clients retrieve such nodes as trees (New_Case below), the whole
    --  new Node class can be hidden in the body.
 
-   package Case_Maps is new Pseudotypes.Maps (Tree);
+   package Case_Maps is new Expressions.Maps (Tree);
    --  Every case value points to a subtree
 
    subtype Map is Case_Maps.Map;

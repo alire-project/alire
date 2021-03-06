@@ -4,17 +4,17 @@ with Alire.Errors;
 
 generic
    type Elements (<>) is private;
-package Alire.Pseudotypes.Maps with Preelaborate is
+package Alire.Expressions.Maps with Preelaborate is
 
    type Map is tagged private;
    --  The main operation we need in our index expressions is to look up a
-   --  value from the pseudotype and get the associated value (a dependency,
+   --  value from the Variable and get the associated value (a dependency,
    --  a property...)
 
-   function Empty (P : Pseudotype) return Map;
+   function Empty (P : Variable) return Map;
    --  Initialize a map for a particular type, containing no mapping
 
-   function Base (M : Map) return Pseudotype;
+   function Base (M : Map) return Variable;
    --  Retrieve the type for which this Map was declared
 
    function Contains (M : Map; V : String) return Boolean;
@@ -49,7 +49,7 @@ private
 
    type Map is tagged record
       Valid   : Boolean := False;
-      Base    : Pseudotype;
+      Base    : Variable;
       Entries : Maps.Map;
    end record;
 
@@ -57,12 +57,12 @@ private
    -- Base --
    ----------
 
-   function Base (M : Map) return Pseudotype
+   function Base (M : Map) return Variable
    is (if M.Valid
        then M.Base
        else raise Checked_Error with "Map is uninitialized");
 
-   function Empty (P : Pseudotype) return Map
+   function Empty (P : Variable) return Map
    is (Valid   => True,
        Base    => P,
        Entries => <>);
@@ -83,4 +83,4 @@ private
    procedure Set_Others (M : in out Map; E : Elements)
    is null;
 
-end Alire.Pseudotypes.Maps;
+end Alire.Expressions.Maps;

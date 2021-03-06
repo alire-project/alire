@@ -1,5 +1,5 @@
 with Alire.Conditional_Trees.Case_Nodes;
-with Alire.Pseudotypes;
+with Alire.Expressions;
 with Alire.TOML_Keys;
 
 package body Alire.Conditional_Trees.TOML_Load is
@@ -40,11 +40,11 @@ package body Alire.Conditional_Trees.TOML_Load is
          function Process_Entries (Case_Table : TOML_Adapters.Key_Queue)
                                    return Tree
          is
-            PType : constant Pseudotypes.Pseudotype :=
-                      Pseudotypes.From
-                        (Name => Head (Tail (Case_Key, '('), ')'));
-            Map   : Case_Nodes.Map := Case_Nodes.Case_Maps.Empty (PType);
-            --  The map only accepts values belonging to PType
+            Var : constant Expressions.Variable :=
+                    Expressions.From
+                      (Name => Head (Tail (Case_Key, '('), ')'));
+            Map : Case_Nodes.Map := Case_Nodes.Case_Maps.Empty (Var);
+            --  The map only accepts values matching the Variable
          begin
             loop
                declare

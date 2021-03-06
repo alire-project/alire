@@ -1,7 +1,7 @@
 generic
    Name : String with Unreferenced;
    type Values is (<>) with Unreferenced;
-package Alire.Pseudotypes.Enums is
+package Alire.Expressions.Enums is
 
    --  Declare a pseudotype that encapsulates an actual Ada enumeration. By
    --  instancing this package the type becomes recognizable by the index
@@ -21,4 +21,4 @@ package Alire.Pseudotypes.Enums is
 --     function Value (V : Values) return Pseudotypes.Value
 --     is (raise Unimplemented);
 
-end Alire.Pseudotypes.Enums;
+end Alire.Expressions.Enums;
