@@ -275,6 +275,9 @@ package body Alire.OS_Lib.Subprocess is
 
    begin
       Create_Temp_Output_File (File, Name);
+      if Name = null then
+         Raise_Checked_Error ("Cannot create temporary file");
+      end if;
 
       Trace.Detail ("Spawning: " & Image (Command, Full_Args) &
                       " > " & Name.all);
