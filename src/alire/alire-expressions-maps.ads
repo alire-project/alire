@@ -19,12 +19,10 @@ package Alire.Expressions.Maps with Preelaborate is
 
    function Contains (M : Map; V : String) return Boolean;
 
-   function Element (M : Map; V : String) return Elements with
-     Pre => M.Contains (V) or else M.Has_Others or else
-     raise Checked_Error with
-       Errors.Set ("Map for " & M.Base.Name
-                   & " does not have a value for " & V);
-   --  Get an element from the map
+   function Element (M : Map; V : String) return Elements;
+   --  Get an element from the map. If the key V is not in the map, return the
+   --  Other value. If no Other has been set, raise Checked_Error. Conditions
+   --  not given in contract form due to bug in older GNATs.
 
    type Key_Array is array (Positive range <>) of UString;
 
@@ -101,9 +99,14 @@ private
    -------------
 
    function Element (M : Map; V : String) return Elements
-   is (if M.Contains (V)
-       then M.Entries (V)
-       else Other (M));
+   is (if M.Contains (V) then
+          M.Entries (V)
+       elsif M.Has_Others then
+          Other (M)
+       else
+          raise Checked_Error with
+            Errors.Set ("Map for " & Name (M.Base)
+                        & " does not have a value for " & V));
 
    -----------
    -- Other --
