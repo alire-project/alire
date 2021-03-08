@@ -123,7 +123,10 @@ package body Alire.Externals.From_System is
          Candidates := Candidates + Natural (Packages.Packages.Length);
       end loop;
 
-      return Utils.Trim (Candidates'Image) & " candidate system packages";
+      return Utils.Trim (Candidates'Image)
+        & (if Candidates = 1
+           then " candidate system package"
+           else " candidate system packages");
    end Image;
 
    ------------
@@ -137,21 +140,29 @@ package body Alire.Externals.From_System is
    is
       Result : Utils.String_Vector;
       use Alire.Properties;
+      use type Platforms.Distributions;
    begin
-      for Distro in Platforms.Known_Distributions loop
-         declare
-            On_Distro : constant Conditional_Packages.Tree :=
-                          This.Origin.Evaluate
-                            (To_Vector
-                               (Properties.Platform.Distributions.New_Property
-                                  (Distro)));
-         begin
-            if not On_Distro.Is_Empty then
-               Result.Append
-                 (TOML_Adapters.Adafy (Distro'Image) & ": "
-                  & On_Distro.Image_One_Line);
-            end if;
-         end;
+      for Concrete_Distro in Platforms.Known_Distributions loop
+
+         --  We show either the requested Distro only, or all distros, which is
+         --  signaled by Distro = Unknown.
+
+         if Concrete_Distro = Distro or else Distro = Platforms.Distro_Unknown
+         then
+            declare
+               On_Distro : constant Conditional_Packages.Tree :=
+                             This.Origin.Evaluate
+                               (To_Vector
+                                  (Properties.Platform.Distributions
+                                   .New_Property (Concrete_Distro)));
+            begin
+               if not On_Distro.Is_Empty then
+                  Result.Append
+                    (TOML_Adapters.Adafy (Concrete_Distro'Image) & ": "
+                     & On_Distro.Image_One_Line);
+               end if;
+            end;
+         end if;
       end loop;
       Result.Append ("others: unavailable");
       return Result;
