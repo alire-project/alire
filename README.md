@@ -22,7 +22,7 @@ Available for Debian stable / Ubuntu >=17.10 / macOS / Windows
 
 The latest release is version 0.7, which is also the first public beta intended for general testing and feedback gathering towards the 1.0 release. See the [Getting Started](doc/getting-started.md) guide for binary downloads.
 
-If, instead, you want to test the latest development version, see [Building from sources](#building-from source).
+If, instead, you want to test the latest development version, see [Building from sources](#building-from-sources).
 
 ## Installation and First Steps ##
 
@@ -40,6 +40,8 @@ Follow these steps:
 1. Build the executable: `gprbuild -j0 -P alr_env`
 
 The binary will be found at `bin/alr`. You can run `alr version` to see version and diagnostics information.
+
+Sourcing the `scripts/alr-completion.bash` file will provide bash tab autocompletion.
 
 ## Design principles ##
 
