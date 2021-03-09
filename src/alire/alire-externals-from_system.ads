@@ -1,5 +1,10 @@
+private with Alire.Conditional_Trees;
+private with Alire.Interfaces;
 private with Alire.Platforms;
+private with Alire.TOML_Keys;
 private with Alire.Utils;
+
+private with TOML;
 
 package Alire.Externals.From_System is
 
@@ -28,31 +33,36 @@ package Alire.Externals.From_System is
 
 private
 
-   subtype Package_Vector is Utils.String_Vector;
+   --  To reuse the conditional expressions parser we need a bit of boilerplate
+
+   type Package_Vector is
+     new Interfaces.Classificable
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable with record
+      Packages : Utils.String_Vector;
+   end record;
+
+   overriding
+   function Key (This : Package_Vector) return String
+   is (TOML_Keys.Origin);
+
+   overriding
+   function To_TOML (This : Package_Vector) return TOML.TOML_Value
+   is (raise Unimplemented); -- Not needed
+
+   overriding
+   function To_YAML (This : Package_Vector) return String
+   is (raise Unimplemented); -- Not needed
+
+   function Image (This : Package_Vector) return String;
+
+   package Conditional_Packages is new Conditional_Trees (Package_Vector,
+                                                          Image);
 
    type Candidates is array (Platforms.Known_Distributions) of Package_Vector;
 
-   type Packages (Is_Case : Boolean := False) is record
-      case Is_Case is
-         when False =>
-            Common_Candidates : Package_Vector;
-         when True  =>
-            Distro_Candidates : Candidates;
-      end case;
-   end record;
-
-   function Candidate_Count (This : Packages) return Natural;
-
    type External is new Externals.External with record
-      Origin : Packages;
+      Origin : Conditional_Packages.Tree;
    end record;
-
-   function System_Candidates (This   : External;
-                               Distro : Platforms.Known_Distributions)
-                               return Package_Vector
-   is
-     (if This.Origin.Is_Case
-      then This.Origin.Distro_Candidates (Distro)
-      else This.Origin.Common_Candidates);
 
 end Alire.Externals.From_System;

@@ -1,0 +1,11 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello"
+version = "0.9"
+maintainers = ["alire@developers.com"]
+maintainers-logins = ["mylogin"]
+
+[executables."case(os)"]
+"linux| windows " = ["hello"] # Without and with whitespace
+
+[origin]
+url = "file:../../../crates/hello_1.0.1"

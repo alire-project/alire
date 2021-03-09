@@ -110,7 +110,8 @@ package body Alire.Dependencies.States is
                       (From.Descend
                          (From.Checked_Pop (Keys.Release, TOML_Table),
                           "release: " & (+Crate)),
-                       Manifest.Index));
+                       Manifest.Index,
+                       Strict => False)); -- because it may come from elsewhere
          end case;
 
          return Data;

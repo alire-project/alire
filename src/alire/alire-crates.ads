@@ -64,13 +64,15 @@ package Alire.Crates is
 
    function Externals (This : Crate) return Alire.Externals.Lists.List;
 
-   function From_Externals_Manifest (From : TOML_Adapters.Key_Queue)
-                                          return Crate;
+   function From_Externals_Manifest (From   : TOML_Adapters.Key_Queue;
+                                     Strict : Boolean)
+                                     return Crate;
    --  Load a manifest containing only external definitions for a crate
 
    procedure Load_Externals
      (This   : in out Crate;
       From   :        TOML_Adapters.Key_Queue;
+      Strict :        Boolean;
       Policy :        Policies.For_Index_Merging :=
         Policies.Merge_Priorizing_Existing);
    --  Load externals detectors into an existing crate

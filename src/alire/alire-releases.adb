@@ -10,7 +10,6 @@ with Alire.Errors;
 with Alire.Origins.Deployers;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
-with Alire.TOML_Expressions;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 with Alire.Warnings;
@@ -585,7 +584,9 @@ package body Alire.Releases is
       --  PROPERTIES
       if not R.Properties.Is_Empty then
          Put_Line ("Properties:");
-         R.Properties.Print ("   ", False);
+         R.Properties.Print ("   ",
+                             And_Or  => False,
+                             Verbose => Alire.Log_Level >= Detail);
       end if;
 
       --  DEPENDENCIES
@@ -648,7 +649,8 @@ package body Alire.Releases is
    -------------------
 
    function From_Manifest (File_Name : Any_Path;
-                           Source    : Manifest.Sources)
+                           Source    : Manifest.Sources;
+                           Strict    : Boolean)
                            return Release
    is
    begin
@@ -657,6 +659,7 @@ package body Alire.Releases is
            (TOML_Load.Load_File (File_Name),
             "Loading release from manifest: " & File_Name),
          Source,
+         Strict,
          File_Name);
    exception
       when E : others =>
@@ -672,6 +675,7 @@ package body Alire.Releases is
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
                        Source : Manifest.Sources;
+                       Strict : Boolean;
                        File   : Any_Path := "")
                        return Release is
    begin
@@ -680,7 +684,7 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
-         Assert (This.From_TOML (From, Source, File));
+         Assert (This.From_TOML (From, Source, Strict, File));
       end return;
    end From_TOML;
 
@@ -691,24 +695,14 @@ package body Alire.Releases is
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
                        Source :        Manifest.Sources;
+                       Strict :        Boolean;
                        File   :        Any_Path := "")
                        return Outcome
    is
       package Dirs    renames Ada.Directories;
       package Labeled renames Alire.Properties.Labeled;
-
-      Strict_Before : constant Boolean := TOML_Expressions.Strict_Enums;
-      --  Initial value of TOML_Expressions.Strict_Enums, to restore it after
-      --  loading this particular release.
    begin
       Trace.Debug ("Loading release " & This.Milestone.Image);
-
-      --  For local manifests we don't allow unknown enum values. For indexes
-      --  we do not complain, as that allows backward compatibility for new
-      --  configurations found in the index but unknown to this Alire. This way
-      --  local errors by the user are caught on the spot.
-      TOML_Expressions.Strict_Enums :=
-        TOML_Expressions.Strict_Enums or else Source in Manifest.Local;
 
       --  Origin
 
@@ -727,13 +721,14 @@ package body Alire.Releases is
       --  Properties
 
       TOML_Load.Load_Crate_Section
-        ((case Source is
-            when Manifest.Index => Crates.Index_Release,
-            when Manifest.Local => Crates.Local_Release),
-         From,
-         This.Properties,
-         This.Dependencies,
-         This.Available);
+        (Strict  => Strict or else Source in Manifest.Local,
+         Section => (case Source is
+                        when Manifest.Index => Crates.Index_Release,
+                        when Manifest.Local => Crates.Local_Release),
+         From    => From,
+         Props   => This.Properties,
+         Deps    => This.Dependencies,
+         Avail   => This.Available);
 
       --  Consolidate/validate some properties as fields:
 
@@ -742,30 +737,8 @@ package body Alire.Releases is
 
       This.Version := Semver.New_Version (This.Property (Labeled.Version));
 
-      --  Restore Strict-ness
-
-      TOML_Expressions.Strict_Enums := Strict_Before;
-
       --  Check for remaining keys, which must be erroneous:
       return From.Report_Extra_Keys;
-   exception
-      when E : others =>
-         Log_Exception (E);
-
-         TOML_Expressions.Strict_Enums := Strict_Before;
-
-         case Source is
-            when Manifest.Index =>
-               raise Program_Error with
-               Errors.Set
-                 ("Cannot load manifest " & This.Name_Str &
-                    " from index with proper version: ", E);
-            when Manifest.Local =>
-               raise Checked_Error with
-               Errors.Set
-                 ("Cannot load manifest " & This.Name_Str &
-                    ", please review contents: ", E);
-         end case;
    end From_TOML;
 
    -------------------

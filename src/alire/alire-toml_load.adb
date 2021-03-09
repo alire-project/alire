@@ -1,12 +1,38 @@
+with Alire.Conditional_Trees.TOML_Load;
+with Alire.Expressions.Enums;
 with Alire.Errors;
+with Alire.Platforms;
 with Alire.Properties.From_TOML;
-with Alire.TOML_Expressions.Cases;
 with Alire.TOML_Keys;
 with Alire.Utils;
 
 with TOML.File_IO;
 
 package body Alire.TOML_Load is
+
+   --  Instantiate loaders at library level
+
+   package Available_Loader  is new Conditional.For_Available.TOML_Load;
+   package Dependency_Loader is new Conditional.For_Dependencies.TOML_Load;
+
+   --  Register predefined environment variables so they're recognized on load
+
+   package Distro_Expressions is new Expressions.Enums
+     (Key      => TOML_Keys.Distribution,
+      Ada_Enum => Platforms.Distributions) with Unreferenced;
+
+   package OS_Expressions is new Expressions.Enums
+     (Key      => TOML_Keys.OS,
+      Name     => "OS",
+      Ada_Enum => Platforms.Operating_Systems) with Unreferenced;
+
+   package Toolchain_Expressions is new Expressions.Enums
+     (Key      => TOML_Keys.Toolchain,
+      Ada_Enum => Platforms.Toolchains) with Unreferenced;
+
+   package Word_Size_Expressions is new Expressions.Enums
+     (Key      => TOML_Keys.Word_Size,
+      Ada_Enum => Platforms.Word_Sizes) with Unreferenced;
 
    --  The following are entries in the manifest that are not loaded as
    --  properties, but stored separately as complex types.
@@ -42,7 +68,8 @@ package body Alire.TOML_Load is
    -- Load_Crate_Section --
    ------------------------
 
-   procedure Load_Crate_Section (Section : Crates.Sections;
+   procedure Load_Crate_Section (Strict  : Boolean;
+                                 Section : Crates.Sections;
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;
@@ -76,16 +103,20 @@ package body Alire.TOML_Load is
 
       if Allowed_Tables (Section, Dependencies) then
          if From.Pop (TOML_Keys.Depends_On, TOML_Deps) then
-            From.Assert (TOML_Deps.Kind = TOML_Array,
-                         "dependencies must be specified as array of tables");
+            From.Assert
+              (TOML_Deps.Kind = TOML_Array,
+               "dependencies must be specified as array of tables");
 
             for I in 1 .. TOML_Deps.Length loop
                Deps := Deps and
-                 TOML_Expressions.Cases.Load_Dependencies
-                   (TOML_Adapters.From
-                      (TOML_Deps.Item (I),
-                       From.Message (TOML_Keys.Depends_On)
-                       & "(group" & I'Img & ")"));
+                 Dependency_Loader.Load
+                   (From    => From.Descend
+                      (Key     => TOML_Keys.Depends_On,
+                       Value   => TOML_Deps.Item (I),
+                       Context => "(group" & I'Img & ")"),
+                    Loader  => Conditional.Deps_From_TOML'Access,
+                    Resolve => True,
+                    Strict  => Strict);
             end loop;
          end if;
       elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
@@ -97,27 +128,28 @@ package body Alire.TOML_Load is
 
       --  Process Available
 
-      declare
-         use Conditional;
-         --  use type Conditional.Availability fails to make "and" visible (?)
-      begin
-         if Allowed_Tables (Section, Available) then
-            if From.Pop (TOML_Keys.Available, TOML_Avail) then
-               Avail := Avail and
-                 TOML_Expressions.Cases.Load_Availability
-                   (TOML_Adapters.From (TOML_Avail,
-                    From.Message (TOML_Keys.Available)));
-            end if;
-         elsif From.Unwrap.Has (TOML_Keys.Available) then
-            From.Checked_Error ("found field not allowed in manifest section: "
-                                & TOML_Keys.Available);
+      if Allowed_Tables (Section, Available) then
+         if From.Pop (TOML_Keys.Available, TOML_Avail) then
+            Avail.Append
+              (Conditional.Availability'
+                 (Available_Loader.Load
+                      (From    => From.Descend
+                           (Key     => TOML_Keys.Available,
+                            Value   => TOML_Avail,
+                            Context => TOML_Keys.Available),
+                       Loader  => Conditional.Available_From_TOML'Access,
+                       Resolve => True,
+                       Strict  => Strict) with null record));
          end if;
-      end;
+      elsif From.Unwrap.Has (TOML_Keys.Available) then
+         From.Checked_Error ("found field not allowed in manifest section: "
+                             & TOML_Keys.Available);
+      end if;
 
       --  Process remaining keys, which must be properties
 
       Props := Props and
-        Properties.From_TOML.Section_Loaders (Section) (From);
+        Properties.From_TOML.Section_Loaders (Section) (From, Strict);
 
    end Load_Crate_Section;
 

@@ -58,7 +58,9 @@ package Alire.Externals is
    --  These kinds are used during TOML loading, and exposed in the spec for
    --  documentation purposes only.
 
-   function From_TOML (From : TOML_Adapters.Key_Queue) return External'Class;
+   function From_TOML (From   : TOML_Adapters.Key_Queue;
+                       Strict : Boolean)
+                       return External'Class;
 
    function On_Platform (This : External'Class;
                          Env  : Properties.Vector) return External'Class;
@@ -68,7 +70,7 @@ private
 
    type External is abstract tagged record
       Properties : Conditional.Properties;
-      Available  : Conditional.Availability := Conditional.Available_Default;
+      Available  : Conditional.Availability;
    end record;
 
 end Alire.Externals;

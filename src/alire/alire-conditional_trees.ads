@@ -1,4 +1,4 @@
-with Ada.Containers; use Ada.Containers;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists; use Ada.Containers;
 with Ada.Iterator_Interfaces;
 
 with Alire.Interfaces;
@@ -152,10 +152,11 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Check properties in conditional nodes to return the applicable elements.
    --  Returns a Tree because it could result in an empty tree.
 
-   procedure Print (This   : Tree;
-                    Prefix : String  := "";
-                    And_Or : Boolean := True;
-                    Sorted : Boolean := False);
+   procedure Print (This    : Tree;
+                    Prefix  : String  := "";
+                    Verbose : Boolean := False;
+                    And_Or  : Boolean := True;
+                    Sorted  : Boolean := False);
    --  Use And_Or = false when only And can appear, in which case there is no
    --  need to distinguish and the output is slightly more compact.
 
@@ -256,6 +257,13 @@ package Alire.Conditional_Trees with Preelaborate is
    function Indexed_Element (Container : Tree; Pos : Cursor) return Tree;
 
    function To_Tree (N : Node'Class) return Tree;
+
+   package Value_Lists is
+     new Ada.Containers.Indefinite_Doubly_Linked_Lists (Values);
+
+   function As_List (This : Tree) return Value_Lists.List;
+   --  Default Enumerate implementation. Remember that this does not resolve
+   --  expressions; merely flattens all leaf nodes.
 
 private
 

@@ -269,11 +269,13 @@ package Alire.Releases is
    --  wrapped as a dependency tree with a single value.
 
    function From_Manifest (File_Name : Any_Path;
-                           Source    : Manifest.Sources)
+                           Source    : Manifest.Sources;
+                           Strict    : Boolean)
                            return Release;
 
    function From_TOML (From   : TOML_Adapters.Key_Queue;
                        Source : Manifest.Sources;
+                       Strict : Boolean;
                        File   : Any_Path := "")
                        return Release
      with Pre => Source not in Manifest.Local or else File /= "";
@@ -342,6 +344,7 @@ private
    function From_TOML (This   : in out Release;
                        From   :        TOML_Adapters.Key_Queue;
                        Source :        Manifest.Sources;
+                       Strict :        Boolean;
                        File   :        Any_Path := "")
                        return Outcome
      with Pre => Source not in Manifest.Local or else File /= "";

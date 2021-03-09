@@ -86,10 +86,13 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Remove Key from the given set of keys and set Value to the
    --  corresponding value in Queue. Return whether Key was present.
 
+   function Pop (Queue : Key_Queue; Key : String) return TOML.TOML_Value;
+   --  Pop a key, that must exist, without checking its type (see Checked_Pop);
+
    function Pop_Expr (Queue  : Key_Queue;
                       Prefix : String;
                       Value  : out TOML.TOML_Value) return String;
-   --  Return a entry in the underlying table which key starts with Prefix,
+   --  Return a entry in the underlying table whose key starts with Prefix,
    --  or No_TOML_Value if not a table or does not contain such a key. The
    --  intended use is to process keys beginning with "case(" in the table.
 
@@ -140,7 +143,8 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Create a table with a single key=val entry
 
    function Adafy (Key : String) return String;
-   --  Take a toml key and replace every '-' and '.' with a '_';
+   --  Take a toml key and replace every '-' and '.' with a '_'; Use Title_Case
+   --  unless key = "others".
 
    function Tomify (Image : String) return String;
    --  Take some enumeration image and turn it into a TOML-style key, replacing
@@ -208,12 +212,16 @@ private
    -----------
 
    function Adafy (Key : String) return String is
-     (Utils.Replace
+     (if Utils.To_Lower_Case (Key) = "others"
+      then Utils.To_Lower_Case (Key)
+      else
+      Utils.To_Mixed_Case
         (Utils.Replace
-             (Key,
-              Match => "-",
-              Subst => "_"),
-        Match => ".", Subst => "_"));
+             (Utils.Replace
+                  (Key,
+                   Match => "-",
+                   Subst => "_"),
+              Match => ".", Subst => "_")));
 
    ----------------------
    -- Tomify_As_String --

@@ -67,7 +67,7 @@ package Alire.Index_On_Disk is
    function Delete (This : Index'Class) return Outcome;
    --  Remove index from current configuration and delete its folder
 
-   function Load (This : Index'Class) return Outcome;
+   function Load (This : Index'Class; Strict : Boolean) return Outcome;
    --  Loads the actual index contents into the in-memory index
 
    function Update (This : Index) return Outcome is abstract;

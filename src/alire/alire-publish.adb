@@ -160,7 +160,8 @@ package body Alire.Publish is
 
       --  Check not duplicated
 
-      Features.Index.Setup_And_Load (From  => Config.Edit.Indexes_Directory);
+      Features.Index.Setup_And_Load (From   => Config.Edit.Indexes_Directory,
+                                     Strict => True);
       if Index.Exists (Release.Name, Release.Version) then
          Raise_Checked_Error
            ("Target release " & Release.Milestone.TTY_Image
@@ -287,7 +288,8 @@ package body Alire.Publish is
       if Context.Options.Nonstandard_Manifest then
          Check_Release (Releases.From_Manifest
                           (Starting_Manifest (Context),
-                           Alire.Manifest.Local));
+                           Alire.Manifest.Local,
+                           Strict => True));
          --  Will have raised if the release is not loadable or incomplete
       else
          declare
@@ -487,7 +489,8 @@ package body Alire.Publish is
                      Paths.Working_Folder_Inside_Root / "archives";
       Release    : constant Releases.Release :=
                      Releases.From_Manifest (Context.Options.Manifest,
-                                             Alire.Manifest.Local);
+                                             Alire.Manifest.Local,
+                                             Strict => True);
       Milestone  : constant String :=
                      TOML_Index.Manifest_File (Release.Name,
                                                Release.Version,
@@ -652,7 +655,8 @@ package body Alire.Publish is
                   Releases
                     .From_Manifest
                       (Packaged_Manifest (Context),
-                       Alire.Manifest.Local)
+                       Alire.Manifest.Local,
+                       Strict => True)
                     .Replacing (Origin => Context.Origin);
    begin
       Check_Release (Release);

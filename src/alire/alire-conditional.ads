@@ -76,13 +76,6 @@ package Alire.Conditional with Preelaborate is
 
    function No_Properties return Properties is (For_Properties.Empty);
 
-   type Property_Loader is access
-     function (From : TOML_Adapters.Key_Queue)
-               return Conditional.Properties;
-   --  Function provided by each concrete Property class for TOML loading.
-   --  From is always a table "prop-name = whatever".
-   --  These may raise Checked_Error.
-
    --------------------
    --  Availability  --
    --------------------

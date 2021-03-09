@@ -392,17 +392,24 @@ package body Alire.Utils is
    -- Split --
    -----------
 
-   function Split (S : String; Separator : Character) return String_Vector is
+   function Split (S         : String;
+                   Separator : Character;
+                   Trim      : Boolean := False)
+                   return String_Vector
+   is
+      function Do_Trim (S : String) return String
+      is (if Trim then Utils.Trim (S) else S);
+
       Prev : Integer := S'First - 1;
    begin
       return V : String_Vector do
          for I in S'Range loop
             if S (I) = Separator then
-               V.Append (S (Prev + 1 .. I - 1));
+               V.Append (Do_Trim (S (Prev + 1 .. I - 1)));
                Prev := I;
             end if;
          end loop;
-         V.Append (S (Prev + 1 .. S'Last));
+         V.Append (Do_Trim (S (Prev + 1 .. S'Last)));
       end return;
    end Split;
 

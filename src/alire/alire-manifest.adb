@@ -64,7 +64,9 @@ package body Alire.Manifest is
    function Is_Valid (Name : Any_Path; Source : Sources) return Boolean is
    begin
       --  Check we are able to load the manifest file
-      if Releases.From_Manifest (Name, Source).Version_Image /= "" then
+      if Releases.From_Manifest
+        (Name, Source, Strict => False).Version_Image /= ""
+      then
          Trace.Debug ("Checked valid manifest at " & Name);
          return True;
       else

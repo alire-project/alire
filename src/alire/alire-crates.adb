@@ -80,8 +80,9 @@ package body Alire.Crates is
    -- From_Externals_Manifest --
    -----------------------------
 
-   function From_Externals_Manifest (From : TOML_Adapters.Key_Queue)
-                                          return Crate
+   function From_Externals_Manifest (From   : TOML_Adapters.Key_Queue;
+                                     Strict : Boolean)
+                                     return Crate
    is
    begin
       From.Assert_Key (TOML_Keys.Name, TOML.TOML_String);
@@ -89,7 +90,7 @@ package body Alire.Crates is
       return This : Crate :=
         New_Crate (+From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
-         This.Load_Externals (From);
+         This.Load_Externals (From, Strict);
       end return;
    end From_Externals_Manifest;
 
@@ -100,6 +101,7 @@ package body Alire.Crates is
    procedure Load_Externals
      (This   : in out Crate;
       From   :        TOML_Adapters.Key_Queue;
+      Strict :        Boolean;
       Policy :        Policies.For_Index_Merging :=
         Policies.Merge_Priorizing_Existing)
    is
@@ -119,8 +121,10 @@ package body Alire.Crates is
                for I in 1 .. TOML_Externals.Length loop
                   This.Externals.Detectors.Append
                     (Alire.Externals.From_TOML
-                       (From.Descend (TOML_Externals.Item (I),
-                                      "external index" & I'Img)));
+                       (From.Descend
+                            (TOML_Externals.Item (I),
+                             "external index" & I'Img),
+                        Strict));
                end loop;
             end if;
          end if;
@@ -143,7 +147,8 @@ package body Alire.Crates is
          Properties   : Conditional.Properties;
       begin
          TOML_Load.Load_Crate_Section
-           (Section => External_Shared_Section,
+           (Strict  => Strict,
+            Section => External_Shared_Section,
             From    => From,
             Props   => Properties,
             Deps    => Unused_Deps,

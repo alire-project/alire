@@ -130,12 +130,17 @@ package body Alr.Commands.Show is
                             (if Cmd.System
                              then Alire.Platform.Distribution
                              else Alire.Platforms.Distro_Unknown);
-               Available : constant Alire.Conditional.Availability :=
+               Available : Alire.Conditional.Availability :=
                              (if Cmd.System
                               then External.On_Platform
                                 (Platform.Properties).Available
                               else External.Available);
             begin
+               --  Improve the looks of a default Available
+               if Available.Is_Empty then
+                  Available := Alire.Conditional.Available_Default;
+               end if;
+
                for I in Detail.First_Index .. Detail.Last_Index loop
                   --  Skip last element, which is unknown distro
                   Table

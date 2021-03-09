@@ -24,8 +24,10 @@ package Alire.TOML_Index is
 
    procedure Load
      (Index    : Index_On_Disk.Index'Class;
+      Strict   : Boolean;
       Result   : out Load_Result);
-   --  Load the whole TOML catalog for the given index.
+   --  Load the whole TOML catalog for the given index. If Strict, don't allow
+   --  unknown enum values.
 
 private
 

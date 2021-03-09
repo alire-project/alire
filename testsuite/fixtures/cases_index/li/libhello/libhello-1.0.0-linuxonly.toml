@@ -6,7 +6,7 @@ maintainers-logins = ["mylogin"]
 [available."case(os)"]
 "..." = false
 linux = true
-[available."case(os)".windows."case(word_size)"]
+[available."case(os)".windows."case(word-size)"]
 "..." = false
 bits_64 = true
 
