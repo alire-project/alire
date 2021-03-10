@@ -195,6 +195,7 @@ package body Alire.Errors is
 
    overriding
    procedure Finalize (This : in out Scope) is
+      pragma Unreferenced (This);
    begin
       Close;
    end Finalize;

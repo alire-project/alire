@@ -8,6 +8,7 @@ package body Alire.TOML_Adapters is
 
    overriding
    procedure Finalize (This : in out Key_Queue) is
+      pragma Unreferenced (This);
    begin
       --  Manually close this error scope
       Errors.Close;

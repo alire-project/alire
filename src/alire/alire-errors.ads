@@ -77,8 +77,8 @@ package Alire.Errors with Preelaborate is
    -----------
 
    type Scope (<>) is limited private;
-   --  A type to create a stack of error information. When Errors.Get is used,
-   --  the whole error stack is returned. Manages closing automatically.
+   --  A type to create a stack of error information. When Errors.Set is used,
+   --  the whole error stack is stored. Manages scope closing automatically.
 
    function Open (Text : String) return Scope;
    --  Push a new message into the error stack
@@ -91,7 +91,7 @@ package Alire.Errors with Preelaborate is
    --  As for Open; don't use manually.
 
    function Stack (Text : String) return String;
-   --  Return current error stack, plus Text
+   --  Return current error stack, plus Text as the latest error
 
 private
 
