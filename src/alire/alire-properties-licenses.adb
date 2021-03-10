@@ -97,7 +97,7 @@ package body Alire.Properties.Licenses is
    begin
       if Value.Kind = TOML_Array then
          Warnings.Warn_Once
-           (From.Message
+           (Errors.Stack
               ("Array of license in manifest is deprecated. " &
                  "License should be a single string containing a " &
                  "valid SPDX expression (https://spdx.org/licenses/)"));

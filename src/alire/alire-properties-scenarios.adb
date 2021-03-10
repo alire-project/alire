@@ -1,3 +1,5 @@
+with Alire.Errors;
+
 package body Alire.Properties.Scenarios is
 
    ---------------
@@ -127,7 +129,7 @@ package body Alire.Properties.Scenarios is
      (if +From.Unwrap.Keys (1)  = TOML_Keys.GPR_Set_Ext
       then From_TOML (From)
       else raise Checked_Error with
-        From.Message ("scenario expressions can only set externals"));
+        Errors.Stack ("scenario expressions can only set externals"));
 
    -------------
    -- To_TOML --

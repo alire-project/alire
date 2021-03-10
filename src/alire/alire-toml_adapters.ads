@@ -1,4 +1,5 @@
-with Alire.Errors;
+private with Ada.Finalization;
+
 with Alire.Utils;
 
 with TOML; use all type TOML.Any_Value_Kind;
@@ -12,12 +13,10 @@ package Alire.TOML_Adapters with Preelaborate is
      Post => Create_Table'Result.Kind in TOML.TOML_Table;
    --  Create a table with a single key and value
 
-   type Key_Queue is tagged private;
+   type Key_Queue is tagged limited private;
    --  Helper type that simplifies keeping track of processed keys during load.
    --  Also encapsulates a context that can be used to pinpoint errors better.
    --  Note: all operations on this type use shallow copies!
-
-   function Empty_Queue return Key_Queue;
 
    function From (Key     : String;
                   Value   : TOML.TOML_Value;
@@ -41,9 +40,6 @@ package Alire.TOML_Adapters with Preelaborate is
                      Context : String)
                      return Key_Queue;
    --  Use Parent for previous context, wrapping a key = value table.
-
-   function Message (Queue : Key_Queue; Message : String) return String;
-   --  Returns Queue's context & ": " & extra message.
 
    function Failure (Queue : Key_Queue; Message : String) return Outcome with
      Post => not Failure'Result.Success;
@@ -162,18 +158,12 @@ package Alire.TOML_Adapters with Preelaborate is
 
 private
 
-   type Key_Queue is tagged record
+   type Key_Queue is new Ada.Finalization.Limited_Controlled with record
       Value   : TOML.TOML_Value;
-      Context : UString;
    end record;
 
-   -----------------
-   -- Empty_Queue --
-   -----------------
-
-   function Empty_Queue return Key_Queue is
-     (Value   => TOML.No_TOML_Value,
-      Context => <>);
+   overriding
+   procedure Finalize (This : in out Key_Queue);
 
    ------------
    -- Unwrap --
@@ -186,26 +176,19 @@ private
    -- Descend --
    -------------
 
-   function Message (Queue : Key_Queue; Message : String) return String is
-     (Errors.Wrap (+Queue.Context, Message));
-
-   -------------
-   -- Descend --
-   -------------
-
    function Descend (Parent  : Key_Queue;
                      Key     : String;
                      Value   : TOML.TOML_Value;
                      Context : String)
                      return Key_Queue is
-      (From (Key, Value, Parent.Message (Context)));
+      (From (Key, Value, Context));
 
    -------------
    -- Failure --
    -------------
 
    function Failure (Queue : Key_Queue; Message : String) return Outcome is
-     (Outcome_Failure (Queue.Message (Message)));
+     (Outcome_Failure (Message));
 
    -----------
    -- Adafy --

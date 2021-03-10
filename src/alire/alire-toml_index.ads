@@ -3,7 +3,6 @@ private with TOML;
 with Alire.Index_On_Disk;
 with Alire.Crates;
 with Alire.Releases;
-with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
 

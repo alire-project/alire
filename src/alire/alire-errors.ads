@@ -1,4 +1,5 @@
 with Ada.Exceptions;
+private with Ada.Finalization;
 
 package Alire.Errors with Preelaborate is
 
@@ -71,9 +72,39 @@ package Alire.Errors with Preelaborate is
    --  Convenience to concatenate two error messages: a new wrapping text and
    --  an existing error within a exception being wrapped.
 
+   -----------
+   -- Scope --
+   -----------
+
+   type Scope (<>) is limited private;
+   --  A type to create a stack of error information. When Errors.Set is used,
+   --  the whole error stack is stored. Manages scope closing automatically.
+
+   function Open (Text : String) return Scope;
+   --  Push a new message into the error stack
+
+   procedure Open (Text : String);
+   --  Manually open a scope; used to blend seamlessly the TOML_Adapters.
+   --  Should not be used otherwise.
+
+   procedure Close;
+   --  As for Open; don't use manually.
+
+   function Stack (Text : String) return String;
+   --  Return current error stack, plus Text as the latest error
+
 private
 
    Id_Marker : constant String := "alire-stored-error:";
+
+   type Scope is new Ada.Finalization.Limited_Controlled with null record;
+
+   overriding
+   procedure Finalize (This : in out Scope);
+
+   -----------------
+   -- Is_Error_Id --
+   -----------------
 
    function Is_Error_Id (Str : String) return Boolean is
      (Str'Length > Id_Marker'Length and then
