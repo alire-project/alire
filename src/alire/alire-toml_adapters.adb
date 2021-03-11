@@ -49,6 +49,7 @@ package body Alire.TOML_Adapters is
    -------------------
 
    procedure Checked_Error (Queue : Key_Queue; Message : String) is
+      pragma Unreferenced (Queue);
    begin
       raise Alire.Checked_Error with Errors.Set (Message);
    end Checked_Error;
