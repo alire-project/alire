@@ -159,7 +159,7 @@ package body Alire.Conditional_Trees.TOML_Load is
       From.Assert
         (From.Unwrap.Keys'Length = 1,
          "Expected a single entry in table, but got:"
-         & From.Unwrap.Keys'Length'Image);
+         & From.Unwrap.Keys'Length'Img);
 
       --  Get the key = ... and process it
 
