@@ -26,12 +26,13 @@ package Alr.Commands.Withing is
 private
 
    type Command is new Commands.Command with record
-      Del   : aliased Boolean := False;
-      From  : aliased Boolean := False;
-      Graph : aliased Boolean := False;
-      Solve : aliased Boolean := False;
-      Tree  : aliased Boolean := False;
-      URL   : aliased GNAT.Strings.String_Access;
+      Commit   : aliased GNAT.Strings.String_Access;
+      Del      : aliased Boolean := False;
+      From     : aliased Boolean := False;
+      Graph    : aliased Boolean := False;
+      Solve    : aliased Boolean := False;
+      Tree     : aliased Boolean := False;
+      URL      : aliased GNAT.Strings.String_Access;
       Versions : aliased Boolean := False;
    end record;
 

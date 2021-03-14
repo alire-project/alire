@@ -1,12 +1,12 @@
 with Ada.Calendar;
 with Ada.Directories;
 
-with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
+with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
@@ -696,6 +696,56 @@ package body Alire.Roots is
          Trace.Detail ("Update completed");
       end;
    end Update_Dependencies;
+
+   ----------------------
+   -- Pinned_To_Remote --
+   ----------------------
+
+   function Pinned_To_Remote (This        : in out Root;
+                              Crate       : String;
+                              URL         : String;
+                              Commit      : String;
+                              Must_Depend : Boolean)
+                              return Remote_Pin_Result
+   is (raise Unimplemented);
+
+   ---------------------------
+   -- Prepare_Pinned_Remote --
+   ---------------------------
+
+   --  function Prepare_Pinned_Remote (This   : Root;
+   --                                  Origin : Origins.Origin)
+   --                                  return Absolute_Path
+   --  is
+   --     Temp : Directories.Temp_File;
+   --     Depl : constant Origins.Deployers.Deployer'Class :=
+   --              Origins.Deployers.New_Deployer (Origin);
+   --  begin
+   --     Depl.Deploy (Temp.Filename).Assert;
+   --
+   --     --  Identify containing release
+   --
+   --     declare
+   --        Found : constant Alire.Roots.Optional.Root :=
+   --                  Roots.Optional.Detect_Root (Temp.Filename);
+   --        Name  : constant String :=
+   --                  (if Found.Is_Valid
+   --                   then Found.Value.Release.Constant_Reference.Name_Str
+   --                   else "");
+   --        Base  : constant Any_Path :=
+   --                  This.Working_Folder / "cache" / "pinned";
+   --     begin
+   --        if Name /= "" then
+   --           Ada.Directories.Create_Path (Base);
+   --
+   --           Ada.Directories.Rename (Temp.Filename, Base / Name);
+   --
+   --           return Base / Name;
+   --        else
+   --           Raise_Checked_Error ("No alire manifest found at the remote");
+   --        end if;
+   --     end;
+   --  end Prepare_Pinned_Remote;
 
    ------------------------------------
    -- Update_And_Deploy_Dependencies --

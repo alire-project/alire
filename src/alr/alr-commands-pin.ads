@@ -29,6 +29,7 @@ package Alr.Commands.Pin is
 private
 
    type Command is new Commands.Command with record
+      Commit  : aliased GNAT.Strings.String_Access;
       Pin_All : aliased Boolean;
       Unpin   : aliased Boolean;
       URL     : aliased GNAT.Strings.String_Access;

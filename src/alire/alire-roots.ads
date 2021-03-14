@@ -1,7 +1,8 @@
 private with AAA.Caches.Files;
 
-limited with Alire.Environment;
+with Alire.Conditional;
 with Alire.Containers;
+limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Properties;
@@ -165,6 +166,25 @@ package Alire.Roots is
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
+
+   type Remote_Pin_Result (Crate_Length : Natural) is record
+      Crate    : String (1 .. Crate_Length); -- May be empty for a "raw" remote
+      New_Dep  : Conditional.Dependencies;   -- Detected dep + old dep
+      Solution : Solutions.Solution;         -- With new pin
+   end record;
+
+   function Pinned_To_Remote (This        : in out Root;
+                              Crate       : String;
+                              URL         : String;
+                              Commit      : String;
+                              Must_Depend : Boolean)
+                              return Remote_Pin_Result;
+   --  Prepares a pin to a remote repo with specific commit. If crate is not
+   --  already a dependency, it will be added as top-level, unless Must_Depend,
+   --  in which case Checked_Error. If Commit = "", the default tip commit in
+   --  the remote will be used instead. If Crate = "", a valid root must be
+   --  found at the given commit. If Crate /= "" and Commit contains a root,
+   --  their crate name must match.
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 

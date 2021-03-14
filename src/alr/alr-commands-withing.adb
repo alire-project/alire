@@ -88,6 +88,42 @@ package body Alr.Commands.Withing is
                                                         Requested.Versions);
    end Add;
 
+   ---------------------
+   -- Add_Remote_Link --
+   ---------------------
+
+   procedure Add_Remote_Link (Cmd   : in out Command;
+                              Crate : String)
+   is
+      use Alire;
+      Old_Deps     : constant Conditional.Dependencies :=
+                       Cmd.Root.Release.Dependencies;
+      New_Solution : constant Roots.Remote_Pin_Result :=
+                       Cmd.Root.Pinned_To_Remote
+                         (Crate       => Crate,
+                          URL         => Cmd.URL.all,
+                          Commit      => Cmd.Commit.all,
+                          Must_Depend => False);
+      use type Conditional.Dependencies;
+   begin
+
+      --  Report crate detection at target destination
+
+      User_Input.Report_Pinned_Crate_Detection (+New_Solution.Crate,
+                                                New_Solution.Solution);
+
+      --  If we made here there were no errors adding the dependency
+      --  and storing the softlink. We can proceed to confirming the
+      --  replacement.
+
+      Replace_Current (Cmd,
+                       Old_Deps     => Old_Deps,
+                       New_Deps     => Old_Deps and New_Solution.New_Dep,
+                       Old_Solution => New_Solution.Solution);
+      --  We use the New_Solution with the softlink as previous solution, so
+      --  the pinned directory is used by the solver.
+   end Add_Remote_Link;
+
    ------------------
    -- Add_Softlink --
    ------------------
@@ -545,13 +581,31 @@ package body Alr.Commands.Withing is
          --  Must be Add, but it could be regular or softlink
 
          if Cmd.URL.all /= "" then
-            if Num_Arguments = 1 then
-               Add_Softlink (Cmd,
-                             Dep_Spec => Argument (1),
-                             Path     => Cmd.URL.all);
+            if Cmd.Commit.all /= "" or else
+              Alire.Utils.Starts_With (Cmd.URL.all, "git+") or else
+              Alire.Utils.Ends_With   (Cmd.URL.all, ".git") or else
+              Alire.Utils.Starts_With (Cmd.URL.all, "http")
+            then
+
+               --  Pin to remote repo
+
+               Add_Remote_Link (Cmd,
+                                Crate => (if Num_Arguments = 1
+                                          then Argument (1)
+                                          else ""));
+
             else
-               Detect_Softlink (Cmd,
-                                Cmd.URL.all);
+
+               --  Pin to local folder
+
+               if Num_Arguments = 1 then
+                  Add_Softlink (Cmd,
+                                Dep_Spec => Argument (1),
+                                Path     => Cmd.URL.all);
+               else
+                  Detect_Softlink (Cmd,
+                                   Cmd.URL.all);
+               end if;
             end if;
          else
             Cmd.Requires_Full_Index;
@@ -638,6 +692,13 @@ package body Alr.Commands.Withing is
                      Cmd.Graph'Access,
                      "", "--graph",
                      "Show ASCII graph of dependencies");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Commit'Access,
+         Long_Switch => "--commit=",
+         Argument    => "HASH",
+         Help        => "Commit to retrieve from repository");
 
       Define_Switch
         (Config      => Config,
