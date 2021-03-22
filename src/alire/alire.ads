@@ -113,7 +113,7 @@ package Alire with Preelaborate is
    --  Base type for paths in Alire. These paths are always platform-dependent
    --  and can be used directly with filesystem functions.
 
-   subtype Portable_Path is String with
+   type Portable_Path is new String with
      Dynamic_Predicate => (for all Char of Portable_Path => Char /= '\');
    --  A portable path always uses forward slashes. For use in the current
    --  platform, it should be adapted first.
