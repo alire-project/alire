@@ -115,7 +115,6 @@ package Alire.Solutions is
                      Link  : Externals.Softlinks.External)
                      return Solution
      with Pre => This.Depends_On (Crate);
-   --  Replace the fulfilment of Crate with a "softlinked" external
 
    function Linking (This  : Solution;
                      Crate : Crate_Name;

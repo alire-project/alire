@@ -6,6 +6,7 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
+with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Root;
 with Alire.Solutions.Diffs;
@@ -297,6 +298,17 @@ package body Alire.Solutions is
                      Link  : Externals.Softlinks.External)
                      return Solution
    is
+      use Alire.OS_Lib.Operators;
+
+      ----------
+      -- Join --
+      ----------
+
+      function Join (Parent, Child : Any_Path) return Any_Path
+      is (if Check_Absolute_Path (Child)
+          then Child
+          else Parent / Child);
+
       Linked_Root : constant Roots.Optional.Root :=
                       Roots.Optional.Detect_Root (Link.Path);
    begin
@@ -307,12 +319,15 @@ package body Alire.Solutions is
       do
          if Linked_Root.Is_Valid and then Linked_Root.Value.Has_Lockfile then
             for Dep of Linked_Root.Value.Solution.Links loop
-               Result :=
-                 Result
-                   .Depending_On (Dep)
-                   .Linking
-                     (Dep.Crate,
-                      Linked_Root.Value.Solution.State (Dep.Crate).Link.Path);
+               Result := Result
+                 .Depending_On (Dep)
+                 .Linking
+                   (Crate => Dep.Crate,
+                    Link  =>
+                      Externals.Softlinks.New_Softlink
+                        (Join (Link.Path,
+                               Linked_Root.Value.Solution.State (Dep.Crate)
+                                                         .Link.Path)));
             end loop;
          end if;
       end return;
