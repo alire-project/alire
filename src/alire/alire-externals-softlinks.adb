@@ -3,8 +3,11 @@ with Ada.Directories;
 with Alire.URI;
 with Alire.Utils.TTY;
 
+with GNATCOLL.VFS;
+
 package body Alire.Externals.Softlinks is
 
+   package Adirs renames Ada.Directories;
    use TOML;
 
    package Keys is
@@ -48,16 +51,22 @@ package body Alire.Externals.Softlinks is
                            & Utils.TTY.Emph (Path));
          end if;
 
-         --  Store the path as absolute, so later usage does not depend on the
-         --  exact location the user is using these paths
+         --  Store the path as a minimal relative path, so cloning a monorepo
+         --  will work as-is, when originally given as a relative path
 
          declare
-            Absolute : constant Absolute_Path :=
-                         Ada.Directories.Full_Name (Path);
+            use GNATCOLL.VFS;
+            Target : constant Filesystem_String :=
+                       (if Check_Absolute_Path (From)
+                        then +From
+                        else GNATCOLL.VFS.Relative_Path
+                          (File => Create (+Adirs.Full_Name (From)),
+                           From => Create (+Adirs.Current_Directory)));
+
          begin
             return (Externals.External with
-                    Path_Length => Absolute'Length,
-                    Path        => Absolute);
+                    Path_Length => Target'Length,
+                    Path        => Any_Path (Target));
          end;
       end;
    end New_Softlink;
