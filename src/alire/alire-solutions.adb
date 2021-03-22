@@ -6,6 +6,7 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
+with Alire.Roots.Optional;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -286,6 +287,36 @@ package body Alire.Solutions is
             --  one missing a crate in the other solution is worse.
       end case;
    end Is_Better;
+
+   -------------
+   -- Linking --
+   -------------
+
+   function Linking (This  : Solution;
+                     Crate : Crate_Name;
+                     Link  : Externals.Softlinks.External)
+                     return Solution
+   is
+      Linked_Root : constant Roots.Optional.Root :=
+                      Roots.Optional.Detect_Root (Link.Path);
+   begin
+      return Result : Solution := (Solved       => True,
+                                   Dependencies =>
+                                     This.Dependencies.Including
+                                       (This.State (Crate).Linking (Link)))
+      do
+         if Linked_Root.Is_Valid and then Linked_Root.Value.Has_Lockfile then
+            for Dep of Linked_Root.Value.Solution.Links loop
+               Result :=
+                 Result
+                   .Depending_On (Dep)
+                   .Linking
+                     (Dep.Crate,
+                      Linked_Root.Value.Solution.State (Dep.Crate).Link.Path);
+            end loop;
+         end if;
+      end return;
+   end Linking;
 
    ------------------
    -- New_Solution --

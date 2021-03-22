@@ -453,18 +453,6 @@ private
 
    function Linking (This  : Solution;
                      Crate : Crate_Name;
-                     Link  : Externals.Softlinks.External)
-                     return Solution
-   is (Solved       => True,
-       Dependencies =>
-          This.Dependencies.Including (This.State (Crate).Linking (Link)));
-
-   -------------
-   -- Linking --
-   -------------
-
-   function Linking (This  : Solution;
-                     Crate : Crate_Name;
                      Path  : Any_Path)
                      return Solution
    is (This.Linking (Crate, Externals.Softlinks.New_Softlink (Path)));
