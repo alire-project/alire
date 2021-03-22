@@ -451,6 +451,7 @@ package body Alire.Roots is
                           Crate : Crate_Name)
                           return Any_Path
    is
+      package Adirs renames Ada.Directories;
       Deps_Dir : constant Any_Path := This.Dependencies_Dir;
    begin
       if This.Release.Element.Name = Crate then
@@ -458,7 +459,7 @@ package body Alire.Roots is
       elsif This.Solution.State (Crate).Is_Solved then
          return Deps_Dir / Release (This, Crate).Unique_Folder;
       elsif This.Solution.State (Crate).Is_Linked then
-         return This.Solution.State (Crate).Link.Path;
+         return Adirs.Full_Name (This.Solution.State (Crate).Link.Path);
       else
          raise Program_Error with "release must be either solved or linked";
       end if;

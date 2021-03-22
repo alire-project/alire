@@ -58,18 +58,18 @@ package body Alire.Externals.Softlinks is
          declare
             use GNATCOLL.VFS;
             Target : constant Filesystem_String :=
-                       (if Check_Absolute_Path (From)
-                        then +From
+                       (if Check_Absolute_Path (Path)
+                        then +Path
                         else GNATCOLL.VFS.Relative_Path
-                          (File => Create (+Adirs.Full_Name (From)),
+                          (File => Create (+Adirs.Full_Name (Path)),
                            From => Create (+Adirs.Current_Directory)));
 
          begin
-            if Check_Absolute_Path (From) then
+            if Check_Absolute_Path (Path) then
                return (Externals.External with
                        Relative    => False,
-                       Path_Length => From'Length,
-                       Abs_Path    => From);
+                       Path_Length => Path'Length,
+                       Abs_Path    => Path);
             else
                return (Externals.External with
                        Relative    => True,
