@@ -67,12 +67,28 @@ package body Alire.VCSs.Git is
                    From : URL;
                    Into : Directory_Path)
                    return Outcome
+   is (This.Clone (From, Into, Branch => ""));
+
+   -----------
+   -- Clone --
+   -----------
+
+   not overriding
+   function Clone (This   : VCS;
+                   From   : URL;
+                   Into   : Directory_Path;
+                   Branch : String)
+                   return Outcome
    is
       pragma Unreferenced (This);
       Extra : constant String_Vector :=
-        Empty_Vector & (if Log_Level < Trace.Info
-                        then "-q"
-                        else "--progress");
+                Empty_Vector
+                & (if Log_Level < Trace.Info
+                   then "-q"
+                   else "--progress")
+                & (if Branch /= ""
+                   then Empty_Vector & "--branch" & Branch
+                   else Empty_Vector);
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
