@@ -953,7 +953,10 @@ package body Alire.Publish is
 
             declare
                use Utils;
-               Raw_URL   : constant String := Git.Fetch_URL (Root_Path);
+               Raw_URL   : constant String :=
+                             Git.Fetch_URL
+                               (Root_Path,
+                                Origin => Git.Remote (Root_Path));
                --  The one reported by the repo, in its public form
 
                Fetch_URL : constant String :=

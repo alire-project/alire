@@ -22,6 +22,14 @@ package Alire.VCSs.Git is
                    return Outcome;
 
    not overriding
+   function Clone (This   : VCS;
+                   From   : URL;
+                   Into   : Directory_Path;
+                   Branch : String)
+                   return Outcome;
+   --  Specify a branch to check out after cloning
+
+   not overriding
    function Revision_Commit (This   : VCS;
                              Repo   : Directory_Path;
                              Rev    : String)
