@@ -21,7 +21,7 @@ run_alr('with', 'hello^1')
 run_alr('with', 'superhello')
 
 # Add more dependencies, without a proper release
-run_alr('with', 'wip', '--use', '/fake')
+run_alr('with', 'wip', '--use', '/fake', '--force')  # force bc dir is missing
 run_alr('with', 'unobtanium', '--force')
 
 # Verify printout (but for test-dependent path)
