@@ -177,6 +177,11 @@ package body Alr.Commands.Pin is
 
             --  Pin to dir
 
+            if not Alire.Utils.User_Input.Approve_Dir (Cmd.URL.all) then
+               Trace.Info ("Abandoned by user.");
+               return;
+            end if;
+
             Cmd.Requires_Full_Index; -- Next statement recomputes a solution
 
             New_Sol := Alire.Pinning.Pin_To

@@ -1,6 +1,8 @@
 with Ada.Text_IO;
 with Ada.Characters.Handling;
 
+with GNAT.OS_Lib;
+
 with Interfaces.C_Streams;
 
 with Alire.Utils.TTY;
@@ -24,6 +26,28 @@ package body Alire.Utils.User_Input is
        when Yes    => "yes",
        when No     => "no",
        when Always => "always");
+
+   ------------------
+   -- Approve_Path --
+   ------------------
+
+   function Approve_Dir (Dir   : Any_Path;
+                         Force : Boolean := Alire.Force)
+                         return Boolean
+   is
+   begin
+      if not GNAT.OS_Lib.Is_Directory (Dir) then
+         return Query
+           (Question => TTY.Error (if TTY.Color_Enabled then "⚠" else "!")
+                        & " Given path does not exist: " & TTY.URL (Dir)
+                        & ASCII.LF & "Do you want to continue anyway?",
+            Valid    => (Yes | No => True, others => False),
+            Default  => (if Force then Yes else No))
+           = Yes;
+      end if;
+
+      return True;
+   end Approve_Dir;
 
    ------------
    -- Is_TTY --
