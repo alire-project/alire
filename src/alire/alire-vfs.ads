@@ -1,16 +1,22 @@
 with Ada.Containers.Vectors;
 
+private with Alire.Utils;
+
+private with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
 
 package Alire.VFS is
 
+   --  Portable paths are relative and use forward slashes. Absolute paths
+   --  cannot be portable.
+
+   function To_Portable (Path : Relative_Path) return Portable_Path;
+
+   function To_Native (Path : Portable_Path) return Relative_Path;
+
    --  Wrapper types on top of GNATCOLL.VFS that hide pointers/deallocations.
    --  Some types are renamed here to be able to rely on this spec without
    --  needing to mix both Alire.VFS and GNATCOLL.VFS.
-
-   --  TODO: progressively migrate use of plain Strings in Alire for filesystem
-   --  strings to Filesystem_String/Virtual_File. Likewise for the mix of
-   --  Platform_Independent_Path, Absolute/Relative_Path, and related chaos.
 
    --  Basic types:
 
@@ -57,5 +63,28 @@ package Alire.VFS is
       Filter  : Read_Dir_Filter := All_Files;
       Special : Boolean         := True) return Virtual_File_Vector;
    --  As GNATCOLL's one, plus if not Special, omit "." and "..".
+
+private
+
+   use all type GNATCOLL.OS.OS_Type;
+
+   -----------------
+   -- To_Portable --
+   -----------------
+
+   function To_Portable (Path : Relative_Path) return Portable_Path
+   is (case GNATCOLL.OS.Constants.OS is
+          when MacOS | Unix => Portable_Path (Path),
+          when Windows      => Portable_Path (Utils.Replace (Path, "\", "/")));
+
+   ---------------
+   -- To_Native --
+   ---------------
+
+   function To_Native (Path : Portable_Path) return Relative_Path
+   is (case GNATCOLL.OS.Constants.OS is
+          when MacOS | Unix => Relative_Path (Path),
+          when Windows      => Relative_Path
+                                 (Utils.Replace (String (Path), "/", "\")));
 
 end Alire.VFS;

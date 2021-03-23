@@ -3,16 +3,20 @@ with Ada.Directories;
 with Alire.URI;
 with Alire.Utils.TTY;
 
+with GNATCOLL.VFS;
+
 package body Alire.Externals.Softlinks is
 
+   package Adirs renames Ada.Directories;
    use TOML;
 
    package Keys is
 
       --  TOML Keys used locally
 
-      Kind : constant String := "kind";
-      Path : constant String := "path";
+      Kind     : constant String := "kind";
+      Path     : constant String := "path";
+      Relative : constant String := "relative";
 
    end Keys;
 
@@ -48,16 +52,30 @@ package body Alire.Externals.Softlinks is
                            & Utils.TTY.Emph (Path));
          end if;
 
-         --  Store the path as absolute, so later usage does not depend on the
-         --  exact location the user is using these paths
+         --  Store the path as a minimal relative path, so cloning a monorepo
+         --  will work as-is, when originally given as a relative path
 
          declare
-            Absolute : constant Absolute_Path :=
-                         Ada.Directories.Full_Name (Path);
+            use GNATCOLL.VFS;
+            Target : constant Filesystem_String :=
+                       (if Check_Absolute_Path (Path)
+                        then +Path
+                        else GNATCOLL.VFS.Relative_Path
+                          (File => Create (+Adirs.Full_Name (Path)),
+                           From => Create (+Adirs.Current_Directory)));
+
          begin
-            return (Externals.External with
-                    Path_Length => Absolute'Length,
-                    Path        => Absolute);
+            if Check_Absolute_Path (Path) then
+               return (Externals.External with
+                       Relative    => False,
+                       Path_Length => Path'Length,
+                       Abs_Path    => Path);
+            else
+               return (Externals.External with
+                       Relative    => True,
+                       Path_Length => Target'Length,
+                       Rel_Path    => Alire.VFS.To_Portable (+Target));
+            end if;
          end;
       end;
    end New_Softlink;
@@ -72,11 +90,18 @@ package body Alire.Externals.Softlinks is
    begin
       Table.Set (Keys.Kind,
                  Create_String (Utils.To_Lower_Case (Softlink'Img)));
+      Table.Set (Keys.Relative,
+                 Create_Boolean (This.Relative));
 
-      Table.Set (Keys.Path,
-                 Create_String ("file:" & This.Path));
-      --  Ensure file: is there so absolute paths on Windows do not report the
-      --  drive letter as the scheme (file:C:\\ is correct, C:\\ is not).
+      if This.Relative then
+         Table.Set (Keys.Path,
+                    Create_String ("file:" & String (This.Rel_Path)));
+      else
+         Table.Set (Keys.Path,
+                    Create_String ("file:" & This.Abs_Path));
+      end if;
+      --  "file:" is there so absolute paths on Windows do not report the drive
+      --  letter as the scheme (file:C:\\ is correct, C:\\ is not).
 
       return Table;
    end To_TOML;

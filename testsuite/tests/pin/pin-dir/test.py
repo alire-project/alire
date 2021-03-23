@@ -32,7 +32,7 @@ p = run_alr('with', '--solve')
 s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\^1.0.0 \(direct,linked'
-             ',pin=.*' + s + 'pin__pin-dir' + s +
+             ',pin=..' + s +  # check that relative path is preserved
              'crates' + s + 'libhello_1.0.0\).*',
              p.out, flags=re.S)
 

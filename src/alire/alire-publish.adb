@@ -454,14 +454,14 @@ package body Alire.Publish is
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
-                  & TOML_Index.Manifest_Path (Name))
+                  & String (TOML_Index.Manifest_Path (Name)))
                & " to create a pull request against the community index.");
          else
             Log_Info
               ("Please create a pull request against the community index at "
                & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
                & " including this file at "
-               & TTY.URL (TOML_Index.Manifest_Path (Name)));
+               & TTY.URL (String (TOML_Index.Manifest_Path (Name))));
          end if;
 
       exception

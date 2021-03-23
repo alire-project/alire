@@ -36,7 +36,7 @@ p = run_alr('show', '--solve')
 s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\^1 \(direct,linked'
-             ',pin=.*' + s + 'pin__change-type' + s +
+             ',pin=..' + s +  # relative link should be preserved
              'crates' + s + 'libhello_1.0.0\).*',
              p.out, flags=re.S)
 

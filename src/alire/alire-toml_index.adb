@@ -476,7 +476,8 @@ package body Alire.TOML_Index is
    function Manifest_Path (Crate : Crate_Name) return Portable_Path is
       Name : constant String := +Crate;
    begin
-      return "index/" & Name (Name'First .. Name'First + 1) & "/" & Name;
+      return Portable_Path
+               ("index/" & Name (Name'First .. Name'First + 1) & "/" & Name);
    end Manifest_Path;
 
 end Alire.TOML_Index;

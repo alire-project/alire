@@ -1,5 +1,6 @@
 with Alire.Interfaces;
 with Alire.TOML_Adapters;
+private with Alire.VFS;
 
 with TOML;
 
@@ -50,10 +51,13 @@ package Alire.Externals.Softlinks is
 
 private
 
-   type External (Path_Length : Positive) is
+   type External (Relative : Boolean; Path_Length : Positive) is
      new Externals.External
      and Interfaces.Tomifiable with record
-      Path : Any_Path (1 .. Path_Length);
+      case Relative is
+         when True  => Rel_Path : Portable_Path (1 .. Path_Length);
+         when False => Abs_Path : Absolute_Path (1 .. Path_Length);
+      end case;
    end record;
 
    -----------
@@ -76,7 +80,9 @@ private
    ----------
 
    function Path (This : External) return Any_Path
-   is (This.Path);
+   is (if This.Relative
+       then VFS.To_Native (This.Rel_Path)
+       else This.Abs_Path);
 
    -------------------
    -- Project_Paths --
