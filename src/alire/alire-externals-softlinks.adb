@@ -47,10 +47,6 @@ package body Alire.Externals.Softlinks is
       declare
          Path : constant Any_Path := URI.Local_Path (From);
       begin
-         if not GNAT.OS_Lib.Is_Directory (Path) then
-            Trace.Warning ("Given path does not exist: "
-                           & Utils.TTY.Emph (Path));
-         end if;
 
          --  Store the path as a minimal relative path, so cloning a monorepo
          --  will work as-is, when originally given as a relative path

@@ -312,6 +312,9 @@ package body Alire.Solutions is
       Linked_Root : constant Roots.Optional.Root :=
                       Roots.Optional.Detect_Root (Link.Path);
    begin
+
+      --  Recursively find any other links
+
       return Result : Solution := (Solved       => True,
                                    Dependencies =>
                                      This.Dependencies.Including
