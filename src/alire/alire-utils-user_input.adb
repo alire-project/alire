@@ -27,9 +27,9 @@ package body Alire.Utils.User_Input is
        when No     => "no",
        when Always => "always");
 
-   ------------------
-   -- Approve_Path --
-   ------------------
+   -----------------
+   -- Approve_Dir --
+   -----------------
 
    function Approve_Dir (Dir   : Any_Path;
                          Force : Boolean := Alire.Force)

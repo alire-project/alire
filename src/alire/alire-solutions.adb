@@ -321,17 +321,36 @@ package body Alire.Solutions is
                                        (This.State (Crate).Linking (Link)))
       do
          if Linked_Root.Is_Valid and then Linked_Root.Value.Has_Lockfile then
-            for Dep of Linked_Root.Value.Solution.Links loop
-               Result := Result
-                 .Depending_On (Dep)
-                 .Linking
-                   (Crate => Dep.Crate,
-                    Link  =>
-                      Externals.Softlinks.New_Softlink
-                        (Join (Link.Path,
-                               Linked_Root.Value.Solution.State (Dep.Crate)
-                                                         .Link.Path)));
-            end loop;
+            declare
+               Linked_Solution : Solution renames Linked_Root.Value.Solution;
+            begin
+
+               --  Go through any links in the linked release
+
+               for Dep of Linked_Solution.Links loop
+                  declare
+
+                     --  Create the new link for our own solution, composing
+                     --  relative paths when possible.
+
+                     New_Link : constant Externals.Softlinks.External :=
+                                  Externals.Softlinks.New_Softlink
+                                    (Join
+                                       (Parent => Link.Path,
+                                        Child  => Linked_Solution.State
+                                                    (Dep.Crate).Link.Path));
+                  begin
+
+                     --  We may or not already depend on the transitively
+                     --  linked release. Just in case, we add the dependency
+                     --  before the link.
+
+                     Result := Result.Depending_On (Dep)
+                                     .Linking (Crate => Dep.Crate,
+                                               Link  => New_Link);
+                  end;
+               end loop;
+            end;
          end if;
       end return;
    end Linking;
