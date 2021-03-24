@@ -100,6 +100,15 @@ package body Alr.Commands.Withing is
       New_Dep   : constant Alire.Dependencies.Dependency :=
                     Alire.Dependencies.From_Milestones (Requested);
    begin
+      --  Confirm target dir
+
+      if not Alire.Utils.User_Input.Approve_Dir (Cmd.URL.all) then
+         Trace.Info ("Abandoned by user.");
+         return;
+      end if;
+
+      --  Prepare new solution
+
       declare
          use Alire;
          use type Conditional.Dependencies;

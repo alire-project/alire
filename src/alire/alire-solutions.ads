@@ -311,10 +311,12 @@ package Alire.Solutions is
    overriding
    function To_TOML (This : Solution) return TOML.TOML_Value with
      Pre => (for all Release of This.Releases =>
-               Release.Dependencies.Is_Unconditional and then
-               Release.Properties.Is_Unconditional);
+               This.State (Release.Name).Is_Linked
+               or else (Release.Dependencies.Is_Unconditional
+                        and then Release.Properties.Is_Unconditional));
    --  Requires releases not to have dynamic expressions. This is currently
-   --  guaranteed by the states storing static versions of releases.
+   --  guaranteed by the states storing static versions of releases. We do not
+   --  store linked releases, so in that case it does not matter.
 
    ---------------
    -- Utilities --
@@ -446,18 +448,6 @@ private
 
    function Is_Complete (This : Solution) return Boolean
    is (This.Composition <= Releases);
-
-   -------------
-   -- Linking --
-   -------------
-
-   function Linking (This  : Solution;
-                     Crate : Crate_Name;
-                     Link  : Externals.Softlinks.External)
-                     return Solution
-   is (Solved       => True,
-       Dependencies =>
-          This.Dependencies.Including (This.State (Crate).Linking (Link)));
 
    -------------
    -- Linking --

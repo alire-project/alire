@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Interfaces;
 with Alire.TOML_Adapters;
 private with Alire.VFS;
@@ -89,6 +91,8 @@ private
    -------------------
 
    function Project_Paths (This : External) return Utils.String_Vector
-   is (Utils.To_Vector (This.Path));
+   is (Utils.To_Vector (Ada.Directories.Full_Name (This.Path)));
+   --  As the path may be relative, we make it absolute to avoid duplicates
+   --  with absolute paths reported by a Release.Project_Paths.
 
 end Alire.Externals.Softlinks;

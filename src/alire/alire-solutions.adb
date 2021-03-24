@@ -6,6 +6,8 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
+with Alire.OS_Lib;
+with Alire.Roots.Optional;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -286,6 +288,72 @@ package body Alire.Solutions is
             --  one missing a crate in the other solution is worse.
       end case;
    end Is_Better;
+
+   -------------
+   -- Linking --
+   -------------
+
+   function Linking (This  : Solution;
+                     Crate : Crate_Name;
+                     Link  : Externals.Softlinks.External)
+                     return Solution
+   is
+      use Alire.OS_Lib.Operators;
+
+      ----------
+      -- Join --
+      ----------
+
+      function Join (Parent, Child : Any_Path) return Any_Path
+      is (if Check_Absolute_Path (Child)
+          then Child
+          else Parent / Child);
+
+      Linked_Root : constant Roots.Optional.Root :=
+                      Roots.Optional.Detect_Root (Link.Path);
+   begin
+
+      --  Recursively find any other links
+
+      return Result : Solution := (Solved       => True,
+                                   Dependencies =>
+                                     This.Dependencies.Including
+                                       (This.State (Crate).Linking (Link)))
+      do
+         if Linked_Root.Is_Valid and then Linked_Root.Value.Has_Lockfile then
+            declare
+               Linked_Solution : Solution renames Linked_Root.Value.Solution;
+            begin
+
+               --  Go through any links in the linked release
+
+               for Dep of Linked_Solution.Links loop
+                  declare
+
+                     --  Create the new link for our own solution, composing
+                     --  relative paths when possible.
+
+                     New_Link : constant Externals.Softlinks.External :=
+                                  Externals.Softlinks.New_Softlink
+                                    (Join
+                                       (Parent => Link.Path,
+                                        Child  => Linked_Solution.State
+                                                    (Dep.Crate).Link.Path));
+                  begin
+
+                     --  We may or not already depend on the transitively
+                     --  linked release. Just in case, we add the dependency
+                     --  before the link.
+
+                     Result := Result.Depending_On (Dep)
+                                     .Linking (Crate => Dep.Crate,
+                                               Link  => New_Link);
+                  end;
+               end loop;
+            end;
+         end if;
+      end return;
+   end Linking;
 
    ------------------
    -- New_Solution --

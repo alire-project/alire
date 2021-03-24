@@ -76,4 +76,11 @@ package Alire.Utils.User_Input is
    --  True when the user answers positively. Defaults to Yes when the new
    --  solution is complete, or when Alire.Force.
 
+   function Approve_Dir (Dir   : Any_Path;
+                         Force : Boolean := Alire.Force)
+                         return Boolean;
+   --  Some commands receive a path from the user (e.g., pinning). If such path
+   --  does not exist, we allow to continue only after user confirmation (or
+   --  forcing). Returns whether to proceed.
+
 end Alire.Utils.User_Input;
