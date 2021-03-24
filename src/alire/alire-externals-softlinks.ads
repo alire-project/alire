@@ -1,7 +1,7 @@
 with Ada.Directories;
 
 with Alire.Interfaces;
-with Alire.Origins;
+with Alire.Origins.Deployers;
 with Alire.TOML_Adapters;
 private with Alire.VFS;
 
@@ -27,6 +27,10 @@ package Alire.Externals.Softlinks is
    --  has been/will be deployed. Path must be relative to the root using the
    --  softlink.
 
+   function Deploy (This : External) return Outcome;
+   --  For a remote pin, redeploy sources if they're not at the expected
+   --  location. For a local pin, do nothing.
+
    overriding
    function Detect (This        : External;
                     Unused_Name : Crate_Name) return Containers.Release_Set
@@ -34,8 +38,14 @@ package Alire.Externals.Softlinks is
    --  Never detected, as we want these crates to work as a wildcard for any
    --  version.
 
+   function Is_Remote (This : External) return Boolean;
+   --  Say if this is a softlink with a remote origin
+
    function Is_Valid (This : External) return Boolean;
    --  Check that the pointed-to folder exists
+
+   function Is_Broken (This : External) return Boolean
+   is (not This.Is_Valid);
 
    overriding
    function Image (This : External) return String;
@@ -79,6 +89,18 @@ private
       end case;
    end record;
 
+   ------------
+   -- Deploy --
+   ------------
+
+   function Deploy (This : External) return Outcome
+   is (if This.Has_Remote
+       then (if GNAT.OS_Lib.Is_Directory (This.Path)
+             then Outcome_Success
+             else Origins.Deployers.New_Deployer (This.Remote.Remote)
+                                   .Deploy (This.Path))
+       else Outcome_Success);
+
    -----------
    -- Image --
    -----------
@@ -86,6 +108,13 @@ private
    overriding
    function Image (This : External) return String
    is ("User-provided at " & This.Path);
+
+   ---------------
+   -- Is_Remote --
+   ---------------
+
+   function Is_Remote (This : External) return Boolean
+   is (This.Has_Remote);
 
    --------------
    -- Is_Valid --

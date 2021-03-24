@@ -181,6 +181,16 @@ package body Alire.Roots is
       Round     : Natural := 0;
    begin
 
+      --  Begin by retrieving any broken remote, so it is ready for actions
+
+      for Dep of This.Solution.Links loop
+         if This.Solution.State (Dep.Crate).Link.Is_Remote and then
+           This.Solution.State (Dep.Crate).Link.Is_Broken
+         then
+            This.Solution.State (Dep.Crate).Link.Deploy.Assert;
+         end if;
+      end loop;
+
       --  Prepare environment for any post-fetch actions. This must be done
       --  after the lockfile on disk is written, since the root will read
       --  dependencies from there.
@@ -567,6 +577,10 @@ package body Alire.Roots is
       elsif (for some Rel of This.Solution.Releases =>
                This.Solution.State (Rel.Name).Is_Solved and then
                not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
+        or else
+          (for some Dep of This.Solution.Links =>
+             This.Solution.State (Dep.Crate).Link.Is_Remote and then
+             This.Solution.State (Dep.Crate).Link.Is_Broken)
       then
          Trace.Info ("Detected missing dependencies, updating workspace...");
          --  Some dependency is missing; redeploy. Should we clean first ???
