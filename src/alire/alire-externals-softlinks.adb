@@ -1,5 +1,3 @@
-with Ada.Directories;
-
 with Alire.URI;
 with Alire.Utils.TTY;
 
