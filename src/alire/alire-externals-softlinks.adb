@@ -52,7 +52,7 @@ package body Alire.Externals.Softlinks is
                         Path   : Relative_Path) return External
    is (Externals.External with
        Has_Remote  => True,
-       Remote      => (Used => True, Remote => Origin),
+       Remote      => (Used => True, Origin => Origin),
        Relative    => True,
        Path_Length => Path'Length,
        Rel_Path    => Alire.VFS.To_Portable (Path));
@@ -123,7 +123,7 @@ package body Alire.Externals.Softlinks is
 
       if This.Has_Remote then
          Table.Set (Keys.Origin,
-                    This.Remote.Remote.To_TOML);
+                    This.Remote.Origin.To_TOML);
       end if;
 
       if This.Relative then

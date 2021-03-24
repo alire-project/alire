@@ -50,7 +50,7 @@ package Alire.Origins is
      with Pre => This.Kind in VCS_Kinds;
    function URL_With_Commit (This : Origin) return Alire.URL
      with Pre => This.Kind in VCS_Kinds;
-   --  Append commit as '@commit'
+   --  Append commit as '#commit'
 
    function Path (This : Origin) return String
      with Pre => This.Kind = Filesystem;
@@ -234,7 +234,7 @@ private
    function Commit (This : Origin) return String is
      (+This.Data.Commit);
    function URL_With_Commit (This : Origin) return Alire.URL is
-     (This.URL & "@" & This.Commit);
+     (This.URL & "#" & This.Commit);
 
    function Path (This : Origin) return String is (+This.Data.Path);
 

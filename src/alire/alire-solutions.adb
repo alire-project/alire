@@ -425,19 +425,30 @@ package body Alire.Solutions is
          Trace.Log ("Dependencies (solution):", Level);
 
          for Rel of This.Releases loop
-            Trace.Log ("   " & Rel.Milestone.TTY_Image
-                       & (if This.State (Rel.Name).Is_Pinned or else
-                             This.State (Rel.Name).Is_Linked
-                         then TTY.Emph (" (pinned)")
-                         else "")
-                       & (if Detailed
-                         then " (origin: "
-                             & (if This.State (Rel.Name).Is_Linked
-                                then TTY.URL (This.State (Rel.Name).Link.Path)
-                                else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
-                             & ")"
-                         else ""),
-                       Level);
+            declare
+               Dep : Dependencies.States.State renames This.State (Rel.Name);
+            begin
+               Trace.Log
+                 ("   "
+                  & Rel.Milestone.TTY_Image
+                  & (if Dep.Is_Pinned or else Dep.Is_Linked
+                     then TTY.Emph (" (pinned)")
+                     else "")
+                  & (if Detailed
+                     then " (origin: "
+                          & (if Dep.Is_Linked
+                             then TTY.URL (Dep.Link.Path)
+                                  & (if Dep.Link.Is_Remote
+                                     then " from "
+                                          & TTY.URL (Dep.Link.Remote.URL)
+                                          & "#"
+                                          & TTY.Emph (Dep.Link.Remote.Commit)
+                                     else "") -- no remote
+                             else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
+                          & ")" -- origin completed
+                    else ""),   -- no details
+                  Level);
+            end;
          end loop;
       end if;
 

@@ -23,12 +23,12 @@ package Alire.Externals.Softlinks is
 
    function New_Remote (Origin : Origins.Origin;
                         Path   : Relative_Path) return External;
-   --  Create a softlink with an associated remote source. Path is where it
+   --  Create a softlink with an associated Origin source. Path is where it
    --  has been/will be deployed. Path must be relative to the root using the
    --  softlink.
 
    function Deploy (This : External) return Outcome;
-   --  For a remote pin, redeploy sources if they're not at the expected
+   --  For a Origin pin, redeploy sources if they're not at the expected
    --  location. For a local pin, do nothing.
 
    overriding
@@ -39,7 +39,7 @@ package Alire.Externals.Softlinks is
    --  version.
 
    function Is_Remote (This : External) return Boolean;
-   --  Say if this is a softlink with a remote origin
+   --  Say if this is a softlink with a Origin origin
 
    function Is_Valid (This : External) return Boolean;
    --  Check that the pointed-to folder exists
@@ -65,6 +65,9 @@ package Alire.Externals.Softlinks is
 
    function Path (This : External) return Any_Path;
 
+   function Remote (This : External) return Origins.Origin
+     with Pre => This.Is_Remote;
+
    function From_TOML (Table : TOML_Adapters.Key_Queue) return External;
 
    overriding
@@ -74,7 +77,7 @@ private
 
    type Optional_Remote (Used : Boolean) is record
       case Used is
-         when True => Remote : Origins.Origin;
+         when True => Origin : Origins.Origin;
          when False => null;
       end case;
    end record;
@@ -97,7 +100,7 @@ private
    is (if This.Has_Remote
        then (if GNAT.OS_Lib.Is_Directory (This.Path)
              then Outcome_Success
-             else Origins.Deployers.New_Deployer (This.Remote.Remote)
+             else Origins.Deployers.New_Deployer (This.Remote.Origin)
                                    .Deploy (This.Path))
        else Outcome_Success);
 
@@ -140,5 +143,12 @@ private
    is (Utils.To_Vector (Ada.Directories.Full_Name (This.Path)));
    --  As the path may be relative, we make it absolute to avoid duplicates
    --  with absolute paths reported by a Release.Project_Paths.
+
+   ------------
+   -- Origin --
+   ------------
+
+   function Remote (This : External) return Origins.Origin
+   is (This.Remote.Origin);
 
 end Alire.Externals.Softlinks;
