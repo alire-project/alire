@@ -30,6 +30,11 @@ package Alire.Dependencies with Preelaborate is
       Version : Semantic_Versioning.Version)
       return Dependency;
 
+   function From_String (Spec : String) return Dependency;
+   --  Intended to parse command-line dependencies given as crate[subset]:
+   --  alr^1.0, alr=1.0, alr~0.7, etc. If no subset is specified, Any version
+   --  is returned. May raise Checked_Error if parsing cannot succeed.
+
    function Crate (Dep : Dependency) return Crate_Name;
 
    function Versions (Dep : Dependency)
@@ -47,9 +52,6 @@ package Alire.Dependencies with Preelaborate is
 
    overriding
    function Key (Dep : Dependency) return String;
-
-   function From_Milestones (Allowed : Milestones.Allowed_Milestones)
-                             return Dependency;
 
    function From_TOML (Key    : String;
                        Value  : TOML.TOML_Value) return Dependency with
@@ -104,10 +106,6 @@ private
    function Versions (Dep : Dependency)
                       return Semantic_Versioning.Extended.Version_Set
    is (Dep.Versions);
-
-   function From_Milestones (Allowed : Milestones.Allowed_Milestones)
-                             return Dependency is
-     (New_Dependency (Allowed.Crate, Allowed.Versions));
 
    function Image (Dep : Dependency) return String is
      ((+Dep.Crate) & Dep.Versions.Image);

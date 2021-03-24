@@ -1,8 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-with Alire.Hashes;
 with Alire.Index_On_Disk;
-with Alire.Outcomes.Indefinite;
 
 package Alire.Features.Index is
 
@@ -53,18 +51,5 @@ package Alire.Features.Index is
    --  Adds the community index, if not already configured. If configured,
    --  re-adds it at the required branch by Index.Community_Branch with the
    --  same priority (i.e., maintaining the relative ordering);
-
-   ------------------------
-   --  Hashing utilities --
-   ------------------------
-
-   package Hashing_Outcomes is new Outcomes.Indefinite (Hashes.Any_Hash);
-
-   function Hash_Origin (Kind       : Hashes.Kinds;
-                         Origin_Img : URL)
-                         return Hashing_Outcomes.Outcome;
-   --  Given a valid image of an origin, compute its hash as it would appear
-   --  in the index. The origin is retrieved into a temporary folder that is
-   --  deleted after use.
 
 end Alire.Features.Index;

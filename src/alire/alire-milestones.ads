@@ -1,6 +1,6 @@
 with Alire.Interfaces;
 
-with Semantic_Versioning.Extended;
+with Semantic_Versioning;
 
 private with Alire.Utils.TTY;
 
@@ -23,37 +23,7 @@ package Alire.Milestones with Preelaborate is
    overriding
    function TTY_Image (M : Milestone) return String;
 
-   -----------------------
-   -- Milestone parsing --
-   -----------------------
-
-   type Allowed_Milestones (<>) is tagged private;
-
-   function Crate_Versions (Spec : String) return Allowed_Milestones;
-   --  Either valid set or Constraint_Error
-   --  If no version was specified, Any version is returned
-   --  Syntax: name[extended version set expression]
-
-   function Crate (This : Allowed_Milestones) return Crate_Name;
-   function Versions (This : Allowed_Milestones)
-                      return Semantic_Versioning.Extended.Version_Set;
-
-   function Image (This : Allowed_Milestones) return String;
-   function TTY_Image (This : Allowed_Milestones) return String;
-
 private
-
-   type Allowed_Milestones (Len : Positive) is tagged record
-      Crate    : Alire.Crate_Name (Len);
-      Versions : Semantic_Versioning.Extended.Version_Set;
-   end record;
-
-   function Crate (This : Allowed_Milestones) return Crate_Name
-   is (This.Crate);
-
-   function Versions (This : Allowed_Milestones)
-                      return Semantic_Versioning.Extended.Version_Set
-   is (This.Versions);
 
    package TTY renames Utils.TTY;
 
@@ -89,11 +59,5 @@ private
      (TTY.Name (+M.Crate)
       & "="
       & TTY.Version (Image (M.Version)));
-
-   function Image (This : Allowed_Milestones) return String
-   is ((+This.Crate) & This.Versions.Image);
-
-   function TTY_Image (This : Allowed_Milestones) return String
-   is (TTY.Name (This.Crate) & TTY.Version (This.Versions.Image));
 
 end Alire.Milestones;

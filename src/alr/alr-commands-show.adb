@@ -230,10 +230,10 @@ package body Alr.Commands.Show is
       end if;
 
       declare
-         Allowed : constant Alire.Milestones.Allowed_Milestones :=
+         Allowed : constant Alire.Dependencies.Dependency :=
            (if Num_Arguments = 1
-            then Alire.Milestones.Crate_Versions (Argument (1))
-            else Alire.Milestones.Crate_Versions
+            then Alire.Dependencies.From_String (Argument (1))
+            else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
          if Num_Arguments = 1 and not Alire.Index.Exists (Allowed.Crate) then

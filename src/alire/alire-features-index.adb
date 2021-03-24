@@ -1,8 +1,6 @@
 with Ada.Directories;
 
 with Alire.Config.Edit;
-with Alire.Directories;
-with Alire.Errors;
 with Alire.Index;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
@@ -381,50 +379,5 @@ package body Alire.Features.Index is
 
       return Outcome_Success;
    end Update_All;
-
-   -----------------
-   -- Hash_Origin --
-   -----------------
-
-   function Hash_Origin (Kind       : Hashes.Kinds;
-                         Origin_Img : URL)
-                         return Hashing_Outcomes.Outcome
-   is
-      Origin : constant Origins.Origin := Origins.From_String (Origin_Img);
-   begin
-
-      --  Retrieve the given origin and compute its hash:
-
-      declare
-         Depl : constant Origins.Deployers.Deployer'Class :=
-                  Origins.Deployers.New_Deployer (Origin);
-         Tmp : Alire.Directories.Temp_File;
-      begin
-         if not Depl.Supports_Hashing then
-            return Hashing_Outcomes.Outcome_Failure
-              ("The supplied origin does not support integrity verification");
-         end if;
-
-         declare
-            Result : constant Outcome := Depl.Fetch (Tmp.Filename);
-         begin
-            Result.Assert;
-         end;
-
-         declare
-            Hash : constant Hashes.Any_Hash :=
-                     Hashes.New_Hash (Kind,
-                                      Depl.Compute_Hash (Tmp.Filename, Kind));
-         begin
-            return Hashing_Outcomes.New_Result (Hash);
-         end;
-      end;
-
-   exception
-      when E : Checked_Error =>
-         return Hashing_Outcomes.Outcome_Failure (Errors.Get (E));
-      when E : others =>
-         return Hashing_Outcomes.Outcome_From_Exception (E);
-   end Hash_Origin;
 
 end Alire.Features.Index;

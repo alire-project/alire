@@ -5,6 +5,7 @@ with Ada.Exceptions;
 with Alire.Containers;
 with Alire.Crates;
 with Alire.Defaults;
+with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
@@ -408,8 +409,8 @@ package body Alr.Commands.Test is
          else
             for J in 1 .. Num_Arguments loop
                declare
-                  Allowed  : constant Alire.Milestones.Allowed_Milestones :=
-                               Alire.Milestones.Crate_Versions (Argument (J));
+                  Allowed  : constant Alire.Dependencies.Dependency :=
+                               Alire.Dependencies.From_String (Argument (J));
                   Crate    : constant Alire.Crates.Crate :=
                                Alire.Index.Crate (Allowed.Crate);
                   Releases : constant Alire.Containers.Release_Set :=
@@ -469,8 +470,8 @@ package body Alr.Commands.Test is
       if not Cmd.Search then
          for I in 1 .. Num_Arguments loop
             declare
-               Cry_Me_A_River : constant Alire.Milestones.Allowed_Milestones :=
-                                  Alire.Milestones.Crate_Versions
+               Cry_Me_A_River : constant Alire.Dependencies.Dependency :=
+                                  Alire.Dependencies.From_String
                                     (Argument (I)) with Unreferenced;
             begin
                null; -- Just check that no exception is raised
