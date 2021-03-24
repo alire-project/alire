@@ -8,7 +8,11 @@ with Alire.Platform;
 with Alire.Properties;
 with Alire.Roots;
 
+with GNATCOLL.VFS;
+
 package body Alire.Directories is
+
+   package Adirs renames Ada.Directories;
 
    ------------------------
    -- Report_Deprecation --
@@ -218,6 +222,21 @@ package body Alire.Directories is
 
       return Found;
    end Find_Files_Under;
+
+   ------------------------
+   -- Find_Relative_Path --
+   ------------------------
+
+   function Find_Relative_Path (Parent : Any_Path;
+                                Child  : Any_Path)
+                                return Any_Path
+   is
+      use GNATCOLL.VFS;
+   begin
+      return +GNATCOLL.VFS.Relative_Path
+        (File => Create (+Adirs.Full_Name (Child)),
+         From => Create (+Adirs.Full_Name (Parent)));
+   end Find_Relative_Path;
 
    ----------------------
    -- Find_Single_File --

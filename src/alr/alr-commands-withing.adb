@@ -92,15 +92,20 @@ package body Alr.Commands.Withing is
    -- Add_Remote_Link --
    ---------------------
 
-   procedure Add_Remote_Link (Cmd   : in out Command;
-                              Crate : String)
+   procedure Add_Remote_Link (Cmd : in out Command;
+                              Dep : String)
    is
       use Alire;
       Old_Deps     : constant Conditional.Dependencies :=
                        Cmd.Root.Release.Dependencies;
+      New_Dep      : constant Alire.Conditional.Dependencies :=
+                       (if Dep = ""
+                        then Alire.Conditional.No_Dependencies
+                        else Alire.Conditional.New_Dependency
+                          (Alire.Dependencies.From_String (Dep)));
       New_Solution : constant Roots.Remote_Pin_Result :=
                        Cmd.Root.Pinned_To_Remote
-                         (Crate       => Crate,
+                         (Dependency  => New_Dep,
                           URL         => Cmd.URL.all,
                           Commit      => Cmd.Commit.all,
                           Must_Depend => False);
@@ -115,6 +120,19 @@ package body Alr.Commands.Withing is
       --  If we made here there were no errors adding the dependency
       --  and storing the softlink. We can proceed to confirming the
       --  replacement.
+
+      Trace.Always ("SOL1");
+      Cmd.Root.Solution.Print (Cmd.Root.Release,
+                               Cmd.Root.Environment,
+                               True,
+                               Alire.Trace.Always);
+      Trace.Always ("SOL2");
+      New_Solution.Solution.Print (Cmd.Root.Release,
+                                   Cmd.Root.Environment,
+                                   True,
+                                   Alire.Trace.Always);
+
+      Trace.Always ("DEP " & New_Solution.New_Dep.Image_One_Line);
 
       Replace_Current (Cmd,
                        Old_Deps     => Old_Deps,
@@ -590,9 +608,9 @@ package body Alr.Commands.Withing is
                --  Pin to remote repo
 
                Add_Remote_Link (Cmd,
-                                Crate => (if Num_Arguments = 1
-                                          then Argument (1)
-                                          else ""));
+                                Dep => (if Num_Arguments = 1
+                                        then Argument (1)
+                                        else ""));
 
             else
 

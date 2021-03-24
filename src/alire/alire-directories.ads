@@ -40,6 +40,13 @@ package Alire.Directories is
    --  Depth 0 means given folder only
    --  Returns all instances found
 
+   function Find_Relative_Path (Parent : Any_Path;
+                                Child  : Any_Path)
+                                return Any_Path;
+   --  Given two paths, find the minimal relative path from Parent up to Child.
+   --  May still return an absolute path if Child is not in the same drive
+   --  (Windows) as Parent.
+
    function Find_Single_File (Path      : String;
                               Extension : String)
                               return String;

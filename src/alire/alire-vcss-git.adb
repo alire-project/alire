@@ -240,6 +240,36 @@ package body Alire.VCSs.Git is
       end if;
    end Remote;
 
+   ------------------------
+   -- Remote_Head_Commit --
+   ------------------------
+
+   not overriding
+   function Remote_Head_Commit (This : VCS;
+                                From : URL) return String
+   is
+      pragma Unreferenced (This);
+      Output : constant Utils.String_Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "ls-remote" & From);
+   begin
+      --  Sample output from git (space is tab):
+      --  95818710c1a2bea0cbfa617a67972fe984761227        HEAD
+      --  b0825ac9373ed587394cf5e7ecf51fd7caf9290a        refs/heads/feat/cache
+      --  95818710c1a2bea0cbfa617a67972fe984761227        refs/heads/master
+      --  a917c31c47a8bd0155c402f692b63bd77e53bae7        refs/pull/1/head
+      --  22cb794ed99dfe6cbb0541af558ada1d2ed8fdbe        refs/tags/v0.1
+      --  ae6fdd0711bb3ca2c1e2d1d18caf7a1b82a11f0a        refs/tags/v0.1^{}
+      --  7376b76f23ab4421fbec31eb616d767edbec7343        refs/tags/v0.2
+
+      for Line of Output loop
+         if Tail (Crunch (Line), ASCII.HT) = "HEAD" then
+            return Head (Line, ASCII.HT);
+         end if;
+      end loop;
+
+      return "";
+   end Remote_Head_Commit;
+
    ------------
    -- Status --
    ------------

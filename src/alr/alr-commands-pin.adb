@@ -1,3 +1,5 @@
+with Alire.Conditional;
+with Alire.Dependencies;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;
@@ -183,10 +185,12 @@ package body Alr.Commands.Pin is
               Alire.Utils.Starts_With (Cmd.URL.all, "http")
             then
                New_Sol := Cmd.Root.Pinned_To_Remote
-                 (Crate       => Argument (1),
+                 (Dependency  => Alire.Conditional.New_Dependency
+                    (Alire.Dependencies.From_String (Argument (1))),
                   URL         => Cmd.URL.all,
                   Commit      => Cmd.Commit.all,
-                  Must_Depend => True).Solution;
+                  Must_Depend => True)
+                 .Solution;
             else
 
                --  Pin to dir

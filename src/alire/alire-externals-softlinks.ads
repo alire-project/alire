@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Interfaces;
+with Alire.Origins;
 with Alire.TOML_Adapters;
 private with Alire.VFS;
 
@@ -16,7 +17,15 @@ package Alire.Externals.Softlinks is
      and Interfaces.Tomifiable
    with private;
 
-   function New_Softlink (From : URL) return External;
+   function New_Softlink (From : Any_Path) return External;
+   --  Create a softlink for a local dir. From must be absolute or relative to
+   --  Ada.Directories.Current.
+
+   function New_Remote (Origin : Origins.Origin;
+                        Path   : Relative_Path) return External;
+   --  Create a softlink with an associated remote source. Path is where it
+   --  has been/will be deployed. Path must be relative to the root using the
+   --  softlink.
 
    overriding
    function Detect (This        : External;
@@ -53,9 +62,17 @@ package Alire.Externals.Softlinks is
 
 private
 
-   type External (Relative : Boolean; Path_Length : Positive) is
+   type Optional_Remote (Used : Boolean) is record
+      case Used is
+         when True => Remote : Origins.Origin;
+         when False => null;
+      end case;
+   end record;
+
+   type External (Has_Remote, Relative : Boolean; Path_Length : Positive) is
      new Externals.External
      and Interfaces.Tomifiable with record
+      Remote : Optional_Remote (Has_Remote);
       case Relative is
          when True  => Rel_Path : Portable_Path (1 .. Path_Length);
          when False => Abs_Path : Absolute_Path (1 .. Path_Length);
