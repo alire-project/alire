@@ -251,8 +251,8 @@ package body Alr.Commands.Pin is
       .New_Line
       .Append ("Specify a single crate to modify its pin.")
       .New_Line
-      .Append ("Use the --use <PATH> switch to "
-               & " force alr to use the PATH target"
+      .Append ("Use the --use <PATH|URL> switch to "
+               & " force alr to use the target"
                & " to fulfill a dependency locally"
                & " instead of looking for indexed releases.")
      );
