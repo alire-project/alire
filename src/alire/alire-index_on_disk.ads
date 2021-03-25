@@ -14,7 +14,7 @@ package Alire.Index_On_Disk is
    --  Actual index is stored in <config>/indexes/<name>/repo
 
    --  URLs given to New_Handler functions must be complete, commit optional:
-   --  E.g.: git+https://path/to/server/and/project[@commit]
+   --  E.g.: git+https://path/to/server/and/project[#commit]
    --  E.g.: file:///path/to/local/folder
 
    Checkout_Directory : constant String := "repo";

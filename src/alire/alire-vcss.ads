@@ -7,7 +7,7 @@ package Alire.VCSs is
    subtype Known_Kinds is Kinds range Kinds'First .. Kinds'Pred (VCS_Unknown);
 
    --  URL format:
-   --  vcs+http[s]://path/to/repo[@commit]
+   --  vcs+http[s]://path/to/repo[#commit]
 
    function Clone (This : VCS;
                    From : URL;
@@ -28,10 +28,10 @@ package Alire.VCSs is
    --  Without kind and commit
 
    function Repo_And_Commit (Origin : URL) return String;
-   --  Without Kind and with optional Commit
+   --  Without Kind and with optional Commit (separated by #)
 
    function Commit (Origin : URL) return String;
-   --  Empty string if no commit part
+   --  Empty string if no commit part (separated by #)
 
    ------------------------
    -- Classwide versions --
