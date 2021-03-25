@@ -192,11 +192,17 @@ package Alire.Roots is
    function Working_Folder (This : Root) return Absolute_Path;
    --  The "alire" folder inside the root path
 
+   function Cache_Dir (This : Root) return Absolute_Path;
+   --  The "alire/cache" dir inside the root path, containing releases and pins
+
    function Crate_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.toml" file inside Working_Folder
 
    function Dependencies_Dir (This : Root) return Absolute_Path;
    --  The folder where dependencies are checked out for this root
+
+   function Pins_Dir (This : Root) return Absolute_Path;
+   --  The folder where remote pins are checked out for this root
 
    function Lock_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.lock" file inside Working_Folder

@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Utils;
 
-with Alr.Paths;
 with Alr.Spawn;
 with Alr.Platform;
 
@@ -38,9 +37,9 @@ package body Alr.Commands.Clean is
       end if;
 
       if Cmd.Cache then
-         if OS_Lib.Is_Folder (Paths.Alr_Working_Cache_Folder) then
+         if OS_Lib.Is_Folder (Cmd.Root.Cache_Dir) then
             Trace.Detail ("Deleting working copy cache...");
-            Ada.Directories.Delete_Tree (Paths.Alr_Working_Cache_Folder);
+            Ada.Directories.Delete_Tree (Cmd.Root.Cache_Dir);
          else
             Trace.Detail ("Cache folder not present");
             --  This is expected if the crate has no dependencies

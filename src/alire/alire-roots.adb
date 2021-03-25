@@ -497,12 +497,22 @@ package body Alire.Roots is
    function Crate_File (This : Root) return Absolute_Path is
      (Path (This) / Crate_File_Name);
 
+   function Cache_Dir (This : Root) return Absolute_Path
+   is (This.Working_Folder / "cache");
+
    ----------------------
    -- Dependencies_Dir --
    ----------------------
 
    function Dependencies_Dir (This : Root) return Absolute_Path is
-      (This.Working_Folder / "cache" / "dependencies");
+     (This.Cache_Dir / "dependencies");
+
+   --------------
+   -- Pins_Dir --
+   --------------
+
+   function Pins_Dir (This : Root) return Absolute_Path
+   is (This.Cache_Dir / "pins");
 
    --------------------
    -- Working_Folder --
@@ -790,11 +800,10 @@ package body Alire.Roots is
                             Directories.Find_Relative_Path
                               (Parent => Ada.Directories.Current_Directory,
                                Child  =>
-                                 This.Working_Folder
-                               / "cache" / "pinned"
-                               / (Linked_Name & "_"
-                                 & Linked_Vers
-                                 & Depl.Base.Short_Unique_Id));
+                                 This.Pins_Dir
+                                 / (Linked_Name & "_"
+                                    & Linked_Vers
+                                    & Depl.Base.Short_Unique_Id));
          begin
             --  Fail if we needed to detect a crate and none found
 
