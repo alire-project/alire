@@ -6,6 +6,16 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Git remotes for pinned releases
+
+PR [#715](https://github.com/alire-project/alire/pull/715)
+
+The pinning commands (`alr with --use`, `alr pin --use`) now also accept a git
+repository URL, which will be downloaded and used to override a dependency, as
+previously could be done only with local directories. The pinning feature works
+recursively, so unpublished crates can now have complete dependencies prior to
+submission to the community index (which relies only on indexed dependencies).
+
 ### Switch to help with publishing of multi-crate repositories
 
 PR [#635](https://github.com/alire-project/alire/pull/635).
