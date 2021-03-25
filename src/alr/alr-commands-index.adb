@@ -123,7 +123,7 @@ package body Alr.Commands.Index is
    procedure Check (Cmd : in out Command) is
    begin
       Cmd.Requires_Full_Index (Strict => True);
-      Alire.Log_Success ("No unknown values found in index contents.");
+      Alire.Put_Success ("No unknown values found in index contents.");
    end Check;
 
    ----------
