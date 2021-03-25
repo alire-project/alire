@@ -165,6 +165,47 @@ package body Alire.Directories is
    end Detect_Root_Path;
 
    ----------------------
+   -- Ensure_Deletable --
+   ----------------------
+
+   procedure Ensure_Deletable (Path : Any_Path) is
+      use Ada.Directories;
+   begin
+      if Exists (Path) and then
+        Kind (Path) = Directory and then
+        Platform.On_Windows
+      then
+         Trace.Debug ("Forcing writability of dir " & Path);
+         OS_Lib.Subprocess.Checked_Spawn
+           ("attrib",
+            Utils.Empty_Vector
+            .Append ("-R") -- Remove read-only
+            .Append ("/D") -- On dirs
+            .Append ("/S") -- Recursively
+            .Append (Path & "\*"));
+      end if;
+   end Ensure_Deletable;
+
+   ------------------
+   -- Force_Delete --
+   ------------------
+
+   procedure Force_Delete (Path : Any_Path) is
+      use Ada.Directories;
+   begin
+      if Exists (Path) then
+         if Kind (Path) = Ordinary_File then
+            Trace.Debug ("Deleting file " & Path & "...");
+            Delete_File (Path);
+         elsif Kind (Path) = Directory then
+            Trace.Debug ("Deleting temporary folder " & Path & "...");
+            Ensure_Deletable (Path);
+            Delete_Tree (Path);
+         end if;
+      end if;
+   end Force_Delete;
+
+   ----------------------
    -- Find_Files_Under --
    ----------------------
 
@@ -373,19 +414,7 @@ package body Alire.Directories is
       --  Force writability of folder when in Windows, as some tools (e.g. git)
       --  that create read-only files will cause a Use_Error
 
-      if Exists (This.Filename) and then
-        Kind (This.Filename) = Directory and then
-        Platform.On_Windows
-      then
-         Trace.Debug ("Forcing writability of temporary dir " & This.Filename);
-         OS_Lib.Subprocess.Checked_Spawn
-           ("attrib",
-            Utils.Empty_Vector
-            .Append ("-R") -- Remove read-only
-            .Append ("/D") -- On dirs
-            .Append ("/S") -- Recursively
-            .Append (This.Filename & "\*"));
-      end if;
+      Ensure_Deletable (This.Filename);
 
       if Exists (This.Filename) then
          if Kind (This.Filename) = Ordinary_File then
