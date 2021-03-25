@@ -169,8 +169,8 @@ package Alire.Roots is
 
    type Remote_Pin_Result (Crate_Length : Natural) is record
       Crate    : String (1 .. Crate_Length); -- May be empty for a "raw" remote
-      New_Dep  : Conditional.Dependencies;   -- Detected dep + old dep
-      Solution : Solutions.Solution;         -- With new pin
+      New_Dep  : Conditional.Dependencies;   -- Requested one or else found one
+      Solution : Solutions.Solution;         -- Includes new remote pin
    end record;
 
    function Pinned_To_Remote (This        : in out Root;
@@ -183,7 +183,7 @@ package Alire.Roots is
    --  Prepares a pin to a remote repo with specific commit. If
    --  Dependency.Crate is not already a dependency, it will be added as
    --  top-level, unless Must_Depend, in which case Checked_Error. If Commit
-   --  = "", the default tip commit in the remote will be used instead. If
+   --  is "", the default tip commit in the remote will be used instead. If
    --  Dependency.Is_Empty, a valid root must be found at the given commit.
    --  If Crate /= "" and Commit contains a root, their crate name must match.
 

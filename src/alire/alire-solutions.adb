@@ -426,13 +426,11 @@ package body Alire.Solutions is
                              then TTY.URL (Dep.Link.Path)
                                   & (if Dep.Link.Is_Remote
                                      then " from "
-                                          & TTY.URL (Dep.Link.Remote.URL)
-                                          & "#"
-                                          & TTY.Emph (Dep.Link.Remote.Commit)
+                                         & Dep.Link.Remote.TTY_URL_With_Commit
                                      else "") -- no remote
                              else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
                           & ")" -- origin completed
-                    else ""),   -- no details
+                     else ""),   -- no details
                   Level);
             end;
          end loop;

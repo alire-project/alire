@@ -3,6 +3,7 @@ with Alire.Dependencies;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;
+with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
@@ -179,10 +180,8 @@ package body Alr.Commands.Pin is
 
             --  Pin to remote commit
 
-            if Cmd.Commit.all /= "" or else
-              Alire.Utils.Starts_With (Cmd.URL.all, "git+") or else
-              Alire.Utils.Ends_With   (Cmd.URL.all, ".git") or else
-              Alire.Utils.Starts_With (Cmd.URL.all, "http")
+            if Cmd.Commit.all /= ""
+              or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
             then
                New_Sol := Cmd.Root.Pinned_To_Remote
                  (Dependency  => Alire.Conditional.New_Dependency

@@ -13,6 +13,7 @@ with Alire.Releases;
 with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
+with Alire.URI;
 with Alire.Utils.User_Input;
 
 with Alr.Commands.User_Input;
@@ -120,19 +121,6 @@ package body Alr.Commands.Withing is
       --  If we made here there were no errors adding the dependency
       --  and storing the softlink. We can proceed to confirming the
       --  replacement.
-
-      Trace.Always ("SOL1");
-      Cmd.Root.Solution.Print (Cmd.Root.Release,
-                               Cmd.Root.Environment,
-                               True,
-                               Alire.Trace.Always);
-      Trace.Always ("SOL2");
-      New_Solution.Solution.Print (Cmd.Root.Release,
-                                   Cmd.Root.Environment,
-                                   True,
-                                   Alire.Trace.Always);
-
-      Trace.Always ("DEP " & New_Solution.New_Dep.Image_One_Line);
 
       Replace_Current (Cmd,
                        Old_Deps     => Old_Deps,
@@ -599,10 +587,8 @@ package body Alr.Commands.Withing is
          --  Must be Add, but it could be regular or softlink
 
          if Cmd.URL.all /= "" then
-            if Cmd.Commit.all /= "" or else
-              Alire.Utils.Starts_With (Cmd.URL.all, "git+") or else
-              Alire.Utils.Ends_With   (Cmd.URL.all, ".git") or else
-              Alire.Utils.Starts_With (Cmd.URL.all, "http")
+            if Cmd.Commit.all /= ""
+              or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
             then
 
                --  Pin to remote repo

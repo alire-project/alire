@@ -847,6 +847,12 @@ package body Alire.Roots is
                Ada.Directories.Rename (Temp.Filename, Linked_Path);
             end if;
 
+            --  Return the solution using the downloaded sources. For that,
+            --  we create a remote link, and use either the dependency we
+            --  were given (already in the manifest), or else the one found
+            --  at the remote. The version will be narrowed down during the
+            --  post-processing in `alr with`.
+
             declare
                New_Link : constant Externals.Softlinks.External :=
                             Externals.Softlinks.New_Remote
@@ -857,14 +863,14 @@ package body Alire.Roots is
                              then Conditional.New_Dependency
                                (+Linked_Name, Semver.Extended.Any)
                              else Dependency);
-               Old_Sol  : constant Solutions.Solution := This.Solution;
             begin
                return Remote_Pin_Result'
                  (Crate_Length => Linked_Name'Length,
                   Crate        => Linked_Name,
                   New_Dep      => New_Dep,
-                  Solution     => Old_Sol.Depending_On (New_Dep.Value)
-                                         .Linking (+Linked_Name, New_Link));
+                  Solution     => This.Solution
+                                      .Depending_On (New_Dep.Value)
+                                      .Linking (+Linked_Name, New_Link));
             end;
          end;
 
