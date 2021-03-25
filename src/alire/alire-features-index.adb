@@ -160,7 +160,7 @@ package body Alire.Features.Index is
             Trace.Debug ("Index was already set, deleting and re-adding...");
             Assert (Indexes (I).Delete);
             return Add (Origin => Alire.Index.Community_Repo &
-                          "@" & Alire.Index.Community_Branch,
+                          "#" & Alire.Index.Community_Branch,
                         Name   => Alire.Index.Community_Name,
                         Under  => Config.Edit.Indexes_Directory,
                         Before => (if Has_Element (Next (I))
@@ -173,7 +173,7 @@ package body Alire.Features.Index is
 
       Trace.Debug ("Index was not set, adding it...");
       return Add (Origin => Alire.Index.Community_Repo &
-                    "@" & Alire.Index.Community_Branch,
+                    "#" & Alire.Index.Community_Branch,
                   Name   => Alire.Index.Community_Name,
                   Under  => Config.Edit.Indexes_Directory);
    exception

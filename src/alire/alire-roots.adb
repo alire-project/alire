@@ -1,21 +1,27 @@
 with Ada.Calendar;
 with Ada.Directories;
 
-with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
+with Alire.Externals.Softlinks;
 with Alire.Manifest;
+with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.Utils.TTY;
+with Alire.VCSs.Git;
 
 with GNAT.OS_Lib;
 
+with Semantic_Versioning.Extended;
+
 package body Alire.Roots is
 
+   package Adirs renames Ada.Directories;
+   package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
    -------------------
@@ -174,6 +180,16 @@ package body Alire.Roots is
       Deployed  : Containers.Crate_Name_Sets.Set;
       Round     : Natural := 0;
    begin
+
+      --  Begin by retrieving any broken remote, so it is ready for actions
+
+      for Dep of This.Solution.Links loop
+         if This.Solution.State (Dep.Crate).Link.Is_Remote and then
+           This.Solution.State (Dep.Crate).Link.Is_Broken
+         then
+            This.Solution.State (Dep.Crate).Link.Deploy.Assert;
+         end if;
+      end loop;
 
       --  Prepare environment for any post-fetch actions. This must be done
       --  after the lockfile on disk is written, since the root will read
@@ -481,12 +497,22 @@ package body Alire.Roots is
    function Crate_File (This : Root) return Absolute_Path is
      (Path (This) / Crate_File_Name);
 
+   function Cache_Dir (This : Root) return Absolute_Path
+   is (This.Working_Folder / "cache");
+
    ----------------------
    -- Dependencies_Dir --
    ----------------------
 
    function Dependencies_Dir (This : Root) return Absolute_Path is
-      (This.Working_Folder / "cache" / "dependencies");
+     (This.Cache_Dir / "dependencies");
+
+   --------------
+   -- Pins_Dir --
+   --------------
+
+   function Pins_Dir (This : Root) return Absolute_Path
+   is (This.Cache_Dir / "pins");
 
    --------------------
    -- Working_Folder --
@@ -561,6 +587,10 @@ package body Alire.Roots is
       elsif (for some Rel of This.Solution.Releases =>
                This.Solution.State (Rel.Name).Is_Solved and then
                not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
+        or else
+          (for some Dep of This.Solution.Links =>
+             This.Solution.State (Dep.Crate).Link.Is_Remote and then
+             This.Solution.State (Dep.Crate).Link.Is_Broken)
       then
          Trace.Info ("Detected missing dependencies, updating workspace...");
          --  Some dependency is missing; redeploy. Should we clean first ???
@@ -696,6 +726,157 @@ package body Alire.Roots is
          Trace.Detail ("Update completed");
       end;
    end Update_Dependencies;
+
+   ----------------------
+   -- Pinned_To_Remote --
+   ----------------------
+
+   function Pinned_To_Remote (This        : in out Root;
+                              Dependency  : Conditional.Dependencies;
+                              URL         : String;
+                              Commit      : String;
+                              Must_Depend : Boolean)
+                              return Remote_Pin_Result
+   is
+      Requested_Crate : constant String :=
+                          (if Dependency.Is_Empty
+                           then ""
+                           else Dependency.Value.Crate.As_String);
+   begin
+
+      --  Check whether are adding or modifying a dependency
+
+      if Must_Depend and then not
+        (for some Dep of This.Release.Constant_Reference.Flat_Dependencies =>
+           Dep.Crate.As_String = Requested_Crate)
+      then
+         Raise_Checked_Error
+           ("Cannot continue because the requested crate is not a dependency: "
+            & Requested_Crate);
+      end if;
+
+      --  Identify the head commit, if not given:
+
+      if Commit = "" then
+         declare
+            Head : constant String :=
+                     VCSs.Git.Handler.Remote_Head_Commit (URL);
+         begin
+            Trace.Info ("No commit provided; using default remote HEAD: "
+                        & TTY.Emph (Head));
+            return This.Pinned_To_Remote (Dependency  => Dependency,
+                                          URL         => URL,
+                                          Commit      => Head,
+                                          Must_Depend => Must_Depend);
+         end;
+      end if;
+
+      --  Check out the remote
+
+      declare
+         Temp : Directories.Temp_File;
+         Depl : constant Origins.Deployers.Deployer'Class :=
+                  Origins.Deployers.New_Deployer
+                    (Origins.New_Git (URL, Commit));
+      begin
+         Depl.Deploy (Temp.Filename).Assert;
+
+         --  Identify containing release, and if satisfying move it to its
+         --  final location in the release cache.
+
+         declare
+            Linked_Root : constant Alire.Roots.Optional.Root :=
+                            Roots.Optional.Detect_Root (Temp.Filename);
+            Linked_Name : constant String :=
+                    (if Linked_Root.Is_Valid
+                     then Linked_Root.Value.Release.Constant_Reference.Name_Str
+                     else Requested_Crate); -- This may still be ""
+            Linked_Vers : constant String :=
+                            (if Linked_Root.Is_Valid
+                             then Linked_Root.Value.Release.Constant_Reference
+                                                           .Version.Image & "_"
+                             else "");
+            Linked_Path : constant Any_Path :=
+                            Directories.Find_Relative_Path
+                              (Parent => Ada.Directories.Current_Directory,
+                               Child  =>
+                                 This.Pins_Dir
+                                 / (Linked_Name & "_"
+                                    & Linked_Vers
+                                    & Depl.Base.Short_Unique_Id));
+         begin
+            --  Fail if we needed to detect a crate and none found
+
+            if Linked_Name = "" and Requested_Crate = "" then
+               Raise_Checked_Error
+                 ("No crate specified and none found at remote.");
+            end if;
+
+            --  Fail if we detected a crate not matching the requested one
+
+            if Requested_Crate /= ""
+              and then Linked_Name /= ""
+              and then Requested_Crate /= Linked_Name
+            then
+               Raise_Checked_Error
+                 ("Requested and retrieved crates do not match: "
+                  & Requested_Crate & " /= " & Linked_Name);
+            end if;
+
+            --  Fail if we are adding a crate that is already a dependency
+
+            if not Must_Depend and then
+              (for some Dep
+                 of This.Release.Constant_Reference.Flat_Dependencies =>
+                 Dep.Crate.As_String = Linked_Name)
+            then
+               Raise_Checked_Error
+                 ("Cannot continue because crate is already a dependency: "
+                  & Linked_Name);
+            end if;
+
+            --  Everything OK, keep the release
+
+            if not GNAT.OS_Lib.Is_Directory
+              (Adirs.Containing_Directory (Linked_Path))
+            then
+               Adirs.Create_Path (Adirs.Containing_Directory (Linked_Path));
+            end if;
+
+            if not GNAT.OS_Lib.Is_Directory (Linked_Path) then
+               Ada.Directories.Rename (Temp.Filename, Linked_Path);
+            end if;
+
+            --  Return the solution using the downloaded sources. For that,
+            --  we create a remote link, and use either the dependency we
+            --  were given (already in the manifest), or else the one found
+            --  at the remote. The version will be narrowed down during the
+            --  post-processing in `alr with`.
+
+            declare
+               New_Link : constant Externals.Softlinks.External :=
+                            Externals.Softlinks.New_Remote
+                              (Origin => Depl.Base,
+                               Path   => Linked_Path);
+               New_Dep  : constant Conditional.Dependencies :=
+                            (if Dependency.Is_Empty
+                             then Conditional.New_Dependency
+                               (+Linked_Name, Semver.Extended.Any)
+                             else Dependency);
+            begin
+               return Remote_Pin_Result'
+                 (Crate_Length => Linked_Name'Length,
+                  Crate        => Linked_Name,
+                  New_Dep      => New_Dep,
+                  Solution     => This.Solution
+                                      .Depending_On (New_Dep.Value)
+                                      .Linking (+Linked_Name, New_Link));
+            end;
+         end;
+
+      end;
+
+   end Pinned_To_Remote;
 
    ------------------------------------
    -- Update_And_Deploy_Dependencies --

@@ -1,6 +1,7 @@
 with Alire.Hashes;
 with Alire.Interfaces;
 with Alire.TOML_Adapters;
+with Alire.Utils.TTY;
 
 private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
@@ -8,6 +9,8 @@ private with Ada.Strings.Unbounded;
 with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.Origins is
+
+   package TTY renames Alire.Utils.TTY;
 
    type Kinds is
      (External,       -- A do-nothing origin, with some custom description
@@ -50,7 +53,9 @@ package Alire.Origins is
      with Pre => This.Kind in VCS_Kinds;
    function URL_With_Commit (This : Origin) return Alire.URL
      with Pre => This.Kind in VCS_Kinds;
-   --  Append commit as '@commit'
+   --  Append commit as '#commit'
+   function TTY_URL_With_Commit (This : Origin) return String
+     with Pre => This.Kind in VCS_Kinds;
 
    function Path (This : Origin) return String
      with Pre => This.Kind = Filesystem;
@@ -234,7 +239,9 @@ private
    function Commit (This : Origin) return String is
      (+This.Data.Commit);
    function URL_With_Commit (This : Origin) return Alire.URL is
-     (This.URL & "@" & This.Commit);
+     (This.URL & "#" & This.Commit);
+   function TTY_URL_With_Commit (This : Origin) return String is
+     (TTY.URL (This.URL) & "#" & TTY.Emph (This.Commit));
 
    function Path (This : Origin) return String is (+This.Data.Path);
 

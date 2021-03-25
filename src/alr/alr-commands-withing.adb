@@ -13,6 +13,7 @@ with Alire.Releases;
 with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
+with Alire.URI;
 with Alire.Utils.User_Input;
 
 with Alr.Commands.User_Input;
@@ -87,6 +88,47 @@ package body Alr.Commands.Withing is
       return Deps and Alire.Conditional.New_Dependency (Requested.Crate,
                                                         Requested.Versions);
    end Add;
+
+   ---------------------
+   -- Add_Remote_Link --
+   ---------------------
+
+   procedure Add_Remote_Link (Cmd : in out Command;
+                              Dep : String)
+   is
+      use Alire;
+      Old_Deps     : constant Conditional.Dependencies :=
+                       Cmd.Root.Release.Dependencies;
+      New_Dep      : constant Alire.Conditional.Dependencies :=
+                       (if Dep = ""
+                        then Alire.Conditional.No_Dependencies
+                        else Alire.Conditional.New_Dependency
+                          (Alire.Dependencies.From_String (Dep)));
+      New_Solution : constant Roots.Remote_Pin_Result :=
+                       Cmd.Root.Pinned_To_Remote
+                         (Dependency  => New_Dep,
+                          URL         => Cmd.URL.all,
+                          Commit      => Cmd.Commit.all,
+                          Must_Depend => False);
+      use type Conditional.Dependencies;
+   begin
+
+      --  Report crate detection at target destination
+
+      User_Input.Report_Pinned_Crate_Detection (+New_Solution.Crate,
+                                                New_Solution.Solution);
+
+      --  If we made here there were no errors adding the dependency
+      --  and storing the softlink. We can proceed to confirming the
+      --  replacement.
+
+      Replace_Current (Cmd,
+                       Old_Deps     => Old_Deps,
+                       New_Deps     => Old_Deps and New_Solution.New_Dep,
+                       Old_Solution => New_Solution.Solution);
+      --  We use the New_Solution with the softlink as previous solution, so
+      --  the pinned directory is used by the solver.
+   end Add_Remote_Link;
 
    ------------------
    -- Add_Softlink --
@@ -545,13 +587,29 @@ package body Alr.Commands.Withing is
          --  Must be Add, but it could be regular or softlink
 
          if Cmd.URL.all /= "" then
-            if Num_Arguments = 1 then
-               Add_Softlink (Cmd,
-                             Dep_Spec => Argument (1),
-                             Path     => Cmd.URL.all);
+            if Cmd.Commit.all /= ""
+              or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
+            then
+
+               --  Pin to remote repo
+
+               Add_Remote_Link (Cmd,
+                                Dep => (if Num_Arguments = 1
+                                        then Argument (1)
+                                        else ""));
+
             else
-               Detect_Softlink (Cmd,
-                                Cmd.URL.all);
+
+               --  Pin to local folder
+
+               if Num_Arguments = 1 then
+                  Add_Softlink (Cmd,
+                                Dep_Spec => Argument (1),
+                                Path     => Cmd.URL.all);
+               else
+                  Detect_Softlink (Cmd,
+                                   Cmd.URL.all);
+               end if;
             end if;
          else
             Cmd.Requires_Full_Index;
@@ -589,9 +647,9 @@ package body Alr.Commands.Withing is
                 & " simultaneously added and removed in a single invocation.")
        .New_Line
        .Append ("* Adding dependencies pinned to external sources:")
-       .Append ("When a single crate name is accompanied by an --use PATH"
+       .Append ("When a single crate name is accompanied by an --use PATH|URL"
                 & " argument, the crate is always fulfilled for any required"
-                & " version by the sources found at PATH.")
+                & " version by the sources found at the given target.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
@@ -641,9 +699,16 @@ package body Alr.Commands.Withing is
 
       Define_Switch
         (Config      => Config,
+         Output      => Cmd.Commit'Access,
+         Long_Switch => "--commit=",
+         Argument    => "HASH",
+         Help        => "Commit to retrieve from repository");
+
+      Define_Switch
+        (Config      => Config,
          Output      => Cmd.URL'Access,
          Long_Switch => Switch_URL & "=",
-         Argument    => "PATH",
+         Argument    => "PATH|URL",
          Help        => "Add a dependency pinned to some external source");
 
       Define_Switch (Config,

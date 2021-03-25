@@ -25,8 +25,8 @@ package body Alire.VCSs is
    ------------
 
    function Commit (Origin : URL) return String is
-     (if Utils.Contains (Origin, "@")
-      then Utils.Tail (Origin, '@')
+     (if Utils.Contains (Origin, "#")
+      then Utils.Tail (Origin, '#')
       else "");
 
    ----------
@@ -42,7 +42,7 @@ package body Alire.VCSs is
    ----------
 
    function Repo (Origin : URL) return String is
-     (Utils.Head (Repo_And_Commit (Origin), '@'));
+     (Utils.Head (Repo_And_Commit (Origin), '#'));
 
    ---------------------
    -- Repo_And_Commit --

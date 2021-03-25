@@ -1,3 +1,5 @@
+with Alire.OS_Lib;
+with Alire.TOML_Keys;
 with Alire.URI;
 with Alire.Utils.TTY;
 
@@ -13,8 +15,10 @@ package body Alire.Externals.Softlinks is
       --  TOML Keys used locally
 
       Kind     : constant String := "kind";
+      Origin   : constant String := TOML_Keys.Origin; -- Must be the same key
       Path     : constant String := "path";
       Relative : constant String := "relative";
+      Remote   : constant String := "remote";
 
    end Keys;
 
@@ -25,9 +29,34 @@ package body Alire.Externals.Softlinks is
    function From_TOML (Table : TOML_Adapters.Key_Queue) return External is
       Path : constant String :=
                Table.Checked_Pop (Keys.Path, TOML_String).As_String;
+      Remote : constant Boolean :=
+                 Table.Checked_Pop (Keys.Remote, TOML_Boolean).As_Boolean;
    begin
-      return New_Softlink (Path);
+      if Remote then
+         declare
+            Origin : Origins.Origin;
+         begin
+            Origin.From_TOML (Table).Assert;
+            return New_Remote (Origin => Origin,
+                               Path   => URI.Local_Path (Path));
+         end;
+      else
+         return New_Softlink (Path);
+      end if;
    end From_TOML;
+
+   ----------------
+   -- New_Remote --
+   ----------------
+
+   function New_Remote (Origin : Origins.Origin;
+                        Path   : Relative_Path) return External
+   is (Externals.External with
+       Has_Remote  => True,
+       Remote      => (Used => True, Origin => Origin),
+       Relative    => True,
+       Path_Length => Path'Length,
+       Rel_Path    => Alire.VFS.To_Portable (Path));
 
    ------------------
    -- New_Softlink --
@@ -61,11 +90,15 @@ package body Alire.Externals.Softlinks is
          begin
             if Check_Absolute_Path (Path) then
                return (Externals.External with
+                       Has_Remote  => False,
+                       Remote      => <>,
                        Relative    => False,
                        Path_Length => Path'Length,
                        Abs_Path    => Path);
             else
                return (Externals.External with
+                       Has_Remote  => False,
+                       Remote      => <>,
                        Relative    => True,
                        Path_Length => Target'Length,
                        Rel_Path    => Alire.VFS.To_Portable (+Target));
@@ -73,6 +106,31 @@ package body Alire.Externals.Softlinks is
          end;
       end;
    end New_Softlink;
+
+   --------------
+   -- Relocate --
+   --------------
+
+   function Relocate (This : External;
+                      From : Any_Path) return External
+   is
+   begin
+      if Check_Absolute_Path (This.Path) then
+         return This;
+      end if;
+
+      declare
+         use Alire.OS_Lib.Operators;
+         New_Path : constant Any_Path := From / This.Path;
+      begin
+         return (Externals.External with
+                 Has_Remote => This.Has_Remote,
+                 Remote     => This.Remote,
+                 Relative   => True,
+                 Path_Length => New_Path'Length,
+                 Rel_Path    => Alire.VFS.To_Portable (New_Path));
+      end;
+   end Relocate;
 
    -------------
    -- To_TOML --
@@ -84,8 +142,15 @@ package body Alire.Externals.Softlinks is
    begin
       Table.Set (Keys.Kind,
                  Create_String (Utils.To_Lower_Case (Softlink'Img)));
+      Table.Set (Keys.Remote,
+                 Create_Boolean (This.Has_Remote));
       Table.Set (Keys.Relative,
                  Create_Boolean (This.Relative));
+
+      if This.Has_Remote then
+         Table.Set (Keys.Origin,
+                    This.Remote.Origin.To_TOML);
+      end if;
 
       if This.Relative then
          Table.Set (Keys.Path,

@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Interfaces;
+with Alire.Origins.Deployers;
 with Alire.TOML_Adapters;
 private with Alire.VFS;
 
@@ -16,7 +17,19 @@ package Alire.Externals.Softlinks is
      and Interfaces.Tomifiable
    with private;
 
-   function New_Softlink (From : URL) return External;
+   function New_Softlink (From : Any_Path) return External;
+   --  Create a softlink for a local dir. From must be absolute or relative to
+   --  Ada.Directories.Current.
+
+   function New_Remote (Origin : Origins.Origin;
+                        Path   : Relative_Path) return External;
+   --  Create a softlink with an associated Origin source. Path is where it
+   --  has been/will be deployed. Path must be relative to the root using the
+   --  softlink.
+
+   function Deploy (This : External) return Outcome;
+   --  For a Origin pin, redeploy sources if they're not at the expected
+   --  location. For a local pin, do nothing.
 
    overriding
    function Detect (This        : External;
@@ -25,8 +38,14 @@ package Alire.Externals.Softlinks is
    --  Never detected, as we want these crates to work as a wildcard for any
    --  version.
 
+   function Is_Remote (This : External) return Boolean;
+   --  Say if this is a softlink with a Origin origin
+
    function Is_Valid (This : External) return Boolean;
    --  Check that the pointed-to folder exists
+
+   function Is_Broken (This : External) return Boolean
+   is (not This.Is_Valid);
 
    overriding
    function Image (This : External) return String;
@@ -46,6 +65,14 @@ package Alire.Externals.Softlinks is
 
    function Path (This : External) return Any_Path;
 
+   function Relocate (This : External;
+                      From : Any_Path) return External;
+   --  Return the same external, but adjust its path (when relative) when seen
+   --  with prefix From.
+
+   function Remote (This : External) return Origins.Origin
+     with Pre => This.Is_Remote;
+
    function From_TOML (Table : TOML_Adapters.Key_Queue) return External;
 
    overriding
@@ -53,14 +80,34 @@ package Alire.Externals.Softlinks is
 
 private
 
-   type External (Relative : Boolean; Path_Length : Positive) is
+   type Optional_Remote (Used : Boolean) is record
+      case Used is
+         when True => Origin : Origins.Origin;
+         when False => null;
+      end case;
+   end record;
+
+   type External (Has_Remote, Relative : Boolean; Path_Length : Positive) is
      new Externals.External
      and Interfaces.Tomifiable with record
+      Remote : Optional_Remote (Has_Remote);
       case Relative is
          when True  => Rel_Path : Portable_Path (1 .. Path_Length);
          when False => Abs_Path : Absolute_Path (1 .. Path_Length);
       end case;
    end record;
+
+   ------------
+   -- Deploy --
+   ------------
+
+   function Deploy (This : External) return Outcome
+   is (if This.Has_Remote
+       then (if GNAT.OS_Lib.Is_Directory (This.Path)
+             then Outcome_Success
+             else Origins.Deployers.New_Deployer (This.Remote.Origin)
+                                   .Deploy (This.Path))
+       else Outcome_Success);
 
    -----------
    -- Image --
@@ -69,6 +116,13 @@ private
    overriding
    function Image (This : External) return String
    is ("User-provided at " & This.Path);
+
+   ---------------
+   -- Is_Remote --
+   ---------------
+
+   function Is_Remote (This : External) return Boolean
+   is (This.Has_Remote);
 
    --------------
    -- Is_Valid --
@@ -94,5 +148,12 @@ private
    is (Utils.To_Vector (Ada.Directories.Full_Name (This.Path)));
    --  As the path may be relative, we make it absolute to avoid duplicates
    --  with absolute paths reported by a Release.Project_Paths.
+
+   ------------
+   -- Origin --
+   ------------
+
+   function Remote (This : External) return Origins.Origin
+   is (This.Remote.Origin);
 
 end Alire.Externals.Softlinks;

@@ -32,6 +32,13 @@ package Alire.Directories is
                               return String;
    --  Return either the valid enclosing root folder, or ""
 
+   procedure Ensure_Deletable (Path : Any_Path);
+   --  In Windows, git checkouts are created with read-only file that do not
+   --  sit well with Ada.Directories.Delete_Tree.
+
+   procedure Force_Delete (Path : Any_Path);
+   --  Calls Ensure_Deletable and then Adirs.Delete_Tree
+
    function Find_Files_Under (Folder    : String;
                               Name      : String;
                               Max_Depth : Natural := Natural'Last)
@@ -39,6 +46,13 @@ package Alire.Directories is
    --  Recursively search for a file
    --  Depth 0 means given folder only
    --  Returns all instances found
+
+   function Find_Relative_Path (Parent : Any_Path;
+                                Child  : Any_Path)
+                                return Any_Path;
+   --  Given two paths, find the minimal relative path from Parent up to Child.
+   --  May still return an absolute path if Child is not in the same drive
+   --  (Windows) as Parent.
 
    function Find_Single_File (Path      : String;
                               Extension : String)
