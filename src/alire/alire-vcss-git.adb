@@ -6,6 +6,8 @@ with Alire.Utils.TTY;
 
 package body Alire.VCSs.Git is
 
+   subtype Git_Commit is String (1 .. 40);
+
    -------------
    -- Run_Git --
    -------------
@@ -240,15 +242,15 @@ package body Alire.VCSs.Git is
       end if;
    end Remote;
 
-   ------------------------
-   -- Remote_Head_Commit --
-   ------------------------
+   -------------------
+   -- Remote_Commit --
+   -------------------
 
    not overriding
-   function Remote_Head_Commit (This : VCS;
-                                From : URL) return String
+   function Remote_Commit (This : VCS;
+                           From : URL;
+                           Ref  : String := "HEAD") return String
    is
-      pragma Unreferenced (This);
       Output : constant Utils.String_Vector :=
                  Run_Git_And_Capture (Empty_Vector & "ls-remote" & From);
    begin
@@ -261,14 +263,38 @@ package body Alire.VCSs.Git is
       --  ae6fdd0711bb3ca2c1e2d1d18caf7a1b82a11f0a        refs/tags/v0.1^{}
       --  7376b76f23ab4421fbec31eb616d767edbec7343        refs/tags/v0.2
 
-      for Line of Output loop
-         if Tail (Crunch (Line), ASCII.HT) = "HEAD" then
-            return Head (Line, ASCII.HT);
-         end if;
-      end loop;
+      --  Prepare Ref to make it less ambiguous
 
-      return "";
-   end Remote_Head_Commit;
+      if Ref = "HEAD" or else Ref = "" then
+         return This.Remote_Commit (From, ASCII.HT & "HEAD");
+      elsif Ref (Ref'First) not in '/' | ASCII.HT then
+         return This.Remote_Commit (From, '/' & Ref);
+      end if;
+
+      --  Once here is reached, the Ref is ready for comparison
+
+      declare
+         Not_Found : constant Git_Commit := (others => 'x');
+         Result    : Git_Commit := Not_Found;
+      begin
+         for Line of Output loop
+            if Ends_With (Line, Ref) then
+               if Result = Not_Found then
+                  Result := Head (Line, ASCII.HT);
+               else
+                  Raise_Checked_Error ("Reference is ambiguous: "
+                                       & TTY.Emph (Ref));
+               end if;
+            end if;
+         end loop;
+
+         if Result = Not_Found then
+            return "";
+         else
+            return Result;
+         end if;
+      end;
+   end Remote_Commit;
 
    ------------
    -- Status --

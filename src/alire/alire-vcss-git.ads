@@ -30,9 +30,11 @@ package Alire.VCSs.Git is
    --  Specify a branch to check out after cloning
 
    not overriding
-   function Remote_Head_Commit (This : VCS;
-                                From : URL) return String;
-   --  Returns the commit reported as HEAD by ls-remote. If none, returns ""
+   function Remote_Commit (This : VCS;
+                           From : URL;
+                           Ref  : String := "HEAD") return String;
+   --  Returns the commit matching Ref by ls-remote. If none, returns "". If
+   --  several match, Checked_Error.
 
    not overriding
    function Revision_Commit (This   : VCS;
