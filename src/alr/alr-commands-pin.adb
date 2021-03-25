@@ -250,10 +250,12 @@ package body Alr.Commands.Pin is
       .New_Line
       .Append ("Specify a single crate to modify its pin.")
       .New_Line
-      .Append ("Use the --use <PATH|URL> switch to "
-               & " force alr to use the target"
-               & " to fulfill a dependency locally"
-               & " instead of looking for indexed releases.")
+      .Append ("Use the --use <PATH|URL> switch to"
+               & " use the target to fulfill a dependency locally"
+               & " instead of looking for indexed releases."
+               & " An optional reference can be specified with --commit;"
+               & " the pin will be frozen at the commit currently matching"
+               & " the reference.")
      );
 
    --------------------
@@ -281,8 +283,8 @@ package body Alr.Commands.Pin is
         (Config      => Config,
          Output      => Cmd.Commit'Access,
          Long_Switch => "--commit=",
-         Argument    => "HASH",
-         Help        => "Commit to retrieve from repository");
+         Argument    => "REF",
+         Help        => "Reference to be retrieved from repository");
 
       Define_Switch
         (Config      => Config,

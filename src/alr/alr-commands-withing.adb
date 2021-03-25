@@ -649,7 +649,10 @@ package body Alr.Commands.Withing is
        .Append ("* Adding dependencies pinned to external sources:")
        .Append ("When a single crate name is accompanied by an --use PATH|URL"
                 & " argument, the crate is always fulfilled for any required"
-                & " version by the sources found at the given target.")
+                & " version by the sources found at the given target."
+                & " An optional reference can be specified with --commit;"
+                & " the pin will be frozen at the commit currently matching"
+                & " the reference.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
@@ -701,7 +704,7 @@ package body Alr.Commands.Withing is
         (Config      => Config,
          Output      => Cmd.Commit'Access,
          Long_Switch => "--commit=",
-         Argument    => "HASH",
+         Argument    => "REF",
          Help        => "Commit to retrieve from repository");
 
       Define_Switch
