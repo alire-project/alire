@@ -65,6 +65,11 @@ package Alire.Externals.Softlinks is
 
    function Path (This : External) return Any_Path;
 
+   function Relocate (This : External;
+                      From : Any_Path) return External;
+   --  Return the same external, but adjust its path (when relative) when seen
+   --  with prefix From.
+
    function Remote (This : External) return Origins.Origin
      with Pre => This.Is_Remote;
 

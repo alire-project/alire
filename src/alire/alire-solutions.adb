@@ -6,7 +6,6 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
-with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Root;
 with Alire.Solutions.Diffs;
@@ -298,17 +297,6 @@ package body Alire.Solutions is
                      Link  : Externals.Softlinks.External)
                      return Solution
    is
-      use Alire.OS_Lib.Operators;
-
-      ----------
-      -- Join --
-      ----------
-
-      function Join (Parent, Child : Any_Path) return Any_Path
-      is (if Check_Absolute_Path (Child)
-          then Child
-          else Parent / Child);
-
       Linked_Root : constant Roots.Optional.Root :=
                       Roots.Optional.Detect_Root (Link.Path);
    begin
@@ -334,11 +322,9 @@ package body Alire.Solutions is
                      --  relative paths when possible.
 
                      New_Link : constant Externals.Softlinks.External :=
-                                  Externals.Softlinks.New_Softlink
-                                    (Join
-                                       (Parent => Link.Path,
-                                        Child  => Linked_Solution.State
-                                                    (Dep.Crate).Link.Path));
+                                  Linked_Solution
+                                    .State (Dep.Crate)
+                                    .Link.Relocate (From => Link.Path);
                   begin
 
                      --  We may or not already depend on the transitively

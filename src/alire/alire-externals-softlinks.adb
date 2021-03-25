@@ -1,3 +1,4 @@
+with Alire.OS_Lib;
 with Alire.TOML_Keys;
 with Alire.URI;
 with Alire.Utils.TTY;
@@ -105,6 +106,31 @@ package body Alire.Externals.Softlinks is
          end;
       end;
    end New_Softlink;
+
+   --------------
+   -- Relocate --
+   --------------
+
+   function Relocate (This : External;
+                      From : Any_Path) return External
+   is
+   begin
+      if Check_Absolute_Path (This.Path) then
+         return This;
+      end if;
+
+      declare
+         use Alire.OS_Lib.Operators;
+         New_Path : constant Any_Path := From / This.Path;
+      begin
+         return (Externals.External with
+                 Has_Remote => This.Has_Remote,
+                 Remote     => This.Remote,
+                 Relative   => True,
+                 Path_Length => New_Path'Length,
+                 Rel_Path    => Alire.VFS.To_Portable (New_Path));
+      end;
+   end Relocate;
 
    -------------
    -- To_TOML --
