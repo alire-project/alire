@@ -565,6 +565,9 @@ package body Alire.Solutions is
                Table
                  .Append (TTY.Name (Dep.Crate))
                  .Append (TTY.Version ("file:" & Dep.Link.Path))
+                 .Append (if Dep.Link.Is_Remote
+                          then Dep.Link.Remote.TTY_URL_With_Commit
+                          else "")
                  .New_Row;
             elsif Dep.Is_Pinned then
                Table
