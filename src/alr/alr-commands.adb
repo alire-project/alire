@@ -425,7 +425,7 @@ package body Alr.Commands is
       Put_Line (TTY.Bold ("DESCRIPTION"));
 
       for Line of Dispatch_Table (Cmd).Long_Description loop
-         AAA.Text_IO.Put_Paragraph (Line,
+         AAA.Text_IO.Put_Paragraph (Help.Highlight_Switches (Line),
                                     Line_Prefix => "   ");
          --  GNATCOLL.Paragraph_Filling seems buggy at the moment, otherwise
          --  it would be the logical choice.
@@ -901,7 +901,8 @@ package body Alr.Commands is
          Ada.Text_IO.Put_Line
            ("Use ""alr help <command>"" for specific command help");
          OS_Lib.Bailout (1);
-      when Constraint_Error | Error_No_Command =>
+      when E : Constraint_Error | Error_No_Command =>
+         Alire.Log_Exception (E);
          if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
             Log ("Unrecognized global option: " & Raw_Arguments (1), Error);
          else
