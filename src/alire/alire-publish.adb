@@ -125,12 +125,12 @@ package body Alire.Publish is
       case Git.Status (Path) is
          when No_Remote =>
             if For_Archiving then
-               Log_Success ("Local repository is clean (without remote).");
+               Put_Success ("Local repository is clean (without remote).");
             else
                Git_Error ("No remote configured", Path);
             end if;
          when Clean =>
-            Log_Success ("Local repository is clean.");
+            Put_Success ("Local repository is clean.");
          when Ahead =>
             Git_Error ("Your branch is ahead of remote" & ASCII.LF &
                          "Please push local commits to the remote branch.",
@@ -273,7 +273,7 @@ package body Alire.Publish is
          .Append ("--non-interactive")
          .Append ("build"));
 
-      Log_Success ("Build succeeded.");
+      Put_Success ("Build succeeded.");
    end Check_Build;
 
    -------------------------
@@ -340,7 +340,7 @@ package body Alire.Publish is
                            Deployer.Compute_Hash
                              (Context.Tmp_Deploy_Dir.Filename, Kind));
             begin
-               Log_Success ("Computed hash: " & String (Hash));
+               Put_Success ("Computed hash: " & String (Hash));
                Context.Origin.Add_Hash (Hash);
             end;
          end loop;
@@ -438,7 +438,7 @@ package body Alire.Publish is
          TOML.File_IO.Dump_To_File (TOML_Origin, Index_File);
          Close (Index_File);
 
-         Log_Success
+         Put_Success
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
 
@@ -446,7 +446,7 @@ package body Alire.Publish is
          --  message otherwise (when lacking a github login).
 
          if Config.Defined (Config.Keys.User_Github_Login) then
-            Log_Info
+            Put_Info
               ("Please upload this file to "
                & TTY.URL
                  (Index.Community_Host & "/"
@@ -457,7 +457,7 @@ package body Alire.Publish is
                   & String (TOML_Index.Manifest_Path (Name)))
                & " to create a pull request against the community index.");
          else
-            Log_Info
+            Put_Info
               ("Please create a pull request against the community index at "
                & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
                & " including this file at "
@@ -581,7 +581,7 @@ package body Alire.Publish is
          Tar_Archive;
       end if;
 
-      Log_Success ("Source archive created successfully.");
+      Put_Success ("Source archive created successfully.");
 
       declare
 
@@ -680,10 +680,10 @@ package body Alire.Publish is
       --  User has an account
 
       if not Config.Defined (Config.Keys.User_Github_Login) then
-         Log_Info ("Publishing to the community index"
+         Put_Info ("Publishing to the community index"
                    & " requires a GitHub account.");
       else
-         Log_Success ("User has a GitHub account: " & TTY.Emph
+         Put_Success ("User has a GitHub account: " & TTY.Emph
                       (Utils.User_Input.Query_Config.User_GitHub_Login));
       end if;
 
@@ -711,7 +711,7 @@ package body Alire.Publish is
                & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
                & " and fork the repository.");
          else
-            Log_Success ("User has forked the community repository");
+            Put_Success ("User has forked the community repository");
          end if;
 
          --  The repo must contain the base branch, or otherwise GitHub
@@ -730,7 +730,7 @@ package body Alire.Publish is
                & TTY.URL (Index.Community_Host
                  & "/" & Login & "/" & Index.Community_Repo_Name));
          else
-            Log_Success ("User's fork contains base branch: "
+            Put_Success ("User's fork contains base branch: "
                          & TTY.Emph (Index.Community_Branch));
          end if;
       end;
@@ -762,7 +762,7 @@ package body Alire.Publish is
          --  internal use with network drives? So allow forcing it.
       end if;
 
-      Log_Success ("Origin is of supported kind: " & Context.Origin.Kind'Img);
+      Put_Success ("Origin is of supported kind: " & Context.Origin.Kind'Img);
 
       if Context.Origin.Kind in Origins.VCS_Kinds then
 
@@ -779,7 +779,7 @@ package body Alire.Publish is
                URI.Authority (URL) = Site or else
                Utils.Ends_With (URI.Authority (URL), "." & Site))
          then
-            Log_Success ("Origin is hosted on trusted site: "
+            Put_Success ("Origin is hosted on trusted site: "
                          & URI.Authority (URL));
          else
             Raise_Checked_Error ("Origin is hosted on unknown site: "
@@ -944,7 +944,7 @@ package body Alire.Publish is
                                              else "HEAD"));
          begin
             if Commit /= "" then
-               Log_Success ("Revision exists in local repository ("
+               Put_Success ("Revision exists in local repository ("
                             & TTY.Emph (Commit) & ").");
             else
                Raise_Checked_Error ("Revision not found in local repository: "

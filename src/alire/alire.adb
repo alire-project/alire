@@ -63,23 +63,41 @@ package body Alire is
       end if;
    end Log_Exception;
 
+   -----------------
+   -- Put_Failure --
+   -----------------
+
+   procedure Put_Failure (Text : String; Level : Trace.Levels := Info) is
+   begin
+      Trace.Log (Utils.TTY.Error ("✗ ") & Text, Level);
+   end Put_Failure;
+
    --------------
-   -- Log_Info --
+   -- Put_Info --
    --------------
 
-   procedure Log_Info (Text : String; Level : Trace.Levels := Info) is
+   procedure Put_Info (Text : String; Level : Trace.Levels := Info) is
    begin
       Trace.Log (Utils.TTY.Info (Text), Level);
-   end Log_Info;
+   end Put_Info;
 
    -----------------
-   -- Log_Success --
+   -- Put_Success --
    -----------------
 
-   procedure Log_Success (Text : String; Level : Trace.Levels := Info) is
+   procedure Put_Success (Text : String; Level : Trace.Levels := Info) is
    begin
       Trace.Log (Utils.TTY.Success (Text), Level);
-   end Log_Success;
+   end Put_Success;
+
+   -----------------
+   -- Put_Warning --
+   -----------------
+
+   procedure Put_Warning (Text : String; Level : Trace.Levels := Info) is
+   begin
+      Trace.Log (Utils.TTY.Warn ("⚠ ") & Text, Level);
+   end Put_Warning;
 
    ------------
    -- Assert --

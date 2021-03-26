@@ -379,7 +379,7 @@ package body Alr.Commands.Init is
          Alire.Lockfiles.File_Name
            (+Name, String (Filesystem_String'(Directory.Full_Name))));
 
-      Alire.Log_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
+      Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;
 
    -------------
