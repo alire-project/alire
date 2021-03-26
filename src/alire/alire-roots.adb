@@ -762,8 +762,8 @@ package body Alire.Roots is
             Head : constant String :=
                      VCSs.Git.Handler.Remote_Head_Commit (URL);
          begin
-            Trace.Info ("No commit provided; using default remote HEAD: "
-                        & TTY.Emph (Head));
+            Put_Info ("No commit provided; using default remote HEAD: "
+                      & TTY.Emph (Head));
             return This.Pinned_To_Remote (Dependency  => Dependency,
                                           URL         => URL,
                                           Commit      => Head,
@@ -873,9 +873,7 @@ package body Alire.Roots is
                                       .Linking (+Linked_Name, New_Link));
             end;
          end;
-
       end;
-
    end Pinned_To_Remote;
 
    ------------------------------------
