@@ -42,5 +42,10 @@ jobs:
     - name: Install alr
       uses: alire-project/setup-alire@latest-devel
 
+    - run: alr printenv
+
     - name: Self-build alr
       run: alr build
+
+    - name: Display built alr version
+      run: ./bin/alr version
