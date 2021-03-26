@@ -86,7 +86,10 @@ package Alire.Origins is
 
    --  Helper types
 
-   subtype Git_Commit is String (1 .. 40);
+   subtype Git_Commit is String (1 .. 40) with
+     Dynamic_Predicate =>
+       (for all Char of Git_Commit => Char in '0' .. '9' | 'a' .. 'f');
+
    subtype Hg_Commit  is String (1 .. 40);
 
    --  Constructors

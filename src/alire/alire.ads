@@ -9,7 +9,7 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "1.1.0-dev+ba275f94";
+   Version : constant String := "1.1.0-dev+0f603c29";
    --  1.1.0-dev: begin post-1.0 changes
    --  1.0.0:     no changes since rc3
    --  1.0.0-rc3: added help colors PR

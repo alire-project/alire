@@ -755,18 +755,26 @@ package body Alire.Roots is
             & Requested_Crate);
       end if;
 
-      --  Identify the head commit, if not given:
+      --  Identify the head commit/reference
 
-      if Commit = "" then
+      if Commit = "" or else Commit not in Origins.Git_Commit then
          declare
-            Head : constant String :=
-                     VCSs.Git.Handler.Remote_Head_Commit (URL);
+            Ref_Commit : constant String :=
+                     VCSs.Git.Handler.Remote_Commit (URL, Ref => Commit);
          begin
-            Put_Info ("No commit provided; using default remote HEAD: "
-                      & TTY.Emph (Head));
+            if Ref_Commit = "" then
+               Raise_Checked_Error ("Could not resolve reference to commit: "
+                                    & TTY.Emph (Commit));
+            else
+               Put_Info ("Using commit " & TTY.Emph (Ref_Commit)
+                         & " for reference "
+                         & TTY.Emph (if Commit = "" then "HEAD"
+                                                      else Commit));
+            end if;
+
             return This.Pinned_To_Remote (Dependency  => Dependency,
                                           URL         => URL,
-                                          Commit      => Head,
+                                          Commit      => Ref_Commit,
                                           Must_Depend => Must_Depend);
          end;
       end if;
