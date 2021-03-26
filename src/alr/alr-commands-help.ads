@@ -38,6 +38,9 @@ package Alr.Commands.Help is
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[command|topic]");
 
+   function Highlight_Switches (Line : String) return String;
+   --  Visit every word and apply Emph to words starting with --
+
 private
 
    type Command is new Commands.Command with null record;

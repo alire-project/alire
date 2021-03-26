@@ -766,11 +766,12 @@ package body Alire.Roots is
                Raise_Checked_Error ("Could not resolve reference to commit: "
                                     & TTY.Emph (Commit));
             else
-               Trace.Info ("Using commit " & TTY.Emph (Ref_Commit)
-                           & " for reference "
-                           & TTY.Emph (if Commit = "" then "HEAD"
+               Put_Info ("Using commit " & TTY.Emph (Ref_Commit)
+                         & " for reference "
+                         & TTY.Emph (if Commit = "" then "HEAD"
                                                       else Commit));
             end if;
+
             return This.Pinned_To_Remote (Dependency  => Dependency,
                                           URL         => URL,
                                           Commit      => Ref_Commit,
@@ -880,9 +881,7 @@ package body Alire.Roots is
                                       .Linking (+Linked_Name, New_Link));
             end;
          end;
-
       end;
-
    end Pinned_To_Remote;
 
    ------------------------------------
