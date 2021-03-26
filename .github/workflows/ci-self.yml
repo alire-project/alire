@@ -16,23 +16,31 @@ on:
 jobs:
 
   build:
-    name: Self-build with `alr build`
+    name: Self-build on ${{ matrix.os }}
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
       with:
-        submodules: true
+        submodules: false # Not needed, should be retrieved by alr
 
     - name: Install toolchain
       uses: ada-actions/toolchain@ce2020
       with:
         distrib: community
 
+    # We need the devel version to build with remote pins
     - name: Install alr
-      uses: alire-project/setup-alire@latest-stable
+      uses: alire-project/setup-alire@latest-devel
 
     - name: Self-build alr
       run: alr build
