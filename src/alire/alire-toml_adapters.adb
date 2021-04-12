@@ -328,7 +328,7 @@ package body Alire.TOML_Adapters is
                Trace.Always (Prefix & "table:");
                for Pair of Val.Iterate_On_Table loop
                   if Pair.Value.Kind in Atom_Value_Kind then
-                     Trace.Always (Prefix & (+Val.Keys (1)) & " = "
+                     Trace.Always (Prefix & (+Pair.Key) & " = "
                                    & Image (Pair.Value));
                   else
                      Trace.Always (Prefix & (+Pair.Key) & " = ");

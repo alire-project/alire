@@ -56,6 +56,10 @@ package Alire.Expressions.Maps with Preelaborate is
      Post => M.Other = E;
    --  Set the default mapping for this map
 
+   procedure Visit_All (M     : in out Map;
+                        Apply : access procedure (E : in out Elements));
+   --  Visits all elements in the map, including the others value
+
 private
 
    package Maps is
