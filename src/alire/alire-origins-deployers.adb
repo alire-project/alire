@@ -27,6 +27,9 @@ package body Alire.Origins.Deployers is
    function New_Deployer (From : Origin) return Deployer'Class is
    begin
       case From.Kind is
+         when Origins.Binary_Archive =>
+            return Source_Archive.Deployer'(Deployer'(Base => From)
+                                            with null record);
          when Origins.External =>
             return External.Deployer'(Deployer'(Base => From)
                                       with null record);
@@ -144,7 +147,7 @@ package body Alire.Origins.Deployers is
       if This.Supports_Hashing then
 
          --  Emit a note if we might profit from hashes:
-         if This.Base.Data.Hashes.Is_Empty then
+         if This.Base.Get_Hashes.Is_Empty then
             Trace.Warning ("No integrity hashes provided for "
                            & This.Base.Image);
             --  TODO: make this an error once all crates are updated with
@@ -154,7 +157,7 @@ package body Alire.Origins.Deployers is
          end if;
 
          --  Compute hashes from downloaded release and verify:
-         for Index_Hash of This.Base.Data.Hashes loop
+         for Index_Hash of This.Base.Get_Hashes loop
             Trace.Debug ("Computing " & Hashes.Kind (Index_Hash)'Img & "...");
             declare
                use type Hashes.Any_Digest;

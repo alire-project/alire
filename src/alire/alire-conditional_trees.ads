@@ -68,6 +68,11 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Recursively merge all subtree elements in a single value or vector.
    --  Since it cannot result in an empty tree, it returns a proper node.
 
+   procedure Recursive_Traversal
+     (This  : in out Node;
+      Apply : access procedure (Value : in out Values)) is abstract;
+   --  Enables full traversal with modification of children
+
    procedure To_TOML (This : Node; Parent : TOML.TOML_Value) is abstract with
      Pre'Class => Parent.Kind = TOML.TOML_Table;
 
@@ -216,6 +221,11 @@ package Alire.Conditional_Trees with Preelaborate is
    function Conjunction (This : Tree) return Conjunctions
      with Pre => This.Root in Vector_Node;
 
+   procedure Visit_All
+     (This  : in out Tree;
+      Apply : access procedure (Value : in out Values));
+   --  Depth-first recursive traversal of all values, irrespective of node type
+
    --  Following iterators/accessors are used during dependency resolution, and
    --  for that reason they will fail for conditional trees.
 
@@ -328,6 +338,11 @@ private
                     Sorted  : Boolean := False);
 
    overriding
+   procedure Recursive_Traversal
+     (This  : in out Leaf_Node;
+      Apply : access procedure (Value : in out Values));
+
+   overriding
    procedure To_TOML (This : Leaf_Node; Parent : TOML.TOML_Value);
 
    overriding
@@ -421,6 +436,11 @@ private
                     Prefix  : String;
                     Verbose : Boolean;
                     Sorted  : Boolean);
+
+   overriding
+   procedure Recursive_Traversal
+     (This  : in out Vector_Node;
+      Apply : access procedure (Value : in out Values));
 
    overriding
    procedure To_TOML (This : Vector_Node; Parent : TOML.TOML_Value);
