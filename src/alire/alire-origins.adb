@@ -1,3 +1,4 @@
+with Alire.Root;
 with Alire.URI;
 with Alire.VCSs.Git;
 
@@ -347,7 +348,7 @@ package body Alire.Origins is
 
    function Short_Unique_Id (This : Origin) return String is
       Hash : constant String :=
-               (if This.Kind = Source_Archive
+               (if This.Kind in Archive_Kinds
                 then Utils.Tail (String (This.Data.Hashes.First_Element), ':')
                 else This.Commit);
    begin
@@ -412,5 +413,15 @@ package body Alire.Origins is
 
       return Table;
    end To_TOML;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (This : Conditional_Archive) return Archive_Data'Class
+   is (if This.Evaluate (Alire.Root.Platform_Properties).Is_Empty
+       then raise Checked_Error with
+         Errors.Set ("Binary archive is unavailable on current platform")
+       else This.Evaluate (Alire.Root.Platform_Properties).Value);
 
 end Alire.Origins;

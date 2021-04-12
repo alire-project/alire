@@ -458,6 +458,7 @@ private
          Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is
+           when Binary_Archive => R.Origin.Short_Unique_Id,
            when External       => "external",
            when Filesystem     => "filesystem",
            when System         => "system",

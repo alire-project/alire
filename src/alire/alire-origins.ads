@@ -1,6 +1,9 @@
+with Alire.Conditional_Trees;
+with Alire.Errors;
 with Alire.Hashes;
 with Alire.Interfaces;
 with Alire.TOML_Adapters;
+private with Alire.TOML_Keys;
 with Alire.Utils.TTY;
 
 private with Ada.Containers.Indefinite_Vectors;
@@ -13,7 +16,8 @@ package Alire.Origins is
    package TTY renames Alire.Utils.TTY;
 
    type Kinds is
-     (External,       -- A do-nothing origin, with some custom description
+     (Binary_Archive, -- A pre-compiled binary (dynamic expr + source archive)
+      External,       -- A do-nothing origin, with some custom description
       Filesystem,     -- Not really an origin, but a working copy of a release
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
@@ -26,10 +30,13 @@ package Alire.Origins is
    type Prefix_Array is array (Kinds) of String_Access;
    Prefixes : constant Prefix_Array;
 
-   subtype VCS_Kinds is Kinds range Git .. SVN;
+   subtype Archive_Kinds is Kinds
+     with Static_Predicate => Archive_Kinds in Binary_Archive | Source_Archive;
 
    subtype External_Kinds is Kinds
      with Static_Predicate => External_Kinds in External | System;
+
+   subtype VCS_Kinds is Kinds range Git .. SVN;
 
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);
    subtype Known_Source_Archive_Format is
@@ -61,11 +68,11 @@ package Alire.Origins is
      with Pre => This.Kind = Filesystem;
 
    function Archive_URL (This : Origin) return Alire.URL
-     with Pre => This.Kind = Source_Archive;
+     with Pre => This.Kind in Archive_Kinds;
    function Archive_Name (This : Origin) return String
-     with Pre => This.Kind = Source_Archive;
+     with Pre => This.Kind in Archive_Kinds;
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
-     with Pre => This.Kind = Source_Archive;
+     with Pre => This.Kind in Archive_Kinds;
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name.
 
@@ -82,7 +89,7 @@ package Alire.Origins is
    --  from external definitions (detected or not).
 
    function Short_Unique_Id (This : Origin) return String with
-     Pre => This.Kind in Git | Hg | Source_Archive;
+     Pre => This.Kind in Git | Hg | Archive_Kinds;
 
    --  Helper types
 
@@ -179,10 +186,59 @@ private
    function Packaged_As (Name : String) return Package_Names
    is (Name => +Name);
 
+   function S (Str : Unbounded_String) return String is (To_String (Str));
+
+   type Archive_Data is
+     new Interfaces.Classificable
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable with
+   record
+      URL    : Unbounded_String;
+      Name   : Unbounded_String;
+      Format : Known_Source_Archive_Format;
+   end record;
+
+   overriding
+   function Key (This : Archive_Data) return String is (TOML_Keys.Origin);
+
+   overriding
+   function To_TOML (This : Archive_Data) return TOML.TOML_Value;
+
+   overriding
+   function To_YAML (This : Archive_Data) return String
+   is (raise Unimplemented with Errors.Set ("Should not be needed"));
+
+   function Image (Archive : Archive_Data;
+                   Kind    : Archive_Kinds) return String
+   is ((if Kind in Source_Archive
+        then "source archive "
+        else "binary archive ")
+       & (if S (Archive.Name) /= ""
+          then S (Archive.Name) & " "
+          else "")
+       & "at " & S (Archive.URL));
+
+   function Binary_Image (Archive : Archive_Data) return String
+   is (Image (Archive, Binary_Archive));
+
+   function Source_Image (Archive : Archive_Data) return String
+   is (Image (Archive, Source_Archive));
+
+   package Conditional_Archives is
+     new Conditional_Trees (Values => Archive_Data,
+                            Image  => Binary_Image);
+
+   type Conditional_Archive is new Conditional_Archives.Tree with null record;
+
+   function Value (This : Conditional_Archive) return Archive_Data'Class;
+
    type Origin_Data (Kind : Kinds := External) is record
       Hashes : Hash_Vectors.Vector;
 
       case Kind is
+         when Binary_Archive =>
+            Bin_Archive : Conditional_Archives.Tree;
+
          when External =>
             Description : Unbounded_String;
 
@@ -194,9 +250,7 @@ private
             Commit   : Unbounded_String;
 
          when Source_Archive =>
-            Archive_URL    : Unbounded_String;
-            Archive_Name   : Unbounded_String;
-            Archive_Format : Known_Source_Archive_Format;
+            Src_Archive : Archive_Data;
 
          when System =>
             Package_Name : Unbounded_String;
@@ -249,27 +303,30 @@ private
    function Path (This : Origin) return String is (+This.Data.Path);
 
    function Archive_URL (This : Origin) return Alire.URL is
-     (+This.Data.Archive_URL);
+     (if This.Kind in Source_Archive
+      then +This.Data.Src_Archive.URL
+      else +This.Data.Bin_Archive.Value.URL);
    function Archive_Name (This : Origin) return String is
-     (+This.Data.Archive_Name);
+     (if This.Kind in Source_Archive
+      then +This.Data.Src_Archive.Name
+      else +This.Data.Bin_Archive.Value.URL);
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
-   is (This.Data.Archive_Format);
+   is (if This.Kind in Source_Archive
+       then This.Data.Src_Archive.Format
+       else This.Data.Bin_Archive.Value.Format);
 
    function Package_Name (This : Origin) return String is
      (+This.Data.Package_Name);
-
-   function S (Str : Unbounded_String) return String is (To_String (Str));
 
    function Image (This : Origin) return String is
      ((case This.Kind is
           when VCS_Kinds      =>
              "commit " & S (This.Data.Commit)
-       & " from " & S (This.Data.Repo_URL),
-          when Source_Archive =>
-             "source archive " & (if S (This.Data.Archive_Name) /= ""
-                                  then S (This.Data.Archive_Name) & " "
-                                  else "")
-       & "at " & S (This.Data.Archive_URL),
+                       & " from " & S (This.Data.Repo_URL),
+          when Archive_Kinds  =>
+            (if This.Kind in Source_Archive
+             then Source_Image (This.Data.Src_Archive)
+             else Binary_Image (This.Data.Bin_Archive.Value)),
           when System         =>
              "system package from platform software manager: "
              & This.Package_Name,
@@ -305,6 +362,6 @@ private
                  External       => Prefix_External'Access,
                  Filesystem     => Prefix_File'Access,
                  System         => Prefix_System'Access,
-                 Source_Archive => null);
+                 Archive_Kinds  => null);
 
 end Alire.Origins;
