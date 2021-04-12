@@ -110,10 +110,10 @@ package body Alire.Origins is
       end if;
 
       return (Data => (Source_Archive,
-                       Hashes         => <>,
-                       Archive_URL    => +URL,
-                       Archive_Name   => +Archive_Name,
-                       Archive_Format => Format));
+                       Hashes      => <>,
+                       Src_Archive => (URL    => +URL,
+                                       Name   => +Archive_Name,
+                                       Format => Format)));
    end New_Source_Archive;
 
    -----------------
@@ -365,7 +365,7 @@ package body Alire.Origins is
 
    overriding function To_TOML (This : Origin) return TOML.TOML_Value is
       use TOML_Adapters;
-      Table : constant TOML.TOML_Value := TOML.Create_Table;
+      Table : TOML.TOML_Value := TOML.Create_Table;
    begin
       case This.Kind is
          when Filesystem =>
@@ -386,13 +386,12 @@ package body Alire.Origins is
             Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all & (+This.Data.Description)));
 
+         when Binary_Archive =>
+            Table := TOML.Merge (Table,
+                                 This.Data.Bin_Archive.Value.To_TOML);
+
          when Source_Archive =>
-            Table.Set (Keys.URL, +This.Archive_URL);
-            if This.Archive_Name /= "" and then
-              This.Archive_Name /= URL_Basename (This.Archive_URL)
-            then
-               Table.Set (Keys.Archive_Name, +This.Archive_Name);
-            end if;
+            Table := TOML.Merge (Table, This.Data.Src_Archive.To_TOML);
 
          when System =>
             Table.Set (Keys.URL,
@@ -414,14 +413,40 @@ package body Alire.Origins is
       return Table;
    end To_TOML;
 
+   -------------
+   -- To_TOML --
+   -------------
+
+   overriding
+   function To_TOML (This : Archive_Data) return TOML.TOML_Value is
+      use TOML;
+      Table : constant TOML.TOML_Value := TOML.Create_Table;
+   begin
+      Table.Set (Keys.URL, Create_String (This.URL));
+      if This.Name /= "" and then
+        This.Name /= URL_Basename (+This.URL)
+      then
+         Table.Set (Keys.Archive_Name, Create_String (This.Name));
+      end if;
+      return Table;
+   end To_TOML;
+
    -----------
    -- Value --
    -----------
 
    function Value (This : Conditional_Archive) return Archive_Data'Class
-   is (if This.Evaluate (Alire.Root.Platform_Properties).Is_Empty
-       then raise Checked_Error with
-         Errors.Set ("Binary archive is unavailable on current platform")
-       else This.Evaluate (Alire.Root.Platform_Properties).Value);
+   is
+      --  Resolve the value that applies currently
+      Evaluated : constant Conditional_Archive :=
+                    This.Evaluate (Alire.Root.Platform_Properties);
+   begin
+      if Evaluated.Is_Empty then
+         Raise_Checked_Error
+           ("Binary archive is unavailable on current platform");
+      else
+         return Conditional_Archives.Tree (Evaluated).Value;
+      end if;
+   end Value;
 
 end Alire.Origins;
