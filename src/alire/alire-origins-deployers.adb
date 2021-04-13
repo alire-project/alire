@@ -26,6 +26,9 @@ package body Alire.Origins.Deployers is
    function New_Deployer (From : Origin) return Deployer'Class is
    begin
       case From.Kind is
+         when Origins.Binary_Archive =>
+            return Source_Archive.Deployer'(Deployer'(Base => From)
+                                            with null record);
          when Origins.External =>
             return External.Deployer'(Deployer'(Base => From)
                                       with null record);
