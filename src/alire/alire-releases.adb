@@ -904,7 +904,7 @@ package body Alire.Releases is
        Name         => R.Name,
        Alias        => R.Alias,
        Version      => R.Version,
-       Origin       => R.Origin,
+       Origin       => R.Origin.Whenever (P),
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
        Forbidden    => R.Forbidden.Evaluate (P),

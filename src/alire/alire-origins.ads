@@ -1,7 +1,8 @@
-with Alire.Conditional_Trees;
+private with Alire.Conditional_Trees.TOML_Load;
 with Alire.Errors;
 with Alire.Hashes;
 with Alire.Interfaces;
+with Alire.Properties;
 with Alire.TOML_Adapters;
 private with Alire.TOML_Keys;
 with Alire.Utils.TTY;
@@ -49,6 +50,9 @@ package Alire.Origins is
      Interfaces.Tomifiable with private;
 
    function Kind (This : Origin) return Kinds;
+
+   function Whenever (This : Origin; Env : Properties.Vector) return Origin;
+   --  Resolve expressions in the origin
 
    -------------------
    --  member data  --
@@ -168,6 +172,9 @@ private
    package Hash_Vectors is new
      Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
 
+   function Get_Hashes (This : Origin) return Hash_Vectors.Vector;
+   --  Ugly Get_ but it avoids lots of ambiguities down the line
+
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;
 
@@ -196,6 +203,7 @@ private
       URL    : Unbounded_String;
       Name   : Unbounded_String;
       Format : Known_Source_Archive_Format;
+      Hashes : Hash_Vectors.Vector;
    end record;
 
    overriding
@@ -229,21 +237,21 @@ private
                             Image  => Binary_Image);
 
    type Conditional_Archive is new Conditional_Archives.Tree with null record;
+   package Binary_Loader is new Conditional_Archives.TOML_Load;
 
-   function Value (This : Conditional_Archive) return Archive_Data'Class;
+   function As_Data (This : Conditional_Archive) return Archive_Data'Class;
 
    type Origin_Data (Kind : Kinds := External) is record
-      Hashes : Hash_Vectors.Vector;
-
       case Kind is
          when Binary_Archive =>
-            Bin_Archive : Conditional_Archives.Tree;
+            Bin_Archive : Conditional_Archive;
 
          when External =>
             Description : Unbounded_String;
 
          when Filesystem =>
-            Path : Unbounded_String;
+            Path   : Unbounded_String;
+            Hashes : Hash_Vectors.Vector;
 
          when VCS_Kinds =>
             Repo_URL : Unbounded_String;
