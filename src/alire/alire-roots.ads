@@ -4,6 +4,7 @@ with Alire.Conditional;
 with Alire.Containers;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
+with Alire.Origins;
 with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
@@ -198,7 +199,9 @@ package Alire.Roots is
    function Crate_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.toml" file inside Working_Folder
 
-   function Dependencies_Dir (This : Root) return Absolute_Path;
+   function Dependencies_Dir (This : Root;
+                              Kind : Origins.Kinds)
+                              return Absolute_Path;
    --  The folder where dependencies are checked out for this root
 
    function Pins_Dir (This : Root) return Absolute_Path;

@@ -1,6 +1,7 @@
 with Ada.Calendar;
 with Ada.Directories;
 
+with Alire.Config.Edit;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
@@ -248,7 +249,8 @@ package body Alire.Roots is
 
                   if Rel.Name /= Release (This).Name then
                      Rel.Deploy (Env           => This.Environment,
-                                 Parent_Folder => This.Dependencies_Dir,
+                                 Parent_Folder =>
+                                   This.Dependencies_Dir (Rel.Origin.Kind),
                                  Was_There     => Was_There);
                   else
                      Trace.Debug
@@ -468,12 +470,15 @@ package body Alire.Roots is
                           return Any_Path
    is
       package Adirs renames Ada.Directories;
-      Deps_Dir : constant Any_Path := This.Dependencies_Dir;
    begin
       if This.Release.Element.Name = Crate then
          return +This.Path;
       elsif This.Solution.State (Crate).Is_Solved then
-         return Deps_Dir / Release (This, Crate).Unique_Folder;
+         declare
+            Rel : constant Releases.Release := Release (This, Crate);
+         begin
+            return This.Dependencies_Dir (Rel.Origin.Kind) / Rel.Unique_Folder;
+         end;
       elsif This.Solution.State (Crate).Is_Linked then
          return Adirs.Full_Name (This.Solution.State (Crate).Link.Path);
       else
@@ -497,6 +502,10 @@ package body Alire.Roots is
    function Crate_File (This : Root) return Absolute_Path is
      (Path (This) / Crate_File_Name);
 
+   ---------------
+   -- Cache_Dir --
+   ---------------
+
    function Cache_Dir (This : Root) return Absolute_Path
    is (This.Working_Folder / "cache");
 
@@ -504,8 +513,14 @@ package body Alire.Roots is
    -- Dependencies_Dir --
    ----------------------
 
-   function Dependencies_Dir (This : Root) return Absolute_Path is
-     (This.Cache_Dir / "dependencies");
+   function Dependencies_Dir (This : Root;
+                              Kind : Origins.Kinds)
+                              return Absolute_Path
+   is (case Kind is
+          when Origins.Binary_Archive =>
+             Config.Edit.Path / "cache" / "dependencies",
+          when others                 =>
+             This.Cache_Dir / "dependencies");
 
    --------------
    -- Pins_Dir --
