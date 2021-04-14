@@ -29,6 +29,11 @@ package body Alire.Conditional_Trees.Case_Nodes is
                     Sorted  : Boolean);
 
    overriding
+   procedure Recursive_Traversal
+     (This  : in out Case_Node;
+      Apply : access procedure (Value : in out Values));
+
+   overriding
    procedure To_TOML (This : Case_Node; Parent : TOML.TOML_Value);
 
    overriding
@@ -193,6 +198,29 @@ package body Alire.Conditional_Trees.Case_Nodes is
 
       return Flat.Root;
    end Flatten;
+
+   -------------------------
+   -- Recursive_Traversal --
+   -------------------------
+
+   overriding
+   procedure Recursive_Traversal
+     (This  : in out Case_Node;
+      Apply : access procedure (Value : in out Values))
+   is
+
+      -----------------
+      -- Local_Apply --
+      -----------------
+
+      procedure Local_Apply (Value : in out Tree) is
+      begin
+         Value.Visit_All (Apply);
+      end Local_Apply;
+
+   begin
+      This.Cases.Visit_All (Local_Apply'Access);
+   end Recursive_Traversal;
 
    -------------
    -- To_TOML --

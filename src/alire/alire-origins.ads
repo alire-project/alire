@@ -204,6 +204,7 @@ private
       Name   : Unbounded_String;
       Format : Known_Source_Archive_Format;
       Hashes : Hash_Vectors.Vector;
+      Binary : Boolean;
    end record;
 
    overriding

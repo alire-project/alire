@@ -75,4 +75,20 @@ package body Alire.Expressions.Maps is
       end return;
    end Size;
 
+   ---------------
+   -- Visit_All --
+   ---------------
+
+   procedure Visit_All (M     : in out Map;
+                        Apply : access procedure (E : in out Elements)) is
+   begin
+      for Elem of M.Entries loop
+         Apply (Elem);
+      end loop;
+
+      for Elem of M.Other loop
+         Apply (Elem);
+      end loop;
+   end Visit_All;
+
 end Alire.Expressions.Maps;

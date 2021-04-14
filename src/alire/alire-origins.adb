@@ -11,6 +11,7 @@ package body Alire.Origins is
    package Keys is -- TOML keys for serialization
 
       Archive_Name : constant String := "archive-name";
+      Binary       : constant String := "binary";
       Commit       : constant String := "commit";
       Hashes       : constant String := "hashes";
       Origin       : constant String := "origin";
@@ -324,6 +325,7 @@ package body Alire.Origins is
                        Src_Archive => (URL    => +URL,
                                        Name   => +Archive_Name,
                                        Format => Format,
+                                       Binary => False,
                                        Hashes => <>)));
    end New_Source_Archive;
 
@@ -435,6 +437,13 @@ package body Alire.Origins is
       begin
          Add_Hashes (Archive_Origin.Data.Src_Archive.Hashes, Table).Assert;
 
+         if Table.Unwrap.Has (Keys.Binary) then
+            Archive_Origin.Data.Src_Archive.Binary :=
+              Table.Checked_Pop (Keys.Binary, TOML_Boolean).As_Boolean;
+         end if;
+
+         Table.Report_Extra_Keys;
+
          --  Wrap as a conditional tree
          return Conditional_Archives.New_Leaf
            (Archive_Origin.Data.Src_Archive);
@@ -472,6 +481,16 @@ package body Alire.Origins is
       Table   : constant TOML_Adapters.Key_Queue :=
                  From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
                                Context => Keys.Origin);
+
+      -----------------
+      -- Mark_Binary --
+      -----------------
+
+      procedure Mark_Binary (Data : in out Archive_Data) is
+      begin
+         Data.Binary := True;
+      end Mark_Binary;
+
    begin
       --  Check if we are seeing a conditional binary origin, or a regular
       --  static one. If the former, divert to the dynamic loader; else
@@ -479,6 +498,9 @@ package body Alire.Origins is
 
       if (for some Key of Table.Unwrap.Keys =>
             Utils.Starts_With (+Key, "case("))
+        or else
+          (Table.Unwrap.Has (Keys.Binary) and then
+           Table.Unwrap.Get (Keys.Binary).As_Boolean)
       then
          This := (Data => Origin_Data'
                     (Kind         => Binary_Archive,
@@ -490,6 +512,13 @@ package body Alire.Origins is
                         Loader  => From_TOML'Access,
                         Resolve => True,
                         Strict  => False) with null record)));
+
+         --  Mark these as explicitly binary, because they're in a case, even
+         --  if the maintainer omitted the binary field. This saves some noise
+         --  in the manifest files.
+
+         This.Data.Bin_Archive.Visit_All (Mark_Binary'Access);
+
          return Outcome_Success;
       end if;
 
@@ -543,7 +572,7 @@ package body Alire.Origins is
          case This.Kind is
          when Filesystem =>
             if Hashed then
-               return Add_Hashes (This.Data.Hashes, Table);
+               Add_Hashes (This.Data.Hashes, Table).Assert;
             end if;
             --  Hashes are mandatory only for source archives. This is checked
             --  on deployment, since at this moment we do not have the proper
@@ -558,7 +587,6 @@ package body Alire.Origins is
             --  Hashes already loaded by the archive data loader
             Assert (not This.Data.Src_Archive.Hashes.Is_Empty,
                     Or_Else => "source archive hashes missing");
-            return Outcome_Success;
 
          when others =>
             if Hashed then
@@ -701,11 +729,17 @@ package body Alire.Origins is
       Table : constant TOML.TOML_Value := TOML.Create_Table;
    begin
       Table.Set (Keys.URL, Create_String (This.URL));
+
       if This.Name /= "" and then
         This.Name /= URL_Basename (+This.URL)
       then
          Table.Set (Keys.Archive_Name, Create_String (This.Name));
       end if;
+
+      if This.Binary then
+         Table.Set (Keys.Binary, Create_Boolean (This.Binary));
+      end if;
+
       return Table;
    end To_TOML;
 

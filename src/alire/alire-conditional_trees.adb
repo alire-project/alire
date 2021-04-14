@@ -627,4 +627,48 @@ package body Alire.Conditional_Trees is
                              return Tree is
      (Tree'(To_Holder (Element (Pos))));
 
+   -------------------------
+   -- Recursive_Traversal --
+   -------------------------
+
+   overriding
+   procedure Recursive_Traversal
+     (This  : in out Leaf_Node;
+      Apply : access procedure (Value : in out Values))
+   is
+   begin
+      Apply (This.Value.Reference);
+   end Recursive_Traversal;
+
+   -------------------------
+   -- Recursive_Traversal --
+   -------------------------
+
+   overriding
+   procedure Recursive_Traversal
+     (This  : in out Vector_Node;
+      Apply : access procedure (Value : in out Values))
+   is
+   begin
+      for Node of This.Values loop
+         Node.Recursive_Traversal (Apply);
+      end loop;
+   end Recursive_Traversal;
+
+   ---------------
+   -- Visit_All --
+   ---------------
+
+   procedure Visit_All
+     (This  : in out Tree;
+      Apply : access procedure (Value : in out Values))
+   is
+   begin
+      if This.Is_Empty then
+         return;
+      else
+         This.Reference.Recursive_Traversal (Apply);
+      end if;
+   end Visit_All;
+
 end Alire.Conditional_Trees;
