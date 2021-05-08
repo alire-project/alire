@@ -444,7 +444,7 @@ private
       else This.Root.Leaf_Count);
 
    function Root (This : Tree) return Node'Class is
-     (This.Constant_Reference);
+     (This.Element);
 
    procedure Tree_TOML_Add (Table : TOML.TOML_Value;
                             Key   : String;

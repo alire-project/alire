@@ -15,9 +15,9 @@ package body Alire.Dependencies.States is
         or else
           (not L.Is_Empty and then not R.Is_Empty
            and then
-           L.Constant_Reference.Milestone = R.Constant_Reference.Milestone
+           L.Element.Milestone = R.Element.Milestone
            and then
-           L.Constant_Reference.Origin = R.Constant_Reference.Origin);
+           L.Element.Origin = R.Element.Origin);
    end "=";
 
    ----------------------
