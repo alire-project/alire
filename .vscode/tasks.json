@@ -1,0 +1,25 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"command": "gprbuild -j0 -p -P alr_env.gpr",
+			"problemMatcher": [
+				"$ada"
+			],
+			"label": "Alire: Build alr",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "shell",
+			"command": "gprclean -r -P alr_env.gpr",
+			"problemMatcher": [
+				"$ada"
+			],
+			"label": "Alire: Clean all projects",
+		}
+	]
+}
