@@ -9,6 +9,7 @@ with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
+with Alire.User_Pins;
 with Alire.Utils.User_Input;
 
 package Alire.Roots is
@@ -225,6 +226,7 @@ private
    type Root is tagged record
       Environment     : Properties.Vector;
       Path            : UString;
+      Pins            : User_Pins.Map;
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
    end record;

@@ -430,6 +430,7 @@ package body Alire.Roots is
                       Env  : Properties.Vector) return Root is
      (Environment     => Env,
       Path            => +Path,
+      Pins            => <>, -- No pins in a fresh root
       Release         => Containers.To_Release_H (R),
       Cached_Solution => <>);
 
