@@ -15,6 +15,14 @@
 		},
 		{
 			"type": "shell",
+			"command": "gprbuild -ws -c -f -s -u -P alr_env.gpr ${file}",
+			"problemMatcher": [
+				"$ada"
+			],
+			"label": "Alire: Compile current file",
+		},
+		{
+			"type": "shell",
 			"command": "gprclean -r -P alr_env.gpr",
 			"problemMatcher": [
 				"$ada"
@@ -26,6 +34,10 @@
 			"command": "/usr/bin/python3 testsuite/run.py",
 			"problemMatcher": [],
 			"label": "Alire: Run testsuite",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
 		}
 	]
 }
