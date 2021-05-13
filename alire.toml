@@ -29,3 +29,6 @@ spdx = "~0.2"
 # Building alr requires the explicit setting of this variable
 [gpr-set-externals."case(os)"]
 macos   = { OS = "macOS" }
+
+# Most dependencies require precise versions during the development cycle
+[[pins]]

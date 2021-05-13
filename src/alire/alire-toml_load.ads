@@ -1,6 +1,7 @@
 with Alire.Conditional;
 with Alire.Crates;
 with Alire.TOML_Adapters;
+with Alire.User_Pins.Maps;
 
 with TOML;
 
@@ -21,6 +22,7 @@ package Alire.TOML_Load is
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;
+                                 Pins    : in out User_Pins.Maps.Map;
                                  Avail   : in out Conditional.Availability);
    --  Loads parts of a manifest, taking into account if we are loading
    --  a indexed release, a local release, a external shared section or

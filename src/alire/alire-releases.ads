@@ -13,6 +13,7 @@ with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
+with Alire.User_Pins.Maps;
 with Alire.Utils;
 
 with Semantic_Versioning;
@@ -336,6 +337,7 @@ private
       Origin       : Origins.Origin;
       Notes        : Description_String (1 .. Notes_Len);
       Dependencies : Conditional.Dependencies;
+      Pins         : User_Pins.Maps.Map;
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;

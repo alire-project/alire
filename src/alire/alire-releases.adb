@@ -234,6 +234,7 @@ package body Alire.Releases is
          Version      => Base.Version,
          Origin       => Base.Origin,
          Dependencies => Base.Dependencies,
+         Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
          Available    => Base.Available)
@@ -288,6 +289,7 @@ package body Alire.Releases is
        Origin       => Origin,
        Notes        => Notes,
        Dependencies => Dependencies,
+       Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
        Available    => Available);
@@ -320,6 +322,7 @@ package body Alire.Releases is
       Origin       => Origin,
       Notes        => "",
       Dependencies => Dependencies,
+      Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
       Available    => Conditional.Empty
@@ -728,6 +731,7 @@ package body Alire.Releases is
          From    => From,
          Props   => This.Properties,
          Deps    => This.Dependencies,
+         Pins    => This.Pins,
          Avail   => This.Available);
 
       --  Consolidate/validate some properties as fields:
@@ -907,6 +911,7 @@ package body Alire.Releases is
        Origin       => R.Origin,
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
+       Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
        Available    => R.Available.Evaluate (P));

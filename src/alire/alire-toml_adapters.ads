@@ -64,6 +64,9 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Return the requested Key value, checking it matches type Kind. If type
    --  mismatch or missing key raise a Checked_Error.
 
+   function Contains (Queue : Key_Queue; Key : String) return Boolean;
+   --  Says if one of the keys in the wrapped table is Key
+
    function Pop (Queue : Key_Queue) return TOML.TOML_Value;
    --  Return a value discarding its key; if no values left No_TOML_Value is
    --  returned.
@@ -158,12 +161,23 @@ package Alire.TOML_Adapters with Preelaborate is
 
 private
 
+   use type UString; -- Allows comparisons between strings and unbounded
+
    type Key_Queue is new Ada.Finalization.Limited_Controlled with record
       Value   : TOML.TOML_Value;
    end record;
 
    overriding
    procedure Finalize (This : in out Key_Queue);
+
+   --------------
+   -- Contains --
+   --------------
+
+   function Contains (Queue : Key_Queue; Key : String) return Boolean
+   is (Queue.Unwrap.Kind in TOML.TOML_Table
+       and then
+         (for some Table_Key of Queue.Unwrap.Keys => Key = Table_Key));
 
    ------------
    -- Unwrap --
