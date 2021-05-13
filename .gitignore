@@ -17,4 +17,5 @@ obj
 stress/*/
 venv
 
-testsuite/out
+out/
+testsuite/out/

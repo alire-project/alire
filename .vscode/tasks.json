@@ -20,6 +20,12 @@
 				"$ada"
 			],
 			"label": "Alire: Clean all projects",
+		},
+		{
+			"type": "shell",
+			"command": "/usr/bin/python3 testsuite/run.py",
+			"problemMatcher": [],
+			"label": "Alire: Run testsuite",
 		}
 	]
 }
