@@ -1,5 +1,5 @@
 FROM gitpod/workspace-base:latest
-ENV PATH=$HOME/gnat/bin:$PATH\
+ENV PATH=$HOME/gnat/bin:$PATH:/workspace/alire/bin\
     GPR_PROJECT_PATH=/home/gitpod/adalib/share/gpr
 
 COPY scripts/gnat_install.qs /tmp/
