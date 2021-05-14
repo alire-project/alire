@@ -8,8 +8,10 @@ maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
 maintainers-logins = ["mosteo", "Fabien-Chouteau"]
 
 # At some point we should have a separate alire/libalire crate for use of
-# alire.gpr only.
-project-files = ["alr.gpr"]
+# alire.gpr only. For now this crate is not intended as a dependency but to be
+# used to build alr.
+auto-gpr-with = false
+project-files = ["alr_env.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
@@ -26,6 +28,4 @@ spdx = "~0.2"
 
 # Building alr requires the explicit setting of this variable
 [gpr-set-externals."case(os)"]
-macos   = { ALIRE_OS = "osx" }
-windows = { ALIRE_OS = "windows" }
-"..."   = { ALIRE_OS = "unix" }
+macos   = { OS = "macOS" }

@@ -32,13 +32,13 @@ aggregate project Alr_Env is
    --  ALIRE_OS is used in alire_common.gpr.
    --  GNATCOLL_OS is used in gnatcoll.gpr.
    case Host_OS is
-      when "Windows_NT" =>
+      when "Windows_NT" | "windows_nt" | "windows" | "Windows" =>
          for External ("ALIRE_OS") use "windows";
          for External ("GNATCOLL_OS") use "windows";
-      when "macOS"      =>
+      when "macOS" | "macos" | "OSX" | "osx" =>
          for External ("ALIRE_OS") use "osx";
          for External ("GNATCOLL_OS") use "osx";
-      when others       =>
+      when others =>
          for External ("ALIRE_OS") use "unix";
          for External ("GNATCOLL_OS") use "unix";
    end case;
