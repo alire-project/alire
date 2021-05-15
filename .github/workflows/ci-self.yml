@@ -1,0 +1,67 @@
+# An action to ensure that alr can build itself by running `alr build`.
+# In other words, a check that submodules are in sync with alire.toml
+
+name: CI alr build
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+  release:
+    types: [created]
+
+jobs:
+
+  build:
+    name: Self-build on ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: false # Not needed, should be retrieved by alr
+
+    - name: Install toolchain
+      uses: ada-actions/toolchain@ce2020
+      with:
+        distrib: community
+
+    # We need the devel version to build with remote pins
+    - name: Install alr
+      uses: alire-project/setup-alire@latest-devel
+
+    - run: alr version -n
+
+    # The checked-in lockfile depends on the curl system package. Running a
+    # non-interactive update will fix this in Windows/macOS by detecting the
+    # external (version from command-line) alternative. We could also work
+    # around this by providing lockfiles for every platform and putting it in
+    # place before building.
+    - run: alr update -n
+    - run: alr update -n
+    # Two runs are needed because indirect dependencies aren't detected until
+    # remote pins have been fetched. This is an actual bug uncovered by this
+    # check that needs fixing (#736).
+
+    # Check dependencies/pins that are going to be used
+    - run: alr with --solve
+
+    - run: alr printenv
+
+    - name: Self-build alr
+      run: alr build
+
+    - name: Display built alr version
+      run: ./bin/alr version

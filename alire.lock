@@ -1,0 +1,207 @@
+# THIS IS A MACHINE-GENERATED FILE. DO NOT EDIT MANUALLY.
+
+[solution]
+[solution.context]
+solved = true
+[[solution.state]]
+crate = "aaa"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "~0.2.1"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/aaa_0.2.3-dev_4b4aa047"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "4b4aa047f29a4270c5b5003468617e153977ab97"
+url = "git+https://github.com/mosteo/aaa.git"
+[[solution.state]]
+crate = "ada_toml"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "~0.1"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/ada_toml_ade3cc90"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "ade3cc905cef405dbf53e16a54f6fb458482710f"
+url = "git+https://github.com/pmderodat/ada-toml.git"
+[[solution.state]]
+crate = "ajunitgen"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "^1.0.1"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/ajunitgen_1.0.2-dev_e5d01db5"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9"
+url = "git+https://github.com/mosteo/ajunitgen.git"
+[[solution.state]]
+crate = "ansiada"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "~0.1"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/ansiada_0.2.0-dev_acf9afca"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "acf9afca3afe1f8b8843c061f3cef860d7567307"
+url = "git+https://github.com/mosteo/ansi-ada.git"
+[[solution.state]]
+crate = "curl"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "*"
+[solution.state.release]
+description = "Command-line tool for transferring data with URL syntax"
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "curl"
+notes = "Provided by system package: curl"
+version = "7.68.0"
+[solution.state.release.origin]
+url = "system:curl"
+[[solution.state]]
+crate = "gnatcoll"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "^21"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/gnatcoll_0.0.0_f3bd1c51"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "f3bd1c51d12962879f52733e790b394f5bbfe05f"
+url = "git+https://github.com/alire-project/gnatcoll-core.git"
+[[solution.state]]
+crate = "minirest"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "~0.2"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/minirest_0.2.0-dev_4550aa35"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "4550aa356d55b9cd55f26acd34701f646021c5ff"
+url = "git+https://github.com/mosteo/minirest.git"
+[[solution.state]]
+crate = "semantic_versioning"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "^2"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/semantic_versioning_2.0.0-dev_82c28f77"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "82c28f773d0e3126d7cdf6e4ded228d2b733441e"
+url = "git+https://github.com/alire-project/semantic_versioning.git"
+[[solution.state]]
+crate = "simple_logging"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "^1.2"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/simple_logging_1.2.0-dev_02a7de75"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "02a7de7568af6af7cedd1048901fae8e9477b1d9"
+url = "git+https://github.com/alire-project/simple_logging.git"
+[[solution.state]]
+crate = "spdx"
+fulfilment = "solved"
+pinned = false
+transitivity = "direct"
+versions = "~0.2"
+[solution.state.release]
+authors = [
+"Fabien Chouteau",
+]
+description = "SPDX License Expression Validator"
+licenses = "MIT"
+maintainers = [
+"Fabien Chouteau <chouteau@adacore.com>",
+]
+maintainers-logins = [
+"Fabien-Chouteau",
+]
+name = "spdx"
+tags = [
+"spdx",
+"license",
+]
+version = "0.2.0"
+website = "https://github.com/Fabien-Chouteau/spdx_ada"
+[solution.state.release.origin]
+commit = "2df9b1182544359c751544e52e14c94830d99fa6"
+url = "git+https://github.com/Fabien-Chouteau/spdx_ada.git"
+[[solution.state]]
+crate = "uri_ada"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "^1"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/uri_ada_1.0.0-dev_b61eba59"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "b61eba59099b3ab39e59e228fe4529927f9e849e"
+url = "git+https://github.com/mosteo/uri-ada.git"
+[[solution.state]]
+crate = "xml_ez_out"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "^1.6"
+[solution.state.release]
+authors = [
+"Marc A. Criley",
+]
+description = "Creation of XML-formatted output from Ada programs"
+executables = [
+"tmeztf",
+]
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "xml_ez_out"
+version = "1.6.0"
+website = "http://www.mckae.com/xmlEz.html"
+[solution.state.release.origin]
+hashes = [
+"sha512:c90d08dcdb96bf39f1e06def716ea9936b2aec25fec2ea4f3314c53a2befefa4ea84c037c35abe6d7675af1c91a8847f6ce4e5e8dd32da1008f2ba43ed79151b",
+]
+url = "https://github.com/alire-project/xmlezout/archive/alr-1.6.tar.gz"
+
