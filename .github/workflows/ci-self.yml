@@ -42,12 +42,18 @@ jobs:
     - name: Install alr
       uses: alire-project/setup-alire@latest-devel
 
+    - run: alr version -n
+
     # The checked-in lockfile depends on the curl system package. Running a
     # non-interactive update will fix this in Windows/macOS by detecting the
     # external (version from command-line) alternative. We could also work
     # around this by providing lockfiles for every platform and putting it in
     # place before building.
     - run: alr update -n
+    - run: alr update -n
+    # Two runs are needed because indirect dependencies aren't detected until
+    # remote pins have been fetched. This is an actual bug uncovered by this
+    # check that needs fixing (#736).
 
     # Check dependencies/pins that are going to be used
     - run: alr with --solve

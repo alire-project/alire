@@ -757,7 +757,7 @@ package body Alire.Roots is
 
       --  Identify the head commit/reference
 
-      if Commit = "" or else Commit not in Origins.Git_Commit then
+      if Commit = "" or else not Origins.Is_Valid_Commit (Commit) then
          declare
             Ref_Commit : constant String :=
                      VCSs.Git.Handler.Remote_Commit (URL, Ref => Commit);

@@ -438,12 +438,32 @@ package body Alire.Solutions is
 
       --  Show other dependencies with their status and hints
 
+      --  TODO: show these in line with the previous ones, as most of the info
+      --  is common. Just mark the true external (missing ones) better, see
+      --  #646 and #685. Now, pins without a release are shown here too,
+      --  although they're properly resolved.
+
       if (for some Dep of This.Dependencies => not Dep.Has_Release) then
          Trace.Log ("Dependencies (external):", Level);
          for Dep of This.Dependencies loop
             if not This.State (Dep.Crate).Has_Release
             then
-               Trace.Log ("   " & Dep.TTY_Image, Level);
+               Trace.Log
+                 ("   "
+                  & Dep.TTY_Image
+                  & (if Dep.Is_Pinned or else Dep.Is_Linked
+                    then TTY.Emph (" (pinned)")
+                    else "")
+                  & (if Detailed and then Dep.Is_Linked
+                     then " (origin: "
+                         & TTY.URL (Dep.Link.Path)
+                         & (if Dep.Link.Is_Remote
+                            then " from "
+                                 & Dep.Link.Remote.TTY_URL_With_Commit
+                            else "") -- no remote
+                         & ")"  -- origin completed
+                     else ""),  -- no details
+                  Level);
 
                --  Look for hints. If we are relying on workspace information
                --  the index may not be loaded, or have changed, so we need to
