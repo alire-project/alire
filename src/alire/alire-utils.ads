@@ -126,7 +126,8 @@ package Alire.Utils with Preelaborate is
    --  Convert between two vector types
 
    package String_Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
-   type String_Set is new String_Sets.Set with null record;
+   subtype String_Set is String_Sets.Set;
+   Empty_Set : String_Set renames String_Sets.Empty_Set;
 
    --------------------
    -- String_Vectors --

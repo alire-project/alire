@@ -425,6 +425,30 @@ static, i.e. they cannot depend on the context.
    notes = "Experimental version"
    ```
 
+ - `configuration` optional table to control crate configuration code
+   generators:
+
+   For more information on crate configuration, see [Using crate
+   configuration](#using-crate-configuration).
+
+- `disabled`: Completely disable configuration code generation for the
+        crate (default: `false`)
+
+      - `output_dir`: Path to the directory where the configuration code will
+        be generated, relative to the crate root (default: `config`).
+
+      - `generate_ada`: Enable generation of Ada configuration (default:
+        `true`).
+
+      - `generate_gpr`: Enable generation of GPR file configuration (default:
+        `true`).
+
+      - `generate_c`: Enable generation of C configuration (default: `true`).
+
+      - `auto_gpr_with`: Enabled generation of list of withed project in the
+        GPR file configuration (default: `true`).
+
+
  - `configuration.variables` optional table of crate configuration variable
    definitions.
 
