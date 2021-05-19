@@ -6,6 +6,14 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Automatic GPR 'with' now in crate configuration
+
+PR [#XXX](https://github.com/alire-project/alire/pull/XXX).
+
+When adding or removing dependency with `alr with`, the list of `with`
+statement for each project files of the dependencies is now automatically added
+to the GPR crate configuration file instead of the root project file.
+
 ### Git remotes for pinned releases
 
 PR [#715](https://github.com/alire-project/alire/pull/715)

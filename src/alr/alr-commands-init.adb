@@ -46,6 +46,7 @@ package body Alr.Commands.Init is
          then Get_Current_Dir
          else Create (+Name, Normalize => True));
       Src_Directory : constant Virtual_File := Directory / "src";
+      Config_Directory : constant Virtual_File := Directory / "config";
 
       File : TIO.File_Type;
 
@@ -104,13 +105,28 @@ package body Alr.Commands.Init is
       procedure Generate_Project_File is
          Filename : constant String :=
             +Full_Name (Directory / (+Lower_Name & ".gpr"));
+
+         Config_Filename : constant String :=
+            +Full_Name (Config_Directory / (+Lower_Name & "_config.gpr"));
       begin
          --  Use more than 80 colums for more readable strings
          pragma Style_Checks ("M200");
+
+         --  Config project file
+         if not Create (Config_Filename) then
+            Trace.Warning ("Cannot create '" & Config_Filename & "'");
+            return;
+         end if;
+         Put_Line ("project " & Mixed_Name & "_Config is");
+         TIO.Put (File, "end " & Mixed_Name & "_Config;");
+         TIO.Close (File);
+
+         --  Main project file
          if not Create (Filename) then
             Trace.Warning ("Cannot create '" & Filename & "'");
             return;
          end if;
+         Put_Line ("with ""config/" & Lower_Name & "_config.gpr"";");
          Put_Line ("project " & Mixed_Name & " is");
          Put_New_Line;
          if For_Library then
@@ -362,6 +378,7 @@ package body Alr.Commands.Init is
         .Make_Dir;
 
       if not Cmd.No_Skel then
+         Config_Directory.Make_Dir;
          Generate_Project_File;
          Src_Directory.Make_Dir;
          if For_Library then

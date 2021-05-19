@@ -20,10 +20,11 @@ os.chdir(glob('myhello*')[0])
 run_alr('with', 'libhello')
 run_alr('with', 'gpr_in_subdir')
 
-check_line_in('myhello.gpr', 'with "libhello.gpr";')
+check_line_in('config/myhello_config.gpr', 'with "libhello.gpr";')
 
 # When the crate declares a project file: `dir1/dir2/dir3/prj.gpr`, the with
 # statement has to be `with "prj.gpr"`. Without the sub-dirs because
 # GPR_PROJECT_PATH is already set with dirs that contain the project file.
-check_line_in('myhello.gpr', 'with "gpr_in_subdir.gpr";')
+check_line_in('config/myhello_config.gpr', 'with "gpr_in_subdir.gpr";')
+
 print('SUCCESS')
