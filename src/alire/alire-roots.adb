@@ -368,6 +368,30 @@ package body Alire.Roots is
       end loop;
    end Deploy_Pins;
 
+   ----------------
+   -- Prune_Pins --
+   ----------------
+
+   procedure Prune_Pins (This : in out Root) is
+      use type Solutions.Solution;
+      Valid_Pins : constant User_Pins.Maps.Map := Release (This).Pins;
+      Pruned_Sol : Solutions.Solution := This.Solution;
+   begin
+      for State of This.Solution.All_Dependencies loop
+         if State.Is_User_Pinned and then not Valid_Pins.Contains (State.Crate)
+         then
+            Pruned_Sol := Pruned_Sol.Unlinking (State.Crate)
+                                    .Unpinning (State.Crate);
+            Put_Info ("Unpinning crate " & TTY.Name (State.Crate));
+         end if;
+      end loop;
+
+      if Pruned_Sol /= This.Solution then
+         Trace.Detail ("Pin-pruned solution commited to disk");
+         This.Set (Pruned_Sol);
+      end if;
+   end Prune_Pins;
+
    ---------------
    -- Is_Stored --
    ---------------
@@ -644,6 +668,7 @@ package body Alire.Roots is
    ------------------------
 
    procedure Sync_From_Manifest (This : in out Root) is
+      Old_Solution : constant Solutions.Solution := This.Solution;
    begin
       if This.Is_Lockfile_Outdated then
          Put_Info ("Detected changes in manifest, synchronizing workspace...");
@@ -652,7 +677,11 @@ package body Alire.Roots is
          --  Pre-fetch any new remote links in the manifest, so they can be
          --  used right away for version resolution/recursive dependencies.
 
-         This.Update_And_Deploy_Dependencies (Confirm => False);
+         This.Prune_Pins;
+         --  And remove any pins that the user has removed
+
+         This.Update_And_Deploy_Dependencies (Old_Sol => Old_Solution,
+                                              Confirm => False);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -989,9 +1018,13 @@ package body Alire.Roots is
    procedure Update_And_Deploy_Dependencies
      (This    : in out Roots.Root;
       Options : Solver.Query_Options := Solver.Default_Options;
+      Old_Sol : Solutions.Solution   := Solutions.Empty_Invalid_Solution;
       Confirm : Boolean              := not Utils.User_Input.Not_Interactive)
    is
-      Prev : constant Solutions.Solution := This.Solution;
+      Prev : constant Solutions.Solution :=
+               (if Old_Sol.Is_Attempted
+                then Old_Sol
+                else This.Solution);
       Next : constant Solutions.Solution :=
                This.Compute_Update (Options => Options);
       Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);

@@ -83,6 +83,8 @@ package body Alire.Environment is
    -- Load --
    ----------
 
+   Already_Warned : Boolean := False;
+
    procedure Load (This : in out Context;
                    Root : in out Alire.Roots.Root)
    is
@@ -95,14 +97,17 @@ package body Alire.Environment is
       --  Warnings when setting up an incomplete environment
 
       if not Solution.Is_Complete then
-         Trace.Debug ("Generating incomplete environment"
+         Trace.Debug ("Generating possibly incomplete environment"
                       & " because of missing dependencies");
 
          --  Normally we would generate a warning, but since that will pollute
          --  the output making it unusable, for once we write directly to
          --  stderr (unless quiet is in effect):
 
-         if not Alire_Early_Elaboration.Switch_Q then
+         if not Alire_Early_Elaboration.Switch_Q and then not Already_Warned
+         then
+            Already_Warned := True;
+
             GNAT.IO.Put_Line
               (GNAT.IO.Standard_Error,
                TTY.Warn ("warn:") & " Generating incomplete environment"

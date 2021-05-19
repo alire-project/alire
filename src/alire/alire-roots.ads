@@ -163,8 +163,11 @@ package Alire.Roots is
    procedure Update_And_Deploy_Dependencies
      (This    : in out Roots.Root;
       Options : Solver.Query_Options := Solver.Default_Options;
+      Old_Sol : Solutions.Solution   := Solutions.Empty_Invalid_Solution;
       Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
-   --  Call Update and Deploy_Dependencies in succession for the given root
+   --  Call Update and Deploy_Dependencies in succession for the given root.
+   --  Old_Sol is used to present differences, and when left at the default
+   --  invalid one, Root.Solution will be used as old solution.
 
    procedure Deploy_Pins (This       : in out Root;
                           Exhaustive : Boolean);
@@ -173,6 +176,9 @@ package Alire.Roots is
    --  re-fetching all pins after each manifest edition. New pins are always
    --  downloaded. An update requested by the user (`alr update`) will be
    --  exhaustive.
+
+   procedure Prune_Pins (This : in out Root);
+   --  Remove any pins in the solution that are not in the manifest
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root

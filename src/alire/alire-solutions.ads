@@ -147,6 +147,12 @@ package Alire.Solutions is
                      return Solution;
    --  Change transitivity
 
+   function Unlinking (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Unpin a crate. If the crate was not linked or not in the solution
+   --  nothing will be done. If it was, it is now missing.
+
    function Unpinning (This  : Solution;
                        Crate : Crate_Name)
                        return Solution;
@@ -172,6 +178,9 @@ package Alire.Solutions is
    function Crates (This : Solution) return Name_Set;
    --  Dependency name closure, independent of the status in the solution, as
    --  found by the solver starting from the direct dependencies.
+
+   function All_Dependencies (This : Solution) return State_Map;
+   --  Get all states in the solution to e.g. iterate over
 
    function Dependencies_That
      (This  : Solution;
@@ -341,6 +350,13 @@ private
    end record;
 
    --  Begin of implementation
+
+   ----------------------
+   -- All_Dependencies --
+   ----------------------
+
+   function All_Dependencies (This : Solution) return State_Map
+   is (This.Dependencies);
 
    -----------------
    -- Composition --
@@ -550,6 +566,20 @@ private
                    Crate : Crate_Name)
                    return Dependency_State
    is (This.Dependencies (Crate));
+
+   ---------------
+   -- Unlinking --
+   ---------------
+
+   function Unlinking (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unlinking))
+       else This);
 
    ---------------
    -- Unpinning --

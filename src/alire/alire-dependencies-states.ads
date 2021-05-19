@@ -61,6 +61,9 @@ package Alire.Dependencies.States is
      with Pre => Base.Crate = Using.Name;
    --  Uses release to fulfill this dependency in a copy of Base
 
+   function Unlinking (Base : State) return State;
+   --  Unlinks the crate in a copy of Base, becoming Missed
+
    function Unpinning (Base : State) return State;
    --  Removes the pin in a copy of Base
 
@@ -476,6 +479,17 @@ private
                    & "=" & TTY.Version (This.Pinning.Version.Image)
           else "")
        & ")");
+
+   ---------------
+   -- Unlinking --
+   ---------------
+
+   function Unlinking (Base : State) return State
+   is (Base.As_Dependency with
+       Name_Len     => Base.Name_Len,
+       Fulfilled    => (Fulfillment => Missed),
+       Pinning      => Base.Pinning,
+       Transitivity => Base.Transitivity);
 
    ---------------
    -- Unpinning --
