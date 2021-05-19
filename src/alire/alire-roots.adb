@@ -357,7 +357,7 @@ package body Alire.Roots is
                end;
             else
 
-               Put_Info ("Skipping pre-existing pin for crate: "
+               Trace.Detail ("Skipping pre-existing pin for crate: "
                          & TTY.Name (Key (I)));
 
             end if;
