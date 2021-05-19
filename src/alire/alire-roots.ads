@@ -166,8 +166,13 @@ package Alire.Roots is
       Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
    --  Call Update and Deploy_Dependencies in succession for the given root
 
-   procedure Deploy_Pins (This : in out Root);
-   --  Download any remote pins in the manifest
+   procedure Deploy_Pins (This       : in out Root;
+                          Exhaustive : Boolean);
+   --  Download any remote pins in the manifest. When not Exhaustive, a pin
+   --  that is already in the solution is not re-downloaded. This is to avoid
+   --  re-fetching all pins after each manifest edition. New pins are always
+   --  downloaded. An update requested by the user (`alr update`) will be
+   --  exhaustive.
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root

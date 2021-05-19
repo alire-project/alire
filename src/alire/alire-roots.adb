@@ -6,6 +6,7 @@ with Alire.Directories;
 with Alire.Environment;
 with Alire.Externals.Softlinks;
 with Alire.Manifest;
+with Alire.Optional;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
@@ -293,10 +294,38 @@ package body Alire.Roots is
    -- Deploy_Pins --
    -----------------
 
-   procedure Deploy_Pins (This : in out Root) is
+   procedure Deploy_Pins (This       : in out Root;
+                          Exhaustive : Boolean) is
       use User_Pins.Maps.Pin_Maps;
       Rel  : constant Alire.Releases.Release := Release (This);
       Pins : constant User_Pins.Maps.Map     := Rel.Pins;
+
+      --------------------
+      -- Needs_Updating --
+      --------------------
+
+      function Needs_Updating (Crate : Crate_Name;
+                               Pin   : User_Pins.Pin) return Boolean
+      is
+         use type Alire.Optional.String;
+      begin
+         return
+           --  Any new pin needs downloading
+           not This.Solution.Links.Contains (Crate)
+
+           --  Manual update requested for pins without a precise commit
+           or else (Exhaustive and then not Pin.Commit.Has_Element)
+
+           --  Auto update for pins which weren't remote and now are
+           or else not This.Solution.State (Crate).Link.Is_Remote
+
+           --  Auto update for pins whose commit has changed in manifest wrt
+           --  lockfile.
+           or else (Pin.Commit.Has_Element and then
+                    Pin.Commit /= This.Solution.State (Crate)
+                                               .Link.Remote.Commit);
+      end Needs_Updating;
+
    begin
       if (for some Pin of Pins => Pin.Is_Remote) then
          Put_Info ("Checking pins...");
@@ -304,27 +333,37 @@ package body Alire.Roots is
 
       for I in Pins.Iterate loop
          if Pins (I).Is_Remote then
+            if Needs_Updating (Key (I), Pins (I)) then
 
-            Put_Info ("Deploying pin for crate: " & TTY.Name (Key (I)));
+               Put_Info ("Deploying pin for crate: " & TTY.Name (Key (I)));
 
-            declare
-               Crate  : constant Crate_Name := Key (I);
-               Pin    : constant User_Pins.Pin := Element (I);
-               Result : constant Remote_Pin_Result :=
-                          This.Pinned_To_Remote
-                            (Dependency  =>
-                               Conditional.New_Dependency
-                               (Rel.Dependency_On (Crate)
+               declare
+                  Crate  : constant Crate_Name := Key (I);
+                  Pin    : constant User_Pins.Pin := Element (I);
+                  Result : constant Remote_Pin_Result :=
+                             This.Pinned_To_Remote
+                               (Dependency  =>
+                                             Conditional.New_Dependency
+                                  (Rel.Dependency_On (Crate)
                                    .Or_Else (Dependencies.From_String
-                                               ((+Crate) & "*"))),
-                             URL         => Pin.URL,
-                             Commit      => Pin.Commit.Or_Else (""),
-                             Must_Depend => True);
-            begin
-               --  Pin deployed, solution can be stored accordingly
+                                     ((+Crate) & "*"))),
+                                URL         => Pin.URL,
+                                Commit      => Pin.Commit.Or_Else (""),
+                                Must_Depend => True);
+               begin
+                  --  Pin deployed, solution can be stored accordingly
 
-               This.Set (Solution => Result.Solution);
-            end;
+                  This.Set (Solution => Result.Solution);
+               end;
+            else
+
+               Put_Info ("Skipping pre-existing pin for crate: "
+                         & TTY.Name (Key (I)));
+
+            end if;
+
+            Trace.Debug ("Skipping local user pin from fetch: "
+                         & TTY.Name (Key (I)));
          end if;
       end loop;
    end Deploy_Pins;
@@ -609,7 +648,9 @@ package body Alire.Roots is
       if This.Is_Lockfile_Outdated then
          Put_Info ("Detected changes in manifest, synchronizing workspace...");
 
-         This.Deploy_Pins;
+         This.Deploy_Pins (Exhaustive => False);
+         --  Pre-fetch any new remote links in the manifest, so they can be
+         --  used right away for version resolution/recursive dependencies.
 
          This.Update_And_Deploy_Dependencies (Confirm => False);
          --  Don't ask for confirmation as this is an automatic update in
@@ -829,7 +870,22 @@ package body Alire.Roots is
                   Origins.Deployers.New_Deployer
                     (Origins.New_Git (URL, Commit));
       begin
-         Depl.Deploy (Temp.Filename).Assert;
+
+         --  Skip checkout if link is already in the solution and with the same
+         --  commit.
+
+         if Requested_Crate /= "" and then
+           This.Solution.Depends_On (+Requested_Crate) and then
+           This.Solution.Links.Contains (+Requested_Crate) and then
+           This.Solution.State (+Requested_Crate).Link.Remote.Commit = Commit
+         then
+            Trace.Debug ("Skipping checkout of remote link "
+                         & TTY.Name (Requested_Crate)
+                         & "#"
+                         & TTY.URL (Commit));
+         else
+            Depl.Deploy (Temp.Filename).Assert;
+         end if;
 
          --  Identify containing release, and if satisfying move it to its
          --  final location in the release cache.

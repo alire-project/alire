@@ -43,6 +43,13 @@ package body Alr.Commands.Update is
 
       Cmd.Requires_Full_Index;
 
+      --  Just in case, retry all pins. This is necessary so pins without an
+      --  explicit commit are updated to HEAD.
+
+      Cmd.Root.Deploy_Pins (Exhaustive => True);
+
+      --  And look for updates in dependencies
+
       Cmd.Root.Update_Dependencies
         (Allowed => Parse_Allowed,
          Options => (Age    => Query_Policy,
