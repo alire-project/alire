@@ -5,6 +5,7 @@ with "ajunitgen";
 with "ansi";
 with "gnatcoll";
 with "minirest";
+with "optional";
 with "semantic_versioning";
 with "simple_logging";
 with "uri";

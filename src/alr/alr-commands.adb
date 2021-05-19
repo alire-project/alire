@@ -610,7 +610,7 @@ package body Alr.Commands is
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
                      Cmd.Requires_Full_Index (Strict => False);
-                     Checked.Sync_Solution_And_Deps;
+                     Checked.Sync_From_Manifest;
                      return;
                   else
                      Notify_Of_Initialization;

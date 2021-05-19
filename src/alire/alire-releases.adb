@@ -91,6 +91,26 @@ package body Alire.Releases is
       return False;
    end Check_Caret_Warning;
 
+   -------------------
+   -- Dependency_On --
+   -------------------
+
+   function Dependency_On (R     : Release;
+                           Crate : Crate_Name;
+                           P     : Alire.Properties.Vector :=
+                             Alire.Properties.No_Properties)
+                           return Alire.Dependencies.Containers.Optional
+   is
+   begin
+      for Dep of R.Flat_Dependencies (P) loop
+         if Dep.Crate = Crate then
+            return Alire.Dependencies.Containers.Optionals.Unit (Dep);
+         end if;
+      end loop;
+
+      return Alire.Dependencies.Containers.Optionals.Empty;
+   end Dependency_On;
+
    ------------
    -- Deploy --
    ------------

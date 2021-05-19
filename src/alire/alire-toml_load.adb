@@ -128,8 +128,11 @@ package body Alire.TOML_Load is
 
       --  Process user pins
 
-      if From.Contains ("pins") then
-         From.Unwrap.Unset ("pins");
+      if From.Contains (TOML_Keys.Pins) then
+         Pins := User_Pins.Maps.From_TOML
+           (From.Descend
+              (From.Checked_Pop (TOML_Keys.Pins, TOML_Array),
+               Context => TOML_Keys.Pins));
       end if;
 
       --  TODO: Process Forbidden

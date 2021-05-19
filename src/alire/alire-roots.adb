@@ -10,6 +10,7 @@ with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
+with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.VCSs.Git;
 
@@ -288,6 +289,46 @@ package body Alire.Roots is
 
    end Deploy_Dependencies;
 
+   -----------------
+   -- Deploy_Pins --
+   -----------------
+
+   procedure Deploy_Pins (This : in out Root) is
+      use User_Pins.Maps.Pin_Maps;
+      Rel  : constant Alire.Releases.Release := Release (This);
+      Pins : constant User_Pins.Maps.Map     := Rel.Pins;
+   begin
+      if (for some Pin of Pins => Pin.Is_Remote) then
+         Put_Info ("Checking pins...");
+      end if;
+
+      for I in Pins.Iterate loop
+         if Pins (I).Is_Remote then
+
+            Put_Info ("Deploying pin for crate: " & TTY.Name (Key (I)));
+
+            declare
+               Crate  : constant Crate_Name := Key (I);
+               Pin    : constant User_Pins.Pin := Element (I);
+               Result : constant Remote_Pin_Result :=
+                          This.Pinned_To_Remote
+                            (Dependency  =>
+                               Conditional.New_Dependency
+                               (Rel.Dependency_On (Crate)
+                                   .Or_Else (Dependencies.From_String
+                                               ((+Crate) & "*"))),
+                             URL         => Pin.URL,
+                             Commit      => Pin.Commit.Or_Else (""),
+                             Must_Depend => True);
+            begin
+               --  Pin deployed, solution can be stored accordingly
+
+               This.Set (Solution => Result.Solution);
+            end;
+         end if;
+      end loop;
+   end Deploy_Pins;
+
    ---------------
    -- Is_Stored --
    ---------------
@@ -559,14 +600,17 @@ package body Alire.Roots is
         File_Time_Stamp (This.Crate_File) > File_Time_Stamp (This.Lock_File);
    end Is_Lockfile_Outdated;
 
-   ----------------------------
-   -- Sync_Solution_And_Deps --
-   ----------------------------
+   ------------------------
+   -- Sync_From_Manifest --
+   ------------------------
 
-   procedure Sync_Solution_And_Deps (This : in out Root) is
+   procedure Sync_From_Manifest (This : in out Root) is
    begin
       if This.Is_Lockfile_Outdated then
-         Trace.Info ("Detected changes in manifest, updating workspace...");
+         Put_Info ("Detected changes in manifest, synchronizing workspace...");
+
+         This.Deploy_Pins;
+
          This.Update_And_Deploy_Dependencies (Confirm => False);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
@@ -580,8 +624,9 @@ package body Alire.Roots is
          --  to manually mark the lockfile as older.
 
          Trace.Info (""); -- Separate changes from what caused the sync
+      end if;
 
-      elsif (for some Rel of This.Solution.Releases =>
+      if (for some Rel of This.Solution.Releases =>
                This.Solution.State (Rel.Name).Is_Solved and then
                not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
         or else
@@ -594,7 +639,7 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
       end if;
 
-   end Sync_Solution_And_Deps;
+   end Sync_From_Manifest;
 
    -------------------------------------------
    -- Sync_Manifest_And_Lockfile_Timestamps --
@@ -748,7 +793,7 @@ package body Alire.Roots is
            Dep.Crate.As_String = Requested_Crate)
       then
          Raise_Checked_Error
-           ("Cannot continue because the requested crate is not a dependency: "
+           ("Cannot continue because the requested pin is not a dependency: "
             & Requested_Crate);
       end if;
 

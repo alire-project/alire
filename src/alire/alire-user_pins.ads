@@ -1,3 +1,4 @@
+with Alire.Optional;
 with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
@@ -20,6 +21,16 @@ package Alire.User_Pins is
                   To_Version);
 
    type Pin (Kind : Kinds) is tagged private;
+
+   function Is_Remote (This : Pin) return Boolean;
+
+   --  Remote attributes
+
+   function URL (This : Pin) return Alire.URL
+     with Pre => This.Is_Remote;
+
+   function Commit (This : Pin) return Optional.String
+     with Pre => This.Is_Remote;
 
    function From_TOML (This : TOML_Adapters.Key_Queue) return Pin;
    --  Expects the rhs of a crate = <pin> entry. This can be a string (for a
@@ -44,5 +55,28 @@ private
             Version : Semantic_Versioning.Version;
       end case;
    end record;
+
+   ------------
+   -- Commit --
+   ------------
+
+   function Commit (This : Pin) return Optional.String
+   is (if +This.Commit = ""
+       then Optional.Strings.Empty
+       else Optional.Strings.Unit (+This.Commit));
+
+   ---------------
+   -- Is_Remote --
+   ---------------
+
+   function Is_Remote (This : Pin) return Boolean
+   is (This.Kind in To_Git);
+
+   ---------
+   -- URL --
+   ---------
+
+   function URL (This : Pin) return Alire.URL
+   is (+This.URL);
 
 end Alire.User_Pins;

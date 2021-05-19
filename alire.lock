@@ -107,6 +107,20 @@ remote = true
 commit = "4550aa356d55b9cd55f26acd34701f646021c5ff"
 url = "git+https://github.com/mosteo/minirest.git"
 [[solution.state]]
+crate = "optional"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "*"
+[solution.state.link]
+kind = "softlink"
+path = "file:alire/cache/pins/optional_0.0.0_f3b855d2"
+relative = true
+remote = true
+[solution.state.link.origin]
+commit = "f3b855d21c78e6644d1bbb02a8606869ead66cac"
+url = "git+https://github.com/mosteo/optional/"
+[[solution.state]]
 crate = "semantic_versioning"
 fulfilment = "linked"
 pinned = false

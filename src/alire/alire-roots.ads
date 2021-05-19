@@ -122,12 +122,13 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   procedure Sync_Solution_And_Deps (This : in out Root);
-   --  Ensure that dependencies are up to date in regard to the lockfile and
-   --  manifest: if the manifest is newer than the lockfile, resolve again,
-   --  as dependencies may have been edited by hand. Otherwise, ensure that
-   --  releases in the lockfile are actually on disk (may be missing if cache
-   --  was deleted, or the crate was just cloned).
+   procedure Sync_From_Manifest (This : in out Root);
+   --  1) Pre-deploy any remote pins in the manifest so they are usable when
+   --  solving. 2) Ensure that dependencies are up to date in regard to the
+   --  lockfile and manifest: if the manifest is newer than the lockfile,
+   --  resolve again, as dependencies may have been edited by hand. 3) Ensure
+   --  that releases in the lockfile are actually on disk (may be missing if
+   --  cache was deleted, or the crate was just cloned).
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -164,6 +165,9 @@ package Alire.Roots is
       Options : Solver.Query_Options := Solver.Default_Options;
       Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
    --  Call Update and Deploy_Dependencies in succession for the given root
+
+   procedure Deploy_Pins (This : in out Root);
+   --  Download any remote pins in the manifest
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root

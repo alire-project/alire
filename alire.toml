@@ -21,6 +21,7 @@ ajunitgen = "^1.0.1"
 ansiada = "~0.1"
 gnatcoll = "^21"
 minirest = "~0.2"
+optional = "~0.0.0"
 semantic_versioning = "^2"
 simple_logging = "^1.2"
 uri_ada = "^1"
@@ -32,3 +33,4 @@ macos   = { OS = "macOS" }
 
 # Most dependencies require precise versions during the development cycle
 [[pins]]
+aaa = { url = "https://github.com/mosteo/aaa.git", commit = "4b4aa047f29a4270c5b5003468617e153977ab97" }
