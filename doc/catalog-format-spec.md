@@ -431,7 +431,7 @@ static, i.e. they cannot depend on the context.
    For more information on crate configuration, see [Using crate
    configuration](#using-crate-configuration).
 
-- `disabled`: Completely disable configuration code generation for the
+      - `disabled`: Completely disable configuration code generation for the
         crate (default: `false`)
 
       - `output_dir`: Path to the directory where the configuration code will

@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Automatic GPR 'with' now in crate configuration
 
-PR [#XXX](https://github.com/alire-project/alire/pull/XXX).
+PR [#740](https://github.com/alire-project/alire/pull/740).
 
 When adding or removing dependency with `alr with`, the list of `with`
 statement for each project files of the dependencies is now automatically added
