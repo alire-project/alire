@@ -151,6 +151,13 @@ package Alire.Roots is
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
+   procedure Update (This : in out Root;
+                     Allowed : Containers.Crate_Name_Sets.Set);
+   --  Full update, explicitly requested. Will fetch/prune pins, update any
+   --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
+   --  empty set of crates to which the update will be limited. Everything is
+   --  updatable if Allowed.Is_Empty.
+
    procedure Update_Dependencies
      (This    : in out Root;
       Silent  : Boolean;
@@ -170,15 +177,20 @@ package Alire.Roots is
    --  invalid one, Root.Solution will be used as old solution.
 
    procedure Deploy_Pins (This       : in out Root;
-                          Exhaustive : Boolean);
+                          Exhaustive : Boolean;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set);
    --  Download any remote pins in the manifest. When not Exhaustive, a pin
    --  that is already in the solution is not re-downloaded. This is to avoid
    --  re-fetching all pins after each manifest edition. New pins are always
    --  downloaded. An update requested by the user (`alr update`) will be
-   --  exhaustive.
+   --  exhaustive. Allowed restricts which crates are affected
 
-   procedure Prune_Pins (This : in out Root);
-   --  Remove any pins in the solution that are not in the manifest
+   procedure Prune_Pins (This : in out Root;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set);
+   --  Remove any pins in the solution that are not in the manifest. Allowed
+   --  restricts which crates are affected.
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root

@@ -21,6 +21,13 @@ run_alr('pin', 'libhello')
 p = run_alr('pin')
 assert_eq('libhello 1.0.0\n', p.out)
 
+# Update and verify that the pin has survived
+run_alr('update')
+p = run_alr('pin')
+assert_eq('libhello 1.0.0\n', p.out)
+
+# Delete lockfile and verify the pin has survived
+
 # Unpin and verify pin is not there
 run_alr('pin', '--unpin', 'libhello')
 p = run_alr('pin')

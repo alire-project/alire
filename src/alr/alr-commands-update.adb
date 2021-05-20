@@ -1,6 +1,5 @@
 with Alire.Containers;
 with Alire.Errors;
-with Alire.Utils.User_Input;
 
 with Alr.Commands.Index;
 
@@ -43,18 +42,7 @@ package body Alr.Commands.Update is
 
       Cmd.Requires_Full_Index;
 
-      --  Just in case, retry all pins. This is necessary so pins without an
-      --  explicit commit are updated to HEAD.
-
-      Cmd.Root.Deploy_Pins (Exhaustive => True);
-
-      --  And look for updates in dependencies
-
-      Cmd.Root.Update_Dependencies
-        (Allowed => Parse_Allowed,
-         Options => (Age    => Query_Policy,
-                     others => <>),
-         Silent  => Alire.Utils.User_Input.Not_Interactive);
+      Cmd.Root.Update (Parse_Allowed);
    end Execute;
 
    ----------------------

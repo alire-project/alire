@@ -295,7 +295,9 @@ package body Alire.Roots is
    -----------------
 
    procedure Deploy_Pins (This       : in out Root;
-                          Exhaustive : Boolean) is
+                          Exhaustive : Boolean;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set) is
       use User_Pins.Maps.Pin_Maps;
       Rel  : constant Alire.Releases.Release := Release (This);
       Pins : constant User_Pins.Maps.Map     := Rel.Pins;
@@ -309,6 +311,15 @@ package body Alire.Roots is
       is
          use type Alire.Optional.String;
       begin
+
+         --  Early reject if the crate is not among the allowed ones
+
+         if not Allowed.Is_Empty and then not Allowed.Contains (Crate) then
+            return False;
+         end if;
+
+         --  Regular checks if the crate is in the update set
+
          return
            --  Any new pin needs downloading
            not This.Solution.Links.Contains (Crate)
@@ -372,13 +383,17 @@ package body Alire.Roots is
    -- Prune_Pins --
    ----------------
 
-   procedure Prune_Pins (This : in out Root) is
+   procedure Prune_Pins (This : in out Root;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set) is
       use type Solutions.Solution;
       Valid_Pins : constant User_Pins.Maps.Map := Release (This).Pins;
       Pruned_Sol : Solutions.Solution := This.Solution;
    begin
       for State of This.Solution.All_Dependencies loop
-         if State.Is_User_Pinned and then not Valid_Pins.Contains (State.Crate)
+         if State.Is_User_Pinned and then
+           not Valid_Pins.Contains (State.Crate) and then
+           (Allowed.Is_Empty or else Allowed.Contains (State.Crate))
          then
             Pruned_Sol := Pruned_Sol.Unlinking (State.Crate)
                                     .Unpinning (State.Crate);
@@ -725,6 +740,32 @@ package body Alire.Roots is
             OS.File_Time_Stamp (This.Crate_File));
       end if;
    end Sync_Manifest_And_Lockfile_Timestamps;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (This : in out Root;
+                     Allowed : Containers.Crate_Name_Sets.Set)
+   is
+   begin
+      --  Just in case, retry all pins. This is necessary so pins without an
+      --  explicit commit are updated to HEAD.
+
+      This.Deploy_Pins (Exhaustive => True,
+                        Allowed    => Allowed);
+
+      --  Prune pins, as otherwise they would remain even if removed from the
+      --  manifest.
+
+      This.Prune_Pins (Allowed);
+
+      --  And look for updates in dependencies
+
+      This.Update_Dependencies
+        (Allowed => Allowed,
+         Silent  => Alire.Utils.User_Input.Not_Interactive);
+   end Update;
 
    --------------------
    -- Compute_Update --
