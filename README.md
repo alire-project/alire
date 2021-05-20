@@ -2,6 +2,7 @@
 [![Windows CI](https://github.com/alire-project/alire/workflows/CI%20Windows/badge.svg)](https://github.com/alire-project/alire/actions)
 [![MacOS CI](https://github.com/alire-project/alire/workflows/CI%20macOS/badge.svg)](https://github.com/alire-project/alire/actions)
 [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/ada-lang/Alire)
+[![Gitpod ready](https://img.shields.io/badge/Gitpod-ready-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/alire-project/alire)
 
 # ALR #
 
@@ -13,14 +14,15 @@ a similar role to Rust's `cargo` or OCaml's `opam`.
 
 ### Caveat emptor ###
 
-Documentation at this time is a work in progress. Expect further efforts in this direction
-until this warning is removed.
+Documentation at this time is a work in progress. Expect further efforts in
+this direction until this warning is removed. Check the latest information at
+https://alire.ada.dev/
 
 ## TL;DR ##
 
 Available for Debian stable / Ubuntu >=17.10 / macOS / Windows
 
-The latest release is version 0.7, which is also the first public beta intended for general testing and feedback gathering towards the 1.0 release. See the [Getting Started](doc/getting-started.md) guide for binary downloads.
+Download the latest stable version from the [Releases](https://github.com/alire-project/alire/releases) page. See the [Getting Started](doc/getting-started.md) guide for binary downloads.
 
 If, instead, you want to test the latest development version, see [Building from sources](#building-from-sources).
 
@@ -52,14 +54,16 @@ Some crates benefit from using platform packages. In this case the user
 will be asked to authorize a `sudo` installation through the platform package
 manager.
 
-Properties and dependencies of projects are managed through a TOML file. This
-file exists locally for working copies of projects, and the Alire community
-index stores the files corresponding to its projects.
+Properties and dependencies of projects are managed through a TOML file
+(`alire.toml`, found at the root of Alire workspaces). This file exists locally
+for working copies of projects, and the Alire community index stores the files
+corresponding to its projects.
 
-The complete build environment is set up by setting the GPR_PROJECT_PATH
-environment variable before running `gprbuild`, thus freeing the user from
-concerns about installation paths. The user simply adds the used projects to
-its own project GPR file with their simple name.
+The complete build environment is automatically set up by setting the
+GPR_PROJECT_PATH environment variable before running `gprbuild`, thus freeing
+the user from concerns about installation paths. The user simply adds the used
+projects to its own project GPR file with their simple name. You can check the
+environment `alr` is using with `alr printenv`.
 
 ## Supported platforms ##
 
