@@ -159,6 +159,12 @@ package Alire.Solutions is
    --  Unpin a crate. If the crate was not pinned or not in the solution
    --  nothing will be done.
 
+   function Unsolving (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Remove links, pins, releases... and mark the crate as missing. If not in
+   --  the solution, nothing will be done.
+
    function With_Pins (This, Src : Solution) return Solution;
    --  Copy pins from Src to This and return it
 
@@ -593,6 +599,20 @@ private
              Dependencies =>
                 This.Dependencies.Including
                (This.Dependencies (Crate).Unpinning))
+       else This);
+
+   ---------------
+   -- Unsolving --
+   ---------------
+
+   function Unsolving (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unlinking.Unpinning.Missing))
        else This);
 
 end Alire.Solutions;

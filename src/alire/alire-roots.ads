@@ -124,11 +124,12 @@ package Alire.Roots is
 
    procedure Sync_From_Manifest (This : in out Root);
    --  1) Pre-deploy any remote pins in the manifest so they are usable when
-   --  solving. 2) Ensure that dependencies are up to date in regard to the
-   --  lockfile and manifest: if the manifest is newer than the lockfile,
-   --  resolve again, as dependencies may have been edited by hand. 3) Ensure
-   --  that releases in the lockfile are actually on disk (may be missing if
-   --  cache was deleted, or the crate was just cloned).
+   --  solving, and apply any local/version pins. 2) Ensure that dependencies
+   --  are up to date in regard to the lockfile and manifest: if the manifest
+   --  is newer than the lockfile, resolve again, as dependencies may have been
+   --  edited by hand. 3) Ensure that releases in the lockfile are actually
+   --  on disk (may be missing if cache was deleted, or the crate was just
+   --  cloned).
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -174,22 +175,18 @@ package Alire.Roots is
       Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
    --  Call Update and Deploy_Dependencies in succession for the given root.
    --  Old_Sol is used to present differences, and when left at the default
-   --  invalid one, Root.Solution will be used as old solution.
+   --  invalid argument value, Root.Solution will be used as old solution.
 
-   procedure Deploy_Pins (This       : in out Root;
-                          Exhaustive : Boolean;
-                          Allowed    : Containers.Crate_Name_Sets.Set :=
-                            Containers.Crate_Name_Sets.Empty_Set);
-   --  Download any remote pins in the manifest. When not Exhaustive, a pin
-   --  that is already in the solution is not re-downloaded. This is to avoid
-   --  re-fetching all pins after each manifest edition. New pins are always
-   --  downloaded. An update requested by the user (`alr update`) will be
-   --  exhaustive. Allowed restricts which crates are affected
-
-   procedure Prune_Pins (This : in out Root;
-                          Allowed    : Containers.Crate_Name_Sets.Set :=
-                            Containers.Crate_Name_Sets.Empty_Set);
-   --  Remove any pins in the solution that are not in the manifest. Allowed
+   procedure Sync_Pins_From_Manifest
+     (This       : in out Root;
+      Exhaustive : Boolean;
+      Allowed    : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set);
+   --  Checks additions/removals of pins, and fetches remote pins. When not
+   --  Exhaustive, a pin that is already in the solution is not re-downloaded.
+   --  This is to avoid re-fetching all pins after each manifest edition.
+   --  New pins, or pins with a changed commit are always downloaded. An update
+   --  requested by the user (`alr update`) will be exhaustive. Allowed
    --  restricts which crates are affected.
 
    procedure Write_Manifest (This : Root);
@@ -255,5 +252,23 @@ private
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
    end record;
+
+   procedure Apply_Local_Pins (This : in out Root);
+   --  Apply version/path pins from the manifest. Remote pins are dealt with by
+   --  Deploy_Pins, as they are costlier and have more involved processing.
+
+   procedure Deploy_Pins (This       : in out Root;
+                          Exhaustive : Boolean;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set);
+   --  Download any remote pins in the manifest. When not Exhaustive, a pin
+   --  that is already in the solution is not re-downloaded. This is to avoid
+   --  re-fetching all pins after each manifest edition. New pins are always
+   --  downloaded. An update requested by the user (`alr update`) will be
+   --  exhaustive. Allowed restricts which crates are affected
+
+   procedure Prune_Pins (This : in out Root);
+   --  Remove any pins in the solution that are not in the manifest. Allowed
+   --  restricts which crates are affected.
 
 end Alire.Roots;

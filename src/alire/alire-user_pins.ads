@@ -24,6 +24,16 @@ package Alire.User_Pins is
 
    function Is_Remote (This : Pin) return Boolean;
 
+   --  Version attributes
+
+   function Version (This : Pin) return Semantic_Versioning.Version
+     with Pre => This.Kind = To_Version;
+
+   --  Local path attributes
+
+   function Path (This : Pin) return Any_Path
+     with Pre => This.Kind = To_Path;
+
    --  Remote attributes
 
    function URL (This : Pin) return Alire.URL
@@ -72,11 +82,24 @@ private
    function Is_Remote (This : Pin) return Boolean
    is (This.Kind in To_Git);
 
+   ----------
+   -- Path --
+   ----------
+
+   function Path (This : Pin) return Any_Path is (+This.Path);
+
    ---------
    -- URL --
    ---------
 
    function URL (This : Pin) return Alire.URL
    is (+This.URL);
+
+   -------------
+   -- Version --
+   -------------
+
+   function Version (This : Pin) return Semantic_Versioning.Version
+   is (This.Version);
 
 end Alire.User_Pins;

@@ -290,6 +290,41 @@ package body Alire.Roots is
 
    end Deploy_Dependencies;
 
+   ----------------------
+   -- Apply_Local_Pins --
+   ----------------------
+
+   procedure Apply_Local_Pins (This : in out Root) is
+      use type Solutions.Solution;
+      Sol  : Solutions.Solution := This.Solution;
+   begin
+      for I in Release (This).Pins.Iterate loop
+         declare
+            use all type User_Pins.Kinds;
+            use User_Pins.Maps.Pin_Maps;
+            Crate : constant Crate_Name := Key (I);
+            Pin   : constant User_Pins.Pin := Element (I);
+         begin
+            case Pin.Kind is
+               when To_Version =>
+                  Sol := Sol.Missing (Crate).Pinning (Crate, Pin.Version);
+               when To_Path =>
+                  Sol := Sol.Missing (Crate).Linking (Crate, Pin.Path);
+               when To_Git =>
+                  null; -- Not considered here
+            end case;
+         end;
+      end loop;
+
+      if Sol /= This.Solution then
+         Solutions.Diffs.Between (This.Solution, Sol).Print
+           (Changed_Only => True,
+            Level        => Trace.Detail);
+         Trace.Detail ("Local pins updated and commited to disk");
+         This.Set (Solution => Sol);
+      end if;
+   end Apply_Local_Pins;
+
    -----------------
    -- Deploy_Pins --
    -----------------
@@ -339,7 +374,7 @@ package body Alire.Roots is
 
    begin
       if (for some Pin of Pins => Pin.Is_Remote) then
-         Put_Info ("Checking pins...");
+         Put_Info ("Checking remote pins...");
       end if;
 
       for I in Pins.Iterate loop
@@ -349,6 +384,7 @@ package body Alire.Roots is
                Put_Info ("Deploying pin for crate: " & TTY.Name (Key (I)));
 
                declare
+                  use type Solutions.Solution;
                   Crate  : constant Crate_Name := Key (I);
                   Pin    : constant User_Pins.Pin := Element (I);
                   Result : constant Remote_Pin_Result :=
@@ -363,8 +399,14 @@ package body Alire.Roots is
                                 Must_Depend => True);
                begin
                   --  Pin deployed, solution can be stored accordingly
-
-                  This.Set (Solution => Result.Solution);
+                  if This.Solution /= Result.Solution then
+                     Solutions
+                       .Diffs.Between (This.Solution, Result.Solution)
+                       .Print (Changed_Only => True,
+                               Level        => Trace.Detail);
+                     This.Set (Solution => Result.Solution);
+                     Trace.Detail ("Remote pins commited to disk");
+                  end if;
                end;
             else
 
@@ -372,9 +414,6 @@ package body Alire.Roots is
                          & TTY.Name (Key (I)));
 
             end if;
-
-            Trace.Debug ("Skipping local user pin from fetch: "
-                         & TTY.Name (Key (I)));
          end if;
       end loop;
    end Deploy_Pins;
@@ -383,17 +422,14 @@ package body Alire.Roots is
    -- Prune_Pins --
    ----------------
 
-   procedure Prune_Pins (This : in out Root;
-                          Allowed    : Containers.Crate_Name_Sets.Set :=
-                            Containers.Crate_Name_Sets.Empty_Set) is
+   procedure Prune_Pins (This : in out Root) is
       use type Solutions.Solution;
       Valid_Pins : constant User_Pins.Maps.Map := Release (This).Pins;
       Pruned_Sol : Solutions.Solution := This.Solution;
    begin
       for State of This.Solution.All_Dependencies loop
          if State.Is_User_Pinned and then
-           not Valid_Pins.Contains (State.Crate) and then
-           (Allowed.Is_Empty or else Allowed.Contains (State.Crate))
+           not Valid_Pins.Contains (State.Crate)
          then
             Pruned_Sol := Pruned_Sol.Unlinking (State.Crate)
                                     .Unpinning (State.Crate);
@@ -402,10 +438,29 @@ package body Alire.Roots is
       end loop;
 
       if Pruned_Sol /= This.Solution then
+         Solutions.Diffs.Between (This.Solution, Pruned_Sol).Print
+           (Changed_Only => True,
+            Level        => Trace.Detail);
          Trace.Detail ("Pin-pruned solution commited to disk");
          This.Set (Pruned_Sol);
       end if;
    end Prune_Pins;
+
+   -----------------------------
+   -- Sync_Pins_From_Manifest --
+   -----------------------------
+
+   procedure Sync_Pins_From_Manifest
+     (This       : in out Root;
+      Exhaustive : Boolean;
+      Allowed    : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set)
+   is
+   begin
+      This.Deploy_Pins (Exhaustive, Allowed);
+      This.Prune_Pins;
+      This.Apply_Local_Pins;
+   end Sync_Pins_From_Manifest;
 
    ---------------
    -- Is_Stored --
@@ -688,12 +743,10 @@ package body Alire.Roots is
       if This.Is_Lockfile_Outdated then
          Put_Info ("Detected changes in manifest, synchronizing workspace...");
 
-         This.Deploy_Pins (Exhaustive => False);
-         --  Pre-fetch any new remote links in the manifest, so they can be
-         --  used right away for version resolution/recursive dependencies.
-
-         This.Prune_Pins;
-         --  And remove any pins that the user has removed
+         This.Sync_Pins_From_Manifest (Exhaustive => False);
+         --  Normally we do not want to re-fetch remote pins, so we request
+         --  a non-exhaustive sync of pins, that will anyway detect evident
+         --  changes (new/removed pins, changed explicit commits).
 
          This.Update_And_Deploy_Dependencies (Old_Sol => Old_Solution,
                                               Confirm => False);
@@ -749,16 +802,10 @@ package body Alire.Roots is
                      Allowed : Containers.Crate_Name_Sets.Set)
    is
    begin
+      This.Sync_Pins_From_Manifest (Exhaustive => True,
+                                    Allowed    => Allowed);
       --  Just in case, retry all pins. This is necessary so pins without an
       --  explicit commit are updated to HEAD.
-
-      This.Deploy_Pins (Exhaustive => True,
-                        Allowed    => Allowed);
-
-      --  Prune pins, as otherwise they would remain even if removed from the
-      --  manifest.
-
-      This.Prune_Pins (Allowed);
 
       --  And look for updates in dependencies
 
