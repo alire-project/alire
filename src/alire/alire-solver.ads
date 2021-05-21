@@ -3,6 +3,7 @@ with Alire.Index;
 with Alire.Properties;
 with Alire.Solutions;
 with Alire.Types;
+with Alire.User_Pins.Maps;
 
 with Semantic_Versioning.Extended;
 
@@ -53,8 +54,8 @@ package Alire.Solver is
    --  releases will be used normally; otherwise a crate with only externals
    --  will always cause failure.
 
+   subtype Pin_Map  is User_Pins.Maps.Map;
    subtype Release  is Types.Release;
-
    subtype Solution is Solutions.Solution;
 
    --  The dependency solver (Resolve subprogram, below) receives a
@@ -132,8 +133,8 @@ package Alire.Solver is
                      Options : Query_Options := Default_Options)
                      return Solution;
    --  Exhaustively look for a solution to the given dependencies, under the
-   --  given platform properties and lookup options. A current solution may
-   --  be given and pinned releases will be reused.
+   --  given platform properties and lookup options. Pins can be supplied to
+   --  override Deps.
 
    function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;

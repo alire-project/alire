@@ -110,7 +110,8 @@ package body Alire.Environment is
 
             GNAT.IO.Put_Line
               (GNAT.IO.Standard_Error,
-               TTY.Warn ("warn:") & " Generating incomplete environment"
+               TTY.Warn ("warn:")
+               & " Generating possibly incomplete environment"
                & " because of missing dependencies");
          end if;
       end if;

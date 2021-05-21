@@ -380,7 +380,27 @@ package body Alire.Solutions is
             if Dep.Is_Pinned then
                Dependencies :=
                  Dependencies and
-                 Conditional.New_Dependency (Dep.Crate, Dep.Versions);
+                 Conditional.New_Dependency (Dep.Crate,
+                                             Dep.Pin_Version);
+            end if;
+         end loop;
+      end return;
+   end Pins;
+
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Dependency_Map
+   is
+   begin
+      return Result : Dependency_Map do
+         for State of This.Dependencies loop
+            if State.Is_Pinned then
+               Result.Insert (State.Crate,
+                              Alire.Dependencies.New_Dependency
+                                (State.Crate,
+                                 State.Pin_Version));
             end if;
          end loop;
       end return;

@@ -248,11 +248,13 @@ package Alire.Solutions is
    --  Return crates for which there is neither hint nor proper versions
 
    function Pins (This : Solution) return Conditional.Dependencies;
-   --  Return all pinned dependencies as a dependency tree containing exact
-   --  versions.
+   --  Return all version-pinned dependencies as a dependency tree containing
+   --  exact versions. NOTE that the original dependency is thus lost in this
+   --  info.
 
    function Pins (This : Solution) return Dependency_Map;
-   --  return all pinned dependencies as plain dependencies for a exact version
+   --  return all version-pinned dependencies as plain dependencies for a exact
+   --  version. NOTE that the original dependency is thus lost.
 
    function Releases (This : Solution) return Release_Map;
    --  Returns the proper releases in the solution (regular and detected
@@ -536,13 +538,6 @@ private
        Dependencies =>
           This.Dependencies.Including
          (This.Dependencies (Crate).Pinning (Version)));
-
-   ----------
-   -- Pins --
-   ----------
-
-   function Pins (This : Solution) return Dependency_Map
-   is (This.Dependencies_That (States.Is_Pinned'Access));
 
    --------------
    -- Required --
