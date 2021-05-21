@@ -5,9 +5,10 @@ with TOML;
 package body Alire.User_Pins is
 
    package Keys is
-      Commit : constant String := "commit";
-      Path   : constant String := "path";
-      URL    : constant String := "url";
+      Commit  : constant String := "commit";
+      Path    : constant String := "path";
+      URL     : constant String := "url";
+      Version : constant String := "version";
    end Keys;
 
    ---------------
@@ -23,7 +24,13 @@ package body Alire.User_Pins is
       function From_Table (This : TOML_Adapters.Key_Queue) return Pin is
          use TOML;
       begin
-         if This.Contains (Keys.Path) then
+         if This.Contains (Keys.Version) then
+            return Pin'
+              (Kind    => To_Version,
+               Version => Semantic_Versioning.Parse
+                 (This.Checked_Pop (Keys.Version, TOML_String).As_String));
+
+         elsif This.Contains (Keys.Path) then
             return Result : constant Pin :=
               (Kind => To_Path,
                Path => +This.Checked_Pop (Keys.Path, TOML_String).As_String)
@@ -52,7 +59,7 @@ package body Alire.User_Pins is
             end return;
 
          else
-            Trace.Error ("Expecting a path or url pin, but got:");
+            Trace.Error ("Unexpected key in pin, got:");
             This.Print;
             Raise_Checked_Error ("invalid pin description");
          end if;

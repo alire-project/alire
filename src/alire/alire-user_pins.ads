@@ -44,14 +44,13 @@ package Alire.User_Pins is
      with Pre => This.Is_Remote;
 
    function From_TOML (This : TOML_Adapters.Key_Queue) return Pin;
-   --  Expects the rhs of a crate = <pin> entry. This can be a string (for a
-   --  version) or a table (for an origin).
+   --  Expects the rhs of a crate = <pin> entry. The rhs is always a table.
 
    --  The TOML representation of a pin is similar to a dependency, but instead
    --  of a version set, we get either a precise version, or an url + commit:
    --  [[pins]]
-   --  foo = "5.6"
-   --  bar = { url = "git+https://blah", commit = }
+   --  foo = { version = "5.6" }
+   --  bar = { url = "git+https://blah", [commit = "deadbeef"] }
 
 private
 
