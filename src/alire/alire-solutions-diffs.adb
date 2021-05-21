@@ -383,6 +383,9 @@ package body Alire.Solutions.Diffs is
       if Changed then
          Table.Print (Level);
       else
+         Trace.Warning (Boolean'(This.Former  = This.Latter)'Image);
+         Trace.Warning (Boolean'(This.Former /= This.Latter)'Image);
+
          Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);
       end if;

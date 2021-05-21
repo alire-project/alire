@@ -22,6 +22,12 @@ package Alire.Dependencies.States is
 
    type State (<>) is new Dependency with private;
 
+   overriding function "=" (L, R : State) return Boolean;
+   --  For some unclear reason, the default implementation reports differences
+   --  for identical states. Suspecting the Indefinite_Holders therein to be
+   --  the culprits. We override to rely on the same information the user sees,
+   --  thus avoiding any inconsistent "want to confirm?" empty updates.
+
    ------------------
    -- Constructors --
    ------------------
@@ -204,6 +210,13 @@ private
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (L, R : State) return Boolean
+   is (L.Image = R.Image);
 
    -------------------
    -- As_Dependency --
