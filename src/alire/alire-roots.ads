@@ -9,7 +9,7 @@ with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils.User_Input;
+with Alire.Utils;
 
 package Alire.Roots is
 
@@ -122,14 +122,15 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   procedure Sync_From_Manifest (This : in out Root);
+   procedure Sync_From_Manifest (This   : in out Root;
+                                 Silent : Boolean);
    --  1) Pre-deploy any remote pins in the manifest so they are usable when
    --  solving, and apply any local/version pins. 2) Ensure that dependencies
    --  are up to date in regard to the lockfile and manifest: if the manifest
    --  is newer than the lockfile, resolve again, as dependencies may have been
    --  edited by hand. 3) Ensure that releases in the lockfile are actually
    --  on disk (may be missing if cache was deleted, or the crate was just
-   --  cloned).
+   --  cloned). When Silent, run as in non-interactive mode.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -149,9 +150,6 @@ package Alire.Roots is
    --  This function loads configured indexes from disk. No changes are
    --  applied to This root.
 
-   procedure Deploy_Dependencies (This : in out Root);
-   --  Download all dependencies not already on disk from This.Solution
-
    procedure Update (This : in out Root;
                      Allowed : Containers.Crate_Name_Sets.Set);
    --  Full update, explicitly requested. Will fetch/prune pins, update any
@@ -159,21 +157,28 @@ package Alire.Roots is
    --  empty set of crates to which the update will be limited. Everything is
    --  updatable if Allowed.Is_Empty.
 
-   procedure Update_Dependencies
+   procedure Deploy_Dependencies (This : in out Root);
+   --  Download all dependencies not already on disk from This.Solution
+
+   procedure Sync_Dependencies
      (This    : in out Root;
       Silent  : Boolean;
+      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set);
-   --  Resolve and update all or given crates in a root. When silent, run
-   --  as in non-interactive mode as this is an automatically-triggered update.
+   --  Resolve and update all or given crates in a root, and regenerate
+   --  configuration. When Silent, run as in non-interactive mode as this is an
+   --  automatically-triggered update. Old_Sol is used to present differences,
+   --  and when left at the default invalid argument value, This.Solution will
+   --  be used as old solution.
 
-   procedure Update_And_Deploy_Dependencies
-     (This    : in out Roots.Root;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Old_Sol : Solutions.Solution   := Solutions.Empty_Invalid_Solution;
-      Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
-   --  Call Update and Deploy_Dependencies in succession for the given root.
+--  procedure Update_And_Deploy_Dependencies
+   --    (This    : in out Roots.Root;
+   --     Options : Solver.Query_Options := Solver.Default_Options;
+   --     Old_Sol : Solutions.Solution   := Solutions.Empty_Invalid_Solution;
+--     Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
+--  --  Call Update and Deploy_Dependencies in succession for the given root.
    --  Old_Sol is used to present differences, and when left at the default
    --  invalid argument value, Root.Solution will be used as old solution.
 

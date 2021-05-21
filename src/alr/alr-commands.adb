@@ -610,7 +610,7 @@ package body Alr.Commands is
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
                      Cmd.Requires_Full_Index (Strict => False);
-                     Checked.Sync_From_Manifest;
+                     Checked.Sync_From_Manifest (Silent => True);
                      return;
                   else
                      Notify_Of_Initialization;
@@ -627,8 +627,8 @@ package body Alr.Commands is
                Trace.Warning
                  ("This workspace was created with a previous alr version."
                   & " Internal data is going to be updated and, as a result,"
-                  & " any existing pins will be unpinned and will need to be"
-                  & " manually recreated.");
+                  & " a fresh solution will be computed that may result in"
+                  & " crate upgrades");
                Alire.Directories.Backup_If_Existing
                  (Checked.Lock_File,
                   Base_Dir => Alire.Paths.Working_Folder_Inside_Root);
@@ -668,7 +668,7 @@ package body Alr.Commands is
 
          if Sync then
             Cmd.Requires_Full_Index (Strict => False);
-            Checked.Update_Dependencies (Silent => True);
+            Checked.Sync_Dependencies (Silent => True);
          end if;
       end;
    end Requires_Valid_Session;
