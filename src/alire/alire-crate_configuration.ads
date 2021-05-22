@@ -47,13 +47,13 @@ private
    --  Use default value for unset variable, raise Checked_Error if a variable
    --  has no default value.
 
-   procedure Load_Definitions (This            : in out Global_Config;
-                               Root            : in out Roots.Root;
-                               Crate           : Crate_Name);
+   procedure Load_Definitions (This  : in out Global_Config;
+                               Root  : in out Roots.Root;
+                               Crate : Crate_Name);
 
-   procedure Load_Settings (This            : in out Global_Config;
-                            Root            : in out Roots.Root;
-                            Crate           : Crate_Name);
+   procedure Load_Settings (This  : in out Global_Config;
+                            Root  : in out Roots.Root;
+                            Crate : Crate_Name);
 
    procedure Generate_Ada_Config (This     : Global_Config;
                                   Crate    : Crate_Name;
