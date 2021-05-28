@@ -279,6 +279,7 @@ package body Alr.Commands.Init is
          Put_Line ("obj/");
          Put_Line ("lib/");
          Put_Line ("alire/");
+         Put_Line ("config/");
          TIO.Close (File);
       end Generate_Gitignore;
 
