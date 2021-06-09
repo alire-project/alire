@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Index;
-with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 
 with GNAT.OS_Lib;

@@ -153,6 +153,7 @@ package Alire.Utils with Preelaborate is
                           C : Ada.Containers.Count_Type := 1)
                           renames Append;
 
+   overriding
    procedure Append_Vector (V : in out String_Vector; V2 : String_Vector)
                             renames Append;
 

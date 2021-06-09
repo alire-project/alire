@@ -7,7 +7,6 @@ with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Index;
 with Alire.Manifest;
-with Alire.Milestones;
 with Alire.OS_Lib;
 with Alire.Releases;
 with Alire.Roots.Optional;

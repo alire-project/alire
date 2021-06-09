@@ -1,5 +1,4 @@
 with Alire.Directories;
-with Alire.Releases;
 
 package body Alire.Root is
 

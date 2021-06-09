@@ -1,4 +1,3 @@
-with Alire.Containers;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 

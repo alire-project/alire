@@ -1,6 +1,5 @@
 with Ada.Strings.Unbounded;
 
-with Alire.Releases;
 with Alire.Properties;
 with Alire.Platforms;
 limited with Alire.Roots;
