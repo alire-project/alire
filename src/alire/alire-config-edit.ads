@@ -120,12 +120,6 @@ private
        +("Directory where Alire will detect and/or install" &
            " msys2 system package manager. (Windows only)")),
 
-      (+"auto-gpr-with",
-       Cfg_Bool,
-       +("If true, Alire will automatically add/edit a list of 'with' " &
-           "statements in the root GPR project file based on the " &
-           "dependencies of the crate.")),
-
       (+Keys.Update_Manually,
        Cfg_Bool,
        +("If true, Alire will not attempt to update dependencies even after "
