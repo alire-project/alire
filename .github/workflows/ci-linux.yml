@@ -30,7 +30,7 @@ jobs:
         submodules: true
 
     - name: Install toolchain
-      uses: ada-actions/toolchain@ce2020
+      uses: ada-actions/toolchain@ce2021
       with:
         distrib: community
     

@@ -34,7 +34,7 @@ jobs:
         submodules: false # Not needed, should be retrieved by alr
 
     - name: Install toolchain
-      uses: ada-actions/toolchain@ce2020
+      uses: ada-actions/toolchain@ce2021
       with:
         distrib: community
 
