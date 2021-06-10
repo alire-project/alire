@@ -164,6 +164,23 @@ package body Alire.Properties.Configurations is
                                            Image (This.Int_Last))
       );
 
+   -------------
+   -- To_TOML --
+   -------------
+
+   overriding
+   function To_TOML (This : Config_Entry) return TOML.TOML_Value is
+      Table : constant TOML.TOML_Value := TOML.Create_Table;
+   begin
+      Table.Set ("output_dir", Create_String (This.Output_Dir));
+      Table.Set ("disabled", Create_Boolean (This.Disabled));
+      Table.Set ("generate_ada", Create_Boolean (This.Gen_Ada));
+      Table.Set ("generate_gpr", Create_Boolean (This.Gen_GPR));
+      Table.Set ("generate_c", Create_Boolean (This.Gen_C));
+      Table.Set ("auto_gpr_with", Create_Boolean (This.Auto_GPR_With));
+      return Table;
+   end To_TOML;
+
    -----------
    -- Image --
    -----------
@@ -796,9 +813,10 @@ package body Alire.Properties.Configurations is
                       (TOML_Keys.Configuration, TOML_Table),
                     TOML_Keys.Configuration);
 
+      Ent : Config_Entry;
    begin
       return Props : Conditional.Properties do
-         while True loop
+         loop
             declare
                Val    : TOML_Value;
                Key    : constant String := Config.Pop (Val);
@@ -810,22 +828,68 @@ package body Alire.Properties.Configurations is
                if Key = Utils.Tail (TOML_Keys.Config_Vars, '.') then
                   Nested := Definitions_From_TOML
                     (From.Descend (Key, Val, "variables"));
+
                elsif Key = Utils.Tail (TOML_Keys.Config_Values, '.') then
                   Nested := Assignments_From_TOML
                     (From.Descend (Key, Val, "settings"));
+
+               elsif Key = "output_dir" then
+                  if Val.Kind = TOML_String then
+                     Ent.Output_Dir := Val.As_Unbounded_String;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(string expected)");
+                  end if;
+
+               elsif Key = "generate_ada" then
+                  if Val.Kind = TOML_Boolean then
+                     Ent.Gen_Ada := Val.As_Boolean;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(boolean expected)");
+                  end if;
+
+               elsif Key = "generate_gpr" then
+                  if Val.Kind = TOML_Boolean then
+                     Ent.Gen_GPR := Val.As_Boolean;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(Boolean expected)");
+                  end if;
+
+               elsif Key = "generate_c" then
+                  if Val.Kind = TOML_Boolean then
+                     Ent.Gen_C := Val.As_Boolean;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(Boolean expected)");
+                  end if;
+
+               elsif Key = "auto_gpr_with" then
+                  if Val.Kind = TOML_Boolean then
+                     Ent.Auto_GPR_With := Val.As_Boolean;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(Boolean expected)");
+                  end if;
+
+               elsif Key = "disabled" then
+                  if Val.Kind = TOML_Boolean then
+                     Ent.Disabled := Val.As_Boolean;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(Boolean expected)");
+                  end if;
+
                else
                   Raise_Checked_Error ("Unknown configuration entry: "
                                        & Key);
                end if;
-
                Props.Append (Nested);
             end;
          end loop;
 
-         if Props.Is_Empty then
-            Props := Conditional.New_Property
-              (Config_Entry'(Property with null record));
-         end if;
+         Props.Append (Conditional.For_Properties.New_Value (Ent));
       end return;
    end Config_Entry_From_TOML;
 

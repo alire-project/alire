@@ -35,8 +35,15 @@ package Alire.Properties.Configurations with Preelaborate is
    --  type of property, but also the children tables as same-level properties
    --  (top-level, or under a case).
 
-   type Config_Entry is new Properties.Property with null record;
+   type Config_Entry is new Properties.Property with private;
    --  This property is the [configuration] itself
+
+   function Output_Dir (This : Config_Entry) return Relative_Path;
+   function Generate_Ada (This : Config_Entry) return Boolean;
+   function Generate_GPR (This : Config_Entry) return Boolean;
+   function Generate_C (This : Config_Entry) return Boolean;
+   function Auto_GPR_With (This : Config_Entry) return Boolean;
+   function Disabled (This : Config_Entry) return Boolean;
 
    type Config_Type_Definition (<>) is new Properties.Property with private;
    --  [configuration.variables]
@@ -89,6 +96,44 @@ package Alire.Properties.Configurations with Preelaborate is
 
 private
 
+   type Config_Entry is new Properties.Property with record
+      Output_Dir    : Ada.Strings.Unbounded.Unbounded_String := +"config";
+      Gen_Ada       : Boolean := True;
+      Gen_GPR       : Boolean := True;
+      Gen_C         : Boolean := True;
+      Auto_GPR_With : Boolean := True;
+      Disabled      : Boolean := False;
+   end record;
+
+   overriding
+   function Key (This : Config_Entry) return String
+   is (TOML_Keys.Configuration);
+
+   overriding
+   function To_TOML (This : Config_Entry) return TOML.TOML_Value;
+
+   overriding
+   function Image (This : Config_Entry) return String
+   is ("Configuration: no modifiers");
+   --  In the future, we may have other settings here
+
+   overriding
+   function To_YAML (This : Config_Entry) return String
+   is ("Configuration: no modifiers");
+
+   function Output_Dir (This : Config_Entry) return Relative_Path
+   is (Relative_Path (+This.Output_Dir));
+   function Generate_Ada (This : Config_Entry) return Boolean
+   is (This.Gen_Ada);
+   function Generate_GPR (This : Config_Entry) return Boolean
+   is (This.Gen_GPR);
+   function Generate_C (This : Config_Entry) return Boolean
+   is (This.Gen_C);
+   function Auto_GPR_With (This : Config_Entry) return Boolean
+   is (This.Auto_GPR_With);
+   function Disabled (This : Config_Entry) return Boolean
+   is (This.Disabled);
+
    type Config_Type_Kind is (Real, Int, Enum, Str, Bool);
 
    subtype Config_Integer is TOML.Any_Integer;
@@ -139,25 +184,5 @@ private
 
    overriding
    function To_YAML (This : Config_Value_Assignment) return String;
-
-   -- top-level configuration --
-
-   overriding
-   function Key (This : Config_Entry) return String
-   is (TOML_Keys.Configuration);
-
-   overriding
-   function To_TOML (This : Config_Entry) return TOML.TOML_Value
-   is (TOML.Create_Table);
-   --  Empty for now
-
-   overriding
-   function Image (This : Config_Entry) return String
-   is ("Configuration: no modifiers");
-   --  In the future, we may have other settings here
-
-   overriding
-   function To_YAML (This : Config_Entry) return String
-   is ("Configuration: no modifiers");
 
 end Alire.Properties.Configurations;

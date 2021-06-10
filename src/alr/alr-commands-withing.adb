@@ -18,7 +18,6 @@ with Alire.Utils.User_Input;
 with Alr.Commands.User_Input;
 with Alr.OS_Lib;
 with Alr.Platform;
-with Alr.Utils.Auto_GPR_With;
 
 with Semantic_Versioning.Extended;
 
@@ -33,21 +32,6 @@ package body Alr.Commands.Withing is
       Old_Deps,
       New_Deps     : Alire.Conditional.Dependencies;
       Old_Solution : Alire.Solutions.Solution);
-
-   -------------------
-   -- Auto_GPR_With --
-   -------------------
-
-   procedure Auto_GPR_With (Cmd : in out Command) is
-   begin
-      for File of Cmd.Root.Release.Project_Files
-        (Cmd.Root.Environment, With_Path => True)
-      loop
-         Utils.Auto_GPR_With.Update
-           (Alire.OS_Lib."/" (Cmd.Root.Path, File),
-            Cmd.Root.Direct_Withs (Cmd.Root.Release));
-      end loop;
-   end Auto_GPR_With;
 
    ---------
    -- Add --
@@ -353,8 +337,6 @@ package body Alr.Commands.Withing is
          Cmd.Set (New_Root);
          Cmd.Root.Set (Solution => New_Solution);
          Cmd.Root.Deploy_Dependencies;
-
-         Cmd.Auto_GPR_With;
       end;
 
    end Replace_Current;

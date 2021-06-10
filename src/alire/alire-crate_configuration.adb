@@ -56,6 +56,22 @@ package body Alire.Crate_Configuration is
       use Alire.Origins;
 
       Solution : constant Solutions.Solution := Root.Solution;
+
+      function Get_Config_Entry (Rel : Releases.Release) return Config_Entry is
+      begin
+         for Prop of Rel.On_Platform_Properties (Root.Environment,
+                                                 Config_Entry'Tag)
+         loop
+            return Config_Entry (Prop);
+         end loop;
+
+         --  No Config_Entry found, return the default Config_Entry
+         declare
+            Ret : Config_Entry;
+         begin
+            return Ret;
+         end;
+      end Get_Config_Entry;
    begin
 
       if not Solution.Is_Complete then
@@ -70,22 +86,36 @@ package body Alire.Crate_Configuration is
          if Rel.Origin.Kind /= Alire.Origins.External then
 
             declare
+               Ent : constant Config_Entry := Get_Config_Entry (Rel);
+
                Conf_Dir : constant Absolute_Path :=
-                 Root.Release_Base (Rel.Name) / "config";
+                 Root.Release_Base (Rel.Name) / Ent.Output_Dir;
             begin
-               Ada.Directories.Create_Path (Conf_Dir);
 
-               This.Generate_Ada_Config
-                 (Rel.Name, Conf_Dir / (+Rel.Name & "_config.ads"));
+               if not Ent.Disabled then
+                  Ada.Directories.Create_Path (Conf_Dir);
 
-               This.Generate_GPR_Config
-                 (Rel.Name,
-                  Conf_Dir / (+Rel.Name & "_config.gpr"),
-                  Root.Direct_Withs (Rel));
+                  if Ent.Generate_Ada then
+                     This.Generate_Ada_Config
+                       (Rel.Name, Conf_Dir / (+Rel.Name & "_config.ads"));
+                  end if;
 
-               This.Generate_C_Config
-                 (Rel.Name, Conf_Dir / (+Rel.Name & "_config.h"));
+                  if Ent.Generate_GPR then
+                     This.Generate_GPR_Config
+                       (Rel.Name,
+                        Conf_Dir / (+Rel.Name & "_config.gpr"),
+                        (if Ent.Auto_GPR_With
+                         then Root.Direct_Withs (Rel)
+                         else Alire.Utils.Empty_Set));
+                  end if;
+
+                  if Ent.Generate_C then
+                     This.Generate_C_Config
+                       (Rel.Name, Conf_Dir / (+Rel.Name & "_config.h"));
+                  end if;
+               end if;
             end;
+
          end if;
       end loop;
    end Generate_Config_Files;
