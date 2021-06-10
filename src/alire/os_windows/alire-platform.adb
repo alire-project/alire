@@ -4,8 +4,6 @@ with GNAT.OS_Lib;
 with Alire.Utils;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
-with Alire.Origins;
-with Alire.Origins.Deployers;
 
 package body Alire.Platform is
 
