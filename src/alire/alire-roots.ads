@@ -129,7 +129,8 @@ package Alire.Roots is
    --  releases in the lockfile are actually on disk (may be missing if cache
    --  was deleted, or the crate was just cloned).
 
-   procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root);
+   procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
+     with Post => not This.Is_Lockfile_Outdated;
    --  If the lockfile is older than the manifest, sync their timestamps, do
    --  nothing otherwise. We want this when the manifest has been manually
    --  edited but the solution hasn't changed (and so the lockfile hasn't been
