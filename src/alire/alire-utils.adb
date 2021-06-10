@@ -50,6 +50,15 @@ package body Alire.Utils is
       end if;
    end Append_To_Last_Line;
 
+   -------------------
+   -- Append_Vector --
+   -------------------
+   --  Using a renaming causes conflicting warnings among compiler versions
+   procedure Append_Vector (V : in out String_Vector; V2 : String_Vector) is
+   begin
+      V.Append (V2);
+   end Append_Vector;
+
    ---------------------------
    -- Command_Line_Contains --
    ---------------------------
