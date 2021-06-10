@@ -96,12 +96,17 @@ package body Alire.Externals.Softlinks is
                        Path_Length => Path'Length,
                        Abs_Path    => Path);
             else
-               return (Externals.External with
-                       Has_Remote  => False,
-                       Remote      => <>,
-                       Relative    => True,
-                       Path_Length => Target'Length,
-                       Rel_Path    => Alire.VFS.To_Portable (+Target));
+               declare
+                  Portable_Target : constant Portable_Path :=
+                                      Alire.VFS.To_Portable (+Target);
+               begin
+                  return (Externals.External with
+                          Has_Remote  => False,
+                          Remote      => <>,
+                          Relative    => True,
+                          Path_Length => Portable_Target'Length,
+                          Rel_Path    => Portable_Target);
+               end;
             end if;
          end;
       end;
