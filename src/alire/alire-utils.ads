@@ -154,9 +154,10 @@ package Alire.Utils with Preelaborate is
                           C : Ada.Containers.Count_Type := 1)
                           renames Append;
 
-   overriding
+   pragma Style_Checks (Off);  -- for GNAT CE 2021, wants 'overriding'
    procedure Append_Vector (V : in out String_Vector; V2 : String_Vector)
                             renames Append;
+   pragma Style_Checks (On);
 
    function Append_To_Last_Line (V : String_Vector;
                                  S : String)
