@@ -13,6 +13,8 @@ with Alire.Utils.Tables;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
 
+with Semantic_Versioning.Extended;
+
 package body Alire.Solutions is
 
    package Semver renames Semantic_Versioning;

@@ -5,6 +5,7 @@ with Ada.Characters.Handling;
 
 with Alire_Early_Elaboration;
 with Alire.Solutions;
+with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
 

@@ -2,7 +2,6 @@ private with AAA.Containers.Indefinite_Holders;
 
 private with Alire.Containers;
 with Alire.Externals.Softlinks;
-with Alire.Properties;
 with Alire.Releases;
 with Alire.TOML_Adapters;
 

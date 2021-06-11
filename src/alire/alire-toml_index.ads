@@ -1,7 +1,4 @@
-private with TOML;
-
 with Alire.Index_On_Disk;
-with Alire.Crates;
 with Alire.Releases;
 
 with Semantic_Versioning;

@@ -4,12 +4,8 @@ with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Config;
-with Alire.Dependencies;
 with Alire.Lockfiles;
-with Alire.Milestones;
 with Alire.Paths;
-with Alire.Releases;
-with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;

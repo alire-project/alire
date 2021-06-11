@@ -1,6 +1,7 @@
-with Alire.Containers;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
+
+with Semantic_Versioning;
 
 package body Alire.Solutions.Diffs is
 

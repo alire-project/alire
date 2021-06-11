@@ -1,8 +1,8 @@
 with Ada.Directories;
 
+with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
-with Alire.GPR;
 with Alire.TOML_Adapters;
 
 with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);

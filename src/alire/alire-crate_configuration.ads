@@ -1,6 +1,5 @@
 with TOML;
 
-with Alire.Releases;
 with Alire.Properties.Configurations;
 limited with Alire.Roots;
 

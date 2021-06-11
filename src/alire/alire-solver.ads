@@ -6,8 +6,6 @@ with Alire.Types;
 
 with Semantic_Versioning.Extended;
 
-with TOML;
-
 package Alire.Solver is
 
    --------------

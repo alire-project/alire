@@ -1,5 +1,3 @@
-with TOML;
-
 generic
    --  Encapsulated enumeration type
    type Enum is (<>);

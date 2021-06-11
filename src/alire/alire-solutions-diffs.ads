@@ -1,5 +1,3 @@
-with Semantic_Versioning.Extended;
-
 package Alire.Solutions.Diffs is
 
    type Diff is tagged private;
