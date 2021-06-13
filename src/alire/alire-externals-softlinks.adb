@@ -51,12 +51,16 @@ package body Alire.Externals.Softlinks is
 
    function New_Remote (Origin : Origins.Origin;
                         Path   : Relative_Path) return External
-   is (Externals.External with
-       Has_Remote  => True,
-       Remote      => (Used => True, Origin => Origin),
-       Relative    => True,
-       Path_Length => Path'Length,
-       Rel_Path    => Alire.VFS.To_Portable (Path));
+   is
+      Stored_Path : constant Portable_Path := Alire.VFS.To_Portable (Path);
+   begin
+      return (Externals.External with
+              Has_Remote  => True,
+              Remote      => (Used => True, Origin => Origin),
+              Relative    => True,
+              Path_Length => Stored_Path'Length,
+              Rel_Path    => Stored_Path);
+   end New_Remote;
 
    ------------------
    -- New_Softlink --
@@ -126,14 +130,15 @@ package body Alire.Externals.Softlinks is
 
       declare
          use Alire.OS_Lib.Operators;
-         New_Path : constant Any_Path := From / This.Path;
+         New_Path : constant Portable_Path :=
+                      Alire.VFS.To_Portable (From / This.Path);
       begin
          return (Externals.External with
-                 Has_Remote => This.Has_Remote,
-                 Remote     => This.Remote,
-                 Relative   => True,
+                 Has_Remote  => This.Has_Remote,
+                 Remote      => This.Remote,
+                 Relative    => True,
                  Path_Length => New_Path'Length,
-                 Rel_Path    => Alire.VFS.To_Portable (New_Path));
+                 Rel_Path    => New_Path);
       end;
    end Relocate;
 
