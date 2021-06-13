@@ -3,7 +3,6 @@ with Ada.Directories;
 with GNAT.OS_Lib;
 
 with Alire;
-with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;

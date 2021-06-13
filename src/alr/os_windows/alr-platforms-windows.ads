@@ -1,5 +1,3 @@
-with Alire.Origins;
-
 package Alr.Platforms.Windows is
 
    type Linux_Variant is new Supported with null record;
