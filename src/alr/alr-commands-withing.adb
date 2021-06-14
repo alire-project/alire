@@ -523,9 +523,9 @@ package body Alr.Commands.Withing is
    begin
       Cmd.Requires_Valid_Session;
 
-      --  if Cmd.URL.all /= "" then
-      --     Flags := Flags + 1;
-      --  end if;
+      if Cmd.URL.all /= "" then
+         Flags := Flags + 1;
+      end if;
 
       Check (Cmd.Del);
       Check (Cmd.From);

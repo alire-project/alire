@@ -720,7 +720,7 @@ package body Alire.Solver is
       end Trace_Pins;
 
       Full_Dependencies : constant Conditional.Dependencies :=
-                            Tree'(Current.Pins and Deps).Evaluate (Props);
+                            Tree'(Current.User_Pins and Deps).Evaluate (Props);
       --  Include pins before other dependencies. This ensures their dependency
       --  can only be solved with the pinned version, and they are attempted
       --  first to avoid wasteful trial-and-error with other versions.

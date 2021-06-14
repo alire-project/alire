@@ -387,6 +387,22 @@ package body Alire.Solutions is
       end return;
    end Pins;
 
+   ---------------
+   -- User_Pins --
+   ---------------
+
+   function User_Pins (This : Solution) return Conditional.Dependencies is
+   begin
+      return Dependencies : Conditional.Dependencies := This.Pins do
+         for Dep of This.Dependencies loop
+            if Dep.Is_Linked then
+               Dependencies
+                 .Append (Conditional.New_Dependency (Dep.As_Dependency));
+            end if;
+         end loop;
+      end return;
+   end User_Pins;
+
    ----------
    -- Pins --
    ----------

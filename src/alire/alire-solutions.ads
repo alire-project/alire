@@ -159,6 +159,13 @@ package Alire.Solutions is
    --  Unpin a crate. If the crate was not pinned or not in the solution
    --  nothing will be done.
 
+   function User_Unpinning (This : Solution;
+                            Crate : Crate_Name)
+                            return Solution;
+   --  Remove either a pin or a link for a crate; e.g. same as calling
+   --  Unpinning and Unlinking in succession. Nothing will be done if
+   --  crate wasn't in the solution.
+
    function Unsolving (This  : Solution;
                        Crate : Crate_Name)
                        return Solution;
@@ -255,6 +262,11 @@ package Alire.Solutions is
    function Pins (This : Solution) return Dependency_Map;
    --  return all version-pinned dependencies as plain dependencies for a exact
    --  version. NOTE that the original dependency is thus lost.
+
+   function User_Pins (This : Solution) return Conditional.Dependencies;
+   --  Return all version- or link-pinned dependencies; equivalent to Pins and
+   --  Links. NOTE that the original dependency is lost for the case of version
+   --  pins, as only the pinned version is returned.
 
    function Releases (This : Solution) return Release_Map;
    --  Returns the proper releases in the solution (regular and detected
@@ -609,5 +621,14 @@ private
                 This.Dependencies.Including
                (This.Dependencies (Crate).Unlinking.Unpinning.Missing))
        else This);
+
+   --------------------
+   -- User_Unpinning --
+   --------------------
+
+   function User_Unpinning (This : Solution;
+                            Crate : Crate_Name)
+                            return Solution
+   is (This.Unpinning (Crate).Unlinking (Crate));
 
 end Alire.Solutions;

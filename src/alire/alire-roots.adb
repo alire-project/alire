@@ -306,6 +306,15 @@ package body Alire.Roots is
             Crate : constant Crate_Name := Key (I);
             Pin   : constant User_Pins.Pin := Element (I);
          begin
+
+            --  A pin for a non-dependency requires that we add a generic
+            --  dependency to the solution first.
+
+            if not Sol.Depends_On (Crate) then
+               Sol := Sol.Depending_On
+                 (Dependencies.New_Dependency (Crate, Semver.Extended.Any));
+            end if;
+
             case Pin.Kind is
                when To_Version =>
                   Sol := Sol.Missing (Crate).Pinning (Crate, Pin.Version);
@@ -432,8 +441,7 @@ package body Alire.Roots is
          if State.Is_User_Pinned and then
            not Valid_Pins.Contains (State.Crate)
          then
-            Pruned_Sol := Pruned_Sol.Unlinking (State.Crate)
-                                    .Unpinning (State.Crate);
+            Pruned_Sol := Pruned_Sol.User_Unpinning (State.Crate);
             Put_Info ("Unpinning crate " & TTY.Name (State.Crate));
          end if;
       end loop;
@@ -459,8 +467,8 @@ package body Alire.Roots is
    is
    begin
       This.Deploy_Pins (Exhaustive, Allowed);
-      This.Prune_Pins;
       This.Apply_Local_Pins;
+      This.Prune_Pins;
    end Sync_Pins_From_Manifest;
 
    ---------------

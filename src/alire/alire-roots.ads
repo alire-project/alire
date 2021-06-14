@@ -273,7 +273,6 @@ private
    --  exhaustive. Allowed restricts which crates are affected
 
    procedure Prune_Pins (This : in out Root);
-   --  Remove any pins in the solution that are not in the manifest. Allowed
-   --  restricts which crates are affected.
+   --  Remove any pins in the solution that are not in the manifest
 
 end Alire.Roots;
