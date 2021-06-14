@@ -1,11 +1,12 @@
 """
-Check that updating an incomplete solution is doable resulting in no changes
+Check that updating an incomplete solution is doable resulting in no changes.
+This is labeled manual because the pin is added through the manifest.
 """
 
 import re
 import os
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin
 from drivers.asserts import assert_match
 from glob import glob
 
@@ -14,7 +15,7 @@ from glob import glob
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 run_alr('with', 'libhello')
-run_alr('pin', '--force', 'libhello=3')
+alr_pin('libhello', version="3")
 
 # See that updating succeeds
 run_alr('update')

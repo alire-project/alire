@@ -317,9 +317,9 @@ package body Alire.Roots is
 
             case Pin.Kind is
                when To_Version =>
-                  Sol := Sol.Missing (Crate).Pinning (Crate, Pin.Version);
+                  Sol := Sol.Resetting (Crate).Pinning (Crate, Pin.Version);
                when To_Path =>
-                  Sol := Sol.Missing (Crate).Linking (Crate, Pin.Path);
+                  Sol := Sol.Resetting (Crate).Linking (Crate, Pin.Path);
                when To_Git =>
                   null; -- Not considered here
             end case;
@@ -879,7 +879,11 @@ package body Alire.Roots is
    is
    begin
       declare
-         --  Shadow the argument with the one we want to use everywhere
+         --  Shadow the argument with the one we want to use everywhere. Note
+         --  that this old is only used for comparison, as the stored solution
+         --  may already include changes caused by pin preparations, and
+         --  furthermore the stored root is the one we need to pass to the
+         --  solver (as it contains the pins).
          Old : constant Solutions.Solution :=
                   (if Sync_Dependencies.Old.Is_Attempted
                    then Sync_Dependencies.Old
@@ -924,20 +928,24 @@ package body Alire.Roots is
 
                Trace.Info ("Nothing to update.");
 
-               return;
+            else
+
+               --  Show changes and optionally ask user to apply them
+
+               if Silent then
+                  Trace.Info
+                    ("Dependencies automatically updated as follows:");
+                  Diff.Print;
+               elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+                  Trace.Detail ("Update abandoned.");
+                  return;
+               end if;
+
             end if;
 
-            --  Show changes and optionally ask user to apply them
-
-            if Silent then
-               Trace.Info ("Dependencies automatically updated as follows:");
-               Diff.Print;
-            elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
-               Trace.Detail ("Update abandoned.");
-               return;
-            end if;
-
-            --  Apply the update
+            --  Apply the update. We do this even when no changes were
+            --  detected, as pin evaluation may have temporarily stored
+            --  unsolved dependencies which have been re-solved now.
 
             This.Set (Solution => Needed);
             This.Deploy_Dependencies;

@@ -4,7 +4,7 @@ Test that a pin to a lower version downgrades and retrieves the new version
 
 import os
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import check_line_in
 
@@ -40,7 +40,7 @@ p = run_alr('show', '--solve')
 check_child('0.2.0', p.out, pinned=False)
 
 # Pin it to a downgrade
-run_alr('pin', 'libchild=0.1')
+alr_pin('libchild', version='0.1')
 
 # Verify new version
 p = run_alr('show', '--solve')

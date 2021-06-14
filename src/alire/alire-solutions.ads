@@ -110,6 +110,12 @@ package Alire.Solutions is
    --  release is fulfilling, by default we don't create its dependency (it
    --  must exist previously).
 
+   function Resetting (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Equivalent to .Missing (Crate).User_Unpinning (Crate). That is, remove
+   --  any fulfillment and any pinning.
+
    function Linking (This  : Solution;
                      Crate : Crate_Name;
                      Link  : Externals.Softlinks.External)
@@ -557,6 +563,15 @@ private
 
    function Required (This : Solution) return State_Map'Class
    is (This.Dependencies);
+
+   ---------------
+   -- Resetting --
+   ---------------
+
+   function Resetting (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (This.Missing (Crate).User_Unpinning (Crate));
 
    -------------
    -- Setting --

@@ -842,7 +842,12 @@ package body Alire.Solutions is
       return Result : Solution := This do
          for Dep of Src.Dependencies loop
             if Dep.Is_Pinned then
-               Result.Dependencies.Include (Dep.Crate, Dep);
+
+               --  We need to copy the pin version; the solving status might
+               --  have changed, so we do not just blindly copy the old pin
+               --  into the new solution.
+
+               Result := Result.Pinning (Dep.Crate, Dep.Pin_Version);
             end if;
          end loop;
       end return;
