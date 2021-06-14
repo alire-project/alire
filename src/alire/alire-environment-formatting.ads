@@ -1,5 +1,3 @@
-with Alire.Releases;
-
 package Alire.Environment.Formatting is
 
    function Format (Release_Dir : Any_Path;

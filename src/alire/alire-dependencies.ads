@@ -1,5 +1,4 @@
 with Alire.Interfaces;
-with Alire.Milestones;
 with Alire.Utils;
 
 with Semantic_Versioning.Basic;

@@ -5,7 +5,6 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Milestones;
-with Alire.Origins.Deployers;
 with Alire.Utils.TTY;
 
 package body Alire.Solver is

@@ -33,8 +33,16 @@ jobs:
       with:
         submodules: false # Not needed, should be retrieved by alr
 
-    - name: Install toolchain
+    # Use 2020 community on macOS since no 2021 exists
+    - name: Install toolchain CE ${{ matrix.os }}
+      if: matrix.os == 'macos-latest'
       uses: ada-actions/toolchain@ce2020
+      with:
+        distrib: community
+
+    - name: Install toolchain CE ${{ matrix.os }}
+      if: matrix.os != 'macos-latest'
+      uses: ada-actions/toolchain@ce2021
       with:
         distrib: community
 

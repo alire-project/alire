@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire.OS_Lib;
-with Alire.Utils;
 
 with Alire.URI;
 

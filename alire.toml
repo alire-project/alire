@@ -11,7 +11,7 @@ maintainers-logins = ["mosteo", "Fabien-Chouteau"]
 # alire.gpr only. For now this crate is not intended as a dependency but to be
 # used to build alr.
 auto-gpr-with = false
-project-files = ["alr_env.gpr"]
+project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]

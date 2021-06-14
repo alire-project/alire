@@ -9,6 +9,7 @@ with Alire.Properties.Environment; use Alire.Properties.Environment;
 with Alire.OS_Lib;
 with Alire.GPR;
 with Alire.Properties.Scenarios;
+with Alire.Releases;
 with Alire.Roots;
 with Alire.Solutions;
 with Alire.Utils;

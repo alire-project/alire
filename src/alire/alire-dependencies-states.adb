@@ -1,5 +1,5 @@
-with Alire.Crates;
 with Alire.Manifest;
+with Alire.Milestones;
 with Alire.Origins;
 with Alire.Roots.Optional;
 

@@ -1,4 +1,3 @@
-with Alire.Origins;
 with Alire.Roots;
 with Alire.URI;
 
