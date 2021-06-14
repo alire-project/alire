@@ -10,7 +10,7 @@ from drivers.asserts import assert_eq
 
 # The test will create ./indirect, ./direct, and ./nest/base crates.
 # Then they are pinned as base -> direct -> indirect. As "base" has a different
-# relative path to "indirect" that "direct", this is also checked.
+# relative path to "indirect" than "direct", this is also checked.
 
 init_local_crate(name="indirect", binary=False, enter=False)
 
