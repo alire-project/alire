@@ -330,7 +330,7 @@ package body Alire.Roots is
          Solutions.Diffs.Between (This.Solution, Sol).Print
            (Changed_Only => True,
             Level        => Trace.Detail);
-         Trace.Detail ("Local pins updated and commited to disk");
+         Trace.Detail ("Local pins updated and committed to lockfile");
          This.Set (Solution => Sol);
       end if;
    end Apply_Local_Pins;
@@ -450,7 +450,7 @@ package body Alire.Roots is
          Solutions.Diffs.Between (This.Solution, Pruned_Sol).Print
            (Changed_Only => True,
             Level        => Trace.Detail);
-         Trace.Detail ("Pin-pruned solution commited to disk");
+         Trace.Detail ("Pin-pruned solution committed to disk");
          This.Set (Pruned_Sol);
       end if;
    end Prune_Pins;

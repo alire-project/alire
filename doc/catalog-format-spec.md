@@ -560,7 +560,7 @@ I.e., a `my_crate_test` crate is initialized within the main `my_crate`. In the 
 [[depends-on]]
 my_crate = "*"              # Any version of the main crate
 [[pins]]
-my_crate = { path = ".." }  # Overriden by the latest sources
+my_crate = { path = ".." }  # Overridden by the latest sources
 ```
 
  Then, `my_crate` is published normally, and `my_crate_test` can be used locally for any kind of testing needed on `my_crate` without polluting `my_crate` manifest with test specifics.
