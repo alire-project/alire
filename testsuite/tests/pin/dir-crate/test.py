@@ -25,7 +25,7 @@ run_alr('with', 'hello', '--force')
 # Pin the hello crate as local dir dependency. The version in the folder is
 # different to the one we had in the solution, so this should cause a downgrade
 # but with complete solution. Now hello=1 --> libhello=1.1.
-alr_pin('hello', path='..' + dir_separator() + target)
+alr_pin('hello', path='../' + target)
 
 # Verify that hello dependencies are detected and used, and are the ones
 # corresponding to the linked dir versions.
