@@ -1,4 +1,8 @@
+with Alire.Utils.TTY;
+
 package body Alire.Properties.Labeled is
+
+   package TTY renames Utils.TTY;
 
    ------------
    -- Filter --
@@ -136,7 +140,8 @@ package body Alire.Properties.Labeled is
             end if;
 
             if not Utils.Is_Valid_Tag (L.Value) then
-               From.Checked_Error ("Tag string is not valid");
+               From.Checked_Error ("Tag string is not valid: "
+                                   & TTY.Error (L.Value));
             end if;
          when others =>
             null;
