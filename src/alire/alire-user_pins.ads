@@ -11,10 +11,10 @@ package Alire.User_Pins is
    --  want an indexed crate to depend on unknown folders/remotes), there is no
    --  need to generate TOML for them.
 
-   --  The information stored for user pins is still incomplete. The root
-   --  must check if the pin was already retrieved, and if it matches the
-   --  user description, or else fetch it, when a change in the manifest
-   --  is detected.
+   --  The information provided by the user in the pin is not complete to work
+   --  with. The root must check if a remote pin was already retrieved, and if
+   --  it matches the user description, or else fetch it, when a change in the
+   --  manifest is detected.
 
    type Kinds is (To_Git,
                   To_Path,
@@ -49,7 +49,9 @@ package Alire.User_Pins is
    --  The TOML representation of a pin is similar to a dependency, but instead
    --  of a version set, we get either a precise version, or an url + commit:
    --  [[pins]]
+   --  foo = "3.4" -- OR:
    --  foo = { version = "5.6" }
+   --  foo = { path = "/path/to/folder" }
    --  bar = { url = "git+https://blah", [commit = "deadbeef"] }
 
 private

@@ -10,6 +10,7 @@ with Alire.Manifest;
 with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
+with Alire.URI;
 with Alire.Utils.User_Input;
 
 with Alr.Commands.Pin;
@@ -110,7 +111,6 @@ package body Alr.Commands.Withing is
       --  We use the New_Solution with the softlink as previous solution, so
       --  the pinned directory is used by the solver.
    end Add_Remote_Link;
-   pragma Unreferenced (Add_Remote_Link);
 
    ------------------
    -- Add_Softlink --
@@ -204,7 +204,6 @@ package body Alr.Commands.Withing is
             & " GNAT project as dependency)");
       end if;
    end Detect_Softlink;
-   pragma Unreferenced (Detect_Softlink);
 
    ---------
    -- Del --
@@ -570,30 +569,30 @@ package body Alr.Commands.Withing is
          if Cmd.URL.all /= "" then
             Pin.Warn_Manual_Only;
 
-            --  if Cmd.Commit.all /= ""
-            --    or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
-            --  then
-            --
-            --     --  Pin to remote repo
-            --
-            --     Add_Remote_Link (Cmd,
-            --                      Dep => (if Num_Arguments = 1
-            --                              then Argument (1)
-            --                              else ""));
-            --
-            --  else
-            --
-            --     --  Pin to local folder
-            --
-            --     if Num_Arguments = 1 then
-            --        Add_Softlink (Cmd,
-            --                      Dep_Spec => Argument (1),
-            --                      Path     => Cmd.URL.all);
-            --     else
-            --        Detect_Softlink (Cmd,
-            --                         Cmd.URL.all);
-            --     end if;
-            --  end if;
+            if Cmd.Commit.all /= ""
+              or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
+            then
+
+               --  Pin to remote repo
+
+               Add_Remote_Link (Cmd,
+                                Dep => (if Num_Arguments = 1
+                                        then Argument (1)
+                                        else ""));
+
+            else
+
+               --  Pin to local folder
+
+               if Num_Arguments = 1 then
+                  Add_Softlink (Cmd,
+                                Dep_Spec => Argument (1),
+                                Path     => Cmd.URL.all);
+               else
+                  Detect_Softlink (Cmd,
+                                   Cmd.URL.all);
+               end if;
+            end if;
          else
             Cmd.Requires_Full_Index;
             Cmd.Add;

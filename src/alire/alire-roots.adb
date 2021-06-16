@@ -415,7 +415,7 @@ package body Alire.Roots is
                        .Print (Changed_Only => True,
                                Level        => Trace.Detail);
                      This.Set (Solution => Result.Solution);
-                     Trace.Detail ("Remote pins commited to disk");
+                     Trace.Detail ("Remote pins committed to disk");
                   end if;
                end;
             else
@@ -1129,43 +1129,6 @@ package body Alire.Roots is
          end;
       end;
    end Pinned_To_Remote;
-
-   ------------------------------------
-   -- Update_And_Deploy_Dependencies --
-   ------------------------------------
-
-   --  procedure Update_And_Deploy_Dependencies
-   --    (This    : in out Roots.Root;
-   --     Options : Solver.Query_Options := Solver.Default_Options;
-   --     Old_Sol : Solutions.Solution   := Solutions.Empty_Invalid_Solution;
---     Confirm : Boolean              := not Utils.User_Input.Not_Interactive)
-   --  is
-   --     Prev : constant Solutions.Solution :=
-   --              (if Old_Sol.Is_Attempted
-   --               then Old_Sol
-   --               else This.Solution);
-   --     Next : constant Solutions.Solution :=
-   --              This.Compute_Update (Options => Options);
-   --     Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);
-   --  begin
-   --     if Diff.Contains_Changes then
-   --        if not Confirm or else
-   --          Utils.User_Input.Confirm_Solution_Changes (Diff)
-   --        then
-   --           if not Confirm then
-   --              Trace.Info ("Changes to dependency solution:");
-   --              Diff.Print (Changed_Only => not Alire.Detailed);
-   --           end if;
-   --
-   --           This.Set (Solution => Next);
-   --           This.Deploy_Dependencies;
-   --        end if;
-   --     end if;
-   --
-   --     --  Update/Create configuration files
-   --     This.Generate_Configuration;
-   --
-   --  end Update_And_Deploy_Dependencies;
 
    --------------------
    -- Write_Manifest --

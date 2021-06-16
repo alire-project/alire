@@ -173,15 +173,6 @@ package Alire.Roots is
    --  and when left at the default invalid argument value, This.Solution will
    --  be used as old solution.
 
---  procedure Update_And_Deploy_Dependencies
-   --    (This    : in out Roots.Root;
-   --     Options : Solver.Query_Options := Solver.Default_Options;
-   --     Old_Sol : Solutions.Solution   := Solutions.Empty_Invalid_Solution;
---     Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
---  --  Call Update and Deploy_Dependencies in succession for the given root.
-   --  Old_Sol is used to present differences, and when left at the default
-   --  invalid argument value, Root.Solution will be used as old solution.
-
    procedure Sync_Pins_From_Manifest
      (This       : in out Root;
       Exhaustive : Boolean;
