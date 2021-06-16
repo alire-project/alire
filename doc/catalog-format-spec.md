@@ -267,7 +267,7 @@ static, i.e. they cannot depend on the context.
 
    ```toml
    project-files = ["my_project.gpr", "utils/utils_for_my_project.gpr"]
-
+   
    [project-files.'case(word-size)']
    bits-64 = ["my_project.gpr"]
    bits-32 = ["my_project32.gpr"]
@@ -291,7 +291,7 @@ static, i.e. they cannot depend on the context.
    ```toml
    [gpr-set-externals]
    BUILD_MODE = "release"
-
+   
    [gpr-set-externals.'case(os)']
    linux   = { OS = "gnu-linux" } # Compact table syntax is convenient in this case
    windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
@@ -365,11 +365,11 @@ static, i.e. they cannot depend on the context.
    [[actions.'case(os)'.linux]]
    type = "post-fetch"
    command = ["make"]
-
+   
    [[actions.'case(os)'.windows]]
    type = "post-fetch"
    command = ["cmd", "build"]
-
+   
    [[actions.'case(os)'.'...']]
    # An explicit empty case alternative, which is not mandatory
    ```
@@ -507,6 +507,63 @@ static, i.e. they cannot depend on the context.
    crate_1.var2 = true
    crate_2.var1 = "Debug"
    ```
+
+## Work-in-progress dependency overrides
+
+It is usual to develop several interdependent crates at the same time. In this scenario, it is often impractical to rely on indexed releases which are not intended to be modified. Instead, one would prefer to use a work-in-progress version of a crate to fulfill some dependency.
+
+Alire provides *pins* to support this use case. Pins are overrides to dependencies, are intended to be used locally, and to be fulfilled by proper dependencies once a crate is ready to be published. The use of pins is based on two ideas:
+
+* Dependencies are given, as normally, in the `depends-on` array of the manifest, even for those dependencies to be pinned. This way, once the release is ready, pins are simply removed and the actual dependencies are used in their place.
+* Dependency overrides, aka *pins*, are given under the `[[pins]]` array of the manifest.
+
+Three kinds of pins are available, all of them with the syntax:
+
+`crate_name = { pin_attributes }`
+
+The specific pin kinds and their attributes are:
+
+* Pins to versions: used to force the use of a particular version of an indexed crate.
+
+  * `version`: a string containing a single version to be used.
+  * `crate_name = { version = "1.2+hotfix-1" }`
+
+* Pins to local crates: a local directory will fulfill the crate dependency, no matter what version is given in its local manifest. "Raw" Ada projects without an Alire manifest can be used too, as long as their project file matches the crate name and it is located in the directory given as override.
+
+  * `path`: an absolute or relative path to the crate directory.
+  * `crate_name  = { path = "../my/wip/crate" }`
+
+  For the common case of directories containing an Alire manifest, dependencies and pins will be included recursively in the build context.
+
+* Pins to git repositories: the repository will be cloned locally and its directory will be used as in the previous case. Currently, this pin may optionally include a commit to fix the checkout to be used. Otherwise, the default branch will be used, and running `alr update` will refresh the checkout.
+
+  * `url`: the URL of a git repository
+  * `commit` (optional): a complete git commit hash.
+  * `crate_name = { url = "https://my/repo.git" } # Updatable pin`
+  * `crate_name = { url = "https://my/repo.git", commit="abcdef..." } # Fixed pin`
+
+### Using pins for crate testing
+
+Pins are also useful to have a separate test project that depends on your main crate. The recommended setup is as follows:
+
+```
+/path/to/my_crate
+├── alire.toml
+└── my_crate_test
+    └── alire.toml
+```
+
+I.e., a `my_crate_test` crate is initialized within the main `my_crate`. In the `my_crate_test` manifest, you have a dependency and local relative path pin for `my_crate`:
+
+```toml
+# my_crate_test/alire.toml
+[[depends-on]]
+my_crate = "*"              # Any version of the main crate
+[[pins]]
+my_crate = { path = ".." }  # Overriden by the latest sources
+```
+
+ Then, `my_crate` is published normally, and `my_crate_test` can be used locally for any kind of testing needed on `my_crate` without polluting `my_crate` manifest with test specifics.
 
 ## External releases
 
