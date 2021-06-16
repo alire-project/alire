@@ -204,6 +204,14 @@ def init_local_crate(name="xxx", binary=True, enter=True):
         os.chdir(name)
 
 
+def alr_lockfile():
+    return "alire.lock"
+
+
+def alr_manifest():
+    return "alire.toml"
+
+
 def alr_unpin(crate, manual=True, fail_if_missing=True):
     """
     Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use

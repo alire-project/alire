@@ -73,7 +73,9 @@ package body Alire.User_Pins is
                Version  => Semantic_Versioning.Parse (This.Unwrap.As_String));
 
          when TOML.TOML_Table =>
-            return From_Table (This);
+            return Result : constant Pin := From_Table (This) do
+               This.Report_Extra_Keys;
+            end return;
 
          when others =>
             Raise_Checked_Error
@@ -81,7 +83,10 @@ package body Alire.User_Pins is
                & This.Unwrap.Kind'Image);
 
       end case;
-
+   exception
+      when E : Semantic_Versioning.Malformed_Input =>
+         Log_Exception (E);
+         Raise_Checked_Error ("Malformed semantic version in pin");
    end From_TOML;
 
 end Alire.User_Pins;
