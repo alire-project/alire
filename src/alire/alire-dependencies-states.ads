@@ -217,6 +217,8 @@ private
 
    overriding function "=" (L, R : State) return Boolean
    is (L.Image = R.Image);
+   --  TODO: this is likely not efficient. We should dig more to find why some
+   --  apparently identical states are reported as different.
 
    -------------------
    -- As_Dependency --

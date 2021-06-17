@@ -14,7 +14,7 @@ appear, or are optional, in a local manifest). These differences are highlighted
 in the following descriptions, where necessary.
 
 Each TOML description file contains exactly one release, except for the special
-external definitions that are described in their own section. 
+external definitions that are described in their own section.
 
 ## Information encoding
 
@@ -247,7 +247,7 @@ static, i.e. they cannot depend on the context.
 
    Available constraint operators are the usual Ada relationals (`=`, `/=`, `>`, `>=`,
    `<`, `<=`) plus caret (`^`, any upwards version within the same major point)
-   and tilde (\~, any upwards version within the same minor point). 
+   and tilde (\~, any upwards version within the same minor point).
 
    **Note that caret and tilde do not have any special behavior for pre-1
    versions.** This means, for example, that `^0.2` will still mean any release
@@ -267,7 +267,7 @@ static, i.e. they cannot depend on the context.
 
    ```toml
    project-files = ["my_project.gpr", "utils/utils_for_my_project.gpr"]
-   
+
    [project-files.'case(word-size)']
    bits-64 = ["my_project.gpr"]
    bits-32 = ["my_project32.gpr"]
@@ -283,7 +283,7 @@ static, i.e. they cannot depend on the context.
    TAG = ""
    ```
 
- - `gpr-set-externals`: optional dynamic table, setting values of project 
+ - `gpr-set-externals`: optional dynamic table, setting values of project
    external variables when building the project. This should not be used to
    specify default values, the default values must be specified in the `.gpr`
    project file. Expressions are accepted before the mapping. For instance:
@@ -291,7 +291,7 @@ static, i.e. they cannot depend on the context.
    ```toml
    [gpr-set-externals]
    BUILD_MODE = "release"
-   
+
    [gpr-set-externals.'case(os)']
    linux   = { OS = "gnu-linux" } # Compact table syntax is convenient in this case
    windows = { OS = "ms-linux" }  # to see all enumeration values, one per row.
@@ -355,7 +355,7 @@ static, i.e. they cannot depend on the context.
    - `post-build`: the command is to be run right after GPRbuild has been
       run. This kind of action is run only for the root crate in a workspace.
 
-   - `test`: the command is run on demand for crate testing within the Alire 
+   - `test`: the command is run on demand for crate testing within the Alire
       ecosystem (using `alr test`). This kind of action is fun only for the
       root crate being tested.
 
@@ -365,11 +365,11 @@ static, i.e. they cannot depend on the context.
    [[actions.'case(os)'.linux]]
    type = "post-fetch"
    command = ["make"]
-   
+
    [[actions.'case(os)'.windows]]
    type = "post-fetch"
    command = ["cmd", "build"]
-   
+
    [[actions.'case(os)'.'...']]
    # An explicit empty case alternative, which is not mandatory
    ```
@@ -512,7 +512,7 @@ static, i.e. they cannot depend on the context.
 
 It is usual to develop several interdependent crates at the same time. In this scenario, it is often impractical to rely on indexed releases which are not intended to be modified. Instead, one would prefer to use a work-in-progress version of a crate to fulfill some dependency.
 
-Alire provides *pins* to support this use case. Pins are overrides to dependencies, are intended to be used locally, and to be fulfilled by proper dependencies once a crate is ready to be published. The use of pins is based on two ideas:
+Alire provides *pins* to support this use case. Pins override dependencies, they are intended to be used locally, and to be fulfilled by proper dependencies once a crate is ready to be published. The use of pins is based on two ideas:
 
 * Dependencies are given, as normally, in the `depends-on` array of the manifest, even for those dependencies to be pinned. This way, once the release is ready, pins are simply removed and the actual dependencies are used in their place.
 * Dependency overrides, aka *pins*, are given under the `[[pins]]` array of the manifest.
@@ -549,21 +549,22 @@ Pins are also useful to have a separate test project that depends on your main c
 ```
 /path/to/my_crate
 ├── alire.toml
-└── my_crate_test
+└── tests
     └── alire.toml
 ```
 
-I.e., a `my_crate_test` crate is initialized within the main `my_crate`. In the `my_crate_test` manifest, you have a dependency and local relative path pin for `my_crate`:
+I.e., a `tests` crate is initialized within the main `my_crate`. In `tests` manifest, you have a dependency and local relative path pin for `my_crate`:
 
 ```toml
-# my_crate_test/alire.toml
+# tests/alire.toml
 [[depends-on]]
 my_crate = "*"              # Any version of the main crate
+aunit = "*"                 # We can have dependencies for testing only
 [[pins]]
 my_crate = { path = ".." }  # Overridden by the latest sources
 ```
 
- Then, `my_crate` is published normally, and `my_crate_test` can be used locally for any kind of testing needed on `my_crate` without polluting `my_crate` manifest with test specifics.
+ Then, `my_crate` is published normally, and `tests` can be used locally for any kind of testing needed on `my_crate` without polluting `my_crate` manifest with test specifics (like extra dependencies used by the test setup).
 
 ## External releases
 
@@ -790,7 +791,7 @@ String variables can be used to define the URL of a website or service:
 URL_Name = {type = "String", default = "example.com"}
 ```
 
-#### PID coefficients 
+#### PID coefficients
 
 Real variables can be used for PID coefficients:
 ```toml
