@@ -15,6 +15,7 @@ package body Alire.User_Pins is
    package TTY renames Alire.Utils.TTY;
 
    package Keys is
+      Branch   : constant String := "branch";
       Commit   : constant String := "commit";
       Internal : constant String := "lockfiled";
       Path     : constant String := "path";
@@ -343,15 +344,32 @@ package body Alire.User_Pins is
               (Kind       => To_Git,
                URL        => +This.Checked_Pop (Keys.URL,
                                                 TOML_String).As_String,
+               Branch     => <>,
                Commit     => <>,
                Local_Path => <>)
             do
+               if This.Contains (Keys.Branch)
+                 and then This.Contains (Keys.Commit)
+               then
+                  This.Checked_Error
+                    ("cannot specify both a branch and a commit");
+               end if;
+
+               --  TEST: simultaneous branch/commit
+
                if This.Contains (Keys.Commit) then
                   Result.Commit :=
                     +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
                   This.Assert (+Result.Commit in Origins.Git_Commit,
                                "invalid commit: " & (+Result.Commit));
+               elsif This.Contains (Keys.Branch) then
+                     Result.Branch :=
+                       +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
+                     This.Assert (+Result.Branch /= "",
+                                  "branch cannot be the empty string");
                end if;
+
+               --  TEST: empty branch value
 
                This.Report_Extra_Keys;
             end return;

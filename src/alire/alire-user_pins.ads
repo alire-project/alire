@@ -55,6 +55,9 @@ package Alire.User_Pins is
    function URL (This : Pin) return Alire.URL
      with Pre => This.Is_Remote;
 
+   function Branch (This : Pin) return Optional.String
+     with Pre => This.Is_Remote;
+
    function Commit (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
 
@@ -98,6 +101,7 @@ private
       case Kind is
          when To_Git =>
             URL        : UString;
+            Branch : UString; -- Optional
             Commit     : UString; -- Optional
             Local_Path : Unbounded_Absolute_Path;
             --  Empty until the pin is locally deployed
@@ -107,6 +111,15 @@ private
             Version : Semantic_Versioning.Version;
       end case;
    end record;
+
+   ------------
+   -- Branch --
+   ------------
+
+   function Branch (This : Pin) return Optional.String
+   is (if +This.Branch = ""
+       then Optional.Strings.Empty
+       else Optional.Strings.Unit (+This.Branch));
 
    ------------
    -- Commit --
