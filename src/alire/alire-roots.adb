@@ -747,10 +747,11 @@ package body Alire.Roots is
    ------------------------
 
    procedure Sync_From_Manifest (This   : in out Root;
-                                 Silent : Boolean) is
+                                 Silent : Boolean;
+                                 Force  : Boolean := False) is
       Old_Solution : constant Solutions.Solution := This.Solution;
    begin
-      if This.Is_Lockfile_Outdated then
+      if Force or else This.Is_Lockfile_Outdated then
          Put_Info ("Detected changes in manifest, synchronizing workspace...");
 
          This.Sync_Pins_From_Manifest (Exhaustive => False);

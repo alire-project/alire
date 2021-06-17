@@ -668,7 +668,8 @@ package body Alr.Commands is
 
          if Sync then
             Cmd.Requires_Full_Index (Strict => False);
-            Checked.Sync_Dependencies (Silent => True);
+            Checked.Sync_From_Manifest (Silent => True, Force => True);
+            --  As we just created the empty lockfile, we force the update
          end if;
       end;
    end Requires_Valid_Session;

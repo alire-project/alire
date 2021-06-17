@@ -123,14 +123,16 @@ package Alire.Roots is
    --  automated changes within the same second.
 
    procedure Sync_From_Manifest (This   : in out Root;
-                                 Silent : Boolean);
-   --  1) Pre-deploy any remote pins in the manifest so they are usable when
-   --  solving, and apply any local/version pins. 2) Ensure that dependencies
-   --  are up to date in regard to the lockfile and manifest: if the manifest
-   --  is newer than the lockfile, resolve again, as dependencies may have been
-   --  edited by hand. 3) Ensure that releases in the lockfile are actually
-   --  on disk (may be missing if cache was deleted, or the crate was just
-   --  cloned). When Silent, run as in non-interactive mode.
+                                 Silent : Boolean;
+                                 Force  : Boolean := False);
+   --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
+   --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
+   --  usable when solving, and apply any local/version pins. 2) Ensure that
+   --  dependencies are up to date in regard to the lockfile and manifest: if
+   --  the manifest is newer than the lockfile, resolve again, as dependencies
+   --  may have been edited by hand. 3) Ensure that releases in the lockfile
+   --  are actually on disk (may be missing if cache was deleted, or the crate
+   --  was just cloned). When Silent, run as in non-interactive mode.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
