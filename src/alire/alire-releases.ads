@@ -489,6 +489,6 @@ private
    is (Semantic_Versioning.Image (R.Version));
 
    function Pins (R : in out Release) return User_Pins.Maps.Reference
-   is (Element => R.Pins'Access);
+   is (Element => R.Pins'Unrestricted_Access);
 
 end Alire.Releases;
