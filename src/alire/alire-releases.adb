@@ -58,7 +58,15 @@ package body Alire.Releases is
         (Alire.Dependencies.Containers.List,
          Alire.Dependencies.Containers.Append);
    begin
-      return Enumerate (R.Dependencies.Evaluate (P));
+      if P.Is_Empty then
+         --  Trying to evaluate a tree with empty dependencies will result
+         --  in spurious warnings about missing environment properties (as we
+         --  indeed didn't give any). Since we want to get flat dependencies
+         --  that do not depend on any properties, this is indeed safe to do.
+         return Enumerate (R.Dependencies);
+      else
+         return Enumerate (R.Dependencies.Evaluate (P));
+      end if;
    end Flat_Dependencies;
 
    -------------------------

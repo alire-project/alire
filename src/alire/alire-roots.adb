@@ -291,50 +291,6 @@ package body Alire.Roots is
 
    end Deploy_Dependencies;
 
-   ----------------------
-   -- Apply_Local_Pins --
-   ----------------------
-
-   procedure Apply_Local_Pins (This : in out Root) is
-      use type Solutions.Solution;
-      Sol  : Solutions.Solution := This.Solution;
-   begin
-      for I in Release (This).Pins.Iterate loop
-         declare
-            use all type User_Pins.Kinds;
-            use User_Pins.Maps.Pin_Maps;
-            Crate : constant Crate_Name := Key (I);
-            Pin   : constant User_Pins.Pin := Element (I);
-         begin
-
-            --  A pin for a non-dependency requires that we add a generic
-            --  dependency to the solution first.
-
-            if not Sol.Depends_On (Crate) then
-               Sol := Sol.Depending_On
-                 (Dependencies.New_Dependency (Crate, Semver.Extended.Any));
-            end if;
-
-            case Pin.Kind is
-               when To_Version =>
-                  Sol := Sol.Resetting (Crate).Pinning (Crate, Pin.Version);
-               when To_Path =>
-                  Sol := Sol.Resetting (Crate).Linking (Crate, Pin.Path);
-               when To_Git =>
-                  null; -- Not considered here
-            end case;
-         end;
-      end loop;
-
-      if Sol /= This.Solution then
-         Solutions.Diffs.Between (This.Solution, Sol).Print
-           (Changed_Only => True,
-            Level        => Trace.Detail);
-         Trace.Detail ("Local pins updated and committed to lockfile");
-         This.Set (Solution => Sol);
-      end if;
-   end Apply_Local_Pins;
-
    -----------------
    -- Deploy_Pins --
    -----------------
@@ -344,7 +300,7 @@ package body Alire.Roots is
                           Allowed    : Containers.Crate_Name_Sets.Set :=
                             Containers.Crate_Name_Sets.Empty_Set) is
       use User_Pins.Maps.Pin_Maps;
-      Rel  : constant Alire.Releases.Release := Release (This);
+      Rel  :          Alire.Releases.Release := Release (This);
       Pins : constant User_Pins.Maps.Map     := Rel.Pins;
 
       --------------------
@@ -427,33 +383,7 @@ package body Alire.Roots is
          end if;
       end loop;
    end Deploy_Pins;
-
-   ----------------
-   -- Prune_Pins --
-   ----------------
-
-   procedure Prune_Pins (This : in out Root) is
-      use type Solutions.Solution;
-      Valid_Pins : constant User_Pins.Maps.Map := Release (This).Pins;
-      Pruned_Sol : Solutions.Solution := This.Solution;
-   begin
-      for State of This.Solution.All_Dependencies loop
-         if State.Is_User_Pinned and then
-           not Valid_Pins.Contains (State.Crate)
-         then
-            Pruned_Sol := Pruned_Sol.User_Unpinning (State.Crate);
-            Put_Info ("Unpinning crate " & TTY.Name (State.Crate));
-         end if;
-      end loop;
-
-      if Pruned_Sol /= This.Solution then
-         Solutions.Diffs.Between (This.Solution, Pruned_Sol).Print
-           (Changed_Only => True,
-            Level        => Trace.Detail);
-         Trace.Detail ("Pin-pruned solution committed to disk");
-         This.Set (Pruned_Sol);
-      end if;
-   end Prune_Pins;
+   pragma Unreferenced (Deploy_Pins);
 
    -----------------------------
    -- Sync_Pins_From_Manifest --
@@ -465,10 +395,176 @@ package body Alire.Roots is
       Allowed    : Containers.Crate_Name_Sets.Set :=
         Containers.Crate_Name_Sets.Empty_Set)
    is
+
+      Sol  : Solutions.Solution := This.Solution;
+
+      --------------
+      -- Add_Pins --
+      --------------
+
+      procedure Add_Pins (Root : in out Roots.Root) is
+
+         ---------------------
+         -- Add_Version_Pin --
+         ---------------------
+
+         procedure Add_Version_Pin (Crate : Crate_Name; Pin : User_Pins.Pin) is
+            use type Semver.Version;
+         begin
+            if not Sol.Depends_On (Crate) then
+               Sol := Sol.Depending_On
+                 (Dependencies.New_Dependency (Crate, Pin.Version));
+            end if;
+
+            if Sol.State (Crate).Is_Pinned
+              and then
+                Sol.State (Crate).Pin_Version /= Pin.Version
+            then
+               Put_Warning ("Incompatible version pins requested for crate "
+                            & TTY.Name (Crate)
+                            & "; fix versions or override with a link pin.");
+            end if;
+
+            Sol := Sol.Resetting (Crate).Pinning (Crate, Pin.Version);
+         end Add_Version_Pin;
+
+         ------------------
+         -- Add_Link_Pin --
+         ------------------
+
+         procedure Add_Link_Pin (Crate : Crate_Name;
+                                 Pin   : in out User_Pins.Pin)
+         is
+         begin
+
+            --  Just in case this is a remote pin, deploy it
+
+            if Exhaustive
+              or else
+                (Allowed.Is_Empty or else Allowed.Contains (Crate))
+            then
+               Pin.Deploy (Under => This.Pins_Dir, Online => Exhaustive);
+            end if;
+
+            --  At this point, we can detect that a link is conflicting with
+            --  another one.
+
+            if Sol.Depends_On (Crate)
+              and then Sol.State (Crate).Is_Linked
+              and then Sol.State (Crate).Link.Path /= Pin.Path
+            then
+               Raise_Checked_Error
+                 ("Conflicting pin links for crate " & TTY.Name (Crate)
+                  & ": Crate " & TTY.Name (Release (Root).Name)
+                  & " wants a link to " & TTY.URL (Pin.Path)
+                  & ", but a previous link exists to "
+                  & TTY.URL (Sol.State (Crate).Link.Path));
+            end if;
+
+            --  TODO: test conflicting link detection for two pins
+            --  TODO: test that the path of a link can be changed without issue
+
+            --  We have a new target root to load
+
+            declare
+               Target : constant Optional.Root :=
+                          Optional.Detect_Root (Pin.Path);
+            begin
+
+               --  Verify matching crate at the target location
+
+               if Target.Is_Valid
+                 and then
+                   Target.Value.Release.Element.Name /= Crate
+               then
+                  Raise_Checked_Error
+                    ("Mismatched crates for pin linking to "
+                     & TTY.URL (Pin.Path) & ": expected " & TTY.Name (Crate)
+                     & " but found "
+                     & TTY.Name (Target.Value.Release.Element.Name));
+               end if;
+
+               --  Add the best dependency we can find for the link if the user
+               --  hasn't given one in the manifest.
+
+               if not Sol.Depends_On (Crate) then
+                  Sol := Sol.Depending_On
+                    (if Target.Is_Valid
+                     then Target.Updatable_Dependency
+                     else Dependencies.New_Dependency
+                       (Crate, Semantic_Versioning.Extended.Any));
+               end if;
+
+               Sol := Sol.Resetting (Crate).Linking (Crate, Pin.Path);
+
+               --  Add possible pins at the link target
+
+               if Target.Is_Valid then
+                  Add_Pins (Target.Value);
+               end if;
+
+            end;
+         end Add_Link_Pin;
+
+      begin
+
+         --  Iterate over this root pins. Any pin that links to another root
+         --  will cause recursive pin loading. Remote pins are fetched in the
+         --  process, so they're available for use immediately. All link pins
+         --  have a proper path once this process completes.
+
+         for I in Release (Root).Pins.Iterate loop
+            declare
+               use all type User_Pins.Kinds;
+               use User_Pins.Maps.Pin_Maps;
+               Crate : constant Crate_Name := Key (I);
+               Pin   : User_Pins.Pin renames Release (Root).Pins.Reference (I);
+            begin
+               case Pin.Kind is
+                  when To_Version =>
+                     Add_Version_Pin (Crate, Pin);
+                  when To_Path | To_Git =>
+                     Add_Link_Pin (Crate, Pin);
+               end case;
+
+               Trace.Detail ("Crate " & TTY.Name (Release (Root).Name)
+                             & " adds pin " & Sol.State (Crate).TTY_Image);
+            end;
+         end loop;
+      end Add_Pins;
+
+      ----------------
+      -- Prune_Pins --
+      ----------------
+
+      procedure Prune_Pins is
+      begin
+         for Dep of Sol.User_Pins loop
+            Sol := Sol.User_Unpinning (Dep.Value.Crate);
+         end loop;
+      end Prune_Pins;
+
+      use type Solutions.Solution;
+
    begin
-      This.Deploy_Pins (Exhaustive, Allowed);
-      This.Apply_Local_Pins;
-      This.Prune_Pins;
+
+      --  Remove any existing pins in the stored solution, to avoid conflicts
+      --  between old and new definitions of the same pin, and to discard
+      --  removed pins.
+
+      Prune_Pins;
+
+      --  Recursively add all pins from this workspace and other linked ones
+
+      Add_Pins (Root => This);
+
+      if Sol /= This.Solution then
+         Solutions.Diffs.Between (This.Solution, Sol).Print
+           (Changed_Only => True,
+            Level        => Trace.Detail);
+         Trace.Detail ("Local pins updated and committed to lockfile");
+         This.Set (Solution => Sol);
+      end if;
    end Sync_Pins_From_Manifest;
 
    ---------------
@@ -626,8 +722,8 @@ package body Alire.Roots is
    -- Release --
    -------------
 
-   function Release (This : Root) return Releases.Release is
-     (This.Release.Constant_Reference);
+   function Release (This : Root) return Releases.Reference
+   is (Element => This.Release.Constant_Reference.Element);
 
    -------------
    -- Release --
@@ -752,6 +848,12 @@ package body Alire.Roots is
       Old_Solution : constant Solutions.Solution := This.Solution;
    begin
       if Force or else This.Is_Lockfile_Outdated then
+         --  TODO: we may want to recursively check manifest timestamps of
+         --  linked crates to detect changes in these manifests and re-resolve.
+         --  Otherwise a manual `alr update` is needed to detect these changes.
+         --  This would imply to store the timestamps in our lockfile for
+         --  linked crates with a manifest.
+
          Put_Info ("Detected changes in manifest, synchronizing workspace...");
 
          This.Sync_Pins_From_Manifest (Exhaustive => False);

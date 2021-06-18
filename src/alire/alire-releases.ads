@@ -29,6 +29,9 @@ package Alire.Releases is
 
    type Release (<>) is new Interfaces.Yamlable with private;
 
+   type Reference (Element : access Release) is tagged limited null record with
+     Implicit_Dereference => Element;
+
    function "<" (L, R : Release) return Boolean;
 
    function Default_Properties return Conditional.Properties;
@@ -194,7 +197,7 @@ package Alire.Releases is
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
 
-   function Pins (R : Release) return User_Pins.Maps.Map;
+   function Pins (R : in out Release) return User_Pins.Maps.Reference;
 
    function Project_Paths (R : Release;
                            P : Alire.Properties.Vector)
@@ -347,7 +350,7 @@ private
       Origin       : Origins.Origin;
       Notes        : Description_String (1 .. Notes_Len);
       Dependencies : Conditional.Dependencies;
-      Pins         : User_Pins.Maps.Map;
+      Pins         : aliased User_Pins.Maps.Map;
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
@@ -485,7 +488,7 @@ private
    function Version_Image (R : Release) return String
    is (Semantic_Versioning.Image (R.Version));
 
-   function Pins (R : Release) return User_Pins.Maps.Map
-   is (R.Pins);
+   function Pins (R : in out Release) return User_Pins.Maps.Reference
+   is (Element => R.Pins'Access);
 
 end Alire.Releases;

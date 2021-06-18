@@ -7,6 +7,8 @@ with Alire.Root;
 
 with GNAT.OS_Lib;
 
+with Semantic_Versioning;
+
 package body Alire.Roots.Optional is
 
    Root_Not_Detected : constant Root :=
@@ -28,8 +30,13 @@ package body Alire.Roots.Optional is
    -----------------
 
    function Detect_Root (Path : Any_Path) return Optional.Root is
-      use Directories.Operators;
-      Crate_File : constant Any_Path := Path / Crate_File_Name;
+      --  use Directories.Operators;
+      Crate_File : constant Any_Path := Crate_File_Name;
+
+      Change_Dir : Directories.Guard (Directories.Enter (Path))
+        with Unreferenced;
+      --  We need to enter the folder with the possible crate, so stored
+      --  relative paths (e.g. in pins) make sense when loaded.
    begin
       if Path /= "" then
          if GNAT.OS_Lib.Is_Regular_File (Crate_File) then
@@ -145,5 +152,16 @@ package body Alire.Roots.Optional is
          Data   =>
            (Status => Valid,
             Value  => This));
+
+   --------------------------
+   -- Updatable_Dependency --
+   --------------------------
+
+   function Updatable_Dependency (This : Root)
+                                  return Dependencies.Dependency
+   is (Dependencies.New_Dependency
+       (This.Value.Release.Element.Name,
+          Semantic_Versioning.Updatable
+            (This.Value.Release.Element.Version)));
 
 end Alire.Roots.Optional;

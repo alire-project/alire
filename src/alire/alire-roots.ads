@@ -91,7 +91,11 @@ package Alire.Roots is
    --  solution in this root. This includes all releases' paths and any linked
    --  directories.
 
-   function Release (This : Root) return Releases.Release;
+   function Release (This : Root) return Releases.Reference;
+   --  Retrieve a reference to the root release. Modifications to this release
+   --  are not stored to its manifest; it is only useful to modify it to
+   --  cache information for the current run (e.g., where a link is actually
+   --  deployed).
 
    function Release (This  : in out Root;
                      Crate : Crate_Name)
@@ -250,22 +254,5 @@ private
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
    end record;
-
-   procedure Apply_Local_Pins (This : in out Root);
-   --  Apply version/path pins from the manifest. Remote pins are dealt with by
-   --  Deploy_Pins, as they are costlier and have more involved processing.
-
-   procedure Deploy_Pins (This       : in out Root;
-                          Exhaustive : Boolean;
-                          Allowed    : Containers.Crate_Name_Sets.Set :=
-                            Containers.Crate_Name_Sets.Empty_Set);
-   --  Download any remote pins in the manifest. When not Exhaustive, a pin
-   --  that is already in the solution is not re-downloaded. This is to avoid
-   --  re-fetching all pins after each manifest edition. New pins are always
-   --  downloaded. An update requested by the user (`alr update`) will be
-   --  exhaustive. Allowed restricts which crates are affected
-
-   procedure Prune_Pins (This : in out Root);
-   --  Remove any pins in the solution that are not in the manifest
 
 end Alire.Roots;

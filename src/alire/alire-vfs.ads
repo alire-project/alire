@@ -10,6 +10,9 @@ package Alire.VFS is
    --  Portable paths are relative and use forward slashes. Absolute paths
    --  cannot be portable.
 
+   function Is_Portable (Path : Any_Path) return Boolean;
+   --  Say if the path may be safely cast to a portable path
+
    function To_Portable (Path : Relative_Path) return Portable_Path;
 
    function To_Native (Path : Portable_Path) return Relative_Path;
@@ -67,6 +70,15 @@ package Alire.VFS is
 private
 
    use all type GNATCOLL.OS.OS_Type;
+
+   -----------------
+   -- Is_Portable --
+   -----------------
+
+   function Is_Portable (Path : Any_Path) return Boolean
+   is ((for all Char of Path => Char /= '\')
+       and then
+       not Check_Absolute_Path (Path));
 
    -----------------
    -- To_Portable --

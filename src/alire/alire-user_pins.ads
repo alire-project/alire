@@ -20,6 +20,8 @@ package Alire.User_Pins is
                   To_Path,
                   To_Version);
 
+   subtype Kinds_With_Path is Kinds range To_Git .. To_Path;
+
    type Pin (Kind : Kinds) is tagged private;
 
    function Is_Remote (This : Pin) return Boolean;
@@ -32,8 +34,14 @@ package Alire.User_Pins is
 
    --  Local path attributes
 
-   function Path (This : Pin) return Any_Path
-     with Pre => This.Kind = To_Path;
+   function Path (This : Pin) return Absolute_Path
+     with Pre => This.Kind in Kinds_With_Path;
+   --  May raise if a Git pin hasn't been yet deployed (see Deploy proc). Even
+   --  if paths can be given as relative, for our internal processing we can
+   --  simplify things by always relying on absolute paths. As these paths are
+   --  not re-written to disk, there is no harm in doing this. Also, showing
+   --  absolute paths to the user is less confusing that relative paths from
+   --  unclear locations.
 
    --  Remote attributes
 
@@ -43,8 +51,22 @@ package Alire.User_Pins is
    function Commit (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
 
+   procedure Deploy (This   : in out Pin;
+                     Under  : Any_Path;
+                     Online : Boolean)
+     with Post => (if This.Kind in Kinds_With_Path then This.Path /= "");
+   --  Will fetch a remote pin and fill its local path; it is a no-op
+   --  otherwise. Under is the umbrella folder for all pins, not the final pin
+   --  destination. If Online, branch pins will be checked for updates. Any pin
+   --  not at their expected final path (computed in here depending on the pin
+   --  kind) will be checked out anyway.
+
+   --  Pin loading from manifest
+
    function From_TOML (This : TOML_Adapters.Key_Queue) return Pin;
    --  Expects the rhs of a crate = <pin> entry. The rhs is always a table.
+   --  Must be called with PWD being the same as of the manifest that is being
+   --  loaded, so relative pins are correct.
 
    --  The TOML representation of a pin is similar to a dependency, but instead
    --  of a version set, we get either a precise version, or an url + commit:
@@ -59,8 +81,9 @@ private
    type Pin (Kind : Kinds) is tagged record
       case Kind is
          when To_Git =>
-            URL    : UString;
-            Commit : UString; -- Optional
+            URL        : UString;
+            Commit     : UString; -- Optional
+            Local_Path : UString; -- Empty until the pin is locally deployed
          when To_Path =>
             Path : UString;
          when To_Version =>
@@ -88,7 +111,13 @@ private
    -- Path --
    ----------
 
-   function Path (This : Pin) return Any_Path is (+This.Path);
+   function Path (This : Pin) return Absolute_Path
+   is (case This.Kind is
+          when To_Path => +This.Path,
+          when To_Git  => (if +This.Local_Path /= ""
+                           then +This.Local_Path
+                           else raise Program_Error with "Undeployed pin"),
+          when others  => raise Program_Error with "invalid pin kind");
 
    ---------
    -- URL --

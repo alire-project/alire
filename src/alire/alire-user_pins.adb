@@ -1,4 +1,7 @@
+with Ada.Directories;
+
 with Alire.Origins;
+with Alire.VFS;
 
 with TOML;
 
@@ -10,6 +13,14 @@ package body Alire.User_Pins is
       URL     : constant String := "url";
       Version : constant String := "version";
    end Keys;
+
+   ------------
+   -- Deploy --
+   ------------
+
+   procedure Deploy (This   : in out Pin;
+                     Under  : Any_Path;
+                     Online : Boolean) is null;
 
    ---------------
    -- From_TOML --
@@ -31,22 +42,41 @@ package body Alire.User_Pins is
                  (This.Checked_Pop (Keys.Version, TOML_String).As_String));
 
          elsif This.Contains (Keys.Path) then
-            return Result : constant Pin :=
+            return Result : Pin :=
               (Kind => To_Path,
                Path => +This.Checked_Pop (Keys.Path, TOML_String).As_String)
             do
-               if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
-                  Raise_Checked_Error ("Pin path is not a valid directory: "
-                                       & (+Result.Path));
-               end if;
                This.Report_Extra_Keys;
+
+               if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+                  This.Checked_Error ("Pin path is not a valid directory: "
+                                      & (+Result.Path));
+               end if;
+
+               --  Check that the path was stored in portable format.
+
+               if not Check_Absolute_Path (+Result.Path) and then
+                 not VFS.Is_Portable (+Result.Path)
+               then
+                  This.Recoverable_Error
+                    ("Pin relative paths must use forward slashes "
+                     & "to be portable");
+               end if;
+
+               --  Make the path absolute
+
+               Result.Path :=
+                 +Ada.Directories.Full_Name
+                 (VFS.To_Native (Portable_Path (+Result.Path)));
             end return;
 
          elsif This.Contains (Keys.URL) then
             return Result : Pin :=
-              (Kind   => To_Git,
-               URL    => +This.Checked_Pop (Keys.URL, TOML_String).As_String,
-               Commit => <>)
+              (Kind       => To_Git,
+               URL        => +This.Checked_Pop (Keys.URL,
+                                                TOML_String).As_String,
+               Commit     => <>,
+               Local_Path => <>)
             do
                if This.Contains (Keys.Commit) then
                   Result.Commit :=
