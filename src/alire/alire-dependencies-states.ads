@@ -480,7 +480,7 @@ private
              when others => This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
           then "," & TTY.Emph ("pin") & "="
-                   & TTY.URL (This.Fulfilled.Target.Get.Path)
+                   & TTY.URL (This.Fulfilled.Target.Get.TTY_Relative_Path)
                    & (if GNAT.OS_Lib.Is_Directory
                         (This.Fulfilled.Target.Get.Path)
                          then ""

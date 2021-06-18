@@ -1,4 +1,4 @@
-with Alire.OS_Lib;
+with Alire.Directories;
 with Alire.TOML_Keys;
 with Alire.URI;
 with Alire.Utils.TTY;
@@ -6,6 +6,8 @@ with Alire.Utils.TTY;
 with GNATCOLL.VFS;
 
 package body Alire.Externals.Softlinks is
+
+   package TTY renames Alire.Utils.TTY;
 
    package Adirs renames Ada.Directories;
    use TOML;
@@ -116,32 +118,6 @@ package body Alire.Externals.Softlinks is
       end;
    end New_Softlink;
 
-   --------------
-   -- Relocate --
-   --------------
-
-   function Relocate (This : External;
-                      From : Any_Path) return External
-   is
-   begin
-      if Check_Absolute_Path (This.Path) then
-         return This;
-      end if;
-
-      declare
-         use Alire.OS_Lib.Operators;
-         New_Path : constant Portable_Path :=
-                      Alire.VFS.To_Portable (From / This.Path);
-      begin
-         return (Externals.External with
-                 Has_Remote  => This.Has_Remote,
-                 Remote      => This.Remote,
-                 Relative    => True,
-                 Path_Length => New_Path'Length,
-                 Rel_Path    => New_Path);
-      end;
-   end Relocate;
-
    -------------
    -- To_TOML --
    -------------
@@ -174,5 +150,13 @@ package body Alire.Externals.Softlinks is
 
       return Table;
    end To_TOML;
+
+   -----------------------
+   -- TTY_Relative_Path --
+   -----------------------
+
+   function TTY_Relative_Path (This : External) return String
+   is (TTY.URL (Directories.Find_Relative_Path (Parent => Directories.Current,
+                                                Child  => This.Path)));
 
 end Alire.Externals.Softlinks;

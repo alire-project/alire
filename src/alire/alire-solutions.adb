@@ -420,7 +420,7 @@ package body Alire.Solutions is
                   & (if Detailed
                      then " (origin: "
                           & (if Dep.Is_Linked
-                             then TTY.URL (Dep.Link.Path)
+                             then Dep.Link.TTY_Relative_Path
                                   & (if Dep.Link.Is_Remote
                                      then " from "
                                          & Dep.Link.Remote.TTY_URL_With_Commit
@@ -453,7 +453,7 @@ package body Alire.Solutions is
                     else "")
                   & (if Detailed and then Dep.Is_Linked
                      then " (origin: "
-                         & TTY.URL (Dep.Link.Path)
+                         & Dep.Link.TTY_Relative_Path
                          & (if Dep.Link.Is_Remote
                             then " from "
                                  & Dep.Link.Remote.TTY_URL_With_Commit
@@ -579,7 +579,7 @@ package body Alire.Solutions is
             if Dep.Is_Linked then
                Table
                  .Append (TTY.Name (Dep.Crate))
-                 .Append (TTY.Version ("file:" & Dep.Link.Path))
+                 .Append ("file:" & Dep.Link.TTY_Relative_Path)
                  .Append (if Dep.Link.Is_Remote
                           then Dep.Link.Remote.TTY_URL_With_Commit
                           else "")
