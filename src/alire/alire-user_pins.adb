@@ -58,30 +58,39 @@ package body Alire.User_Pins is
          elsif This.Contains (Keys.Path) then
             return Result : Pin :=
               (Kind => To_Path,
-               Path => +This.Checked_Pop (Keys.Path, TOML_String).As_String)
+               Path => <>)
             do
-               This.Report_Extra_Keys;
+               declare
+                  User_Path : constant String :=
+                                This.Checked_Pop (Keys.Path,
+                                                  TOML_String).As_String;
+               begin
+                  This.Report_Extra_Keys;
 
-               if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
-                  This.Checked_Error ("Pin path is not a valid directory: "
-                                      & (+Result.Path));
-               end if;
+                  --  Check that the path was stored in portable format or as
+                  --  absolute path.
 
-               --  Check that the path was stored in portable format.
+                  if not Check_Absolute_Path (User_Path) and then
+                    not VFS.Is_Portable (User_Path)
+                  then
+                     This.Recoverable_Error
+                       ("Pin relative paths must use forward slashes "
+                        & "to be portable");
+                  end if;
 
-               if not Check_Absolute_Path (+Result.Path) and then
-                 not VFS.Is_Portable (+Result.Path)
-               then
-                  This.Recoverable_Error
-                    ("Pin relative paths must use forward slashes "
-                     & "to be portable");
-               end if;
+                  --  Make the path absolute if not already, and store it
 
-               --  Make the path absolute
+                  Result.Path :=
+                    +Ada.Directories.Full_Name
+                    (if VFS.Is_Portable (User_Path)
+                     then VFS.To_Native (Portable_Path (User_Path))
+                     else User_Path);
 
-               Result.Path :=
-                 +Ada.Directories.Full_Name
-                 (VFS.To_Native (Portable_Path (+Result.Path)));
+                  if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+                     This.Checked_Error ("Pin path is not a valid directory: "
+                                         & (+Result.Path));
+                  end if;
+               end;
             end return;
 
          elsif This.Contains (Keys.URL) then

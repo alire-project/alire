@@ -88,9 +88,10 @@ private
          when To_Git =>
             URL        : UString;
             Commit     : UString; -- Optional
-            Local_Path : UString; -- Empty until the pin is locally deployed
+            Local_Path : Unbounded_Absolute_Path;
+            --  Empty until the pin is locally deployed
          when To_Path =>
-            Path : UString;
+            Path : Unbounded_Absolute_Path;
          when To_Version =>
             Version : Semantic_Versioning.Version;
       end case;
