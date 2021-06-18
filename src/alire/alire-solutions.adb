@@ -579,7 +579,7 @@ package body Alire.Solutions is
             if Dep.Is_Linked then
                Table
                  .Append (TTY.Name (Dep.Crate))
-                 .Append ("file:" & Dep.Link.TTY_Relative_Path)
+                 .Append (TTY.URL ("file:") & Dep.Link.TTY_Relative_Path)
                  .Append (if Dep.Link.Is_Remote
                           then Dep.Link.Remote.TTY_URL_With_Commit
                           else "")
