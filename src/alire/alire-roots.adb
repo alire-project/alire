@@ -451,7 +451,7 @@ package body Alire.Roots is
 
             if Sol.Depends_On (Crate)
               and then Sol.State (Crate).Is_Linked
-              and then Sol.State (Crate).Link.Path /= Pin.Path
+              and then Sol.State (Crate).Link.Path /= Pin.Relative_Path
             then
                Raise_Checked_Error
                  ("Conflicting pin links for crate " & TTY.Name (Crate)

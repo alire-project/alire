@@ -3,13 +3,10 @@ with Alire.TOML_Keys;
 with Alire.URI;
 with Alire.Utils.TTY;
 
-with GNATCOLL.VFS;
-
 package body Alire.Externals.Softlinks is
 
    package TTY renames Alire.Utils.TTY;
 
-   package Adirs renames Ada.Directories;
    use TOML;
 
    package Keys is
@@ -43,7 +40,7 @@ package body Alire.Externals.Softlinks is
                                Path   => URI.Local_Path (Path));
          end;
       else
-         return New_Softlink (Path);
+         return New_Softlink (URI.Local_Path (Path));
       end if;
    end From_TOML;
 
@@ -68,54 +65,35 @@ package body Alire.Externals.Softlinks is
    -- New_Softlink --
    ------------------
 
-   function New_Softlink (From  : URL) return External
+   function New_Softlink (From  : Any_Path) return External
    is
+      --  Try to store a relative path whenever possible so lockfiles are
+      --  minimally portable across OSes.
+      Path : constant Any_Path :=
+               Directories.Find_Relative_Path
+                 (Parent => Directories.Current,
+                  Child  => From);
    begin
-      if URI.Scheme (From) not in URI.File_Schemes then
-         Raise_Checked_Error
-           ("Given URL does not seem to denote a local path: "
-            & Utils.TTY.Emph (From));
-      end if;
-
-      declare
-         Path : constant Any_Path := URI.Local_Path (From);
-      begin
-
-         --  Store the path as a minimal relative path, so cloning a monorepo
-         --  will work as-is, when originally given as a relative path
-
+      if Check_Absolute_Path (Path) then
+         return (Externals.External with
+                 Has_Remote  => False,
+                 Remote      => <>,
+                 Relative    => False,
+                 Path_Length => Path'Length,
+                 Abs_Path    => Path);
+      else
          declare
-            use GNATCOLL.VFS;
-            Target : constant Filesystem_String :=
-                       (if Check_Absolute_Path (Path)
-                        then +Path
-                        else GNATCOLL.VFS.Relative_Path
-                          (File => Create (+Adirs.Full_Name (Path)),
-                           From => Create (+Adirs.Current_Directory)));
-
+            Portable_Target : constant Portable_Path :=
+                                Alire.VFS.To_Portable (Path);
          begin
-            if Check_Absolute_Path (Path) then
-               return (Externals.External with
-                       Has_Remote  => False,
-                       Remote      => <>,
-                       Relative    => False,
-                       Path_Length => Path'Length,
-                       Abs_Path    => Path);
-            else
-               declare
-                  Portable_Target : constant Portable_Path :=
-                                      Alire.VFS.To_Portable (+Target);
-               begin
-                  return (Externals.External with
-                          Has_Remote  => False,
-                          Remote      => <>,
-                          Relative    => True,
-                          Path_Length => Portable_Target'Length,
-                          Rel_Path    => Portable_Target);
-               end;
-            end if;
+            return (Externals.External with
+                    Has_Remote  => False,
+                    Remote      => <>,
+                    Relative    => True,
+                    Path_Length => Portable_Target'Length,
+                    Rel_Path    => Portable_Target);
          end;
-      end;
+      end if;
    end New_Softlink;
 
    -------------

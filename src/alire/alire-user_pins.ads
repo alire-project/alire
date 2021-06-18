@@ -43,6 +43,11 @@ package Alire.User_Pins is
    --  absolute paths to the user is less confusing that relative paths from
    --  unclear locations.
 
+   function Relative_Path (This : Pin) return Any_Path
+     with Pre => This.Kind in Kinds_With_Path;
+   --  Convenience to compare lockfile paths to pin paths. May still return an
+   --  absolute path for paths in another drive on windows.
+
    --  Remote attributes
 
    function URL (This : Pin) return Alire.URL

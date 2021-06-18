@@ -490,5 +490,6 @@ private
 
    function Pins (R : in out Release) return User_Pins.Maps.Reference
    is (Element => R.Pins'Unrestricted_Access);
+   --  Unrestricted required by the older gnats
 
 end Alire.Releases;

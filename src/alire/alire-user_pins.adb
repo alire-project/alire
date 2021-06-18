@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Directories;
 with Alire.Origins;
 with Alire.VFS;
 
@@ -20,7 +21,20 @@ package body Alire.User_Pins is
 
    procedure Deploy (This   : in out Pin;
                      Under  : Any_Path;
-                     Online : Boolean) is null;
+                     Online : Boolean)
+   is
+   begin
+      null;
+   end Deploy;
+
+   -------------------
+   -- Relative_Path --
+   -------------------
+
+   function Relative_Path (This : Pin) return Any_Path
+   is (Directories.Find_Relative_Path
+       (Parent => Directories.Current,
+        Child  => +This.Path));
 
    ---------------
    -- From_TOML --
