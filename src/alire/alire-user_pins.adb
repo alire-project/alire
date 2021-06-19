@@ -8,15 +8,18 @@ with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
+with GNAT.OS_Lib;
+
 package body Alire.User_Pins is
 
    package TTY renames Alire.Utils.TTY;
 
    package Keys is
-      Commit  : constant String := "commit";
-      Path    : constant String := "path";
-      URL     : constant String := "url";
-      Version : constant String := "version";
+      Commit   : constant String := "commit";
+      Internal : constant String := "lockfiled";
+      Path     : constant String := "path";
+      URL      : constant String := "url";
+      Version  : constant String := "version";
    end Keys;
 
    ---------------
@@ -32,13 +35,22 @@ package body Alire.User_Pins is
    -- Deploy --
    ------------
 
-   procedure Deploy (This   : Pin;
+   procedure Deploy (This   : in out Pin;
                      Crate  : Crate_Name;
+                     Under  : Any_Path;
                      Online : Boolean)
    is
       use Ada.Strings.Unbounded;
+      use Directories.Operators;
 
-      Destination : constant String := Path (This);
+      Folder : constant String :=
+                 (+Crate)
+               & (if This.Is_Remote and then This.Commit /= ""
+                  then "_" & Origins.Short_Commit (+This.Commit)
+                  else "");
+
+      Destination : constant String :=
+                      Ada.Directories.Full_Name (Under / Folder);
 
       --------------
       -- Checkout --
@@ -57,13 +69,19 @@ package body Alire.User_Pins is
 
          --  Check out the branch or commit
 
-         VCSs.Git.Handler.Clone
-           (From   => URL (This) & (if Commit /= ""
-                                    then "#" & Commit
-                                    else ""),
-            Into   => Temp.Filename,
-            Branch => Branch, -- May be empty for default branch
-            Depth  => 1).Assert;
+         if not
+           VCSs.Git.Handler.Clone
+             (From   => URL (This) & (if Commit /= ""
+                                      then "#" & Commit
+                                      else ""),
+              Into   => Temp.Filename,
+              Branch => Branch, -- May be empty for default branch
+              Depth  => 1).Success
+         then
+            Raise_Checked_Error
+              ("Checkout of repository at " & TTY.URL (URL (This))
+               & " failed, re-run with -vv -d for details");
+         end if;
 
          --  Successful checkout
 
@@ -98,7 +116,11 @@ package body Alire.User_Pins is
 
          --  Finally update
 
-         VCSs.Git.Handler.Update (Destination).Assert;
+         if not VCSs.Git.Handler.Update (Destination).Success then
+            Raise_Checked_Error
+              ("Update of repository at " & TTY.URL (Destination)
+               & " failed, re-run with -vv -d for details");
+         end if;
       end Update;
 
    begin
@@ -109,10 +131,12 @@ package body Alire.User_Pins is
          return;
       end if;
 
+      This.Local_Path := +Destination;
+
       --  Don't check out an already existing commit pin, or a non-update
       --  branch pin
 
-      if Ada.Directories.Exists (Path (This))
+      if Ada.Directories.Exists (Destination)
         and then
           (This.Commit /= "" or else not Online)
       then
@@ -175,6 +199,29 @@ package body Alire.User_Pins is
          then "#" & TTY.Emph (Commit (This).Element.Ptr.all)
          else ""));
 
+   ----------
+   -- Path --
+   ----------
+
+   function Path (This : Pin) return Absolute_Path
+   is
+      --  Having this as an expression function causes CE2021 to return a
+      --  corrupted string some times.
+   begin
+      case This.Kind is
+         when To_Path =>
+            return +This.Path;
+         when To_Git  =>
+            if +This.Local_Path /= "" then
+               return +This.Local_Path;
+            else
+               raise Program_Error with "Undeployed pin";
+            end if;
+         when others  =>
+            raise Program_Error with "invalid pin kind";
+      end case;
+   end Path;
+
    -------------------
    -- Relative_Path --
    -------------------
@@ -188,8 +235,7 @@ package body Alire.User_Pins is
    -- From_TOML --
    ---------------
 
-   function From_TOML (Crate : Crate_Name;
-                       This  : TOML_Adapters.Key_Queue) return Pin is
+   function From_TOML (This  : TOML_Adapters.Key_Queue) return Pin is
 
       ----------------
       -- From_Table --
@@ -197,8 +243,49 @@ package body Alire.User_Pins is
 
       function From_Table (This : TOML_Adapters.Key_Queue) return Pin is
          use TOML;
+
+         -------------------
+         -- From_Lockfile --
+         -------------------
+         --  Special case loader for pins not described by the user, but stored
+         --  by us in the lockfile. These already have a path for the pin.
+         function From_Lockfile return Pin is
+         begin
+            This.Assert
+              (This.Checked_Pop (Keys.Internal, TOML_Boolean).As_Boolean,
+               "Boolean expected");
+
+            if This.Contains (Keys.URL) then
+               return Result : Pin := (Kind => To_Git, others => <>) do
+                  Result.URL :=
+                    +This.Checked_Pop (Keys.URL,
+                                       TOML_String).As_String;
+
+                  Result.Local_Path :=
+                    +Utils.User_Input.To_Absolute_From_Portable
+                    (This.Checked_Pop (Keys.Path, TOML_String).As_String);
+
+                  if This.Contains (Keys.Commit) then
+                     Result.Commit :=
+                       +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
+                  end if;
+               end return;
+            else
+               return Result : Pin := (Kind => To_Path, others => <>) do
+                  Result.Path :=
+                    +Utils.User_Input.To_Absolute_From_Portable
+                    (This.Checked_Pop (Keys.Path, TOML_String).As_String);
+               end return;
+            end if;
+         end From_Lockfile;
+
       begin
-         if This.Contains (Keys.Version) then
+         if This.Contains (Keys.Internal) then
+            return Result : constant Pin := From_Lockfile do
+               This.Report_Extra_Keys;
+            end return;
+
+         elsif This.Contains (Keys.Version) then
             return Pin'
               (Kind    => To_Version,
                Version => Semantic_Versioning.Parse
@@ -260,20 +347,6 @@ package body Alire.User_Pins is
                                "invalid commit: " & (+Result.Commit));
                end if;
 
-               declare
-                  use type UString;
-                  use Directories.Operators;
-                  Deploy_Folder : constant String :=
-                                    (+Crate) &
-                  (if Result.Commit /= ""
-                   then "_" & Origins.Short_Commit (+Result.Commit)
-                   else "");
-               begin
-                  Result.Local_Path :=
-                    +Ada.Directories.Full_Name
-                      ("alire" / "cache" / "pins" / Deploy_Folder);
-               end;
-
                This.Report_Extra_Keys;
             end return;
 
@@ -316,14 +389,24 @@ package body Alire.User_Pins is
       use TOML;
       Table : constant TOML_Value := Create_Table;
    begin
-      Table.Set (Keys.Path,
-                 Create_String (VFS.Attempt_Portable (Path (This))));
-
       if This.Is_Remote then
          Table.Set (Keys.URL,
                     Create_String
                       (URL (This)));
       end if;
+
+      if Commit (This).Has_Element then
+         Table.Set (Keys.Commit,
+                    Create_String (Commit (This).Element.Ptr.all));
+      end if;
+
+      --  Pins going into the lockfile require all this information; we must
+      --  also notify the loader not to report unexpected keys
+
+      Table.Set (Keys.Path,
+                 Create_String (VFS.Attempt_Portable (Path (This))));
+
+      Table.Set (Keys.Internal, Create_Boolean (True));
 
       return Table;
    end To_TOML;

@@ -31,8 +31,7 @@ package body Alire.User_Pins.Maps is
 
                   Result.Insert (Crate,
                                  User_Pins.From_TOML
-                                   (Crate,
-                                    This.Descend
+                                   (This.Descend
                                       (Value   => Table.Get (Key),
                                        Context => +Key)));
                end;

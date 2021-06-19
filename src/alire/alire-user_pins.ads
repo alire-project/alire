@@ -64,20 +64,21 @@ package Alire.User_Pins is
    function TTY_URL_With_Commit (This : Pin) return String
      with Pre => This.Is_Remote;
 
-   procedure Deploy (This   : Pin;
+   procedure Deploy (This   : in out Pin;
                      Crate  : Crate_Name;
-                     Online : Boolean);
-   --  with Post => (if This.Kind in Kinds_With_Path then This.Path /= "");
+                     Under  : Any_Path;
+                     Online : Boolean)
+     with Pre  => This.Kind in Kinds_With_Path,
+          Post => Path (This) /= "";
    --  Will fetch a remote pin and fill its local path; it is a no-op
    --  otherwise. Under is the umbrella folder for all pins, not the final pin
    --  destination. If Online, branch pins will be checked for updates. Any pin
-   --  not at their expected final path (computed in here depending on the pin
-   --  kind) will be checked out anyway.
+   --  sources not at their expected final path (computed in here depending on
+   --  the pin kind) will be checked out anyway.
 
    --  Pin loading from manifest
 
-   function From_TOML (Crate : Crate_Name;
-                       This  : TOML_Adapters.Key_Queue) return Pin;
+   function From_TOML (This  : TOML_Adapters.Key_Queue) return Pin;
    --  Expects the rhs of a crate = <pin> entry. The rhs is always a table.
    --  Must be called with PWD being the same as of the manifest that is being
    --  loaded, so relative pins are correct.
@@ -125,19 +126,6 @@ private
 
    function Is_Remote (This : Pin) return Boolean
    is (This.Kind in To_Git);
-
-   ----------
-   -- Path --
-   ----------
-
-   function Path (This : Pin) return Absolute_Path
-   is (case This.Kind is
-          when To_Path => +This.Path,
-          when To_Git  => (if +This.Local_Path /= ""
-                           then +This.Local_Path
-                           else raise Program_Error with "Undeployed pin"),
-          when others  => raise Program_Error with "invalid pin kind");
-
    ---------
    -- URL --
    ---------

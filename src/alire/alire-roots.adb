@@ -288,7 +288,8 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set)
    is
 
-      Sol  : Solutions.Solution := This.Solution;
+      Sol      : Solutions.Solution := This.Solution;
+      Pins_Dir : constant Any_Path := This.Pins_Dir;
 
       --------------
       -- Add_Pins --
@@ -325,7 +326,7 @@ package body Alire.Roots is
          ------------------
 
          procedure Add_Link_Pin (Crate : Crate_Name;
-                                 Pin   : User_Pins.Pin)
+                                 Pin   : in out User_Pins.Pin)
          is
          begin
 
@@ -336,6 +337,7 @@ package body Alire.Roots is
                 (Allowed.Is_Empty or else Allowed.Contains (Crate))
             then
                Pin.Deploy (Crate  => Crate,
+                           Under  => Pins_Dir,
                            Online => Exhaustive);
             end if;
 
@@ -368,15 +370,19 @@ package body Alire.Roots is
 
                --  Verify matching crate at the target location
 
-               if Target.Is_Valid
-                 and then
-                   Target.Value.Release.Element.Name /= Crate
-               then
-                  Raise_Checked_Error
-                    ("Mismatched crates for pin linking to "
-                     & TTY.URL (Pin.Path) & ": expected " & TTY.Name (Crate)
-                     & " but found "
-                     & TTY.Name (Target.Value.Release.Element.Name));
+               if Target.Is_Valid then
+                  Trace.Debug
+                    ("Crate found at pin location " & Pin.Relative_Path);
+                  if Target.Value.Name /= Crate then
+                     Raise_Checked_Error
+                       ("Mismatched crates for pin linking to "
+                        & TTY.URL (Pin.Path) & ": expected " & TTY.Name (Crate)
+                        & " but found "
+                        & TTY.Name (Target.Value.Name));
+                  end if;
+               else
+                  Trace.Debug
+                    ("No crate found at pin location " & Pin.Relative_Path);
                end if;
 
                --  Add the best dependency we can find for the link if the user
@@ -403,6 +409,8 @@ package body Alire.Roots is
             end;
          end Add_Link_Pin;
 
+         Pins : constant User_Pins.Maps.Map := Release (This).Pins;
+
       begin
 
          --  Iterate over this root pins. Any pin that links to another root
@@ -410,13 +418,17 @@ package body Alire.Roots is
          --  process, so they're available for use immediately. All link pins
          --  have a proper path once this process completes.
 
-         for I in Release (This).Pins.Iterate loop
+         for I in Pins.Iterate loop
             declare
                use all type User_Pins.Kinds;
                use User_Pins.Maps.Pin_Maps;
-               Crate : constant Crate_Name := Key (I);
-               Pin   : constant User_Pins.Pin := Element (I);
+               Crate : constant Crate_Name    := Key (I);
+               Pin   :          User_Pins.Pin := Element (I);
             begin
+
+               Trace.Debug ("Crate " & TTY.Name (This.Name)
+                            & " adds pin for crate " & TTY.Name (Crate));
+
                case Pin.Kind is
                   when To_Version =>
                      Add_Version_Pin (Crate, Pin);
@@ -424,7 +436,7 @@ package body Alire.Roots is
                      Add_Link_Pin (Crate, Pin);
                end case;
 
-               Trace.Detail ("Crate " & TTY.Name (Release (This).Name)
+               Trace.Detail ("Crate " & TTY.Name (This.Name)
                              & " adds pin " & Sol.State (Crate).TTY_Image);
             end;
          end loop;
@@ -608,6 +620,13 @@ package body Alire.Roots is
       Path            => +Path,
       Release         => Containers.To_Release_H (R),
       Cached_Solution => <>);
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (This : Root) return Crate_Name
+   is (This.Release.Constant_Reference.Name);
 
    ----------
    -- Path --

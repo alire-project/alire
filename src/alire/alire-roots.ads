@@ -82,6 +82,9 @@ package Alire.Roots is
    procedure Export_Build_Environment (This : in out Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
+   function Name (This : Root) return Crate_Name;
+   --  Crate name of the root release
+
    function Path (This : Root) return Absolute_Path;
 
    function Project_Paths (This : in out Root)
