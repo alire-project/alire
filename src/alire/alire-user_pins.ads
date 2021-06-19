@@ -57,6 +57,7 @@ package Alire.User_Pins is
      with Pre => This.Is_Remote;
 
    procedure Deploy (This   : in out Pin;
+                     Crate  : Crate_Name;
                      Under  : Any_Path;
                      Online : Boolean)
      with Post => (if This.Kind in Kinds_With_Path then This.Path /= "");

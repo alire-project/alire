@@ -1,3 +1,4 @@
+with Ada.Directories;
 with Ada.Text_IO;
 with Ada.Characters.Handling;
 
@@ -6,6 +7,7 @@ with GNAT.OS_Lib;
 with Interfaces.C_Streams;
 
 with Alire.Utils.TTY;
+with Alire.VFS;
 
 package body Alire.Utils.User_Input is
 
@@ -321,5 +323,34 @@ package body Alire.Utils.User_Input is
          end;
       end loop;
    end Validated_Input;
+
+   -------------------------------
+   -- To_Absolute_From_Portable --
+   -------------------------------
+
+   function To_Absolute_From_Portable
+     (User_Path                  : String;
+      Error_When_Relative_Native : String :=
+        "relative paths must use forward slashes to be portable")
+      return Absolute_Path
+   is
+   begin
+      if not Check_Absolute_Path (User_Path) and then
+        not VFS.Is_Portable (User_Path)
+      then
+         Recoverable_Error
+           (Error_When_Relative_Native & ": " & TTY.URL (User_Path));
+      end if;
+
+      --  Make the path absolute if not already, and store it
+
+      return
+        Ada.Directories.Full_Name
+          (if VFS.Is_Portable (User_Path)
+           then VFS.To_Native (Portable_Path (User_Path))
+           else User_Path);
+
+      --  TODO: TEST FOR THESE PATHS
+   end To_Absolute_From_Portable;
 
 end Alire.Utils.User_Input;

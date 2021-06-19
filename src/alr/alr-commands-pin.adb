@@ -1,5 +1,3 @@
-with Alire.Conditional;
-with Alire.Dependencies;
 with Alire.Releases;
 with Alire.Solutions.Diffs;
 with Alire.Pinning;
@@ -202,13 +200,17 @@ package body Alr.Commands.Pin is
             if Cmd.Commit.all /= ""
               or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
             then
-               New_Sol := Cmd.Root.Pinned_To_Remote
-                 (Dependency  => Alire.Conditional.New_Dependency
-                    (Alire.Dependencies.From_String (Argument (1))),
-                  URL         => Cmd.URL.all,
-                  Commit      => Cmd.Commit.all,
-                  Must_Depend => True)
-                 .Solution;
+               null;
+               --  This is slated for removal in the immediate future; kept for
+               --  reference for the replacement implementation
+
+               --  New_Sol := Cmd.Root.Pinned_To_Remote
+               --    (Dependency  => Alire.Conditional.New_Dependency
+               --       (Alire.Dependencies.From_String (Argument (1))),
+               --     URL         => Cmd.URL.all,
+               --     Commit      => Cmd.Commit.all,
+               --     Must_Depend => True)
+               --    .Solution;
             else
 
                --  Pin to dir

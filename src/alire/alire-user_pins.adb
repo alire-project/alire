@@ -2,11 +2,17 @@ with Ada.Directories;
 
 with Alire.Directories;
 with Alire.Origins;
+with Alire.Roots.Optional;
+with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
+with Alire.VCSs.Git;
 with Alire.VFS;
 
 with TOML;
 
 package body Alire.User_Pins is
+
+   package TTY renames Alire.Utils.TTY;
 
    package Keys is
       Commit  : constant String := "commit";
@@ -20,11 +26,145 @@ package body Alire.User_Pins is
    ------------
 
    procedure Deploy (This   : in out Pin;
+                     Crate  : Crate_Name;
                      Under  : Any_Path;
                      Online : Boolean)
    is
+      use Ada.Strings.Unbounded;
+      use Directories.Operators;
+
+      Folder : constant String :=
+                 (+Crate) &
+                 (if This.Is_Remote and then This.Commit /= ""
+                  then "_" & Origins.Short_Commit (+This.Commit)
+                  else "");
+      Destination : constant String := Under / Folder;
+
+      --------------
+      -- Checkout --
+      --------------
+
+      procedure Checkout (Branch : String := ""; Commit : String := "")
+        with Pre => not (Branch /= "" and then Commit /= "");
+      --  Pass only a commit or a branch. If none, default remote head.
+
+      procedure Checkout (Branch : String := "";
+                          Commit : String := "")
+      is
+         package Adirs renames Ada.Directories;
+         Temp : Directories.Temp_File;
+      begin
+
+         --  Check out the branch or commit
+
+         VCSs.Git.Handler.Clone
+           (From   => URL (This) & (if Commit /= ""
+                                    then "#" & Commit
+                                    else ""),
+            Into   => Temp.Filename,
+            Branch => Branch, -- May be empty for default branch
+            Depth  => 1).Assert;
+
+         --  Successful checkout
+
+         if not Adirs.Exists (Adirs.Containing_Directory (Destination)) then
+            Adirs.Create_Path (Adirs.Containing_Directory (Destination));
+         end if;
+         Adirs.Rename (Temp.Filename, Destination);
+         Temp.Keep;
+      end Checkout;
+
+      ------------
+      -- Update --
+      ------------
+
+      procedure Update is
+      begin
+         Trace.Detail ("Checking out pin " & TTY.Name (Crate) & " at "
+                       & TTY.URL (Destination));
+
+         --  If the fetch URL has been changed, fall back to checkout
+
+         if VCSs.Git.Handler.Fetch_URL
+           (Repo   => Destination,
+            Public => False) /= This.URL
+         then
+            Put_Info ("Switching pin " & TTY.Name (Crate) & " to origin at "
+                      & TTY.URL (+This.URL));
+            Ada.Directories.Delete_Tree (Destination);
+            Checkout; -- Pending branch tracking implementation
+            return;
+         end if;
+
+         --  Finally update
+
+         VCSs.Git.Handler.Update (Destination).Assert;
+      end Update;
+
    begin
-      null;
+
+      --  Check when to do nothing
+
+      if not This.Is_Remote then
+         return;
+      end if;
+
+      This.Local_Path := +Ada.Directories.Full_Name (Destination);
+
+      --  Don't check out an already existing commit pin, or a non-update
+      --  branch pin
+
+      if Ada.Directories.Exists (Destination)
+        and then
+          (This.Commit /= "" or else not Online)
+      then
+         Trace.Debug ("Skipping deployment of already existing pin at "
+                      & TTY.URL (Destination));
+         return;
+      end if;
+
+      --  Check out a fixed commit, a branch, or update a branch are the three
+      --  remaining possibilities.
+
+      if This.Commit /= "" then
+         Checkout (Commit => +This.Commit);
+
+      elsif Ada.Directories.Exists (Destination) then
+         Update;
+
+      else
+         Checkout;
+
+      end if;
+
+      --  At this point, we have the sources at Destination. Last checks ensue.
+
+      declare
+         Root : constant Roots.Optional.Root :=
+                  Roots.Optional.Detect_Root (Destination);
+      begin
+
+         --  Check crate name mismatch
+
+         if Root.Is_Valid and then
+           Crate /= Root.Value.Release.Name
+         then
+            Raise_Checked_Error
+              ("Requested and retrieved crates do not match: "
+               & TTY.Name (Crate) & " /= "
+               & TTY.Name (Root.Value.Release.Name));
+         end if;
+
+         --  Warn if raw project
+
+         if not Root.Is_Valid then
+            Put_Warning
+              ("Pin for " & TTY.Name (Crate) & " does not contain an Alire "
+               & "manifest. It will be used as a raw GNAT project.");
+         end if;
+
+      end;
+
    end Deploy;
 
    -------------------
@@ -75,20 +215,23 @@ package body Alire.User_Pins is
                   then
                      This.Recoverable_Error
                        ("Pin relative paths must use forward slashes "
-                        & "to be portable");
+                        & "to be portable: " & Utils.TTY.URL (User_Path));
                   end if;
 
                   --  Make the path absolute if not already, and store it
 
                   Result.Path :=
-                    +Ada.Directories.Full_Name
-                    (if VFS.Is_Portable (User_Path)
-                     then VFS.To_Native (Portable_Path (User_Path))
-                     else User_Path);
+                    +Utils.User_Input.To_Absolute_From_Portable
+                    (User_Path                  => User_Path,
+                     Error_When_Relative_Native =>
+                       "Pin relative paths must use forward slashes " &
+                       " to be portable");
+                  --  TODO: TEST FOR THE PREVIOUS CHECK
 
                   if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
                      This.Checked_Error ("Pin path is not a valid directory: "
                                          & (+Result.Path));
+                     --  TODO: TEST FOR THE PREVIOUS CHECK
                   end if;
                end;
             end return;

@@ -79,7 +79,8 @@ package body Alire.VCSs.Git is
    function Clone (This   : VCS;
                    From   : URL;
                    Into   : Directory_Path;
-                   Branch : String)
+                   Branch : String;
+                   Depth  : Natural := 0)
                    return Outcome
    is
       pragma Unreferenced (This);
@@ -88,6 +89,9 @@ package body Alire.VCSs.Git is
                 & (if Log_Level < Trace.Info
                    then "-q"
                    else "--progress")
+                & (if Depth /= 0
+                   then Empty_Vector & "--depth" & Utils.Trim (Depth'Image)
+                   else Empty_Vector)
                 & (if Branch /= ""
                    then Empty_Vector & "--branch" & Branch
                    else Empty_Vector);
@@ -399,7 +403,7 @@ package body Alire.VCSs.Git is
                  else Empty_Vector & "--progress");
    begin
 
-      Run_Git (Empty_Vector & "pull" & Extra);
+      Run_Git (Empty_Vector & "pull" & Extra & "--recurse-submodules");
 
       return Outcome_Success;
    exception

@@ -1,20 +1,18 @@
 with Ada.Directories;
 
+with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Externals.Softlinks;
 with Alire.Manifest;
-with Alire.Optional;
-with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
-with Alire.VCSs.Git;
 
 with GNAT.OS_Lib;
 
@@ -22,7 +20,6 @@ with Semantic_Versioning.Extended;
 
 package body Alire.Roots is
 
-   package Adirs renames Ada.Directories;
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
@@ -291,100 +288,6 @@ package body Alire.Roots is
 
    end Deploy_Dependencies;
 
-   -----------------
-   -- Deploy_Pins --
-   -----------------
-
-   procedure Deploy_Pins (This       : in out Root;
-                          Exhaustive : Boolean;
-                          Allowed    : Containers.Crate_Name_Sets.Set :=
-                            Containers.Crate_Name_Sets.Empty_Set) is
-      use User_Pins.Maps.Pin_Maps;
-      Rel  :          Alire.Releases.Release := Release (This);
-      Pins : constant User_Pins.Maps.Map     := Rel.Pins;
-
-      --------------------
-      -- Needs_Updating --
-      --------------------
-
-      function Needs_Updating (Crate : Crate_Name;
-                               Pin   : User_Pins.Pin) return Boolean
-      is
-         use type Alire.Optional.String;
-      begin
-
-         --  Early reject if the crate is not among the allowed ones
-
-         if not Allowed.Is_Empty and then not Allowed.Contains (Crate) then
-            return False;
-         end if;
-
-         --  Regular checks if the crate is in the update set
-
-         return
-           --  Any new pin needs downloading
-           not This.Solution.Links.Contains (Crate)
-
-           --  Manual update requested for pins without a precise commit
-           or else (Exhaustive and then not Pin.Commit.Has_Element)
-
-           --  Auto update for pins which weren't remote and now are
-           or else not This.Solution.State (Crate).Link.Is_Remote
-
-           --  Auto update for pins whose commit has changed in manifest wrt
-           --  lockfile.
-           or else (Pin.Commit.Has_Element and then
-                    Pin.Commit /= This.Solution.State (Crate)
-                                               .Link.Remote.Commit);
-      end Needs_Updating;
-
-   begin
-      if (for some Pin of Pins => Pin.Is_Remote) then
-         Put_Info ("Checking remote pins...");
-      end if;
-
-      for I in Pins.Iterate loop
-         if Pins (I).Is_Remote then
-            if Needs_Updating (Key (I), Pins (I)) then
-
-               Put_Info ("Deploying pin for crate: " & TTY.Name (Key (I)));
-
-               declare
-                  use type Solutions.Solution;
-                  Crate  : constant Crate_Name := Key (I);
-                  Pin    : constant User_Pins.Pin := Element (I);
-                  Result : constant Remote_Pin_Result :=
-                             This.Pinned_To_Remote
-                               (Dependency  =>
-                                             Conditional.New_Dependency
-                                  (Rel.Dependency_On (Crate)
-                                   .Or_Else (Dependencies.From_String
-                                     ((+Crate) & "*"))),
-                                URL         => Pin.URL,
-                                Commit      => Pin.Commit.Or_Else (""),
-                                Must_Depend => True);
-               begin
-                  --  Pin deployed, solution can be stored accordingly
-                  if This.Solution /= Result.Solution then
-                     Solutions
-                       .Diffs.Between (This.Solution, Result.Solution)
-                       .Print (Changed_Only => True,
-                               Level        => Trace.Detail);
-                     This.Set (Solution => Result.Solution);
-                     Trace.Detail ("Remote pins committed to disk");
-                  end if;
-               end;
-            else
-
-               Trace.Detail ("Skipping pre-existing pin for crate: "
-                         & TTY.Name (Key (I)));
-
-            end if;
-         end if;
-      end loop;
-   end Deploy_Pins;
-   pragma Unreferenced (Deploy_Pins);
-
    -----------------------------
    -- Sync_Pins_From_Manifest --
    -----------------------------
@@ -443,7 +346,9 @@ package body Alire.Roots is
               or else
                 (Allowed.Is_Empty or else Allowed.Contains (Crate))
             then
-               Pin.Deploy (Under => This.Pins_Dir, Online => Exhaustive);
+               Pin.Deploy (Crate  => Crate,
+                           Under  => This.Pins_Dir,
+                           Online => Exhaustive);
             end if;
 
             --  At this point, we can detect that a link is conflicting with
@@ -495,7 +400,16 @@ package body Alire.Roots is
                        (Crate, Semantic_Versioning.Extended.Any));
                end if;
 
-               Sol := Sol.Resetting (Crate).Linking (Crate, Pin.Path);
+               declare
+                  Pin_Path : constant String := Pin.Path;
+                  --  Some nasty bug is happening in which if I don't copy this
+                  --  path and instead use Pin.Path directly in the call below,
+                  --  garbage is received in the immediate Linking argument.
+               begin
+                  Sol := Sol
+                    .Resetting (Crate)
+                    .Linking (Crate, String'(Pin_Path));
+               end;
 
                --  Add possible pins at the link target
 
@@ -1060,178 +974,6 @@ package body Alire.Roots is
          end;
       end;
    end Sync_Dependencies;
-
-   ----------------------
-   -- Pinned_To_Remote --
-   ----------------------
-
-   function Pinned_To_Remote (This        : in out Root;
-                              Dependency  : Conditional.Dependencies;
-                              URL         : String;
-                              Commit      : String;
-                              Must_Depend : Boolean)
-                              return Remote_Pin_Result
-   is
-      Requested_Crate : constant String :=
-                          (if Dependency.Is_Empty
-                           then ""
-                           else Dependency.Value.Crate.As_String);
-   begin
-
-      --  Check whether are adding or modifying a dependency
-
-      if Must_Depend and then not
-        (for some Dep of This.Release.Constant_Reference.Flat_Dependencies =>
-           Dep.Crate.As_String = Requested_Crate)
-      then
-         Raise_Checked_Error
-           ("Cannot continue because the requested pin is not a dependency: "
-            & Requested_Crate);
-      end if;
-
-      --  Identify the head commit/reference
-
-      if Commit = "" or else not Origins.Is_Valid_Commit (Commit) then
-         declare
-            Ref_Commit : constant String :=
-                     VCSs.Git.Handler.Remote_Commit (URL, Ref => Commit);
-         begin
-            if Ref_Commit = "" then
-               Raise_Checked_Error ("Could not resolve reference to commit: "
-                                    & TTY.Emph (Commit));
-            else
-               Put_Info ("Using commit " & TTY.Emph (Ref_Commit)
-                         & " for reference "
-                         & TTY.Emph (if Commit = "" then "HEAD"
-                                                      else Commit));
-            end if;
-
-            return This.Pinned_To_Remote (Dependency  => Dependency,
-                                          URL         => URL,
-                                          Commit      => Ref_Commit,
-                                          Must_Depend => Must_Depend);
-         end;
-      end if;
-
-      --  Check out the remote
-
-      declare
-         Temp : Directories.Temp_File;
-         Depl : constant Origins.Deployers.Deployer'Class :=
-                  Origins.Deployers.New_Deployer
-                    (Origins.New_Git (URL, Commit));
-      begin
-
-         --  Skip checkout if link is already in the solution and with the same
-         --  commit.
-
-         if Requested_Crate /= "" and then
-           This.Solution.Depends_On (+Requested_Crate) and then
-           This.Solution.Links.Contains (+Requested_Crate) and then
-           This.Solution.State (+Requested_Crate).Link.Remote.Commit = Commit
-         then
-            Trace.Debug ("Skipping checkout of remote link "
-                         & TTY.Name (Requested_Crate)
-                         & "#"
-                         & TTY.URL (Commit));
-         else
-            Depl.Deploy (Temp.Filename).Assert;
-         end if;
-
-         --  Identify containing release, and if satisfying move it to its
-         --  final location in the release cache.
-
-         declare
-            Linked_Root : constant Alire.Roots.Optional.Root :=
-                            Roots.Optional.Detect_Root (Temp.Filename);
-            Linked_Name : constant String :=
-                    (if Linked_Root.Is_Valid
-                     then Linked_Root.Value.Release.Constant_Reference.Name_Str
-                     else Requested_Crate); -- This may still be ""
-            Linked_Vers : constant String :=
-                            (if Linked_Root.Is_Valid
-                             then Linked_Root.Value.Release.Constant_Reference
-                                                           .Version.Image & "_"
-                             else "");
-            Linked_Path : constant Any_Path :=
-                            Directories.Find_Relative_Path
-                              (Parent => Ada.Directories.Current_Directory,
-                               Child  =>
-                                 This.Pins_Dir
-                                 / (Linked_Name & "_"
-                                    & Linked_Vers
-                                    & Depl.Base.Short_Unique_Id));
-         begin
-            --  Fail if we needed to detect a crate and none found
-
-            if Linked_Name = "" and Requested_Crate = "" then
-               Raise_Checked_Error
-                 ("No crate specified and none found at remote.");
-            end if;
-
-            --  Fail if we detected a crate not matching the requested one
-
-            if Requested_Crate /= ""
-              and then Linked_Name /= ""
-              and then Requested_Crate /= Linked_Name
-            then
-               Raise_Checked_Error
-                 ("Requested and retrieved crates do not match: "
-                  & Requested_Crate & " /= " & Linked_Name);
-            end if;
-
-            --  Fail if we are adding a crate that is already a dependency
-
-            if not Must_Depend and then
-              (for some Dep
-                 of This.Release.Constant_Reference.Flat_Dependencies =>
-                 Dep.Crate.As_String = Linked_Name)
-            then
-               Raise_Checked_Error
-                 ("Cannot continue because crate is already a dependency: "
-                  & Linked_Name);
-            end if;
-
-            --  Everything OK, keep the release
-
-            if not GNAT.OS_Lib.Is_Directory
-              (Adirs.Containing_Directory (Linked_Path))
-            then
-               Adirs.Create_Path (Adirs.Containing_Directory (Linked_Path));
-            end if;
-
-            if not GNAT.OS_Lib.Is_Directory (Linked_Path) then
-               Ada.Directories.Rename (Temp.Filename, Linked_Path);
-            end if;
-
-            --  Return the solution using the downloaded sources. For that,
-            --  we create a remote link, and use either the dependency we
-            --  were given (already in the manifest), or else the one found
-            --  at the remote. The version will be narrowed down during the
-            --  post-processing in `alr with`.
-
-            declare
-               New_Link : constant Externals.Softlinks.External :=
-                            Externals.Softlinks.New_Remote
-                              (Origin => Depl.Base,
-                               Path   => Linked_Path);
-               New_Dep  : constant Conditional.Dependencies :=
-                            (if Dependency.Is_Empty
-                             then Conditional.New_Dependency
-                               (+Linked_Name, Semver.Extended.Any)
-                             else Dependency);
-            begin
-               return Remote_Pin_Result'
-                 (Crate_Length => Linked_Name'Length,
-                  Crate        => Linked_Name,
-                  New_Dep      => New_Dep,
-                  Solution     => This.Solution
-                                      .Depending_On (New_Dep.Value)
-                                      .Linking (+Linked_Name, New_Link));
-            end;
-         end;
-      end;
-   end Pinned_To_Remote;
 
    --------------------
    -- Write_Manifest --
