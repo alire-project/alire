@@ -389,19 +389,20 @@ package body Alire.User_Pins is
       use TOML;
       Table : constant TOML_Value := Create_Table;
    begin
+
+      --  Pins going into the lockfile require all the information; we must
+      --  also notify the loader not to report unexpected keys
+
       if This.Is_Remote then
          Table.Set (Keys.URL,
                     Create_String
                       (URL (This)));
-      end if;
 
-      if Commit (This).Has_Element then
-         Table.Set (Keys.Commit,
-                    Create_String (Commit (This).Element.Ptr.all));
+         if Commit (This).Has_Element then
+            Table.Set (Keys.Commit,
+                       Create_String (Commit (This).Element.Ptr.all));
+         end if;
       end if;
-
-      --  Pins going into the lockfile require all this information; we must
-      --  also notify the loader not to report unexpected keys
 
       Table.Set (Keys.Path,
                  Create_String (VFS.Attempt_Portable (Path (This))));
