@@ -19,18 +19,23 @@ package body Alire.User_Pins.Maps is
                          & Table.Kind'Image);
 
             for Key of Table.Keys loop
-               if Result.Contains (+(+Key)) then
-                  This.Checked_Error ("pin for crate " & (+Key)
-                                      & " is specified more than once");
-               end if;
+               declare
+                  Crate : constant Crate_Name := +(+Key);
+               begin
+                  if Result.Contains (Crate) then
+                     This.Checked_Error ("pin for crate " & (+Crate)
+                                         & " is specified more than once");
+                  end if;
 
-               --  Obtain a single pin
+                  --  Obtain a single pin
 
-               Result.Insert (+(+Key),
-                              User_Pins.From_TOML
-                                (This.Descend
-                                   (Value   => Table.Get (Key),
-                                    Context => +Key)));
+                  Result.Insert (Crate,
+                                 User_Pins.From_TOML
+                                   (Crate,
+                                    This.Descend
+                                      (Value   => Table.Get (Key),
+                                       Context => +Key)));
+               end;
             end loop;
          end;
       end loop;

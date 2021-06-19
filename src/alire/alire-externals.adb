@@ -3,7 +3,6 @@ with AAA.Enum_Tools;
 with Alire.Crates;
 with Alire.Externals.From_Output;
 with Alire.Externals.From_System;
-with Alire.Externals.Softlinks;
 with Alire.Externals.Unindexed;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
@@ -36,7 +35,6 @@ package body Alire.Externals is
         (case Kind is
             when Hint           => Unindexed.External'
                                      (External with null record),
-            when Softlink       => Softlinks.From_TOML (From),
             when System         => From_System.From_TOML (From),
             when Version_Output => From_Output.From_TOML (From));
 

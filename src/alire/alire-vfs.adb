@@ -1,5 +1,24 @@
 package body Alire.VFS is
 
+   ----------------------
+   -- Attempt_Portable --
+   ----------------------
+
+   function Attempt_Portable (Path : Any_Path;
+                              From : Any_Path := Directories.Current)
+                              return String
+   is
+      Relative : constant Any_Path :=
+                   Directories.Find_Relative_Path (Parent => From,
+                                                   Child  => Path);
+   begin
+      if Check_Absolute_Path (Relative) then
+         return Path;
+      else
+         return String (To_Portable (Relative));
+      end if;
+   end Attempt_Portable;
+
    --------------
    -- Read_Dir --
    --------------

@@ -11,9 +11,6 @@ package Alire.User_Pins.Maps is
 
    type Map is new Pin_Maps.Map with null record;
 
-   type Reference (Element : access Map) is tagged limited null record
-     with Implicit_Dereference => Element;
-
    function From_TOML (This : TOML_Adapters.Key_Queue) return Map
      with Pre => This.Unwrap.Kind in TOML.TOML_Array
      or else raise Checked_Error

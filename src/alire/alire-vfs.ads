@@ -1,5 +1,6 @@
 with Ada.Containers.Vectors;
 
+with Alire.Directories;
 private with Alire.Utils;
 
 private with GNATCOLL.OS.Constants;
@@ -12,6 +13,12 @@ package Alire.VFS is
 
    function Is_Portable (Path : Any_Path) return Boolean;
    --  Say if the path may be safely cast to a portable path
+
+   function Attempt_Portable (Path : Any_Path;
+                              From : Any_Path := Directories.Current)
+                              return String;
+   --  If Path seen from From is relative, convert to portable, else return
+   --  as-is
 
    function To_Portable (Path : Relative_Path) return Portable_Path;
 

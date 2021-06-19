@@ -5,7 +5,6 @@ with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
-with Alire.Externals.Softlinks;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
@@ -180,16 +179,6 @@ package body Alire.Roots is
       Round     : Natural := 0;
    begin
 
-      --  Begin by retrieving any broken remote, so it is ready for actions
-
-      for Dep of This.Solution.Links loop
-         if This.Solution.State (Dep.Crate).Link.Is_Remote and then
-           This.Solution.State (Dep.Crate).Link.Is_Broken
-         then
-            This.Solution.State (Dep.Crate).Link.Deploy.Assert;
-         end if;
-      end loop;
-
       --  Prepare environment for any post-fetch actions. This must be done
       --  after the lockfile on disk is written, since the root will read
       --  dependencies from there.
@@ -305,7 +294,7 @@ package body Alire.Roots is
       -- Add_Pins --
       --------------
 
-      procedure Add_Pins (Root : in out Roots.Root) is
+      procedure Add_Pins (This : in out Roots.Root) is
 
          ---------------------
          -- Add_Version_Pin --
@@ -336,7 +325,7 @@ package body Alire.Roots is
          ------------------
 
          procedure Add_Link_Pin (Crate : Crate_Name;
-                                 Pin   : in out User_Pins.Pin)
+                                 Pin   : User_Pins.Pin)
          is
          begin
 
@@ -347,7 +336,6 @@ package body Alire.Roots is
                 (Allowed.Is_Empty or else Allowed.Contains (Crate))
             then
                Pin.Deploy (Crate  => Crate,
-                           Under  => This.Pins_Dir,
                            Online => Exhaustive);
             end if;
 
@@ -358,11 +346,11 @@ package body Alire.Roots is
 
             if Sol.Depends_On (Crate)
               and then Sol.State (Crate).Is_Linked
-              and then Sol.State (Crate).Link.Path /= Pin.Relative_Path
+              and then Sol.State (Crate).Link.Path /= Pin.Path
             then
                Raise_Checked_Error
                  ("Conflicting pin links for crate " & TTY.Name (Crate)
-                  & ": Crate " & TTY.Name (Release (Root).Name)
+                  & ": Crate " & TTY.Name (Release (This).Name)
                   & " wants a link to " & TTY.URL (Pin.Path)
                   & ", but a previous link exists to "
                   & TTY.URL (Sol.State (Crate).Link.Path));
@@ -402,16 +390,9 @@ package body Alire.Roots is
                        (Crate, Semantic_Versioning.Extended.Any));
                end if;
 
-               declare
-                  Pin_Path : constant String := Pin.Path;
-                  --  Some nasty bug is happening in which if I don't copy this
-                  --  path and instead use Pin.Path directly in the call below,
-                  --  garbage is received in the immediate Linking argument.
-               begin
-                  Sol := Sol
-                    .Resetting (Crate)
-                    .Linking (Crate, String'(Pin_Path));
-               end;
+               Sol := Sol
+                 .Resetting (Crate)
+                 .Linking (Crate, Pin);
 
                --  Add possible pins at the link target
 
@@ -429,12 +410,12 @@ package body Alire.Roots is
          --  process, so they're available for use immediately. All link pins
          --  have a proper path once this process completes.
 
-         for I in Release (Root).Pins.Iterate loop
+         for I in Release (This).Pins.Iterate loop
             declare
                use all type User_Pins.Kinds;
                use User_Pins.Maps.Pin_Maps;
                Crate : constant Crate_Name := Key (I);
-               Pin   : User_Pins.Pin renames Release (Root).Pins.Reference (I);
+               Pin   : constant User_Pins.Pin := Element (I);
             begin
                case Pin.Kind is
                   when To_Version =>
@@ -443,7 +424,7 @@ package body Alire.Roots is
                      Add_Link_Pin (Crate, Pin);
                end case;
 
-               Trace.Detail ("Crate " & TTY.Name (Release (Root).Name)
+               Trace.Detail ("Crate " & TTY.Name (Release (This).Name)
                              & " adds pin " & Sol.State (Crate).TTY_Image);
             end;
          end loop;
@@ -472,7 +453,7 @@ package body Alire.Roots is
 
       --  Recursively add all pins from this workspace and other linked ones
 
-      Add_Pins (Root => This);
+      Add_Pins (This);
 
       if Sol /= This.Solution then
          Solutions.Diffs.Between (This.Solution, Sol).Print
@@ -554,12 +535,12 @@ package body Alire.Roots is
          end loop;
       end loop;
 
-      --  Add paths for pinned folders
+      --  Add paths for raw pinned folders
 
-      for Link of This.Solution.Links loop
-         for Path of This.Solution.State (Link.Crate).Link.Project_Paths loop
-            Paths.Include (Path); -- These are absolute
-         end loop;
+      for Linked of This.Solution.Links loop
+         if not This.Solution.State (Linked.Crate).Has_Release then
+            Paths.Include (This.Solution.State (Linked.Crate).Link.Path);
+         end if;
       end loop;
 
       --  To match the output of root crate paths and Ada.Directories full path
@@ -638,8 +619,8 @@ package body Alire.Roots is
    -- Release --
    -------------
 
-   function Release (This : Root) return Releases.Reference
-   is (Element => This.Release.Constant_Reference.Element);
+   function Release (This : Root) return Releases.Release
+   is (This.Release.Element);
 
    -------------
    -- Release --
@@ -661,7 +642,6 @@ package body Alire.Roots is
                           Crate : Crate_Name)
                           return Any_Path
    is
-      package Adirs renames Ada.Directories;
       Deps_Dir : constant Any_Path := This.Dependencies_Dir;
    begin
       if This.Release.Element.Name = Crate then
@@ -669,7 +649,7 @@ package body Alire.Roots is
       elsif This.Solution.State (Crate).Is_Solved then
          return Deps_Dir / Release (This, Crate).Unique_Folder;
       elsif This.Solution.State (Crate).Is_Linked then
-         return Adirs.Full_Name (This.Solution.State (Crate).Link.Path);
+         return This.Solution.State (Crate).Link.Path;
       else
          raise Program_Error with "release must be either solved or linked";
       end if;
@@ -760,7 +740,8 @@ package body Alire.Roots is
 
    procedure Sync_From_Manifest (This   : in out Root;
                                  Silent : Boolean;
-                                 Force  : Boolean := False) is
+                                 Force  : Boolean := False)
+   is
       Old_Solution : constant Solutions.Solution := This.Solution;
    begin
       if Force or else This.Is_Lockfile_Outdated then
@@ -779,7 +760,6 @@ package body Alire.Roots is
 
          This.Sync_Dependencies (Old    => Old_Solution,
                                  Silent => Silent);
-
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -794,15 +774,25 @@ package body Alire.Roots is
          Trace.Info (""); -- Separate changes from what caused the sync
       end if;
 
-      if (for some Rel of This.Solution.Releases =>
-               This.Solution.State (Rel.Name).Is_Solved and then
-               not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
-        or else
-          (for some Dep of This.Solution.Links =>
-             This.Solution.State (Dep.Crate).Link.Is_Remote and then
+      --  The following checks may only succeed if the user has deleted
+      --  something externally, or after running `alr clean --cache`.
+
+      --  Detect remote pins that are not at the expected location
+
+      if (for some Dep of This.Solution.Links =>
              This.Solution.State (Dep.Crate).Link.Is_Broken)
       then
-         Trace.Info ("Detected missing dependencies, updating workspace...");
+         This.Sync_Pins_From_Manifest (Exhaustive => False);
+      end if;
+
+      --  Detect dependencies that are not at the expected location
+
+      if (for some Rel of This.Solution.Releases =>
+            This.Solution.State (Rel.Name).Is_Solved and then
+            not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
+      then
+         Trace.Detail
+           ("Detected missing dependency sources, updating workspace...");
          --  Some dependency is missing; redeploy. Should we clean first ???
          This.Deploy_Dependencies;
       end if;

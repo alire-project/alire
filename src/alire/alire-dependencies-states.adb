@@ -93,9 +93,10 @@ package body Alire.Dependencies.States is
             when Hinted => null;
 
             when Linked =>
-               Data.Target.Hold
-                 (Externals.Softlinks.From_TOML
-                    (From.Descend
+               Data.Target := To_Holder
+                 (User_Pins.From_TOML
+                    (Crate,
+                     From.Descend
                          (Value   => From.Checked_Pop (Keys.Link, TOML_Table),
                           Context => Keys.Link)));
                Data.Opt_Rel := Optional_Release (From_TOML.Crate,

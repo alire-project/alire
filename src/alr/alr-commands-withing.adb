@@ -78,6 +78,7 @@ package body Alr.Commands.Withing is
    procedure Add_Softlink (Cmd      : in out Command;
                            Dep_Spec : String;
                            Path     : String) is
+      pragma Unreferenced (Path);
       New_Dep : constant Alire.Dependencies.Dependency :=
                   Alire.Dependencies.From_String (Dep_Spec);
    begin
@@ -96,11 +97,12 @@ package body Alr.Commands.Withing is
          Old_Deps     : constant Conditional.Dependencies :=
                           Cmd.Root.Release.Dependencies;
          Old_Solution : constant Solutions.Solution := Cmd.Root.Solution;
-         New_Solution : constant Solutions.Solution :=
-                          Old_Solution
-                            .Depending_On (New_Dep)
-                            .Linking (Crate => New_Dep.Crate,
-                                      Path  => Path);
+         New_Solution : constant Solutions.Solution := Old_Solution;
+                          --  Old_Solution
+                          --    .Depending_On (New_Dep)
+                          --    .Linking (Crate => New_Dep.Crate,
+                          --              Path  => Path);
+                          --  TODO: remove this dead code in PR fixing alr with
       begin
 
          --  Prevent double-add

@@ -8,8 +8,6 @@ with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
-with TOML;
-
 package body Alire.User_Pins is
 
    package TTY renames Alire.Utils.TTY;
@@ -21,24 +19,26 @@ package body Alire.User_Pins is
       Version : constant String := "version";
    end Keys;
 
+   ---------------
+   -- Is_Broken --
+   ---------------
+
+   function Is_Broken (This : Pin) return Boolean
+   is (not Ada.Directories.Exists (Path (This))
+       or else Ada.Directories.Kind (Path (This))
+               not in Ada.Directories.Directory);
+
    ------------
    -- Deploy --
    ------------
 
-   procedure Deploy (This   : in out Pin;
+   procedure Deploy (This   : Pin;
                      Crate  : Crate_Name;
-                     Under  : Any_Path;
                      Online : Boolean)
    is
       use Ada.Strings.Unbounded;
-      use Directories.Operators;
 
-      Folder : constant String :=
-                 (+Crate) &
-                 (if This.Is_Remote and then This.Commit /= ""
-                  then "_" & Origins.Short_Commit (+This.Commit)
-                  else "");
-      Destination : constant String := Under / Folder;
+      Destination : constant String := Path (This);
 
       --------------
       -- Checkout --
@@ -109,12 +109,10 @@ package body Alire.User_Pins is
          return;
       end if;
 
-      This.Local_Path := +Ada.Directories.Full_Name (Destination);
-
       --  Don't check out an already existing commit pin, or a non-update
       --  branch pin
 
-      if Ada.Directories.Exists (Destination)
+      if Ada.Directories.Exists (Path (This))
         and then
           (This.Commit /= "" or else not Online)
       then
@@ -167,20 +165,31 @@ package body Alire.User_Pins is
 
    end Deploy;
 
+   -------------------------
+   -- TTY_URL_With_Commit --
+   -------------------------
+
+   function TTY_URL_With_Commit (This : Pin) return String
+   is (TTY.URL (URL (This))
+       & (if Commit (This).Has_Element
+         then "#" & TTY.Emph (Commit (This).Element.Ptr.all)
+         else ""));
+
    -------------------
    -- Relative_Path --
    -------------------
 
-   function Relative_Path (This : Pin) return Any_Path
-   is (Directories.Find_Relative_Path
-       (Parent => Directories.Current,
-        Child  => +This.Path));
+   function Relative_Path (This : Pin; Color : Boolean := True) return Any_Path
+   is (if Color
+       then TTY.URL (Directories.Find_Relative_Path_To (Path (This)))
+       else Directories.Find_Relative_Path_To (Path (This)));
 
    ---------------
    -- From_TOML --
    ---------------
 
-   function From_TOML (This : TOML_Adapters.Key_Queue) return Pin is
+   function From_TOML (Crate : Crate_Name;
+                       This  : TOML_Adapters.Key_Queue) return Pin is
 
       ----------------
       -- From_Table --
@@ -251,6 +260,20 @@ package body Alire.User_Pins is
                                "invalid commit: " & (+Result.Commit));
                end if;
 
+               declare
+                  use type UString;
+                  use Directories.Operators;
+                  Deploy_Folder : constant String :=
+                                    (+Crate) &
+                  (if Result.Commit /= ""
+                   then "_" & Origins.Short_Commit (+Result.Commit)
+                   else "");
+               begin
+                  Result.Local_Path :=
+                    +Ada.Directories.Full_Name
+                      ("alire" / "cache" / "pins" / Deploy_Folder);
+               end;
+
                This.Report_Extra_Keys;
             end return;
 
@@ -284,5 +307,25 @@ package body Alire.User_Pins is
          Log_Exception (E);
          Raise_Checked_Error ("Malformed semantic version in pin");
    end From_TOML;
+
+   -------------
+   -- To_TOML --
+   -------------
+
+   function To_TOML (This : Pin) return TOML.TOML_Value is
+      use TOML;
+      Table : constant TOML_Value := Create_Table;
+   begin
+      Table.Set (Keys.Path,
+                 Create_String (VFS.Attempt_Portable (Path (This))));
+
+      if This.Is_Remote then
+         Table.Set (Keys.URL,
+                    Create_String
+                      (URL (This)));
+      end if;
+
+      return Table;
+   end To_TOML;
 
 end Alire.User_Pins;

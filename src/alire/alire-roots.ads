@@ -90,7 +90,7 @@ package Alire.Roots is
    --  solution in this root. This includes all releases' paths and any linked
    --  directories.
 
-   function Release (This : Root) return Releases.Reference;
+   function Release (This : Root) return Releases.Release;
    --  Retrieve a reference to the root release. Modifications to this release
    --  are not stored to its manifest; it is only useful to modify it to
    --  cache information for the current run (e.g., where a link is actually

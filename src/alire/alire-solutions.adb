@@ -295,12 +295,12 @@ package body Alire.Solutions is
 
    function Linking (This  : Solution;
                      Crate : Crate_Name;
-                     Link  : Externals.Softlinks.External)
+                     Link  : Dependencies.States.Softlink)
                      return Solution
    is (Solved       => True,
        Dependencies =>
           This.Dependencies.Including
-         (This.State (Crate).Linking (Link)));
+            (This.State (Crate).Linking (Link)));
 
    ------------------
    -- New_Solution --
@@ -420,10 +420,10 @@ package body Alire.Solutions is
                   & (if Detailed
                      then " (origin: "
                           & (if Dep.Is_Linked
-                             then Dep.Link.TTY_Relative_Path
+                             then Dep.Link.Relative_Path
                                   & (if Dep.Link.Is_Remote
                                      then " from "
-                                         & Dep.Link.Remote.TTY_URL_With_Commit
+                                         & Dep.Link.TTY_URL_With_Commit
                                      else "") -- no remote
                              else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
                           & ")" -- origin completed
@@ -453,10 +453,10 @@ package body Alire.Solutions is
                     else "")
                   & (if Detailed and then Dep.Is_Linked
                      then " (origin: "
-                         & Dep.Link.TTY_Relative_Path
+                         & Dep.Link.Relative_Path
                          & (if Dep.Link.Is_Remote
                             then " from "
-                                 & Dep.Link.Remote.TTY_URL_With_Commit
+                                 & Dep.Link.TTY_URL_With_Commit
                             else "") -- no remote
                          & ")"  -- origin completed
                      else ""),  -- no details
@@ -579,9 +579,9 @@ package body Alire.Solutions is
             if Dep.Is_Linked then
                Table
                  .Append (TTY.Name (Dep.Crate))
-                 .Append (TTY.URL ("file:") & Dep.Link.TTY_Relative_Path)
+                 .Append (TTY.URL ("file:") & Dep.Link.Relative_Path)
                  .Append (if Dep.Link.Is_Remote
-                          then Dep.Link.Remote.TTY_URL_With_Commit
+                          then Dep.Link.TTY_URL_With_Commit
                           else "")
                  .New_Row;
             elsif Dep.Is_Pinned then

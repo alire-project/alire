@@ -28,26 +28,6 @@ package body Alire.Pinning is
             .Pinning (Crate, Version);
    end Pin;
 
-   ------------
-   -- Pin_To --
-   ------------
-
-   function Pin_To (Crate        : Crate_Name;
-                    URL          : String;
-                    Dependencies : Conditional.Dependencies;
-                    Environment  : Properties.Vector;
-                    Solution     : Solutions.Solution)
-                    return Solutions.Solution
-   --  Just in case it was already pinned to a version, we remove that hidden
-   --  restriction, and re-solve so any old constraints in the dependencies
-   --  caused by the old pin disappear.
-   is (Solver.Resolve
-       (Dependencies,
-        Environment,
-        Solution
-        .Unpinning (Crate)
-        .Linking (Crate, URL)));
-
    -----------
    -- Unpin --
    -----------
