@@ -540,21 +540,6 @@ package body Alr.Commands is
                                      Sync : Boolean := True) is
       use Alire;
 
-      ------------------------------
-      -- Notify_Of_Initialization --
-      ------------------------------
-
-      procedure Notify_Of_Initialization is
-         --  Tell the user we are automatically computing the first solution
-         --  for the workspace. We don't want to say this when no Sync, as a
-         --  manually requested update is coming.
-      begin
-         if Sync then
-            Trace.Info
-              ("No dependency solution found, updating workspace...");
-         end if;
-      end Notify_Of_Initialization;
-
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
@@ -612,9 +597,6 @@ package body Alr.Commands is
                      Cmd.Requires_Full_Index (Strict => False);
                      Checked.Sync_From_Manifest (Silent => True);
                      return;
-                  else
-                     Notify_Of_Initialization;
-                     --  And fall through
                   end if;
 
                else
@@ -635,9 +617,6 @@ package body Alr.Commands is
                Ada.Directories.Delete_File (Checked.Lock_File);
 
             when Lockfiles.Missing =>
-               --  Notify the user. This may happen e.g. after first cloning.
-               Notify_Of_Initialization;
-
                --  For the record, with the full path
                Trace.Debug
                  ("Workspace has no lockfile at " & Checked.Lock_File);

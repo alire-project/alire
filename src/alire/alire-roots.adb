@@ -351,6 +351,8 @@ package body Alire.Roots is
                            Online => Exhaustive);
             end if;
 
+            --  TODO: TEST FOR RECURSIVE REMOTE PINS
+
             --  At this point, we can detect that a link is conflicting with
             --  another one.
 
@@ -768,7 +770,7 @@ package body Alire.Roots is
          --  This would imply to store the timestamps in our lockfile for
          --  linked crates with a manifest.
 
-         Put_Info ("Detected changes in manifest, synchronizing workspace...");
+         Put_Info ("Synchronizing workspace...");
 
          This.Sync_Pins_From_Manifest (Exhaustive => False);
          --  Normally we do not want to re-fetch remote pins, so we request

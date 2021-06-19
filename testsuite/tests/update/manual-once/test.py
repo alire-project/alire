@@ -21,7 +21,7 @@ def prepare_crate(name):
     info = os.stat("alire.toml")
     os.utime("alire.lock", (info.st_atime, info.st_mtime - 1))
 
-warning_text = "Detected changes in manifest, synchronizing workspace"
+warning_text = "Synchronizing workspace"
 
 # Test when directly doing an update. Should report no changes.
 prepare_crate("test1")
