@@ -322,12 +322,10 @@ package body Alire.User_Pins is
                      Error_When_Relative_Native =>
                        "Pin relative paths must use forward slashes " &
                        " to be portable");
-                  --  TODO: TEST FOR THE PREVIOUS CHECK
 
                   if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
                      This.Checked_Error ("Pin path is not a valid directory: "
                                          & (+Result.Path));
-                     --  TODO: TEST FOR THE PREVIOUS CHECK
                   end if;
                end;
             end return;
