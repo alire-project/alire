@@ -197,14 +197,20 @@ package body Alire.User_Pins is
 
    end Deploy;
 
-   -------------------------
-   -- TTY_URL_With_Commit --
-   -------------------------
+   ----------------------------
+   -- TTY_URL_With_Reference --
+   ----------------------------
 
-   function TTY_URL_With_Commit (This : Pin) return String
+   function TTY_URL_With_Reference (This     : Pin;
+                                    Detailed : Boolean := False)
+                                    return String
    is (TTY.URL (URL (This))
        & (if Commit (This).Has_Element
-         then "#" & TTY.Emph (Commit (This).Element.Ptr.all)
+         then "#" & TTY.Emph (if Detailed
+                              then +This.Commit
+                              else Origins.Short_Commit (+This.Commit))
+         elsif Branch (This).Has_Element
+         then "#" & TTY.Emph (+This.Branch)
          else ""));
 
    ----------

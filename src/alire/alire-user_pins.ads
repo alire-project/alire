@@ -61,8 +61,11 @@ package Alire.User_Pins is
    function Commit (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
 
-   function TTY_URL_With_Commit (This : Pin) return String
+   function TTY_URL_With_Reference (This     : Pin;
+                                    Detailed : Boolean := False)
+                                    return String
      with Pre => This.Is_Remote;
+   --  returns https://blah[#commit|#branch], when existing
 
    procedure Deploy (This   : in out Pin;
                      Crate  : Crate_Name;
