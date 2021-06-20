@@ -97,7 +97,7 @@ package body Alire.User_Pins is
       -- Update --
       ------------
 
-      procedure Update is
+      procedure Update (Branch : String) is
       begin
          Trace.Detail ("Checking out pin " & TTY.Name (Crate) & " at "
                        & TTY.URL (Destination));
@@ -115,9 +115,10 @@ package body Alire.User_Pins is
             return;
          end if;
 
-         --  Finally update
+         --  Finally update. In case the branch has just been changed by the
+         --  user in the manifest, the following call wil also take care of it.
 
-         if not VCSs.Git.Handler.Update (Destination).Success then
+         if not VCSs.Git.Handler.Update (Destination, Branch).Success then
             Raise_Checked_Error
               ("Update of repository at " & TTY.URL (Destination)
                & " failed, re-run with -vv -d for details");
@@ -138,8 +139,12 @@ package body Alire.User_Pins is
       --  branch pin
 
       if Ada.Directories.Exists (Destination)
+        and then not Online
         and then
-          (This.Commit /= "" or else not Online)
+          (This.Commit /= ""         -- Static checkout, no need to re-checkout
+           or else This.Branch = ""  -- Default branch, same
+           or else VCSs.Git.Handler.Branch (Destination) = This.Branch)
+           --  Branch is explicit and matches the one on disk, same
       then
          Trace.Debug ("Skipping deployment of already existing pin at "
                       & TTY.URL (Destination));
@@ -153,10 +158,12 @@ package body Alire.User_Pins is
          Checkout (Commit => +This.Commit);
 
       elsif Ada.Directories.Exists (Destination) then
-         Update;
+         Update (+This.Branch);
+         --  Branch may still be "" if none given
 
       else
-         Checkout;
+         Checkout (Branch => +This.Branch);
+         --  Branch may still be "" if none given
 
       end if;
 

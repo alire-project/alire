@@ -330,12 +330,12 @@ package body Alire.Roots is
          is
          begin
 
-            --  Just in case this is a remote pin, deploy it
+            --  Just in case this is a remote pin, deploy it. Deploy is
+            --  conservative (unless Online), but it will detect local
+            --  inexpensive changes like a missing checkout, changed commit
+            --  or branch.
 
-            if Exhaustive
-              or else
-                (Allowed.Is_Empty or else Allowed.Contains (Crate))
-            then
+            if Allowed.Is_Empty or else Allowed.Contains (Crate) then
                Pin.Deploy (Crate  => Crate,
                            Under  => Pins_Dir,
                            Online => Exhaustive);
