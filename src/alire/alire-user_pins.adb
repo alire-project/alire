@@ -265,6 +265,9 @@ package body Alire.User_Pins is
                "Boolean expected");
 
             if This.Contains (Keys.URL) then
+
+               --  A complete remote pin
+
                return Result : Pin := (Kind => To_Git, others => <>) do
                   Result.URL :=
                     +This.Checked_Pop (Keys.URL,
@@ -277,9 +280,16 @@ package body Alire.User_Pins is
                   if This.Contains (Keys.Commit) then
                      Result.Commit :=
                        +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
+                  elsif This.Contains (Keys.Branch) then
+                     Result.Branch :=
+                       +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                   end if;
                end return;
+
             else
+
+               --  Just a local pin
+
                return Result : Pin := (Kind => To_Path, others => <>) do
                   Result.Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
@@ -440,6 +450,9 @@ package body Alire.User_Pins is
          if Commit (This).Has_Element then
             Table.Set (Keys.Commit,
                        Create_String (Commit (This).Element.Ptr.all));
+         elsif Branch (This).Has_Element then
+            Table.Set (Keys.Branch,
+                       Create_String (Branch (This).Element.Ptr.all));
          end if;
       end if;
 
