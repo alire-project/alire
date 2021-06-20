@@ -43,10 +43,7 @@ package Alire.User_Pins is
      with Pre => This.Kind in Kinds_With_Path;
    --  May raise if a Git pin hasn't been yet deployed (see Deploy proc). Even
    --  if paths can be given as relative, for our internal processing we can
-   --  simplify things by always relying on absolute paths. As these paths are
-   --  not re-written to disk, there is no harm in doing this. Also, showing
-   --  absolute paths to the user is less confusing that relative paths from
-   --  unclear locations.
+   --  simplify things by always relying on absolute paths.
 
    function Relative_Path (This : Pin; Color : Boolean := True) return Any_Path
      with Pre => This.Kind in Kinds_With_Path;
@@ -78,7 +75,7 @@ package Alire.User_Pins is
 
    --  Pin loading from manifest
 
-   function From_TOML (This  : TOML_Adapters.Key_Queue) return Pin;
+   function From_TOML (This : TOML_Adapters.Key_Queue) return Pin;
    --  Expects the rhs of a crate = <pin> entry. The rhs is always a table.
    --  Must be called with PWD being the same as of the manifest that is being
    --  loaded, so relative pins are correct.

@@ -98,6 +98,8 @@ package body Alr.Commands.Withing is
                           Cmd.Root.Release.Dependencies;
          Old_Solution : constant Solutions.Solution := Cmd.Root.Solution;
          New_Solution : constant Solutions.Solution := Old_Solution;
+         --  The following is slated for refactoring in the follow-up PR. Kept
+         --  momentarily for reference.
                           --  Old_Solution
                           --    .Depending_On (New_Dep)
                           --    .Linking (Crate => New_Dep.Crate,

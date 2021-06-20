@@ -29,9 +29,6 @@ package Alire.Releases is
 
    type Release (<>) is new Interfaces.Yamlable with private;
 
-   type Reference (Element : access Release) is tagged limited null record with
-     Implicit_Dereference => Element;
-
    function "<" (L, R : Release) return Boolean;
 
    function Default_Properties return Conditional.Properties;
