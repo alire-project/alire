@@ -288,6 +288,89 @@ package body Alire.User_Pins is
             end if;
          end From_Lockfile;
 
+         ------------------
+         -- Load_To_Path --
+         ------------------
+
+         function Load_To_Path return Pin is
+            Result : Pin :=
+                       (Kind => To_Path,
+                        Path => <>);
+            User_Path : constant String :=
+                          This.Checked_Pop (Keys.Path,
+                                            TOML_String).As_String;
+         begin
+            This.Report_Extra_Keys;
+
+            --  Check that the path was stored in portable format or as
+            --  absolute path.
+
+            if not Check_Absolute_Path (User_Path) and then
+              not VFS.Is_Portable (User_Path)
+            then
+               This.Recoverable_Error
+                 ("Pin relative paths must use forward slashes "
+                  & "to be portable: " & Utils.TTY.URL (User_Path));
+            end if;
+
+            --  Make the path absolute if not already, and store it
+
+            Result.Path :=
+              +Utils.User_Input.To_Absolute_From_Portable
+              (User_Path                  => User_Path,
+               Error_When_Relative_Native =>
+                 "Pin relative paths must use forward slashes " &
+                 " to be portable");
+
+            if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+               This.Checked_Error ("Pin path is not a valid directory: "
+                                   & (+Result.Path));
+            end if;
+
+            return Result;
+         end Load_To_Path;
+
+         -----------------
+         -- Load_Remote --
+         -----------------
+
+         function Load_Remote return Pin is
+            Result : Pin :=
+                       (Kind       => To_Git,
+                        URL        => +This.Checked_Pop (Keys.URL,
+                          TOML_String).As_String,
+                        Branch     => <>,
+                        Commit     => <>,
+                        Local_Path => <>);
+         begin
+            if This.Contains (Keys.Branch)
+              and then This.Contains (Keys.Commit)
+            then
+               This.Checked_Error
+                 ("cannot specify both a branch and a commit");
+            end if;
+
+            --  TEST: simultaneous branch/commit
+
+            if This.Contains (Keys.Commit) then
+               Result.Commit :=
+                 +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
+               This.Assert (+Result.Commit in Origins.Git_Commit,
+                            "invalid commit: " & (+Result.Commit));
+            elsif This.Contains (Keys.Branch) then
+               Result.Branch :=
+                 +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
+               This.Assert (+Result.Branch /= "",
+                            "branch cannot be the empty string");
+            end if;
+
+            --  TEST: empty branch value
+
+            This.Report_Extra_Keys;
+
+            return Result;
+         end Load_Remote;
+
       begin
          if This.Contains (Keys.Internal) then
             return Result : constant Pin := From_Lockfile do
@@ -301,78 +384,10 @@ package body Alire.User_Pins is
                  (This.Checked_Pop (Keys.Version, TOML_String).As_String));
 
          elsif This.Contains (Keys.Path) then
-            return Result : Pin :=
-              (Kind => To_Path,
-               Path => <>)
-            do
-               declare
-                  User_Path : constant String :=
-                                This.Checked_Pop (Keys.Path,
-                                                  TOML_String).As_String;
-               begin
-                  This.Report_Extra_Keys;
-
-                  --  Check that the path was stored in portable format or as
-                  --  absolute path.
-
-                  if not Check_Absolute_Path (User_Path) and then
-                    not VFS.Is_Portable (User_Path)
-                  then
-                     This.Recoverable_Error
-                       ("Pin relative paths must use forward slashes "
-                        & "to be portable: " & Utils.TTY.URL (User_Path));
-                  end if;
-
-                  --  Make the path absolute if not already, and store it
-
-                  Result.Path :=
-                    +Utils.User_Input.To_Absolute_From_Portable
-                    (User_Path                  => User_Path,
-                     Error_When_Relative_Native =>
-                       "Pin relative paths must use forward slashes " &
-                       " to be portable");
-
-                  if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
-                     This.Checked_Error ("Pin path is not a valid directory: "
-                                         & (+Result.Path));
-                  end if;
-               end;
-            end return;
+            return Load_To_Path;
 
          elsif This.Contains (Keys.URL) then
-            return Result : Pin :=
-              (Kind       => To_Git,
-               URL        => +This.Checked_Pop (Keys.URL,
-                                                TOML_String).As_String,
-               Branch     => <>,
-               Commit     => <>,
-               Local_Path => <>)
-            do
-               if This.Contains (Keys.Branch)
-                 and then This.Contains (Keys.Commit)
-               then
-                  This.Checked_Error
-                    ("cannot specify both a branch and a commit");
-               end if;
-
-               --  TEST: simultaneous branch/commit
-
-               if This.Contains (Keys.Commit) then
-                  Result.Commit :=
-                    +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
-                  This.Assert (+Result.Commit in Origins.Git_Commit,
-                               "invalid commit: " & (+Result.Commit));
-               elsif This.Contains (Keys.Branch) then
-                     Result.Branch :=
-                       +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
-                     This.Assert (+Result.Branch /= "",
-                                  "branch cannot be the empty string");
-               end if;
-
-               --  TEST: empty branch value
-
-               This.Report_Extra_Keys;
-            end return;
+            return Load_Remote;
 
          else
             Trace.Error ("Unexpected key in pin, got:");
