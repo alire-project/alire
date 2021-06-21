@@ -52,8 +52,8 @@ package body Alire.Roots.Optional is
                     Outcome_Success
                       (Roots.New_Root
                          (R    => Releases.From_Manifest (Crate_File,
-                          Manifest.Local,
-                          Strict => True),
+                                                          Manifest.Local,
+                                                          Strict => True),
                           Path => Ada.Directories.Full_Name (Path),
                           Env  => Alire.Root.Platform_Properties))
                   do

@@ -1,5 +1,3 @@
-with Ada.Directories;
-
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
@@ -13,6 +11,7 @@ with Alire.Solutions.Diffs;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.VCSs.Git;
 
 with GNAT.OS_Lib;
 
@@ -1099,33 +1098,64 @@ package body Alire.Roots is
    ------------------------
 
    procedure Confirm_And_Commit (Original, Edited : in out Root) is
-      Dep_Diff : constant Dependencies.Diffs.Diff :=
-                   Dependencies.Diffs.Between
-                     (Former => Release (Original)
-                                  .Dependencies (Original.Environment),
-                      Latter => Release (Edited)
-                                  .Dependencies (Edited.Environment));
    begin
+      Edited.Reload_Manifest;
+      --  Ensures the modifications to the manifest are taken into account for
+      --  the solution we are about to compute
 
-      --  First show requested changes
+      declare
+         Dep_Diff : constant Dependencies.Diffs.Diff :=
+                      Dependencies.Diffs.Between
+                        (Former => Release (Original)
+                         .Dependencies (Original.Environment),
+                         Latter => Release (Edited)
+                         .Dependencies (Edited.Environment));
+      begin
 
-      if Dep_Diff.Contains_Changes then
-         Trace.Info ("Requested changes:");
-         Trace.Info ("");
-         Dep_Diff.Print;
-      end if;
+         --  First show requested changes
 
-      --  Then show the effects on the solution
+         if Dep_Diff.Contains_Changes then
+            Trace.Info ("Requested changes:");
+            Trace.Info ("");
+            Dep_Diff.Print;
+         end if;
 
-      if Alire.Utils.User_Input.Confirm_Solution_Changes
+         --  Compute the new solution
+
+         Edited.Set (Solution => Edited.Compute_Update);
+
+         --  Then show the effects on the solution
+
+         if Alire.Utils.User_Input.Confirm_Solution_Changes
            (Original.Solution.Changes (Edited.Solution),
             Changed_Only => not Alire.Detailed)
-      then
-         Edited.Commit;
-      else
-         Trace.Info ("No changes applied.");
-      end if;
+         then
+            Edited.Commit;
+         else
+            Trace.Info ("No changes applied.");
+         end if;
+      end;
    end Confirm_And_Commit;
+
+   ---------------------
+   -- Reload_Manifest --
+   ---------------------
+
+   procedure Reload_Manifest (This : in out Root) is
+   begin
+
+      --  Load our manifest
+
+      This.Release.Replace_Element
+        (Releases.From_Manifest
+           (Crate_File (This),
+            Manifest.Local,
+            Strict => True));
+
+      --  And prepare pins for any subsequent update
+
+      This.Sync_Pins_From_Manifest (Exhaustive => False);
+   end Reload_Manifest;
 
    --------------
    -- Finalize --
@@ -1149,5 +1179,201 @@ package body Alire.Roots is
       Finalize_File (+This.Manifest);
       Finalize_File (+This.Lockfile);
    end Finalize;
+
+   ---------------------------
+   -- MANIFEST MANIPULATION --
+   ---------------------------
+
+   procedure Add_Dependency (This : in out Root;
+                             Dep  : Dependencies.Dependency)
+   is
+   begin
+      Alire.Manifest.Append (Crate_File (This), Dep);
+   end Add_Dependency;
+
+   -----------------------
+   -- Remove_Dependency --
+   -----------------------
+
+   procedure Remove_Dependency (This  : in out Root;
+                                Crate : Crate_Name;
+                                Unpin : Boolean := True) is
+   begin
+      raise Unimplemented;
+   end Remove_Dependency;
+
+   ---------------------
+   -- Add_Version_Pin --
+   ---------------------
+
+   procedure Add_Version_Pin (This    : in out Root;
+                              Crate   : Crate_Name;
+                              Version : String)
+   is
+      V : constant Semver.Version := Semver.Parse (Version);
+   begin
+      if not This.Solution.Depends_On (Crate) then
+         This.Add_Dependency
+           (Dependencies.New_Dependency
+              (Crate,
+               Semver.Updatable (V)));
+      end if;
+
+      --  Remove any previous pin for this crate
+
+      This.Remove_Pin (Crate);
+
+      --  And add the new pin
+
+      Alire.Manifest.Append (Crate_File (This),
+                             Crate,
+                             User_Pins.New_Version (V));
+   end Add_Version_Pin;
+
+   --------------------------
+   -- Add_Pin_Preparations --
+   --------------------------
+
+   function Add_Pin_Preparations (This  : in out Root;
+                                  Crate : Alire.Optional.Crate_Name;
+                                  Path  : Any_Path)
+                                  return Crate_Name
+   is
+      Pin_Root : constant Optional.Root := Optional.Detect_Root (Path);
+   begin
+      if Crate.Is_Empty and then not Pin_Root.Is_Valid then
+         Raise_Checked_Error
+           ("No crate name given and link target is not an Alire crate:"
+            & ASCII.LF & " Please provide an explicit crate name.");
+      end if;
+
+      --  No need to check that Pin_Root.Name and Crate agree, as this will be
+      --  done by the pin loader.
+
+      declare
+         --  At this point we can be sure of the crate name, so we shadow the
+         --  original argument.
+         Crate : constant Crate_Name :=
+                   Add_Pin_Preparations.Crate
+                                       .Or_Else (Pin_Root.Value.Name);
+      begin
+         if not This.Solution.Depends_On (Crate) then
+            This.Add_Dependency
+              (Dependencies.New_Dependency
+                 (Crate,
+                  (if Pin_Root.Is_Valid
+                   then Pin_Root.Updatable_Dependency.Versions
+                   else Semver.Extended.Any)));
+         end if;
+
+         --  Remove any previous pin for this crate
+
+         This.Remove_Pin (Crate);
+
+         return Crate;
+      end;
+   end Add_Pin_Preparations;
+
+   ------------------
+   -- Add_Path_Pin --
+   ------------------
+
+   procedure Add_Path_Pin (This  : in out Root;
+                           Crate : Alire.Optional.Crate_Name;
+                           Path  : Any_Path)
+   is
+      Added : constant Crate_Name := Add_Pin_Preparations (This, Crate, Path);
+   begin
+      --  And add the new pin
+
+      Alire.Manifest.Append (Crate_File (This),
+                             Added,
+                             User_Pins.New_Path (Path));
+   end Add_Path_Pin;
+
+   --------------------
+   -- Add_Remote_Pin --
+   --------------------
+
+   procedure Add_Remote_Pin (This   : in out Root;
+                             Crate  : Alire.Optional.Crate_Name;
+                             Origin : URL;
+                             Commit : String := "";
+                             Branch : String := "")
+   is
+      Temp_Pin : Directories.Temp_File;
+      --  We'll need to fetch the remote to a temporary location to verify
+      --  crate matches. If all goes well, we will keep the download so there
+      --  is no need to redownload on next run.
+   begin
+      if not VCSs.Git.Handler.Clone
+               (From   => Origin & (if Commit /= ""
+                                       then "#" & Commit
+                                       else ""),
+                Into   => Temp_Pin.Filename,
+                Branch => Branch, -- May be empty for default branch
+                Depth  => 1).Success
+      then
+         Raise_Checked_Error
+           ("Checkout of repository at " & TTY.URL (Origin)
+            & " failed, re-run with -vv -d for details");
+      end if;
+
+      --  We can proceed as if it where a local pin now
+
+      declare
+         Crate : constant Crate_Name :=
+                   Add_Pin_Preparations (This,
+                                         Add_Remote_Pin.Crate,
+                                         Temp_Pin.Filename);
+         New_Pin : constant User_Pins.Pin :=
+                     User_Pins.New_Remote (URL    => Origin,
+                                           Commit => Commit,
+                                           Branch => Branch);
+
+         Destination : constant Absolute_Path :=
+                         New_Pin.Deploy_Path (Crate, This.Pins_Dir);
+
+         package Adirs renames Ada.Directories;
+      begin
+
+         --  Put in place the checkout, as it is valid if we reached this point
+
+         if not Adirs.Exists (This.Pins_Dir) then
+            Adirs.Create_Path (This.Pins_Dir);
+         end if;
+
+         if Adirs.Exists (Destination) then
+            --  Remove a previous pin deployment, which may be obsolete
+            Adirs.Delete_Tree (Destination);
+         end if;
+
+         Adirs.Rename (Old_Name => Temp_Pin.Filename,
+                       New_Name => Destination);
+
+         --  Finally add the new pin to the manifest
+
+         Alire.Manifest.Append (Crate_File (This),
+                                Crate,
+                                User_Pins.New_Remote (URL    => Origin,
+                                                      Commit => Commit,
+                                                      Branch => Branch));
+      end;
+   end Add_Remote_Pin;
+
+   ----------------
+   -- Remove_Pin --
+   ----------------
+
+   procedure Remove_Pin (This : in out Root; Crate : Crate_Name)
+   is
+   begin
+      if This.Solution.Depends_On (Crate)
+        and then This.Solution.State (Crate).Is_User_Pinned
+      then
+         Alire.Manifest.Remove_Pin (Lock_File (This),
+                                    Crate);
+      end if;
+   end Remove_Pin;
 
 end Alire.Roots;

@@ -82,6 +82,14 @@ package Alire.User_Pins is
      with Pre => This.Is_Remote;
    --  returns https://blah[#commit|#branch], when existing
 
+   function Deploy_Path (This  : Pin;
+                         Crate : Crate_Name;
+                         Under : Any_Path)
+                         return Absolute_Path
+     with Pre => This.Kind in Kinds_With_Path;
+   --  Says where this pin would be deployed, without doing nothing else. Under
+   --  is the umbrella folder for all pins of a root.
+
    procedure Deploy (This   : in out Pin;
                      Crate  : Crate_Name;
                      Under  : Any_Path;

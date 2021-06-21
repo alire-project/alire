@@ -103,6 +103,25 @@ package body Alire.User_Pins is
        or else Ada.Directories.Kind (Path (This))
                not in Ada.Directories.Directory);
 
+   -----------------
+   -- Deploy_Path --
+   -----------------
+
+   function Deploy_Path (This  : Pin;
+                         Crate : Crate_Name;
+                         Under : Any_Path)
+                         return Absolute_Path
+   is
+      use Directories.Operators;
+   begin
+      return Ada.Directories.Full_Name
+        (Under
+         / (Crate.As_String
+            & (if This.Is_Remote and then This.Commit /= ""
+               then "_" & Origins.Short_Commit (+This.Commit)
+               else "")));
+   end Deploy_Path;
+
    ------------
    -- Deploy --
    ------------
@@ -113,16 +132,8 @@ package body Alire.User_Pins is
                      Online : Boolean)
    is
       use Ada.Strings.Unbounded;
-      use Directories.Operators;
 
-      Folder : constant String :=
-                 (+Crate)
-               & (if This.Is_Remote and then This.Commit /= ""
-                  then "_" & Origins.Short_Commit (+This.Commit)
-                  else "");
-
-      Destination : constant String :=
-                      Ada.Directories.Full_Name (Under / Folder);
+      Destination : constant Absolute_Path := This.Deploy_Path (Crate, Under);
 
       --------------
       -- Checkout --

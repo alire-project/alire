@@ -16,6 +16,11 @@ package Alire.Utils.Text_Files is
 
    function Lines (This : aliased in out File) return access String_Vector;
 
+   procedure Append_Lines (File       : Any_Path;
+                           Lines      : String_Vector;
+                           Backup_Dir : Any_Path := "");
+   --  Add the given lines to the end of the file
+
 private
 
    type File (Length, Backup_Len : Natural) is

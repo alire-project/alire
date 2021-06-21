@@ -16,7 +16,8 @@ package body Alire.Manifest is
    ------------
 
    procedure Append (Name : Any_Path;
-                     Deps : Dependencies.Containers.List) is
+                     Dep  : Dependencies.Dependency)
+   is
       Replacer : constant Directories.Replacer :=
                    Directories.New_Replacement
                      (Name,
@@ -24,17 +25,12 @@ package body Alire.Manifest is
                       Backup_Dir => Paths.Working_Folder_Inside_Root);
       File     : File_Type;
    begin
-      if Deps.Is_Empty then
-         return;
-      end if;
 
       Open (File, Append_File, Replacer.Editable_Name);
 
-      for Dep of Deps loop
-         New_Line (File);
-         Put_Line (File, "[[" & TOML_Keys.Depends_On & "]]" & Warning);
-         Put_Line (File, Dep.Manifest_Image & Warning);
-      end loop;
+      New_Line (File);
+      Put_Line (File, "[[" & TOML_Keys.Depends_On & "]]" & Warning);
+      Put_Line (File, Dep.Manifest_Image & Warning);
 
       Close (File);
 
@@ -55,6 +51,18 @@ package body Alire.Manifest is
          end if;
 
          raise; -- Let it be processed upwards, if necessary
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append (File  : Any_Path;
+                     Crate : Crate_Name;
+                     Pin   : User_Pins.Pin)
+   is
+   begin
+      raise Unimplemented;
    end Append;
 
    --------------
@@ -85,21 +93,21 @@ package body Alire.Manifest is
    ------------
 
    procedure Remove (Name : Any_Path;
-                     Deps : Dependencies.Containers.List)
+                     Dep  : Crate_Name)
    is
 
       ------------
       -- Remove --
       ------------
 
-      procedure Remove (Dep   : Dependencies.Dependency;
+      procedure Remove (Dep   : Crate_Name;
                         Lines : in out Utils.String_Vector)
       --  Remove given Dep from Lines, or warn if impossible
       is
          Enter_Marker : constant String := "[[" & TOML_Keys.Depends_On & "]]";
          --  We must see a line like this before being able to remove a dep.
 
-         Target       : constant String := (+Dep.Crate) & "=""";
+         Target       : constant String := Dep.As_String & "=""";
          --  A line starting with Target is a candidate for deletion
 
          Armed        : Boolean := False;
@@ -246,9 +254,6 @@ package body Alire.Manifest is
                       Backup     => True,
                       Backup_Dir => Paths.Working_Folder_Inside_Root);
    begin
-      if Deps.Is_Empty then
-         return;
-      end if;
 
       declare
          File : constant Utils.Text_Files.File :=
@@ -256,9 +261,7 @@ package body Alire.Manifest is
                                          Backup => False);
                                          -- Replacer takes care of backup
       begin
-         for Dep of Deps loop
-            Remove (Dep, File.Lines.all);
-         end loop;
+         Remove (Dep, File.Lines.all);
       end;
 
       --  Attempt loading of the new file as a double check. This should never
@@ -270,5 +273,16 @@ package body Alire.Manifest is
 
       Replacer.Replace; -- All went well, keep the changes
    end Remove;
+
+   ----------------
+   -- Remove_Pin --
+   ----------------
+
+   procedure Remove_Pin (File : Any_Path;
+                         Pin  : Crate_Name)
+   is
+   begin
+      raise Unimplemented;
+   end Remove_Pin;
 
 end Alire.Manifest;
