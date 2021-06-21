@@ -26,6 +26,8 @@ package Alire.User_Pins is
 
    type Pin (Kind : Kinds) is tagged private;
 
+   function Image (This : Pin) return String;
+
    function Is_Remote (This : Pin) return Boolean;
    --  A pin to a remote source such as git, source archives, etc
 

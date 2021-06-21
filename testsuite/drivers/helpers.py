@@ -66,12 +66,32 @@ def dir_separator():
     return '/' if os.name != 'nt' else '\\'
 
 
+def touch(file):
+    """
+    Create an almost empty file
+    """
+    with open(file, "w") as f:
+        f.write("\n")
+
+
 # Add a 'with "something";' at the top of a project file
 def with_project(file, project):
     with open(file, 'r+') as f:
         content = f.read()
         f.seek(0, 0)
         f.write('with "{}";'.format(project) + '\n' + content)
+
+
+def git_head(path="."):
+    """
+    Return the head commit in a git repo
+    """
+    start_cwd = os.getcwd()
+    os.chdir(path)
+    head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],
+                      capture_output=True).stdout.split()[0]
+    os.chdir(start_cwd)
+    return head_commit.decode()
 
 
 def init_git_repo(path):

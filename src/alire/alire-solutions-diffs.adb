@@ -155,9 +155,10 @@ package body Alire.Solutions.Diffs is
                         "pin=" & Latter.Link.Relative_Path);
             --  Changed remote
             if Latter.Link.Is_Remote and then
-              (not Former.Link.Is_Remote or else
-               Former.Link.TTY_URL_With_Reference /=
-                 Latter.Link.TTY_URL_With_Reference)
+              (Has_Former and then
+                 (not Former.Link.Is_Remote or else
+                  Former.Link.TTY_URL_With_Reference /=
+                    Latter.Link.TTY_URL_With_Reference))
             then
                Add_Change (Chg, Icon (Pinned),
                            "url=" & Latter.Link.TTY_URL_With_Reference);

@@ -23,6 +23,20 @@ package body Alire.User_Pins is
       Version  : constant String := "version";
    end Keys;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (This : Pin) return String
+   is (case This.Kind is
+          when To_Version => "version=" & TTY.Version (This.Version.Image),
+          when To_Path    => "path=" & TTY.URL (+This.Path),
+          when To_Git     =>
+            (if Path (This) /= ""
+             then "path=" & TTY.URL (Path (This)) & ","
+             else "")
+            & ("url=" & This.TTY_URL_With_Reference));
+
    ---------------
    -- Is_Broken --
    ---------------
