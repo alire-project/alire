@@ -32,12 +32,18 @@ package Alire.User_Pins is
    function Is_Remote (This : Pin) return Boolean;
    --  A pin to a remote source such as git, source archives, etc
 
-   --  Version attributes
+   --  Version pins
+
+   function New_Version (Version : Semantic_Versioning.Version) return Pin
+     with Post => New_Version'Result.Kind = To_Version;
 
    function Version (This : Pin) return Semantic_Versioning.Version
      with Pre => This.Kind = To_Version;
 
-   --  Local path attributes
+   --  Local path pins
+
+   function New_Path (Path : Any_Path) return Pin
+     with Post => New_Path'Result.Kind = To_Path;
 
    function Is_Broken (This : Pin) return Boolean
      with Pre => This.Kind in Kinds_With_Path;
@@ -53,7 +59,13 @@ package Alire.User_Pins is
    --  Convenience to show to users. May still return an absolute path for
    --  paths in another drive on Windows. May include TTY sequences.
 
-   --  Remote attributes
+   --  Remote pins
+
+   function New_Remote (URL : Alire.URL;
+                        Commit : String := "";
+                        Branch : String := "")
+                        return Pin
+     with Post => New_Remote'Result.Kind = To_Git;
 
    function URL (This : Pin) return Alire.URL
      with Pre => This.Is_Remote;
@@ -100,6 +112,11 @@ package Alire.User_Pins is
    function To_TOML (This : Pin) return TOML.TOML_Value
      with Pre => This.Kind in Kinds_With_Path;
    --  Used by the lockfile
+
+   function To_Manifest_Line (This  : Pin;
+                              Crate : Crate_Name)
+                              return String;
+   --  Returns the single line that describes this pin in a manifest
 
 private
 
