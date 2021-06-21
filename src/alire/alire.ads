@@ -9,7 +9,7 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "1.1.0-dev+branchpins";
+   Version : constant String := "1.1.0-dev+pincmdline";
    --  1.1.0-dev: begin post-1.0 changes
    --  1.0.0:     no changes since rc3
    --  1.0.0-rc3: added help colors PR
@@ -97,6 +97,7 @@ package Alire with Preelaborate is
 
    function "+" (P : Crate_Name) return String;
    function "+" (P : String)  return Crate_Name;
+   function To_Name (S : String) return Crate_Name renames "+";
 
    subtype Description_String is String with Dynamic_Predicate =>
      Description_String'Length <= Max_Description_Length;

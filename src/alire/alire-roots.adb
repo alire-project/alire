@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
+with Alire.Dependencies.Diffs;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
@@ -1092,6 +1093,39 @@ package body Alire.Roots is
       Commit (+This.Lockfile, Lock_File (Regular_Root));
       This.Lockfile := +"";
    end Commit;
+
+   ------------------------
+   -- Confirm_And_Commit --
+   ------------------------
+
+   procedure Confirm_And_Commit (Original, Edited : in out Root) is
+      Dep_Diff : constant Dependencies.Diffs.Diff :=
+                   Dependencies.Diffs.Between
+                     (Former => Release (Original)
+                                  .Dependencies (Original.Environment),
+                      Latter => Release (Edited)
+                                  .Dependencies (Edited.Environment));
+   begin
+
+      --  First show requested changes
+
+      if Dep_Diff.Contains_Changes then
+         Trace.Info ("Requested changes:");
+         Trace.Info ("");
+         Dep_Diff.Print;
+      end if;
+
+      --  Then show the effects on the solution
+
+      if Alire.Utils.User_Input.Confirm_Solution_Changes
+           (Original.Solution.Changes (Edited.Solution),
+            Changed_Only => not Alire.Detailed)
+      then
+         Edited.Commit;
+      else
+         Trace.Info ("No changes applied.");
+      end if;
+   end Confirm_And_Commit;
 
    --------------
    -- Finalize --

@@ -2,8 +2,10 @@ private with AAA.Caches.Files;
 private with Ada.Finalization;
 
 with Alire.Containers;
+with Alire.Dependencies;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
+with Alire.Optional;
 with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
@@ -63,6 +65,11 @@ package Alire.Roots is
    procedure Commit (This : in out Root);
    --  Renames the manifest and lockfile to their regular places, making this
    --  root a regular one to all effects.
+
+   procedure Confirm_And_Commit (Original, Edited : in out Root);
+   --  Present differences in the solutions of Original and Edited and ask
+   --  the user to accept, in which case Edited.Commit is called. Edited is
+   --  expected to be a temporary copy of Original.
 
    procedure Set (This     : in out Root;
                   Solution : Solutions.Solution) with
@@ -206,6 +213,40 @@ package Alire.Roots is
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
+
+   --  Modification of the manifest -- these are equivalent to hand edition
+
+   procedure Add_Dependency (This : in out Root;
+                             Dep  : Dependencies.Dependency);
+   --  Add a dependency
+
+   procedure Remove_Dependency (This : in out Root; Crate : Crate_Name);
+   --  Remove any dependency/pin on crate. If neither exist, it will raise.
+
+   procedure Add_Version_Pin (This    : in out Root;
+                              Crate   : Crate_Name;
+                              Version : String);
+   --  Add a version pin; if the root doesn't depend on it previously, the
+   --  dependency will be added too.
+
+   procedure Add_Path_Pin (This  : in out Root;
+                           Crate : Optional.Crate_Name;
+                           Path  : Any_Path);
+   --  Add a pin to a folder; if Crate.Is_Empty then Path must point to an
+   --  Alire workspace for which it can be deduced. If Crate.Has_Element, the
+   --  crates should match. If the root does not depend already on the crate,
+   --  a dependency will be added.
+
+   procedure Add_Remote_Pin (This   : in out Root;
+                             Crate  : Optional.Crate_Name;
+                             Origin : URL;
+                             Commit : String := "";
+                             Branch : String := "")
+     with Pre => not (Commit /= "" and then Branch /= "");
+   --  Add a pin to a remote repo, with optional Commit xor Branch. if
+   --  Crate.Is_Empty then Path must point to an Alire workspace for which it
+   --  can be deduced. If Crate.Has_Element, the crates should match. If the
+   --  root does not depend already on the crate, a dependency will be added.
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
