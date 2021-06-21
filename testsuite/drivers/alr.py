@@ -212,6 +212,14 @@ def alr_manifest():
     return "alire.toml"
 
 
+def alr_touch_manifest(path="."):
+    """
+    Make the lockfile older than the manifest, to ensure editions to the
+    manifest are detected.
+    """
+    os.utime(os.path.join(path, "alire.lock"), (0, 0))
+
+
 def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
     """
     Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use
