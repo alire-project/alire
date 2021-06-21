@@ -22,6 +22,8 @@ package body Alire.Roots is
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
+   use type UString;
+
    -------------------
    -- Build_Context --
    -------------------
@@ -641,10 +643,13 @@ package body Alire.Roots is
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
-     (Environment     => Env,
+     (Ada.Finalization.Controlled with
+      Environment     => Env,
       Path            => +Path,
       Release         => Containers.To_Release_H (R),
-      Cached_Solution => <>);
+      Cached_Solution => <>,
+      Lockfile        => <>,
+      Manifest        => <>);
 
    ----------
    -- Name --
@@ -703,17 +708,23 @@ package body Alire.Roots is
    -- Lock_File --
    ---------------
 
-   function Lock_File (This : Root) return Absolute_Path is
-     (Lockfiles.File_Name
-        (This.Release.Constant_Reference.Name,
-         +This.Path));
+   function Lock_File (This : Root) return Absolute_Path
+   is (if This.Lockfile /= ""
+       then +This.Lockfile
+       else Lockfiles.File_Name (+This.Path));
 
    ----------------
    -- Crate_File --
    ----------------
 
-   function Crate_File (This : Root) return Absolute_Path is
-     (Path (This) / Crate_File_Name);
+   function Crate_File (This : Root) return Absolute_Path
+   is (if This.Manifest /= ""
+       then +This.Manifest
+       else Path (This) / Crate_File_Name);
+
+   ---------------
+   -- Cache_Dir --
+   ---------------
 
    function Cache_Dir (This : Root) return Absolute_Path
    is (This.Working_Folder / "cache");
@@ -1029,5 +1040,80 @@ package body Alire.Roots is
       Release.Whenever (This.Environment)
              .To_File (This.Crate_File, Manifest.Local);
    end Write_Manifest;
+
+   --------------------
+   -- Temporary_Copy --
+   --------------------
+
+   function Temporary_Copy (This : in out Root) return Root is
+      Copy : Root := This;
+
+      Temp_Manifest : Directories.Temp_File;
+      Temp_Lockfile : Directories.Temp_File;
+   begin
+      Temp_Manifest.Keep;
+      Temp_Lockfile.Keep;
+
+      Copy.Manifest := +Temp_Manifest.Filename;
+      Ada.Directories.Copy_File (Source_Name => This.Crate_File,
+                                 Target_Name => +Copy.Manifest);
+
+      Copy.Lockfile := +Temp_Manifest.Filename;
+      Copy.Set (Solution => This.Solution);
+
+      return Copy;
+   end Temporary_Copy;
+
+   ------------
+   -- Commit --
+   ------------
+
+   procedure Commit (This : in out Root) is
+
+      Regular_Root : constant Root := Load_Root (Path (This));
+      --  We use a regular root to extract the paths of manifest and lockfile.
+      --  A bit overkill but entirely more readable than messing with paths.
+
+      procedure Commit (Source, Target : Absolute_File) is
+      begin
+         if Source /= "" then
+            Directories.Backup_If_Existing (Target,
+                                            Base_Dir => This.Working_Folder);
+            Ada.Directories.Copy_File (Source_Name => Source,
+                                       Target_Name => Target);
+            Ada.Directories.Delete_File (Source);
+         end if;
+      end Commit;
+
+   begin
+      Commit (+This.Manifest, Crate_File (Regular_Root));
+      This.Manifest := +"";
+
+      Commit (+This.Lockfile, Lock_File (Regular_Root));
+      This.Lockfile := +"";
+   end Commit;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (This : in out Root) is
+
+      procedure Finalize_File (File : Absolute_Path) is
+      begin
+         if File /= "" then
+            declare
+               Temp : Directories.Temp_File := Directories.With_Name (File)
+                 with Unreferenced;
+            begin
+               Trace.Debug ("Discarding temporary root file: " & File);
+            end;
+         end if;
+      end Finalize_File;
+
+   begin
+      Finalize_File (+This.Manifest);
+      Finalize_File (+This.Lockfile);
+   end Finalize;
 
 end Alire.Roots;

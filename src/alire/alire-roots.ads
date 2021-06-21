@@ -1,4 +1,5 @@
 private with AAA.Caches.Files;
+private with Ada.Finalization;
 
 with Alire.Containers;
 limited with Alire.Environment;
@@ -49,6 +50,19 @@ package Alire.Roots is
                       Env  : Properties.Vector) return Root;
    --  From existing release
    --  Path must point to the session folder (parent of alire metadata folder)
+
+   function Temporary_Copy (This : in out Root) return Root;
+   --  Obtain a temporary copy of This root, in the sense that it uses temp
+   --  names for the manifest and lockfile. The cache is shared, so any
+   --  pins/dependencies added to the temporary copy are ready if the copy is
+   --  commited (see Commit call). The intended use is to be able to modify
+   --  the temporary manifest, and finally compare the solutions between This
+   --  and its copy. This way, no logic remains in `alr with`/`alr pin`, for
+   --  example, as they simply edit the manifest as if the user did it by hand.
+
+   procedure Commit (This : in out Root);
+   --  Renames the manifest and lockfile to their regular places, making this
+   --  root a regular one to all effects.
 
    procedure Set (This     : in out Root;
                   Solution : Solutions.Solution) with
@@ -227,11 +241,17 @@ private
       Load   => Load_Solution,
       Write  => Write_Solution);
 
-   type Root is tagged record
+   type Root is new Ada.Finalization.Controlled with record
       Environment     : Properties.Vector;
       Path            : UString;
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
+
+      --  These values, if different from "", mean this is a temporary root
+      Manifest        : Unbounded_Absolute_Path;
+      Lockfile        : Unbounded_Absolute_Path;
    end record;
+
+   overriding procedure Finalize (This : in out Root);
 
 end Alire.Roots;

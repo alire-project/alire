@@ -391,7 +391,7 @@ package body Alr.Commands.Init is
       Alire.Lockfiles.Write
         ((Solution => Alire.Solutions.Empty_Valid_Solution),
          Alire.Lockfiles.File_Name
-           (+Name, String (Filesystem_String'(Directory.Full_Name))));
+           (String (Filesystem_String'(Directory.Full_Name))));
 
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;

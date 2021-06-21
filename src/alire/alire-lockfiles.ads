@@ -21,8 +21,7 @@ package Alire.Lockfiles is
    end record;
    --  Information that goes in the lockfile
 
-   function File_Name (Name     : Crate_Name;
-                       Root_Dir : Any_Path) return Any_Path;
+   function File_Name (Root_Dir : Any_Path) return Any_Path;
    --  Return the location /path/to/crate/dir/alire.lock, filename included,
    --  given the root directory where the crate is deployed.
 
