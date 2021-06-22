@@ -33,10 +33,6 @@ package body Alire.Roots.Editable is
       Original : Roots.Root renames This.Orig;
       Edited   : Roots.Root renames This.Edit;
    begin
-      Edited.Reload_Manifest;
-      --  Ensures the modifications to the manifest are taken into account for
-      --  the solution we are about to compute
-
       declare
          Dep_Diff : constant Dependencies.Diffs.Diff :=
                       Dependencies.Diffs.Between
@@ -80,6 +76,9 @@ package body Alire.Roots.Editable is
    is
    begin
       Alire.Manifest.Append (Crate_File (This.Edit), Dep);
+      This.Reload_Manifest;
+
+      This.Edit.Set (This.Solution.Depending_On (Dep));
    end Add_Dependency;
 
    -----------------------
@@ -119,6 +118,9 @@ package body Alire.Roots.Editable is
       Alire.Manifest.Append (Crate_File (This.Edit),
                              Crate,
                              User_Pins.New_Version (V));
+      This.Reload_Manifest;
+
+      This.Edit.Set (This.Solution.Pinning (Crate, V));
    end Add_Version_Pin;
 
    --------------------------
@@ -148,6 +150,7 @@ package body Alire.Roots.Editable is
                    Add_Pin_Preparations.Crate
                                        .Or_Else (Pin_Root.Value.Name);
       begin
+
          if not This.Solution.Depends_On (Crate) then
             This.Add_Dependency
               (Dependencies.New_Dependency
@@ -176,13 +179,23 @@ package body Alire.Roots.Editable is
       Abs_Path : constant Absolute_Path := Ada.Directories.Full_Name (Path);
       Added    : constant Crate_Name :=
                    Add_Pin_Preparations (This, Crate, Abs_Path);
+      New_Pin  : constant User_Pins.Pin := User_Pins.New_Path (Abs_Path);
    begin
       --  And add the new pin
 
       Alire.Manifest.Append
         (Crate_File (This.Edit),
          Added,
-         User_Pins.New_Path (Abs_Path));
+         New_Pin);
+      This.Reload_Manifest;
+
+      This.Edit.Set (This.Solution.Linking (Added, New_Pin));
+
+      --  Since link pins can bring in more dependencies, we must also Update.
+      --  Changes will be shown afterwards on the call to Confirm_And_Commit.
+      This.Edit.Update (Allow_All_Crates,
+                        Silent   => True,
+                        Interact => False);
    end Add_Path_Pin;
 
    --------------------
@@ -220,7 +233,7 @@ package body Alire.Roots.Editable is
                    Add_Pin_Preparations (This,
                                          Add_Remote_Pin.Crate,
                                          Temp_Pin.Filename);
-         New_Pin : constant User_Pins.Pin :=
+         New_Pin : User_Pins.Pin :=
                      User_Pins.New_Remote (URL    => Origin,
                                            Commit => Commit,
                                            Branch => Branch);
@@ -252,6 +265,20 @@ package body Alire.Roots.Editable is
                                 User_Pins.New_Remote (URL    => Origin,
                                                       Commit => Commit,
                                                       Branch => Branch));
+         This.Reload_Manifest;
+
+         --  And update lockfile. We need to "deploy" the pin (it's already
+         --  deployed) so the pin becomes aware of its own path.
+
+         New_Pin.Deploy (Crate, This.Edit.Pins_Dir, Online => False);
+         This.Edit.Set (This.Solution.Linking (Crate, New_Pin));
+
+         --  Since link pins can bring in more dependencies, we must
+         --  also Update. Changes will be shown afterwards on the call
+         --  to Confirm_And_Commit.
+         This.Edit.Update (Allow_All_Crates,
+                           Silent   => True,
+                           Interact => False);
       end;
    end Add_Remote_Pin;
 
@@ -267,8 +294,18 @@ package body Alire.Roots.Editable is
       then
          Alire.Manifest.Remove_Pin (Lock_File (This.Edit),
                                     Crate);
+         This.Edit.Set (This.Solution.User_Unpinning (Crate));
       end if;
    end Remove_Pin;
+
+   ---------------------
+   -- Reload_Manifest --
+   ---------------------
+
+   procedure Reload_Manifest (This : in out Root) is
+   begin
+      This.Edit.Reload_Manifest;
+   end Reload_Manifest;
 
    --------------
    -- Finalize --

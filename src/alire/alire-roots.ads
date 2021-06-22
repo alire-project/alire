@@ -127,9 +127,9 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   procedure Sync_From_Manifest (This   : in out Root;
-                                 Silent : Boolean;
-                                 Force  : Boolean := False);
+   procedure Sync_From_Manifest (This     : in out Root;
+                                 Interact : Boolean;
+                                 Force    : Boolean := False);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -137,7 +137,7 @@ package Alire.Roots is
    --  the manifest is newer than the lockfile, resolve again, as dependencies
    --  may have been edited by hand. 3) Ensure that releases in the lockfile
    --  are actually on disk (may be missing if cache was deleted, or the crate
-   --  was just cloned). When Silent, run as in non-interactive mode.
+   --  was just cloned). When not Interact, run as in non-interactive mode.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -146,8 +146,13 @@ package Alire.Roots is
    --  edited but the solution hasn't changed (and so the lockfile hasn't been
    --  regenerated). This way we know the lockfile is valid for the manifest.
 
-   procedure Update (This : in out Root;
-                     Allowed : Containers.Crate_Name_Sets.Set);
+   Allow_All_Crates : Containers.Crate_Name_Sets.Set renames
+                        Containers.Crate_Name_Sets.Empty_Set;
+
+   procedure Update (This     : in out Root;
+                     Allowed  : Containers.Crate_Name_Sets.Set;
+                     Silent   : Boolean;
+                     Interact : Boolean);
    --  Full update, explicitly requested. Will fetch/prune pins, update any
    --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
    --  empty set of crates to which the update will be limited. Everything is
@@ -157,11 +162,12 @@ package Alire.Roots is
    --  Download all dependencies not already on disk from This.Solution
 
    procedure Sync_Dependencies
-     (This    : in out Root;
-      Silent  : Boolean;
-      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Allowed : Containers.Crate_Name_Sets.Set :=
+     (This     : in out Root;
+      Silent   : Boolean; -- Do not output anything
+      Interact : Boolean; -- Request confirmation from the user
+      Old      : Solutions.Solution := Solutions.Empty_Invalid_Solution;
+      Options  : Solver.Query_Options := Solver.Default_Options;
+      Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is an

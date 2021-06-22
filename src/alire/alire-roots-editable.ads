@@ -32,6 +32,12 @@ package Alire.Roots.Editable is
 
    --  Edition procedures
 
+   procedure Reload_Manifest (This : in out Root);
+   --  If changes have been done to the manifest, either via the dependency/pin
+   --  modification procedures, or somehow outside alire after This was
+   --  created, we need to reload the manifest. The solution remains
+   --  untouched (use Update to recompute a fresh solution).
+
    procedure Add_Dependency (This : in out Root;
                              Dep  : Dependencies.Dependency)
      with Pre =>

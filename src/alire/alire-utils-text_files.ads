@@ -18,6 +18,7 @@ package Alire.Utils.Text_Files is
 
    procedure Append_Lines (File       : Any_Path;
                            Lines      : String_Vector;
+                           Backup     : Boolean  := True;
                            Backup_Dir : Any_Path := "");
    --  Add the given lines to the end of the file
 

@@ -1,12 +1,10 @@
 with Alire.Releases;
 with Alire.Solutions.Diffs;
-with Alire.Pinning;
 with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
 with Alr.Commands.User_Input;
-with Alr.Platform;
 
 with Semantic_Versioning;
 
@@ -52,12 +50,13 @@ package body Alr.Commands.Pin is
 
          Cmd.Requires_Full_Index;
 
-         Solution := Alire.Pinning.Pin
-           (Crate        => Name,
-            Version      => Version,
-            Dependencies => Cmd.Root.Release.Dependencies,
-            Environment  => Platform.Properties,
-            Solution     => Solution);
+         --  To be removed in upcoming PR, kept momentarily for reference
+         --  Solution := Alire.Pinning.Pin
+         --    (Crate        => Name,
+         --     Version      => Version,
+         --     Dependencies => Cmd.Root.Release.Dependencies,
+         --     Environment  => Platform.Properties,
+         --     Solution     => Solution);
 
       end Pin;
 
@@ -75,11 +74,12 @@ package body Alr.Commands.Pin is
 
          Cmd.Requires_Full_Index;
 
-         Solution := Alire.Pinning.Unpin
-           (Crate        => Name,
-            Dependencies => Cmd.Root.Release.Dependencies,
-            Environment  => Platform.Properties,
-            Solution     => Solution);
+         --  To be removed in upcoming PR, kept momentarily for reference
+         --  Solution := Alire.Pinning.Unpin
+         --    (Crate        => Name,
+         --     Dependencies => Cmd.Root.Release.Dependencies,
+         --     Environment  => Platform.Properties,
+         --     Solution     => Solution);
       end Unpin;
 
    begin

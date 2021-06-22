@@ -792,9 +792,9 @@ package body Alire.Roots is
    -- Sync_From_Manifest --
    ------------------------
 
-   procedure Sync_From_Manifest (This   : in out Root;
-                                 Silent : Boolean;
-                                 Force  : Boolean := False)
+   procedure Sync_From_Manifest (This     : in out Root;
+                                 Interact : Boolean;
+                                 Force    : Boolean := False)
    is
       Old_Solution : constant Solutions.Solution := This.Solution;
    begin
@@ -812,8 +812,9 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         This.Sync_Dependencies (Old    => Old_Solution,
-                                 Silent => Silent);
+         This.Sync_Dependencies (Old      => Old_Solution,
+                                 Silent   => False,
+                                 Interact => Interact);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -872,8 +873,10 @@ package body Alire.Roots is
    -- Update --
    ------------
 
-   procedure Update (This : in out Root;
-                     Allowed : Containers.Crate_Name_Sets.Set)
+   procedure Update (This     : in out Root;
+                     Allowed  : Containers.Crate_Name_Sets.Set;
+                     Silent   : Boolean;
+                     Interact : Boolean)
    is
       Old : constant Solutions.Solution := This.Solution;
    begin
@@ -885,9 +888,10 @@ package body Alire.Roots is
       --  And look for updates in dependencies
 
       This.Sync_Dependencies
-        (Allowed => Allowed,
-         Old     => Old,
-         Silent  => Alire.Utils.User_Input.Not_Interactive);
+        (Allowed  => Allowed,
+         Old      => Old,
+         Silent   => Silent,
+         Interact => Interact and not Alire.Utils.User_Input.Not_Interactive);
    end Update;
 
    --------------------
@@ -933,11 +937,12 @@ package body Alire.Roots is
    -----------------------
 
    procedure Sync_Dependencies
-     (This    : in out Root;
-      Silent  : Boolean;
-      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Allowed : Containers.Crate_Name_Sets.Set :=
+     (This     : in out Root;
+      Silent   : Boolean; -- Do not output anything
+      Interact : Boolean; -- Request confirmation from the user
+      Old      : Solutions.Solution := Solutions.Empty_Invalid_Solution;
+      Options  : Solver.Query_Options := Solver.Default_Options;
+      Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
    begin
@@ -989,16 +994,24 @@ package body Alire.Roots is
                --  In case manual changes in manifest do not modify the
                --  solution.
 
-               Trace.Info ("Nothing to update.");
+               if not Silent then
+                  Trace.Info ("Nothing to update.");
+               end if;
 
             else
 
                --  Show changes and optionally ask user to apply them
 
-               if Silent then
-                  Trace.Info
-                    ("Dependencies automatically updated as follows:");
-                  Diff.Print;
+               if not Interact then
+                  declare
+                     Level : constant Trace.Levels :=
+                               (if Silent then Debug else Info);
+                  begin
+                     Trace.Log
+                       ("Dependencies automatically updated as follows:",
+                        Level);
+                     Diff.Print (Level => Level);
+                  end;
                elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
                   Trace.Detail ("Update abandoned.");
                   return;
@@ -1098,18 +1111,13 @@ package body Alire.Roots is
 
    procedure Reload_Manifest (This : in out Root) is
    begin
-
       --  Load our manifest
 
       This.Release.Replace_Element
         (Releases.From_Manifest
-           (Crate_File (This),
+           (This.Crate_File,
             Manifest.Local,
             Strict => True));
-
-      --  And prepare pins for any subsequent update
-
-      This.Sync_Pins_From_Manifest (Exhaustive => False);
    end Reload_Manifest;
 
 end Alire.Roots;

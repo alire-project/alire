@@ -13,6 +13,8 @@ with Alire.URI;
 with Alr.OS_Lib;
 with Alr.Platform;
 
+with Semantic_Versioning.Extended;
+
 package body Alr.Commands.Withing is
 
    Switch_URL : constant String := "--use";
@@ -166,8 +168,15 @@ package body Alr.Commands.Withing is
       --  First, add the dependency if given
 
       if Num_Arguments = 1 then
-         Root.Add_Dependency
-           (Alire.Dependencies.From_String (Argument (1)));
+         declare
+            use type Semantic_Versioning.Extended.Version_Set;
+            Dep : constant Alire.Dependencies.Dependency :=
+                    Alire.Dependencies.From_String (Argument (1));
+         begin
+            if Dep.Versions /= Semantic_Versioning.Extended.Any then
+               Root.Add_Dependency (Dep);
+            end if;
+         end;
       end if;
 
       --  Now, add the pin to the path/remote

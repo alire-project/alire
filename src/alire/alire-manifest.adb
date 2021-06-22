@@ -1,5 +1,3 @@
-with Ada.Text_IO; use Ada.Text_IO;
-
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Paths;
@@ -18,39 +16,16 @@ package body Alire.Manifest is
    procedure Append (Name : Any_Path;
                      Dep  : Dependencies.Dependency)
    is
-      Replacer : constant Directories.Replacer :=
-                   Directories.New_Replacement
-                     (Name,
-                      Backup     => True,
-                      Backup_Dir => Paths.Working_Folder_Inside_Root);
-      File     : File_Type;
    begin
+      Utils.Text_Files.Append_Lines
+        (File       => Name,
+         Lines      =>
+           Utils.Empty_Vector
+         .Append ("[[" & TOML_Keys.Depends_On & "]]" & Warning)
+         .Append (Dep.Manifest_Image & Warning),
+         Backup     => False);
+      --  No need to backup, as this is done already on a copy of the manifest
 
-      Open (File, Append_File, Replacer.Editable_Name);
-
-      New_Line (File);
-      Put_Line (File, "[[" & TOML_Keys.Depends_On & "]]" & Warning);
-      Put_Line (File, Dep.Manifest_Image & Warning);
-
-      Close (File);
-
-      --  Attempt loading of the new file as a double check
-      if not Is_Valid (Replacer.Editable_Name, Local) then
-         raise Program_Error
-           with Errors.Set ("Addition of dependencies to manifest failed");
-      end if;
-
-      Replacer.Replace; -- All went well, keep the changes
-   exception
-      when E : others =>
-         Trace.Debug ("Exception attempting to append dependencies:");
-         Alire.Log_Exception (E);
-
-         if Is_Open (File) then
-            Close (File);
-         end if;
-
-         raise; -- Let it be processed upwards, if necessary
    end Append;
 
    ------------
@@ -62,7 +37,14 @@ package body Alire.Manifest is
                      Pin   : User_Pins.Pin)
    is
    begin
-      raise Unimplemented;
+      Utils.Text_Files.Append_Lines
+        (File       => File,
+         Lines      =>
+           Utils.Empty_Vector
+                .Append ("[[" & TOML_Keys.Pins & "]]" & Warning)
+                .Append (Pin.To_Manifest_Line (Crate) & " " & Warning),
+         Backup     => False);
+      --  No need to backup as this is done on a copy of the manifest already
    end Append;
 
    --------------

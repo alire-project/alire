@@ -10,9 +10,10 @@ package body Alire.Utils.Text_Files is
 
    procedure Append_Lines (File       : Any_Path;
                            Lines      : String_Vector;
+                           Backup     : Boolean  := True;
                            Backup_Dir : Any_Path := "")
    is
-      F : Text_Files.File := Load (File, Backup_Dir => Backup_Dir);
+      F : Text_Files.File := Load (File, Backup, Backup_Dir);
    begin
       F.Lines.Append (Lines);
    end Append_Lines;
