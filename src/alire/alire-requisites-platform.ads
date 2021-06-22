@@ -6,8 +6,6 @@ with Alire.Requisites.Cases;
 with Alire.Requisites.Comparables;
 with Alire.TOML_Keys;
 
-with TOML;
-
 package Alire.Requisites.Platform with Preelaborate is
 
    package Ps   renames Platforms;

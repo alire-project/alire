@@ -1,6 +1,5 @@
 with Alire.Interfaces;
 with Alire.Milestones;
-with Alire.TOML_Adapters;
 with Alire.Utils;
 
 with Semantic_Versioning.Basic;

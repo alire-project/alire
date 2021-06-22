@@ -2,7 +2,6 @@ with Alire.Index;
 with Alire.Origins.Deployers.System;
 with Alire.Platform;
 with Alire.Releases;
-with Alire.Requisites;
 with Alire.TOML_Adapters;
 with Alire.TOML_Expressions;
 with Alire.TOML_Keys;

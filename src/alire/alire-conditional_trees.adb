@@ -20,11 +20,11 @@ package body Alire.Conditional_Trees is
    function To_YAML (This : Tree) return String
    is (if This.Is_Empty
        then ""
-       else This.Constant_Reference.To_YAML);
+       else This.Element.To_YAML);
 
    overriding
    function To_YAML (V : Leaf_Node) return String is
-     (V.Value.Constant_Reference.To_YAML);
+     (V.Value.Element.To_YAML);
 
    overriding
    function To_YAML (V : Vector_Node) return String is
@@ -142,7 +142,7 @@ package body Alire.Conditional_Trees is
    function Image_One_Line (This : Tree) return String is
      (if This.Is_Empty
       then "(empty)"
-      else This.Constant_Reference.Image);
+      else This.Element.Image);
 
    ----------------------------
    -- All_But_First_Children --
@@ -665,7 +665,7 @@ package body Alire.Conditional_Trees is
 
       return Forward_Iterator'
         (Children =>
-           Vector_Node (Container.Constant_Reference.Element.all).Values);
+           Vector_Node (Container.Element).Values);
    end Iterate;
 
    ---------------------

@@ -1,4 +1,3 @@
-with Semantic_Versioning.Extended;
 
 package Alire.Solutions.Diffs is
 

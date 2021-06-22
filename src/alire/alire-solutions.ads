@@ -10,7 +10,7 @@ with Alire.TOML_Adapters;
 
 limited with Alire.Solutions.Diffs;
 
-with Semantic_Versioning.Extended;
+with Semantic_Versioning;
 
 with TOML;
 

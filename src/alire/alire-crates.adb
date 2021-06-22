@@ -5,6 +5,8 @@ with Alire.TOML_Load;
 with Alire.Utils.TTY;
 
 with TOML;
+with Alire.Requisites;
+with Alire.Properties;
 
 package body Alire.Crates is
 

@@ -1,15 +1,10 @@
 private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
-with Alire.Dependencies;
-with Alire.GPR;
-with Alire.Origins;
 with Alire.Crates.Containers;
 with Alire.Policies;
 with Alire.Properties;
-with Alire.Properties.Licenses;
 with Alire.Releases;
-with Alire.Requisites;
 with Alire.Utils;
 
 with Semantic_Versioning;

@@ -1,4 +1,3 @@
-with Alire.Releases;
 
 package Alire.Environment.Formatting is
 

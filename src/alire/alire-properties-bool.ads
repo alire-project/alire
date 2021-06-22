@@ -1,5 +1,4 @@
 with Alire.Conditional;
-with Alire.GPR;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.Utils;

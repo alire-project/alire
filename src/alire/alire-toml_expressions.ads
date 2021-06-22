@@ -1,5 +1,4 @@
 with Alire.TOML_Adapters;
-with Alire.Requisites;
 
 with TOML;
 

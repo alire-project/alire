@@ -16,6 +16,7 @@ with Alire.Utils.TTY;
 with Alire.Platform;
 
 with GNAT.IO;
+with Alire.Releases;
 
 package body Alire.Environment is
 

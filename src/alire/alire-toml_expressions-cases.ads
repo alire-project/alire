@@ -1,4 +1,5 @@
 with Alire.Conditional;
+with Alire.Requisites;
 with Alire.TOML_Adapters;
 
 package Alire.TOML_Expressions.Cases with Preelaborate is
