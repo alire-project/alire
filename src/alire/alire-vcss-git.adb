@@ -88,18 +88,21 @@ package body Alire.VCSs.Git is
                 Empty_Vector
                 & (if Log_Level < Trace.Info
                    then "-q"
-                   else "--progress")
-                & (if Depth /= 0
-                   then Empty_Vector & "--depth" & Utils.Trim (Depth'Image)
-                   else Empty_Vector)
-                & (if Branch /= ""
-                   then Empty_Vector & "--branch" & Branch
+                   else "--progress");
+      Depth_Opts : constant String_Vector :=
+                     (if Depth /= 0 and then Commit (From) = ""
+                      then Empty_Vector & "--depth" & Utils.Trim (Depth'Image)
+                                        & "--no-single-branch" -- but all tips
                    else Empty_Vector);
+      Branch_Opts : constant String_Vector :=
+                      (if Branch /= ""
+                       then Empty_Vector & "--branch" & Branch
+                       else Empty_Vector);
    begin
       Trace.Detail ("Checking out [git]: " & From);
 
       Run_Git (Empty_Vector & "clone" & "--recursive" &
-                 Extra & Repo (From) & Into);
+                 Extra & Branch_Opts & Depth_Opts & Repo (From) & Into);
 
       if Commit (From) /= "" then
          declare
@@ -393,8 +396,17 @@ package body Alire.VCSs.Git is
    function Update (This : VCS;
                     Repo : Directory_Path)
                     return Outcome
+   is (This.Update (Repo, Branch => ""));
+
+   ------------
+   -- Update --
+   ------------
+
+   function Update (This   : VCS;
+                    Repo   : Directory_Path;
+                    Branch : String)
+                    return Outcome
    is
-      pragma Unreferenced (This);
       Guard : Directories.Guard (Directories.Enter (Repo))
         with Unreferenced;
       Extra : constant String_Vector :=
@@ -403,7 +415,35 @@ package body Alire.VCSs.Git is
                  else Empty_Vector & "--progress");
    begin
 
-      Run_Git (Empty_Vector & "pull" & Extra & "--recurse-submodules");
+      --  Switch branch if changed
+
+      if Branch /= "" and then This.Branch (Repo) /= Branch then
+
+         Trace.Detail ("Detected branch change needed in git update at "
+                       & TTY.URL (Repo) & "; switching from "
+                       & TTY.Emph (This.Branch (Repo)) & " to "
+                       & TTY.Emph (Branch));
+
+         Run_Git (Empty_Vector & "fetch");
+         --  In case there are new remote branches
+
+         Run_Git (Empty_Vector
+                  & "checkout"
+                  & String'(This.Remote (Repo) & "/" & Branch)
+                  & "-B"
+                  & Branch
+                  & Extra
+                  & "--recurse-submodules");
+         --  Force overwrite any previous local same branch. Since we just
+         --  fetched, the checkout should be up to date and there's no need
+         --  to additionally pull.
+
+      else
+
+         Run_Git (Empty_Vector & "pull" & Extra & "--recurse-submodules");
+         --  Plain pull
+
+      end if;
 
       return Outcome_Success;
    exception
