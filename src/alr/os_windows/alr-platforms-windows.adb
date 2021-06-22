@@ -18,15 +18,10 @@ package body Alr.Platforms.Windows is
 
    package Cfg renames Alire.Config;
 
-   Msys2_Installer     : constant String := "msys2-x86_64-20200903.exe";
+   Msys2_Installer     : constant String := "msys2-x86_64-20210604.exe";
    Msys2_Installer_URL : constant String :=
-     "https://github.com/msys2/msys2-installer/releases/download/2020-09-03/"
+     "https://github.com/msys2/msys2-installer/releases/download/2021-06-04/"
      & Msys2_Installer;
-
-   Msys2_Installer_Script     : constant String := "auto-install.js";
-   Msys2_Installer_Script_URL : constant String :=
-     "https://raw.githubusercontent.com/msys2/msys2-installer/a588bcc/" &
-     Msys2_Installer_Script;
 
    -------------------
    -- Set_Msys2_Env --
@@ -105,9 +100,6 @@ package body Alr.Platforms.Windows is
    is
       use Alire.Utils;
 
-      Install_Prefix : constant String :=
-        "InstallDir=" & Install_Dir;
-
       Result : Alire.Outcome;
    begin
       if not Query_User_For_Msys2_Install (Install_Dir) then
@@ -122,21 +114,16 @@ package body Alr.Platforms.Windows is
          return Result;
       end if;
 
-      Result := Alire.OS_Lib.Download.File (Msys2_Installer_Script_URL,
-                                            Msys2_Installer_Script,
-                                            Install_Dir);
-      if not Result.Success then
-         return Result;
-      end if;
-
       begin
          --  Run msys2's installer
          Alire.OS_Lib.Subprocess.Checked_Spawn
            (Install_Dir / Msys2_Installer,
             Alire.Utils.Empty_Vector &
-              "--script" & (Install_Dir / Msys2_Installer_Script) &
-              "-v" &
-              Install_Prefix);
+              "in" &
+              "--confirm-command" &
+              "--accept-messages" &
+              "--root" &
+              Install_Dir);
 
       exception
          when others =>
