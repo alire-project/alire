@@ -4,7 +4,7 @@ Verify that recursive pins work for local paths
 
 from drivers.alr import run_alr, alr_pin, init_local_crate
 from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import init_git_repo
+from drivers.helpers import init_git_repo, dir_separator
 
 import re
 import os
@@ -35,10 +35,13 @@ alr_pin("yyy", url=path_yyy)
 
 # Should work properly
 p = run_alr("pin")
-assert_match(re.escape('yyy file:alire/cache/pins/yyy ') +  # local path
-             '.*' + re.escape('/nest/yyy\n') +              # remote url
-             re.escape('zzz file:alire/cache/pins/zzz ') +  # local path
-             '.*' + re.escape('/zzz     \n'),               # remote url
+
+# Absolute path to simulate a remote URL is platform dependent:
+s = dir_separator()
+assert_match(re.escape('yyy file:alire/cache/pins/yyy ') +  # local rel path
+             '.*' + re.escape(f'{s}nest{s}yyy\n') +         # remote abs url
+             re.escape('zzz file:alire/cache/pins/zzz ') +  # local rel path
+             '.*' + re.escape(f'{s}zzz     \n'),            # remote abs url
              p.out)
 
 print('SUCCESS')

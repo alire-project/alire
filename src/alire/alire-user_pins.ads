@@ -45,10 +45,10 @@ package Alire.User_Pins is
    --  if paths can be given as relative, for our internal processing we can
    --  simplify things by always relying on absolute paths.
 
-   function Relative_Path (This : Pin; Color : Boolean := True) return Any_Path
+   function Relative_Path (This : Pin; Color : Boolean := True) return String
      with Pre => This.Kind in Kinds_With_Path;
    --  Convenience to show to users. May still return an absolute path for
-   --  paths in another drive on windows.
+   --  paths in another drive on windows. May include TTY sequences.
 
    --  Remote attributes
 

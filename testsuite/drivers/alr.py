@@ -267,9 +267,9 @@ def alr_pin(crate, version="", path="", url="", commit="",
         elif path != "":
             pin_line = f"{crate} = {{ path = '{path}' }}"  # literal so \ works
         elif url != "" and commit != "":
-            pin_line = f'{crate} = {{ url = "{url}", commit = "{commit}" }}'
+            pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
         elif url != "":
-            pin_line = f'{crate} = {{ url = "{url}" }}'
+            pin_line = f"{crate} = {{ url = '{url}' }}"
         else:
             raise ValueError("Specify either version, path or url")
 

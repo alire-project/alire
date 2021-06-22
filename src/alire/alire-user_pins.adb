@@ -226,10 +226,18 @@ package body Alire.User_Pins is
    -- Relative_Path --
    -------------------
 
-   function Relative_Path (This : Pin; Color : Boolean := True) return Any_Path
-   is (if Color
-       then TTY.URL (Directories.Find_Relative_Path_To (Path (This)))
-       else Directories.Find_Relative_Path_To (Path (This)));
+   function Relative_Path (This : Pin; Color : Boolean := True) return String
+   is
+      Portable : constant String :=
+                   VFS.Attempt_Portable
+                     (Directories.Find_Relative_Path_To (Path (This)));
+   begin
+      if Color then
+         return TTY.URL (Portable);
+      else
+         return Portable;
+      end if;
+   end Relative_Path;
 
    ---------------
    -- From_TOML --
