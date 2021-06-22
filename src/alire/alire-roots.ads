@@ -3,17 +3,13 @@ with Ada.Directories;
 private with Ada.Finalization;
 
 with Alire.Containers;
-with Alire.Dependencies;
 limited with Alire.Environment;
-with Alire.Errors;
 private with Alire.Lockfiles;
-with Alire.Optional;
 with Alire.Paths;
 with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.TTY;
 with Alire.Utils;
 
 package Alire.Roots is
@@ -55,26 +51,6 @@ package Alire.Roots is
                       Env  : Properties.Vector) return Root;
    --  From existing release
    --  Path must point to the session folder (parent of alire metadata folder)
-
-   function Temporary_Copy (This : in out Root) return Root;
-   --  Obtain a temporary copy of This root, in the sense that it uses temp
-   --  names for the manifest and lockfile. The cache is shared, so any
-   --  pins/dependencies added to the temporary copy are ready if the copy is
-   --  commited (see Commit call). The intended use is to be able to modify
-   --  the temporary manifest, and finally compare the solutions between This
-   --  and its copy. This way, no logic remains in `alr with`/`alr pin`, for
-   --  example, as they simply edit the manifest as if the user did it by hand.
-
-   procedure Commit (This : in out Root);
-   --  Renames the manifest and lockfile to their regular places, making this
-   --  root a regular one to all effects.
-
-   procedure Confirm_And_Commit (Original, Edited : in out Root);
-   --  Present differences in the solutions
-   --  of Original and Edited and ask the user to accept, in which case
-   --  Edited.Commit is called. Edited is expected to be a temporary copy
-   --  of Original. Performs an Edited.Reload_Manifest, so any changes done to
-   --  the Edited manifest about dependency/pin adition/removal are applied.
 
    procedure Set (This     : in out Root;
                   Solution : Solutions.Solution) with
@@ -208,78 +184,6 @@ package Alire.Roots is
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
 
-   --  Modification of the manifest -- these are equivalent to hand edition
-
-   procedure Add_Dependency (This : in out Root;
-                             Dep  : Dependencies.Dependency)
-     with Pre =>
-       not This.Solution.Depends_On (Dep.Crate)
-       or else raise Checked_Error with Errors.Set
-         (TTY.Name (Dep.Crate) & " is already a dependency of "
-          & TTY.Name (This.Name));
-   --  Add a dependency
-
-   procedure Remove_Dependency (This  : in out Root;
-                                Crate : Crate_Name;
-                                Unpin : Boolean := True)
-     with Pre =>
-       This.Solution.Depends_On (Crate)
-       or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is not a dependency or pin of "
-          & TTY.Name (This.Name));
-   --  Remove any dependency (and pin) on crate
-
-   function Can_Be_Pinned (This  : in out Root;
-                           Crate : Crate_Name)
-                           return Boolean
-   is (not This.Solution.Depends_On (Crate)
-       or else not This.Solution.State (Crate).Is_User_Pinned
-       or else Force
-       or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is already pinned to "
-          & This.Solution.State (Crate).Image));
-   --  Says if a pin can be added: not already a pin, or Force. As an
-   --  exception, the body is here as this function is intended to serve as
-   --  a precondition, an hence serve as documentation.
-
-   procedure Add_Version_Pin (This    : in out Root;
-                              Crate   : Crate_Name;
-                              Version : String)
-     with Pre => This.Can_Be_Pinned (Crate);
-   --  Add a version pin; if the root doesn't depend on it previously, the
-   --  dependency will be added too.
-
-   procedure Add_Path_Pin (This  : in out Root;
-                           Crate : Optional.Crate_Name;
-                           Path  : Any_Path)
-     with Pre =>
-       Crate.Is_Empty
-       or else This.Can_Be_Pinned (Crate.Element.Ptr.all);
-   --  Add a pin to a folder; if Crate.Is_Empty then Path must point to an
-   --  Alire workspace from which it can be deduced. If Crate.Has_Element, the
-   --  crates should match. If the root does not depend already on the crate,
-   --  a dependency will be added.
-
-   procedure Add_Remote_Pin (This   : in out Root;
-                             Crate  : Optional.Crate_Name;
-                             Origin : URL;
-                             Commit : String := "";
-                             Branch : String := "")
-     with Pre =>
-       (not (Commit /= "" and then Branch /= "")
-        or else raise Checked_Error with
-          Errors.Set ("Simultaneous Branch and Commit pins are incompatible"))
-       and then
-         (Crate.Is_Empty
-          or else This.Can_Be_Pinned (Crate.Element.Ptr.all));
-   --  Add a pin to a remote repo, with optional Commit xor Branch. if
-   --  Crate.Is_Empty then Path must point to an Alire workspace for which it
-   --  can be deduced. If Crate.Has_Element, the crates should match. If the
-   --  root does not depend already on the crate, a dependency will be added.
-
-   procedure Remove_Pin (This : in out Root; Crate : Crate_Name);
-   --  Remove the pin for Crate if existing; otherwise do nothing
-
    procedure Reload_Manifest (This : in out Root)
      with Pre => This.Path = Ada.Directories.Current_Directory;
    --  If changes have been done to the manifest, either via the dependency/pin
@@ -332,7 +236,8 @@ private
       Lockfile        : Unbounded_Absolute_Path;
    end record;
 
-   overriding procedure Finalize (This : in out Root);
+   --  Support for editable roots begins here. These are not expected to be
+   --  directly useful to clients, so better kept them under wraps.
 
    function Compute_Update
      (This        : in out Root;
@@ -345,5 +250,18 @@ private
    --  This function loads configured indexes from disk. No changes are applied
    --  to This root. NOTE: pins have to be added to This.Solution beforehand,
    --  or they will not be applied.
+
+   function Temporary_Copy (This : in out Root) return Root'Class;
+   --  Obtain a temporary copy of This root, in the sense that it uses temp
+   --  names for the manifest and lockfile. The cache is shared, so any
+   --  pins/dependencies added to the temporary copy are ready if the copy is
+   --  commited (see Commit call). The intended use is to be able to modify
+   --  the temporary manifest, and finally compare the solutions between This
+   --  and its copy. This way, no logic remains in `alr with`/`alr pin`, for
+   --  example, as they simply edit the manifest as if the user did it by hand.
+
+   procedure Commit (This : in out Root);
+   --  Renames the manifest and lockfile to their regular places, making this
+   --  root a regular one to all effects.
 
 end Alire.Roots;

@@ -6,6 +6,7 @@ with Ada.Text_IO;
 with Alire.Dependencies;
 with Alire.Optional;
 with Alire.Releases;
+with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
 
@@ -20,7 +21,7 @@ package body Alr.Commands.Withing is
    -- Add --
    ---------
 
-   procedure Add (Root : in out Alire.Roots.Root) is
+   procedure Add (Root : in out Alire.Roots.Editable.Root) is
    begin
       for I in 1 .. Num_Arguments loop
          Root.Add_Dependency (Alire.Dependencies.From_String (Argument (I)));
@@ -31,7 +32,7 @@ package body Alr.Commands.Withing is
    -- Del --
    ---------
 
-   procedure Del (Root : in out Alire.Roots.Root) is
+   procedure Del (Root : in out Alire.Roots.Editable.Root) is
    begin
       for I in 1 .. Num_Arguments loop
          Root.Remove_Dependency (Alire.To_Name (Argument (I)));
@@ -42,7 +43,7 @@ package body Alr.Commands.Withing is
    -- From --
    ----------
 
-   procedure From (Root : in out Alire.Roots.Root) is
+   procedure From (Root : in out Alire.Roots.Editable.Root) is
       use Ada.Text_IO;
       use Utils;
 
@@ -152,7 +153,9 @@ package body Alr.Commands.Withing is
    -- Add_With_Pin --
    ------------------
 
-   procedure Add_With_Pin (Cmd : Command; Root : in out Alire.Roots.Root) is
+   procedure Add_With_Pin (Cmd  : Command;
+                           Root : in out Alire.Roots.Editable.Root)
+   is
       Crate : constant Alire.Optional.Crate_Name :=
                 (if Num_Arguments = 1
                  then Alire.Optional.Crate_Names.Unit
@@ -258,7 +261,8 @@ package body Alr.Commands.Withing is
       --  so we create a temporary copy of the root for these changes
 
       declare
-         New_Root : Alire.Roots.Root := Cmd.Root.Temporary_Copy;
+         New_Root : Alire.Roots.Editable.Root :=
+                      Alire.Roots.Editable.New_Root (Cmd.Root);
       begin
 
          if not (Cmd.Del or else Cmd.From) then
@@ -283,7 +287,7 @@ package body Alr.Commands.Withing is
 
          --  Apply changes
 
-         New_Root.Confirm_And_Commit (Cmd.Root);
+         New_Root.Confirm_And_Commit;
 
       end;
    end Execute;

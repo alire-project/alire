@@ -12,8 +12,9 @@ package body Alire.Utils.Text_Files is
                            Lines      : String_Vector;
                            Backup_Dir : Any_Path := "")
    is
+      F : Text_Files.File := Load (File, Backup_Dir => Backup_Dir);
    begin
-      raise Unimplemented;
+      F.Lines.Append (Lines);
    end Append_Lines;
 
    --------------
