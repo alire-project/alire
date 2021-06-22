@@ -22,6 +22,12 @@ package Alire.Dependencies.States is
 
    type State (<>) is new Dependency with private;
 
+   overriding function "=" (L, R : State) return Boolean;
+   --  For some unclear reason, the default implementation reports differences
+   --  for identical states. Suspecting the Indefinite_Holders therein to be
+   --  the culprits. We override to rely on the same information the user sees,
+   --  thus avoiding any inconsistent "want to confirm?" empty updates.
+
    ------------------
    -- Constructors --
    ------------------
@@ -60,6 +66,9 @@ package Alire.Dependencies.States is
                      return State
      with Pre => Base.Crate = Using.Name;
    --  Uses release to fulfill this dependency in a copy of Base
+
+   function Unlinking (Base : State) return State;
+   --  Unlinks the crate in a copy of Base, becoming Missed
 
    function Unpinning (Base : State) return State;
    --  Removes the pin in a copy of Base
@@ -201,6 +210,15 @@ private
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (L, R : State) return Boolean
+   is (L.Image = R.Image);
+   --  TODO: this is likely not efficient. We should dig more to find why some
+   --  apparently identical states are reported as different.
 
    -------------------
    -- As_Dependency --
@@ -476,6 +494,17 @@ private
                    & "=" & TTY.Version (This.Pinning.Version.Image)
           else "")
        & ")");
+
+   ---------------
+   -- Unlinking --
+   ---------------
+
+   function Unlinking (Base : State) return State
+   is (Base.As_Dependency with
+       Name_Len     => Base.Name_Len,
+       Fulfilled    => (Fulfillment => Missed),
+       Pinning      => Base.Pinning,
+       Transitivity => Base.Transitivity);
 
    ---------------
    -- Unpinning --

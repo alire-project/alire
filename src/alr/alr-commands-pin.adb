@@ -17,6 +17,20 @@ package body Alr.Commands.Pin is
    package Semver renames Semantic_Versioning;
    package TTY renames Alire.Utils.TTY;
 
+   ----------------------
+   -- Warn_Manual_Only --
+   ----------------------
+
+   procedure Warn_Manual_Only is
+   begin
+      Reportaise_Command_Failed
+        ("Pin adition/removal is currently not implemented via command-line. "
+         & "Please edit the manifest manually to add/remove pins. "
+         & "Find the syntax for pins at "
+         & TTY.URL ("https://github.com/alire-project/alire/blob/master/"
+                    & "doc/catalog-format-spec.md"));
+   end Warn_Manual_Only;
+
    --------------------
    -- Change_One_Pin --
    --------------------
@@ -158,6 +172,11 @@ package body Alr.Commands.Pin is
          Reportaise_Wrong_Arguments
            ("Pin expects a single crate or crate=version argument");
       end if;
+
+      --  Anything beyond this point is modifying pins, which is currently
+      --  unimplemented.
+
+      Warn_Manual_Only;
 
       --  Apply changes;
 

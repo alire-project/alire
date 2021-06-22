@@ -6,11 +6,14 @@ with Alire.Directories;
 with Alire.Environment;
 with Alire.Externals.Softlinks;
 with Alire.Manifest;
+with Alire.Optional;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Solutions.Diffs;
+with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
+with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
 
 with GNAT.OS_Lib;
@@ -288,6 +291,186 @@ package body Alire.Roots is
 
    end Deploy_Dependencies;
 
+   ----------------------
+   -- Apply_Local_Pins --
+   ----------------------
+
+   procedure Apply_Local_Pins (This : in out Root) is
+      use type Solutions.Solution;
+      Sol  : Solutions.Solution := This.Solution;
+   begin
+      for I in Release (This).Pins.Iterate loop
+         declare
+            use all type User_Pins.Kinds;
+            use User_Pins.Maps.Pin_Maps;
+            Crate : constant Crate_Name := Key (I);
+            Pin   : constant User_Pins.Pin := Element (I);
+         begin
+
+            --  A pin for a non-dependency requires that we add a generic
+            --  dependency to the solution first.
+
+            if not Sol.Depends_On (Crate) then
+               Sol := Sol.Depending_On
+                 (Dependencies.New_Dependency (Crate, Semver.Extended.Any));
+            end if;
+
+            case Pin.Kind is
+               when To_Version =>
+                  Sol := Sol.Resetting (Crate).Pinning (Crate, Pin.Version);
+               when To_Path =>
+                  Sol := Sol.Resetting (Crate).Linking (Crate, Pin.Path);
+               when To_Git =>
+                  null; -- Not considered here
+            end case;
+         end;
+      end loop;
+
+      if Sol /= This.Solution then
+         Solutions.Diffs.Between (This.Solution, Sol).Print
+           (Changed_Only => True,
+            Level        => Trace.Detail);
+         Trace.Detail ("Local pins updated and committed to lockfile");
+         This.Set (Solution => Sol);
+      end if;
+   end Apply_Local_Pins;
+
+   -----------------
+   -- Deploy_Pins --
+   -----------------
+
+   procedure Deploy_Pins (This       : in out Root;
+                          Exhaustive : Boolean;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set) is
+      use User_Pins.Maps.Pin_Maps;
+      Rel  : constant Alire.Releases.Release := Release (This);
+      Pins : constant User_Pins.Maps.Map     := Rel.Pins;
+
+      --------------------
+      -- Needs_Updating --
+      --------------------
+
+      function Needs_Updating (Crate : Crate_Name;
+                               Pin   : User_Pins.Pin) return Boolean
+      is
+         use type Alire.Optional.String;
+      begin
+
+         --  Early reject if the crate is not among the allowed ones
+
+         if not Allowed.Is_Empty and then not Allowed.Contains (Crate) then
+            return False;
+         end if;
+
+         --  Regular checks if the crate is in the update set
+
+         return
+           --  Any new pin needs downloading
+           not This.Solution.Links.Contains (Crate)
+
+           --  Manual update requested for pins without a precise commit
+           or else (Exhaustive and then not Pin.Commit.Has_Element)
+
+           --  Auto update for pins which weren't remote and now are
+           or else not This.Solution.State (Crate).Link.Is_Remote
+
+           --  Auto update for pins whose commit has changed in manifest wrt
+           --  lockfile.
+           or else (Pin.Commit.Has_Element and then
+                    Pin.Commit /= This.Solution.State (Crate)
+                                               .Link.Remote.Commit);
+      end Needs_Updating;
+
+   begin
+      if (for some Pin of Pins => Pin.Is_Remote) then
+         Put_Info ("Checking remote pins...");
+      end if;
+
+      for I in Pins.Iterate loop
+         if Pins (I).Is_Remote then
+            if Needs_Updating (Key (I), Pins (I)) then
+
+               Put_Info ("Deploying pin for crate: " & TTY.Name (Key (I)));
+
+               declare
+                  use type Solutions.Solution;
+                  Crate  : constant Crate_Name := Key (I);
+                  Pin    : constant User_Pins.Pin := Element (I);
+                  Result : constant Remote_Pin_Result :=
+                             This.Pinned_To_Remote
+                               (Dependency  =>
+                                             Conditional.New_Dependency
+                                  (Rel.Dependency_On (Crate)
+                                   .Or_Else (Dependencies.From_String
+                                     ((+Crate) & "*"))),
+                                URL         => Pin.URL,
+                                Commit      => Pin.Commit.Or_Else (""),
+                                Must_Depend => True);
+               begin
+                  --  Pin deployed, solution can be stored accordingly
+                  if This.Solution /= Result.Solution then
+                     Solutions
+                       .Diffs.Between (This.Solution, Result.Solution)
+                       .Print (Changed_Only => True,
+                               Level        => Trace.Detail);
+                     This.Set (Solution => Result.Solution);
+                     Trace.Detail ("Remote pins committed to disk");
+                  end if;
+               end;
+            else
+
+               Trace.Detail ("Skipping pre-existing pin for crate: "
+                         & TTY.Name (Key (I)));
+
+            end if;
+         end if;
+      end loop;
+   end Deploy_Pins;
+
+   ----------------
+   -- Prune_Pins --
+   ----------------
+
+   procedure Prune_Pins (This : in out Root) is
+      use type Solutions.Solution;
+      Valid_Pins : constant User_Pins.Maps.Map := Release (This).Pins;
+      Pruned_Sol : Solutions.Solution := This.Solution;
+   begin
+      for State of This.Solution.All_Dependencies loop
+         if State.Is_User_Pinned and then
+           not Valid_Pins.Contains (State.Crate)
+         then
+            Pruned_Sol := Pruned_Sol.User_Unpinning (State.Crate);
+            Put_Info ("Unpinning crate " & TTY.Name (State.Crate));
+         end if;
+      end loop;
+
+      if Pruned_Sol /= This.Solution then
+         Solutions.Diffs.Between (This.Solution, Pruned_Sol).Print
+           (Changed_Only => True,
+            Level        => Trace.Detail);
+         Trace.Detail ("Pin-pruned solution committed to disk");
+         This.Set (Pruned_Sol);
+      end if;
+   end Prune_Pins;
+
+   -----------------------------
+   -- Sync_Pins_From_Manifest --
+   -----------------------------
+
+   procedure Sync_Pins_From_Manifest
+     (This       : in out Root;
+      Exhaustive : Boolean;
+      Allowed    : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set)
+   is
+   begin
+      This.Deploy_Pins (Exhaustive, Allowed);
+      This.Apply_Local_Pins;
+      This.Prune_Pins;
+   end Sync_Pins_From_Manifest;
+
    ---------------
    -- Is_Stored --
    ---------------
@@ -559,15 +742,26 @@ package body Alire.Roots is
         File_Time_Stamp (This.Crate_File) > File_Time_Stamp (This.Lock_File);
    end Is_Lockfile_Outdated;
 
-   ----------------------------
-   -- Sync_Solution_And_Deps --
-   ----------------------------
+   ------------------------
+   -- Sync_From_Manifest --
+   ------------------------
 
-   procedure Sync_Solution_And_Deps (This : in out Root) is
+   procedure Sync_From_Manifest (This   : in out Root;
+                                 Silent : Boolean;
+                                 Force  : Boolean := False) is
+      Old_Solution : constant Solutions.Solution := This.Solution;
    begin
-      if This.Is_Lockfile_Outdated then
-         Trace.Info ("Detected changes in manifest, updating workspace...");
-         This.Update_And_Deploy_Dependencies (Confirm => False);
+      if Force or else This.Is_Lockfile_Outdated then
+         Put_Info ("Detected changes in manifest, synchronizing workspace...");
+
+         This.Sync_Pins_From_Manifest (Exhaustive => False);
+         --  Normally we do not want to re-fetch remote pins, so we request
+         --  a non-exhaustive sync of pins, that will anyway detect evident
+         --  changes (new/removed pins, changed explicit commits).
+
+         This.Sync_Dependencies (Old    => Old_Solution,
+                                 Silent => Silent);
+
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -580,8 +774,9 @@ package body Alire.Roots is
          --  to manually mark the lockfile as older.
 
          Trace.Info (""); -- Separate changes from what caused the sync
+      end if;
 
-      elsif (for some Rel of This.Solution.Releases =>
+      if (for some Rel of This.Solution.Releases =>
                This.Solution.State (Rel.Name).Is_Solved and then
                not GNAT.OS_Lib.Is_Directory (This.Release_Base (Rel.Name)))
         or else
@@ -594,7 +789,7 @@ package body Alire.Roots is
          This.Deploy_Dependencies;
       end if;
 
-   end Sync_Solution_And_Deps;
+   end Sync_From_Manifest;
 
    -------------------------------------------
    -- Sync_Manifest_And_Lockfile_Timestamps --
@@ -610,6 +805,28 @@ package body Alire.Roots is
             OS.File_Time_Stamp (This.Crate_File));
       end if;
    end Sync_Manifest_And_Lockfile_Timestamps;
+
+   ------------
+   -- Update --
+   ------------
+
+   procedure Update (This : in out Root;
+                     Allowed : Containers.Crate_Name_Sets.Set)
+   is
+      Old : constant Solutions.Solution := This.Solution;
+   begin
+      This.Sync_Pins_From_Manifest (Exhaustive => True,
+                                    Allowed    => Allowed);
+      --  Just in case, retry all pins. This is necessary so pins without an
+      --  explicit commit are updated to HEAD.
+
+      --  And look for updates in dependencies
+
+      This.Sync_Dependencies
+        (Allowed => Allowed,
+         Old     => Old,
+         Silent  => Alire.Utils.User_Input.Not_Interactive);
+   end Update;
 
    --------------------
    -- Compute_Update --
@@ -649,80 +866,98 @@ package body Alire.Roots is
          Options => Options);
    end Compute_Update;
 
-   -------------------------
-   -- Update_Dependencies --
-   -------------------------
+   -----------------------
+   -- Sync_Dependencies --
+   -----------------------
 
-   procedure Update_Dependencies
+   procedure Sync_Dependencies
      (This    : in out Root;
       Silent  : Boolean;
+      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
-      Old     : constant Solutions.Solution := This.Solution;
    begin
-
-      --  Ensure requested crates are in solution first.
-
-      for Crate of Allowed loop
-         if not Old.Depends_On (Crate) then
-            Raise_Checked_Error ("Requested crate is not a dependency: "
-                                 & TTY.Name (Crate));
-         end if;
-
-         if Old.Pins.Contains (Crate) then
-            --  The solver will never update a pinned crate, so we may allow
-            --  this to be attempted but it will have no effect.
-            Recoverable_Error
-              ("Requested crate is pinned and cannot be updated: "
-               & Alire.Utils.TTY.Name (Crate));
-         end if;
-      end loop;
-
       declare
-         Needed : constant Solutions.Solution   := This.Compute_Update
-                                                     (Allowed, Options);
-         Diff   : constant Solutions.Diffs.Diff := Old.Changes (Needed);
-      begin
-         --  Early exit when there are no changes
+         --  Shadow the argument with the one we want to use everywhere. Note
+         --  that this old is only used for comparison, as the stored solution
+         --  may already include changes caused by pin preparations, and
+         --  furthermore the stored root is the one we need to pass to the
+         --  solver (as it contains the pins).
+         Old : constant Solutions.Solution :=
+                  (if Sync_Dependencies.Old.Is_Attempted
+                   then Sync_Dependencies.Old
+                   else This.Solution);
 
-         if not Alire.Force and not Diff.Contains_Changes then
-            if not Needed.Is_Complete then
-               Trace.Warning
-                 ("There are missing dependencies"
-                  & " (use `alr with --solve` for details).");
+      begin
+
+         --  Ensure requested crates are in solution first.
+
+         for Crate of Allowed loop
+            if not Old.Depends_On (Crate) then
+               Raise_Checked_Error ("Requested crate is not a dependency: "
+                                    & TTY.Name (Crate));
             end if;
 
-            This.Sync_Manifest_And_Lockfile_Timestamps;
-            --  Just in case manual changes in manifest don't modify solution
+            if Old.Pins.Contains (Crate) then
+               --  The solver will never update a pinned crate, so we may allow
+               --  this to be attempted but it will have no effect.
+               Recoverable_Error
+                 ("Requested crate is pinned and cannot be updated: "
+                  & Alire.Utils.TTY.Name (Crate));
+            end if;
+         end loop;
 
-            Trace.Info ("Nothing to update.");
+         declare
+            Needed : constant Solutions.Solution   := This.Compute_Update
+              (Allowed, Options);
+            Diff   : constant Solutions.Diffs.Diff := Old.Changes (Needed);
+         begin
+            --  Early exit when there are no changes
 
-            return;
-         end if;
+            if not Alire.Force and not Diff.Contains_Changes then
+               if not Needed.Is_Complete then
+                  Trace.Warning
+                    ("There are missing dependencies"
+                     & " (use `alr with --solve` for details).");
+               end if;
 
-         --  Show changes and optionally ask user to apply them
+               This.Sync_Manifest_And_Lockfile_Timestamps;
+               --  In case manual changes in manifest do not modify the
+               --  solution.
 
-         if Silent then
-            Trace.Info ("Dependencies automatically updated as follows:");
-            Diff.Print;
-         elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
-            Trace.Detail ("Update abandoned.");
-            return;
-         end if;
+               Trace.Info ("Nothing to update.");
 
-         --  Apply the update
+            else
 
-         This.Set (Solution => Needed);
-         This.Deploy_Dependencies;
+               --  Show changes and optionally ask user to apply them
 
-         --  Update/Create configuration files
-         This.Generate_Configuration;
+               if Silent then
+                  Trace.Info
+                    ("Dependencies automatically updated as follows:");
+                  Diff.Print;
+               elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
+                  Trace.Detail ("Update abandoned.");
+                  return;
+               end if;
 
-         Trace.Detail ("Update completed");
+            end if;
+
+            --  Apply the update. We do this even when no changes were
+            --  detected, as pin evaluation may have temporarily stored
+            --  unsolved dependencies which have been re-solved now.
+
+            This.Set (Solution => Needed);
+            This.Deploy_Dependencies;
+
+            --  Update/Create configuration files
+            This.Generate_Configuration;
+
+            Trace.Detail ("Update completed");
+         end;
       end;
-   end Update_Dependencies;
+   end Sync_Dependencies;
 
    ----------------------
    -- Pinned_To_Remote --
@@ -748,7 +983,7 @@ package body Alire.Roots is
            Dep.Crate.As_String = Requested_Crate)
       then
          Raise_Checked_Error
-           ("Cannot continue because the requested crate is not a dependency: "
+           ("Cannot continue because the requested pin is not a dependency: "
             & Requested_Crate);
       end if;
 
@@ -784,7 +1019,22 @@ package body Alire.Roots is
                   Origins.Deployers.New_Deployer
                     (Origins.New_Git (URL, Commit));
       begin
-         Depl.Deploy (Temp.Filename).Assert;
+
+         --  Skip checkout if link is already in the solution and with the same
+         --  commit.
+
+         if Requested_Crate /= "" and then
+           This.Solution.Depends_On (+Requested_Crate) and then
+           This.Solution.Links.Contains (+Requested_Crate) and then
+           This.Solution.State (+Requested_Crate).Link.Remote.Commit = Commit
+         then
+            Trace.Debug ("Skipping checkout of remote link "
+                         & TTY.Name (Requested_Crate)
+                         & "#"
+                         & TTY.URL (Commit));
+         else
+            Depl.Deploy (Temp.Filename).Assert;
+         end if;
 
          --  Identify containing release, and if satisfying move it to its
          --  final location in the release cache.
@@ -880,39 +1130,6 @@ package body Alire.Roots is
          end;
       end;
    end Pinned_To_Remote;
-
-   ------------------------------------
-   -- Update_And_Deploy_Dependencies --
-   ------------------------------------
-
-   procedure Update_And_Deploy_Dependencies
-     (This    : in out Roots.Root;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Confirm : Boolean              := not Utils.User_Input.Not_Interactive)
-   is
-      Prev : constant Solutions.Solution := This.Solution;
-      Next : constant Solutions.Solution :=
-               This.Compute_Update (Options => Options);
-      Diff : constant Solutions.Diffs.Diff := Prev.Changes (Next);
-   begin
-      if Diff.Contains_Changes then
-         if not Confirm or else
-           Utils.User_Input.Confirm_Solution_Changes (Diff)
-         then
-            if not Confirm then
-               Trace.Info ("Changes to dependency solution:");
-               Diff.Print (Changed_Only => not Alire.Detailed);
-            end if;
-
-            This.Set (Solution => Next);
-            This.Deploy_Dependencies;
-         end if;
-      end if;
-
-      --  Update/Create configuration files
-      This.Generate_Configuration;
-
-   end Update_And_Deploy_Dependencies;
 
    --------------------
    -- Write_Manifest --

@@ -9,7 +9,7 @@ with Alire.Properties;
 with Alire.Releases;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils.User_Input;
+with Alire.Utils;
 
 package Alire.Roots is
 
@@ -122,12 +122,17 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   procedure Sync_Solution_And_Deps (This : in out Root);
-   --  Ensure that dependencies are up to date in regard to the lockfile and
-   --  manifest: if the manifest is newer than the lockfile, resolve again,
-   --  as dependencies may have been edited by hand. Otherwise, ensure that
-   --  releases in the lockfile are actually on disk (may be missing if cache
-   --  was deleted, or the crate was just cloned).
+   procedure Sync_From_Manifest (This   : in out Root;
+                                 Silent : Boolean;
+                                 Force  : Boolean := False);
+   --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
+   --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
+   --  usable when solving, and apply any local/version pins. 2) Ensure that
+   --  dependencies are up to date in regard to the lockfile and manifest: if
+   --  the manifest is newer than the lockfile, resolve again, as dependencies
+   --  may have been edited by hand. 3) Ensure that releases in the lockfile
+   --  are actually on disk (may be missing if cache was deleted, or the crate
+   --  was just cloned). When Silent, run as in non-interactive mode.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -147,23 +152,40 @@ package Alire.Roots is
    --  This function loads configured indexes from disk. No changes are
    --  applied to This root.
 
+   procedure Update (This : in out Root;
+                     Allowed : Containers.Crate_Name_Sets.Set);
+   --  Full update, explicitly requested. Will fetch/prune pins, update any
+   --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
+   --  empty set of crates to which the update will be limited. Everything is
+   --  updatable if Allowed.Is_Empty.
+
    procedure Deploy_Dependencies (This : in out Root);
    --  Download all dependencies not already on disk from This.Solution
 
-   procedure Update_Dependencies
+   procedure Sync_Dependencies
      (This    : in out Root;
       Silent  : Boolean;
+      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
       Options : Solver.Query_Options := Solver.Default_Options;
       Allowed : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set);
-   --  Resolve and update all or given crates in a root. When silent, run
-   --  as in non-interactive mode as this is an automatically-triggered update.
+   --  Resolve and update all or given crates in a root, and regenerate
+   --  configuration. When Silent, run as in non-interactive mode as this is an
+   --  automatically-triggered update. Old_Sol is used to present differences,
+   --  and when left at the default invalid argument value, This.Solution will
+   --  be used as old solution.
 
-   procedure Update_And_Deploy_Dependencies
-     (This    : in out Roots.Root;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Confirm : Boolean              := not Utils.User_Input.Not_Interactive);
-   --  Call Update and Deploy_Dependencies in succession for the given root
+   procedure Sync_Pins_From_Manifest
+     (This       : in out Root;
+      Exhaustive : Boolean;
+      Allowed    : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set);
+   --  Checks additions/removals of pins, and fetches remote pins. When not
+   --  Exhaustive, a pin that is already in the solution is not re-downloaded.
+   --  This is to avoid re-fetching all pins after each manifest edition.
+   --  New pins, or pins with a changed commit are always downloaded. An update
+   --  requested by the user (`alr update`) will be exhaustive. Allowed
+   --  restricts which crates are affected.
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
@@ -228,5 +250,22 @@ private
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
    end record;
+
+   procedure Apply_Local_Pins (This : in out Root);
+   --  Apply version/path pins from the manifest. Remote pins are dealt with by
+   --  Deploy_Pins, as they are costlier and have more involved processing.
+
+   procedure Deploy_Pins (This       : in out Root;
+                          Exhaustive : Boolean;
+                          Allowed    : Containers.Crate_Name_Sets.Set :=
+                            Containers.Crate_Name_Sets.Empty_Set);
+   --  Download any remote pins in the manifest. When not Exhaustive, a pin
+   --  that is already in the solution is not re-downloaded. This is to avoid
+   --  re-fetching all pins after each manifest edition. New pins are always
+   --  downloaded. An update requested by the user (`alr update`) will be
+   --  exhaustive. Allowed restricts which crates are affected
+
+   procedure Prune_Pins (This : in out Root);
+   --  Remove any pins in the solution that are not in the manifest
 
 end Alire.Roots;

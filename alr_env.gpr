@@ -9,6 +9,7 @@ aggregate project Alr_Env is
                          "deps/ansi",
                          "deps/gnatcoll-slim",
                          "deps/minirest",
+                         "deps/optional",
                          "deps/semantic_versioning",
                          "deps/simple_logging",
                          "deps/uri-ada",

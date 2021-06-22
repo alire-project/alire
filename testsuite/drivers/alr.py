@@ -2,6 +2,7 @@
 Helpers to run alr in the testsuite.
 """
 
+import os
 import os.path
 
 from shutil import copytree
@@ -201,3 +202,79 @@ def init_local_crate(name="xxx", binary=True, enter=True):
     run_alr("init", name, "--bin" if binary else "--lib")
     if enter:
         os.chdir(name)
+
+
+def alr_lockfile():
+    return "alire.lock"
+
+
+def alr_manifest():
+    return "alire.toml"
+
+
+def alr_unpin(crate, manual=True, fail_if_missing=True):
+    """
+    Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use
+    the command-line, according to manual. Must be run in a crate root.
+    """
+
+    if manual:
+        # Locate and remove the lines with the pin
+        with open("alire.toml", "rt") as manifest:
+            found = False
+            lines = manifest.readlines()
+            orig = lines
+            for i in range(1, len(lines)):
+                if lines[i].startswith(f"{crate} =") \
+                  and lines[i-1] == "[[pins]]\n":
+                    lines.pop(i)
+                    lines.pop(i-1)
+                    found = True
+                    break
+
+        # Write the new manifest
+        if found:
+            with open("alire.toml", "wt") as manifest:
+                manifest.writelines(lines)
+
+            # Make the lockfile "older" (otherwise timestamp is identical)
+            os.utime("alire.lock", (0, 0))
+            run_alr("pin")  # Ensure changes don't affect next command output
+        elif fail_if_missing:
+            raise RuntimeError
+            (f"Could not unpin crate {crate} in lines:\n" + str(orig))
+
+    else:
+        raise NotImplementedError("Unimplemented")
+
+
+def alr_pin(crate, version="", path="", url="", commit="", manual=True):
+    """
+    Pin a crate, either manually or using the command-line interface. Use only
+    one of version, path, url. Must be run in a crate root.
+    """
+
+    if manual:
+        alr_unpin(crate, fail_if_missing=False)  # Just in case
+
+        if version != "":
+            pin_line = f'{crate} = {{ version = "{version}" }}'
+        elif path != "":
+            pin_line = f'{crate} = {{ path = "{path}" }}'
+        elif url != "" and commit != "":
+            pin_line = f'{crate} = {{ url = "{path}", commit = "{commit}" }}'
+        elif url != "":
+            pin_line = f'{crate} = {{ url = "{path}" }}'
+        else:
+            raise ValueError("Specify either version, path or url")
+
+        with open("alire.toml", "at") as manifest:
+            manifest.writelines(["\n[[pins]]\n", pin_line + "\n"])
+
+        # Make the lockfile "older" (otherwise timestamp is identical)
+        os.utime("alire.lock", (0, 0))
+
+        run_alr("pin")  # so the changes in the manifest are applied
+
+    else:
+        raise NotImplementedError("Unimplemented")

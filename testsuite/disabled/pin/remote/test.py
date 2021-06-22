@@ -32,8 +32,10 @@ def verify(head):
     run_alr("build")
 
     # Prepare for next test
-    run_alr("with", "--del", "upstream")  # Remove dependency
-    shutil.rmtree("alire")                # Total cleanup not relying on alr
+    run_alr("with", "--del", "upstream")      # Remove dependency
+    p = run_alr("pin")
+    assert_eq(f"There are no pins\n", p.out)  # Ensure pin is gone
+    shutil.rmtree("alire")                    # Total cleanup outside of alr
 
 
 # Initialize a git repo that will act as the "online" remote

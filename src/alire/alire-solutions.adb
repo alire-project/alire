@@ -380,7 +380,43 @@ package body Alire.Solutions is
             if Dep.Is_Pinned then
                Dependencies :=
                  Dependencies and
-                 Conditional.New_Dependency (Dep.Crate, Dep.Versions);
+                 Conditional.New_Dependency (Dep.Crate,
+                                             Dep.Pin_Version);
+            end if;
+         end loop;
+      end return;
+   end Pins;
+
+   ---------------
+   -- User_Pins --
+   ---------------
+
+   function User_Pins (This : Solution) return Conditional.Dependencies is
+   begin
+      return Dependencies : Conditional.Dependencies := This.Pins do
+         for Dep of This.Dependencies loop
+            if Dep.Is_Linked then
+               Dependencies
+                 .Append (Conditional.New_Dependency (Dep.As_Dependency));
+            end if;
+         end loop;
+      end return;
+   end User_Pins;
+
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Dependency_Map
+   is
+   begin
+      return Result : Dependency_Map do
+         for State of This.Dependencies loop
+            if State.Is_Pinned then
+               Result.Insert (State.Crate,
+                              Alire.Dependencies.New_Dependency
+                                (State.Crate,
+                                 State.Pin_Version));
             end if;
          end loop;
       end return;
@@ -806,7 +842,12 @@ package body Alire.Solutions is
       return Result : Solution := This do
          for Dep of Src.Dependencies loop
             if Dep.Is_Pinned then
-               Result.Dependencies.Include (Dep.Crate, Dep);
+
+               --  We need to copy the pin version; the solving status might
+               --  have changed, so we do not just blindly copy the old pin
+               --  into the new solution.
+
+               Result := Result.Pinning (Dep.Crate, Dep.Pin_Version);
             end if;
          end loop;
       end return;

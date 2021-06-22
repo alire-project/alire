@@ -8,12 +8,12 @@ with Alire.Dependencies.Diffs;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Releases;
-with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.URI;
 with Alire.Utils.User_Input;
 
+with Alr.Commands.Pin;
 with Alr.Commands.User_Input;
 with Alr.OS_Lib;
 with Alr.Platform;
@@ -567,6 +567,8 @@ package body Alr.Commands.Withing is
          --  Must be Add, but it could be regular or softlink
 
          if Cmd.URL.all /= "" then
+            Pin.Warn_Manual_Only;
+
             if Cmd.Commit.all /= ""
               or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
             then

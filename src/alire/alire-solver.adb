@@ -699,8 +699,28 @@ package body Alire.Solver is
          end if;
       end Detect_Unavailable_Direct_Dependencies;
 
+      ----------------
+      -- Trace_Pins --
+      ----------------
+
+      procedure Trace_Pins is
+      begin
+         if (for some State of Current.All_Dependencies =>
+               State.Is_User_Pinned)
+         then
+            Trace.Detail ("User pins to apply:");
+            for State of Current.All_Dependencies loop
+               if State.Is_User_Pinned then
+                  Trace.Detail ("   " & State.TTY_Image);
+               end if;
+            end loop;
+         else
+            Trace.Detail ("No user pins to apply");
+         end if;
+      end Trace_Pins;
+
       Full_Dependencies : constant Conditional.Dependencies :=
-                            Tree'(Current.Pins and Deps).Evaluate (Props);
+                            Tree'(Current.User_Pins and Deps).Evaluate (Props);
       --  Include pins before other dependencies. This ensures their dependency
       --  can only be solved with the pinned version, and they are attempted
       --  first to avoid wasteful trial-and-error with other versions.
@@ -712,6 +732,10 @@ package body Alire.Solver is
    begin
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
+
+      Trace.Detail ("Root dependency tree is: "
+                    & Full_Dependencies.Image_One_Line);
+      Trace_Pins;
 
       --  Warn if we foresee things taking a loong time...
 

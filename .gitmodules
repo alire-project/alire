@@ -36,3 +36,6 @@
 	path = deps/spdx
 	url = https://github.com/Fabien-Chouteau/spdx_ada
 	branch = 319ca7bcc1e2eb1843aad1f64aca3ecba91a2bcc
+[submodule "deps/optional"]
+	path = deps/optional
+	url = https://github.com/mosteo/optional

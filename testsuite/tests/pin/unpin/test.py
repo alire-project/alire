@@ -4,7 +4,7 @@ Test unpinning
 
 import os
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin, alr_unpin
 from drivers.asserts import assert_eq
 from drivers.helpers import check_line_in
 
@@ -17,12 +17,19 @@ os.chdir('xxx')
 run_alr('with', 'libhello')
 
 # Pin the version of libhello and verify pin is there
-run_alr('pin', 'libhello')
+alr_pin('libhello', version="1")
 p = run_alr('pin')
 assert_eq('libhello 1.0.0\n', p.out)
 
+# Update and verify that the pin has survived
+run_alr('update')
+p = run_alr('pin')
+assert_eq('libhello 1.0.0\n', p.out)
+
+# Delete lockfile and verify the pin has survived
+
 # Unpin and verify pin is not there
-run_alr('pin', '--unpin', 'libhello')
+alr_unpin('libhello')
 p = run_alr('pin')
 assert_eq('There are no pins\n', p.out)
 

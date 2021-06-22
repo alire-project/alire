@@ -110,6 +110,12 @@ package Alire.Solutions is
    --  release is fulfilling, by default we don't create its dependency (it
    --  must exist previously).
 
+   function Resetting (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Equivalent to .Missing (Crate).User_Unpinning (Crate). That is, remove
+   --  any fulfillment and any pinning.
+
    function Linking (This  : Solution;
                      Crate : Crate_Name;
                      Link  : Externals.Softlinks.External)
@@ -147,11 +153,30 @@ package Alire.Solutions is
                      return Solution;
    --  Change transitivity
 
+   function Unlinking (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Unpin a crate. If the crate was not linked or not in the solution
+   --  nothing will be done. If it was, it is now missing.
+
    function Unpinning (This  : Solution;
                        Crate : Crate_Name)
                        return Solution;
    --  Unpin a crate. If the crate was not pinned or not in the solution
    --  nothing will be done.
+
+   function User_Unpinning (This : Solution;
+                            Crate : Crate_Name)
+                            return Solution;
+   --  Remove either a pin or a link for a crate; e.g. same as calling
+   --  Unpinning and Unlinking in succession. Nothing will be done if
+   --  crate wasn't in the solution.
+
+   function Unsolving (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Remove links, pins, releases... and mark the crate as missing. If not in
+   --  the solution, nothing will be done.
 
    function With_Pins (This, Src : Solution) return Solution;
    --  Copy pins from Src to This and return it
@@ -172,6 +197,9 @@ package Alire.Solutions is
    function Crates (This : Solution) return Name_Set;
    --  Dependency name closure, independent of the status in the solution, as
    --  found by the solver starting from the direct dependencies.
+
+   function All_Dependencies (This : Solution) return State_Map;
+   --  Get all states in the solution to e.g. iterate over
 
    function Dependencies_That
      (This  : Solution;
@@ -233,11 +261,18 @@ package Alire.Solutions is
    --  Return crates for which there is neither hint nor proper versions
 
    function Pins (This : Solution) return Conditional.Dependencies;
-   --  Return all pinned dependencies as a dependency tree containing exact
-   --  versions.
+   --  Return all version-pinned dependencies as a dependency tree containing
+   --  exact versions. NOTE that the original dependency is thus lost in this
+   --  info.
 
    function Pins (This : Solution) return Dependency_Map;
-   --  return all pinned dependencies as plain dependencies for a exact version
+   --  return all version-pinned dependencies as plain dependencies for a exact
+   --  version. NOTE that the original dependency is thus lost.
+
+   function User_Pins (This : Solution) return Conditional.Dependencies;
+   --  Return all version- or link-pinned dependencies; equivalent to Pins and
+   --  Links. NOTE that the original dependency is lost for the case of version
+   --  pins, as only the pinned version is returned.
 
    function Releases (This : Solution) return Release_Map;
    --  Returns the proper releases in the solution (regular and detected
@@ -341,6 +376,13 @@ private
    end record;
 
    --  Begin of implementation
+
+   ----------------------
+   -- All_Dependencies --
+   ----------------------
+
+   function All_Dependencies (This : Solution) return State_Map
+   is (This.Dependencies);
 
    -----------------
    -- Composition --
@@ -515,19 +557,21 @@ private
           This.Dependencies.Including
          (This.Dependencies (Crate).Pinning (Version)));
 
-   ----------
-   -- Pins --
-   ----------
-
-   function Pins (This : Solution) return Dependency_Map
-   is (This.Dependencies_That (States.Is_Pinned'Access));
-
    --------------
    -- Required --
    --------------
 
    function Required (This : Solution) return State_Map'Class
    is (This.Dependencies);
+
+   ---------------
+   -- Resetting --
+   ---------------
+
+   function Resetting (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (This.Missing (Crate).User_Unpinning (Crate));
 
    -------------
    -- Setting --
@@ -552,6 +596,20 @@ private
    is (This.Dependencies (Crate));
 
    ---------------
+   -- Unlinking --
+   ---------------
+
+   function Unlinking (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unlinking))
+       else This);
+
+   ---------------
    -- Unpinning --
    ---------------
 
@@ -564,5 +622,28 @@ private
                 This.Dependencies.Including
                (This.Dependencies (Crate).Unpinning))
        else This);
+
+   ---------------
+   -- Unsolving --
+   ---------------
+
+   function Unsolving (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unlinking.Unpinning.Missing))
+       else This);
+
+   --------------------
+   -- User_Unpinning --
+   --------------------
+
+   function User_Unpinning (This : Solution;
+                            Crate : Crate_Name)
+                            return Solution
+   is (This.Unpinning (Crate).Unlinking (Crate));
 
 end Alire.Solutions;

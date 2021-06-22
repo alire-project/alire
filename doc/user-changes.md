@@ -6,6 +6,23 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Pins stored in the manifest
+
+PR [#743](https://github.com/alire-project/alire/pull/743).
+
+The options to modify pins through the command-line  (`with --use`, `alr pin
+[--unpin] crate` have been disabled in favor of direct edition of the manifest.
+This way, pins are more robust against lockfile format changes. These kinds of
+pins exist:
+
+```
+[[pins]]
+foo = { version = "1.3.2+bugfix" } # Require a specific version
+bar = { path = "../my/bar" } # Use a local crate to override a dependency
+baz = { url = "https://github.com/baz.git" } # No commit, will use HEAD, will update on `alr update`
+gru = { url = "https://gitlab.com/gru.git" commit="123456890abcdef..." } # Explicit commit, won't update
+```
+
 ### Automatic GPR 'with' now in crate configuration
 
 PR [#740](https://github.com/alire-project/alire/pull/740).

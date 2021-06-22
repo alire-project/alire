@@ -1,11 +1,11 @@
 """
-Check that updating a pinned crate results in a recoverable error
+Check that updating a manifest-pinned crate results in a recoverable error
 """
 
 import re
 import os
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin
 from drivers.asserts import assert_match
 from glob import glob
 
@@ -13,8 +13,8 @@ from glob import glob
 # Add a dependency and force it missing by pinning it to non-existing version
 run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
-run_alr('with', 'libhello^1')   # This causes libhello=1.1
-run_alr('pin', 'libhello=1')  # Downgrade to 1.0
+run_alr('with', 'libhello^1')     # This causes libhello=1.1
+alr_pin('libhello', version='1')  # Downgrade to 1.0
 
 # Check that updating without specific crate does not err
 run_alr('update')

@@ -15,3 +15,4 @@ jobs:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
           locale: "US"
+          exclude: "*.lock*
