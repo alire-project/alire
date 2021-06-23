@@ -68,14 +68,6 @@ def dir_separator():
     return '/' if os.name != 'nt' else '\\'
 
 
-def touch(file):
-    """
-    Create an almost empty file
-    """
-    with open(file, "w") as f:
-        f.write("\n")
-
-
 # Add a 'with "something";' at the top of a project file
 def with_project(file, project):
     with open(file, 'r+') as f:

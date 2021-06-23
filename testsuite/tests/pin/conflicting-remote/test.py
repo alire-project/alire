@@ -4,7 +4,8 @@ Check conflict detection for remote pins for the same crate
 
 from drivers.alr import run_alr, alr_pin, alr_unpin, init_local_crate
 from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import git_blast, git_head, init_git_repo, touch
+from drivers.helpers import git_blast, git_head, init_git_repo
+from e3.os.fs import touch
 from re import escape
 
 import re
