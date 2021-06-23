@@ -1,5 +1,6 @@
 with Ada.Containers.Vectors;
 
+with Alire.Directories;
 private with Alire.Utils;
 
 private with GNATCOLL.OS.Constants;
@@ -9,6 +10,15 @@ package Alire.VFS is
 
    --  Portable paths are relative and use forward slashes. Absolute paths
    --  cannot be portable.
+
+   function Is_Portable (Path : Any_Path) return Boolean;
+   --  Say if the path may be safely cast to a portable path
+
+   function Attempt_Portable (Path : Any_Path;
+                              From : Any_Path := Directories.Current)
+                              return String;
+   --  If Path seen from From is relative, convert to portable, else return
+   --  as-is
 
    function To_Portable (Path : Relative_Path) return Portable_Path;
 
@@ -67,6 +77,15 @@ package Alire.VFS is
 private
 
    use all type GNATCOLL.OS.OS_Type;
+
+   -----------------
+   -- Is_Portable --
+   -----------------
+
+   function Is_Portable (Path : Any_Path) return Boolean
+   is ((for all Char of Path => Char /= '\')
+       and then
+       not Check_Absolute_Path (Path));
 
    -----------------
    -- To_Portable --

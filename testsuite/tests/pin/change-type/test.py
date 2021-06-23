@@ -33,11 +33,9 @@ alr_pin('libhello', path='../crates/libhello_1.0.0')
 
 # Check that it shows as such in the solution
 p = run_alr('show', '--solve')
-s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\^1 \(direct,linked'
-             ',pin=..' + s +  # relative link should be preserved
-             'crates' + s + 'libhello_1.0.0\).*',
+             ',pin=../crates/libhello_1.0.0\).*',
              p.out, flags=re.S)
 
 # Repin to a version and check again

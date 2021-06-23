@@ -1,9 +1,9 @@
-private with AAA.Containers.Indefinite_Holders;
+private with Ada.Containers.Indefinite_Holders;
 
 private with Alire.Containers;
-with Alire.Externals.Softlinks;
 with Alire.Releases;
 with Alire.TOML_Adapters;
+with Alire.User_Pins;
 
 package Alire.Dependencies.States is
 
@@ -19,6 +19,10 @@ package Alire.Dependencies.States is
    type Transitivities is (Unknown,   -- Needed by limitations in the solver
                            Direct,    -- A dependency of the root release
                            Indirect); -- A dependency introduced transitively
+
+   subtype Softlink is User_Pins.Pin
+     with Dynamic_Predicate =>
+       Softlink.Kind in User_Pins.Kinds_With_Path;
 
    type State (<>) is new Dependency with private;
 
@@ -39,7 +43,7 @@ package Alire.Dependencies.States is
    --  Change fulfilment to Hinted in copy of Base
 
    function Linking (Base : State;
-                     Link : Externals.Softlinks.External)
+                     Link : Softlink)
                      return State;
    --  Returns a copy of Base fulfilled by Path
 
@@ -107,7 +111,7 @@ package Alire.Dependencies.States is
 
    function Fulfilment (This : State) return Fulfillments;
 
-   function Link (This : State) return Externals.Softlinks.External
+   function Link (This : State) return Softlink
      with Pre => This.Is_Linked;
 
    function Pin_Version (This : State) return Semantic_Versioning.Version
@@ -172,16 +176,18 @@ private
 
    --  Helper types
 
-   package External_Holders is
-     new AAA.Containers.Indefinite_Holders (Externals.Softlinks.External);
-
-   type Link_Holder is new External_Holders.Holder with null record;
-
    overriding
    function New_Dependency
      (Crate    : Crate_Name;
       Versions : Semantic_Versioning.Extended.Version_Set)
       return State;
+
+   package Link_Holders is
+     new Ada.Containers.Indefinite_Holders (Softlink, User_Pins."=");
+
+   type Link_Holder is new Link_Holders.Holder with null record;
+
+   function Get (This : Link_Holder) return Softlink renames Element;
 
    type Fulfillment_Data (Fulfillment : Fulfillments := Missed) is record
       case Fulfillment is
@@ -275,11 +281,13 @@ private
           else "")
        & Utils.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
-          then ",pin=" & This.Fulfilled.Target.Get.Path
-                       & (if GNAT.OS_Lib.Is_Directory
-                            (This.Fulfilled.Target.Get.Path)
-                             then ""
-                             else "," & TTY.Error ("broken"))
+          then ",pin=" & This.Fulfilled.Target.Element.Relative_Path
+                       & (if not This.Fulfilled.Target.Element.Is_Broken
+                          then ""
+                          else ",broken")
+                       & (if This.Fulfilled.Target.Element.Is_Remote
+                          then ",url=" & This.Fulfilled.Target.Element.URL
+                          else "")
                        & (if This.Has_Release
                           then ",release"
                           else "")
@@ -321,7 +329,7 @@ private
    -- Link --
    ----------
 
-   function Link (This : State) return Externals.Softlinks.External
+   function Link (This : State) return Softlink
    is (This.Fulfilled.Target.Get);
 
    -------------
@@ -329,7 +337,7 @@ private
    -------------
 
    function Linking (Base : State;
-                     Link : Externals.Softlinks.External)
+                     Link : Softlink)
                      return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
@@ -480,11 +488,14 @@ private
              when others => This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
           then "," & TTY.Emph ("pin") & "="
-                   & TTY.URL (This.Fulfilled.Target.Get.Path)
-                   & (if GNAT.OS_Lib.Is_Directory
-                        (This.Fulfilled.Target.Get.Path)
-                         then ""
-                         else "," & TTY.Error ("broken"))
+                   & TTY.URL (This.Fulfilled.Target.Element.Relative_Path)
+                   & (if not This.Fulfilled.Target.Element.Is_Broken
+                      then ""
+                      else "," & TTY.Error ("broken"))
+                   & (if This.Fulfilled.Target.Element.Is_Remote
+                      then ",url=" & TTY.URL
+                        (This.Fulfilled.Target.Element.URL)
+                      else "")
                    & (if This.Has_Release
                       then "," & TTY.OK ("release")
                       else "")

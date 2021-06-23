@@ -6,7 +6,6 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
-with Alire.Roots.Optional;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -296,52 +295,12 @@ package body Alire.Solutions is
 
    function Linking (This  : Solution;
                      Crate : Crate_Name;
-                     Link  : Externals.Softlinks.External)
+                     Link  : Dependencies.States.Softlink)
                      return Solution
-   is
-      Linked_Root : constant Roots.Optional.Root :=
-                      Roots.Optional.Detect_Root (Link.Path);
-   begin
-
-      --  Recursively find any other links
-
-      return Result : Solution := (Solved       => True,
-                                   Dependencies =>
-                                     This.Dependencies.Including
-                                       (This.State (Crate).Linking (Link)))
-      do
-         if Linked_Root.Is_Valid and then Linked_Root.Value.Has_Lockfile then
-            declare
-               Linked_Solution : Solution renames Linked_Root.Value.Solution;
-            begin
-
-               --  Go through any links in the linked release
-
-               for Dep of Linked_Solution.Links loop
-                  declare
-
-                     --  Create the new link for our own solution, composing
-                     --  relative paths when possible.
-
-                     New_Link : constant Externals.Softlinks.External :=
-                                  Linked_Solution
-                                    .State (Dep.Crate)
-                                    .Link.Relocate (From => Link.Path);
-                  begin
-
-                     --  We may or not already depend on the transitively
-                     --  linked release. Just in case, we add the dependency
-                     --  before the link.
-
-                     Result := Result.Depending_On (Dep)
-                                     .Linking (Crate => Dep.Crate,
-                                               Link  => New_Link);
-                  end;
-               end loop;
-            end;
-         end if;
-      end return;
-   end Linking;
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including
+            (This.State (Crate).Linking (Link)));
 
    ------------------
    -- New_Solution --
@@ -461,10 +420,10 @@ package body Alire.Solutions is
                   & (if Detailed
                      then " (origin: "
                           & (if Dep.Is_Linked
-                             then TTY.URL (Dep.Link.Path)
+                             then Dep.Link.Relative_Path
                                   & (if Dep.Link.Is_Remote
                                      then " from "
-                                         & Dep.Link.Remote.TTY_URL_With_Commit
+                                         & Dep.Link.TTY_URL_With_Commit
                                      else "") -- no remote
                              else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
                           & ")" -- origin completed
@@ -494,10 +453,10 @@ package body Alire.Solutions is
                     else "")
                   & (if Detailed and then Dep.Is_Linked
                      then " (origin: "
-                         & TTY.URL (Dep.Link.Path)
+                         & Dep.Link.Relative_Path
                          & (if Dep.Link.Is_Remote
                             then " from "
-                                 & Dep.Link.Remote.TTY_URL_With_Commit
+                                 & Dep.Link.TTY_URL_With_Commit
                             else "") -- no remote
                          & ")"  -- origin completed
                      else ""),  -- no details
@@ -620,9 +579,9 @@ package body Alire.Solutions is
             if Dep.Is_Linked then
                Table
                  .Append (TTY.Name (Dep.Crate))
-                 .Append (TTY.Version ("file:" & Dep.Link.Path))
+                 .Append (TTY.URL ("file:") & Dep.Link.Relative_Path)
                  .Append (if Dep.Link.Is_Remote
-                          then Dep.Link.Remote.TTY_URL_With_Commit
+                          then Dep.Link.TTY_URL_With_Commit
                           else "")
                  .New_Row;
             elsif Dep.Is_Pinned then

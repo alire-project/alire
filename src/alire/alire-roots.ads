@@ -1,6 +1,5 @@
 private with AAA.Caches.Files;
 
-with Alire.Conditional;
 with Alire.Containers;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
@@ -83,6 +82,9 @@ package Alire.Roots is
    procedure Export_Build_Environment (This : in out Root);
    --  Export the build environment (PATH, GPR_PROJECT_PATH) of the given root
 
+   function Name (This : Root) return Crate_Name;
+   --  Crate name of the root release
+
    function Path (This : Root) return Absolute_Path;
 
    function Project_Paths (This : in out Root)
@@ -92,6 +94,7 @@ package Alire.Roots is
    --  directories.
 
    function Release (This : Root) return Releases.Release;
+   --  Retrieve a the root release, i.e., the one described in the manifest
 
    function Release (This  : in out Root;
                      Crate : Crate_Name)
@@ -190,26 +193,6 @@ package Alire.Roots is
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
 
-   type Remote_Pin_Result (Crate_Length : Natural) is record
-      Crate    : String (1 .. Crate_Length); -- May be empty for a "raw" remote
-      New_Dep  : Conditional.Dependencies;   -- Requested one or else found one
-      Solution : Solutions.Solution;         -- Includes new remote pin
-   end record;
-
-   function Pinned_To_Remote (This        : in out Root;
-                              Dependency  : Conditional.Dependencies;
-                              URL         : String;
-                              Commit      : String;
-                              Must_Depend : Boolean)
-                              return Remote_Pin_Result
-     with Pre => Dependency.Is_Empty or else Dependency.Is_Value;
-   --  Prepares a pin to a remote repo with specific commit. If
-   --  Dependency.Crate is not already a dependency, it will be added as
-   --  top-level, unless Must_Depend, in which case Checked_Error. If Commit
-   --  is "", the default tip commit in the remote will be used instead. If
-   --  Dependency.Is_Empty, a valid root must be found at the given commit.
-   --  If Crate /= "" and Commit contains a root, their crate name must match.
-
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
    function Working_Folder (This : Root) return Absolute_Path;
@@ -250,22 +233,5 @@ private
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
    end record;
-
-   procedure Apply_Local_Pins (This : in out Root);
-   --  Apply version/path pins from the manifest. Remote pins are dealt with by
-   --  Deploy_Pins, as they are costlier and have more involved processing.
-
-   procedure Deploy_Pins (This       : in out Root;
-                          Exhaustive : Boolean;
-                          Allowed    : Containers.Crate_Name_Sets.Set :=
-                            Containers.Crate_Name_Sets.Empty_Set);
-   --  Download any remote pins in the manifest. When not Exhaustive, a pin
-   --  that is already in the solution is not re-downloaded. This is to avoid
-   --  re-fetching all pins after each manifest edition. New pins are always
-   --  downloaded. An update requested by the user (`alr update`) will be
-   --  exhaustive. Allowed restricts which crates are affected
-
-   procedure Prune_Pins (This : in out Root);
-   --  Remove any pins in the solution that are not in the manifest
 
 end Alire.Roots;

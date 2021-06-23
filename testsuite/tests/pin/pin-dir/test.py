@@ -29,11 +29,9 @@ run_alr('build')
 p = run_alr('with', '--solve')
 # For this match we don't know where the test is temporarily put, so we skip
 # over some parts of the output
-s = re.escape(dir_separator())  # platform-dependent
 assert_match('.*Dependencies \(external\):.*'
              'libhello\^1.0.0 \(direct,linked'
-             ',pin=..' + s +  # check that relative path is preserved
-             'crates' + s + 'libhello_1.0.0\).*',
+             ',pin=../crates/libhello_1.0.0\).*',  # relative, always fwd slash
              p.out, flags=re.S)
 
 # Check that unpinning the dependency works and now the dependency is show

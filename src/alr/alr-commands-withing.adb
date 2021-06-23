@@ -71,47 +71,6 @@ package body Alr.Commands.Withing is
                                                         Requested.Versions);
    end Add;
 
-   ---------------------
-   -- Add_Remote_Link --
-   ---------------------
-
-   procedure Add_Remote_Link (Cmd : in out Command;
-                              Dep : String)
-   is
-      use Alire;
-      Old_Deps     : constant Conditional.Dependencies :=
-                       Cmd.Root.Release.Dependencies;
-      New_Dep      : constant Alire.Conditional.Dependencies :=
-                       (if Dep = ""
-                        then Alire.Conditional.No_Dependencies
-                        else Alire.Conditional.New_Dependency
-                          (Alire.Dependencies.From_String (Dep)));
-      New_Solution : constant Roots.Remote_Pin_Result :=
-                       Cmd.Root.Pinned_To_Remote
-                         (Dependency  => New_Dep,
-                          URL         => Cmd.URL.all,
-                          Commit      => Cmd.Commit.all,
-                          Must_Depend => False);
-      use type Conditional.Dependencies;
-   begin
-
-      --  Report crate detection at target destination
-
-      User_Input.Report_Pinned_Crate_Detection (+New_Solution.Crate,
-                                                New_Solution.Solution);
-
-      --  If we made here there were no errors adding the dependency
-      --  and storing the softlink. We can proceed to confirming the
-      --  replacement.
-
-      Replace_Current (Cmd,
-                       Old_Deps     => Old_Deps,
-                       New_Deps     => Old_Deps and New_Solution.New_Dep,
-                       Old_Solution => New_Solution.Solution);
-      --  We use the New_Solution with the softlink as previous solution, so
-      --  the pinned directory is used by the solver.
-   end Add_Remote_Link;
-
    ------------------
    -- Add_Softlink --
    ------------------
@@ -119,6 +78,7 @@ package body Alr.Commands.Withing is
    procedure Add_Softlink (Cmd      : in out Command;
                            Dep_Spec : String;
                            Path     : String) is
+      pragma Unreferenced (Path);
       New_Dep : constant Alire.Dependencies.Dependency :=
                   Alire.Dependencies.From_String (Dep_Spec);
    begin
@@ -137,11 +97,14 @@ package body Alr.Commands.Withing is
          Old_Deps     : constant Conditional.Dependencies :=
                           Cmd.Root.Release.Dependencies;
          Old_Solution : constant Solutions.Solution := Cmd.Root.Solution;
-         New_Solution : constant Solutions.Solution :=
-                          Old_Solution
-                            .Depending_On (New_Dep)
-                            .Linking (Crate => New_Dep.Crate,
-                                      Path  => Path);
+         New_Solution : constant Solutions.Solution := Old_Solution;
+         --  The following is slated for refactoring in the follow-up PR. Kept
+         --  momentarily for reference.
+                          --  Old_Solution
+                          --    .Depending_On (New_Dep)
+                          --    .Linking (Crate => New_Dep.Crate,
+                          --              Path  => Path);
+                          --  TODO: remove this dead code in PR fixing alr with
       begin
 
          --  Prevent double-add
@@ -575,10 +538,13 @@ package body Alr.Commands.Withing is
 
                --  Pin to remote repo
 
-               Add_Remote_Link (Cmd,
-                                Dep => (if Num_Arguments = 1
-                                        then Argument (1)
-                                        else ""));
+               null;
+
+               --  Slated for immediate removal; kept momentarily for reference
+               --  Add_Remote_Link (Cmd,
+               --                   Dep => (if Num_Arguments = 1
+               --                           then Argument (1)
+               --                           else ""));
 
             else
 

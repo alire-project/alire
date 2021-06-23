@@ -4,6 +4,7 @@ with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with Alire.OS_Lib.Subprocess;
+with Alire.Paths;
 with Alire.Platform;
 with Alire.Properties;
 with Alire.Roots;
@@ -381,6 +382,34 @@ package body Alire.Directories is
       for I in 5 .. 8 loop
          UStrings.Replace_Element (This.Name, I, Char_Random.Random (Gen));
       end loop;
+
+      --  Try to use our alire folder to hide temporaries; return an absolute
+      --  path in any case to avoid problems with the user of the tmp file
+      --  changing working directory.
+
+      if Ada.Directories.Exists (Paths.Working_Folder_Inside_Root) then
+
+         --  Create tmp folder if not existing
+
+         if not Ada.Directories.Exists
+           (Paths.Working_Folder_Inside_Root
+            / Paths.Temp_Folder_Inside_Working_Folder)
+         then
+            Ada.Directories.Create_Path
+              (Paths.Working_Folder_Inside_Root
+               / Paths.Temp_Folder_Inside_Working_Folder);
+         end if;
+
+         This.Name := +Ada.Directories.Full_Name
+           (Paths.Working_Folder_Inside_Root
+            / Paths.Temp_Folder_Inside_Working_Folder
+            / (+This.Name));
+
+      else
+
+         This.Name := +Ada.Directories.Full_Name (+This.Name);
+
+      end if;
    end Initialize;
 
    --------------

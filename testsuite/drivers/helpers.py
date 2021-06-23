@@ -6,6 +6,7 @@ from subprocess import run
 from zipfile import ZipFile
 
 import os
+import platform
 
 
 # Return the entries (sorted) under a given folder, both folders and files
@@ -50,7 +51,11 @@ def check_line_in(filename, line):
                 break
         else:
             assert False, 'Could not find {} in {}:\n{}'.format(
-                repr(line), filename, content_of (filename))
+                repr(line), filename, content_of(filename))
+
+
+def on_windows():
+    return platform.system() == "Windows"
 
 
 def path_separator():

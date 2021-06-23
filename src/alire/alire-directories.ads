@@ -54,6 +54,9 @@ package Alire.Directories is
    --  May still return an absolute path if Child is not in the same drive
    --  (Windows) as Parent.
 
+   function Find_Relative_Path_To (Path : Any_Path) return Any_Path;
+   --  Same as Find_Relative_Path (Parent => Current, Child => Path)
+
    function Find_Single_File (Path      : String;
                               Extension : String)
                               return String;
@@ -174,5 +177,12 @@ private
       Backup     : Boolean := True;
       Backup_Dir : Any_Path (1 .. Backup_Len);
    end record;
+
+   ---------------------------
+   -- Find_Relative_Path_To --
+   ---------------------------
+
+   function Find_Relative_Path_To (Path : Any_Path) return Any_Path
+   is (Find_Relative_Path (Current, Path));
 
 end Alire.Directories;

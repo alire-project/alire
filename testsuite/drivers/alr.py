@@ -212,10 +212,11 @@ def alr_manifest():
     return "alire.toml"
 
 
-def alr_unpin(crate, manual=True, fail_if_missing=True):
+def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
     """
     Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use
     the command-line, according to manual. Must be run in a crate root.
+    If update, run `alr pin` to force computation of new solution
     """
 
     if manual:
@@ -239,7 +240,9 @@ def alr_unpin(crate, manual=True, fail_if_missing=True):
 
             # Make the lockfile "older" (otherwise timestamp is identical)
             os.utime("alire.lock", (0, 0))
-            run_alr("pin")  # Ensure changes don't affect next command output
+
+            if update:
+                run_alr("pin")  # Ensure changes don't affect next command output
         elif fail_if_missing:
             raise RuntimeError
             (f"Could not unpin crate {crate} in lines:\n" + str(orig))
@@ -248,10 +251,12 @@ def alr_unpin(crate, manual=True, fail_if_missing=True):
         raise NotImplementedError("Unimplemented")
 
 
-def alr_pin(crate, version="", path="", url="", commit="", manual=True):
+def alr_pin(crate, version="", path="", url="", commit="",
+            manual=True, update=True):
     """
     Pin a crate, either manually or using the command-line interface. Use only
     one of version, path, url. Must be run in a crate root.
+    When update, run `alr pin` so the new solution is computed.
     """
 
     if manual:
@@ -260,11 +265,11 @@ def alr_pin(crate, version="", path="", url="", commit="", manual=True):
         if version != "":
             pin_line = f'{crate} = {{ version = "{version}" }}'
         elif path != "":
-            pin_line = f'{crate} = {{ path = "{path}" }}'
+            pin_line = f"{crate} = {{ path = '{path}' }}"  # literal so \ works
         elif url != "" and commit != "":
-            pin_line = f'{crate} = {{ url = "{path}", commit = "{commit}" }}'
+            pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
         elif url != "":
-            pin_line = f'{crate} = {{ url = "{path}" }}'
+            pin_line = f"{crate} = {{ url = '{url}' }}"
         else:
             raise ValueError("Specify either version, path or url")
 
@@ -274,7 +279,8 @@ def alr_pin(crate, version="", path="", url="", commit="", manual=True):
         # Make the lockfile "older" (otherwise timestamp is identical)
         os.utime("alire.lock", (0, 0))
 
-        run_alr("pin")  # so the changes in the manifest are applied
+        if update:
+            run_alr("pin")  # so the changes in the manifest are applied
 
     else:
         raise NotImplementedError("Unimplemented")

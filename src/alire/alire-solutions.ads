@@ -1,7 +1,6 @@
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States.Maps;
-with Alire.Externals.Softlinks;
 with Alire.Interfaces;
 with Alire.Properties;
 with Alire.Releases;
@@ -118,17 +117,10 @@ package Alire.Solutions is
 
    function Linking (This  : Solution;
                      Crate : Crate_Name;
-                     Link  : Externals.Softlinks.External)
+                     Link  : Dependencies.States.Softlink)
                      return Solution
      with Pre => This.Depends_On (Crate);
-   --  Replace the fulfilment of Crate with a "softlinked" external
-
-   function Linking (This  : Solution;
-                     Crate : Crate_Name;
-                     Path  : Any_Path)
-                     return Solution
-     with Pre => This.Depends_On (Crate);
-   --  As previous but giving a path for simplicity
+   --  Fulfill a dependency with a link pin
 
    function Missing (This : Solution;
                      Dep  : Dependencies.Dependency)
@@ -490,16 +482,6 @@ private
 
    function Is_Complete (This : Solution) return Boolean
    is (This.Composition <= Releases);
-
-   -------------
-   -- Linking --
-   -------------
-
-   function Linking (This  : Solution;
-                     Crate : Crate_Name;
-                     Path  : Any_Path)
-                     return Solution
-   is (This.Linking (Crate, Externals.Softlinks.New_Softlink (Path)));
 
    -----------
    -- Links --

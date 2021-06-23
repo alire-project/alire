@@ -9,7 +9,7 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "1.1.0-dev+0f603c29";
+   Version : constant String := "1.1.0-dev+recpins";
    --  1.1.0-dev: begin post-1.0 changes
    --  1.0.0:     no changes since rc3
    --  1.0.0-rc3: added help colors PR
@@ -139,6 +139,11 @@ package Alire with Preelaborate is
 
    subtype Absolute_Path is Any_Path
      with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
+
+   subtype Unbounded_Absolute_Path is UString
+     with Dynamic_Predicate =>
+       +Unbounded_Absolute_Path = "" or else
+       Check_Absolute_Path (+Unbounded_Absolute_Path);
 
    subtype Relative_File is Any_Path;
    --  Filenames with relative paths
