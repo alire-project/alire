@@ -1,4 +1,3 @@
-with Ada.Calendar;
 with Ada.Directories;
 
 with Alire.Environment;
@@ -290,12 +289,11 @@ package body Alire.Roots is
    --------------------------
 
    function Is_Lockfile_Outdated (This : Root) return Boolean is
-      use Ada.Directories;
-      use type Ada.Calendar.Time;
+      use GNAT.OS_Lib;
    begin
       return
-        Modification_Time (This.Crate_File) >
-        Modification_Time (This.Lock_File);
+        File_Time_Stamp (This.Crate_File) >
+        File_Time_Stamp (This.Lock_File);
    end Is_Lockfile_Outdated;
 
    ----------------------------

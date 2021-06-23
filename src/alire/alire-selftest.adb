@@ -2,8 +2,6 @@ with Alire.Config.Edit;
 with Alire.Utils;
 with Alire.VCSs.Git;
 
-with TOML; use TOML;
-
 package body Alire.Selftest is
 
    --  Tests are Check_* procedures that end normally or raise some exception.

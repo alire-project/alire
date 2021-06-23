@@ -1,5 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 
+with Alire.TOML_Adapters;
+
 package Alire.Dependencies.States.Maps is
 
    package State_Maps is

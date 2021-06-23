@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Directories;
 with Alire.Errors;
-with Alire.GPR;
 
 with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
 --  Hash implementation generics are not directly withed anywhere. Since they
@@ -23,6 +22,8 @@ with GNATCOLL.VFS;
 
 with TOML;
 use type TOML.Any_Value_Kind, TOML.TOML_Value;
+with Alire.TOML_Adapters;
+with Alire.Crates;
 
 package body Alire.TOML_Index is
 

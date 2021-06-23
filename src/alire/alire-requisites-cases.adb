@@ -1,3 +1,4 @@
+with Alire.TOML_Adapters;
 package body Alire.Requisites.Cases is
 
    Dots : constant String := "...";

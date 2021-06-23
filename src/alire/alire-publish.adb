@@ -30,6 +30,7 @@ with GNATCOLL.OS.Constants;
 with Semantic_Versioning;
 
 with TOML.File_IO;
+with Alire.Origins;
 
 package body Alire.Publish is
 

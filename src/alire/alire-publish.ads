@@ -1,4 +1,3 @@
-with Alire.Origins;
 with Alire.URI;
 
 package Alire.Publish is

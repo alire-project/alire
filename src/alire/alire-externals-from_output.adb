@@ -2,7 +2,6 @@ with Alire.Index;
 with Alire.Origins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Releases;
-with Alire.Requisites;
 with Alire.TOML_Keys;
 
 with Semantic_Versioning;

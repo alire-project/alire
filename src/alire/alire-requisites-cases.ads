@@ -1,6 +1,5 @@
 with Alire.Interfaces;
 with Alire.Properties;
-with Alire.TOML_Adapters;
 
 with TOML;
 

@@ -2,12 +2,9 @@ with Alire.Dependencies;
 with Alire.Index;
 with Alire.Properties;
 with Alire.Solutions;
-with Alire.TOML_Adapters;
 with Alire.Types;
 
 with Semantic_Versioning.Extended;
-
-with TOML;
 
 package Alire.Solver is
 
