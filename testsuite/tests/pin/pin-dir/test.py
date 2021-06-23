@@ -31,7 +31,7 @@ p = run_alr('with', '--solve')
 # over some parts of the output
 assert_match('.*Dependencies \(external\):.*'
              'libhello\^1.0.0 \(direct,linked'
-             ',pin=../crates/libhello_1.0.0\).*',  # relative, always fwd slash
+             ',path=../crates/libhello_1.0.0\).*',  # relative, always fwd slash
              p.out, flags=re.S)
 
 # Check that unpinning the dependency works and now the dependency is show

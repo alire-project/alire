@@ -82,6 +82,18 @@ def with_project(file, project):
         f.write('with "{}";'.format(project) + '\n' + content)
 
 
+def git_branch(path="."):
+    """
+    Return the branch name of the checkout
+    """
+    start_cwd = os.getcwd()
+    os.chdir(path)
+    branch = run(["git", "branch"],
+                 capture_output=True).stdout.split()[1]
+    os.chdir(start_cwd)
+    return branch.decode()
+
+
 def git_head(path="."):
     """
     Return the head commit in a git repo

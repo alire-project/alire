@@ -27,15 +27,19 @@ package body Alire.User_Pins is
    -- Image --
    -----------
 
-   function Image (This : Pin) return String
+   function Image (This : Pin; User : Boolean) return String
    is (case This.Kind is
           when To_Version => "version=" & TTY.Version (This.Version.Image),
-          when To_Path    => "path=" & TTY.URL (+This.Path),
+          when To_Path    => "path=" & TTY.URL (if User
+                                       then VFS.Attempt_Portable (+This.Path)
+                                       else +This.Path),
           when To_Git     =>
             (if Path (This) /= ""
-             then "path=" & TTY.URL (Path (This)) & ","
+             then "path=" & TTY.URL ((if User
+                                      then VFS.Attempt_Portable (Path (This))
+                                      else Path (This))) & ","
              else "")
-            & ("url=" & This.TTY_URL_With_Reference));
+             & ("url=" & This.TTY_URL_With_Reference));
 
    ---------------
    -- Is_Broken --

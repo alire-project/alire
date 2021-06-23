@@ -35,7 +35,7 @@ alr_pin('libhello', path='../crates/libhello_1.0.0')
 p = run_alr('show', '--solve')
 assert_match('.*Dependencies \(external\):.*'
              'libhello\^1 \(direct,linked'
-             ',pin=../crates/libhello_1.0.0\).*',
+             ',path=../crates/libhello_1.0.0\).*',
              p.out, flags=re.S)
 
 # Repin to a version and check again
