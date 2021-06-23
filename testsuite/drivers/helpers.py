@@ -7,6 +7,8 @@ from zipfile import ZipFile
 
 import os
 import platform
+import shutil
+import stat
 
 
 # Return the entries (sorted) under a given folder, both folders and files
@@ -104,6 +106,18 @@ def git_head(path="."):
                       capture_output=True).stdout.split()[0]
     os.chdir(start_cwd)
     return head_commit.decode()
+
+
+def git_blast(path):
+    """
+    Change permissions prior to deletion, as otherwise Windows is uncapable
+    of removing git checkouts
+    """
+    for dirpath, dirnames, filenames in os.walk(path):
+        os.chmod(dirpath, stat.S_IRWXU)
+        for filename in filenames:
+            os.chmod(os.path.join(dirpath, filename), stat.S_IRWXU)
+    shutil.rmtree(path)
 
 
 def init_git_repo(path):

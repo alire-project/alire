@@ -4,9 +4,10 @@ Check conflict detection for remote pins for the same crate
 
 from drivers.alr import run_alr, alr_pin, alr_unpin, init_local_crate
 from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import git_head, init_git_repo, touch
+from drivers.helpers import git_blast, git_head, init_git_repo, touch
 from re import escape
 
+import re
 import os
 import shutil
 import subprocess
@@ -45,13 +46,13 @@ def should_work(commit="", branch=""):
     p = run_alr("pin")
     assert_match(escape("yyy file:../yyy") + ".*\n" +
                  escape("zzz file:alire/cache/pins/zzz") + ".*" +
-                 escape("pin__conflicting-remote/zzz"),
+                 escape(url),
                  p.out)
 
     # Clean up for next trial
     os.chdir("..")
     os.chdir("..")
-    shutil.rmtree("nest")
+    git_blast("nest")
 
 
 #  In this function we will test conflicts that should be detected
@@ -85,14 +86,16 @@ should_work(commit=head1)    # Remote at given commit
 should_work(branch="devel")  # Remote at given branch
 
 should_not_work(commits=[head1, head2],
-                match_error=""
-                ".*Conflicting pin links for crate zzz: Crate xxx wants to "
-                "link path=.*/nest/xxx/alire/cache/pins/zzz_.*,"
-                "url=.*, but a previous link exists to path=.*/zzz")
+                match_error=".*" +
+                re.escape("Conflicting pin links for crate zzz: "
+                          "Crate xxx wants to link ") +
+                ".*" + re.escape(", but a previous link exists to ") +
+                ".*zzz#[0-9a-f]+.*")  # with commit
 should_not_work(branches=["", "devel"],
-                match_error=""
-                ".*Conflicting pin links for crate zzz: Crate xxx wants to "
-                "link path=.*/nest/xxx/alire/cache/pins/zzz.*,"
-                "url=.*, but a previous link exists to path=.*/zzz#devel\n")
+                match_error=".*" +
+                re.escape("Conflicting pin links for crate zzz: "
+                          "Crate xxx wants to link ") +
+                ".*" + re.escape(", but a previous link exists to ") +
+                ".*zzz#devel\n")  # with branch
 
 print('SUCCESS')

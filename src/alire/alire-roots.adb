@@ -352,9 +352,9 @@ package body Alire.Roots is
                Raise_Checked_Error
                  ("Conflicting pin links for crate " & TTY.Name (Crate)
                   & ": Crate " & TTY.Name (Release (This).Name)
-                  & " wants to link " & TTY.URL (Pin.Image (User => False))
+                  & " wants to link " & TTY.URL (Pin.Image (User => True))
                   & ", but a previous link exists to "
-                  & TTY.URL (Sol.State (Crate).Link.Image (User => False)));
+                  & TTY.URL (Sol.State (Crate).Link.Image (User => True)));
             end if;
 
             --  We have a new target root to load

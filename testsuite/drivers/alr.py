@@ -277,7 +277,7 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
         elif url != "" and commit != "":
             pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
         elif url != "" and branch != "":
-            pin_line = f'{crate} = {{ url = "{url}", branch = "{branch}" }}'
+            pin_line = f"{crate} = {{ url = '{url}', branch = '{branch}' }}"
         elif url != "":
             pin_line = f"{crate} = {{ url = '{url}' }}"
         else:
