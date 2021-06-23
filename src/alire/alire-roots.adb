@@ -341,8 +341,6 @@ package body Alire.Roots is
                            Online => Exhaustive);
             end if;
 
-            --  TODO: TEST FOR RECURSIVE REMOTE PINS
-
             --  At this point, we can detect that a link is conflicting with
             --  another one.
 
@@ -359,7 +357,6 @@ package body Alire.Roots is
             end if;
 
             --  TODO: test conflicting link detection for two pins
-            --  TODO: test that the path of a link can be changed without issue
 
             --  We have a new target root to load
 

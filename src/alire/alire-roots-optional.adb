@@ -30,7 +30,6 @@ package body Alire.Roots.Optional is
    -----------------
 
    function Detect_Root (Path : Any_Path) return Optional.Root is
-      --  use Directories.Operators;
       Crate_File : constant Any_Path := Crate_File_Name;
    begin
       if not GNAT.OS_Lib.Is_Directory (Path) then

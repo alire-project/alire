@@ -94,10 +94,7 @@ package Alire.Roots is
    --  directories.
 
    function Release (This : Root) return Releases.Release;
-   --  Retrieve a reference to the root release. Modifications to this release
-   --  are not stored to its manifest; it is only useful to modify it to
-   --  cache information for the current run (e.g., where a link is actually
-   --  deployed).
+   --  Retrieve a the root release, i.e., the one described in the manifest
 
    function Release (This  : in out Root;
                      Crate : Crate_Name)

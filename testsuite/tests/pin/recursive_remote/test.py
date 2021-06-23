@@ -1,5 +1,6 @@
 """
-Verify that recursive pins work for local paths
+Verify that recursive pins work for remote urls (simulated as local git remotes
+using absolute paths)
 """
 
 from drivers.alr import run_alr, alr_pin, init_local_crate

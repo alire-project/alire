@@ -350,7 +350,6 @@ package body Alire.Utils.User_Input is
            then VFS.To_Native (Portable_Path (User_Path))
            else User_Path);
 
-      --  TODO: TEST FOR THESE PATHS
    end To_Absolute_From_Portable;
 
 end Alire.Utils.User_Input;
