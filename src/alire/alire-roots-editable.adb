@@ -155,8 +155,6 @@ package body Alire.Roots.Editable is
       pragma Unreferenced (Unpin);
    begin
 
-      --  TODO: remove pin if existing too (next PR)
-
       --  If dependency is not among dependencies at all, nothing to do
 
       if not (for some Dep of Release (This.Edit).Flat_Dependencies =>
@@ -183,6 +181,10 @@ package body Alire.Roots.Editable is
 
       Alire.Manifest.Remove (This.Edit.Crate_File, Crate);
       This.Reload_Manifest;
+
+      if Unpin then
+         This.Remove_Pin (Crate);
+      end if;
 
    end Remove_Dependency;
 

@@ -8,6 +8,7 @@ with "minirest";
 with "optional";
 with "semantic_versioning";
 with "simple_logging";
+with "toml_slicer";
 with "uri";
 with "xml_ez_out";
 with "spdx";
