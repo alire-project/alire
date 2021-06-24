@@ -119,6 +119,15 @@ package body Alire.Roots.Editable is
 
    begin
 
+      --  Do not add if already a direct dependency
+
+      if (for some Existing_Dep of Release (This.Edit).Flat_Dependencies =>
+            Existing_Dep.Crate = Dep.Crate)
+      then
+         raise Checked_Error with Errors.Set
+           (TTY.Name (Dep.Crate) & " is already a direct dependency.");
+      end if;
+
       --  If we are given an Any dependency, attempt a solving to narrow down
       --  to a "safely updatable" subset.
 
@@ -143,7 +152,36 @@ package body Alire.Roots.Editable is
                                 Crate : Crate_Name;
                                 Unpin : Boolean := True) is
    begin
-      raise Unimplemented;
+
+      --  TODO: remove pin if existing too (next PR)
+
+      --  If dependency is not among dependencies at all, nothing to do
+
+      if not (for some Dep of Release (This.Edit).Flat_Dependencies =>
+                Dep.Crate = Crate)
+      then
+         Raise_Checked_Error
+           ("Requested crate is not among direct dependencies.");
+      end if;
+
+      --  If dependency is not among the top-level direct dependencies, this is
+      --  a dynamic dependency
+
+      if not Release (This.Edit).Dependencies.Is_Iterable
+        or else
+          not (for some Dep of
+                 Release (This.Edit).Dependencies =>
+                     Dep.Is_Value and then Dep.Value.Crate = Crate)
+      then
+         Raise_Checked_Error
+           ("Crate slated for removal is not among direct static dependencies:"
+            & " " & TTY.Name (Crate)
+            & "; please remove manually from manifest.");
+      end if;
+
+      Alire.Manifest.Remove (This.Edit.Crate_File, Crate);
+      This.Reload_Manifest;
+
    end Remove_Dependency;
 
    ---------------------

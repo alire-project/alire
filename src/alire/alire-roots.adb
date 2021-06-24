@@ -1103,6 +1103,8 @@ package body Alire.Roots is
 
       Commit (+This.Lockfile, Lock_File (Regular_Root));
       This.Lockfile := +"";
+
+      This.Sync_From_Manifest (Interact => False);
    end Commit;
 
    ---------------------

@@ -39,23 +39,14 @@ package Alire.Roots.Editable is
    --  untouched (use Update to recompute a fresh solution).
 
    procedure Add_Dependency (This : in out Root;
-                             Dep  : Dependencies.Dependency)
-     with Pre =>
-       not This.Solution.Depends_On (Dep.Crate)
-       or else raise Checked_Error with Errors.Set
-         (TTY.Name (Dep.Crate) & " is already a dependency of "
-          & TTY.Name (This.Name));
-   --  Add a dependency
+                             Dep  : Dependencies.Dependency);
+   --  Add a dependency, unless Dep is already among direct dependencies
 
    procedure Remove_Dependency (This  : in out Root;
                                 Crate : Crate_Name;
-                                Unpin : Boolean := True)
-     with Pre =>
-       This.Solution.Depends_On (Crate)
-       or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is not a dependency or pin of "
-          & TTY.Name (This.Name));
-   --  Remove any dependency (and pin) on crate
+                                Unpin : Boolean := True);
+   --  Remove any dependency (and pin) on crate; will err if Crate is not a
+   --  dependency already.
 
    function Can_Be_Pinned (This  : in out Root;
                            Crate : Crate_Name)
