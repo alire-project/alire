@@ -239,8 +239,9 @@ package body Alire.Roots.Editable is
          --  At this point we can be sure of the crate name, so we shadow the
          --  original argument.
          Crate : constant Crate_Name :=
-                   Add_Pin_Preparations.Crate
-                                       .Or_Else (Pin_Root.Value.Name);
+                   (if Add_Pin_Preparations.Crate.Has_Element
+                    then Add_Pin_Preparations.Crate.Element.Ptr.all
+                    else Pin_Root.Value.Name);
       begin
 
          if not This.Solution.Depends_On (Crate) then

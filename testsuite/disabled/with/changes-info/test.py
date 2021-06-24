@@ -40,8 +40,9 @@ Changes to dependency solution:
              p.out, flags=re.S)
 
 ###############################################################################
-# Check adding a pinned dir
-p = run_alr('with', 'local_crate', '--use=/', quiet=False)
+# Check adding a pinned dir (the dir must exist)
+os.mkdir("local_crate")
+p = run_alr('with', 'local_crate', '--use=local_crate', quiet=False)
 assert_match(".*" +
              re.escape("""Requested changes:
 
@@ -49,7 +50,7 @@ assert_match(".*" +
 
 Changes to dependency solution:
 
-   +· local_crate unknown (new,pin=""") + ".*",  # skip platform-dependent path
+   +· local_crate unknown (new,path=local_crate)""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################

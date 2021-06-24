@@ -21,7 +21,8 @@ run_alr('with', 'hello^1')
 run_alr('with', 'superhello')
 
 # Add more dependencies, without a proper release
-run_alr('with', 'wip', '--use', '/fake', '--force')  # force bc dir is missing
+os.mkdir("fake")
+run_alr('with', 'wip', '--use', 'fake', '--force')  # force bc dir is missing
 run_alr('with', 'unobtanium', '--force')
 
 # Verify printout (but for test-dependent path)
@@ -33,7 +34,7 @@ assert_match(re.escape('''xxx=0.0.0
 +-- superhello=1.0.0 (^1.0.0)
 |   +-- libhello=1.0.1 (~1.0)
 +-- unobtanium* (direct,missed) (*)
-+-- wip* (direct,linked,pin=''') + '.*' + re.escape(') (*)'),
++-- wip* (direct,linked,path=''') + '.*' + re.escape(') (*)'),
              p.out, flags=re.S)
 
 print('SUCCESS')
