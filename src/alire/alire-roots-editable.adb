@@ -1,3 +1,4 @@
+with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Directories;
 with Alire.Manifest;
@@ -74,11 +75,64 @@ package body Alire.Roots.Editable is
    procedure Add_Dependency (This : in out Root;
                              Dep  : Dependencies.Dependency)
    is
-   begin
-      Alire.Manifest.Append (Crate_File (This.Edit), Dep);
-      This.Reload_Manifest;
 
-      This.Edit.Set (This.Solution.Depending_On (Dep));
+      --------------------
+      -- Find_Updatable --
+      --------------------
+
+      function Find_Updatable return Dependencies.Dependency is
+      begin
+
+         --  Solve with the new dependency and take the updatable set for the
+         --  version in the solution.
+
+         Trace.Debug ("Attempting to narrow down dependency for new crate "
+                      & Dep.TTY_Image);
+
+         declare
+            use type Conditional.For_Dependencies.Tree;
+            Sol : constant Solutions.Solution :=
+                    Solver.Resolve
+                      (Deps    => Release (This.Edit)
+                                  .Dependencies (This.Edit.Environment)
+                                  and Dep,
+                       Props   => This.Edit.Environment,
+                       Current => This.Edit.Solution);
+         begin
+            if Sol.State (Dep.Crate).Has_Release then
+               return
+                 Dependencies.New_Dependency
+                   (Crate    => Dep.Crate,
+                    Versions => Semver.Updatable
+                      (Sol.State (Dep.Crate).Release.Version));
+            else
+               return Dep;
+            end if;
+
+         exception
+            when Solver.No_Solution_Error =>
+               Put_Warning ("No solution found when adding dependency: "
+                            & Dep.TTY_Image);
+               return Dep;
+         end;
+      end Find_Updatable;
+
+   begin
+
+      --  If we are given an Any dependency, attempt a solving to narrow down
+      --  to a "safely updatable" subset.
+
+      declare
+         Dep : constant Dependencies.Dependency :=
+                 (if Add_Dependency.Dep.Versions.Is_Any
+                  then Find_Updatable
+                  else Add_Dependency.Dep);
+      begin
+         Alire.Manifest.Append (Crate_File (This.Edit), Dep);
+         This.Reload_Manifest;
+
+         This.Edit.Set (This.Solution.Depending_On (Dep));
+      end;
    end Add_Dependency;
 
    -----------------------

@@ -9,6 +9,8 @@ with Semantic_Versioning.Extended;
 
 package Alire.Solver is
 
+   No_Solution_Error : exception;
+
    --------------
    -- Policies --
    --------------
@@ -134,7 +136,7 @@ package Alire.Solver is
                      return Solution;
    --  Exhaustively look for a solution to the given dependencies, under the
    --  given platform properties and lookup options. Pins can be supplied to
-   --  override Deps.
+   --  override Deps. May raise No_Solution_Error.
 
    function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;

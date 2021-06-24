@@ -896,11 +896,11 @@ package body Alire.Solutions is
       end return;
    end To_TOML;
 
-   -------------------------------
-   -- Restrict_New_Dependencies --
-   -------------------------------
+   -----------------------------
+   -- Narrow_New_Dependencies --
+   -----------------------------
 
-   function Restrict_New_Dependencies (Old_Deps,
+   function Narrow_New_Dependencies (Old_Deps,
                                        New_Deps : Conditional.Dependencies;
                                        New_Sol  : Solution)
                                        return Conditional.Dependencies
@@ -952,6 +952,6 @@ package body Alire.Solutions is
             end if;
          end loop;
       end return;
-   end Restrict_New_Dependencies;
+   end Narrow_New_Dependencies;
 
 end Alire.Solutions;
