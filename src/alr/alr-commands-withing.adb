@@ -15,6 +15,8 @@ with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
+with TOML_Slicer;
+
 package body Alr.Commands.Withing is
 
    Switch_URL : constant String := "--use";
@@ -299,6 +301,12 @@ package body Alr.Commands.Withing is
          New_Root.Confirm_And_Commit;
 
       end;
+   exception
+      when E : TOML_Slicer.Slicing_Error =>
+         Alire.Log_Exception (E);
+         Reportaise_Command_Failed
+           ("alr was unable to apply your request; "
+            & "please edit the manifest manually.");
    end Execute;
 
    ----------------------

@@ -194,15 +194,14 @@ package body Alire.Roots.Editable is
 
    procedure Add_Version_Pin (This    : in out Root;
                               Crate   : Crate_Name;
-                              Version : String)
+                              Version : Semver.Version)
    is
-      V : constant Semver.Version := Semver.Parse (Version);
    begin
       if not This.Solution.Depends_On (Crate) then
          This.Add_Dependency
            (Dependencies.New_Dependency
               (Crate,
-               Semver.Updatable (V)));
+               Semver.Updatable (Version)));
       end if;
 
       --  Remove any previous pin for this crate
@@ -213,10 +212,10 @@ package body Alire.Roots.Editable is
 
       Alire.Manifest.Append (Crate_File (This.Edit),
                              Crate,
-                             User_Pins.New_Version (V));
+                             User_Pins.New_Version (Version));
       This.Reload_Manifest;
 
-      This.Edit.Set (This.Solution.Pinning (Crate, V));
+      This.Edit.Set (This.Solution.Pinning (Crate, Version));
    end Add_Version_Pin;
 
    --------------------------
