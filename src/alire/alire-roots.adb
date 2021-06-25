@@ -793,6 +793,7 @@ package body Alire.Roots is
    ------------------------
 
    procedure Sync_From_Manifest (This     : in out Root;
+                                 Silent   : Boolean;
                                  Interact : Boolean;
                                  Force    : Boolean := False)
    is
@@ -813,7 +814,7 @@ package body Alire.Roots is
          --  changes (new/removed pins, changed explicit commits).
 
          This.Sync_Dependencies (Old      => Old_Solution,
-                                 Silent   => False,
+                                 Silent   => Silent,
                                  Interact => Interact);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
@@ -1104,7 +1105,8 @@ package body Alire.Roots is
       Commit (+This.Lockfile, Lock_File (Regular_Root));
       This.Lockfile := +"";
 
-      This.Sync_From_Manifest (Interact => False);
+      This.Sync_From_Manifest (Silent   => True,
+                               Interact => False);
    end Commit;
 
    ---------------------

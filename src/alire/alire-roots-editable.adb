@@ -150,7 +150,9 @@ package body Alire.Roots.Editable is
 
    procedure Remove_Dependency (This  : in out Root;
                                 Crate : Crate_Name;
-                                Unpin : Boolean := True) is
+                                Unpin : Boolean := True)
+   is
+      pragma Unreferenced (Unpin);
    begin
 
       --  TODO: remove pin if existing too (next PR)

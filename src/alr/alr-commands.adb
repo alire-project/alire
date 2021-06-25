@@ -595,7 +595,8 @@ package body Alr.Commands is
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
                      Cmd.Requires_Full_Index (Strict => False);
-                     Checked.Sync_From_Manifest (Interact => False);
+                     Checked.Sync_From_Manifest (Silent   => False,
+                                                 Interact => False);
                      return;
                   end if;
 
@@ -647,7 +648,8 @@ package body Alr.Commands is
 
          if Sync then
             Cmd.Requires_Full_Index (Strict => False);
-            Checked.Sync_From_Manifest (Interact => False,
+            Checked.Sync_From_Manifest (Silent   => False,
+                                        Interact => False,
                                         Force    => True);
             --  As we just created the empty lockfile, we force the update
          end if;

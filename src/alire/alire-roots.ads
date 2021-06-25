@@ -128,6 +128,7 @@ package Alire.Roots is
    --  automated changes within the same second.
 
    procedure Sync_From_Manifest (This     : in out Root;
+                                 Silent   : Boolean;
                                  Interact : Boolean;
                                  Force    : Boolean := False);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
@@ -137,7 +138,8 @@ package Alire.Roots is
    --  the manifest is newer than the lockfile, resolve again, as dependencies
    --  may have been edited by hand. 3) Ensure that releases in the lockfile
    --  are actually on disk (may be missing if cache was deleted, or the crate
-   --  was just cloned). When not Interact, run as in non-interactive mode.
+   --  was just cloned). When Silent, downgrade log level of some output. When
+   --  not Interact, run as if --non-interactive were in effect.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;

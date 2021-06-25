@@ -18,11 +18,11 @@ package Alire.Roots.Editable is
    --  Confirm_And_Commit is called.
 
    procedure Confirm_And_Commit (This : in out Root);
-   --  Present differences in the solutions
-   --  of Original and Edited and ask the user to accept, in which case
-   --  Edited.Commit is called. Edited is expected to be a temporary copy
-   --  of Original. Performs an Edited.Reload_Manifest, so any changes done to
-   --  the Edited manifest about dependency/pin adition/removal are applied.
+   --  Present differences in the solutions of Original and Edited and ask
+   --  the user to accept, in which case Edited.Commit is called. Edited
+   --  is expected to be a temporary copy of Original. Performs an
+   --  Edited.Reload_Manifest, so any changes done to the Edited manifest
+   --  about dependency/pin adition/removal are applied.
 
    --  A few proxies so useful predicates can be kept
 
@@ -40,13 +40,14 @@ package Alire.Roots.Editable is
 
    procedure Add_Dependency (This : in out Root;
                              Dep  : Dependencies.Dependency);
-   --  Add a dependency, unless Dep is already among direct dependencies
+   --  Add a dependency, or raise Checked_Error is Dep is already among direct
+   --  dependencies.
 
    procedure Remove_Dependency (This  : in out Root;
                                 Crate : Crate_Name;
                                 Unpin : Boolean := True);
-   --  Remove any dependency (and pin) on crate; will err if Crate is not a
-   --  dependency already.
+   --  Remove any dependency (and pin) on crate; will raise Checked_Error if
+   --  Crate is not a dependency already.
 
    function Can_Be_Pinned (This  : in out Root;
                            Crate : Crate_Name)
@@ -90,7 +91,7 @@ package Alire.Roots.Editable is
           Errors.Set ("Simultaneous Branch and Commit pins are incompatible"))
        and then
          (Crate.Is_Empty
-          or else This.Can_Be_Pinned (Crate.Element.Ptr.all));
+          or else This.Can_Be_Pinned (Crate.Element));
    --  Add a pin to a remote repo, with optional Commit xor Branch. if
    --  Crate.Is_Empty then Path must point to an Alire workspace for which it
    --  can be deduced. If Crate.Has_Element, the crates should match. If the
