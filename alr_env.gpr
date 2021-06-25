@@ -3,7 +3,6 @@ aggregate project Alr_Env is
    for Create_Missing_Dirs use "True";
 
    for Project_Path use (
-                         "../toml_slicer",
                          "deps/aaa",
                          "deps/ada-toml",
                          "deps/ajunitgen",
@@ -13,6 +12,7 @@ aggregate project Alr_Env is
                          "deps/optional",
                          "deps/semantic_versioning",
                          "deps/simple_logging",
+                         "deps/toml_slicer",
                          "deps/uri-ada",
                          "deps/xmlezout",
                          "deps/spdx");

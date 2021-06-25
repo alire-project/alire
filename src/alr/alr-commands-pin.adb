@@ -67,8 +67,10 @@ package body Alr.Commands.Pin is
       --  Sanity checks
 
       if not Solution.Depends_On (Dep.Crate) then
-         Reportaise_Command_Failed ("Cannot pin dependency not in solution: "
-                                    & TTY.Name (Dep.Crate));
+         Reportaise_Command_Failed
+           ("Cannot " & (if Cmd.Unpin then "unpin" else "pin")
+            & " dependency not in solution: "
+            & TTY.Name (Dep.Crate));
       end if;
 
       --  Check if we are given a particular version

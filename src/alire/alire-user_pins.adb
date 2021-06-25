@@ -83,8 +83,10 @@ package body Alire.User_Pins is
    is (Crate.As_String
        & " = { "
        & (case This.Kind is
-            when To_Version => "version='" & This.Version.Image & "'",
-            when To_Path    => "path='" & Path (This) & "'",
+            when To_Version =>
+               "version='" & This.Version.Image & "'",
+            when To_Path    =>
+               "path='" & VFS.Attempt_Portable (Path (This)) & "'",
             when To_Git     =>
                "url='" & (+This.URL) & "'"
                & (if This.Branch /= ""

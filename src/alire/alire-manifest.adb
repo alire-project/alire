@@ -7,7 +7,7 @@ with TOML_Slicer;
 
 package body Alire.Manifest is
 
-   Warning : constant String := "  # This line was added by `alr with`";
+   Warning : constant String := "  # Added by alr";
 
    ------------
    -- Append --

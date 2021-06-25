@@ -152,7 +152,6 @@ package body Alire.Roots.Editable is
                                 Crate : Crate_Name;
                                 Unpin : Boolean := True)
    is
-      pragma Unreferenced (Unpin);
    begin
 
       --  If dependency is not among dependencies at all, nothing to do
@@ -388,7 +387,7 @@ package body Alire.Roots.Editable is
       if This.Solution.Depends_On (Crate)
         and then This.Solution.State (Crate).Is_User_Pinned
       then
-         Alire.Manifest.Remove_Pin (Lock_File (This.Edit),
+         Alire.Manifest.Remove_Pin (This.Edit.Crate_File,
                                     Crate);
          This.Edit.Set (This.Solution.User_Unpinning (Crate));
       end if;
