@@ -4,9 +4,10 @@ Verify pin circularity detection
 
 from drivers.alr import run_alr, alr_pin, alr_unpin, init_local_crate
 from drivers.asserts import assert_eq, assert_match
-from drivers.helpers import on_windows
+from drivers.helpers import on_windows, dir_separator
 
 import os
+import re
 import shutil
 
 # Obvious self-pinning detection
@@ -36,9 +37,11 @@ alr_pin("yyy", path="../yyy", update=False)
 
 # At this point, xxx --> yyy --> zzz --> yyy
 p = run_alr("pin", complain_on_error=False)
-assert_match(".*"
-             "ERROR: Pin circularity detected when adding pin zzz --> yyy:\n"
-             "ERROR:    Last manifest in the cycle is .*/zzz/alire.toml\n",
-             p.out)
+s = re.escape(dir_separator())
+assert_match(
+    ".*"
+    "ERROR: Pin circularity detected when adding pin zzz --> yyy:\n"
+    f"ERROR:    Last manifest in the cycle is .*{s}zzz{s}alire.toml\n",
+    p.out)
 
 print('SUCCESS')
