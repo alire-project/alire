@@ -15,12 +15,31 @@ package body Alire.User_Pins is
    package TTY renames Alire.Utils.TTY;
 
    package Keys is
+      Branch   : constant String := "branch";
       Commit   : constant String := "commit";
       Internal : constant String := "lockfiled";
       Path     : constant String := "path";
       URL      : constant String := "url";
       Version  : constant String := "version";
    end Keys;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (This : Pin; User : Boolean) return String
+   is (case This.Kind is
+          when To_Version => "version=" & TTY.Version (This.Version.Image),
+          when To_Path    => "path=" & TTY.URL (if User
+                                       then VFS.Attempt_Portable (+This.Path)
+                                       else +This.Path),
+          when To_Git     =>
+            (if Path (This) /= ""
+             then "path=" & TTY.URL ((if User
+                                      then VFS.Attempt_Portable (Path (This))
+                                      else Path (This))) & ","
+             else "")
+             & ("url=" & This.TTY_URL_With_Reference));
 
    ---------------
    -- Is_Broken --
@@ -96,7 +115,7 @@ package body Alire.User_Pins is
       -- Update --
       ------------
 
-      procedure Update is
+      procedure Update (Branch : String) is
       begin
          Trace.Detail ("Checking out pin " & TTY.Name (Crate) & " at "
                        & TTY.URL (Destination));
@@ -114,9 +133,10 @@ package body Alire.User_Pins is
             return;
          end if;
 
-         --  Finally update
+         --  Finally update. In case the branch has just been changed by the
+         --  user in the manifest, the following call wil also take care of it.
 
-         if not VCSs.Git.Handler.Update (Destination).Success then
+         if not VCSs.Git.Handler.Update (Destination, Branch).Success then
             Raise_Checked_Error
               ("Update of repository at " & TTY.URL (Destination)
                & " failed, re-run with -vv -d for details");
@@ -137,8 +157,12 @@ package body Alire.User_Pins is
       --  branch pin
 
       if Ada.Directories.Exists (Destination)
+        and then not Online
         and then
-          (This.Commit /= "" or else not Online)
+          (This.Commit /= ""         -- Static checkout, no need to re-checkout
+           or else This.Branch = ""  -- Default branch, same
+           or else VCSs.Git.Handler.Branch (Destination) = This.Branch)
+           --  Branch is explicit and matches the one on disk, same
       then
          Trace.Debug ("Skipping deployment of already existing pin at "
                       & TTY.URL (Destination));
@@ -152,10 +176,12 @@ package body Alire.User_Pins is
          Checkout (Commit => +This.Commit);
 
       elsif Ada.Directories.Exists (Destination) then
-         Update;
+         Update (+This.Branch);
+         --  Branch may still be "" if none given
 
       else
-         Checkout;
+         Checkout (Branch => +This.Branch);
+         --  Branch may still be "" if none given
 
       end if;
 
@@ -189,14 +215,20 @@ package body Alire.User_Pins is
 
    end Deploy;
 
-   -------------------------
-   -- TTY_URL_With_Commit --
-   -------------------------
+   ----------------------------
+   -- TTY_URL_With_Reference --
+   ----------------------------
 
-   function TTY_URL_With_Commit (This : Pin) return String
+   function TTY_URL_With_Reference (This     : Pin;
+                                    Detailed : Boolean := False)
+                                    return String
    is (TTY.URL (URL (This))
        & (if Commit (This).Has_Element
-         then "#" & TTY.Emph (Commit (This).Element.Ptr.all)
+         then "#" & TTY.Emph (if Detailed
+                              then +This.Commit
+                              else Origins.Short_Commit (+This.Commit))
+         elsif Branch (This).Has_Element
+         then "#" & TTY.Emph (+This.Branch)
          else ""));
 
    ----------
@@ -264,6 +296,9 @@ package body Alire.User_Pins is
                "Boolean expected");
 
             if This.Contains (Keys.URL) then
+
+               --  A complete remote pin
+
                return Result : Pin := (Kind => To_Git, others => <>) do
                   Result.URL :=
                     +This.Checked_Pop (Keys.URL,
@@ -276,9 +311,16 @@ package body Alire.User_Pins is
                   if This.Contains (Keys.Commit) then
                      Result.Commit :=
                        +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
+                  elsif This.Contains (Keys.Branch) then
+                     Result.Branch :=
+                       +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
                   end if;
                end return;
+
             else
+
+               --  Just a local pin
+
                return Result : Pin := (Kind => To_Path, others => <>) do
                   Result.Path :=
                     +Utils.User_Input.To_Absolute_From_Portable
@@ -286,6 +328,89 @@ package body Alire.User_Pins is
                end return;
             end if;
          end From_Lockfile;
+
+         ------------------
+         -- Load_To_Path --
+         ------------------
+
+         function Load_To_Path return Pin is
+            Result : Pin :=
+                       (Kind => To_Path,
+                        Path => <>);
+            User_Path : constant String :=
+                          This.Checked_Pop (Keys.Path,
+                                            TOML_String).As_String;
+         begin
+            This.Report_Extra_Keys;
+
+            --  Check that the path was stored in portable format or as
+            --  absolute path.
+
+            if not Check_Absolute_Path (User_Path) and then
+              not VFS.Is_Portable (User_Path)
+            then
+               This.Recoverable_Error
+                 ("Pin relative paths must use forward slashes "
+                  & "to be portable: " & Utils.TTY.URL (User_Path));
+            end if;
+
+            --  Make the path absolute if not already, and store it
+
+            Result.Path :=
+              +Utils.User_Input.To_Absolute_From_Portable
+              (User_Path                  => User_Path,
+               Error_When_Relative_Native =>
+                 "Pin relative paths must use forward slashes " &
+                 " to be portable");
+
+            if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
+               This.Checked_Error ("Pin path is not a valid directory: "
+                                   & (+Result.Path));
+            end if;
+
+            return Result;
+         end Load_To_Path;
+
+         -----------------
+         -- Load_Remote --
+         -----------------
+
+         function Load_Remote return Pin is
+            Result : Pin :=
+                       (Kind       => To_Git,
+                        URL        => +This.Checked_Pop (Keys.URL,
+                          TOML_String).As_String,
+                        Branch     => <>,
+                        Commit     => <>,
+                        Local_Path => <>);
+         begin
+            if This.Contains (Keys.Branch)
+              and then This.Contains (Keys.Commit)
+            then
+               This.Checked_Error
+                 ("cannot specify both a branch and a commit");
+            end if;
+
+            --  TEST: simultaneous branch/commit
+
+            if This.Contains (Keys.Commit) then
+               Result.Commit :=
+                 +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
+               This.Assert (+Result.Commit in Origins.Git_Commit,
+                            "invalid commit: " & (+Result.Commit));
+            elsif This.Contains (Keys.Branch) then
+               Result.Branch :=
+                 +This.Checked_Pop (Keys.Branch, TOML_String).As_String;
+               This.Assert (+Result.Branch /= "",
+                            "branch cannot be the empty string");
+            end if;
+
+            --  TEST: empty branch value
+
+            This.Report_Extra_Keys;
+
+            return Result;
+         end Load_Remote;
 
       begin
          if This.Contains (Keys.Internal) then
@@ -300,61 +425,10 @@ package body Alire.User_Pins is
                  (This.Checked_Pop (Keys.Version, TOML_String).As_String));
 
          elsif This.Contains (Keys.Path) then
-            return Result : Pin :=
-              (Kind => To_Path,
-               Path => <>)
-            do
-               declare
-                  User_Path : constant String :=
-                                This.Checked_Pop (Keys.Path,
-                                                  TOML_String).As_String;
-               begin
-                  This.Report_Extra_Keys;
-
-                  --  Check that the path was stored in portable format or as
-                  --  absolute path.
-
-                  if not Check_Absolute_Path (User_Path) and then
-                    not VFS.Is_Portable (User_Path)
-                  then
-                     This.Recoverable_Error
-                       ("Pin relative paths must use forward slashes "
-                        & "to be portable: " & Utils.TTY.URL (User_Path));
-                  end if;
-
-                  --  Make the path absolute if not already, and store it
-
-                  Result.Path :=
-                    +Utils.User_Input.To_Absolute_From_Portable
-                    (User_Path                  => User_Path,
-                     Error_When_Relative_Native =>
-                       "Pin relative paths must use forward slashes " &
-                       " to be portable");
-
-                  if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
-                     This.Checked_Error ("Pin path is not a valid directory: "
-                                         & (+Result.Path));
-                  end if;
-               end;
-            end return;
+            return Load_To_Path;
 
          elsif This.Contains (Keys.URL) then
-            return Result : Pin :=
-              (Kind       => To_Git,
-               URL        => +This.Checked_Pop (Keys.URL,
-                                                TOML_String).As_String,
-               Commit     => <>,
-               Local_Path => <>)
-            do
-               if This.Contains (Keys.Commit) then
-                  Result.Commit :=
-                    +This.Checked_Pop (Keys.Commit, TOML_String).As_String;
-                  This.Assert (+Result.Commit in Origins.Git_Commit,
-                               "invalid commit: " & (+Result.Commit));
-               end if;
-
-               This.Report_Extra_Keys;
-            end return;
+            return Load_Remote;
 
          else
             Trace.Error ("Unexpected key in pin, got:");
@@ -407,6 +481,9 @@ package body Alire.User_Pins is
          if Commit (This).Has_Element then
             Table.Set (Keys.Commit,
                        Create_String (Commit (This).Element.Ptr.all));
+         elsif Branch (This).Has_Element then
+            Table.Set (Keys.Branch,
+                       Create_String (Branch (This).Element.Ptr.all));
          end if;
       end if;
 

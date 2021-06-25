@@ -328,14 +328,15 @@ package body Alire.Roots is
          procedure Add_Link_Pin (Crate : Crate_Name;
                                  Pin   : in out User_Pins.Pin)
          is
+            use type User_Pins.Pin;
          begin
 
-            --  Just in case this is a remote pin, deploy it
+            --  Just in case this is a remote pin, deploy it. Deploy is
+            --  conservative (unless Online), but it will detect local
+            --  inexpensive changes like a missing checkout, changed commit
+            --  or branch.
 
-            if Exhaustive
-              or else
-                (Allowed.Is_Empty or else Allowed.Contains (Crate))
-            then
+            if Allowed.Is_Empty or else Allowed.Contains (Crate) then
                Pin.Deploy (Crate  => Crate,
                            Under  => Pins_Dir,
                            Online => Exhaustive);
@@ -346,17 +347,15 @@ package body Alire.Roots is
 
             if Sol.Depends_On (Crate)
               and then Sol.State (Crate).Is_Linked
-              and then Sol.State (Crate).Link.Path /= Pin.Path
+              and then Sol.State (Crate).Link /= Pin
             then
                Raise_Checked_Error
                  ("Conflicting pin links for crate " & TTY.Name (Crate)
                   & ": Crate " & TTY.Name (Release (This).Name)
-                  & " wants a link to " & TTY.URL (Pin.Path)
+                  & " wants to link " & TTY.URL (Pin.Image (User => True))
                   & ", but a previous link exists to "
-                  & TTY.URL (Sol.State (Crate).Link.Path));
+                  & TTY.URL (Sol.State (Crate).Link.Image (User => True)));
             end if;
-
-            --  TODO: test conflicting link detection for two pins
 
             --  We have a new target root to load
 

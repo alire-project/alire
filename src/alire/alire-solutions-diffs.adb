@@ -146,13 +146,13 @@ package body Alire.Solutions.Diffs is
          if Gains_State (Hinted) then
             Add_Change (Chg, Icon (Hinted), TTY.Warn ("external"));
 
-         --  Changed linked dir target
+         --  Changed linked dir
          elsif Has_Latter and then Latter.Is_Linked and then
            (not Has_Former or else not Former.Is_Linked or else
             Former.Link /= Latter.Link)
          then
             Add_Change (Chg, Icon (Pinned),
-                        "pin=" & Latter.Link.Relative_Path);
+                        Latter.Link.Image (User => True));
 
          --  New unsolvable
          elsif Gains_State (Missed) then

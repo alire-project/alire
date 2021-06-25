@@ -535,11 +535,12 @@ The specific pin kinds and their attributes are:
 
   For the common case of directories containing an Alire manifest, dependencies and pins will be included recursively in the build context.
 
-* Pins to git repositories: the repository will be cloned locally and its directory will be used as in the previous case. Currently, this pin may optionally include a commit to fix the checkout to be used. Otherwise, the default branch will be used, and running `alr update` will refresh the checkout.
+* Pins to git repositories: the repository will be cloned locally and its directory will be used as in the previous case. This pin may optionally include a commit to fix the checkout to be used, or a branch to track. Otherwise, the default branch will be used. Running `alr update` will refresh the checkout.
 
   * `url`: the URL of a git repository
   * `commit` (optional): a complete git commit hash.
-  * `crate_name = { url = "https://my/repo.git" } # Updatable pin`
+  * `crate_name = { url = "https://my/repo.git" } # Updatable pin to default branch`
+  * `crate_name = { url = "https://my/repo.git", branch="feature" } # Updatable pin`
   * `crate_name = { url = "https://my/repo.git", commit="abcdef..." } # Fixed pin`
 
 ### Using pins for crate testing

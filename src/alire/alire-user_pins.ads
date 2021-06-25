@@ -26,6 +26,9 @@ package Alire.User_Pins is
 
    type Pin (Kind : Kinds) is tagged private;
 
+   function Image (This : Pin; User : Boolean) return String;
+   --  Returns the internal information as-is or with relative paths, when User
+
    function Is_Remote (This : Pin) return Boolean;
    --  A pin to a remote source such as git, source archives, etc
 
@@ -55,11 +58,17 @@ package Alire.User_Pins is
    function URL (This : Pin) return Alire.URL
      with Pre => This.Is_Remote;
 
+   function Branch (This : Pin) return Optional.String
+     with Pre => This.Is_Remote;
+
    function Commit (This : Pin) return Optional.String
      with Pre => This.Is_Remote;
 
-   function TTY_URL_With_Commit (This : Pin) return String
+   function TTY_URL_With_Reference (This     : Pin;
+                                    Detailed : Boolean := False)
+                                    return String
      with Pre => This.Is_Remote;
+   --  returns https://blah[#commit|#branch], when existing
 
    procedure Deploy (This   : in out Pin;
                      Crate  : Crate_Name;
@@ -98,6 +107,7 @@ private
       case Kind is
          when To_Git =>
             URL        : UString;
+            Branch : UString; -- Optional
             Commit     : UString; -- Optional
             Local_Path : Unbounded_Absolute_Path;
             --  Empty until the pin is locally deployed
@@ -107,6 +117,15 @@ private
             Version : Semantic_Versioning.Version;
       end case;
    end record;
+
+   ------------
+   -- Branch --
+   ------------
+
+   function Branch (This : Pin) return Optional.String
+   is (if +This.Branch = ""
+       then Optional.Strings.Empty
+       else Optional.Strings.Unit (+This.Branch));
 
    ------------
    -- Commit --

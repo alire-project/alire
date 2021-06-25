@@ -6,6 +6,19 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Pins to git branches
+
+PR [#754](https://github.com/alire-project/alire/pull/754)
+
+A new option for remote pins exist to track branches:
+
+```
+[[pins]]
+wip = { url = "https://gitrepo.com/wip.git" branch="feature" }
+```
+
+Running `alr update` will pull any changes from the branch.
+
 ### Pins stored in the manifest
 
 PR [#743](https://github.com/alire-project/alire/pull/743).

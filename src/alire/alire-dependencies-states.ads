@@ -281,16 +281,16 @@ private
           else "")
        & Utils.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
-          then ",pin=" & This.Fulfilled.Target.Element.Relative_Path
-                       & (if not This.Fulfilled.Target.Element.Is_Broken
-                          then ""
-                          else ",broken")
-                       & (if This.Fulfilled.Target.Element.Is_Remote
-                          then ",url=" & This.Fulfilled.Target.Element.URL
-                          else "")
-                       & (if This.Has_Release
-                          then ",release"
-                          else "")
+          then This.Fulfilled.Target.Element.Image (User => True)
+               & (if not This.Fulfilled.Target.Element.Is_Broken
+                  then ""
+                  else ",broken")
+               & (if This.Fulfilled.Target.Element.Is_Remote
+                  then ",url=" & This.Fulfilled.Target.Element.URL
+                  else "")
+               & (if This.Has_Release
+                  then ",release"
+                  else "")
           else "")
        & (if This.Pinning.Pinned
           then ",pin=" & This.Pinning.Version.Image
@@ -487,15 +487,10 @@ private
              when Hinted => TTY.Warn (This.Fulfilled.Fulfillment'Img),
              when others => This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
-          then "," & TTY.Emph ("pin") & "="
-                   & TTY.URL (This.Fulfilled.Target.Element.Relative_Path)
+          then "," & This.Fulfilled.Target.Element.Image (User => True)
                    & (if not This.Fulfilled.Target.Element.Is_Broken
                       then ""
                       else "," & TTY.Error ("broken"))
-                   & (if This.Fulfilled.Target.Element.Is_Remote
-                      then ",url=" & TTY.URL
-                        (This.Fulfilled.Target.Element.URL)
-                      else "")
                    & (if This.Has_Release
                       then "," & TTY.OK ("release")
                       else "")

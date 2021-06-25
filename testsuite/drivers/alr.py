@@ -212,6 +212,14 @@ def alr_manifest():
     return "alire.toml"
 
 
+def alr_touch_manifest(path="."):
+    """
+    Make the lockfile older than the manifest, to ensure editions to the
+    manifest are detected.
+    """
+    os.utime(os.path.join(path, "alire.lock"), (0, 0))
+
+
 def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
     """
     Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use
@@ -251,7 +259,7 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
         raise NotImplementedError("Unimplemented")
 
 
-def alr_pin(crate, version="", path="", url="", commit="",
+def alr_pin(crate, version="", path="", url="", commit="", branch="",
             manual=True, update=True):
     """
     Pin a crate, either manually or using the command-line interface. Use only
@@ -268,6 +276,8 @@ def alr_pin(crate, version="", path="", url="", commit="",
             pin_line = f"{crate} = {{ path = '{path}' }}"  # literal so \ works
         elif url != "" and commit != "":
             pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
+        elif url != "" and branch != "":
+            pin_line = f"{crate} = {{ url = '{url}', branch = '{branch}' }}"
         elif url != "":
             pin_line = f"{crate} = {{ url = '{url}' }}"
         else:

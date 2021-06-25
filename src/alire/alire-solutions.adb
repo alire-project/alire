@@ -423,7 +423,8 @@ package body Alire.Solutions is
                              then Dep.Link.Relative_Path
                                   & (if Dep.Link.Is_Remote
                                      then " from "
-                                         & Dep.Link.TTY_URL_With_Commit
+                                          & Dep.Link.TTY_URL_With_Reference
+                                              (Detailed)
                                      else "") -- no remote
                              else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
                           & ")" -- origin completed
@@ -456,7 +457,7 @@ package body Alire.Solutions is
                          & Dep.Link.Relative_Path
                          & (if Dep.Link.Is_Remote
                             then " from "
-                                 & Dep.Link.TTY_URL_With_Commit
+                                 & Dep.Link.TTY_URL_With_Reference
                             else "") -- no remote
                          & ")"  -- origin completed
                      else ""),  -- no details
@@ -581,7 +582,7 @@ package body Alire.Solutions is
                  .Append (TTY.Name (Dep.Crate))
                  .Append (TTY.URL ("file:") & Dep.Link.Relative_Path)
                  .Append (if Dep.Link.Is_Remote
-                          then Dep.Link.TTY_URL_With_Commit
+                          then Dep.Link.TTY_URL_With_Reference (Detailed)
                           else "")
                  .New_Row;
             elsif Dep.Is_Pinned then
