@@ -288,8 +288,10 @@ package body Alire.Roots is
         Containers.Crate_Name_Sets.Empty_Set)
    is
 
-      Sol      : Solutions.Solution := This.Solution;
-      Pins_Dir : constant Any_Path := This.Pins_Dir;
+      Sol        : Solutions.Solution := This.Solution;
+      Pins_Dir   : constant Any_Path := This.Pins_Dir;
+      Linkers    : Containers.Crate_Name_Sets.Set;
+      --  We store here crates that contain link pins, to detect cycles
 
       --------------
       -- Add_Pins --
@@ -330,6 +332,20 @@ package body Alire.Roots is
          is
             use type User_Pins.Pin;
          begin
+
+            --  Store the requester of this link to be able to detect cycles,
+            --  and check that the requested link is not already in the list
+            --  of requesters (which would imply circularity).
+
+            Linkers.Include (This.Name);
+
+            if Linkers.Contains (Crate) then
+               Raise_Checked_Error
+                 ("Pin circularity detected when adding pin "
+                  & TTY.Name (This.Name) & " --> " & TTY.Name (Crate)
+                  & ASCII.LF & "Last manifest in the cycle is "
+                  & TTY.URL (This.Crate_File));
+            end if;
 
             --  Just in case this is a remote pin, deploy it. Deploy is
             --  conservative (unless Online), but it will detect local
@@ -422,6 +438,8 @@ package body Alire.Roots is
                Pin   :          User_Pins.Pin := Element (I);
             begin
 
+               --  Avoid obvious self-pinning
+
                Trace.Debug ("Crate " & TTY.Name (This.Name)
                             & " adds pin for crate " & TTY.Name (Crate));
 
@@ -470,6 +488,17 @@ package body Alire.Roots is
          Trace.Detail ("Local pins updated and committed to lockfile");
          This.Set (Solution => Sol);
       end if;
+
+   exception
+      when others =>
+         --  In the event that the manifest contains bad pins, we ensure the
+         --  lockfile is outdated so the manifest is not ignored on next run.
+         if Ada.Directories.Exists (This.Lock_File) then
+            Trace.Debug ("Removing lockfile because of bad pins in manifest");
+            Ada.Directories.Delete_File (This.Lock_File);
+         end if;
+
+         raise;
    end Sync_Pins_From_Manifest;
 
    ---------------
