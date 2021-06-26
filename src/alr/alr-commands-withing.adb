@@ -157,7 +157,7 @@ package body Alr.Commands.Withing is
    -- Add_With_Pin --
    ------------------
 
-   procedure Add_With_Pin (Cmd  : Command;
+   procedure Add_With_Pin (Cmd  : in out Command;
                            Root : in out Alire.Roots.Editable.Root)
    is
       Crate : constant Alire.Optional.Crate_Name :=
@@ -175,7 +175,9 @@ package body Alr.Commands.Withing is
             Dep : constant Alire.Dependencies.Dependency :=
                     Alire.Dependencies.From_String (Argument (1));
          begin
-            if Dep.Versions /= Semantic_Versioning.Extended.Any then
+            if Dep.Versions /= Semantic_Versioning.Extended.Any and then
+              not Cmd.Root.Solution.Depends_On (Dep.Crate)
+            then
                Root.Add_Dependency (Dep);
             end if;
          end;

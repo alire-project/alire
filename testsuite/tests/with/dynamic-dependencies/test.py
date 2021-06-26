@@ -24,12 +24,12 @@ with open(manifest, 'a') as file:
 
 # Check adding a dependency
 run_alr('with', 'hello^1')
-assert 'hello = "^1"  # This line was added by `alr with`' \
+assert 'hello = "^1"  # Added by alr' \
        in content_of(manifest)
 
 # Check removal
 run_alr('with', '--del', 'hello')
-assert 'hello = "^1"  # This line was added by `alr with`' \
+assert 'hello = "^1"  # Added by alr' \
        not in content_of(manifest)
 
 # Check that the dependency that precedes the dynamic expression is removable

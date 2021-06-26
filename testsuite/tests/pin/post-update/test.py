@@ -45,6 +45,9 @@ run_alr('with', 'libparent')
 # Remove child dependency
 run_alr('with', '--del', 'libchild')
 
+# But keeping the pin (alr with --del will remove also the pin)
+alr_pin('libchild', version="0.1")
+
 # Verify pinned version is still in the solution, pre-update:
 p = run_alr('show', '--solve')
 check_child('0.1.0', p.out, pinned=True)

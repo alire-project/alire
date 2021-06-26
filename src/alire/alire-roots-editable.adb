@@ -246,6 +246,12 @@ package body Alire.Roots.Editable is
                     else Pin_Root.Value.Name);
       begin
 
+         --  If nothing in the solution depends on the crate (that is why we
+         --  check the Solution and not the top-level dependencies) requested
+         --  to be pinned, we assume a top-level dependency on the crate would
+         --  be wanted, and add it too. If this is not wanted, the user can
+         --  easily remove the dependency by hand afterwards.
+
          if not This.Solution.Depends_On (Crate) then
             This.Add_Dependency
               (Dependencies.New_Dependency

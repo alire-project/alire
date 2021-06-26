@@ -152,6 +152,13 @@ package body Alire.User_Pins is
          Temp : Directories.Temp_File;
       begin
 
+         --  Skip checkout of existing commit
+
+         if Commit /= "" and then Adirs.Exists (Destination) then
+            Trace.Debug ("Skipping checkout of commit pin at " & Destination);
+            return;
+         end if;
+
          --  Check out the branch or commit
 
          if not

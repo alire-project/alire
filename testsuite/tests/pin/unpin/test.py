@@ -27,6 +27,9 @@ p = run_alr('pin')
 assert_eq('libhello 1.0.0\n', p.out)
 
 # Delete lockfile and verify the pin has survived
+os.remove('alire.lock')
+p = run_alr('pin')
+assert_eq('libhello 1.0.0\n', p.out)
 
 # Unpin and verify pin is not there
 alr_unpin('libhello')
