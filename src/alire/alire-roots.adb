@@ -1,8 +1,7 @@
-with Ada.Directories;
-
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
+with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
@@ -21,6 +20,8 @@ package body Alire.Roots is
 
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
+
+   use type UString;
 
    -------------------
    -- Build_Context --
@@ -641,10 +642,13 @@ package body Alire.Roots is
    function New_Root (R    : Releases.Release;
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root is
-     (Environment     => Env,
+     (Ada.Finalization.Controlled with
+      Environment     => Env,
       Path            => +Path,
       Release         => Containers.To_Release_H (R),
-      Cached_Solution => <>);
+      Cached_Solution => <>,
+      Lockfile        => <>,
+      Manifest        => <>);
 
    ----------
    -- Name --
@@ -703,17 +707,23 @@ package body Alire.Roots is
    -- Lock_File --
    ---------------
 
-   function Lock_File (This : Root) return Absolute_Path is
-     (Lockfiles.File_Name
-        (This.Release.Constant_Reference.Name,
-         +This.Path));
+   function Lock_File (This : Root) return Absolute_Path
+   is (if This.Lockfile /= ""
+       then +This.Lockfile
+       else Lockfiles.File_Name (+This.Path));
 
    ----------------
    -- Crate_File --
    ----------------
 
-   function Crate_File (This : Root) return Absolute_Path is
-     (Path (This) / Crate_File_Name);
+   function Crate_File (This : Root) return Absolute_Path
+   is (if This.Manifest /= ""
+       then +This.Manifest
+       else Path (This) / Crate_File_Name);
+
+   ---------------
+   -- Cache_Dir --
+   ---------------
 
    function Cache_Dir (This : Root) return Absolute_Path
    is (This.Working_Folder / "cache");
@@ -782,9 +792,10 @@ package body Alire.Roots is
    -- Sync_From_Manifest --
    ------------------------
 
-   procedure Sync_From_Manifest (This   : in out Root;
-                                 Silent : Boolean;
-                                 Force  : Boolean := False)
+   procedure Sync_From_Manifest (This     : in out Root;
+                                 Silent   : Boolean;
+                                 Interact : Boolean;
+                                 Force    : Boolean := False)
    is
       Old_Solution : constant Solutions.Solution := This.Solution;
    begin
@@ -802,8 +813,9 @@ package body Alire.Roots is
          --  a non-exhaustive sync of pins, that will anyway detect evident
          --  changes (new/removed pins, changed explicit commits).
 
-         This.Sync_Dependencies (Old    => Old_Solution,
-                                 Silent => Silent);
+         This.Sync_Dependencies (Old      => Old_Solution,
+                                 Silent   => Silent,
+                                 Interact => Interact);
          --  Don't ask for confirmation as this is an automatic update in
          --  reaction to a manually edited manifest, and we need the lockfile
          --  to match the manifest. As any change in dependencies will be
@@ -862,8 +874,10 @@ package body Alire.Roots is
    -- Update --
    ------------
 
-   procedure Update (This : in out Root;
-                     Allowed : Containers.Crate_Name_Sets.Set)
+   procedure Update (This     : in out Root;
+                     Allowed  : Containers.Crate_Name_Sets.Set;
+                     Silent   : Boolean;
+                     Interact : Boolean)
    is
       Old : constant Solutions.Solution := This.Solution;
    begin
@@ -875,9 +889,10 @@ package body Alire.Roots is
       --  And look for updates in dependencies
 
       This.Sync_Dependencies
-        (Allowed => Allowed,
-         Old     => Old,
-         Silent  => Alire.Utils.User_Input.Not_Interactive);
+        (Allowed  => Allowed,
+         Old      => Old,
+         Silent   => Silent,
+         Interact => Interact and not Alire.Utils.User_Input.Not_Interactive);
    end Update;
 
    --------------------
@@ -923,11 +938,12 @@ package body Alire.Roots is
    -----------------------
 
    procedure Sync_Dependencies
-     (This    : in out Root;
-      Silent  : Boolean;
-      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Allowed : Containers.Crate_Name_Sets.Set :=
+     (This     : in out Root;
+      Silent   : Boolean; -- Do not output anything
+      Interact : Boolean; -- Request confirmation from the user
+      Old      : Solutions.Solution := Solutions.Empty_Invalid_Solution;
+      Options  : Solver.Query_Options := Solver.Default_Options;
+      Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
    begin
@@ -979,16 +995,24 @@ package body Alire.Roots is
                --  In case manual changes in manifest do not modify the
                --  solution.
 
-               Trace.Info ("Nothing to update.");
+               if not Silent then
+                  Trace.Info ("Nothing to update.");
+               end if;
 
             else
 
                --  Show changes and optionally ask user to apply them
 
-               if Silent then
-                  Trace.Info
-                    ("Dependencies automatically updated as follows:");
-                  Diff.Print;
+               if not Interact then
+                  declare
+                     Level : constant Trace.Levels :=
+                               (if Silent then Debug else Info);
+                  begin
+                     Trace.Log
+                       ("Dependencies automatically updated as follows:",
+                        Level);
+                     Diff.Print (Level => Level);
+                  end;
                elsif not Utils.User_Input.Confirm_Solution_Changes (Diff) then
                   Trace.Detail ("Update abandoned.");
                   return;
@@ -1029,5 +1053,75 @@ package body Alire.Roots is
       Release.Whenever (This.Environment)
              .To_File (This.Crate_File, Manifest.Local);
    end Write_Manifest;
+
+   --------------------
+   -- Temporary_Copy --
+   --------------------
+
+   function Temporary_Copy (This : in out Root) return Root'Class is
+      Copy : Root := This;
+
+      Temp_Manifest : Directories.Temp_File;
+      Temp_Lockfile : Directories.Temp_File;
+   begin
+      Temp_Manifest.Keep;
+      Temp_Lockfile.Keep;
+
+      Copy.Manifest := +Temp_Manifest.Filename;
+      Ada.Directories.Copy_File (Source_Name => This.Crate_File,
+                                 Target_Name => +Copy.Manifest);
+
+      Copy.Lockfile := +Temp_Lockfile.Filename;
+      Copy.Set (Solution => This.Solution);
+
+      return Copy;
+   end Temporary_Copy;
+
+   ------------
+   -- Commit --
+   ------------
+
+   procedure Commit (This : in out Root) is
+
+      Regular_Root : constant Root := Load_Root (Path (This));
+      --  We use a regular root to extract the paths of manifest and lockfile.
+      --  A bit overkill but entirely more readable than messing with paths.
+
+      procedure Commit (Source, Target : Absolute_File) is
+      begin
+         if Source /= "" then
+            Directories.Backup_If_Existing (Target,
+                                            Base_Dir => This.Working_Folder);
+            Ada.Directories.Copy_File (Source_Name => Source,
+                                       Target_Name => Target);
+            Ada.Directories.Delete_File (Source);
+         end if;
+      end Commit;
+
+   begin
+      Commit (+This.Manifest, Crate_File (Regular_Root));
+      This.Manifest := +"";
+
+      Commit (+This.Lockfile, Lock_File (Regular_Root));
+      This.Lockfile := +"";
+
+      This.Sync_From_Manifest (Silent   => True,
+                               Interact => False);
+   end Commit;
+
+   ---------------------
+   -- Reload_Manifest --
+   ---------------------
+
+   procedure Reload_Manifest (This : in out Root) is
+   begin
+      --  Load our manifest
+
+      This.Release.Replace_Element
+        (Releases.From_Manifest
+           (This.Crate_File,
+            Manifest.Local,
+            Strict => True));
+   end Reload_Manifest;
 
 end Alire.Roots;

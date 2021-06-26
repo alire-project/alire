@@ -1,5 +1,3 @@
-with Ada.Text_IO; use Ada.Text_IO;
-
 with Alire.Directories;
 with Alire.Errors;
 with Alire.Paths;
@@ -16,45 +14,37 @@ package body Alire.Manifest is
    ------------
 
    procedure Append (Name : Any_Path;
-                     Deps : Dependencies.Containers.List) is
-      Replacer : constant Directories.Replacer :=
-                   Directories.New_Replacement
-                     (Name,
-                      Backup     => True,
-                      Backup_Dir => Paths.Working_Folder_Inside_Root);
-      File     : File_Type;
+                     Dep  : Dependencies.Dependency)
+   is
    begin
-      if Deps.Is_Empty then
-         return;
-      end if;
+      Utils.Text_Files.Append_Lines
+        (File       => Name,
+         Lines      =>
+           Utils.Empty_Vector
+         .Append ("[[" & TOML_Keys.Depends_On & "]]" & Warning)
+         .Append (Dep.Manifest_Image & Warning),
+         Backup     => False);
+      --  No need to backup, as this is done already on a copy of the manifest
 
-      Open (File, Append_File, Replacer.Editable_Name);
+   end Append;
 
-      for Dep of Deps loop
-         New_Line (File);
-         Put_Line (File, "[[" & TOML_Keys.Depends_On & "]]" & Warning);
-         Put_Line (File, Dep.Manifest_Image & Warning);
-      end loop;
+   ------------
+   -- Append --
+   ------------
 
-      Close (File);
-
-      --  Attempt loading of the new file as a double check
-      if not Is_Valid (Replacer.Editable_Name, Local) then
-         raise Program_Error
-           with Errors.Set ("Addition of dependencies to manifest failed");
-      end if;
-
-      Replacer.Replace; -- All went well, keep the changes
-   exception
-      when E : others =>
-         Trace.Debug ("Exception attempting to append dependencies:");
-         Alire.Log_Exception (E);
-
-         if Is_Open (File) then
-            Close (File);
-         end if;
-
-         raise; -- Let it be processed upwards, if necessary
+   procedure Append (File  : Any_Path;
+                     Crate : Crate_Name;
+                     Pin   : User_Pins.Pin)
+   is
+   begin
+      Utils.Text_Files.Append_Lines
+        (File       => File,
+         Lines      =>
+           Utils.Empty_Vector
+                .Append ("[[" & TOML_Keys.Pins & "]]" & Warning)
+                .Append (Pin.To_Manifest_Line (Crate) & " " & Warning),
+         Backup     => False);
+      --  No need to backup as this is done on a copy of the manifest already
    end Append;
 
    --------------
@@ -85,21 +75,21 @@ package body Alire.Manifest is
    ------------
 
    procedure Remove (Name : Any_Path;
-                     Deps : Dependencies.Containers.List)
+                     Dep  : Crate_Name)
    is
 
       ------------
       -- Remove --
       ------------
 
-      procedure Remove (Dep   : Dependencies.Dependency;
+      procedure Remove (Dep   : Crate_Name;
                         Lines : in out Utils.String_Vector)
       --  Remove given Dep from Lines, or warn if impossible
       is
          Enter_Marker : constant String := "[[" & TOML_Keys.Depends_On & "]]";
          --  We must see a line like this before being able to remove a dep.
 
-         Target       : constant String := (+Dep.Crate) & "=""";
+         Target       : constant String := Dep.As_String & "=""";
          --  A line starting with Target is a candidate for deletion
 
          Armed        : Boolean := False;
@@ -246,9 +236,6 @@ package body Alire.Manifest is
                       Backup     => True,
                       Backup_Dir => Paths.Working_Folder_Inside_Root);
    begin
-      if Deps.Is_Empty then
-         return;
-      end if;
 
       declare
          File : constant Utils.Text_Files.File :=
@@ -256,9 +243,7 @@ package body Alire.Manifest is
                                          Backup => False);
                                          -- Replacer takes care of backup
       begin
-         for Dep of Deps loop
-            Remove (Dep, File.Lines.all);
-         end loop;
+         Remove (Dep, File.Lines.all);
       end;
 
       --  Attempt loading of the new file as a double check. This should never
@@ -270,5 +255,16 @@ package body Alire.Manifest is
 
       Replacer.Replace; -- All went well, keep the changes
    end Remove;
+
+   ----------------
+   -- Remove_Pin --
+   ----------------
+
+   procedure Remove_Pin (File : Any_Path;
+                         Pin  : Crate_Name)
+   is
+   begin
+      raise Unimplemented;
+   end Remove_Pin;
 
 end Alire.Manifest;

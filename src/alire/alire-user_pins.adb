@@ -14,6 +14,8 @@ package body Alire.User_Pins is
 
    package TTY renames Alire.Utils.TTY;
 
+   use type UString;
+
    package Keys is
       Branch   : constant String := "branch";
       Commit   : constant String := "commit";
@@ -22,6 +24,36 @@ package body Alire.User_Pins is
       URL      : constant String := "url";
       Version  : constant String := "version";
    end Keys;
+
+   -----------------
+   -- New_Version --
+   -----------------
+
+   function New_Version (Version : Semantic_Versioning.Version) return Pin
+   is (Kind    => To_Version,
+       Version => Version);
+
+   --------------
+   -- New_Path --
+   --------------
+
+   function New_Path (Path : Any_Path) return Pin
+   is (Kind => To_Path,
+       Path => +Path);
+
+   ----------------
+   -- New_Remote --
+   ----------------
+
+   function New_Remote (URL : Alire.URL;
+                        Commit : String := "";
+                        Branch : String := "")
+                        return Pin
+   is (Kind       => To_Git,
+       URL        => +URL,
+       Commit     => +Commit,
+       Branch     => +Branch,
+       Local_Path => <>);
 
    -----------
    -- Image --
@@ -41,6 +73,27 @@ package body Alire.User_Pins is
              else "")
              & ("url=" & This.TTY_URL_With_Reference));
 
+   ----------------------
+   -- To_Manifest_Line --
+   ----------------------
+
+   function To_Manifest_Line (This  : Pin;
+                              Crate : Crate_Name)
+                              return String
+   is (Crate.As_String
+       & " = { "
+       & (case This.Kind is
+            when To_Version => "version='" & This.Version.Image & "'",
+            when To_Path    => "path='" & Path (This) & "'",
+            when To_Git     =>
+               "url='" & (+This.URL) & "'"
+               & (if This.Branch /= ""
+                  then ", branch='" & (+This.Branch) & "'"
+                  elsif This.Commit /= ""
+                  then ", commit='" & (+This.Commit) & "'"
+                  else ""))
+       & " }");
+
    ---------------
    -- Is_Broken --
    ---------------
@@ -49,6 +102,25 @@ package body Alire.User_Pins is
    is (not Ada.Directories.Exists (Path (This))
        or else Ada.Directories.Kind (Path (This))
                not in Ada.Directories.Directory);
+
+   -----------------
+   -- Deploy_Path --
+   -----------------
+
+   function Deploy_Path (This  : Pin;
+                         Crate : Crate_Name;
+                         Under : Any_Path)
+                         return Absolute_Path
+   is
+      use Directories.Operators;
+   begin
+      return Ada.Directories.Full_Name
+        (Under
+         / (Crate.As_String
+            & (if This.Is_Remote and then This.Commit /= ""
+               then "_" & Origins.Short_Commit (+This.Commit)
+               else "")));
+   end Deploy_Path;
 
    ------------
    -- Deploy --
@@ -60,16 +132,8 @@ package body Alire.User_Pins is
                      Online : Boolean)
    is
       use Ada.Strings.Unbounded;
-      use Directories.Operators;
 
-      Folder : constant String :=
-                 (+Crate)
-               & (if This.Is_Remote and then This.Commit /= ""
-                  then "_" & Origins.Short_Commit (+This.Commit)
-                  else "");
-
-      Destination : constant String :=
-                      Ada.Directories.Full_Name (Under / Folder);
+      Destination : constant Absolute_Path := This.Deploy_Path (Crate, Under);
 
       --------------
       -- Checkout --

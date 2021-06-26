@@ -1,4 +1,6 @@
 private with AAA.Caches.Files;
+with Ada.Directories;
+private with Ada.Finalization;
 
 with Alire.Containers;
 limited with Alire.Environment;
@@ -125,9 +127,10 @@ package Alire.Roots is
    --  conceivably we could use checksums to make it more robust against
    --  automated changes within the same second.
 
-   procedure Sync_From_Manifest (This   : in out Root;
-                                 Silent : Boolean;
-                                 Force  : Boolean := False);
+   procedure Sync_From_Manifest (This     : in out Root;
+                                 Silent   : Boolean;
+                                 Interact : Boolean;
+                                 Force    : Boolean := False);
    --  If the lockfile timestamp is outdated w.r.t the manifest, or Force, do
    --  as follows: 1) Pre-deploy any remote pins in the manifest so they are
    --  usable when solving, and apply any local/version pins. 2) Ensure that
@@ -135,7 +138,8 @@ package Alire.Roots is
    --  the manifest is newer than the lockfile, resolve again, as dependencies
    --  may have been edited by hand. 3) Ensure that releases in the lockfile
    --  are actually on disk (may be missing if cache was deleted, or the crate
-   --  was just cloned). When Silent, run as in non-interactive mode.
+   --  was just cloned). When Silent, downgrade log level of some output. When
+   --  not Interact, run as if --non-interactive were in effect.
 
    procedure Sync_Manifest_And_Lockfile_Timestamps (This : Root)
      with Post => not This.Is_Lockfile_Outdated;
@@ -144,19 +148,13 @@ package Alire.Roots is
    --  edited but the solution hasn't changed (and so the lockfile hasn't been
    --  regenerated). This way we know the lockfile is valid for the manifest.
 
-   function Compute_Update
-     (This        : in out Root;
-      Allowed     : Containers.Crate_Name_Sets.Set :=
-        Containers.Crate_Name_Sets.Empty_Set;
-      Options     : Solver.Query_Options := Solver.Default_Options)
-      return Solutions.Solution;
-   --  Compute a new solution for the workspace. If Allowed is not empty,
-   --  crates not appearing in Allowed are held back at their current version.
-   --  This function loads configured indexes from disk. No changes are
-   --  applied to This root.
+   Allow_All_Crates : Containers.Crate_Name_Sets.Set renames
+                        Containers.Crate_Name_Sets.Empty_Set;
 
-   procedure Update (This : in out Root;
-                     Allowed : Containers.Crate_Name_Sets.Set);
+   procedure Update (This     : in out Root;
+                     Allowed  : Containers.Crate_Name_Sets.Set;
+                     Silent   : Boolean;
+                     Interact : Boolean);
    --  Full update, explicitly requested. Will fetch/prune pins, update any
    --  updatable crates. Equivalent to `alr update`. Allowed is an optionally
    --  empty set of crates to which the update will be limited. Everything is
@@ -166,11 +164,12 @@ package Alire.Roots is
    --  Download all dependencies not already on disk from This.Solution
 
    procedure Sync_Dependencies
-     (This    : in out Root;
-      Silent  : Boolean;
-      Old     : Solutions.Solution := Solutions.Empty_Invalid_Solution;
-      Options : Solver.Query_Options := Solver.Default_Options;
-      Allowed : Containers.Crate_Name_Sets.Set :=
+     (This     : in out Root;
+      Silent   : Boolean; -- Do not output anything
+      Interact : Boolean; -- Request confirmation from the user
+      Old      : Solutions.Solution := Solutions.Empty_Invalid_Solution;
+      Options  : Solver.Query_Options := Solver.Default_Options;
+      Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is an
@@ -192,6 +191,13 @@ package Alire.Roots is
 
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
+
+   procedure Reload_Manifest (This : in out Root)
+     with Pre => This.Path = Ada.Directories.Current_Directory;
+   --  If changes have been done to the manifest, either via the dependency/pin
+   --  modification procedures, or somehow outside alire after This was
+   --  created, we need to reload the manifest. The solution remains
+   --  untouched (use Update to recompute a fresh solution).
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
@@ -227,11 +233,43 @@ private
       Load   => Load_Solution,
       Write  => Write_Solution);
 
-   type Root is tagged record
+   type Root is new Ada.Finalization.Controlled with record
       Environment     : Properties.Vector;
       Path            : UString;
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
+
+      --  These values, if different from "", mean this is a temporary root
+      Manifest        : Unbounded_Absolute_Path;
+      Lockfile        : Unbounded_Absolute_Path;
    end record;
+
+   --  Support for editable roots begins here. These are not expected to be
+   --  directly useful to clients, so better kept them under wraps.
+
+   function Compute_Update
+     (This        : in out Root;
+      Allowed     : Containers.Crate_Name_Sets.Set :=
+        Containers.Crate_Name_Sets.Empty_Set;
+      Options     : Solver.Query_Options := Solver.Default_Options)
+      return Solutions.Solution;
+   --  Compute a new solution for the workspace. If Allowed is not empty,
+   --  crates not appearing in Allowed are held back at their current version.
+   --  This function loads configured indexes from disk. No changes are applied
+   --  to This root. NOTE: pins have to be added to This.Solution beforehand,
+   --  or they will not be applied.
+
+   function Temporary_Copy (This : in out Root) return Root'Class;
+   --  Obtain a temporary copy of This root, in the sense that it uses temp
+   --  names for the manifest and lockfile. The cache is shared, so any
+   --  pins/dependencies added to the temporary copy are ready if the copy is
+   --  commited (see Commit call). The intended use is to be able to modify
+   --  the temporary manifest, and finally compare the solutions between This
+   --  and its copy. This way, no logic remains in `alr with`/`alr pin`, for
+   --  example, as they simply edit the manifest as if the user did it by hand.
+
+   procedure Commit (This : in out Root);
+   --  Renames the manifest and lockfile to their regular places, making this
+   --  root a regular one to all effects.
 
 end Alire.Roots;

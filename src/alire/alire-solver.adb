@@ -4,6 +4,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States;
+with Alire.Errors;
 with Alire.Milestones;
 with Alire.Utils.TTY;
 
@@ -799,7 +800,7 @@ package body Alire.Solver is
                        Detecting    => Options.Detecting,
                        Hinting      => Options.Hinting)));
          else
-            Raise_Checked_Error
+            raise No_Solution_Error with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies.");
          end if;
       else

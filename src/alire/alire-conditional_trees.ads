@@ -249,9 +249,7 @@ package Alire.Conditional_Trees with Preelaborate is
    package Iterators is new Ada.Iterator_Interfaces (Cursor, Has_Element);
 
    function Iterate (Container : Tree) return Iterators.Forward_Iterator'Class
-     with Pre => Container.Is_Empty or else
-                 Container.Root in Leaf_Node or else
-                 Container.Root in Vector_Node;
+     with Pre => Container.Is_Iterable;
    --  Returns our own iterator.
 
    function Indexed_Element (Container : Tree; Pos : Cursor) return Tree;

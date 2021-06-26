@@ -349,10 +349,10 @@ package Alire.Solutions is
    -- Utilities --
    ---------------
 
-   function Restrict_New_Dependencies (Old_Deps,
-                                       New_Deps : Conditional.Dependencies;
-                                       New_Sol  : Solution)
-                                       return Conditional.Dependencies;
+   function Narrow_New_Dependencies (Old_Deps,
+                                     New_Deps : Conditional.Dependencies;
+                                     New_Sol  : Solution)
+                                     return Conditional.Dependencies;
    --  Take new dependencies in a tree, see how they've been solved, and
    --  replace "any" dependencies with the proper tilde or caret, depending on
    --  what was found in the solution. E.g., if the user provided lib=*, and it
