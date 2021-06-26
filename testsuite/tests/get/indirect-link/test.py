@@ -22,17 +22,19 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Depend on tier2, as a linked idr
-run_alr('with', 'tier2', '--use', '/')  # path is irrelevant
+os.mkdir('tier2')
+run_alr('with', 'tier2', '--use', 'tier2')
 
 # Add tier1 (this is where the bug manifests pre- fix)
 run_alr('with', 'tier1')
 
 # Verify the solution graph looks as expected
 p = run_alr('with', '--solve')
-assert_match('.*Dependencies \(graph\):\n'
-             '   tier1=1\.0\.0 --> tier2\*.*'
-             '   xxx=0\.0\.0   --> tier1=1\.0\.0.*'
-             '   xxx=0\.0\.0   --> tier2\*.*',
+assert_match('.*' +
+             re.escape('Dependencies (graph):\n'
+                       '   tier1=1.0.0 --> tier2*              \n'
+                       '   xxx=0.0.0   --> tier1=1.0.0 (^1.0.0)\n'
+                       '   xxx=0.0.0   --> tier2^1.0.0         ') + '.*',
              p.out, flags=re.S)
 
 
