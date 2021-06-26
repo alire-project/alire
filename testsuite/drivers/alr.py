@@ -256,7 +256,12 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
             (f"Could not unpin crate {crate} in lines:\n" + str(orig))
 
     else:
-        raise NotImplementedError("Unimplemented")
+        if not update:
+            raise RuntimeError("Update cannot be disabled when using the"
+                               " command-line interface")
+
+        run_alr("pin", "--unpin", crate)
+
 
 
 def alr_pin(crate, version="", path="", url="", commit="", branch="",
@@ -266,6 +271,9 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
     one of version, path, url. Must be run in a crate root.
     When update, run `alr pin` so the new solution is computed.
     """
+
+    if commit != "" and branch != "":
+        raise RuntimeError("Do not specify both commit and branch")
 
     if manual:
         alr_unpin(crate, fail_if_missing=False)  # Just in case
@@ -293,4 +301,24 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
             run_alr("pin")  # so the changes in the manifest are applied
 
     else:
-        raise NotImplementedError("Unimplemented")
+        if not update:
+            raise RuntimeError("Update cannot be disabled when using the"
+                               " command-line interface")
+
+        args = []
+        if version != "":
+            args += [f"{crate}={version}"]
+        else:
+            if crate != "":
+                args += [crate]
+
+            if path != "":
+                args += ["--use", f"{path}"]
+            elif url != "":
+                args += ["--use", f"{url}"]
+            elif commit != "":
+                args += ["--commit", f"{commit}"]
+            elif branch != "":
+                args += ["--branch", f"{branch}"]
+
+        run_alr("pin", args)

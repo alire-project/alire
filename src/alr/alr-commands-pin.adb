@@ -122,6 +122,9 @@ package body Alr.Commands.Pin is
       then
          Reportaise_Wrong_Arguments
            ("--use must be used alone with a crate name");
+      elsif Cmd.Commit.all /= "" and then Cmd.Branch.all /= "" then
+         Reportaise_Wrong_Arguments
+           ("Cannot specify both a branch and a commit simultaneously");
       end if;
 
       Cmd.Requires_Valid_Session;
@@ -237,7 +240,9 @@ package body Alr.Commands.Pin is
                & " instead of looking for indexed releases."
                & " An optional reference can be specified with --commit;"
                & " the pin will be frozen at the commit currently matching"
-               & " the reference.")
+               & " the reference.  Alternatively, a branch to track can be"
+               & " specified with --branch. Use `alr update` to refresh the"
+               & " tracking pin contents.")
      );
 
    --------------------
@@ -260,6 +265,13 @@ package body Alr.Commands.Pin is
                      Cmd.Unpin'Access,
                      Long_Switch => "--unpin",
                      Help        => "Unpin a release");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Branch'Access,
+         Long_Switch => "--branch=",
+         Argument    => "NAME",
+         Help        => "Branch to be tracked in repository");
 
       Define_Switch
         (Config      => Config,

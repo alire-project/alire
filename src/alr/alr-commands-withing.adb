@@ -195,7 +195,7 @@ package body Alr.Commands.Withing is
            (Crate  => Crate,
             Origin => Cmd.URL.all,
             Commit => Cmd.Commit.all,
-            Branch => ""); -- TODO: PARSE BRANCH
+            Branch => Cmd.Branch.all);
 
       else
 
@@ -240,6 +240,11 @@ package body Alr.Commands.Withing is
       Check (Cmd.Solve);
       Check (Cmd.Tree);
       Check (Cmd.Versions);
+
+      if Cmd.Commit.all /= "" and then Cmd.Branch.all /= "" then
+         Reportaise_Wrong_Arguments
+           ("Cannot specify both a branch and a commit simultaneously");
+      end if;
 
       --  No parameters: give requested info and return. There is still the
       --  possibility of a `with --use` that is processed later.
@@ -337,7 +342,9 @@ package body Alr.Commands.Withing is
                 & " version by the sources found at the given target."
                 & " An optional reference can be specified with --commit;"
                 & " the pin will be frozen at the commit currently matching"
-                & " the reference.")
+                & " the reference. Alternatively, a branch to track can be"
+                & " specified with --branch. Use `alr update` to refresh the"
+                & " tracking pin contents.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
@@ -350,13 +357,6 @@ package body Alr.Commands.Withing is
        .Append ("Example of GPR file contents:")
        .New_Line
        .Append ("with ""libhello""; -- alr with libhello")
-       .New_Line
-       .Append ("* Caveat:")
-       .Append ("Since alr does not modify user files, any dependencies"
-                & " managed through this command only directly affect"
-                & " the metadata files of alr itself. In order to use the"
-                & " dependencies in Ada code, the user *must* add the needed"
-                & " 'with'ed project files in their own GPR files.")
        .New_Line
        .Append (Crate_Version_Sets));
 
@@ -384,6 +384,13 @@ package body Alr.Commands.Withing is
                      Cmd.Graph'Access,
                      "", "--graph",
                      "Show ASCII graph of dependencies");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Branch'Access,
+         Long_Switch => "--branch=",
+         Argument    => "NAME",
+         Help        => "Branch to track in repository");
 
       Define_Switch
         (Config      => Config,
