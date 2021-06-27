@@ -220,6 +220,38 @@ def alr_touch_manifest(path="."):
     os.utime(os.path.join(path, "alire.lock"), (0, 0))
 
 
+def delete_array_entry_from_manifest(array, crate,
+                                     fail_if_missing=True, update=True):
+    """
+    Manual deletion of dependencies/pins. As we emit the additions too, this is
+    simpler than the actual code in alr.
+    """
+    with open(alr_manifest(), "rt") as manifest:
+            found = False
+            lines = manifest.readlines()
+            orig = lines
+            for i in range(1, len(lines)):
+                if lines[i].startswith(f"{crate} =") \
+                  and lines[i-1] == f"[[{array}]]\n":
+                    lines.pop(i)
+                    lines.pop(i-1)
+                    found = True
+                    break
+
+    # Write the new manifest
+    if found:
+        with open(alr_manifest(), "wt") as manifest:
+            manifest.writelines(lines)
+        if update:
+            run_alr("pin")  # Ensure changes don't affect next command output
+    elif fail_if_missing:
+            raise RuntimeError
+            (f"Could not remove crate {crate} in lines:\n" + str(orig))
+
+    # Make the lockfile "older" (otherwise timestamp is identical)
+    os.utime(alr_lockfile(), (0, 0))
+
+
 def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
     """
     Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use
@@ -229,31 +261,8 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
 
     if manual:
         # Locate and remove the lines with the pin
-        with open("alire.toml", "rt") as manifest:
-            found = False
-            lines = manifest.readlines()
-            orig = lines
-            for i in range(1, len(lines)):
-                if lines[i].startswith(f"{crate} =") \
-                  and lines[i-1] == "[[pins]]\n":
-                    lines.pop(i)
-                    lines.pop(i-1)
-                    found = True
-                    break
-
-        # Write the new manifest
-        if found:
-            with open("alire.toml", "wt") as manifest:
-                manifest.writelines(lines)
-
-            # Make the lockfile "older" (otherwise timestamp is identical)
-            os.utime("alire.lock", (0, 0))
-
-            if update:
-                run_alr("pin")  # Ensure changes don't affect next command output
-        elif fail_if_missing:
-            raise RuntimeError
-            (f"Could not unpin crate {crate} in lines:\n" + str(orig))
+        delete_array_entry_from_manifest("pins", crate,
+                                         fail_if_missing, update)
 
     else:
         if not update:
@@ -261,7 +270,6 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
                                " command-line interface")
 
         run_alr("pin", "--unpin", crate)
-
 
 
 def alr_pin(crate, version="", path="", url="", commit="", branch="",
@@ -291,11 +299,11 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
         else:
             raise ValueError("Specify either version, path or url")
 
-        with open("alire.toml", "at") as manifest:
+        with open(alr_manifest(), "at") as manifest:
             manifest.writelines(["\n[[pins]]\n", pin_line + "\n"])
 
         # Make the lockfile "older" (otherwise timestamp is identical)
-        os.utime("alire.lock", (0, 0))
+        os.utime(alr_lockfile(), (0, 0))
 
         if update:
             run_alr("pin")  # so the changes in the manifest are applied
@@ -309,8 +317,7 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
         if version != "":
             args += [f"{crate}={version}"]
         else:
-            if crate != "":
-                args += [crate]
+            args += [crate]
 
             if path != "":
                 args += ["--use", f"{path}"]
@@ -322,3 +329,43 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
                 args += ["--branch", f"{branch}"]
 
         run_alr("pin", args)
+
+
+def alr_with(dep="", path="", url="", commit="", branch="",
+             delete=False, manual=True, update=True):
+    """
+    Add/remove dependencies either through command-line or manifest edition
+    """
+    if commit != "" and branch != "":
+        raise RuntimeError("Do not specify both commit and branch")
+    if path != "" and url != "":
+        raise RuntimeError("Do not specify both path and url")
+
+    if manual:
+        if delete:
+            delete_array_entry_from_manifest("depends-on", dep, update=update)
+        else:
+            with open(alr_manifest(), "at") as manifest:
+                manifest.writelines(["\n[[depends-on]]\n",
+                                     f"{dep}\n"])
+                if update:
+                    run_alr("with")
+
+    else:
+        if delete:
+            run_alr("with", "--del", dep)
+        else:
+            args = []
+            if dep != "":
+                args += [dep]
+
+            if path != "":
+                args += ["--use", f"{path}"]
+            elif url != "":
+                args += ["--use", f"{url}"]
+            elif commit != "":
+                args += ["--commit", f"{commit}"]
+            elif branch != "":
+                args += ["--branch", f"{branch}"]
+
+            run_alr("with", args)
