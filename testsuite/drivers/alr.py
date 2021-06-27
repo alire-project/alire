@@ -323,16 +323,17 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
                 args += ["--use", f"{path}"]
             elif url != "":
                 args += ["--use", f"{url}"]
-            elif commit != "":
+
+            if commit != "":
                 args += ["--commit", f"{commit}"]
             elif branch != "":
                 args += ["--branch", f"{branch}"]
 
-        run_alr("pin", args)
+        run_alr("pin", *args)
 
 
 def alr_with(dep="", path="", url="", commit="", branch="",
-             delete=False, manual=True, update=True):
+             delete=False, manual=True, update=True, force=False):
     """
     Add/remove dependencies either through command-line or manifest edition
     """
@@ -341,21 +342,40 @@ def alr_with(dep="", path="", url="", commit="", branch="",
     if path != "" and url != "":
         raise RuntimeError("Do not specify both path and url")
 
+    separators = "=^~<>*"
+
+    # Fix the dependency if no version subset is in dep
+    if not any([separator in dep for separator in separators]):
+        dep += "*"
+
+    # Find the separator position
+    pos = max([dep.find(separator) for separator in separators])
+
     if manual:
         if delete:
             delete_array_entry_from_manifest("depends-on", dep, update=update)
         else:
             with open(alr_manifest(), "at") as manifest:
-                manifest.writelines(["\n[[depends-on]]\n",
-                                     f"{dep}\n"])
-                if update:
-                    run_alr("with")
+                lines = ["\n[[depends-on]]\n",
+                         f'{dep[:pos]} = "{dep[pos:]}"\n']
+                manifest.writelines(lines)
+
+            if path != "" or url != "":
+                alr_pin(crate=f'{dep[:pos]}', path=path, url=url,
+                        commit=commit, branch=branch, manual=manual,
+                        update=False)
+
+            # Make the lockfile "older" (otherwise timestamp is identical)
+            os.utime(alr_lockfile(), (0, 0))
+
+            if update:
+                run_alr("with", force=force)
 
     else:
         if delete:
             run_alr("with", "--del", dep)
         else:
-            args = []
+            args = ["with"]
             if dep != "":
                 args += [dep]
 
@@ -363,9 +383,10 @@ def alr_with(dep="", path="", url="", commit="", branch="",
                 args += ["--use", f"{path}"]
             elif url != "":
                 args += ["--use", f"{url}"]
-            elif commit != "":
+
+            if commit != "":
                 args += ["--commit", f"{commit}"]
             elif branch != "":
                 args += ["--branch", f"{branch}"]
 
-            run_alr("with", args)
+            run_alr(*args, force=force)

@@ -161,7 +161,7 @@ package body Alr.Commands.Pin is
 
          elsif Cmd.URL.all /= "" then
 
-            if Cmd.Commit.all /= ""
+            if Cmd.Commit.all /= "" or else Cmd.Branch.all /= ""
               or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
             then
 
@@ -171,7 +171,7 @@ package body Alr.Commands.Pin is
                  (Crate  => Optional_Crate,
                   Origin => Cmd.URL.all,
                   Commit => Cmd.Commit.all,
-                  Branch => ""); -- TODO: allow passing --branch
+                  Branch => Cmd.Branch.all);
 
             else
 
