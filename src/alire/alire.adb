@@ -1,6 +1,7 @@
 with AAA.Debug;
 
 with Alire.Errors;
+with Alire.Warnings;
 with Alire.Utils.TTY;
 
 with GNAT.IO;
@@ -238,7 +239,7 @@ package body Alire is
    procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
    begin
       if Recover then
-         Trace.Warning (Msg);
+         Warnings.Warn_Once (Msg);
       else
          Raise_Checked_Error (Msg);
       end if;
