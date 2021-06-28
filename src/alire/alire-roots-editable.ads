@@ -85,16 +85,17 @@ package Alire.Roots.Editable is
    procedure Add_Remote_Pin (This   : in out Root;
                              Crate  : Optional.Crate_Name;
                              Origin : URL;
-                             Commit : String := "";
+                             Ref    : String := "";
                              Branch : String := "")
      with Pre =>
-       (not (Commit /= "" and then Branch /= "")
+       (not (Ref /= "" and then Branch /= "")
         or else raise Checked_Error with
-          Errors.Set ("Simultaneous Branch and Commit pins are incompatible"))
+          Errors.Set ("Simultaneous Branch and Ref pins are incompatible"))
        and then
          (Crate.Is_Empty
           or else This.Can_Be_Pinned (Crate.Element));
-   --  Add a pin to a remote repo, with optional Commit xor Branch. if
+   --  Add a pin to a remote repo, with optional Ref xor Branch. If Ref is
+   --  not a Commit, it will be converted to one using `git ls-remote`. If
    --  Crate.Is_Empty then Path must point to an Alire workspace for which it
    --  can be deduced. If Crate.Has_Element, the crates should match. If the
    --  root does not depend already on the crate, a dependency will be added.

@@ -342,10 +342,13 @@ def alr_with(dep="", path="", url="", commit="", branch="",
     if path != "" and url != "":
         raise RuntimeError("Do not specify both path and url")
 
+    if manual and dep == "":
+        raise RuntimeError("Cannot manually add without explicit dependency")
+
     separators = "=^~<>*"
 
     # Fix the dependency if no version subset is in dep
-    if not any([separator in dep for separator in separators]):
+    if manual and not any([separator in dep for separator in separators]):
         dep += "*"
 
     # Find the separator position

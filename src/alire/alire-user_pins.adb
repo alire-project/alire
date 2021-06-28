@@ -1,7 +1,6 @@
 with Ada.Directories;
 
 with Alire.Directories;
-with Alire.Origins;
 with Alire.Roots.Optional;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;

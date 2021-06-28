@@ -1,4 +1,5 @@
 with Alire.Optional;
+with Alire.Origins;
 with Alire.TOML_Adapters;
 
 with Semantic_Versioning;
@@ -65,7 +66,9 @@ package Alire.User_Pins is
                         Commit : String := "";
                         Branch : String := "")
                         return Pin
-     with Post => New_Remote'Result.Kind = To_Git;
+     with
+       Pre => Commit = "" or else Origins.Is_Valid_Commit (Commit),
+       Post => New_Remote'Result.Kind = To_Git;
 
    function URL (This : Pin) return Alire.URL
      with Pre => This.Is_Remote;

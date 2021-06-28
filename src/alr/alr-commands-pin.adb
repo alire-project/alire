@@ -170,7 +170,7 @@ package body Alr.Commands.Pin is
                New_Root.Add_Remote_Pin
                  (Crate  => Optional_Crate,
                   Origin => Cmd.URL.all,
-                  Commit => Cmd.Commit.all,
+                  Ref    => Cmd.Commit.all,
                   Branch => Cmd.Branch.all);
 
             else
