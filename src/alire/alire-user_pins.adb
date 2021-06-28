@@ -83,8 +83,10 @@ package body Alire.User_Pins is
    is (Crate.As_String
        & " = { "
        & (case This.Kind is
-            when To_Version => "version='" & This.Version.Image & "'",
-            when To_Path    => "path='" & Path (This) & "'",
+            when To_Version =>
+               "version='" & This.Version.Image & "'",
+            when To_Path    =>
+               "path='" & VFS.Attempt_Portable (Path (This)) & "'",
             when To_Git     =>
                "url='" & (+This.URL) & "'"
                & (if This.Branch /= ""
@@ -149,6 +151,13 @@ package body Alire.User_Pins is
          package Adirs renames Ada.Directories;
          Temp : Directories.Temp_File;
       begin
+
+         --  Skip checkout of existing commit
+
+         if Commit /= "" and then Adirs.Exists (Destination) then
+            Trace.Debug ("Skipping checkout of commit pin at " & Destination);
+            return;
+         end if;
 
          --  Check out the branch or commit
 

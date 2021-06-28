@@ -5,6 +5,8 @@ with Alire.Errors;
 with Alire.Optional;
 with Alire.TTY;
 
+with Semantic_Versioning;
+
 package Alire.Roots.Editable is
 
    --  This type mimics manual edition of the manifest. All operations in here
@@ -64,7 +66,7 @@ package Alire.Roots.Editable is
 
    procedure Add_Version_Pin (This    : in out Root;
                               Crate   : Crate_Name;
-                              Version : String)
+                              Version : Semantic_Versioning.Version)
      with Pre => This.Can_Be_Pinned (Crate);
    --  Add a version pin; if the root doesn't depend on it previously, the
    --  dependency will be added too.

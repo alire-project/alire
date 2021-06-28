@@ -26,10 +26,6 @@ package Alr.Commands.Pin is
        & " | crate --use=<path> [--commit=REF]"
        & " | --all]");
 
-   procedure Warn_Manual_Only;
-   --  For the time being, we do not allow creating pins via command line.
-   --  Warn the user that pins have to be added manually to the manifest.
-
 private
 
    type Command is new Commands.Command with record

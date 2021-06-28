@@ -152,10 +152,7 @@ package body Alire.Roots.Editable is
                                 Crate : Crate_Name;
                                 Unpin : Boolean := True)
    is
-      pragma Unreferenced (Unpin);
    begin
-
-      --  TODO: remove pin if existing too (next PR)
 
       --  If dependency is not among dependencies at all, nothing to do
 
@@ -184,6 +181,10 @@ package body Alire.Roots.Editable is
       Alire.Manifest.Remove (This.Edit.Crate_File, Crate);
       This.Reload_Manifest;
 
+      if Unpin then
+         This.Remove_Pin (Crate);
+      end if;
+
    end Remove_Dependency;
 
    ---------------------
@@ -192,15 +193,14 @@ package body Alire.Roots.Editable is
 
    procedure Add_Version_Pin (This    : in out Root;
                               Crate   : Crate_Name;
-                              Version : String)
+                              Version : Semver.Version)
    is
-      V : constant Semver.Version := Semver.Parse (Version);
    begin
       if not This.Solution.Depends_On (Crate) then
          This.Add_Dependency
            (Dependencies.New_Dependency
               (Crate,
-               Semver.Updatable (V)));
+               Semver.Updatable (Version)));
       end if;
 
       --  Remove any previous pin for this crate
@@ -211,10 +211,10 @@ package body Alire.Roots.Editable is
 
       Alire.Manifest.Append (Crate_File (This.Edit),
                              Crate,
-                             User_Pins.New_Version (V));
+                             User_Pins.New_Version (Version));
       This.Reload_Manifest;
 
-      This.Edit.Set (This.Solution.Pinning (Crate, V));
+      This.Edit.Set (This.Solution.Pinning (Crate, Version));
    end Add_Version_Pin;
 
    --------------------------
@@ -245,6 +245,12 @@ package body Alire.Roots.Editable is
                     then Add_Pin_Preparations.Crate.Element.Ptr.all
                     else Pin_Root.Value.Name);
       begin
+
+         --  If nothing in the solution depends on the crate (that is why we
+         --  check the Solution and not the top-level dependencies) requested
+         --  to be pinned, we assume a top-level dependency on the crate would
+         --  be wanted, and add it too. If this is not wanted, the user can
+         --  easily remove the dependency by hand afterwards.
 
          if not This.Solution.Depends_On (Crate) then
             This.Add_Dependency
@@ -387,7 +393,7 @@ package body Alire.Roots.Editable is
       if This.Solution.Depends_On (Crate)
         and then This.Solution.State (Crate).Is_User_Pinned
       then
-         Alire.Manifest.Remove_Pin (Lock_File (This.Edit),
+         Alire.Manifest.Remove_Pin (This.Edit.Crate_File,
                                     Crate);
          This.Edit.Set (This.Solution.User_Unpinning (Crate));
       end if;

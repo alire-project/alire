@@ -39,3 +39,6 @@
 [submodule "deps/optional"]
 	path = deps/optional
 	url = https://github.com/mosteo/optional
+[submodule "deps/toml_slicer"]
+	path = deps/toml_slicer
+	url = https://github.com/mosteo/toml_slicer
