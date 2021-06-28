@@ -4,6 +4,20 @@ with Alire.Directories;
 
 package body Alire.Utils.Text_Files is
 
+   ------------------
+   -- Append_Lines --
+   ------------------
+
+   procedure Append_Lines (File       : Any_Path;
+                           Lines      : String_Vector;
+                           Backup     : Boolean  := True;
+                           Backup_Dir : Any_Path := "")
+   is
+      F : Text_Files.File := Load (File, Backup, Backup_Dir);
+   begin
+      F.Lines.Append (Lines);
+   end Append_Lines;
+
    --------------
    -- Finalize --
    --------------

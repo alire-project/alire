@@ -4,7 +4,7 @@ Test that removing a pinned dependency keeps the pinned release in the solution
 
 import os
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import check_line_in
 
@@ -21,7 +21,7 @@ os.chdir('xxx')
 run_alr('with', 'libparent')
 
 # Pin the child
-run_alr('pin', 'libchild')
+alr_pin('libchild', version='0.2')
 
 # Remove parent
 run_alr('with', '--del', 'libparent')

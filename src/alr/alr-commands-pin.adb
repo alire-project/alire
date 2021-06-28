@@ -1,16 +1,16 @@
-with Alire.Conditional;
 with Alire.Dependencies;
-with Alire.Releases;
-with Alire.Solutions.Diffs;
-with Alire.Pinning;
+with Alire.Optional;
+with Alire.Roots.Editable;
+with Alire.Solutions;
 with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
 with Alr.Commands.User_Input;
-with Alr.Platform;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
+
+with TOML_Slicer;
 
 package body Alr.Commands.Pin is
 
@@ -21,12 +21,15 @@ package body Alr.Commands.Pin is
    -- Change_One_Pin --
    --------------------
 
-   procedure Change_One_Pin (Cmd      : in out Command;
-                             Solution : in out Alire.Solutions.Solution;
-                             Target   :        String)
+   procedure Change_One_Pin (Cmd    : in out Command;
+                             Root   : in out Alire.Roots.Editable.Root;
+                             Target :        String)
    is
-      Version : Semver.Version;
-      Name    : constant Alire.Crate_Name := +Utils.Head (Target, '=');
+      Version  : Semver.Version;
+      Solution : constant Alire.Solutions.Solution := Root.Solution;
+      Dep      : constant Alire.Dependencies.Dependency :=
+                   Alire.Dependencies.From_String (Target);
+      --  Only crate=version should be allowed here, we check it shortly
 
       ---------
       -- Pin --
@@ -40,12 +43,7 @@ package body Alr.Commands.Pin is
 
          Cmd.Requires_Full_Index;
 
-         Solution := Alire.Pinning.Pin
-           (Crate        => Name,
-            Version      => Version,
-            Dependencies => Cmd.Root.Release.Dependencies,
-            Environment  => Platform.Properties,
-            Solution     => Solution);
+         Root.Add_Version_Pin (Dep.Crate, Version);
 
       end Pin;
 
@@ -55,28 +53,24 @@ package body Alr.Commands.Pin is
 
       procedure Unpin is
       begin
-         if not (Solution.State (Name).Is_Linked or else
-                 Solution.State (Name).Is_Pinned)
-         then
+         if not Solution.State (Dep.Crate).Is_User_Pinned then
             Reportaise_Command_Failed ("Requested crate is already unpinned");
          end if;
 
          Cmd.Requires_Full_Index;
 
-         Solution := Alire.Pinning.Unpin
-           (Crate        => Name,
-            Dependencies => Cmd.Root.Release.Dependencies,
-            Environment  => Platform.Properties,
-            Solution     => Solution);
+         Root.Remove_Pin (Dep.Crate);
       end Unpin;
 
    begin
 
       --  Sanity checks
 
-      if not Solution.Depends_On (Name) then
-         Reportaise_Command_Failed ("Cannot pin dependency not in solution: "
-                                    & (+Name));
+      if not Solution.Depends_On (Dep.Crate) then
+         Reportaise_Command_Failed
+           ("Cannot " & (if Cmd.Unpin then "unpin" else "pin")
+            & " dependency not in solution: "
+            & TTY.Name (Dep.Crate));
       end if;
 
       --  Check if we are given a particular version
@@ -87,17 +81,19 @@ package body Alr.Commands.Pin is
             Reportaise_Wrong_Arguments ("Unpinning does not require version");
          end if;
 
-         Version := Semver.Parse (Utils.Tail (Target, '='),
+         Version := Semver.Parse (Utils.Tail (Dep.Image, '='),
                                   Relaxed => False);
 
-         Trace.Debug ("Pin requested for exact version: " & Version.Image);
-      elsif Solution.State (Name).Is_Solved then
-         Version := Solution.State (Name).Release.Version;
+         Trace.Debug ("Pin requested for exact version: "
+                      & Version.Image);
+
+      elsif Solution.State (Dep.Crate).Is_Solved then
+         Version := Solution.State (Dep.Crate).Release.Version;
       elsif not Cmd.Unpin then
-         Trace.Warning ("An explicit version is required to pin a crate with"
-                        & " no release in the current solution: "
-                        & TTY.Name (Name));
-         return;
+         Reportaise_Wrong_Arguments
+           ("An explicit version is required to pin a crate with"
+            & " no release in the current solution: "
+            & TTY.Name (Dep.Crate));
       end if;
 
       --  Proceed to pin/unpin
@@ -116,23 +112,22 @@ package body Alr.Commands.Pin is
    overriding procedure Execute (Cmd : in out Command)
    is
 
-      -------------
-      -- Confirm --
-      -------------
+      -------------------------
+      -- Validate_Crate_Spec --
+      -------------------------
 
-      procedure Confirm (Old_Sol, New_Sol : Alire.Solutions.Solution) is
-         Diff : constant Alire.Solutions.Diffs.Diff :=
-                  Old_Sol.Changes (New_Sol);
+      procedure Validate_Crate_Spec (Spec : String) is
+         Dep : constant Alire.Dependencies.Dependency :=
+                 Alire.Dependencies.From_String (Spec);
       begin
-         if Diff.Contains_Changes then
-            if Alire.Utils.User_Input.Confirm_Solution_Changes (Diff) then
-               Cmd.Root.Set (Solution => New_Sol);
-               Cmd.Root.Deploy_Dependencies;
+         if not Dep.Versions.Is_Any then
+            if not Alire.Utils.Starts_With (Dep.Versions.Image, "=") then
+               Reportaise_Wrong_Arguments
+                 ("Plain crate name or crate=version argument expected for"
+                  & " pinning, but got: " & TTY.Emph (Spec));
             end if;
-         else
-            Trace.Info ("No changes to apply.");
          end if;
-      end Confirm;
+      end Validate_Crate_Spec;
 
    begin
 
@@ -145,6 +140,9 @@ package body Alr.Commands.Pin is
       then
          Reportaise_Wrong_Arguments
            ("--use must be used alone with a crate name");
+      elsif Cmd.Commit.all /= "" and then Cmd.Branch.all /= "" then
+         Reportaise_Wrong_Arguments
+           ("Cannot specify both a branch and a commit simultaneously");
       end if;
 
       Cmd.Requires_Valid_Session;
@@ -157,39 +155,46 @@ package body Alr.Commands.Pin is
       elsif Num_Arguments > 1 then
          Reportaise_Wrong_Arguments
            ("Pin expects a single crate or crate=version argument");
+      elsif Num_Arguments = 1 then
+         --  Check that we get either a plain name or a crate=version
+         Validate_Crate_Spec (Argument (1));
       end if;
 
       --  Apply changes;
 
       declare
-         New_Sol : Alire.Solutions.Solution := Cmd.Root.Solution;
-         Old_Sol : constant Alire.Solutions.Solution := New_Sol;
+         New_Root : Alire.Roots.Editable.Root :=
+                      Alire.Roots.Editable.New_Root (Original => Cmd.Root);
+         Optional_Crate : constant Alire.Optional.Crate_Name :=
+                            (if Num_Arguments = 1
+                             then Alire.Optional.Crate_Names.Unit
+                               (Alire.Dependencies
+                                     .From_String (Argument (1)).Crate)
+                             else Alire.Optional.Crate_Names.Empty);
       begin
 
          if Cmd.Pin_All then
 
             --  Change all pins
 
-            for Crate of New_Sol.Crates loop
-               if New_Sol.State (Crate).Is_Pinned = Cmd.Unpin then
-                  Change_One_Pin (Cmd, New_Sol, +Crate);
-               end if;
+            for Crate of Cmd.Root.Solution.Crates loop
+               Change_One_Pin (Cmd, New_Root, Crate.As_String);
             end loop;
 
          elsif Cmd.URL.all /= "" then
 
-            --  Pin to remote commit
-
-            if Cmd.Commit.all /= ""
+            if Cmd.Commit.all /= "" or else Cmd.Branch.all /= ""
               or else Alire.URI.Is_HTTP_Or_Git (Cmd.URL.all)
             then
-               New_Sol := Cmd.Root.Pinned_To_Remote
-                 (Dependency  => Alire.Conditional.New_Dependency
-                    (Alire.Dependencies.From_String (Argument (1))),
-                  URL         => Cmd.URL.all,
-                  Commit      => Cmd.Commit.all,
-                  Must_Depend => True)
-                 .Solution;
+
+               --  Pin to remote commit
+
+               New_Root.Add_Remote_Pin
+                 (Crate  => Optional_Crate,
+                  Origin => Cmd.URL.all,
+                  Ref    => Cmd.Commit.all,
+                  Branch => Cmd.Branch.all);
+
             else
 
                --  Pin to dir
@@ -201,35 +206,37 @@ package body Alr.Commands.Pin is
 
                Cmd.Requires_Full_Index; -- Next statement recomputes a solution
 
-               New_Sol := Alire.Pinning.Pin_To
-                 (+Argument (1),
-                  Cmd.URL.all,
-                  Cmd.Root.Release.Dependencies,
-                  Platform.Properties,
-                  Old_Sol);
+               New_Root.Add_Path_Pin (Crate => Optional_Crate,
+                                      Path  => Cmd.URL.all);
 
             end if;
 
             --  Report crate detection at target destination
 
-            User_Input.Report_Pinned_Crate_Detection (+Argument (1),
-                                                      New_Sol);
+            User_Input.Report_Pinned_Crate_Detection (Optional_Crate.Element,
+                                                      New_Root.Solution);
 
          else
 
             --  Change a single pin
 
-            Change_One_Pin (Cmd, New_Sol, Argument (1));
+            Change_One_Pin (Cmd, New_Root, Argument (1));
          end if;
 
          --  Consolidate changes
 
-         Confirm (Old_Sol, New_Sol);
+         New_Root.Confirm_And_Commit;
       end;
 
    exception
-      when Semver.Malformed_Input =>
+      when E : Semver.Malformed_Input =>
+         Alire.Log_Exception (E);
          Reportaise_Wrong_Arguments ("Improper version string");
+      when E : TOML_Slicer.Slicing_Error =>
+         Alire.Log_Exception (E);
+         Reportaise_Command_Failed
+           ("alr was unable to apply your request; "
+            & "please edit the manifest manually.");
    end Execute;
 
    ----------------------
@@ -255,7 +262,9 @@ package body Alr.Commands.Pin is
                & " instead of looking for indexed releases."
                & " An optional reference can be specified with --commit;"
                & " the pin will be frozen at the commit currently matching"
-               & " the reference.")
+               & " the reference.  Alternatively, a branch to track can be"
+               & " specified with --branch. Use `alr update` to refresh the"
+               & " tracking pin contents.")
      );
 
    --------------------
@@ -278,6 +287,13 @@ package body Alr.Commands.Pin is
                      Cmd.Unpin'Access,
                      Long_Switch => "--unpin",
                      Help        => "Unpin a release");
+
+      Define_Switch
+        (Config      => Config,
+         Output      => Cmd.Branch'Access,
+         Long_Switch => "--branch=",
+         Argument    => "NAME",
+         Help        => "Branch to be tracked in repository");
 
       Define_Switch
         (Config      => Config,

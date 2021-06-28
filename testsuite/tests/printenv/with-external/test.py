@@ -21,15 +21,16 @@ os.chdir('libhello_0.9.0_filesystem')
 p = run_alr('printenv', quiet=False)
 assert_eq(0, p.status)
 
-expected_gpr_path=""
+expected_gpr_path = ""
 if platform.system() == 'Windows':
     expected_gpr_path = '.*\\\\libhello_0.9.0_filesystem'
 else:
     expected_gpr_path = '.*/libhello_0.9.0_filesystem'
 
 # Check the printenv output
-assert_match('warn: Generating incomplete environment'  # Note: this warning is
-             ' because of missing dependencies\n'       # via stderr so it's OK
+assert_match('warn: Generating possibly incomplete environment'
+             ' because of missing dependencies\n'
+             # Note: this warning is via stderr so it's OK
              '.*'
              'export ALIRE="True"\n'
              '.*'

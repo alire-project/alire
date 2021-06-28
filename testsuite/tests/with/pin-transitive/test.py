@@ -10,7 +10,7 @@ from drivers.asserts import assert_eq
 
 # The test will create ./indirect, ./direct, and ./nest/base crates.
 # Then they are pinned as base -> direct -> indirect. As "base" has a different
-# relative path to "indirect" that "direct", this is also checked.
+# relative path to "indirect" than "direct", this is also checked.
 
 init_local_crate(name="indirect", binary=False, enter=False)
 
@@ -25,12 +25,10 @@ os.chdir("nest")
 init_local_crate(name="base")
 run_alr("with", "--use=../../direct")
 
-s = os.sep
-
 # Verify created pins
 p = run_alr("pin")
-assert_eq("direct   file:.." + s + ".." + s + "direct   \n"
-          "indirect file:.." + s + ".." + s + "indirect \n",
+assert_eq("direct   file:../../direct   \n"
+          "indirect file:../../indirect \n",
           p.out)
 
 # Check pin removal
@@ -40,7 +38,7 @@ os.chdir("../nest/base")
 run_alr("update")
 
 p = run_alr("pin")
-assert_eq("direct file:.." + s + ".." + s + "direct \n",
+assert_eq("direct file:../../direct \n",
           p.out)
 
 

@@ -8,6 +8,7 @@ with Alire.Solutions;
 with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
+with Alire.Warnings;
 
 with Alire.Directories;
 
@@ -28,8 +29,8 @@ package body Alire.Crate_Configuration is
    begin
 
       if not Solution.Is_Complete then
-         Trace.Warning ("Generating possibly incomplete configuration"
-                        & " because of missing dependencies");
+         Warnings.Warn_Once ("Generating possibly incomplete configuration"
+                             & " because of missing dependencies");
       end if;
 
       for Rel of Solution.Releases.Including (Root.Release) loop
@@ -75,8 +76,8 @@ package body Alire.Crate_Configuration is
    begin
 
       if not Solution.Is_Complete then
-         Trace.Warning ("Generating possibly incomplete configuration"
-                      & " because of missing dependencies");
+         Warnings.Warn_Once ("Generating possibly incomplete configuration"
+                             & " because of missing dependencies");
       end if;
 
       for Rel of Solution.Releases.Including (Root.Release) loop

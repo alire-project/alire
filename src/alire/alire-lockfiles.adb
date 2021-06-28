@@ -26,8 +26,7 @@ package body Alire.Lockfiles is
    -- File_Name --
    ---------------
 
-   function File_Name (Name     : Crate_Name;
-                       Root_Dir : Any_Path) return Any_Path
+   function File_Name (Root_Dir : Any_Path) return Any_Path
    is (Root_Dir / "alire.lock");
 
    ---------------

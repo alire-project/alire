@@ -13,6 +13,7 @@ with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
+with Alire.User_Pins.Maps;
 with Alire.Utils;
 
 with Semantic_Versioning;
@@ -144,6 +145,14 @@ package Alire.Releases is
                           return Conditional.Dependencies;
    --  Retrieve only the dependencies that apply on platform P
 
+   function Dependency_On (R     : Release;
+                           Crate : Crate_Name;
+                           P     : Alire.Properties.Vector :=
+                             Alire.Properties.No_Properties)
+                           return Alire.Dependencies.Containers.Optional;
+   --  If R.Flat_Dependencies contains Crate, that dependency will be returned,
+   --  Empty otherwise.
+
    function Flat_Dependencies
      (R : Release;
       P : Alire.Properties.Vector := Alire.Properties.No_Properties)
@@ -184,6 +193,8 @@ package Alire.Releases is
                          return Utils.String_Vector;
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
+
+   function Pins (R : Release) return User_Pins.Maps.Map;
 
    function Project_Paths (R : Release;
                            P : Alire.Properties.Vector)
@@ -336,6 +347,7 @@ private
       Origin       : Origins.Origin;
       Notes        : Description_String (1 .. Notes_Len);
       Dependencies : Conditional.Dependencies;
+      Pins         : User_Pins.Maps.Map;
       Forbidden    : Conditional.Dependencies;
       Properties   : Conditional.Properties;
       Available    : Conditional.Availability;
@@ -472,5 +484,8 @@ private
 
    function Version_Image (R : Release) return String
    is (Semantic_Versioning.Image (R.Version));
+
+   function Pins (R : Release) return User_Pins.Maps.Map
+   is (R.Pins);
 
 end Alire.Releases;

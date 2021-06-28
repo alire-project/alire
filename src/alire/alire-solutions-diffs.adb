@@ -1,4 +1,5 @@
 with Alire.Utils.Tables;
+with Alire.User_Pins;
 with Alire.Utils.TTY;
 
 package body Alire.Solutions.Diffs is
@@ -139,18 +140,19 @@ package body Alire.Solutions.Diffs is
          is ((not Has_Former or else Former.Fulfilment not in Fulfilment)
              and then Has_Latter and then Latter.Fulfilment in Fulfilment);
 
+         use type Alire.User_Pins.Pin;
       begin
          --  New hint
          if Gains_State (Hinted) then
             Add_Change (Chg, Icon (Hinted), TTY.Warn ("external"));
 
-         --  Changed linked dir target
+         --  Changed linked dir
          elsif Has_Latter and then Latter.Is_Linked and then
            (not Has_Former or else not Former.Is_Linked or else
-            Former.Link.Path /= Latter.Link.Path)
+            Former.Link /= Latter.Link)
          then
             Add_Change (Chg, Icon (Pinned),
-                        "pin=" & TTY.URL (Latter.Link.Path));
+                        Latter.Link.Image (User => True));
 
          --  New unsolvable
          elsif Gains_State (Missed) then
@@ -383,7 +385,7 @@ package body Alire.Solutions.Diffs is
       if Changed then
          Table.Print (Level);
       else
-         Trace.Log (Prefix & "No changes between former an new solution.",
+         Trace.Log (Prefix & "No changes between former and new solution.",
                     Level);
       end if;
    end Print;

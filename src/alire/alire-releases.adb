@@ -58,7 +58,15 @@ package body Alire.Releases is
         (Alire.Dependencies.Containers.List,
          Alire.Dependencies.Containers.Append);
    begin
-      return Enumerate (R.Dependencies.Evaluate (P));
+      if P.Is_Empty then
+         --  Trying to evaluate a tree with empty dependencies will result
+         --  in spurious warnings about missing environment properties (as we
+         --  indeed didn't give any). Since we want to get flat dependencies
+         --  that do not depend on any properties, this is indeed safe to do.
+         return Enumerate (R.Dependencies);
+      else
+         return Enumerate (R.Dependencies.Evaluate (P));
+      end if;
    end Flat_Dependencies;
 
    -------------------------
@@ -90,6 +98,26 @@ package body Alire.Releases is
 
       return False;
    end Check_Caret_Warning;
+
+   -------------------
+   -- Dependency_On --
+   -------------------
+
+   function Dependency_On (R     : Release;
+                           Crate : Crate_Name;
+                           P     : Alire.Properties.Vector :=
+                             Alire.Properties.No_Properties)
+                           return Alire.Dependencies.Containers.Optional
+   is
+   begin
+      for Dep of R.Flat_Dependencies (P) loop
+         if Dep.Crate = Crate then
+            return Alire.Dependencies.Containers.Optionals.Unit (Dep);
+         end if;
+      end loop;
+
+      return Alire.Dependencies.Containers.Optionals.Empty;
+   end Dependency_On;
 
    ------------
    -- Deploy --
@@ -234,6 +262,7 @@ package body Alire.Releases is
          Version      => Base.Version,
          Origin       => Base.Origin,
          Dependencies => Base.Dependencies,
+         Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
          Available    => Base.Available)
@@ -288,6 +317,7 @@ package body Alire.Releases is
        Origin       => Origin,
        Notes        => Notes,
        Dependencies => Dependencies,
+       Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
        Available    => Available);
@@ -320,6 +350,7 @@ package body Alire.Releases is
       Origin       => Origin,
       Notes        => "",
       Dependencies => Dependencies,
+      Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
       Available    => Conditional.Empty
@@ -728,6 +759,7 @@ package body Alire.Releases is
          From    => From,
          Props   => This.Properties,
          Deps    => This.Dependencies,
+         Pins    => This.Pins,
          Avail   => This.Available);
 
       --  Consolidate/validate some properties as fields:
@@ -907,6 +939,7 @@ package body Alire.Releases is
        Origin       => R.Origin,
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
+       Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
        Available    => R.Available.Evaluate (P));

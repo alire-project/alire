@@ -6,20 +6,21 @@ import os
 import shutil
 
 from drivers.alr import run_alr, init_local_crate
-from drivers.helpers import init_git_repo
+from drivers.helpers import init_git_repo, git_branch
 from drivers.asserts import assert_eq
 
-s = os.sep
 
-
-def verify(head):
+def verify(head=""):  # Either head or branch /= ""
     # Check that the linked dir exists at the expected location
-    pin_path = f"alire{s}cache{s}pins{s}upstream_0.0.0_{head[:8]}"
+    pin_path = (f"alire/cache/pins/upstream" +
+                ("" if head == "" else f"_{head[:8]}"))
     assert os.path.isdir(pin_path)
 
     # Verify info reported by alr
     p = run_alr("pin")
-    assert_eq(f"upstream file:{pin_path} ../upstream.git#{head}\n", p.out)
+    assert_eq(f"upstream file:{pin_path} ../upstream.git" +
+              ("" if head == "" else f"#{head[0:8]}") + "\n",
+              p.out)
 
     # Verify building with pinned dependency
     run_alr("build")
@@ -32,8 +33,10 @@ def verify(head):
     run_alr("build")
 
     # Prepare for next test
-    run_alr("with", "--del", "upstream")  # Remove dependency
-    shutil.rmtree("alire")                # Total cleanup not relying on alr
+    run_alr("with", "--del", "upstream")      # Remove dependency
+    p = run_alr("pin")
+    assert_eq(f"There are no pins\n", p.out)  # Ensure pin is gone
+    shutil.rmtree("alire")                    # Total cleanup outside of alr
 
 
 # Initialize a git repo that will act as the "online" remote
@@ -51,7 +54,7 @@ verify(head)
 
 # Add using with, without head commit
 run_alr("with", "--use", "../upstream.git")
-verify(head)
+verify()
 
 # Pin afterwards, with commit
 run_alr("with", "upstream", force=True)  # force, as it is unsolvable
@@ -61,6 +64,6 @@ verify(head)
 # Pin afterwards, without commit
 run_alr("with", "upstream", force=True)
 run_alr("pin", "upstream", "--use", "../upstream.git")
-verify(head)
+verify()
 
 print('SUCCESS')

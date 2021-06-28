@@ -6,6 +6,9 @@ from subprocess import run
 from zipfile import ZipFile
 
 import os
+import platform
+import shutil
+import stat
 
 
 # Return the entries (sorted) under a given folder, both folders and files
@@ -50,7 +53,11 @@ def check_line_in(filename, line):
                 break
         else:
             assert False, 'Could not find {} in {}:\n{}'.format(
-                repr(line), filename, content_of (filename))
+                repr(line), filename, content_of(filename))
+
+
+def on_windows():
+    return platform.system() == "Windows"
 
 
 def path_separator():
@@ -67,6 +74,42 @@ def with_project(file, project):
         content = f.read()
         f.seek(0, 0)
         f.write('with "{}";'.format(project) + '\n' + content)
+
+
+def git_branch(path="."):
+    """
+    Return the branch name of the checkout
+    """
+    start_cwd = os.getcwd()
+    os.chdir(path)
+    branch = run(["git", "branch"],
+                 capture_output=True).stdout.split()[1]
+    os.chdir(start_cwd)
+    return branch.decode()
+
+
+def git_head(path="."):
+    """
+    Return the head commit in a git repo
+    """
+    start_cwd = os.getcwd()
+    os.chdir(path)
+    head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],
+                      capture_output=True).stdout.split()[0]
+    os.chdir(start_cwd)
+    return head_commit.decode()
+
+
+def git_blast(path):
+    """
+    Change permissions prior to deletion, as otherwise Windows is uncapable
+    of removing git checkouts
+    """
+    for dirpath, dirnames, filenames in os.walk(path):
+        os.chmod(dirpath, stat.S_IRWXU)
+        for filename in filenames:
+            os.chmod(os.path.join(dirpath, filename), stat.S_IRWXU)
+    shutil.rmtree(path)
 
 
 def init_git_repo(path):

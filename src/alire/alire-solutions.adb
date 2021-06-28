@@ -6,7 +6,6 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
-with Alire.Roots.Optional;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -296,52 +295,12 @@ package body Alire.Solutions is
 
    function Linking (This  : Solution;
                      Crate : Crate_Name;
-                     Link  : Externals.Softlinks.External)
+                     Link  : Dependencies.States.Softlink)
                      return Solution
-   is
-      Linked_Root : constant Roots.Optional.Root :=
-                      Roots.Optional.Detect_Root (Link.Path);
-   begin
-
-      --  Recursively find any other links
-
-      return Result : Solution := (Solved       => True,
-                                   Dependencies =>
-                                     This.Dependencies.Including
-                                       (This.State (Crate).Linking (Link)))
-      do
-         if Linked_Root.Is_Valid and then Linked_Root.Value.Has_Lockfile then
-            declare
-               Linked_Solution : Solution renames Linked_Root.Value.Solution;
-            begin
-
-               --  Go through any links in the linked release
-
-               for Dep of Linked_Solution.Links loop
-                  declare
-
-                     --  Create the new link for our own solution, composing
-                     --  relative paths when possible.
-
-                     New_Link : constant Externals.Softlinks.External :=
-                                  Linked_Solution
-                                    .State (Dep.Crate)
-                                    .Link.Relocate (From => Link.Path);
-                  begin
-
-                     --  We may or not already depend on the transitively
-                     --  linked release. Just in case, we add the dependency
-                     --  before the link.
-
-                     Result := Result.Depending_On (Dep)
-                                     .Linking (Crate => Dep.Crate,
-                                               Link  => New_Link);
-                  end;
-               end loop;
-            end;
-         end if;
-      end return;
-   end Linking;
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including
+            (This.State (Crate).Linking (Link)));
 
    ------------------
    -- New_Solution --
@@ -380,7 +339,43 @@ package body Alire.Solutions is
             if Dep.Is_Pinned then
                Dependencies :=
                  Dependencies and
-                 Conditional.New_Dependency (Dep.Crate, Dep.Versions);
+                 Conditional.New_Dependency (Dep.Crate,
+                                             Dep.Pin_Version);
+            end if;
+         end loop;
+      end return;
+   end Pins;
+
+   ---------------
+   -- User_Pins --
+   ---------------
+
+   function User_Pins (This : Solution) return Conditional.Dependencies is
+   begin
+      return Dependencies : Conditional.Dependencies := This.Pins do
+         for Dep of This.Dependencies loop
+            if Dep.Is_Linked then
+               Dependencies
+                 .Append (Conditional.New_Dependency (Dep.As_Dependency));
+            end if;
+         end loop;
+      end return;
+   end User_Pins;
+
+   ----------
+   -- Pins --
+   ----------
+
+   function Pins (This : Solution) return Dependency_Map
+   is
+   begin
+      return Result : Dependency_Map do
+         for State of This.Dependencies loop
+            if State.Is_Pinned then
+               Result.Insert (State.Crate,
+                              Alire.Dependencies.New_Dependency
+                                (State.Crate,
+                                 State.Pin_Version));
             end if;
          end loop;
       end return;
@@ -425,10 +420,11 @@ package body Alire.Solutions is
                   & (if Detailed
                      then " (origin: "
                           & (if Dep.Is_Linked
-                             then TTY.URL (Dep.Link.Path)
+                             then Dep.Link.Relative_Path
                                   & (if Dep.Link.Is_Remote
                                      then " from "
-                                         & Dep.Link.Remote.TTY_URL_With_Commit
+                                          & Dep.Link.TTY_URL_With_Reference
+                                              (Detailed)
                                      else "") -- no remote
                              else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
                           & ")" -- origin completed
@@ -458,10 +454,10 @@ package body Alire.Solutions is
                     else "")
                   & (if Detailed and then Dep.Is_Linked
                      then " (origin: "
-                         & TTY.URL (Dep.Link.Path)
+                         & Dep.Link.Relative_Path
                          & (if Dep.Link.Is_Remote
                             then " from "
-                                 & Dep.Link.Remote.TTY_URL_With_Commit
+                                 & Dep.Link.TTY_URL_With_Reference
                             else "") -- no remote
                          & ")"  -- origin completed
                      else ""),  -- no details
@@ -584,9 +580,9 @@ package body Alire.Solutions is
             if Dep.Is_Linked then
                Table
                  .Append (TTY.Name (Dep.Crate))
-                 .Append (TTY.Version ("file:" & Dep.Link.Path))
+                 .Append (TTY.URL ("file:") & Dep.Link.Relative_Path)
                  .Append (if Dep.Link.Is_Remote
-                          then Dep.Link.Remote.TTY_URL_With_Commit
+                          then Dep.Link.TTY_URL_With_Reference (Detailed)
                           else "")
                  .New_Row;
             elsif Dep.Is_Pinned then
@@ -806,7 +802,12 @@ package body Alire.Solutions is
       return Result : Solution := This do
          for Dep of Src.Dependencies loop
             if Dep.Is_Pinned then
-               Result.Dependencies.Include (Dep.Crate, Dep);
+
+               --  We need to copy the pin version; the solving status might
+               --  have changed, so we do not just blindly copy the old pin
+               --  into the new solution.
+
+               Result := Result.Pinning (Dep.Crate, Dep.Pin_Version);
             end if;
          end loop;
       end return;
@@ -895,11 +896,11 @@ package body Alire.Solutions is
       end return;
    end To_TOML;
 
-   -------------------------------
-   -- Restrict_New_Dependencies --
-   -------------------------------
+   -----------------------------
+   -- Narrow_New_Dependencies --
+   -----------------------------
 
-   function Restrict_New_Dependencies (Old_Deps,
+   function Narrow_New_Dependencies (Old_Deps,
                                        New_Deps : Conditional.Dependencies;
                                        New_Sol  : Solution)
                                        return Conditional.Dependencies
@@ -951,6 +952,6 @@ package body Alire.Solutions is
             end if;
          end loop;
       end return;
-   end Restrict_New_Dependencies;
+   end Narrow_New_Dependencies;
 
 end Alire.Solutions;

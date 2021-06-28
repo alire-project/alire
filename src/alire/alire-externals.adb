@@ -3,10 +3,10 @@ with AAA.Enum_Tools;
 with Alire.Crates;
 with Alire.Externals.From_Output;
 with Alire.Externals.From_System;
-with Alire.Externals.Softlinks;
 with Alire.Externals.Unindexed;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
+with Alire.User_Pins.Maps;
 
 with TOML;
 
@@ -35,7 +35,6 @@ package body Alire.Externals is
         (case Kind is
             when Hint           => Unindexed.External'
                                      (External with null record),
-            when Softlink       => Softlinks.From_TOML (From),
             when System         => From_System.From_TOML (From),
             when Version_Output => From_Output.From_TOML (From));
 
@@ -61,7 +60,8 @@ package body Alire.Externals is
          end if;
       end Validate;
 
-      Deps : Conditional.Dependencies;
+      Unused_Deps : Conditional.Dependencies;
+      Unused_Pins : User_Pins.Maps.Map;
 
    begin
 
@@ -82,8 +82,14 @@ package body Alire.Externals is
             Section => Crates.External_Private_Section,
             From    => From,
             Props   => Ext.Properties,
-            Deps    => Deps,
+            Deps    => Unused_Deps,
+            Pins    => Unused_Pins,
             Avail   => Ext.Available);
+
+         Assert (Unused_Deps.Is_Empty,
+                 "Unexpected dependencies in external definition");
+         Assert (Unused_Pins.Is_Empty,
+                 "Unexpected pins in external definition");
 
          From.Report_Extra_Keys; -- Table must be exhausted at this point
       end return;

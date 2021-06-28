@@ -1,3 +1,5 @@
+with Alire.Dependencies;
+
 package Alire.Roots.Optional is
 
    type States is
@@ -50,6 +52,14 @@ package Alire.Roots.Optional is
      with Pre => Status in Outside | Broken;
 
    function Outcome_Success (This : Roots.Root) return Optional.Root;
+
+   --  UTILITIES
+
+   function Updatable_Dependency (This : Root)
+                                  return Dependencies.Dependency
+     with Pre => This.Is_Valid;
+   --  If This.Is_Valid, get the corresponding updatable
+   --  dependency (e.g., ^1.2, ~0.1.2). Otherwise, return "any".
 
 private
 

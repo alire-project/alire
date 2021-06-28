@@ -4,7 +4,7 @@ Test a basic init-with-pin-run workflow.
 
 import os
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin
 from drivers.asserts import assert_eq
 from drivers.helpers import check_line_in
 
@@ -17,7 +17,7 @@ os.chdir('xxx')
 session_file = os.path.join('alire.toml')
 run_alr('with', 'libhello')
 check_line_in(session_file,
-              'libhello = "^1.0.0"  # This line was added by `alr with`')
+              'libhello = "^1.0.0"  # Added by alr')
 
 # Add the corresponding "with" line in xxx.gpr.
 #
@@ -29,7 +29,7 @@ with open('xxx.gpr', 'w') as f:
     f.write(content)
 
 # Pin the version of libhello and verify pin is there
-run_alr('pin', 'libhello')
+alr_pin('libhello', version='1.0')
 p = run_alr('pin')
 assert_eq('libhello 1.0.0\n', p.out)
 

@@ -1,6 +1,5 @@
 with Alire.Containers;
 with Alire.Errors;
-with Alire.Utils.User_Input;
 
 with Alr.Commands.Index;
 
@@ -43,11 +42,9 @@ package body Alr.Commands.Update is
 
       Cmd.Requires_Full_Index;
 
-      Cmd.Root.Update_Dependencies
-        (Allowed => Parse_Allowed,
-         Options => (Age    => Query_Policy,
-                     others => <>),
-         Silent  => Alire.Utils.User_Input.Not_Interactive);
+      Cmd.Root.Update (Parse_Allowed,
+                       Silent   => False,
+                       Interact => True);
    end Execute;
 
    ----------------------

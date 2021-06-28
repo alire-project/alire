@@ -21,7 +21,8 @@ run_alr('with', 'hello^1')
 run_alr('with', 'superhello')
 
 # Add a pinned directory and a missing dependency
-run_alr('with', 'wip', '--use', '/fake')
+os.mkdir("fake")
+run_alr('with', 'wip', '--use', 'fake')
 run_alr('with', 'unobtanium', '--force')
 
 # Check output

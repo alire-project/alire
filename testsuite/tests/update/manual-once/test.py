@@ -21,7 +21,7 @@ def prepare_crate(name):
     info = os.stat("alire.toml")
     os.utime("alire.lock", (info.st_atime, info.st_mtime - 1))
 
-warning_text = "Detected changes in manifest, updating workspace"
+warning_text = "Synchronizing workspace"
 
 # Test when directly doing an update. Should report no changes.
 prepare_crate("test1")
@@ -34,7 +34,7 @@ assert warning_text not in p.out
 # Test when doing other things. Should warn once of possible changes.
 prepare_crate("test2")
 p = run_alr("with", quiet=False)  # First run must warn
-assert_match(warning_text + ".*", p.out)
+assert_match(".*" + warning_text + ".*", p.out)
 p = run_alr("with", quiet=False)  # Second run must not warn
 assert warning_text not in p.out
 

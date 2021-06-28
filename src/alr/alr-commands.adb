@@ -540,21 +540,6 @@ package body Alr.Commands is
                                      Sync : Boolean := True) is
       use Alire;
 
-      ------------------------------
-      -- Notify_Of_Initialization --
-      ------------------------------
-
-      procedure Notify_Of_Initialization is
-         --  Tell the user we are automatically computing the first solution
-         --  for the workspace. We don't want to say this when no Sync, as a
-         --  manually requested update is coming.
-      begin
-         if Sync then
-            Trace.Info
-              ("No dependency solution found, updating workspace...");
-         end if;
-      end Notify_Of_Initialization;
-
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
@@ -610,11 +595,9 @@ package body Alr.Commands is
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
                      Cmd.Requires_Full_Index (Strict => False);
-                     Checked.Sync_Solution_And_Deps;
+                     Checked.Sync_From_Manifest (Silent   => False,
+                                                 Interact => False);
                      return;
-                  else
-                     Notify_Of_Initialization;
-                     --  And fall through
                   end if;
 
                else
@@ -627,17 +610,14 @@ package body Alr.Commands is
                Trace.Warning
                  ("This workspace was created with a previous alr version."
                   & " Internal data is going to be updated and, as a result,"
-                  & " any existing pins will be unpinned and will need to be"
-                  & " manually recreated.");
+                  & " a fresh solution will be computed that may result in"
+                  & " crate upgrades");
                Alire.Directories.Backup_If_Existing
                  (Checked.Lock_File,
                   Base_Dir => Alire.Paths.Working_Folder_Inside_Root);
                Ada.Directories.Delete_File (Checked.Lock_File);
 
             when Lockfiles.Missing =>
-               --  Notify the user. This may happen e.g. after first cloning.
-               Notify_Of_Initialization;
-
                --  For the record, with the full path
                Trace.Debug
                  ("Workspace has no lockfile at " & Checked.Lock_File);
@@ -668,7 +648,10 @@ package body Alr.Commands is
 
          if Sync then
             Cmd.Requires_Full_Index (Strict => False);
-            Checked.Update_Dependencies (Silent => True);
+            Checked.Sync_From_Manifest (Silent   => False,
+                                        Interact => False,
+                                        Force    => True);
+            --  As we just created the empty lockfile, we force the update
          end if;
       end;
    end Requires_Valid_Session;

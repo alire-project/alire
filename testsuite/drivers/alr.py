@@ -2,6 +2,7 @@
 Helpers to run alr in the testsuite.
 """
 
+import os
 import os.path
 
 from shutil import copytree
@@ -201,3 +202,194 @@ def init_local_crate(name="xxx", binary=True, enter=True):
     run_alr("init", name, "--bin" if binary else "--lib")
     if enter:
         os.chdir(name)
+
+
+def alr_lockfile():
+    return "alire.lock"
+
+
+def alr_manifest():
+    return "alire.toml"
+
+
+def alr_touch_manifest(path="."):
+    """
+    Make the lockfile older than the manifest, to ensure editions to the
+    manifest are detected.
+    """
+    os.utime(os.path.join(path, "alire.lock"), (0, 0))
+
+
+def delete_array_entry_from_manifest(array, crate,
+                                     fail_if_missing=True, update=True):
+    """
+    Manual deletion of dependencies/pins. As we emit the additions too, this is
+    simpler than the actual code in alr.
+    """
+    with open(alr_manifest(), "rt") as manifest:
+            found = False
+            lines = manifest.readlines()
+            orig = lines
+            for i in range(1, len(lines)):
+                if lines[i].startswith(f"{crate} =") \
+                  and lines[i-1] == f"[[{array}]]\n":
+                    lines.pop(i)
+                    lines.pop(i-1)
+                    found = True
+                    break
+
+    # Write the new manifest
+    if found:
+        with open(alr_manifest(), "wt") as manifest:
+            manifest.writelines(lines)
+        if update:
+            run_alr("pin")  # Ensure changes don't affect next command output
+    elif fail_if_missing:
+            raise RuntimeError
+            (f"Could not remove crate {crate} in lines:\n" + str(orig))
+
+    # Make the lockfile "older" (otherwise timestamp is identical)
+    os.utime(alr_lockfile(), (0, 0))
+
+
+def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
+    """
+    Unpin a crate, if pinned, or no-op otherwise. Will edit the manifest or use
+    the command-line, according to manual. Must be run in a crate root.
+    If update, run `alr pin` to force computation of new solution
+    """
+
+    if manual:
+        # Locate and remove the lines with the pin
+        delete_array_entry_from_manifest("pins", crate,
+                                         fail_if_missing, update)
+
+    else:
+        if not update:
+            raise RuntimeError("Update cannot be disabled when using the"
+                               " command-line interface")
+
+        run_alr("pin", "--unpin", crate)
+
+
+def alr_pin(crate, version="", path="", url="", commit="", branch="",
+            manual=True, update=True, force=False):
+    """
+    Pin a crate, either manually or using the command-line interface. Use only
+    one of version, path, url. Must be run in a crate root.
+    When update, run `alr pin` so the new solution is computed.
+    """
+
+    if commit != "" and branch != "":
+        raise RuntimeError("Do not specify both commit and branch")
+
+    if manual:
+        alr_unpin(crate, fail_if_missing=False)  # Just in case
+
+        if version != "":
+            pin_line = f'{crate} = {{ version = "{version}" }}'
+        elif path != "":
+            pin_line = f"{crate} = {{ path = '{path}' }}"  # literal so \ works
+        elif url != "" and commit != "":
+            pin_line = f"{crate} = {{ url = '{url}', commit = '{commit}' }}"
+        elif url != "" and branch != "":
+            pin_line = f"{crate} = {{ url = '{url}', branch = '{branch}' }}"
+        elif url != "":
+            pin_line = f"{crate} = {{ url = '{url}' }}"
+        else:
+            raise ValueError("Specify either version, path or url")
+
+        with open(alr_manifest(), "at") as manifest:
+            manifest.writelines(["\n[[pins]]\n", pin_line + "\n"])
+
+        # Make the lockfile "older" (otherwise timestamp is identical)
+        os.utime(alr_lockfile(), (0, 0))
+
+        if update:
+            return run_alr("pin")  # so the changes in the manifest are applied
+
+    else:
+        if not update:
+            raise RuntimeError("Update cannot be disabled when using the"
+                               " command-line interface")
+
+        args = []
+        if version != "":
+            args += [f"{crate}={version}"]
+        else:
+            args += [crate]
+
+            if path != "":
+                args += ["--use", f"{path}"]
+            elif url != "":
+                args += ["--use", f"{url}"]
+
+            if commit != "":
+                args += ["--commit", f"{commit}"]
+            elif branch != "":
+                args += ["--branch", f"{branch}"]
+
+        return run_alr("pin", *args, force=force)
+
+
+def alr_with(dep="", path="", url="", commit="", branch="",
+             delete=False, manual=True, update=True, force=False):
+    """
+    Add/remove dependencies either through command-line or manifest edition
+    """
+    if commit != "" and branch != "":
+        raise RuntimeError("Do not specify both commit and branch")
+    if path != "" and url != "":
+        raise RuntimeError("Do not specify both path and url")
+
+    if manual and dep == "":
+        raise RuntimeError("Cannot manually add without explicit dependency")
+
+    separators = "=^~<>*"
+
+    # Fix the dependency if no version subset is in dep
+    if manual and not any([separator in dep for separator in separators]):
+        dep += "*"
+
+    # Find the separator position
+    pos = max([dep.find(separator) for separator in separators])
+
+    if manual:
+        if delete:
+            delete_array_entry_from_manifest("depends-on", dep, update=update)
+        else:
+            with open(alr_manifest(), "at") as manifest:
+                lines = ["\n[[depends-on]]\n",
+                         f'{dep[:pos]} = "{dep[pos:]}"\n']
+                manifest.writelines(lines)
+
+            if path != "" or url != "":
+                alr_pin(crate=f'{dep[:pos]}', path=path, url=url,
+                        commit=commit, branch=branch, manual=manual,
+                        update=False)
+
+            # Make the lockfile "older" (otherwise timestamp is identical)
+            os.utime(alr_lockfile(), (0, 0))
+
+            if update:
+                return run_alr("with", force=force)
+
+    else:
+        if delete:
+            run_alr("with", "--del", dep)
+        else:
+            args = ["with"]
+            if dep != "":
+                args += [dep]
+
+            if path != "":
+                args += ["--use", f"{path}"]
+            elif url != "":
+                args += ["--use", f"{url}"]
+
+            if commit != "":
+                args += ["--commit", f"{commit}"]
+            elif branch != "":
+                args += ["--branch", f"{branch}"]
+
+            return run_alr(*args, force=force)

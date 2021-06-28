@@ -25,9 +25,12 @@ package Alire.VCSs.Git is
    function Clone (This   : VCS;
                    From   : URL;
                    Into   : Directory_Path;
-                   Branch : String)
+                   Branch : String;
+                   Depth  : Natural := 0)
                    return Outcome;
-   --  Specify a branch to check out after cloning
+   --  Specify a branch to check out after cloning. Branch may be "" for the
+   --  default remote branch. For any Depth /= 0, apply --depth <Depth>. A
+   --  commit may be specified as From#Commit_Id
 
    not overriding
    function Remote_Commit (This : VCS;
@@ -66,6 +69,13 @@ package Alire.VCSs.Git is
    function Update (This : VCS;
                     Repo : Directory_Path)
                     return Outcome;
+
+   not overriding
+   function Update (This   : VCS;
+                    Repo   : Directory_Path;
+                    Branch : String)
+                    return Outcome;
+   --  Update and track Branch, if given.
 
    type States is (Dirty,     -- Uncommited local changes
                    No_Remote, -- Clean, no remote configured

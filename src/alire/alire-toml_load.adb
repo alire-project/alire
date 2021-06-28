@@ -73,8 +73,10 @@ package body Alire.TOML_Load is
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;
+                                 Pins    : in out User_Pins.Maps.Map;
                                  Avail   : in out Conditional.Availability)
    is
+      pragma Unreferenced (Pins);
       use TOML;
       use type Conditional.Dependencies;
       use type Conditional.Properties;
@@ -122,6 +124,15 @@ package body Alire.TOML_Load is
       elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
          From.Checked_Error ("found field not allowed in manifest section: "
                              & TOML_Keys.Depends_On);
+      end if;
+
+      --  Process user pins
+
+      if From.Contains (TOML_Keys.Pins) then
+         Pins := User_Pins.Maps.From_TOML
+           (From.Descend
+              (From.Checked_Pop (TOML_Keys.Pins, TOML_Array),
+               Context => TOML_Keys.Pins));
       end if;
 
       --  TODO: Process Forbidden

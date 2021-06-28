@@ -2,6 +2,7 @@ with Alire.Origins;
 with Alire.Properties.Labeled;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
+with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 
 with TOML;
@@ -144,6 +145,7 @@ package body Alire.Crates is
       declare
          Unused_Avail : Conditional.Availability;
          Unused_Deps  : Conditional.Dependencies;
+         Unused_Pins  : User_Pins.Maps.Map;
          Properties   : Conditional.Properties;
       begin
          TOML_Load.Load_Crate_Section
@@ -152,7 +154,15 @@ package body Alire.Crates is
             From    => From,
             Props   => Properties,
             Deps    => Unused_Deps,
+            Pins    => Unused_Pins,
             Avail   => Unused_Avail);
+
+         Assert (Unused_Deps.Is_Empty,
+                 "Unexpected dependencies in external definition");
+         Assert (Unused_Pins.Is_Empty,
+                 "Unexpected pins in external definition");
+         Assert (Unused_Avail.Is_Empty,
+                 "Unexpected availability in external definition");
 
          case Policy is
             when Policies.Merge_Priorizing_Existing =>

@@ -1,3 +1,5 @@
+with AAA.Debug;
+
 with Alire.TOML_Adapters;
 
 with GNAT.IO;
@@ -154,6 +156,7 @@ package body Alire.Conditional_Trees.Case_Nodes is
                & This.Cases.Base.Key & "; 'other' expressions discarded");
             --  Not sure if this may happen and what we should do in that case;
             --  take the others branch or drop it as if the var was NaN
+            Trace.Debug (AAA.Debug.Stack_Trace);
          end if;
       end return;
    end Evaluate;

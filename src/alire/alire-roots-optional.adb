@@ -7,6 +7,8 @@ with Alire.Root;
 
 with GNAT.OS_Lib;
 
+with Semantic_Versioning;
+
 package body Alire.Roots.Optional is
 
    Root_Not_Detected : constant Root :=
@@ -28,44 +30,58 @@ package body Alire.Roots.Optional is
    -----------------
 
    function Detect_Root (Path : Any_Path) return Optional.Root is
-      use Directories.Operators;
-      Crate_File : constant Any_Path := Path / Crate_File_Name;
+      Crate_File : constant Any_Path := Crate_File_Name;
    begin
-      if Path /= "" then
-         if GNAT.OS_Lib.Is_Regular_File (Crate_File) then
-            begin
-               return This : constant Root :=
-                 Outcome_Success
-                   (Roots.New_Root
-                      (R    => Releases.From_Manifest (Crate_File,
-                                                       Manifest.Local,
-                                                       Strict => True),
-                       Path => Ada.Directories.Full_Name (Path),
-                       Env  => Alire.Root.Platform_Properties))
-               do
-                  --  Crate loaded properly, we can return a valid root here
-                  Trace.Debug ("Valid root found at " & Path);
-               end return;
-            exception
-               when E : others =>
-                  Trace.Debug ("Unloadable root found at " & Path);
-                  Log_Exception (E);
-                  return Outcome_Failure
-                    (Errors.Get (E),
-                     Broken,
-                     Report => False);
-            end;
-         else
-            Trace.Debug ("No root found at " & Path);
-            return Root_Not_Detected;
-         end if;
-      else
-         Trace.Debug ("No root can be detected because given path is empty");
+      if not GNAT.OS_Lib.Is_Directory (Path) then
+         Trace.Debug
+           ("No root can be detected because given path is not a directory: "
+            & Path);
          return Root_Not_Detected;
-         --  This happens when detection of session folders in parent folders
-         --  has been already attempted by the caller, so it ends calling here
-         --  with an empty path.
       end if;
+
+      declare
+         Change_Dir : Directories.Guard (Directories.Enter (Path))
+           with Unreferenced;
+         --  We need to enter the folder with the possible crate, so stored
+         --  relative paths (e.g. in pins) make sense when loaded.
+      begin
+         if Path /= "" then
+            if GNAT.OS_Lib.Is_Regular_File (Crate_File) then
+               begin
+                  return This : constant Root :=
+                    Outcome_Success
+                      (Roots.New_Root
+                         (R    => Releases.From_Manifest (Crate_File,
+                                                          Manifest.Local,
+                                                          Strict => True),
+                          Path => Ada.Directories.Full_Name (Path),
+                          Env  => Alire.Root.Platform_Properties))
+                  do
+                     --  Crate loaded properly, we can return a valid root here
+                     Trace.Debug ("Valid root found at " & Path);
+                  end return;
+               exception
+                  when E : others =>
+                     Trace.Debug ("Unloadable root found at " & Path);
+                     Log_Exception (E);
+                     return Outcome_Failure
+                       (Errors.Get (E),
+                        Broken,
+                        Report => False);
+               end;
+            else
+               Trace.Debug ("No root found at " & Path);
+               return Root_Not_Detected;
+            end if;
+         else
+            Trace.Debug
+              ("No root can be detected because given path is empty");
+            return Root_Not_Detected;
+            --  This happens when detection of session folders in parent
+            --  folders has been already attempted by the caller, so it
+            --  ends calling here with an empty path.
+         end if;
+      end;
    end Detect_Root;
 
    -----------------
@@ -145,5 +161,16 @@ package body Alire.Roots.Optional is
          Data   =>
            (Status => Valid,
             Value  => This));
+
+   --------------------------
+   -- Updatable_Dependency --
+   --------------------------
+
+   function Updatable_Dependency (This : Root)
+                                  return Dependencies.Dependency
+   is (Dependencies.New_Dependency
+       (This.Value.Release.Element.Name,
+          Semantic_Versioning.Updatable
+            (This.Value.Release.Element.Version)));
 
 end Alire.Roots.Optional;

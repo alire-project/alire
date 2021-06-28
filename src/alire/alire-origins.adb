@@ -341,22 +341,24 @@ package body Alire.Origins is
       return Reduce;
    end Image_Of_Hashes;
 
+   ------------------
+   -- Short_Commit --
+   ------------------
+
+   function Short_Commit (Commit : String) return String
+   is (if Commit'Length < 8
+       then Commit
+       else Commit (Commit'First .. Commit'First + 7));
+
    ---------------------
    -- Short_Unique_Id --
    ---------------------
 
-   function Short_Unique_Id (This : Origin) return String is
-      Hash : constant String :=
-               (if This.Kind = Source_Archive
-                then Utils.Tail (String (This.Data.Hashes.First_Element), ':')
-                else This.Commit);
-   begin
-      if Hash'Length < 8 then
-         return Hash;
-      else
-         return Hash (Hash'First .. Hash'First + 7);
-      end if;
-   end Short_Unique_Id;
+   function Short_Unique_Id (This : Origin) return String
+   is (Short_Commit
+         (if This.Kind = Source_Archive
+          then Utils.Tail (String (This.Data.Hashes.First_Element), ':')
+          else This.Commit));
 
    -------------
    -- To_TOML --

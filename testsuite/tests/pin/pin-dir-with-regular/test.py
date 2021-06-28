@@ -5,7 +5,7 @@ Test that pinning another crate doesn't affect a regularly solved one
 import os
 import re
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_pin
 from drivers.asserts import assert_match
 
 # Initialize a workspace, enter, and add a regular dependency
@@ -19,7 +19,7 @@ run_alr('with', 'libhello')
 run_alr('with', 'unobtanium', '--force')
 
 # Pin the missing crate
-run_alr('pin', 'unobtanium', '--use', '/')
+alr_pin('unobtanium', path='/')
 
 # Check the solution shows both pinned dir and regular dependency
 p = run_alr('with', '--solve')
