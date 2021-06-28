@@ -58,8 +58,8 @@ package Alire.Roots.Editable is
        or else not This.Solution.State (Crate).Is_User_Pinned
        or else Force
        or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is already pinned to "
-          & This.Solution.State (Crate).Image));
+         (TTY.Name (Crate) & " is already pinned with pin "
+          & This.Solution.State (Crate).User_Pin.Image (User => True)));
    --  Says if a pin can be added: not already a pin, or Force. As an
    --  exception, the body is here as this function is intended to serve as
    --  a precondition, an hence serve as documentation.

@@ -117,6 +117,9 @@ package Alire.Dependencies.States is
    function Pin_Version (This : State) return Semantic_Versioning.Version
      with Pre => This.Is_Pinned;
 
+   function User_Pin (This : State) return User_Pins.Pin
+     with Pre => This.Is_User_Pinned;
+
    function Release (This : State) return Releases.Release
      with Pre => This.Has_Release;
 
@@ -522,5 +525,14 @@ private
        Fulfilled    => Base.Fulfilled,
        Pinning      => (Pinned => False),
        Transitivity => Base.Transitivity);
+
+   --------------
+   -- User_Pin --
+   --------------
+
+   function User_Pin (This : State) return User_Pins.Pin
+   is (if This.Is_Linked
+       then This.Link
+       else User_Pins.New_Version (This.Pin_Version));
 
 end Alire.Dependencies.States;

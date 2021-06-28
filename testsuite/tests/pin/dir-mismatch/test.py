@@ -27,7 +27,7 @@ run_alr('with', 'nothello', '--use', '..')
 # Detect a repin is rejected unless forced
 p = run_alr('with', 'nothello', '--use', '..' + dir_separator() + target,
             complain_on_error=False)
-assert_match(".*nothello is already pinned to.*", p.out)
+assert_match(".*nothello is already pinned with pin .*", p.out)
 
 # Try to repin to a dir with valid crate metadata
 p = run_alr('with', 'nothello', '--use', '..' + dir_separator() + target,
