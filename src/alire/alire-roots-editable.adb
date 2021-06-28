@@ -2,6 +2,7 @@ with Alire.Conditional;
 with Alire.Dependencies.Diffs;
 with Alire.Directories;
 with Alire.Manifest;
+with Alire.Origins;
 with Alire.Roots.Optional;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
@@ -306,17 +307,50 @@ package body Alire.Roots.Editable is
    procedure Add_Remote_Pin (This   : in out Root;
                              Crate  : Alire.Optional.Crate_Name;
                              Origin : URL;
-                             Commit : String := "";
+                             Ref    : String := "";
                              Branch : String := "")
    is
+
+      ---------------------------
+      -- Convert_Ref_To_Commit --
+      ---------------------------
+
+      procedure Convert_Ref_To_Commit is
+         Ref    : constant String := Add_Remote_Pin.Ref;
+         Commit : constant String :=
+                    VCSs.Git.Handler.Remote_Commit (Origin, Ref);
+      begin
+         if Commit /= "" then
+            Put_Info ("Using commit " & TTY.Emph (Commit)
+                      & " for reference " & TTY.Emph (Ref));
+            This.Add_Remote_Pin (Crate, Origin, Commit, Branch);
+         else
+            Raise_Checked_Error
+              ("Requested remote reference " & TTY.Emph (Ref)
+               & " not found in repository " & TTY.URL (Origin));
+         end if;
+      end Convert_Ref_To_Commit;
+
       Temp_Pin : Directories.Temp_File;
       --  We'll need to fetch the remote to a temporary location to verify
       --  crate matches. If all goes well, we will keep the download so there
       --  is no need to redownload on next run.
    begin
+
+      --  We accept any reference that can be converted to a commit, as commit.
+      --  This is a bit of a misnomer really in the command-line interface.
+
+      if Ref /= "" and then not Origins.Is_Valid_Commit (Ref) then
+         Convert_Ref_To_Commit;
+         return;
+      end if;
+
+      --  Clone the remote so we can identify the crate and perform other
+      --  validity checks.
+
       if not VCSs.Git.Handler.Clone
-               (From   => Origin & (if Commit /= ""
-                                       then "#" & Commit
+               (From   => Origin & (if Ref /= ""
+                                       then "#" & Ref
                                        else ""),
                 Into   => Temp_Pin.Filename,
                 Branch => Branch, -- May be empty for default branch
@@ -336,7 +370,7 @@ package body Alire.Roots.Editable is
                                          Temp_Pin.Filename);
          New_Pin : User_Pins.Pin :=
                      User_Pins.New_Remote (URL    => Origin,
-                                           Commit => Commit,
+                                           Commit => Ref,
                                            Branch => Branch);
 
          Destination : constant Absolute_Path :=
@@ -364,7 +398,7 @@ package body Alire.Roots.Editable is
          Alire.Manifest.Append (Crate_File (This.Edit),
                                 Crate,
                                 User_Pins.New_Remote (URL    => Origin,
-                                                      Commit => Commit,
+                                                      Commit => Ref,
                                                       Branch => Branch));
          This.Reload_Manifest;
 

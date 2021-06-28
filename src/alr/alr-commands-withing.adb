@@ -194,7 +194,7 @@ package body Alr.Commands.Withing is
          Root.Add_Remote_Pin
            (Crate  => Crate,
             Origin => Cmd.URL.all,
-            Commit => Cmd.Commit.all,
+            Ref    => Cmd.Commit.all,
             Branch => Cmd.Branch.all);
 
       else
