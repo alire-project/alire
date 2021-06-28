@@ -273,7 +273,7 @@ def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
 
 
 def alr_pin(crate, version="", path="", url="", commit="", branch="",
-            manual=True, update=True):
+            manual=True, update=True, force=False):
     """
     Pin a crate, either manually or using the command-line interface. Use only
     one of version, path, url. Must be run in a crate root.
@@ -306,7 +306,7 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
         os.utime(alr_lockfile(), (0, 0))
 
         if update:
-            run_alr("pin")  # so the changes in the manifest are applied
+            return run_alr("pin")  # so the changes in the manifest are applied
 
     else:
         if not update:
@@ -329,7 +329,7 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
             elif branch != "":
                 args += ["--branch", f"{branch}"]
 
-        run_alr("pin", *args)
+        return run_alr("pin", *args, force=force)
 
 
 def alr_with(dep="", path="", url="", commit="", branch="",
@@ -372,7 +372,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             os.utime(alr_lockfile(), (0, 0))
 
             if update:
-                run_alr("with", force=force)
+                return run_alr("with", force=force)
 
     else:
         if delete:
@@ -392,4 +392,4 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             elif branch != "":
                 args += ["--branch", f"{branch}"]
 
-            run_alr(*args, force=force)
+            return run_alr(*args, force=force)
