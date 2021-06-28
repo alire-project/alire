@@ -9,12 +9,10 @@ from drivers.alr import run_alr, init_local_crate
 from drivers.helpers import init_git_repo, git_branch
 from drivers.asserts import assert_eq
 
-s = os.sep
-
 
 def verify(head=""):  # Either head or branch /= ""
     # Check that the linked dir exists at the expected location
-    pin_path = (f"alire{s}cache{s}pins{s}upstream" +
+    pin_path = (f"alire/cache/pins/upstream" +
                 ("" if head == "" else f"_{head[:8]}"))
     assert os.path.isdir(pin_path)
 
