@@ -8,7 +8,7 @@ with Alire.Utils.User_Input;
 
 with Alr.Commands.User_Input;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 with TOML_Slicer;
 
@@ -111,6 +111,24 @@ package body Alr.Commands.Pin is
 
    overriding procedure Execute (Cmd : in out Command)
    is
+
+      -------------------------
+      -- Validate_Crate_Spec --
+      -------------------------
+
+      procedure Validate_Crate_Spec (Spec : String) is
+         Dep : constant Alire.Dependencies.Dependency :=
+                 Alire.Dependencies.From_String (Spec);
+      begin
+         if not Dep.Versions.Is_Any then
+            if not Alire.Utils.Starts_With (Dep.Versions.Image, "=") then
+               Reportaise_Wrong_Arguments
+                 ("Plain crate name or crate=version argument expected for"
+                  & " pinning, but got: " & TTY.Emph (Spec));
+            end if;
+         end if;
+      end Validate_Crate_Spec;
+
    begin
 
       --  Argument validation
@@ -137,6 +155,9 @@ package body Alr.Commands.Pin is
       elsif Num_Arguments > 1 then
          Reportaise_Wrong_Arguments
            ("Pin expects a single crate or crate=version argument");
+      elsif Num_Arguments = 1 then
+         --  Check that we get either a plain name or a crate=version
+         Validate_Crate_Spec (Argument (1));
       end if;
 
       --  Apply changes;
@@ -147,7 +168,8 @@ package body Alr.Commands.Pin is
          Optional_Crate : constant Alire.Optional.Crate_Name :=
                             (if Num_Arguments = 1
                              then Alire.Optional.Crate_Names.Unit
-                               (Alire.To_Name (Argument (1)))
+                               (Alire.Dependencies
+                                     .From_String (Argument (1)).Crate)
                              else Alire.Optional.Crate_Names.Empty);
       begin
 
