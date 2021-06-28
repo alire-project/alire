@@ -263,7 +263,7 @@ private
    --  Obtain a temporary copy of This root, in the sense that it uses temp
    --  names for the manifest and lockfile. The cache is shared, so any
    --  pins/dependencies added to the temporary copy are ready if the copy is
-   --  commited (see Commit call). The intended use is to be able to modify
+   --  committed (see Commit call). The intended use is to be able to modify
    --  the temporary manifest, and finally compare the solutions between This
    --  and its copy. This way, no logic remains in `alr with`/`alr pin`, for
    --  example, as they simply edit the manifest as if the user did it by hand.
