@@ -117,6 +117,16 @@ package body Alire.Directories is
       End_Search (Search);
    end Copy;
 
+   -----------------
+   -- Delete_Tree --
+   -----------------
+
+   procedure Delete_Tree (Path : Any_Path) is
+   begin
+      Ensure_Deletable (Path);
+      Ada.Directories.Delete_Tree (Path);
+   end Delete_Tree;
+
    ----------------------
    -- Detect_Root_Path --
    ----------------------

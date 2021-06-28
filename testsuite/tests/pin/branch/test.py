@@ -13,7 +13,7 @@ import os
 import shutil
 import subprocess
 
-#  "remote" is going to be the remote crate
+# "remote" is going to be the remote crate
 
 init_local_crate(name="remote", enter=False)
 url = os.path.join(os.getcwd(), "remote")
