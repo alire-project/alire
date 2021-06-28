@@ -201,7 +201,7 @@ package body Alire.User_Pins is
          then
             Put_Info ("Switching pin " & TTY.Name (Crate) & " to origin at "
                       & TTY.URL (+This.URL));
-            Ada.Directories.Delete_Tree (Destination);
+            Directories.Delete_Tree (Destination);
             Checkout; -- Pending branch tracking implementation
             return;
          end if;

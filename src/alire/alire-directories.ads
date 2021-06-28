@@ -32,6 +32,9 @@ package Alire.Directories is
                               return String;
    --  Return either the valid enclosing root folder, or ""
 
+   procedure Delete_Tree (Path : Any_Path);
+   --  Equivalent to Ensure_Deletable + Ada.Directories.Delete_Tree
+
    procedure Ensure_Deletable (Path : Any_Path);
    --  In Windows, git checkouts are created with read-only file that do not
    --  sit well with Ada.Directories.Delete_Tree.
