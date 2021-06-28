@@ -98,7 +98,7 @@ package body Alire.Roots.Editable is
                                   .Dependencies (This.Edit.Environment)
                                   and Dep,
                        Props   => This.Edit.Environment,
-                       Current => This.Edit.Solution);
+                       Pins    => This.Edit.Solution);
          begin
             if Sol.State (Dep.Crate).Has_Release then
                return
@@ -215,7 +215,7 @@ package body Alire.Roots.Editable is
                              User_Pins.New_Version (Version));
       This.Reload_Manifest;
 
-      This.Edit.Set (This.Solution.Pinning (Crate, Version));
+      This.Edit.Set (This.Solution.Resetting (Crate).Pinning (Crate, Version));
    end Add_Version_Pin;
 
    --------------------------

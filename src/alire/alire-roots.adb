@@ -478,7 +478,7 @@ package body Alire.Roots is
       procedure Prune_Pins is
       begin
          for Dep of Sol.User_Pins loop
-            Sol := Sol.User_Unpinning (Dep.Value.Crate);
+            Sol := Sol.Resetting (Dep.Value.Crate);
          end loop;
       end Prune_Pins;
 
@@ -944,7 +944,7 @@ package body Alire.Roots is
       return Solver.Resolve
         (Deps    => Deps,
          Props   => This.Environment,
-         Current => Old,
+         Pins    => Old,
          Options => Options);
    end Compute_Update;
 

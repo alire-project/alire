@@ -131,16 +131,17 @@ package Alire.Solver is
 
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
-                     Current : Solution;
+                     Pins    : Solution;
                      Options : Query_Options := Default_Options)
                      return Solution;
    --  Exhaustively look for a solution to the given dependencies, under the
    --  given platform properties and lookup options. Pins can be supplied to
-   --  override Deps. May raise No_Solution_Error.
+   --  override Deps. May raise No_Solution_Error when not using Exhaustive
+   --  options.
 
    function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;
-                           Current : Solution;
+                           Pins    : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean;
    --  Simplified call to Resolve, discarding result
