@@ -59,7 +59,7 @@ package Alire.Roots.Optional is
                                   return Dependencies.Dependency
      with Pre => This.Is_Valid;
    --  If This.Is_Valid, get the corresponding updatable
-   --  dependency (e.g., ^1.2, ~0.1.2). Otherwise, return "any".
+   --  dependency (e.g., ^1.2, ~0.1.2).
 
 private
 

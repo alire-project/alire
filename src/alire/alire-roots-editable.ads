@@ -28,6 +28,9 @@ package Alire.Roots.Editable is
 
    --  A few proxies so useful predicates can be kept
 
+   function Old (This : Root) return Roots.Root;
+   --  The original root this editable copy was made from
+
    function Name (This : Root) return Crate_Name;
 
    function Solution (This : in out Root) return Solutions.Solution;
@@ -54,12 +57,11 @@ package Alire.Roots.Editable is
    function Can_Be_Pinned (This  : in out Root;
                            Crate : Crate_Name)
                            return Boolean
-   is (not This.Solution.Depends_On (Crate)
-       or else not This.Solution.State (Crate).Is_User_Pinned
+   is (not Release (This.Old).Pins.Contains (Crate)
        or else Force
        or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is already pinned with pin "
-          & This.Solution.State (Crate).User_Pin.Image (User => True)));
+         (TTY.Name (Crate) & " is already pinned to "
+          & Release (This.Old).Pins.Element (Crate).Image (User => False)));
    --  Says if a pin can be added: not already a pin, or Force. As an
    --  exception, the body is here as this function is intended to serve as
    --  a precondition, an hence serve as documentation.
@@ -118,6 +120,13 @@ private
 
    function Name (This : Root) return Crate_Name
    is (This.Edit.Name);
+
+   ---------
+   -- Old --
+   ---------
+
+   function Old (This : Root) return Roots.Root
+   is (This.Orig);
 
    --------------
    -- Solution --

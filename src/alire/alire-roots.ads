@@ -167,15 +167,12 @@ package Alire.Roots is
      (This     : in out Root;
       Silent   : Boolean; -- Do not output anything
       Interact : Boolean; -- Request confirmation from the user
-      Old      : Solutions.Solution := Solutions.Empty_Invalid_Solution;
       Options  : Solver.Query_Options := Solver.Default_Options;
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is an
-   --  automatically-triggered update. Old_Sol is used to present differences,
-   --  and when left at the default invalid argument value, This.Solution will
-   --  be used as old solution.
+   --  automatically-triggered update.
 
    procedure Sync_Pins_From_Manifest
      (This       : in out Root;
@@ -238,6 +235,9 @@ private
       Path            : UString;
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
+
+      Pins            : Solutions.Solution;
+      --  Closure of all pins that are recursively found
 
       --  These values, if different from "", mean this is a temporary root
       Manifest        : Unbounded_Absolute_Path;
