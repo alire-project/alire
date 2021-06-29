@@ -251,7 +251,8 @@ package body Alire.Roots.Editable is
          --  check the Solution and not the top-level dependencies) requested
          --  to be pinned, we assume a top-level dependency on the crate would
          --  be wanted, and add it too. If this is not wanted, the user can
-         --  easily remove the dependency by hand afterwards.
+         --  easily remove the dependency by hand afterwards (or add it, if the
+         --  dependency is in the closure but not in the root crate).
 
          if not This.Solution.Depends_On (Crate) then
             This.Add_Dependency
@@ -264,7 +265,9 @@ package body Alire.Roots.Editable is
 
          --  Remove any previous pin for this crate
 
-         This.Remove_Pin (Crate);
+         if Release (This.Edit).Pins.Contains (Crate) then
+            This.Remove_Pin (Crate);
+         end if;
 
          return Crate;
       end;

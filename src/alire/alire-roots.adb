@@ -291,14 +291,18 @@ package body Alire.Roots is
 
       Sol        : Solutions.Solution := This.Solution;
       Pins_Dir   : constant Any_Path := This.Pins_Dir;
-      Linkers    : Containers.Crate_Name_Sets.Set;
-      --  We store here crates that contain link pins, to detect cycles
+      Linked     : Containers.Crate_Name_Sets.Set;
+      --  And we use this to avoid re-processing the same link target
 
       --------------
       -- Add_Pins --
       --------------
 
-      procedure Add_Pins (This : in out Roots.Root) is
+      procedure Add_Pins (This     : in out Roots.Root;
+                          Upstream : Containers.Crate_Name_Sets.Set)
+        --  Upstream contains crates that are in the linking path to this root;
+        --  hence attempting to link to an upstream means a cycle in the graph.
+      is
 
          ---------------------
          -- Add_Version_Pin --
@@ -334,13 +338,10 @@ package body Alire.Roots is
             use type User_Pins.Pin;
          begin
 
-            --  Store the requester of this link to be able to detect cycles,
-            --  and check that the requested link is not already in the list
-            --  of requesters (which would imply circularity).
+            --  If the target of this link is an upstream crate, we are
+            --  attempting to create a cycle.
 
-            Linkers.Include (This.Name);
-
-            if Linkers.Contains (Crate) then
+            if Upstream.Contains (Crate) then
                Raise_Checked_Error
                  ("Pin circularity detected when adding pin "
                   & TTY.Name (This.Name) & " --> " & TTY.Name (Crate)
@@ -374,9 +375,21 @@ package body Alire.Roots is
                   & TTY.URL (Sol.State (Crate).Link.Image (User => True)));
             end if;
 
+            --  If the link target has already been seen, we do not need to
+            --  reprocess it
+
+            if Linked.Contains (Crate) then
+               Trace.Debug ("Skipping adding of already added link target: "
+                            & TTY.Name (Crate));
+               return;
+            else
+               Linked.Insert (Crate);
+            end if;
+
             --  We have a new target root to load
 
             declare
+               use Containers.Crate_Name_Sets;
                Target : constant Optional.Root :=
                           Optional.Detect_Root (Pin.Path);
             begin
@@ -416,7 +429,8 @@ package body Alire.Roots is
                --  Add possible pins at the link target
 
                if Target.Is_Valid then
-                  Add_Pins (Target.Value);
+                  Add_Pins (Target.Value,
+                            Upstream => Union (Upstream, To_Set (This.Name)));
                end if;
 
             end;
@@ -480,7 +494,8 @@ package body Alire.Roots is
 
       --  Recursively add all pins from this workspace and other linked ones
 
-      Add_Pins (This);
+      Add_Pins (This,
+                Upstream => Containers.Crate_Name_Sets.To_Set (This.Name));
 
       if Sol /= This.Solution then
          Solutions.Diffs.Between (This.Solution, Sol).Print
