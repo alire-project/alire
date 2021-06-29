@@ -34,7 +34,7 @@ p = run_alr('with', 'nothello', '--use', '..' + dir_separator() + target,
             complain_on_error=False, force=True)
 
 # Expected error
-assert_match('.*crate mismatch: expected nothello but found hello at.*', p.out)
+assert_match('.*expected nothello but found hello.*', p.out)
 # skip test-specific path
 
 print('SUCCESS')

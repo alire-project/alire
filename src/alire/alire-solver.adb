@@ -756,7 +756,7 @@ package body Alire.Solver is
                if not Index.Exists (Dep.Value.Crate) then
                   --  Crate totally unavailable
                   Unavailable_Crates.Include (Dep.Value.Crate);
-                  Trace.Detail ("Direct dependency is not a known crate: "
+                  Trace.Debug ("Direct dependency is not a known crate: "
                                 & TTY.Name (Dep.Value.Crate));
                else
                   --  Pre-populate external releases
@@ -768,7 +768,7 @@ package body Alire.Solver is
 
                      --  No valid releases for the crate
                      Unavailable_Deps.Include (Dep.Value.Image);
-                     Trace.Detail
+                     Trace.Debug
                        ("Direct dependency has no fulfilling releases: "
                         & TTY.Name (Dep.Value.Image));
                   end if;

@@ -1104,6 +1104,10 @@ package body Alire.Roots is
            (This.Crate_File,
             Manifest.Local,
             Strict => True));
+
+      --  And our pins
+
+      This.Sync_Pins_From_Manifest (Exhaustive => False);
    end Reload_Manifest;
 
 end Alire.Roots;

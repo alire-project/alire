@@ -60,7 +60,7 @@ package Alire.Roots.Editable is
    is (not Release (This.Old).Pins.Contains (Crate)
        or else Force
        or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is already pinned to "
+         (TTY.Name (Crate) & " is already pinned with pin "
           & Release (This.Old).Pins.Element (Crate).Image (User => False)));
    --  Says if a pin can be added: not already a pin, or Force. As an
    --  exception, the body is here as this function is intended to serve as
