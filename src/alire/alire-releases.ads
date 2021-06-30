@@ -153,6 +153,13 @@ package Alire.Releases is
    --  If R.Flat_Dependencies contains Crate, that dependency will be returned,
    --  Empty otherwise.
 
+   function Depends_On (R : Release;
+                        Crate : Crate_Name;
+                           P     : Alire.Properties.Vector :=
+                          Alire.Properties.No_Properties)
+                        return Boolean
+   is (R.Dependency_On (Crate, P).Has_Element);
+
    function Flat_Dependencies
      (R : Release;
       P : Alire.Properties.Vector := Alire.Properties.No_Properties)

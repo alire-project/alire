@@ -217,7 +217,8 @@ def alr_touch_manifest(path="."):
     Make the lockfile older than the manifest, to ensure editions to the
     manifest are detected.
     """
-    os.utime(os.path.join(path, "alire.lock"), (0, 0))
+    if os.path.exists(alr_lockfile()):
+        os.utime(alr_lockfile(), (0, 0))
 
 
 def delete_array_entry_from_manifest(array, crate,
@@ -249,7 +250,7 @@ def delete_array_entry_from_manifest(array, crate,
             (f"Could not remove crate {crate} in lines:\n" + str(orig))
 
     # Make the lockfile "older" (otherwise timestamp is identical)
-    os.utime(alr_lockfile(), (0, 0))
+    alr_touch_manifest()
 
 
 def alr_unpin(crate, manual=True, fail_if_missing=True, update=True):
@@ -303,7 +304,7 @@ def alr_pin(crate, version="", path="", url="", commit="", branch="",
             manifest.writelines(["\n[[pins]]\n", pin_line + "\n"])
 
         # Make the lockfile "older" (otherwise timestamp is identical)
-        os.utime(alr_lockfile(), (0, 0))
+        alr_touch_manifest()
 
         if update:
             return run_alr("pin")  # so the changes in the manifest are applied
