@@ -8,6 +8,7 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Origins.Deployers;
+with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
 with Alire.TOML_Load;
@@ -128,12 +129,55 @@ package body Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True)
+      Perform_Actions : Boolean := True;
+      Create_Manifest : Boolean := False;
+      Include_Origin  : Boolean := False)
    is
-      use Alire.OS_Lib.Operators;
+      use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / This.Unique_Folder;
       Result : Alire.Outcome;
+
+      ------------------------------
+      -- Backup_Upstream_Manifest --
+      ------------------------------
+
+      procedure Backup_Upstream_Manifest is
+         Working_Dir : Guard (Enter (Folder)) with Unreferenced;
+      begin
+         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
+
+         if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
+            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            declare
+               Upstream_File : constant String :=
+                                 Paths.Working_Folder_Inside_Root
+                                 / (Paths.Crate_File_Name & ".upstream");
+            begin
+               Alire.Directories.Backup_If_Existing
+                 (Upstream_File,
+                  Base_Dir => Paths.Working_Folder_Inside_Root);
+               Ada.Directories.Rename
+                 (Old_Name => Paths.Crate_File_Name,
+                  New_Name => Upstream_File);
+            end;
+         end if;
+      end Backup_Upstream_Manifest;
+
+      -----------------------------------
+      -- Create_Authoritative_Manifest --
+      -----------------------------------
+
+      procedure Create_Authoritative_Manifest (Kind : Manifest.Sources) is
+      begin
+         Trace.Debug ("Generating manifest file for "
+                      & This.Milestone.TTY_Image & " with"
+                      & This.Dependencies.Leaf_Count'Img & " dependencies");
+
+         This.Whenever (Env).To_File (Folder / Paths.Crate_File_Name,
+                                      Kind);
+      end Create_Authoritative_Manifest;
+
    begin
 
       --  Deploy if the target dir is not already there
@@ -155,13 +199,23 @@ package body Alire.Releases is
          --  a place from where to run their actions by default.
 
          Ada.Directories.Create_Path (Folder);
+
+         --  Backup a potentially packaged manifest, so our authoritative
+         --  manifest from the index is always used.
+
+         Backup_Upstream_Manifest;
+
+         if Create_Manifest then
+            Create_Authoritative_Manifest (if Include_Origin
+                                           then Manifest.Index
+                                           else Manifest.Local);
+         end if;
       end if;
 
       --  Run actions on first retrieval
 
       if Perform_Actions and then not Was_There then
          declare
-            use Alire.Directories;
             Work_Dir : Guard (Enter (Folder)) with Unreferenced;
          begin
             Alire.Properties.Actions.Executor.Execute_Actions

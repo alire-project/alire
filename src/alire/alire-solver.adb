@@ -6,6 +6,8 @@ with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
+with Alire.Origins;
+with Alire.Shared;
 with Alire.Utils.TTY;
 
 package body Alire.Solver is
@@ -161,6 +163,10 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
+      Installed : constant Containers.Release_Set := Shared.Available;
+      --  Installed releases do not change during resolution, we make a local
+      --  copy here so they are not read repeatedly from disk.
+
       Dupes : Natural := 0;
       --  Some solutions are found twice when some dependencies are subsets of
       --  other dependencies.
@@ -210,7 +216,8 @@ package body Alire.Solver is
          -- Expand_Value --
          ------------------
 
-         procedure Expand_Value (Dep : Dependencies.Dependency) is
+         procedure Expand_Value (Dep          : Dependencies.Dependency;
+                                 Allow_Shared : Boolean) is
 
             --  Ensure the dependency exists in the solution, so the following
             --  procedures can safely count on it being there:
@@ -224,6 +231,7 @@ package body Alire.Solver is
 
             procedure Check (R : Release) is
                use Alire.Containers;
+               use all type Origins.Kinds;
             begin
 
                --  We first check that the release matches the dependency we
@@ -332,7 +340,9 @@ package body Alire.Solver is
                   Expand (Expanded  => Expanded and R.To_Dependency,
                           Target    => Remaining and R.Dependencies (Props),
                           Remaining => Empty,
-                          Solution  => Solution.Including (R, Props));
+                          Solution  => Solution.Including
+                            (R, Props,
+                             Shared => R.Origin.Kind = Binary_Archive));
                end if;
             end Check;
 
@@ -453,6 +463,52 @@ package body Alire.Solver is
             --  will have to), we should do this globally since this is
             --  information common to all search states.
 
+            ------------------
+            -- Check_Shared --
+            ------------------
+
+            procedure Check_Shared is
+               Satisfied_By_Shared : Boolean := False;
+            begin
+
+               --  Solve with all installed dependencies that satisfy it
+
+               for R of reverse Installed.Satisfying (Dep) loop
+                  Satisfiable         := True;
+                  Satisfied_By_Shared := True;
+
+                  Trace.Debug
+                    ("SOLVER: dependency FROZEN+SHARED: "
+                     & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
+                     & (if R.Name /= R.Provides
+                       then " also providing " & (+R.Provides)
+                       else "") &
+                       " adding" &
+                       R.Dependencies (Props).Leaf_Count'Img &
+                       " dependencies to tree " &
+                       Tree'(Expanded
+                       and Target
+                       and Remaining
+                       and R.Dependencies (Props)).Image_One_Line);
+
+                  Expand (Expanded  => Expanded and R.To_Dependency,
+                          Target    => Remaining and R.Dependencies (Props),
+                          Remaining => Empty,
+                          Solution  => Solution.Including (R, Props,
+                                                           Shared => True));
+               end loop;
+
+               --  We may want still check without taking into account
+               --  installed releases.
+
+               if not Satisfied_By_Shared
+                 or else Options.Completeness > First_Complete
+               then
+                  Expand_Value (Dep          => Dep,
+                                Allow_Shared => False);
+               end if;
+            end Check_Shared;
+
          begin
 
             if Pins.Depends_On (Dep.Crate) and then
@@ -485,6 +541,15 @@ package body Alire.Solver is
                --  compatibility of the already frozen release:
 
                Check (Solution.Releases.Element (Dep.Crate));
+
+            elsif Allow_Shared then
+
+               --  There is a shared release we can use for this dependency; we
+               --  prefer this option first. If more solutions than the first
+               --  complete one are sought, we can still try without the shared
+               --  release.
+
+               Check_Shared;
 
             elsif Pins.Depends_On (Dep.Crate) and then
                   Pins.State (Dep.Crate).Is_Pinned
@@ -724,8 +789,9 @@ package body Alire.Solver is
             --  2 is done here: first add/merge new dep, then use it for expand
 
             Expand_Value
-              (Solution.Depending_On (Target.Value) -- add or merge dependency
-               .Dependency (Target.Value.Crate));   -- and use it in expansion
+              (Solution.Depending_On (Target.Value)  -- add or merge dependency
+                   .Dependency (Target.Value.Crate), -- and use it in expansion
+               Allow_Shared => Options.Sharing = Allow_Shared);
 
          elsif Target.Is_Vector then
             if Target.Conjunction = Anded then
@@ -877,9 +943,10 @@ package body Alire.Solver is
                              when All_Incomplete                =>
                                 raise Program_Error with "Unreachable code"),
                        Detecting    => Options.Detecting,
-                       Hinting      => Options.Hinting)));
+                       Hinting      => Options.Hinting,
+                       Sharing      => Options.Sharing)));
          else
-            raise No_Solution_Error with Errors.Set
+            raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies.");
          end if;
       else

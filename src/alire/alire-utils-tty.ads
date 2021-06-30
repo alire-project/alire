@@ -67,6 +67,9 @@ package Alire.Utils.TTY with Preelaborate is
    function Description (Text : String) return String;
    --  Not bold cyan for crate descriptions
 
+   function Terminal (Text : String) return String;
+   --  For showing commands that the user can run; mimics old amber displays.
+
    function URL (Text : String) return String;
 
    function Version (Text : String) return String;
@@ -121,6 +124,10 @@ private
    function Description (Text : String) return String is
      (Format (Text,
               Fore  => ANSI.Light_Cyan));
+
+   function Terminal (Text : String) return String is
+           (Format (Text,
+            Fore  => ANSI.Yellow));
 
    function URL (Text : String) return String renames Version;
 

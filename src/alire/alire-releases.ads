@@ -25,11 +25,10 @@ private with Alire.Utils.TTY;
 
 package Alire.Releases is
 
---     subtype Dependency_Vector is Dependencies.Vectors.Vector;
-
    type Release (<>) is new Interfaces.Yamlable with private;
 
    function "<" (L, R : Release) return Boolean;
+   --  Sorts by name, version, and build within same version
 
    function Default_Properties return Conditional.Properties;
    --  Returns the values in Defaults already wrapped as properties
@@ -329,8 +328,13 @@ package Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True);
-   --  Deploy the sources of this release under the given Parent_Folder
+      Perform_Actions : Boolean := True;
+      Create_Manifest : Boolean := False;
+      Include_Origin  : Boolean := False);
+   --  Deploy the sources of this release under the given Parent_Folder. If
+   --  Create_Manifest, any packaged manifest will be moved out of the way
+   --  and an autoritative manifest will be generated from index information.
+   --  The created manifest may optionally Include_Origin information.
 
 private
 

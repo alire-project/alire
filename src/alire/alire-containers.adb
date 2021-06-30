@@ -132,6 +132,24 @@ package body Alire.Containers is
       end if;
    end Merge;
 
+   ----------------
+   -- Satisfying --
+   ----------------
+
+   function Satisfying (This : Release_Set;
+                        Dep  : Dependencies.Dependency)
+                        return Release_Set
+   is
+   begin
+      return Result : Release_Set do
+         for Release of This loop
+            if Release.Satisfies (Dep) then
+               Result.Include (Release);
+            end if;
+         end loop;
+      end return;
+   end Satisfying;
+
    ---------------------
    -- To_Dependencies --
    ---------------------

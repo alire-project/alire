@@ -1,4 +1,4 @@
-private with Ada.Containers.Indefinite_Holders;
+private with AAA.Containers.Indefinite_Holders;
 
 private with Alire.Containers;
 with Alire.Releases;
@@ -25,12 +25,6 @@ package Alire.Dependencies.States is
        Softlink.Kind in User_Pins.Kinds_With_Path;
 
    type State (<>) is new Dependency with private;
-
-   overriding function "=" (L, R : State) return Boolean;
-   --  For some unclear reason, the default implementation reports differences
-   --  for identical states. Suspecting the Indefinite_Holders therein to be
-   --  the culprits. We override to rely on the same information the user sees,
-   --  thus avoiding any inconsistent "want to confirm?" empty updates.
 
    ------------------
    -- Constructors --
@@ -65,8 +59,9 @@ package Alire.Dependencies.States is
                      return State;
    --  Modify transitivity in a copy of Base
 
-   function Solving (Base  : State;
-                     Using : Releases.Release)
+   function Solving (Base   : State;
+                     Using  : Releases.Release;
+                     Shared : Boolean := False)
                      return State
      with Pre => Base.Crate = Using.Name;
    --  Uses release to fulfill this dependency in a copy of Base
@@ -101,6 +96,8 @@ package Alire.Dependencies.States is
    function Is_Missing (This : State) return Boolean;
 
    function Is_Pinned (This : State) return Boolean;
+
+   function Is_Shared (This : State) return Boolean;
 
    function Is_User_Pinned (This : State) return Boolean;
    --  From the POV of users, pinning to version or linking to dir is a pin
@@ -186,7 +183,7 @@ private
       return State;
 
    package Link_Holders is
-     new Ada.Containers.Indefinite_Holders (Softlink, User_Pins."=");
+     new AAA.Containers.Indefinite_Holders (Softlink);
 
    type Link_Holder is new Link_Holders.Holder with null record;
 
@@ -199,6 +196,7 @@ private
             Opt_Rel : Stored_Release; -- This might not be filled-in
          when Solved =>
             Release : Stored_Release; -- This is always valid
+            Shared  : Boolean;        -- The release is from shared install
          when others => null;
       end case;
    end record;
@@ -219,15 +217,6 @@ private
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
-
-   ---------
-   -- "=" --
-   ---------
-
-   overriding function "=" (L, R : State) return Boolean
-   is (L.Image = R.Image);
-   --  TODO: this is likely not efficient. We should dig more to find why some
-   --  apparently identical states are reported as different.
 
    -------------------
    -- As_Dependency --
@@ -293,6 +282,9 @@ private
                       else "")
                    & (if This.Has_Release
                       then ",release"
+                   else "")
+                   & (if This.Is_Shared
+                      then ",installed"
                       else "")
           else "")
        & (if This.Pinning.Pinned
@@ -321,6 +313,9 @@ private
 
    function Is_Pinned (This : State) return Boolean
    is (This.Pinning.Pinned);
+
+   function Is_Shared (This : State) return Boolean
+   is (This.Fulfilled.Fulfillment = Solved and then This.Fulfilled.Shared);
 
    function Is_Solved (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved);
@@ -456,13 +451,15 @@ private
    -- Solving --
    -------------
 
-   function Solving (Base  : State;
-                     Using : Releases.Release)
+   function Solving (Base   : State;
+                     Using  : Releases.Release;
+                     Shared : Boolean := False)
                      return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
        Fulfilled    => (Fulfillment => Solved,
-                        Release     => To_Holder (Using)),
+                        Release     => To_Holder (Using),
+                        Shared      => Shared),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -496,6 +493,9 @@ private
                       else "," & TTY.Error ("broken"))
                    & (if This.Has_Release
                       then "," & TTY.OK ("release")
+                      else "")
+                   & (if This.Is_Shared
+                      then "," & TTY.Emph ("installed")
                       else "")
           else "")
        & (if This.Pinning.Pinned

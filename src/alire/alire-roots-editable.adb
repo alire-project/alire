@@ -112,7 +112,7 @@ package body Alire.Roots.Editable is
             end if;
 
          exception
-            when Solver.No_Solution_Error =>
+            when Query_Unsuccessful =>
                Put_Warning ("No solution found when adding dependency: "
                             & Dep.TTY_Image);
                return Dep;

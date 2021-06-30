@@ -1,5 +1,6 @@
+with AAA.Containers.Indefinite_Holders;
+
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
@@ -8,6 +9,8 @@ with Alire.Dependencies;
 with Alire.Milestones;
 with Alire.Properties;
 with Alire.Releases;
+
+with Optional.Values;
 
 package Alire.Containers is
 
@@ -42,15 +45,28 @@ package Alire.Containers is
                                                   Milestones."<",
                                                   Milestones."=");
 
+   function Release_Image (R : Releases.Release) return String
+   is (R.Milestone.TTY_Image);
+
+   package Optional_Releases is new Optional.Values (Releases.Release,
+                                                     Release_Image);
+
    package Release_Sets
    is new Ada.Containers.Indefinite_Ordered_Sets (Releases.Release,
                                                   Releases."<",
                                                   Releases."=");
-   subtype Release_Set is Release_Sets.Set;
+   type Release_Set is new Release_Sets.Set with null record;
+
+   function Satisfying (This : Release_Set;
+                        Dep  : Dependencies.Dependency)
+                        return Release_Set
+     with Post =>
+       Satisfying'Result.Is_Empty
+       or else (for all Release of Satisfying'Result =>
+                  Release.Satisfies (Dep));
 
    package Release_Holders
-   is new Ada.Containers.Indefinite_Holders (Releases.Release,
-                                             Releases."=");
+   is new AAA.Containers.Indefinite_Holders (Releases.Release);
    subtype Release_H is Release_Holders.Holder;
 
    package Crate_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps

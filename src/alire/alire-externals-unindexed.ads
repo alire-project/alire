@@ -8,7 +8,7 @@ package Alire.Externals.Unindexed is
    overriding
    function Detect (This        : External;
                     Unused_Name : Crate_Name) return Containers.Release_Set is
-     (Containers.Release_Sets.Empty_Set);
+     (Containers.Release_Sets.Empty_Set with null record);
 
    overriding
    function Image (This : External) return String is ("Externally provided");

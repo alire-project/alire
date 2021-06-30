@@ -26,7 +26,7 @@ package body Alire.Externals.From_Output is
          Trace.Debug
            ("External not detected because executable is not in PATH: "
             & This.Command.First_Element);
-         return Containers.Release_Sets.Empty_Set;
+         return (Containers.Release_Sets.Empty_Set with null record);
       else
          GNAT.OS_Lib.Free (Location);
       end if;

@@ -99,7 +99,8 @@ package Alire.Solutions is
    function Including (This           : Solution;
                        Release        : Alire.Releases.Release;
                        Env            : Properties.Vector;
-                       Add_Dependency : Boolean := False)
+                       Add_Dependency : Boolean := False;
+                       Shared         : Boolean := False)
                        return Solution
      with Pre => Add_Dependency or else This.Depends_On (Release.Name);
    --  Add a release to the solution, marking its dependency as solved. Takes
