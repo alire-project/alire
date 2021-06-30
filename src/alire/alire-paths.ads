@@ -9,6 +9,10 @@ package Alire.Paths with Preelaborate is
 
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
+   Cache_Folder_Inside_Working_Folder : constant Relative_Path := "cache";
+
+   Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
+
    function Working_Folder_Inside_Root return Relative_Path
    is ("alire");
    --  Folder within a working release that will contain metadata/build files,
