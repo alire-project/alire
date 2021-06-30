@@ -7,10 +7,10 @@ package Alire.Hashes with Preelaborate is
    --  type and value is the actual hash representation emitted by the GNAT.*
    --  hashing functions. E.g.: "sha1:5c16c1c74ae8236770644b69f2e4cf1ccc88adad"
 
-   type Kinds is (SHA512);
-   --  Recognized hashes that we are able to compute/verify.
-   --  To add a new kind, instance the Alire.Hashes.Common generic and with it
-   --  in Alire.TOML_Index body.
+   type Kinds is (SHA256, SHA512);
+   --  Recognized hashes that we are able to compute/verify. To add a new kind,
+   --  instance the Alire.Hashes.Common generic and with it in Alire.TOML_Index
+   --  body.
 
    Default : constant Kinds := SHA512;
    --  In the event we introduce several hashes, this default is considered the
