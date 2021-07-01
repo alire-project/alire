@@ -20,12 +20,13 @@ package Alr.Commands.Clean is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("");
+   is ("[--cache] [--temp]");
 
 private
 
    type Command is new Commands.Command with record
       Cache : aliased Boolean := False;
+      Temp  : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Clean;
