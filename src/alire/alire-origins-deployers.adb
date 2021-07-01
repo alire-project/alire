@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Directories;
 with Alire.Origins.Deployers.External;
 with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Deployers.Git;
@@ -57,24 +58,47 @@ package body Alire.Origins.Deployers is
    function Deploy_Steps (From   : Origin;
                           Folder : String) return Outcome
    is
+      use Directories.Operators;
+      Temp_Dir      : Directories.Temp_File :=
+                        Directories.With_Name
+                          (Ada.Directories.Containing_Directory (Folder)
+                           / Directories.Temp_Name);
+      --  We use a temporary location to fetch and verify, as otherwise any
+      --  failure before final deployment may result in considering a crate
+      --  already deployed.
+
       The_Deployer  : constant Deployer'Class := New_Deployer (From);
       Result        : Outcome;
    begin
 
       --  1. Fetch sources
-      Result := The_Deployer.Fetch (Folder);
+      Result := The_Deployer.Fetch (Temp_Dir.Filename);
       if not Result.Success then
          return Result;
       end if;
 
       --  2. Verify sources
-      Result := The_Deployer.Verify_Hashes (Folder);
+      Result := The_Deployer.Verify_Hashes (Temp_Dir.Filename);
       if not Result.Success then
          return Result;
       end if;
 
       --  3. Deploy final sources
-      return The_Deployer.Deploy (Folder);
+      The_Deployer.Deploy (Temp_Dir.Filename).Assert;
+
+      --  4. Rename into final location. This is always in the same drive (as
+      --  we created the temporary as a sibling of the final location) so it
+      --  should be an instant operation. We check for the folder existence
+      --  as some deployers may not need one (like system packages).
+      Temp_Dir.Keep;
+      if Ada.Directories.Exists (Temp_Dir.Filename) then
+         Trace.Debug ("Renaming into place " & TTY.URL (Temp_Dir.Filename)
+                      & " as " & TTY.URL (Folder));
+         Ada.Directories.Rename (Old_Name => Temp_Dir.Filename,
+                                 New_Name => Folder);
+      end if;
+
+      return Outcome_Success;
    exception
       when E : others =>
          Log_Exception (E);

@@ -375,12 +375,7 @@ package body Alire.Directories is
    -- TEMP FILES --
    ----------------
 
-   ----------------
-   -- Initialize --
-   ----------------
-
-   overriding
-   procedure Initialize (This : in out Temp_File) is
+   function Temp_Name (Length : Positive := 8) return String is
       subtype Valid_Character is Character range 'a' .. 'z';
       package Char_Random is new
         Ada.Numerics.Discrete_Random (Valid_Character);
@@ -388,10 +383,24 @@ package body Alire.Directories is
    begin
       Char_Random.Reset (Gen);
 
-      This.Name := +"alr-XXXX.tmp";
-      for I in 5 .. 8 loop
-         UStrings.Replace_Element (This.Name, I, Char_Random.Random (Gen));
-      end loop;
+      return Result : String (1 .. Length + 4) do
+         Result (1 .. 4) := "alr-";
+         Result (Length + 1 .. Result'Last) := ".tmp";
+         for I in 5 .. Length loop
+            Result (I) := Char_Random.Random (Gen);
+         end loop;
+      end return;
+   end Temp_Name;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding
+   procedure Initialize (This : in out Temp_File) is
+
+   begin
+      This.Name := +Temp_Name;
 
       --  Try to use our alire folder to hide temporaries; return an absolute
       --  path in any case to avoid problems with the user of the tmp file
