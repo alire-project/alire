@@ -5,6 +5,7 @@ with Alire.Directories;
 with Alire.Errors;
 with Alire.TOML_Adapters;
 
+with Alire.Hashes.SHA256_Impl; pragma Unreferenced (Alire.Hashes.SHA256_Impl);
 with Alire.Hashes.SHA512_Impl; pragma Unreferenced (Alire.Hashes.SHA512_Impl);
 --  Hash implementation generics are not directly withed anywhere. Since they
 --  are not Preelaborate, and the index loader is one of the few in Alire also
