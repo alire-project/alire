@@ -26,4 +26,18 @@ assert_eq("ERROR: Plain crate name or crate=version argument expected"
           " for pinning, but got: hello^1.0\n",
           p.out)
 
+# Test that pinning to a non-existent version is doable but solution is missing
+p = run_alr("pin", "hello=7.7.7", force=True)
+p = run_alr("pin")
+assert_eq("hello 7.7.7\n", p.out)
+p = run_alr("with", "--solve")
+assert_eq("""\
+Dependencies (direct):
+   hello*
+Dependencies (external):
+   hello=7.7.7 (direct,missed,pin=7.7.7) (pinned)
+Dependencies (graph):
+   xxx=0.0.0 --> hello*
+""", p.out)
+
 print('SUCCESS')

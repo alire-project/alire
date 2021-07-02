@@ -167,15 +167,12 @@ package Alire.Roots is
      (This     : in out Root;
       Silent   : Boolean; -- Do not output anything
       Interact : Boolean; -- Request confirmation from the user
-      Old      : Solutions.Solution := Solutions.Empty_Invalid_Solution;
       Options  : Solver.Query_Options := Solver.Default_Options;
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set);
    --  Resolve and update all or given crates in a root, and regenerate
    --  configuration. When Silent, run as in non-interactive mode as this is an
-   --  automatically-triggered update. Old_Sol is used to present differences,
-   --  and when left at the default invalid argument value, This.Solution will
-   --  be used as old solution.
+   --  automatically-triggered update.
 
    procedure Sync_Pins_From_Manifest
      (This       : in out Root;
@@ -239,6 +236,9 @@ private
       Release         : Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
 
+      Pins            : Solutions.Solution;
+      --  Closure of all pins that are recursively found
+
       --  These values, if different from "", mean this is a temporary root
       Manifest        : Unbounded_Absolute_Path;
       Lockfile        : Unbounded_Absolute_Path;
@@ -263,7 +263,7 @@ private
    --  Obtain a temporary copy of This root, in the sense that it uses temp
    --  names for the manifest and lockfile. The cache is shared, so any
    --  pins/dependencies added to the temporary copy are ready if the copy is
-   --  commited (see Commit call). The intended use is to be able to modify
+   --  committed (see Commit call). The intended use is to be able to modify
    --  the temporary manifest, and finally compare the solutions between This
    --  and its copy. This way, no logic remains in `alr with`/`alr pin`, for
    --  example, as they simply edit the manifest as if the user did it by hand.

@@ -249,6 +249,9 @@ package Alire.Solutions is
    function Links (This : Solution) return Dependency_Map;
    --  Return crates that are solved with a softlink
 
+   function Link_Pins (This : Solution) return Conditional.Dependencies;
+   --  Return dependencies of linked crates in the solution
+
    function Misses (This : Solution) return Dependency_Map;
    --  Return crates for which there is neither hint nor proper versions
 

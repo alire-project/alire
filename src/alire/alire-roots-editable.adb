@@ -24,6 +24,7 @@ package body Alire.Roots.Editable is
       return Result : Root do
          Result.Orig := Original;
          Result.Edit := Roots.Root (Original.Temporary_Copy);
+         Result.Edit.Sync_Pins_From_Manifest (Exhaustive => False);
       end return;
    end New_Root;
 
@@ -98,7 +99,7 @@ package body Alire.Roots.Editable is
                                   .Dependencies (This.Edit.Environment)
                                   and Dep,
                        Props   => This.Edit.Environment,
-                       Current => This.Edit.Solution);
+                       Pins    => This.Edit.Pins);
          begin
             if Sol.State (Dep.Crate).Has_Release then
                return
@@ -122,9 +123,7 @@ package body Alire.Roots.Editable is
 
       --  Do not add if already a direct dependency
 
-      if (for some Existing_Dep of Release (This.Edit).Flat_Dependencies =>
-            Existing_Dep.Crate = Dep.Crate)
-      then
+      if Release (This.Edit).Depends_On (Dep.Crate, This.Edit.Environment) then
          raise Checked_Error with Errors.Set
            (TTY.Name (Dep.Crate) & " is already a direct dependency.");
       end if;
@@ -157,9 +156,7 @@ package body Alire.Roots.Editable is
 
       --  If dependency is not among dependencies at all, nothing to do
 
-      if not (for some Dep of Release (This.Edit).Flat_Dependencies =>
-                Dep.Crate = Crate)
-      then
+      if not Release (This.Edit).Depends_On (Crate) then
          Raise_Checked_Error
            ("Requested crate is not among direct dependencies.");
       end if;
@@ -197,6 +194,10 @@ package body Alire.Roots.Editable is
                               Version : Semver.Version)
    is
    begin
+
+      --  If nothing in the solution depends on the pinned crate, add it as a
+      --  direct dependency.
+
       if not This.Solution.Depends_On (Crate) then
          This.Add_Dependency
            (Dependencies.New_Dependency
@@ -215,7 +216,7 @@ package body Alire.Roots.Editable is
                              User_Pins.New_Version (Version));
       This.Reload_Manifest;
 
-      This.Edit.Set (This.Solution.Pinning (Crate, Version));
+      This.Edit.Set (This.Solution.Resetting (Crate).Pinning (Crate, Version));
    end Add_Version_Pin;
 
    --------------------------
@@ -298,6 +299,7 @@ package body Alire.Roots.Editable is
 
       --  Since link pins can bring in more dependencies, we must also Update.
       --  Changes will be shown afterwards on the call to Confirm_And_Commit.
+
       This.Edit.Update (Allow_All_Crates,
                         Silent   => True,
                         Interact => False);
@@ -390,7 +392,7 @@ package body Alire.Roots.Editable is
 
          if Adirs.Exists (Destination) then
             --  Remove a previous pin deployment, which may be obsolete
-            Adirs.Delete_Tree (Destination);
+            Directories.Delete_Tree (Destination);
          end if;
 
          Adirs.Rename (Old_Name => Temp_Pin.Filename,
@@ -405,8 +407,8 @@ package body Alire.Roots.Editable is
                                                       Branch => Branch));
          This.Reload_Manifest;
 
-         --  And update lockfile. We need to "deploy" the pin (it's already
-         --  deployed) so the pin becomes aware of its own path.
+         --  And update lockfile. We need to call Deploy on the pin (although
+         --  it is already deployed) so the pin becomes aware of its own path.
 
          New_Pin.Deploy (Crate, This.Edit.Pins_Dir, Online => False);
          This.Edit.Set (This.Solution.Linking (Crate, New_Pin));
@@ -414,6 +416,7 @@ package body Alire.Roots.Editable is
          --  Since link pins can bring in more dependencies, we must
          --  also Update. Changes will be shown afterwards on the call
          --  to Confirm_And_Commit.
+
          This.Edit.Update (Allow_All_Crates,
                            Silent   => True,
                            Interact => False);
@@ -427,12 +430,11 @@ package body Alire.Roots.Editable is
    procedure Remove_Pin (This : in out Root; Crate : Crate_Name)
    is
    begin
-      if This.Solution.Depends_On (Crate)
-        and then This.Solution.State (Crate).Is_User_Pinned
-      then
+      if Release (This.Edit).Pins.Contains (Crate) then
          Alire.Manifest.Remove_Pin (This.Edit.Crate_File,
                                     Crate);
          This.Edit.Set (This.Solution.User_Unpinning (Crate));
+         This.Reload_Manifest;
       end if;
    end Remove_Pin;
 

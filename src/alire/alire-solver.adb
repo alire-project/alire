@@ -113,10 +113,10 @@ package body Alire.Solver is
 
    function Is_Resolvable (Deps    : Types.Abstract_Dependencies;
                            Props   : Properties.Vector;
-                           Current : Solution;
+                           Pins    : Solution;
                            Options : Query_Options := Default_Options)
                            return Boolean
-   is (Resolve (Deps, Props, Current, Options).Is_Complete);
+   is (Resolve (Deps, Props, Pins, Options).Is_Complete);
 
    -------------
    -- Resolve --
@@ -124,7 +124,7 @@ package body Alire.Solver is
 
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;
-                     Current : Solution;
+                     Pins    : Solution;
                      Options : Query_Options := Default_Options)
                      return Solution
    is
@@ -371,6 +371,82 @@ package body Alire.Solver is
                end if;
             end Expand_Missing;
 
+            -----------------------
+            -- Check_Version_Pin --
+            -----------------------
+            --  Specific checks for a version pin that narrow down the search
+            procedure Check_Version_Pin is
+               Pin_Version : constant Semver.Version :=
+                               Pins.State (Dep.Crate).Pin_Version;
+            begin
+
+               --  For a version pin release, we try only a release with the
+               --  exact version of the pin, to speed up the solving. If the
+               --  pin version is incompatible with the dependency, this branch
+               --  cannot succeed though.
+
+               if Semver.Extended.Is_In (Pin_Version, Dep.Versions) then
+
+                  --  The pin is compatible with the dependency, go ahead
+
+                  if Index.Exists (Dep.Crate, Pin_Version) then
+
+                     --  There is a valid crate for this pin and dependency
+
+                     Trace.Debug ("SOLVER short-cutting due to version pin"
+                                  & " with valid release in index");
+                     Check (Index.Find (Dep.Crate, Pin_Version));
+
+                     --  The check may still fail, so we must attempt this one:
+
+                     Trace.Debug
+                       ("SOLVER: marking crate " & Dep.Image
+                        & " MISSING in case pinned version available in index "
+                        & TTY.Version (Pin_Version.Image)
+                        & " is incompatible with other dependencies"
+                        & " when the search tree was "
+                        & Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+
+                     Expand_Missing (Dep);
+
+                  else
+
+                     --  There is no release for this pin
+
+                     Trace.Debug
+                       ("SOLVER: marking crate " & Dep.Image
+                        & " MISSING because index LACKS pinned version "
+                        & TTY.Version (Pin_Version.Image)
+                        & " when the search tree was "
+                        & Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+
+                     Expand_Missing (Dep);
+
+                  end if;
+
+               else
+
+                  --  The pin contradicts the dependency
+
+                  Trace.Debug
+                    ("SOLVER: marking crate " & Dep.Image
+                     & " MISSING because version pin "
+                     & TTY.Version (Pin_Version.Image) & " cannot satisfy "
+                     & Dep.TTY_Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                       and Target
+                       and Remaining).Image_One_Line);
+
+                  Expand_Missing (Dep);
+
+               end if;
+            end Check_Version_Pin;
+
             Satisfiable : Boolean := False;
             --  Mark that the dependency is satisfiable. When we refactor the
             --  solver from recursive to priority queue (I guess we eventually
@@ -379,8 +455,8 @@ package body Alire.Solver is
 
          begin
 
-            if Current.Depends_On (Dep.Crate) and then
-               Current.State (Dep.Crate).Is_Linked
+            if Pins.Depends_On (Dep.Crate) and then
+               Pins.State (Dep.Crate).Is_Linked
             then
 
                --  The dependency is softlinked in the starting solution, hence
@@ -388,20 +464,20 @@ package body Alire.Solver is
 
                Trace.Debug
                  ("SOLVER: dependency LINKED to " &
-                    Current.State (Dep.Crate).Link.Path &
+                    Pins.State (Dep.Crate).Link.Path &
                     " when tree is " &
                     Tree'(Expanded and Target and Remaining).Image_One_Line);
 
                Expand (Expanded  => Expanded and Dep,
                        Target    => Remaining and
-                         (if Current.State (Dep.Crate).Has_Release
-                          then Current.State (Dep.Crate)
-                                      .Release.Dependencies (Props)
+                         (if Pins.State (Dep.Crate).Has_Release
+                          then Pins.State (Dep.Crate)
+                                   .Release.Dependencies (Props)
                           else Empty),
                        Remaining => Empty,
                        Solution  =>
                          Solution.Linking (Dep.Crate,
-                                           Current.State (Dep.Crate).Link));
+                                           Pins.State (Dep.Crate).Link));
 
             elsif Solution.Releases.Contains (Dep.Crate) then
 
@@ -410,18 +486,13 @@ package body Alire.Solver is
 
                Check (Solution.Releases.Element (Dep.Crate));
 
-            elsif
-              Current.Depends_On (Dep.Crate) and then
-              Current.State (Dep.Crate).Is_Pinned and then
-              Current.State (Dep.Crate).Is_Solved
+            elsif Pins.Depends_On (Dep.Crate) and then
+                  Pins.State (Dep.Crate).Is_Pinned
             then
 
-               --  For an existing pinned release, we try first to reuse the
-               --  stored release instead of looking for another release with
-               --  the same version (which will be the same one anyway for a
-               --  same index).
+               --  Specific pin checks that can speed up the search
 
-               Check (Current.Releases.Element (Dep.Crate));
+               Check_Version_Pin;
 
             elsif Index.Exists (Dep.Crate) then
 
@@ -503,6 +574,15 @@ package body Alire.Solver is
 
                if not Satisfiable or else Options.Completeness = All_Incomplete
                then
+
+                  Trace.Debug
+                    ("SOLVER: marking crate " & Dep.Image
+                     & " MISSING with Satisfiable=" & Satisfiable'Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                       and Target
+                       and Remaining).Image_One_Line);
+
                   Expand_Missing (Dep);
                end if;
 
@@ -676,7 +756,7 @@ package body Alire.Solver is
                if not Index.Exists (Dep.Value.Crate) then
                   --  Crate totally unavailable
                   Unavailable_Crates.Include (Dep.Value.Crate);
-                  Trace.Detail ("Direct dependency is not a known crate: "
+                  Trace.Debug ("Direct dependency is not a known crate: "
                                 & TTY.Name (Dep.Value.Crate));
                else
                   --  Pre-populate external releases
@@ -688,7 +768,7 @@ package body Alire.Solver is
 
                      --  No valid releases for the crate
                      Unavailable_Deps.Include (Dep.Value.Image);
-                     Trace.Detail
+                     Trace.Debug
                        ("Direct dependency has no fulfilling releases: "
                         & TTY.Name (Dep.Value.Image));
                   end if;
@@ -706,11 +786,11 @@ package body Alire.Solver is
 
       procedure Trace_Pins is
       begin
-         if (for some State of Current.All_Dependencies =>
+         if (for some State of Pins.All_Dependencies =>
                State.Is_User_Pinned)
          then
             Trace.Detail ("User pins to apply:");
-            for State of Current.All_Dependencies loop
+            for State of Pins.All_Dependencies loop
                if State.Is_User_Pinned then
                   Trace.Detail ("   " & State.TTY_Image);
                end if;
@@ -721,10 +801,9 @@ package body Alire.Solver is
       end Trace_Pins;
 
       Full_Dependencies : constant Conditional.Dependencies :=
-                            Tree'(Current.User_Pins and Deps).Evaluate (Props);
-      --  Include pins before other dependencies. This ensures their dependency
-      --  can only be solved with the pinned version, and they are attempted
-      --  first to avoid wasteful trial-and-error with other versions.
+                            Tree'(Pins.User_Pins and Deps).Evaluate (Props);
+      --  Include pins before other dependencies. This makes their dependency
+      --  show in solutions explicitly.
 
       Solution : constant Alire.Solutions.Solution :=
                    Alire.Solutions.Empty_Valid_Solution;
@@ -785,7 +864,7 @@ package body Alire.Solver is
             return Resolve
               (Deps    => Deps,
                Props   => Props,
-               Current => Current,
+               Pins    => Pins,
                Options =>
                  (Query_Options'
                       (Age          => Options.Age,
@@ -809,7 +888,7 @@ package body Alire.Solver is
 
          declare
             Best_Solution : Alire.Solutions.Solution :=
-                              Solutions.First_Element.With_Pins (Current);
+                              Solutions.First_Element.With_Pins (Pins);
          begin
 
             --  Mark pins as direct dependencies
