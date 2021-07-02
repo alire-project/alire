@@ -436,8 +436,8 @@ package body Alire.User_Pins is
                  " to be portable");
 
             if not GNAT.OS_Lib.Is_Directory (+Result.Path) then
-               This.Checked_Error ("Pin path is not a valid directory: "
-                                   & (+Result.Path));
+               This.Recoverable_Error ("Pin path is not a valid directory: "
+                                       & (+Result.Path));
             end if;
 
             return Result;
