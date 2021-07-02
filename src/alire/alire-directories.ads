@@ -98,6 +98,11 @@ package Alire.Directories is
    -- Temporary files --
    ---------------------
 
+   function Temp_Name (Length : Positive := 8) return String
+     with Pre => Length >= 5;
+   --  Return a filename such as "alr-sdrv.tmp". Length refers to the name
+   --  without .tmp. The alr- prefix is fixed.
+
    --  TEMP_FILE: obtain a temporary name with optional cleanup
 
    type Temp_File is tagged limited private;

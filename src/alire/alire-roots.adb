@@ -721,7 +721,7 @@ package body Alire.Roots is
    ---------------
 
    function Cache_Dir (This : Root) return Absolute_Path
-   is (This.Working_Folder / "cache");
+   is (This.Working_Folder / Paths.Cache_Folder_Inside_Working_Folder);
 
    ----------------------
    -- Dependencies_Dir --
