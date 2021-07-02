@@ -879,7 +879,7 @@ package body Alire.Solver is
                        Detecting    => Options.Detecting,
                        Hinting      => Options.Hinting)));
          else
-            raise No_Solution_Error with Errors.Set
+            raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies.");
          end if;
       else

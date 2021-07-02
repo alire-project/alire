@@ -9,8 +9,6 @@ with Semantic_Versioning.Extended;
 
 package Alire.Solver is
 
-   No_Solution_Error : exception;
-
    --------------
    -- Policies --
    --------------
@@ -97,8 +95,8 @@ package Alire.Solver is
      with Pre =>
        Exists (Name, Allowed) or else
        raise Query_Unsuccessful
-         with "Release within requested version not found: "
-              & Dependencies.New_Dependency (Name, Allowed).Image;
+         with "Release within requested versions not found: "
+              & Dependencies.New_Dependency (Name, Allowed).TTY_Image;
 
    -----------------------
    --  Advanced queries --

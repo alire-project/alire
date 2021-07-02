@@ -54,7 +54,7 @@ package body Alire.Shared is
       if Current.Depends_On (Release.Name)
         and then Current.State (Release.Name).Release.Version = Release.Version
       then
-         Trace.Debug ("Skipping installation of already available release: "
+         Trace.Info ("Skipping installation of already available release: "
                       & Release.Milestone.TTY_Image);
          return;
       end if;
@@ -89,7 +89,7 @@ package body Alire.Shared is
                                     Add_Dependency => True);
 
       Lockfiles.Write (Contents => (Solution => Current),
-                       Filename => Lockfile);
+                       Filename => Config.Edit.Path / Lockfile);
 
       Put_Info (Release.Milestone.TTY_Image & " installed successfully.");
    end Share;

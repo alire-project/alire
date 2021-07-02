@@ -131,6 +131,7 @@ package Alr.Commands is
                       Cmd_Help,
                       Cmd_Index,
                       Cmd_Init,
+                      Cmd_Install,
                       Cmd_Pin,
                       Cmd_Printenv,
                       Cmd_Publish,
@@ -160,6 +161,7 @@ package Alr.Commands is
    Group_Commands : constant array (Cmd_Names) of Group_Names :=
      (Cmd_Config |
       Cmd_Help |
+      Cmd_Install |
       Cmd_Printenv |
       Cmd_Version => Group_General,
       Cmd_Build |
