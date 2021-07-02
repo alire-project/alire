@@ -1,0 +1,16 @@
+description = "Sample crate"
+name = "crate"
+version = "2.0.0"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[origin]
+# Relative to where the index and the crates are placed by the test set up
+url = "file:../../../../crates/libhello_1.0.0.tgz"
+
+# These hashes are wrong
+hashes = [
+"sha256:000000007c6997c5f68ea4bfe6134c318073fed38ec0f81ccb1ae2bfdcc0187a",
+"sha512:00000000540d0655c87605b54af732f76a8a363015f183b06e98aa91e54c0e69397872718c5c16f436dd6de0fba506dc50c66d34a0e5c61fb63cb01fa22f35ac",
+]
