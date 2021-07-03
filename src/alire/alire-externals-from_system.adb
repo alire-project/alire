@@ -23,7 +23,7 @@ package body Alire.Externals.From_System is
       if not Platform.Distribution_Is_Known then
          Trace.Detail ("Cannot look for system packages for crate " & (+Name)
                        & "in unknown distribution");
-         return Containers.Release_Sets.Empty_Set;
+         return (Containers.Release_Sets.Empty_Set with null record);
       end if;
 
       Trace.Debug ("Looking for system packages that provide crate: "

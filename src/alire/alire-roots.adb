@@ -108,33 +108,8 @@ package body Alire.Roots is
         (Env             => Env,
          Parent_Folder   => Parent_Folder,
          Was_There       => Was_There,
-         Perform_Actions => Perform_Actions);
-
-      --  Backup a potentially packaged manifest, so our authoritative manifest
-      --  from the index is always used.
-
-      declare
-         Working_Dir : Guard (Enter (This.Unique_Folder))
-           with Unreferenced;
-      begin
-         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
-
-         if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
-            Trace.Debug ("Backing up bundled manifest file as *.upstream");
-            declare
-               Upstream_File : constant String :=
-                                 Paths.Working_Folder_Inside_Root /
-                                 (Paths.Crate_File_Name & ".upstream");
-            begin
-               Alire.Directories.Backup_If_Existing
-                 (Upstream_File,
-                  Base_Dir => Paths.Working_Folder_Inside_Root);
-               Ada.Directories.Rename
-                 (Old_Name => Paths.Crate_File_Name,
-                  New_Name => Upstream_File);
-            end;
-         end if;
-      end;
+         Perform_Actions => Perform_Actions,
+         Create_Manifest => True);
 
       --  And generate its working files, if they do not exist
 
@@ -150,14 +125,9 @@ package body Alire.Roots is
 
          Ada.Directories.Create_Path (Root.Working_Folder);
 
-         --  Generate the authoritative manifest from index information for
-         --  eventual use of the gotten crate as a local workspace.
-
-         Root.Write_Manifest;
-
-         --  Create also a preliminary lockfile (since dependencies are
-         --  still unretrieved). Once they are checked out, the lockfile
-         --  will be replaced with the complete solution.
+         --  Create a preliminary lockfile (since dependencies are still
+         --  unretrieved). Once they are checked out, the lockfile will
+         --  be replaced with the complete solution.
 
          Root.Set
            (Solution => (if This.Dependencies (Env).Is_Empty
@@ -750,6 +720,26 @@ package body Alire.Roots is
      ((+This.Path) / "alire");
 
    --------------------
+   -- Write_Manifest --
+   --------------------
+
+   procedure Write_Manifest (This : Root) is
+      Release : constant Releases.Release := Roots.Release (This);
+   begin
+      Trace.Debug
+        ("Generating manifest file for "
+         & Release.Milestone.TTY_Image & " with"
+         & Release.Dependencies.Leaf_Count'Img & " dependencies");
+
+      Directories.Backup_If_Existing (File     => This.Crate_File,
+                                      Base_Dir => This.Working_Folder);
+
+      Release.Whenever (This.Environment)
+             .To_File (Filename => This.Crate_File,
+                       Format   => Manifest.Local);
+   end Write_Manifest;
+
+   --------------------
    -- Write_Solution --
    --------------------
 
@@ -1021,25 +1011,6 @@ package body Alire.Roots is
          Trace.Detail ("Update completed");
       end;
    end Sync_Dependencies;
-
-   --------------------
-   -- Write_Manifest --
-   --------------------
-
-   procedure Write_Manifest (This : Root) is
-      Release : constant Releases.Release := Roots.Release (This);
-   begin
-      Trace.Debug ("Generating " & Release.Name_Str & ".toml file for "
-                   & Release.Milestone.Image & " with"
-                   & Release.Dependencies.Leaf_Count'Img & " dependencies");
-
-      Directories.Backup_If_Existing
-        (This.Crate_File,
-         Base_Dir => Paths.Working_Folder_Inside_Root);
-
-      Release.Whenever (This.Environment)
-             .To_File (This.Crate_File, Manifest.Local);
-   end Write_Manifest;
 
    --------------------
    -- Temporary_Copy --

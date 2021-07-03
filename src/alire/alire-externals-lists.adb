@@ -19,7 +19,7 @@ package body Alire.Externals.Lists is
       --  Avoid the log message if there's nothing to detect
 
       if This.Is_Empty then
-         return Containers.Release_Sets.Empty_Set;
+         return (Containers.Release_Sets.Empty_Set with null record);
       end if;
 
       declare

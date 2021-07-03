@@ -55,7 +55,7 @@ package body Alr.Commands.Install is
    procedure List (Unused_Cmd : in out Command) is
       Table : AAA.Table_IO.Table;
    begin
-      if Alire.Shared.Available.All_Dependencies.Is_Empty then
+      if Alire.Shared.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
                      & TTY.URL (Alire.Config.Edit.Path));
          return;
@@ -63,10 +63,10 @@ package body Alr.Commands.Install is
 
       Table.Append (TTY.Emph ("CRATE")).Append (TTY.Emph ("VERSION")).New_Row;
 
-      for Dep of Alire.Shared.Available.All_Dependencies loop
+      for Dep of Alire.Shared.Available loop
          Table
-           .Append (TTY.Name (Dep.Crate))
-           .Append (TTY.Version (Dep.Release.Version.Image))
+           .Append (TTY.Name (Dep.Name))
+           .Append (TTY.Version (Dep.Version.Image))
            .New_Row;
       end loop;
 

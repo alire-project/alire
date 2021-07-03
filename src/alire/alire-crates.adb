@@ -67,7 +67,8 @@ package body Alire.Crates is
                       Version : Semantic_Versioning.Version) return Boolean
    is
    begin
-      return Keys.Contains (This.Releases, Version);
+      return Keys.Contains (Containers.Release_Sets.Set (This.Releases),
+                            Version);
    end Contains;
 
    ---------------
@@ -271,7 +272,9 @@ package body Alire.Crates is
                       Release : Alire.Releases.Release)
    is
    begin
-      Keys.Replace (This.Releases, Release.Version, Release);
+      Keys.Replace (Containers.Release_Sets.Set (This.Releases),
+                    Release.Version,
+                    Release);
    end Replace;
 
 end Alire.Crates;

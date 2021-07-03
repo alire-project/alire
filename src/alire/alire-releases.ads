@@ -328,8 +328,11 @@ package Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True);
-   --  Deploy the sources of this release under the given Parent_Folder
+      Perform_Actions : Boolean := True;
+      Create_Manifest : Boolean := False);
+   --  Deploy the sources of this release under the given Parent_Folder. If
+   --  Create_Manifest, any packaged manifest will be moved out of the way
+   --  and an autoritative manifest will be generated from index information.
 
 private
 

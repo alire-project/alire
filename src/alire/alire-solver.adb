@@ -6,6 +6,7 @@ with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
+with Alire.Origins;
 with Alire.Shared;
 with Alire.Utils.TTY;
 
@@ -162,7 +163,7 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
-      Installed : constant Alire.Solutions.Solution := Shared.Available;
+      Installed : constant Containers.Release_Set := Shared.Available;
       --  Installed releases do not change during resolution, we make a local
       --  copy here so they are not read repeatedly from disk.
 
@@ -230,6 +231,7 @@ package body Alire.Solver is
 
             procedure Check (R : Release) is
                use Alire.Containers;
+               use all type Origins.Kinds;
             begin
 
                --  We first check that the release matches the dependency we
@@ -338,7 +340,9 @@ package body Alire.Solver is
                   Expand (Expanded  => Expanded and R.To_Dependency,
                           Target    => Remaining and R.Dependencies (Props),
                           Remaining => Empty,
-                          Solution  => Solution.Including (R, Props));
+                          Solution  => Solution.Including
+                            (R, Props,
+                             Shared => R.Origin.Kind = Binary_Archive));
                end if;
             end Check;
 
@@ -466,37 +470,33 @@ package body Alire.Solver is
             procedure Check_Shared is
                Satisfied_By_Shared : Boolean := False;
             begin
-               if Installed.Depends_On (Dep.Crate)
-                 and then Installed.State (Dep.Crate).Release.Satisfies (Dep)
-               then
-                  declare
-                     R : constant Release :=
-                           Installed.State (Dep.Crate).Release;
-                  begin
-                     Satisfiable         := True;
-                     Satisfied_By_Shared := True;
 
-                     Trace.Debug
-                       ("SOLVER: dependency FROZEN+SHARED: "
-                        & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
-                        & (if R.Name /= R.Provides
-                           then " also providing " & (+R.Provides)
-                           else "") &
-                          " adding" &
-                          R.Dependencies (Props).Leaf_Count'Img &
-                          " dependencies to tree " &
-                          Tree'(Expanded
-                                and Target
-                                and Remaining
-                                and R.Dependencies (Props)).Image_One_Line);
+               --  Solve with all installed dependencies that satisfy it
 
-                     Expand (Expanded  => Expanded and R.To_Dependency,
-                             Target    => Remaining and R.Dependencies (Props),
-                             Remaining => Empty,
-                             Solution  => Solution.Including (R, Props,
-                                                              Shared => True));
-                  end;
-               end if;
+               for R of reverse Installed.Satisfying (Dep) loop
+                  Satisfiable         := True;
+                  Satisfied_By_Shared := True;
+
+                  Trace.Debug
+                    ("SOLVER: dependency FROZEN+SHARED: "
+                     & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
+                     & (if R.Name /= R.Provides
+                       then " also providing " & (+R.Provides)
+                       else "") &
+                       " adding" &
+                       R.Dependencies (Props).Leaf_Count'Img &
+                       " dependencies to tree " &
+                       Tree'(Expanded
+                       and Target
+                       and Remaining
+                       and R.Dependencies (Props)).Image_One_Line);
+
+                  Expand (Expanded  => Expanded and R.To_Dependency,
+                          Target    => Remaining and R.Dependencies (Props),
+                          Remaining => Empty,
+                          Solution  => Solution.Including (R, Props,
+                                                           Shared => True));
+               end loop;
 
                --  We may want still check without taking into account
                --  installed releases.
