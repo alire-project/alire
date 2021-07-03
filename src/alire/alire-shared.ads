@@ -10,6 +10,9 @@ package Alire.Shared is
    --  Return the contents of a lockfile describing what releases are installed
    --  at the shared location.
 
+   function Install_Path return Any_Path;
+   --  Returns the base folder in which all shared releases live
+
    procedure Share (Release : Releases.Release);
    --  Deploy a release in the shared location for the configuration
 

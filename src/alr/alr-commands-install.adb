@@ -66,7 +66,8 @@ package body Alr.Commands.Install is
       for Dep of Alire.Shared.Available.All_Dependencies loop
          Table
            .Append (TTY.Name (Dep.Crate))
-           .Append (TTY.Version (Dep.Release.Version.Image));
+           .Append (TTY.Version (Dep.Release.Version.Image))
+           .New_Row;
       end loop;
 
       Table.Print;

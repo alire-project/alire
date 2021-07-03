@@ -23,7 +23,19 @@ package body Alire.Shared is
    function Available return Solutions.Solution is
    begin
       if GNAT.OS_Lib.Is_Regular_File (Config.Edit.Path / Lockfile) then
-         return Lockfiles.Read (Config.Edit.Path / Lockfile).Solution;
+         begin
+            return Lockfiles.Read (Config.Edit.Path / Lockfile).Solution;
+         exception
+            when E : others =>
+               Log_Exception (E);
+               Put_Warning ("Installed releases need to be reinstalled.");
+               Directories.Force_Delete (Config.Edit.Path / Lockfile);
+               return Solutions.Empty_Valid_Solution;
+               --  TODO: we can rebuild this file by loading all crate
+               --  manifests found in the immediate subfolders. Indeed, this
+               --  is better than relying on a lockfile, as everything will
+               --  be always synced.
+         end;
       else
          return Solutions.Empty_Valid_Solution;
       end if;

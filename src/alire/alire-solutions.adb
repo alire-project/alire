@@ -130,7 +130,8 @@ package body Alire.Solutions is
    function Including (This           : Solution;
                        Release        : Alire.Releases.Release;
                        Env            : Properties.Vector;
-                       Add_Dependency : Boolean := False)
+                       Add_Dependency : Boolean := False;
+                       Shared         : Boolean := False)
                        return Solution
    is
    begin
@@ -143,7 +144,9 @@ package body Alire.Solutions is
 
          Result.Dependencies :=
            Result.Dependencies.Including
-             (Result.State (Release.Name).Solving (Release.Whenever (Env)));
+             (Result.State (Release.Name)
+                    .Solving (Release.Whenever (Env),
+                              Shared => Shared));
          --  TODO: remove this Whenever once dynamic expr can be exported
 
          --  Check that there's no conflict with current solution
@@ -427,6 +430,8 @@ package body Alire.Solutions is
                   & Rel.Milestone.TTY_Image
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
+                     elsif Dep.Is_Shared
+                     then TTY.Emph (" (installed)")
                      else "")
                   & (if Detailed
                      then " (origin: "

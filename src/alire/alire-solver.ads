@@ -54,6 +54,10 @@ package Alire.Solver is
    --  releases will be used normally; otherwise a crate with only externals
    --  will always cause failure.
 
+   type Sharing_Policies is (Allow_Shared, Only_Local);
+   --  * Allow_Shared: crates used with `alr install` can appear in solutions.
+   --  * Only_Local: only crates in the local workspace will be used.
+
    subtype Pin_Map  is User_Pins.Maps.Map;
    subtype Release  is Types.Release;
    subtype Solution is Solutions.Solution;
@@ -108,6 +112,7 @@ package Alire.Solver is
       Completeness : Completeness_Policies := First_Complete;
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
+      Sharing      : Sharing_Policies      := Allow_Shared;
    end record;
 
    Default_Options : constant Query_Options := (others => <>);

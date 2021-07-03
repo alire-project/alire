@@ -1,5 +1,4 @@
 with Alire.Conditional;
-with Alire.Config.Edit;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
@@ -7,6 +6,7 @@ with Alire.Environment;
 with Alire.Manifest;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
+with Alire.Shared;
 with Alire.Solutions.Diffs;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
@@ -188,10 +188,11 @@ package body Alire.Roots is
 
       --  Mark any dependencies without a corresponding regular release as
       --  already deployed (in practice, we don't have to deploy them, and
-      --  dependents don't need to wait for their deployment).
+      --  dependents don't need to wait for their deployment). Likewhise for
+      --  installed dependencies, which are already deployed.
 
       for Dep of This.Solution.Required loop
-         if not Dep.Has_Release then
+         if not Dep.Has_Release or else Dep.Is_Shared then
             Deployed.Include (Dep.Crate);
          end if;
       end loop;
@@ -238,7 +239,8 @@ package body Alire.Roots is
                   if Rel.Name /= Release (This).Name then
                      Rel.Deploy (Env           => This.Environment,
                                  Parent_Folder =>
-                                   This.Dependencies_Dir (Rel.Origin.Kind),
+                                   Ada.Directories.Containing_Directory
+                                     (This.Release_Base (Rel.Name)),
                                  Was_There     => Was_There);
                   else
                      Trace.Debug
@@ -693,7 +695,13 @@ package body Alire.Roots is
          declare
             Rel : constant Releases.Release := Release (This, Crate);
          begin
-            return This.Dependencies_Dir (Rel.Origin.Kind) / Rel.Unique_Folder;
+            if This.Solution.State (Crate).Is_Shared then
+               return Shared.Install_Path / Rel.Unique_Folder;
+            else
+               return This.Cache_Dir
+                      / Paths.Deps_Folder_Inside_Cache_Folder
+                      / Rel.Unique_Folder;
+            end if;
          end;
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
@@ -726,19 +734,6 @@ package body Alire.Roots is
 
    function Cache_Dir (This : Root) return Absolute_Path
    is (This.Working_Folder / Paths.Cache_Folder_Inside_Working_Folder);
-
-   ----------------------
-   -- Dependencies_Dir --
-   ----------------------
-
-   function Dependencies_Dir (This : Root;
-                              Kind : Origins.Kinds)
-                              return Absolute_Path
-   is (case Kind is
-          when Origins.Binary_Archive =>
-             Config.Edit.Path / "cache" / "dependencies",
-          when others                 =>
-             This.Cache_Dir / "dependencies");
 
    --------------
    -- Pins_Dir --
