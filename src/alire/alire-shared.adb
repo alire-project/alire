@@ -39,7 +39,7 @@ package body Alire.Shared is
                Result.Include
                  (Releases.From_Manifest
                     (File_Name => Full_Name (Item) / Paths.Crate_File_Name,
-                     Source    => Manifest.Local,
+                     Source    => Manifest.Index,
                      Strict    => True));
             else
                Warnings.Warn_Once ("Unexpected folder in shared crates path: "
@@ -102,7 +102,10 @@ package body Alire.Shared is
                       Parent_Folder   => Install_Path,
                       Was_There       => Already_Installed,
                       Perform_Actions => True,
-                      Create_Manifest => True);
+                      Create_Manifest => True,
+                      Include_Origin  => True);
+      --  We need the origin to be included for the release to be recognized as
+      --  a binary-origin release.
 
       if Already_Installed then
          Trace.Warning

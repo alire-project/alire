@@ -1,4 +1,4 @@
-private with Ada.Containers.Indefinite_Holders;
+private with AAA.Containers.Indefinite_Holders;
 
 private with Alire.Containers;
 with Alire.Releases;
@@ -25,12 +25,6 @@ package Alire.Dependencies.States is
        Softlink.Kind in User_Pins.Kinds_With_Path;
 
    type State (<>) is new Dependency with private;
-
-   overriding function "=" (L, R : State) return Boolean;
-   --  For some unclear reason, the default implementation reports differences
-   --  for identical states. Suspecting the Indefinite_Holders therein to be
-   --  the culprits. We override to rely on the same information the user sees,
-   --  thus avoiding any inconsistent "want to confirm?" empty updates.
 
    ------------------
    -- Constructors --
@@ -189,7 +183,7 @@ private
       return State;
 
    package Link_Holders is
-     new Ada.Containers.Indefinite_Holders (Softlink, User_Pins."=");
+     new AAA.Containers.Indefinite_Holders (Softlink);
 
    type Link_Holder is new Link_Holders.Holder with null record;
 
@@ -223,15 +217,6 @@ private
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
-
-   ---------
-   -- "=" --
-   ---------
-
-   overriding function "=" (L, R : State) return Boolean
-   is (L.Image = R.Image);
-   --  TODO: this is likely not efficient. We should dig more to find why some
-   --  apparently identical states are reported as different.
 
    -------------------
    -- As_Dependency --

@@ -1,5 +1,6 @@
+with AAA.Containers.Indefinite_Holders;
+
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
@@ -65,8 +66,7 @@ package Alire.Containers is
                   Release.Satisfies (Dep));
 
    package Release_Holders
-   is new Ada.Containers.Indefinite_Holders (Releases.Release,
-                                             Releases."=");
+   is new AAA.Containers.Indefinite_Holders (Releases.Release);
    subtype Release_H is Release_Holders.Holder;
 
    package Crate_Release_Maps is new Ada.Containers.Indefinite_Ordered_Maps

@@ -130,7 +130,8 @@ package body Alire.Releases is
       Parent_Folder   : String;
       Was_There       : out Boolean;
       Perform_Actions : Boolean := True;
-      Create_Manifest : Boolean := False)
+      Create_Manifest : Boolean := False;
+      Include_Origin  : Boolean := False)
    is
       use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
@@ -167,14 +168,14 @@ package body Alire.Releases is
       -- Create_Authoritative_Manifest --
       -----------------------------------
 
-      procedure Create_Authoritative_Manifest is
+      procedure Create_Authoritative_Manifest (Kind : Manifest.Sources) is
       begin
          Trace.Debug ("Generating manifest file for "
                       & This.Milestone.TTY_Image & " with"
                       & This.Dependencies.Leaf_Count'Img & " dependencies");
 
          This.Whenever (Env).To_File (Folder / Paths.Crate_File_Name,
-                                      Manifest.Local);
+                                      Kind);
       end Create_Authoritative_Manifest;
 
    begin
@@ -205,7 +206,9 @@ package body Alire.Releases is
          Backup_Upstream_Manifest;
 
          if Create_Manifest then
-            Create_Authoritative_Manifest;
+            Create_Authoritative_Manifest (if Include_Origin
+                                           then Manifest.Index
+                                           else Manifest.Local);
          end if;
       end if;
 

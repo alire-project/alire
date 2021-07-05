@@ -1075,7 +1075,7 @@ package body Alire.Roots is
    begin
       --  Load our manifest
 
-      This.Release.Replace_Element
+      This.Release.Hold
         (Releases.From_Manifest
            (This.Crate_File,
             Manifest.Local,
