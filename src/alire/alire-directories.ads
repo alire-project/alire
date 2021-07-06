@@ -75,6 +75,9 @@ package Alire.Directories is
    --  the directory entry is passed before entering it "." and ".." are
    --  ignored. If Stop is set to True, traversal will not continue.
 
+   function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
+   --  Size of files under a given point, in bytes.
+
    ----------------
    -- GUARD TYPE --
    ----------------

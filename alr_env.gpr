@@ -12,6 +12,7 @@ aggregate project Alr_Env is
                          "deps/optional",
                          "deps/semantic_versioning",
                          "deps/simple_logging",
+                         "deps/si_units",
                          "deps/toml_slicer",
                          "deps/uri-ada",
                          "deps/xmlezout",

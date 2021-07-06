@@ -516,6 +516,36 @@ package body Alire.Directories is
    end Traverse_Tree;
 
    ---------------
+   -- Tree_Size --
+   ---------------
+
+   function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size is
+
+      use Ada.Directories;
+      Result : File_Size := 0;
+
+      ----------------
+      -- Accumulate --
+      ----------------
+
+      procedure Accumulate (Item : Directory_Entry_Type;
+                            Stop : in out Boolean)
+      is
+      begin
+         Stop := False;
+         if Kind (Item) = Ordinary_File then
+            Result := Result + Size (Item);
+         end if;
+      end Accumulate;
+
+   begin
+      Traverse_Tree (Path,
+                     Doing   => Accumulate'Access,
+                     Recurse => True);
+      return Result;
+   end Tree_Size;
+
+   ---------------
    -- With_Name --
    ---------------
 

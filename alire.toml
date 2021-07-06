@@ -24,6 +24,7 @@ minirest = "~0.2"
 optional = "~0.0.0"
 semantic_versioning = "^2"
 simple_logging = "^1.2"
+si_units ="~0.2"
 uri_ada = "^1"
 spdx = "~0.2"
 

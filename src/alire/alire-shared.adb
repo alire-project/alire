@@ -9,6 +9,8 @@ with Alire.Root;
 with Alire.TTY;
 with Alire.Warnings;
 
+with SI_Units.Binary;
+
 package body Alire.Shared is
 
    use Directories.Operators;
@@ -115,5 +117,64 @@ package body Alire.Shared is
 
       Put_Info (Release.Milestone.TTY_Image & " installed successfully.");
    end Share;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+     (Release : Releases.Release;
+      Confirm : Boolean := not Utils.User_Input.Not_Interactive)
+   is
+      type Modular_File_Size is mod 2 ** Ada.Directories.File_Size'Size;
+
+      function Image is new SI_Units.Binary.Image
+        (Item        => Modular_File_Size,
+         Default_Aft => 1,
+         Unit        => "B");
+
+      use Utils.User_Input;
+      Path : constant Absolute_Path := Install_Path / Release.Unique_Folder;
+   begin
+      if not Ada.Directories.Exists (Path) then
+         Raise_Checked_Error
+           ("Directory slated for removal does not exist: " & TTY.URL (Path));
+      end if;
+
+      if not Confirm or else Utils.User_Input.Query
+        (Question => "Release " & Release.Milestone.TTY_Image & " is going to "
+         & "be removed, freeing "
+         & TTY.Emph (Image (Modular_File_Size (Directories.Tree_Size (Path))))
+         & ". Do you want to proceed?",
+         Valid    => (No | Yes => True, others => False),
+         Default  => Yes) = Yes
+      then
+         Directories.Force_Delete (Path);
+         Put_Success
+           ("Release " & Release.Milestone.TTY_Image
+            & " removed successfully");
+      end if;
+   end Remove;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove
+     (Target : Milestones.Milestone;
+      Confirm : Boolean := not Utils.User_Input.Not_Interactive)
+   is
+      use type Milestones.Milestone;
+   begin
+      for Release of Available loop
+         if Release.Milestone = Target then
+            Remove (Release, Confirm);
+            return;
+         end if;
+      end loop;
+
+      Raise_Checked_Error
+        ("Requested release is not installed: " & Target.TTY_Image);
+   end Remove;
 
 end Alire.Shared;

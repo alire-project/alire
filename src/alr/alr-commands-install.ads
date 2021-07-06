@@ -32,7 +32,7 @@ package Alr.Commands.Install is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration) is null;
+      Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
    overriding
    function Short_Description (Cmd : Command) return String
@@ -40,10 +40,12 @@ package Alr.Commands.Install is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[crate[version set]]");
+   is ("[-u|--uninstall] [crate[version set]]");
 
 private
 
-   type Command is new Commands.Command with null record;
+   type Command is new Commands.Command with record
+      Uninstall : aliased Boolean := False;
+   end record;
 
 end Alr.Commands.Install;
