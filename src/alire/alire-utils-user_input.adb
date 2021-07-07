@@ -166,6 +166,130 @@ package body Alire.Utils.User_Input is
       end loop;
    end Query;
 
+   -----------------
+   -- Query_Multi --
+   -----------------
+
+   function Query_Multi (Question         : String;
+                         Choices          : String_Vector;
+                         Page_Size        : Positive := 10)
+                         return Positive
+   is
+      Answers : constant array (Positive range <>) of Character :=
+                  ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+                   'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                   'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+                  'u', 'v', 'w', 'x', 'y', 'z');
+      pragma Assert (Answers'First = Positive'First);
+
+      Use_Pager  : constant Boolean := Natural (Choices.Length) > Page_Size;
+      Page_Start : Positive := 1;
+      Page_End   : Positive;
+      --  Points always to the last valid choice; there can be an extra choice
+      --  if Use_Pager, to move forward the list.
+
+      -------------------
+      -- Print_Choices --
+      -------------------
+
+      procedure Print_Choices is
+      begin
+         Page_End   := Positive'Min (Choices.Last_Index,
+                                     Page_Start + Page_Size - 1);
+
+         --  Print the choices proper
+
+         for I in Page_Start .. Page_End loop
+            TIO.Put_Line
+              ("  "
+               &  (if I = Page_Start
+                   then TTY.Bold ("" & Answers (I - Page_Start + 1))
+                   else TTY.Emph ("" & Answers (I - Page_Start + 1)))
+               & ". " & Choices (I));
+         end loop;
+
+         --  And the pager if needed
+
+         if Use_Pager then
+            TIO.Put_Line (TTY.Emph ("  " & Answers (Page_End - Page_Start + 2))
+                          & ". (See more choices...)");
+         end if;
+      end Print_Choices;
+
+   begin
+      loop
+         begin
+            TIO.Put_Line (Question);
+
+            if Not_Interactive or else not Is_TTY then
+               return Choices.First_Index;
+            end if;
+
+            --  Flush the input that the user may have entered by mistake
+            --  before the question is asked.
+            Flush_TTY;
+
+            Print_Choices;
+            TIO.Put_Line ("Enter your choice index (first is default): ");
+            TIO.Put ("> ");
+
+            declare
+               Answer_Line : constant String := TIO.Get_Line;
+               Answer_Char : Character;
+               Answer_Pos  : Natural := 0;
+               Extra       : constant Natural := (if Use_Pager then 1 else 0);
+               --  We have an extra entry in the list in this case
+            begin
+               if Answer_Line = "" then
+                  return Page_Start;
+               elsif Answer_Line'Length > 1 then
+                  raise Checked_Error with "answer too long";
+               end if;
+
+               Answer_Char := Answer_Line (Answer_Line'First);
+
+               --  Find the user's choice, and correct it with the actual page
+               --  we are showing to them.
+
+               for I in Answers'Range loop
+                  if Answer_Char = Answers (I) then
+                     Answer_Pos := I;
+                  end if;
+               end loop;
+
+               if Answer_Pos = 0 then
+                  raise Checked_Error with "Choice out of range";
+               end if;
+
+               Answer_Pos := Answer_Pos + Page_Start - 1;
+
+               if Answer_Pos not in Page_Start .. Page_End + Extra
+               then
+                  raise Checked_Error with "Choice out of range";
+               end if;
+
+               --  We have a valid choice; either change pages or return choice
+               if Answer_Pos = Page_End + 1 then
+                  Page_Start := Page_Start + Page_Size;
+                  if Page_Start > Choices.Last_Index then
+                     Page_Start := Choices.First_Index;
+                  end if;
+               else
+                  return Answer_Pos;
+               end if;
+            end;
+         exception
+            when E : TIO.End_Error =>
+               --  This happens on the user hitting Ctrl-D, and no further
+               --  input can be obtained as stdin is closed
+               Log_Exception (E);
+               Raise_Checked_Error ("Cancelled.");
+            when others =>
+               Put_Failure ("Not a valid choice, please use a line index.");
+         end;
+      end loop;
+   end Query_Multi;
+
    ---------
    -- Img --
    ---------

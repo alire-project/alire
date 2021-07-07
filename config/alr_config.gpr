@@ -6,6 +6,7 @@ with "gnatcoll.gpr";
 with "minirest.gpr";
 with "optional.gpr";
 with "semantic_versioning.gpr";
+with "si_units.gpr";
 with "simple_logging.gpr";
 with "spdx.gpr";
 with "uri.gpr";

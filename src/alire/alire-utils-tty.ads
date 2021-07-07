@@ -57,6 +57,10 @@ package Alire.Utils.TTY with Preelaborate is
 
    function Bold (Text : String) return String;
 
+   function Dim (Text : String) return String;
+
+   function Italic (Text : String) return String;
+
    function Underline (Text : String) return String;
 
    function Name (Crate : Crate_Name) return String;
@@ -110,6 +114,14 @@ private
    function Bold (Text : String) return String is
      (Format (Text,
               Style => ANSI.Bright));
+
+   function Dim (Text : String) return String is
+     (Format (Text,
+              Style => ANSI.Dim));
+
+   function Italic (Text : String) return String is
+     (Format (Text,
+              Style => ANSI.Italic));
 
    function Underline (Text : String) return String is
      (Format (Text,

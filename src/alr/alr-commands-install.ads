@@ -40,11 +40,12 @@ package Alr.Commands.Install is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[-u|--uninstall] [crate[version set]]");
+   is ("[-u|--uninstall] [crate[version set]] | --toolchain");
 
 private
 
    type Command is new Commands.Command with record
+      Toolchain : aliased Boolean := False;
       Uninstall : aliased Boolean := False;
    end record;
 

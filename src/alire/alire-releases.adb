@@ -188,7 +188,7 @@ package body Alire.Releases is
                          This.Milestone.Image);
       else
          Was_There := False;
-         Trace.Detail ("About to deploy " & This.Milestone.Image);
+         Put_Info ("Deploying release " & This.Milestone.TTY_Image & " ...");
          Result := Alire.Origins.Deployers.Deploy (This, Folder);
          if not Result.Success then
             Raise_Checked_Error (Message (Result));

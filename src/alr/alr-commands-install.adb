@@ -8,6 +8,7 @@ with Alire.Milestones;
 with Alire.Releases;
 with Alire.Shared;
 with Alire.Solver;
+with Alire.Toolchains;
 with Alire.Utils;
 
 with Semantic_Versioning.Extended;
@@ -25,6 +26,13 @@ package body Alr.Commands.Install is
    is
       use GNAT.Command_Line;
    begin
+      Define_Switch
+        (Config,
+         Cmd.Toolchain'Access,
+         Switch      => "",
+         Long_Switch => "--toolchain",
+         Help        => "Run the toolchain selection assistant");
+
       Define_Switch
         (Config,
          Cmd.Uninstall'Access,
@@ -153,6 +161,11 @@ package body Alr.Commands.Install is
 
       --  Validation
 
+      if Cmd.Uninstall and then Cmd.Toolchain then
+         Reportaise_Wrong_Arguments
+           ("The provided switches cannot be used simultaneously");
+      end if;
+
       if Num_Arguments > 1 then
          Reportaise_Wrong_Arguments
            ("One crate with optional version expected: crate[version set]");
@@ -162,9 +175,17 @@ package body Alr.Commands.Install is
          Reportaise_Wrong_Arguments ("No release to uninstall specified");
       end if;
 
+      if Cmd.Toolchain and then Num_Arguments /= 0 then
+         Reportaise_Wrong_Arguments
+           ("Toolchain installation does not accept any arguments");
+      end if;
+
       --  Dispatch to subcommands
 
-      if Cmd.Uninstall then
+      if Cmd.Toolchain then
+         Cmd.Requires_Full_Index;
+         Alire.Toolchains.Assistant;
+      elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
       elsif Num_Arguments = 1 then
          Cmd.Install (Argument (1));

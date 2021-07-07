@@ -8,7 +8,6 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
-with Alire;
 with Alire.Config.Edit;
 with Alire.Errors;
 with Alire.Features.Index;
@@ -17,6 +16,7 @@ with Alire.Paths;
 with Alire.Platforms;
 with Alire.Root;
 with Alire.Solutions;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
@@ -547,6 +547,8 @@ package body Alr.Commands is
       Manual_Only : constant Boolean :=
                       Alire.Config.Get
                         (Alire.Config.Keys.Update_Manually, False);
+
+      package Conf renames Alire.Config;
    begin
 
       --  If the root has been already loaded, then all following checks have
@@ -555,6 +557,12 @@ package body Alr.Commands is
       if Cmd.Optional_Root.Is_Valid then
          Trace.Debug ("Workspace is valid [already loaded]");
          return;
+      end if;
+
+      if Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True)
+        and then not Conf.Defined (Conf.Keys.Toolchain_Version)
+      then
+         Alire.Toolchains.Assistant;
       end if;
 
       Trace.Debug ("Workspace is being checked and loaded for the first time");
