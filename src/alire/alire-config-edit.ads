@@ -140,7 +140,12 @@ private
       (+Keys.Warning_Caret,
        Cfg_Bool,
        +("If true, Alire will warn about the use of caret (^) "
-         & "for pre-1 dependencies."))
+         & "for pre-1 dependencies.")),
+
+      (+Keys.Toolchain_Assistant,
+       Cfg_Bool,
+       +("If true, and assistant to select the default toolchain will run "
+         & "when first needed."))
 
      );
 

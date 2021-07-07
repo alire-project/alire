@@ -23,6 +23,14 @@ package Alire.Utils.User_Input is
    --  If interactive, ask the user for one of the valid answer.
    --  Otherwise return the Default answer.
 
+   function Query_Multi (Question         : String;
+                         Choices          : String_Vector;
+                         Page_Size        : Positive := 10)
+                         return Positive
+     with Pre => Page_Size >= 2 and then Page_Size < 36;
+   --  Present the Choices in a numbered list 1-9-0-a-z, with paging if
+   --  Choices.Length > Page_Size. Default is always First of Choices.
+
    type Answer_With_Input (Length : Natural) is record
       Input  : String (1 .. Length);
       Answer : Answer_Kind;
@@ -35,7 +43,6 @@ package Alire.Utils.User_Input is
       Default  : access function (User_Input : String) return Answer_Kind;
       Confirm  : String := "Is this information correct?";
       Is_Valid : access function (User_Input : String) return Boolean)
-
       return Answer_With_Input;
    --  Interactive prompt for information from the user, with confirmation:
    --  Put_Line (Question)
