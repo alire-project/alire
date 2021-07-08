@@ -8,6 +8,7 @@ with Alire.Index;
 with Alire.Origins;
 with Alire.Releases;
 with Alire.Root;
+with Alire.Shared;
 with Alire.TTY;
 with Alire.Utils.User_Input;
 
@@ -22,12 +23,13 @@ package body Alire.Toolchains is
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
 
-      Choices  : Utils.String_Vector;
-      Releases : Release_Vectors.Vector;
+      Choices : Utils.String_Vector;
+      Targets : Release_Vectors.Vector;
       --  These two variables are in sync; so the picked choice says the
       --  release to use at the same position in the respective vector.
 
-      GNAT    : constant Crate_Name := To_Name ("gnat");
+      GNAT     : constant Crate_Name := To_Name ("gnat");
+      GPRbuild : constant Crate_Name := To_Name ("gprbuild");
 
       ----------------
       -- Add_Choice --
@@ -40,10 +42,10 @@ package body Alire.Toolchains is
       begin
          if Prepend then
             Choices.Prepend (Text);
-            Releases.Prepend (Release);
+            Targets.Prepend (Release);
          else
             Choices.Append (Text);
-            Releases.Append (Release);
+            Targets.Append (Release);
          end if;
       end Add_Choice;
 
@@ -58,7 +60,7 @@ package body Alire.Toolchains is
 
          --  Always offer to configure nothing
          Choices.Append ("None");
-         Releases.Append (Index.Crate (GNAT).Base); -- Just a placeholder
+         Targets.Append (Index.Crate (GNAT).Base); -- Just a placeholder
 
          --  Identify possible externals first (but after the newest Alire one)
          for Release of reverse Index.Crate (GNAT).Releases loop
@@ -101,11 +103,62 @@ package body Alire.Toolchains is
                        Choices   => Choices);
       begin
          if Choices (Choice) = "None" then
+
             Put_Info ("Selected to rely on a user-provided toolchain.");
 
+            --  Clean up stored version
+
+            Config.Edit.Unset (Path  => Config.Edit.Filepath (Config.Global),
+                               Key   => Config.Keys.Toolchain_Version);
+
          else
+
             Put_Info ("Selected toolchain version "
-                      & TTY.Bold (Releases (Choice).Version.Image));
+                      & TTY.Bold (Targets (Choice).Version.Image));
+
+            --  If the selected compiler is one of our regular indexed ones,
+            --  install the compiler and a matching gprbuild, if existing.
+            --  Also, store the version in our configuration for future
+            --  reference. On the contrary, if the selection is from system
+            --  packages or the environment, we need not to install anything.
+            --  (We are not offering system packages, as only one gnat can
+            --  be installed e.g. in Debian, and changing it would affect the
+            --  whole system. We only offer external compilers detected in the
+            --  environment.)
+
+            Set_Up_Choice :
+            declare
+               GNAT_Release : constant Releases.Release := Targets (Choice);
+            begin
+
+               --  Store version
+
+               Config.Edit.Set (Path  => Config.Edit.Filepath (Config.Global),
+                                Key   => Config.Keys.Toolchain_Version,
+                                Value => GNAT_Release.Version.Image);
+
+               --  Optionally, deploy as a shared install
+
+               if GNAT_Release.Origin.Is_Regular then
+                  Shared.Share (GNAT_Release);
+
+                  if Index.Exists (GPRbuild) then
+                     if Index.Exists (GPRbuild, GNAT_Release.Version) then
+                        Shared.Share
+                          (Index.Find (GPRbuild, GNAT_Release.Version));
+                     else
+                        Put_Warning
+                          ("No matching GPRbuild version in the catalog.");
+                     end if;
+                  else
+                     Put_Warning
+                       ("No indexed GPRbuild versions in the catalog.");
+                  end if;
+
+               else
+                  Trace.Debug ("The user selected a external GNAT as default");
+               end if;
+            end Set_Up_Choice;
          end if;
       end Set_Toolchain;
 
@@ -129,12 +182,19 @@ package body Alire.Toolchains is
             & """alr install --toolchain"".")
          .Append (""));
 
+      if Config.Get (Config.Keys.Toolchain_Version, "") /= "" then
+         Put_Info ("Version currently in use: "
+                   & TTY.Version
+                     (Config.Get (Config.Keys.Toolchain_Version, "")));
+         Trace.Info ("");
+      end if;
+
       --  Find the newest regular gnat in our index:
       if Index.Exists (GNAT) then
          Fill_Version_Choices;
          Set_Toolchain;
       else
-         Put_Warning ("There are no indexed GNAT versions in the catalog");
+         Put_Warning ("No indexed GNAT versions in the catalog");
       end if;
 
       Config.Edit.Set (Config.Edit.Filepath (Config.Global),
