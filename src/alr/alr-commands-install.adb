@@ -183,6 +183,7 @@ package body Alr.Commands.Install is
       --  Dispatch to subcommands
 
       if Cmd.Toolchain then
+         Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant;
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));

@@ -201,16 +201,17 @@ package body Alire.Utils.User_Input is
 
          for I in Page_Start .. Page_End loop
             TIO.Put_Line
-              ((if I = Page_Start
-               then TTY.Bold ("" & Answers (I - Page_Start + 1))
-               else TTY.Emph ("" & Answers (I - Page_Start + 1)))
+              ("  "
+               &  (if I = Page_Start
+                   then TTY.Bold ("" & Answers (I - Page_Start + 1))
+                   else TTY.Emph ("" & Answers (I - Page_Start + 1)))
                & ". " & Choices (I));
          end loop;
 
          --  And the pager if needed
 
          if Use_Pager then
-            TIO.Put_Line (TTY.Emph ("" & Answers (Page_End - Page_Start + 2))
+            TIO.Put_Line (TTY.Emph ("  " & Answers (Page_End - Page_Start + 2))
                           & ". (See more choices...)");
          end if;
       end Print_Choices;
@@ -228,7 +229,8 @@ package body Alire.Utils.User_Input is
          Flush_TTY;
 
          Print_Choices;
-         TIO.Put_Line ("Enter your choice (first is default): ");
+         TIO.Put_Line ("Enter your choice index (first is default): ");
+         TIO.Put ("> ");
 
          declare
             Answer_Line : constant String := TIO.Get_Line;
@@ -276,7 +278,7 @@ package body Alire.Utils.User_Input is
             end if;
          exception
             when others =>
-               Put_Failure ("Not a valid choice, please try again.");
+               Put_Failure ("Not a valid choice, please use a line index.");
          end;
       end loop;
    end Query_Multi;
