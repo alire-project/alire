@@ -263,20 +263,6 @@ package body Alire.Solver is
                                 and Remaining).Image_One_Line);
                   end if;
 
-               --  If the alias of the candidate release is already in the
-               --  frozen list, the candidate is incompatible since another
-               --  crate has already provided this dependency:
-
-               elsif Solution.Releases.Contains (R.Provides) then
-                  Trace.Debug
-                    ("SOLVER: discarding tree because of " &
-                       "conflicting PROVIDES release: " &
-                       R.Milestone.Image & " provides " & (+R.Provides) &
-                       " already in tree " &
-                       Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
-
                --  If the candidate release is forbidden by a previously
                --  resolved dependency, the candidate release is
                --  incompatible and we may stop search along this branch.
@@ -399,44 +385,31 @@ package body Alire.Solver is
 
                   --  The pin is compatible with the dependency, go ahead
 
-                  if Index.Exists (Dep.Crate, Pin_Version) then
+                  for Release of Index.Releases_Satisfying
+                    (Dependencies.New_Dependency (Dep.Crate, Pin_Version))
+                  loop
 
                      --  There is a valid crate for this pin and dependency
 
                      Trace.Debug ("SOLVER short-cutting due to version pin"
                                   & " with valid release in index");
-                     Check (Index.Find (Dep.Crate, Pin_Version));
+                     Check (Release);
+                  end loop;
 
-                     --  The check may still fail, so we must attempt this one:
+                     --  There may be no satisfying releases, or even so the
+                     --  check may still fail, so we must attempt this one too:
 
-                     Trace.Debug
-                       ("SOLVER: marking crate " & Dep.Image
-                        & " MISSING in case pinned version available in index "
-                        & TTY.Version (Pin_Version.Image)
-                        & " is incompatible with other dependencies"
-                        & " when the search tree was "
-                        & Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
+                  Trace.Debug
+                    ("SOLVER: marking crate " & Dep.Image
+                     & " MISSING in case pinned version "
+                     & TTY.Version (Pin_Version.Image)
+                     & " is incompatible with other dependencies"
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                       and Target
+                       and Remaining).Image_One_Line);
 
-                     Expand_Missing (Dep);
-
-                  else
-
-                     --  There is no release for this pin
-
-                     Trace.Debug
-                       ("SOLVER: marking crate " & Dep.Image
-                        & " MISSING because index LACKS pinned version "
-                        & TTY.Version (Pin_Version.Image)
-                        & " when the search tree was "
-                        & Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-
-                     Expand_Missing (Dep);
-
-                  end if;
+                  Expand_Missing (Dep);
 
                else
 

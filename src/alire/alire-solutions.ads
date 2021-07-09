@@ -232,6 +232,13 @@ package Alire.Solutions is
                      return Boolean;
    --  Check whether the solution forbids a release
 
+   function Satisfies (This    : Solution;
+                       Release : Alire.Releases.Release;
+                       Env     : Properties.Vector)
+                       return Boolean;
+   --  Check whether the solution already satisfies a release or its
+   --  equivalences.
+
    function Hints (This : Solution) return Dependency_Map;
    --  Return undetected externals in the solution
 

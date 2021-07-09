@@ -6,6 +6,7 @@ with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -20,6 +21,7 @@ package body Alire.Solutions is
    package TTY renames Utils.TTY;
 
    use type Ada.Containers.Count_Type;
+   use type Milestones.Milestone;
    use type Semantic_Versioning.Version;
 
    -----------------------
@@ -106,6 +108,30 @@ package body Alire.Solutions is
       end return;
    end Forbidden;
 
+   ---------------
+   -- Satisfies --
+   ---------------
+
+   function Satisfies (This    : Solution;
+                       Release : Alire.Releases.Release;
+                       Env     : Properties.Vector)
+                       return Boolean
+   is (
+         --  Trivial equivalence, and mutual satisfiability via equivalences
+         (for some Solved of This.Releases =>
+          Solved.Milestone = Release.Milestone or else
+          Solved.Satisfies (Release.To_Dependency.Value) or else
+          Release.Satisfies (Solved.To_Dependency.Value))
+       or else
+       --  Already linked
+         (for some Linked of This.Links => Linked.Crate = Release.Name)
+       or else
+       --  Already linked to one of the release equivalences
+         (for some Linked of This.Links =>
+             (for some Mil of Release.Provides =>
+                   Linked.Crate = Mil.Crate))
+      );
+
    -------------
    -- Forbids --
    -------------
@@ -114,14 +140,22 @@ package body Alire.Solutions is
                      Release : Alire.Releases.Release;
                      Env     : Properties.Vector)
                      return Boolean
-   --  First check stored releases' forbids against new release, then check new
-   --  release's forbids agains solution releases.
-   is ((for some Rel of This.Releases =>
-          (for some Dep of Rel.Forbidden (Env) =>
+   --  ChCheck stored releases' forbids against new release, then check new
+   --  release's forbids agains solution releases. Finally, check that another
+   --  release in the solution already provides the target release, & viceversa
+   is (
+       --  Some of the releases in the solution forbid this one release
+       (for some Solved of This.Releases =>
+          (for some Dep of Solved.Forbidden (Env) =>
                 Release.Satisfies (Dep.Value))
         or else
           (for some Dep of Release.Forbidden (Env) =>
-               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value)))));
+               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))))
+       or else
+         (for some Rel of This.Releases =>
+             Rel.Satisfies (Release.To_Dependency.Value)
+             or else Release.Satisfies (Rel.To_Dependency.Value))
+      );
 
    ---------------
    -- Including --
