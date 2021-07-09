@@ -263,6 +263,21 @@ package body Alire.Solver is
                                 and Remaining).Image_One_Line);
                   end if;
 
+               --  If the candidate release is already satisfied by the
+               --  solution, it can be added to the solution. This takes
+               --  care of "provides" equivalences. TODO: TEST this new branch.
+
+               elsif Solution.Satisfies (R, Props)
+               then
+                  Trace.Debug
+                    ("SOLVER: discarding tree because of" &
+                       " ALREADY SATISFIED release: " &
+                       R.Milestone.Image &
+                       " satisfied by current solution when tree is " &
+                       Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
                --  If the candidate release is forbidden by a previously
                --  resolved dependency, the candidate release is
                --  incompatible and we may stop search along this branch.
@@ -312,8 +327,8 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                        " to satisfy " & Dep.TTY_Image &
-                     (if R.Name /= R.Provides
-                        then " also providing " & (+R.Provides)
+                     (if not R.Provides.Is_Empty
+                        then " also providing " & R.Provides.Image_One_Line
                         else "") &
                        " adding" &
                        R.Dependencies (Props).Leaf_Count'Img &
@@ -453,8 +468,8 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: dependency FROZEN+SHARED: "
                      & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
-                     & (if R.Name /= R.Provides
-                       then " also providing " & (+R.Provides)
+                     & (if not R.Provides.Is_Empty
+                       then " also providing " & R.Provides.Image_One_Line
                        else "") &
                        " adding" &
                        R.Dependencies (Props).Leaf_Count'Img &
@@ -533,6 +548,7 @@ package body Alire.Solver is
                Check_Version_Pin;
 
             elsif Index.Exists (Dep.Crate) then
+               --  TODO replace with index satisfiability
 
                --  Detect externals for this dependency now, so they are
                --  available as regular releases. Note that if no release

@@ -170,4 +170,24 @@ package body Alire.Index is
       end return;
    end Release_Count;
 
+   -------------------------
+   -- Releases_Satisfying --
+   -------------------------
+
+   function Releases_Satisfying (Dep : Dependencies.Dependency)
+                                 return Containers.Release_Set
+   is
+      Result : Containers.Release_Set;
+   begin
+      if Exists (Dep.Crate) then
+         for Release of Crate (Dep.Crate).Releases loop
+            if Release.Satisfies (Dep) then
+               Result.Insert (Release);
+            end if;
+         end loop;
+      end if;
+
+      return Result;
+   end Releases_Satisfying;
+
 end Alire.Index;

@@ -399,6 +399,9 @@ private
                           return Conditional.Dependencies
    is (R.Dependencies.Evaluate (P));
 
+   function Provides (R : Release) return Alire.Provides.Equivalences
+   is (R.Equivalences);
+
    function Forbidden (R : Release) return Conditional.Dependencies
    is (R.Forbidden);
 

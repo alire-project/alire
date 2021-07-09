@@ -140,21 +140,15 @@ package body Alire.Solutions is
                      Release : Alire.Releases.Release;
                      Env     : Properties.Vector)
                      return Boolean
-   --  ChCheck stored releases' forbids against new release, then check new
-   --  release's forbids agains solution releases. Finally, check that another
-   --  release in the solution already provides the target release, & viceversa
    is (
        --  Some of the releases in the solution forbid this one release
        (for some Solved of This.Releases =>
           (for some Dep of Solved.Forbidden (Env) =>
                 Release.Satisfies (Dep.Value))
         or else
+        --  The candidate release forbids something in the solution
           (for some Dep of Release.Forbidden (Env) =>
                (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))))
-       or else
-         (for some Rel of This.Releases =>
-             Rel.Satisfies (Release.To_Dependency.Value)
-             or else Release.Satisfies (Rel.To_Dependency.Value))
       );
 
    ---------------

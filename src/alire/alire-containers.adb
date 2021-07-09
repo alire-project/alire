@@ -59,9 +59,6 @@ package body Alire.Containers is
       return Result : Release_Map := Dst do
          for E of Src loop
             Result.Insert (E.Name, E);
-            if E.Name /= E.Provides then
-               Result.Insert (E.Provides, E);
-            end if;
          end loop;
       end return;
    end Inserting;
@@ -159,18 +156,15 @@ package body Alire.Containers is
    is
       package Semver renames Semantic_Versioning;
       use Conditional.For_Dependencies;
-      use Crate_Release_Maps;
    begin
       return Deps : Conditional.Dependencies do
          for I in Map.Iterate loop
-            if Key (I) = Map (I).Provides then -- Avoid duplicates
-               Deps :=
-                 Deps and
-                 Conditional.New_Dependency
-                   (Map (I).Name,
-                    Semver.Extended.To_Extended
-                      (Semver.Basic.Exactly (Map (I).Version)));
-            end if;
+            Deps :=
+              Deps and
+              Conditional.New_Dependency
+                (Map (I).Name,
+                 Semver.Extended.To_Extended
+                   (Semver.Basic.Exactly (Map (I).Version)));
          end loop;
       end return;
    end To_Dependencies;
