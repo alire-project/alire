@@ -4,6 +4,7 @@ with Alire.Crates;
 with Alire.Externals.From_Output;
 with Alire.Externals.From_System;
 with Alire.Externals.Unindexed;
+with Alire.Provides;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
@@ -60,8 +61,10 @@ package body Alire.Externals is
          end if;
       end Validate;
 
-      Unused_Deps : Conditional.Dependencies;
-      Unused_Pins : User_Pins.Maps.Map;
+      --  These cannot appear in externals:
+      Unused_Deps  : Conditional.Dependencies;
+      Unused_Equiv : Provides.Equivalences;
+      Unused_Pins  : User_Pins.Maps.Map;
 
    begin
 
@@ -83,6 +86,7 @@ package body Alire.Externals is
             From    => From,
             Props   => Ext.Properties,
             Deps    => Unused_Deps,
+            Equiv   => Unused_Equiv,
             Pins    => Unused_Pins,
             Avail   => Ext.Available);
 

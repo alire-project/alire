@@ -6,6 +6,7 @@ with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
+with Alire.Optional;
 with Alire.Origins;
 with Alire.Shared;
 with Alire.Utils.TTY;
@@ -224,14 +225,17 @@ package body Alire.Solver is
 
             Solution : constant Alire.Solutions.Solution :=
                          Expand.Solution.Depending_On (Dep);
+            --  Note that, since this merge may render the release for the old
+            --  dependency invalid, it should be checked again (which Check
+            --  below does.)
 
             -----------
             -- Check --
             -----------
 
-            procedure Check (R : Release) is
-               use Alire.Containers;
+            procedure Check (R : Release; Is_Shared : Boolean) is
                use all type Origins.Kinds;
+               use type Release;
             begin
 
                --  We first check that the release matches the dependency we
@@ -245,13 +249,59 @@ package body Alire.Solver is
                --  current dependency, we may continue along this branch,
                --  with this dependency out of the picture.
 
-               if Solution.Releases.Contains (R.Name) then
+               if Solution.Provides (R)
+               then
+
+                  if R /= Solution.Release_Providing (R) then
+
+                     --  This may occur when e.g., we have a system compiler in
+                     --  the solution, which does not have provides and hence
+                     --  cannot be detected before this point. In this case we
+                     --  cannot add a release that also provides something
+                     --  in the solution, so we have to discard this branch.
+
+                     Trace.Debug
+                       ("SOLVER: discarding tree because of " &
+                          "conflicting FROZEN release: " &
+                          Solution.Release_Providing (R).Milestone.TTY_Image &
+                          " already provides same crate as target release: " &
+                          R.Milestone.TTY_Image & " for dependency " &
+                          Dep.Image & " in tree " &
+                          Tree'(Expanded
+                                and Target
+                                and Remaining).Image_One_Line);
+
+                     return;
+
+                  end if;
+
+                  --  Now we may continue knowing that R is the same release
+                  --  already in the solution for another dependency.
+
                   if R.Satisfies (Dep) then
-                     --  Continue along this tree
+
+                     Trace.Debug
+                       ("SOLVER: reusing FROZEN release: " &
+                          R.Milestone.Image & " to satisfy " &
+                          Dep.Image & " in tree " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+
+                     --  Continue along this tree; no need to add dependencies
+                     --  as the release was already added previously.
+
                      Expand (Expanded  => Expanded,
                              Target    => Remaining,
                              Remaining => Empty,
-                             Solution  => Solution);
+                             Solution  => Solution.Including
+                               (R, Props,
+                                For_Dependency =>
+                                  Optional.Crate_Names.Unit (Dep.Crate),
+                                Shared         =>
+                                  Is_Shared or else
+                                  R.Origin.Kind = Binary_Archive));
+
                   else
                      Trace.Debug
                        ("SOLVER: discarding tree because of " &
@@ -262,20 +312,6 @@ package body Alire.Solver is
                                 and Target
                                 and Remaining).Image_One_Line);
                   end if;
-
-               --  If the alias of the candidate release is already in the
-               --  frozen list, the candidate is incompatible since another
-               --  crate has already provided this dependency:
-
-               elsif Solution.Releases.Contains (R.Provides) then
-                  Trace.Debug
-                    ("SOLVER: discarding tree because of " &
-                       "conflicting PROVIDES release: " &
-                       R.Milestone.Image & " provides " & (+R.Provides) &
-                       " already in tree " &
-                       Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
 
                --  If the candidate release is forbidden by a previously
                --  resolved dependency, the candidate release is
@@ -326,8 +362,9 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                        " to satisfy " & Dep.TTY_Image &
-                     (if R.Name /= R.Provides
-                        then " also providing " & (+R.Provides)
+                     (if Is_Shared then " with INSTALLED" else "") &
+                     (if not R.Provides.Is_Empty
+                        then " also providing " & R.Provides.Image_One_Line
                         else "") &
                        " adding" &
                        R.Dependencies (Props).Leaf_Count'Img &
@@ -342,7 +379,11 @@ package body Alire.Solver is
                           Remaining => Empty,
                           Solution  => Solution.Including
                             (R, Props,
-                             Shared => R.Origin.Kind = Binary_Archive));
+                             For_Dependency =>
+                               Optional.Crate_Names.Unit (Dep.Crate),
+                             Shared =>
+                               Is_Shared or else
+                               R.Origin.Kind = Binary_Archive));
                end if;
             end Check;
 
@@ -381,227 +422,12 @@ package body Alire.Solver is
                end if;
             end Expand_Missing;
 
-            -----------------------
-            -- Check_Version_Pin --
-            -----------------------
-            --  Specific checks for a version pin that narrow down the search
-            procedure Check_Version_Pin is
-               Pin_Version : constant Semver.Version :=
-                               Pins.State (Dep.Crate).Pin_Version;
+            --------------------
+            -- Check_External --
+            --------------------
+
+            procedure Check_External is
             begin
-
-               --  For a version pin release, we try only a release with the
-               --  exact version of the pin, to speed up the solving. If the
-               --  pin version is incompatible with the dependency, this branch
-               --  cannot succeed though.
-
-               if Semver.Extended.Is_In (Pin_Version, Dep.Versions) then
-
-                  --  The pin is compatible with the dependency, go ahead
-
-                  if Index.Exists (Dep.Crate, Pin_Version) then
-
-                     --  There is a valid crate for this pin and dependency
-
-                     Trace.Debug ("SOLVER short-cutting due to version pin"
-                                  & " with valid release in index");
-                     Check (Index.Find (Dep.Crate, Pin_Version));
-
-                     --  The check may still fail, so we must attempt this one:
-
-                     Trace.Debug
-                       ("SOLVER: marking crate " & Dep.Image
-                        & " MISSING in case pinned version available in index "
-                        & TTY.Version (Pin_Version.Image)
-                        & " is incompatible with other dependencies"
-                        & " when the search tree was "
-                        & Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-
-                     Expand_Missing (Dep);
-
-                  else
-
-                     --  There is no release for this pin
-
-                     Trace.Debug
-                       ("SOLVER: marking crate " & Dep.Image
-                        & " MISSING because index LACKS pinned version "
-                        & TTY.Version (Pin_Version.Image)
-                        & " when the search tree was "
-                        & Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-
-                     Expand_Missing (Dep);
-
-                  end if;
-
-               else
-
-                  --  The pin contradicts the dependency
-
-                  Trace.Debug
-                    ("SOLVER: marking crate " & Dep.Image
-                     & " MISSING because version pin "
-                     & TTY.Version (Pin_Version.Image) & " cannot satisfy "
-                     & Dep.TTY_Image
-                     & " when the search tree was "
-                     & Tree'(Expanded
-                       and Target
-                       and Remaining).Image_One_Line);
-
-                  Expand_Missing (Dep);
-
-               end if;
-            end Check_Version_Pin;
-
-            Satisfiable : Boolean := False;
-            --  Mark that the dependency is satisfiable. When we refactor the
-            --  solver from recursive to priority queue (I guess we eventually
-            --  will have to), we should do this globally since this is
-            --  information common to all search states.
-
-            ------------------
-            -- Check_Shared --
-            ------------------
-
-            procedure Check_Shared is
-               Satisfied_By_Shared : Boolean := False;
-            begin
-
-               --  Solve with all installed dependencies that satisfy it
-
-               for R of reverse Installed.Satisfying (Dep) loop
-                  Satisfiable         := True;
-                  Satisfied_By_Shared := True;
-
-                  Trace.Debug
-                    ("SOLVER: dependency FROZEN+SHARED: "
-                     & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
-                     & (if R.Name /= R.Provides
-                       then " also providing " & (+R.Provides)
-                       else "") &
-                       " adding" &
-                       R.Dependencies (Props).Leaf_Count'Img &
-                       " dependencies to tree " &
-                       Tree'(Expanded
-                       and Target
-                       and Remaining
-                       and R.Dependencies (Props)).Image_One_Line);
-
-                  Expand (Expanded  => Expanded and R.To_Dependency,
-                          Target    => Remaining and R.Dependencies (Props),
-                          Remaining => Empty,
-                          Solution  => Solution.Including (R, Props,
-                                                           Shared => True));
-               end loop;
-
-               --  We may want still check without taking into account
-               --  installed releases.
-
-               if not Satisfied_By_Shared
-                 or else Options.Completeness > First_Complete
-               then
-                  Expand_Value (Dep          => Dep,
-                                Allow_Shared => False);
-               end if;
-            end Check_Shared;
-
-         begin
-
-            if Pins.Depends_On (Dep.Crate) and then
-               Pins.State (Dep.Crate).Is_Linked
-            then
-
-               --  The dependency is softlinked in the starting solution, hence
-               --  we need not look further for releases.
-
-               Trace.Debug
-                 ("SOLVER: dependency LINKED to " &
-                    Pins.State (Dep.Crate).Link.Path &
-                    " when tree is " &
-                    Tree'(Expanded and Target and Remaining).Image_One_Line);
-
-               Expand (Expanded  => Expanded and Dep,
-                       Target    => Remaining and
-                         (if Pins.State (Dep.Crate).Has_Release
-                          then Pins.State (Dep.Crate)
-                                   .Release.Dependencies (Props)
-                          else Empty),
-                       Remaining => Empty,
-                       Solution  =>
-                         Solution.Linking (Dep.Crate,
-                                           Pins.State (Dep.Crate).Link));
-
-            elsif Solution.Releases.Contains (Dep.Crate) then
-
-               --  Cut search once a crate is frozen, by checking the
-               --  compatibility of the already frozen release:
-
-               Check (Solution.Releases.Element (Dep.Crate));
-
-            elsif Allow_Shared then
-
-               --  There is a shared release we can use for this dependency; we
-               --  prefer this option first. If more solutions than the first
-               --  complete one are sought, we can still try without the shared
-               --  release.
-
-               Check_Shared;
-
-            elsif Pins.Depends_On (Dep.Crate) and then
-                  Pins.State (Dep.Crate).Is_Pinned
-            then
-
-               --  Specific pin checks that can speed up the search
-
-               Check_Version_Pin;
-
-            elsif Index.Exists (Dep.Crate) then
-
-               --  Detect externals for this dependency now, so they are
-               --  available as regular releases. Note that if no release
-               --  fulfills the dependency, it will be resolved as a hint
-               --  below.
-
-               if Options.Detecting = Detect then
-                  Index.Detect_Externals (Dep.Crate, Props);
-               end if;
-
-               --  Check the releases now, from newer to older (unless required
-               --  in reverse). We keep track that none is valid, as this is
-               --  a special case in which we're being asked an impossible
-               --  thing from the start, which we can use to enable a partial
-               --  solution without exploring the whole solution space:
-
-               if not Unavailable_Deps.Contains (Dep.Image) then
-                  --  Don't bother checking what we known to not be available.
-                  --  We still want to go through to external hinting.
-                  declare
-                     procedure Consider (R : Release) is
-                     begin
-                        Satisfiable := Satisfiable or else R.Satisfies (Dep);
-                        Check (R);
-                     end Consider;
-                  begin
-                     if Options.Age = Newest then
-                        for R of reverse Index.Crate (Dep.Crate).Releases loop
-                           Consider (R);
-                        end loop;
-                     else
-                        for R of Index.Crate (Dep.Crate).Releases loop
-                           Consider (R);
-                        end loop;
-                     end if;
-                  end;
-               end if;
-
-               --  Beside normal releases, an external may exist for the
-               --  crate, in which case we hint the crate instead of failing
-               --  resolution (if the external failed to find its releases).
-
                if not Index.Crate (Dep.Crate).Externals.Is_Empty then
                   if Options.Hinting = Hint then
                      Trace.Debug
@@ -634,6 +460,227 @@ package body Alire.Solver is
                           and Target
                           and Remaining).Image_One_Line);
                end if;
+            end Check_External;
+
+            -----------------------
+            -- Check_Version_Pin --
+            -----------------------
+            --  Specific checks for a version pin that narrow down the search
+            procedure Check_Version_Pin is
+               Pin_Version : constant Semver.Version :=
+                               Pins.State (Dep.Crate).Pin_Version;
+            begin
+
+               --  For a version pin release, we try only a release with the
+               --  exact version of the pin, to speed up the solving. If the
+               --  pin version is incompatible with the dependency, this branch
+               --  cannot succeed though.
+
+               if Semver.Extended.Is_In (Pin_Version, Dep.Versions) then
+
+                  --  The pin is compatible with the dependency, go ahead
+
+                  for Release of Index.Releases_Satisfying
+                    (Dependencies.New_Dependency (Dep.Crate, Pin_Version))
+                  loop
+
+                     --  There is a valid crate for this pin and dependency
+
+                     Trace.Debug ("SOLVER short-cutting due to version pin"
+                                  & " with valid release in index");
+                     Check (Release, Is_Shared => False);
+                  end loop;
+
+                     --  There may be no satisfying releases, or even so the
+                     --  check may still fail, so we must attempt this one too:
+
+                  Trace.Debug
+                    ("SOLVER: marking crate " & Dep.Image
+                     & " MISSING in case pinned version "
+                     & TTY.Version (Pin_Version.Image)
+                     & " is incompatible with other dependencies"
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                       and Target
+                       and Remaining).Image_One_Line);
+
+                  Expand_Missing (Dep);
+
+               else
+
+                  --  The pin contradicts the dependency
+
+                  Trace.Debug
+                    ("SOLVER: marking crate " & Dep.Image
+                     & " MISSING because version pin "
+                     & TTY.Version (Pin_Version.Image) & " cannot satisfy "
+                     & Dep.TTY_Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                       and Target
+                       and Remaining).Image_One_Line);
+
+                  Expand_Missing (Dep);
+
+               end if;
+            end Check_Version_Pin;
+
+            Satisfiable : Boolean := False;
+            --  Mark that the dependency is satisfiable. When we refactor the
+            --  solver from recursive to priority queue (I guess we eventually
+            --  will have to), we should do this globally since this is
+            --  information common to all search states.
+
+            ------------------
+            -- Check_Shared --
+            ------------------
+
+            procedure Check_Shared is
+            begin
+
+               --  TODO: TEST: two incompatible crates providing the same one.
+               --  TODO: TEST: virtual and real crate satisfying the same one.
+               --  TODO: TEST: full enumeration with external & provides
+
+               --  Solve with all installed dependencies that satisfy it
+
+               for R of reverse Installed.Satisfying (Dep) loop
+                  Satisfiable := True;
+
+                  Check (R, Is_Shared => True);
+               end loop;
+
+               --  We may want still check without taking into account
+               --  installed releases.
+
+               if Installed.Satisfying (Dep).Is_Empty
+                 or else Options.Completeness = All_Incomplete
+               then
+                  Expand_Value (Dep          => Dep,
+                                Allow_Shared => False);
+               end if;
+            end Check_Shared;
+
+         begin
+
+            --  if not Solution.State (Dep.Crate).Is_Missing then
+            --
+            --  -- Cheapest case, we already saw this dependency and dealt w it
+            --
+            --     Trace.Debug
+            --       ("SOLVER: dependency REUSED with " &
+            --          Solution.State (Dep.Crate).TTY_Image &
+            --          " when tree is " &
+            --        Tree'(Expanded and Target and Remaining).Image_One_Line);
+            --
+            --     Expand (Expanded  => Expanded,
+            --             Target    => Remaining,
+            --             Remaining => Empty,
+            --             Solution  => Solution);
+
+            if Pins.Depends_On (Dep.Crate) and then
+               Pins.State (Dep.Crate).Is_Linked
+            then
+
+               --  The dependency is softlinked in the starting solution, hence
+               --  we need not look further for releases.
+
+               Trace.Debug
+                 ("SOLVER: dependency LINKED to " &
+                    Pins.State (Dep.Crate).Link.Path &
+                    " when tree is " &
+                    Tree'(Expanded and Target and Remaining).Image_One_Line);
+
+               Expand (Expanded  => Expanded and Dep,
+                       Target    => Remaining and
+                         (if Pins.State (Dep.Crate).Has_Release
+                          then Pins.State (Dep.Crate)
+                                   .Release.Dependencies (Props)
+                          else Empty),
+                       Remaining => Empty,
+                       Solution  =>
+                         Solution.Linking (Dep.Crate,
+                                           Pins.State (Dep.Crate).Link));
+
+            elsif Solution.Releases.Contains_Or_Provides (Dep.Crate) then
+
+               --  Cut search once a crate is frozen, by checking the
+               --  compatibility of the already frozen release. This will
+               --  result in the same release being used to satisfy the new
+               --  Dep, if possible, or discarding the search branch early.
+
+               Trace.Debug
+                 ("SOLVER: re-checking EXISTING release "
+                  & Solution.Releases.Element_Providing (Dep.Crate)
+                            .Milestone.TTY_Image
+                  & " for DIFFERENT dep " & Dep.TTY_Image);
+
+               Check (Solution.Releases.Element_Providing (Dep.Crate),
+                      Is_Shared =>
+                        Solution.Dependency_Providing (Dep.Crate).Is_Shared);
+
+            elsif Allow_Shared then
+
+               --  There is a shared release we can use for this dependency; we
+               --  prefer this option first. If more solutions than the first
+               --  complete one are sought, we can still try without the shared
+               --  release.
+
+               Check_Shared;
+
+            elsif Pins.Depends_On (Dep.Crate) and then
+                  Pins.State (Dep.Crate).Is_Pinned
+            then
+
+               --  Specific pin checks that can speed up the search
+
+               Check_Version_Pin;
+
+            elsif Index.Exists (Dep.Crate) then
+               --  TODO replace with index satisfiability
+
+               --  Detect externals for this dependency now, so they are
+               --  available as regular releases. Note that if no release
+               --  fulfills the dependency, it will be resolved as a hint
+               --  below.
+
+               if Options.Detecting = Detect then
+                  Index.Detect_Externals (Dep.Crate, Props);
+               end if;
+
+               --  Check the releases now, from newer to older (unless required
+               --  in reverse). We keep track that none is valid, as this is
+               --  a special case in which we're being asked an impossible
+               --  thing from the start, which we can use to enable a partial
+               --  solution without exploring the whole solution space:
+
+               if not Unavailable_Deps.Contains (Dep.Image) then
+                  --  Don't bother checking what we known to not be available.
+                  --  We still want to go through to external hinting.
+                  declare
+                     procedure Consider (R : Release) is
+                     begin
+                        Satisfiable := Satisfiable or else R.Satisfies (Dep);
+                        Check (R, Is_Shared => False);
+                     end Consider;
+                  begin
+                     if Options.Age = Newest then
+                        for R of reverse Index.Crate (Dep.Crate).Releases loop
+                           Consider (R);
+                        end loop;
+                     else
+                        for R of Index.Crate (Dep.Crate).Releases loop
+                           Consider (R);
+                        end loop;
+                     end if;
+                  end;
+               end if;
+
+               --  Beside normal releases, an external may exist for the
+               --  crate, in which case we hint the crate instead of failing
+               --  resolution (if the external failed to find its releases).
+
+               Check_External;
 
                --  There may be a less bad solution if we leave this crate out.
 

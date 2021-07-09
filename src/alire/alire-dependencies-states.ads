@@ -63,7 +63,7 @@ package Alire.Dependencies.States is
                      Using  : Releases.Release;
                      Shared : Boolean := False)
                      return State
-     with Pre => Base.Crate = Using.Name;
+     with Pre => Using.Provides (Base.Crate);
    --  Uses release to fulfill this dependency in a copy of Base
 
    function Unlinking (Base : State) return State;
@@ -97,6 +97,9 @@ package Alire.Dependencies.States is
 
    function Is_Pinned (This : State) return Boolean;
 
+   function Is_Provided (This : State) return Boolean;
+   --  True when the release name is different from the dependency crate
+
    function Is_Shared (This : State) return Boolean;
 
    function Is_User_Pinned (This : State) return Boolean;
@@ -125,6 +128,13 @@ package Alire.Dependencies.States is
    --  Imaging
 
    overriding function Image (This : State) return String;
+
+   function Milestone_Image (This  : State;
+                             Color : Boolean := True)
+                             return String
+     with Pre => This.Has_Release;
+   --  Will use the dep name if it differs from the dependency (due to
+   --  equivalences).
 
    overriding function TTY_Image (This : State) return String;
 
@@ -314,6 +324,9 @@ private
    function Is_Pinned (This : State) return Boolean
    is (This.Pinning.Pinned);
 
+   function Is_Provided (This : State) return Boolean
+   is (This.Has_Release and then This.Release.Name /= This.Crate);
+
    function Is_Shared (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved and then This.Fulfilled.Shared);
 
@@ -359,6 +372,27 @@ private
        Fulfilled    => Base.Fulfilled,
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
+
+   ---------------------
+   -- Milestone_Image --
+   ---------------------
+
+   function Milestone_Image (This  : State;
+                             Color : Boolean := True)
+                             return String
+   is (if Color then
+          TTY.Name (This.Crate)
+          & "="
+          & TTY.Version (This.Release.Version.Image)
+          & (if This.Crate /= This.Release.Name
+            then " (" & TTY.Italic (This.Release.Name.As_String) & ")"
+            else "")
+       else
+         (+This.Crate) & "=" & This.Release.Version.Image
+         & (if This.Crate /= This.Release.Name
+            then " (" & This.Release.Name.As_String & ")"
+            else "")
+      );
 
    -------------
    -- Missing --

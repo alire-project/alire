@@ -1,7 +1,9 @@
 private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
+with Alire.Containers;
 with Alire.Crates.Containers;
+with Alire.Dependencies;
 with Alire.Policies;
 with Alire.Properties;
 with Alire.Releases;
@@ -83,6 +85,14 @@ package Alire.Index is
    function Exists (Name : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean;
+
+   function Releases_Satisfying (Dep : Dependencies.Dependency)
+                                 return Containers.Release_Set;
+   --  By analogy with Releases/Milestones, this call says if a release exists
+   --  that is able to provide this dependency, also considering "provides"
+   --  equivalences. TODO: actually implement the "provides" part with
+   --  refactored internals, since currently it would be terribly inefficient
+   --  as it would require going over every release in the index.
 
    function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release

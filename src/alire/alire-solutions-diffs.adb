@@ -41,7 +41,7 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => TTY.Emph  ("𐩒"),
              when Unchanged  => TTY.OK    ("="),
              when Missing    => TTY.Error ("⚠"),
-             when Shared     => TTY.Emph  ("🌐"))
+             when Shared     => TTY.Emph  ("♼"))
        else
          (case Change is
              when Added      => "+",
@@ -244,6 +244,17 @@ package body Alire.Solutions.Diffs is
       end Pinned_Or_Unpinned;
 
       ---------------------
+      -- Provider_Change --
+      ---------------------
+
+      procedure Provider_Change is
+      begin
+         if Has_Latter and then Latter.Is_Provided then
+            Add_Change (Chg, "", TTY.Italic (Latter.Release.Name.As_String));
+         end if;
+      end Provider_Change;
+
+      ---------------------
       -- Up_Or_Downgrade --
       ---------------------
 
@@ -320,6 +331,8 @@ package body Alire.Solutions.Diffs is
       Fulfil_Change;
 
       Sharing_Change;
+
+      Provider_Change;
 
       Transitivity_Changed;
 

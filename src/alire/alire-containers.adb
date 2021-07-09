@@ -1,7 +1,42 @@
+with Alire.Errors;
+
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
 package body Alire.Containers is
+
+   --------------------------
+   -- Contains_Or_Provides --
+   --------------------------
+
+   function Contains_Or_Provides (This  : Release_Map;
+                                  Crate : Crate_Name) return Boolean
+   is (This.Contains (Crate)
+       or else
+         (for some Rel of This => Rel.Provides (Crate)));
+
+   -----------------------
+   -- Element_Providing --
+   -----------------------
+
+   function Element_Providing (This  : Release_Map;
+                               Crate : Crate_Name)
+                               return Releases.Release
+   is
+   begin
+      if This.Contains (Crate) then
+         return This (Crate);
+      else
+         for Rel of This loop
+            if Rel.Provides (Crate) then
+               return Rel;
+            end if;
+         end loop;
+      end if;
+
+      raise Constraint_Error with Errors.Set
+        ("Requested crate not in map: " & Crate.As_String);
+   end Element_Providing;
 
    ---------------
    -- Enumerate --
@@ -59,9 +94,6 @@ package body Alire.Containers is
       return Result : Release_Map := Dst do
          for E of Src loop
             Result.Insert (E.Name, E);
-            if E.Name /= E.Provides then
-               Result.Insert (E.Provides, E);
-            end if;
          end loop;
       end return;
    end Inserting;
@@ -132,6 +164,30 @@ package body Alire.Containers is
       end if;
    end Merge;
 
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (This    : in out Release_Map;
+                     Release : Releases.Release)
+   is
+   begin
+      if This.Contains (Release.Name) then
+         This.Exclude (Release.Name);
+         return;
+      else
+         for Mil of Release.Provides loop
+            if This.Contains (Mil.Crate) then
+               This.Exclude (Mil.Crate);
+               return;
+            end if;
+         end loop;
+      end if;
+
+      raise Constraint_Error with Errors.Set
+        ("Release not in map: " & Release.Milestone.TTY_Image);
+   end Remove;
+
    ----------------
    -- Satisfying --
    ----------------
@@ -159,18 +215,15 @@ package body Alire.Containers is
    is
       package Semver renames Semantic_Versioning;
       use Conditional.For_Dependencies;
-      use Crate_Release_Maps;
    begin
       return Deps : Conditional.Dependencies do
          for I in Map.Iterate loop
-            if Key (I) = Map (I).Provides then -- Avoid duplicates
-               Deps :=
-                 Deps and
-                 Conditional.New_Dependency
-                   (Map (I).Name,
-                    Semver.Extended.To_Extended
-                      (Semver.Basic.Exactly (Map (I).Version)));
-            end if;
+            Deps :=
+              Deps and
+              Conditional.New_Dependency
+                (Map (I).Name,
+                 Semver.Extended.To_Extended
+                   (Semver.Basic.Exactly (Map (I).Version)));
          end loop;
       end return;
    end To_Dependencies;

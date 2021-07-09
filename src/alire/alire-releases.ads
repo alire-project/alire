@@ -11,6 +11,7 @@ with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
+with Alire.Provides;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
 with Alire.User_Pins.Maps;
@@ -59,12 +60,6 @@ package Alire.Releases is
       return         Release;
    --  For working releases that may have incomplete information. Note that the
    --  default properties are used by default.
-
-   function Renaming (Base     : Release;
-                      Provides : Crate_Name) return Release;
-   --  Fills-in the "provides" field
-   --  During resolution, a release that has a renaming will act as the
-   --  "Provides" release, so both releases cannot be selected simultaneously.
 
    function Replacing (Base    : Release;
                        Notes   : Description_String := "")
@@ -119,10 +114,6 @@ package Alire.Releases is
    --  Returns the long description for the crate, which is also stored as a
    --  property of the release.
 
-   function Provides (R : Release) return Crate_Name;
-   --  The actual name to be used during dependency resolution (but nowhere
-   --  else).
-
    function Forbidden (R : Release) return Conditional.Dependencies;
    --  Get all forbidden dependencies in platform-independen fashion
 
@@ -167,6 +158,15 @@ package Alire.Releases is
    --  is useful whenever you need to inspect all direct dependencies, no
    --  matter how they will be solved. If P is not empty, this function
    --  also works for platform-dependent dependencies only.
+
+   function Provides (R : Release) return Provides.Equivalences;
+
+   function Provides (R : Release; Target : Crate_Name) return Boolean;
+   --  Say if one of this release Provides milestones is for Target, in
+   --  addition to R.Name = Target.
+
+   function Provides (R : Release; Target : Release) return Boolean;
+   --  Check whether R and Target have the same name or provide the same name
 
    function Property (R   : Release;
                       Key : Alire.Properties.Labeled.Labels)
@@ -277,7 +277,7 @@ package Alire.Releases is
    --  True if some property contains the given string
 
    function Satisfies (R   : Release;
-                       Dep : Alire.Dependencies.Dependency)
+                       Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
 
@@ -353,10 +353,10 @@ private
    is new Interfaces.Yamlable
    with record
       Name         : Crate_Name (Prj_Len);
-      Alias        : UString; -- I finally gave up on constraints
       Version      : Semantic_Versioning.Version;
       Origin       : Origins.Origin;
       Notes        : Description_String (1 .. Notes_Len);
+      Equivalences : Alire.Provides.Equivalences;
       Dependencies : Conditional.Dependencies;
       Pins         : User_Pins.Maps.Map;
       Forbidden    : Conditional.Dependencies;
@@ -395,11 +395,6 @@ private
    function TTY_Name (R : Release) return String
    is (Utils.TTY.Name (+R.Name));
 
-   function Provides (R : Release) return Crate_Name
-   is (if UStrings.Length (R.Alias) = 0
-       then R.Name
-       else +(+R.Alias));
-
    function Notes (R : Release) return Description_String
    is (R.Notes);
 
@@ -410,6 +405,27 @@ private
                           P : Alire.Properties.Vector)
                           return Conditional.Dependencies
    is (R.Dependencies.Evaluate (P));
+
+   function Provides (R : Release) return Alire.Provides.Equivalences
+   is (R.Equivalences);
+
+   function Provides (R : Release; Target : Crate_Name) return Boolean
+   is (R.Name = Target
+       or else
+         (for some Mil of R.Equivalences => Mil.Crate = Target));
+
+   function Provides (R : Release; Target : Release) return Boolean
+   is (R.Provides (Target.Name)
+       or else
+       Target.Provides (R.Name)
+       or else
+         (for some Mil_1 of R.Equivalences =>
+             Mil_1.Crate = Target.Name
+             or else
+            (for some Mil_2 of Target.Equivalences =>
+                Mil_2.Crate = R.Name
+                or else
+                Mil_1.Crate = Mil_2.Crate)));
 
    function Forbidden (R : Release) return Conditional.Dependencies
    is (R.Forbidden);
@@ -490,9 +506,11 @@ private
            when SVN            => R.Origin.Commit));
 
    function Satisfies (R   : Release;
-                       Dep : Alire.Dependencies.Dependency)
+                       Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean
-   is (R.Name = Dep.Crate and then Dep.Versions.Contains (R.Version));
+   is ((R.Name = Dep.Crate and then Dep.Versions.Contains (R.Version))
+       or else
+       R.Equivalences.Satisfies (Dep));
 
    function Version_Image (R : Release) return String
    is (Semantic_Versioning.Image (R.Version));

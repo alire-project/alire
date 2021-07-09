@@ -239,18 +239,6 @@ package body Alire.Releases is
       end return;
    end Forbidding;
 
-   --------------
-   -- Renaming --
-   --------------
-
-   function Renaming (Base     : Release;
-                      Provides : Crate_Name) return Release is
-   begin
-      return Renamed : Release := Base do
-         Renamed.Alias := +(+Provides);
-      end return;
-   end Renaming;
-
    ---------------
    -- Replacing --
    ---------------
@@ -312,10 +300,10 @@ package body Alire.Releases is
          Name      => Base.Name,
          Notes     => New_Notes,
 
-         Alias        => Base.Alias,
          Version      => Base.Version,
          Origin       => Base.Origin,
          Dependencies => Base.Dependencies,
+         Equivalences => Base.Equivalences,
          Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
@@ -366,11 +354,11 @@ package body Alire.Releases is
    is (Prj_Len      => Name.Length,
        Notes_Len    => Notes'Length,
        Name         => Name,
-       Alias        => +"",
        Version      => Version,
        Origin       => Origin,
        Notes        => Notes,
        Dependencies => Dependencies,
+       Equivalences => <>,
        Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
@@ -399,11 +387,11 @@ package body Alire.Releases is
      (Prj_Len      => Name.Length,
       Notes_Len    => 0,
       Name         => Name,
-      Alias        => +"",
       Version      => +"0.0.0",
       Origin       => Origin,
       Notes        => "",
       Dependencies => Dependencies,
+      Equivalences => <>,
       Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
@@ -650,8 +638,8 @@ package body Alire.Releases is
       --  MILESTONE
       Put_Line (R.Milestone.TTY_Image & ": " & R.TTY_Description);
 
-      if R.Provides /= R.Name then
-         Put_Line ("Provides: " & (+R.Provides));
+      if not R.Equivalences.Is_Empty then
+         Put_Line ("Provides: " & R.Equivalences.Image_One_Line);
       end if;
 
       if R.Notes /= "" then
@@ -813,6 +801,7 @@ package body Alire.Releases is
          From    => From,
          Props   => This.Properties,
          Deps    => This.Dependencies,
+         Equiv   => This.Equivalences,
          Pins    => This.Pins,
          Avail   => This.Available);
 
@@ -879,9 +868,9 @@ package body Alire.Releases is
       --  Version
       Root.Set (TOML_Keys.Version, +Semver.Image (R.Version));
 
-      --  Alias/Provides
-      if UStrings.Length (R.Alias) > 0 then
-         Root.Set (TOML_Keys.Provides, +(+R.Alias));
+      --  Provided equivalences
+      if not R.Equivalences.Is_Empty then
+         Root.Set (TOML_Keys.Provides, R.Equivalences.To_TOML);
       end if;
 
       --  Notes
@@ -988,11 +977,11 @@ package body Alire.Releases is
    is (Prj_Len      => R.Prj_Len,
        Notes_Len    => R.Notes_Len,
        Name         => R.Name,
-       Alias        => R.Alias,
        Version      => R.Version,
        Origin       => R.Origin.Whenever (P),
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
+       Equivalences => R.Equivalences,
        Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
