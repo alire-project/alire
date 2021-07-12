@@ -1,3 +1,5 @@
+with Alire.Errors;
+
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
@@ -128,6 +130,30 @@ package body Alire.Containers is
          This.Insert (Dep.Crate, Dep);
       end if;
    end Merge;
+
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (This    : in out Release_Map;
+                     Release : Releases.Release)
+   is
+   begin
+      if This.Contains (Release.Name) then
+         This.Exclude (Release.Name);
+         return;
+      else
+         for Mil of Release.Provides loop
+            if This.Contains (Mil.Crate) then
+               This.Exclude (Mil.Crate);
+               return;
+            end if;
+         end loop;
+      end if;
+
+      raise Constraint_Error with Errors.Set
+        ("Release not in map: " & Release.Milestone.TTY_Image);
+   end Remove;
 
    ----------------
    -- Satisfying --

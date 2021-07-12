@@ -63,7 +63,7 @@ package Alire.Dependencies.States is
                      Using  : Releases.Release;
                      Shared : Boolean := False)
                      return State
-     with Pre => Base.Crate = Using.Name;
+     with Pre => Using.Provides (Base.Crate);
    --  Uses release to fulfill this dependency in a copy of Base
 
    function Unlinking (Base : State) return State;

@@ -172,7 +172,7 @@ package body Alire.Solutions is
 
          Result.Dependencies :=
            Result.Dependencies.Including
-             (Result.State (Release.Name)
+             (Result.State (Release)
                     .Solving (Release.Whenever (Env),
                               Shared => Shared));
          --  TODO: remove this Whenever once dynamic expr can be exported
@@ -836,6 +836,52 @@ package body Alire.Solutions is
         This.Dependencies.Including
           (This.State (Crate).Setting (Transitivity));
    end Set;
+
+   -----------
+   -- State --
+   -----------
+
+   function State (This  : Solution;
+                   Crate : Crate_Name)
+                   return Dependency_State
+   is
+   begin
+      if This.Dependencies.Contains (Crate) then
+         return This.Dependencies (Crate);
+      end if;
+
+      for Dep of This.Dependencies loop
+         if Dep.Has_Release and then Dep.Release.Provides (Dep.Crate) then
+            return Dep;
+         end if;
+      end loop;
+
+      Raise_Checked_Error ("No dependency in solution matches crate "
+                           & TTY.Name (Crate));
+   end State;
+
+   -----------
+   -- State --
+   -----------
+
+   function State (This    : Solution;
+                   Release : Alire.Releases.Release)
+                   return Dependency_State
+   is
+   begin
+      if This.Dependencies.Contains (Release.Name) then
+         return This.Dependencies (Release.Name);
+      end if;
+
+      for Dep of This.Dependencies loop
+         if Release.Provides (Dep.Crate) then
+            return Dep;
+         end if;
+      end loop;
+
+      Raise_Checked_Error ("No dependency in solution matches release "
+                           & Release.Milestone.TTY_Image);
+   end State;
 
    ---------------
    -- With_Pins --

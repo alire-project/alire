@@ -102,7 +102,7 @@ package Alire.Solutions is
                        Add_Dependency : Boolean := False;
                        Shared         : Boolean := False)
                        return Solution
-     with Pre => Add_Dependency or else This.Depends_On (Release.Name);
+     with Pre => Add_Dependency or else This.Depends_On (Release);
    --  Add a release to the solution, marking its dependency as solved. Takes
    --  care of adding forbidden dependencies and ensuring the Release does not
    --  conflict with current solution (which would result in a Checked_Error).
@@ -219,7 +219,12 @@ package Alire.Solutions is
 
    function Depends_On (This : Solution;
                         Name : Crate_Name) return Boolean;
-   --  Says if the solution depends on the crate in some way
+   --  Says if the solution depends on the crate in some way. Will also
+   --  consider Provides of releases in the solution.
+
+   function Depends_On (This    : Solution;
+                        Release : Alire.Releases.Release) return Boolean;
+   --  Likewise, but take also into account the Release.Provides
 
    function Forbidden (This : Solution;
                        Env  : Properties.Vector)
@@ -291,6 +296,13 @@ package Alire.Solutions is
      with Pre => This.Depends_On (Crate);
    --  Returns the solving state of a dependency in the solution
 
+   function State (This    : Solution;
+                   Release : Alire.Releases.Release)
+                   return Dependency_State
+     with Pre => This.Depends_On (Release);
+   --  Returns the state of the dependency this release might fulfill, relying
+   --  only on the release name or its provides names.
+
    --------------
    -- Mutation --
    --------------
@@ -349,7 +361,7 @@ package Alire.Solutions is
    overriding
    function To_TOML (This : Solution) return TOML.TOML_Value with
      Pre => (for all Release of This.Releases =>
-               This.State (Release.Name).Is_Linked
+               This.State (Release).Is_Linked
                or else (Release.Dependencies.Is_Unconditional
                         and then Release.Properties.Is_Unconditional));
    --  Requires releases not to have dynamic expressions. This is currently
@@ -440,7 +452,22 @@ private
 
    function Depends_On (This : Solution;
                         Name : Crate_Name) return Boolean
-   is (This.Dependencies.Contains (Name));
+   is (This.Dependencies.Contains (Name)
+       or else
+         (for some Dep of This.Dependencies =>
+          Dep.Has_Release and then Dep.Release.Provides (Name)));
+
+   ----------------
+   -- Depends_On --
+   ----------------
+
+   function Depends_On (This    : Solution;
+                        Release : Alire.Releases.Release) return Boolean
+   is (for some Dep of This.Dependencies =>
+          Dep.Crate = Release.Name
+       or else
+         (for some Mil of Release.Provides  =>
+             Dep.Crate = Mil.Crate));
 
    ----------------------------
    -- Empty_Invalid_Solution --
@@ -578,15 +605,6 @@ private
        Dependencies =>
           This.Dependencies.Including
          (This.Dependencies (Crate).Setting (Transitivity)));
-
-   -----------
-   -- State --
-   -----------
-
-   function State (This  : Solution;
-                   Crate : Crate_Name)
-                   return Dependency_State
-   is (This.Dependencies (Crate));
 
    ---------------
    -- Unlinking --

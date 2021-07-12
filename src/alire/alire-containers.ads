@@ -100,6 +100,11 @@ package Alire.Containers is
    --  Those insert both under the actual crate name and Provides, if
    --  different.
 
+   procedure Remove (This    : in out Release_Map;
+                     Release : Releases.Release);
+   --  Locate the release, by name or provides, and remove it. Will raise if
+   --  the release is not found.
+
    function To_Dependencies (Map : Release_Map)
                              return Conditional.Dependencies;
    --  Will filter out duplicates under Provides key (only actual crates will

@@ -164,6 +164,15 @@ package body Alire.Roots is
       for Dep of This.Solution.Required loop
          if not Dep.Has_Release or else Dep.Is_Shared then
             Deployed.Include (Dep.Crate);
+
+            --  Also mark as deployed any crate provided by shared releases
+
+            if Dep.Has_Release then
+               for Mil of Dep.Release.Provides loop
+                  Deployed.Include (Mil.Crate);
+               end loop;
+            end if;
+
          end if;
       end loop;
 
@@ -187,7 +196,7 @@ package body Alire.Roots is
                --  don't have undeployed dependencies. We also identify
                --  releases that need not to be deployed (e.g. linked ones).
 
-               if not This.Solution.State (Rel.Name).Is_Solved then
+               if not This.Solution.State (Rel).Is_Solved then
                   Trace.Debug ("Round" & Round'Img & ": NOOP " &
                                  Rel.Milestone.Image);
 
@@ -206,7 +215,7 @@ package body Alire.Roots is
 
                   To_Remove.Include (Rel);
 
-                  if Rel.Name /= Release (This).Name then
+                  if not Release (This).Provides (Rel.Name) then
                      Rel.Deploy (Env           => This.Environment,
                                  Parent_Folder =>
                                    Ada.Directories.Containing_Directory
@@ -227,8 +236,15 @@ package body Alire.Roots is
                  with "No release checked out in round" & Round'Img;
             else
                for Rel of To_Remove loop
-                  Pending.Exclude (Rel.Name);
+                  Pending.Remove (Rel);
+
+                  Trace.Debug ("Marking deployed: " & Rel.Name.As_String);
                   Deployed.Include (Rel.Name);
+                  for Mil of Rel.Provides loop
+                     Trace.Debug ("Marking deployed (provided): "
+                                  & Mil.Crate.As_String);
+                     Deployed.Include (Mil.Crate);
+                  end loop;
                end loop;
             end if;
          end;
