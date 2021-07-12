@@ -801,6 +801,7 @@ package body Alire.Releases is
          From    => From,
          Props   => This.Properties,
          Deps    => This.Dependencies,
+         Equiv   => This.Equivalences,
          Pins    => This.Pins,
          Avail   => This.Available);
 

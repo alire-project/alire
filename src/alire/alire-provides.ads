@@ -2,6 +2,7 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
 with Alire.Dependencies;
 with Alire.Milestones;
+with Alire.TOML_Adapters;
 
 with TOML;
 
@@ -18,6 +19,8 @@ package Alire.Provides with Preelaborate is
 
    type Equivalences is new Milestone_Lists.List with null record;
 
+   No_Equivalences : constant Equivalences;
+
    function Satisfies (This : Equivalences;
                        Dep  : Dependencies.Dependency)
                        return Boolean;
@@ -25,7 +28,15 @@ package Alire.Provides with Preelaborate is
 
    function Image_One_Line (This : Equivalences) return String;
 
+   function From_TOML (From : TOML_Adapters.Key_Queue) return Equivalences
+     with Pre => From.Unwrap.Kind in TOML.TOML_Array;
+
    function To_TOML (This : Equivalences) return TOML.TOML_Value with
      Post => To_TOML'Result.Kind in TOML.TOML_Array;
+
+private
+
+   No_Equivalences : constant Equivalences :=
+                       (Milestone_Lists.Empty_List with null record);
 
 end Alire.Provides;

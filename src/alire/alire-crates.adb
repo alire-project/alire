@@ -1,5 +1,6 @@
 with Alire.Origins;
 with Alire.Properties.Labeled;
+with Alire.Provides;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
@@ -146,6 +147,7 @@ package body Alire.Crates is
       declare
          Unused_Avail : Conditional.Availability;
          Unused_Deps  : Conditional.Dependencies;
+         Unused_Equiv : Provides.Equivalences;
          Unused_Pins  : User_Pins.Maps.Map;
          Properties   : Conditional.Properties;
       begin
@@ -155,6 +157,7 @@ package body Alire.Crates is
             From    => From,
             Props   => Properties,
             Deps    => Unused_Deps,
+            Equiv   => Unused_Equiv,
             Pins    => Unused_Pins,
             Avail   => Unused_Avail);
 

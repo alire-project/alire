@@ -37,6 +37,26 @@ package body Alire.Provides is
    is (for some Milestone of This =>
          Semantic_Versioning.Extended.Is_In (Milestone.Version, Dep.Versions));
 
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   function From_TOML (From : TOML_Adapters.Key_Queue) return Equivalences is
+      use TOML;
+      TOML_Equivs : constant TOML_Value := From.Unwrap;
+   begin
+      return Result : Equivalences do
+         for I in 1 .. TOML_Equivs.Length loop
+            From.Assert (TOML_Equivs.Item (I).Kind = TOML_String,
+                         "expected a string describing a milestone, but got: "
+                         & TOML_Equivs.Item (I).Kind'Image);
+
+            Result.Append
+              (Milestones.New_Milestone (TOML_Equivs.Item (I).As_String));
+         end loop;
+      end return;
+   end From_TOML;
+
    -------------
    -- To_TOML --
    -------------

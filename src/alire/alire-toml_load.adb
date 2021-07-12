@@ -39,6 +39,7 @@ package body Alire.TOML_Load is
 
    type Tables is (Available,
                    Dependencies,
+                   Provides,
                    Origin);
 
    Allowed_Tables : constant array (Crates.Sections, Tables) of Boolean :=
@@ -73,6 +74,7 @@ package body Alire.TOML_Load is
                                  From    : TOML_Adapters.Key_Queue;
                                  Props   : in out Conditional.Properties;
                                  Deps    : in out Conditional.Dependencies;
+                                 Equiv   : in out Alire.Provides.Equivalences;
                                  Pins    : in out User_Pins.Maps.Map;
                                  Avail   : in out Conditional.Availability)
    is
@@ -83,6 +85,7 @@ package body Alire.TOML_Load is
 
       TOML_Avail : TOML.TOML_Value;
       TOML_Deps  : TOML.TOML_Value;
+      TOML_Equiv : TOML.TOML_Value;
 
    begin
 
@@ -124,6 +127,19 @@ package body Alire.TOML_Load is
       elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
          From.Checked_Error ("found field not allowed in manifest section: "
                              & TOML_Keys.Depends_On);
+      end if;
+
+      --  Process Provides
+
+      if Allowed_Tables (Section, Provides) then
+         if From.Pop (TOML_Keys.Provides, TOML_Equiv) then
+            From.Assert
+              (TOML_Equiv.Kind = TOML_Array,
+               "provides must be an array of strings describing milestones");
+
+            Equiv := Alire.Provides.From_TOML
+              (From.Descend (TOML_Equiv, TOML_Keys.Provides));
+         end if;
       end if;
 
       --  Process user pins
