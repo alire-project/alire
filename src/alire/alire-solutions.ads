@@ -2,6 +2,7 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States.Maps;
 with Alire.Interfaces;
+with Alire.Optional;
 with Alire.Properties;
 with Alire.Releases;
 limited with Alire.Roots;
@@ -74,17 +75,6 @@ package Alire.Solutions is
 
    function Empty_Valid_Solution return Solution;
 
-   function New_Solution
-     (Env      : Properties.Vector := Properties.No_Properties;
-      Releases : Release_Map       := Containers.Empty_Release_Map;
-      Direct   : Dependency_Map    := Containers.Empty_Dependency_Map)
-      return Solution
-     with Pre => Releases.Is_Empty or else not Env.Is_Empty;
-   --  A new solution. Trivially, a Solution without dependencies is complete.
-   --  We can initialize it with solved releases and unsolved dependencies. In
-   --  both cases, these are marked as direct dependencies. The environment is
-   --  only needed when releases are given.
-
    function Depending_On (This : Solution;
                           Dep  : Dependencies.Dependency)
                           return Solution;
@@ -96,19 +86,26 @@ package Alire.Solutions is
                      return Solution;
    --  Add/merge dependency as hinted in solution
 
-   function Including (This           : Solution;
-                       Release        : Alire.Releases.Release;
-                       Env            : Properties.Vector;
-                       Add_Dependency : Boolean := False;
-                       Shared         : Boolean := False)
-                       return Solution
-     with Pre => Add_Dependency or else This.Depends_On (Release);
+   function Including
+     (This           : Solution;
+      Release        : Alire.Releases.Release;
+      Env            : Properties.Vector;
+      For_Dependency : Optional.Crate_Name := Optional.Crate_Names.Empty;
+      Add_Dependency : Boolean := False;
+      Shared         : Boolean := False)
+      return Solution
+     with Pre =>
+       (Add_Dependency and then not This.Provides (Release))
+       xor
+       (For_Dependency.Has_Element and then
+       This.All_Dependencies.Contains (For_Dependency.Value));
    --  Add a release to the solution, marking its dependency as solved. Takes
    --  care of adding forbidden dependencies and ensuring the Release does not
    --  conflict with current solution (which would result in a Checked_Error).
    --  Since from the release we can't know the actual complete dependency the
    --  release is fulfilling, by default we don't create its dependency (it
-   --  must exist previously).
+   --  must exist previously). Only in particular cases where we want to add
+   --  a dependency matching the release Add_Dependency should be true.
 
    function Resetting (This  : Solution;
                        Crate : Crate_Name)
@@ -242,6 +239,14 @@ package Alire.Solutions is
                       return Boolean;
    --  Check whether the solution already contains or provides a release
    --  equivalent to Release.
+
+   function Release_Providing (This    : Solution;
+                               Release : Alire.Releases.Release)
+                               return Alire.Releases.Release
+     with Pre => This.Provides (Release);
+   --  Return the release already in the solution that prevents Release from
+   --  entering the solution, as they both provide the same crate according
+   --  to This.Provides
 
    function Hints (This : Solution) return Dependency_Map;
    --  Return undetected externals in the solution
@@ -389,271 +394,6 @@ private
       --  Has solving been attempted?
    end record;
 
-   --  Begin of implementation
-
-   ----------------------
-   -- All_Dependencies --
-   ----------------------
-
-   function All_Dependencies (This : Solution) return State_Map
-   is (This.Dependencies);
-
-   -----------------
-   -- Composition --
-   -----------------
-
-   function Composition (This : Solution) return Compositions
-   is (if not This.Solved then
-          Unsolved
-       elsif This.Dependencies.Is_Empty then
-          Empty
-       elsif (for all Dep of This.Dependencies =>
-                 Dep.Is_Solved or else Dep.Is_Linked)
-       then
-          Releases
-       elsif (for all Dep of This.Dependencies => Dep.Is_Hinted) then
-          Hints
-       elsif (for some Dep of This.Dependencies => Dep.Is_Missing) then
-          Partial
-       else
-          Mixed);
-
-   ----------------------
-   -- Contains_Release --
-   ----------------------
-
-   function Contains_Release (This  : Solution;
-                              Crate : Crate_Name) return Boolean
-   is (This.Depends_On (Crate) and then This.State (Crate).Is_Solved);
-
-   ----------------
-   -- Dependency --
-   ----------------
-
-   function Dependency (This  : Solution;
-                        Crate : Crate_Name)
-                        return Alire.Dependencies.Dependency
-   is (This.Dependencies (Crate).As_Dependency);
-
-   ------------------
-   -- Depending_On --
-   ------------------
-
-   function Depending_On (This : Solution;
-                          Dep  : Dependencies.Dependency)
-                          return Solution
-   is (Solution'(Solved       => True,
-                 Dependencies => This.Dependencies.Merging (Dep)));
-
-   ----------------
-   -- Depends_On --
-   ----------------
-
-   function Depends_On (This : Solution;
-                        Name : Crate_Name) return Boolean
-   is (This.Dependencies.Contains (Name)
-       or else
-         (for some Dep of This.Dependencies =>
-          Dep.Has_Release and then Dep.Release.Provides (Name)));
-
-   ----------------
-   -- Depends_On --
-   ----------------
-
-   function Depends_On (This    : Solution;
-                        Release : Alire.Releases.Release) return Boolean
-   is (for some Dep of This.Dependencies =>
-          Dep.Crate = Release.Name
-       or else
-         (for some Mil of Release.Provides  =>
-             Dep.Crate = Mil.Crate));
-
-   ----------------------------
-   -- Empty_Invalid_Solution --
-   ----------------------------
-
-   function Empty_Invalid_Solution return Solution
-   is (Solved => False,
-       others => <>);
-
-   --------------------------
-   -- Empty_Valid_Solution --
-   --------------------------
-
-   function Empty_Valid_Solution return Solution
-   is (Solved => True,
-       others => <>);
-
-   -------------
-   -- Hinting --
-   -------------
-
-   function Hinting (This : Solution;
-                     Dep  : Dependencies.Dependency)
-                     return Solution
-   is (if This.Depends_On (Dep.Crate)
-       then (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including (This.State (Dep.Crate).Hinting))
-       else (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including (States.New_State (Dep).Hinting)));
-
-   -----------
-   -- Hints --
-   -----------
-
-   function Hints (This : Solution) return Dependency_Map
-   is (This.Dependencies_That (States.Is_Hinted'Access));
-
-   ------------------
-   -- Is_Attempted --
-   ------------------
-
-   function Is_Attempted (This : Solution) return Boolean
-   is (This.Composition /= Unsolved);
-
-   -----------------
-   -- Is_Complete --
-   -----------------
-
-   function Is_Complete (This : Solution) return Boolean
-   is (This.Composition <= Releases);
-
-   -----------
-   -- Links --
-   -----------
-
-   function Links (This : Solution) return Dependency_Map
-   is (This.Dependencies_That (States.Is_Linked'Access));
-
-   ------------
-   -- Misses --
-   ------------
-
-   function Misses (This : Solution) return Dependency_Map
-   is (This.Dependencies_That (States.Is_Missing'Access));
-
-   -------------
-   -- Missing --
-   -------------
-
-   function Missing (This : Solution;
-                     Dep  : Dependencies.Dependency)
-                     return Solution
-   is (if This.Depends_On (Dep.Crate)
-       then (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including (This.State (Dep.Crate).Missing))
-       else (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including (States.New_State (Dep).Missing)));
-
-   -------------
-   -- Missing --
-   -------------
-
-   function Missing (This  : Solution;
-                     Crate : Crate_Name)
-                     return Solution
-   is (if This.Dependencies.Contains (Crate)
-       then (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including
-               (This.Dependencies (Crate).Missing))
-       else This);
-
-   -------------
-   -- Pinning --
-   -------------
-
-   function Pinning (This    : Solution;
-                     Crate   : Crate_Name;
-                     Version : Semantic_Versioning.Version)
-                     return Solution
-   is (Solved       => True,
-       Dependencies =>
-          This.Dependencies.Including
-         (This.Dependencies (Crate).Pinning (Version)));
-
-   --------------
-   -- Required --
-   --------------
-
-   function Required (This : Solution) return State_Map'Class
-   is (This.Dependencies);
-
-   ---------------
-   -- Resetting --
-   ---------------
-
-   function Resetting (This  : Solution;
-                       Crate : Crate_Name)
-                       return Solution
-   is (This.Missing (Crate).User_Unpinning (Crate));
-
-   -------------
-   -- Setting --
-   -------------
-
-   function Setting (This         : Solution;
-                     Crate        : Crate_Name;
-                     Transitivity : States.Transitivities)
-                     return Solution
-   is (Solved       => True,
-       Dependencies =>
-          This.Dependencies.Including
-         (This.Dependencies (Crate).Setting (Transitivity)));
-
-   ---------------
-   -- Unlinking --
-   ---------------
-
-   function Unlinking (This  : Solution;
-                       Crate : Crate_Name)
-                       return Solution
-   is (if This.Dependencies.Contains (Crate)
-       then (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including
-               (This.Dependencies (Crate).Unlinking))
-       else This);
-
-   ---------------
-   -- Unpinning --
-   ---------------
-
-   function Unpinning (This  : Solution;
-                       Crate : Crate_Name)
-                       return Solution
-   is (if This.Dependencies.Contains (Crate)
-       then (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including
-               (This.Dependencies (Crate).Unpinning))
-       else This);
-
-   ---------------
-   -- Unsolving --
-   ---------------
-
-   function Unsolving (This  : Solution;
-                       Crate : Crate_Name)
-                       return Solution
-   is (if This.Dependencies.Contains (Crate)
-       then (Solved       => True,
-             Dependencies =>
-                This.Dependencies.Including
-               (This.Dependencies (Crate).Unlinking.Unpinning.Missing))
-       else This);
-
-   --------------------
-   -- User_Unpinning --
-   --------------------
-
-   function User_Unpinning (This : Solution;
-                            Crate : Crate_Name)
-                            return Solution
-   is (This.Unpinning (Crate).Unlinking (Crate));
+   --  Implementations moved to body due to missing symbols in predicates
 
 end Alire.Solutions;

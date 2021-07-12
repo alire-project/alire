@@ -6,6 +6,7 @@ with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
+with Alire.Optional;
 with Alire.Origins;
 with Alire.Shared;
 with Alire.Utils.TTY;
@@ -224,14 +225,17 @@ package body Alire.Solver is
 
             Solution : constant Alire.Solutions.Solution :=
                          Expand.Solution.Depending_On (Dep);
+            --  Note that, since this merge may render the release for the old
+            --  dependency invalid, it should be checked again (which Check
+            --  below does.)
 
             -----------
             -- Check --
             -----------
 
             procedure Check (R : Release; Is_Shared : Boolean) is
-               use Alire.Containers;
                use all type Origins.Kinds;
+               use type Release;
             begin
 
                --  We first check that the release matches the dependency we
@@ -245,13 +249,59 @@ package body Alire.Solver is
                --  current dependency, we may continue along this branch,
                --  with this dependency out of the picture.
 
-               if Solution.Releases.Contains (R.Name) then
+               if Solution.Provides (R)
+               then
+
+                  if R /= Solution.Release_Providing (R) then
+
+                     --  This may occur when e.g., we have a system compiler in
+                     --  the solution, which does not have provides and hence
+                     --  cannot be detected before this point. In this case we
+                     --  cannot add a release that also provides something
+                     --  in the solution, so we have to discard this branch.
+
+                     Trace.Debug
+                       ("SOLVER: discarding tree because of " &
+                          "conflicting FROZEN release: " &
+                          Solution.Release_Providing (R).Milestone.TTY_Image &
+                          " already provides same crate as target release: " &
+                          R.Milestone.TTY_Image & " for dependency " &
+                          Dep.Image & " in tree " &
+                          Tree'(Expanded
+                                and Target
+                                and Remaining).Image_One_Line);
+
+                     return;
+
+                  end if;
+
+                  --  Now we may continue knowing that R is the same release
+                  --  already in the solution for another dependency.
+
                   if R.Satisfies (Dep) then
-                     --  Continue along this tree
+
+                     Trace.Debug
+                       ("SOLVER: reusing FROZEN release: " &
+                          R.Milestone.Image & " to satisfy " &
+                          Dep.Image & " in tree " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+
+                     --  Continue along this tree; no need to add dependencies
+                     --  as the release was already added previously.
+
                      Expand (Expanded  => Expanded,
                              Target    => Remaining,
                              Remaining => Empty,
-                             Solution  => Solution);
+                             Solution  => Solution.Including
+                               (R, Props,
+                                For_Dependency =>
+                                  Optional.Crate_Names.Unit (Dep.Crate),
+                                Shared         =>
+                                  Is_Shared or else
+                                  R.Origin.Kind = Binary_Archive));
+
                   else
                      Trace.Debug
                        ("SOLVER: discarding tree because of " &
@@ -262,21 +312,6 @@ package body Alire.Solver is
                                 and Target
                                 and Remaining).Image_One_Line);
                   end if;
-
-               --  If the candidate release is already satisfied by the
-               --  solution, it can be added to the solution. This takes
-               --  care of "provides" equivalences. TODO: TEST this new branch.
-
-               elsif Solution.Provides (R)
-               then
-                  Trace.Debug
-                    ("SOLVER: discarding tree because of" &
-                       " ALREADY PROVIDED release: " &
-                       R.Milestone.Image &
-                       " provided by current solution when tree is " &
-                       Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
 
                --  If the candidate release is forbidden by a previously
                --  resolved dependency, the candidate release is
@@ -344,6 +379,8 @@ package body Alire.Solver is
                           Remaining => Empty,
                           Solution  => Solution.Including
                             (R, Props,
+                             For_Dependency =>
+                               Optional.Crate_Names.Unit (Dep.Crate),
                              Shared =>
                                Is_Shared or else
                                R.Origin.Kind = Binary_Archive));
@@ -384,6 +421,46 @@ package body Alire.Solver is
                              and Remaining).Image_One_Line);
                end if;
             end Expand_Missing;
+
+            --------------------
+            -- Check_External --
+            --------------------
+
+            procedure Check_External is
+            begin
+               if not Index.Crate (Dep.Crate).Externals.Is_Empty then
+                  if Options.Hinting = Hint then
+                     Trace.Debug
+                       ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
+                          " via EXTERNAL to satisfy " & Dep.Image &
+                          " without adding dependencies to tree " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+
+                     Expand (Expanded  => Expanded,
+                             Target    => Remaining,
+                             Remaining => Empty,
+                             Solution  => Solution.Hinting (Dep));
+                  else
+                     Trace.Debug
+                       ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
+                          " as HINTING is DISABLED, for dep " & Dep.Image &
+                          " having externals, when tree is " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+                  end if;
+               else
+                  Trace.Debug
+                       ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
+                          " for dep " & Dep.Image &
+                          " LACKING externals, when tree is " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining).Image_One_Line);
+               end if;
+            end Check_External;
 
             -----------------------
             -- Check_Version_Pin --
@@ -461,39 +538,23 @@ package body Alire.Solver is
             procedure Check_Shared is
             begin
 
+               --  TODO: TEST: two incompatible crates providing the same one.
+               --  TODO: TEST: virtual and real crate satisfying the same one.
+               --  TODO: TEST: full enumeration with external & provides
+
                --  Solve with all installed dependencies that satisfy it
 
                for R of reverse Installed.Satisfying (Dep) loop
                   Satisfiable := True;
 
                   Check (R, Is_Shared => True);
-
-                  --  Trace.Debug
-                  --    ("SOLVER: dependency FROZEN+SHARED: "
-                  --     & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
-                  --     & (if not R.Provides.Is_Empty
-                  --       then " also providing " & R.Provides.Image_One_Line
-                  --       else "") &
-                  --       " adding" &
-                  --       R.Dependencies (Props).Leaf_Count'Img &
-                  --       " dependencies to tree " &
-                  --       Tree'(Expanded
-                  --       and Target
-                  --       and Remaining
-                  --       and R.Dependencies (Props)).Image_One_Line);
-                  --
-                  --  Expand (Expanded  => Expanded and R.To_Dependency,
-                  --         Target    => Remaining and R.Dependencies (Props),
-                  --          Remaining => Empty,
-                  --          Solution  => Solution.Including (R, Props,
-                  --                                          Shared => True));
                end loop;
 
                --  We may want still check without taking into account
                --  installed releases.
 
                if Installed.Satisfying (Dep).Is_Empty
-                 or else Options.Completeness > First_Complete
+                 or else Options.Completeness = All_Incomplete
                then
                   Expand_Value (Dep          => Dep,
                                 Allow_Shared => False);
@@ -501,6 +562,21 @@ package body Alire.Solver is
             end Check_Shared;
 
          begin
+
+            --  if not Solution.State (Dep.Crate).Is_Missing then
+            --
+            --  -- Cheapest case, we already saw this dependency and dealt w it
+            --
+            --     Trace.Debug
+            --       ("SOLVER: dependency REUSED with " &
+            --          Solution.State (Dep.Crate).TTY_Image &
+            --          " when tree is " &
+            --        Tree'(Expanded and Target and Remaining).Image_One_Line);
+            --
+            --     Expand (Expanded  => Expanded,
+            --             Target    => Remaining,
+            --             Remaining => Empty,
+            --             Solution  => Solution);
 
             if Pins.Depends_On (Dep.Crate) and then
                Pins.State (Dep.Crate).Is_Linked
@@ -529,7 +605,15 @@ package body Alire.Solver is
             elsif Solution.Releases.Contains_Or_Provides (Dep.Crate) then
 
                --  Cut search once a crate is frozen, by checking the
-               --  compatibility of the already frozen release:
+               --  compatibility of the already frozen release. This will
+               --  result in the same release being used to satisfy the new
+               --  Dep, if possible, or discarding the search branch early.
+
+               Trace.Debug
+                 ("SOLVER: re-checking EXISTING release "
+                  & Solution.Releases.Element_Providing (Dep.Crate)
+                            .Milestone.TTY_Image
+                  & " for DIFFERENT dep " & Dep.TTY_Image);
 
                Check (Solution.Releases.Element_Providing (Dep.Crate),
                       Is_Shared => False); -- TODO: FIX (extract from solution)
@@ -595,38 +679,7 @@ package body Alire.Solver is
                --  crate, in which case we hint the crate instead of failing
                --  resolution (if the external failed to find its releases).
 
-               if not Index.Crate (Dep.Crate).Externals.Is_Empty then
-                  if Options.Hinting = Hint then
-                     Trace.Debug
-                       ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
-                          " via EXTERNAL to satisfy " & Dep.Image &
-                          " without adding dependencies to tree " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-
-                     Expand (Expanded  => Expanded,
-                             Target    => Remaining,
-                             Remaining => Empty,
-                             Solution  => Solution.Hinting (Dep));
-                  else
-                     Trace.Debug
-                       ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
-                          " as HINTING is DISABLED, for dep " & Dep.Image &
-                          " having externals, when tree is " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-                  end if;
-               else
-                  Trace.Debug
-                       ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
-                          " for dep " & Dep.Image &
-                          " LACKING externals, when tree is " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-               end if;
+               Check_External;
 
                --  There may be a less bad solution if we leave this crate out.
 

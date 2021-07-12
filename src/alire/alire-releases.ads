@@ -417,6 +417,8 @@ private
    function Provides (R : Release; Target : Release) return Boolean
    is (R.Provides (Target.Name)
        or else
+       Target.Provides (R.Name)
+       or else
          (for some Mil_1 of R.Equivalences =>
              Mil_1.Crate = Target.Name
              or else

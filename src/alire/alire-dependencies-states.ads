@@ -97,6 +97,9 @@ package Alire.Dependencies.States is
 
    function Is_Pinned (This : State) return Boolean;
 
+   function Is_Provided (This : State) return Boolean;
+   --  True when the release name is different from the dependency crate
+
    function Is_Shared (This : State) return Boolean;
 
    function Is_User_Pinned (This : State) return Boolean;
@@ -320,6 +323,9 @@ private
 
    function Is_Pinned (This : State) return Boolean
    is (This.Pinning.Pinned);
+
+   function Is_Provided (This : State) return Boolean
+   is (This.Has_Release and then This.Release.Name /= This.Crate);
 
    function Is_Shared (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved and then This.Fulfilled.Shared);

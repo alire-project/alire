@@ -109,7 +109,8 @@ package Alire.Solver is
 
    type Query_Options is record
       Age          : Age_Policies          := Newest;
-      Completeness : Completeness_Policies := First_Complete;
+      Completeness : Completeness_Policies := All_Incomplete;
+      --  First_Complete;
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
       Sharing      : Sharing_Policies      := Allow_Shared;

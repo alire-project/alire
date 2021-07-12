@@ -79,15 +79,6 @@ package body Alire.Roots is
       Conf.Generate_Config_Files (This);
    end Generate_Configuration;
 
-   --------------------------------
-   -- Check_Dependency_Conflicts --
-   --------------------------------
-
-   procedure Check_Dependency_Conflicts (This : Root) is
-   begin
-      null;
-   end Check_Dependency_Conflicts;
-
    ------------------
    -- Check_Stored --
    ------------------
@@ -842,11 +833,6 @@ package body Alire.Roots is
 
          Trace.Info (""); -- Separate changes from what caused the sync
       end if;
-
-      --  Common sense checks for bad top-level dependencies. At worst, we will
-      --  print a warning.
-
-      This.Check_Dependency_Conflicts;
 
       --  The following checks may only succeed if the user has deleted
       --  something externally, or after running `alr clean --cache`.
