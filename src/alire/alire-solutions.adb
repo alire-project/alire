@@ -449,13 +449,15 @@ package body Alire.Solutions is
       if not This.Releases.Is_Empty then
          Trace.Log ("Dependencies (solution):", Level);
 
-         for Rel of This.Releases loop
-            declare
-               Dep : Dependencies.States.State renames This.State (Rel.Name);
-            begin
+         for Dep of This.Dependencies loop
+            if Dep.Has_Release then
                Trace.Log
                  ("   "
-                  & Rel.Milestone.TTY_Image
+                  & TTY.Name (Dep.Crate) & "="
+                  & TTY.Version (Dep.Release.Version.Image)
+                  & (if Dep.Crate /= Dep.Release.Name -- provided by
+                     then " (" & TTY.Italic (TTY.Name (Dep.Release.Name)) & ")"
+                     else "")
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
                      elsif Dep.Is_Shared
@@ -470,11 +472,12 @@ package body Alire.Solutions is
                                           & Dep.Link.TTY_URL_With_Reference
                                               (Detailed)
                                      else "") -- no remote
-                             else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
+                             else Utils.To_Lower_Case
+                               (Dep.Release.Origin.Kind'Img))
                           & ")" -- origin completed
                      else ""),   -- no details
                   Level);
-            end;
+            end if;
          end loop;
       end if;
 
@@ -699,7 +702,7 @@ package body Alire.Solutions is
                   --  For a dependency solved by a release, print exact
                   --  version. Otherwise print the state of the dependency.
                   & (if This.State (Dep.Crate).Has_Release
-                    then This.State (Dep.Crate).Release.Milestone.TTY_Image
+                    then This.State (Dep.Crate).Milestone_Image
                     else This.State (Dep.Crate).TTY_Image)
 
                   --  And dependency that introduces the crate in the solution
@@ -744,6 +747,7 @@ package body Alire.Solutions is
       Table
         .Append (TTY.Bold ("CRATE"))
         .Append (TTY.Bold ("DEPENDENCY"))
+        .Append (TTY.Bold ("PROVIDER"))
         .Append (TTY.Bold ("SOLVED"))
         .Append (TTY.Bold ("LATEST"))
         .New_Row;
@@ -758,6 +762,12 @@ package body Alire.Solutions is
             Table.Append (TTY.Version ("(root)"));
          else
             Table.Append (TTY.Version (Dep.Versions.Image));
+         end if;
+
+         if Dep.Has_Release and then Dep.Crate /= Dep.Release.Name then
+            Table.Append (TTY.Italic (Dep.Release.Name.As_String));
+         else
+            Table.Append ("");
          end if;
 
          Index.Detect_Externals (Dep.Crate, Root.Environment);

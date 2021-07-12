@@ -1,4 +1,3 @@
-with Alire.Conditional;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
@@ -41,8 +40,7 @@ package body Alire.Dependencies.Graphs is
    is
    begin
       return Result : Graph := This do
-         for Dep of Conditional.Enumerate (R.Dependencies.Evaluate (Env))
-         loop
+         for Dep of R.Flat_Dependencies (Env) loop
             Result.Include (New_Dependency (R.Name, Dep.Crate));
          end loop;
       end return;
@@ -104,9 +102,9 @@ package body Alire.Dependencies.Graphs is
 
       if Solution.State (Dependee).Has_Release then
          if For_Plot then
-            return Solution.State (Dependee).Release.Milestone.Image;
+            return Solution.State (Dependee).Milestone_Image (Color => False);
          else
-            return Solution.State (Dependee).Release.Milestone.TTY_Image
+            return Solution.State (Dependee).Milestone_Image
               & " ("
               & TTY.Version
                (Solution.Dependency (Dependent, Dependee).Versions.Image)

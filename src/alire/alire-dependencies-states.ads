@@ -126,6 +126,13 @@ package Alire.Dependencies.States is
 
    overriding function Image (This : State) return String;
 
+   function Milestone_Image (This  : State;
+                             Color : Boolean := True)
+                             return String
+     with Pre => This.Has_Release;
+   --  Will use the dep name if it differs from the dependency (due to
+   --  equivalences).
+
    overriding function TTY_Image (This : State) return String;
 
    -------------------
@@ -359,6 +366,27 @@ private
        Fulfilled    => Base.Fulfilled,
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
+
+   ---------------------
+   -- Milestone_Image --
+   ---------------------
+
+   function Milestone_Image (This  : State;
+                             Color : Boolean := True)
+                             return String
+   is (if Color then
+          TTY.Name (This.Crate)
+          & "="
+          & TTY.Version (This.Release.Version.Image)
+          & (if This.Crate /= This.Release.Name
+            then " (" & TTY.Italic (This.Release.Name.As_String) & ")"
+            else "")
+       else
+         (+This.Crate) & "=" & This.Release.Version.Image
+         & (if This.Crate /= This.Release.Name
+            then " (" & This.Release.Name.As_String & ")"
+            else "")
+      );
 
    -------------
    -- Missing --

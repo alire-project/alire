@@ -41,7 +41,7 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => TTY.Emph  ("𐩒"),
              when Unchanged  => TTY.OK    ("="),
              when Missing    => TTY.Error ("⚠"),
-             when Shared     => TTY.Emph  ("🌐"))
+             when Shared     => TTY.Emph  ("♼"))
        else
          (case Change is
              when Added      => "+",
