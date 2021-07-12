@@ -105,6 +105,17 @@ package Alire.Containers is
    --  Locate the release, by name or provides, and remove it. Will raise if
    --  the release is not found.
 
+   function Contains_Or_Provides (This  : Release_Map;
+                                  Crate : Crate_Name) return Boolean;
+   --  Say if either the crate is a direct member, or provided by one of the
+   --  stored releases.
+
+   function Element_Providing (This  : Release_Map;
+                               Crate : Crate_Name)
+                               return Releases.Release
+     with Pre => This.Contains_Or_Provides (Crate);
+   --  Returns the release that is or provides Crate
+
    function To_Dependencies (Map : Release_Map)
                              return Conditional.Dependencies;
    --  Will filter out duplicates under Provides key (only actual crates will

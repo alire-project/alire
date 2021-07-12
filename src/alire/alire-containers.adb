@@ -5,6 +5,39 @@ with Semantic_Versioning.Extended;
 
 package body Alire.Containers is
 
+   --------------------------
+   -- Contains_Or_Provides --
+   --------------------------
+
+   function Contains_Or_Provides (This  : Release_Map;
+                                  Crate : Crate_Name) return Boolean
+   is (This.Contains (Crate)
+       or else
+         (for some Rel of This => Rel.Provides (Crate)));
+
+   -----------------------
+   -- Element_Providing --
+   -----------------------
+
+   function Element_Providing (This  : Release_Map;
+                               Crate : Crate_Name)
+                               return Releases.Release
+   is
+   begin
+      if This.Contains (Crate) then
+         return This (Crate);
+      else
+         for Rel of This loop
+            if Rel.Provides (Crate) then
+               return Rel;
+            end if;
+         end loop;
+      end if;
+
+      raise Constraint_Error with Errors.Set
+        ("Requested crate not in map: " & Crate.As_String);
+   end Element_Providing;
+
    ---------------
    -- Enumerate --
    ---------------

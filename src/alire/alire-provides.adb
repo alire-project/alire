@@ -35,6 +35,8 @@ package body Alire.Provides is
                        Dep  : Dependencies.Dependency)
                        return Boolean
    is (for some Milestone of This =>
+          Milestone.Crate = Dep.Crate
+       and then
          Semantic_Versioning.Extended.Is_In (Milestone.Version, Dep.Versions));
 
    ---------------

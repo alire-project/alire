@@ -21,7 +21,6 @@ package body Alire.Solutions is
    package TTY renames Utils.TTY;
 
    use type Ada.Containers.Count_Type;
-   use type Milestones.Milestone;
    use type Semantic_Versioning.Version;
 
    -----------------------
@@ -108,20 +107,16 @@ package body Alire.Solutions is
       end return;
    end Forbidden;
 
-   ---------------
-   -- Satisfies --
-   ---------------
+   --------------
+   -- Provides --
+   --------------
 
-   function Satisfies (This    : Solution;
-                       Release : Alire.Releases.Release;
-                       Env     : Properties.Vector)
-                       return Boolean
+   function Provides (This    : Solution;
+                      Release : Alire.Releases.Release)
+                      return Boolean
    is (
          --  Trivial equivalence, and mutual satisfiability via equivalences
-         (for some Solved of This.Releases =>
-          Solved.Milestone = Release.Milestone or else
-          Solved.Satisfies (Release.To_Dependency.Value) or else
-          Release.Satisfies (Solved.To_Dependency.Value))
+         (for some Solved of This.Releases => Solved.Provides (Release))
        or else
        --  Already linked
          (for some Linked of This.Links => Linked.Crate = Release.Name)

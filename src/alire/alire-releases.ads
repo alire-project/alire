@@ -165,6 +165,9 @@ package Alire.Releases is
    --  Say if one of this release Provides milestones is for Target, in
    --  addition to R.Name = Target.
 
+   function Provides (R : Release; Target : Release) return Boolean;
+   --  Check whether R and Target have the same name or provide the same name
+
    function Property (R   : Release;
                       Key : Alire.Properties.Labeled.Labels)
                       return String;
@@ -409,7 +412,18 @@ private
    function Provides (R : Release; Target : Crate_Name) return Boolean
    is (R.Name = Target
        or else
-       (for some Mil of R.Equivalences => Mil.Crate = Target));
+         (for some Mil of R.Equivalences => Mil.Crate = Target));
+
+   function Provides (R : Release; Target : Release) return Boolean
+   is (R.Provides (Target.Name)
+       or else
+         (for some Mil_1 of R.Equivalences =>
+             Mil_1.Crate = Target.Name
+             or else
+            (for some Mil_2 of Target.Equivalences =>
+                Mil_2.Crate = R.Name
+                or else
+                Mil_1.Crate = Mil_2.Crate)));
 
    function Forbidden (R : Release) return Conditional.Dependencies
    is (R.Forbidden);

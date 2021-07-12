@@ -229,7 +229,7 @@ package body Alire.Solver is
             -- Check --
             -----------
 
-            procedure Check (R : Release) is
+            procedure Check (R : Release; Is_Shared : Boolean) is
                use Alire.Containers;
                use all type Origins.Kinds;
             begin
@@ -267,13 +267,13 @@ package body Alire.Solver is
                --  solution, it can be added to the solution. This takes
                --  care of "provides" equivalences. TODO: TEST this new branch.
 
-               elsif Solution.Satisfies (R, Props)
+               elsif Solution.Provides (R)
                then
                   Trace.Debug
                     ("SOLVER: discarding tree because of" &
-                       " ALREADY SATISFIED release: " &
+                       " ALREADY PROVIDED release: " &
                        R.Milestone.Image &
-                       " satisfied by current solution when tree is " &
+                       " provided by current solution when tree is " &
                        Tree'(Expanded
                              and Target
                              and Remaining).Image_One_Line);
@@ -327,6 +327,7 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                        " to satisfy " & Dep.TTY_Image &
+                     (if Is_Shared then " with INSTALLED" else "") &
                      (if not R.Provides.Is_Empty
                         then " also providing " & R.Provides.Image_One_Line
                         else "") &
@@ -343,7 +344,9 @@ package body Alire.Solver is
                           Remaining => Empty,
                           Solution  => Solution.Including
                             (R, Props,
-                             Shared => R.Origin.Kind = Binary_Archive));
+                             Shared =>
+                               Is_Shared or else
+                               R.Origin.Kind = Binary_Archive));
                end if;
             end Check;
 
@@ -408,7 +411,7 @@ package body Alire.Solver is
 
                      Trace.Debug ("SOLVER short-cutting due to version pin"
                                   & " with valid release in index");
-                     Check (Release);
+                     Check (Release, Is_Shared => False);
                   end loop;
 
                      --  There may be no satisfying releases, or even so the
@@ -456,40 +459,40 @@ package body Alire.Solver is
             ------------------
 
             procedure Check_Shared is
-               Satisfied_By_Shared : Boolean := False;
             begin
 
                --  Solve with all installed dependencies that satisfy it
 
                for R of reverse Installed.Satisfying (Dep) loop
-                  Satisfiable         := True;
-                  Satisfied_By_Shared := True;
+                  Satisfiable := True;
 
-                  Trace.Debug
-                    ("SOLVER: dependency FROZEN+SHARED: "
-                     & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
-                     & (if not R.Provides.Is_Empty
-                       then " also providing " & R.Provides.Image_One_Line
-                       else "") &
-                       " adding" &
-                       R.Dependencies (Props).Leaf_Count'Img &
-                       " dependencies to tree " &
-                       Tree'(Expanded
-                       and Target
-                       and Remaining
-                       and R.Dependencies (Props)).Image_One_Line);
+                  Check (R, Is_Shared => True);
 
-                  Expand (Expanded  => Expanded and R.To_Dependency,
-                          Target    => Remaining and R.Dependencies (Props),
-                          Remaining => Empty,
-                          Solution  => Solution.Including (R, Props,
-                                                           Shared => True));
+                  --  Trace.Debug
+                  --    ("SOLVER: dependency FROZEN+SHARED: "
+                  --     & R.Milestone.Image & " to satisfy " & Dep.TTY_Image
+                  --     & (if not R.Provides.Is_Empty
+                  --       then " also providing " & R.Provides.Image_One_Line
+                  --       else "") &
+                  --       " adding" &
+                  --       R.Dependencies (Props).Leaf_Count'Img &
+                  --       " dependencies to tree " &
+                  --       Tree'(Expanded
+                  --       and Target
+                  --       and Remaining
+                  --       and R.Dependencies (Props)).Image_One_Line);
+                  --
+                  --  Expand (Expanded  => Expanded and R.To_Dependency,
+                  --         Target    => Remaining and R.Dependencies (Props),
+                  --          Remaining => Empty,
+                  --          Solution  => Solution.Including (R, Props,
+                  --                                          Shared => True));
                end loop;
 
                --  We may want still check without taking into account
                --  installed releases.
 
-               if not Satisfied_By_Shared
+               if Installed.Satisfying (Dep).Is_Empty
                  or else Options.Completeness > First_Complete
                then
                   Expand_Value (Dep          => Dep,
@@ -523,12 +526,13 @@ package body Alire.Solver is
                          Solution.Linking (Dep.Crate,
                                            Pins.State (Dep.Crate).Link));
 
-            elsif Solution.Releases.Contains (Dep.Crate) then
+            elsif Solution.Releases.Contains_Or_Provides (Dep.Crate) then
 
                --  Cut search once a crate is frozen, by checking the
                --  compatibility of the already frozen release:
 
-               Check (Solution.Releases.Element (Dep.Crate));
+               Check (Solution.Releases.Element_Providing (Dep.Crate),
+                      Is_Shared => False); -- TODO: FIX (extract from solution)
 
             elsif Allow_Shared then
 
@@ -572,7 +576,7 @@ package body Alire.Solver is
                      procedure Consider (R : Release) is
                      begin
                         Satisfiable := Satisfiable or else R.Satisfies (Dep);
-                        Check (R);
+                        Check (R, Is_Shared => False);
                      end Consider;
                   begin
                      if Options.Age = Newest then
