@@ -56,6 +56,9 @@ package Alire.Containers is
                                                   Releases."<",
                                                   Releases."=");
    type Release_Set is new Release_Sets.Set with null record;
+   Empty_Release_Set : constant Release_Set;
+
+   function Image_One_Line (This : Release_Set) return String;
 
    function Satisfying (This : Release_Set;
                         Dep  : Dependencies.Dependency)
@@ -138,5 +141,8 @@ private
 
    Empty_Release_Map : constant Release_Map :=
                          (Crate_Release_Maps.Empty_Map with null record);
+
+   Empty_Release_Set : constant Release_Set :=
+                         (Release_Sets.Empty_Set with null record);
 
 end Alire.Containers;

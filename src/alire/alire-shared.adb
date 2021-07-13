@@ -16,6 +16,8 @@ package body Alire.Shared is
 
    use Directories.Operators;
 
+   use type Milestones.Milestone;
+
    ---------------
    -- Available --
    ---------------
@@ -178,7 +180,6 @@ package body Alire.Shared is
      (Target : Milestones.Milestone;
       Confirm : Boolean := not Utils.User_Input.Not_Interactive)
    is
-      use type Milestones.Milestone;
    begin
       for Release of Available loop
          if Release.Milestone = Target then
@@ -190,5 +191,20 @@ package body Alire.Shared is
       Raise_Checked_Error
         ("Requested release is not installed: " & Target.TTY_Image);
    end Remove;
+
+   -------------
+   -- Release --
+   -------------
+
+   function Release (Target : Milestones.Milestone) return Releases.Release is
+   begin
+      for Release of Available loop
+         if Release.Milestone = Target then
+            return Release;
+         end if;
+      end loop;
+
+      raise Constraint_Error with "Not installed: " & Target.TTY_Image;
+   end Release;
 
 end Alire.Shared;

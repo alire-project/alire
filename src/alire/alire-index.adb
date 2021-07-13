@@ -1,10 +1,22 @@
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
 package body Alire.Index is
 
+   package Release_Set_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (Crate_Name, Containers.Release_Set, "<", Containers."=");
+   subtype Alias_Map is Release_Set_Maps.Map;
+
    use all type Semantic_Versioning.Version;
 
    Contents : aliased Alire.Crates.Containers.Maps.Map;
+   --  Regular mapping from crate name to its releases
+
+   Aliases  : Alias_Map;
+   --  Mapping from crate name to any release that satisfies it. Currently,
+   --  releases are duplicated in memory. These two collections could be made
+   --  to share releases towards some indirection or pointers.
 
    ---------
    -- Add --
@@ -48,10 +60,32 @@ package body Alire.Index is
                   Policy : Policies.For_Index_Merging :=
                     Policies.Merge_Priorizing_Existing)
    is
+
+      -----------------
+      -- Add_Aliases --
+      -----------------
+
+      procedure Add_Aliases is
+      begin
+         for Mil of Release.Provides loop
+            declare
+               Crate : Containers.Release_Set :=
+                         (if Aliases.Contains (Mil.Crate)
+                          then Aliases (Mil.Crate)
+                          else Containers.Empty_Release_Set);
+            begin
+               Crate.Include (Release);
+               Aliases.Include (Mil.Crate, Crate);
+            end;
+         end loop;
+      end Add_Aliases;
+
       Crate : Crates.Crate := Crates.New_Crate (Release.Name);
    begin
       Crate.Add (Release);
       Add (Crate, Policy);
+
+      Add_Aliases;
    end Add;
 
    --------------------------
@@ -174,15 +208,33 @@ package body Alire.Index is
    -- Releases_Satisfying --
    -------------------------
 
-   function Releases_Satisfying (Dep : Dependencies.Dependency)
+   function Releases_Satisfying (Dep : Dependencies.Dependency;
+                                 Env : Properties.Vector)
                                  return Containers.Release_Set
    is
       Result : Containers.Release_Set;
    begin
+
+      --  Regular crates
+
       if Exists (Dep.Crate) then
          for Release of Crate (Dep.Crate).Releases loop
-            if Release.Satisfies (Dep) then
+            if Release.Satisfies (Dep)
+              and then Release.Is_Available (Env)
+            then
                Result.Insert (Release);
+            end if;
+         end loop;
+      end if;
+
+      --  And any aliases via Provides
+
+      if Aliases.Contains (Dep.Crate) then
+         for Release of Aliases (Dep.Crate) loop
+            if Release.Satisfies (Dep)
+              and then Release.Is_Available (Env)
+            then
+               Result.Include (Release);
             end if;
          end loop;
       end if;

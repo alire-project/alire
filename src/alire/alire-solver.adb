@@ -9,6 +9,8 @@ with Alire.Milestones;
 with Alire.Optional;
 with Alire.Origins;
 with Alire.Shared;
+with Alire.Root;
+with Alire.Toolchains;
 with Alire.Utils.TTY;
 
 package body Alire.Solver is
@@ -46,18 +48,9 @@ package body Alire.Solver is
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any)
       return Boolean
-   is
-   begin
-      if Alire.Index.Exists (Name) then
-         for R of Index.Crate (Name).Releases loop
-            if Allowed.Contains (R.Version) then
-               return True;
-            end if;
-         end loop;
-      end if;
-
-      return False;
-   end Exists;
+   is (not Index.Releases_Satisfying
+       (Dependencies.New_Dependency (Name, Allowed),
+        Root.Platform_Properties).Is_Empty);
 
    ----------
    -- Find --
@@ -481,7 +474,8 @@ package body Alire.Solver is
                   --  The pin is compatible with the dependency, go ahead
 
                   for Release of Index.Releases_Satisfying
-                    (Dependencies.New_Dependency (Dep.Crate, Pin_Version))
+                    (Dependencies.New_Dependency (Dep.Crate, Pin_Version),
+                     Props)
                   loop
 
                      --  There is a valid crate for this pin and dependency
@@ -561,22 +555,43 @@ package body Alire.Solver is
                end if;
             end Check_Shared;
 
+            -----------------------------
+            -- Use_Configured_Compiler --
+            -----------------------------
+
+            procedure Use_Configured_Compiler is
+               New_Dep : constant Dependencies.Dependency :=
+                           Dependencies.New_Dependency
+                             (Crate    => Toolchains.Tool_Dependency
+                                            (Toolchains.GNAT_Crate).Crate,
+                              Versions => Dep.Versions);
+               --  Note that the version set may still exclude the configured
+               --  compiler, in which case other compiler versions will be
+               --  attempted (but from the configured compiler crate only).
+            begin
+               Trace.Debug ("SOLVER: replacing " & Dep.TTY_Image
+                            & " with " & New_Dep.TTY_Image);
+               Expand_Value (New_Dep, Allow_Shared);
+            end Use_Configured_Compiler;
+
          begin
 
-            --  if not Solution.State (Dep.Crate).Is_Missing then
-            --
-            --  -- Cheapest case, we already saw this dependency and dealt w it
-            --
-            --     Trace.Debug
-            --       ("SOLVER: dependency REUSED with " &
-            --          Solution.State (Dep.Crate).TTY_Image &
-            --          " when tree is " &
-            --        Tree'(Expanded and Target and Remaining).Image_One_Line);
-            --
-            --     Expand (Expanded  => Expanded,
-            --             Target    => Remaining,
-            --             Remaining => Empty,
-            --             Solution  => Solution);
+            --  If the dependency is on generic gnat, we will force the use of
+            --  the configured compiler, if any. Otherwise, any installed (but
+            --  not set as THE compiler) gnat will be used first. Last, any of
+            --  the remotely available compilers will be used, but trying first
+            --  the native ones (thanks to the way releases are ordered).
+
+            if Dep.Crate = Toolchains.GNAT_Crate and then
+              Toolchains.Tool_Is_Configured (Toolchains.GNAT_Crate) and then
+              Toolchains.Tool_Dependency (Toolchains.GNAT_Crate).Crate /=
+                Toolchains.GNAT_Crate -- This implies a particular GNAT
+            then
+               Use_Configured_Compiler;
+               return;
+            end if;
+
+            --  Regular considerations follow
 
             if Pins.Depends_On (Dep.Crate) and then
                Pins.State (Dep.Crate).Is_Linked
@@ -636,8 +651,10 @@ package body Alire.Solver is
 
                Check_Version_Pin;
 
-            elsif Index.Exists (Dep.Crate) then
-               --  TODO replace with index satisfiability
+            elsif Index.Exists (Dep.Crate) or else
+              not Index.Releases_Satisfying (Dep, Props).Is_Empty
+              --  TODO: Worth caching?
+            then
 
                --  Detect externals for this dependency now, so they are
                --  available as regular releases. Note that if no release
@@ -658,18 +675,26 @@ package body Alire.Solver is
                   --  Don't bother checking what we known to not be available.
                   --  We still want to go through to external hinting.
                   declare
+                     Candidates : constant Containers.Release_Set :=
+                                    Index.Releases_Satisfying (Dep, Props);
+
                      procedure Consider (R : Release) is
                      begin
                         Satisfiable := Satisfiable or else R.Satisfies (Dep);
                         Check (R, Is_Shared => False);
                      end Consider;
                   begin
+                     Trace.Debug ("SOLVER: considering"
+                                  & Candidates.Length'Image & " candidates to "
+                                  & Dep.TTY_Image & ": "
+                                  & Candidates.Image_One_Line);
+
                      if Options.Age = Newest then
-                        for R of reverse Index.Crate (Dep.Crate).Releases loop
+                        for R of reverse Candidates loop
                            Consider (R);
                         end loop;
                      else
-                        for R of Index.Crate (Dep.Crate).Releases loop
+                        for R of Candidates loop
                            Consider (R);
                         end loop;
                      end if;
@@ -866,25 +891,18 @@ package body Alire.Solver is
       begin
          if not Direct.Contains_ORs then
             for Dep of Direct loop
-               if not Index.Exists (Dep.Value.Crate) then
-                  --  Crate totally unavailable
-                  Unavailable_Crates.Include (Dep.Value.Crate);
-                  Trace.Debug ("Direct dependency is not a known crate: "
-                                & TTY.Name (Dep.Value.Crate));
-               else
-                  --  Pre-populate external releases
-                  if Options.Detecting = Detect then
-                     Index.Detect_Externals (Dep.Value.Crate, Props);
-                  end if;
 
-                  if not Exists (Dep.Value.Crate, Dep.Value.Versions) then
+               --  Pre-populate external releases
 
-                     --  No valid releases for the crate
-                     Unavailable_Deps.Include (Dep.Value.Image);
-                     Trace.Debug
-                       ("Direct dependency has no fulfilling releases: "
-                        & TTY.Name (Dep.Value.Image));
-                  end if;
+               if Options.Detecting = Detect then
+                  Index.Detect_Externals (Dep.Value.Crate, Props);
+               end if;
+
+               if Index.Releases_Satisfying (Dep.Value, Props).Is_Empty then
+                  Unavailable_Deps.Include (Dep.Value.Image);
+                  Trace.Debug
+                    ("Direct dependency has no fulfilling releases: "
+                     & TTY.Name (Dep.Value.Image));
                end if;
             end loop;
          else

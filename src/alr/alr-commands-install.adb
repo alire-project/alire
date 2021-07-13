@@ -11,6 +11,8 @@ with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils;
 
+with Alr.Platform;
+
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Install is
@@ -84,6 +86,8 @@ package body Alr.Commands.Install is
    ----------
 
    procedure List (Unused_Cmd : in out Command) is
+      use Alire;
+      use type Dependencies.Dependency;
       Table : AAA.Table_IO.Table;
    begin
       if Alire.Shared.Available.Is_Empty then
@@ -92,13 +96,30 @@ package body Alr.Commands.Install is
          return;
       end if;
 
-      Table.Append (TTY.Emph ("CRATE")).Append (TTY.Emph ("VERSION")).New_Row;
+      Table
+        .Append (TTY.Emph ("CRATE"))
+        .Append (TTY.Emph ("VERSION"))
+        .Append (TTY.Emph ("STATUS"))
+        .New_Row;
 
       for Dep of Alire.Shared.Available loop
-         Table
-           .Append (TTY.Name (Dep.Name))
-           .Append (TTY.Version (Dep.Version.Image))
-           .New_Row;
+         declare
+            Tool : constant Crate_Name :=
+                     (if Dep.Provides (Toolchains.GNAT_Crate)
+                      then Toolchains.GNAT_Crate
+                      else Dep.Name);
+         begin
+            Table
+              .Append (TTY.Name (Dep.Name))
+                .Append (TTY.Version (Dep.Version.Image))
+                  .Append (if Toolchains.Tool_Is_Configured (Tool)
+                           and then
+                           Dep.To_Dependency.Value =
+                             Toolchains.Tool_Dependency (Tool)
+                           then "Default toolchain"
+                           else "Shared release")
+              .New_Row;
+         end;
       end loop;
 
       Table.Print;
@@ -184,7 +205,7 @@ package body Alr.Commands.Install is
 
       if Cmd.Toolchain then
          Cmd.Requires_Full_Index;
-         Alire.Toolchains.Assistant;
+         Alire.Toolchains.Assistant (Platform.Operating_System);
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
       elsif Num_Arguments = 1 then

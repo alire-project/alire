@@ -760,4 +760,14 @@ package body Alire.Origins is
       end if;
    end Whenever;
 
+   ------------------
+   -- Is_Available --
+   ------------------
+
+   function Is_Available (This : Origin; Env : Properties.Vector)
+                             return Boolean
+   is (This.Kind /= Binary_Archive
+       or else
+       This.Data.Bin_Archive.Evaluate (Env).Is_Value);
+
 end Alire.Origins;

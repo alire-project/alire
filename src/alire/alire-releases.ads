@@ -14,6 +14,7 @@ with Alire.Properties.Licenses;
 with Alire.Provides;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
+with Alire.Toolchains;
 with Alire.User_Pins.Maps;
 with Alire.Utils;
 
@@ -376,7 +377,11 @@ private
 
    use all type Conditional.Properties;
 
-   function "<" (L, R : Release) return Boolean
+   function Sort_Compilers (L, R : Release) return Boolean;
+   --  For the special case of crates providing a compiler, we prefer the
+   --  native compilers before the cross-compilers.
+
+   function Standard_Sorting (L, R : Release) return Boolean
    is (L.Name < R.Name
          or else
        (L.Name = R.Name and then L.Version < R.Version)
@@ -385,9 +390,13 @@ private
            and then
         L.Version = R.Version
            and then
-        Build (L.Version) < Build (R.Version)
-       )
-      );
+        Build (L.Version) < Build (R.Version)));
+
+   function "<" (L, R : Release) return Boolean
+   is (if L.Provides (Toolchains.GNAT_Crate) and then
+          R.Provides (Toolchains.GNAT_Crate)
+       then Sort_Compilers (L, R)
+       else Standard_Sorting (L, R));
 
    function Name (R : Release) return Crate_Name
    is (R.Name);
@@ -446,7 +455,8 @@ private
 
    function Is_Available (R : Release;
                           P : Alire.Properties.Vector) return Boolean
-   is (R.Available.Is_Available (P));
+   is (R.Available.Is_Available (P)
+       and then R.Origin.Is_Available (P));
 
    function Description (R : Release) return Description_String
    --  Image returns "Description: Blah" so we have to cut.

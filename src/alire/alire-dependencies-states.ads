@@ -184,6 +184,11 @@ private
                             Version : Semantic_Versioning.Version)
                             return State;
 
+   overriding
+   function New_Dependency (Milestone : Milestones.Milestone;
+                            Updatable : Boolean := False)
+                            return State;
+
    --  Helper types
 
    overriding
@@ -425,6 +430,23 @@ private
       Versions : Semantic_Versioning.Extended.Version_Set)
       return State
    is (New_State (Dependencies.New_Dependency (Crate, Versions)));
+
+   --------------------
+   -- New_Dependency --
+   --------------------
+
+   overriding
+   function New_Dependency (Milestone : Milestones.Milestone;
+                            Updatable : Boolean := False)
+                            return State
+   is (New_State
+       (if Updatable then
+           Dependencies.New_Dependency
+             (Milestone.Crate,
+              Semantic_Versioning.Updatable (Milestone.Version))
+        else
+           Dependencies.New_Dependency
+             (Milestone.Crate, Milestone.Version)));
 
    ---------------
    -- New_State --

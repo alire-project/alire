@@ -473,4 +473,13 @@ package body Alire.Roots.Editable is
          Log_Exception (E, Warning);
    end Finalize;
 
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (This : in out Root; Solution : Solutions.Solution) is
+   begin
+      This.Edit.Set (Solution);
+   end Set;
+
 end Alire.Roots.Editable;

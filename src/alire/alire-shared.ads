@@ -13,6 +13,10 @@ package Alire.Shared is
    --  Return the contents of a lockfile describing what releases are installed
    --  at the shared location.
 
+   function Release (Target : Milestones.Milestone) return Releases.Release;
+   --  Retrieve the release corresponding to Target, if it exists. Will raise
+   --  Constraint_Error if not among Available.
+
    function Install_Path return Any_Path;
    --  Returns the base folder in which all shared releases live
 
@@ -31,5 +35,6 @@ package Alire.Shared is
    procedure Remove
      (Target : Milestones.Milestone;
       Confirm : Boolean := not Utils.User_Input.Not_Interactive);
+   --  Behaves as the previous Remove
 
 end Alire.Shared;

@@ -86,7 +86,8 @@ package Alire.Index is
                     Version : Semantic_Versioning.Version)
                     return Boolean;
 
-   function Releases_Satisfying (Dep : Dependencies.Dependency)
+   function Releases_Satisfying (Dep : Dependencies.Dependency;
+                                 Env : Properties.Vector)
                                  return Containers.Release_Set;
    --  By analogy with Releases/Milestones, this call says if a release exists
    --  that is able to provide this dependency, also considering "provides"

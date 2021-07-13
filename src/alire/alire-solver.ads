@@ -89,6 +89,7 @@ package Alire.Solver is
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any)
       return Boolean;
+   --  Say if some release in the index fulfills this dependency
 
    function Find
      (Name    : Alire.Crate_Name;
