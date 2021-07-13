@@ -32,7 +32,7 @@ package body Alire.Provides is
    ---------------
 
    function Satisfies (This : Equivalences;
-                       Dep  : Dependencies.Dependency)
+                       Dep  : Dependencies.Dependency'Class)
                        return Boolean
    is (for some Milestone of This =>
           Milestone.Crate = Dep.Crate

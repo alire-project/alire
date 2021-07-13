@@ -616,7 +616,8 @@ package body Alire.Solver is
                   & " for DIFFERENT dep " & Dep.TTY_Image);
 
                Check (Solution.Releases.Element_Providing (Dep.Crate),
-                      Is_Shared => False); -- TODO: FIX (extract from solution)
+                      Is_Shared =>
+                        Solution.Dependency_Providing (Dep.Crate).Is_Shared);
 
             elsif Allow_Shared then
 

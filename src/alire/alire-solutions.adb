@@ -413,6 +413,16 @@ package body Alire.Solutions is
                                          then Release.Name
                                          else For_Dependency.Value);
    begin
+
+      --  Check that there's no conflict with current solution
+
+      if This.Forbids (Release, Env) then
+         --  The solver should take care, so this is an unexpected error
+         raise Program_Error with
+           "release " & Release.Milestone.TTY_Image
+           & " is forbidden by solution";
+      end if;
+
       return Result : Solution := This do
          if Add_Dependency and then not This.Depends_On (Release.Name) then
             Result := Result.Depending_On (Release.To_Dependency.Value);
@@ -427,14 +437,22 @@ package body Alire.Solutions is
                               Shared => Shared));
          --  TODO: remove this Whenever once dynamic expr can be exported
 
-         --  Check that there's no conflict with current solution
+         --  In addition, mark as solved other deps satisfied via provides
 
-         if Result.Forbids (Release, Env) then
-            --  The solver should take care, so this is an unexpected error
-            raise Program_Error with
-              "release " & Release.Milestone.TTY_Image
-              & " is forbidden by solution";
-         end if;
+         for Dep of This.Dependencies loop
+            if Dep.Crate /= Dep_Name
+              and then not Dep.Is_Solved
+              and then Release.Satisfies (Dep)
+            then
+               Trace.Debug
+                 ("Marking " & Dep.TTY_Image & " as solved colaterally by "
+                  & Release.Milestone.TTY_Image);
+               Result.Dependencies :=
+                 Result.Dependencies.Including
+                   (This.State (Dep.Crate)
+                        .Solving (Release.Whenever (Env), Shared => Shared));
+            end if;
+         end loop;
 
       end return;
    end Including;
@@ -1057,6 +1075,24 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Releases;
+
+   --------------------------
+   -- Dependency_Providing --
+   --------------------------
+
+   function Dependency_Providing (This  : Solution;
+                                  Crate : Crate_Name)
+                                  return States.State
+   is
+   begin
+      for Dep of This.Dependencies loop
+         if Dep.Has_Release and then Dep.Release.Provides (Crate) then
+            return Dep;
+         end if;
+      end loop;
+
+      raise Program_Error with "Should not be reached due to preconditions";
+   end Dependency_Providing;
 
    -----------------------
    -- Release_Providing --

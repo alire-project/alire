@@ -22,7 +22,7 @@ package Alire.Provides with Preelaborate is
    No_Equivalences : constant Equivalences;
 
    function Satisfies (This : Equivalences;
-                       Dep  : Dependencies.Dependency)
+                       Dep  : Dependencies.Dependency'Class)
                        return Boolean;
    --  Check if any of the stored milestones fulfills the dependency.
 

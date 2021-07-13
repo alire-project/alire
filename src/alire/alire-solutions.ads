@@ -240,6 +240,13 @@ package Alire.Solutions is
    --  Check whether the solution already contains or provides a release
    --  equivalent to Release.
 
+   function Dependency_Providing (This  : Solution;
+                                  Crate : Crate_Name)
+                                  return States.State
+     with Pre => This.Releases.Contains_Or_Provides (Crate);
+   --  Return the dependency containing the release that satisfies the same as
+   --  Release would satisfy.
+
    function Release_Providing (This    : Solution;
                                Release : Alire.Releases.Release)
                                return Alire.Releases.Release

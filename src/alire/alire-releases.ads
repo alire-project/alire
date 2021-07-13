@@ -277,7 +277,7 @@ package Alire.Releases is
    --  True if some property contains the given string
 
    function Satisfies (R   : Release;
-                       Dep : Alire.Dependencies.Dependency)
+                       Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean;
    --  Ascertain if this release is a valid candidate for Dep
 
@@ -506,7 +506,7 @@ private
            when SVN            => R.Origin.Commit));
 
    function Satisfies (R   : Release;
-                       Dep : Alire.Dependencies.Dependency)
+                       Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean
    is ((R.Name = Dep.Crate and then Dep.Versions.Contains (R.Version))
        or else
