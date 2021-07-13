@@ -9,6 +9,8 @@ with Alire.Milestones;
 with Alire.Optional;
 with Alire.Origins;
 with Alire.Shared;
+with Alire.Root;
+with Alire.Toolchains;
 with Alire.Utils.TTY;
 
 package body Alire.Solver is
@@ -481,7 +483,8 @@ package body Alire.Solver is
                   --  The pin is compatible with the dependency, go ahead
 
                   for Release of Index.Releases_Satisfying
-                    (Dependencies.New_Dependency (Dep.Crate, Pin_Version))
+                    (Dependencies.New_Dependency (Dep.Crate, Pin_Version),
+                     Root.Platform_Properties)
                   loop
 
                      --  There is a valid crate for this pin and dependency
@@ -914,7 +917,8 @@ package body Alire.Solver is
       end Trace_Pins;
 
       Full_Dependencies : constant Conditional.Dependencies :=
-                            Tree'(Pins.User_Pins and Deps).Evaluate (Props);
+                            Toolchains.Add_Compiler
+                             (Tree'(Pins.User_Pins and Deps).Evaluate (Props));
       --  Include pins before other dependencies. This makes their dependency
       --  show in solutions explicitly.
 

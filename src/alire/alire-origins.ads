@@ -54,6 +54,11 @@ package Alire.Origins is
    function Whenever (This : Origin; Env : Properties.Vector) return Origin;
    --  Resolve expressions in the origin
 
+   function Is_Available (This : Origin; Env : Properties.Vector)
+                          return Boolean;
+   --  For a binary origin, true iif there is a value for the environment. True
+   --  for the rest of kinds.
+
    -------------------
    --  member data  --
    -------------------

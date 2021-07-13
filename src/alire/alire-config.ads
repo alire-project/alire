@@ -96,7 +96,7 @@ package Alire.Config with Preelaborate is
       --  assistant to select a gnat compiler and corresponding gprbuild
       --  will be launched.
 
-      Toolchain_Version : constant Config_Key := "toolchain.version";
+      Toolchain_Default : constant Config_Key := "toolchain.default";
       --  We use this key internally to store the configured toolchain picked
       --  up by the user. Not really intended to be set up by users, so not
       --  listed as a built-in.

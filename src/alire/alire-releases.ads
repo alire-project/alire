@@ -446,7 +446,8 @@ private
 
    function Is_Available (R : Release;
                           P : Alire.Properties.Vector) return Boolean
-   is (R.Available.Is_Available (P));
+   is (R.Available.Is_Available (P)
+       and then R.Origin.Is_Available (P));
 
    function Description (R : Release) return Description_String
    --  Image returns "Description: Blah" so we have to cut.

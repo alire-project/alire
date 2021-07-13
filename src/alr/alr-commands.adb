@@ -560,9 +560,9 @@ package body Alr.Commands is
       end if;
 
       if Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True)
-        and then not Conf.Defined (Conf.Keys.Toolchain_Version)
+        and then not Alire.Toolchains.Compiler_Is_Configured
       then
-         Alire.Toolchains.Assistant;
+         Alire.Toolchains.Assistant (Platform.Operating_System);
       end if;
 
       Trace.Debug ("Workspace is being checked and loaded for the first time");

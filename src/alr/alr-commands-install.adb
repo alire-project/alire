@@ -11,6 +11,8 @@ with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils;
 
+with Alr.Platform;
+
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Install is
@@ -184,7 +186,7 @@ package body Alr.Commands.Install is
 
       if Cmd.Toolchain then
          Cmd.Requires_Full_Index;
-         Alire.Toolchains.Assistant;
+         Alire.Toolchains.Assistant (Platform.Operating_System);
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
       elsif Num_Arguments = 1 then

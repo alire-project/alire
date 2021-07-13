@@ -1,4 +1,5 @@
 with Alire.Interfaces;
+with Alire.Milestones;
 with Alire.Utils;
 
 with Semantic_Versioning.Basic;
@@ -28,6 +29,12 @@ package Alire.Dependencies with Preelaborate is
      (Crate   : Crate_Name;
       Version : Semantic_Versioning.Version)
       return Dependency;
+
+   function New_Dependency (Milestone : Milestones.Milestone;
+                            Updatable : Boolean := False)
+                            return Dependency;
+   --  Return either an exact crate=version or a safely upgradable crate^1.x
+   --  dependency for the given milestone.
 
    function From_String (Spec : String) return Dependency;
    --  Intended to parse command-line dependencies given as crate[subset]:
@@ -98,7 +105,17 @@ private
    is (New_Dependency
        (Crate,
         Semantic_Versioning.Extended.To_Extended
-          (Semantic_Versioning.Basic.Exactly (Version))));
+            (Semantic_Versioning.Basic.Exactly (Version))));
+
+   function New_Dependency (Milestone : Milestones.Milestone;
+                            Updatable : Boolean := False)
+                            return Dependency
+   is (if Updatable
+       then
+          New_Dependency (Milestone.Crate,
+                          Semantic_Versioning.Updatable (Milestone.Version))
+       else
+          New_Dependency (Milestone.Crate, Milestone.Version));
 
    function Crate (Dep : Dependency) return Crate_Name is (Dep.Crate);
 

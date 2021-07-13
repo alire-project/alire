@@ -5,20 +5,53 @@ with Ada.Containers.Indefinite_Vectors;
 
 with Alire.Config.Edit;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Origins;
+with Alire.Properties;
 with Alire.Releases;
 with Alire.Root;
 with Alire.Shared;
 with Alire.TTY;
 with Alire.Utils.User_Input;
 
+with Semantic_Versioning.Extended;
+
 package body Alire.Toolchains is
+
+   ------------------
+   -- Add_Compiler --
+   ------------------
+
+   function Add_Compiler (Deps : Conditional.Dependencies)
+                          return Conditional.Dependencies
+   is
+      use type Conditional.Dependencies;
+      use Utils;
+   begin
+
+      --  We do not add a dependency if no compiler is configured (old alr
+      --  working mode) or if there is a top-level specific dependency.
+
+      if not Compiler_Is_Configured
+        or else
+        (for some Dep of Conditional.Enumerate (Deps) =>
+             Starts_With (Dep.Crate.As_String, "gnat_"))
+      then
+         Trace.Debug ("Not adding compiler dependency (compiler configured: "
+                      & Compiler_Is_Configured'Image & ")");
+         return Deps;
+      else
+         Trace.Debug ("Adding compiler dependency on "
+                      & Compiler_Dependency.TTY_Image);
+         return Conditional.New_Dependency (Compiler_Dependency) and Deps;
+      end if;
+   end Add_Compiler;
 
    ---------------
    -- Assistant --
    ---------------
 
-   procedure Assistant is
+   procedure Assistant (Current_OS : Platforms.Operating_Systems) is
       package Release_Vectors is new
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
@@ -29,6 +62,10 @@ package body Alire.Toolchains is
       --  release to use at the same position in the respective vector.
 
       GNAT     : constant Crate_Name := To_Name ("gnat");
+      GNAT_Dep : constant Dependencies.Dependency :=
+                   Dependencies.New_Dependency
+                     (GNAT,
+                      Semantic_Versioning.Extended.Any);
       GPRbuild : constant Crate_Name := To_Name ("gprbuild");
 
       ----------------
@@ -55,6 +92,7 @@ package body Alire.Toolchains is
 
       procedure Fill_Version_Choices is
          use all type Origins.Kinds;
+         Env : constant Properties.Vector := Root.Platform_Properties;
       begin
          Index.Detect_Externals (GNAT, Root.Platform_Properties);
 
@@ -63,9 +101,9 @@ package body Alire.Toolchains is
          Targets.Append (Index.Crate (GNAT).Base); -- Just a placeholder
 
          --  Identify possible externals first (but after the newest Alire one)
-         for Release of reverse Index.Crate (GNAT).Releases loop
+         for Release of reverse Index.Releases_Satisfying (GNAT_Dep, Env) loop
             if Release.Origin.Kind in System | External then
-               Add_Choice (Release.Version.Image
+               Add_Choice (Release.Milestone.TTY_Image
                            & TTY.Dim (" [" & Release.Notes & "]"),
                            Release);
             end if;
@@ -75,16 +113,29 @@ package body Alire.Toolchains is
          --  which goes before anything else.
          Add_Binary_Versions :
          declare
+            use Utils;
             First : Boolean := True;
          begin
-            for Release of reverse Index.Crate (GNAT).Releases loop
+            for Release of reverse Index.Releases_Satisfying (GNAT_Dep, Env)
+            loop
                if Release.Origin.Is_Regular then
-                  if First then
+
+                  --  We want the newest native compiler to be the default.
+                  --  This is a crudish check in which the compiler crate name
+                  --  must contain our current platform name, since there's
+                  --  nothing in the manifest saying if the compiler is native
+                  --  or not.
+
+                  if First
+                    and then Contains
+                      (Release.Name.As_String,
+                       To_Lower_Case (Current_OS'Image))
+                  then
                      First := False;
-                     Add_Choice (Release.Version.Image, Release,
+                     Add_Choice (Release.Milestone.TTY_Image, Release,
                                  Prepend => True);
                   else
-                     Add_Choice (Release.Version.Image, Release);
+                     Add_Choice (Release.Milestone.TTY_Image, Release);
                   end if;
                end if;
             end loop;
@@ -109,12 +160,12 @@ package body Alire.Toolchains is
             --  Clean up stored version
 
             Config.Edit.Unset (Path  => Config.Edit.Filepath (Config.Global),
-                               Key   => Config.Keys.Toolchain_Version);
+                               Key   => Config.Keys.Toolchain_Default);
 
          else
 
             Put_Info ("Selected toolchain version "
-                      & TTY.Bold (Targets (Choice).Version.Image));
+                      & TTY.Bold (Targets (Choice).Milestone.TTY_Image));
 
             --  If the selected compiler is one of our regular indexed ones,
             --  install the compiler and a matching gprbuild, if existing.
@@ -131,11 +182,11 @@ package body Alire.Toolchains is
                GNAT_Release : constant Releases.Release := Targets (Choice);
             begin
 
-               --  Store version
+               --  Store toolchain
 
                Config.Edit.Set (Path  => Config.Edit.Filepath (Config.Global),
-                                Key   => Config.Keys.Toolchain_Version,
-                                Value => GNAT_Release.Version.Image);
+                                Key   => Config.Keys.Toolchain_Default,
+                                Value => GNAT_Release.Milestone.Image);
 
                --  Optionally, deploy as a shared install
 
@@ -182,10 +233,9 @@ package body Alire.Toolchains is
             & """alr install --toolchain"".")
          .Append (""));
 
-      if Config.Get (Config.Keys.Toolchain_Version, "") /= "" then
-         Put_Info ("Version currently in use: "
-                   & TTY.Version
-                     (Config.Get (Config.Keys.Toolchain_Version, "")));
+      if Compiler_Is_Configured then
+         Put_Info ("Compiler currently in use: "
+                   & Compiler_Dependency.TTY_Image);
          Trace.Info ("");
       end if;
 
@@ -201,5 +251,27 @@ package body Alire.Toolchains is
                        Config.Keys.Toolchain_Assistant,
                        "false");
    end Assistant;
+
+   ------------------------------
+   -- Compiler_Milestone_Image --
+   ------------------------------
+   --  The string we use to store the compiler version
+   function Compiler_Milestone_Image return String
+   is (Config.Get (Config.Keys.Toolchain_Default, ""));
+
+   ----------------------------
+   -- Compiler_Is_Configured --
+   ----------------------------
+
+   function Compiler_Is_Configured return Boolean
+   is (Compiler_Milestone_Image /= "");
+
+   -------------------------
+   -- Compiler_Dependency --
+   -------------------------
+
+   function Compiler_Dependency return Dependencies.Dependency
+   is (Dependencies.New_Dependency
+       (Milestones.New_Milestone (Compiler_Milestone_Image)));
 
 end Alire.Toolchains;
