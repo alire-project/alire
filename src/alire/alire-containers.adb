@@ -121,6 +121,25 @@ package body Alire.Containers is
       end return;
    end Excluding;
 
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Release_Set) return String is
+      Result : UString;
+      use UStrings;
+   begin
+      for Rel of This loop
+         if Result /= "" then
+            Append (Result, ", ");
+         end if;
+
+         Append (Result, Rel.Milestone.TTY_Image);
+      end loop;
+
+      return +Result;
+   end Image_One_Line;
+
    ---------------
    -- Including --
    ---------------

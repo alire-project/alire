@@ -4,6 +4,10 @@ with Alire.Platforms;
 
 package Alire.Toolchains is
 
+   GNAT_Crate : constant Crate_Name := To_Name ("gnat");
+
+   function Any_GNAT return Dependencies.Dependency;
+
    procedure Assistant (Current_OS : Platforms.Operating_Systems);
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.

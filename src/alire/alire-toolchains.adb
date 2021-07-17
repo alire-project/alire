@@ -47,6 +47,14 @@ package body Alire.Toolchains is
       end if;
    end Add_Compiler;
 
+   --------------
+   -- Any_GNAT --
+   --------------
+
+   function Any_GNAT return Dependencies.Dependency
+   is (Dependencies.New_Dependency
+        (GNAT_Crate, Semantic_Versioning.Extended.Any));
+
    ---------------
    -- Assistant --
    ---------------
@@ -61,11 +69,6 @@ package body Alire.Toolchains is
       --  These two variables are in sync; so the picked choice says the
       --  release to use at the same position in the respective vector.
 
-      GNAT     : constant Crate_Name := To_Name ("gnat");
-      GNAT_Dep : constant Dependencies.Dependency :=
-                   Dependencies.New_Dependency
-                     (GNAT,
-                      Semantic_Versioning.Extended.Any);
       GPRbuild : constant Crate_Name := To_Name ("gprbuild");
 
       ----------------
@@ -94,14 +97,14 @@ package body Alire.Toolchains is
          use all type Origins.Kinds;
          Env : constant Properties.Vector := Root.Platform_Properties;
       begin
-         Index.Detect_Externals (GNAT, Root.Platform_Properties);
+         Index.Detect_Externals (GNAT_Crate, Root.Platform_Properties);
 
          --  Always offer to configure nothing
          Choices.Append ("None");
-         Targets.Append (Index.Crate (GNAT).Base); -- Just a placeholder
+         Targets.Append (Index.Crate (GNAT_Crate).Base); -- Just a placeholder
 
          --  Identify possible externals first (but after the newest Alire one)
-         for Release of reverse Index.Releases_Satisfying (GNAT_Dep, Env) loop
+         for Release of reverse Index.Releases_Satisfying (Any_GNAT, Env) loop
             if Release.Origin.Kind in System | External then
                Add_Choice (Release.Milestone.TTY_Image
                            & TTY.Dim (" [" & Release.Notes & "]"),
@@ -116,7 +119,7 @@ package body Alire.Toolchains is
             use Utils;
             First : Boolean := True;
          begin
-            for Release of reverse Index.Releases_Satisfying (GNAT_Dep, Env)
+            for Release of reverse Index.Releases_Satisfying (Any_GNAT, Env)
             loop
                if Release.Origin.Is_Regular then
 
@@ -240,7 +243,9 @@ package body Alire.Toolchains is
       end if;
 
       --  Find the newest regular gnat in our index:
-      if Index.Exists (GNAT) then
+      if not Index.Releases_Satisfying (Any_GNAT,
+                                        Root.Platform_Properties).Is_Empty
+      then
          Fill_Version_Choices;
          Set_Toolchain;
       else

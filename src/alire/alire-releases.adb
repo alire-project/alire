@@ -11,6 +11,7 @@ with Alire.Origins.Deployers;
 with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
+with Alire.Root;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 with Alire.Warnings;
@@ -1003,5 +1004,37 @@ package body Alire.Releases is
          return "";
       end if;
    end Long_Description;
+
+   --------------------
+   -- Sort_Compilers --
+   --------------------
+
+   function Sort_Compilers (L, R : Release) return Boolean is
+
+      ---------------
+      -- Is_Native --
+      ---------------
+
+      function Is_Native (This : Release) return Boolean is
+         use Utils;
+      begin
+         return Contains (This.Name.As_String,
+                          To_Lower_Case (Root.Platform_OS'Image));
+      end Is_Native;
+
+   begin
+
+      --  non-native goes first
+
+      if Is_Native (R) and then not Is_Native (L) then
+         return True;
+      elsif Is_Native (L) and then not Is_Native (R) then
+         return False;
+      end if;
+
+      --  otherwise same ordering as regular crates
+
+      return Standard_Sorting (L, R);
+   end Sort_Compilers;
 
 end Alire.Releases;

@@ -58,6 +58,8 @@ package Alire.Containers is
    type Release_Set is new Release_Sets.Set with null record;
    Empty_Release_Set : constant Release_Set;
 
+   function Image_One_Line (This : Release_Set) return String;
+
    function Satisfying (This : Release_Set;
                         Dep  : Dependencies.Dependency)
                         return Release_Set
