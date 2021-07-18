@@ -3,11 +3,13 @@ with Ada.Numerics.Discrete_Random;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platform;
 with Alire.Properties;
 with Alire.Roots;
+with Alire.TTY;
 
 with GNATCOLL.VFS;
 
@@ -203,6 +205,8 @@ package body Alire.Directories is
 
    procedure Force_Delete (Path : Any_Path) is
       use Ada.Directories;
+      use GNATCOLL.VFS;
+      Success : Boolean := False;
    begin
       if Exists (Path) then
          if Kind (Path) = Ordinary_File then
@@ -210,8 +214,18 @@ package body Alire.Directories is
             Delete_File (Path);
          elsif Kind (Path) = Directory then
             Trace.Debug ("Deleting temporary folder " & Path & "...");
+
             Ensure_Deletable (Path);
-            Delete_Tree (Path);
+
+            --  Ada.Directories fails when there are softlinks in a tree, so we
+            --  use GNATCOLL instead.
+            GNATCOLL.VFS.Remove_Dir (Create (+Path),
+                                     Recursive => True,
+                                     Success   => Success);
+            if not Success then
+               raise Program_Error with
+                 Errors.Set ("Could not delete: " & TTY.URL (Path));
+            end if;
          end if;
       end if;
    end Force_Delete;

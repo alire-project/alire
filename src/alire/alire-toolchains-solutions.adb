@@ -36,4 +36,16 @@ package body Alire.Toolchains.Solutions is
       return Result;
    end Add_Toolchain;
 
+   ---------------------
+   -- Is_In_Toolchain --
+   ---------------------
+
+   function Is_In_Toolchain (Release : Releases.Release) return Boolean
+   is
+      use type Dependencies.Dependency;
+   begin
+      return Tool_Is_Configured (Release.Name) and then
+        Tool_Dependency (Release.Name) = Release.To_Dependency.Value;
+   end Is_In_Toolchain;
+
 end Alire.Toolchains.Solutions;

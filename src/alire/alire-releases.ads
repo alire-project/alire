@@ -382,7 +382,7 @@ private
    --  native compilers before the cross-compilers.
 
    function Standard_Sorting (L, R : Release) return Boolean
-   is (L.Name < R.Name
+   is (R.Name < L.Name -- So when going from newest to oldest the order is OK
          or else
        (L.Name = R.Name and then L.Version < R.Version)
          or else

@@ -768,6 +768,6 @@ package body Alire.Origins is
                              return Boolean
    is (This.Kind /= Binary_Archive
        or else
-       This.Data.Bin_Archive.Evaluate (Env).Is_Value);
+       not This.Data.Bin_Archive.Evaluate (Env).Is_Empty);
 
 end Alire.Origins;

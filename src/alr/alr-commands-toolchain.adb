@@ -15,7 +15,7 @@ with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
-package body Alr.Commands.Install is
+package body Alr.Commands.Toolchain is
 
    --------------------
    -- Setup_Switches --
@@ -30,9 +30,16 @@ package body Alr.Commands.Install is
    begin
       Define_Switch
         (Config,
-         Cmd.Toolchain'Access,
+         Cmd.Install'Access,
+         Switch      => "-i",
+         Long_Switch => "--install",
+         Help        => "Install a toolchain component");
+
+      Define_Switch
+        (Config,
+         Cmd.S_Select'Access,
          Switch      => "",
-         Long_Switch => "--toolchain",
+         Long_Switch => "--select",
          Help        => "Run the toolchain selection assistant");
 
       Define_Switch
@@ -40,7 +47,7 @@ package body Alr.Commands.Install is
          Cmd.Uninstall'Access,
          Switch      => "-u",
          Long_Switch => "--uninstall",
-         Help        => "Uninstall a release");
+         Help        => "Uninstall a toolchain component");
    end Setup_Switches;
 
    -------------
@@ -61,6 +68,15 @@ package body Alr.Commands.Install is
                               Allowed => Dep.Versions,
                               Policy  => Query_Policy);
       begin
+
+         --  Only allow sharing toolchain elements in this command:
+
+         if not (for some Crate of Alire.Toolchains.Tools =>
+                   Rel.Provides (Crate))
+         then
+            Reportaise_Wrong_Arguments
+              ("The requested crate is not a toolchain component");
+         end if;
 
          --  Inform of how the requested crate has been narrowed down
 
@@ -116,8 +132,8 @@ package body Alr.Commands.Install is
                            and then
                            Dep.To_Dependency.Value =
                              Toolchains.Tool_Dependency (Tool)
-                           then "Default toolchain"
-                           else "Shared release")
+                           then TTY.Description ("Default")
+                           else "Available")
               .New_Row;
          end;
       end loop;
@@ -182,7 +198,7 @@ package body Alr.Commands.Install is
 
       --  Validation
 
-      if Cmd.Uninstall and then Cmd.Toolchain then
+      if Cmd.Uninstall and then Cmd.S_Select then
          Reportaise_Wrong_Arguments
            ("The provided switches cannot be used simultaneously");
       end if;
@@ -192,24 +208,29 @@ package body Alr.Commands.Install is
            ("One crate with optional version expected: crate[version set]");
       end if;
 
-      if Cmd.Uninstall and then Num_Arguments /= 1 then
-         Reportaise_Wrong_Arguments ("No release to uninstall specified");
+      if (Cmd.Install or Cmd.Uninstall) and then Num_Arguments /= 1 then
+         Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
-      if Cmd.Toolchain and then Num_Arguments /= 0 then
+      if Num_Arguments = 1 and then not (Cmd.Install or Cmd.Uninstall) then
+         Reportaise_Wrong_Arguments
+           ("Specify the action to perform with the crate");
+      end if;
+
+      if Cmd.S_Select and then Num_Arguments /= 0 then
          Reportaise_Wrong_Arguments
            ("Toolchain installation does not accept any arguments");
       end if;
 
       --  Dispatch to subcommands
 
-      if Cmd.Toolchain then
+      if Cmd.S_Select then
          Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant (Platform.Operating_System);
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
-      elsif Num_Arguments = 1 then
-         Cmd.Install (Argument (1));
+      elsif Cmd.Install then
+         Install (Cmd, Argument (1));
       else
          Cmd.List;
       end if;
@@ -220,4 +241,4 @@ package body Alr.Commands.Install is
          Reportaise_Wrong_Arguments ("Improper version specification");
    end Execute;
 
-end Alr.Commands.Install;
+end Alr.Commands.Toolchain;

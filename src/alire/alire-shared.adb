@@ -7,6 +7,7 @@ with Alire.Origins;
 with Alire.Paths;
 with Alire.Properties.Actions;
 with Alire.Root;
+with Alire.Toolchains.Solutions;
 with Alire.TTY;
 with Alire.Warnings;
 
@@ -83,6 +84,42 @@ package body Alire.Shared is
    procedure Share (Release : Releases.Release)
    is
       Already_Installed : Boolean := False;
+
+      --------------------
+      -- Is_Installable --
+      --------------------
+
+      function Is_Installable return Boolean is
+
+         --  We can install only regular releases. Also, releases that do not
+         --  have post-fetch actions (as they might involve using dependencies)
+         --  and dependencies simultaneously. I.e., post-fetch without
+         --  dependencies is OK, as it is having dependencies and no
+         --  post-fetch. Since "make" can be a pretty common single dependency
+         --  that does not cause problems, we make an exception for it.
+
+         use Containers.Crate_Name_Sets;
+         Allowed_Dependencies : constant Set := To_Set (To_Name ("make"));
+
+      begin
+         if Release.Dependencies.Is_Empty or else
+           (for all Dep of Release.Flat_Dependencies (Root.Platform_Properties)
+                => Allowed_Dependencies.Contains (Dep.Crate))
+         then
+            return True;
+         end if;
+
+         if Release.On_Platform_Actions
+           (Root.Platform_Properties,
+            (Properties.Actions.Post_Fetch => True,
+             others                        => False)).Is_Empty
+         then
+            return True;
+         end if;
+
+         return False;
+      end Is_Installable;
+
    begin
 
       --  See if it is a valid installable origin
@@ -93,13 +130,8 @@ package body Alire.Shared is
             & " has origin of kind " & Release.Origin.Kind'Image);
       end if;
 
-      if not Release.Dependencies.Is_Empty and then
-        not Release.On_Platform_Actions
-          (Root.Platform_Properties,
-           (Properties.Actions.Post_Fetch => True,
-            others                        => False)).Is_Empty
-      then
-         Raise_Checked_Error
+      if not Is_Installable then
+         Recoverable_Error
            ("Releases with both dependencies and post-fetch actions are not "
             & " yet supported. (Use `"
             & TTY.Terminal ("alr show <crate=version>") & "` to examine "
@@ -155,6 +187,19 @@ package body Alire.Shared is
       if not Ada.Directories.Exists (Path) then
          Raise_Checked_Error
            ("Directory slated for removal does not exist: " & TTY.URL (Path));
+      end if;
+
+      if Toolchains.Solutions.Is_In_Toolchain (Release) then
+         Recoverable_Error ("The release to be removed ("
+                            & Release.Milestone.TTY_Image & ") is part of the "
+                            & "configured default toolchain.");
+
+         --  If forced:
+         Put_Warning ("Removing it anyway; it will be also removed from the "
+                      & "default toolchain.");
+
+         --  So remove it
+         Toolchains.Unconfigure (Release.Name);
       end if;
 
       if not Confirm or else Utils.User_Input.Query

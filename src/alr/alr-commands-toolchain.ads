@@ -1,6 +1,6 @@
 with Alire.TTY;
 
-package Alr.Commands.Install is
+package Alr.Commands.Toolchain is
 
    package TTY renames Alire.TTY;
 
@@ -17,16 +17,24 @@ package Alr.Commands.Install is
                               return Alire.Utils.String_Vector
    is (Alire.Utils.Empty_Vector
        .Append
-         ("Install toolchain elements, like" & " " & TTY.Emph ("GNAT")
+         ("Download toolchain elements, like" & " " & TTY.Emph ("GNAT")
           & " and " & TTY.Emph ("gprbuid") & ", in the shared cache of the"
           & " active configuration.")
        .New_Line
        .Append
-         ("Run it without arguments to get a list of installed releases.")
+         ("Run it without arguments to get a list of downloaded tools.")
        .New_Line
        .Append
-         ("Specify a crate name with optional version set to request the"
-          & " crate installation.")
+         ("Use --select without arguments to run the assistant to "
+          & "select the default toolchain for this configuration.")
+       .New_Line
+       .Append
+         ("Specify --install/--uninstall and a crate name with optional "
+          & "version set to make available or remove a tool.")
+       .New_Line
+       .Append
+         ("Run `" & TTY.Terminal ("alr help toolchains") & "` for further "
+          & "information about toolchain management and use.")
       );
 
    overriding
@@ -36,17 +44,18 @@ package Alr.Commands.Install is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Manage Alire-provided toolchains and shared dependencies");
+   is ("Manage Alire-provided toolchains");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[-u|--uninstall] [crate[version set]] | --toolchain");
+   is ("[-u|--uninstall] [-i|--install crate[version set]] | --select");
 
 private
 
    type Command is new Commands.Command with record
-      Toolchain : aliased Boolean := False;
+      Install   : aliased Boolean := False;
+      S_Select  : aliased Boolean := False;
       Uninstall : aliased Boolean := False;
    end record;
 
-end Alr.Commands.Install;
+end Alr.Commands.Toolchain;

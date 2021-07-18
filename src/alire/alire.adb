@@ -237,11 +237,14 @@ package body Alire is
    -----------------------
 
    procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
+      use Alire.Utils;
+      Info : constant String := " (This error can be overridden with "
+                                & TTY.Terminal ("--force") & ".)";
    begin
       if Recover then
          Warnings.Warn_Once (Msg);
       else
-         Raise_Checked_Error (Msg);
+         Raise_Checked_Error (Msg & Info);
       end if;
    end Recoverable_Error;
 

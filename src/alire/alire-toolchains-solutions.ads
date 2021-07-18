@@ -1,3 +1,4 @@
+with Alire.Releases;
 with Alire.Solutions;
 
 package Alire.Toolchains.Solutions is
@@ -10,5 +11,8 @@ package Alire.Toolchains.Solutions is
    --  ones (if defined) to the solution. This is used just before launching
    --  the build, so the configured tools are used despite not being in a
    --  regular solution.
+
+   function Is_In_Toolchain (Release : Releases.Release) return Boolean;
+   --  Say if this Release is part of the user-configured toolchain
 
 end Alire.Toolchains.Solutions;

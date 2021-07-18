@@ -30,7 +30,6 @@ with Alr.Commands.Get;
 with Alr.Commands.Help;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
-with Alr.Commands.Install;
 with Alr.Commands.Pin;
 with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
@@ -38,6 +37,7 @@ with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
+with Alr.Commands.Toolchain;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
@@ -62,26 +62,26 @@ package body Alr.Commands is
    type Command_Access is access Command'Class;
 
    Dispatch_Table : constant array (Cmd_Names) of Command_Access :=
-                      (Cmd_Build    => new Build.Command,
-                       Cmd_Clean    => new Clean.Command,
-                       Cmd_Config   => new Config.Command,
-                       Cmd_Dev      => new Dev.Command,
-                       Cmd_Edit     => new Edit.Command,
-                       Cmd_Get      => new Get.Command,
-                       Cmd_Help     => new Help.Command,
-                       Cmd_Index    => new Index.Command,
-                       Cmd_Init     => new Init.Command,
-                       Cmd_Install  => new Install.Command,
-                       Cmd_Pin      => new Pin.Command,
-                       Cmd_Printenv => new Printenv.Command,
-                       Cmd_Publish  => new Publish.Command,
-                       Cmd_Run      => new Run.Command,
-                       Cmd_Search   => new Search.Command,
-                       Cmd_Show     => new Show.Command,
-                       Cmd_Test     => new Test.Command,
-                       Cmd_Update   => new Update.Command,
-                       Cmd_Version  => new Version.Command,
-                       Cmd_With     => new Withing.Command);
+                      (Cmd_Build     => new Build.Command,
+                       Cmd_Clean     => new Clean.Command,
+                       Cmd_Config    => new Config.Command,
+                       Cmd_Dev       => new Dev.Command,
+                       Cmd_Edit      => new Edit.Command,
+                       Cmd_Get       => new Get.Command,
+                       Cmd_Help      => new Help.Command,
+                       Cmd_Index     => new Index.Command,
+                       Cmd_Init      => new Init.Command,
+                       Cmd_Pin       => new Pin.Command,
+                       Cmd_Printenv  => new Printenv.Command,
+                       Cmd_Publish   => new Publish.Command,
+                       Cmd_Run       => new Run.Command,
+                       Cmd_Search    => new Search.Command,
+                       Cmd_Show      => new Show.Command,
+                       Cmd_Test      => new Test.Command,
+                       Cmd_Toolchain => new Toolchain.Command,
+                       Cmd_Update    => new Update.Command,
+                       Cmd_Version   => new Version.Command,
+                       Cmd_With      => new Withing.Command);
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 
@@ -560,6 +560,7 @@ package body Alr.Commands is
       end if;
 
       if Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True) then
+         Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant (Platform.Operating_System);
       end if;
 

@@ -4,6 +4,7 @@ private with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
 with Alire.Platforms;
+private with Alire.Utils;
 
 package Alire.Toolchains is
 
@@ -19,6 +20,9 @@ package Alire.Toolchains is
                .Union (Name_Sets.To_Set (GPRbuild_Crate));
    --  All crates that are part of the provided binary toolchain
 
+   --  The following functions will transform any `gnat_XXX` dependency on
+   --  plain `gnat`.
+
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
@@ -33,6 +37,9 @@ package Alire.Toolchains is
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
 
+   procedure Unconfigure (Crate : Crate_Name);
+   --  Set the crate as not configured.
+
 private
 
    --------------
@@ -40,8 +47,10 @@ private
    --------------
    --  Construct the "toolchain.use.crate" keys
    function Tool_Key (Crate : Crate_Name) return Config.Config_Key
-   is (Config.Config_Key
-       (String (Config.Keys.Toolchain_Use) & "." & Crate.As_String));
+   is (if Utils.Starts_With (Crate.As_String, "gnat_")
+       then Tool_Key (GNAT_Crate)
+       else Config.Config_Key
+              (String (Config.Keys.Toolchain_Use) & "." & Crate.As_String));
 
    --------------------
    -- Tool_Milestone --

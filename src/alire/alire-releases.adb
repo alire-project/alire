@@ -137,7 +137,6 @@ package body Alire.Releases is
       use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / This.Unique_Folder;
-      Result : Alire.Outcome;
 
       ------------------------------
       -- Backup_Upstream_Manifest --
@@ -189,11 +188,8 @@ package body Alire.Releases is
                          This.Milestone.Image);
       else
          Was_There := False;
-         Put_Info ("Deploying release " & This.Milestone.TTY_Image & " ...");
-         Result := Alire.Origins.Deployers.Deploy (This, Folder);
-         if not Result.Success then
-            Raise_Checked_Error (Message (Result));
-         end if;
+         Put_Info ("Deploying release " & This.Milestone.TTY_Image & "...");
+         Alire.Origins.Deployers.Deploy (This, Folder).Assert;
 
          --  For deployers that do nothing, we ensure the folder exists so all
          --  dependencies leave a trace in the cache/dependencies folder, and
@@ -213,7 +209,7 @@ package body Alire.Releases is
          end if;
       end if;
 
-      --  Run actions on first retrieval
+      --  Run post-fetch actions on first retrieval
 
       if Perform_Actions and then not Was_There then
          declare
@@ -225,6 +221,20 @@ package body Alire.Releases is
                Moment  => Post_Fetch);
          end;
       end if;
+
+   exception
+      when E : others =>
+         --  Clean up if deployment failed after the initial deployment (e.g.
+         --  during an action).
+         Log_Exception (E);
+
+         if Ada.Directories.Exists (Folder) then
+            Trace.Debug ("Cleaning up failed release deployment of "
+                         & This.Milestone.TTY_Image);
+            Directories.Force_Delete (Folder);
+         end if;
+
+         raise;
    end Deploy;
 
    ----------------
