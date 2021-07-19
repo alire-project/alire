@@ -97,16 +97,17 @@ and then issue:
 
 ## Finding available projects
 
-For quick listing of crates and their descriptions you can use the `list`
-command:
+For quick listing of crates and their descriptions you can use the `search`
+command with the `--crates` switch:
 
-* `alr list [substring]`
+* `alr search --crates [substring]`
 
-There's also a `search` command which provides more details about specific
+Otherwise, `search` will look into releases, providing more details about specific
 releases:
 
 * `alr search <substring>` will look for `substring` in crate names.
-* `alr search --list` will list the whole catalog.
+* `alr search --list` will list the latest release of every crate.
+* `alr search --list --full` will list all releases in the catalog.
 
 Even more details are obtained with:
 
