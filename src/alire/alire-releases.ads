@@ -94,6 +94,12 @@ package Alire.Releases is
                         return Release;
    --  Add forbidden dependencies to a release
 
+   function Providing (Base    : Release;
+                       Targets : Utils.String_Set)
+                       return Release;
+   --  Add an equivalence to Target=Base.Version for all Target of Targets
+   --  (which may be empty).
+
    function Whenever (R : Release; P : Properties.Vector) return Release;
    --  Materialize conditions in a Release once the whatever properties are
    --  known. At present dependencies, properties, and availability.

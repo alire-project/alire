@@ -59,6 +59,7 @@ package body Alire.Externals.From_Output is
                      Releases.Insert
                        (Index.Crate (Name).Base
                         .Retagging (Semantic_Versioning.Parse (Version))
+                        .Providing (This.Provides)
                         .Replacing (Origins.New_External ("path " & Path))
                         .Replacing (Notes => "Detected at " -- length is 12
                                     & Utils.Shorten

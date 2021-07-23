@@ -251,6 +251,23 @@ package body Alire.Releases is
    end Forbidding;
 
    ---------------
+   -- Providing --
+   ---------------
+
+   function Providing (Base    : Release;
+                       Targets : Utils.String_Set)
+                       return Release
+   is
+   begin
+      return Result : Release := Base do
+         for Target of Targets loop
+            Result.Equivalences.Append
+              (Milestones.New_Milestone (To_Name (Target), Base.Version));
+         end loop;
+      end return;
+   end Providing;
+
+   ---------------
    -- Replacing --
    ---------------
 

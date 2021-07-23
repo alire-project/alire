@@ -39,6 +39,19 @@ package body Alire.Externals is
             when System         => From_System.From_TOML (From),
             when Version_Output => From_Output.From_TOML (From));
 
+      -------------------
+      -- Load_Provides --
+      -------------------
+      --  Pops and loads the provides = "crate" special external case
+      procedure Load_Provides (This : in out External'Class;
+                               From : TOML_Adapters.Key_Queue)
+      is
+         use TOML;
+      begin
+         This.Provides.Insert
+           (From.Checked_Pop (TOML_Keys.Provides, TOML_String).As_String);
+      end Load_Provides;
+
       Kind : TOML.TOML_Value;
       OK   : constant Boolean := From.Pop (TOML_Keys.External_Kind, Kind);
 
@@ -77,6 +90,15 @@ package body Alire.Externals is
       return Ext : External'Class :=
         From_TOML (Kinds'Value (TOML_Adapters.Adafy (Kind.As_String)))
       do
+
+         --  Deal with the special provides of an external, which cannot have
+         --  a version as it is yet unknown.
+
+         if Ext not in Unindexed.External'Class and then
+           From.Contains (TOML_Keys.Provides)
+         then
+            Load_Provides (Ext, From);
+         end if;
 
          --  Load common external fields
 

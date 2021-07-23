@@ -52,6 +52,7 @@ package body Alire.Externals.From_System is
                         Releases.Insert
                           (Index.Crate (Name).Base
                            .Retagging (Result.Value)
+                           .Providing (This.Provides)
                            .Replacing (Origins.New_System (Candidate))
                            .Replacing (Notes => "Provided by system package: "
                                        & Candidate));

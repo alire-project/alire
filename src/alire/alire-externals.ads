@@ -66,6 +66,7 @@ private
 
    type External is abstract tagged record
       Properties : Conditional.Properties;
+      Provides   : Utils.String_Set;
       Available  : Conditional.Availability;
    end record;
 
