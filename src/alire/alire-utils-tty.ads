@@ -79,6 +79,12 @@ package Alire.Utils.TTY with Preelaborate is
    function Version (Text : String) return String;
    --  For versions/version sets, bold magenta
 
+   ----------------------
+   -- Purpose-specific --
+   ----------------------
+
+   function Alr return String is (Terminal ("alr"));
+
 private
 
    function Info (Text : String := "") return String is
@@ -138,8 +144,7 @@ private
               Fore  => ANSI.Light_Cyan));
 
    function Terminal (Text : String) return String is
-           (Format (Text,
-            Fore  => ANSI.Yellow));
+     (ANSI.Color_Wrap (Text, ANSI.Palette_Fg (5, 3, 0)));
 
    function URL (Text : String) return String renames Version;
 

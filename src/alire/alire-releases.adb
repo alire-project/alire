@@ -11,7 +11,6 @@ with Alire.Origins.Deployers;
 with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
-with Alire.Root;
 with Alire.TOML_Load;
 with Alire.Utils.YAML;
 with Alire.Warnings;
@@ -1045,8 +1044,8 @@ package body Alire.Releases is
       function Is_Native (This : Release) return Boolean is
          use Utils;
       begin
-         return Contains (This.Name.As_String,
-                          To_Lower_Case (Root.Platform_OS'Image));
+         return Ends_With (This.Name.As_String, "_native");
+         --  A lil' bit of magic to recognize the native compilers
       end Is_Native;
 
    begin

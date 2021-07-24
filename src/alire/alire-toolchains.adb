@@ -78,7 +78,14 @@ package body Alire.Toolchains is
          use all type Origins.Kinds;
          Env : constant Properties.Vector := Root.Platform_Properties;
       begin
-         Index.Detect_Externals (Crate, Root.Platform_Properties);
+         if Crate = GNAT_Crate then
+            --  We need a bit of magic as the externals for GNAT are now in a
+            --  different crate
+            Index.Detect_Externals
+              (To_Name ("gnat_external"), Root.Platform_Properties);
+         else
+            Index.Detect_Externals (Crate, Root.Platform_Properties);
+         end if;
 
          --  Always offer to configure nothing
          Result.Choices.Append ("None");
@@ -207,8 +214,9 @@ package body Alire.Toolchains is
             Put_Info ("Currently configured: "
                       & Tool_Dependency (Crate).TTY_Image);
          else
-            Put_Info (Crate.TTY_Image & " is currently not configured. (alr "
-                      & "will use the version found in the environment.)");
+            Put_Info (Crate.TTY_Image & " is currently not configured. ("
+                      & TTY.Alr
+                      & " will use the version found in the environment.)");
          end if;
          Trace.Info ("");
 

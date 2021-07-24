@@ -16,7 +16,7 @@ package body Alire.Index is
    Aliases  : Alias_Map;
    --  Mapping from crate name to any release that satisfies it. Currently,
    --  releases are duplicated in memory. These two collections could be made
-   --  to share releases towards some indirection or pointers.
+   --  to share releases via some indirection or pointers.
 
    ---------
    -- Add --
@@ -121,7 +121,7 @@ package body Alire.Index is
          Trace.Debug ("Looking for externals for crate: " & (+Name));
          for Release of Contents (Name).Externals.Detect (Name, Env) loop
             Trace.Debug ("Adding external: " & Release.Milestone.Image);
-            Contents (Name).Add (Release);
+            Add (Release);
          end loop;
       end if;
    end Detect_Externals;
