@@ -9,6 +9,7 @@ with Alire.Index;
 with Alire.Milestones;
 with Alire.Root;
 with Alire.Solutions.Diffs;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
@@ -95,6 +96,15 @@ package body Alire.Solutions is
    function Depends_On (This    : Solution;
                         Release : Alire.Releases.Release) return Boolean
    is (for some Dep of This.Dependencies => Release.Provides (Dep.Crate));
+
+   ------------------------------
+   -- Depends_On_Specific_GNAT --
+   ------------------------------
+
+   function Depends_On_Specific_GNAT (This : Solution) return Boolean
+   is (This.Releases.Contains_Or_Provides (Toolchains.GNAT_Crate) and then
+       This.Releases.Element_Providing
+         (Toolchains.GNAT_Crate).Name /= Toolchains.GNAT_Crate);
 
    ----------------------------
    -- Empty_Invalid_Solution --

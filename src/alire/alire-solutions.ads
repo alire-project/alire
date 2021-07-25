@@ -223,6 +223,9 @@ package Alire.Solutions is
                         Release : Alire.Releases.Release) return Boolean;
    --  Likewise, but take also into account the Release.Provides
 
+   function Depends_On_Specific_GNAT (This : Solution) return Boolean;
+   --  Say if the solution contains a release which is a gnat_something
+
    function Forbidden (This : Solution;
                        Env  : Properties.Vector)
                        return Dependency_Map;

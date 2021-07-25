@@ -560,23 +560,43 @@ package body Alire.Solver is
             -----------------------------
 
             procedure Use_Configured_Compiler is
-               New_Dep : constant Dependencies.Dependency :=
-                           Dependencies.New_Dependency
-                             (Crate    => Toolchains.Tool_Dependency
-                                            (Toolchains.GNAT_Crate).Crate,
-                              Versions => Dep.Versions);
+               GNAT_To_Use : UString;
                --  Note that the version set may still exclude the configured
                --  compiler, in which case other compiler versions will be
                --  attempted (but from the configured compiler crate only).
             begin
-               Trace.Debug ("SOLVER: replacing " & Dep.TTY_Image
-                            & " with " & New_Dep.TTY_Image);
-               Expand_Value (New_Dep, Allow_Shared);
+               if Solution.Depends_On_Specific_GNAT then
+
+                  --  There is already a precise gnat_xxx in the solution, that
+                  --  we must reuse.
+
+                  GNAT_To_Use := +Solution.Releases.Element_Providing
+                    (Toolchains.GNAT_Crate).Name.As_String;
+
+               else
+
+                  --  Otherwise, we use the configured compiler
+
+                  GNAT_To_Use := +Toolchains.Tool_Dependency
+                    (Toolchains.GNAT_Crate).Crate.As_String;
+
+               end if;
+
+               declare
+                  New_Dep : constant Dependencies.Dependency :=
+                              Dependencies.New_Dependency
+                    (Crate    => To_Name (+GNAT_To_Use),
+                     Versions => Dep.Versions);
+               begin
+                  Trace.Debug ("SOLVER: replacing " & Dep.TTY_Image
+                               & " with " & New_Dep.TTY_Image);
+                  Expand_Value (New_Dep, Allow_Shared);
+               end;
             end Use_Configured_Compiler;
 
          begin
 
-            --  If the dependency is on generic gnat, we will force the use of
+            --  If the dependency is on generic gnat, we will attempt to use
             --  the configured compiler, if any. Otherwise, any installed (but
             --  not set as THE compiler) gnat will be used first. Last, any of
             --  the remotely available compilers will be used, but trying first

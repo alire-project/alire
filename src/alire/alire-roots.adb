@@ -216,11 +216,19 @@ package body Alire.Roots is
                   To_Remove.Include (Rel);
 
                   if not Release (This).Provides (Rel.Name) then
-                     Rel.Deploy (Env           => This.Environment,
-                                 Parent_Folder =>
+                     Rel.Deploy (Env             => This.Environment,
+                                 Parent_Folder   =>
                                    Ada.Directories.Containing_Directory
                                      (This.Release_Base (Rel.Name)),
-                                 Was_There     => Was_There);
+                                 Was_There       => Was_There,
+                                 Create_Manifest =>
+                                   This.Solution.State (Rel.Name).Is_Shared,
+                                 Include_Origin  =>
+                                   This.Solution.State (Rel.Name).Is_Shared);
+
+                     --  TODO: TEST that a compiler deployed as dependency
+                     --  works the same as one deployed via `alr toolchain`.
+
                   else
                      Trace.Debug
                        ("Skipping checkout of root crate as dependency");
