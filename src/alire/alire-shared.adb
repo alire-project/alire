@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Directories;
+with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.Paths;
@@ -64,6 +65,23 @@ package body Alire.Shared is
            (Start => Install_Path,
             Doing => Detect'Access);
       end if;
+
+      --  Include external toolchain members
+
+      Index.Detect_Externals (Toolchains.GNAT_External_Crate,
+                              Root.Platform_Properties);
+
+      for Tool of Toolchains.Tools loop
+         Index.Detect_Externals (Tool, Root.Platform_Properties);
+
+         for Release of Index.Releases_Satisfying (Toolchains.Any_Tool (Tool),
+                                                   Root.Platform_Properties)
+         loop
+            if not Release.Origin.Is_Regular then
+               Result.Include (Release);
+            end if;
+         end loop;
+      end loop;
 
       return Result;
    end Available;
@@ -141,8 +159,8 @@ package body Alire.Shared is
       --  See if it can be skipped
 
       if Available.Contains (Release) then
-         Trace.Info ("Skipping installation of already available release: "
-                      & Release.Milestone.TTY_Image);
+         Trace.Detail ("Skipping installation of already available release: "
+                       & Release.Milestone.TTY_Image);
          return;
       end if;
 
@@ -184,6 +202,11 @@ package body Alire.Shared is
       use Utils.User_Input;
       Path : constant Absolute_Path := Install_Path / Release.Unique_Folder;
    begin
+      if not Release.Origin.Is_Regular then
+         Raise_Checked_Error
+           ("Only regular releases deployed through Alire can be removed.");
+      end if;
+
       if not Ada.Directories.Exists (Path) then
          Raise_Checked_Error
            ("Directory slated for removal does not exist: " & TTY.URL (Path));

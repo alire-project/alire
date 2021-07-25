@@ -4,6 +4,7 @@ with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
+with Alire.Origins;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
 with Alire.Shared;
@@ -216,18 +217,41 @@ package body Alire.Roots is
                   To_Remove.Include (Rel);
 
                   if not Release (This).Provides (Rel.Name) then
-                     Rel.Deploy (Env             => This.Environment,
-                                 Parent_Folder   =>
-                                   Ada.Directories.Containing_Directory
-                                     (This.Release_Base (Rel.Name)),
-                                 Was_There       => Was_There,
-                                 Create_Manifest =>
-                                   This.Solution.State (Rel.Name).Is_Shared,
-                                 Include_Origin  =>
-                                   This.Solution.State (Rel.Name).Is_Shared);
+
+                     --  A regular release is deployed normally. A binary
+                     --  release is installed as a shared dependency. A
+                     --  detected external is skipped.
+
+                     if Rel.Origin.Kind in Origins.Binary_Archive then
+
+                        Shared.Share (Rel);
+
+                     elsif This.Solution.State (Rel.Name).Is_Shared
+                       and then Rel.Origin.Kind in Origins.External
+                     then
+
+                        Trace.Debug ("No-op deployment of shared external: "
+                                     & Rel.Milestone.TTY_Image);
+
+                     else
+
+                        Rel.Deploy (Env             => This.Environment,
+                                    Parent_Folder   =>
+                                      Ada.Directories.Containing_Directory
+                                        (This.Release_Base (Rel.Name)),
+                                    Was_There       => Was_There,
+                                    Create_Manifest =>
+                                      This.Solution.State (Rel.Name).Is_Shared,
+                                    Include_Origin  =>
+                                     This.Solution.State (Rel.Name).Is_Shared);
+
+                     end if;
 
                      --  TODO: TEST that a compiler deployed as dependency
                      --  works the same as one deployed via `alr toolchain`.
+
+                     --  TODO: TEST that an external compiler is not deployed
+                     --  as an empty folder in the shared location
 
                   else
                      Trace.Debug

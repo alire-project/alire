@@ -82,7 +82,7 @@ package body Alire.Toolchains is
             --  We need a bit of magic as the externals for GNAT are now in a
             --  different crate
             Index.Detect_Externals
-              (To_Name ("gnat_external"), Root.Platform_Properties);
+              (GNAT_External_Crate, Root.Platform_Properties);
          else
             Index.Detect_Externals (Crate, Root.Platform_Properties);
          end if;

@@ -536,6 +536,8 @@ package body Alire.Solver is
                --  TODO: TEST: virtual and real crate satisfying the same one.
                --  TODO: TEST: full enumeration with external & provides
 
+               --  Solve with all externals that are not hints
+
                --  Solve with all installed dependencies that satisfy it
 
                for R of reverse Installed.Satisfying (Dep) loop

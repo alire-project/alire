@@ -1,6 +1,8 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with Alire.TTY;
+
 package body Alire.Index is
 
    package Release_Set_Maps is new
@@ -115,7 +117,8 @@ package body Alire.Index is
          Trace.Debug
            ("Not redoing detection of externals for crate " & (+Name));
       elsif not Exists (Name) then
-         Trace.Debug ("Skipping external detection for unindexed crate");
+         Trace.Debug ("Skipping external detection for unindexed crate: "
+                      & TTY.Name (Name));
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));

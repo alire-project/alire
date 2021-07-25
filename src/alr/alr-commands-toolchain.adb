@@ -101,11 +101,13 @@ package body Alr.Commands.Toolchain is
    -- List --
    ----------
 
-   procedure List (Unused_Cmd : in out Command) is
+   procedure List (Cmd : in out Command) is
       use Alire;
       use type Dependencies.Dependency;
       Table : AAA.Table_IO.Table;
    begin
+      Cmd.Requires_Full_Index;
+
       if Alire.Shared.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
                      & TTY.URL (Alire.Config.Edit.Path));
@@ -116,26 +118,31 @@ package body Alr.Commands.Toolchain is
         .Append (TTY.Emph ("CRATE"))
         .Append (TTY.Emph ("VERSION"))
         .Append (TTY.Emph ("STATUS"))
+        .Append (TTY.Emph ("NOTES"))
         .New_Row;
 
       for Dep of Alire.Shared.Available loop
-         declare
-            Tool : constant Crate_Name :=
-                     (if Dep.Provides (Toolchains.GNAT_Crate)
-                      then Toolchains.GNAT_Crate
-                      else Dep.Name);
-         begin
-            Table
-              .Append (TTY.Name (Dep.Name))
-                .Append (TTY.Version (Dep.Version.Image))
-                  .Append (if Toolchains.Tool_Is_Configured (Tool)
-                           and then
-                           Dep.To_Dependency.Value =
-                             Toolchains.Tool_Dependency (Tool)
-                           then TTY.Description ("Default")
-                           else "Available")
-              .New_Row;
-         end;
+         if (for some Crate of Toolchains.Tools =>
+               Dep.Provides (Crate))
+         then
+            declare
+               Tool : constant Crate_Name :=
+                        (if Dep.Provides (Toolchains.GNAT_Crate)
+                         then Toolchains.GNAT_Crate
+                         else Dep.Name);
+            begin
+               Table
+                 .Append (TTY.Name (Dep.Name))
+                 .Append (TTY.Version (Dep.Version.Image))
+                 .Append (if Toolchains.Tool_Is_Configured (Tool)
+                             and then Dep.To_Dependency.Value =
+                                      Toolchains.Tool_Dependency (Tool)
+                          then TTY.Description ("Default")
+                          else "Available")
+                 .Append (TTY.Dim (Dep.Notes))
+                 .New_Row;
+            end;
+         end if;
       end loop;
 
       Table.Print;
@@ -174,6 +181,7 @@ package body Alr.Commands.Toolchain is
       end Find_Version;
 
    begin
+      Cmd.Requires_Full_Index;
 
       --  If no version was given, find if only one is installed
 
