@@ -2,6 +2,7 @@ with AAA.Enum_Tools;
 with AAA.Text_IO;
 
 with Alire.Crates;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 
@@ -9,7 +10,8 @@ package body Alr.Commands.Help is
 
    package TTY renames Alire.Utils.TTY;
 
-   type Help_Topics is (Identifiers);
+   type Help_Topics is (Identifiers,
+                        Toolchains);
    --  Enumeration used to index available help topics.
 
    -----------------------
@@ -18,7 +20,8 @@ package body Alr.Commands.Help is
 
    function One_Liner_Summary (Topic : Help_Topics) return String
    is (case Topic is
-          when Identifiers => "Naming rules for crate and index names"
+          when Identifiers => "Naming rules for crate and index names",
+          when Toolchains  => "Configuration and use of toolchains"
       );
 
    -----------------
@@ -31,7 +34,9 @@ package body Alr.Commands.Help is
    is
      (case Topic is
          when Identifiers =>
-            Alire.Crates.Naming_Convention
+            Alire.Crates.Naming_Convention,
+         when Toolchains  =>
+            Alire.Toolchains.Description
      );
 
    ------------------
@@ -64,7 +69,7 @@ package body Alr.Commands.Help is
 
       elsif Is_Topic (Keyword) then
          Put_Line (TTY.Bold (Help_Topics'Value (Keyword)'Img));
-         Format (Description (Identifiers));
+         Format (Description (Help_Topics'Value (Keyword)));
 
       else
          Trace.Error ("No help found for: " & Keyword);

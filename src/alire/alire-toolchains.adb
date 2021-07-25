@@ -11,7 +11,6 @@ with Alire.Properties;
 with Alire.Releases;
 with Alire.Root;
 with Alire.Shared;
-with Alire.TTY;
 with Alire.Utils.User_Input;
 
 with Semantic_Versioning.Extended;
