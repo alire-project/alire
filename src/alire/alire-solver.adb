@@ -8,6 +8,7 @@ with Alire.Errors;
 with Alire.Milestones;
 with Alire.Optional;
 with Alire.Origins;
+with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
@@ -157,7 +158,7 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
-      Installed : constant Containers.Release_Set := Shared.Available;
+      Installed : constant Releases.Containers.Release_Set := Shared.Available;
       --  Installed releases do not change during resolution, we make a local
       --  copy here so they are not read repeatedly from disk.
 
@@ -573,14 +574,14 @@ package body Alire.Solver is
                   --  we must reuse.
 
                   GNAT_To_Use := +Solution.Releases.Element_Providing
-                    (Toolchains.GNAT_Crate).Name.As_String;
+                    (GNAT_Crate).Name.As_String;
 
                else
 
                   --  Otherwise, we use the configured compiler
 
                   GNAT_To_Use := +Toolchains.Tool_Dependency
-                    (Toolchains.GNAT_Crate).Crate.As_String;
+                    (GNAT_Crate).Crate.As_String;
 
                end if;
 
@@ -604,10 +605,10 @@ package body Alire.Solver is
             --  the remotely available compilers will be used, but trying first
             --  the native ones (thanks to the way releases are ordered).
 
-            if Dep.Crate = Toolchains.GNAT_Crate and then
-              Toolchains.Tool_Is_Configured (Toolchains.GNAT_Crate) and then
-              Toolchains.Tool_Dependency (Toolchains.GNAT_Crate).Crate /=
-                Toolchains.GNAT_Crate -- This implies a particular GNAT
+            if Dep.Crate = GNAT_Crate and then
+              Toolchains.Tool_Is_Configured (GNAT_Crate) and then
+              Toolchains.Tool_Dependency (GNAT_Crate).Crate /= GNAT_Crate
+              --  This implies a particular GNAT
             then
                Use_Configured_Compiler;
                return;
@@ -697,7 +698,7 @@ package body Alire.Solver is
                   --  Don't bother checking what we known to not be available.
                   --  We still want to go through to external hinting.
                   declare
-                     Candidates : constant Containers.Release_Set :=
+                     Candidates : constant Releases.Containers.Release_Set :=
                                     Index.Releases_Satisfying (Dep, Props);
 
                      procedure Consider (R : Release) is
@@ -1055,7 +1056,7 @@ package body Alire.Solver is
 
             --  Mark direct dependencies
 
-            for Dep of Containers.Enumerate (Deps) loop
+            for Dep of Conditional.Enumerate (Deps) loop
                if Best_Solution.Depends_On (Dep.Crate) then
                   Best_Solution.Set (Dep.Crate, Direct);
                end if;

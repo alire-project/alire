@@ -14,7 +14,6 @@ with Alire.Properties.Licenses;
 with Alire.Provides;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
-with Alire.Toolchains;
 with Alire.User_Pins.Maps;
 with Alire.Utils;
 
@@ -397,12 +396,6 @@ private
         L.Version = R.Version
            and then
         Build (L.Version) < Build (R.Version)));
-
-   function "<" (L, R : Release) return Boolean
-   is (if L.Provides (Toolchains.GNAT_Crate) and then
-          R.Provides (Toolchains.GNAT_Crate)
-       then Sort_Compilers (L, R)
-       else Standard_Sorting (L, R));
 
    function Name (R : Release) return Crate_Name
    is (R.Name);

@@ -9,11 +9,6 @@ with Alire.Utils;
 
 package Alire.Toolchains is
 
-   GNAT_Crate     : constant Crate_Name := To_Name ("gnat");
-   GPRbuild_Crate : constant Crate_Name := To_Name ("gprbuild");
-
-   GNAT_External_Crate : constant Crate_Name := To_Name ("gnat_external");
-
    package Name_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
 

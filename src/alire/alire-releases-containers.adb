@@ -1,9 +1,9 @@
 with Alire.Errors;
 
-with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
+with Semantic_Versioning.Basic;
 
-package body Alire.Containers is
+package body Alire.Releases.Containers is
 
    --------------------------
    -- Contains_Or_Provides --
@@ -37,30 +37,6 @@ package body Alire.Containers is
       raise Constraint_Error with Errors.Set
         ("Requested crate not in map: " & Crate.As_String);
    end Element_Providing;
-
-   ---------------
-   -- Enumerate --
-   ---------------
-
-   function Enumerate (These : Conditional.Dependencies) return Dependency_Map
-   is
-
-      procedure Append (C     : in out Dependency_Map;
-                        V     : Dependencies.Dependency;
-                        Count : Ada.Containers.Count_Type := 1)
-      is
-         pragma Unreferenced (Count);
-      begin
-         C.Include (V.Crate, V);
-      end Append;
-
-      function Internal is new Conditional.For_Dependencies.Enumerate
-        (Collection => Dependency_Map,
-         Append     => Append);
-
-   begin
-      return Internal (These);
-   end Enumerate;
 
    ------------
    -- Insert --
@@ -154,35 +130,6 @@ package body Alire.Containers is
       end return;
    end Including;
 
-   -----------
-   -- Merge --
-   -----------
-
-   procedure Merge (This : in out Dependency_Map;
-                    Dep  :        Dependencies.Dependency)
-   is
-      use type Dependencies.Dependency;
-      use type Semantic_Versioning.Extended.Version_Set;
-   begin
-      if This.Contains (Dep.Crate) then
-         declare
-            Old : constant Dependencies.Dependency := This (Dep.Crate);
-         begin
-            if Old /= Dep then
-               --  Include should work to replace the dependency, but I'm
-               --  getting a tampering error using it (?)
-               This.Delete (Dep.Crate);
-               This.Insert (Dep.Crate,
-                            Dependencies.New_Dependency
-                              (Dep.Crate,
-                               Old.Versions and Dep.Versions));
-            end if;
-         end;
-      else
-         This.Insert (Dep.Crate, Dep);
-      end if;
-   end Merge;
-
    ------------
    -- Remove --
    ------------
@@ -212,7 +159,7 @@ package body Alire.Containers is
    ----------------
 
    function Satisfying (This : Release_Set;
-                        Dep  : Dependencies.Dependency)
+                        Dep  : Alire.Dependencies.Dependency)
                         return Release_Set
    is
    begin
@@ -263,7 +210,7 @@ package body Alire.Containers is
    --------------
 
    function Whenever (Map   : Release_Map;
-                      Props : Properties.Vector) return Release_Map is
+                      Props : Alire.Properties.Vector) return Release_Map is
    begin
       return Result : Release_Map do
          for Release of Map loop
@@ -272,4 +219,4 @@ package body Alire.Containers is
       end return;
    end Whenever;
 
-end Alire.Containers;
+end Alire.Releases.Containers;

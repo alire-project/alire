@@ -1,6 +1,5 @@
 with Alire.Root;
 with Alire.URI;
-with Alire.VCSs.Git;
 
 package body Alire.Origins is
 

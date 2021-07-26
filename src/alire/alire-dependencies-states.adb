@@ -42,7 +42,8 @@ package body Alire.Dependencies.States is
                                  & " at " & TTY.URL (Workspace));
          end if;
       else
-         return (Containers.Release_Holders.Empty_Holder with null record);
+         return (Releases.Containers.Release_Holders.Empty_Holder
+                 with null record);
       end if;
    end Optional_Release;
 

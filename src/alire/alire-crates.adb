@@ -29,7 +29,7 @@ package body Alire.Crates is
    -- Keys --
    ----------
 
-   package Keys is new Containers.Release_Sets.Generic_Keys
+   package Keys is new Alire.Releases.Containers.Release_Sets.Generic_Keys
      (Semantic_Versioning.Version,
       Alire.Releases.Version,
       Semantic_Versioning."<");
@@ -68,8 +68,9 @@ package body Alire.Crates is
                       Version : Semantic_Versioning.Version) return Boolean
    is
    begin
-      return Keys.Contains (Containers.Release_Sets.Set (This.Releases),
-                            Version);
+      return Keys.Contains
+        (Alire.Releases.Containers.Release_Sets.Set (This.Releases),
+         Version);
    end Contains;
 
    ---------------
@@ -264,8 +265,9 @@ package body Alire.Crates is
    -- Releases --
    --------------
 
-   function Releases (This : Crate) return Containers.Release_Set is
-     (This.Releases);
+   function Releases (This : Crate)
+                      return Alire.Releases.Containers.Release_Set
+   is (This.Releases);
 
    -------------
    -- Replace --
@@ -275,7 +277,7 @@ package body Alire.Crates is
                       Release : Alire.Releases.Release)
    is
    begin
-      Keys.Replace (Containers.Release_Sets.Set (This.Releases),
+      Keys.Replace (Alire.Releases.Containers.Release_Sets.Set (This.Releases),
                     Release.Version,
                     Release);
    end Replace;

@@ -1,12 +1,11 @@
 private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
-with Alire.Containers;
 with Alire.Crates.Containers;
 with Alire.Dependencies;
 with Alire.Policies;
 with Alire.Properties;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Utils;
 
 with Semantic_Versioning;
@@ -88,7 +87,7 @@ package Alire.Index is
 
    function Releases_Satisfying (Dep : Dependencies.Dependency;
                                  Env : Properties.Vector)
-                                 return Containers.Release_Set;
+                                 return Releases.Containers.Release_Set;
    --  By analogy with Releases/Milestones, this call says if a release exists
    --  that is able to provide this dependency, also considering "provides"
    --  equivalences. TODO: actually implement the "provides" part with

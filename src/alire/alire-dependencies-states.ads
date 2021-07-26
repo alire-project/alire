@@ -1,7 +1,6 @@
 private with AAA.Containers.Indefinite_Holders;
 
-private with Alire.Containers;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
 with Alire.User_Pins;
 
@@ -150,7 +149,7 @@ private
 
    use type Semantic_Versioning.Extended.Version_Set;
 
-   type Stored_Release is new Containers.Release_H with null record;
+   type Stored_Release is new Releases.Containers.Release_H with null record;
    --  New type to simplify comparison of optional stored releases
 
    overriding function "=" (L, R : Stored_Release) return Boolean;

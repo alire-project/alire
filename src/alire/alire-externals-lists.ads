@@ -13,7 +13,8 @@ package Alire.Externals.Lists is
 
    function Detect (This : List;
                     Name : Crate_Name;
-                    Env  : Properties.Vector) return Containers.Release_Set;
+                    Env  : Properties.Vector)
+                    return Releases.Containers.Release_Set;
    --  Goes over the externals defined in List and, when Available, performs
    --  their Detect call.
 

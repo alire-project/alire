@@ -7,7 +7,8 @@ package body Alire.Index is
 
    package Release_Set_Maps is new
      Ada.Containers.Indefinite_Ordered_Maps
-       (Crate_Name, Containers.Release_Set, "<", Containers."=");
+       (Crate_Name, Releases.Containers.Release_Set,
+        "<",        Releases.Containers."=");
    subtype Alias_Map is Release_Set_Maps.Map;
 
    use all type Semantic_Versioning.Version;
@@ -71,10 +72,10 @@ package body Alire.Index is
       begin
          for Mil of Release.Provides loop
             declare
-               Crate : Containers.Release_Set :=
+               Crate : Releases.Containers.Release_Set :=
                          (if Aliases.Contains (Mil.Crate)
                           then Aliases (Mil.Crate)
-                          else Containers.Empty_Release_Set);
+                          else Releases.Containers.Empty_Release_Set);
             begin
                Crate.Include (Release);
                Aliases.Include (Mil.Crate, Crate);
@@ -213,9 +214,9 @@ package body Alire.Index is
 
    function Releases_Satisfying (Dep : Dependencies.Dependency;
                                  Env : Properties.Vector)
-                                 return Containers.Release_Set
+                                 return Releases.Containers.Release_Set
    is
-      Result : Containers.Release_Set;
+      Result : Releases.Containers.Release_Set;
    begin
 
       --  Regular crates

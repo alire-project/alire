@@ -1,10 +1,11 @@
 with Alire.Conditional;
 with Alire.Containers;
+with Alire.Dependencies.Containers;
 with Alire.Dependencies.States.Maps;
 with Alire.Interfaces;
 with Alire.Optional;
 with Alire.Properties;
-with Alire.Releases;
+with Alire.Releases.Containers;
 limited with Alire.Roots;
 with Alire.TOML_Adapters;
 
@@ -16,10 +17,10 @@ with TOML;
 
 package Alire.Solutions is
 
-   subtype Dependency_Map   is Alire.Containers.Dependency_Map;
+   subtype Dependency_Map   is Dependencies.Containers.Map;
    subtype Dependency_State is Dependencies.States.State;
    subtype Name_Set         is Containers.Crate_Name_Sets.Set;
-   subtype Release_Map      is Alire.Containers.Release_Map;
+   subtype Release_Map      is Releases.Containers.Release_Map;
    subtype State_Map        is Dependencies.States.Maps.Map;
 
    package States renames Dependencies.States;

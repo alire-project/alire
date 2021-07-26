@@ -6,8 +6,6 @@ with Alire.Utils.TTY;
 
 package body Alire.VCSs.Git is
 
-   subtype Git_Commit is String (1 .. 40);
-
    -------------
    -- Run_Git --
    -------------

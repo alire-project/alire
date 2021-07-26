@@ -1,7 +1,6 @@
-with Alire.Containers;
 with Alire.Errors;
 with Alire.Milestones;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Utils.User_Input;
 
 package Alire.Shared is
@@ -9,7 +8,7 @@ package Alire.Shared is
    --  Stuff about shared/binary crates that are deployed not in the local
    --  workspace but in the shared configuration folder.
 
-   function Available return Containers.Release_Set;
+   function Available return Releases.Containers.Release_Set;
    --  Return the contents of a lockfile describing what releases are installed
    --  at the shared location.
 

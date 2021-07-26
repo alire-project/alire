@@ -1,14 +1,11 @@
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platform;
-with Alire.Properties;
-with Alire.Roots;
 with Alire.TTY;
 
 with GNATCOLL.VFS;
@@ -16,46 +13,6 @@ with GNATCOLL.VFS;
 package body Alire.Directories is
 
    package Adirs renames Ada.Directories;
-
-   ------------------------
-   -- Report_Deprecation --
-   ------------------------
-
-   procedure Report_Deprecation with No_Return;
-   --  We give some minimal guidelines about what to do with the metadata
-   --  changes, and redirect to a wiki page for more details.
-
-   procedure Report_Deprecation is
-      Old_Manifest : constant String :=
-                       Directories.Find_Single_File ("alire", "toml");
-      use Ada.Text_IO; -- To bypass any -q or verbosity configuration
-   begin
-      New_Line;
-      Put_Line ("WARNING: Deprecated metadata possibly detected at "
-                & Old_Manifest);
-      New_Line;
-      Put_Line ("Due to recent changes to Alire's way of storing metadata,");
-      Put_Line ("you need to reinitialize or migrate the workspace.");
-      Put_Line
-        ("Please check here for details on how to migrate your metadata:");
-      New_Line;
-      Put_Line ("   https://github.com/alire-project/alire/wiki/"
-                & "2020-Metadata-format-migration");
-      Put_Line ("");
-      Put_Line ("How to reinitialize, in a nutshell:");
-      New_Line;
-      Put_Line ("   - Delete the old manifest file at 'alire/*.toml'");
-      Put_Line ("   - run one of");
-      Put_Line ("      $ alr init --in-place --bin <crate name>");
-      Put_Line ("      $ alr init --in-place --lib <crate name>");
-      Put_Line ("   - Re-add any necessary dependencies using one or more ");
-      Put_Line ("      $ alr with <dependency>");
-      New_Line;
-
-      --  This happens too early during elaboration and otherwise a stack trace
-      --  is produced, so:
-      GNAT.OS_Lib.OS_Exit (1);
-   end Report_Deprecation;
 
    ------------------------
    -- Backup_If_Existing --
@@ -133,7 +90,8 @@ package body Alire.Directories is
    -- Detect_Root_Path --
    ----------------------
 
-   function Detect_Root_Path (Starting_At : Absolute_Path := Current)
+   function Detect_Root_Path (Starting_At : Absolute_Path :=
+                                Ada.Directories.Current_Directory)
                               return String
    is
       use Ada.Directories;
@@ -145,24 +103,13 @@ package body Alire.Directories is
       function Find_Candidate_Folder (Path : Any_Path)
                                       return Any_Path
       is
-         Possible_Root : constant Roots.Root := Roots.New_Root
-           (Name => +"unused",
-            Path => Path,
-            Env  => Properties.No_Properties);
       begin
          Trace.Debug ("Looking for alire metadata at: " & Path);
          if
-           Exists (Possible_Root.Crate_File) and then
-           Kind (Possible_Root.Crate_File) = Ordinary_File
+           Exists (Path / Paths.Crate_File_Name) and then
+           Kind (Path / Paths.Crate_File_Name) = Ordinary_File
          then
             return Path;
-         elsif GNAT.OS_Lib.Is_Directory ("alire") and then
-           Directories.Find_Single_File ("alire", "toml") /= "" and then
-           not Utils.Ends_With (Directories.Find_Single_File ("alire", "toml"),
-                                "config.toml") and then
-           not GNAT.OS_Lib.Is_Regular_File ("alire" / "alr_env.gpr")
-         then
-            Report_Deprecation;
          else
             return Find_Candidate_Folder (Containing_Directory (Path));
          end if;

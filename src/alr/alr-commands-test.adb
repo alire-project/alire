@@ -2,7 +2,6 @@ with Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;
 
-with Alire.Containers;
 with Alire.Crates;
 with Alire.Defaults;
 with Alire.Dependencies;
@@ -11,7 +10,7 @@ with Alire.Index;
 with Alire.Milestones;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Executor;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
@@ -76,9 +75,10 @@ package body Alr.Commands.Test is
    -- Do_Test --
    -------------
 
-   procedure Do_Test (Cmd          : Command;
-                      Releases     : Alire.Containers.Release_Sets.Set;
-                      Docker_Image : String)
+   procedure Do_Test
+     (Cmd          : Command;
+      Releases     : Alire.Releases.Containers.Release_Sets.Set;
+      Docker_Image : String)
    is
       use Ada.Calendar;
       use GNATCOLL.VFS;
@@ -363,14 +363,14 @@ package body Alr.Commands.Test is
          raise Command_Failed;
       end Not_Empty;
 
-      Candidates : Alire.Containers.Release_Sets.Set;
+      Candidates : Alire.Releases.Containers.Release_Sets.Set;
 
       Docker_Image : constant String :=
                        (if Cmd.Docker.all = ""
                         then Alire.Defaults.Docker_Test_Image
                         else Utils.Replace (Cmd.Docker.all, "=", ""));
 
-      use Alire.Containers.Release_Sets;
+      use Alire.Releases.Containers.Release_Sets;
 
       ---------------------
       -- Find_Candidates --
@@ -413,7 +413,7 @@ package body Alr.Commands.Test is
                                Alire.Dependencies.From_String (Argument (J));
                   Crate    : constant Alire.Crates.Crate :=
                                Alire.Index.Crate (Allowed.Crate);
-                  Releases : constant Alire.Containers.Release_Set :=
+                  Releases : constant Alire.Releases.Containers.Release_Set :=
                                Crate.Releases;
                begin
                   for I in Releases.Iterate loop

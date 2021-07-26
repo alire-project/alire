@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Config.Edit;
+with Alire.Containers;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Manifest;
@@ -24,9 +25,9 @@ package body Alire.Shared is
    -- Available --
    ---------------
 
-   function Available return Containers.Release_Set is
+   function Available return Releases.Containers.Release_Set is
 
-      Result : Containers.Release_Set;
+      Result : Releases.Containers.Release_Set;
 
       ------------
       -- Detect --
@@ -68,7 +69,7 @@ package body Alire.Shared is
 
       --  Include external toolchain members
 
-      Index.Detect_Externals (Toolchains.GNAT_External_Crate,
+      Index.Detect_Externals (GNAT_External_Crate,
                               Root.Platform_Properties);
 
       for Tool of Toolchains.Tools loop

@@ -1,11 +1,10 @@
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
-with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Milestones;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
@@ -127,8 +126,8 @@ package body Alr.Commands.Toolchain is
          then
             declare
                Tool : constant Crate_Name :=
-                        (if Dep.Provides (Toolchains.GNAT_Crate)
-                         then Toolchains.GNAT_Crate
+                        (if Dep.Provides (GNAT_Crate)
+                         then GNAT_Crate
                          else Dep.Name);
             begin
                Table
@@ -161,7 +160,7 @@ package body Alr.Commands.Toolchain is
       function Find_Version return String is
          --  Obtain all installed releases for the crate; we will proceed if
          --  only one exists.
-         Available : constant Alire.Containers.Release_Set :=
+         Available : constant Alire.Releases.Containers.Release_Set :=
                        Alire.Shared.Available.Satisfying
                          (Alire.Dependencies.New_Dependency
                             (Crate    => Alire.To_Name (Target),

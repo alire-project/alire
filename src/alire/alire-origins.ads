@@ -6,6 +6,8 @@ with Alire.Properties;
 with Alire.TOML_Adapters;
 private with Alire.TOML_Keys;
 with Alire.Utils.TTY;
+with Alire.VCSs.Git;
+with Alire.VCSs.Hg;
 
 private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
@@ -102,18 +104,12 @@ package Alire.Origins is
 
    --  Helper types
 
-   subtype Hexadecimal_Character is Character with
-     Static_Predicate => Hexadecimal_Character in '0' .. '9' | 'a' .. 'f';
-
-   subtype Git_Commit is String (1 .. 40) with
-     Dynamic_Predicate =>
-       (for all Char of Git_Commit => Char in Hexadecimal_Character);
-
-   subtype Hg_Commit  is String (1 .. 40);
+   subtype Git_Commit is VCSs.Git.Git_Commit;
+   subtype Hg_Commit  is VCSs.Hg.Hg_Commit;
 
    function Is_Valid_Commit (S : String) return Boolean
    is (S'Length = Git_Commit'Length and then
-       (for all Char of S => Char in Hexadecimal_Character));
+       (for all Char of S => Char in Utils.Hexadecimal_Character));
 
    function Short_Commit (Commit : String) return String;
    --  First characters in the commit

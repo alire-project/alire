@@ -16,7 +16,7 @@ package body Alire.Externals.From_Output is
 
    overriding
    function Detect (This : External;
-                    Name : Crate_Name) return Containers.Release_Set
+                    Name : Crate_Name) return Releases.Containers.Release_Set
    is
       Location : GNAT.OS_Lib.String_Access :=
                    GNAT.OS_Lib.Locate_Exec_On_Path
@@ -26,7 +26,7 @@ package body Alire.Externals.From_Output is
          Trace.Debug
            ("External not detected because executable is not in PATH: "
             & This.Command.First_Element);
-         return (Containers.Release_Sets.Empty_Set with null record);
+         return (Releases.Containers.Release_Sets.Empty_Set with null record);
       else
          GNAT.OS_Lib.Free (Location);
       end if;
@@ -40,7 +40,7 @@ package body Alire.Externals.From_Output is
                         This.Command.Tail).Flatten ("" & ASCII.LF);
          --  ASCII.LF is used by Regpat for new lines
       begin
-         return Releases : Containers.Release_Set do
+         return Releases : Alire.Releases.Containers.Release_Set do
             Trace.Debug ("Looking for external in version string: " & Output);
             Match (This.Regexp, Output, Matches);
 

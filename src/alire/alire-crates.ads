@@ -1,8 +1,7 @@
 with Alire.Conditional;
-with Alire.Containers;
 with Alire.Externals.Lists;
 with Alire.Policies;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
@@ -84,7 +83,7 @@ package Alire.Crates is
    --  Merge external definitions from both crates, applying some index merging
    --  policy.
 
-   function Releases (This : Crate) return Containers.Release_Set;
+   function Releases (This : Crate) return Releases.Containers.Release_Set;
 
    procedure Replace (This    : in out Crate;
                       Release : Alire.Releases.Release) with Pre =>
@@ -108,7 +107,7 @@ private
    type Crate (Len : Natural) is tagged record
       Name      : Crate_Name (Len);
       Externals : External_Data;
-      Releases  : Containers.Release_Set;
+      Releases  : Alire.Releases.Containers.Release_Set;
    end record;
 
 end Alire.Crates;

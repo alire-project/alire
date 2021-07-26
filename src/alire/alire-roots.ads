@@ -7,7 +7,7 @@ limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Properties;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
@@ -230,7 +230,7 @@ private
    type Root is new Ada.Finalization.Controlled with record
       Environment     : Properties.Vector;
       Path            : UString;
-      Release         : Containers.Release_H;
+      Release         : Releases.Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
 
       Pins            : Solutions.Solution;

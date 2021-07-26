@@ -129,7 +129,10 @@ private
    -------------
 
    function Current (This : in out Root) return Reference
-   is (Element => This.Edit'Access);
+   is (Element => This.Edit'Unrestricted_Access);
+   --  CE2021 is happy with 'Access but 9.3 complains about a dangling pointer.
+   --  We are returning a short-lived pointer to a limited value so I don't see
+   --  the problem.
 
    ----------
    -- Name --

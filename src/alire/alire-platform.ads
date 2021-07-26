@@ -1,5 +1,5 @@
 with Alire.Platforms;
-with Alire.Environment;
+limited with Alire.Environment;
 
 private with GNATCOLL.OS.Constants;
 

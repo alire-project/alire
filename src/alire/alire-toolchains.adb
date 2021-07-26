@@ -4,11 +4,10 @@ with AAA.Text_IO;
 with Ada.Containers.Indefinite_Vectors;
 
 with Alire.Config.Edit;
-with Alire.Containers;
 with Alire.Index;
 with Alire.Origins;
 with Alire.Properties;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Shared;
 with Alire.Utils.User_Input;
@@ -42,7 +41,7 @@ package body Alire.Toolchains is
          --  release to use at the same position in the respective vector.
       end record;
 
-      Selected : Containers.Release_Set;
+      Selected : Releases.Containers.Release_Set;
       --  We store here all selected releases, so they are deployed in batch
       --  after all the user interactions.
 

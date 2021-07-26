@@ -183,7 +183,7 @@ package body Alire.Roots is
          Round := Round + 1;
 
          declare
-            To_Remove : Alire.Containers.Release_Set;
+            To_Remove : Alire.Releases.Containers.Release_Set;
             function Enum (Deps : Conditional.Dependencies)
                            return Alire.Dependencies.Containers.List
                            renames Conditional.Enumerate;
@@ -660,7 +660,7 @@ package body Alire.Roots is
      (Ada.Finalization.Controlled with
       Environment     => Env,
       Path            => +Path,
-      Release         => Containers.To_Release_H (R),
+      Release         => Releases.Containers.To_Release_H (R),
       Cached_Solution => <>,
       Pins            => <>,
       Lockfile        => <>,

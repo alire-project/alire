@@ -2,14 +2,12 @@ with Ada.Containers;
 
 with Alire.Config;
 with Alire.Crates;
-with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Root;
 with Alire.Solutions.Diffs;
-with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.Utils.Tools;
 with Alire.Utils.TTY;
@@ -102,9 +100,8 @@ package body Alire.Solutions is
    ------------------------------
 
    function Depends_On_Specific_GNAT (This : Solution) return Boolean
-   is (This.Releases.Contains_Or_Provides (Toolchains.GNAT_Crate) and then
-       This.Releases.Element_Providing
-         (Toolchains.GNAT_Crate).Name /= Toolchains.GNAT_Crate);
+   is (This.Releases.Contains_Or_Provides (GNAT_Crate) and then
+       This.Releases.Element_Providing (GNAT_Crate).Name /= GNAT_Crate);
 
    ----------------------------
    -- Empty_Invalid_Solution --
@@ -1030,11 +1027,12 @@ package body Alire.Solutions is
             Latest_Known : constant Boolean :=
                              Index.Exists (Dep.Crate) and then
                              not Index.Crate (Dep.Crate).Releases.Is_Empty;
-            Latest       : constant Containers.Release_H :=
+            Latest       : constant Alire.Releases.Containers.Release_H :=
                              (if Latest_Known
-                              then Containers.To_Release_H
+                              then Alire.Releases.Containers.To_Release_H
                                 (Index.Crate (Dep.Crate).Releases.Last_Element)
-                              else Containers.Release_Holders.Empty_Holder);
+                              else Alire.Releases.Containers.Release_Holders
+                                                            .Empty_Holder);
          begin
 
             --  Print release version, colored according to being latest

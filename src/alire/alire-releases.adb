@@ -28,6 +28,16 @@ package body Alire.Releases is
 
    use all type Alire.Properties.Labeled.Labels;
 
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (L, R : Release) return Boolean
+   is (if L.Provides (GNAT_Crate) and then
+       R.Provides (GNAT_Crate)
+       then Sort_Compilers (L, R)
+       else Standard_Sorting (L, R));
+
    --------------------
    -- All_Properties --
    --------------------

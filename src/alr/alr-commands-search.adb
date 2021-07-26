@@ -1,8 +1,7 @@
-with Alire.Containers;
 with Alire.Externals;
 with Alire.Index.Search;
 with Alire.Crates;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
@@ -89,7 +88,7 @@ package body Alr.Commands.Search is
          Tab.Append (Ext.Image);
       end List_Undetected;
 
-      use Alire.Containers.Release_Sets;
+      use Alire.Releases.Containers.Release_Sets;
    begin
 
       --  First, simpler case of search into crates
