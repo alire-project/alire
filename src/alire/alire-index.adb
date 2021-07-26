@@ -1,6 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with Alire.Containers;
 with Alire.TTY;
 
 package body Alire.Index is
@@ -9,17 +10,30 @@ package body Alire.Index is
      Ada.Containers.Indefinite_Ordered_Maps
        (Crate_Name, Releases.Containers.Release_Set,
         "<",        Releases.Containers."=");
-   subtype Alias_Map is Release_Set_Maps.Map;
+   subtype Release_Alias_Map is Release_Set_Maps.Map;
+
+   package External_Alias_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (Crate_Name,
+                                             Containers.Crate_Name_Sets.Set,
+                                             "<",
+                                             Containers.Crate_Name_Sets."=");
+   subtype External_Alias_Map is External_Alias_Maps.Map;
 
    use all type Semantic_Versioning.Version;
 
    Contents : aliased Alire.Crates.Containers.Maps.Map;
    --  Regular mapping from crate name to its releases
 
-   Aliases  : Alias_Map;
+   Aliases  : Release_Alias_Map;
    --  Mapping from crate name to any release that satisfies it. Currently,
    --  releases are duplicated in memory. These two collections could be made
    --  to share releases via some indirection or pointers.
+
+   External_Aliases : External_Alias_Map;
+   --  For external crates that provide another crate, we need to be aware
+   --  when external detection is requested. Everything should be tidier when
+   --  and index is its own well-encapsulated type. This mapping goes in the
+   --  direction Provided -> Providers.
 
    ---------
    -- Add --
@@ -117,15 +131,20 @@ package body Alire.Index is
       if Already_Detected.Contains (Name) then
          Trace.Debug
            ("Not redoing detection of externals for crate " & (+Name));
-      elsif not Exists (Name) then
-         Trace.Debug ("Skipping external detection for unindexed crate: "
+      elsif not External_Aliases.Contains (Name) then
+         Trace.Debug ("Skipping detection for crate without externals: "
                       & TTY.Name (Name));
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
-         for Release of Contents (Name).Externals.Detect (Name, Env) loop
-            Trace.Debug ("Adding external: " & Release.Milestone.Image);
-            Add (Release);
+
+         for Provider of External_Aliases (Name) loop
+            Trace.Debug ("Detecting via provider " & TTY.Name (Provider));
+            for Release of Contents (Provider).Externals.Detect (Provider, Env)
+            loop
+               Trace.Debug ("Adding external: " & Release.Milestone.Image);
+               Add (Release);
+            end loop;
          end loop;
       end if;
    end Detect_Externals;
@@ -194,6 +213,30 @@ package body Alire.Index is
         "Requested milestone not in index: "
         & (+Name) & "=" & Semantic_Versioning.Image (Version);
    end Find;
+
+   -------------------
+   -- Has_Externals --
+   -------------------
+
+   function Has_Externals (Name : Crate_Name) return Boolean
+   is (External_Aliases.Contains (Name));
+
+   -----------------------------
+   -- Register_External_Alias --
+   -----------------------------
+
+   procedure Register_External_Alias (Provider  : Crate_Name;
+                                      Providing : Crate_Name)
+   is
+   begin
+      if External_Aliases.Contains (Providing) then
+         External_Aliases (Providing).Include (Provider);
+      else
+         External_Aliases.Insert
+           (Providing,
+            Containers.Crate_Name_Sets.To_Set (Provider));
+      end if;
+   end Register_External_Alias;
 
    -------------------
    -- Release_Count --

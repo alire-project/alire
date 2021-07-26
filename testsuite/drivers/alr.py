@@ -38,6 +38,12 @@ def prepare_env(config_dir, env):
     mkdir(config_dir)
     env['ALR_CONFIG'] = config_dir
 
+    # Disable selection of toolchain to preserve older behavior. Tests that
+    # require a configured compiler will have to set it up explicitly.
+    run_alr("config", "--global", "--set", "toolchain.assistant", "false",
+            "-c", config_dir)
+    #  Pass config location explicitly since env is not yet applied
+
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":

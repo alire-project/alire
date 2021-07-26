@@ -486,10 +486,10 @@ package body Alire.Solutions is
 
          for Rel of This.Releases loop
             if Than.Contains_Release (Rel.Name) then
-               if Than.Releases.Element (Rel.Name).Version < Rel.Version then
+               if Than.Release_Providing (Rel.Name).Version < Rel.Version then
                   return Better;
                elsif
-                 Rel.Version < Than.Releases.Element (Rel.Name).Version
+                 Rel.Version < Than.Release_Providing (Rel.Name).Version
                then
                   return Worse;
                end if;
@@ -1101,6 +1101,15 @@ package body Alire.Solutions is
 
       raise Program_Error with "Should not be reached due to preconditions";
    end Dependency_Providing;
+
+   -----------------------
+   -- Release_Providing --
+   -----------------------
+
+   function Release_Providing (This  : Solution;
+                               Crate : Crate_Name)
+                               return Alire.Releases.Release
+   is (This.Dependency_Providing (Crate).Release);
 
    -----------------------
    -- Release_Providing --

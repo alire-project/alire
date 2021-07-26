@@ -283,7 +283,7 @@ package body Alire.Utils.User_Input is
                --  This happens on the user hitting Ctrl-D, and no further
                --  input can be obtained as stdin is closed
                Log_Exception (E);
-               Raise_Checked_Error ("Cancelled.");
+               Raise_Checked_Error ("Canceled.");
             when others =>
                Put_Failure ("Not a valid choice, please use a line index.");
          end;

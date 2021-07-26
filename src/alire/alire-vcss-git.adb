@@ -279,8 +279,8 @@ package body Alire.VCSs.Git is
       --  Once here is reached, the Ref is ready for comparison
 
       declare
-         Not_Found : constant Git_Commit := (others => 'x');
-         Result    : Git_Commit := Not_Found;
+         Not_Found : constant String (Git_Commit'Range) := (others => 'x');
+         Result    : String := Not_Found;
       begin
          for Line of Output loop
             if Ends_With (Line, Ref) then
@@ -296,7 +296,7 @@ package body Alire.VCSs.Git is
          if Result = Not_Found then
             return "";
          else
-            return Result;
+            return Git_Commit (Result); -- So range checked
          end if;
       end;
    end Remote_Commit;

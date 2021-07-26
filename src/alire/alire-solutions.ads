@@ -251,6 +251,11 @@ package Alire.Solutions is
    --  Return the dependency containing the release that satisfies the same as
    --  Release would satisfy.
 
+   function Release_Providing (This  : Solution;
+                               Crate : Crate_Name)
+                               return Alire.Releases.Release
+     with Pre => This.Contains_Release (Crate);
+
    function Release_Providing (This    : Solution;
                                Release : Alire.Releases.Release)
                                return Alire.Releases.Release

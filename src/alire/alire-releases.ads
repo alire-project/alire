@@ -2,6 +2,7 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Tags;
 
 with Alire.Conditional;
+with Alire.Containers;
 with Alire.Dependencies.Containers;
 with Alire.Interfaces;
 with Alire.Manifest;
@@ -94,7 +95,7 @@ package Alire.Releases is
    --  Add forbidden dependencies to a release
 
    function Providing (Base    : Release;
-                       Targets : Utils.String_Set)
+                       Targets : Containers.Crate_Name_Sets.Set)
                        return Release;
    --  Add an equivalence to Target=Base.Version for all Target of Targets
    --  (which may be empty).

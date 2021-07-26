@@ -1,3 +1,5 @@
+with AAA.Directories;
+
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
 with Ada.Unchecked_Deallocation;
@@ -434,6 +436,13 @@ package body Alire.Directories is
             Delete_Tree (This.Filename);
          end if;
       end if;
+
+      --  Remove temp dir if empty to keep things tidy, and avoid modifying
+      --  lots of tests.
+
+      AAA.Directories.Remove_Folder_If_Empty
+        (Paths.Working_Folder_Inside_Root
+         / Paths.Temp_Folder_Inside_Working_Folder);
    exception
       when E : others =>
          Log_Exception (E);

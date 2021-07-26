@@ -49,7 +49,8 @@ package body Alire.Externals is
          use TOML;
       begin
          This.Provides.Insert
-           (From.Checked_Pop (TOML_Keys.Provides, TOML_String).As_String);
+           (To_Name
+              (From.Checked_Pop (TOML_Keys.Provides, TOML_String).As_String));
       end Load_Provides;
 
       Kind : TOML.TOML_Value;

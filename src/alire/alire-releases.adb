@@ -264,14 +264,14 @@ package body Alire.Releases is
    ---------------
 
    function Providing (Base    : Release;
-                       Targets : Utils.String_Set)
+                       Targets : Containers.Crate_Name_Sets.Set)
                        return Release
    is
    begin
       return Result : Release := Base do
          for Target of Targets loop
             Result.Equivalences.Append
-              (Milestones.New_Milestone (To_Name (Target), Base.Version));
+              (Milestones.New_Milestone (Target, Base.Version));
          end loop;
       end return;
    end Providing;

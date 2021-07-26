@@ -1,4 +1,5 @@
 with Alire.Conditional;
+with Alire.Containers;
 with Alire.Platforms;
 with Alire.Properties;
 with Alire.Releases.Containers;
@@ -62,12 +63,23 @@ package Alire.Externals is
                          Env  : Properties.Vector) return External'Class;
    --  Evaluate Properties and Available fields under the given environment
 
+   function Equivalences (This : External'Class)
+                          return Containers.Crate_Name_Sets.Set;
+
 private
 
    type External is abstract tagged record
       Properties : Conditional.Properties;
-      Provides   : Utils.String_Set;
+      Provides   : Containers.Crate_Name_Sets.Set;
       Available  : Conditional.Availability;
    end record;
+
+   ------------------
+   -- Equivalences --
+   ------------------
+
+   function Equivalences (This : External'Class)
+                          return Containers.Crate_Name_Sets.Set
+   is (This.Provides);
 
 end Alire.Externals;

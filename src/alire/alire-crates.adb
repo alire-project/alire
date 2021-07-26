@@ -1,3 +1,4 @@
+with Alire.Index;
 with Alire.Origins;
 with Alire.Properties.Labeled;
 with Alire.Provides;
@@ -131,6 +132,19 @@ package body Alire.Crates is
                         Strict));
                end loop;
             end if;
+
+            --  Register any aliased in the detectors for this crate, so we
+            --  know when to detect. Also the trivial equivalence, for the
+            --  benefit of queries in the index.
+
+            Index.Register_External_Alias (This.Name, This.Name);
+
+            for Detector of This.Externals.Detectors loop
+               for Alias of Detector.Equivalences loop
+                  Index.Register_External_Alias (Provider  => This.Name,
+                                                 Providing => Alias);
+               end loop;
+            end loop;
          end if;
       end Load_Externals_Array;
 

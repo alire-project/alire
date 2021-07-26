@@ -2,7 +2,7 @@
 Test that external tool dependencies work as expected.
 """
 
-import re
+import os, re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq
@@ -33,6 +33,7 @@ compare(dir_content,
          'main_1.0.0_filesystem/alire/cache',
          'main_1.0.0_filesystem/alire/cache/dependencies',
          make_dep_dir,
+         make_dep_dir + "/alire",
          'main_1.0.0_filesystem/config',
          'main_1.0.0_filesystem/config/main_config.ads',
          'main_1.0.0_filesystem/config/main_config.gpr',

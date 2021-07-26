@@ -70,6 +70,10 @@ package Alire.Index is
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
+   procedure Register_External_Alias (Provider  : Crate_Name;
+                                      Providing : Crate_Name);
+   --  Register that Provider has external detectors for Providing
+
    ---------------------
    --  BASIC QUERIES  --
    ---------------------
@@ -84,6 +88,8 @@ package Alire.Index is
    function Exists (Name : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean;
+
+   function Has_Externals (Name : Crate_Name) return Boolean;
 
    function Releases_Satisfying (Dep : Dependencies.Dependency;
                                  Env : Properties.Vector)

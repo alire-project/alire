@@ -102,7 +102,9 @@ package body Alire.Origins.Deployers.System.Pacman is
          end if;
       end if;
 
-      return Version_Outcomes.Outcome_Failure ("could not be detected");
+      Trace.Debug ("System deployer could not detect: " & This.Base.Image);
+      return Version_Outcomes.Outcome_Failure ("could not be detected",
+                                               Report => False);
    end Detect;
 
    -------------

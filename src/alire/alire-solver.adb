@@ -125,7 +125,7 @@ package body Alire.Solver is
                      Options : Query_Options := Default_Options)
                      return Solution
    is
-      Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies...");
+      Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
       use Alire.Conditional.For_Dependencies;
 
@@ -416,13 +416,13 @@ package body Alire.Solver is
                end if;
             end Expand_Missing;
 
-            --------------------
-            -- Check_External --
-            --------------------
+            ------------------
+            -- Check_Hinted --
+            ------------------
 
-            procedure Check_External is
+            procedure Check_Hinted is
             begin
-               if not Index.Crate (Dep.Crate).Externals.Is_Empty then
+               if Index.Has_Externals (Dep.Crate) then
                   if Options.Hinting = Hint then
                      Trace.Debug
                        ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
@@ -454,7 +454,7 @@ package body Alire.Solver is
                           and Target
                           and Remaining).Image_One_Line);
                end if;
-            end Check_External;
+            end Check_Hinted;
 
             -----------------------
             -- Check_Version_Pin --
@@ -675,6 +675,7 @@ package body Alire.Solver is
                Check_Version_Pin;
 
             elsif Index.Exists (Dep.Crate) or else
+                  Index.Has_Externals (Dep.Crate) or else
               not Index.Releases_Satisfying (Dep, Props).Is_Empty
               --  TODO: Worth caching?
             then
@@ -728,7 +729,7 @@ package body Alire.Solver is
                --  crate, in which case we hint the crate instead of failing
                --  resolution (if the external failed to find its releases).
 
-               Check_External;
+               Check_Hinted;
 
                --  There may be a less bad solution if we leave this crate out.
 
@@ -837,7 +838,7 @@ package body Alire.Solver is
                Dupes := Dupes + 1;
             end if;
 
-            Progress.Step ("Solving dependencies... "
+            Progress.Step ("Solving dependencies"
                            & Utils.Trim (Complete'Img) & "/"
                            & Utils.Trim (Partial'Img) & "/"
                            & Utils.Trim (Dupes'Image)
