@@ -4,6 +4,7 @@ with Alire.Config;
 with Alire.Crates;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
+with Alire.Errors;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Root;
@@ -1162,8 +1163,8 @@ package body Alire.Solutions is
          end if;
       end loop;
 
-      Raise_Checked_Error ("No dependency in solution matches crate "
-                           & TTY.Name (Crate));
+      raise Program_Error with Errors.Set
+        ("No dependency in solution matches crate " & TTY.Name (Crate));
    end State;
 
    -----------
@@ -1185,8 +1186,9 @@ package body Alire.Solutions is
          end if;
       end loop;
 
-      Raise_Checked_Error ("No dependency in solution matches release "
-                           & Release.Milestone.TTY_Image);
+      raise Program_Error with Errors.Set
+        ("No dependency in solution matches release "
+         & Release.Milestone.TTY_Image);
    end State;
 
    ---------------

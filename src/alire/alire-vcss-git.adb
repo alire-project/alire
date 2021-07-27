@@ -296,7 +296,7 @@ package body Alire.VCSs.Git is
          if Result = Not_Found then
             return "";
          else
-            return Git_Commit (Result); -- So range checked
+            return Git_Commit (Result); -- Contents check
          end if;
       end;
    end Remote_Commit;

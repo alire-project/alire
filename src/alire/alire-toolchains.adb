@@ -28,8 +28,7 @@ package body Alire.Toolchains is
    -- Assistant --
    ---------------
 
-   procedure Assistant (Current_OS : Platforms.Operating_Systems) is
-      pragma Unreferenced (Current_OS);
+   procedure Assistant is
       package Release_Vectors is new
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
@@ -76,14 +75,7 @@ package body Alire.Toolchains is
          use all type Origins.Kinds;
          Env : constant Properties.Vector := Root.Platform_Properties;
       begin
-         if Crate = GNAT_Crate then
-            --  We need a bit of magic as the externals for GNAT are now in a
-            --  different crate
-            Index.Detect_Externals
-              (GNAT_External_Crate, Root.Platform_Properties);
-         else
-            Index.Detect_Externals (Crate, Root.Platform_Properties);
-         end if;
+         Index.Detect_Externals (Crate, Root.Platform_Properties);
 
          --  Always offer to configure nothing
          Result.Choices.Append ("None");
@@ -229,9 +221,6 @@ package body Alire.Toolchains is
                & Crate.TTY_Image);
          end if;
 
-         Config.Edit.Set (Config.Edit.Filepath (Config.Global),
-                          Config.Keys.Toolchain_Assistant,
-                          "false");
       end Set_Up;
 
    begin
@@ -254,6 +243,14 @@ package body Alire.Toolchains is
       for Tool of Tools loop
          Set_Up (Tool);
       end loop;
+
+      --  The user has already chosen, so disable the assistant
+
+      Config.Edit.Set (Config.Edit.Filepath (Config.Global),
+                       Config.Keys.Toolchain_Assistant,
+                       "false");
+
+      --  Finally deploy selections
 
       for Release of Selected loop
          Install (Release);

@@ -28,6 +28,7 @@ package body Alire.Origins.Deployers is
    begin
       case From.Kind is
          when Origins.Binary_Archive =>
+            --  We can reuse the Source_Archive.Deployer
             return Source_Archive.Deployer'(Deployer'(Base => From)
                                             with null record);
          when Origins.External =>

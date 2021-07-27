@@ -26,7 +26,7 @@ Crates that require a particular cross-compiler may now specify it as a regular
 dependency on, e.g., `gnat_riscv_elf`.
 
 In addition to a default compiler, the preferred version of a compiler for a
-target may be made available with `alr toolchain --install <crate[=version]>.
+target may be made available with `alr toolchain --install <crate[=version]>`.
 When launching a build, Alire will use preferably the default selected compiler
 or, if the default is for a different target, one of the other installed
 compilers. If no installed compiler is available for the crate target, Alire

@@ -561,7 +561,7 @@ package body Alr.Commands is
 
       if Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True) then
          Cmd.Requires_Full_Index;
-         Alire.Toolchains.Assistant (Platform.Operating_System);
+         Alire.Toolchains.Assistant;
       end if;
 
       Trace.Debug ("Workspace is being checked and loaded for the first time");

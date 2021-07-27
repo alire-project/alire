@@ -187,6 +187,9 @@ private
    function New_Dependency (Milestone : Milestones.Milestone;
                             Updatable : Boolean := False)
                             return State;
+   --  Create a dependency from a milestone. If Updatable, use the appropriate
+   --  caret/tilde versions set modifier; otherwise depend on the exact
+   --  milestone.
 
    --  Helper types
 

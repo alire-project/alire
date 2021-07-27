@@ -3,7 +3,6 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 private with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
-with Alire.Platforms;
 with Alire.TTY;
 with Alire.Utils;
 
@@ -18,15 +17,16 @@ package Alire.Toolchains is
                .Union (Name_Sets.To_Set (GPRbuild_Crate));
    --  All crates that are part of the provided binary toolchain
 
-   --  The following functions will transform any `gnat_XXX` dependency on
-   --  plain `gnat`.
-
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
-   procedure Assistant (Current_OS : Platforms.Operating_Systems);
+   procedure Assistant;
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.
+
+   --  The following functions will transform any `gnat_XXX` dependency on
+   --  plain `gnat`. This way we need to to litter the callers with similar
+   --  transformations, as we always want whatever gnat_XXX is used for "gnat".
 
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean;
    --  Say if a tool is actually configured by the user

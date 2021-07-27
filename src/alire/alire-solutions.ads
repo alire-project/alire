@@ -248,8 +248,7 @@ package Alire.Solutions is
                                   Crate : Crate_Name)
                                   return States.State
      with Pre => This.Releases.Contains_Or_Provides (Crate);
-   --  Return the dependency containing the release that satisfies the same as
-   --  Release would satisfy.
+   --  Return the dependency containing the release that provides Crate
 
    function Release_Providing (This  : Solution;
                                Crate : Crate_Name)
@@ -410,6 +409,7 @@ private
       --  Has solving been attempted?
    end record;
 
-   --  Implementations moved to body due to missing symbols in predicates
+   --  Implementations moved to body due to bug about missing symbols in
+   --  predicates otherwise.
 
 end Alire.Solutions;

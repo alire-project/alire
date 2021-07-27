@@ -4,8 +4,8 @@ package Alr.Commands.Toolchain is
 
    package TTY renames Alire.TTY;
 
-   --  Installation of binary releases and shared dependencies into the
-   --  ${ALR_CONFIG}/cache shared configuration.
+   --  Installation of binary toolchain crates into the ${ALR_CONFIG}/cache
+   --  shared configuration.
 
    type Command is new Commands.Command with private;
 

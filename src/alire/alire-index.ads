@@ -94,11 +94,8 @@ package Alire.Index is
    function Releases_Satisfying (Dep : Dependencies.Dependency;
                                  Env : Properties.Vector)
                                  return Releases.Containers.Release_Set;
-   --  By analogy with Releases/Milestones, this call says if a release exists
-   --  that is able to provide this dependency, also considering "provides"
-   --  equivalences. TODO: actually implement the "provides" part with
-   --  refactored internals, since currently it would be terribly inefficient
-   --  as it would require going over every release in the index.
+   --  Return all releases in the catalog able to provide this dependency, also
+   --  considering their "provides" equivalences.
 
    function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release

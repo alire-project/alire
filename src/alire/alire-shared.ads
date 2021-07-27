@@ -9,8 +9,7 @@ package Alire.Shared is
    --  workspace but in the shared configuration folder.
 
    function Available return Releases.Containers.Release_Set;
-   --  Return the contents of a lockfile describing what releases are installed
-   --  at the shared location.
+   --  Returns the releases installed at the shared location
 
    function Release (Target : Milestones.Milestone) return Releases.Release;
    --  Retrieve the release corresponding to Target, if it exists. Will raise

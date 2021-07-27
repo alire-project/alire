@@ -65,6 +65,9 @@ package Alire.Externals is
 
    function Equivalences (This : External'Class)
                           return Containers.Crate_Name_Sets.Set;
+   --  An external may have a "provides" for another crate, always matching
+   --  the same version. Used ATM for GNAT compilers, including system ones,
+   --  to provide the "gnat" crate.
 
 private
 

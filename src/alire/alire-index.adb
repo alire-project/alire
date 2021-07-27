@@ -31,9 +31,8 @@ package body Alire.Index is
 
    External_Aliases : External_Alias_Map;
    --  For external crates that provide another crate, we need to be aware
-   --  when external detection is requested. Everything should be tidier when
-   --  and index is its own well-encapsulated type. This mapping goes in the
-   --  direction Provided -> Providers.
+   --  when external detection is requested. This mapping goes in the direction
+   --  Provided -> Providers.
 
    ---------
    -- Add --

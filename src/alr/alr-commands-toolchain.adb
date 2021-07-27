@@ -10,8 +10,6 @@ with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils;
 
-with Alr.Platform;
-
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Toolchain is
@@ -233,7 +231,7 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.S_Select then
          Cmd.Requires_Full_Index;
-         Alire.Toolchains.Assistant (Platform.Operating_System);
+         Alire.Toolchains.Assistant;
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
       elsif Cmd.Install then

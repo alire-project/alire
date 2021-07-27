@@ -1,23 +1,18 @@
-with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-
 with Alire.Dependencies;
-with Alire.Milestones;
+with Alire.Milestones.Containers;
 with Alire.TOML_Adapters;
 
 with TOML;
 
 package Alire.Provides with Preelaborate is
 
-   --  Support for crates filling in for another crate. Each individual
-   --  equivalence is in practice a dependency; that is, a release can replace
-   --  a range of releases in another crate (although this seems pretty rare
-   --  and normally the equivalence would be a single version).
+   --  Support for releases filling in for another crate release. Each
+   --  individual equivalence is a milestone. Conceptually, an equivalence
+   --  could be a dependency, but this complicates things elsewhere, as we
+   --  would need to intersect dependencies (which Semantic_Versioning cannot
+   --  do) to check satisfiability.
 
-   package Milestone_Lists is new
-     Ada.Containers.Indefinite_Doubly_Linked_Lists (Milestones.Milestone,
-                                                    Milestones."=");
-
-   type Equivalences is new Milestone_Lists.List with null record;
+   type Equivalences is new Milestones.Containers.Lists.List with null record;
 
    No_Equivalences : constant Equivalences;
 
@@ -37,6 +32,6 @@ package Alire.Provides with Preelaborate is
 private
 
    No_Equivalences : constant Equivalences :=
-                       (Milestone_Lists.Empty_List with null record);
+                     (Milestones.Containers.Lists.Empty_List with null record);
 
 end Alire.Provides;

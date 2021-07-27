@@ -1,6 +1,6 @@
 package Alire.VCSs.Hg is
 
-   subtype Hg_Commit  is String (1 .. 40);
+   subtype Hg_Commit is String (1 .. 40);
 
    type VCS (<>) is new VCSs.VCS with private;
 

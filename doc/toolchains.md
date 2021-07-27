@@ -9,7 +9,7 @@ interactions that this section explains.
 Some crates may require particular GNAT compilers (for example for
 cross-compilation). Note that, independently of the compiler finally made
 available by `alr` in the environment, the crate project file still must define
-an appropriate Target attribute for the desired compiler. At the moment, Alire
+an appropriate `Target` attribute for the desired compiler. At the moment, Alire
 does not examine project file contents to identify necessary compilers, and
 relies only on regular `depends-on` dependencies.
 
@@ -63,14 +63,14 @@ For crates with dependencies on GNAT compilers, the following two cases simultan
 - Solution with generic dependencies on `gnat`: The solver will provide a
   concrete GNAT to satisfy this dependency, applying the following
   prioritization:
-   1. A precise compiler that is also a dependency.
+   1. A target-specific compiler that is already a dependency.
    1. The default compiler, if it has been defined.
    1. A native compiler that is already deployed.
    1. A cross-compiler that is already deployed.
-   1. A native compiler from the index, that will be deployed with the rest of
-      dependencies.
+   1. A native compiler from the index, that will be deployed with the rest of dependencies.
+   1. A cross-compiler from the index, that will be deployed with the rest of dependencies.
 
-- Solution with dependencies on a precise GNAT (`gnat_native`, `gnat_ricv_elf`,
+- Solution with dependencies on a target-specific GNAT (`gnat_native`, `gnat_ricv_elf`,
   etc.): The `alr` solver will provide one compiler in the environment, applying the
   following prioritization:
    1. A matching compiler that is already deployed, explicitly via `alr

@@ -92,8 +92,7 @@ package body Alire.Directories is
    -- Detect_Root_Path --
    ----------------------
 
-   function Detect_Root_Path (Starting_At : Absolute_Path :=
-                                Ada.Directories.Current_Directory)
+   function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String
    is
       use Ada.Directories;

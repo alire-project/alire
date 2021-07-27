@@ -2,7 +2,7 @@
 Test that external tool dependencies work as expected.
 """
 
-import os, re
+import re
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq

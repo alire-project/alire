@@ -55,7 +55,7 @@ package Alire.Solver is
    --  will always cause failure.
 
    type Sharing_Policies is (Allow_Shared, Only_Local);
-   --  * Allow_Shared: crates used with `alr install` can appear in solutions.
+   --  * Allow_Shared: crates in the shared config can appear in solutions.
    --  * Only_Local: only crates in the local workspace will be used.
 
    subtype Pin_Map  is User_Pins.Maps.Map;
