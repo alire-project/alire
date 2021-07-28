@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Root;
 with Alire.URI;
 
@@ -52,7 +54,9 @@ package body Alire.Origins is
    --------------------
 
    function New_Filesystem (Path : String) return Origin is
-     (Data => (Filesystem, Path => +Path, Hashes => <>));
+     (Data => (Filesystem,
+               Path   => +Ada.Directories.Full_Name (Path),
+               Hashes => <>));
 
    -------------
    -- New_Git --
@@ -321,11 +325,16 @@ package body Alire.Origins is
       end if;
 
       return (Data => (Source_Archive,
-                       Src_Archive => (URL    => +URL,
-                                       Name   => +Archive_Name,
-                                       Format => Format,
-                                       Binary => False,
-                                       Hashes => <>)));
+                       Src_Archive =>
+                         (URL    =>
+                            +(if URI.Scheme (URL) in URI.File_Schemes
+                              then Ada.Directories.Full_Name
+                                                     (URI.Local_Path (URL))
+                              else URL),
+                          Name   => +Archive_Name,
+                          Format => Format,
+                          Binary => False,
+                          Hashes => <>)));
    end New_Source_Archive;
 
    -----------------

@@ -221,7 +221,10 @@ package body Alire.Utils.User_Input is
          begin
             TIO.Put_Line (Question);
 
-            if Not_Interactive or else not Is_TTY then
+            if Not_Interactive then
+               Put_Info ("Using default choice in non-interactive mode: "
+                         & Choices.First_Element);
+               Trace.Warning (Alire.Is_TTY'Image);
                return Choices.First_Index;
             end if;
 

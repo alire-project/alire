@@ -18,10 +18,10 @@ package body Alire.Provides is
       for Equiv of This loop
          if not First then
             Append (Result, ", ");
-            First := False;
          end if;
 
          Append (Result, Equiv.TTY_Image);
+         First := False;
       end loop;
 
       return +Result;

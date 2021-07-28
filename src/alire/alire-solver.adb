@@ -23,7 +23,6 @@ package body Alire.Solver is
    package TTY renames Utils.TTY;
 
    use all type Dependencies.States.Transitivities;
-   use all type Semver.Extended.Version_Set;
 
    package Solution_Sets is new Ada.Containers.Indefinite_Ordered_Sets
      (Element_Type => Solution,
@@ -64,38 +63,16 @@ package body Alire.Solver is
       Policy  : Age_Policies)
       return Release
    is
-      use Semantic_Versioning;
-
-      -----------
-      -- Check --
-      -----------
-
-      function Check (R : Index.Release) return Boolean is
-      begin
-         if Allowed.Contains (R.Version) then
-            return True;
-         else
-            Trace.Debug ("Skipping unsatisfactory version: " &
-                           Image (R.Version));
-         end if;
-
-         return False;
-      end Check;
-
+      Candidates : constant Releases.Containers.Release_Set :=
+                     Index.Releases_Satisfying
+                       (Dependencies.New_Dependency (Name, Allowed),
+                        Root.Platform_Properties);
    begin
-      if Alire.Index.Exists (Name) then
+      if not Candidates.Is_Empty then
          if Policy = Newest then
-            for R of reverse Alire.Index.Crate (Name).Releases loop
-               if Check (R) then
-                  return R;
-               end if;
-            end loop;
+            return Candidates.Last_Element;
          else
-            for R of Alire.Index.Crate (Name).Releases loop
-               if Check (R) then
-                  return R;
-               end if;
-            end loop;
+            return Candidates.First_Element;
          end if;
       end if;
 
@@ -223,6 +200,103 @@ package body Alire.Solver is
             --  dependency invalid, it should be checked again (which Check
             --  below does.)
 
+            --------------------
+            -- Check_Compiler --
+            --------------------
+
+            function Check_Compiler (R : Release) return Boolean is
+
+               -------------------
+               -- Specific_GNAT --
+               -------------------
+               --  Examine pending dependencies for a specific GNAT, and if so
+               --  return the one.
+               function Specific_GNAT (Deps : Conditional.Dependencies)
+                                       return Conditional.Dependencies
+               is
+               begin
+                  if Deps.Is_Iterable then
+                     for Dep of Deps loop
+                        if Utils.Starts_With (Dep.Value.Crate.As_String,
+                                              "gnat_") -- Ugly hack
+                        then
+                           return Dep;
+                        end if;
+                     end loop;
+                  end if;
+
+                  return Conditional.No_Dependencies;
+               end Specific_GNAT;
+
+            begin
+
+               --  The following checks are not guaranteed to find the proper
+               --  GNAT to use, as a yet-unknonw dependency might add a precise
+               --  GNAT later on. It should however cover the common case
+               --  in which the GNAT dependencies are in the root crate. If
+               --  all else fails, in the end there is a real problem of the
+               --  user having selected an incompatible compiler, so the last
+               --  recourse is for the user to unselect the compiler in this
+               --  configuration local config, for example.
+
+               if Solution.Depends_On_Specific_GNAT then
+
+                  --  There is already a precise gnat_xxx in the solution, that
+                  --  we must reuse.
+
+                  Trace.Debug
+                    ("SOLVER: gnat PASS " & Boolean'
+                       (Solution.Releases
+                        .Element_Providing (GNAT_Crate).Name = R.Name)'Image
+                     & " for " & R.Milestone.TTY_Image
+                     & " due to compiler already in solution: "
+                     & Solution.Releases.Element_Providing
+                       (GNAT_Crate).Milestone.TTY_Image);
+
+                  return Solution
+                    .Releases.Element_Providing (GNAT_Crate).Name = R.Name;
+
+               elsif not Specific_GNAT (Remaining).Is_Empty then
+
+                  --  There is an unsolved dependency on a specific gnat, that
+                  --  we must honor sooner or later, so no point on trying
+                  --  another target.
+
+                  Trace.Debug
+                    ("SOLVER: gnat PASS " & Boolean'
+                       (Specific_GNAT (Remaining).Value.Crate = R.Name)'Image
+                     & " for " & R.Milestone.TTY_Image
+                     & " due to compiler already in dependencies: "
+                     & Specific_GNAT (Remaining).Value.TTY_Image);
+
+                  return Specific_GNAT (Remaining).Value.Crate = R.Name;
+
+               elsif Toolchains.Tool_Is_Configured (GNAT_Crate) then
+
+                  --  There is a preferred compiler that we must use, as there
+                  --  is no overriding reason not to
+
+                  Trace.Debug
+                    ("SOLVER: gnat PASS " & Boolean'
+                       (Toolchains
+                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Image
+                     & " for " & R.Milestone.TTY_Image
+                     & " due to configured compiler: "
+                     & Toolchains.Tool_Dependency (GNAT_Crate).TTY_Image);
+
+                  return Toolchains
+                    .Tool_Dependency (GNAT_Crate).Crate = R.Name;
+
+               else
+
+                  Trace.Debug ("SOLVER: gnat compiler " & R.Milestone.TTY_Image
+                               & " is valid candidate.");
+
+                  return True;
+
+               end if;
+            end Check_Compiler;
+
             -----------
             -- Check --
             -----------
@@ -231,6 +305,16 @@ package body Alire.Solver is
                use all type Origins.Kinds;
                use type Release;
             begin
+
+               --  Special compiler checks are hardcoded when the dependency is
+               --  on a generic GNAT. This way we ensure the preferred compiler
+               --  is used, unless we are forced by other dependencies to do
+               --  something else
+
+               if R.Provides (GNAT_Crate) and then not Check_Compiler (R) then
+                  --  Reason already logged by Check_Compiler
+                  return;
+               end if;
 
                --  We first check that the release matches the dependency we
                --  are attempting to resolve, in which case we check whether
@@ -533,12 +617,6 @@ package body Alire.Solver is
             procedure Check_Shared is
             begin
 
-               --  TODO: TEST: two incompatible crates providing the same one.
-               --  TODO: TEST: virtual and real crate satisfying the same one.
-               --  TODO: TEST: full enumeration with external & provides
-
-               --  Solve with all externals that are not hints
-
                --  Solve with all installed dependencies that satisfy it
 
                for R of reverse Installed.Satisfying (Dep) loop
@@ -551,70 +629,15 @@ package body Alire.Solver is
                --  installed releases.
 
                if Installed.Satisfying (Dep).Is_Empty
-                 or else Options.Completeness = All_Incomplete
+                 or else Options.Completeness >= Some_Incomplete
                then
                   Expand_Value (Dep          => Dep,
                                 Allow_Shared => False);
                end if;
+
             end Check_Shared;
 
-            -----------------------------
-            -- Use_Configured_Compiler --
-            -----------------------------
-
-            procedure Use_Configured_Compiler is
-               GNAT_To_Use : UString;
-               --  Note that the version set may still exclude the configured
-               --  compiler, in which case other compiler versions will be
-               --  attempted (but from the configured compiler crate only).
-            begin
-               if Solution.Depends_On_Specific_GNAT then
-
-                  --  There is already a precise gnat_xxx in the solution, that
-                  --  we must reuse.
-
-                  GNAT_To_Use := +Solution.Releases.Element_Providing
-                    (GNAT_Crate).Name.As_String;
-
-               else
-
-                  --  Otherwise, we use the configured compiler
-
-                  GNAT_To_Use := +Toolchains.Tool_Dependency
-                    (GNAT_Crate).Crate.As_String;
-
-               end if;
-
-               declare
-                  New_Dep : constant Dependencies.Dependency :=
-                              Dependencies.New_Dependency
-                    (Crate    => To_Name (+GNAT_To_Use),
-                     Versions => Dep.Versions);
-               begin
-                  Trace.Debug ("SOLVER: replacing " & Dep.TTY_Image
-                               & " with " & New_Dep.TTY_Image);
-                  Expand_Value (New_Dep, Allow_Shared);
-               end;
-            end Use_Configured_Compiler;
-
          begin
-
-            --  If the dependency is on generic gnat, we will attempt to use
-            --  the configured compiler, if any. Otherwise, any installed (but
-            --  not set as THE compiler) gnat will be used first. Last, any of
-            --  the remotely available compilers will be used, but trying first
-            --  the native ones (thanks to the way releases are ordered).
-
-            if Dep.Crate = GNAT_Crate and then
-              Toolchains.Tool_Is_Configured (GNAT_Crate) and then
-              Toolchains.Tool_Dependency (GNAT_Crate).Crate /= GNAT_Crate
-              --  This implies a particular GNAT
-            then
-               Use_Configured_Compiler;
-               return;
-            end if;
-
-            --  Regular considerations follow
 
             if Pins.Depends_On (Dep.Crate) and then
                Pins.State (Dep.Crate).Is_Linked
@@ -657,7 +680,9 @@ package body Alire.Solver is
                       Is_Shared =>
                         Solution.Dependency_Providing (Dep.Crate).Is_Shared);
 
-            elsif Allow_Shared then
+            end if;
+
+            if Allow_Shared then
 
                --  There is a shared release we can use for this dependency; we
                --  prefer this option first. If more solutions than the first
@@ -666,7 +691,9 @@ package body Alire.Solver is
 
                Check_Shared;
 
-            elsif Pins.Depends_On (Dep.Crate) and then
+            end if;
+
+            if Pins.Depends_On (Dep.Crate) and then
                   Pins.State (Dep.Crate).Is_Pinned
             then
 

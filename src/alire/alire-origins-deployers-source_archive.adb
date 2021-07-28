@@ -138,7 +138,7 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       if URI.Scheme (This.Base.Archive_URL) in URI.File_Schemes then
          if not Dirs.Exists (Folder) then
-            Dirs.Create_Directory (Folder);
+            Alire.Directories.Create_Tree (Folder);
          end if;
 
          Ada.Directories.Copy_File

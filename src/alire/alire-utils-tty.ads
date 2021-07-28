@@ -144,7 +144,9 @@ private
               Fore  => ANSI.Light_Cyan));
 
    function Terminal (Text : String) return String is
-     (ANSI.Color_Wrap (Text, ANSI.Palette_Fg (5, 3, 0)));
+     (if Color_Enabled and then Is_TTY
+      then ANSI.Color_Wrap (Text, ANSI.Palette_Fg (5, 3, 0))
+      else Text);
 
    function URL (Text : String) return String renames Version;
 

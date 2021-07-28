@@ -348,6 +348,12 @@ package body Alire.TOML_Index is
       Version   : String;
       Strict    : Boolean)
    is
+      --  We enter the folder of the file so any relative paths within (mostly
+      --  used during tests, but might be valid for private indexes too) are
+      --  properly resolved by the loaders elsewhere.
+
+      Enter : Directories.Guard
+        (Directories.Enter (Directories.Parent (File_Name))) with Unreferenced;
 
       -------------------
       -- Error_In_File --

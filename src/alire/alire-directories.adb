@@ -79,6 +79,16 @@ package body Alire.Directories is
    end Copy;
 
    -----------------
+   -- Create_Tree --
+   -----------------
+
+   procedure Create_Tree (Path : Any_Path) is
+      use GNATCOLL.VFS;
+   begin
+      Make_Dir (Create (+Path));
+   end Create_Tree;
+
+   -----------------
    -- Delete_Tree --
    -----------------
 

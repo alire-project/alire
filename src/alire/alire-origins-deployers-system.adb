@@ -101,7 +101,7 @@ package body Alire.Origins.Deployers.System is
                                           with Wrapper =>
                                              System.RPM_Wrappers.Dnf,
                                           others       => <>));
-      --  TODO: add here other native package managers as they get
+      --  NOTE: add here other native package managers as they get
       --  implemented.
 
    -------------------------

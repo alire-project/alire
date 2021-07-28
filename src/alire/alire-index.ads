@@ -91,11 +91,14 @@ package Alire.Index is
 
    function Has_Externals (Name : Crate_Name) return Boolean;
 
-   function Releases_Satisfying (Dep : Dependencies.Dependency;
-                                 Env : Properties.Vector)
+   function Releases_Satisfying (Dep              : Dependencies.Dependency;
+                                 Env              : Properties.Vector;
+                                 Use_Equivalences : Boolean := True;
+                                 Available        : Boolean := True)
                                  return Releases.Containers.Release_Set;
-   --  Return all releases in the catalog able to provide this dependency, also
-   --  considering their "provides" equivalences.
+   --  Return all releases in the catalog able to provide this dependency,
+   --  also optionally considering their "provides" equivalences, and also
+   --  optionally including unavailable on the platform.
 
    function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release

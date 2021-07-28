@@ -247,12 +247,6 @@ package body Alire.Roots is
 
                      end if;
 
-                     --  TODO: TEST that a compiler deployed as dependency
-                     --  works the same as one deployed via `alr toolchain`.
-
-                     --  TODO: TEST that an external compiler is not deployed
-                     --  as an empty folder in the shared location
-
                   else
                      Trace.Debug
                        ("Skipping checkout of root crate as dependency");

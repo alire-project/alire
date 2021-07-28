@@ -118,7 +118,10 @@ package Alire.Origins is
 
    function New_External (Description : String) return Origin;
 
-   function New_Filesystem (Path : String) return Origin;
+   function New_Filesystem (Path : Any_Path) return Origin;
+   --  If Path is relative it will be converted to a full path, so this
+   --  function should be called from a point where the path makes sense
+   --  in that case.
 
    function New_Git (URL    : Alire.URL;
                      Commit : Git_Commit)
