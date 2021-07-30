@@ -449,9 +449,12 @@ package body Alire.Directories is
       --  Remove temp dir if empty to keep things tidy, and avoid modifying
       --  lots of tests.
 
-      AAA.Directories.Remove_Folder_If_Empty
-        (Paths.Working_Folder_Inside_Root
-         / Paths.Temp_Folder_Inside_Working_Folder);
+      if Ada.Directories.Simple_Name (Parent (This.Filename)) =
+        Paths.Temp_Folder_Inside_Working_Folder
+      then
+         AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
+      end if;
+
    exception
       when E : others =>
          Log_Exception (E);

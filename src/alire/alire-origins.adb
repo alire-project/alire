@@ -324,12 +324,14 @@ package body Alire.Origins is
            "Unable to determine archive format from file extension";
       end if;
 
+      --  We add the "file:" to have a proper URI and simplify things for
+      --  Windows absolute paths with drive letter.
       return (Data => (Source_Archive,
                        Src_Archive =>
                          (URL    =>
                             +(if URI.Scheme (URL) in URI.File_Schemes
-                              then Ada.Directories.Full_Name
-                                                     (URI.Local_Path (URL))
+                              then "file:" & Ada.Directories.Full_Name
+                                                         (URI.Local_Path (URL))
                               else URL),
                           Name   => +Archive_Name,
                           Format => Format,

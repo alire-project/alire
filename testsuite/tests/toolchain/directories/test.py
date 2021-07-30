@@ -12,20 +12,29 @@ from drivers.helpers import contents
 # Identify config location
 p = run_alr("version")
 config_dir = re.search("config folder is ([^\n.]*)", p.out).group(1)
+config_dir = config_dir.replace("\\", "/")
+# The 'contents` function we use to compare these strings normalizes all paths
+# to forward slashes, so we do the same with the config_dir
+
 unk_re = "[0-9]+\.[0-9]+\.[0-9]+_[0-9a-f]{8}"  # Unknown version + Unknown hash
 
 
 def config_path_re(crate):
-    return f"{config_dir}/cache/dependencies/{crate}_" + unk_re
+    return re.escape(f"{config_dir}/cache/dependencies/{crate}_") + unk_re
 
 
 # First we test manual installation
 run_alr("toolchain", "--install", "gnat_native")
 # This next call returns all paths related to the installed compiler
 paths = contents(config_dir, "gnat_native")
-assert len(paths) >= 1 and \
-    re.search(config_path_re("gnat_native"), paths[0]), \
-    "Unexpected contents: " + str(paths)
+try:
+    assert len(paths) >= 1 and \
+        re.search(config_path_re("gnat_native"), paths[0]), \
+        "Unexpected contents: " + str(paths)
+except:
+    print(f"erroneous regex was: {config_path_re('gnat_native')}")
+    print(f"erroneous path was: {paths[0]}")
+    raise
 
 # Uninstall the compiler and verify absence
 run_alr("toolchain", "--uninstall", "gnat_native")
