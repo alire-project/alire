@@ -9,6 +9,7 @@ with "semantic_versioning.gpr";
 with "si_units.gpr";
 with "simple_logging.gpr";
 with "spdx.gpr";
+with "toml_slicer.gpr";
 with "uri.gpr";
 abstract project alr_Config is
 

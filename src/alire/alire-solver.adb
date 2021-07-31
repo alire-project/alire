@@ -287,6 +287,19 @@ package body Alire.Solver is
                   return Toolchains
                     .Tool_Dependency (GNAT_Crate).Crate = R.Name;
 
+               elsif Dep.Crate = GNAT_Crate then
+
+                  --  For generic dependencies on gnat, we do not want to use
+                  --  a compiler that is not already installed.
+
+                  Trace.Debug
+                    ("SOLVER: gnat PASS " & Boolean'
+                       (Installed.Contains (R))'Image
+                     & " for " & R.Milestone.TTY_Image
+                     & " due to installed compiler availability.");
+
+                  return Installed.Contains (R);
+
                else
 
                   Trace.Debug ("SOLVER: gnat compiler " & R.Milestone.TTY_Image

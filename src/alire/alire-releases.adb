@@ -1046,6 +1046,13 @@ package body Alire.Releases is
 
    function Sort_Compilers (L, R : Release) return Boolean is
 
+      -----------------
+      -- Is_External --
+      -----------------
+
+      function Is_External (This : Release) return Boolean
+      is (This.Name = GNAT_External_Crate);
+
       ---------------
       -- Is_Native --
       ---------------
@@ -1059,12 +1066,18 @@ package body Alire.Releases is
 
    begin
 
-      --  non-native goes first
+      --  External is preferred to any other compiler. This can be overridden
+      --  by explicitly selecting a compiler with `alr toolchain --select`, or
+      --  by specifying a targeted gnat_xxx compiler.
 
-      if Is_Native (R) and then not Is_Native (L) then
-         return True;
-      elsif Is_Native (L) and then not Is_Native (R) then
-         return False;
+      if Is_External (L) xor Is_External (R) then
+         return Is_External (R);
+      end if;
+
+      --  Native goes next in preferences (preferred to cross-compilers)
+
+      if Is_Native (L) xor Is_Native (R) then
+         return Is_Native (R);
       end if;
 
       --  otherwise same ordering as regular crates

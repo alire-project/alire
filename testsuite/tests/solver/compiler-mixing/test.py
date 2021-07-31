@@ -4,10 +4,20 @@ Check mixing gnat/gnat_xxx dependencies without configured preferred compiler
 
 import subprocess
 import os
+import re
 
 from drivers.alr import run_alr, init_local_crate, alr_with
 from drivers.asserts import assert_eq, assert_match, match_solution
 from re import escape as e
+
+# Verify only external compiler available
+p = run_alr("toolchain")
+assert_match(".*\n"  # Headers
+             "gnat_external.*Available.*Detected.*\n",
+             p.out)
+
+# Capture version
+version = re.search("[0-9.]+", p.out, re.MULTILINE).group()
 
 # Prepare a couple of dependencies, one depending on gnat, and another one
 # depending on gnat_native.
@@ -27,16 +37,16 @@ init_local_crate("xxx_generic_generic")
 run_alr("with", "--use=../dep_generic")
 alr_with("gnat")
 
-# gnat x gnat results in the native available compiler being used, preferred
-# over the external also available compiler
-match_solution("gnat=2.0.0 (gnat_native) (installed) (origin: binary_archive)",
+# gnat x gnat results in the external available compiler being used, preferred
+# over the native also available compiler (but not selected)
+match_solution(f"gnat={version} (gnat_external) (installed)",
                escape=True)
 
-# If we add a precise dependency on e.g. the external compiler, this should
-# override the native compiler
-alr_with("gnat_external")
-match_solution("gnat=.*" + e("(gnat_external) (installed)") + ".*" +
-               "gnat_external=.*" + e("(installed) (origin: external)") + ".*")
+# If we add a precise dependency on e.g. the installed native compiler, this
+# should override the external compiler
+alr_with("gnat_native")
+match_solution("gnat=2.0.0 (gnat_native) (installed)", escape=True)
+match_solution("gnat_native=2.0.0 (installed)", escape=True)
 
 # Let us swap the generic dependency with a targeted dependency, starting from
 # scratch
@@ -58,8 +68,7 @@ run_alr("with", "--use=../dep_generic")
 alr_with("gnat_native")
 
 # In this case the only possible solution is with the targeted compiler. The
-# Generic dependency also appears, coming from the dep_generic crate, and
-# because there is no default compiler selected
+# Generic dependency also appears, coming from the dep_generic crate
 match_solution("gnat=" + e("2.0.0 (gnat_native) (installed)") + ".*" +
                "gnat_native=" + e("2.0.0 (installed)") + ".*")
 

@@ -352,14 +352,19 @@ def alr_with(dep="", path="", url="", commit="", branch="",
     if manual and dep == "":
         raise RuntimeError("Cannot manually add without explicit dependency")
 
-    separators = "=^~<>*"
+    separators = "/=^~<>*"
 
     # Fix the dependency if no version subset is in dep
     if manual and not any([separator in dep for separator in separators]):
         dep += "*"
 
     # Find the separator position
-    pos = max([dep.find(separator) for separator in separators])
+    pos = len(dep) + 1
+    for separator in separators:
+        idx = dep.find(separator)
+        pos = idx if 0 < idx < pos else pos
+    if manual and pos > len(dep):
+        raise RuntimeError(f"Should not happen, dep is {dep}")
 
     if manual:
         if delete:

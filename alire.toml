@@ -24,7 +24,8 @@ minirest = "~0.2"
 optional = "~0.0.0"
 semantic_versioning = "^2"
 simple_logging = "^1.2"
-si_units ="~0.2"
+si_units = "~0.2"
+toml_slicer = "~0.1"
 uri_ada = "^1"
 spdx = "~0.2"
 
@@ -34,13 +35,14 @@ macos   = { OS = "macOS" }
 
 # Most dependencies require precise versions during the development cycle:
 [[pins]]
-aaa = { url = "https://github.com/mosteo/aaa.git", commit = "ccb78861bd7589dfcce08a70b69cdc72169bbf4a" }
+aaa = { url = "https://github.com/mosteo/aaa.git", commit = "32ee4c80001ae388d8ae43b8a3aac94ccba30614" }
 ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "ade3cc905cef405dbf53e16a54f6fb458482710f" }
 ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
 ansiada = { url = "https://github.com/mosteo/ansi-ada.git", commit = "acf9afca3afe1f8b8843c061f3cef860d7567307" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "f3bd1c51d12962879f52733e790b394f5bbfe05f" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "4550aa356d55b9cd55f26acd34701f646021c5ff" }
-optional = { url = "https://github.com/mosteo/optional.git", commit = "eb929e67ccd357881997d4eed5e4477144923d7c" }
-semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning.git", commit = "85689acb6dfde74d00473b41563b75adf76f4881" }
+optional = { url = "https://github.com/mosteo/optional.git", commit = "0c7d20c0c8b48ccb6b25fb648d48382e598c25c3" }
+semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning.git", commit = "fe4e72e40786589a66d53662639f894fcdb3419c" }
 simple_logging = { url = "https://github.com/alire-project/simple_logging.git", commit = "02a7de7568af6af7cedd1048901fae8e9477b1d9" }
+toml_slicer = { url = "https://github.com/mosteo/toml_slicer.git", commit = "1c0286bd724c6f257a36fc89412fcefd4f555228" }
 uri_ada = { url = "https://github.com/mosteo/uri-ada.git", commit = "b61eba59099b3ab39e59e228fe4529927f9e849e" }

@@ -852,11 +852,13 @@ package body Alire.Solutions is
          for Dep of This.Hints loop
             Trace.Warning ("   " & Dep.Image);
 
-            for Hint of Index.Crate (Dep.Crate)
-                             .Externals.Hints (Dep.Crate, Env)
-            loop
-               Trace.Warning ("      Hint: " & Hint);
-            end loop;
+            if Index.All_Crates.Contains (Dep.Crate) then
+               for Hint of Index.Crate (Dep.Crate)
+                 .Externals.Hints (Dep.Crate, Env)
+               loop
+                  Trace.Warning ("      Hint: " & Hint);
+               end loop;
+            end if;
          end loop;
 
          Trace.Warning
