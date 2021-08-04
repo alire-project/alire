@@ -281,9 +281,15 @@ package body Alire.Crate_Configuration is
 
          Name : constant Unbounded_String := +(+Crate & "." & Type_Name_Lower);
       begin
+
          if This.Map.Contains (Name) then
-            Raise_Checked_Error
-              ("Configuration variable '" & (+Name) & "' already defined");
+            if Type_Name_Lower = "build_mode" then
+               Raise_Checked_Error
+                 ("Configuration variable '" & (+Name) & "' is reserved");
+            else
+               Raise_Checked_Error
+                 ("Configuration variable '" & (+Name) & "' already defined");
+            end if;
          end if;
 
          declare
@@ -298,6 +304,9 @@ package body Alire.Crate_Configuration is
       Rel : constant Releases.Release := Root.Release (Crate);
 
    begin
+      --  Add built-in definition
+      Add_Definition (Alire.Properties.Configurations.Builtin_Build_Mode);
+
       for Prop of Rel.On_Platform_Properties (Root.Environment,
                                               Config_Type_Definition'Tag)
       loop

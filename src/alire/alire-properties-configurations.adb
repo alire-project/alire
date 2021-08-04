@@ -501,6 +501,28 @@ package body Alire.Properties.Configurations is
       use ASCII;
       Name : constant String := +This.Name;
       Indent : constant String := "   ";
+
+      function GNAT_Switches (Mode : String; Indent : String := "")
+                              return String
+      is
+      begin
+         pragma Style_Checks ("M120");
+         if Mode = "Release" then
+            return "(""-O3"", -- Optimize for performance" & LF &
+              Indent & """-gnatp"", -- Supress checks" & LF &
+              Indent & """-gnatw.X"", -- Disable warnings for No_Exception_Propagation" & LF &
+              Indent & """-gnatQ""  -- Don't quit. Generate ALI and tree files even if illegalities" & LF &
+              Indent & ")";
+         elsif Mode = "Develop" then
+            return "(""-Og"",  -- Optimize for debug" & LF &
+              Indent & """-g"", -- Debug info" & LF &
+              Indent & """-gnatw.X"", -- Disable warnings for No_Exception_Propagation" & LF &
+              Indent & """-gnatQ""  -- Don't quit. Generate ALI and tree files even if illegalities" & LF &
+              Indent & ")";
+         else
+            return "()";
+         end if;
+      end GNAT_Switches;
    begin
       case This.Kind is
 
@@ -515,7 +537,12 @@ package body Alire.Properties.Configurations is
             return Indent & "type " & Name & "_Kind is (" &
               To_String (This.Values, Wrap_With_Quotes => True) & ");" & LF &
               Indent & Name & " : " & Name & "_Kind := """ & Value.As_String
-              & """;";
+              & """;"
+              & (if Name = "Build_Mode"
+                 then LF & Indent & "GNAT_Switches := " &
+                   GNAT_Switches (Value.As_String,
+                   Indent & "                  ") & ";"
+                 else "");
 
          when Real =>
 
@@ -892,5 +919,22 @@ package body Alire.Properties.Configurations is
          Props.Append (Conditional.For_Properties.New_Value (Ent));
       end return;
    end Config_Entry_From_TOML;
+
+   ------------------------
+   -- Builtin_Build_Mode --
+   ------------------------
+
+   function Builtin_Build_Mode return Config_Type_Definition is
+
+      Ret : constant Config_Type_Definition :=
+        (Kind    => Enum,
+         Name    => +"Build_Mode",
+         Default => TOML.Create_String ("Release"),
+         Values  => TOML.Create_Array (Item_Kind => TOML.TOML_String));
+   begin
+      Ret.Values.Append (TOML.Create_String ("Release"));
+      Ret.Values.Append (TOML.Create_String ("Develop"));
+      return Ret;
+   end Builtin_Build_Mode;
 
 end Alire.Properties.Configurations;
