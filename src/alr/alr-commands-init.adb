@@ -147,13 +147,13 @@ package body Alr.Commands.Init is
          end if;
          Put_New_Line;
          Put_Line ("   type Enabled_Kind is (""enabled"", ""disabled"");");
-         Put_Line ("   Compile_Checks : Enabled_Kind := External (""" & Upper_Name & "_COMPILE_CHECKS"", ""enabled"");");
-         Put_Line ("   Runtime_Checks : Enabled_Kind := External (""" & Upper_Name & "_RUNTIME_CHECKS"", ""enabled"");");
-         Put_Line ("   Style_Checks : Enabled_Kind := External (""" & Upper_Name & "_STYLE_CHECKS"", ""enabled"");");
-         Put_Line ("   Contracts_Checks : Enabled_Kind := External (""" & Upper_Name & "_CONTRACTS"", ""enabled"");");
+         Put_Line ("   Compile_Checks : Enabled_Kind := External (""" & Upper_Name & "_COMPILE_CHECKS"", ""disabled"");");
+         Put_Line ("   Runtime_Checks : Enabled_Kind := External (""" & Upper_Name & "_RUNTIME_CHECKS"", ""disabled"");");
+         Put_Line ("   Style_Checks : Enabled_Kind := External (""" & Upper_Name & "_STYLE_CHECKS"", ""disabled"");");
+         Put_Line ("   Contracts_Checks : Enabled_Kind := External (""" & Upper_Name & "_CONTRACTS"", ""disabled"");");
          Put_New_Line;
          Put_Line ("   type Build_Kind is (""debug"", ""optimize"");");
-         Put_Line ("   Build_Mode : Build_Kind := External (""" & Upper_Name & "_BUILD_MODE"", ""debug"");");
+         Put_Line ("   Build_Mode : Build_Kind := External (""" & Upper_Name & "_BUILD_MODE"", ""optimize"");");
          Put_New_Line;
          Put_Line ("   Compile_Checks_Switches := ();");
          Put_Line ("   case Compile_Checks is");
