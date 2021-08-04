@@ -8,6 +8,8 @@ with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Solutions;
 with Alire.Utils.User_Input.Query_Config;
+with Alire.Properties.Configurations;
+with Alr.Utils;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
@@ -113,6 +115,14 @@ package body Alr.Commands.Init is
          Put_Line ("abstract project " & Mixed_Name & "_Config is");
          Put_Line ("   Crate_Version := ""0.0.0"";");
          Put_Line ("end " & Mixed_Name & "_Config;");
+
+         declare
+            use Alire.Properties.Configurations;
+            Build_Mode : constant Config_Type_Definition := Builtin_Build_Mode;
+         begin
+            Put_Line (To_GPR_Declaration (Build_Mode, Default (Build_Mode)));
+         end;
+         TIO.Put (File, "end " & Mixed_Name & "_Config;");
          TIO.Close (File);
 
          --  Main project file
@@ -144,6 +154,7 @@ package body Alr.Commands.Init is
             Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");
          end if;
          Put_New_Line;
+<<<<<<< HEAD
          Put_Line ("   type Enabled_Kind is (""enabled"", ""disabled"");");
          Put_Line ("   Compile_Checks : Enabled_Kind := External (""" & Upper_Name & "_COMPILE_CHECKS"", ""disabled"");");
          Put_Line ("   Runtime_Checks : Enabled_Kind := External (""" & Upper_Name & "_RUNTIME_CHECKS"", ""disabled"");");
@@ -200,15 +211,10 @@ package body Alr.Commands.Init is
          Put_Line ("                            ""-Og""); -- No optimization");
          Put_Line ("   end case;");
          Put_New_Line;
+=======
+>>>>>>> e8652207... Build profiles prototype
          Put_Line ("   package Compiler is");
-         Put_Line ("      for Default_Switches (""Ada"") use");
-         Put_Line ("        Compile_Checks_Switches &");
-         Put_Line ("        Build_Switches &");
-         Put_Line ("        Runtime_Checks_Switches &");
-         Put_Line ("        Style_Checks_Switches &");
-         Put_Line ("        Contracts_Switches &");
-         Put_Line ("        (""-gnatw.X"", -- Disable warnings for No_Exception_Propagation");
-         Put_Line ("         ""-gnatQ"");  -- Don't quit. Generate ALI and tree files even if illegalities");
+         Put_Line ("      for Default_Switches (""Ada"") use " & Mixed_Name & "_Config.GNAT_Switches;");
          Put_Line ("   end Compiler;");
          Put_New_Line;
          Put_Line ("   package Binder is");

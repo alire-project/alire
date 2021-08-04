@@ -94,6 +94,8 @@ package Alire.Properties.Configurations with Preelaborate is
    function Assignments_From_TOML (From : TOML_Adapters.Key_Queue)
                                     return Conditional.Properties;
 
+   function Builtin_Build_Mode return Config_Type_Definition;
+
 private
 
    type Config_Entry is new Properties.Property with record
