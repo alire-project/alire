@@ -102,7 +102,8 @@ package body Alire.Solutions is
 
    function Depends_On_Specific_GNAT (This : Solution) return Boolean
    is (This.Releases.Contains_Or_Provides (GNAT_Crate) and then
-       This.Releases.Element_Providing (GNAT_Crate).Name /= GNAT_Crate);
+         (for some Rel of This.Releases.Elements_Providing (GNAT_Crate) =>
+               Rel.Name /= GNAT_Crate));
 
    ----------------------------
    -- Empty_Invalid_Solution --
@@ -487,10 +488,13 @@ package body Alire.Solutions is
 
          for Rel of This.Releases loop
             if Than.Contains_Release (Rel.Name) then
-               if Than.Release_Providing (Rel.Name).Version < Rel.Version then
+               if Than.Releases_Providing (Rel.Name)
+                      .First_Element.Version < Rel.Version
+               then
                   return Better;
                elsif
-                 Rel.Version < Than.Release_Providing (Rel.Name).Version
+                 Rel.Version < Than.Releases_Providing (Rel.Name)
+                                   .First_Element.Version
                then
                   return Worse;
                end if;
@@ -1087,50 +1091,60 @@ package body Alire.Solutions is
       end return;
    end Releases;
 
-   --------------------------
-   -- Dependency_Providing --
-   --------------------------
+   ----------------------------
+   -- Dependencies_Providing --
+   ----------------------------
 
-   function Dependency_Providing (This  : Solution;
-                                  Crate : Crate_Name)
-                                  return States.State
+   function Dependencies_Providing (This  : Solution;
+                                    Crate : Crate_Name)
+                                    return State_Map
    is
+      Result : State_Map;
    begin
       for Dep of This.Dependencies loop
          if Dep.Has_Release and then Dep.Release.Provides (Crate) then
-            return Dep;
+            Result.Insert (Dep.Crate, Dep);
          end if;
       end loop;
 
-      raise Program_Error with "Should not be reached due to preconditions";
-   end Dependency_Providing;
+      return Result;
+   end Dependencies_Providing;
 
-   -----------------------
-   -- Release_Providing --
-   -----------------------
+   ------------------------
+   -- Releases_Providing --
+   ------------------------
 
-   function Release_Providing (This  : Solution;
+   function Releases_Providing (This  : Solution;
                                Crate : Crate_Name)
-                               return Alire.Releases.Release
-   is (This.Dependency_Providing (Crate).Release);
-
-   -----------------------
-   -- Release_Providing --
-   -----------------------
-
-   function Release_Providing (This    : Solution;
-                               Release : Alire.Releases.Release)
-                               return Alire.Releases.Release
+                               return Alire.Releases.Containers.Release_Set
    is
+      Result : Alire.Releases.Containers.Release_Set;
+   begin
+      for State of This.Dependencies_Providing (Crate) loop
+         Result.Include (State.Release);
+      end loop;
+
+      return Result;
+   end Releases_Providing;
+
+   ------------------------
+   -- Releases_Providing --
+   ------------------------
+
+   function Releases_Providing (This    : Solution;
+                                Release : Alire.Releases.Release)
+                                return Alire.Releases.Containers.Release_Set
+   is
+      Result : Alire.Releases.Containers.Release_Set;
    begin
       for Rel of This.Releases loop
          if Rel.Provides (Release) then
-            return Rel;
+            Result.Include (Rel);
          end if;
       end loop;
 
-      raise Program_Error with "Should not be reached due to precondition";
-   end Release_Providing;
+      return Result;
+   end Releases_Providing;
 
    ---------
    -- Set --

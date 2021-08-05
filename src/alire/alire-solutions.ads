@@ -244,24 +244,21 @@ package Alire.Solutions is
    --  Check whether the solution already contains or provides a release
    --  equivalent to Release.
 
-   function Dependency_Providing (This  : Solution;
-                                  Crate : Crate_Name)
-                                  return States.State
-     with Pre => This.Releases.Contains_Or_Provides (Crate);
-   --  Return the dependency containing the release that provides Crate
+   function Dependencies_Providing (This  : Solution;
+                                    Crate : Crate_Name)
+                                    return State_Map;
+   --  Return the dependency containing the release that provides Crate (may be
+   --  empty).
 
-   function Release_Providing (This  : Solution;
-                               Crate : Crate_Name)
-                               return Alire.Releases.Release
-     with Pre => This.Contains_Release (Crate);
+   function Releases_Providing (This  : Solution;
+                                Crate : Crate_Name)
+                                return Alire.Releases.Containers.Release_Set;
 
-   function Release_Providing (This    : Solution;
-                               Release : Alire.Releases.Release)
-                               return Alire.Releases.Release
-     with Pre => This.Provides (Release);
-   --  Return the release already in the solution that prevents Release from
-   --  entering the solution, as they both provide the same crate according
-   --  to This.Provides
+   function Releases_Providing (This    : Solution;
+                                Release : Alire.Releases.Release)
+                                return Alire.Releases.Containers.Release_Set;
+   --  Return releases already in the solution that are equivalent to Release
+   --  (may be empty).
 
    function Hints (This : Solution) return Dependency_Map;
    --  Return undetected externals in the solution

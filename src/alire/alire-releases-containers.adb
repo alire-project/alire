@@ -15,28 +15,24 @@ package body Alire.Releases.Containers is
        or else
          (for some Rel of This => Rel.Provides (Crate)));
 
-   -----------------------
-   -- Element_Providing --
-   -----------------------
+   ------------------------
+   -- Elements_Providing --
+   ------------------------
 
-   function Element_Providing (This  : Release_Map;
-                               Crate : Crate_Name)
-                               return Releases.Release
+   function Elements_Providing (This  : Release_Map'Class;
+                                Crate : Crate_Name)
+                                return Release_Set
    is
+      Result : Release_Set;
    begin
-      if This.Contains (Crate) then
-         return This (Crate);
-      else
-         for Rel of This loop
-            if Rel.Provides (Crate) then
-               return Rel;
-            end if;
-         end loop;
-      end if;
+      for Rel of This loop
+         if Rel.Provides (Crate) then
+            Result.Include (Rel);
+         end if;
+      end loop;
 
-      raise Constraint_Error with Errors.Set
-        ("Requested crate not in map: " & Crate.As_String);
-   end Element_Providing;
+      return Result;
+   end Elements_Providing;
 
    ------------
    -- Insert --

@@ -70,12 +70,12 @@ package Alire.Releases.Containers is
 
    function Contains_Or_Provides (This  : Release_Map;
                                   Crate : Crate_Name) return Boolean;
-   --  Say if either the crate is a direct member, or provided by one of the
-   --  stored releases.
+   --  Say if either the crate is a direct member, or provided by one or more
+   --  of the stored releases.
 
-   function Element_Providing (This  : Release_Map;
-                               Crate : Crate_Name)
-                               return Releases.Release
+   function Elements_Providing (This  : Release_Map'Class;
+                                Crate : Crate_Name)
+                                return Release_Set
      with Pre => This.Contains_Or_Provides (Crate);
    --  Returns the release that is or provides Crate
 

@@ -228,6 +228,8 @@ package body Alire.Solver is
                   return Conditional.No_Dependencies;
                end Specific_GNAT;
 
+               Result : Boolean := False;
+
             begin
 
                --  The following checks are not guaranteed to find the proper
@@ -242,19 +244,20 @@ package body Alire.Solver is
                if Solution.Depends_On_Specific_GNAT then
 
                   --  There is already a precise gnat_xxx in the solution, that
-                  --  we must reuse.
+                  --  we can reuse.
+
+                  Result :=
+                    (for some Prev of Solution.Releases_Providing (GNAT_Crate)
+                     => Prev.Name = R.Name);
 
                   Trace.Debug
-                    ("SOLVER: gnat PASS " & Boolean'
-                       (Solution.Releases
-                        .Element_Providing (GNAT_Crate).Name = R.Name)'Image
+                    ("SOLVER: gnat PASS " & Result'Image
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in solution: "
-                     & Solution.Releases.Element_Providing
-                       (GNAT_Crate).Milestone.TTY_Image);
+                     & Solution.Releases.Elements_Providing
+                       (GNAT_Crate).Image_One_Line);
 
-                  return Solution
-                    .Releases.Element_Providing (GNAT_Crate).Name = R.Name;
+                  return Result;
 
                elsif not Specific_GNAT (Remaining).Is_Empty then
 
@@ -611,7 +614,7 @@ package body Alire.Solver is
                          Solution.Linking (Dep.Crate,
                                            Pins.State (Dep.Crate).Link));
 
-            elsif Solution.Releases.Contains_Or_Provides (Dep.Crate) then
+            elsif not Solution.Dependencies_Providing (Dep.Crate).Is_Empty then
 
                --  Cut search once a crate is frozen, by checking the
                --  compatibility of the already frozen release. This will
@@ -619,15 +622,18 @@ package body Alire.Solver is
                --  Dep, if possible, or discarding the search branch early.
 
                Trace.Debug
-                 ("SOLVER: re-checking EXISTING release "
-                  & Solution.Releases.Element_Providing (Dep.Crate)
-                            .Milestone.TTY_Image
+                 ("SOLVER: re-checking EXISTING releases "
+                  & Solution.Releases_Providing (Dep.Crate).Image_One_Line
                   & " for DIFFERENT dep " & Dep.TTY_Image);
 
-               Check (Solution.Releases.Element_Providing (Dep.Crate),
-                      Is_Shared =>
-                        Solution.Dependency_Providing (Dep.Crate).Is_Shared,
-                      Is_Reused => True);
+               for In_Sol of Solution.Dependencies_Providing (Dep.Crate) loop
+                  if In_Sol.Has_Release then
+                     Check (In_Sol.Release,
+                            Is_Shared =>
+                              In_Sol.Is_Shared,
+                            Is_Reused => True);
+                  end if;
+               end loop;
 
             end if;
 
