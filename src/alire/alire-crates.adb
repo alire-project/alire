@@ -173,6 +173,7 @@ package body Alire.Crates is
             Props   => Properties,
             Deps    => Unused_Deps,
             Equiv   => Unused_Equiv,
+            Forbids => Unused_Deps,
             Pins    => Unused_Pins,
             Avail   => Unused_Avail);
 

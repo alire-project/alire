@@ -110,6 +110,7 @@ package body Alire.Externals is
             Props   => Ext.Properties,
             Deps    => Unused_Deps,
             Equiv   => Unused_Equiv,
+            Forbids => Unused_Deps,
             Pins    => Unused_Pins,
             Avail   => Ext.Available);
 

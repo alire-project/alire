@@ -838,6 +838,7 @@ package body Alire.Releases is
          Props   => This.Properties,
          Deps    => This.Dependencies,
          Equiv   => This.Equivalences,
+         Forbids => This.Forbidden,
          Pins    => This.Pins,
          Avail   => This.Available);
 
@@ -949,9 +950,14 @@ package body Alire.Releases is
          end;
       end if;
 
-      --  Forbidden
+      --  Forbidden, wrapped as an array
       if not R.Forbidden.Is_Empty then
-         Root.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+         declare
+            Forbid_Array : constant TOML.TOML_Value := TOML.Create_Array;
+         begin
+            Forbid_Array.Append (R.Forbidden.To_TOML);
+            Root.Set (TOML_Keys.Forbidden, Forbid_Array);
+         end;
       end if;
 
       --  Available
