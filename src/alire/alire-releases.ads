@@ -126,7 +126,7 @@ package Alire.Releases is
 
    function Forbidden (R : Release;
                        P : Alire.Properties.Vector)
-                       return Conditional.Dependencies;
+                       return Conditional.Forbidden_Dependencies;
    --  Get platform-specific forbidden dependencies
 
    function Notes   (R : Release) return Description_String;
@@ -441,7 +441,7 @@ private
 
    function Forbidden (R : Release;
                        P : Alire.Properties.Vector)
-                       return Conditional.Dependencies
+                       return Conditional.Forbidden_Dependencies
    is (R.Forbidden.Evaluate (P));
 
    function Properties (R : Release) return Conditional.Properties

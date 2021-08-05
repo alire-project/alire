@@ -96,17 +96,17 @@ package Alire.Solutions is
       Shared         : Boolean := False)
       return Solution
      with Pre =>
-       (Add_Dependency and then not This.Provides (Release))
-       xor
+       Add_Dependency xor
        (For_Dependency.Has_Element and then
-       This.All_Dependencies.Contains (For_Dependency.Value));
+        This.All_Dependencies.Contains (For_Dependency.Value));
    --  Add a release to the solution, marking its dependency as solved. Takes
-   --  care of adding forbidden dependencies and ensuring the Release does not
-   --  conflict with current solution (which would result in a Checked_Error).
-   --  Since from the release we can't know the actual complete dependency the
-   --  release is fulfilling, by default we don't create its dependency (it
-   --  must exist previously). Only in particular cases where we want to add
-   --  a dependency matching the release Add_Dependency should be true.
+   --  care of adding forbidden dependencies and ensuring the Release does
+   --  not conflict with the current solution (the Solver must check this,
+   --  so Program_Error otherwise). Since from the release we can't know
+   --  the actual complete dependency the release is fulfilling, by default
+   --  we don't create its dependency (it must exist previously). Only in
+   --  particular cases where we want to add a dependency matching the
+   --  release Add_Dependency should be true.
 
    function Resetting (This  : Solution;
                        Crate : Crate_Name)

@@ -1,5 +1,6 @@
 """
 Test that two crates providing the same third crate are incompatible
+DISABLED because this is no longer conflicting. To be revisited when "forbids"
 """
 
 import subprocess

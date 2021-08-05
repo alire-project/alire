@@ -93,7 +93,8 @@ package Alire.Conditional_Trees with Preelaborate is
    --  used to store conditional/dynamic properties and dependencies.
    --  Iteration is only over direct children, when the tree is AND/OR vector.
 
-   function Root (This : Tree) return Node'Class;
+   function Root (This : Tree) return Node'Class
+     with Pre => not This.Is_Empty;
 
    function Is_Iterable (This : Tree) return Boolean;
    --  Iterators visit only immediate values (leaves or vectors). Thus, this
@@ -349,7 +350,7 @@ private
    function To_YAML (V : Leaf_Node) return String;
 
    function Is_Value (This : Tree) return Boolean is
-     (This.Root in Leaf_Node);
+     (not This.Is_Empty and then This.Root in Leaf_Node);
 
    function Value (This : Tree) return Values is
      (Leaf_Node (This.Root).Value.Element);
@@ -449,7 +450,7 @@ private
    function TO_YAML (V : Vector_Node) return String;
 
    function Is_Vector (This : Tree) return Boolean is
-     (This.Root in Vector_Node);
+     (not This.Is_Empty and then This.Root in Vector_Node);
 
    --  Delayed implementation to avoid freezing:
 

@@ -1,9 +1,9 @@
 description = "A crate that supplies another crate"
-name = "crate_clash"
-version = "1.0.0"
+name = "crate_virt_1"
+version = "2.0.0"
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
-provides = ["crate_virtual=1.0"]
+provides = ["crate_virtual=1.0", "crate_lone=1.0"]
 
 [origin]
 url = "file:../../../crates/libhello_1.0.0.tgz"

@@ -314,9 +314,12 @@ package body Alire.Solver is
             -- Check --
             -----------
 
-            procedure Check (R : Release; Is_Shared : Boolean) is
+            procedure Check (R         : Release;
+                             Is_Shared : Boolean;
+                             Is_Reused : Boolean)
+            is
                use all type Origins.Kinds;
-               use type Release;
+               --  use type Release;
             begin
 
                --  Special compiler checks are hardcoded when the dependency is
@@ -324,92 +327,19 @@ package body Alire.Solver is
                --  is used, unless we are forced by other dependencies to do
                --  something else
 
-               if R.Provides (GNAT_Crate) and then not Check_Compiler (R) then
+               if Dep.Crate = GNAT_Crate and then
+                 R.Provides (GNAT_Crate) and then
+                 not Check_Compiler (R)
+               then
                   --  Reason already logged by Check_Compiler
                   return;
                end if;
-
-               --  We first check that the release matches the dependency we
-               --  are attempting to resolve, in which case we check whether
-               --  it is a valid candidate by taking into account the following
-               --  cases:
-
-               --  A possibility is that the dependency was already frozen
-               --  previously (it was a dependency of an earlierly frozen
-               --  release). If the frozen version also satisfied the
-               --  current dependency, we may continue along this branch,
-               --  with this dependency out of the picture.
-
-               if Solution.Provides (R)
-               then
-
-                  if R /= Solution.Release_Providing (R) then
-
-                     --  This may occur when e.g., we have a system compiler in
-                     --  the solution, which does not have provides and hence
-                     --  cannot be detected before this point. In this case we
-                     --  cannot add a release that also provides something
-                     --  in the solution, so we have to discard this branch.
-
-                     Trace.Debug
-                       ("SOLVER: discarding tree because of " &
-                          "conflicting FROZEN release: " &
-                          Solution.Release_Providing (R).Milestone.TTY_Image &
-                          " already provides same crate as target release: " &
-                          R.Milestone.TTY_Image & " for dependency " &
-                          Dep.Image & " in tree " &
-                          Tree'(Expanded
-                                and Target
-                                and Remaining).Image_One_Line);
-
-                     return;
-
-                  end if;
-
-                  --  Now we may continue knowing that R is the same release
-                  --  already in the solution for another dependency.
-
-                  if R.Satisfies (Dep) then
-
-                     Trace.Debug
-                       ("SOLVER: reusing FROZEN release: " &
-                          R.Milestone.Image & " to satisfy " &
-                          Dep.Image & " in tree " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-
-                     --  Continue along this tree; no need to add dependencies
-                     --  as the release was already added previously.
-
-                     Expand (Expanded  => Expanded,
-                             Target    => Remaining,
-                             Remaining => Empty,
-                             Solution  => Solution.Including
-                               (R, Props,
-                                For_Dependency =>
-                                  Optional.Crate_Names.Unit (Dep.Crate),
-                                Shared         =>
-                                  Is_Shared or else
-                                  R.Origin.Kind = Binary_Archive));
-
-                  else
-                     Trace.Debug
-                       ("SOLVER: discarding tree because of " &
-                          "conflicting FROZEN release: " &
-                          R.Milestone.Image & " does not satisfy " &
-                          Dep.Image & " in tree " &
-                          Tree'(Expanded
-                                and Target
-                                and Remaining).Image_One_Line);
-                  end if;
 
                --  If the candidate release is forbidden by a previously
                --  resolved dependency, the candidate release is
                --  incompatible and we may stop search along this branch.
 
-               elsif Solution.Forbids (R, Props)
-               then
+               if Solution.Forbids (R, Props) then
                   Trace.Debug
                     ("SOLVER: discarding tree because of" &
                        " FORBIDDEN release: " &
@@ -446,13 +376,16 @@ package body Alire.Solver is
                              and Target
                              and Remaining).Image_One_Line);
 
-               --  If we reached here, the release fulfills the dependency and
-               --  it's a first time seen, so we add it to the solution.
+               --  If we reached here, the release fulfills the dependency, so
+               --  we add it to the solution. It might still be a release that
+               --  fulfilled a previous dependency, so we take care of that
+               --  when adding its dependencies.
 
                else
                   Trace.Debug
                     ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                        " to satisfy " & Dep.TTY_Image &
+                     (if Is_Reused then " with REUSED" else "") &
                      (if Is_Shared then " with INSTALLED" else "") &
                      (if not R.Provides.Is_Empty
                         then " also providing " & R.Provides.Image_One_Line
@@ -466,8 +399,10 @@ package body Alire.Solver is
                              and R.Dependencies (Props)).Image_One_Line);
 
                   Expand (Expanded  => Expanded and R.To_Dependency,
-                          Target    => Remaining and R.Dependencies (Props),
-                          Remaining => Empty,
+                          Target    => Remaining,
+                          Remaining => (if Is_Reused
+                                        then Empty -- No point on re-resolving
+                                        else R.Dependencies (Props)),
                           Solution  => Solution.Including
                             (R, Props,
                              For_Dependency =>
@@ -580,7 +515,7 @@ package body Alire.Solver is
 
                      Trace.Debug ("SOLVER short-cutting due to version pin"
                                   & " with valid release in index");
-                     Check (Release, Is_Shared => False);
+                     Check (Release, Is_Shared => False, Is_Reused => False);
                   end loop;
 
                      --  There may be no satisfying releases, or even so the
@@ -635,7 +570,7 @@ package body Alire.Solver is
                for R of reverse Installed.Satisfying (Dep) loop
                   Satisfiable := True;
 
-                  Check (R, Is_Shared => True);
+                  Check (R, Is_Shared => True, Is_Reused => False);
                end loop;
 
                --  We may want still check without taking into account
@@ -691,7 +626,8 @@ package body Alire.Solver is
 
                Check (Solution.Releases.Element_Providing (Dep.Crate),
                       Is_Shared =>
-                        Solution.Dependency_Providing (Dep.Crate).Is_Shared);
+                        Solution.Dependency_Providing (Dep.Crate).Is_Shared,
+                      Is_Reused => True);
 
             end if;
 
@@ -745,7 +681,7 @@ package body Alire.Solver is
                      procedure Consider (R : Release) is
                      begin
                         Satisfiable := Satisfiable or else R.Satisfies (Dep);
-                        Check (R, Is_Shared => False);
+                        Check (R, Is_Shared => False, Is_Reused => False);
                      end Consider;
                   begin
                      Trace.Debug ("SOLVER: considering"
@@ -911,6 +847,7 @@ package body Alire.Solver is
                        Target    => Remaining,
                        Remaining => Empty,
                        Solution  => Solution);
+               return;
             end if;
          end if;
 
