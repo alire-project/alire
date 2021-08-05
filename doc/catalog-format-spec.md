@@ -524,6 +524,30 @@ static, i.e. they cannot depend on the context.
    # A crate depending on `bar^1` might find this `foo` release in its solution instead.
    ```
 
+ - `forbids`: an array of tables containing dependency specifications, just as
+   the `depends-on` property. Releases matching one of the forbidden
+   dependencies are prevented from appearing in a solution with the release
+   doing the forbidding.
+
+   There are two use cases for this property:
+
+   1. To codify known conflicts between releases for some reason (for example,
+   sources with the same name).
+   2. To provide drop-in replacements for another crate, in conjunction with
+   a `provides` field. In this case the release must both provide and forbid
+   the crate for which it is a replacement.
+
+   Example:
+
+   ```toml
+   name = "bar"
+   version = "1.0"
+   provides = [ "foo=1.0" ]
+   [[forbids]]
+   baz = "*" # This crate cannot coexist with ours for some reason
+   foo = "*" # No other crate that provides foo is needed/allowed at the same time
+   ```
+
 ## Work-in-progress dependency overrides
 
 It is usual to develop several interdependent crates at the same time. In this scenario, it is often impractical to rely on indexed releases which are not intended to be modified. Instead, one would prefer to use a work-in-progress version of a crate to fulfill some dependency.
