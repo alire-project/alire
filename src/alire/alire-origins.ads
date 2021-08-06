@@ -68,6 +68,10 @@ package Alire.Origins is
 
    function Commit (This : Origin) return String
      with Pre => This.Kind in VCS_Kinds;
+   function Subdir (This : Origin) return Relative_Path
+     with Pre => This.Kind in VCS_Kinds;
+   --  Returns "" or a path in which the crate is located within the deployed
+   --  origin.
    function URL (This : Origin) return Alire.URL
      with Pre => This.Kind in VCS_Kinds;
    function URL_With_Commit (This : Origin) return Alire.URL
@@ -125,24 +129,30 @@ package Alire.Origins is
    --  in that case.
 
    function New_Git (URL    : Alire.URL;
-                     Commit : Git_Commit)
+                     Commit : Git_Commit;
+                     Subdir : Relative_Path := "")
                      return Origin;
 
    function New_Hg (URL    : Alire.URL;
-                    Commit : Hg_Commit)
+                    Commit : Hg_Commit;
+                    Subdir : Relative_Path := "")
                     return Origin;
 
-   function New_SVN (URL : Alire.URL; Commit : String) return Origin;
+   function New_SVN (URL    : Alire.URL;
+                     Commit : String;
+                     Subdir : Relative_Path := "") return Origin;
 
-   function New_VCS (URL : Alire.URL; Commit : String) return Origin;
+   function New_VCS (URL    : Alire.URL;
+                     Commit : String;
+                     Subdir : Relative_Path := "") return Origin;
    --  Attempt to identify an origin kind from the transport (git+https). If no
    --  VCS specified, look for ".git" extension.
 
    Unknown_Source_Archive_Name_Error : exception;
 
    function New_Source_Archive
-     (URL  : Alire.URL;
-      Name : String := "") return Origin;
+     (URL    : Alire.URL;
+      Name   : String := "") return Origin;
    --  Create a reference to a source archive to be downloaded and extracted.
    --  URL is the address of the archive to download. Name is the name of the
    --  file to download.
@@ -272,6 +282,7 @@ private
          when VCS_Kinds =>
             Repo_URL : Unbounded_String;
             Commit   : Unbounded_String;
+            Subdir   : UString;
 
          when Source_Archive =>
             Src_Archive : Archive_Data;

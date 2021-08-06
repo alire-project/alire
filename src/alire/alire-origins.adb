@@ -50,7 +50,9 @@ package body Alire.Origins is
    ------------------
 
    function New_External (Description : String) return Origin is
-     (Data => (External, Description => +Description, Hashes => <>));
+     (Data => (External,
+               Description => +Description,
+               Hashes      => <>));
 
    --------------------
    -- New_Filesystem --
@@ -66,25 +68,41 @@ package body Alire.Origins is
    -------------
 
    function New_Git (URL    : Alire.URL;
-                     Commit : Git_Commit)
+                     Commit : Git_Commit;
+                     Subdir : Relative_Path := "")
                      return Origin is
-     (Data => (Git, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+     (Data => (Git,
+               Repo_URL => +URL,
+               Commit   => +Commit,
+               Hashes   => <>,
+               Subdir   => +Subdir));
 
    ------------
    -- New_Hg --
    ------------
 
    function New_Hg (URL    : Alire.URL;
-                    Commit : Hg_Commit)
+                    Commit : Hg_Commit;
+                    Subdir : Relative_Path := "")
                     return Origin is
-     (Data => (Hg, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+     (Data => (Hg,
+               Repo_URL => +URL,
+               Commit   => +Commit,
+               Hashes   => <>,
+               Subdir   => +Subdir));
 
    -------------
    -- New_SVN --
    -------------
 
-   function New_SVN (URL : Alire.URL; Commit : String) return Origin is
-     (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+   function New_SVN (URL    : Alire.URL;
+                     Commit : String;
+                     Subdir : Relative_Path := "") return Origin is
+     (Data => (SVN,
+               Repo_URL => +URL,
+               Commit   => +Commit,
+               Hashes   => <>,
+               Subdir   => +Subdir));
 
    ----------------
    -- New_System --
@@ -98,6 +116,13 @@ package body Alire.Origins is
    ----------
 
    function Kind (This : Origin) return Kinds is (This.Data.Kind);
+
+   ------------
+   -- Subdir --
+   ------------
+
+   function Subdir (This : Origin) return Relative_Path
+   is (+This.Data.Subdir);
 
    ---------
    -- URL --
@@ -363,7 +388,9 @@ package body Alire.Origins is
    -- New_VCS --
    -------------
 
-   function New_VCS (URL : Alire.URL; Commit : String) return Origin is
+   function New_VCS (URL    : Alire.URL;
+                     Commit : String;
+                     Subdir : Relative_Path := "") return Origin is
       use AAA.Strings;
       use all type URI.Schemes;
       Scheme      : constant URI.Schemes := URI.Scheme (URL);
