@@ -49,7 +49,7 @@ package body Alr.Commands.Show is
                            (Name, Versions),
                          Platform.Properties,
                          Use_Equivalences => False,
-                         Available        => False));
+                         Available_Only   => False));
 
          Rel : constant Alire.Releases.Release :=
                  (if Candidates.Is_Empty

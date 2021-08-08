@@ -37,6 +37,7 @@ package body Alr.Commands.Search is
       procedure List_Release (R : Alire.Releases.Release) is
          package Solver renames Alire.Solver;
       begin
+         Trace.Debug ("Listing release: " & R.Milestone.TTY_Image);
          if (Cmd.Prop.all = ""
              or else
              R.Property_Contains (Cmd.Prop.all)

@@ -80,7 +80,7 @@ package Alire.Solutions is
                           Dep  : Dependencies.Dependency)
                           return Solution;
    --  Add or merge a dependency without changing its state. For a new
-   --  dependency, it will be marked as Missing and with Unknown transitivity.
+   --  dependency, it will be marked as Pending and with Unknown transitivity.
 
    function Hinting (This : Solution;
                      Dep  : Dependencies.Dependency)

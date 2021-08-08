@@ -94,7 +94,7 @@ package Alire.Index is
    function Releases_Satisfying (Dep              : Dependencies.Dependency;
                                  Env              : Properties.Vector;
                                  Use_Equivalences : Boolean := True;
-                                 Available        : Boolean := True)
+                                 Available_Only   : Boolean := True)
                                  return Releases.Containers.Release_Set;
    --  Return all releases in the catalog able to provide this dependency,
    --  also optionally considering their "provides" equivalences, and also

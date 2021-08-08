@@ -437,14 +437,21 @@ package body Alire.Solutions is
             Result := Result.Depending_On (Release.To_Dependency.Value);
          end if;
 
-         --  Mark dependency solved and store its release
+         --  Mark dependency solved and store its release. We double check here
+         --  that the release actually is adequate for the dependency.
 
-         Result.Dependencies :=
-           Result.Dependencies.Including
-             (Result.State (Dep_Name)
-                    .Solving (Release.Whenever (Env),
-                              Shared => Shared));
-         --  TODO: remove this Whenever once dynamic expr can be exported
+         if Release.Satisfies (Result.State (Dep_Name).As_Dependency) then
+            Result.Dependencies :=
+              Result.Dependencies.Including
+                (Result.State (Dep_Name).Solving
+                   (Release.Whenever (Env),
+                    Shared => Shared));
+            --  TODO: remove this Whenever once dynamic expr can be exported
+         elsif Result.State (Dep_Name).Is_Hinted then
+            Result := Result.Hinting (Result.State (Dep_Name).As_Dependency);
+         else
+            Result := Result.Missing (Result.State (Dep_Name).As_Dependency);
+         end if;
 
          --  In addition, mark as solved other deps satisfied via provides
 
