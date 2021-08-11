@@ -178,11 +178,16 @@ package body Alr.Commands.Init is
          Put_Line ("      when ""enabled"" =>");
          Put_Line ("         Style_Checks_Switches :=");
          Put_Line ("           (""-gnatyg"",   -- GNAT Style checks");
+         Put_Line ("            ""-gnaty4"",   -- 4 space tabs");
          Put_Line ("            ""-gnaty-d"",  -- Disable no DOS line terminators");
          Put_Line ("            ""-gnatyM80"", -- Maximum line length");
          Put_Line ("            ""-gnatyO"");  -- Overriding subprograms explicitly marked as such");
          Put_Line ("      when others => null;");
          Put_Line ("   end case;");
+         Put_New_Line;
+         Put_Line ("   package Pretty_Printer is");
+         Put_Line ("      for Default_Switches (""Ada"") use (""-i4"");");
+         Put_Line ("   end Pretty_Printer;");
          Put_New_Line;
          Put_Line ("   Contracts_Switches := ();");
          Put_Line ("   case Contracts_Checks is");
@@ -253,7 +258,7 @@ package body Alr.Commands.Init is
          end if;
          Put_Line ("procedure " & Mixed_Name & " is");
          Put_Line ("begin");
-         Put_Line ("   null;");
+         Put_Line ("    null;");
          TIO.Put (File, "end " & Mixed_Name & ";");
          TIO.Close (File);
       end Generate_Program_Main;
