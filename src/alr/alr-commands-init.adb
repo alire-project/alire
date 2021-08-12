@@ -113,7 +113,7 @@ package body Alr.Commands.Init is
             Trace.Warning ("Cannot create '" & Config_Filename & "'");
             return;
          end if;
-         Put_Line ("project " & Mixed_Name & "_Config is");
+         Put_Line ("abstract project " & Mixed_Name & "_Config is");
          TIO.Put (File, "end " & Mixed_Name & "_Config;");
          TIO.Close (File);
 
