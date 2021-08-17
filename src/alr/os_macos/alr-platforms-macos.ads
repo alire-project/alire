@@ -1,5 +1,3 @@
-with Alire.Origins;
-
 package Alr.Platforms.MacOS is
 
    type OS_Variant is new Supported with null record;
