@@ -34,10 +34,12 @@ assert_match('.*Dependencies \(solution\):\n'
 #    xxx=0.0.0 -> hello=5 (missing)
 alr_pin('hello', version='5')
 
-# Check solution is as expected
+# Check solution is as expected. Depending on the solver options and
+# optimizations, this may show as hello=5.0.0 or hello(=5.0.0&>0), hence the
+# permissive regex
 p = run_alr('with', '--solve')
 assert_match('.*Dependencies \(external\):\n'
-             '   hello\(=5\.0\.0\).*',
+             '   hello.*=5\.0\.0.*',
              p.out, flags=re.S)
 
 

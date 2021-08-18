@@ -80,7 +80,7 @@ package Alire.Solutions is
                           Dep  : Dependencies.Dependency)
                           return Solution;
    --  Add or merge a dependency without changing its state. For a new
-   --  dependency, it will be marked as Missing and with Unknown transitivity.
+   --  dependency, it will be marked as Pending and with Unknown transitivity.
 
    function Hinting (This : Solution;
                      Dep  : Dependencies.Dependency)
@@ -96,17 +96,17 @@ package Alire.Solutions is
       Shared         : Boolean := False)
       return Solution
      with Pre =>
-       (Add_Dependency and then not This.Provides (Release))
-       xor
+       Add_Dependency xor
        (For_Dependency.Has_Element and then
-       This.All_Dependencies.Contains (For_Dependency.Value));
+        This.All_Dependencies.Contains (For_Dependency.Value));
    --  Add a release to the solution, marking its dependency as solved. Takes
-   --  care of adding forbidden dependencies and ensuring the Release does not
-   --  conflict with current solution (which would result in a Checked_Error).
-   --  Since from the release we can't know the actual complete dependency the
-   --  release is fulfilling, by default we don't create its dependency (it
-   --  must exist previously). Only in particular cases where we want to add
-   --  a dependency matching the release Add_Dependency should be true.
+   --  care of adding forbidden dependencies and ensuring the Release does
+   --  not conflict with the current solution (the Solver must check this,
+   --  so Program_Error otherwise). Since from the release we can't know
+   --  the actual complete dependency the release is fulfilling, by default
+   --  we don't create its dependency (it must exist previously). Only in
+   --  particular cases where we want to add a dependency matching the
+   --  release Add_Dependency should be true.
 
    function Resetting (This  : Solution;
                        Crate : Crate_Name)
@@ -244,24 +244,21 @@ package Alire.Solutions is
    --  Check whether the solution already contains or provides a release
    --  equivalent to Release.
 
-   function Dependency_Providing (This  : Solution;
-                                  Crate : Crate_Name)
-                                  return States.State
-     with Pre => This.Releases.Contains_Or_Provides (Crate);
-   --  Return the dependency containing the release that provides Crate
+   function Dependencies_Providing (This  : Solution;
+                                    Crate : Crate_Name)
+                                    return State_Map;
+   --  Return the dependency containing the release that provides Crate (may be
+   --  empty).
 
-   function Release_Providing (This  : Solution;
-                               Crate : Crate_Name)
-                               return Alire.Releases.Release
-     with Pre => This.Contains_Release (Crate);
+   function Releases_Providing (This  : Solution;
+                                Crate : Crate_Name)
+                                return Alire.Releases.Containers.Release_Set;
 
-   function Release_Providing (This    : Solution;
-                               Release : Alire.Releases.Release)
-                               return Alire.Releases.Release
-     with Pre => This.Provides (Release);
-   --  Return the release already in the solution that prevents Release from
-   --  entering the solution, as they both provide the same crate according
-   --  to This.Provides
+   function Releases_Providing (This    : Solution;
+                                Release : Alire.Releases.Release)
+                                return Alire.Releases.Containers.Release_Set;
+   --  Return releases already in the solution that are equivalent to Release
+   --  (may be empty).
 
    function Hints (This : Solution) return Dependency_Map;
    --  Return undetected externals in the solution

@@ -22,6 +22,7 @@ package body Alire.Solver is
    package Semver renames Semantic_Versioning;
    package TTY renames Utils.TTY;
 
+   use all type Dependencies.States.Fulfillments;
    use all type Dependencies.States.Transitivities;
 
    package Solution_Sets is new Ada.Containers.Indefinite_Ordered_Sets
@@ -106,8 +107,8 @@ package body Alire.Solver is
 
       use Alire.Conditional.For_Dependencies;
 
-      Unavailable_Crates : Containers.Crate_Name_Sets.Set;
-      Unavailable_Deps   : Utils.String_Sets.Set;
+      Unavailable_Crates      : Containers.Crate_Name_Sets.Set;
+      Unavailable_Direct_Deps : Utils.String_Sets.Set;
       --  Some dependencies may be unavailable because the crate does not
       --  exist, the requested releases do not exist, or the intersection of
       --  versions is empty. In this case, we can prematurely end the search
@@ -116,6 +117,10 @@ package body Alire.Solver is
       --  impossibilites must be top-level DIRECT dependencies (i.e.,
       --  introduced by the user), or otherwise it does make sense to explore
       --  alternate solutions that may not require the impossible dependencies.
+
+      Unavailable_All_Deps : Utils.String_Sets.Set;
+      --  Still, we can keep track of indirect unsolvable deps to speed-up the
+      --  search by not reattempting branches that contain such a dependency.
 
       --  On the solver internal operation: the solver recursively tries all
       --  possible dependency combinations, in depth-first order. This means
@@ -228,6 +233,8 @@ package body Alire.Solver is
                   return Conditional.No_Dependencies;
                end Specific_GNAT;
 
+               Result : Boolean := False;
+
             begin
 
                --  The following checks are not guaranteed to find the proper
@@ -242,19 +249,20 @@ package body Alire.Solver is
                if Solution.Depends_On_Specific_GNAT then
 
                   --  There is already a precise gnat_xxx in the solution, that
-                  --  we must reuse.
+                  --  we can reuse.
+
+                  Result :=
+                    (for some Prev of Solution.Releases_Providing (GNAT_Crate)
+                     => Prev.Name = R.Name);
 
                   Trace.Debug
-                    ("SOLVER: gnat PASS " & Boolean'
-                       (Solution.Releases
-                        .Element_Providing (GNAT_Crate).Name = R.Name)'Image
+                    ("SOLVER: gnat PASS " & Result'Image
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in solution: "
-                     & Solution.Releases.Element_Providing
-                       (GNAT_Crate).Milestone.TTY_Image);
+                     & Solution.Releases.Elements_Providing
+                       (GNAT_Crate).Image_One_Line);
 
-                  return Solution
-                    .Releases.Element_Providing (GNAT_Crate).Name = R.Name;
+                  return Result;
 
                elsif not Specific_GNAT (Remaining).Is_Empty then
 
@@ -314,9 +322,11 @@ package body Alire.Solver is
             -- Check --
             -----------
 
-            procedure Check (R : Release; Is_Shared : Boolean) is
+            procedure Check (R         : Release;
+                             Is_Shared : Boolean;
+                             Is_Reused : Boolean)
+            is
                use all type Origins.Kinds;
-               use type Release;
             begin
 
                --  Special compiler checks are hardcoded when the dependency is
@@ -324,92 +334,19 @@ package body Alire.Solver is
                --  is used, unless we are forced by other dependencies to do
                --  something else
 
-               if R.Provides (GNAT_Crate) and then not Check_Compiler (R) then
+               if Dep.Crate = GNAT_Crate and then
+                 R.Provides (GNAT_Crate) and then
+                 not Check_Compiler (R)
+               then
                   --  Reason already logged by Check_Compiler
                   return;
                end if;
-
-               --  We first check that the release matches the dependency we
-               --  are attempting to resolve, in which case we check whether
-               --  it is a valid candidate by taking into account the following
-               --  cases:
-
-               --  A possibility is that the dependency was already frozen
-               --  previously (it was a dependency of an earlierly frozen
-               --  release). If the frozen version also satisfied the
-               --  current dependency, we may continue along this branch,
-               --  with this dependency out of the picture.
-
-               if Solution.Provides (R)
-               then
-
-                  if R /= Solution.Release_Providing (R) then
-
-                     --  This may occur when e.g., we have a system compiler in
-                     --  the solution, which does not have provides and hence
-                     --  cannot be detected before this point. In this case we
-                     --  cannot add a release that also provides something
-                     --  in the solution, so we have to discard this branch.
-
-                     Trace.Debug
-                       ("SOLVER: discarding tree because of " &
-                          "conflicting FROZEN release: " &
-                          Solution.Release_Providing (R).Milestone.TTY_Image &
-                          " already provides same crate as target release: " &
-                          R.Milestone.TTY_Image & " for dependency " &
-                          Dep.Image & " in tree " &
-                          Tree'(Expanded
-                                and Target
-                                and Remaining).Image_One_Line);
-
-                     return;
-
-                  end if;
-
-                  --  Now we may continue knowing that R is the same release
-                  --  already in the solution for another dependency.
-
-                  if R.Satisfies (Dep) then
-
-                     Trace.Debug
-                       ("SOLVER: reusing FROZEN release: " &
-                          R.Milestone.Image & " to satisfy " &
-                          Dep.Image & " in tree " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
-
-                     --  Continue along this tree; no need to add dependencies
-                     --  as the release was already added previously.
-
-                     Expand (Expanded  => Expanded,
-                             Target    => Remaining,
-                             Remaining => Empty,
-                             Solution  => Solution.Including
-                               (R, Props,
-                                For_Dependency =>
-                                  Optional.Crate_Names.Unit (Dep.Crate),
-                                Shared         =>
-                                  Is_Shared or else
-                                  R.Origin.Kind = Binary_Archive));
-
-                  else
-                     Trace.Debug
-                       ("SOLVER: discarding tree because of " &
-                          "conflicting FROZEN release: " &
-                          R.Milestone.Image & " does not satisfy " &
-                          Dep.Image & " in tree " &
-                          Tree'(Expanded
-                                and Target
-                                and Remaining).Image_One_Line);
-                  end if;
 
                --  If the candidate release is forbidden by a previously
                --  resolved dependency, the candidate release is
                --  incompatible and we may stop search along this branch.
 
-               elsif Solution.Forbids (R, Props)
-               then
+               if Solution.Forbids (R, Props) then
                   Trace.Debug
                     ("SOLVER: discarding tree because of" &
                        " FORBIDDEN release: " &
@@ -433,6 +370,20 @@ package body Alire.Solver is
                              and Target
                              and Remaining).Image_One_Line);
 
+                  --  Even if the release is OK for the dependency, we
+                  --  agregated dependencies for the crate in the solution
+                  --  can be another matter, so we recheck again.
+
+               elsif not R.Satisfies (Solution.Dependency (Dep.Crate)) then
+                  Trace.Debug
+                    ("SOLVER: discarding search branch because "
+                     & R.Milestone.Image & " FAILS to fulfill dep-in-solution "
+                     & Solution.Dependency (Dep.Crate).TTY_Image
+                     & " when the search tree was "
+                     & Tree'(Expanded
+                             and Target
+                             and Remaining).Image_One_Line);
+
                --  Or it may be that, even being a valid version, it's not for
                --  this environment.
 
@@ -446,35 +397,46 @@ package body Alire.Solver is
                              and Target
                              and Remaining).Image_One_Line);
 
-               --  If we reached here, the release fulfills the dependency and
-               --  it's a first time seen, so we add it to the solution.
+               --  If we reached here, the release fulfills the dependency, so
+               --  we add it to the solution. It might still be a release that
+               --  fulfilled a previous dependency, so we take care of that
+               --  when adding its dependencies.
 
                else
-                  Trace.Debug
-                    ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
-                       " to satisfy " & Dep.TTY_Image &
-                     (if Is_Shared then " with INSTALLED" else "") &
-                     (if not R.Provides.Is_Empty
-                        then " also providing " & R.Provides.Image_One_Line
-                        else "") &
-                       " adding" &
-                       R.Dependencies (Props).Leaf_Count'Img &
-                       " dependencies to tree " &
-                       Tree'(Expanded
-                             and Target
-                             and Remaining
-                             and R.Dependencies (Props)).Image_One_Line);
+                  declare
+                     --  We only need to add dependencies if it is the first
+                     --  time we see this release.
+                     New_Deps : constant Conditional.Platform_Dependencies :=
+                                  (if Is_Reused
+                                   then Conditional.No_Dependencies
+                                   else R.Dependencies (Props));
+                  begin
+                     Trace.Debug
+                       ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
+                          " to satisfy " & Dep.TTY_Image &
+                        (if Is_Reused then " with REUSED" else "") &
+                        (if Is_Shared then " with INSTALLED" else "") &
+                        (if not R.Provides.Is_Empty
+                           then " also providing " & R.Provides.Image_One_Line
+                           else "") &
+                          " adding" & New_Deps.Leaf_Count'Img &
+                          " dependencies to tree " &
+                          Tree'(Expanded
+                          and Target
+                          and Remaining
+                          and New_Deps).Image_One_Line);
 
-                  Expand (Expanded  => Expanded and R.To_Dependency,
-                          Target    => Remaining and R.Dependencies (Props),
-                          Remaining => Empty,
-                          Solution  => Solution.Including
-                            (R, Props,
-                             For_Dependency =>
-                               Optional.Crate_Names.Unit (Dep.Crate),
-                             Shared =>
-                               Is_Shared or else
-                               R.Origin.Kind = Binary_Archive));
+                     Expand (Expanded  => Expanded and R.To_Dependency,
+                             Target    => Remaining,
+                             Remaining => New_Deps,
+                             Solution  => Solution.Including
+                               (R, Props,
+                                For_Dependency =>
+                                  Optional.Crate_Names.Unit (Dep.Crate),
+                                Shared         =>
+                                  Is_Shared or else
+                                R.Origin.Kind = Binary_Archive));
+                  end;
                end if;
             end Check;
 
@@ -488,7 +450,7 @@ package body Alire.Solver is
             begin
                if Options.Completeness > All_Complete or else
                  Unavailable_Crates.Contains (Dep.Crate) or else
-                 Unavailable_Deps.Contains (Dep.Image)
+                 Unavailable_Direct_Deps.Contains (Dep.Image)
                then
 
                   Trace.Debug
@@ -580,7 +542,7 @@ package body Alire.Solver is
 
                      Trace.Debug ("SOLVER short-cutting due to version pin"
                                   & " with valid release in index");
-                     Check (Release, Is_Shared => False);
+                     Check (Release, Is_Shared => False, Is_Reused => False);
                   end loop;
 
                      --  There may be no satisfying releases, or even so the
@@ -635,7 +597,7 @@ package body Alire.Solver is
                for R of reverse Installed.Satisfying (Dep) loop
                   Satisfiable := True;
 
-                  Check (R, Is_Shared => True);
+                  Check (R, Is_Shared => True, Is_Reused => False);
                end loop;
 
                --  We may want still check without taking into account
@@ -649,6 +611,8 @@ package body Alire.Solver is
                end if;
 
             end Check_Shared;
+
+            use type Alire.Dependencies.Dependency;
 
          begin
 
@@ -675,8 +639,10 @@ package body Alire.Solver is
                        Solution  =>
                          Solution.Linking (Dep.Crate,
                                            Pins.State (Dep.Crate).Link));
+               return;
+            end if;
 
-            elsif Solution.Releases.Contains_Or_Provides (Dep.Crate) then
+            if not Solution.Dependencies_Providing (Dep.Crate).Is_Empty then
 
                --  Cut search once a crate is frozen, by checking the
                --  compatibility of the already frozen release. This will
@@ -684,14 +650,20 @@ package body Alire.Solver is
                --  Dep, if possible, or discarding the search branch early.
 
                Trace.Debug
-                 ("SOLVER: re-checking EXISTING release "
-                  & Solution.Releases.Element_Providing (Dep.Crate)
-                            .Milestone.TTY_Image
+                 ("SOLVER: re-checking EXISTING releases "
+                  & Solution.Releases_Providing (Dep.Crate).Image_One_Line
                   & " for DIFFERENT dep " & Dep.TTY_Image);
 
-               Check (Solution.Releases.Element_Providing (Dep.Crate),
-                      Is_Shared =>
-                        Solution.Dependency_Providing (Dep.Crate).Is_Shared);
+               for In_Sol of Solution.Dependencies_Providing (Dep.Crate) loop
+                  if In_Sol.Has_Release then
+                     Check (In_Sol.Release,
+                            Is_Shared =>
+                              In_Sol.Is_Shared,
+                            Is_Reused => True);
+                  end if;
+               end loop;
+
+               return;
 
             end if;
 
@@ -735,7 +707,9 @@ package body Alire.Solver is
                --  thing from the start, which we can use to enable a partial
                --  solution without exploring the whole solution space:
 
-               if not Unavailable_Deps.Contains (Dep.Image) then
+               if not Unavailable_Direct_Deps.Contains (Dep.Image) and then
+                 not Unavailable_All_Deps.Contains (Dep.Image)
+               then
                   --  Don't bother checking what we known to not be available.
                   --  We still want to go through to external hinting.
                   declare
@@ -744,8 +718,17 @@ package body Alire.Solver is
 
                      procedure Consider (R : Release) is
                      begin
-                        Satisfiable := Satisfiable or else R.Satisfies (Dep);
-                        Check (R, Is_Shared => False);
+                        --  A GNAT release may still satisfy the dependency
+                        --  but be not a valid candidate if uninstalled and
+                        --  the dependency is on generic GNAT, so explicitly
+                        --  consider this case:
+
+                        Satisfiable := Satisfiable or else
+                          (R.Satisfies (Dep) and then
+                               (Dep.Crate /= GNAT_Crate or else
+                                Installed.Contains (R)));
+
+                        Check (R, Is_Shared => False, Is_Reused => False);
                      end Consider;
                   begin
                      Trace.Debug ("SOLVER: considering"
@@ -770,6 +753,17 @@ package body Alire.Solver is
                --  resolution (if the external failed to find its releases).
 
                Check_Hinted;
+
+               --  If the dependency cannot be satisfied, add it to our damned
+               --  list for speed-up.
+
+               if not Satisfiable and then
+                 not Unavailable_All_Deps.Contains (Dep.Image)
+               then
+                  Trace.Debug ("SOLVER: marking as unsatisfiable: "
+                               & Dep.TTY_Image);
+                  Unavailable_All_Deps.Include (Dep.Image);
+               end if;
 
                --  There may be a less bad solution if we leave this crate out.
 
@@ -845,7 +839,6 @@ package body Alire.Solver is
             --  may force exploring all the combos of the rest of crates just
             --  because it doesn't exist.
             function Contains_All_Satisfiable return Boolean is
-               use all type Dependencies.States.Fulfillments;
             begin
                for Crate of Solution.Crates loop
                   if Solution.State (Crate).Fulfilment in Missed | Hinted
@@ -854,7 +847,7 @@ package body Alire.Solver is
                       not Unavailable_Crates.Contains (Crate)
                         --  Because it does not exist at all, so "complete"
                     and then
-                      not Unavailable_Deps.Contains
+                      not Unavailable_Direct_Deps.Contains
                         (Solution.Dependency (Crate).Image)
                         --  Because no release fulfills it, so "complete"
                   then
@@ -892,6 +885,11 @@ package body Alire.Solver is
          end Store_Finished;
 
       begin
+         Trace.Debug ("SOLVER: EXPAND");
+         Trace.Debug ("Frozen: " & Expanded.Image_One_Line);
+         Trace.Debug ("Target: " & Target.Image_One_Line);
+         Trace.Debug ("Remain: " & Remaining.Image_One_Line);
+
          if Target.Is_Empty then
 
             --  This is a completed search branch, be the solution complete or
@@ -911,6 +909,7 @@ package body Alire.Solver is
                        Target    => Remaining,
                        Remaining => Empty,
                        Solution  => Solution);
+               return;
             end if;
          end if;
 
@@ -962,12 +961,15 @@ package body Alire.Solver is
                   Index.Detect_Externals (Dep.Value.Crate, Props);
                end if;
 
+               --  Regular unavailable releases
+
                if Index.Releases_Satisfying (Dep.Value, Props).Is_Empty then
-                  Unavailable_Deps.Include (Dep.Value.Image);
+                  Unavailable_Direct_Deps.Include (Dep.Value.Image);
                   Trace.Debug
                     ("Direct dependency has no fulfilling releases: "
                      & TTY.Name (Dep.Value.Image));
                end if;
+
             end loop;
          else
             Trace.Debug ("Alternate dependencies in tree, "
