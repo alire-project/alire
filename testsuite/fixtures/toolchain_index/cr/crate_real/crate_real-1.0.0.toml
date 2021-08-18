@@ -1,0 +1,9 @@
+description = "A crate"
+name = "crate_real"
+version = "1.0.0"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[origin]
+url = "file:../../../crates/libhello_1.0.0.tgz"
+hashes = ["sha512:99fa3a55540d0655c87605b54af732f76a8a363015f183b06e98aa91e54c0e69397872718c5c16f436dd6de0fba506dc50c66d34a0e5c61fb63cb01fa22f35ac"]
