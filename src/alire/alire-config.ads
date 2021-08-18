@@ -63,6 +63,8 @@ package Alire.Config with Preelaborate is
    --  is returned.
 
    type Level is (Global, Local);
+   --  Ordering is important, as Globals are loaded first and overridden by any
+   --  Local definition loaded later.
 
    --  TODO: refactor this globals package into a type that can be
    --  passed around.

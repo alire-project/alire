@@ -559,9 +559,14 @@ package body Alr.Commands is
          return;
       end if;
 
-      if Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True) then
+      --  Unless the command is precisely to configure the toolchain, ask the
+      --  user for its preference at this time.
+
+      if Cmd not in Commands.Toolchain.Command'Class and then
+        Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True)
+      then
          Cmd.Requires_Full_Index;
-         Alire.Toolchains.Assistant;
+         Alire.Toolchains.Assistant (Conf.Global);
       end if;
 
       Trace.Debug ("Workspace is being checked and loaded for the first time");

@@ -34,6 +34,13 @@ package body Alr.Commands.Toolchain is
 
       Define_Switch
         (Config,
+         Cmd.Local'Access,
+         Switch      => "",
+         Long_Switch => "--local",
+         Help        => "Store toolchain configuration in local workspace");
+
+      Define_Switch
+        (Config,
          Cmd.S_Select'Access,
          Switch      => "",
          Long_Switch => "--select",
@@ -227,17 +234,33 @@ package body Alr.Commands.Toolchain is
            ("Toolchain installation does not accept any arguments");
       end if;
 
+      if Cmd.Local and then not Cmd.S_Select then
+         Reportaise_Wrong_Arguments ("--local requires --select");
+      end if;
+
       --  Dispatch to subcommands
 
       if Cmd.S_Select then
+
          Cmd.Requires_Full_Index;
-         Alire.Toolchains.Assistant;
+
+         if Cmd.Local then
+            Cmd.Requires_Valid_Session;
+         end if;
+
+         Alire.Toolchains.Assistant (if Cmd.Local
+                                     then Alire.Config.Local
+                                     else Alire.Config.Global);
+
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
+
       elsif Cmd.Install then
          Install (Cmd, Argument (1));
+
       else
          Cmd.List;
+
       end if;
 
    exception

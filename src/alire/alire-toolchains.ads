@@ -1,6 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-private with Alire.Config;
+with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
 with Alire.TTY;
@@ -20,9 +20,11 @@ package Alire.Toolchains is
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
-   procedure Assistant;
+   procedure Assistant (Level : Config.Level);
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.
+   --  This information may apply config-wide or workspace-wide. Installation
+   --  goes, in any case, to the config cache location.
 
    --  The following functions will transform any `gnat_XXX` dependency on
    --  plain `gnat`. This way we need to to litter the callers with similar
