@@ -68,6 +68,11 @@ package Alire.Conditional_Trees with Preelaborate is
    --  Recursively merge all subtree elements in a single value or vector.
    --  Since it cannot result in an empty tree, it returns a proper node.
 
+   procedure Recursive_Traversal
+     (This  : in out Node;
+      Apply : access procedure (Value : in out Values)) is abstract;
+   --  Enables full traversal with modification of children
+
    procedure To_TOML (This : Node; Parent : TOML.TOML_Value) is abstract with
      Pre'Class => Parent.Kind = TOML.TOML_Table;
 
@@ -88,7 +93,8 @@ package Alire.Conditional_Trees with Preelaborate is
    --  used to store conditional/dynamic properties and dependencies.
    --  Iteration is only over direct children, when the tree is AND/OR vector.
 
-   function Root (This : Tree) return Node'Class;
+   function Root (This : Tree) return Node'Class
+     with Pre => not This.Is_Empty;
 
    function Is_Iterable (This : Tree) return Boolean;
    --  Iterators visit only immediate values (leaves or vectors). Thus, this
@@ -216,6 +222,11 @@ package Alire.Conditional_Trees with Preelaborate is
    function Conjunction (This : Tree) return Conjunctions
      with Pre => This.Root in Vector_Node;
 
+   procedure Visit_All
+     (This  : in out Tree;
+      Apply : access procedure (Value : in out Values));
+   --  Depth-first recursive traversal of all values, irrespective of node type
+
    --  Following iterators/accessors are used during dependency resolution, and
    --  for that reason they will fail for conditional trees.
 
@@ -328,13 +339,18 @@ private
                     Sorted  : Boolean := False);
 
    overriding
+   procedure Recursive_Traversal
+     (This  : in out Leaf_Node;
+      Apply : access procedure (Value : in out Values));
+
+   overriding
    procedure To_TOML (This : Leaf_Node; Parent : TOML.TOML_Value);
 
    overriding
    function To_YAML (V : Leaf_Node) return String;
 
    function Is_Value (This : Tree) return Boolean is
-     (This.Root in Leaf_Node);
+     (not This.Is_Empty and then This.Root in Leaf_Node);
 
    function Value (This : Tree) return Values is
      (Leaf_Node (This.Root).Value.Element);
@@ -423,13 +439,18 @@ private
                     Sorted  : Boolean);
 
    overriding
+   procedure Recursive_Traversal
+     (This  : in out Vector_Node;
+      Apply : access procedure (Value : in out Values));
+
+   overriding
    procedure To_TOML (This : Vector_Node; Parent : TOML.TOML_Value);
 
    overriding
    function TO_YAML (V : Vector_Node) return String;
 
    function Is_Vector (This : Tree) return Boolean is
-     (This.Root in Vector_Node);
+     (not This.Is_Empty and then This.Root in Vector_Node);
 
    --  Delayed implementation to avoid freezing:
 

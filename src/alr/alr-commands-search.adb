@@ -1,8 +1,7 @@
-with Alire.Containers;
 with Alire.Externals;
 with Alire.Index.Search;
-with Alire.Crates;
-with Alire.Releases;
+with Alire.Crates.Containers;
+with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
@@ -38,6 +37,7 @@ package body Alr.Commands.Search is
       procedure List_Release (R : Alire.Releases.Release) is
          package Solver renames Alire.Solver;
       begin
+         Trace.Debug ("Listing release: " & R.Milestone.TTY_Image);
          if (Cmd.Prop.all = ""
              or else
              R.Property_Contains (Cmd.Prop.all)
@@ -89,7 +89,7 @@ package body Alr.Commands.Search is
          Tab.Append (Ext.Image);
       end List_Undetected;
 
-      use Alire.Containers.Release_Sets;
+      use Alire.Releases.Containers.Release_Sets;
    begin
 
       --  First, simpler case of search into crates
@@ -223,9 +223,20 @@ package body Alr.Commands.Search is
             --  List releases
 
             Trace.Detail ("Searching...");
-            for Crate of Alire.Index.All_Crates.all loop
-               List_Crate (Crate);
-            end loop;
+            declare
+               I : Alire.Crates.Containers.Maps.Cursor :=
+                     Alire.Index.All_Crates.First;
+               use Alire.Crates.Containers.Maps;
+            begin
+               --  Cursor-based iteration because external detection during
+               --  listing may cause addition of new crates, and this triggers
+               --  tampering checks in some compiler versions.
+
+               while Has_Element (I) loop
+                  List_Crate (Element (I));
+                  Next (I);
+               end loop;
+            end;
          else
 
             --  Search into releases

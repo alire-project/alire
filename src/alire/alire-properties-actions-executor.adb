@@ -1,6 +1,7 @@
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Runners;
+with Alire.TTY;
 
 package body Alire.Properties.Actions.Executor is
 
@@ -77,18 +78,25 @@ package body Alire.Properties.Actions.Executor is
       Err_To_Out : Boolean;
       Code       : out Integer;
       Output     : out Utils.String_Vector;
-      Prefix     : Utils.String_Vector := Utils.Empty_Vector) is
+      Prefix     : Utils.String_Vector := Utils.Empty_Vector)
+   is
+      Now : Releases.Moment_Array := (others => False);
    begin
-      for Act of Release.On_Platform_Actions (Env) loop
-         if Action'Class (Act).Moment = Moment then
-            Trace.Detail ("Running action: " & Act.Image);
-            Execute_Run (This       => Runners.Run (Act),
-                         Capture    => Capture,
-                         Err_To_Out => Err_To_Out,
-                         Code       => Code,
-                         Output     => Output,
-                         Prefix     => Prefix);
-         end if;
+      Now (Moment) := True; -- Cannot be done in the initialization
+
+      if not Release.On_Platform_Actions (Env, Now).Is_Empty then
+         Put_Info ("Running " & TTY.Name (Utils.To_Lower_Case (Moment'Image))
+                   & " actions for " & Release.Milestone.TTY_Image & "...");
+      end if;
+
+      for Act of Release.On_Platform_Actions (Env, Now) loop
+         Trace.Detail ("Running action: " & Act.Image);
+         Execute_Run (This       => Runners.Run (Act),
+                      Capture    => Capture,
+                      Err_To_Out => Err_To_Out,
+                      Code       => Code,
+                      Output     => Output,
+                      Prefix     => Prefix);
       end loop;
    end Execute_Actions;
 

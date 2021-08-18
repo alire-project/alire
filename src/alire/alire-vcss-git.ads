@@ -5,6 +5,14 @@ package Alire.VCSs.Git is
    Known_Transformable_Hosts : constant Utils.String_Vector;
    --  Known hosts that honor the git@ --> https:// transformation
 
+   subtype Git_Commit is String (1 .. 40) with
+     Dynamic_Predicate =>
+       (for all Char of Git_Commit => Char in Hexadecimal_Character);
+
+   function Is_Valid_Commit (S : String) return Boolean
+   is (S'Length = Git_Commit'Length and then
+       (for all Char of S => Char in Utils.Hexadecimal_Character));
+
    type VCS (<>) is new VCSs.VCS with private;
 
    function Handler return VCS;

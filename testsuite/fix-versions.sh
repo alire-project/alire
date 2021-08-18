@@ -1,6 +1,6 @@
 #!/bin/bash
 
-oldversion=0.4
-newversion=1.0
+oldversion=1.0
+newversion=1.1
 
 find . -type f -name index.toml -exec sed -i "s/$oldversion/$newversion/" {} \;

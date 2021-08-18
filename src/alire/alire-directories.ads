@@ -1,17 +1,17 @@
 with Ada.Directories;
 
+with Alire.OS_Lib;
 with Alire.Utils;
 
 private with Ada.Finalization;
 
 package Alire.Directories is
 
-   function "/" (L, R : String) return String
-   is (Ada.Directories.Compose (L, R));
+   function "/" (L, R : String) return String renames OS_Lib."/";
 
    --  Package to enable easy use of "/"
    package Operators is
-      function "/" (L, R : String) return String renames Directories."/";
+      function "/" (L, R : String) return String renames OS_Lib."/";
    end Operators;
 
    procedure Backup_If_Existing (File     : Any_Path;
@@ -28,9 +28,15 @@ package Alire.Directories is
 
    function Current return String renames Ada.Directories.Current_Directory;
 
+   function Parent (Path : Any_Path) return String
+                    renames Ada.Directories.Containing_Directory;
+
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String;
    --  Return either the valid enclosing root folder, or ""
+
+   procedure Create_Tree (Path : Any_Path);
+   --  Create Path and all necessary intermediate folders
 
    procedure Delete_Tree (Path : Any_Path);
    --  Equivalent to Ensure_Deletable + Ada.Directories.Delete_Tree
@@ -74,6 +80,9 @@ package Alire.Directories is
    --  Traverse all items in a folder, optionally recursively If recursively,
    --  the directory entry is passed before entering it "." and ".." are
    --  ignored. If Stop is set to True, traversal will not continue.
+
+   function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
+   --  Size of files under a given point, in bytes.
 
    ----------------
    -- GUARD TYPE --

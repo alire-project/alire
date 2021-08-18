@@ -2,6 +2,7 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Platforms;
 with Alire.Properties;
+with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
 with Alire.Utils;
 
@@ -14,7 +15,7 @@ package Alire.Externals is
    type External is abstract tagged private;
 
    function Detect (This : External;
-                    Name : Crate_Name) return Containers.Release_Set
+                    Name : Crate_Name) return Releases.Containers.Release_Set
                     is abstract;
    --  Perform detection and return all matching releases. Empty set must be
    --  returned if nothing can be detected. Checked_Error must be raised if
@@ -62,11 +63,26 @@ package Alire.Externals is
                          Env  : Properties.Vector) return External'Class;
    --  Evaluate Properties and Available fields under the given environment
 
+   function Equivalences (This : External'Class)
+                          return Containers.Crate_Name_Sets.Set;
+   --  An external may have a "provides" for another crate, always matching
+   --  the same version. Used ATM for GNAT compilers, including system ones,
+   --  to provide the "gnat" crate.
+
 private
 
    type External is abstract tagged record
       Properties : Conditional.Properties;
+      Provides   : Containers.Crate_Name_Sets.Set;
       Available  : Conditional.Availability;
    end record;
+
+   ------------------
+   -- Equivalences --
+   ------------------
+
+   function Equivalences (This : External'Class)
+                          return Containers.Crate_Name_Sets.Set
+   is (This.Provides);
 
 end Alire.Externals;

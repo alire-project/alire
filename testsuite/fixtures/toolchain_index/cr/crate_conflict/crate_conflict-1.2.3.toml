@@ -1,0 +1,13 @@
+description = "A crate that conflicts with other crates"
+name = "crate_conflict"
+version = "1.2.3"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[forbids]]
+crate_virtual = "*"
+crate_lone = "*"
+
+[origin]
+url = "file:../../../crates/libhello_1.0.0.tgz"
+hashes = ["sha512:99fa3a55540d0655c87605b54af732f76a8a363015f183b06e98aa91e54c0e69397872718c5c16f436dd6de0fba506dc50c66d34a0e5c61fb63cb01fa22f35ac"]

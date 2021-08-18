@@ -38,6 +38,12 @@ def prepare_env(config_dir, env):
     mkdir(config_dir)
     env['ALR_CONFIG'] = config_dir
 
+    # Disable selection of toolchain to preserve older behavior. Tests that
+    # require a configured compiler will have to set it up explicitly.
+    run_alr("config", "--global", "--set", "toolchain.assistant", "false",
+            "-c", config_dir)
+    #  Pass config location explicitly since env is not yet applied
+
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":
@@ -346,14 +352,19 @@ def alr_with(dep="", path="", url="", commit="", branch="",
     if manual and dep == "":
         raise RuntimeError("Cannot manually add without explicit dependency")
 
-    separators = "=^~<>*"
+    separators = "/=^~<>*"
 
     # Fix the dependency if no version subset is in dep
     if manual and not any([separator in dep for separator in separators]):
         dep += "*"
 
     # Find the separator position
-    pos = max([dep.find(separator) for separator in separators])
+    pos = len(dep) + 1
+    for separator in separators:
+        idx = dep.find(separator)
+        pos = idx if 0 < idx < pos else pos
+    if manual and pos > len(dep):
+        raise RuntimeError(f"Should not happen, dep is {dep}")
 
     if manual:
         if delete:

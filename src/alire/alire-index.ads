@@ -2,9 +2,10 @@ private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alire.Crates.Containers;
+with Alire.Dependencies;
 with Alire.Policies;
 with Alire.Properties;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Utils;
 
 with Semantic_Versioning;
@@ -38,7 +39,7 @@ package Alire.Index is
      and then Branch_String (Branch_String'Last) /= '-'
      and then (for some C of Branch_String => C = '-');
 
-   Community_Branch : constant String := "stable-1.0";
+   Community_Branch : constant String := "devel-1.1";
    --  The branch used for the community index
 
    Version : constant Semantic_Versioning.Version :=
@@ -69,6 +70,10 @@ package Alire.Index is
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
+   procedure Register_External_Alias (Provider  : Crate_Name;
+                                      Providing : Crate_Name);
+   --  Register that Provider has external detectors for Providing
+
    ---------------------
    --  BASIC QUERIES  --
    ---------------------
@@ -83,6 +88,17 @@ package Alire.Index is
    function Exists (Name : Crate_Name;
                     Version : Semantic_Versioning.Version)
                     return Boolean;
+
+   function Has_Externals (Name : Crate_Name) return Boolean;
+
+   function Releases_Satisfying (Dep              : Dependencies.Dependency;
+                                 Env              : Properties.Vector;
+                                 Use_Equivalences : Boolean := True;
+                                 Available_Only   : Boolean := True)
+                                 return Releases.Containers.Release_Set;
+   --  Return all releases in the catalog able to provide this dependency,
+   --  also optionally considering their "provides" equivalences, and also
+   --  optionally including unavailable on the platform.
 
    function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version) return Release

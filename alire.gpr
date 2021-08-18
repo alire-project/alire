@@ -8,10 +8,11 @@ with "minirest";
 with "optional";
 with "semantic_versioning";
 with "simple_logging";
+with "si_units";
+with "spdx";
 with "toml_slicer";
 with "uri";
 with "xml_ez_out";
-with "spdx";
 
 library project Alire is
 

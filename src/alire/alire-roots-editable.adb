@@ -112,7 +112,7 @@ package body Alire.Roots.Editable is
             end if;
 
          exception
-            when Solver.No_Solution_Error =>
+            when Query_Unsuccessful =>
                Put_Warning ("No solution found when adding dependency: "
                             & Dep.TTY_Image);
                return Dep;
@@ -140,7 +140,7 @@ package body Alire.Roots.Editable is
          Alire.Manifest.Append (Crate_File (This.Edit), Dep);
          This.Reload_Manifest;
 
-         This.Edit.Set (This.Solution.Depending_On (Dep));
+         This.Edit.Set (This.Solution.Missing (Dep));
       end;
    end Add_Dependency;
 
@@ -472,5 +472,14 @@ package body Alire.Roots.Editable is
       when E : others =>
          Log_Exception (E, Warning);
    end Finalize;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (This : in out Root; Solution : Solutions.Solution) is
+   begin
+      This.Edit.Set (Solution);
+   end Set;
 
 end Alire.Roots.Editable;

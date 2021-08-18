@@ -261,6 +261,10 @@ static, i.e. they cannot depend on the context.
    project documentation on [extended version
    sets](https://github.com/alire-project/semantic_versioning#types).
 
+   See also the [section on compiler dependencies](#compiler-versions-and-cross-compilers) 
+   for more details on how to use the `depends-on` property for cross-compiling or 
+   compiler version selection.
+
  - `project-files`: optional list of strings. Each is a path, relative to the
    root of the source directory, to a `.gpr` project file to be made available.
    Expressions are accepted. For instance:
@@ -425,7 +429,7 @@ static, i.e. they cannot depend on the context.
    notes = "Experimental version"
    ```
 
- - `configuration` optional table to control crate configuration code
+ - `configuration`: optional table to control crate configuration code
    generators:
 
    For more information on crate configuration, see [Using crate
@@ -449,7 +453,7 @@ static, i.e. they cannot depend on the context.
         GPR file configuration (default: `true`).
 
 
- - `configuration.variables` optional table of crate configuration variable
+ - `configuration.variables`: optional table of crate configuration variable
    definitions.
 
    For more information on crate configuration, see [Using crate
@@ -506,6 +510,42 @@ static, i.e. they cannot depend on the context.
    crate_1.var1 = 42
    crate_1.var2 = true
    crate_2.var1 = "Debug"
+   ```
+
+ - `provides`: specifies a list of releases of another crate for which the
+   current release is a drop-in replacement. I.e., the crate is either
+   API-compatible or call-compatible, depending on how it is to be used (as a
+   source library, or providing some command-line tool).
+
+   Example:
+   ```toml
+   name = "foo"
+   provides = ["bar=1.1"]
+   # A crate depending on `bar^1` might find this `foo` release in its solution instead.
+   ```
+
+ - `forbids`: an array of tables containing dependency specifications, just as
+   the `depends-on` property. Releases matching one of the forbidden
+   dependencies are prevented from appearing in a solution with the release
+   doing the forbidding.
+
+   There are two use cases for this property:
+
+   1. To codify known conflicts between releases for some reason (for example,
+   sources with the same name).
+   2. To provide drop-in replacements for another crate, in conjunction with
+   a `provides` field. In this case the release must both provide and forbid
+   the crate for which it is a replacement.
+
+   Example:
+
+   ```toml
+   name = "bar"
+   version = "1.0"
+   provides = [ "foo=1.0" ]
+   [[forbids]]
+   baz = "*" # This crate cannot coexist with ours for some reason
+   foo = "*" # No other crate that provides foo is needed/allowed at the same time
    ```
 
 ## Work-in-progress dependency overrides
@@ -627,6 +667,12 @@ version-regexp  = "^GNAT ([\\d\\.]+).*|^GNAT Community ([\\d]{4}).*"
 # TOML-escaped GNAT.Regpat-compatible regular expression. Parenthesized
 # matches will cause the matched expression to be parsed as the Semantic
 # Version of the tool.
+
+provides = "another_crate_name"
+# This crate will be equivalent to `another_crate_name` for the solver. The
+# version will be the same as detected for the current external. For example,
+# all GNAT compilers provide the "gnat" crate, and so there cannot be two
+# compilers in the same solution.
 ```
 
 ### External kinds: system packages
@@ -837,6 +883,47 @@ It can be used in the main GPR file like so:
 With the files `test-sort__bubble.adb`, `test-sort__quick.adb` and
 `test-sort__merge.adb` each implementing a different algorithm.
 
+## Compiler versions and cross-compilers
+
+Dependencies in Alire are used also to deal with compiler versions and
+cross-compilers. Also related is the information on toolchains available in the
+[Toolchain management](./toolchains.md) document or via `alr help toolchains`.
+
+### Excluding compiler versions
+
+One may know that a particular compiler version has a problem with some code.
+This may be expressed with dependencies on the generic `gnat` crate, which
+although is not found in the catalog, is a crate that all GNAT compilers
+provide. (Such a crate without actual releases, but provided by other crates,
+is called a virtual crate.) For example:
+
+```toml
+gnat = ">=7"   # We require a minimum compiler version
+gnat = "/=7.3" # We know a precise version is incompatible
+```
+
+Since only one dependency on a same crate may appear, the relational operators
+`&` (and), `|` (or) can be used instead:
+
+```toml
+[[depends-on]]
+gnat = "/=7.3 & >=7"
+```
+
+### Requesting a compiler for a concrete target
+
+The other use of compiler dependencies is to specify that a compiler for a
+particular target is needed. (Note that the project file **also** has to
+specify the proper target and runtime.) This way Alire can configure the
+appropriate environment for the build. For example:
+
+```toml
+gnat_arm_elf = "*" # Any compiler targeting ARM
+```
+
+Dependencies on cross-compilers should **only** be used in crates that actually
+require a concrete target (e.g., final binaries) to avoid preventing their use
+as general libraries with any compiler.
 
 ## Further reading ##
 

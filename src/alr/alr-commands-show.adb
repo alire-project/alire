@@ -4,7 +4,7 @@ with Alire.Index;
 with Alire.Milestones;
 with Alire.Platform;
 with Alire.Platforms;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Roots.Optional;
 with Alire.Solutions;
@@ -40,10 +40,21 @@ package body Alr.Commands.Show is
       declare
          --  Nested so a failure in Query.Find is caught below
 
-         Rel     : constant Alire.Releases.Release  :=
+         Candidates : constant Alire.Releases.Containers.Release_Set  :=
                      (if Current
-                      then Cmd.Root.Release
-                      else Query.Find (Name, Versions, Query_Policy));
+                      then Alire.Releases.Containers.To_Set
+                        (Cmd.Root.Release)
+                      else Alire.Index.Releases_Satisfying
+                        (Alire.Dependencies.New_Dependency
+                           (Name, Versions),
+                         Platform.Properties,
+                         Use_Equivalences => False,
+                         Available_Only   => False));
+
+         Rel : constant Alire.Releases.Release :=
+                 (if Candidates.Is_Empty
+                  then raise Alire.Query_Unsuccessful
+                  else Candidates.Last_Element); -- Last is newest
       begin
          if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
@@ -260,8 +271,8 @@ package body Alr.Commands.Show is
          end if;
       exception
          when Alire.Query_Unsuccessful =>
-            Trace.Info ("Crate [" & (+Allowed.Crate) &
-                          "] does not exist in the index");
+            Reportaise_Command_Failed
+              ("Crate " & Allowed.TTY_Image & " does not exist in the index");
       end;
    end Execute;
 

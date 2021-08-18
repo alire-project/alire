@@ -1,5 +1,7 @@
+with Ada.Directories;
+
+with Alire.Root;
 with Alire.URI;
-with Alire.VCSs.Git;
 
 package body Alire.Origins is
 
@@ -10,6 +12,7 @@ package body Alire.Origins is
    package Keys is -- TOML keys for serialization
 
       Archive_Name : constant String := "archive-name";
+      Binary       : constant String := "binary";
       Commit       : constant String := "commit";
       Hashes       : constant String := "hashes";
       Origin       : constant String := "origin";
@@ -21,6 +24,156 @@ package body Alire.Origins is
    --  Try to get a basename for the given URL. Return an empty string on
    --  failure.
 
+   -------------
+   -- As_Data --
+   -------------
+
+   function As_Data (This : Conditional_Archive) return Archive_Data'Class
+   is
+      --  Resolve the value that applies currently
+      Evaluated : constant Conditional_Archive :=
+                    This.Evaluate (Alire.Root.Platform_Properties);
+   begin
+      if Evaluated.Is_Empty then
+         Raise_Checked_Error
+           ("Binary archive is unavailable on current platform");
+      else
+         return Conditional_Archives.Tree (Evaluated).Value;
+      end if;
+   end As_Data;
+
+   ------------------
+   -- New_External --
+   ------------------
+
+   function New_External (Description : String) return Origin is
+     (Data => (External, Description => +Description, Hashes => <>));
+
+   --------------------
+   -- New_Filesystem --
+   --------------------
+
+   function New_Filesystem (Path : String) return Origin is
+     (Data => (Filesystem,
+               Path   => +Ada.Directories.Full_Name (Path),
+               Hashes => <>));
+
+   -------------
+   -- New_Git --
+   -------------
+
+   function New_Git (URL    : Alire.URL;
+                     Commit : Git_Commit)
+                     return Origin is
+     (Data => (Git, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+
+   ------------
+   -- New_Hg --
+   ------------
+
+   function New_Hg (URL    : Alire.URL;
+                    Commit : Hg_Commit)
+                    return Origin is
+     (Data => (Hg, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+
+   -------------
+   -- New_SVN --
+   -------------
+
+   function New_SVN (URL : Alire.URL; Commit : String) return Origin is
+     (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+
+   ----------------
+   -- New_System --
+   ----------------
+
+   function New_System (System_Package_Name : String) return Origin is
+     (Data => (System, Package_Name => +System_Package_Name, Hashes => <>));
+
+   ----------
+   -- Kind --
+   ----------
+
+   function Kind (This : Origin) return Kinds is (This.Data.Kind);
+
+   ---------
+   -- URL --
+   ---------
+
+   function URL    (This : Origin) return Alire.URL is
+     (Alire.URL (+This.Data.Repo_URL));
+   ------------
+   -- Commit --
+   ------------
+
+   function Commit (This : Origin) return String is
+     (+This.Data.Commit);
+
+   ---------------------
+   -- URL_With_Commit --
+   ---------------------
+
+   function URL_With_Commit (This : Origin) return Alire.URL is
+     (This.URL & "#" & This.Commit);
+
+   -------------------------
+   -- TTY_URL_With_Commit --
+   -------------------------
+
+   function TTY_URL_With_Commit (This : Origin) return String is
+     (TTY.URL (This.URL) & "#" & TTY.Emph (This.Commit));
+
+   ----------
+   -- Path --
+   ----------
+
+   function Path (This : Origin) return String is (+This.Data.Path);
+
+   -----------------
+   -- Archive_URL --
+   -----------------
+
+   function Archive_URL (This : Origin) return Alire.URL is
+     (if This.Kind in Source_Archive
+      then +This.Data.Src_Archive.URL
+      else +This.Data.Bin_Archive.As_Data.URL);
+
+   ------------------
+   -- Archive_Name --
+   ------------------
+
+   function Archive_Name (This : Origin) return String is
+     (if This.Kind in Source_Archive
+      then +This.Data.Src_Archive.Name
+      else +This.Data.Bin_Archive.As_Data.Name);
+
+   --------------------
+   -- Archive_Format --
+   --------------------
+
+   function Archive_Format (This : Origin) return Known_Source_Archive_Format
+   is (if This.Kind in Source_Archive
+       then This.Data.Src_Archive.Format
+       else This.Data.Bin_Archive.As_Data.Format);
+
+   ------------------
+   -- Package_Name --
+   ------------------
+
+   function Package_Name (This : Origin) return String is
+     (+This.Data.Package_Name);
+
+   -------------
+   -- Get_URL --
+   -------------
+
+   function Get_URL (This : Origin) return Alire.URL
+   is (case This.Kind is
+          when Filesystem     => This.Path,
+          when Source_Archive => This.Archive_URL,
+          when VCS_Kinds      => This.URL,
+          when others         => raise Checked_Error with "Origin has no URL");
+
    --------------
    -- Add_Hash --
    --------------
@@ -28,8 +181,71 @@ package body Alire.Origins is
    procedure Add_Hash (This : in out Origin;
                        Hash :        Hashes.Any_Hash) is
    begin
-      This.Data.Hashes.Append (Hash);
+      case This.Kind is
+         when Filesystem =>
+            This.Data.Hashes.Append (Hash);
+         when Binary_Archive =>
+            --  This case should not happen, as publishing assistant doesn't
+            --  work for conditional binary origins.
+            raise Program_Error with Errors.Set
+              ("Unintended use of Alire.Origins.Add_Hash");
+         when Source_Archive =>
+            This.Data.Src_Archive.Hashes.Append (Hash);
+         when others =>
+            Raise_Checked_Error ("Cannot add hash to origin kind "
+                                 & This.Kind'Image);
+      end case;
    end Add_Hash;
+
+   ----------------
+   -- Get_Hashes --
+   ----------------
+
+   function Get_Hashes (This : Origin) return Hash_Vectors.Vector
+   is (case This.Kind is
+          when Filesystem     => This.Data.Hashes,
+          when Binary_Archive => This.Data.Bin_Archive.As_Data.Hashes,
+          when Source_Archive => This.Data.Src_Archive.Hashes,
+          when others         => Hash_Vectors.Empty_Vector);
+
+   ----------------
+   -- Add_Hashes --
+   ----------------
+   --  Load hash information into the given origin
+   function Add_Hashes (This   : in out Hash_Vectors.Vector;
+                        Parent : TOML_Adapters.Key_Queue) return Outcome is
+      Val : TOML.TOML_Value;
+   begin
+      if Parent.Pop (Keys.Hashes, Val) then
+         if Val.Kind /= TOML.TOML_Array then
+            return Parent.Failure
+              (Keys.Hashes & " must be an array of hash values");
+         end if;
+
+         for I in 1 .. Val.Length loop
+            if Val.Item (I).Kind /= TOML.TOML_String then
+               return Parent.Failure
+                 ("hash must be a 'kind:digest' formatted string");
+            end if;
+
+            declare
+               Hash : constant String := Val.Item (I).As_String;
+            begin
+               if not Hashes.Is_Well_Formed (Hash) then
+                  return Parent.Failure
+                    ("malformed or unknown hash: " & Hash);
+               end if;
+
+               This.Append (Hashes.Any_Hash (Hash));
+            end;
+         end loop;
+      else
+         return Parent.Failure
+           ("missing mandatory " & Keys.Hashes & " field");
+      end if;
+
+      return Outcome_Success;
+   end Add_Hashes;
 
    ------------------
    -- URL_Basename --
@@ -108,11 +324,19 @@ package body Alire.Origins is
            "Unable to determine archive format from file extension";
       end if;
 
+      --  We add the "file:" to have a proper URI and simplify things for
+      --  Windows absolute paths with drive letter.
       return (Data => (Source_Archive,
-                       Hashes         => <>,
-                       Archive_URL    => +URL,
-                       Archive_Name   => +Archive_Name,
-                       Archive_Format => Format));
+                       Src_Archive =>
+                         (URL    =>
+                            +(if URI.Scheme (URL) in URI.File_Schemes
+                              then "file:" & Ada.Directories.Full_Name
+                                                         (URI.Local_Path (URL))
+                              else URL),
+                          Name   => +Archive_Name,
+                          Format => Format,
+                          Binary => False,
+                          Hashes => <>)));
    end New_Source_Archive;
 
    -----------------
@@ -196,62 +420,127 @@ package body Alire.Origins is
    -- From_TOML --
    ---------------
 
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Conditional_Archives.Tree
+   is
+      use TOML;
+      Archive : TOML_Value;
+      Table   : constant TOML_Adapters.Key_Queue :=
+                  From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
+                                Context => "data");
+   begin
+      --  Optional filename checks:
+      if Table.Pop (Keys.Archive_Name, Archive) then
+         if Archive.Kind /= TOML.TOML_String then
+            Table.Checked_Error ("archive name must be a string");
+         end if;
+      end if;
+
+      declare
+         Archive_Origin : Origin :=
+                            New_Source_Archive
+                              (URL  => Table.Checked_Pop
+                                 (Keys.URL, TOML_String).As_String,
+                               Name => (if Archive.Is_Present
+                                        then Archive.As_String
+                                        else ""));
+      begin
+         Add_Hashes (Archive_Origin.Data.Src_Archive.Hashes, Table).Assert;
+
+         if Table.Unwrap.Has (Keys.Binary) then
+            Archive_Origin.Data.Src_Archive.Binary :=
+              Table.Checked_Pop (Keys.Binary, TOML_Boolean).As_Boolean;
+         end if;
+
+         Table.Report_Extra_Keys;
+
+         --  Wrap as a conditional tree
+         return Conditional_Archives.New_Leaf
+           (Archive_Origin.Data.Src_Archive);
+      end;
+   exception
+      when Unknown_Source_Archive_Name_Error =>
+         Table.Checked_Error
+           ("unable to determine archive name from URL: "
+            & "please specify one with '"
+            & Keys.Archive_Name & "'");
+   end From_TOML;
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   function From_TOML (From : TOML_Adapters.Key_Queue) return Archive_Data
+   is (Archive_Data
+       (Conditional_Archive'
+          (Conditional_Archives.Tree'(From_TOML (From)) with null record)
+        .As_Data));
+
+   ---------------
+   -- From_TOML --
+   ---------------
+
    overriding
    function From_TOML (This : in out Origin;
                        From :        TOML_Adapters.Key_Queue)
                        return Outcome
    is
 
-      ----------------
-      -- Add_Hashes --
-      ----------------
-
-      function Add_Hashes (Parent : TOML_Adapters.Key_Queue) return Outcome is
-         Val : TOML.TOML_Value;
-      begin
-         if Parent.Pop (Keys.Hashes, Val) then
-            if Val.Kind /= TOML.TOML_Array then
-               return Parent.Failure
-                 (Keys.Hashes & " must be an array of hash values");
-            end if;
-
-            for I in 1 .. Val.Length loop
-               if Val.Item (I).Kind /= TOML.TOML_String then
-                  return Parent.Failure
-                    ("hash must be a 'kind:digest' formatted string");
-               end if;
-
-               declare
-                  Hash : constant String := Val.Item (I).As_String;
-               begin
-                  if not Hashes.Is_Well_Formed (Hash) then
-                     return Parent.Failure
-                       ("malformed or unknown hash: " & Hash);
-                  end if;
-
-                  This.Add_Hash (Hashes.Any_Hash (Hash));
-               end;
-            end loop;
-         else
-            return Parent.Failure
-              ("missing mandatory " & Keys.Hashes & " field");
-         end if;
-
-         return Outcome_Success;
-      end Add_Hashes;
-
       use TOML;
       use all type URI.Schemes;
-      Archive : TOML_Value;
       Table   : constant TOML_Adapters.Key_Queue :=
                  From.Descend (From.Checked_Pop (Keys.Origin, TOML_Table),
-                              Context => Keys.Origin);
-      URL     : constant String :=
-                 Table.Checked_Pop (Keys.URL, TOML_String).As_String;
-      Scheme  : constant URI.Schemes := URI.Scheme (URL);
-      Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
+                               Context => Keys.Origin);
+
+      -----------------
+      -- Mark_Binary --
+      -----------------
+
+      procedure Mark_Binary (Data : in out Archive_Data) is
+      begin
+         Data.Binary := True;
+      end Mark_Binary;
+
    begin
-      case Scheme is
+      --  Check if we are seeing a conditional binary origin, or a regular
+      --  static one. If the former, divert to the dynamic loader; else
+      --  continue loading normally.
+
+      if (for some Key of Table.Unwrap.Keys =>
+            Utils.Starts_With (+Key, "case("))
+        or else
+          (Table.Unwrap.Has (Keys.Binary) and then
+           Table.Unwrap.Get (Keys.Binary).As_Boolean)
+      then
+         This := (Data => Origin_Data'
+                    (Kind         => Binary_Archive,
+                     Bin_Archive  => (Binary_Loader.Load
+                       (From    => Table.Descend
+                            (Keys.Origin,
+                             Table.Unwrap,
+                             Context => "binary archive"),
+                        Loader  => From_TOML'Access,
+                        Resolve => True,
+                        Strict  => False) with null record)));
+
+         --  Mark these as explicitly binary, because they're in a case, even
+         --  if the maintainer omitted the binary field. This saves some noise
+         --  in the manifest files.
+
+         This.Data.Bin_Archive.Visit_All (Mark_Binary'Access);
+
+         return Outcome_Success;
+      end if;
+
+      --  Regular static loading of other origin kinds
+
+      declare
+         URL     : constant String :=
+                     Table.Checked_Pop (Keys.URL, TOML_String).As_String;
+         Scheme  : constant URI.Schemes := URI.Scheme (URL);
+         Hashed  : constant Boolean := Table.Unwrap.Has (Keys.Hashes);
+      begin
+         case Scheme is
          when External =>
             This := New_External (URI.Path (URL));
 
@@ -261,7 +550,7 @@ package body Alire.Origins is
             end if;
             This := New_Filesystem (URI.Local_Path (URL));
 
-         when URI.VCS_Schemes  => null;
+         when URI.VCS_Schemes  =>
             declare
                Commit : constant String := Table.Checked_Pop
                  (Keys.Commit, TOML_String).As_String;
@@ -270,47 +559,44 @@ package body Alire.Origins is
             end;
 
          when HTTP             =>
-            --  Optional filename checks:
-            if Table.Pop (Keys.Archive_Name, Archive) then
-               if Archive.Kind /= TOML.TOML_String then
-                  return Table.Failure ("archive name must be a string");
-               end if;
-            end if;
+            --  Reinsert the URL so we can reuse the dynamic archive loader:
+            Table.Unwrap.Set (Keys.URL, Create_String (URL));
 
-            begin
-               This := New_Source_Archive
-                 (URL  => URL,
-                  Name => (if Archive.Is_Present
-                           then Archive.As_String
-                           else ""));
-            exception
-               when Unknown_Source_Archive_Name_Error =>
-                  return Table.Failure
-                    ("unable to determine archive name from URL: "
-                     & "please specify one with '"
-                     & Keys.Archive_Name & "'");
-            end;
-
+            --  And load
+            This := (Data => (Kind        => Source_Archive,
+                              Src_Archive => From_TOML
+                                (Table.Descend
+                                   (Keys.Origin,
+                                    Table.Unwrap,
+                                    Context => "source archive")),
+                              Hashes      => <>));
          when System =>
             This := New_System (URI.Path (URL));
 
          when Unknown          =>
             From.Checked_Error ("unsupported scheme in URL: " & URL);
-      end case;
+         end case;
 
-      --  Check hashes existence appropriateness
+         --  Check hashes existence appropriateness
 
-      case This.Kind is
+         case This.Kind is
          when Filesystem =>
             if Hashed then
-               return Add_Hashes (Table);
+               Add_Hashes (This.Data.Hashes, Table).Assert;
             end if;
             --  Hashes are mandatory only for source archives. This is checked
             --  on deployment, since at this moment we do not have the proper
             --  absolute patch
 
+         when Binary_Archive =>
+            --  Should not happen, as we have loaded this particular case above
+            raise Program_Error with
+               Errors.Set ("This case should be unreachable");
+
          when Source_Archive =>
-            return Add_Hashes (Table); -- mandatory
+            --  Hashes already loaded by the archive data loader
+            Assert (not This.Data.Src_Archive.Hashes.Is_Empty,
+                    Or_Else => "source archive hashes missing");
 
          when others =>
             if Hashed then
@@ -318,10 +604,41 @@ package body Alire.Origins is
                  ("hashes cannot be provided for origins of kind "
                   & Utils.To_Mixed_Case (This.Kind'Img));
             end if;
-      end case;
+         end case;
 
-      return Table.Report_Extra_Keys;
+         return Table.Report_Extra_Keys;
+      end;
    end From_TOML;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (This : Origin) return String is
+     ((case This.Kind is
+          when VCS_Kinds      =>
+             "commit " & S (This.Data.Commit)
+       & " from " & S (This.Data.Repo_URL),
+          when Archive_Kinds  =>
+         (if This.Kind in Source_Archive then
+             Source_Image (This.Data.Src_Archive)
+          elsif This.Data.Bin_Archive.Is_Value then
+             Binary_Image (This.Data.Bin_Archive.As_Data)
+          else
+             This.Data.Bin_Archive.Image_One_Line),
+          when System         =>
+             "system package from platform software manager: "
+       & This.Package_Name,
+          when Filesystem     =>
+             "path " & S (This.Data.Path),
+          when External       =>
+             "external " & S (This.Data.Description))
+      & (if This.Get_Hashes.Is_Empty
+         then ""
+         elsif This.Get_Hashes.Last_Index = 1
+         then " with hash " & This.Image_Of_Hashes
+         else " with hashes " & This.Image_Of_Hashes)
+     );
 
    ---------------------
    -- Image_Of_Hashes --
@@ -330,12 +647,12 @@ package body Alire.Origins is
    function Image_Of_Hashes (This : Origin) return String is
 
       --  Recursively concatenate all hashes:
-      function Reduce (I : Natural := This.Data.Hashes.Last_Index)
+      function Reduce (I : Natural := This.Get_Hashes.Last_Index)
                        return String is
         (if I = 0 then ""
          elsif I > 1 then Reduce (I => I - 1) & ", "
-                          & String (This.Data.Hashes.Element (I))
-         else String (This.Data.Hashes.Element (I)));
+                          & String (This.Get_Hashes.Element (I))
+         else String (This.Get_Hashes.Element (I)));
 
    begin
       return Reduce;
@@ -356,8 +673,8 @@ package body Alire.Origins is
 
    function Short_Unique_Id (This : Origin) return String
    is (Short_Commit
-         (if This.Kind = Source_Archive
-          then Utils.Tail (String (This.Data.Hashes.First_Element), ':')
+         (if This.Kind in Source_Archive | Binary_Archive
+          then Utils.Tail (String (This.Get_Hashes.First_Element), ':')
           else This.Commit));
 
    -------------
@@ -366,7 +683,7 @@ package body Alire.Origins is
 
    overriding function To_TOML (This : Origin) return TOML.TOML_Value is
       use TOML_Adapters;
-      Table : constant TOML.TOML_Value := TOML.Create_Table;
+      Table : TOML.TOML_Value := TOML.Create_Table;
    begin
       case This.Kind is
          when Filesystem =>
@@ -387,24 +704,23 @@ package body Alire.Origins is
             Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all & (+This.Data.Description)));
 
+         when Binary_Archive =>
+            Table := TOML.Merge (Table,
+                                 This.Data.Bin_Archive.As_Data.To_TOML);
+
          when Source_Archive =>
-            Table.Set (Keys.URL, +This.Archive_URL);
-            if This.Archive_Name /= "" and then
-              This.Archive_Name /= URL_Basename (This.Archive_URL)
-            then
-               Table.Set (Keys.Archive_Name, +This.Archive_Name);
-            end if;
+            Table := TOML.Merge (Table, This.Data.Src_Archive.To_TOML);
 
          when System =>
             Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all & This.Package_Name));
       end case;
 
-      if not This.Data.Hashes.Is_Empty then
+      if not This.Get_Hashes.Is_Empty then
          declare
             Hashes : constant TOML.TOML_Value := TOML.Create_Array;
          begin
-            for Hash of This.Data.Hashes loop
+            for Hash of This.Get_Hashes loop
                Hashes.Append (+String (Hash));
             end loop;
 
@@ -414,5 +730,54 @@ package body Alire.Origins is
 
       return Table;
    end To_TOML;
+
+   -------------
+   -- To_TOML --
+   -------------
+
+   overriding
+   function To_TOML (This : Archive_Data) return TOML.TOML_Value is
+      use TOML;
+      Table : constant TOML.TOML_Value := TOML.Create_Table;
+   begin
+      Table.Set (Keys.URL, Create_String (This.URL));
+
+      if This.Name /= "" and then
+        This.Name /= URL_Basename (+This.URL)
+      then
+         Table.Set (Keys.Archive_Name, Create_String (This.Name));
+      end if;
+
+      if This.Binary then
+         Table.Set (Keys.Binary, Create_Boolean (This.Binary));
+      end if;
+
+      return Table;
+   end To_TOML;
+
+   --------------
+   -- Whenever --
+   --------------
+
+   function Whenever (This : Origin; Env : Properties.Vector) return Origin is
+   begin
+      if This.Kind = Binary_Archive then
+         return Result : Origin := This do
+            Result.Data.Bin_Archive := This.Data.Bin_Archive.Evaluate (Env);
+         end return;
+      else
+         return This;
+      end if;
+   end Whenever;
+
+   ------------------
+   -- Is_Available --
+   ------------------
+
+   function Is_Available (This : Origin; Env : Properties.Vector)
+                             return Boolean
+   is (This.Kind /= Binary_Archive
+       or else
+       not This.Data.Bin_Archive.Evaluate (Env).Is_Empty);
 
 end Alire.Origins;

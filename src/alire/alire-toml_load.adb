@@ -39,6 +39,8 @@ package body Alire.TOML_Load is
 
    type Tables is (Available,
                    Dependencies,
+                   Forbids,
+                   Provides,
                    Origin);
 
    Allowed_Tables : constant array (Crates.Sections, Tables) of Boolean :=
@@ -68,21 +70,26 @@ package body Alire.TOML_Load is
    -- Load_Crate_Section --
    ------------------------
 
-   procedure Load_Crate_Section (Strict  : Boolean;
-                                 Section : Crates.Sections;
-                                 From    : TOML_Adapters.Key_Queue;
-                                 Props   : in out Conditional.Properties;
-                                 Deps    : in out Conditional.Dependencies;
-                                 Pins    : in out User_Pins.Maps.Map;
-                                 Avail   : in out Conditional.Availability)
+   procedure Load_Crate_Section
+     (Strict  : Boolean;
+      Section : Crates.Sections;
+      From    : TOML_Adapters.Key_Queue;
+      Props   : in out Conditional.Properties;
+      Deps    : in out Conditional.Dependencies;
+      Equiv   : in out Alire.Provides.Equivalences;
+      Forbids : in out Conditional.Forbidden_Dependencies;
+      Pins    : in out User_Pins.Maps.Map;
+      Avail   : in out Conditional.Availability)
    is
       pragma Unreferenced (Pins);
       use TOML;
       use type Conditional.Dependencies;
       use type Conditional.Properties;
 
-      TOML_Avail : TOML.TOML_Value;
-      TOML_Deps  : TOML.TOML_Value;
+      TOML_Avail   : TOML.TOML_Value;
+      TOML_Deps    : TOML.TOML_Value;
+      TOML_Equiv   : TOML.TOML_Value;
+      TOML_Forbids : TOML.TOML_Value;
 
    begin
 
@@ -124,6 +131,44 @@ package body Alire.TOML_Load is
       elsif From.Unwrap.Has (TOML_Keys.Depends_On) then
          From.Checked_Error ("found field not allowed in manifest section: "
                              & TOML_Keys.Depends_On);
+      end if;
+
+      --  Process Forbids
+
+      if Allowed_Tables (Section, TOML_Load.Forbids) then
+         if From.Pop (TOML_Keys.Forbidden, TOML_Forbids) then
+            From.Assert
+              (TOML_Forbids.Kind = TOML_Array,
+               "dependencies must be specified as array of tables");
+
+            for I in 1 .. TOML_Forbids.Length loop
+               Forbids := Forbids and
+                 Dependency_Loader.Load
+                   (From    => From.Descend
+                      (Key     => TOML_Keys.Forbidden,
+                       Value   => TOML_Forbids.Item (I),
+                       Context => "(group" & I'Img & ")"),
+                    Loader  => Conditional.Deps_From_TOML'Access,
+                    Resolve => True,
+                    Strict  => Strict);
+            end loop;
+         end if;
+      elsif From.Unwrap.Has (TOML_Keys.Forbidden) then
+         From.Checked_Error ("found field not allowed in manifest section: "
+                             & TOML_Keys.Forbidden);
+      end if;
+
+      --  Process Provides
+
+      if Allowed_Tables (Section, Provides) then
+         if From.Pop (TOML_Keys.Provides, TOML_Equiv) then
+            From.Assert
+              (TOML_Equiv.Kind = TOML_Array,
+               "provides must be an array of strings describing milestones");
+
+            Equiv := Alire.Provides.From_TOML
+              (From.Descend (TOML_Equiv, TOML_Keys.Provides));
+         end if;
       end if;
 
       --  Process user pins

@@ -1,7 +1,13 @@
+private with Alire.Conditional_Trees.TOML_Load;
+with Alire.Errors;
 with Alire.Hashes;
 with Alire.Interfaces;
+with Alire.Properties;
 with Alire.TOML_Adapters;
+private with Alire.TOML_Keys;
 with Alire.Utils.TTY;
+with Alire.VCSs.Git;
+with Alire.VCSs.Hg;
 
 private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
@@ -13,7 +19,8 @@ package Alire.Origins is
    package TTY renames Alire.Utils.TTY;
 
    type Kinds is
-     (External,       -- A do-nothing origin, with some custom description
+     (Binary_Archive, -- A pre-compiled binary (dynamic expr + source archive)
+      External,       -- A do-nothing origin, with some custom description
       Filesystem,     -- Not really an origin, but a working copy of a release
       Git,            -- Remote git repo
       Hg,             -- Remote hg repo
@@ -26,10 +33,13 @@ package Alire.Origins is
    type Prefix_Array is array (Kinds) of String_Access;
    Prefixes : constant Prefix_Array;
 
-   subtype VCS_Kinds is Kinds range Git .. SVN;
+   subtype Archive_Kinds is Kinds
+     with Static_Predicate => Archive_Kinds in Binary_Archive | Source_Archive;
 
    subtype External_Kinds is Kinds
      with Static_Predicate => External_Kinds in External | System;
+
+   subtype VCS_Kinds is Kinds range Git .. SVN;
 
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);
    subtype Known_Source_Archive_Format is
@@ -42,6 +52,14 @@ package Alire.Origins is
      Interfaces.Tomifiable with private;
 
    function Kind (This : Origin) return Kinds;
+
+   function Whenever (This : Origin; Env : Properties.Vector) return Origin;
+   --  Resolve expressions in the origin
+
+   function Is_Available (This : Origin; Env : Properties.Vector)
+                          return Boolean;
+   --  For a binary origin, true iif there is a value for the environment. True
+   --  for the rest of kinds.
 
    -------------------
    --  member data  --
@@ -61,11 +79,11 @@ package Alire.Origins is
      with Pre => This.Kind = Filesystem;
 
    function Archive_URL (This : Origin) return Alire.URL
-     with Pre => This.Kind = Source_Archive;
+     with Pre => This.Kind in Archive_Kinds;
    function Archive_Name (This : Origin) return String
-     with Pre => This.Kind = Source_Archive;
+     with Pre => This.Kind in Archive_Kinds;
    function Archive_Format (This : Origin) return Known_Source_Archive_Format
-     with Pre => This.Kind = Source_Archive;
+     with Pre => This.Kind in Archive_Kinds;
    function Archive_Format (Name : String) return Source_Archive_Format;
    --  Guess the format of a source archive from its file name.
 
@@ -82,22 +100,16 @@ package Alire.Origins is
    --  from external definitions (detected or not).
 
    function Short_Unique_Id (This : Origin) return String with
-     Pre => This.Kind in Git | Hg | Source_Archive;
+     Pre => This.Kind in Git | Hg | Archive_Kinds;
 
    --  Helper types
 
-   subtype Hexadecimal_Character is Character with
-     Static_Predicate => Hexadecimal_Character in '0' .. '9' | 'a' .. 'f';
-
-   subtype Git_Commit is String (1 .. 40) with
-     Dynamic_Predicate =>
-       (for all Char of Git_Commit => Char in Hexadecimal_Character);
-
-   subtype Hg_Commit  is String (1 .. 40);
+   subtype Git_Commit is VCSs.Git.Git_Commit;
+   subtype Hg_Commit  is VCSs.Hg.Hg_Commit;
 
    function Is_Valid_Commit (S : String) return Boolean
    is (S'Length = Git_Commit'Length and then
-       (for all Char of S => Char in Hexadecimal_Character));
+       (for all Char of S => Char in Utils.Hexadecimal_Character));
 
    function Short_Commit (Commit : String) return String;
    --  First characters in the commit
@@ -106,7 +118,10 @@ package Alire.Origins is
 
    function New_External (Description : String) return Origin;
 
-   function New_Filesystem (Path : String) return Origin;
+   function New_Filesystem (Path : Any_Path) return Origin;
+   --  If Path is relative it will be converted to a full path, so this
+   --  function should be called from a point where the path makes sense
+   --  in that case.
 
    function New_Git (URL    : Alire.URL;
                      Commit : Git_Commit)
@@ -171,6 +186,9 @@ private
    package Hash_Vectors is new
      Ada.Containers.Indefinite_Vectors (Positive, Hashes.Any_Hash);
 
+   function Get_Hashes (This : Origin) return Hash_Vectors.Vector;
+   --  Ugly Get_ but it avoids lots of ambiguities down the line
+
    function "+" (S : String) return Unbounded_String
    renames To_Unbounded_String;
 
@@ -189,24 +207,73 @@ private
    function Packaged_As (Name : String) return Package_Names
    is (Name => +Name);
 
-   type Origin_Data (Kind : Kinds := External) is record
-      Hashes : Hash_Vectors.Vector;
+   function S (Str : Unbounded_String) return String is (To_String (Str));
 
+   type Archive_Data is
+     new Interfaces.Classificable
+     and Interfaces.Tomifiable
+     and Interfaces.Yamlable with
+   record
+      URL    : Unbounded_String;
+      Name   : Unbounded_String;
+      Format : Known_Source_Archive_Format;
+      Hashes : Hash_Vectors.Vector;
+      Binary : Boolean;
+   end record;
+
+   overriding
+   function Key (This : Archive_Data) return String is (TOML_Keys.Origin);
+
+   overriding
+   function To_TOML (This : Archive_Data) return TOML.TOML_Value;
+
+   overriding
+   function To_YAML (This : Archive_Data) return String
+   is (raise Unimplemented with Errors.Set ("Should not be needed"));
+
+   function Image (Archive : Archive_Data;
+                   Kind    : Archive_Kinds) return String
+   is ((if Kind in Source_Archive
+        then "source archive "
+        else "binary archive ")
+       & (if S (Archive.Name) /= ""
+          then S (Archive.Name) & " "
+          else "")
+       & "at " & S (Archive.URL));
+
+   function Binary_Image (Archive : Archive_Data) return String
+   is (Image (Archive, Binary_Archive));
+
+   function Source_Image (Archive : Archive_Data) return String
+   is (Image (Archive, Source_Archive));
+
+   package Conditional_Archives is
+     new Conditional_Trees (Values => Archive_Data,
+                            Image  => Binary_Image);
+
+   type Conditional_Archive is new Conditional_Archives.Tree with null record;
+   package Binary_Loader is new Conditional_Archives.TOML_Load;
+
+   function As_Data (This : Conditional_Archive) return Archive_Data'Class;
+
+   type Origin_Data (Kind : Kinds := External) is record
       case Kind is
+         when Binary_Archive =>
+            Bin_Archive : Conditional_Archive;
+
          when External =>
             Description : Unbounded_String;
 
          when Filesystem =>
-            Path : Unbounded_String;
+            Path   : Unbounded_String;
+            Hashes : Hash_Vectors.Vector;
 
          when VCS_Kinds =>
             Repo_URL : Unbounded_String;
             Commit   : Unbounded_String;
 
          when Source_Archive =>
-            Archive_URL    : Unbounded_String;
-            Archive_Name   : Unbounded_String;
-            Archive_Format : Known_Source_Archive_Format;
+            Src_Archive : Archive_Data;
 
          when System =>
             Package_Name : Unbounded_String;
@@ -223,84 +290,6 @@ private
 
    function Image_Of_Hashes (This : Origin) return String;
 
-   function New_External (Description : String) return Origin is
-      (Data => (External, Description => +Description, Hashes => <>));
-
-   function New_Filesystem (Path : String) return Origin is
-     (Data => (Filesystem, Path => +Path, Hashes => <>));
-
-   function New_Git (URL    : Alire.URL;
-                     Commit : Git_Commit)
-                     return Origin is
-     (Data => (Git, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
-
-   function New_Hg (URL    : Alire.URL;
-                    Commit : Hg_Commit)
-                    return Origin is
-     (Data => (Hg, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
-
-   function New_SVN (URL : Alire.URL; Commit : String) return Origin is
-     (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
-
-   function New_System (System_Package_Name : String) return Origin is
-     (Data => (System, Package_Name => +System_Package_Name, Hashes => <>));
-
-   function Kind (This : Origin) return Kinds is (This.Data.Kind);
-
-   function URL    (This : Origin) return Alire.URL is
-     (Alire.URL (+This.Data.Repo_URL));
-   function Commit (This : Origin) return String is
-     (+This.Data.Commit);
-   function URL_With_Commit (This : Origin) return Alire.URL is
-     (This.URL & "#" & This.Commit);
-   function TTY_URL_With_Commit (This : Origin) return String is
-     (TTY.URL (This.URL) & "#" & TTY.Emph (This.Commit));
-
-   function Path (This : Origin) return String is (+This.Data.Path);
-
-   function Archive_URL (This : Origin) return Alire.URL is
-     (+This.Data.Archive_URL);
-   function Archive_Name (This : Origin) return String is
-     (+This.Data.Archive_Name);
-   function Archive_Format (This : Origin) return Known_Source_Archive_Format
-   is (This.Data.Archive_Format);
-
-   function Package_Name (This : Origin) return String is
-     (+This.Data.Package_Name);
-
-   function S (Str : Unbounded_String) return String is (To_String (Str));
-
-   function Image (This : Origin) return String is
-     ((case This.Kind is
-          when VCS_Kinds      =>
-             "commit " & S (This.Data.Commit)
-       & " from " & S (This.Data.Repo_URL),
-          when Source_Archive =>
-             "source archive " & (if S (This.Data.Archive_Name) /= ""
-                                  then S (This.Data.Archive_Name) & " "
-                                  else "")
-       & "at " & S (This.Data.Archive_URL),
-          when System         =>
-             "system package from platform software manager: "
-             & This.Package_Name,
-          when Filesystem     =>
-             "path " & S (This.Data.Path),
-          when External       =>
-             "external " & S (This.Data.Description))
-      & (if This.Data.Hashes.Is_Empty
-         then ""
-         elsif This.Data.Hashes.Last_Index = 1
-         then " with hash " & This.Image_Of_Hashes
-         else " with hashes " & This.Image_Of_Hashes)
-     );
-
-   function Get_URL (This : Origin) return Alire.URL
-   is (case This.Kind is
-          when Filesystem     => This.Path,
-          when Source_Archive => This.Archive_URL,
-          when VCS_Kinds      => This.URL,
-          when others         => raise Checked_Error with "Origin has no URL");
-
    Prefix_External : aliased constant String := "external:";
    Prefix_Git      : aliased constant String := "git+";
    Prefix_Hg       : aliased constant String := "hg+";
@@ -315,6 +304,6 @@ private
                  External       => Prefix_External'Access,
                  Filesystem     => Prefix_File'Access,
                  System         => Prefix_System'Access,
-                 Source_Archive => null);
+                 Archive_Kinds  => null);
 
 end Alire.Origins;

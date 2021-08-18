@@ -5,6 +5,7 @@ Assorted helpers that are reused by several tests.
 from subprocess import run
 from zipfile import ZipFile
 
+import re
 import os
 import platform
 import shutil
@@ -12,11 +13,17 @@ import stat
 
 
 # Return the entries (sorted) under a given folder, both folders and files
-def contents(dir):
+# Optionally, return only those matching regex
+def contents(dir, regex=""):
     assert os.path.exists(dir), "Bad path for enumeration: {}".format(dir)
-    return sorted([os.path.join(root, name).replace('\\', '/') for
-                   root, dirs, files in os.walk(dir)
-                   for name in dirs + files])
+    if regex != "":
+        matcher = re.compile(regex)
+    return sorted([os.path.join(root, name).replace('\\', '/')
+                   for root, dirs, files in os.walk(dir)
+                   for name in dirs + files
+                   if regex == "" or
+                   matcher.search(os.path.join(root, name).replace('\\', '/'))
+                   ])
 
 
 # Return the content of a text file as a single string with embedded newlines

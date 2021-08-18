@@ -4,6 +4,7 @@ with Alire.Crates;
 with Alire.Externals.From_Output;
 with Alire.Externals.From_System;
 with Alire.Externals.Unindexed;
+with Alire.Provides;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
@@ -38,6 +39,20 @@ package body Alire.Externals is
             when System         => From_System.From_TOML (From),
             when Version_Output => From_Output.From_TOML (From));
 
+      -------------------
+      -- Load_Provides --
+      -------------------
+      --  Pops and loads the provides = "crate" special external case
+      procedure Load_Provides (This : in out External'Class;
+                               From : TOML_Adapters.Key_Queue)
+      is
+         use TOML;
+      begin
+         This.Provides.Insert
+           (To_Name
+              (From.Checked_Pop (TOML_Keys.Provides, TOML_String).As_String));
+      end Load_Provides;
+
       Kind : TOML.TOML_Value;
       OK   : constant Boolean := From.Pop (TOML_Keys.External_Kind, Kind);
 
@@ -60,8 +75,10 @@ package body Alire.Externals is
          end if;
       end Validate;
 
-      Unused_Deps : Conditional.Dependencies;
-      Unused_Pins : User_Pins.Maps.Map;
+      --  These cannot appear in externals:
+      Unused_Deps  : Conditional.Dependencies;
+      Unused_Equiv : Provides.Equivalences;
+      Unused_Pins  : User_Pins.Maps.Map;
 
    begin
 
@@ -75,6 +92,15 @@ package body Alire.Externals is
         From_TOML (Kinds'Value (TOML_Adapters.Adafy (Kind.As_String)))
       do
 
+         --  Deal with the special provides of an external, which cannot have
+         --  a version as it is yet unknown.
+
+         if Ext not in Unindexed.External'Class and then
+           From.Contains (TOML_Keys.Provides)
+         then
+            Load_Provides (Ext, From);
+         end if;
+
          --  Load common external fields
 
          TOML_Load.Load_Crate_Section
@@ -83,6 +109,8 @@ package body Alire.Externals is
             From    => From,
             Props   => Ext.Properties,
             Deps    => Unused_Deps,
+            Equiv   => Unused_Equiv,
+            Forbids => Unused_Deps,
             Pins    => Unused_Pins,
             Avail   => Ext.Available);
 

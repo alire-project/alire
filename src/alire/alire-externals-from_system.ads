@@ -15,7 +15,7 @@ package Alire.Externals.From_System is
 
    overriding
    function Detect (This : External;
-                    Name : Crate_Name) return Containers.Release_Set;
+                    Name : Crate_Name) return Releases.Containers.Release_Set;
 
    overriding
    function Image (This : External) return String;

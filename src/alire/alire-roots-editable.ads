@@ -31,9 +31,19 @@ package Alire.Roots.Editable is
    function Old (This : Root) return Roots.Root;
    --  The original root this editable copy was made from
 
+   type Reference (Element : not null access Roots.Root)
+   is limited null record with Implicit_Dereference => Element;
+
+   function Current (This : in out Root) return Reference;
+   --  Retrieve the temporary copy. This is read/write because the caching of
+   --  solutions requires it, but it is intended for read-only use.
+
    function Name (This : Root) return Crate_Name;
 
    function Solution (This : in out Root) return Solutions.Solution;
+
+   procedure Set (This : in out Root; Solution : Solutions.Solution);
+   --  Bulk replace the solution in the temporary copy
 
    --  Edition procedures
 
@@ -109,10 +119,20 @@ private
 
    type Root is new Ada.Finalization.Limited_Controlled with record
       Orig : Roots.Root;
-      Edit : Roots.Root;
+      Edit : aliased Roots.Root;
    end record;
 
    overriding procedure Finalize (This : in out Root);
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (This : in out Root) return Reference
+   is (Element => This.Edit'Unrestricted_Access);
+   --  CE2021 is happy with 'Access but 9.3 complains about a dangling pointer.
+   --  We are returning a short-lived pointer to a limited value so I don't see
+   --  the problem.
 
    ----------
    -- Name --

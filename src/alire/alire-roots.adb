@@ -1,12 +1,13 @@
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
-with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
+with Alire.Origins;
 with Alire.OS_Lib;
 with Alire.Roots.Optional;
+with Alire.Shared;
 with Alire.Solutions.Diffs;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
@@ -108,33 +109,8 @@ package body Alire.Roots is
         (Env             => Env,
          Parent_Folder   => Parent_Folder,
          Was_There       => Was_There,
-         Perform_Actions => Perform_Actions);
-
-      --  Backup a potentially packaged manifest, so our authoritative manifest
-      --  from the index is always used.
-
-      declare
-         Working_Dir : Guard (Enter (This.Unique_Folder))
-           with Unreferenced;
-      begin
-         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
-
-         if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
-            Trace.Debug ("Backing up bundled manifest file as *.upstream");
-            declare
-               Upstream_File : constant String :=
-                                 Paths.Working_Folder_Inside_Root /
-                                 (Paths.Crate_File_Name & ".upstream");
-            begin
-               Alire.Directories.Backup_If_Existing
-                 (Upstream_File,
-                  Base_Dir => Paths.Working_Folder_Inside_Root);
-               Ada.Directories.Rename
-                 (Old_Name => Paths.Crate_File_Name,
-                  New_Name => Upstream_File);
-            end;
-         end if;
-      end;
+         Perform_Actions => Perform_Actions,
+         Create_Manifest => True);
 
       --  And generate its working files, if they do not exist
 
@@ -150,14 +126,9 @@ package body Alire.Roots is
 
          Ada.Directories.Create_Path (Root.Working_Folder);
 
-         --  Generate the authoritative manifest from index information for
-         --  eventual use of the gotten crate as a local workspace.
-
-         Root.Write_Manifest;
-
-         --  Create also a preliminary lockfile (since dependencies are
-         --  still unretrieved). Once they are checked out, the lockfile
-         --  will be replaced with the complete solution.
+         --  Create a preliminary lockfile (since dependencies are still
+         --  unretrieved). Once they are checked out, the lockfile will
+         --  be replaced with the complete solution.
 
          Root.Set
            (Solution => (if This.Dependencies (Env).Is_Empty
@@ -188,11 +159,21 @@ package body Alire.Roots is
 
       --  Mark any dependencies without a corresponding regular release as
       --  already deployed (in practice, we don't have to deploy them, and
-      --  dependents don't need to wait for their deployment).
+      --  dependents don't need to wait for their deployment). Likewhise for
+      --  installed dependencies, which are already deployed.
 
       for Dep of This.Solution.Required loop
-         if not Dep.Has_Release then
+         if not Dep.Has_Release or else Dep.Is_Shared then
             Deployed.Include (Dep.Crate);
+
+            --  Also mark as deployed any crate provided by shared releases
+
+            if Dep.Has_Release then
+               for Mil of Dep.Release.Provides loop
+                  Deployed.Include (Mil.Crate);
+               end loop;
+            end if;
+
          end if;
       end loop;
 
@@ -202,7 +183,7 @@ package body Alire.Roots is
          Round := Round + 1;
 
          declare
-            To_Remove : Alire.Containers.Release_Set;
+            To_Remove : Alire.Releases.Containers.Release_Set;
             function Enum (Deps : Conditional.Dependencies)
                            return Alire.Dependencies.Containers.List
                            renames Conditional.Enumerate;
@@ -216,7 +197,7 @@ package body Alire.Roots is
                --  don't have undeployed dependencies. We also identify
                --  releases that need not to be deployed (e.g. linked ones).
 
-               if not This.Solution.State (Rel.Name).Is_Solved then
+               if not This.Solution.State (Rel).Is_Solved then
                   Trace.Debug ("Round" & Round'Img & ": NOOP " &
                                  Rel.Milestone.Image);
 
@@ -235,10 +216,37 @@ package body Alire.Roots is
 
                   To_Remove.Include (Rel);
 
-                  if Rel.Name /= Release (This).Name then
-                     Rel.Deploy (Env           => This.Environment,
-                                 Parent_Folder => This.Dependencies_Dir,
-                                 Was_There     => Was_There);
+                  if not Release (This).Provides (Rel.Name) then
+
+                     --  A regular release is deployed normally. A binary
+                     --  release is installed as a shared dependency. A
+                     --  detected external is skipped.
+
+                     if Rel.Origin.Kind in Origins.Binary_Archive then
+
+                        Shared.Share (Rel);
+
+                     elsif This.Solution.State (Rel.Name).Is_Shared
+                       and then Rel.Origin.Kind in Origins.External
+                     then
+
+                        Trace.Debug ("No-op deployment of shared external: "
+                                     & Rel.Milestone.TTY_Image);
+
+                     else
+
+                        Rel.Deploy (Env             => This.Environment,
+                                    Parent_Folder   =>
+                                      Ada.Directories.Containing_Directory
+                                        (This.Release_Base (Rel.Name)),
+                                    Was_There       => Was_There,
+                                    Create_Manifest =>
+                                      This.Solution.State (Rel.Name).Is_Shared,
+                                    Include_Origin  =>
+                                     This.Solution.State (Rel.Name).Is_Shared);
+
+                     end if;
+
                   else
                      Trace.Debug
                        ("Skipping checkout of root crate as dependency");
@@ -254,8 +262,15 @@ package body Alire.Roots is
                  with "No release checked out in round" & Round'Img;
             else
                for Rel of To_Remove loop
-                  Pending.Exclude (Rel.Name);
+                  Pending.Remove (Rel);
+
+                  Trace.Debug ("Marking deployed: " & Rel.Name.As_String);
                   Deployed.Include (Rel.Name);
+                  for Mil of Rel.Provides loop
+                     Trace.Debug ("Marking deployed (provided): "
+                                  & Mil.Crate.As_String);
+                     Deployed.Include (Mil.Crate);
+                  end loop;
                end loop;
             end if;
          end;
@@ -639,7 +654,7 @@ package body Alire.Roots is
      (Ada.Finalization.Controlled with
       Environment     => Env,
       Path            => +Path,
-      Release         => Containers.To_Release_H (R),
+      Release         => Releases.Containers.To_Release_H (R),
       Cached_Solution => <>,
       Pins            => <>,
       Lockfile        => <>,
@@ -685,12 +700,21 @@ package body Alire.Roots is
                           Crate : Crate_Name)
                           return Any_Path
    is
-      Deps_Dir : constant Any_Path := This.Dependencies_Dir;
    begin
       if This.Release.Element.Name = Crate then
          return +This.Path;
       elsif This.Solution.State (Crate).Is_Solved then
-         return Deps_Dir / Release (This, Crate).Unique_Folder;
+         declare
+            Rel : constant Releases.Release := Release (This, Crate);
+         begin
+            if This.Solution.State (Crate).Is_Shared then
+               return Shared.Install_Path / Rel.Unique_Folder;
+            else
+               return This.Cache_Dir
+                      / Paths.Deps_Folder_Inside_Cache_Folder
+                      / Rel.Unique_Folder;
+            end if;
+         end;
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
       else
@@ -723,13 +747,6 @@ package body Alire.Roots is
    function Cache_Dir (This : Root) return Absolute_Path
    is (This.Working_Folder / Paths.Cache_Folder_Inside_Working_Folder);
 
-   ----------------------
-   -- Dependencies_Dir --
-   ----------------------
-
-   function Dependencies_Dir (This : Root) return Absolute_Path is
-     (This.Cache_Dir / "dependencies");
-
    --------------
    -- Pins_Dir --
    --------------
@@ -743,6 +760,26 @@ package body Alire.Roots is
 
    function Working_Folder (This : Root) return Absolute_Path is
      ((+This.Path) / "alire");
+
+   --------------------
+   -- Write_Manifest --
+   --------------------
+
+   procedure Write_Manifest (This : Root) is
+      Release : constant Releases.Release := Roots.Release (This);
+   begin
+      Trace.Debug
+        ("Generating manifest file for "
+         & Release.Milestone.TTY_Image & " with"
+         & Release.Dependencies.Leaf_Count'Img & " dependencies");
+
+      Directories.Backup_If_Existing (File     => This.Crate_File,
+                                      Base_Dir => This.Working_Folder);
+
+      Release.Whenever (This.Environment)
+             .To_File (Filename => This.Crate_File,
+                       Format   => Manifest.Local);
+   end Write_Manifest;
 
    --------------------
    -- Write_Solution --
@@ -1018,25 +1055,6 @@ package body Alire.Roots is
    end Sync_Dependencies;
 
    --------------------
-   -- Write_Manifest --
-   --------------------
-
-   procedure Write_Manifest (This : Root) is
-      Release : constant Releases.Release := Roots.Release (This);
-   begin
-      Trace.Debug ("Generating " & Release.Name_Str & ".toml file for "
-                   & Release.Milestone.Image & " with"
-                   & Release.Dependencies.Leaf_Count'Img & " dependencies");
-
-      Directories.Backup_If_Existing
-        (This.Crate_File,
-         Base_Dir => Paths.Working_Folder_Inside_Root);
-
-      Release.Whenever (This.Environment)
-             .To_File (This.Crate_File, Manifest.Local);
-   end Write_Manifest;
-
-   --------------------
    -- Temporary_Copy --
    --------------------
 
@@ -1099,7 +1117,7 @@ package body Alire.Roots is
    begin
       --  Load our manifest
 
-      This.Release.Replace_Element
+      This.Release.Hold
         (Releases.From_Manifest
            (This.Crate_File,
             Manifest.Local,

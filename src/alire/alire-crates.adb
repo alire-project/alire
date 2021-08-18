@@ -1,5 +1,7 @@
+with Alire.Index;
 with Alire.Origins;
 with Alire.Properties.Labeled;
+with Alire.Provides;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
 with Alire.User_Pins.Maps;
@@ -28,7 +30,7 @@ package body Alire.Crates is
    -- Keys --
    ----------
 
-   package Keys is new Containers.Release_Sets.Generic_Keys
+   package Keys is new Alire.Releases.Containers.Release_Sets.Generic_Keys
      (Semantic_Versioning.Version,
       Alire.Releases.Version,
       Semantic_Versioning."<");
@@ -67,7 +69,9 @@ package body Alire.Crates is
                       Version : Semantic_Versioning.Version) return Boolean
    is
    begin
-      return Keys.Contains (This.Releases, Version);
+      return Keys.Contains
+        (Alire.Releases.Containers.Release_Sets.Set (This.Releases),
+         Version);
    end Contains;
 
    ---------------
@@ -128,6 +132,19 @@ package body Alire.Crates is
                         Strict));
                end loop;
             end if;
+
+            --  Register any aliased in the detectors for this crate, so we
+            --  know when to detect. Also the trivial equivalence, for the
+            --  benefit of queries in the index.
+
+            Index.Register_External_Alias (This.Name, This.Name);
+
+            for Detector of This.Externals.Detectors loop
+               for Alias of Detector.Equivalences loop
+                  Index.Register_External_Alias (Provider  => This.Name,
+                                                 Providing => Alias);
+               end loop;
+            end loop;
          end if;
       end Load_Externals_Array;
 
@@ -145,6 +162,7 @@ package body Alire.Crates is
       declare
          Unused_Avail : Conditional.Availability;
          Unused_Deps  : Conditional.Dependencies;
+         Unused_Equiv : Provides.Equivalences;
          Unused_Pins  : User_Pins.Maps.Map;
          Properties   : Conditional.Properties;
       begin
@@ -154,6 +172,8 @@ package body Alire.Crates is
             From    => From,
             Props   => Properties,
             Deps    => Unused_Deps,
+            Equiv   => Unused_Equiv,
+            Forbids => Unused_Deps,
             Pins    => Unused_Pins,
             Avail   => Unused_Avail);
 
@@ -260,8 +280,9 @@ package body Alire.Crates is
    -- Releases --
    --------------
 
-   function Releases (This : Crate) return Containers.Release_Set is
-     (This.Releases);
+   function Releases (This : Crate)
+                      return Alire.Releases.Containers.Release_Set
+   is (This.Releases);
 
    -------------
    -- Replace --
@@ -271,7 +292,9 @@ package body Alire.Crates is
                       Release : Alire.Releases.Release)
    is
    begin
-      Keys.Replace (This.Releases, Release.Version, Release);
+      Keys.Replace (Alire.Releases.Containers.Release_Sets.Set (This.Releases),
+                    Release.Version,
+                    Release);
    end Replace;
 
 end Alire.Crates;

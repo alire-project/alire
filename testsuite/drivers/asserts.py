@@ -6,6 +6,7 @@ testcases based on Python scripts.
 import re
 import difflib
 
+from drivers.alr import run_alr
 
 def indent(text, prefix='  '):
     """
@@ -46,3 +47,13 @@ def assert_match(expected_re, actual, label=None, flags=re.S):
                 'But got:',
                 indent(actual)]
         assert False, '\n'.join(text)
+
+
+def match_solution(regex, escape=False, whole=False):
+    "Check whether a regex matches the current solution"
+    p = run_alr("with", "--solve")
+    wrap = "" if whole else ".*"
+    assert_match(wrap +
+                 (regex if not escape else re.escape(regex)) +
+                 wrap,
+                 p.out)

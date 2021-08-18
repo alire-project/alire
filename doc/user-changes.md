@@ -6,6 +6,52 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Conflicting releases
+
+PR [#781](https://github.com/alire-project/alire/pull/781)
+
+For releases that have known incompatibilities (duplicated source names,
+drop-in equivalent crates), it is now possible to express this information
+through a `forbids` table array, with the same syntax as dependencies. For
+example:
+
+```
+[[forbids]]
+conflicting_crate = "^1"
+```
+
+Releases related by a `forbids` property will not appear simultaneously as
+dependencies in a solution, as the solver will discard these combinations.
+
+### Toolchain management
+
+PR [#775](https://github.com/alire-project/alire/pull/775)
+
+A variety of GNAT compilers (native and cross-target) is now available through
+Alire. These compilers are managed with the `alr toolchain` new command. The
+available compilers can be listed with `alr search --full gnat_`.
+
+Toolchain configuration is common to all crates in the active configuration
+prefix (which can be switched with the global `-c` option or by providing a
+path with the `ALR_CONFIG` environment variable).
+
+The `alr toolchain --select` subcommand allows selecting the preferred default
+compiler (or none at all, to continue using the previous mode of operation) for
+crates that do not specify one.
+
+Crates that require a particular cross-compiler may now specify it as a regular
+dependency on, e.g., `gnat_riscv_elf`.
+
+In addition to a default compiler, the preferred version of a compiler for a
+target may be made available with `alr toolchain --install <crate[=version]>`.
+When launching a build, Alire will use preferably the default selected compiler
+or, if the default is for a different target, one of the other installed
+compilers. If no installed compiler is available for the crate target, Alire
+will offer to download the appropriate cross-target compiler.
+
+Finally, running `alr toolchain` without arguments will list the currently
+installed compilers and gprbuild versions.
+
 ### Pins to git branches
 
 PR [#754](https://github.com/alire-project/alire/pull/754)

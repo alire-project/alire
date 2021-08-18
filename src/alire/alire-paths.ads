@@ -7,6 +7,8 @@ package Alire.Paths with Preelaborate is
 
    Cache_Folder_Inside_Working_Folder : constant Relative_Path := "cache";
 
+   Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
+
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
    function Working_Folder_Inside_Root return Relative_Path

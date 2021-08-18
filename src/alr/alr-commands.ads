@@ -138,6 +138,7 @@ package Alr.Commands is
                       Cmd_Search,
                       Cmd_Show,
                       Cmd_Test,
+                      Cmd_Toolchain,
                       Cmd_Update,
                       Cmd_Version,
                       Cmd_With);
@@ -158,22 +159,23 @@ package Alr.Commands is
    function Image (Name : Group_Names) return String;
 
    Group_Commands : constant array (Cmd_Names) of Group_Names :=
-     (Cmd_Config |
-      Cmd_Help |
-      Cmd_Printenv |
+     (Cmd_Config    |
+      Cmd_Help      |
+      Cmd_Printenv  |
+      Cmd_Toolchain |
       Cmd_Version => Group_General,
       Cmd_Build |
       Cmd_Clean |
-      Cmd_Dev |
-      Cmd_Edit |
-      Cmd_Run |
+      Cmd_Dev   |
+      Cmd_Edit  |
+      Cmd_Run   |
       Cmd_Test    => Group_Build,
       Cmd_Index   => Group_Index,
-      Cmd_Get |
-      Cmd_Init |
-      Cmd_Pin |
+      Cmd_Get    |
+      Cmd_Init   |
+      Cmd_Pin    |
       Cmd_Search |
-      Cmd_Show |
+      Cmd_Show   |
       Cmd_Update |
       Cmd_With    => Group_Release,
       Cmd_Publish => Group_Publish);

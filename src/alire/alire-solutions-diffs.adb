@@ -21,7 +21,8 @@ package body Alire.Solutions.Diffs is
       Pinned,     -- A release being pinned
       Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
-      Missing    -- A missing dependency
+      Missing,    -- A missing dependency
+      Shared      -- A release used from the shared installed releases
      );
 
    ----------
@@ -39,18 +40,21 @@ package body Alire.Solutions.Diffs is
              when Pinned     => TTY.OK    ("⊙"),
              when Unpinned   => TTY.Emph  ("𐩒"),
              when Unchanged  => TTY.OK    ("="),
-             when Missing    => TTY.Error ("⚠"))
+             when Missing    => TTY.Error ("⚠"),
+             when Shared     => TTY.Emph  ("♼"))
        else
          (case Change is
-               when Added      => "+",
-               when Removed    => "-",
-               when Hinted     => "~",
-               when Upgraded   => "^",
-               when Downgraded => "v",
-               when Pinned     => "·",
-               when Unpinned   => "o",
-               when Unchanged  => "=",
-               when Missing    => "!"));
+             when Added      => "+",
+             when Removed    => "-",
+             when Hinted     => "~",
+             when Upgraded   => "^",
+             when Downgraded => "v",
+             when Pinned     => "·",
+             when Unpinned   => "o",
+             when Unchanged  => "=",
+             when Missing    => "!",
+             when Shared     => "i"
+         ));
 
    --  This type is used to summarize every detected change
    type Crate_Changes is record
@@ -169,6 +173,25 @@ package body Alire.Solutions.Diffs is
          end if;
       end Fulfil_Change;
 
+      --------------------
+      -- Sharing_Change --
+      --------------------
+
+      procedure Sharing_Change is
+      begin
+         if (not Has_Former or else not Former.Is_Shared)
+           and then Has_Latter and then Latter.Is_Shared
+         then
+            Add_Change (Chg, Icon (Shared), TTY.Emph ("installed"));
+
+         elsif Has_Former and then Former.Is_Shared
+           and then Has_Latter and then not Latter.Is_Shared
+         then
+            Add_Change (Chg, "", TTY.Emph ("local"));
+
+         end if;
+      end Sharing_Change;
+
       --------------------------
       -- transitivity_changed --
       --------------------------
@@ -219,6 +242,17 @@ package body Alire.Solutions.Diffs is
                         "pin=" & TTY.Version (Latter.Pin_Version.Image));
          end if;
       end Pinned_Or_Unpinned;
+
+      ---------------------
+      -- Provider_Change --
+      ---------------------
+
+      procedure Provider_Change is
+      begin
+         if Has_Latter and then Latter.Is_Provided then
+            Add_Change (Chg, "", TTY.Italic (Latter.Release.Name.As_String));
+         end if;
+      end Provider_Change;
 
       ---------------------
       -- Up_Or_Downgrade --
@@ -295,6 +329,10 @@ package body Alire.Solutions.Diffs is
       Pinned_Or_Unpinned;
 
       Fulfil_Change;
+
+      Sharing_Change;
+
+      Provider_Change;
 
       Transitivity_Changed;
 

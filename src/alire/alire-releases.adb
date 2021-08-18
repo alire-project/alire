@@ -8,6 +8,7 @@ with Alire.Directories;
 with Alire.Defaults;
 with Alire.Errors;
 with Alire.Origins.Deployers;
+with Alire.Paths;
 with Alire.Properties.Bool;
 with Alire.Properties.Actions.Executor;
 with Alire.TOML_Load;
@@ -26,6 +27,15 @@ package body Alire.Releases is
    package Semver renames Semantic_Versioning;
 
    use all type Alire.Properties.Labeled.Labels;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (L, R : Release) return Boolean
+   is (if L.Provides (GNAT_Crate) and then R.Provides (GNAT_Crate)
+       then Sort_Compilers (L, R)
+       else Standard_Sorting (L, R));
 
    --------------------
    -- All_Properties --
@@ -128,12 +138,54 @@ package body Alire.Releases is
       Env             : Alire.Properties.Vector;
       Parent_Folder   : String;
       Was_There       : out Boolean;
-      Perform_Actions : Boolean := True)
+      Perform_Actions : Boolean := True;
+      Create_Manifest : Boolean := False;
+      Include_Origin  : Boolean := False)
    is
-      use Alire.OS_Lib.Operators;
+      use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
       Folder : constant Any_Path := Parent_Folder / This.Unique_Folder;
-      Result : Alire.Outcome;
+
+      ------------------------------
+      -- Backup_Upstream_Manifest --
+      ------------------------------
+
+      procedure Backup_Upstream_Manifest is
+         Working_Dir : Guard (Enter (Folder)) with Unreferenced;
+      begin
+         Ada.Directories.Create_Path (Paths.Working_Folder_Inside_Root);
+
+         if GNAT.OS_Lib.Is_Regular_File (Paths.Crate_File_Name) then
+            Trace.Debug ("Backing up bundled manifest file as *.upstream");
+            declare
+               Upstream_File : constant String :=
+                                 Paths.Working_Folder_Inside_Root
+                                 / (Paths.Crate_File_Name & ".upstream");
+            begin
+               Alire.Directories.Backup_If_Existing
+                 (Upstream_File,
+                  Base_Dir => Paths.Working_Folder_Inside_Root);
+               Ada.Directories.Rename
+                 (Old_Name => Paths.Crate_File_Name,
+                  New_Name => Upstream_File);
+            end;
+         end if;
+      end Backup_Upstream_Manifest;
+
+      -----------------------------------
+      -- Create_Authoritative_Manifest --
+      -----------------------------------
+
+      procedure Create_Authoritative_Manifest (Kind : Manifest.Sources) is
+      begin
+         Trace.Debug ("Generating manifest file for "
+                      & This.Milestone.TTY_Image & " with"
+                      & This.Dependencies.Leaf_Count'Img & " dependencies");
+
+         This.Whenever (Env).To_File (Folder / Paths.Crate_File_Name,
+                                      Kind);
+      end Create_Authoritative_Manifest;
+
    begin
 
       --  Deploy if the target dir is not already there
@@ -144,24 +196,31 @@ package body Alire.Releases is
                          This.Milestone.Image);
       else
          Was_There := False;
-         Trace.Detail ("About to deploy " & This.Milestone.Image);
-         Result := Alire.Origins.Deployers.Deploy (This, Folder);
-         if not Result.Success then
-            Raise_Checked_Error (Message (Result));
-         end if;
+         Put_Info ("Deploying release " & This.Milestone.TTY_Image & "...");
+         Alire.Origins.Deployers.Deploy (This, Folder).Assert;
 
          --  For deployers that do nothing, we ensure the folder exists so all
          --  dependencies leave a trace in the cache/dependencies folder, and
          --  a place from where to run their actions by default.
 
          Ada.Directories.Create_Path (Folder);
+
+         --  Backup a potentially packaged manifest, so our authoritative
+         --  manifest from the index is always used.
+
+         Backup_Upstream_Manifest;
+
+         if Create_Manifest then
+            Create_Authoritative_Manifest (if Include_Origin
+                                           then Manifest.Index
+                                           else Manifest.Local);
+         end if;
       end if;
 
-      --  Run actions on first retrieval
+      --  Run post-fetch actions on first retrieval
 
       if Perform_Actions and then not Was_There then
          declare
-            use Alire.Directories;
             Work_Dir : Guard (Enter (Folder)) with Unreferenced;
          begin
             Alire.Properties.Actions.Executor.Execute_Actions
@@ -170,6 +229,20 @@ package body Alire.Releases is
                Moment  => Post_Fetch);
          end;
       end if;
+
+   exception
+      when E : others =>
+         --  Clean up if deployment failed after the initial deployment (e.g.
+         --  during an action).
+         Log_Exception (E);
+
+         if Ada.Directories.Exists (Folder) then
+            Trace.Debug ("Cleaning up failed release deployment of "
+                         & This.Milestone.TTY_Image);
+            Directories.Force_Delete (Folder);
+         end if;
+
+         raise;
    end Deploy;
 
    ----------------
@@ -185,17 +258,22 @@ package body Alire.Releases is
       end return;
    end Forbidding;
 
-   --------------
-   -- Renaming --
-   --------------
+   ---------------
+   -- Providing --
+   ---------------
 
-   function Renaming (Base     : Release;
-                      Provides : Crate_Name) return Release is
+   function Providing (Base    : Release;
+                       Targets : Containers.Crate_Name_Sets.Set)
+                       return Release
+   is
    begin
-      return Renamed : Release := Base do
-         Renamed.Alias := +(+Provides);
+      return Result : Release := Base do
+         for Target of Targets loop
+            Result.Equivalences.Append
+              (Milestones.New_Milestone (Target, Base.Version));
+         end loop;
       end return;
-   end Renaming;
+   end Providing;
 
    ---------------
    -- Replacing --
@@ -258,10 +336,10 @@ package body Alire.Releases is
          Name      => Base.Name,
          Notes     => New_Notes,
 
-         Alias        => Base.Alias,
          Version      => Base.Version,
          Origin       => Base.Origin,
          Dependencies => Base.Dependencies,
+         Equivalences => Base.Equivalences,
          Pins         => Base.Pins,
          Forbidden    => Base.Forbidden,
          Properties   => Base.Properties,
@@ -312,11 +390,11 @@ package body Alire.Releases is
    is (Prj_Len      => Name.Length,
        Notes_Len    => Notes'Length,
        Name         => Name,
-       Alias        => +"",
        Version      => Version,
        Origin       => Origin,
        Notes        => Notes,
        Dependencies => Dependencies,
+       Equivalences => <>,
        Pins         => <>,
        Forbidden    => Conditional.For_Dependencies.Empty,
        Properties   => Properties,
@@ -345,11 +423,11 @@ package body Alire.Releases is
      (Prj_Len      => Name.Length,
       Notes_Len    => 0,
       Name         => Name,
-      Alias        => +"",
       Version      => +"0.0.0",
       Origin       => Origin,
       Notes        => "",
       Dependencies => Dependencies,
+      Equivalences => <>,
       Pins         => <>,
       Forbidden    => Conditional.For_Dependencies.Empty,
       Properties   => Properties,
@@ -596,8 +674,8 @@ package body Alire.Releases is
       --  MILESTONE
       Put_Line (R.Milestone.TTY_Image & ": " & R.TTY_Description);
 
-      if R.Provides /= R.Name then
-         Put_Line ("Provides: " & (+R.Provides));
+      if not R.Equivalences.Is_Empty then
+         Put_Line ("Provides: " & R.Equivalences.Image_One_Line);
       end if;
 
       if R.Notes /= "" then
@@ -759,6 +837,8 @@ package body Alire.Releases is
          From    => From,
          Props   => This.Properties,
          Deps    => This.Dependencies,
+         Equiv   => This.Equivalences,
+         Forbids => This.Forbidden,
          Pins    => This.Pins,
          Avail   => This.Available);
 
@@ -825,9 +905,9 @@ package body Alire.Releases is
       --  Version
       Root.Set (TOML_Keys.Version, +Semver.Image (R.Version));
 
-      --  Alias/Provides
-      if UStrings.Length (R.Alias) > 0 then
-         Root.Set (TOML_Keys.Provides, +(+R.Alias));
+      --  Provided equivalences
+      if not R.Equivalences.Is_Empty then
+         Root.Set (TOML_Keys.Provides, R.Equivalences.To_TOML);
       end if;
 
       --  Notes
@@ -870,9 +950,14 @@ package body Alire.Releases is
          end;
       end if;
 
-      --  Forbidden
+      --  Forbidden, wrapped as an array
       if not R.Forbidden.Is_Empty then
-         Root.Set (TOML_Keys.Forbidden, R.Forbidden.To_TOML);
+         declare
+            Forbid_Array : constant TOML.TOML_Value := TOML.Create_Array;
+         begin
+            Forbid_Array.Append (R.Forbidden.To_TOML);
+            Root.Set (TOML_Keys.Forbidden, Forbid_Array);
+         end;
       end if;
 
       --  Available
@@ -934,11 +1019,11 @@ package body Alire.Releases is
    is (Prj_Len      => R.Prj_Len,
        Notes_Len    => R.Notes_Len,
        Name         => R.Name,
-       Alias        => R.Alias,
        Version      => R.Version,
-       Origin       => R.Origin,
+       Origin       => R.Origin.Whenever (P),
        Notes        => R.Notes,
        Dependencies => R.Dependencies.Evaluate (P),
+       Equivalences => R.Equivalences,
        Pins         => R.Pins,
        Forbidden    => R.Forbidden.Evaluate (P),
        Properties   => R.Properties.Evaluate (P),
@@ -960,5 +1045,50 @@ package body Alire.Releases is
          return "";
       end if;
    end Long_Description;
+
+   --------------------
+   -- Sort_Compilers --
+   --------------------
+
+   function Sort_Compilers (L, R : Release) return Boolean is
+
+      -----------------
+      -- Is_External --
+      -----------------
+
+      function Is_External (This : Release) return Boolean
+      is (This.Name = GNAT_External_Crate);
+
+      ---------------
+      -- Is_Native --
+      ---------------
+
+      function Is_Native (This : Release) return Boolean is
+         use Utils;
+      begin
+         return Ends_With (This.Name.As_String, "_native");
+         --  A lil' bit of magic to recognize the native compilers
+      end Is_Native;
+
+   begin
+
+      --  External is preferred to any other compiler. This can be overridden
+      --  by explicitly selecting a compiler with `alr toolchain --select`, or
+      --  by specifying a targeted gnat_xxx compiler.
+
+      if Is_External (L) xor Is_External (R) then
+         return Is_External (R);
+      end if;
+
+      --  Native goes next in preferences (preferred to cross-compilers)
+
+      if Is_Native (L) xor Is_Native (R) then
+         return Is_Native (R);
+      end if;
+
+      --  otherwise same ordering as regular crates
+
+      return Standard_Sorting (L, R);
+   end Sort_Compilers;
 
 end Alire.Releases;

@@ -1,10 +1,38 @@
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with Alire.Containers;
+with Alire.TTY;
+
 package body Alire.Index is
+
+   package Release_Set_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps
+       (Crate_Name, Releases.Containers.Release_Set,
+        "<",        Releases.Containers."=");
+   subtype Release_Alias_Map is Release_Set_Maps.Map;
+
+   package External_Alias_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (Crate_Name,
+                                             Containers.Crate_Name_Sets.Set,
+                                             "<",
+                                             Containers.Crate_Name_Sets."=");
+   subtype External_Alias_Map is External_Alias_Maps.Map;
 
    use all type Semantic_Versioning.Version;
 
    Contents : aliased Alire.Crates.Containers.Maps.Map;
+   --  Regular mapping from crate name to its releases
+
+   Aliases  : Release_Alias_Map;
+   --  Mapping from crate name to any release that satisfies it. Currently,
+   --  releases are duplicated in memory. These two collections could be made
+   --  to share releases via some indirection or pointers.
+
+   External_Aliases : External_Alias_Map;
+   --  For external crates that provide another crate, we need to be aware
+   --  when external detection is requested. This mapping goes in the direction
+   --  Provided -> Providers.
 
    ---------
    -- Add --
@@ -48,10 +76,32 @@ package body Alire.Index is
                   Policy : Policies.For_Index_Merging :=
                     Policies.Merge_Priorizing_Existing)
    is
+
+      -----------------
+      -- Add_Aliases --
+      -----------------
+
+      procedure Add_Aliases is
+      begin
+         for Mil of Release.Provides loop
+            declare
+               Crate : Releases.Containers.Release_Set :=
+                         (if Aliases.Contains (Mil.Crate)
+                          then Aliases (Mil.Crate)
+                          else Releases.Containers.Empty_Release_Set);
+            begin
+               Crate.Include (Release);
+               Aliases.Include (Mil.Crate, Crate);
+            end;
+         end loop;
+      end Add_Aliases;
+
       Crate : Crates.Crate := Crates.New_Crate (Release.Name);
    begin
       Crate.Add (Release);
       Add (Crate, Policy);
+
+      Add_Aliases;
    end Add;
 
    --------------------------
@@ -80,14 +130,20 @@ package body Alire.Index is
       if Already_Detected.Contains (Name) then
          Trace.Debug
            ("Not redoing detection of externals for crate " & (+Name));
-      elsif not Exists (Name) then
-         Trace.Debug ("Skipping external detection for unindexed crate");
+      elsif not External_Aliases.Contains (Name) then
+         Trace.Debug ("Skipping detection for crate without externals: "
+                      & TTY.Name (Name));
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
-         for Release of Contents (Name).Externals.Detect (Name, Env) loop
-            Trace.Debug ("Adding external: " & Release.Milestone.Image);
-            Contents (Name).Add (Release);
+
+         for Provider of External_Aliases (Name) loop
+            Trace.Debug ("Detecting via provider " & TTY.Name (Provider));
+            for Release of Contents (Provider).Externals.Detect (Provider, Env)
+            loop
+               Trace.Debug ("Adding external: " & Release.Milestone.Image);
+               Add (Release);
+            end loop;
          end loop;
       end if;
    end Detect_Externals;
@@ -158,6 +214,30 @@ package body Alire.Index is
    end Find;
 
    -------------------
+   -- Has_Externals --
+   -------------------
+
+   function Has_Externals (Name : Crate_Name) return Boolean
+   is (External_Aliases.Contains (Name));
+
+   -----------------------------
+   -- Register_External_Alias --
+   -----------------------------
+
+   procedure Register_External_Alias (Provider  : Crate_Name;
+                                      Providing : Crate_Name)
+   is
+   begin
+      if External_Aliases.Contains (Providing) then
+         External_Aliases (Providing).Include (Provider);
+      else
+         External_Aliases.Insert
+           (Providing,
+            Containers.Crate_Name_Sets.To_Set (Provider));
+      end if;
+   end Register_External_Alias;
+
+   -------------------
    -- Release_Count --
    -------------------
 
@@ -169,5 +249,45 @@ package body Alire.Index is
          end loop;
       end return;
    end Release_Count;
+
+   -------------------------
+   -- Releases_Satisfying --
+   -------------------------
+
+   function Releases_Satisfying (Dep              : Dependencies.Dependency;
+                                 Env              : Properties.Vector;
+                                 Use_Equivalences : Boolean := True;
+                                 Available_Only   : Boolean := True)
+                                 return Releases.Containers.Release_Set
+   is
+      Result : Releases.Containers.Release_Set;
+   begin
+
+      --  Regular crates
+
+      if Exists (Dep.Crate) then
+         for Release of Crate (Dep.Crate).Releases loop
+            if Release.Satisfies (Dep)
+              and then (not Available_Only or else Release.Is_Available (Env))
+            then
+               Result.Insert (Release);
+            end if;
+         end loop;
+      end if;
+
+      --  And any aliases via Provides
+
+      if Use_Equivalences and then Aliases.Contains (Dep.Crate) then
+         for Release of Aliases (Dep.Crate) loop
+            if Release.Satisfies (Dep)
+              and then (not Available_Only or else Release.Is_Available (Env))
+            then
+               Result.Include (Release);
+            end if;
+         end loop;
+      end if;
+
+      return Result;
+   end Releases_Satisfying;
 
 end Alire.Index;

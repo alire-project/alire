@@ -1,31 +1,38 @@
-with Semantic_Versioning.Basic;
+with Alire.Errors;
+
 with Semantic_Versioning.Extended;
+with Semantic_Versioning.Basic;
 
-package body Alire.Containers is
+package body Alire.Releases.Containers is
 
-   ---------------
-   -- Enumerate --
-   ---------------
+   --------------------------
+   -- Contains_Or_Provides --
+   --------------------------
 
-   function Enumerate (These : Conditional.Dependencies) return Dependency_Map
+   function Contains_Or_Provides (This  : Release_Map;
+                                  Crate : Crate_Name) return Boolean
+   is (This.Contains (Crate)
+       or else
+         (for some Rel of This => Rel.Provides (Crate)));
+
+   ------------------------
+   -- Elements_Providing --
+   ------------------------
+
+   function Elements_Providing (This  : Release_Map'Class;
+                                Crate : Crate_Name)
+                                return Release_Set
    is
-
-      procedure Append (C     : in out Dependency_Map;
-                        V     : Dependencies.Dependency;
-                        Count : Ada.Containers.Count_Type := 1)
-      is
-         pragma Unreferenced (Count);
-      begin
-         C.Include (V.Crate, V);
-      end Append;
-
-      function Internal is new Conditional.For_Dependencies.Enumerate
-        (Collection => Dependency_Map,
-         Append     => Append);
-
+      Result : Release_Set;
    begin
-      return Internal (These);
-   end Enumerate;
+      for Rel of This loop
+         if Rel.Provides (Crate) then
+            Result.Include (Rel);
+         end if;
+      end loop;
+
+      return Result;
+   end Elements_Providing;
 
    ------------
    -- Insert --
@@ -59,9 +66,6 @@ package body Alire.Containers is
       return Result : Release_Map := Dst do
          for E of Src loop
             Result.Insert (E.Name, E);
-            if E.Name /= E.Provides then
-               Result.Insert (E.Provides, E);
-            end if;
          end loop;
       end return;
    end Inserting;
@@ -89,6 +93,25 @@ package body Alire.Containers is
       end return;
    end Excluding;
 
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Release_Set) return String is
+      Result : UString;
+      use UStrings;
+   begin
+      for Rel of This loop
+         if Result /= "" then
+            Append (Result, ", ");
+         end if;
+
+         Append (Result, Rel.Milestone.TTY_Image);
+      end loop;
+
+      return +Result;
+   end Image_One_Line;
+
    ---------------
    -- Including --
    ---------------
@@ -103,34 +126,47 @@ package body Alire.Containers is
       end return;
    end Including;
 
-   -----------
-   -- Merge --
-   -----------
+   ------------
+   -- Remove --
+   ------------
 
-   procedure Merge (This : in out Dependency_Map;
-                    Dep  :        Dependencies.Dependency)
+   procedure Remove (This    : in out Release_Map;
+                     Release : Releases.Release)
    is
-      use type Dependencies.Dependency;
-      use type Semantic_Versioning.Extended.Version_Set;
    begin
-      if This.Contains (Dep.Crate) then
-         declare
-            Old : constant Dependencies.Dependency := This (Dep.Crate);
-         begin
-            if Old /= Dep then
-               --  Include should work to replace the dependency, but I'm
-               --  getting a tampering error using it (?)
-               This.Delete (Dep.Crate);
-               This.Insert (Dep.Crate,
-                            Dependencies.New_Dependency
-                              (Dep.Crate,
-                               Old.Versions and Dep.Versions));
-            end if;
-         end;
+      if This.Contains (Release.Name) then
+         This.Exclude (Release.Name);
+         return;
       else
-         This.Insert (Dep.Crate, Dep);
+         for Mil of Release.Provides loop
+            if This.Contains (Mil.Crate) then
+               This.Exclude (Mil.Crate);
+               return;
+            end if;
+         end loop;
       end if;
-   end Merge;
+
+      raise Constraint_Error with Errors.Set
+        ("Release not in map: " & Release.Milestone.TTY_Image);
+   end Remove;
+
+   ----------------
+   -- Satisfying --
+   ----------------
+
+   function Satisfying (This : Release_Set;
+                        Dep  : Alire.Dependencies.Dependency)
+                        return Release_Set
+   is
+   begin
+      return Result : Release_Set do
+         for Release of This loop
+            if Release.Satisfies (Dep) then
+               Result.Include (Release);
+            end if;
+         end loop;
+      end return;
+   end Satisfying;
 
    ---------------------
    -- To_Dependencies --
@@ -141,18 +177,15 @@ package body Alire.Containers is
    is
       package Semver renames Semantic_Versioning;
       use Conditional.For_Dependencies;
-      use Crate_Release_Maps;
    begin
       return Deps : Conditional.Dependencies do
          for I in Map.Iterate loop
-            if Key (I) = Map (I).Provides then -- Avoid duplicates
-               Deps :=
-                 Deps and
-                 Conditional.New_Dependency
-                   (Map (I).Name,
-                    Semver.Extended.To_Extended
-                      (Semver.Basic.Exactly (Map (I).Version)));
-            end if;
+            Deps :=
+              Deps and
+              Conditional.New_Dependency
+                (Map (I).Name,
+                 Semver.Extended.To_Extended
+                   (Semver.Basic.Exactly (Map (I).Version)));
          end loop;
       end return;
    end To_Dependencies;
@@ -173,7 +206,7 @@ package body Alire.Containers is
    --------------
 
    function Whenever (Map   : Release_Map;
-                      Props : Properties.Vector) return Release_Map is
+                      Props : Alire.Properties.Vector) return Release_Map is
    begin
       return Result : Release_Map do
          for Release of Map loop
@@ -182,4 +215,4 @@ package body Alire.Containers is
       end return;
    end Whenever;
 
-end Alire.Containers;
+end Alire.Releases.Containers;

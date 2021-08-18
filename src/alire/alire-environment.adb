@@ -10,8 +10,9 @@ with Alire.OS_Lib;
 with Alire.GPR;
 with Alire.Properties.Scenarios;
 with Alire.Releases;
-with Alire.Roots;
+with Alire.Roots.Editable;
 with Alire.Solutions;
+with Alire.Toolchains.Solutions;
 with Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Platform;
@@ -88,8 +89,14 @@ package body Alire.Environment is
    procedure Load (This : in out Context;
                    Root : in out Alire.Roots.Root)
    is
-      Solution : constant Solutions.Solution := Root.Solution;
+      Solution : constant Solutions.Solution :=
+                   Toolchains.Solutions.Add_Toolchain (Root.Solution);
+      Tool_Root : Roots.Editable.Root :=
+                    Roots.Editable.New_Root (Root);
+      --  We use a copy of the base root to add the toolchain elements that
+      --  might be missing from its solution
    begin
+      Tool_Root.Set (Solution);
 
       --  Load platform environment
       Alire.Platform.Load_Environment (This);
@@ -120,7 +127,8 @@ package body Alire.Environment is
       --  supplied project files.
 
       declare
-         Sorted_Paths : constant Alire.Utils.String_Set := Root.Project_Paths;
+         Sorted_Paths : constant Alire.Utils.String_Set :=
+                          Tool_Root.Current.Project_Paths;
       begin
          if not Sorted_Paths.Is_Empty then
             for Path of Sorted_Paths loop
@@ -132,7 +140,7 @@ package body Alire.Environment is
       --  Custom definitions provided by each release
 
       for Rel of Solution.Releases.Including (Root.Release) loop
-         This.Load (Root            => Root,
+         This.Load (Root            => Tool_Root,
                     Crate           => Rel.Name);
       end loop;
 
@@ -144,20 +152,22 @@ package body Alire.Environment is
    ----------
 
    procedure Load (This            : in out Context;
-                   Root            : in out Roots.Root;
+                   Root            : in out Roots.Editable.Root;
                    Crate           : Crate_Name)
    is
-      Rel    : constant Releases.Release := Root.Release (Crate);
+      Env    : constant Properties.Vector := Root.Current.Environment;
+      Rel    : constant Releases.Release := Root.Current.Release (Crate);
       Origin : constant String := Rel.Name_Str;
    begin
       Trace.Debug ("Loading environment for release: " & TTY.Name (Crate));
 
       --  Environment variables defined in the crate manifest
-      for Act of Rel.Environment (Root.Environment) loop
+      for Act of Rel.Environment (Env) loop
          begin
             declare
                Value : constant String :=
-                 Formatting.Format (Root.Release_Base (Rel.Name), Act.Value);
+                       Formatting.Format (Root.Current.Release_Base (Rel.Name),
+                                          Act.Value);
             begin
                case Act.Action is
 
@@ -184,7 +194,7 @@ package body Alire.Environment is
       end loop;
 
       --  Environment variables for GPR external scenario variables
-      for Property of Rel.On_Platform_Properties (Root.Environment) loop
+      for Property of Rel.On_Platform_Properties (Env) loop
          if Property in Alire.Properties.Scenarios.Property'Class then
             declare
                use all type Alire.GPR.Variable_Kinds;

@@ -46,7 +46,7 @@ function _alr_completion() {
     # Command-specific completions
     $found &&\
     case $cmd in
-        get | show)
+        get | show | toolchain)
             # Suggest crate names
             COMPREPLY+=($(compgen -W "$_alr_crates" -- $curr))
             ;;
