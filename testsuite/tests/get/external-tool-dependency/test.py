@@ -28,8 +28,8 @@ for elt in dir_content:
 # Check folder contents
 compare(dir_content,
         ['main_1.0.0_filesystem/alire',
-         'main_1.0.0_filesystem/alire.lock',
          'main_1.0.0_filesystem/alire.toml',
+         'main_1.0.0_filesystem/alire/alire.lock',
          'main_1.0.0_filesystem/alire/cache',
          'main_1.0.0_filesystem/alire/cache/dependencies',
          make_dep_dir,

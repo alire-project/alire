@@ -126,6 +126,7 @@ package body Alire.Lockfiles is
    begin
       Trace.Debug ("Dumping lockfile contents to " & Filename);
 
+      Directories.Create_Tree (Directories.Parent (Filename));
       Create (File, Out_File, Filename);
       Put_Line (File,
                 "# THIS IS A MACHINE-GENERATED FILE. DO NOT EDIT MANUALLY.");

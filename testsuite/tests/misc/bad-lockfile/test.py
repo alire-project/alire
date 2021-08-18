@@ -2,7 +2,7 @@
 A test that a bad lockfile is recovered from (losing pins)
 """
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_lockfile
 
 import os
 import re
@@ -14,16 +14,15 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 BADLINE = "SHOULND'T BE HERE"
-FILE = "alire.lock"
 
-with open(FILE, "a") as myfile:
+with open(alr_lockfile(), "a") as myfile:
     myfile.write(BADLINE)
 
 # Run a command that requires the lockfile
 p = run_alr('show')
 
 # Now the lockfile should be recreated and proper, so check no bad line:
-with open(FILE, 'r') as myfile:
+with open(alr_lockfile(), 'r') as myfile:
         for line in myfile:
             assert line != BADLINE, "Unexpected line found in file"
 

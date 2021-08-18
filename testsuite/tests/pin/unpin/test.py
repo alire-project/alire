@@ -4,7 +4,7 @@ Test unpinning
 
 import os
 
-from drivers.alr import run_alr, alr_pin, alr_unpin
+from drivers.alr import run_alr, alr_pin, alr_unpin, alr_lockfile
 from drivers.asserts import assert_eq
 from drivers.helpers import check_line_in
 
@@ -27,7 +27,7 @@ p = run_alr('pin')
 assert_eq('libhello 1.0.0\n', p.out)
 
 # Delete lockfile and verify the pin has survived
-os.remove('alire.lock')
+os.remove(alr_lockfile())
 p = run_alr('pin')
 assert_eq('libhello 1.0.0\n', p.out)
 
