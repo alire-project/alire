@@ -211,7 +211,7 @@ def init_local_crate(name="xxx", binary=True, enter=True):
 
 
 def alr_lockfile():
-    return "alire.lock"
+    return os.path.join("alire", "alire.lock")
 
 
 def alr_manifest():
