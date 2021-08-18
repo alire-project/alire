@@ -6,6 +6,23 @@ stay on top of `alr` new features.
 
 ## Release `1.1`
 
+### Conflicting releases
+
+PR [#781](https://github.com/alire-project/alire/pull/781)
+
+For releases that have known incompatibilities (duplicated source names,
+drop-in equivalent crates), it is now possible to express this information
+through a `forbids` table array, with the same syntax as dependencies. For
+example:
+
+```
+[[forbids]]
+conflicting_crate = "^1"
+```
+
+Releases related by a `forbids` property will not appear simultaneously as
+dependencies in a solution, as the solver will discard these combinations.
+
 ### Toolchain management
 
 PR [#775](https://github.com/alire-project/alire/pull/775)
