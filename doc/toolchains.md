@@ -14,7 +14,7 @@ native or cross-compiler.
 
 The native compiler for each platform is always `gnat_native`, whereas
 cross-compilers follow the naming convention `gnat_<target>` (e.g.,
-`gnat-riscv_elf`). Alire will only offer to install valid cross-compilers for
+`gnat_riscv_elf`). Alire will only offer to install valid cross-compilers for
 the host platform.
 
 ## Identifying available compilers
