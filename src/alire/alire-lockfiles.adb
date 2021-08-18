@@ -2,6 +2,7 @@ with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Directories;
+with Alire.Paths;
 with Alire.TOML_Load;
 
 with TOML.File_IO;
@@ -27,7 +28,7 @@ package body Alire.Lockfiles is
    ---------------
 
    function File_Name (Root_Dir : Any_Path) return Any_Path
-   is (Root_Dir / "alire.lock");
+   is (Root_Dir / Paths.Working_Folder_Inside_Root / Simple_Name);
 
    ---------------
    -- From_TOML --
