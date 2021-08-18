@@ -26,7 +26,10 @@ package Alr.Commands.Toolchain is
        .New_Line
        .Append
          ("Use --select without arguments to run the assistant to "
-          & "select the default toolchain for this configuration.")
+          & "select the default toolchain for this configuration. "
+          & "Adding --local will instead make the selection apply "
+          & "only to the workspace (overridding a possible "
+          & "configuration-wide selection).")
        .New_Line
        .Append
          ("Specify --install/--uninstall and a crate name with optional "
@@ -48,12 +51,14 @@ package Alr.Commands.Toolchain is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[-u|--uninstall] [-i|--install crate[version set]] | --select");
+   is ("[-u|--uninstall] [-i|--install crate[version set]] |"
+       & " --select [--local]");
 
 private
 
    type Command is new Commands.Command with record
       Install   : aliased Boolean := False;
+      Local     : aliased Boolean := False;
       S_Select  : aliased Boolean := False;
       Uninstall : aliased Boolean := False;
    end record;

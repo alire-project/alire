@@ -28,7 +28,7 @@ package body Alire.Toolchains is
    -- Assistant --
    ---------------
 
-   procedure Assistant is
+   procedure Assistant (Level : Config.Level) is
       package Release_Vectors is new
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
@@ -152,7 +152,7 @@ package body Alire.Toolchains is
 
          --  Store tool milestone after successful deployment
 
-         Config.Edit.Set (Path  => Config.Edit.Filepath (Config.Global),
+         Config.Edit.Set (Path  => Config.Edit.Filepath (Level),
                           Key   => Tool_Key (Release.Name),
                           Value => Release.Milestone.Image);
 
@@ -176,7 +176,7 @@ package body Alire.Toolchains is
 
             --  Clean up stored version
 
-            Config.Edit.Unset (Path  => Config.Edit.Filepath (Config.Global),
+            Config.Edit.Unset (Path  => Config.Edit.Filepath (Level),
                                Key   => Tool_Key (Crate));
 
          else
@@ -246,7 +246,7 @@ package body Alire.Toolchains is
 
       --  The user has already chosen, so disable the assistant
 
-      Config.Edit.Set (Config.Edit.Filepath (Config.Global),
+      Config.Edit.Set (Config.Edit.Filepath (Level),
                        Config.Keys.Toolchain_Assistant,
                        "false");
 
@@ -279,8 +279,10 @@ package body Alire.Toolchains is
 
    procedure Unconfigure (Crate : Crate_Name) is
    begin
-      Config.Edit.Unset (Config.Edit.Filepath (Config.Global),
-                         Tool_Key (Crate));
+      for Level in Config.Level loop
+         Config.Edit.Unset (Config.Edit.Filepath (Level),
+                            Tool_Key (Crate));
+      end loop;
    end Unconfigure;
 
 end Alire.Toolchains;
