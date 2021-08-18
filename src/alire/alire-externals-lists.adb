@@ -12,21 +12,21 @@ package body Alire.Externals.Lists is
    function Detect (This : List;
                     Name : Crate_Name;
                     Env  : Properties.Vector)
-                    return Containers.Release_Set
+                    return Releases.Containers.Release_Set
    is
    begin
 
       --  Avoid the log message if there's nothing to detect
 
       if This.Is_Empty then
-         return Containers.Release_Sets.Empty_Set;
+         return (Releases.Containers.Release_Sets.Empty_Set with null record);
       end if;
 
       declare
          Busy : Simple_Logging.Ongoing := Simple_Logging.Activity
            ("Looking for external crate: " & (+Name));
       begin
-         return Detected : Containers.Release_Set do
+         return Detected : Releases.Containers.Release_Set do
             for External of This loop
                if External.Available.Is_Available (Env) then
                   Trace.Debug ("Attempting detection of available external: "

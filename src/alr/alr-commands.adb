@@ -8,7 +8,6 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Alire_Early_Elaboration;
-with Alire;
 with Alire.Config.Edit;
 with Alire.Errors;
 with Alire.Features.Index;
@@ -17,6 +16,7 @@ with Alire.Paths;
 with Alire.Platforms;
 with Alire.Root;
 with Alire.Solutions;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
@@ -37,6 +37,7 @@ with Alr.Commands.Run;
 with Alr.Commands.Search;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
+with Alr.Commands.Toolchain;
 with Alr.Commands.Update;
 with Alr.Commands.Version;
 with Alr.Commands.Withing;
@@ -61,25 +62,26 @@ package body Alr.Commands is
    type Command_Access is access Command'Class;
 
    Dispatch_Table : constant array (Cmd_Names) of Command_Access :=
-                      (Cmd_Build    => new Build.Command,
-                       Cmd_Clean    => new Clean.Command,
-                       Cmd_Config   => new Config.Command,
-                       Cmd_Dev      => new Dev.Command,
-                       Cmd_Edit     => new Edit.Command,
-                       Cmd_Get      => new Get.Command,
-                       Cmd_Help     => new Help.Command,
-                       Cmd_Index    => new Index.Command,
-                       Cmd_Init     => new Init.Command,
-                       Cmd_Pin      => new Pin.Command,
-                       Cmd_Printenv => new Printenv.Command,
-                       Cmd_Publish  => new Publish.Command,
-                       Cmd_Run      => new Run.Command,
-                       Cmd_Search   => new Search.Command,
-                       Cmd_Show     => new Show.Command,
-                       Cmd_Test     => new Test.Command,
-                       Cmd_Update   => new Update.Command,
-                       Cmd_Version  => new Version.Command,
-                       Cmd_With     => new Withing.Command);
+                      (Cmd_Build     => new Build.Command,
+                       Cmd_Clean     => new Clean.Command,
+                       Cmd_Config    => new Config.Command,
+                       Cmd_Dev       => new Dev.Command,
+                       Cmd_Edit      => new Edit.Command,
+                       Cmd_Get       => new Get.Command,
+                       Cmd_Help      => new Help.Command,
+                       Cmd_Index     => new Index.Command,
+                       Cmd_Init      => new Init.Command,
+                       Cmd_Pin       => new Pin.Command,
+                       Cmd_Printenv  => new Printenv.Command,
+                       Cmd_Publish   => new Publish.Command,
+                       Cmd_Run       => new Run.Command,
+                       Cmd_Search    => new Search.Command,
+                       Cmd_Show      => new Show.Command,
+                       Cmd_Test      => new Test.Command,
+                       Cmd_Toolchain => new Toolchain.Command,
+                       Cmd_Update    => new Update.Command,
+                       Cmd_Version   => new Version.Command,
+                       Cmd_With      => new Withing.Command);
 
    Command_Line_Config_Path : aliased GNAT.OS_Lib.String_Access;
 
@@ -545,6 +547,8 @@ package body Alr.Commands is
       Manual_Only : constant Boolean :=
                       Alire.Config.Get
                         (Alire.Config.Keys.Update_Manually, False);
+
+      package Conf renames Alire.Config;
    begin
 
       --  If the root has been already loaded, then all following checks have
@@ -553,6 +557,11 @@ package body Alr.Commands is
       if Cmd.Optional_Root.Is_Valid then
          Trace.Debug ("Workspace is valid [already loaded]");
          return;
+      end if;
+
+      if Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True) then
+         Cmd.Requires_Full_Index;
+         Alire.Toolchains.Assistant;
       end if;
 
       Trace.Debug ("Workspace is being checked and loaded for the first time");

@@ -2,10 +2,11 @@ with Ada.Containers;
 
 with Alire.Config;
 with Alire.Crates;
-with Alire.Dependencies.Containers;
 with Alire.Dependencies.Diffs;
 with Alire.Dependencies.Graphs;
+with Alire.Errors;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Utils.Tables;
@@ -21,6 +22,284 @@ package body Alire.Solutions is
 
    use type Ada.Containers.Count_Type;
    use type Semantic_Versioning.Version;
+
+   ----------------------
+   -- All_Dependencies --
+   ----------------------
+
+   function All_Dependencies (This : Solution) return State_Map
+   is (This.Dependencies);
+
+   -----------------
+   -- Composition --
+   -----------------
+
+   function Composition (This : Solution) return Compositions
+   is (if not This.Solved then
+          Unsolved
+       elsif This.Dependencies.Is_Empty then
+          Empty
+       elsif (for all Dep of This.Dependencies =>
+                 Dep.Is_Solved or else Dep.Is_Linked)
+       then
+          Releases
+       elsif (for all Dep of This.Dependencies => Dep.Is_Hinted) then
+          Hints
+       elsif (for some Dep of This.Dependencies => Dep.Is_Missing) then
+          Partial
+       else
+          Mixed);
+
+   ----------------------
+   -- Contains_Release --
+   ----------------------
+
+   function Contains_Release (This  : Solution;
+                              Crate : Crate_Name) return Boolean
+   is (This.Depends_On (Crate) and then This.State (Crate).Is_Solved);
+
+   ----------------
+   -- Dependency --
+   ----------------
+
+   function Dependency (This  : Solution;
+                        Crate : Crate_Name)
+                        return Alire.Dependencies.Dependency
+   is (This.Dependencies (Crate).As_Dependency);
+
+   ------------------
+   -- Depending_On --
+   ------------------
+
+   function Depending_On (This : Solution;
+                          Dep  : Dependencies.Dependency)
+                          return Solution
+   is (Solution'(Solved       => True,
+                 Dependencies => This.Dependencies.Merging (Dep)));
+
+   ----------------
+   -- Depends_On --
+   ----------------
+
+   function Depends_On (This : Solution;
+                        Name : Crate_Name) return Boolean
+   is (This.Dependencies.Contains (Name)
+       or else
+         (for some Dep of This.Dependencies =>
+             Dep.Has_Release and then Dep.Release.Provides (Name)));
+
+   ----------------
+   -- Depends_On --
+   ----------------
+
+   function Depends_On (This    : Solution;
+                        Release : Alire.Releases.Release) return Boolean
+   is (for some Dep of This.Dependencies => Release.Provides (Dep.Crate));
+
+   ------------------------------
+   -- Depends_On_Specific_GNAT --
+   ------------------------------
+
+   function Depends_On_Specific_GNAT (This : Solution) return Boolean
+   is (This.Releases.Contains_Or_Provides (GNAT_Crate) and then
+       This.Releases.Element_Providing (GNAT_Crate).Name /= GNAT_Crate);
+
+   ----------------------------
+   -- Empty_Invalid_Solution --
+   ----------------------------
+
+   function Empty_Invalid_Solution return Solution
+   is (Solved => False,
+       others => <>);
+
+   --------------------------
+   -- Empty_Valid_Solution --
+   --------------------------
+
+   function Empty_Valid_Solution return Solution
+   is (Solved => True,
+       others => <>);
+
+   -------------
+   -- Hinting --
+   -------------
+
+   function Hinting (This : Solution;
+                     Dep  : Dependencies.Dependency)
+                     return Solution
+   is (if This.Depends_On (Dep.Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (This.State (Dep.Crate).Hinting))
+       else (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (States.New_State (Dep).Hinting)));
+
+   -----------
+   -- Hints --
+   -----------
+
+   function Hints (This : Solution) return Dependency_Map
+   is (This.Dependencies_That (States.Is_Hinted'Access));
+
+   ------------------
+   -- Is_Attempted --
+   ------------------
+
+   function Is_Attempted (This : Solution) return Boolean
+   is (This.Composition /= Unsolved);
+
+   -----------------
+   -- Is_Complete --
+   -----------------
+
+   function Is_Complete (This : Solution) return Boolean
+   is (This.Composition <= Releases);
+
+   -----------
+   -- Links --
+   -----------
+
+   function Links (This : Solution) return Dependency_Map
+   is (This.Dependencies_That (States.Is_Linked'Access));
+
+   ------------
+   -- Misses --
+   ------------
+
+   function Misses (This : Solution) return Dependency_Map
+   is (This.Dependencies_That (States.Is_Missing'Access));
+
+   -------------
+   -- Missing --
+   -------------
+
+   function Missing (This : Solution;
+                     Dep  : Dependencies.Dependency)
+                     return Solution
+   is (if This.Depends_On (Dep.Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (This.State (Dep.Crate).Missing))
+       else (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including (States.New_State (Dep).Missing)));
+
+   -------------
+   -- Missing --
+   -------------
+
+   function Missing (This  : Solution;
+                     Crate : Crate_Name)
+                     return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Missing))
+       else This);
+
+   -------------
+   -- Pinning --
+   -------------
+
+   function Pinning (This    : Solution;
+                     Crate   : Crate_Name;
+                     Version : Semantic_Versioning.Version)
+                     return Solution
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including
+         (This.Dependencies (Crate).Pinning (Version)));
+
+   --------------
+   -- Provides --
+   --------------
+
+   function Provides (This    : Solution;
+                      Release : Alire.Releases.Release)
+                      return Boolean
+   is (for some Solved of This.Releases => Solved.Provides (Release));
+
+   --------------
+   -- Required --
+   --------------
+
+   function Required (This : Solution) return State_Map'Class
+   is (This.Dependencies);
+
+   ---------------
+   -- Resetting --
+   ---------------
+
+   function Resetting (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (This.Missing (Crate).User_Unpinning (Crate));
+
+   -------------
+   -- Setting --
+   -------------
+
+   function Setting (This         : Solution;
+                     Crate        : Crate_Name;
+                     Transitivity : States.Transitivities)
+                     return Solution
+   is (Solved       => True,
+       Dependencies =>
+          This.Dependencies.Including
+         (This.Dependencies (Crate).Setting (Transitivity)));
+
+   ---------------
+   -- Unlinking --
+   ---------------
+
+   function Unlinking (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unlinking))
+       else This);
+
+   ---------------
+   -- Unpinning --
+   ---------------
+
+   function Unpinning (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unpinning))
+       else This);
+
+   ---------------
+   -- Unsolving --
+   ---------------
+
+   function Unsolving (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is (if This.Dependencies.Contains (Crate)
+       then (Solved       => True,
+             Dependencies =>
+                This.Dependencies.Including
+               (This.Dependencies (Crate).Unlinking.Unpinning.Missing))
+       else This);
+
+   --------------------
+   -- User_Unpinning --
+   --------------------
+
+   function User_Unpinning (This  : Solution;
+                            Crate : Crate_Name)
+                            return Solution
+   is (This.Unpinning (Crate).Unlinking (Crate));
 
    -----------------------
    -- Dependencies_That --
@@ -114,26 +393,44 @@ package body Alire.Solutions is
                      Release : Alire.Releases.Release;
                      Env     : Properties.Vector)
                      return Boolean
-   --  First check stored releases' forbids against new release, then check new
-   --  release's forbids agains solution releases.
-   is ((for some Rel of This.Releases =>
-          (for some Dep of Rel.Forbidden (Env) =>
+   is (
+       --  Some of the releases in the solution forbid this one release
+       (for some Solved of This.Releases =>
+          (for some Dep of Solved.Forbidden (Env) =>
                 Release.Satisfies (Dep.Value))
         or else
+        --  The candidate release forbids something in the solution
           (for some Dep of Release.Forbidden (Env) =>
-               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value)))));
+               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))))
+      );
 
    ---------------
    -- Including --
    ---------------
 
-   function Including (This           : Solution;
-                       Release        : Alire.Releases.Release;
-                       Env            : Properties.Vector;
-                       Add_Dependency : Boolean := False)
-                       return Solution
+   function Including
+     (This           : Solution;
+      Release        : Alire.Releases.Release;
+      Env            : Properties.Vector;
+      For_Dependency : Optional.Crate_Name := Optional.Crate_Names.Empty;
+      Add_Dependency : Boolean := False;
+      Shared         : Boolean := False)
+      return Solution
    is
+      Dep_Name : constant Crate_Name := (if Add_Dependency
+                                         then Release.Name
+                                         else For_Dependency.Value);
    begin
+
+      --  Check that there's no conflict with current solution
+
+      if This.Forbids (Release, Env) then
+         --  The solver should take care, so this is an unexpected error
+         raise Program_Error with
+           "release " & Release.Milestone.TTY_Image
+           & " is forbidden by solution";
+      end if;
+
       return Result : Solution := This do
          if Add_Dependency and then not This.Depends_On (Release.Name) then
             Result := Result.Depending_On (Release.To_Dependency.Value);
@@ -143,17 +440,27 @@ package body Alire.Solutions is
 
          Result.Dependencies :=
            Result.Dependencies.Including
-             (Result.State (Release.Name).Solving (Release.Whenever (Env)));
+             (Result.State (Dep_Name)
+                    .Solving (Release.Whenever (Env),
+                              Shared => Shared));
          --  TODO: remove this Whenever once dynamic expr can be exported
 
-         --  Check that there's no conflict with current solution
+         --  In addition, mark as solved other deps satisfied via provides
 
-         if Result.Forbids (Release, Env) then
-            --  The solver should take care, so this is an unexpected error
-            raise Program_Error with
-              "release " & Release.Milestone.TTY_Image
-              & " is forbidden by solution";
-         end if;
+         for Dep of This.Dependencies loop
+            if Dep.Crate /= Dep_Name
+              and then not Dep.Is_Solved
+              and then Release.Satisfies (Dep)
+            then
+               Trace.Debug
+                 ("Marking " & Dep.TTY_Image & " as solved colaterally by "
+                  & Release.Milestone.TTY_Image);
+               Result.Dependencies :=
+                 Result.Dependencies.Including
+                   (This.State (Dep.Crate)
+                        .Solving (Release.Whenever (Env), Shared => Shared));
+            end if;
+         end loop;
 
       end return;
    end Including;
@@ -180,10 +487,10 @@ package body Alire.Solutions is
 
          for Rel of This.Releases loop
             if Than.Contains_Release (Rel.Name) then
-               if Than.Releases.Element (Rel.Name).Version < Rel.Version then
+               if Than.Release_Providing (Rel.Name).Version < Rel.Version then
                   return Better;
                elsif
-                 Rel.Version < Than.Releases.Element (Rel.Name).Version
+                 Rel.Version < Than.Release_Providing (Rel.Name).Version
                then
                   return Worse;
                end if;
@@ -302,31 +609,6 @@ package body Alire.Solutions is
           This.Dependencies.Including
             (This.State (Crate).Linking (Link)));
 
-   ------------------
-   -- New_Solution --
-   ------------------
-
-   function New_Solution
-     (Env      : Properties.Vector := Properties.No_Properties;
-      Releases : Release_Map       := Containers.Empty_Release_Map;
-      Direct   : Dependency_Map    := Containers.Empty_Dependency_Map)
-      return Solution
-   is
-   begin
-      return This : Solution := (Solved => True,
-                                 others => <>)
-      do
-         for Rel of Releases loop
-            This := This.Including (Rel, Env, Add_Dependency => True);
-         end loop;
-
-         for Dep of Direct loop
-            This := This.Depending_On (Dep);
-            This.Set (Dep.Crate, Dependencies.States.Direct);
-         end loop;
-      end return;
-   end New_Solution;
-
    ---------------
    -- Link_Pins --
    ---------------
@@ -418,15 +700,19 @@ package body Alire.Solutions is
       if not This.Releases.Is_Empty then
          Trace.Log ("Dependencies (solution):", Level);
 
-         for Rel of This.Releases loop
-            declare
-               Dep : Dependencies.States.State renames This.State (Rel.Name);
-            begin
+         for Dep of This.Dependencies loop
+            if Dep.Has_Release then
                Trace.Log
                  ("   "
-                  & Rel.Milestone.TTY_Image
+                  & TTY.Name (Dep.Crate) & "="
+                  & TTY.Version (Dep.Release.Version.Image)
+                  & (if Dep.Crate /= Dep.Release.Name -- provided by
+                     then " (" & TTY.Italic (TTY.Name (Dep.Release.Name)) & ")"
+                     else "")
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
+                     elsif Dep.Is_Shared
+                     then TTY.Emph (" (installed)")
                      else "")
                   & (if Detailed
                      then " (origin: "
@@ -437,11 +723,12 @@ package body Alire.Solutions is
                                           & Dep.Link.TTY_URL_With_Reference
                                               (Detailed)
                                      else "") -- no remote
-                             else Utils.To_Lower_Case (Rel.Origin.Kind'Img))
+                             else Utils.To_Lower_Case
+                               (Dep.Release.Origin.Kind'Img))
                           & ")" -- origin completed
                      else ""),   -- no details
                   Level);
-            end;
+            end if;
          end loop;
       end if;
 
@@ -565,11 +852,13 @@ package body Alire.Solutions is
          for Dep of This.Hints loop
             Trace.Warning ("   " & Dep.Image);
 
-            for Hint of Index.Crate (Dep.Crate)
-                             .Externals.Hints (Dep.Crate, Env)
-            loop
-               Trace.Warning ("      Hint: " & Hint);
-            end loop;
+            if Index.All_Crates.Contains (Dep.Crate) then
+               for Hint of Index.Crate (Dep.Crate)
+                 .Externals.Hints (Dep.Crate, Env)
+               loop
+                  Trace.Warning ("      Hint: " & Hint);
+               end loop;
+            end if;
          end loop;
 
          Trace.Warning
@@ -666,7 +955,7 @@ package body Alire.Solutions is
                   --  For a dependency solved by a release, print exact
                   --  version. Otherwise print the state of the dependency.
                   & (if This.State (Dep.Crate).Has_Release
-                    then This.State (Dep.Crate).Release.Milestone.TTY_Image
+                    then This.State (Dep.Crate).Milestone_Image
                     else This.State (Dep.Crate).TTY_Image)
 
                   --  And dependency that introduces the crate in the solution
@@ -711,6 +1000,7 @@ package body Alire.Solutions is
       Table
         .Append (TTY.Bold ("CRATE"))
         .Append (TTY.Bold ("DEPENDENCY"))
+        .Append (TTY.Bold ("PROVIDER"))
         .Append (TTY.Bold ("SOLVED"))
         .Append (TTY.Bold ("LATEST"))
         .New_Row;
@@ -727,6 +1017,12 @@ package body Alire.Solutions is
             Table.Append (TTY.Version (Dep.Versions.Image));
          end if;
 
+         if Dep.Has_Release and then Dep.Crate /= Dep.Release.Name then
+            Table.Append (TTY.Italic (Dep.Release.Name.As_String));
+         else
+            Table.Append ("");
+         end if;
+
          Index.Detect_Externals (Dep.Crate, Root.Environment);
          --  Detect externals for the crate, in case they add more versions
 
@@ -734,11 +1030,12 @@ package body Alire.Solutions is
             Latest_Known : constant Boolean :=
                              Index.Exists (Dep.Crate) and then
                              not Index.Crate (Dep.Crate).Releases.Is_Empty;
-            Latest       : constant Containers.Release_H :=
+            Latest       : constant Alire.Releases.Containers.Release_H :=
                              (if Latest_Known
-                              then Containers.To_Release_H
+                              then Alire.Releases.Containers.To_Release_H
                                 (Index.Crate (Dep.Crate).Releases.Last_Element)
-                              else Containers.Release_Holders.Empty_Holder);
+                              else Alire.Releases.Containers.Release_Holders
+                                                            .Empty_Holder);
          begin
 
             --  Print release version, colored according to being latest
@@ -790,6 +1087,51 @@ package body Alire.Solutions is
       end return;
    end Releases;
 
+   --------------------------
+   -- Dependency_Providing --
+   --------------------------
+
+   function Dependency_Providing (This  : Solution;
+                                  Crate : Crate_Name)
+                                  return States.State
+   is
+   begin
+      for Dep of This.Dependencies loop
+         if Dep.Has_Release and then Dep.Release.Provides (Crate) then
+            return Dep;
+         end if;
+      end loop;
+
+      raise Program_Error with "Should not be reached due to preconditions";
+   end Dependency_Providing;
+
+   -----------------------
+   -- Release_Providing --
+   -----------------------
+
+   function Release_Providing (This  : Solution;
+                               Crate : Crate_Name)
+                               return Alire.Releases.Release
+   is (This.Dependency_Providing (Crate).Release);
+
+   -----------------------
+   -- Release_Providing --
+   -----------------------
+
+   function Release_Providing (This    : Solution;
+                               Release : Alire.Releases.Release)
+                               return Alire.Releases.Release
+   is
+   begin
+      for Rel of This.Releases loop
+         if Rel.Provides (Release) then
+            return Rel;
+         end if;
+      end loop;
+
+      raise Program_Error with "Should not be reached due to precondition";
+   end Release_Providing;
+
    ---------
    -- Set --
    ---------
@@ -803,6 +1145,53 @@ package body Alire.Solutions is
         This.Dependencies.Including
           (This.State (Crate).Setting (Transitivity));
    end Set;
+
+   -----------
+   -- State --
+   -----------
+
+   function State (This  : Solution;
+                   Crate : Crate_Name)
+                   return Dependency_State
+   is
+   begin
+      if This.Dependencies.Contains (Crate) then
+         return This.Dependencies (Crate);
+      end if;
+
+      for Dep of This.Dependencies loop
+         if Dep.Has_Release and then Dep.Release.Provides (Dep.Crate) then
+            return Dep;
+         end if;
+      end loop;
+
+      raise Program_Error with Errors.Set
+        ("No dependency in solution matches crate " & TTY.Name (Crate));
+   end State;
+
+   -----------
+   -- State --
+   -----------
+
+   function State (This    : Solution;
+                   Release : Alire.Releases.Release)
+                   return Dependency_State
+   is
+   begin
+      if This.Dependencies.Contains (Release.Name) then
+         return This.Dependencies (Release.Name);
+      end if;
+
+      for Dep of This.Dependencies loop
+         if Release.Provides (Dep.Crate) then
+            return Dep;
+         end if;
+      end loop;
+
+      raise Program_Error with Errors.Set
+        ("No dependency in solution matches release "
+         & Release.Milestone.TTY_Image);
+   end State;
 
    ---------------
    -- With_Pins --

@@ -14,6 +14,9 @@ package Alire.Milestones with Preelaborate is
                            Version : Semantic_Versioning.Version)
                            return Milestone;
 
+   function New_Milestone (Image : String) return Milestone;
+   --  Attempt to parse a valid crate=version milestone
+
    function Crate (M : Milestone) return Crate_Name;
 
    function Version (M : Milestone) return Semantic_Versioning.Version;
@@ -42,7 +45,12 @@ private
    function New_Milestone (Name    : Crate_Name;
                            Version : Semantic_Versioning.Version)
                            return Milestone
-     is (Name.Length, Name, Version);
+   is (Name.Length, Name, Version);
+
+   function New_Milestone (Image : String) return Milestone
+   is (New_Milestone
+       (Name    => To_Name (Utils.Head (Image, '=')),
+        Version => Semantic_Versioning.New_Version (Utils.Tail (Image, '='))));
 
    function Crate (M : Milestone) return Crate_Name is (M.Name);
 

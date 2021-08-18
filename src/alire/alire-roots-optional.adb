@@ -91,7 +91,7 @@ package body Alire.Roots.Optional is
    function Search_Root (From : Any_Path) return Optional.Root
    is (Detect_Root
        (Directories.Detect_Root_Path
-        (Ada.Directories.Full_Name (From))));
+          (Ada.Directories.Full_Name (From))));
 
    ---------------
    -- Is_Broken --

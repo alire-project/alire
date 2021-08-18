@@ -117,32 +117,4 @@ private
    function Path (This : URL) return String
    is (U.Extract (This, U.Path));
 
-   ------------
-   -- Scheme --
-   ------------
-
-   function Scheme (This : URL) return Schemes
-   is (if U.Scheme (This) = "" then
-          None
-       elsif L (U.Scheme (This)) = "external" then
-          External
-       elsif L (U.Scheme (This)) = "file" then
-          File
-       elsif Utils.Starts_With (L (U.Scheme (This)), "git+") then
-          Git
-       elsif Utils.Starts_With (L (U.Scheme (This)), "git@") then
-          Pure_Git
-       elsif Utils.Starts_With (L (U.Scheme (This)), "hg+") then
-          Hg
-       elsif Utils.Starts_With (L (U.Scheme (This)), "svn+") then
-          SVN
-       elsif L (U.Scheme (This)) = "http" then
-          HTTP
-       elsif L (U.Scheme (This)) = "https" then
-          HTTP
-       elsif L (U.Scheme (This)) = "system" then
-          System
-       else
-          Unknown);
-
 end Alire.URI;

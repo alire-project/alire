@@ -1,6 +1,7 @@
 with Ada.Directories;
 with GNAT.OS_Lib;
 
+with Alire.Environment;
 with Alire.Utils;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;

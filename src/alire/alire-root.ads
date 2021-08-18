@@ -1,3 +1,4 @@
+with Alire.Platforms;
 with Alire.Properties;
 with Alire.Roots.Optional;
 
@@ -19,5 +20,8 @@ package Alire.Root is
    --  Until we do The Big Refactor of moving platform detection from Alr into
    --  Alire, this is a stopgag measure to be able to encapsulate properties in
    --  the Current Root. TODO: remove during the refactor.
+
+   function Platform_OS return Platforms.Operating_Systems;
+   --  TODO: remove during the same refactor as above
 
 end Alire.Root;

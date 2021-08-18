@@ -57,6 +57,10 @@ package Alire.Utils.TTY with Preelaborate is
 
    function Bold (Text : String) return String;
 
+   function Dim (Text : String) return String;
+
+   function Italic (Text : String) return String;
+
    function Underline (Text : String) return String;
 
    function Name (Crate : Crate_Name) return String;
@@ -67,10 +71,19 @@ package Alire.Utils.TTY with Preelaborate is
    function Description (Text : String) return String;
    --  Not bold cyan for crate descriptions
 
+   function Terminal (Text : String) return String;
+   --  For showing commands that the user can run; mimics old amber displays.
+
    function URL (Text : String) return String;
 
    function Version (Text : String) return String;
    --  For versions/version sets, bold magenta
+
+   ----------------------
+   -- Purpose-specific --
+   ----------------------
+
+   function Alr return String is (Terminal ("alr"));
 
 private
 
@@ -108,6 +121,14 @@ private
      (Format (Text,
               Style => ANSI.Bright));
 
+   function Dim (Text : String) return String is
+     (Format (Text,
+              Style => ANSI.Dim));
+
+   function Italic (Text : String) return String is
+     (Format (Text,
+              Style => ANSI.Italic));
+
    function Underline (Text : String) return String is
      (Format (Text,
               Style => ANSI.Underline));
@@ -121,6 +142,11 @@ private
    function Description (Text : String) return String is
      (Format (Text,
               Fore  => ANSI.Light_Cyan));
+
+   function Terminal (Text : String) return String is
+     (if Color_Enabled and then Is_TTY
+      then ANSI.Color_Wrap (Text, ANSI.Palette_Fg (5, 3, 0))
+      else Text);
 
    function URL (Text : String) return String renames Version;
 

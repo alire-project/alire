@@ -1,7 +1,6 @@
-private with Ada.Containers.Indefinite_Holders;
+private with AAA.Containers.Indefinite_Holders;
 
-private with Alire.Containers;
-with Alire.Releases;
+with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
 with Alire.User_Pins;
 
@@ -25,12 +24,6 @@ package Alire.Dependencies.States is
        Softlink.Kind in User_Pins.Kinds_With_Path;
 
    type State (<>) is new Dependency with private;
-
-   overriding function "=" (L, R : State) return Boolean;
-   --  For some unclear reason, the default implementation reports differences
-   --  for identical states. Suspecting the Indefinite_Holders therein to be
-   --  the culprits. We override to rely on the same information the user sees,
-   --  thus avoiding any inconsistent "want to confirm?" empty updates.
 
    ------------------
    -- Constructors --
@@ -65,10 +58,11 @@ package Alire.Dependencies.States is
                      return State;
    --  Modify transitivity in a copy of Base
 
-   function Solving (Base  : State;
-                     Using : Releases.Release)
+   function Solving (Base   : State;
+                     Using  : Releases.Release;
+                     Shared : Boolean := False)
                      return State
-     with Pre => Base.Crate = Using.Name;
+     with Pre => Using.Provides (Base.Crate);
    --  Uses release to fulfill this dependency in a copy of Base
 
    function Unlinking (Base : State) return State;
@@ -102,6 +96,11 @@ package Alire.Dependencies.States is
 
    function Is_Pinned (This : State) return Boolean;
 
+   function Is_Provided (This : State) return Boolean;
+   --  True when the release name is different from the dependency crate
+
+   function Is_Shared (This : State) return Boolean;
+
    function Is_User_Pinned (This : State) return Boolean;
    --  From the POV of users, pinning to version or linking to dir is a pin
 
@@ -129,6 +128,13 @@ package Alire.Dependencies.States is
 
    overriding function Image (This : State) return String;
 
+   function Milestone_Image (This  : State;
+                             Color : Boolean := True)
+                             return String
+     with Pre => This.Has_Release;
+   --  Will use the dep name if it differs from the dependency (due to
+   --  equivalences).
+
    overriding function TTY_Image (This : State) return String;
 
    -------------------
@@ -143,7 +149,7 @@ private
 
    use type Semantic_Versioning.Extended.Version_Set;
 
-   type Stored_Release is new Containers.Release_H with null record;
+   type Stored_Release is new Releases.Containers.Release_H with null record;
    --  New type to simplify comparison of optional stored releases
 
    overriding function "=" (L, R : Stored_Release) return Boolean;
@@ -177,6 +183,14 @@ private
                             Version : Semantic_Versioning.Version)
                             return State;
 
+   overriding
+   function New_Dependency (Milestone : Milestones.Milestone;
+                            Updatable : Boolean := False)
+                            return State;
+   --  Create a dependency from a milestone. If Updatable, use the appropriate
+   --  caret/tilde versions set modifier; otherwise depend on the exact
+   --  milestone.
+
    --  Helper types
 
    overriding
@@ -186,7 +200,7 @@ private
       return State;
 
    package Link_Holders is
-     new Ada.Containers.Indefinite_Holders (Softlink, User_Pins."=");
+     new AAA.Containers.Indefinite_Holders (Softlink);
 
    type Link_Holder is new Link_Holders.Holder with null record;
 
@@ -199,6 +213,7 @@ private
             Opt_Rel : Stored_Release; -- This might not be filled-in
          when Solved =>
             Release : Stored_Release; -- This is always valid
+            Shared  : Boolean;        -- The release is from shared install
          when others => null;
       end case;
    end record;
@@ -219,15 +234,6 @@ private
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
-
-   ---------
-   -- "=" --
-   ---------
-
-   overriding function "=" (L, R : State) return Boolean
-   is (L.Image = R.Image);
-   --  TODO: this is likely not efficient. We should dig more to find why some
-   --  apparently identical states are reported as different.
 
    -------------------
    -- As_Dependency --
@@ -293,6 +299,9 @@ private
                       else "")
                    & (if This.Has_Release
                       then ",release"
+                   else "")
+                   & (if This.Is_Shared
+                      then ",installed"
                       else "")
           else "")
        & (if This.Pinning.Pinned
@@ -321,6 +330,12 @@ private
 
    function Is_Pinned (This : State) return Boolean
    is (This.Pinning.Pinned);
+
+   function Is_Provided (This : State) return Boolean
+   is (This.Has_Release and then This.Release.Name /= This.Crate);
+
+   function Is_Shared (This : State) return Boolean
+   is (This.Fulfilled.Fulfillment = Solved and then This.Fulfilled.Shared);
 
    function Is_Solved (This : State) return Boolean
    is (This.Fulfilled.Fulfillment = Solved);
@@ -365,6 +380,27 @@ private
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
+   ---------------------
+   -- Milestone_Image --
+   ---------------------
+
+   function Milestone_Image (This  : State;
+                             Color : Boolean := True)
+                             return String
+   is (if Color then
+          TTY.Name (This.Crate)
+          & "="
+          & TTY.Version (This.Release.Version.Image)
+          & (if This.Crate /= This.Release.Name
+            then " (" & TTY.Italic (This.Release.Name.As_String) & ")"
+            else "")
+       else
+         (+This.Crate) & "=" & This.Release.Version.Image
+         & (if This.Crate /= This.Release.Name
+            then " (" & This.Release.Name.As_String & ")"
+            else "")
+      );
+
    -------------
    -- Missing --
    -------------
@@ -396,6 +432,23 @@ private
       Versions : Semantic_Versioning.Extended.Version_Set)
       return State
    is (New_State (Dependencies.New_Dependency (Crate, Versions)));
+
+   --------------------
+   -- New_Dependency --
+   --------------------
+
+   overriding
+   function New_Dependency (Milestone : Milestones.Milestone;
+                            Updatable : Boolean := False)
+                            return State
+   is (New_State
+       (if Updatable then
+           Dependencies.New_Dependency
+             (Milestone.Crate,
+              Semantic_Versioning.Updatable (Milestone.Version))
+        else
+           Dependencies.New_Dependency
+             (Milestone.Crate, Milestone.Version)));
 
    ---------------
    -- New_State --
@@ -456,13 +509,15 @@ private
    -- Solving --
    -------------
 
-   function Solving (Base  : State;
-                     Using : Releases.Release)
+   function Solving (Base   : State;
+                     Using  : Releases.Release;
+                     Shared : Boolean := False)
                      return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
        Fulfilled    => (Fulfillment => Solved,
-                        Release     => To_Holder (Using)),
+                        Release     => To_Holder (Using),
+                        Shared      => Shared),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -496,6 +551,9 @@ private
                       else "," & TTY.Error ("broken"))
                    & (if This.Has_Release
                       then "," & TTY.OK ("release")
+                      else "")
+                   & (if This.Is_Shared
+                      then "," & TTY.Emph ("installed")
                       else "")
           else "")
        & (if This.Pinning.Pinned

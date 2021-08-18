@@ -98,7 +98,9 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
          end if;
       end loop;
 
-      return Version_Outcomes.Outcome_Failure ("could not be detected");
+      Trace.Debug ("System deployer could not detect: " & This.Base.Image);
+      return Version_Outcomes.Outcome_Failure ("could not be detected",
+                                               Report => False);
    end Detect;
 
    -------------

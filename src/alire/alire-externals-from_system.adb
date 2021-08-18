@@ -15,7 +15,7 @@ package body Alire.Externals.From_System is
 
    overriding
    function Detect (This : External;
-                    Name : Crate_Name) return Containers.Release_Set
+                    Name : Crate_Name) return Releases.Containers.Release_Set
    is
       package System renames Origins.Deployers.System;
    begin
@@ -23,13 +23,13 @@ package body Alire.Externals.From_System is
       if not Platform.Distribution_Is_Known then
          Trace.Detail ("Cannot look for system packages for crate " & (+Name)
                        & "in unknown distribution");
-         return Containers.Release_Sets.Empty_Set;
+         return (Releases.Containers.Release_Sets.Empty_Set with null record);
       end if;
 
       Trace.Debug ("Looking for system packages that provide crate: "
                    & (+Name));
 
-      return Releases : Containers.Release_Set do
+      return Releases : Alire.Releases.Containers.Release_Set do
          declare
             Origin : constant Conditional_Packages.Tree :=
                        This.Origin.Evaluate (Root.Platform_Properties);
@@ -52,6 +52,7 @@ package body Alire.Externals.From_System is
                         Releases.Insert
                           (Index.Crate (Name).Base
                            .Retagging (Result.Value)
+                           .Providing (This.Provides)
                            .Replacing (Origins.New_System (Candidate))
                            .Replacing (Notes => "Provided by system package: "
                                        & Candidate));

@@ -2,7 +2,7 @@ with Ada.Strings.Unbounded;
 
 with Alire.Properties;
 with Alire.Platforms;
-limited with Alire.Roots;
+limited with Alire.Roots.Editable;
 
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Vectors;
@@ -92,7 +92,7 @@ private
    procedure Add (This : in out Context; Name : String; Action : Env_Action);
 
    procedure Load (This            : in out Context;
-                   Root            : in out Roots.Root;
+                   Root            : in out Roots.Editable.Root;
                    Crate           : Crate_Name);
    --  Load the environment variables of a release (GPR_PROJECT_PATH and custom
    --  variables) in the context.

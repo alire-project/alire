@@ -1,59 +1,20 @@
+with AAA.Directories;
+
 with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
-with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
+with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platform;
-with Alire.Properties;
-with Alire.Roots;
+with Alire.TTY;
 
 with GNATCOLL.VFS;
 
 package body Alire.Directories is
 
    package Adirs renames Ada.Directories;
-
-   ------------------------
-   -- Report_Deprecation --
-   ------------------------
-
-   procedure Report_Deprecation with No_Return;
-   --  We give some minimal guidelines about what to do with the metadata
-   --  changes, and redirect to a wiki page for more details.
-
-   procedure Report_Deprecation is
-      Old_Manifest : constant String :=
-                       Directories.Find_Single_File ("alire", "toml");
-      use Ada.Text_IO; -- To bypass any -q or verbosity configuration
-   begin
-      New_Line;
-      Put_Line ("WARNING: Deprecated metadata possibly detected at "
-                & Old_Manifest);
-      New_Line;
-      Put_Line ("Due to recent changes to Alire's way of storing metadata,");
-      Put_Line ("you need to reinitialize or migrate the workspace.");
-      Put_Line
-        ("Please check here for details on how to migrate your metadata:");
-      New_Line;
-      Put_Line ("   https://github.com/alire-project/alire/wiki/"
-                & "2020-Metadata-format-migration");
-      Put_Line ("");
-      Put_Line ("How to reinitialize, in a nutshell:");
-      New_Line;
-      Put_Line ("   - Delete the old manifest file at 'alire/*.toml'");
-      Put_Line ("   - run one of");
-      Put_Line ("      $ alr init --in-place --bin <crate name>");
-      Put_Line ("      $ alr init --in-place --lib <crate name>");
-      Put_Line ("   - Re-add any necessary dependencies using one or more ");
-      Put_Line ("      $ alr with <dependency>");
-      New_Line;
-
-      --  This happens too early during elaboration and otherwise a stack trace
-      --  is produced, so:
-      GNAT.OS_Lib.OS_Exit (1);
-   end Report_Deprecation;
 
    ------------------------
    -- Backup_If_Existing --
@@ -118,6 +79,16 @@ package body Alire.Directories is
    end Copy;
 
    -----------------
+   -- Create_Tree --
+   -----------------
+
+   procedure Create_Tree (Path : Any_Path) is
+      use GNATCOLL.VFS;
+   begin
+      Make_Dir (Create (+Path));
+   end Create_Tree;
+
+   -----------------
    -- Delete_Tree --
    -----------------
 
@@ -143,24 +114,13 @@ package body Alire.Directories is
       function Find_Candidate_Folder (Path : Any_Path)
                                       return Any_Path
       is
-         Possible_Root : constant Roots.Root := Roots.New_Root
-           (Name => +"unused",
-            Path => Path,
-            Env  => Properties.No_Properties);
       begin
          Trace.Debug ("Looking for alire metadata at: " & Path);
          if
-           Exists (Possible_Root.Crate_File) and then
-           Kind (Possible_Root.Crate_File) = Ordinary_File
+           Exists (Path / Paths.Crate_File_Name) and then
+           Kind (Path / Paths.Crate_File_Name) = Ordinary_File
          then
             return Path;
-         elsif GNAT.OS_Lib.Is_Directory ("alire") and then
-           Directories.Find_Single_File ("alire", "toml") /= "" and then
-           not Utils.Ends_With (Directories.Find_Single_File ("alire", "toml"),
-                                "config.toml") and then
-           not GNAT.OS_Lib.Is_Regular_File ("alire" / "alr_env.gpr")
-         then
-            Report_Deprecation;
          else
             return Find_Candidate_Folder (Containing_Directory (Path));
          end if;
@@ -203,6 +163,8 @@ package body Alire.Directories is
 
    procedure Force_Delete (Path : Any_Path) is
       use Ada.Directories;
+      use GNATCOLL.VFS;
+      Success : Boolean := False;
    begin
       if Exists (Path) then
          if Kind (Path) = Ordinary_File then
@@ -210,8 +172,18 @@ package body Alire.Directories is
             Delete_File (Path);
          elsif Kind (Path) = Directory then
             Trace.Debug ("Deleting temporary folder " & Path & "...");
+
             Ensure_Deletable (Path);
-            Delete_Tree (Path);
+
+            --  Ada.Directories fails when there are softlinks in a tree, so we
+            --  use GNATCOLL instead.
+            GNATCOLL.VFS.Remove_Dir (Create (+Path),
+                                     Recursive => True,
+                                     Success   => Success);
+            if not Success then
+               raise Program_Error with
+                 Errors.Set ("Could not delete: " & TTY.URL (Path));
+            end if;
          end if;
       end if;
    end Force_Delete;
@@ -473,6 +445,16 @@ package body Alire.Directories is
             Delete_Tree (This.Filename);
          end if;
       end if;
+
+      --  Remove temp dir if empty to keep things tidy, and avoid modifying
+      --  lots of tests.
+
+      if Ada.Directories.Simple_Name (Parent (This.Filename)) =
+        Paths.Temp_Folder_Inside_Working_Folder
+      then
+         AAA.Directories.Remove_Folder_If_Empty (Parent (This.Filename));
+      end if;
+
    exception
       when E : others =>
          Log_Exception (E);
@@ -514,6 +496,36 @@ package body Alire.Directories is
               (Directory => True, Ordinary_File => True, others => False),
               Go_Down'Access);
    end Traverse_Tree;
+
+   ---------------
+   -- Tree_Size --
+   ---------------
+
+   function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size is
+
+      use Ada.Directories;
+      Result : File_Size := 0;
+
+      ----------------
+      -- Accumulate --
+      ----------------
+
+      procedure Accumulate (Item : Directory_Entry_Type;
+                            Stop : in out Boolean)
+      is
+      begin
+         Stop := False;
+         if Kind (Item) = Ordinary_File then
+            Result := Result + Size (Item);
+         end if;
+      end Accumulate;
+
+   begin
+      Traverse_Tree (Path,
+                     Doing   => Accumulate'Access,
+                     Recurse => True);
+      return Result;
+   end Tree_Size;
 
    ---------------
    -- With_Name --

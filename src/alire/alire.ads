@@ -9,7 +9,7 @@ with Simple_Logging;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "1.1.0-dev+pincmdline";
+   Version : constant String := "1.1.0-dev+toolchain";
    --  1.1.0-dev: begin post-1.0 changes
    --  1.0.0:     no changes since rc3
    --  1.0.0-rc3: added help colors PR
@@ -270,6 +270,14 @@ package Alire with Preelaborate is
    --  the opposite of Put_Success when it makes sense to continue, albeit
    --  briefly, without emitting a final error with Raise_Checked_Error.
 
+   ---------------
+   -- Constants --
+   ---------------
+
+   GNAT_Crate          : constant Crate_Name;
+   GNAT_External_Crate : constant Crate_Name;
+   GPRbuild_Crate      : constant Crate_Name;
+
 private
 
    type Crate_Name (Len : Natural) is tagged record
@@ -304,5 +312,11 @@ private
 
    function Detailed return Boolean is
      (Log_Level >= Detail);
+
+   GNAT_Crate     : constant Crate_Name := (Len => 4, Name => "gnat");
+   GPRbuild_Crate : constant Crate_Name := (Len => 8, Name => "gprbuild");
+
+   GNAT_External_Crate : constant Crate_Name :=
+                           (Len => 13, Name => "gnat_external");
 
 end Alire;

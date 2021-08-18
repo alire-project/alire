@@ -21,6 +21,8 @@ package Alire.Origins.Deployers is
    --  create and redispatch the necessary concrete Deployer implementation.
    --  Since it may fail during normal operation (e.g. network down) it
    --  contains any unexpected error and returns an Outcome.
+   --    To deploy a regular Release though, with action execution, the
+   --  intended way is to call Release.Deploy which will in turn call this one.
 
    --------------
    -- Deployer --

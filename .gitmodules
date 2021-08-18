@@ -42,3 +42,6 @@
 [submodule "deps/toml_slicer"]
 	path = deps/toml_slicer
 	url = https://github.com/mosteo/toml_slicer
+[submodule "deps/si_units"]
+	path = deps/si_units
+	url = https://github.com/HeisenbugLtd/si_units.git
