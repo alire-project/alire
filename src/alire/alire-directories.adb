@@ -606,8 +606,6 @@ package body Alire.Directories is
          end if;
       end Accumulate;
 
-      use all type Ada.Directories.File_Kind;
-
    begin
       if not Ada.Directories.Exists (Path) then
          return 0;
