@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.Paths;
 with Alire.TTY;
@@ -47,8 +48,18 @@ package body Alr.Commands.Clean is
 
       package TTY renames Alire.TTY;
    begin
+
+      --  Current workspace
+
       Alire.Directories.Traverse_Tree
         (Start   => ".",
+         Doing   => Add_Target'Access,
+         Recurse => True);
+
+      --  Configuration-wide cache, where interrupted binary downloads dwell...
+
+      Alire.Directories.Traverse_Tree
+        (Start   => Alire.Config.Edit.Path,
          Doing   => Add_Target'Access,
          Recurse => True);
 
