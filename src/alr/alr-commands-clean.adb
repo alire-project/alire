@@ -17,14 +17,25 @@ package body Alr.Commands.Clean is
 
    procedure Delete_Temp_Files is
 
+      Freed : Ada.Directories.File_Size := 0;
+
+      -----------------
+      -- Freed_Image --
+      -----------------
+
+      function Freed_Image return String
+      is ("freeing " & Alire.Directories.TTY_Image (Freed) & ".");
+
       ------------
       -- Delete --
       ------------
 
       procedure Delete (Path : String)
       is
+         use type Ada.Directories.File_Size;
       begin
          Trace.Detail ("Deleting " & Alire.TTY.URL (Path));
+         Freed := Freed + Alire.Directories.Tree_Size (Path);
          Alire.Directories.Force_Delete (Path);
       end Delete;
 
@@ -70,10 +81,11 @@ package body Alr.Commands.Clean is
       if Targets.Is_Empty then
          Trace.Info ("No temporaries found.");
       elsif Targets.Length in 1 then
-         Trace.Info ("Deleted " & TTY.Emph ("1") & " temporary.");
+         Trace.Info ("Deleted " & TTY.Emph ("1") & " temporary, "
+                     & Freed_Image);
       else
          Trace.Info ("Deleted" & TTY.Emph (Targets.Length'Image)
-                     & " temporaries.");
+                     & " temporaries, " & Freed_Image);
       end if;
    end Delete_Temp_Files;
 

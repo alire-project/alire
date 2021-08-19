@@ -12,6 +12,8 @@ with Alire.TTY;
 
 with GNATCOLL.VFS;
 
+with SI_Units.Binary;
+
 package body Alire.Directories is
 
    package Adirs renames Ada.Directories;
@@ -526,6 +528,21 @@ package body Alire.Directories is
                      Recurse => True);
       return Result;
    end Tree_Size;
+
+   ---------------
+   -- TTY_Image --
+   ---------------
+
+   function TTY_Image (Size : Ada.Directories.File_Size) return String is
+      type Modular_File_Size is mod 2 ** Ada.Directories.File_Size'Size;
+
+      function Image is new SI_Units.Binary.Image
+        (Item        => Modular_File_Size,
+         Default_Aft => 1,
+         Unit        => "B");
+   begin
+      return TTY.Emph (Image (Modular_File_Size (Size)));
+   end TTY_Image;
 
    ---------------
    -- With_Name --

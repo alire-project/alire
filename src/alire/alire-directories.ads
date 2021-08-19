@@ -84,6 +84,9 @@ package Alire.Directories is
    function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
    --  Size of files under a given point, in bytes.
 
+   function TTY_Image (Size : Ada.Directories.File_Size) return String;
+   --  Obtain a human-readable and colorized representation of a file size
+
    ----------------
    -- GUARD TYPE --
    ----------------
