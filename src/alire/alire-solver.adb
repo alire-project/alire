@@ -272,7 +272,7 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Specific_GNAT (Remaining).Value.Crate = R.Name)'Image
+                       (Specific_GNAT (Remaining).Value.Crate = R.Name)'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in dependencies: "
                      & Specific_GNAT (Remaining).Value.TTY_Image);
@@ -287,7 +287,7 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
                        (Toolchains
-                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Image
+                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to configured compiler: "
                      & Toolchains.Tool_Dependency (GNAT_Crate).TTY_Image);
