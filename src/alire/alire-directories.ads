@@ -82,7 +82,8 @@ package Alire.Directories is
    --  ignored. If Stop is set to True, traversal will not continue.
 
    function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
-   --  Size of files under a given point, in bytes.
+   --  Size of files under a given point, in bytes. Will return 0 for an
+   --  invalid path or an special file.
 
    function TTY_Image (Size : Ada.Directories.File_Size) return String;
    --  Obtain a human-readable and colorized representation of a file size
@@ -109,6 +110,10 @@ package Alire.Directories is
    ---------------------
    -- Temporary files --
    ---------------------
+
+   procedure Delete_Temporaries;
+   --  For user forced Ctrl-C interruptions, this will attempt to delete any
+   --  currently existing temporaries.
 
    function Temp_Name (Length : Positive := 8) return String
      with Pre => Length >= 5;

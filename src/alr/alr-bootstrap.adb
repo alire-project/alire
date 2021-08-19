@@ -1,5 +1,6 @@
 with Ada.Calendar;
 
+with Alire.Directories;
 with Alire_Early_Elaboration;
 with Alire.Index;
 with Alire.Root;
@@ -18,6 +19,8 @@ package body Alr.Bootstrap is
    procedure Interrupted is
    begin
       Trace.Always (" Interrupted by user");
+
+      Alire.Directories.Delete_Temporaries;
 
       OS_Lib.Bailout (1);
    end Interrupted;

@@ -18,6 +18,58 @@ package body Alire.Directories is
 
    package Adirs renames Ada.Directories;
 
+   -------------------
+   -- Temp_Registry --
+   -------------------
+   --  To be able to remove temp files when we are forcibly interrupted, we
+   --  keep track of them here. Calling Delete_Temporaries will do the cleanup
+   --  (as file ops are blocking and cannot be done in a protected).
+   protected Temp_Registry is
+
+      procedure Add (Path : Any_Path);
+      --  Add a path to a temporary
+
+      procedure Del (Path : Any_Path);
+      --  Remove a path to a temporary
+
+      function Get return Utils.String_Set;
+      --  Retrieve all current temporaries
+
+   private
+
+      Registry : Utils.String_Set;
+
+   end Temp_Registry;
+
+   protected body Temp_Registry is
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Path : Any_Path) is
+      begin
+         --  Store absolute, so CWD changes do not affect us
+         Registry.Include (Ada.Directories.Full_Name (Path));
+      end Add;
+
+      ---------
+      -- Del --
+      ---------
+
+      procedure Del (Path : Any_Path) is
+      begin
+         Registry.Exclude (Path);
+      end Del;
+
+      ---------
+      -- Get --
+      ---------
+
+      function Get return Utils.String_Set is (Registry);
+
+   end Temp_Registry;
+
    ------------------------
    -- Backup_If_Existing --
    ------------------------
@@ -89,6 +141,33 @@ package body Alire.Directories is
    begin
       Make_Dir (Create (+Path));
    end Create_Tree;
+
+   ------------------------
+   -- Delete_Temporaries --
+   ------------------------
+
+   procedure Delete_Temporaries is
+      Paths : constant Utils.String_Set := Temp_Registry.Get;
+   begin
+      if Paths.Is_Empty then
+         Trace.Debug ("No temporaries to remove");
+      else
+         for Path of Paths loop
+            begin
+               Force_Delete (Path);
+            exception
+               when E : others =>
+                  Trace.Debug ("Could not delete temporary " & Path & ": "
+                               & Errors.Get (E));
+                  Log_Exception (E);
+
+                  --  As this is used during final cleanup, any exception here
+                  --  is logged but not raised. Maybe this can happen for open
+                  --  files?
+            end;
+         end loop;
+      end if;
+   end Delete_Temporaries;
 
    -----------------
    -- Delete_Tree --
@@ -375,6 +454,7 @@ package body Alire.Directories is
 
    begin
       This.Name := +Temp_Name;
+      Temp_Registry.Add (+This.Name);
 
       --  Try to use our alire folder to hide temporaries; return an absolute
       --  path in any case to avoid problems with the user of the tmp file
@@ -419,6 +499,7 @@ package body Alire.Directories is
    procedure Keep (This : in out Temp_File) is
    begin
       This.Keep := True;
+      Temp_Registry.Del (+This.Name);
    end Keep;
 
    --------------
@@ -432,6 +513,9 @@ package body Alire.Directories is
       if This.Keep then
          return;
       end if;
+
+      --  We are deleting it here, so remove from "live" temp files registry
+      Temp_Registry.Del (+This.Name);
 
       --  Force writability of folder when in Windows, as some tools (e.g. git)
       --  that create read-only files will cause a Use_Error
@@ -522,11 +606,26 @@ package body Alire.Directories is
          end if;
       end Accumulate;
 
+      use all type Ada.Directories.File_Kind;
+
    begin
-      Traverse_Tree (Path,
-                     Doing   => Accumulate'Access,
-                     Recurse => True);
-      return Result;
+      if not Ada.Directories.Exists (Path) then
+         return 0;
+      end if;
+
+      case Ada.Directories.Kind (Path) is
+         when Ordinary_File =>
+            return Ada.Directories.Size (Path);
+
+         when Directory =>
+            Traverse_Tree (Path,
+                           Doing   => Accumulate'Access,
+                           Recurse => True);
+            return Result;
+
+         when others =>
+            return 0;
+      end case;
    end Tree_Size;
 
    ---------------
@@ -549,9 +648,15 @@ package body Alire.Directories is
    ---------------
 
    function With_Name (Name : String) return Temp_File is
-     (Temp_File'(Ada.Finalization.Limited_Controlled with
-                 Keep => <>,
-                 Name => +Name));
+   begin
+      return Temp : constant Temp_File :=
+        (Temp_File'(Ada.Finalization.Limited_Controlled with
+                    Keep => <>,
+                    Name => +Name))
+      do
+         Temp_Registry.Add (Name);
+      end return;
+   end With_Name;
 
    --------------
    -- REPLACER --
