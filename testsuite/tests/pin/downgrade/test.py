@@ -4,7 +4,7 @@ Test that a pin to a lower version downgrades and retrieves the new version
 
 import os
 
-from drivers.alr import run_alr, alr_pin
+from drivers.alr import run_alr, alr_pin, alr_lockfile
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import check_line_in
 
@@ -22,8 +22,8 @@ def check_child(version, output, pinned):
                  output, flags=re.S)
 
     # Verify lockfile
-    check_line_in('alire.lock', 'name = "libchild"')
-    check_line_in('alire.lock', f'version = "{version}"')
+    check_line_in(alr_lockfile(), 'name = "libchild"')
+    check_line_in(alr_lockfile(), f'version = "{version}"')
 
     # Verify dependency folders
     assert os.path.exists('alire/cache/dependencies/libchild_' + version +

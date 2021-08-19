@@ -4,7 +4,7 @@ Test that a pinned release does not get updated
 
 import os
 
-from drivers.alr import run_alr, alr_pin, alr_unpin
+from drivers.alr import run_alr, alr_pin, alr_unpin, alr_lockfile
 from drivers.asserts import assert_eq, assert_match
 from drivers.helpers import check_line_in
 
@@ -23,8 +23,8 @@ def check_child(version, output, pinned):
                  output, flags=re.S)
 
     # Verify lockfile
-    check_line_in('alire.lock', 'name = "libchild"')
-    check_line_in('alire.lock', f'version = "{version}"')
+    check_line_in(alr_lockfile(), 'name = "libchild"')
+    check_line_in(alr_lockfile(), f'version = "{version}"')
 
 
 # Create a new "xxx" program project

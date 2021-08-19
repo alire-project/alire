@@ -722,6 +722,39 @@ package body Alire.Roots is
       end if;
    end Release_Base;
 
+   ----------------------
+   -- Migrate_Lockfile --
+   ----------------------
+   --  This function is intended to migrate lockfiles in the old root location
+   --  to inside the alire folder. It could be conceivably removed down the
+   --  line during a major release.
+   function Migrate_Lockfile (This : Root;
+                              Path : Any_Path)
+                              return Any_Path
+   is
+      package Adirs renames Ada.Directories;
+      Old_Path : constant Any_Path :=
+                   Adirs.Containing_Directory
+                     (Adirs.Containing_Directory (Path))
+                   / Lockfiles.Simple_Name;
+   begin
+      if Adirs.Exists (Old_Path) then
+         Directories.Backup_If_Existing (Old_Path,
+                                         Base_Dir => This.Working_Folder);
+
+         if Adirs.Exists (Path) then
+            Put_Info ("Removing old lockfile at " & TTY.URL (Old_Path));
+            Adirs.Delete_File (Old_Path);
+         else
+            Put_Info ("Migrating lockfile from "
+                      & TTY.URL (Old_Path) & " to " & TTY.URL (Path));
+            Adirs.Rename (Old_Path, Path);
+         end if;
+      end if;
+
+      return Path;
+   end Migrate_Lockfile;
+
    ---------------
    -- Lock_File --
    ---------------
@@ -729,7 +762,7 @@ package body Alire.Roots is
    function Lock_File (This : Root) return Absolute_Path
    is (if This.Lockfile /= ""
        then +This.Lockfile
-       else Lockfiles.File_Name (+This.Path));
+       else Migrate_Lockfile (This, Lockfiles.File_Name (+This.Path)));
 
    ----------------
    -- Crate_File --

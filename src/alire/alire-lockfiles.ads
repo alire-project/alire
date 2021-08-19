@@ -6,6 +6,8 @@ with TOML;
 
 package Alire.Lockfiles is
 
+   Simple_Name : constant String := "alire.lock";
+
    type Validities is (Missing, Invalid, Valid);
 
    --  The lockfile stores persistent private information read/written by
