@@ -1,7 +1,7 @@
 name = "alr"
 description = "Command-line tool from the Alire project"
 
-version = "1.1.0-dev"
+version = "1.2.0-dev"
 
 authors = ["Alejandro R. Mosteo", "Fabien Chouteau", "Pierre-Marie de Rodat"]
 maintainers = ["alejandro@mosteo.com", "chouteau@adacore.com"]
@@ -15,19 +15,25 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.2.3"
-ada_toml = "~0.1"
+aaa = "~0.2.4"
+ada_toml = "~0.3"
 ajunitgen = "^1.0.1"
 ansiada = "~0.1"
+clic = "~0.1.1"
 gnatcoll = "^21"
 minirest = "~0.2"
 optional = "~0.0.0"
 semantic_versioning = "^2"
 simple_logging = "^1.2"
 si_units = "~0.2"
+stopwatch = "~0.1"
 toml_slicer = "~0.1"
 uri_ada = "^1"
 spdx = "~0.2"
+
+# For some reason static-pic is giving hell in CLIC
+[gpr-set-externals]
+CLIC_LIBRARY_TYPE="static"
 
 # Building alr requires the explicit setting of this variable
 [gpr-set-externals."case(os)"]
@@ -35,13 +41,15 @@ macos   = { OS = "macOS" }
 
 # Most dependencies require precise versions during the development cycle:
 [[pins]]
-ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "ade3cc905cef405dbf53e16a54f6fb458482710f" }
 ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
+ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "2a671ffb1039a036f2bb68bdc88afc8d3dc68c10" }
 ansiada = { url = "https://github.com/mosteo/ansi-ada.git", commit = "acf9afca3afe1f8b8843c061f3cef860d7567307" }
+clic = { url = "https://github.com/alire-project/clic.git", commit = "a58e1a90f39169bdb883243b5ac6b2b8a99fa34f" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "f3bd1c51d12962879f52733e790b394f5bbfe05f" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "4550aa356d55b9cd55f26acd34701f646021c5ff" }
 optional = { url = "https://github.com/mosteo/optional.git", commit = "0c7d20c0c8b48ccb6b25fb648d48382e598c25c3" }
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning.git", commit = "fe4e72e40786589a66d53662639f894fcdb3419c" }
 simple_logging = { url = "https://github.com/alire-project/simple_logging.git", commit = "02a7de7568af6af7cedd1048901fae8e9477b1d9" }
+stopwatch = { url = "https://github.com/mosteo/stopwatch.git", commit = "86e7302d29f360f98f568b6015755229949b2194" }
 toml_slicer = { url = "https://github.com/mosteo/toml_slicer.git", commit = "1c0286bd724c6f257a36fc89412fcefd4f555228" }
 uri_ada = { url = "https://github.com/mosteo/uri-ada.git", commit = "b61eba59099b3ab39e59e228fe4529927f9e849e" }
