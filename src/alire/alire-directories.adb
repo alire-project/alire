@@ -26,10 +26,10 @@ package body Alire.Directories is
    --  (as file ops are blocking and cannot be done in a protected).
    protected Temp_Registry is
 
-      procedure Add (Path : Any_Path);
+      procedure Add (Path : Absolute_Path);
       --  Add a path to a temporary
 
-      procedure Del (Path : Any_Path);
+      procedure Del (Path : Absolute_Path);
       --  Remove a path to a temporary
 
       function Get return Utils.String_Set;
@@ -47,17 +47,16 @@ package body Alire.Directories is
       -- Add --
       ---------
 
-      procedure Add (Path : Any_Path) is
+      procedure Add (Path : Absolute_Path) is
       begin
-         --  Store absolute, so CWD changes do not affect us
-         Registry.Include (Ada.Directories.Full_Name (Path));
+         Registry.Include (Path);
       end Add;
 
       ---------
       -- Del --
       ---------
 
-      procedure Del (Path : Any_Path) is
+      procedure Del (Path : Absolute_Path) is
       begin
          Registry.Exclude (Path);
       end Del;
@@ -451,10 +450,8 @@ package body Alire.Directories is
 
    overriding
    procedure Initialize (This : in out Temp_File) is
-
+      Simple_Name : constant String := Temp_Name;
    begin
-      This.Name := +Temp_Name;
-      Temp_Registry.Add (+This.Name);
 
       --  Try to use our alire folder to hide temporaries; return an absolute
       --  path in any case to avoid problems with the user of the tmp file
@@ -476,20 +473,22 @@ package body Alire.Directories is
          This.Name := +Ada.Directories.Full_Name
            (Paths.Working_Folder_Inside_Root
             / Paths.Temp_Folder_Inside_Working_Folder
-            / (+This.Name));
+            / Simple_Name);
 
       else
 
-         This.Name := +Ada.Directories.Full_Name (+This.Name);
+         This.Name := +Ada.Directories.Full_Name (Simple_Name);
 
       end if;
+
+      Temp_Registry.Add (+This.Name);
    end Initialize;
 
    --------------
    -- Filename --
    --------------
 
-   function Filename (This : Temp_File) return String is
+   function Filename (This : Temp_File) return Absolute_Path is
      (+This.Name);
 
    ----------
@@ -645,14 +644,14 @@ package body Alire.Directories is
    -- With_Name --
    ---------------
 
-   function With_Name (Name : String) return Temp_File is
+   function With_Name (Name : Any_Path) return Temp_File is
    begin
       return Temp : constant Temp_File :=
         (Temp_File'(Ada.Finalization.Limited_Controlled with
                     Keep => <>,
-                    Name => +Name))
+                    Name => +Adirs.Full_Name (Name)))
       do
-         Temp_Registry.Add (Name);
+         Temp_Registry.Add (+Temp.Name);
       end return;
    end With_Name;
 
