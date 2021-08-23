@@ -30,6 +30,9 @@ package Alire.Toolchains is
    --  plain `gnat`. This way we need to to litter the callers with similar
    --  transformations, as we always want whatever gnat_XXX is used for "gnat".
 
+   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
+   --  Enable/Disable the automatic assistant on next run
+
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean;
    --  Say if a tool is actually configured by the user
 

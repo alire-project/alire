@@ -246,9 +246,7 @@ package body Alire.Toolchains is
 
       --  The user has already chosen, so disable the assistant
 
-      Config.Edit.Set (Config.Edit.Filepath (Level),
-                       Config.Keys.Toolchain_Assistant,
-                       "false");
+      Set_Automatic_Assistant (False, Level);
 
       --  Finally deploy selections
 
@@ -257,6 +255,18 @@ package body Alire.Toolchains is
       end loop;
 
    end Assistant;
+
+   -----------------------------
+   -- Set_Automatic_Assistant --
+   -----------------------------
+
+   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
+   is
+   begin
+      Config.Edit.Set (Config.Edit.Filepath (Level),
+                       Config.Keys.Toolchain_Assistant,
+                       (if Enabled then "true" else "false"));
+   end Set_Automatic_Assistant;
 
    ------------------------
    -- Tool_Is_Configured --
