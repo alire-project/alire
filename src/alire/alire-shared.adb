@@ -13,8 +13,6 @@ with Alire.Toolchains.Solutions;
 with Alire.TTY;
 with Alire.Warnings;
 
-with SI_Units.Binary;
-
 package body Alire.Shared is
 
    use Directories.Operators;
@@ -193,13 +191,6 @@ package body Alire.Shared is
      (Release : Releases.Release;
       Confirm : Boolean := not Utils.User_Input.Not_Interactive)
    is
-      type Modular_File_Size is mod 2 ** Ada.Directories.File_Size'Size;
-
-      function Image is new SI_Units.Binary.Image
-        (Item        => Modular_File_Size,
-         Default_Aft => 1,
-         Unit        => "B");
-
       use Utils.User_Input;
       Path : constant Absolute_Path := Install_Path / Release.Unique_Folder;
    begin
@@ -229,7 +220,7 @@ package body Alire.Shared is
       if not Confirm or else Utils.User_Input.Query
         (Question => "Release " & Release.Milestone.TTY_Image & " is going to "
          & "be removed, freeing "
-         & TTY.Emph (Image (Modular_File_Size (Directories.Tree_Size (Path))))
+         & Directories.TTY_Image (Directories.Tree_Size (Path))
          & ". Do you want to proceed?",
          Valid    => (No | Yes => True, others => False),
          Default  => Yes) = Yes
