@@ -57,6 +57,7 @@ package Alr.Commands.Toolchain is
 private
 
    type Command is new Commands.Command with record
+      Disable   : aliased Boolean := False;
       Install   : aliased Boolean := False;
       Local     : aliased Boolean := False;
       S_Select  : aliased Boolean := False;

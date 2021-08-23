@@ -27,6 +27,12 @@ package body Alr.Commands.Toolchain is
    begin
       Define_Switch
         (Config,
+         Cmd.Disable'Access,
+         Long_Switch => "--disable-assistant",
+         Help        => "Disable autorun of selection assistant");
+
+      Define_Switch
+        (Config,
          Cmd.Install'Access,
          Switch      => "-i",
          Long_Switch => "--install",
@@ -210,7 +216,9 @@ package body Alr.Commands.Toolchain is
 
       --  Validation
 
-      if Cmd.Uninstall and then Cmd.S_Select then
+      if Alire.Utils.Count_True
+        ((Cmd.Disable, Cmd.Install, Cmd.S_Select, Cmd.Uninstall)) > 1
+      then
          Reportaise_Wrong_Arguments
            ("The provided switches cannot be used simultaneously");
       end if;
@@ -234,8 +242,14 @@ package body Alr.Commands.Toolchain is
            ("Toolchain installation does not accept any arguments");
       end if;
 
-      if Cmd.Local and then not Cmd.S_Select then
-         Reportaise_Wrong_Arguments ("--local requires --select");
+      if Cmd.Local and then not (Cmd.S_Select or else Cmd.Disable) then
+         Reportaise_Wrong_Arguments
+           ("--local requires --select or --disable-assistant");
+      end if;
+
+      if Cmd.Disable and then Num_Arguments /= 0 then
+         Reportaise_Wrong_Arguments
+           ("Disabling the assistant does not admit any extra arguments");
       end if;
 
       --  Dispatch to subcommands
@@ -257,6 +271,16 @@ package body Alr.Commands.Toolchain is
 
       elsif Cmd.Install then
          Install (Cmd, Argument (1));
+
+      elsif Cmd.Disable then
+         Alire.Toolchains.Set_Automatic_Assistant (False,
+                                                   (if Cmd.Local
+                                                    then Alire.Config.Local
+                                                    else Alire.Config.Global));
+         Alire.Put_Info
+           ("Assistant disabled in "
+            & TTY.Emph (if Cmd.Local then "local" else "global")
+            & " configuration.");
 
       else
          Cmd.List;
