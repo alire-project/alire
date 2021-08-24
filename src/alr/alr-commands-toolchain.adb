@@ -284,16 +284,16 @@ package body Alr.Commands.Toolchain is
             Cmd.Requires_Valid_Session;
          end if;
 
-         if Num_Arguments = 0 then
+         if Args.Count = 0 then
             Alire.Toolchains.Assistant (if Cmd.Local
                                         then Alire.Config.Local
                                         else Alire.Config.Global);
          else
-            Install (Cmd, Argument (1), Set_As_Default => True);
+            Install (Cmd, Args (1), Set_As_Default => True);
          end if;
 
       elsif Cmd.Uninstall then
-         Uninstall (Cmd, Args.First_Element);
+         Uninstall (Cmd, Args (1));
 
       elsif Cmd.Install then
          Install (Cmd, Args (1), Set_As_Default => False);
