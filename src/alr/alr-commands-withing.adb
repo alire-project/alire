@@ -2,6 +2,7 @@ with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Text_IO;
+with Ada.Containers;
 
 with Alire.Dependencies;
 with Alire.Optional;
@@ -9,6 +10,7 @@ with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
+with Alire.Utils;
 
 with Alr.OS_Lib;
 with Alr.Platform;
@@ -19,16 +21,20 @@ with TOML_Slicer;
 
 package body Alr.Commands.Withing is
 
+   use type Ada.Containers.Count_Type;
+
    Switch_URL : constant String := "--use";
 
    ---------
    -- Add --
    ---------
 
-   procedure Add (Root : in out Alire.Roots.Editable.Root) is
+   procedure Add (Root : in out Alire.Roots.Editable.Root;
+                  Args :        AAA.Strings.Vector)
+   is
    begin
-      for I in 1 .. Num_Arguments loop
-         Root.Add_Dependency (Alire.Dependencies.From_String (Argument (I)));
+      for I in Args.First_Index .. Args.Last_Index loop
+         Root.Add_Dependency (Alire.Dependencies.From_String (Args (I)));
       end loop;
    end Add;
 
@@ -36,10 +42,11 @@ package body Alr.Commands.Withing is
    -- Del --
    ---------
 
-   procedure Del (Root : in out Alire.Roots.Editable.Root) is
+   procedure Del (Root : in out Alire.Roots.Editable.Root;
+                  Args :        AAA.Strings.Vector) is
    begin
-      for I in 1 .. Num_Arguments loop
-         Root.Remove_Dependency (Alire.To_Name (Argument (I)));
+      for I in Args.First_Index .. Args.Last_Index loop
+         Root.Remove_Dependency (Alire.To_Name (Args (I)));
       end loop;
    end Del;
 
@@ -47,9 +54,11 @@ package body Alr.Commands.Withing is
    -- From --
    ----------
 
-   procedure From (Root : in out Alire.Roots.Editable.Root) is
+   procedure From (Root : in out Alire.Roots.Editable.Root;
+                   Args :        AAA.Strings.Vector)
+   is
       use Ada.Text_IO;
-      use Utils;
+      use Alire.Utils;
 
       -------------
       -- Extract --
@@ -125,8 +134,8 @@ package body Alr.Commands.Withing is
          Close (File);
       end Check_File;
    begin
-      for I in 1 .. Num_Arguments loop
-         Check_File (Argument (I));
+      for I in Args.First_Index .. Args.Last_Index loop
+         Check_File (Args (I));
       end loop;
    end From;
 
@@ -158,22 +167,23 @@ package body Alr.Commands.Withing is
    ------------------
 
    procedure Add_With_Pin (Cmd  : in out Command;
-                           Root : in out Alire.Roots.Editable.Root)
+                           Root : in out Alire.Roots.Editable.Root;
+                           Args :        AAA.Strings.Vector)
    is
       Crate : constant Alire.Optional.Crate_Name :=
-                (if Num_Arguments = 1
+                (if Args.Length = 1
                  then Alire.Optional.Crate_Names.Unit
-                   (Alire.Dependencies.From_String (Argument (1)).Crate)
+                   (Alire.Dependencies.From_String (Args (1)).Crate)
                  else Alire.Optional.Crate_Names.Empty);
    begin
 
       --  First, add the dependency if given
 
-      if Num_Arguments = 1 then
+      if Args.Length = 1 then
          declare
             use type Semantic_Versioning.Extended.Version_Set;
             Dep : constant Alire.Dependencies.Dependency :=
-                    Alire.Dependencies.From_String (Argument (1));
+                    Alire.Dependencies.From_String (Args (1));
          begin
             if Dep.Versions /= Semantic_Versioning.Extended.Any and then
               not Cmd.Root.Solution.Depends_On (Dep.Crate)
@@ -212,7 +222,10 @@ package body Alr.Commands.Withing is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       Flags : Natural := 0;
 
       procedure Check (Flag : Boolean) is
@@ -249,7 +262,7 @@ package body Alr.Commands.Withing is
       --  No parameters: give requested info and return. There is still the
       --  possibility of a `with --use` that is processed later.
 
-      if Num_Arguments = 0 then
+      if Args.Length = 0 then
          if Flags = 0 or else Cmd.Solve then
             List (Cmd);
             return;
@@ -266,7 +279,7 @@ package body Alr.Commands.Withing is
          end if;
       end if;
 
-      if Num_Arguments < 1 then
+      if Args.Length < 1 then
          if Cmd.Del then
             Reportaise_Wrong_Arguments ("At least one dependency required");
          elsif Cmd.From then
@@ -288,17 +301,17 @@ package body Alr.Commands.Withing is
             --  Must be Add, but it could be regular or softlink
 
             if Cmd.URL.all /= "" then
-               Cmd.Add_With_Pin (New_Root);
+               Cmd.Add_With_Pin (New_Root, Args);
             else
                Cmd.Requires_Full_Index;
-               Add (New_Root);
+               Add (New_Root, Args);
             end if;
 
          elsif Cmd.Del then
-            Del (New_Root);
+            Del (New_Root, Args);
          elsif Cmd.From then
             Cmd.Requires_Full_Index;
-            From (New_Root);
+            From (New_Root, Args);
          else
             raise Program_Error with "List should have already happened";
          end if;
@@ -322,8 +335,8 @@ package body Alr.Commands.Withing is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Inspect and manage dependencies.")
        .New_Line
        .Append ("* Inspecting dependencies:")

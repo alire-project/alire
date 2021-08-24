@@ -1,4 +1,5 @@
 with Alire.TTY;
+with AAA.Strings;
 
 package Alr.Commands.Toolchain is
 
@@ -10,12 +11,17 @@ package Alr.Commands.Toolchain is
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return String
+   is ("toolchain");
 
    overriding
-   function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+   procedure Execute (Cmd : in out Command;
+                      Args :        AAA.Strings.Vector);
+
+   overriding
+   function Long_Description (Cmd  : Command)
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append
          ("Download toolchain elements, like" & " " & TTY.Emph ("GNAT")
           & " and " & TTY.Emph ("gprbuid") & ", in the shared cache of the"

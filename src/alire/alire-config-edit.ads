@@ -1,3 +1,4 @@
+with AAA.Strings;
 with Alire.Directories;
 
 package Alire.Config.Edit is
@@ -40,7 +41,7 @@ package Alire.Config.Edit is
    --  by Alire. When Show_Origin is true, the configuration file where each
    --  key was loaded is also listed.
 
-   function Builtins_Info return Alire.Utils.String_Vector;
+   function Builtins_Info return AAA.Strings.Vector;
    --  Return a String_Vector with the documentation of builtin configuration
    --  options in text format.
 

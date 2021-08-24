@@ -52,7 +52,12 @@ package body Alr.Commands.Edit is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
+      pragma Unreferenced (Args);
+
       use Ada.Containers;
       use GNAT.Strings;
       use Alire.Config;
@@ -60,9 +65,9 @@ package body Alr.Commands.Edit is
       Editor_Cmd  : constant String :=
         Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
 
-      Args : String_Vector := Split (Editor_Cmd, ' ');
+      Edit_Args : String_Vector := Split (Editor_Cmd, ' ');
    begin
-      if Args.Is_Empty then
+      if Edit_Args.Is_Empty then
          Reportaise_Command_Failed
            ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
       end if;
@@ -74,7 +79,7 @@ package body Alr.Commands.Edit is
       Cmd.Root.Export_Build_Environment;
 
       declare
-         Exec : constant String := Args.First_Element;
+         Exec : constant String := Edit_Args.First_Element;
       begin
          if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
             if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
@@ -101,7 +106,7 @@ package body Alr.Commands.Edit is
               ("No project file to open for this crate.");
 
          elsif Project_Files.Length = 1 then
-            Start_Editor (Args, Project_Files.First_Element);
+            Start_Editor (Edit_Args, Project_Files.First_Element);
 
          elsif Cmd.Prj = null
            or else
@@ -116,7 +121,7 @@ package body Alr.Commands.Edit is
               ("Please specify a project file with --project=.");
 
          else
-            Start_Editor (Args, Cmd.Prj.all);
+            Start_Editor (Edit_Args, Cmd.Prj.all);
          end if;
       end;
    end Execute;
@@ -127,8 +132,8 @@ package body Alr.Commands.Edit is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Start GNATstudio with Alire build environment setup.")
      );
 

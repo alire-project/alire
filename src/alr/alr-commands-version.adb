@@ -20,7 +20,10 @@ package body Alr.Commands.Version is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       use Ada.Text_IO;
       use all type Alire.Roots.Optional.States;
    begin
@@ -78,8 +81,8 @@ package body Alr.Commands.Version is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Shows assorted metadata about the alr executable,"
                & " and about the crate or sandbox found in the current"
                & " directory, if any."));

@@ -1,3 +1,5 @@
+with Ada.Containers;
+
 with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Index;
@@ -10,12 +12,15 @@ with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
+with Alire.Utils;
 
 with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Show is
+
+   use type Ada.Containers.Count_Type;
 
    package Query  renames Alire.Solver;
    package Semver renames Semantic_Versioning;
@@ -122,7 +127,8 @@ package body Alr.Commands.Show is
 
    procedure Report_Externals (Name : Alire.Crate_Name;
                                Cmd  : Command) is
-      Table : Alire.Utils.Tables.Table;
+      use Alire;
+      Table : Utils.Tables.Table;
    begin
       if Alire.Index.Crate (Name).Externals.Is_Empty then
          Trace.Info ("No externals defined for the requested crate.");
@@ -212,13 +218,16 @@ package body Alr.Commands.Show is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
-      if Num_Arguments > 1 then
+      if Args.Length > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if Num_Arguments = 0 then
+      if Args.Length = 0 then
          if Alire.Root.Current.Outside then
             Reportaise_Wrong_Arguments
               ("Cannot proceed without a crate name");
@@ -234,7 +243,7 @@ package body Alr.Commands.Show is
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Num_Arguments = 1 or else
+      if Args.Length = 1 or else
         Cmd.Graph or else Cmd.Solve or else Cmd.Tree
       then
          Cmd.Requires_Full_Index;
@@ -242,12 +251,12 @@ package body Alr.Commands.Show is
 
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
-           (if Num_Arguments = 1
-            then Alire.Dependencies.From_String (Argument (1))
+           (if Args.Length = 1
+            then Alire.Dependencies.From_String (Args (1))
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Num_Arguments = 1 and not Alire.Index.Exists (Allowed.Crate) then
+         if Args.Length = 1 and not Alire.Index.Exists (Allowed.Crate) then
             raise Alire.Query_Unsuccessful;
          end if;
 
@@ -260,13 +269,13 @@ package body Alr.Commands.Show is
             Report_Jekyll (Cmd,
                            Allowed.Crate,
                            Allowed.Versions,
-                           Num_Arguments = 0);
+                           Args.Length = 0);
          elsif Cmd.External then
             Report_Externals (Allowed.Crate, Cmd);
          else
             Report (Allowed.Crate,
                     Allowed.Versions,
-                    Num_Arguments = 0,
+                    Args.Length = 0,
                     Cmd);
          end if;
       exception
@@ -282,8 +291,8 @@ package body Alr.Commands.Show is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Shows information found in the loaded indexes about a"
                 & " specific release (see below to narrow the searched"
                 & " milestones). By default, only direct dependencies are"

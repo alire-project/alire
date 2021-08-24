@@ -1,3 +1,5 @@
+with Ada.Containers;
+
 with Alire.Crates.Containers;
 with Alire.Externals;
 with Alire.Index.Search;
@@ -14,13 +16,18 @@ with Semantic_Versioning;
 
 package body Alr.Commands.Search is
 
+   use type Ada.Containers.Count_Type;
+
    package TTY renames Alire.Utils.TTY;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
 
       Found : Natural := 0;
       Tab   : Alire.Utils.Tables.Table;
@@ -106,7 +113,7 @@ package body Alr.Commands.Search is
               ("Extra switches are incompatible with --crates");
          end if;
 
-         if Cmd.List and then Num_Arguments /= 0 then
+         if Cmd.List and then Args.Length /= 0 then
             Reportaise_Wrong_Arguments
               ("Search substring and --list are incompatible");
          end if;
@@ -114,9 +121,9 @@ package body Alr.Commands.Search is
          Cmd.Requires_Full_Index;
 
          Alire.Index.Search.Print_Crates
-           (Substring => (case Num_Arguments is
+           (Substring => (case Args.Length is
                              when 0      => "",
-                             when 1      => Argument (1),
+                             when 1      => Args (1),
                              when others =>
                                 raise Wrong_Command_Arguments with
                                   "Only one search substring supported"));
@@ -129,7 +136,7 @@ package body Alr.Commands.Search is
          Cmd.External := True;
       end if;
 
-      if Num_Arguments = 0
+      if Args.Length = 0
         and then
          not Cmd.List
         and then
@@ -141,11 +148,11 @@ package body Alr.Commands.Search is
          raise Wrong_Command_Arguments;
       end if;
 
-      if Num_Arguments = 0 and then Cmd.Prop.all /= "" then
+      if Args.Length = 0 and then Cmd.Prop.all /= "" then
          Cmd.List := True;
       end if;
 
-      if Cmd.List and then Num_Arguments /= 0 then
+      if Cmd.List and then Args.Length /= 0 then
          Trace.Error ("Listing is incompatible with searching");
          raise Wrong_Command_Arguments;
       end if;
@@ -229,7 +236,7 @@ package body Alr.Commands.Search is
          if Cmd.List then
             Trace.Detail ("Searching...");
          else
-            Trace.Detail ("Searching " & Utils.Quote (Argument (1)) & "...");
+            Trace.Detail ("Searching " & Utils.Quote (Args (1)) & "...");
          end if;
 
          while Has_Element (I) loop
@@ -238,7 +245,7 @@ package body Alr.Commands.Search is
                Crate   : Alire.Crates.Crate renames Element (I);
                Pattern : constant String := (if Cmd.List
                                              then ""
-                                             else Argument (1));
+                                             else Args (1));
             begin
                if Cmd.List then
 
@@ -272,8 +279,9 @@ package body Alr.Commands.Search is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is
+     (AAA.Strings.Empty_Vector
       .Append ("Searches the given substring in crate names (or properties"
                & " with --property), and shows the most recent release"
                & " of matching crates (unless --full is specified).")

@@ -1,3 +1,5 @@
+with Ada.Containers; use Ada.Containers;
+
 with Alire.Dependencies;
 with Alire.Optional;
 with Alire.Roots.Editable;
@@ -75,13 +77,13 @@ package body Alr.Commands.Pin is
 
       --  Check if we are given a particular version
 
-      if Utils.Contains (Target, "=") then
+      if Alire.Utils.Contains (Target, "=") then
 
          if Cmd.Unpin then
             Reportaise_Wrong_Arguments ("Unpinning does not require version");
          end if;
 
-         Version := Semver.Parse (Utils.Tail (Dep.Image, '='),
+         Version := Semver.Parse (Alire.Utils.Tail (Dep.Image, '='),
                                   Relaxed => False);
 
          Trace.Debug ("Pin requested for exact version: "
@@ -109,7 +111,9 @@ package body Alr.Commands.Pin is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command)
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
    is
 
       -------------------------
@@ -133,10 +137,10 @@ package body Alr.Commands.Pin is
 
       --  Argument validation
 
-      if Cmd.Pin_All and then Num_Arguments /= 0 then
+      if Cmd.Pin_All and then Args.Length /= 0 then
          Reportaise_Wrong_Arguments ("--all must appear alone");
       elsif Cmd.URL.all /= "" and then
-        (Num_Arguments /= 1 or else Cmd.Pin_All or else Cmd.Unpin)
+        (Args.Length /= 1 or else Cmd.Pin_All or else Cmd.Unpin)
       then
          Reportaise_Wrong_Arguments
            ("--use must be used alone with a crate name");
@@ -149,15 +153,15 @@ package body Alr.Commands.Pin is
 
       --  Listing of pins
 
-      if not Cmd.Pin_All and then Num_Arguments = 0 then
+      if not Cmd.Pin_All and then Args.Length = 0 then
          Cmd.Root.Solution.Print_Pins;
          return;
-      elsif Num_Arguments > 1 then
+      elsif Args.Length > 1 then
          Reportaise_Wrong_Arguments
            ("Pin expects a single crate or crate=version argument");
-      elsif Num_Arguments = 1 then
+      elsif Args.Length = 1 then
          --  Check that we get either a plain name or a crate=version
-         Validate_Crate_Spec (Argument (1));
+         Validate_Crate_Spec (Args (1));
       end if;
 
       --  Apply changes;
@@ -166,10 +170,10 @@ package body Alr.Commands.Pin is
          New_Root : Alire.Roots.Editable.Root :=
                       Alire.Roots.Editable.New_Root (Original => Cmd.Root);
          Optional_Crate : constant Alire.Optional.Crate_Name :=
-                            (if Num_Arguments = 1
+                            (if Args.Length = 1
                              then Alire.Optional.Crate_Names.Unit
                                (Alire.Dependencies
-                                     .From_String (Argument (1)).Crate)
+                                     .From_String (Args (1)).Crate)
                              else Alire.Optional.Crate_Names.Empty);
       begin
 
@@ -220,7 +224,7 @@ package body Alr.Commands.Pin is
 
             --  Change a single pin
 
-            Change_One_Pin (Cmd, New_Root, Argument (1));
+            Change_One_Pin (Cmd, New_Root, Args (1));
          end if;
 
          --  Consolidate changes
@@ -245,8 +249,8 @@ package body Alr.Commands.Pin is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Pin releases to a particular version."
                & " By default, the current solution version is used."
                & " A pinned release is not affected by automatic updates.")

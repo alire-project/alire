@@ -2,6 +2,7 @@ with AAA.Text_IO;
 
 with Ada.Directories;
 with Ada.Text_IO;
+with Ada.Containers; use Ada.Containers;
 
 with Alire.Config;
 with Alire.Lockfiles;
@@ -27,12 +28,13 @@ package body Alr.Commands.Init is
    -- Generate --
    --------------
 
-   procedure Generate (Cmd : Command) is
+   procedure Generate (Cmd  : Command;
+                       Args : AAA.Strings.Vector) is
 
       package TIO renames Ada.Text_IO;
 
       For_Library : constant Boolean := not Cmd.Bin;
-      Name        : constant String := Argument (1);
+      Name        : constant String := Args (1);
       Lower_Name  : constant String := Utils.To_Lower_Case (Name);
       Upper_Name  : constant String := Utils.To_Upper_Case (Name);
       Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
@@ -401,9 +403,12 @@ package body Alr.Commands.Init is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
-      if Num_Arguments /= 1 then
+      if Args.Length /= 1 then
          Trace.Error ("No crate name given");
          raise Wrong_Command_Arguments;
       end if;
@@ -416,7 +421,7 @@ package body Alr.Commands.Init is
       --  Validation finished
 
       declare
-         Name  : constant String := Argument (1);
+         Name  : constant String := Args (1);
          Check : constant Alire.Crate_Name := +Name with Unreferenced;
       begin
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
@@ -426,7 +431,7 @@ package body Alr.Commands.Init is
                & " alr; please choose another name");
          end if;
 
-         Generate (Cmd);
+         Generate (Cmd, Args);
       end;
    end Execute;
 
@@ -436,8 +441,8 @@ package body Alr.Commands.Init is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Initializes a new crate containing a ready-to-build GNAT"
                & " project. The crate is created as a child of the current"
                & " directory, containing minimal sources for an executable"

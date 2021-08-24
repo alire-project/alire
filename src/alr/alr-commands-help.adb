@@ -115,7 +115,9 @@ package body Alr.Commands.Help is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Empty_Vector)
+   is
       pragma Unreferenced (Cmd);
    begin
       if Num_Arguments /= 1 then

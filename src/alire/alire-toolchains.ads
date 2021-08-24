@@ -1,5 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+with AAA.Strings;
+
 with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
@@ -48,8 +50,8 @@ package Alire.Toolchains is
    procedure Unconfigure (Crate : Crate_Name);
    --  Set the crate as not configured.
 
-   Description : constant Utils.String_Vector
-     := Utils.Empty_Vector
+   Description : constant AAA.Strings.Vector
+     := AAA.Strings.Empty_Vector
        .Append ("Alire indexes binary releases of GNAT and gprbuild. The "
                 & "compilers are indexed with their target name, e.g., "
                 & TTY.Name ("gnat_native") & " or "

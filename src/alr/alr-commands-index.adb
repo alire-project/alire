@@ -82,7 +82,9 @@ package body Alr.Commands.Index is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
       --  Check no multi-action
       case Alire.Utils.Count_True
@@ -192,8 +194,8 @@ package body Alr.Commands.Index is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Add, remove, list and update indexes used by the current"
                & " alr configuration.")
       .New_Line

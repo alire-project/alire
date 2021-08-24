@@ -10,9 +10,12 @@ package body Alr.Commands.Build is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
-      if not Execute (Cmd, Export_Build_Env => True) then
+      if not Execute (Cmd, Args, Export_Build_Env => True) then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -22,7 +25,11 @@ package body Alr.Commands.Build is
    -------------
 
    function Execute (Cmd              : in out Commands.Command'Class;
-                     Export_Build_Env : Boolean) return Boolean is
+                     Args             :        AAA.Strings.Vector;
+                     Export_Build_Env :        Boolean)
+                     return Boolean
+   is
+      pragma Unreferenced (Args);
    begin
       Cmd.Requires_Full_Index;
 
@@ -91,10 +98,10 @@ package body Alr.Commands.Build is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
-      .Append ("Invokes gprbuild to compile all targets in the current"
-               & " crate."));
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("Invokes gprbuild to compile all targets in the current"
+         & " crate."));
 
    --------------------
    -- Setup_Switches --

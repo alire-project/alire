@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 package Alr.Commands.Help is
 
    --  Help command. While commands provide their own help text, other topics
@@ -15,12 +17,17 @@ package Alr.Commands.Help is
    --  List a summary of topics which are not commands.
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return String
+   is ("help");
+
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector);
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Shows information about commands and topics.")
        .Append ("See available commands with 'alr help commands'")
        .Append ("See available topics with 'alr help topics'."));

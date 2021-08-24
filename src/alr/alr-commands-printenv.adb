@@ -7,7 +7,10 @@ package body Alr.Commands.Printenv is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       Enabled : Natural := 0;
    begin
       --  Check no multi-action
@@ -46,8 +49,8 @@ package body Alr.Commands.Printenv is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Print the environment variables used to build the crate." &
                  " This command can be used to setup a build environment," &
                  " for instance before starting an IDE.")

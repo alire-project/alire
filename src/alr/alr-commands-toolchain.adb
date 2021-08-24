@@ -1,3 +1,4 @@
+with Ada.Containers;
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
@@ -8,7 +9,7 @@ with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
-with Alire.Utils;
+with Alire.Utils; use Alire.Utils;
 
 with Semantic_Versioning.Extended;
 
@@ -211,7 +212,7 @@ package body Alr.Commands.Toolchain is
 
       --  If no version was given, find if only one is installed
 
-      if not Utils.Contains (Target, "=") then
+      if not Contains (Target, "=") then
          Uninstall (Cmd, Target & "=" & Find_Version);
          return;
       end if;
@@ -227,7 +228,10 @@ package body Alr.Commands.Toolchain is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args : AAA.Strings.Vector)
+   is
+      use Ada.Containers;
    begin
 
       --  Validation
@@ -239,23 +243,23 @@ package body Alr.Commands.Toolchain is
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      if Num_Arguments > 1 then
+      if Args.Length > 1 then
          Reportaise_Wrong_Arguments
            ("One crate with optional version expected: crate[version set]");
       end if;
 
-      if (Cmd.Install or Cmd.Uninstall) and then Num_Arguments /= 1 then
+      if (Cmd.Install or Cmd.Uninstall) and then Args.Length /= 1 then
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
-      if Num_Arguments = 1 and then
+      if Args.Count = 1 and then
         not (Cmd.Install or Cmd.Uninstall or Cmd.S_Select)
       then
          Reportaise_Wrong_Arguments
            ("Specify the action to perform with the crate");
       end if;
 
-      if Cmd.S_Select and then Num_Arguments > 1 then
+      if Cmd.S_Select and then Args.Count > 1 then
          Reportaise_Wrong_Arguments
            ("Toolchain installation accepts at most one argument");
       end if;
@@ -265,7 +269,7 @@ package body Alr.Commands.Toolchain is
            ("--local requires --select or --disable-assistant");
       end if;
 
-      if Cmd.Disable and then Num_Arguments /= 0 then
+      if Cmd.Disable and then Args.Length /= 0 then
          Reportaise_Wrong_Arguments
            ("Disabling the assistant does not admit any extra arguments");
       end if;
@@ -289,10 +293,10 @@ package body Alr.Commands.Toolchain is
          end if;
 
       elsif Cmd.Uninstall then
-         Uninstall (Cmd, Argument (1));
+         Uninstall (Cmd, Args.First_Element);
 
       elsif Cmd.Install then
-         Install (Cmd, Argument (1), Set_As_Default => False);
+         Install (Cmd, Args (1), Set_As_Default => False);
 
       elsif Cmd.Disable then
          Alire.Toolchains.Set_Automatic_Assistant (False,

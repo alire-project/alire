@@ -1,3 +1,4 @@
+with Ada.Containers; use Ada.Containers;
 with Ada.Directories;
 
 with Alire.Config.Edit;
@@ -177,6 +178,7 @@ package body Alr.Commands.Get is
 
          if Cmd.Build then
             Build_OK := Commands.Build.Execute (Cmd,
+                                                AAA.Strings.Empty_Vector,
                                                 Export_Build_Env => False);
             --  Environment is already set up
          else
@@ -219,7 +221,10 @@ package body Alr.Commands.Get is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
 
       procedure Check_Unavailable_External (Name : Alire.Crate_Name) is
          --  Better user feedback if crate is only available through externals.
@@ -291,18 +296,18 @@ package body Alr.Commands.Get is
       end Check_Unavailable_External;
 
    begin
-      if Num_Arguments > 1 then
+      if Args.Length > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if Num_Arguments /= 1 then
+      if Args.Length /= 1 then
          Trace.Error ("No crate requested");
          raise Wrong_Command_Arguments with "One crate to get expected";
       end if;
 
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
-           Alire.Dependencies.From_String (Argument (1));
+           Alire.Dependencies.From_String (Args (1));
       begin
          if Cmd.Build and Cmd.Only then
             Reportaise_Wrong_Arguments
@@ -313,7 +318,7 @@ package body Alr.Commands.Get is
 
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed
-              ("Crate [" & Argument (1) & "] does not exist in the catalog.");
+              ("Crate [" & Args (1) & "] does not exist in the catalog.");
          end if;
 
          Check_Unavailable_External (Allowed.Crate);
@@ -336,8 +341,8 @@ package body Alr.Commands.Get is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Retrieve a crate, in the case of regular ones, or install"
                 & " a system package provided by the platform."
                 & " A regular crate is deployed under an immediate folder"

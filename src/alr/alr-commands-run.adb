@@ -12,6 +12,8 @@ with GNAT.OS_Lib;
 
 package body Alr.Commands.Run is
 
+   use type Ada.Containers.Count_Type;
+
    Max_Search_Depth : constant := 3;
    --  How many levels to go down looking for built executables,
    --  relative to the build folder of the root crate
@@ -44,7 +46,10 @@ package body Alr.Commands.Run is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       use type GNAT.Strings.String_Access;
 
       Name       : constant String := Cmd.Root.Release.Name_Str;
@@ -102,7 +107,7 @@ package body Alr.Commands.Run is
       --  Validation
       if Cmd.List
         and then
-          (Num_Arguments /= 0
+          (Args.Length /= 0
            or else
              (Cmd.Args /= null and then Cmd.Args.all /= ""))
       then
@@ -110,7 +115,7 @@ package body Alr.Commands.Run is
          raise Wrong_Command_Arguments;
       end if;
 
-      if not Cmd.List and then Num_Arguments > 1 then
+      if not Cmd.List and then Args.Length > 1 then
          Put_Line ("Too many arguments");
          raise Wrong_Command_Arguments;
       end if;
@@ -128,7 +133,10 @@ package body Alr.Commands.Run is
 
          --  COMPILATION  --
          if not Cmd.No_Compile then
-            if not Commands.Build.Execute (Cmd, Export_Build_Env => True) then
+            if not Commands.Build.Execute (Cmd,
+                                           Args => AAA.Strings.Empty_Vector,
+                                           Export_Build_Env => True)
+            then
                Reportaise_Command_Failed ("Build failed");
             end if;
          end if;
@@ -139,7 +147,7 @@ package body Alr.Commands.Run is
          --  either the declared executable or, by lack of that, an executable
          --  with the name of the crate.
 
-         if Num_Arguments = 0 and then Natural (Declared.Length) > 1 then
+         if Args.Length = 0 and then Natural (Declared.Length) > 1 then
             Trace.Error
               ("No executable specified but "
                & "the release builds more than one executable:");
@@ -151,9 +159,9 @@ package body Alr.Commands.Run is
          --  the release declares no executables and the requested one is
          --  the default one, e.g., same as running without argument).
 
-         if Num_Arguments = 1
-           and then not Declared.Contains (Argument (1))
-           and then Argument (1) /= Cmd.Root.Release.Default_Executable
+         if Args.Length = 1
+           and then not Declared.Contains (Args (1))
+           and then Args (1) /= Cmd.Root.Release.Default_Executable
          then
             Reportaise_Wrong_Arguments
               ("The requested executable is not built by this release"
@@ -166,8 +174,8 @@ package body Alr.Commands.Run is
          declare
             use all type Ada.Containers.Count_Type;
             Target_WO_Ext : constant String :=
-              (if Num_Arguments = 1
-               then Argument (1)
+              (if Args.Length = 1
+               then Args (1)
                else
                  (if Declared.Length = 1
                   then Declared.First_Element
@@ -226,8 +234,8 @@ package body Alr.Commands.Run is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Compiles the crate (unless --skip-compile is specified)"
                & " and then executes the default or given resulting"
                & " executable. ")

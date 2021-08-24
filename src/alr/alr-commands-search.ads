@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 private with GNAT.Strings;
 
 package Alr.Commands.Search is
@@ -5,11 +7,16 @@ package Alr.Commands.Search is
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return String
+   is ("search");
+
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector);
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector;
+                              return AAA.Strings.Vector;
 
    overriding
    function Short_Description (Cmd : Command) return String

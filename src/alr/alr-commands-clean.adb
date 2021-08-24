@@ -39,7 +39,7 @@ package body Alr.Commands.Clean is
          Alire.Directories.Force_Delete (Path);
       end Delete;
 
-      Targets : Alire.Utils.String_Set;
+      Targets : AAA.Strings.Set;
 
       ----------------
       -- Add_Target --
@@ -49,10 +49,10 @@ package body Alr.Commands.Clean is
                             Unused_Stop : in out Boolean)
       is
          use Ada.Directories;
-         use Alire.Utils;
+         use AAA.Strings;
          Name : constant String := Simple_Name (Item);
       begin
-         if Starts_With (Name, "alr-") and then Ends_With (Name, ".tmp") then
+         if Has_Prefix (Name, "alr-") and then Has_Suffix (Name, ".tmp") then
             Targets.Include (Ada.Directories.Full_Name (Item));
          end if;
       end Add_Target;
@@ -118,7 +118,9 @@ package body Alr.Commands.Clean is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       use Alire.Utils;
    begin
 
@@ -178,20 +180,20 @@ package body Alr.Commands.Clean is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
-      .Append ("no options:")
-      .Append ("   gprclean -r will be called to clean up the"
-               & " build environment.")
-      .New_Line
-      .Append ("--cache:")
-      .Append ("   All downloaded dependencies will be deleted.")
-      .New_Line
-      .Append ("--temp:")
-      .Append ("   All alr-???.tmp files in the subtree will be deleted."
-               & " These files may remain when alr is interrupted via"
-               & " Ctrl-C or other forceful means.")
-     );
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("no options:")
+       .Append ("   gprclean -r will be called to clean up the"
+                & " build environment.")
+       .New_Line
+       .Append ("--cache:")
+       .Append ("   All downloaded dependencies will be deleted.")
+       .New_Line
+       .Append ("--temp:")
+       .Append ("   All alr-???.tmp files in the subtree will be deleted."
+                & " These files may remain when alr is interrupted via"
+                & " Ctrl-C or other forceful means.")
+      );
 
    --------------------
    -- Setup_Switches --

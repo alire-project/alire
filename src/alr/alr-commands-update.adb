@@ -9,7 +9,10 @@ package body Alr.Commands.Update is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
 
       -------------------
       -- Parse_Allowed --
@@ -18,8 +21,8 @@ package body Alr.Commands.Update is
       function Parse_Allowed return Alire.Containers.Crate_Name_Sets.Set is
       begin
          return Set :  Alire.Containers.Crate_Name_Sets.Set do
-            for I in 1 .. Num_Arguments loop
-               Set.Include (+Argument (I));
+            for I in 1 .. Args.Last_Index loop
+               Set.Include (+Args (I));
             end loop;
          end return;
       exception
@@ -53,8 +56,9 @@ package body Alr.Commands.Update is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is
+     (AAA.Strings.Empty_Vector
       .Append ("Resolves unpinned dependencies using available indexes.")
       .New_Line
       .Append ("Invoked without arguments will consider all unpinned crates"

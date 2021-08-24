@@ -17,7 +17,10 @@ package body Alr.Commands.Dev is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
       if Cmd.Custom then
          Custom;
@@ -42,8 +45,8 @@ package body Alr.Commands.Dev is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Internal command for development help. Options and features"
                & " are not stable and may change without warning."));
 
@@ -51,7 +54,8 @@ package body Alr.Commands.Dev is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is

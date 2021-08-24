@@ -1,6 +1,7 @@
 with Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;
+with Ada.Containers;
 
 with Alire.Crates;
 with Alire.Defaults;
@@ -31,6 +32,8 @@ with GNAT.Command_Line;
 with GNATCOLL.VFS;
 
 package body Alr.Commands.Test is
+
+   use type Ada.Containers.Count_Type;
 
    package Query renames Alire.Solver;
 
@@ -350,8 +353,11 @@ package body Alr.Commands.Test is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
-      Test_All : constant Boolean := Num_Arguments = 0;
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
+      Test_All : constant Boolean := Args.Length = 0;
 
       procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
                            Stop : in out Boolean)
@@ -383,8 +389,8 @@ package body Alr.Commands.Test is
          --------------
 
          function Is_Match (Name : Alire.Crate_Name) return Boolean is
-           (for some I in 1 .. Num_Arguments =>
-               Utils.Contains (+Name, Argument (I)));
+           (for some I in Args.First_Index .. Args.Last_Index =>
+               Utils.Contains (+Name, Args (I)));
 
       begin
 
@@ -407,10 +413,10 @@ package body Alr.Commands.Test is
                end if;
             end loop;
          else
-            for J in 1 .. Num_Arguments loop
+            for J in Args.First_Index .. Args.Last_Index loop
                declare
                   Allowed  : constant Alire.Dependencies.Dependency :=
-                               Alire.Dependencies.From_String (Argument (J));
+                               Alire.Dependencies.From_String (Args (J));
                   Crate    : constant Alire.Crates.Crate :=
                                Alire.Index.Crate (Allowed.Crate);
                   Releases : constant Alire.Releases.Containers.Release_Set :=
@@ -468,11 +474,11 @@ package body Alr.Commands.Test is
    begin
       --  Validate command line
       if not Cmd.Search then
-         for I in 1 .. Num_Arguments loop
+         for I in Integer range Args.First_Index .. Args.Last_Index loop
             declare
                Cry_Me_A_River : constant Alire.Dependencies.Dependency :=
                                   Alire.Dependencies.From_String
-                                    (Argument (I)) with Unreferenced;
+                                    (Args (I)) with Unreferenced;
             begin
                null; -- Just check that no exception is raised
             end;
@@ -480,7 +486,7 @@ package body Alr.Commands.Test is
       end if;
 
       --  Validate exclusive options
-      if Cmd.Full and then (Num_Arguments /= 0 or else Cmd.Search) then
+      if Cmd.Full and then (Args.Length /= 0 or else Cmd.Search) then
          Trace.Always
            ("Either use --full or specify crate names, but not both");
          raise Command_Failed;
@@ -536,8 +542,8 @@ package body Alr.Commands.Test is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Tests the retrievability and buildability of all or"
                 & " specific releases. Unless --continue or --redo is given,"
                 & " the command expects to be run in an empty folder.")

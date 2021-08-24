@@ -1,4 +1,3 @@
-with AAA.Strings;
 with AAA.Text_IO;
 
 with Ada.Containers.Indefinite_Vectors;

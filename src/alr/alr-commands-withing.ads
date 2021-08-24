@@ -1,14 +1,22 @@
+with AAA.Strings;
+
 private with GNAT.Strings;
 
 package Alr.Commands.Withing is
 
    type Command is new Commands.Command with private;
 
-   overriding procedure Execute (Cmd : in out Command);
+   overriding
+   function Name (Cmd : Command) return String
+   is ("with");
+
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector);
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector;
+                              return AAA.Strings.Vector;
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;

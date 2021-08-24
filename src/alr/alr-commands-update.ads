@@ -1,13 +1,20 @@
+with AAA.Strings;
+
 package Alr.Commands.Update is
 
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return String
+   is ("update");
+
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector);
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector;
+                              return AAA.Strings.Vector;
 
    overriding
    procedure Setup_Switches

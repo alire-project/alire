@@ -1,8 +1,13 @@
+with Ada.Containers;
+
 with Alire.Origins;
 with Alire.Publish;
 with Alire.URI;
+with Alire.Utils;
 
 package body Alr.Commands.Publish is
+
+   use type Ada.Containers.Count_Type;
 
    package URI renames Alire.URI;
 
@@ -11,10 +16,12 @@ package body Alr.Commands.Publish is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
 
       function Revision return String
-      is (if Num_Arguments >= 2 then Argument (2) else "");
+      is (if Args.Length >= 2 then Args (2) else "");
 
       Options : constant Alire.Publish.All_Options :=
                   Alire.Publish.New_Options
@@ -37,22 +44,22 @@ package body Alr.Commands.Publish is
 
       elsif Cmd.Tar then
 
-         if Num_Arguments > 2 then
+         if Args.Length > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");
          end if;
 
          Alire.Publish.Directory_Tar
-           (Path     => (if Num_Arguments >= 1 then Argument (1) else "."),
-            Revision => (if Num_Arguments >= 2 then Argument (2) else "HEAD"),
+           (Path     => (if Args.Length >= 1 then Args (1) else "."),
+            Revision => (if Args.Length >= 2 then Args (2) else "HEAD"),
             Options  => Options);
 
       else
-         if Num_Arguments < 1 then
+         if Args.Length < 1 then
             Alire.Publish.Local_Repository (Options => Options);
 
-         elsif Num_Arguments > 2 then
+         elsif Args.Length > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");
@@ -63,7 +70,7 @@ package body Alr.Commands.Publish is
 
             declare
                use Alire.Origins;
-               URL : constant String := Argument (1);
+               URL : constant String := Args (1);
             begin
                if URI.Scheme (URL) in URI.File_Schemes then
                   if Archive_Format (URI.Local_Path (URL)) /= Unknown then
