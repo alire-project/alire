@@ -3,6 +3,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
+with Alire.Releases;
 with Alire.TTY;
 with Alire.Utils;
 
@@ -32,6 +33,10 @@ package Alire.Toolchains is
 
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
    --  Enable/Disable the automatic assistant on next run
+
+   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level);
+   --  Mark the given release as the default to be used. Does not check that it
+   --  be already installed.
 
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean;
    --  Say if a tool is actually configured by the user

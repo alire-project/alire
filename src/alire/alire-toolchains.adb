@@ -152,9 +152,7 @@ package body Alire.Toolchains is
 
          --  Store tool milestone after successful deployment
 
-         Config.Edit.Set (Path  => Config.Edit.Filepath (Level),
-                          Key   => Tool_Key (Release.Name),
-                          Value => Release.Milestone.Image);
+         Set_As_Default (Release, Level);
 
       end Install;
 
@@ -255,6 +253,18 @@ package body Alire.Toolchains is
       end loop;
 
    end Assistant;
+
+   --------------------
+   -- Set_As_Default --
+   --------------------
+
+   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level)
+   is
+   begin
+      Config.Edit.Set (Path  => Config.Edit.Filepath (Level),
+                       Key   => Tool_Key (Release.Name),
+                       Value => Release.Milestone.Image);
+   end Set_As_Default;
 
    -----------------------------
    -- Set_Automatic_Assistant --

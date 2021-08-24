@@ -29,7 +29,8 @@ package Alr.Commands.Toolchain is
           & "select the default toolchain for this configuration. "
           & "Adding --local will instead make the selection apply "
           & "only to the workspace (overridding a possible "
-          & "configuration-wide selection).")
+          & "configuration-wide selection). Giving a release argument will "
+          & "skip the assistant and set the release as the default.")
        .New_Line
        .Append
          ("Specify --install/--uninstall and a crate name with optional "
@@ -52,7 +53,7 @@ package Alr.Commands.Toolchain is
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[-u|--uninstall] [-i|--install crate[version set]] |"
-       & " --select [--local]");
+       & " --select [--local] [release]");
 
 private
 
