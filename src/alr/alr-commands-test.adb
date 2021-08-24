@@ -364,9 +364,9 @@ package body Alr.Commands.Test is
       is
          pragma Unreferenced (Item, Stop);
       begin
-         Put_Line ("Current folder is not empty, testing aborted " &
-                     "(use --continue to resume a partial test)");
-         raise Command_Failed;
+         Reportaise_Command_Failed
+           ("Current folder is not empty, testing aborted " &
+              "(use --continue to resume a partial test)");
       end Not_Empty;
 
       Candidates : Alire.Releases.Containers.Release_Sets.Set;
@@ -487,9 +487,8 @@ package body Alr.Commands.Test is
 
       --  Validate exclusive options
       if Cmd.Full and then (Args.Length /= 0 or else Cmd.Search) then
-         Trace.Always
+         Reportaise_Command_Failed
            ("Either use --full or specify crate names, but not both");
-         raise Command_Failed;
       end if;
 
       --  Check in empty folder!
@@ -513,8 +512,8 @@ package body Alr.Commands.Test is
                Trace.Detail ("Testing all releases");
             end if;
          else
-            Trace.Always ("No releases specified; use --full to test'em all!");
-            raise Command_Failed;
+            Reportaise_Command_Failed
+              ("No releases specified; use --full to test'em all!");
          end if;
       end if;
 
@@ -525,8 +524,7 @@ package body Alr.Commands.Test is
       Find_Candidates;
 
       if Candidates.Is_Empty then
-         Trace.Info ("No releases for the requested crates");
-         raise Command_Failed;
+         Reportaise_Command_Failed ("No releases for the requested crates");
       else
          Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
       end if;

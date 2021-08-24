@@ -111,13 +111,11 @@ package body Alr.Commands.Run is
            or else
              (Cmd.Args /= null and then Cmd.Args.all /= ""))
       then
-         Put_Line ("Listing is incompatible with execution");
-         raise Wrong_Command_Arguments;
+         Reportaise_Wrong_Arguments ("Listing is incompatible with execution");
       end if;
 
       if not Cmd.List and then Args.Length > 1 then
-         Put_Line ("Too many arguments");
-         raise Wrong_Command_Arguments;
+         Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
       declare
@@ -211,9 +209,8 @@ package body Alr.Commands.Run is
             --  Finally launch a single target executable, or error otherwise:
 
             if Target_Exes.Is_Empty then
-               Trace.Error
+               Reportaise_Command_Failed
                  ("Executable " & Utils.Quote (Target) & " not found");
-               raise Command_Failed;
             elsif Natural (Target_Exes.Length) > 1 then
                Trace.Error ("Too many candidates found:");
                for Candid of Target_Exes loop

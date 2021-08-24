@@ -1,4 +1,4 @@
-with Ada.Containers; use Ada.Containers;
+with Ada.Containers;
 
 with Alire.Dependencies;
 with Alire.Optional;
@@ -18,6 +18,8 @@ package body Alr.Commands.Pin is
 
    package Semver renames Semantic_Versioning;
    package TTY renames Alire.Utils.TTY;
+
+   use type Ada.Containers.Count_Type;
 
    --------------------
    -- Change_One_Pin --

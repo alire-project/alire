@@ -207,7 +207,7 @@ package body Alr.Commands is
    procedure Reportaise_Wrong_Arguments (Message : String) is
    begin
       Alire.Errors.Pretty_Print (Message);
-      raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
+      raise SubCmd.Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
    -------------------------

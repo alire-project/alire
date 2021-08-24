@@ -109,8 +109,7 @@ package body Alr.Commands.Get is
                   Valid    => (Yes | No => True, others => False),
                   Default  => (if Alire.Force then Yes else No)) = No
                then
-                  Trace.Info ("Crate retrieval abandoned.");
-                  raise Command_Failed;
+                  Reportaise_Command_Failed ("Crate retrieval abandoned.");
                end if;
             end if;
          end;
@@ -212,7 +211,7 @@ package body Alr.Commands.Get is
       end if;
 
       if not Build_OK then
-         raise Command_Failed with "Build ended with errors";
+         Reportaise_Command_Failed ("Build ended with errors");
          --  This is not displayed at default level, but ensures exit code /= 0
       end if;
    end Retrieve;
@@ -302,7 +301,7 @@ package body Alr.Commands.Get is
 
       if Args.Length /= 1 then
          Trace.Error ("No crate requested");
-         raise Wrong_Command_Arguments with "One crate to get expected";
+         Reportaise_Wrong_Arguments ("One crate to get expected");
       end if;
 
       declare

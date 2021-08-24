@@ -155,16 +155,6 @@ package body SubCommander.Instance is
       end if;
    end What_Command;
 
-   -------------------------------
-   -- Reportaise_Command_Failed --
-   -------------------------------
-
-   procedure Reportaise_Command_Failed (Message : String) is
-   begin
-      raise Command_Failed with Message;
-   end Reportaise_Command_Failed;
-   pragma Unreferenced (Reportaise_Command_Failed);
-
    --------------------------------
    -- Reportaise_Wrong_Arguments --
    --------------------------------
@@ -505,7 +495,7 @@ package body SubCommander.Instance is
          Put_Line ("Use """ & Main_Command_Name &
                      " help <command>"" for specific command help");
          Error_Exit (1);
-      when Constraint_Error | Error_No_Command =>
+      when Error_No_Command =>
          --  Alire.Log_Exception (E);
          if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
             Put_Error ("Unrecognized global option: " &
@@ -590,6 +580,27 @@ package body SubCommander.Instance is
          end if;
       end;
 
+   exception
+      when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
+         --  Getopt has already displayed some help
+         Put_Line ("");
+         Put_Line ("Use """ & Main_Command_Name &
+                     " help <command>"" for specific command help");
+         Error_Exit (1);
+      when Error_No_Command =>
+         --  Alire.Log_Exception (E);
+         if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
+            Put_Error ("Unrecognized global option: " &
+                         Raw_Arguments.First_Element);
+         else
+            Put_Error ("Unrecognized command: " & Raw_Arguments.First_Element);
+         end if;
+         Put_Line ("");
+         Display_Usage (Displayed_Error => True);
+         Error_Exit (1);
+      when Wrong_Command_Arguments =>
+         --  Raised in here, so no need to raise up unless in debug mode
+         Error_Exit (1);
    end Execute;
 
    ------------------------

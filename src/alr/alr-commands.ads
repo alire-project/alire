@@ -21,8 +21,6 @@ pragma Warnings (On);
 
 package Alr.Commands is
 
-   Wrong_Command_Arguments : exception;
-
    -------------
    -- Execute --
    -------------

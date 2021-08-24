@@ -125,7 +125,7 @@ package body Alr.Commands.Search is
                              when 0      => "",
                              when 1      => Args (1),
                              when others =>
-                                raise Wrong_Command_Arguments with
+                                raise SubCmd.Wrong_Command_Arguments with
                                   "Only one search substring supported"));
          return;
       end if;
@@ -143,9 +143,9 @@ package body Alr.Commands.Search is
          Cmd.Prop.all = ""
       then
          --  no search term, nor --list, nor --prop
-         Trace.Error ("Please provide a search term, --property, or use" &
-                        " --list to show all available releases");
-         raise Wrong_Command_Arguments;
+         Reportaise_Wrong_Arguments
+           ("Please provide a search term, --property, or use" &
+              " --list to show all available releases");
       end if;
 
       if Args.Length = 0 and then Cmd.Prop.all /= "" then
@@ -153,8 +153,7 @@ package body Alr.Commands.Search is
       end if;
 
       if Cmd.List and then Args.Length /= 0 then
-         Trace.Error ("Listing is incompatible with searching");
-         raise Wrong_Command_Arguments;
+         Reportaise_Wrong_Arguments ("Listing is incompatible with searching");
       end if;
 
       --  End of option verification, start of search. First load the index,

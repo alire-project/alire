@@ -48,7 +48,6 @@ package SubCommander.Instance is
    procedure Display_Usage (Displayed_Error : Boolean := False);
    procedure Display_Help (Keyword : String);
 
-   Command_Failed : exception;
    Wrong_Command_Arguments : exception;
    Error_No_Command : exception;
    Command_Already_Defined : exception;

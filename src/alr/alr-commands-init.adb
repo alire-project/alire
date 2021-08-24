@@ -409,13 +409,11 @@ package body Alr.Commands.Init is
    is
    begin
       if Args.Length /= 1 then
-         Trace.Error ("No crate name given");
-         raise Wrong_Command_Arguments;
+         Reportaise_Wrong_Arguments ("No crate name given");
       end if;
 
       if not (Cmd.Bin or Cmd.Lib) then
-         Log ("Please provide either --bin or --lib");
-         raise Command_Failed;
+         Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
 
       --  Validation finished
