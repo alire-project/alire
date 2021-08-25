@@ -3,9 +3,11 @@ with AAA.Table_IO;
 with Alire.Config.Edit;
 with Alire.Features.Index;
 with Alire.Index_On_Disk;
-with Alire.Utils;
+with Alire.Utils.TTY;
 
 package body Alr.Commands.Index is
+
+   package TTY renames Alire.Utils.TTY;
 
    --  Forward declarations
 
@@ -154,10 +156,13 @@ package body Alr.Commands.Index is
       end if;
 
       Table
-        .Append ("#").Append ("Name").Append ("URL").Append ("Path");
+        .Append (TTY.Emph ("#"))
+        .Append (TTY.Emph ("NAME"))
+        .Append (TTY.Emph ("URL"))
+        .Append (TTY.Emph ("PATH"));
 
       if Alire.Log_Level = Alire.Trace.Debug then
-         Table.Append ("Priority");
+         Table.Append (TTY.Emph ("PRIORITY"));
       end if;
 
       for Index of Indexes loop
