@@ -107,14 +107,14 @@ package body Alr.Commands.Run is
       --  Validation
       if Cmd.List
         and then
-          (Args.Length /= 0
+          (Args.Count /= 0
            or else
              (Cmd.Args /= null and then Cmd.Args.all /= ""))
       then
          Reportaise_Wrong_Arguments ("Listing is incompatible with execution");
       end if;
 
-      if not Cmd.List and then Args.Length > 1 then
+      if not Cmd.List and then Args.Count > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
@@ -145,7 +145,7 @@ package body Alr.Commands.Run is
          --  either the declared executable or, by lack of that, an executable
          --  with the name of the crate.
 
-         if Args.Length = 0 and then Natural (Declared.Length) > 1 then
+         if Args.Count = 0 and then Natural (Declared.Length) > 1 then
             Trace.Error
               ("No executable specified but "
                & "the release builds more than one executable:");
@@ -157,7 +157,7 @@ package body Alr.Commands.Run is
          --  the release declares no executables and the requested one is
          --  the default one, e.g., same as running without argument).
 
-         if Args.Length = 1
+         if Args.Count = 1
            and then not Declared.Contains (Args (1))
            and then Args (1) /= Cmd.Root.Release.Default_Executable
          then
@@ -172,7 +172,7 @@ package body Alr.Commands.Run is
          declare
             use all type Ada.Containers.Count_Type;
             Target_WO_Ext : constant String :=
-              (if Args.Length = 1
+              (if Args.Count = 1
                then Args (1)
                else
                  (if Declared.Length = 1

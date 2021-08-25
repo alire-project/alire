@@ -2,7 +2,6 @@ with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
 with Ada.Text_IO;
-with Ada.Containers;
 
 with Alire.Dependencies;
 with Alire.Optional;
@@ -20,8 +19,6 @@ with Semantic_Versioning.Extended;
 with TOML_Slicer;
 
 package body Alr.Commands.Withing is
-
-   use type Ada.Containers.Count_Type;
 
    Switch_URL : constant String := "--use";
 
@@ -171,7 +168,7 @@ package body Alr.Commands.Withing is
                            Args :        AAA.Strings.Vector)
    is
       Crate : constant Alire.Optional.Crate_Name :=
-                (if Args.Length = 1
+                (if Args.Count = 1
                  then Alire.Optional.Crate_Names.Unit
                    (Alire.Dependencies.From_String (Args (1)).Crate)
                  else Alire.Optional.Crate_Names.Empty);
@@ -179,7 +176,7 @@ package body Alr.Commands.Withing is
 
       --  First, add the dependency if given
 
-      if Args.Length = 1 then
+      if Args.Count = 1 then
          declare
             use type Semantic_Versioning.Extended.Version_Set;
             Dep : constant Alire.Dependencies.Dependency :=
@@ -262,7 +259,7 @@ package body Alr.Commands.Withing is
       --  No parameters: give requested info and return. There is still the
       --  possibility of a `with --use` that is processed later.
 
-      if Args.Length = 0 then
+      if Args.Count = 0 then
          if Flags = 0 or else Cmd.Solve then
             List (Cmd);
             return;
@@ -279,7 +276,7 @@ package body Alr.Commands.Withing is
          end if;
       end if;
 
-      if Args.Length < 1 then
+      if Args.Count < 1 then
          if Cmd.Del then
             Reportaise_Wrong_Arguments ("At least one dependency required");
          elsif Cmd.From then

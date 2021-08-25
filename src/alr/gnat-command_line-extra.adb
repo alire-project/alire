@@ -1,15 +1,18 @@
-with Alire.Utils;
-
+with AAA.Strings;
 with GNAT.Strings;
 
 package body GNAT.Command_Line.Extra is
 
-   function Verify_No_Duplicates (Config : Command_Line_Configuration)
+   function Verify_No_Duplicates (A, B : Command_Line_Configuration)
                                   return Boolean
    is
-      Seen : Alire.Utils.String_Sets.Set;
+      Seen : AAA.Strings.Set;
       --  We track already set switches in this set; any re-appearance is
       --  reported.
+
+      ------------
+      -- Insert --
+      ------------
 
       function Insert (Switch : String) return Boolean is
          --  Return True if OK; False otherwise.
@@ -20,25 +23,53 @@ package body GNAT.Command_Line.Extra is
          return True;
       exception
          when Constraint_Error =>
-            Alire.Trace.Error ("Redefined switch: " & Switch);
             return False;
       end Insert;
 
-      use all type GNAT.Strings.String_Access;
-   begin
-      for Switch of Config.Switches.all loop
+      ------------
+      -- Insert --
+      ------------
+
+      function Insert (Sw : Switch_Definition) return Boolean is
+         use all type GNAT.Strings.String_Access;
+      begin
          --  Short version
-         if Switch.Switch /= null and then
-           Switch.Switch.all /= "" and then
-           not Insert (Switch.Switch.all)
+         if Sw.Switch /= null and then
+           Sw.Switch.all /= "" and then
+           not Insert (Sw.Switch.all)
          then
             return False;
          end if;
          --  Long version
-         if Switch.Long_Switch /= null and then
-           Switch.Long_Switch.all /= "" and then
-           not Insert (Switch.Long_Switch.all)
+         if Sw.Long_Switch /= null and then
+           Sw.Long_Switch.all /= "" and then
+           not Insert (Sw.Long_Switch.all)
          then
+            return False;
+         end if;
+
+         return True;
+      end Insert;
+   begin
+      if A = null
+        or else
+         A.Switches = null
+        or else
+         B = null
+        or else
+         B.Switches = null
+      then
+         return True;
+      end if;
+
+      for Switch of A.Switches.all loop
+         if not Insert (Switch) then
+            return False;
+         end if;
+      end loop;
+
+      for Switch of B.Switches.all loop
+         if not Insert (Switch) then
             return False;
          end if;
       end loop;
@@ -46,6 +77,10 @@ package body GNAT.Command_Line.Extra is
       --  No duplication detected
       return True;
    end Verify_No_Duplicates;
+
+   ---------------------
+   -- For_Each_Switch --
+   ---------------------
 
    procedure For_Each_Switch
      (Config : Command_Line_Configuration;

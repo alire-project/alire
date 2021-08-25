@@ -86,6 +86,10 @@ package body Alr.Commands.Index is
                       Args :        AAA.Strings.Vector)
    is
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Name (Cmd) & " doesn't take arguments");
+      end if;
+
       --  Check no multi-action
       case Alire.Utils.Count_True
         ((Cmd.Add.all /= "",

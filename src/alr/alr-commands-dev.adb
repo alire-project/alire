@@ -18,10 +18,14 @@ package body Alr.Commands.Dev is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command;
+   procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       if Cmd.Custom then
          Custom;
       end if;

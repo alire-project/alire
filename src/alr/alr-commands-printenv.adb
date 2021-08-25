@@ -13,6 +13,10 @@ package body Alr.Commands.Printenv is
    is
       Enabled : Natural := 0;
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       --  Check no multi-action
       Enabled := Enabled + (if Cmd.Details then 1 else 0);
       Enabled := Enabled + (if Cmd.Unix_Shell then 1 else 0);

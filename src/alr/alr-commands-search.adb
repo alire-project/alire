@@ -1,5 +1,3 @@
-with Ada.Containers;
-
 with Alire.Crates.Containers;
 with Alire.Externals;
 with Alire.Index.Search;
@@ -15,8 +13,6 @@ with Alr.Utils;
 with Semantic_Versioning;
 
 package body Alr.Commands.Search is
-
-   use type Ada.Containers.Count_Type;
 
    package TTY renames Alire.Utils.TTY;
 
@@ -113,7 +109,7 @@ package body Alr.Commands.Search is
               ("Extra switches are incompatible with --crates");
          end if;
 
-         if Cmd.List and then Args.Length /= 0 then
+         if Cmd.List and then Args.Count /= 0 then
             Reportaise_Wrong_Arguments
               ("Search substring and --list are incompatible");
          end if;
@@ -121,7 +117,7 @@ package body Alr.Commands.Search is
          Cmd.Requires_Full_Index;
 
          Alire.Index.Search.Print_Crates
-           (Substring => (case Args.Length is
+           (Substring => (case Args.Count is
                              when 0      => "",
                              when 1      => Args (1),
                              when others =>
@@ -136,7 +132,7 @@ package body Alr.Commands.Search is
          Cmd.External := True;
       end if;
 
-      if Args.Length = 0
+      if Args.Count = 0
         and then
          not Cmd.List
         and then
@@ -148,11 +144,11 @@ package body Alr.Commands.Search is
               " --list to show all available releases");
       end if;
 
-      if Args.Length = 0 and then Cmd.Prop.all /= "" then
+      if Args.Count = 0 and then Cmd.Prop.all /= "" then
          Cmd.List := True;
       end if;
 
-      if Cmd.List and then Args.Length /= 0 then
+      if Cmd.List and then Args.Count /= 0 then
          Reportaise_Wrong_Arguments ("Listing is incompatible with searching");
       end if;
 

@@ -223,11 +223,11 @@ package body Alr.Commands.Show is
                       Args :        AAA.Strings.Vector)
    is
    begin
-      if Args.Length > 1 then
+      if Args.Count > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if Args.Length = 0 then
+      if Args.Count = 0 then
          if Alire.Root.Current.Outside then
             Reportaise_Wrong_Arguments
               ("Cannot proceed without a crate name");
@@ -243,7 +243,7 @@ package body Alr.Commands.Show is
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Args.Length = 1 or else
+      if Args.Count = 1 or else
         Cmd.Graph or else Cmd.Solve or else Cmd.Tree
       then
          Cmd.Requires_Full_Index;
@@ -251,12 +251,12 @@ package body Alr.Commands.Show is
 
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
-           (if Args.Length = 1
+           (if Args.Count = 1
             then Alire.Dependencies.From_String (Args (1))
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Args.Length = 1 and not Alire.Index.Exists (Allowed.Crate) then
+         if Args.Count = 1 and not Alire.Index.Exists (Allowed.Crate) then
             raise Alire.Query_Unsuccessful;
          end if;
 
@@ -269,13 +269,13 @@ package body Alr.Commands.Show is
             Report_Jekyll (Cmd,
                            Allowed.Crate,
                            Allowed.Versions,
-                           Args.Length = 0);
+                           Args.Count = 0);
          elsif Cmd.External then
             Report_Externals (Allowed.Crate, Cmd);
          else
             Report (Allowed.Crate,
                     Allowed.Versions,
-                    Args.Length = 0,
+                    Args.Count = 0,
                     Cmd);
          end if;
       exception

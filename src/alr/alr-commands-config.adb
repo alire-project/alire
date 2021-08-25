@@ -1,4 +1,3 @@
-with Ada.Containers;
 with Alire.Config.Edit;
 with Alire.Root;
 
@@ -12,8 +11,6 @@ package body Alr.Commands.Config is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use Ada.Containers;
-
       Enabled : Natural := 0;
 
       Lvl : constant Alire.Config.Level := (if Cmd.Global
@@ -54,7 +51,7 @@ package body Alr.Commands.Config is
       end if;
 
       if Cmd.List then
-         case Args.Length is
+         case Args.Count is
             when 0 =>
                Trace.Always (Alire.Config.Edit.List
                              (Filter => "*",
@@ -69,7 +66,7 @@ package body Alr.Commands.Config is
          end case;
 
       elsif Cmd.Get then
-         if Args.Length /= 1 then
+         if Args.Count /= 1 then
             Reportaise_Wrong_Arguments ("Unset expects one argument");
          end if;
 
@@ -86,7 +83,7 @@ package body Alr.Commands.Config is
                                          "' is not defined");
          end if;
       elsif Cmd.Set then
-         if Args.Length /= 2 then
+         if Args.Count /= 2 then
             Reportaise_Wrong_Arguments ("Set expects two arguments");
          end if;
 
@@ -104,7 +101,7 @@ package body Alr.Commands.Config is
          end;
 
       elsif Cmd.Unset then
-         if Args.Length /= 1 then
+         if Args.Count /= 1 then
             Reportaise_Wrong_Arguments ("Unset expects one argument");
          end if;
 

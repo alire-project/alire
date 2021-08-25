@@ -56,8 +56,6 @@ package body Alr.Commands.Edit is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      pragma Unreferenced (Args);
-
       use Ada.Containers;
       use GNAT.Strings;
       use Alire.Config;
@@ -67,6 +65,10 @@ package body Alr.Commands.Edit is
 
       Edit_Args : String_Vector := Split (Editor_Cmd, ' ');
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       if Edit_Args.Is_Empty then
          Reportaise_Command_Failed
            ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");

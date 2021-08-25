@@ -27,6 +27,10 @@ package body Alr.Commands.Version is
       use Ada.Text_IO;
       use all type Alire.Roots.Optional.States;
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       Trace.Always ("Alr version: " & Alr.Version);
       Trace.Always ("Alire Library version: " & Alire.Version);
       Trace.Always ("alr status is " & Bootstrap.Status_Line);

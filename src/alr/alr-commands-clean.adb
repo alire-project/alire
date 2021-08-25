@@ -5,11 +5,16 @@ with Alire.Directories;
 with Alire.Paths;
 with Alire.TTY;
 with Alire.Utils;
+with Alire.GPR;
 
 with Alr.Spawn;
 with Alr.Platform;
 
 package body Alr.Commands.Clean is
+
+   Scenario : Alire.GPR.Scenario;
+   --  This will be filled in during parsing of command line with any seen "-X"
+   --  parameters.
 
    -----------------------
    -- Delete_Temp_Files --
@@ -124,6 +129,10 @@ package body Alr.Commands.Clean is
       use Alire.Utils;
    begin
 
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Valid_Session;
          Cmd.Root.Export_Build_Environment;
@@ -199,7 +208,8 @@ package body Alr.Commands.Clean is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is
@@ -213,6 +223,8 @@ package body Alr.Commands.Clean is
                      Cmd.Temp'Access,
                      Long_Switch => "--temp",
                      Help        => "Delete dangling temporary files");
+
+      Add_GPR_Scenario_Switch (Config);
    end Setup_Switches;
 
 end Alr.Commands.Clean;

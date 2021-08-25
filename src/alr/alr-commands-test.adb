@@ -357,7 +357,7 @@ package body Alr.Commands.Test is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      Test_All : constant Boolean := Args.Length = 0;
+      Test_All : constant Boolean := Args.Count = 0;
 
       procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
                            Stop : in out Boolean)
@@ -486,7 +486,7 @@ package body Alr.Commands.Test is
       end if;
 
       --  Validate exclusive options
-      if Cmd.Full and then (Args.Length /= 0 or else Cmd.Search) then
+      if Cmd.Full and then (Args.Count /= 0 or else Cmd.Search) then
          Reportaise_Command_Failed
            ("Either use --full or specify crate names, but not both");
       end if;

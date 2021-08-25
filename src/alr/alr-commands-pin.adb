@@ -1,5 +1,3 @@
-with Ada.Containers;
-
 with Alire.Dependencies;
 with Alire.Optional;
 with Alire.Roots.Editable;
@@ -18,8 +16,6 @@ package body Alr.Commands.Pin is
 
    package Semver renames Semantic_Versioning;
    package TTY renames Alire.Utils.TTY;
-
-   use type Ada.Containers.Count_Type;
 
    --------------------
    -- Change_One_Pin --
@@ -139,10 +135,10 @@ package body Alr.Commands.Pin is
 
       --  Argument validation
 
-      if Cmd.Pin_All and then Args.Length /= 0 then
+      if Cmd.Pin_All and then Args.Count /= 0 then
          Reportaise_Wrong_Arguments ("--all must appear alone");
       elsif Cmd.URL.all /= "" and then
-        (Args.Length /= 1 or else Cmd.Pin_All or else Cmd.Unpin)
+        (Args.Count /= 1 or else Cmd.Pin_All or else Cmd.Unpin)
       then
          Reportaise_Wrong_Arguments
            ("--use must be used alone with a crate name");
@@ -155,13 +151,13 @@ package body Alr.Commands.Pin is
 
       --  Listing of pins
 
-      if not Cmd.Pin_All and then Args.Length = 0 then
+      if not Cmd.Pin_All and then Args.Count = 0 then
          Cmd.Root.Solution.Print_Pins;
          return;
-      elsif Args.Length > 1 then
+      elsif Args.Count > 1 then
          Reportaise_Wrong_Arguments
            ("Pin expects a single crate or crate=version argument");
-      elsif Args.Length = 1 then
+      elsif Args.Count = 1 then
          --  Check that we get either a plain name or a crate=version
          Validate_Crate_Spec (Args (1));
       end if;
@@ -172,7 +168,7 @@ package body Alr.Commands.Pin is
          New_Root : Alire.Roots.Editable.Root :=
                       Alire.Roots.Editable.New_Root (Original => Cmd.Root);
          Optional_Crate : constant Alire.Optional.Crate_Name :=
-                            (if Args.Length = 1
+                            (if Args.Count = 1
                              then Alire.Optional.Crate_Names.Unit
                                (Alire.Dependencies
                                      .From_String (Args (1)).Crate)

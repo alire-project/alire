@@ -1,7 +1,8 @@
 with Ada.Command_Line;
-with GNAT.OS_Lib;
 with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.Command_Line.Extra;
+with GNAT.OS_Lib;
+with GNAT.Strings;
 
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -43,14 +44,16 @@ package body SubCommander.Instance is
    Not_In_A_Group   : AAA.Strings.Vector;
    --  List of commands that are not in a group
 
-   Raw_Arguments : AAA.Strings.Vector;
-   --  Raw arguments, first one is the command
+   Global_Arguments : AAA.Strings.Vector;
+   --  Vector of arguments for the global command, the first one should be the
+   --  command name, otherwise there is an invalid global switch on the command
+   --  line.
 
    Help_Requested  : Boolean;
 
    First_Nonswitch : Integer;
 
-   Global_Config   : Command_Line_Configuration;
+   Global_Config : Command_Line_Configuration;
 
    Parsing_Done : Boolean := False;
 
@@ -61,6 +64,8 @@ package body SubCommander.Instance is
    function Highlight_Switches (Line : String) return String;
    function What_Command (Str : String := "") return not null Command_Access;
    procedure Put_Line_For_Access (Str : String);
+   function To_Argument_List (V : AAA.Strings.Vector)
+                              return GNAT.OS_Lib.Argument_List_Access;
 
    -------------------------
    -- Put_Line_For_Access --
@@ -70,6 +75,22 @@ package body SubCommander.Instance is
    begin
       Put_Line (Str);
    end Put_Line_For_Access;
+
+   ----------------------
+   -- To_Argument_List --
+   ----------------------
+
+   function To_Argument_List (V : AAA.Strings.Vector)
+                              return GNAT.OS_Lib.Argument_List_Access
+   is
+      List : constant GNAT.OS_Lib.Argument_List_Access :=
+        new GNAT.Strings.String_List (1 .. V.Count);
+   begin
+      for Index in List.all'Range loop
+         List (Index) := new String'(V (Index));
+      end loop;
+      return List;
+   end To_Argument_List;
 
    --------------
    -- Register --
@@ -149,56 +170,28 @@ package body SubCommander.Instance is
 
    function What_Command return String is
    begin
-      if Raw_Arguments.Is_Empty then
+      if Global_Arguments.Is_Empty
+        or else
+          AAA.Strings.Has_Prefix (Global_Arguments.First_Element, "-")
+      then
          raise Error_No_Command;
       else
-         return Raw_Arguments.First_Element;
+         return Global_Arguments.First_Element;
       end if;
    end What_Command;
-
-   --------------------------------
-   -- Reportaise_Wrong_Arguments --
-   --------------------------------
-
-   procedure Reportaise_Wrong_Arguments (Message : String) is
-   begin
-      raise Wrong_Command_Arguments with Message;
-   end Reportaise_Wrong_Arguments;
 
    --------------------
    -- Fill_Arguments --
    --------------------
-
-   Fill_For_Real : Boolean := False;
 
    procedure Fill_Arguments (Switch    : String;
                              Parameter : String;
                              Section   : String)
    is
       pragma Unreferenced (Parameter);
-      --  For some reason, Get_Argument is not working.
-
-      --  This allows capturing any unknown switch under the wildcard class as
-      --  an argument.
       pragma Unreferenced (Section);
    begin
-      --  As of now, the only multiple switch that must be treated here is -X
-
-      if Switch (Switch'First) = '-' then
-         if Fill_For_Real then
-            if Switch (Switch'First + 1) = 'X' then
-               null;
-            else
-               Reportaise_Wrong_Arguments ("Unrecognized switch: " & Switch);
-            end if;
-         else
-             --  We are only checking global command/switches, these switches
-             --  are not yet interesting.
-            null;
-         end if;
-      else
-         Raw_Arguments.Append (Switch);
-      end if;
+      Global_Arguments.Append (Switch);
    end Fill_Arguments;
 
    ----------------------------
@@ -434,11 +427,11 @@ package body SubCommander.Instance is
                    Ada.Command_Line.Argument (I) in "-h" | "--help");
       end Check_For_Help;
 
-      -------------------
-      -- Get_Arguments --
-      -------------------
+      ----------------------
+      -- Filter_Arguments --
+      ----------------------
 
-      function Get_Arguments return GNAT.OS_Lib.Argument_List_Access is
+      function Filter_Arguments return GNAT.OS_Lib.Argument_List_Access is
          use Ada.Command_Line;
 
          package SU renames Ada.Strings.Unbounded;
@@ -456,7 +449,7 @@ package body SubCommander.Instance is
          end loop;
 
          return GNAT.OS_Lib.Argument_String_To_List (SU.To_String (Arguments));
-      end Get_Arguments;
+      end Filter_Arguments;
 
       Arguments        : GNAT.OS_Lib.Argument_List_Access;
       Arguments_Parser : Opt_Parser;
@@ -467,7 +460,9 @@ package body SubCommander.Instance is
       Help_Requested  := Check_For_Help;
       First_Nonswitch := Check_First_Nonswitch;
 
-      Arguments := Get_Arguments;
+      --  We filter the command line arguments to remove -h/--help that would
+      --  trigger the Getopt automatic help system.
+      Arguments := Filter_Arguments;
 
       Set_Global_Switches (Global_Config);
 
@@ -478,37 +473,27 @@ package body SubCommander.Instance is
          Define_Switch (Global_Config, "*");
       end if;
 
+      --  Run the parser first with only the global switches. With the wildcard
+      --  above (Define_Switch (Global_Config, "*")) all the unknown switches
+      --  and arguments go through the Fill_Arguments callback, and therefore
+      --  are added to Global_Arguments. This includes the command name and all
+      --  potential command specific switches and arguments.
       Initialize_Option_Scan (Arguments_Parser, Arguments);
       Getopt (Global_Config,
               Callback => Fill_Arguments'Unrestricted_Access,
               Parser   => Arguments_Parser);
 
-      --  At this point the command and all unknown switches are in
-      --  Raw_Arguments.
-
       GNAT.OS_Lib.Free (Arguments);
+
+      --  At this point the command and all unknown switches are in
+      --  Global_Arguments.
 
       Parsing_Done := True;
    exception
       when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
-         --  Getopt has already displayed some help
          Put_Line ("");
          Put_Line ("Use """ & Main_Command_Name &
                      " help <command>"" for specific command help");
-         Error_Exit (1);
-      when Error_No_Command =>
-         --  Alire.Log_Exception (E);
-         if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
-            Put_Error ("Unrecognized global option: " &
-                         Raw_Arguments.First_Element);
-         else
-            Put_Error ("Unrecognized command: " & Raw_Arguments.First_Element);
-         end if;
-         Put_Line ("");
-         Display_Usage (Displayed_Error => True);
-         Error_Exit (1);
-      when Wrong_Command_Arguments =>
-         --  Raised in here, so no need to raise up unless in debug mode
          Error_Exit (1);
    end Parse_Command_Line;
 
@@ -521,8 +506,7 @@ package body SubCommander.Instance is
       --  Show either general or specific help
       if Help_Requested then
          if First_Nonswitch > 0 then
-            Display_Help
-              (Ada.Command_Line.Argument (First_Nonswitch));
+            Display_Help (Ada.Command_Line.Argument (First_Nonswitch));
             Error_Exit (0);
          else
             null;
@@ -531,53 +515,83 @@ package body SubCommander.Instance is
          end if;
       end if;
 
-      if Raw_Arguments.Is_Empty then
+      if Global_Arguments.Is_Empty then
+         --  We should at least have the sub-command name in the arguments
          Display_Usage;
+         Error_Exit (1);
+
+      elsif AAA.Strings.Has_Prefix (Global_Arguments.First_Element, "-") then
+
+         --  If the first Global_Arguments is a switch (starts with '-'),
+         --  that means it is an invalid global switch. It is in the arguments
+         --  because of the wildcard: Define_Switch (Global_Config, "*");
+
+         Put_Error ("Unrecognized global option: " &
+                      Global_Arguments.First_Element);
+         Display_Global_Options;
          Error_Exit (1);
       end if;
 
-      --  Dispatch to the appropriate command (which includes 'help')
+      --  Dispatch to the appropriate command
 
       declare
          Cmd : constant not null Command_Access := What_Command;
          --  Might raise if invalid, if so we are done
 
          Command_Config  : Command_Line_Configuration;
-      begin
-         Raw_Arguments := AAA.Strings.Empty_Vector; -- Reinitialize arguments
-         Set_Global_Switches (Command_Config);
 
-         --  Specific to command
+         Sub_Cmd_Line : GNAT.OS_Lib.String_List_Access :=
+           To_Argument_List (Global_Arguments);
+         --  Make a new command line argument list from the remaining arguments
+         --  and switches after global parsing.
+
+         Parser : Opt_Parser;
+
+         Sub_Arguments : AAA.Strings.Vector;
+      begin
+
+         --  Add command specific switches to the config. We don't need the
+         --  global switches because they have been parsed before.
          Cmd.Setup_Switches (Command_Config);
 
          --  Ensure Command has not set a switch that is already global:
-         if not GNAT.Command_Line.Extra.Verify_No_Duplicates (Command_Config)
+         if not GNAT.Command_Line.Extra.Verify_No_Duplicates
+           (Command_Config, Global_Config)
          then
-            raise Program_Error with "Duplicate switch definition detected";
+            Put_Error ("Duplicate switch definition detected");
+            Error_Exit (1);
          end if;
 
-         --  Validate combined command + global configuration:
-         Fill_For_Real := True;
+         --  Initialize a new switch parser that will only see the new
+         --  sub-command line (i.e. the remaining args and switches after
+         --  global parsing).
+         Initialize_Option_Scan (Parser, Sub_Cmd_Line);
 
-         Initialize_Option_Scan;
-         Getopt (Command_Config);
+         --  Parse sub-command line, invalid switches will raise an exception
+         Getopt (Command_Config, Parser => Parser);
 
-         --  If OK, retrieve all arguments with the final, command-specific
-         --  proper configuration.
-         Define_Switch (Command_Config, "*");
-         Getopt (Command_Config,
-                 Callback => Fill_Arguments'Unrestricted_Access);
+         --  Make a vector of arguments for the sub-command (every element that
+         --  was not a switch in the sub-command line).
+         loop
+            declare
+               Arg : constant String :=
+                 GNAT.Command_Line.Get_Argument (Parser => Parser);
+            begin
+               exit when Arg = "";
+               Sub_Arguments.Append (Arg);
+            end;
+         end loop;
 
-         if Raw_Arguments.Is_Empty then
+         --  We don't need this anymore
+         GNAT.OS_Lib.Free (Sub_Cmd_Line);
+
+         if Sub_Arguments.Is_Empty then
             raise Program_Error
               with "we should have at least the command name here";
          else
-            declare
-               Args : AAA.Strings.Vector := Raw_Arguments;
-            begin
-               Args.Delete_First;
-               Cmd.Execute (Args);
-            end;
+            --  Remove the sub-command name from the list
+            Sub_Arguments.Delete_First;
+            Cmd.Execute (Sub_Arguments);
          end if;
       end;
 
@@ -589,13 +603,7 @@ package body SubCommander.Instance is
                      " help <command>"" for specific command help");
          Error_Exit (1);
       when Error_No_Command =>
-         --  Alire.Log_Exception (E);
-         if Raw_Arguments (1) (String'(Raw_Arguments (1))'First) = '-' then
-            Put_Error ("Unrecognized global option: " &
-                         Raw_Arguments.First_Element);
-         else
-            Put_Error ("Unrecognized command: " & Raw_Arguments.First_Element);
-         end if;
+         Put_Error ("Unrecognized command: " & Global_Arguments.First_Element);
          Put_Line ("");
          Display_Usage (Displayed_Error => True);
          Error_Exit (1);
@@ -780,10 +788,9 @@ package body SubCommander.Instance is
    procedure Execute (This : in out Builtin_Help;
                       Args :        AAA.Strings.Vector)
    is
-      use Ada.Containers;
    begin
-      if Args.Length /= 1 then
-         if Args.Length > 1 then
+      if Args.Count /= 1 then
+         if Args.Count > 1 then
             Put_Error ("Please specify a single help keyword");
             Put_Line ("");
          end if;

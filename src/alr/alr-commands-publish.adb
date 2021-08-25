@@ -1,13 +1,9 @@
-with Ada.Containers;
-
 with Alire.Origins;
 with Alire.Publish;
 with Alire.URI;
 with Alire.Utils;
 
 package body Alr.Commands.Publish is
-
-   use type Ada.Containers.Count_Type;
 
    package URI renames Alire.URI;
 
@@ -21,7 +17,7 @@ package body Alr.Commands.Publish is
    is
 
       function Revision return String
-      is (if Args.Length >= 2 then Args (2) else "");
+      is (if Args.Count >= 2 then Args (2) else "");
 
       Options : constant Alire.Publish.All_Options :=
                   Alire.Publish.New_Options
@@ -44,22 +40,22 @@ package body Alr.Commands.Publish is
 
       elsif Cmd.Tar then
 
-         if Args.Length > 2 then
+         if Args.Count > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");
          end if;
 
          Alire.Publish.Directory_Tar
-           (Path     => (if Args.Length >= 1 then Args (1) else "."),
-            Revision => (if Args.Length >= 2 then Args (2) else "HEAD"),
+           (Path     => (if Args.Count >= 1 then Args (1) else "."),
+            Revision => (if Args.Count >= 2 then Args (2) else "HEAD"),
             Options  => Options);
 
       else
-         if Args.Length < 1 then
+         if Args.Count < 1 then
             Alire.Publish.Local_Repository (Options => Options);
 
-         elsif Args.Length > 2 then
+         elsif Args.Count > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");

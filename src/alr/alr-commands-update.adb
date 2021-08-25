@@ -21,7 +21,7 @@ package body Alr.Commands.Update is
       function Parse_Allowed return Alire.Containers.Crate_Name_Sets.Set is
       begin
          return Set :  Alire.Containers.Crate_Name_Sets.Set do
-            for I in 1 .. Args.Last_Index loop
+            for I in Args.First_Index .. Args.Last_Index loop
                Set.Include (+Args (I));
             end loop;
          end return;
@@ -72,7 +72,8 @@ package body Alr.Commands.Update is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is

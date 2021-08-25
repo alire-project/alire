@@ -29,8 +29,12 @@ package body Alr.Commands.Build is
                      Export_Build_Env :        Boolean)
                      return Boolean
    is
-      pragma Unreferenced (Args);
    begin
+
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       Cmd.Requires_Full_Index;
 
       Cmd.Requires_Valid_Session;
@@ -61,7 +65,7 @@ package body Alr.Commands.Build is
          loop
 
             Spawn.Gprbuild (Gpr_File,
-                            Extra_Args    => Scenario.As_Command_Line);
+                            Extra_Args => Scenario.As_Command_Line);
          end loop;
 
       exception
@@ -107,17 +111,14 @@ package body Alr.Commands.Build is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out GNAT.Command_Line.Command_Line_Configuration)
    is
       pragma Unreferenced (Cmd);
-      use GNAT.Command_Line;
    begin
-      Define_Switch (Config,
-                     "-X!",
-                     Help => "Scenario variable for gprbuild",
-                     Argument => "Var=Arg");
+      Add_GPR_Scenario_Switch (Config);
    end Setup_Switches;
 
 end Alr.Commands.Build;

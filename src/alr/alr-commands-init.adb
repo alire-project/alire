@@ -2,7 +2,6 @@ with AAA.Text_IO;
 
 with Ada.Directories;
 with Ada.Text_IO;
-with Ada.Containers; use Ada.Containers;
 
 with Alire.Config;
 with Alire.Lockfiles;
@@ -408,7 +407,7 @@ package body Alr.Commands.Init is
                       Args :        AAA.Strings.Vector)
    is
    begin
-      if Args.Length /= 1 then
+      if Args.Count /= 1 then
          Reportaise_Wrong_Arguments ("No crate name given");
       end if;
 

@@ -5,14 +5,12 @@ with AAA.Strings;
 with Alire.Directories;
 with Alire.Roots.Optional;
 with Alire.Solver;
+with Alire.TTY;
+with Alire.GPR;
 
 with SubCommander;
 
-with Alire.TTY;
-
 private with Ada.Text_IO;
-
-private with Alire.GPR;
 private with SubCommander.Instance;
 
 pragma Warnings (Off);
@@ -86,6 +84,15 @@ package Alr.Commands is
    function Enter_Working_Folder return Alire.Directories.Destination;
    --  Attempt to find the root alire working dir if deeper inside it
 
+   Scenario : Alire.GPR.Scenario;
+   --  This will be filled in during parsing of command line with any seen "-X"
+   --  parameters.
+
+   procedure Add_GPR_Scenario_Switch
+     (Config : in out GNAT.Command_Line.Command_Line_Configuration);
+   --  This will add a command line switch that handles the "-X" scenario
+   --  variable switches and fill the Scenario data above.
+
 private
 
    type Command
@@ -100,10 +107,6 @@ private
    procedure Reportaise_Command_Failed  (Message : String);
    procedure Reportaise_Wrong_Arguments (Message : String);
    --  Report and Raise :P
-
-   Scenario : Alire.GPR.Scenario;
-   --  This will be filled in during parsing of command line with any seen "-X"
-   --  parameters.
 
    --  Folder guards conveniences for commands:
 

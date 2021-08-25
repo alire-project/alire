@@ -39,6 +39,7 @@ with Alr.Commands.Topics.Naming_Convention;
 with Alr.Commands.Topics.Toolchains;
 
 with GNAT.OS_Lib;
+with GNAT.Source_Info;
 
 with GNATCOLL.VFS;
 with Alr.Platform;
@@ -465,6 +466,43 @@ package body Alr.Commands is
    begin
       Cmd.Optional_Root := Alire.Roots.Optional.Outcome_Success (Root);
    end Set;
+
+   ---------------------
+   -- Handle_X_Switch --
+   ---------------------
+
+   procedure Handle_X_Switch (Switch, Value : String) is
+      use AAA.Strings;
+   begin
+      if Switch /= "-X" then
+         Reportaise_Command_Failed ("Unexpected switch '" & Switch & "' in " &
+                                      GNAT.Source_Info.Enclosing_Entity);
+      end if;
+
+      declare
+         S : constant Vector := Split (Value, '=');
+      begin
+         if S.Count /= 2 then
+            Reportaise_Wrong_Arguments ("Invalid switch '" &
+                                          Switch & Value & "'");
+         end if;
+         Alire.GPR.Add_Argument (Scenario, S (1), S (2));
+      end;
+   end Handle_X_Switch;
+   -----------------------------
+   -- Add_GPR_Scenario_Switch --
+   -----------------------------
+
+   procedure Add_GPR_Scenario_Switch
+     (Config : in out GNAT.Command_Line.Command_Line_Configuration)
+   is
+   begin
+      Define_Switch (Config,
+                     Callback => Handle_X_Switch'Access,
+                     Switch   => "-X!",
+                     Help     => "Scenario variable for gprbuild/gprclean",
+                     Argument => "Var=Arg");
+   end Add_GPR_Scenario_Switch;
 
 begin
 

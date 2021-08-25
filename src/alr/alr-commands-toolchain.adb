@@ -1,4 +1,3 @@
-with Ada.Containers;
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
@@ -231,7 +230,6 @@ package body Alr.Commands.Toolchain is
    procedure Execute (Cmd  : in out Command;
                       Args : AAA.Strings.Vector)
    is
-      use Ada.Containers;
    begin
 
       --  Validation
@@ -243,12 +241,12 @@ package body Alr.Commands.Toolchain is
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      if Args.Length > 1 then
+      if Args.Count > 1 then
          Reportaise_Wrong_Arguments
            ("One crate with optional version expected: crate[version set]");
       end if;
 
-      if (Cmd.Install or Cmd.Uninstall) and then Args.Length /= 1 then
+      if (Cmd.Install or Cmd.Uninstall) and then Args.Count /= 1 then
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
@@ -269,7 +267,7 @@ package body Alr.Commands.Toolchain is
            ("--local requires --select or --disable-assistant");
       end if;
 
-      if Cmd.Disable and then Args.Length /= 0 then
+      if Cmd.Disable and then Args.Count /= 0 then
          Reportaise_Wrong_Arguments
            ("Disabling the assistant does not admit any extra arguments");
       end if;

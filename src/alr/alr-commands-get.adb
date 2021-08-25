@@ -1,4 +1,3 @@
-with Ada.Containers; use Ada.Containers;
 with Ada.Directories;
 
 with Alire.Config.Edit;
@@ -295,11 +294,11 @@ package body Alr.Commands.Get is
       end Check_Unavailable_External;
 
    begin
-      if Args.Length > 1 then
+      if Args.Count > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if Args.Length /= 1 then
+      if Args.Count /= 1 then
          Trace.Error ("No crate requested");
          Reportaise_Wrong_Arguments ("One crate to get expected");
       end if;
