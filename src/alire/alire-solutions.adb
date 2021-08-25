@@ -908,6 +908,34 @@ package body Alire.Solutions is
       end if;
    end Print_Pins;
 
+   ------------------
+   -- Print_States --
+   ------------------
+
+   procedure Print_States (This   : Solution;
+                           Indent : String := "   ";
+                           Level  : Trace.Levels := Trace.Info)
+   is
+      Table : Utils.Tables.Table;
+   begin
+      Table.Header (Indent & "RELEASE");
+      Table.Header ("DEPENDENCY");
+      Table.New_Row;
+
+      for State of This.Dependencies loop
+         if State.Has_Release then
+            Table.Append (Indent & State.Release.Milestone.TTY_Image);
+         else
+            Table.Append (Indent & TTY.Warn ("(none)"));
+         end if;
+
+         Table.Append (State.TTY_Image);
+         Table.New_Row;
+      end loop;
+
+      Table.Print (Level => Level);
+   end Print_States;
+
    ----------------
    -- Print_Tree --
    ----------------

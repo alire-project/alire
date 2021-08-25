@@ -354,6 +354,11 @@ package Alire.Solutions is
    procedure Print_Pins (This : Solution);
    --  Dump a table with pins in this solution
 
+   procedure Print_States (This   : Solution;
+                           Indent : String := "   ";
+                           Level  : Trace.Levels := Trace.Info);
+   --  List all dependencies in the solution with their current state
+
    procedure Print_Tree (This       : Solution;
                          Root       : Alire.Releases.Release;
                          Prefix     : String := "";
