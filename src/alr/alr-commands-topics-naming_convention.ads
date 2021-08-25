@@ -10,7 +10,7 @@ package Alr.Commands.Topics.Naming_Convention is
 
    overriding
    function Name (This : Topic) return String
-   is ("indentifiers");
+   is ("identifiers");
 
    overriding
    function Title (This : Topic) return String
