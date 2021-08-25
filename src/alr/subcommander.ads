@@ -3,9 +3,13 @@ with GNAT.Command_Line;
 
 package SubCommander is
 
-   --  This root package defines the interface types to be unsed in the
+   --  This root package defines the interface types to be used in the
    --  SubCommander. See SubCommander.Instance to create the parser/executor.
 
+   subtype Identifier is String
+     with Predicate => (for all C of Identifier
+                        => C in 'a' .. 'z' | 'A' .. 'Z' |
+                                '0' .. '9' | '-' | '.' | '_');
    -------------
    -- Command --
    -------------
@@ -32,17 +36,18 @@ package SubCommander is
 
    type Command_Access is access all Command'Class;
 
-   function Name (Cmd : Command) return String
+   function Name (Cmd : Command) return Identifier
    is abstract;
-   --  Commands must override this procedure to provide the command name.
+   --  Commands must override this procedure to provide the sub-command name.
+   --  This name is used to identify the sub-command in usage and command line.
+   --  E.g. "my_app <name>" will exectute the <name> command.
 
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is abstract;
    --  Commands must override this procedure to provide the command
-   --  functionality. Should raise Command_Failed if command cannot be
-   --  completed normally. Should raise Wrong_Command_Arguments if the
-   --  arguments are incorrect.
+   --  functionality. Should raise Wrong_Command_Arguments if the arguments
+   --  are incorrect.
 
    function Long_Description (Cmd : Command) return AAA.Strings.Vector
                               is abstract;
@@ -62,7 +67,7 @@ package SubCommander is
    --  SUMMARY in the help of a specific command.
 
    function Usage_Custom_Parameters (Cmd : Command) return String is abstract;
-   --  The part after "alr [global options] command [command options] " that
+   --  The part after "<main> [global options] command [command options] " that
    --  gets shown in USAGE in the command help summary. That is, it is the
    --  specific command-line part that is not managed via Gnat.Command_Line
 
@@ -71,16 +76,24 @@ package SubCommander is
    -----------------
 
    type Help_Topic is limited interface;
+   --  This type encapsulate the content of an "help topic", i.e. a piece of
+   --  documentation that can displayed from the command line.
 
    type Help_Topic_Access is access all Help_Topic'Class;
 
-   function Name (This : Help_Topic) return String
+   function Name (This : Help_Topic) return Identifier
    is abstract;
+   --  This name is used to identify the topic in usage and command line.
+   --  E.g. "my_app help <name>" will display the content of the <name> topic.
 
    function Title (This : Help_Topic) return String
    is abstract;
+   --  Descriptive title for the topic content. Unlike the Name, the Title can
+   --  containt whitespaces.
 
    function Content (This : Help_Topic) return AAA.Strings.Vector
    is abstract;
+   --  Return the content of the help topic. Each string in the vector is a
+   --  paragraph that will be reformatted into appropriate length lines.
 
 end SubCommander;

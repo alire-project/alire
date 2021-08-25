@@ -61,7 +61,7 @@ private
    type Builtin_Help is new Command with null record;
 
    overriding
-   function Name (This : Builtin_Help) return String
+   function Name (This : Builtin_Help) return Identifier
    is ("help");
 
    overriding

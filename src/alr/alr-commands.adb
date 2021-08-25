@@ -207,7 +207,7 @@ package body Alr.Commands is
    procedure Reportaise_Wrong_Arguments (Message : String) is
    begin
       Alire.Errors.Pretty_Print (Message);
-      raise SubCmd.Wrong_Command_Arguments with Alire.Errors.Set (Message);
+      raise Sub_Cmd.Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
    -------------------------
@@ -367,7 +367,7 @@ package body Alr.Commands is
 
    procedure Parse_Command_Line is
    begin
-      SubCmd.Parse_Command_Line;
+      Sub_Cmd.Parse_Command_Line;
 
       if No_TTY then
          Alire.Is_TTY := False;
@@ -403,8 +403,8 @@ package body Alr.Commands is
       Create_Alire_Folders;
 
       begin
-         SubCmd.Execute;
-         Log ("alr " & SubCmd.What_Command & " done", Detail);
+         Sub_Cmd.Execute;
+         Log ("alr " & Sub_Cmd.What_Command & " done", Detail);
       exception
          when E : Alire.Checked_Error =>
             Alire.Errors.Pretty_Print (Alire.Errors.Get (E, Clear => False));
@@ -415,7 +415,7 @@ package body Alr.Commands is
             end if;
 
          when Child_Failed | Command_Failed =>
-            Trace.Detail ("alr " & SubCmd.What_Command & " unsuccessful");
+            Trace.Detail ("alr " & Sub_Cmd.What_Command & " unsuccessful");
             if Alire.Log_Level = Debug then
                raise;
             else
@@ -469,31 +469,31 @@ package body Alr.Commands is
 begin
 
    -- Commands --
-   SubCmd.Register ("General", new SubCmd.Builtin_Help);
-   SubCmd.Register ("General", new Config.Command);
-   SubCmd.Register ("General", new Printenv.Command);
-   SubCmd.Register ("General", new Toolchain.Command);
-   SubCmd.Register ("General", new Version.Command);
+   Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
+   Sub_Cmd.Register ("General", new Config.Command);
+   Sub_Cmd.Register ("General", new Printenv.Command);
+   Sub_Cmd.Register ("General", new Toolchain.Command);
+   Sub_Cmd.Register ("General", new Version.Command);
 
-   SubCmd.Register ("Build", new Build.Command);
-   SubCmd.Register ("Build", new Clean.Command);
-   SubCmd.Register ("Build", new Dev.Command);
-   SubCmd.Register ("Build", new Edit.Command);
-   SubCmd.Register ("Build", new Run.Command);
-   SubCmd.Register ("Build", new Test.Command);
+   Sub_Cmd.Register ("Build", new Build.Command);
+   Sub_Cmd.Register ("Build", new Clean.Command);
+   Sub_Cmd.Register ("Build", new Dev.Command);
+   Sub_Cmd.Register ("Build", new Edit.Command);
+   Sub_Cmd.Register ("Build", new Run.Command);
+   Sub_Cmd.Register ("Build", new Test.Command);
 
-   SubCmd.Register ("Index", new Get.Command);
-   SubCmd.Register ("Index", new Index.Command);
-   SubCmd.Register ("Index", new Init.Command);
-   SubCmd.Register ("Index", new Pin.Command);
-   SubCmd.Register ("Index", new Search.Command);
-   SubCmd.Register ("Index", new Show.Command);
-   SubCmd.Register ("Index", new Update.Command);
-   SubCmd.Register ("Index", new Withing.Command);
+   Sub_Cmd.Register ("Index", new Get.Command);
+   Sub_Cmd.Register ("Index", new Index.Command);
+   Sub_Cmd.Register ("Index", new Init.Command);
+   Sub_Cmd.Register ("Index", new Pin.Command);
+   Sub_Cmd.Register ("Index", new Search.Command);
+   Sub_Cmd.Register ("Index", new Show.Command);
+   Sub_Cmd.Register ("Index", new Update.Command);
+   Sub_Cmd.Register ("Index", new Withing.Command);
 
-   SubCmd.Register ("Publish", new Publish.Command);
+   Sub_Cmd.Register ("Publish", new Publish.Command);
 
    -- Help topics --
-   SubCmd.Register (new Topics.Naming_Convention.Topic);
-   SubCmd.Register (new Topics.Toolchains.Topic);
+   Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
+   Sub_Cmd.Register (new Topics.Toolchains.Topic);
 end Alr.Commands;

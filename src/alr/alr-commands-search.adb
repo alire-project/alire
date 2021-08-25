@@ -125,7 +125,7 @@ package body Alr.Commands.Search is
                              when 0      => "",
                              when 1      => Args (1),
                              when others =>
-                                raise SubCmd.Wrong_Command_Arguments with
+                                raise Sub_Cmd.Wrong_Command_Arguments with
                                   "Only one search substring supported"));
          return;
       end if;

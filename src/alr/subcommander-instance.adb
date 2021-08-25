@@ -31,13 +31,13 @@ package body SubCommander.Instance is
       Hash            => Ada.Strings.Unbounded.Hash,
       Equivalent_Keys => Ada.Strings.Unbounded."=");
 
-   Registerd_Commands : Command_Maps.Map;
+   Registered_Commands : Command_Maps.Map;
    --  A map of commands based on their names
 
-   Registerd_Topics : Topics_Maps.Map;
+   Registered_Topics : Topics_Maps.Map;
    --  A map of topics based on their names
 
-   Registerd_Groups : Group_Maps.Map;
+   Registered_Groups : Group_Maps.Map;
    --  A map of list of commands based on their group names
 
    Not_In_A_Group   : AAA.Strings.Vector;
@@ -78,11 +78,11 @@ package body SubCommander.Instance is
    procedure Register (Cmd : not null Command_Access) is
       Name : constant Unbounded_String := To_Unbounded_String (Cmd.Name);
    begin
-      if Registerd_Commands.Contains (Name) then
+      if Registered_Commands.Contains (Name) then
          raise Command_Already_Defined with Cmd.Name;
       else
          --  Register the command
-         Registerd_Commands.Insert (Name, Cmd);
+         Registered_Commands.Insert (Name, Cmd);
 
          --  This command is not in a group
          Not_In_A_Group.Append (Cmd.Name);
@@ -97,19 +97,20 @@ package body SubCommander.Instance is
       Name : constant Unbounded_String := To_Unbounded_String (Cmd.Name);
       Ugroup : constant Unbounded_String := To_Unbounded_String (Group);
    begin
-      if Registerd_Commands.Contains (Name) then
+      if Registered_Commands.Contains (Name) then
          raise Command_Already_Defined with Cmd.Name;
       else
          --  Register the command
-         Registerd_Commands.Insert (Name, Cmd);
+         Registered_Commands.Insert (Name, Cmd);
 
          --  Create the group if it doesn't exist yet
-         if not Registerd_Groups.Contains (Ugroup) then
-            Registerd_Groups.Insert (Ugroup, AAA.Strings.Vectors.Empty_Vector);
+         if not Registered_Groups.Contains (Ugroup) then
+            Registered_Groups.Insert (Ugroup,
+                                      AAA.Strings.Vectors.Empty_Vector);
          end if;
 
          --  Add this command to the list of commands for the group
-         Registerd_Groups.Reference (Ugroup).Append (Cmd.Name);
+         Registered_Groups.Reference (Ugroup).Append (Cmd.Name);
       end if;
    end Register;
 
@@ -120,10 +121,10 @@ package body SubCommander.Instance is
    procedure Register (Topic : not null Help_Topic_Access) is
       Name : constant Unbounded_String := To_Unbounded_String (Topic.Name);
    begin
-      if Registerd_Topics.Contains (Name) then
+      if Registered_Topics.Contains (Name) then
          raise Program_Error;
       else
-         Registerd_Topics.Insert (Name, Topic);
+         Registered_Topics.Insert (Name, Topic);
       end if;
    end Register;
 
@@ -135,8 +136,8 @@ package body SubCommander.Instance is
       Name : constant Unbounded_String :=
         To_Unbounded_String (if Str = "" then What_Command else Str);
    begin
-      if Registerd_Commands.Contains (Name) then
-         return Registerd_Commands.Element (Name);
+      if Registered_Commands.Contains (Name) then
+         return Registered_Commands.Element (Name);
       else
          raise Error_No_Command;
       end if;
@@ -226,17 +227,17 @@ package body SubCommander.Instance is
 
       First_Group : Boolean := Not_In_A_Group.Is_Empty;
    begin
-      if Registerd_Commands.Is_Empty then
+      if Registered_Commands.Is_Empty then
          return;
       end if;
 
       Put_Line (TTY_Chapter ("COMMANDS"));
 
       for Name of Not_In_A_Group loop
-         Add_Command (Registerd_Commands (To_Unbounded_String (Name)));
+         Add_Command (Registered_Commands (To_Unbounded_String (Name)));
       end loop;
 
-      for Iter in Registerd_Groups.Iterate loop
+      for Iter in Registered_Groups.Iterate loop
 
          if not First_Group then
             Table.New_Row;
@@ -252,7 +253,7 @@ package body SubCommander.Instance is
             Table.Append (Tab);
             Table.Append (TTY_Underline (Group));
             for Name of Element (Iter) loop
-               Add_Command (Registerd_Commands (To_Unbounded_String (Name)));
+               Add_Command (Registered_Commands (To_Unbounded_String (Name)));
             end loop;
          end;
       end loop;
@@ -270,13 +271,13 @@ package body SubCommander.Instance is
       use Topics_Maps;
 
    begin
-      if Registerd_Topics.Is_Empty then
+      if Registered_Topics.Is_Empty then
          return;
       end if;
 
       Put_Line (TTY_Chapter ("TOPICS"));
 
-      for Elt in Registerd_Topics.Iterate loop
+      for Elt in Registered_Topics.Iterate loop
          Table.New_Row;
          Table.Append (Tab);
          Table.Append (TTY_Description (To_String (Key (Elt))));
@@ -756,12 +757,12 @@ package body SubCommander.Instance is
 
       Ukey : constant Unbounded_String := To_Unbounded_String (Keyword);
    begin
-      if Registerd_Commands.Contains (Ukey) then
+      if Registered_Commands.Contains (Ukey) then
          Display_Usage (What_Command (Keyword));
 
-      elsif Registerd_Topics.Contains (Ukey) then
-         Put_Line (TTY_Chapter (Registerd_Topics.Element (Ukey).Title));
-         Format (Registerd_Topics.Element (Ukey).Content);
+      elsif Registered_Topics.Contains (Ukey) then
+         Put_Line (TTY_Chapter (Registered_Topics.Element (Ukey).Title));
+         Format (Registered_Topics.Element (Ukey).Content);
       else
          Put_Error ("No help found for: " & Keyword);
          Display_Global_Options;

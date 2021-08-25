@@ -9,7 +9,7 @@ package Alr.Commands.Publish is
    type Command is new Commands.Command with private;
 
    overriding
-   function Name (Cmd : Command) return String
+   function Name (Cmd : Command) return SubCommander.Identifier
    is ("publish");
 
    overriding

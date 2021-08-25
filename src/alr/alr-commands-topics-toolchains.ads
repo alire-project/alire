@@ -9,7 +9,7 @@ package Alr.Commands.Topics.Toolchains is
    type Topic is new SubCommander.Help_Topic with null record;
 
    overriding
-   function Name (This : Topic) return String
+   function Name (This : Topic) return SubCommander.Identifier
    is ("toolchains");
 
    overriding

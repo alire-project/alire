@@ -124,7 +124,7 @@ private
    procedure Set_Global_Switches
      (Config : in out GNAT.Command_Line.Command_Line_Configuration);
 
-   package SubCmd is new SubCommander.Instance
+   package Sub_Cmd is new SubCommander.Instance
      (Main_Command_Name   => "alr",
       Version             => Alr.Version,
       Put                 => Ada.Text_IO.Put,
