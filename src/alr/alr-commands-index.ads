@@ -22,7 +22,7 @@ package Alr.Commands.Index is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("--add <url> --name <name> [--before <name>] | --del <name> | --list"
+     ("--add <url> --name <name> [--before <name>] | --del <name> | [--list]"
       & " | --update-all | --check");
 
    procedure Update_All;

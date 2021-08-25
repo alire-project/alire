@@ -83,16 +83,23 @@ package body Alr.Commands.Index is
    procedure Execute (Cmd : in out Command) is
    begin
       --  Check no multi-action
-      if Alire.Utils.Count_True
+      case Alire.Utils.Count_True
         ((Cmd.Add.all /= "",
           Cmd.Del.all /= "",
           Cmd.Check,
           Cmd.List,
           Cmd.Rset,
-          Cmd.Update_All)) /= 1
-      then
-         Reportaise_Wrong_Arguments ("Specify exactly one index subcommand");
-      end if;
+          Cmd.Update_All))
+      is
+         when 0 =>
+            --  Use --list as the default
+            Cmd.List := True;
+         when 1 =>
+            null; -- Usual case, just fall through
+         when others =>
+            Reportaise_Wrong_Arguments
+              ("Specify exactly one index subcommand");
+      end case;
 
       --  Dispatch to selected action
       if Cmd.Add.all /= "" then
@@ -245,7 +252,7 @@ package body Alr.Commands.Index is
         (Config      => Config,
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
-         Help        => "List configured indexes");
+         Help        => "List configured indexes (default)");
 
       GNAT.Command_Line.Define_Switch
         (Config      => Config,
