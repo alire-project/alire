@@ -1,6 +1,6 @@
+with Alire.Crates.Containers;
 with Alire.Externals;
 with Alire.Index.Search;
-with Alire.Crates.Containers;
 with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
@@ -217,42 +217,45 @@ package body Alr.Commands.Search is
             Busy.Step;
          end List_Crate;
 
+         I : Alire.Crates.Containers.Maps.Cursor :=
+               Alire.Index.All_Crates.First;
+         --  Cursor-based iteration because external detection during listing
+         --  may cause addition of new crates, and that triggers tampering
+         --  checks in some compiler versions.
+
+         use Alire.Crates.Containers.Maps;
       begin
          if Cmd.List then
-
-            --  List releases
-
             Trace.Detail ("Searching...");
-            declare
-               I : Alire.Crates.Containers.Maps.Cursor :=
-                     Alire.Index.All_Crates.First;
-               use Alire.Crates.Containers.Maps;
-            begin
-               --  Cursor-based iteration because external detection during
-               --  listing may cause addition of new crates, and this triggers
-               --  tampering checks in some compiler versions.
-
-               while Has_Element (I) loop
-                  List_Crate (Element (I));
-                  Next (I);
-               end loop;
-            end;
          else
+            Trace.Detail ("Searching " & Utils.Quote (Argument (1)) & "...");
+         end if;
 
-            --  Search into releases
+         while Has_Element (I) loop
 
             declare
-               Pattern : constant String := Argument (1);
+               Crate   : Alire.Crates.Crate renames Element (I);
+               Pattern : constant String := (if Cmd.List
+                                             then ""
+                                             else Argument (1));
             begin
-               Trace.Detail ("Searching " & Utils.Quote (Pattern) & "...");
+               if Cmd.List then
 
-               for Crate of Alire.Index.All_Crates.all loop
+                  --  List all releases
+                  List_Crate (Crate);
+
+               else
+
+                  --  Search into release names
                   if Utils.Contains (+Crate.Name, Pattern) then
                      List_Crate (Crate);
                   end if;
-               end loop;
+
+               end if;
             end;
-         end if;
+
+            Next (I);
+         end loop;
       end;
 
       if Found = 0 then
