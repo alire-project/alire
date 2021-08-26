@@ -64,9 +64,13 @@ package body Alr.Commands.Toolchain is
    -- Install --
    -------------
 
-   procedure Install (Cmd : in out Command; Request : String) is
+   procedure Install (Cmd            : in out Command;
+                      Request        : String;
+                      Set_As_Default : Boolean)
+   is
       use Alire;
    begin
+
       Cmd.Requires_Full_Index;
 
       Installation :
@@ -98,6 +102,18 @@ package body Alr.Commands.Toolchain is
          --  And perform the actual installation
 
          Shared.Share (Rel);
+
+         if Set_As_Default then
+            Alire.Toolchains.Set_As_Default
+              (Rel,
+               Level => (if Cmd.Local
+                         then Alire.Config.Local
+                         else Alire.Config.Global));
+            Alire.Put_Info
+              (Rel.Milestone.TTY_Image & " set as default in "
+               & TTY.Emph (if Cmd.Local then "local" else "global")
+               & " configuration.");
+         end if;
 
       end Installation;
 
@@ -232,14 +248,16 @@ package body Alr.Commands.Toolchain is
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
-      if Num_Arguments = 1 and then not (Cmd.Install or Cmd.Uninstall) then
+      if Num_Arguments = 1 and then
+        not (Cmd.Install or Cmd.Uninstall or Cmd.S_Select)
+      then
          Reportaise_Wrong_Arguments
            ("Specify the action to perform with the crate");
       end if;
 
-      if Cmd.S_Select and then Num_Arguments /= 0 then
+      if Cmd.S_Select and then Num_Arguments > 1 then
          Reportaise_Wrong_Arguments
-           ("Toolchain installation does not accept any arguments");
+           ("Toolchain installation accepts at most one argument");
       end if;
 
       if Cmd.Local and then not (Cmd.S_Select or else Cmd.Disable) then
@@ -262,15 +280,19 @@ package body Alr.Commands.Toolchain is
             Cmd.Requires_Valid_Session;
          end if;
 
-         Alire.Toolchains.Assistant (if Cmd.Local
-                                     then Alire.Config.Local
-                                     else Alire.Config.Global);
+         if Num_Arguments = 0 then
+            Alire.Toolchains.Assistant (if Cmd.Local
+                                        then Alire.Config.Local
+                                        else Alire.Config.Global);
+         else
+            Install (Cmd, Argument (1), Set_As_Default => True);
+         end if;
 
       elsif Cmd.Uninstall then
          Uninstall (Cmd, Argument (1));
 
       elsif Cmd.Install then
-         Install (Cmd, Argument (1));
+         Install (Cmd, Argument (1), Set_As_Default => False);
 
       elsif Cmd.Disable then
          Alire.Toolchains.Set_Automatic_Assistant (False,
