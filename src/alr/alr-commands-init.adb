@@ -114,7 +114,8 @@ package body Alr.Commands.Init is
             return;
          end if;
          Put_Line ("abstract project " & Mixed_Name & "_Config is");
-         TIO.Put (File, "end " & Mixed_Name & "_Config;");
+         Put_Line ("   Crate_Version := ""0.0.0"";");
+         Put_Line ("end " & Mixed_Name & "_Config;");
          TIO.Close (File);
 
          --  Main project file
@@ -127,7 +128,7 @@ package body Alr.Commands.Init is
          Put_New_Line;
          if For_Library then
             Put_Line ("   for Library_Name use """ & Mixed_Name & """;");
-            Put_Line ("   for Library_Version use ""0.0.0"";");
+            Put_Line ("   for Library_Version use Project'Library_Name & "".so."" & " & Mixed_Name & "_Config.Crate_Version;");
             Put_New_Line;
          end if;
          Put_Line ("   for Source_Dirs use (""src"");");
