@@ -229,56 +229,58 @@ package body Alr.Commands.Index is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration) is
+      Config : in out SubCommander.Switches_Configuration)
+   is
+      use SubCommander;
    begin
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Add'Access,
          Long_Switch => "--add=",
          Argument    => "URL",
          Help        => "Add an index");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Bfr'Access,
          Long_Switch => "--before=",
          Argument    => "NAME",
          Help        => "Priority order (defaults to last)");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Check'Access,
          Long_Switch => "--check",
          Help        =>
            "Check index contents for unknown configuration values");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Del'Access,
          Long_Switch => "--del=",
          Argument    => "NAME",
          Help        => "Remove an index");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
          Help        => "List configured indexes (default)");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Name'Access,
          Long_Switch => "--name=",
          Argument    => "NAME",
          Help        => "User given name for the index");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Update_All'Access,
          Long_Switch => "--update-all",
          Help        => "Update configured indexes");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Rset'Access,
          Long_Switch => "--reset-community",

@@ -211,9 +211,9 @@ package body Alr.Commands.Clean is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out SubCommander.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use SubCommander;
    begin
       Define_Switch (Config,
                      Cmd.Cache'Access,

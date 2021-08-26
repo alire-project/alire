@@ -61,9 +61,9 @@ package body Alr.Commands.Dev is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out SubCommander.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use SubCommander;
 
       function Command_Line_Contains (Arg : String) return Boolean is
         (for some I in 1 .. Ada.Command_Line.Argument_Count =>

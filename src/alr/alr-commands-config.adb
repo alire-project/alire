@@ -158,46 +158,48 @@ package body Alr.Commands.Config is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration) is
+      Config : in out SubCommander.Switches_Configuration)
+   is
+      use SubCommander;
    begin
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
          Help        => "List configuration options");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Show_Origin'Access,
          Long_Switch => "--show-origin",
          Help        => "Show origin of configuration values in --list");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Get'Access,
          Long_Switch => "--get",
          Help        => "Print value of a configuration option");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Set'Access,
          Long_Switch => "--set",
          Help        => "Set a configuration option");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Unset'Access,
          Long_Switch => "--unset",
          Help        => "Unset a configuration option");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Global'Access,
          Long_Switch => "--global",
          Help        => "Set and Unset global configuration instead" &
                          " of the local one");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Builtins_Doc'Access,
          Long_Switch => "--builtins-doc",

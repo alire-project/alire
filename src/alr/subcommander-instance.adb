@@ -1,6 +1,5 @@
 with Ada.Command_Line;
 with GNAT.Command_Line; use GNAT.Command_Line;
-with GNAT.Command_Line.Extra;
 with GNAT.OS_Lib;
 with GNAT.Strings;
 
@@ -19,7 +18,7 @@ package body SubCommander.Instance is
       Hash            => Ada.Strings.Unbounded.Hash,
       Equivalent_Keys => Ada.Strings.Unbounded."=");
 
-   package Topics_Maps is new Ada.Containers.Hashed_Maps
+   package Topic_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Ada.Strings.Unbounded.Unbounded_String,
       Element_Type    => Help_Topic_Access,
       Hash            => Ada.Strings.Unbounded.Hash,
@@ -35,7 +34,7 @@ package body SubCommander.Instance is
    Registered_Commands : Command_Maps.Map;
    --  A map of commands based on their names
 
-   Registered_Topics : Topics_Maps.Map;
+   Registered_Topics : Topic_Maps.Map;
    --  A map of topics based on their names
 
    Registered_Groups : Group_Maps.Map;
@@ -53,12 +52,12 @@ package body SubCommander.Instance is
 
    First_Nonswitch : Integer;
 
-   Global_Config : Command_Line_Configuration;
+   Global_Config : Switches_Configuration;
 
-   Parsing_Done : Boolean := False;
+   Global_Parsing_Done : Boolean := False;
 
    procedure Display_Options
-     (Config : Command_Line_Configuration;
+     (Config : Switches_Configuration;
       Title  : String);
    procedure Display_Global_Options;
    function Highlight_Switches (Line : String) return String;
@@ -261,7 +260,7 @@ package body SubCommander.Instance is
    procedure Display_Valid_Topics is
       Tab   : constant String (1 .. 1) := (others => ' ');
       Table : AAA.Table_IO.Table;
-      use Topics_Maps;
+      use Topic_Maps;
 
    begin
       if Registered_Topics.Is_Empty then
@@ -286,9 +285,9 @@ package body SubCommander.Instance is
    -------------------
 
    procedure Display_Usage (Cmd : not null Command_Access) is
-      Config  : Command_Line_Configuration;
-      Canary1 : Command_Line_Configuration;
-      Canary2 : Command_Line_Configuration;
+      Config  : Switches_Configuration;
+      Canary1 : Switches_Configuration;
+      Canary2 : Switches_Configuration;
    begin
       Put_Line (TTY_Chapter ("SUMMARY"));
       Put_Line ("   " & Cmd.Short_Description);
@@ -297,7 +296,7 @@ package body SubCommander.Instance is
       Put_Line (TTY_Chapter ("USAGE"));
       Put ("   ");
       Put_Line
-        (TTY_Underline ("alr") &
+        (TTY_Underline (Main_Command_Name) &
            " " &
          TTY_Underline (Cmd.Name) &
          " [options] " &
@@ -310,7 +309,8 @@ package body SubCommander.Instance is
       Set_Global_Switches (Canary2); -- For comparison
       Cmd.Setup_Switches (Canary1);
 
-      if Get_Switches (Canary1) /= Get_Switches (Canary2) then
+      if Get_Switches (Canary1.GNAT_Cfg) /= Get_Switches (Canary2.GNAT_Cfg)
+      then
          Cmd.Setup_Switches (Config);
       end if;
 
@@ -348,10 +348,11 @@ package body SubCommander.Instance is
       end if;
 
       Put_Line (TTY_Chapter ("USAGE"));
-      Put_Line ("   " & TTY_Underline ("alr") & " [global options] " &
+      Put_Line ("   " & TTY_Underline (Main_Command_Name) &
+                  " [global options] " &
                   "<command> [command options] [<arguments>]");
       Put_Line ("");
-      Put_Line ("   " & TTY_Underline ("alr") & " " &
+      Put_Line ("   " & TTY_Underline (Main_Command_Name) & " " &
                         TTY_Underline ("help") &
                         " [<command>|<topic>]");
 
@@ -380,18 +381,11 @@ package body SubCommander.Instance is
       Display_Valid_Topics;
    end Display_Usage;
 
-   ------------
-   -- Parsed --
-   ------------
+   ---------------------------
+   -- Parse_Global_Switches --
+   ---------------------------
 
-   function Parsed return Boolean
-   is (Parsing_Done);
-
-   ------------------------
-   -- Parse_Command_Line --
-   ------------------------
-
-   procedure Parse_Command_Line is
+   procedure Parse_Global_Switches is
 
       ---------------------------
       -- Check_First_Nonswitch --
@@ -451,9 +445,17 @@ package body SubCommander.Instance is
       Arguments        : GNAT.OS_Lib.Argument_List_Access;
       Arguments_Parser : Opt_Parser;
    begin
+
+      --  Only do the global parsing once
+      if Global_Parsing_Done then
+         return;
+      else
+         Global_Parsing_Done := True;
+      end if;
+
       --  GNAT switch handling intercepts -h/--help. To have the same output
-      --  for 'alr -h command' and 'alr help command', we do manual handling
-      --  first in search of a -h/--help:
+      --  for '<main> -h command' and '<main> help command', we do manual
+      --  handling first in search of a -h/--help:
       Help_Requested  := Check_For_Help;
       First_Nonswitch := Check_First_Nonswitch;
 
@@ -476,7 +478,7 @@ package body SubCommander.Instance is
       --  are added to Global_Arguments. This includes the command name and all
       --  potential command specific switches and arguments.
       Initialize_Option_Scan (Arguments_Parser, Arguments);
-      Getopt (Global_Config,
+      Getopt (Global_Config.GNAT_Cfg,
               Callback => Fill_Arguments'Unrestricted_Access,
               Parser   => Arguments_Parser);
 
@@ -485,14 +487,13 @@ package body SubCommander.Instance is
       --  At this point the command and all unknown switches are in
       --  Global_Arguments.
 
-      Parsing_Done := True;
    exception
       when Exit_From_Command_Line | Invalid_Switch | Invalid_Parameter =>
          Put_Line ("");
          Put_Line ("Use """ & Main_Command_Name &
                      " help <command>"" for specific command help");
          Error_Exit (1);
-   end Parse_Command_Line;
+   end Parse_Global_Switches;
 
    -------------
    -- Execute --
@@ -500,6 +501,9 @@ package body SubCommander.Instance is
 
    procedure Execute is
    begin
+
+      Parse_Global_Switches;
+
       --  Show either general or specific help
       if Help_Requested then
          if First_Nonswitch > 0 then
@@ -535,7 +539,7 @@ package body SubCommander.Instance is
          Cmd : constant not null Command_Access := What_Command;
          --  Might raise if invalid, if so we are done
 
-         Command_Config  : Command_Line_Configuration;
+         Command_Config  : Switches_Configuration;
 
          Sub_Cmd_Line : GNAT.OS_Lib.String_List_Access :=
            To_Argument_List (Global_Arguments);
@@ -552,9 +556,7 @@ package body SubCommander.Instance is
          Cmd.Setup_Switches (Command_Config);
 
          --  Ensure Command has not set a switch that is already global:
-         if not GNAT.Command_Line.Extra.Verify_No_Duplicates
-           (Command_Config, Global_Config)
-         then
+         if not Verify_No_Duplicates (Command_Config, Global_Config) then
             Put_Error ("Duplicate switch definition detected");
             Error_Exit (1);
          end if;
@@ -565,7 +567,7 @@ package body SubCommander.Instance is
          Initialize_Option_Scan (Parser, Sub_Cmd_Line);
 
          --  Parse sub-command line, invalid switches will raise an exception
-         Getopt (Command_Config, Parser => Parser);
+         Getopt (Command_Config.GNAT_Cfg, Parser => Parser);
 
          --  Make a vector of arguments for the sub-command (every element that
          --  was not a switch in the sub-command line).
@@ -582,14 +584,12 @@ package body SubCommander.Instance is
          --  We don't need this anymore
          GNAT.OS_Lib.Free (Sub_Cmd_Line);
 
-         if Sub_Arguments.Is_Empty then
-            raise Program_Error
-              with "we should have at least the command name here";
-         else
-            --  Remove the sub-command name from the list
-            Sub_Arguments.Delete_First;
-            Cmd.Execute (Sub_Arguments);
-         end if;
+         pragma Assert (not Sub_Arguments.Is_Empty,
+                        "Should have at least the command name");
+
+         --  Remove the sub-command name from the list
+         Sub_Arguments.Delete_First;
+         Cmd.Execute (Sub_Arguments);
       end;
 
    exception
@@ -603,9 +603,6 @@ package body SubCommander.Instance is
          Put_Error ("Unrecognized command: " & Global_Arguments.First_Element);
          Put_Line ("");
          Display_Usage (Displayed_Error => True);
-         Error_Exit (1);
-      when Wrong_Command_Arguments =>
-         --  Raised in here, so no need to raise up unless in debug mode
          Error_Exit (1);
    end Execute;
 
@@ -659,13 +656,17 @@ package body SubCommander.Instance is
    ---------------------
 
    procedure Display_Options
-     (Config : Command_Line_Configuration;
+     (Config : Switches_Configuration;
       Title  : String)
    is
       Tab     : constant String (1 .. 1) := (others => ' ');
       Table   : AAA.Table_IO.Table;
 
       Has_Printable_Rows : Boolean := False;
+
+      -----------------
+      -- Without_Arg --
+      -----------------
 
       function Without_Arg (Value : String) return String is
          Required_Character : constant Character := Value (Value'Last);
@@ -676,6 +677,10 @@ package body SubCommander.Instance is
              else
                Value);
       end Without_Arg;
+
+      --------------
+      -- With_Arg --
+      --------------
 
       function With_Arg (Value, Arg : String) return String is
          Required_Character : constant Character := Value (Value'Last);
@@ -693,6 +698,10 @@ package body SubCommander.Instance is
                      when others => raise Program_Error))
             else Value);
       end With_Arg;
+
+      ---------------
+      -- Print_Row --
+      ---------------
 
       procedure Print_Row (Short_Switch, Long_Switch, Arg, Help : String) is
          Has_Short : constant Boolean := Short_Switch not in " " | "";
@@ -719,8 +728,12 @@ package body SubCommander.Instance is
          Has_Printable_Rows := True;
       end Print_Row;
    begin
-      GNAT.Command_Line.Extra.For_Each_Switch
-        (Config, Print_Row'Access);
+      for Elt of Config.Info loop
+         Print_Row (To_String (Elt.Switch),
+                    To_String (Elt.Long_Switch),
+                    To_String (Elt.Argument),
+                    To_String (Elt.Help));
+      end loop;
 
       if Has_Printable_Rows then
          Put_Line ("");
@@ -736,7 +749,7 @@ package body SubCommander.Instance is
    ----------------------------
 
    procedure Display_Global_Options is
-      Global_Config   : Command_Line_Configuration;
+      Global_Config   : Switches_Configuration;
    begin
       Set_Global_Switches (Global_Config);
       Display_Options (Global_Config, "GLOBAL OPTIONS");
@@ -785,6 +798,7 @@ package body SubCommander.Instance is
    procedure Execute (This : in out Builtin_Help;
                       Args :        AAA.Strings.Vector)
    is
+      pragma Unreferenced (This);
    begin
       if Args.Count /= 1 then
          if Args.Count > 1 then
@@ -824,43 +838,5 @@ package body SubCommander.Instance is
 
       Display_Help (Args (1));
    end Execute;
-
-   ----------------------
-   -- Long_Description --
-   ----------------------
-
-   overriding
-   function Long_Description (This : Builtin_Help)
-                              return AAA.Strings.Vector
-   is (AAA.Strings.Empty_Vector
-       .Append ("Shows information about commands and topics.")
-       .Append ("See available commands with '<> help commands'")
-       .Append ("See available topics with '<> help topics'."));
-
-   --------------------
-   -- Setup_Switches --
-   --------------------
-
-   overriding
-   procedure Setup_Switches
-     (This    : in out Builtin_Help;
-      Config  : in out GNAT.Command_Line.Command_Line_Configuration)
-   is null;
-
-   -----------------------
-   -- Short_Description --
-   -----------------------
-
-   overriding
-   function Short_Description (This : Builtin_Help) return String
-   is ("Shows help on the given command/topic");
-
-   -----------------------------
-   -- Usage_Custom_Parameters --
-   -----------------------------
-
-   overriding
-   function Usage_Custom_Parameters (This : Builtin_Help) return String
-   is ("[<command>|<topic>]");
 
 end SubCommander.Instance;

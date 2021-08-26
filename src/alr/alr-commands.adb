@@ -46,7 +46,6 @@ with Alr.Platform;
 
 package body Alr.Commands is
 
-   use GNAT.Command_Line;
    use type GNAT.OS_Lib.String_Access;
 
    --  To add a command: update the dispatch table below
@@ -94,8 +93,9 @@ package body Alr.Commands is
    -------------------------
 
    procedure Set_Global_Switches
-     (Config : in out GNAT.Command_Line.Command_Line_Configuration)
+     (Config : in out SubCommander.Switches_Configuration)
    is
+      use SubCommander;
    begin
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
@@ -208,7 +208,7 @@ package body Alr.Commands is
    procedure Reportaise_Wrong_Arguments (Message : String) is
    begin
       Alire.Errors.Pretty_Print (Message);
-      raise Sub_Cmd.Wrong_Command_Arguments with Alire.Errors.Set (Message);
+      raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
    -------------------------
@@ -362,13 +362,14 @@ package body Alr.Commands is
       end;
    end Requires_Valid_Session;
 
-   ------------------------
-   -- Parse_Command_Line --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Parse_Command_Line is
+   procedure Execute is
    begin
-      Sub_Cmd.Parse_Command_Line;
+
+      Sub_Cmd.Parse_Global_Switches;
 
       if No_TTY then
          Alire.Is_TTY := False;
@@ -391,16 +392,6 @@ package body Alr.Commands is
          Alire.Config.Edit.Set_Path (Command_Line_Config_Path.all);
       end if;
 
-   end Parse_Command_Line;
-
-   -------------
-   -- Execute --
-   -------------
-
-   procedure Execute is
-   begin
-      Parse_Command_Line;
-
       Create_Alire_Folders;
 
       begin
@@ -415,7 +406,7 @@ package body Alr.Commands is
                OS_Lib.Bailout (1);
             end if;
 
-         when Child_Failed | Command_Failed =>
+         when Child_Failed | Command_Failed | Wrong_Command_Arguments =>
             Trace.Detail ("alr " & Sub_Cmd.What_Command & " unsuccessful");
             if Alire.Log_Level = Debug then
                raise;
@@ -494,14 +485,16 @@ package body Alr.Commands is
    -----------------------------
 
    procedure Add_GPR_Scenario_Switch
-     (Config : in out GNAT.Command_Line.Command_Line_Configuration)
+     (Config : in out SubCommander.Switches_Configuration)
    is
+
    begin
-      Define_Switch (Config,
-                     Callback => Handle_X_Switch'Access,
-                     Switch   => "-X!",
-                     Help     => "Scenario variable for gprbuild/gprclean",
-                     Argument => "Var=Arg");
+      SubCommander.Define_Switch
+        (Config,
+         Callback => Handle_X_Switch'Access,
+         Switch   => "-X!",
+         Help     => "Scenario variable for gprbuild/gprclean",
+         Argument => "Var=Arg");
    end Add_GPR_Scenario_Switch;
 
 begin

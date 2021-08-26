@@ -27,8 +27,6 @@ with Alr.Testing.Markdown;
 with Alr.Testing.Text;
 with Alr.Utils;
 
-with GNAT.Command_Line;
-
 with GNATCOLL.VFS;
 
 package body Alr.Commands.Test is
@@ -557,11 +555,12 @@ package body Alr.Commands.Test is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out SubCommander.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use SubCommander;
    begin
       Define_Switch
         (Config,

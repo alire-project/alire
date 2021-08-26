@@ -246,24 +246,26 @@ package body Alr.Commands.Run is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out SubCommander.Switches_Configuration)
    is
+      use SubCommander;
    begin
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config,
          Cmd.Args'Access,
          "-a:", "--args=",
          "Arguments to pass through (quote them if more than one)",
          Argument => "ARGS");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config,
          Cmd.List'Access,
          "", "--list", "List executables produced by current release");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config,
          Cmd.No_Compile'Access,
          "-s", "--skip-build", "Skip building step");

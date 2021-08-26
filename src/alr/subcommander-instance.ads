@@ -1,16 +1,25 @@
+--  Instantiate this package to create a sub-command parser/executor
+
 generic
 
-   Main_Command_Name : String;
-   Version           : String;
+   Main_Command_Name : String; --  Name of the main command or program
+   Version           : String; --  Version of the program
 
    with procedure Set_Global_Switches
-     (Config : in out GNAT.Command_Line.Command_Line_Configuration);
+     (Config : in out SubCommander.Switches_Configuration);
+   --  This procedure should define the global switches using the
+   --  Register_Switch procedures of the SubCommander package.
 
-   with procedure Put (Str : String);
-   with procedure Put_Line (Str : String);
-   with procedure Put_Error (Str : String);
+   with procedure Put (Str : String); -- Used to print help and usage
+   with procedure Put_Line (Str : String); -- Used to print help and usage
+   with procedure Put_Error (Str : String); -- Used to print errors
+
    with procedure Error_Exit (Code : Integer);
+   --  Used to signal that the program should terminate with the give error
+   --  code. Typicaly use GNAT.OS_Lib.OS_Exit.
 
+   --  The procedures below are used to format the output such as usage and
+   --  help. Use SubCommander.No_TTY if you don't want or need formating.
    with function TTY_Chapter (Str : String) return String;
    with function TTY_Description (Str : String) return String;
    with function TTY_Version (Str : String) return String;
@@ -18,8 +27,6 @@ generic
    with function TTY_Emph (Str : String) return String;
 
 package SubCommander.Instance is
-
-   --  Instantiate this package to create a sub-command parser/executor
 
    procedure Register (Cmd : not null Command_Access);
    --  Register a sub-command
@@ -30,25 +37,22 @@ package SubCommander.Instance is
    procedure Register (Topic : not null Help_Topic_Access);
    --  Register an help topic
 
-   function Parsed return Boolean;
+   procedure Execute;
+   --  Parse the command line and execute a sub-command or display help/usage
+   --  depending on command line args.
 
-   procedure Parse_Command_Line
-     with Post => Parsed;
-   --  Upon return, global switches have been processed so you can already
-   --  change the behavior of your program based on these (e.g. verbosity).
+   procedure Parse_Global_Switches;
+   --  Optional. Call this procedure before Execute to get only global switches
+   --  parsed. This can be useful to check the values of global switches before
+   --  running a sub-command or change the behavior of your program based on
+   --  these (e.g. verbosity, output color, etc.).
 
-   function What_Command return String
-     with Pre => Parsed;
-
-   procedure Execute
-     with Pre => Parsed;
-   --  Execute a command or display help/usage depending on command line args
-   --  parsed with Parse_Command_Line.
+   function What_Command return String;
 
    procedure Display_Usage (Displayed_Error : Boolean := False);
+
    procedure Display_Help (Keyword : String);
 
-   Wrong_Command_Arguments : exception;
    Error_No_Command : exception;
    Command_Already_Defined : exception;
 
@@ -70,17 +74,26 @@ private
 
    overriding
    function Long_Description (This : Builtin_Help)
-                              return AAA.Strings.Vector;
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("Shows information about commands and topics.")
+       .Append ("See available commands with '" &
+           Main_Command_Name & " help commands'")
+       .Append ("See available topics with '" &
+           Main_Command_Name & " help topics'."));
 
    overriding
    procedure Setup_Switches
      (This    : in out Builtin_Help;
-      Config  : in out GNAT.Command_Line.Command_Line_Configuration);
+      Config  : in out SubCommander.Switches_Configuration)
+   is null;
 
    overriding
-   function Short_Description (This : Builtin_Help) return String;
+   function Short_Description (This : Builtin_Help) return String
+   is ("Shows help on the given command/topic");
 
    overriding
-   function Usage_Custom_Parameters (This : Builtin_Help) return String;
+   function Usage_Custom_Parameters (This : Builtin_Help) return String
+   is ("[<command>|<topic>]");
 
 end SubCommander.Instance;

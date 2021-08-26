@@ -21,7 +21,7 @@ package Alr.Commands.Edit is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration);
+      Config : in out SubCommander.Switches_Configuration);
 
    overriding
    function Short_Description (Cmd : Command) return String

@@ -121,7 +121,7 @@ package body Alr.Commands.Search is
                              when 0      => "",
                              when 1      => Args (1),
                              when others =>
-                                raise Sub_Cmd.Wrong_Command_Arguments with
+                                raise Wrong_Command_Arguments with
                                   "Only one search substring supported"));
          return;
       end if;
@@ -305,11 +305,12 @@ package body Alr.Commands.Search is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out SubCommander.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use SubCommander;
    begin
       Define_Switch
         (Config,
