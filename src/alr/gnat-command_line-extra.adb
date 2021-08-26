@@ -17,13 +17,12 @@ package body GNAT.Command_Line.Extra is
       function Insert (Switch : String) return Boolean is
          --  Return True if OK; False otherwise.
       begin
-         Seen.Insert (Switch);
-         --  Raises Constraint_Error when element already exists.
-
-         return True;
-      exception
-         when Constraint_Error =>
+         if Seen.Contains (Switch) then
             return False;
+         else
+            Seen.Insert (Switch);
+            return True;
+         end if;
       end Insert;
 
       ------------
@@ -89,6 +88,10 @@ package body GNAT.Command_Line.Extra is
    is
       use all type GNAT.Strings.String_Access;
    begin
+      if Config = null or else Config.Switches = null then
+         return;
+      end if;
+
       for S of Config.Switches.all loop
          Callback
            ((if S.Switch /= null then S.Switch.all else ""),

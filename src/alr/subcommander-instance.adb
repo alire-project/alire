@@ -434,21 +434,18 @@ package body SubCommander.Instance is
       function Filter_Arguments return GNAT.OS_Lib.Argument_List_Access is
          use Ada.Command_Line;
 
-         package SU renames Ada.Strings.Unbounded;
-
-         Arguments : SU.Unbounded_String;
+         Arguments : AAA.Strings.Vector;
       begin
          for I in 1 .. Argument_Count loop
             declare
                Arg : constant String := Ada.Command_Line.Argument (I);
             begin
                if Arg not in "-h" | "--help" then
-                  SU.Append (Arguments, (if I = 1 then "" else " ") & Arg);
+                  Arguments.Append (Arg);
                end if;
             end;
          end loop;
-
-         return GNAT.OS_Lib.Argument_String_To_List (SU.To_String (Arguments));
+         return To_Argument_List (Arguments);
       end Filter_Arguments;
 
       Arguments        : GNAT.OS_Lib.Argument_List_Access;
