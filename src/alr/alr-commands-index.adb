@@ -3,9 +3,11 @@ with AAA.Table_IO;
 with Alire.Config.Edit;
 with Alire.Features.Index;
 with Alire.Index_On_Disk;
-with Alire.Utils;
+with Alire.Utils.TTY;
 
 package body Alr.Commands.Index is
+
+   package TTY renames Alire.Utils.TTY;
 
    --  Forward declarations
 
@@ -83,16 +85,23 @@ package body Alr.Commands.Index is
    procedure Execute (Cmd : in out Command) is
    begin
       --  Check no multi-action
-      if Alire.Utils.Count_True
+      case Alire.Utils.Count_True
         ((Cmd.Add.all /= "",
           Cmd.Del.all /= "",
           Cmd.Check,
           Cmd.List,
           Cmd.Rset,
-          Cmd.Update_All)) /= 1
-      then
-         Reportaise_Wrong_Arguments ("Specify exactly one index subcommand");
-      end if;
+          Cmd.Update_All))
+      is
+         when 0 =>
+            --  Use --list as the default
+            Cmd.List := True;
+         when 1 =>
+            null; -- Usual case, just fall through
+         when others =>
+            Reportaise_Wrong_Arguments
+              ("Specify exactly one index subcommand");
+      end case;
 
       --  Dispatch to selected action
       if Cmd.Add.all /= "" then
@@ -147,10 +156,13 @@ package body Alr.Commands.Index is
       end if;
 
       Table
-        .Append ("#").Append ("Name").Append ("URL").Append ("Path");
+        .Append (TTY.Emph ("#"))
+        .Append (TTY.Emph ("NAME"))
+        .Append (TTY.Emph ("URL"))
+        .Append (TTY.Emph ("PATH"));
 
       if Alire.Log_Level = Alire.Trace.Debug then
-         Table.Append ("Priority");
+         Table.Append (TTY.Emph ("PRIORITY"));
       end if;
 
       for Index of Indexes loop
@@ -245,7 +257,7 @@ package body Alr.Commands.Index is
         (Config      => Config,
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
-         Help        => "List configured indexes");
+         Help        => "List configured indexes (default)");
 
       GNAT.Command_Line.Define_Switch
         (Config      => Config,
