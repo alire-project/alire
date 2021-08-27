@@ -167,9 +167,12 @@ package body Alire.TOML_Index is
             Set_Error (Result, Filename,
                        "index version (" & Version.Image
                        & ") is older than that expected by alr ("
-                       & Alire.Index.Version.Image & ")."
-                       & " Please update your local index "
-                       & "(alr index --update-all)");
+                       & Alire.Index.Version.Image & ")." & ASCII.LF
+                       & " Updating your local index might solve the issue "
+                       & "(alr index --update-all). " & ASCII.LF
+                       & "Otherwise, remove the " & "index with name '"
+                       & TTY.Emph (Index.Name)
+                       & "' (alr index --del " & Index.Name & ")");
          end if;
 
          if Alire.Index.Version /= Version then
