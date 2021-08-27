@@ -21,8 +21,6 @@ with GNAT.IO;
 
 package body Alire.Environment is
 
-   package TTY renames Utils.TTY;
-
    ---------------------
    -- Already_Defines --
    ---------------------
@@ -159,7 +157,8 @@ package body Alire.Environment is
       Rel    : constant Releases.Release := Root.Current.Release (Crate);
       Origin : constant String := Rel.Name_Str;
    begin
-      Trace.Debug ("Loading environment for release: " & TTY.Name (Crate));
+      Trace.Debug ("Loading environment for release: " &
+                     Utils.TTY.Name (Crate));
 
       --  Environment variables defined in the crate manifest
       for Act of Rel.Environment (Env) loop

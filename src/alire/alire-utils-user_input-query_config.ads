@@ -1,10 +1,15 @@
+with CLIC.User_Input;
+
 package Alire.Utils.User_Input.Query_Config is
 
-   function Config_Or_Query_String (Config_Key : String;
-                                    Question   : String;
-                                    Default    : String;
-                                    Validation : String_Validation_Access)
-                                    return String
+   use type CLIC.User_Input.String_Validation_Access;
+
+   function Config_Or_Query_String
+     (Config_Key : String;
+      Question   : String;
+      Default    : String;
+      Validation : CLIC.User_Input.String_Validation_Access)
+      return String
      with Pre => Validation = null or else Validation (Default);
    --  Same as Query_String but first looks for a configuration value before
    --  querying the user. If the answer is different from Default, it is saved

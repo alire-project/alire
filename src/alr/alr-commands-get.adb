@@ -12,7 +12,8 @@ with Alire.Properties.Actions.Executor;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 with Alr.Commands.Build;
 with Alr.Platform;
@@ -86,7 +87,7 @@ package body Alr.Commands.Get is
 
       if not Cmd.Only then
          declare
-            use Alire.Utils.User_Input;
+            use CLIC.User_Input;
          begin
             Solution := Query.Resolve
               (Rel.Dependencies (Platform.Properties),
@@ -101,7 +102,7 @@ package body Alr.Commands.Get is
                Trace.Warning ("Could not find a complete solution for "
                               & Rel.Milestone.TTY_Image);
 
-               if Alire.Utils.User_Input.Query
+               if CLIC.User_Input.Query
                  (Question =>
                     "Build will fail unless externals are made available,"
                     & " do you want to continue?",

@@ -14,8 +14,6 @@ with Semantic_Versioning;
 
 package body Alr.Commands.Search is
 
-   package TTY renames Alire.Utils.TTY;
-
    -------------
    -- Execute --
    -------------
@@ -54,7 +52,7 @@ package body Alr.Commands.Search is
          then
             Found := Found + 1;
             Tab.New_Row;
-            Tab.Append (TTY.Name (+R.Name));
+            Tab.Append (Alire.Utils.TTY.Name (+R.Name));
             Tab.Append
               ((if R.Origin.Is_System then Flag_System else " ") &
                (if R.Is_Available (Platform.Properties)

@@ -8,8 +8,6 @@ package body Alire.Solutions.Diffs is
    --  type could be made much simpler, even not needing to preprocess the
    --  solutions. To keep in mind for any future large refactoring needed here.
 
-   package TTY renames Utils.TTY;
-
    --  Define all changes we can detect, to simplify retrieving their
    --  icon/text. These are not exclusive to each other.
    type Changes is
@@ -404,7 +402,7 @@ package body Alire.Solutions.Diffs is
 
                --  Always show crate name
 
-               Table.Append (TTY.Name (Crate));
+               Table.Append (Utils.TTY.Name (Crate));
 
                --  Show most precise version available
 

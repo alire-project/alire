@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Root;
 with Alire.URI;
+with Alire.Utils.TTY;
 
 package body Alire.Origins is
 
@@ -121,7 +122,7 @@ package body Alire.Origins is
    -------------------------
 
    function TTY_URL_With_Commit (This : Origin) return String is
-     (TTY.URL (This.URL) & "#" & TTY.Emph (This.Commit));
+     (Utils.TTY.URL (This.URL) & "#" & TTY.Emph (This.Commit));
 
    ----------
    -- Path --

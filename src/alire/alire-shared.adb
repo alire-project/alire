@@ -10,7 +10,6 @@ with Alire.Paths;
 with Alire.Properties.Actions;
 with Alire.Root;
 with Alire.Toolchains.Solutions;
-with Alire.TTY;
 with Alire.Warnings;
 
 package body Alire.Shared is
@@ -189,9 +188,9 @@ package body Alire.Shared is
 
    procedure Remove
      (Release : Releases.Release;
-      Confirm : Boolean := not Utils.User_Input.Not_Interactive)
+      Confirm : Boolean := not CLIC.User_Input.Not_Interactive)
    is
-      use Utils.User_Input;
+      use CLIC.User_Input;
       Path : constant Absolute_Path := Install_Path / Release.Unique_Folder;
    begin
       if not Release.Origin.Is_Regular then
@@ -217,7 +216,7 @@ package body Alire.Shared is
          Toolchains.Unconfigure (Release.Name);
       end if;
 
-      if not Confirm or else Utils.User_Input.Query
+      if not Confirm or else Query
         (Question => "Release " & Release.Milestone.TTY_Image & " is going to "
          & "be removed, freeing "
          & Directories.TTY_Image (Directories.Tree_Size (Path))
@@ -238,7 +237,7 @@ package body Alire.Shared is
 
    procedure Remove
      (Target : Milestones.Milestone;
-      Confirm : Boolean := not Utils.User_Input.Not_Interactive)
+      Confirm : Boolean := not CLIC.User_Input.Not_Interactive)
    is
    begin
       for Release of Available loop

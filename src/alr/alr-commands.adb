@@ -1,9 +1,11 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
-with Alire.Platforms;
-with Alire.Utils.TTY;
 
+with CLIC.TTY;
+with CLIC.User_Input;
+
+with Alire.Platforms;
 with Alire_Early_Elaboration;
 with Alire.Config.Edit;
 with Alire.Errors;
@@ -13,7 +15,6 @@ with Alire.Paths;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
-with Alire.Utils.User_Input;
 
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
@@ -113,7 +114,7 @@ package body Alr.Commands is
                      "Display general or command-specific help");
 
       Define_Switch (Config,
-                     Alire.Utils.User_Input.Not_Interactive'Access,
+                     CLIC.User_Input.Not_Interactive'Access,
                      "-n", "--non-interactive",
                      "Assume default answers for all user prompts");
 
@@ -372,14 +373,14 @@ package body Alr.Commands is
       Sub_Cmd.Parse_Global_Switches;
 
       if No_TTY then
-         Alire.Is_TTY := False;
+         CLIC.TTY.Force_Disable_TTY;
       end if;
 
       if Platform.Operating_System not in Alire.Platforms.Windows and then
         not No_Color and then
         not No_TTY
       then
-         Alire.Utils.TTY.Enable_Color (Force => False);
+         CLIC.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable
 
          Simple_Logging.ASCII_Only := False;
@@ -408,6 +409,14 @@ package body Alr.Commands is
 
          when Child_Failed | Command_Failed | Wrong_Command_Arguments =>
             Trace.Detail ("alr " & Sub_Cmd.What_Command & " unsuccessful");
+            if Alire.Log_Level = Debug then
+               raise;
+            else
+               OS_Lib.Bailout (1);
+            end if;
+
+         when CLIC.User_Input.User_Interrupt =>
+            Trace.Error ("Canceled.");
             if Alire.Log_Level = Debug then
                raise;
             else

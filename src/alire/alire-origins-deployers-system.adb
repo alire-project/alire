@@ -3,7 +3,8 @@ with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
 with Alire.Platform;
 with Alire.Platforms;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 with GNAT.IO;
 
@@ -47,7 +48,7 @@ package body Alire.Origins.Deployers.System is
 
    function Query_User (Pkg : String) return Boolean is
       use GNAT.IO;
-      use Utils.User_Input;
+      use CLIC.User_Input;
    begin
       Put_Line ("The system package '" & Pkg &
                   "' is about to be installed.");

@@ -1,6 +1,8 @@
+with Interfaces.C_Streams;
+with Simple_Logging; use Simple_Logging;
 with Simple_Logging.Decorators;
 
-package body Alire.Utils.TTY is
+package body CLIC.TTY is
 
    use all type ANSI.Colors;
    use all type ANSI.Styles;
@@ -12,6 +14,34 @@ package body Alire.Utils.TTY is
 
    function Verbose_Decorator (Level   : Simple_Logging.Levels;
                                Message : String) return String;
+
+   Disabled_By_User : Boolean := False;
+
+   -----------------------
+   -- Force_Disable_TTY --
+   -----------------------
+
+   procedure Force_Disable_TTY is
+   begin
+      Disabled_By_User := True;
+   end Force_Disable_TTY;
+
+   ---------------
+   -- Check_TTY --
+   ---------------
+
+   function Check_TTY return Boolean is
+      use Interfaces.C_Streams;
+   begin
+      return isatty (fileno (stdin)) /= 0;
+   end Check_TTY;
+
+   ------------
+   -- Is_TTY --
+   ------------
+
+   function Is_TTY return Boolean
+   is (if Disabled_By_User then False else Check_TTY);
 
    -------------------
    -- Color_Enabled --
@@ -39,23 +69,23 @@ package body Alire.Utils.TTY is
 
       if Force or else Is_TTY then
          Use_Color := True;
-         Trace.Debug ("Color output enabled");
+         Simple_Logging.Debug ("Color output enabled");
       else
-         Trace.Debug ("Color output was requested but not enabled:"
-                      & " force=" & Force'Img
-                      & "; Is_TTY=" & Is_TTY'Img);
+         Simple_Logging.Debug ("Color output was requested but not enabled:"
+                               & " force=" & Force'Img
+                               & "; Is_TTY=" & Is_TTY'Img);
       end if;
 
       --  Set debug colors. When Detail/Debug are also enabled, we add the
       --  "info:" prefix to otherwise normal output, so it's seen more easily.
 
       if Use_Color then
-         case Log_Level is
+         case Simple_Logging.Level is
             when Always .. Info =>
-               Simple_Logging.Decorators.Level_Decorator :=
+               Decorators.Level_Decorator :=
                  Regular_Decorator'Access;
             when others =>
-               Simple_Logging.Decorators.Level_Decorator :=
+               Decorators.Level_Decorator :=
                  Verbose_Decorator'Access;
          end case;
       end if;
@@ -133,4 +163,4 @@ package body Alire.Utils.TTY is
                          Style      => Dim));
    end Verbose_Decorator;
 
-end Alire.Utils.TTY;
+end CLIC.TTY;

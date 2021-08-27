@@ -3,7 +3,7 @@ private with Ada.Finalization;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Optional;
-with Alire.TTY;
+with Alire.Utils.TTY;
 
 with Semantic_Versioning;
 
@@ -70,7 +70,7 @@ package Alire.Roots.Editable is
    is (not Release (This.Old).Pins.Contains (Crate)
        or else Force
        or else raise Checked_Error with Errors.Set
-         (TTY.Name (Crate) & " is already pinned with pin "
+         (Utils.TTY.Name (Crate) & " is already pinned with pin "
           & Release (This.Old).Pins.Element (Crate).Image (User => False)));
    --  Says if a pin can be added: not already a pin, or Force. As an
    --  exception, the body is here as this function is intended to serve as

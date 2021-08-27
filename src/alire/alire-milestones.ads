@@ -3,6 +3,7 @@ with Alire.Interfaces;
 with Semantic_Versioning;
 
 private with Alire.Utils.TTY;
+private with Alire.Utils;
 
 package Alire.Milestones with Preelaborate is
 
@@ -27,8 +28,6 @@ package Alire.Milestones with Preelaborate is
    function TTY_Image (M : Milestone) return String;
 
 private
-
-   package TTY renames Utils.TTY;
 
    type Milestone (Name_Len : Natural) is new Interfaces.Colorable with record
       Name    : Crate_Name (Name_Len);
@@ -64,8 +63,8 @@ private
 
    overriding
    function TTY_Image (M : Milestone) return String is
-     (TTY.Name (+M.Crate)
+     (Utils.TTY.Name (+M.Crate)
       & "="
-      & TTY.Version (Image (M.Version)));
+      & Utils.TTY.Version (Image (M.Version)));
 
 end Alire.Milestones;

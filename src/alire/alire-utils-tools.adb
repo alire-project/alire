@@ -3,7 +3,7 @@ with Alire.OS_Lib;
 with Alire.Platforms;
 with Alire.Platform;
 with Alire.Origins.Deployers.System;
-with Alire.Utils.User_Input;
+with CLIC.User_Input;
 
 package body Alire.Utils.Tools is
 
@@ -78,7 +78,7 @@ package body Alire.Utils.Tools is
    --------------------------
 
    procedure Install_From_Distrib (Tool : Tool_Kind; Fail : Boolean) is
-      use Utils.User_Input;
+      use CLIC.User_Input;
 
       Pck : constant String := System_Package_For_Tool (Tool);
    begin

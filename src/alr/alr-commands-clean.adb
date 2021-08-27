@@ -3,7 +3,6 @@ with Ada.Directories;
 with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.Paths;
-with Alire.TTY;
 with Alire.Utils;
 with Alire.GPR;
 
@@ -62,7 +61,6 @@ package body Alr.Commands.Clean is
          end if;
       end Add_Target;
 
-      package TTY renames Alire.TTY;
    begin
 
       --  Current workspace

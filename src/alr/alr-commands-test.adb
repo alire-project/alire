@@ -15,7 +15,6 @@ with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
-with Alire.Utils.User_Input;
 
 with Alr.Files;
 with Alr.Paths;
@@ -28,6 +27,8 @@ with Alr.Testing.Text;
 with Alr.Utils;
 
 with GNATCOLL.VFS;
+
+with CLIC.User_Input;
 
 package body Alr.Commands.Test is
 
@@ -499,7 +500,7 @@ package body Alr.Commands.Test is
            (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      Alire.Utils.User_Input.Not_Interactive := True;
+      CLIC.User_Input.Not_Interactive := True;
 
       --  Start testing
       if Test_All then

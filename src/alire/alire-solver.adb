@@ -12,6 +12,7 @@ with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
+with Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
 
@@ -26,7 +27,6 @@ package body Alire.Solver is
    --  Used on search timeout; solution might not even exist or be incomplete
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use all type Dependencies.States.Fulfillments;
    use all type Dependencies.States.Transitivities;
@@ -117,7 +117,7 @@ package body Alire.Solver is
       use Alire.Conditional.For_Dependencies;
 
       Unavailable_Crates      : Containers.Crate_Name_Sets.Set;
-      Unavailable_Direct_Deps : Utils.String_Sets.Set;
+      Unavailable_Direct_Deps : Alire.Utils.String_Sets.Set;
       --  Some dependencies may be unavailable because the crate does not
       --  exist, the requested releases do not exist, or the intersection of
       --  versions is empty. In this case, we can prematurely end the search
@@ -1041,7 +1041,7 @@ package body Alire.Solver is
                   Unavailable_Direct_Deps.Include (Dep.Value.Image);
                   Trace.Debug
                     ("Direct dependency has no fulfilling releases: "
-                     & TTY.Name (Dep.Value.Image));
+                     & Utils.TTY.Name (Dep.Value.Image));
                end if;
 
             end loop;

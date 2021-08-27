@@ -18,7 +18,6 @@ with Semantic_Versioning.Extended;
 package body Alire.Solutions is
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use type Ada.Containers.Count_Type;
    use type Semantic_Versioning.Version;
@@ -708,10 +707,11 @@ package body Alire.Solutions is
             if Dep.Has_Release then
                Trace.Log
                  ("   "
-                  & TTY.Name (Dep.Crate) & "="
+                  & Utils.TTY.Name (Dep.Crate) & "="
                   & TTY.Version (Dep.Release.Version.Image)
                   & (if Dep.Crate /= Dep.Release.Name -- provided by
-                     then " (" & TTY.Italic (TTY.Name (Dep.Release.Name)) & ")"
+                    then " (" & TTY.Italic
+                      (Utils.TTY.Name (Dep.Release.Name)) & ")"
                      else "")
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
@@ -883,7 +883,7 @@ package body Alire.Solutions is
          for Dep of This.Dependencies loop
             if Dep.Is_Linked then
                Table
-                 .Append (TTY.Name (Dep.Crate))
+                 .Append (Utils.TTY.Name (Dep.Crate))
                  .Append (TTY.URL ("file:") & Dep.Link.Relative_Path)
                  .Append (if Dep.Link.Is_Remote
                           then Dep.Link.TTY_URL_With_Reference (Detailed)
@@ -891,7 +891,7 @@ package body Alire.Solutions is
                  .New_Row;
             elsif Dep.Is_Pinned then
                Table
-                 .Append (TTY.Name (Dep.Crate))
+                 .Append (Utils.TTY.Name (Dep.Crate))
                  .Append (TTY.Version (Dep.Pin_Version.Image))
                  .New_Row;
             end if;
@@ -1208,7 +1208,7 @@ package body Alire.Solutions is
       end loop;
 
       raise Program_Error with Errors.Set
-        ("No dependency in solution matches crate " & TTY.Name (Crate));
+        ("No dependency in solution matches crate " & Utils.TTY.Name (Crate));
    end State;
 
    -----------

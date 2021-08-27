@@ -3,8 +3,8 @@ with Alire.Optional;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
-with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.Utils.TTY;
 
 with Alr.Commands.User_Input;
 
@@ -15,7 +15,6 @@ with TOML_Slicer;
 package body Alr.Commands.Pin is
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Alire.Utils.TTY;
 
    --------------------
    -- Change_One_Pin --
@@ -70,7 +69,7 @@ package body Alr.Commands.Pin is
          Reportaise_Command_Failed
            ("Cannot " & (if Cmd.Unpin then "unpin" else "pin")
             & " dependency not in solution: "
-            & TTY.Name (Dep.Crate));
+            & Alire.Utils.TTY.Name (Dep.Crate));
       end if;
 
       --  Check if we are given a particular version
@@ -93,7 +92,7 @@ package body Alr.Commands.Pin is
          Reportaise_Wrong_Arguments
            ("An explicit version is required to pin a crate with"
             & " no release in the current solution: "
-            & TTY.Name (Dep.Crate));
+            & Alire.Utils.TTY.Name (Dep.Crate));
       end if;
 
       --  Proceed to pin/unpin

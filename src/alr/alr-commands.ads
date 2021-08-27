@@ -3,7 +3,6 @@ with AAA.Strings;
 with Alire.Directories;
 with Alire.Roots.Optional;
 with Alire.Solver;
-with Alire.TTY;
 with Alire.GPR;
 
 with CLIC.Subcommander;

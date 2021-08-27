@@ -1,2 +1,5 @@
-package CLIC is
+package CLIC
+with Preelaborate
+is
+
 end CLIC;

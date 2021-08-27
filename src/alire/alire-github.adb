@@ -7,8 +7,6 @@ with Minirest;
 
 package body Alire.GitHub is
 
-   package TTY renames Alire.Utils.TTY;
-
    Base_URL    : constant URL    := "https://api.github.com";
    Header_Rate : constant String := "X-Ratelimit-Remaining";
 
@@ -43,7 +41,7 @@ package body Alire.GitHub is
             --  Log info about why the API call failed
 
             Trace.Debug ("Failed GitHub request to API: "
-                         & TTY.URL (Full_URL));
+                         & Utils.TTY.URL (Full_URL));
             Trace.Debug ("Status: " & This.Status_Line);
             Trace.Debug ("Headers: "
                          & This.Raw_Headers.Flatten ((1 => ASCII.LF)));

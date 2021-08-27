@@ -57,9 +57,9 @@ private
    --  Import TOML Table in the Config_Map global variable
 
    procedure Load_Config;
-   --  Clear an reload all configuration. Also set some values elsewhere used
-   --  to break circularities. Bottom line, this procedure must leave the
-   --  program-wide configuration ready.
+   --  Clear and reload all configuration. Also set some values elsewhere
+   --  used to break circularities. Bottom line, this procedure must leave
+   --  the program-wide configuration ready.
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
    --  Load a TOML config file and return No_TOML_Value if the file is invalid

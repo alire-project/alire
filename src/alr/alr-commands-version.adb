@@ -1,8 +1,6 @@
 with Alire.Index;
 with Alire.Properties;
 with Alire.Roots.Optional;
-with Alire.Utils.TTY;
-with Alire.Utils.User_Input;
 
 with Alr.Bootstrap;
 with Alr.Files;
@@ -11,6 +9,8 @@ with Alr.Paths;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
+
+with CLIC.User_Input;
 
 package body Alr.Commands.Version is
 
@@ -40,14 +40,14 @@ package body Alr.Commands.Version is
       Trace.Always
         ("interaction flags are:"
          & " force:" & Alire.Force'Img
-         & " not-interactive:" & Alire.Utils.User_Input.Not_Interactive'Img);
+         & " not-interactive:" & CLIC.User_Input.Not_Interactive'Img);
 
       case Cmd.Optional_Root.Status is
          when Outside =>
             Trace.Always ("alr root is empty");
          when Broken =>
             Trace.Always ("alr root has invalid metadata: "
-                          & Alire.Utils.TTY.Error (Cmd.Optional_Root.Message));
+                          & TTY.Error (Cmd.Optional_Root.Message));
          when Valid =>
             Trace.Always ("alr root is " & Cmd.Root.Release.Milestone.Image);
       end case;

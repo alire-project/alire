@@ -7,7 +7,6 @@ with Alire.Config;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Solutions;
-with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 
 with Alr.Utils;
@@ -18,7 +17,6 @@ with TOML;
 
 package body Alr.Commands.Init is
 
-   package TTY renames Alire.Utils.TTY;
    package UI renames Alire.Utils.User_Input;
 
    Sed_Pattern : constant String := "PROJECT_SKEL";

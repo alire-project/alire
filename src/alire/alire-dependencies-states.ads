@@ -388,11 +388,11 @@ private
                              Color : Boolean := True)
                              return String
    is (if Color then
-          TTY.Name (This.Crate)
+          Utils.TTY.Name (This.Crate)
           & "="
           & TTY.Version (This.Release.Version.Image)
           & (if This.Crate /= This.Release.Name
-            then " (" & TTY.Italic (This.Release.Name.As_String) & ")"
+            then " (" & CLIC.TTY.Italic (This.Release.Name.As_String) & ")"
             else "")
        else
          (+This.Crate) & "=" & This.Release.Version.Image

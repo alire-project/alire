@@ -6,8 +6,8 @@ with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
 with Alire.Releases;
-with Alire.TTY;
 with Alire.Utils;
+with Alire.Utils.TTY;
 
 package Alire.Toolchains is
 
@@ -54,8 +54,8 @@ package Alire.Toolchains is
      := AAA.Strings.Empty_Vector
        .Append ("Alire indexes binary releases of GNAT and gprbuild. The "
                 & "compilers are indexed with their target name, e.g., "
-                & TTY.Name ("gnat_native") & " or "
-                & TTY.Name ("gnat_riscv_elf") & ". ")
+                & Utils.TTY.Name ("gnat_native") & " or "
+                & Utils.TTY.Name ("gnat_riscv_elf") & ". ")
      .Append ("")
      .Append ("Use " & TTY.Terminal ("alr toolchain --help") & " to obtain "
               & "information about toolchain management. Alire can be "

@@ -18,8 +18,9 @@ with Alire.Origins.Deployers.Filesystem;
 with Alire.Origins.Tweaks;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
-with Alire.Utils.TTY;
 with Alire.VCSs.Git;
+with Alire.Utils;
+with Alire.Utils.TTY;
 
 with GNATCOLL.VFS;
 
@@ -30,7 +31,6 @@ package body Alire.TOML_Index is
 
    package Dirs   renames Ada.Directories;
    package Semver renames Semantic_Versioning;
-   package TTY    renames Utils.TTY;
 
    Strict : Boolean := False;
    --  Allow or not unknown values in enums. This isn't easily moved to an
@@ -368,7 +368,7 @@ package body Alire.TOML_Index is
       Value    : TOML.TOML_Value;
    begin
       Trace.Debug ("Loading "
-                   & TTY.Name (Name) & " " & TTY.Version (Version)
+                   & Utils.TTY.Name (Name) & " " & TTY.Version (Version)
                    & " from " & File_Name);
 
       --  Load the TOML file

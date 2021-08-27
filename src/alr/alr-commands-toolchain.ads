@@ -1,9 +1,6 @@
-with Alire.TTY;
 with AAA.Strings;
 
 package Alr.Commands.Toolchain is
-
-   package TTY renames Alire.TTY;
 
    --  Installation of binary toolchain crates into the ${ALR_CONFIG}/cache
    --  shared configuration.

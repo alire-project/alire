@@ -125,7 +125,7 @@ package body Alire.Roots.Editable is
 
       if Release (This.Edit).Depends_On (Dep.Crate, This.Edit.Environment) then
          raise Checked_Error with Errors.Set
-           (TTY.Name (Dep.Crate) & " is already a direct dependency.");
+           (Utils.TTY.Name (Dep.Crate) & " is already a direct dependency.");
       end if;
 
       --  If we are given an Any dependency, attempt a solving to narrow down
@@ -172,7 +172,7 @@ package body Alire.Roots.Editable is
       then
          Raise_Checked_Error
            ("Crate slated for removal is not among direct static dependencies:"
-            & " " & TTY.Name (Crate)
+            & " " & Utils.TTY.Name (Crate)
             & "; please remove manually from manifest.");
       end if;
 

@@ -3,11 +3,9 @@ with AAA.Table_IO;
 with Alire.Config.Edit;
 with Alire.Features.Index;
 with Alire.Index_On_Disk;
-with Alire.Utils.TTY;
+with Alire.Utils;
 
 package body Alr.Commands.Index is
-
-   package TTY renames Alire.Utils.TTY;
 
    --  Forward declarations
 

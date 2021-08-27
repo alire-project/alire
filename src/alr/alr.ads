@@ -1,6 +1,7 @@
 with Alire;
 
 with Simple_Logging;
+with CLIC.TTY;
 
 package Alr with Preelaborate is
 
@@ -24,6 +25,7 @@ package Alr with Preelaborate is
    pragma Warnings (On);
 
    package Trace renames Simple_Logging;
+   package TTY renames CLIC.TTY;
 
    function "+" (S : Alire.UString) return String
                  renames Alire.UStrings.To_String;

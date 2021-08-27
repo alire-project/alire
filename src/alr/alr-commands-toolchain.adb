@@ -9,6 +9,7 @@ with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
+with Alire.Utils.TTY;
 
 with Semantic_Versioning.Extended;
 
@@ -158,7 +159,7 @@ package body Alr.Commands.Toolchain is
                          else Dep.Name);
             begin
                Table
-                 .Append (TTY.Name (Dep.Name))
+                 .Append (Alire.Utils.TTY.Name (Dep.Name))
                  .Append (TTY.Version (Dep.Version.Image))
                  .Append (if Toolchains.Tool_Is_Configured (Tool)
                              and then Dep.To_Dependency.Value =
@@ -196,7 +197,7 @@ package body Alr.Commands.Toolchain is
          if Available.Is_Empty then
             Reportaise_Command_Failed
               ("Requested crate has no installed releases: "
-               & TTY.Name (Target));
+               & Alire.Utils.TTY.Name (Alire.To_Name (Target)));
          elsif Available.Length not in 1 then
             Reportaise_Command_Failed
               ("Requested crate has several installed releases, "

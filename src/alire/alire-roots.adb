@@ -18,10 +18,11 @@ with GNAT.OS_Lib;
 
 with Semantic_Versioning.Extended;
 
+with CLIC.User_Input;
+
 package body Alire.Roots is
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use type UString;
 
@@ -274,7 +275,7 @@ package body Alire.Roots is
               and then Pins.State (Crate).Pin_Version /= Pin.Version
             then
                Put_Warning ("Incompatible version pins requested for crate "
-                            & TTY.Name (Crate)
+                            & Utils.TTY.Name (Crate)
                             & "; fix versions or override with a link pin.");
             end if;
 
@@ -305,7 +306,8 @@ package body Alire.Roots is
             if Upstream.Contains (Crate) then
                Raise_Checked_Error
                  ("Pin circularity detected when adding pin "
-                  & TTY.Name (This.Name) & " --> " & TTY.Name (Crate)
+                  & Utils.TTY.Name (This.Name) & " --> " &
+                    Utils.TTY.Name (Crate)
                   & ASCII.LF & "Last manifest in the cycle is "
                   & TTY.URL (This.Crate_File));
             end if;
@@ -329,8 +331,8 @@ package body Alire.Roots is
               and then Pins.State (Crate).Link /= Pin
             then
                Raise_Checked_Error
-                 ("Conflicting pin links for crate " & TTY.Name (Crate)
-                  & ": Crate " & TTY.Name (Release (This).Name)
+                 ("Conflicting pin links for crate " & Utils.TTY.Name (Crate)
+                  & ": Crate " & Utils.TTY.Name (Release (This).Name)
                   & " wants to link " & TTY.URL (Pin.Image (User => True))
                   & ", but a previous link exists to "
                   & TTY.URL (Pins.State (Crate).Link.Image (User => True)));
@@ -341,7 +343,7 @@ package body Alire.Roots is
 
             if Linked.Contains (Crate) then
                Trace.Debug ("Skipping adding of already added link target: "
-                            & TTY.Name (Crate));
+                            & Utils.TTY.Name (Crate));
                return;
             else
                Linked.Insert (Crate);
@@ -364,9 +366,10 @@ package body Alire.Roots is
                   if Target.Value.Name /= Crate then
                      Raise_Checked_Error
                        ("Mismatched crates for pin linking to "
-                        & TTY.URL (Pin.Path) & ": expected " & TTY.Name (Crate)
+                        & TTY.URL (Pin.Path) & ": expected " &
+                          Utils.TTY.Name (Crate)
                         & " but found "
-                        & TTY.Name (Target.Value.Name));
+                        & Utils.TTY.Name (Target.Value.Name));
                   end if;
                else
                   Trace.Debug
@@ -411,8 +414,9 @@ package body Alire.Roots is
 
                --  Avoid obvious self-pinning
 
-               Trace.Debug ("Crate " & TTY.Name (This.Name)
-                            & " adds pin for crate " & TTY.Name (Crate));
+               Trace.Debug ("Crate " & Utils.TTY.Name (This.Name)
+                            & " adds pin for crate "
+                            & Utils.TTY.Name (Crate));
 
                case Pin.Kind is
                   when To_Version =>
@@ -421,7 +425,7 @@ package body Alire.Roots is
                      Add_Link_Pin (Crate, Pin);
                end case;
 
-               Trace.Detail ("Crate " & TTY.Name (This.Name)
+               Trace.Detail ("Crate " & Utils.TTY.Name (This.Name)
                              & " adds pin " & Pins.State (Crate).TTY_Image);
             end;
          end loop;
@@ -894,7 +898,7 @@ package body Alire.Roots is
       This.Sync_Dependencies
         (Allowed  => Allowed,
          Silent   => Silent,
-         Interact => Interact and not Alire.Utils.User_Input.Not_Interactive);
+         Interact => Interact and not CLIC.User_Input.Not_Interactive);
    end Update;
 
    --------------------
@@ -959,7 +963,7 @@ package body Alire.Roots is
       for Crate of Allowed loop
          if not Old.Depends_On (Crate) then
             Raise_Checked_Error ("Requested crate is not a dependency: "
-                                 & TTY.Name (Crate));
+                                 & Utils.TTY.Name (Crate));
          end if;
 
          if Old.Pins.Contains (Crate) then
