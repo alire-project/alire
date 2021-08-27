@@ -5,10 +5,11 @@ with GNAT.Command_Line;
 private with Ada.Strings.Unbounded;
 private with Ada.Containers.Vectors;
 
-package SubCommander is
+package CLIC.Subcommander is
 
-   --  This root package defines the interface types to be used in the
-   --  SubCommander. See SubCommander.Instance to create the parser/executor.
+   --  This root package defines the interface types to be used in
+   --  the Subcommander. See CLIC.Subcommander.Instance to create
+   --  the parser/executor.
 
    type Switches_Configuration is limited private;
    --  This is a wrapper around GNAT.Command_Line.Command_Line_Configuration
@@ -144,7 +145,7 @@ package SubCommander is
    function No_TTY (Str : String) return String
    is (Str);
    --  Use this function for the TTY_* generic parameters of
-   --  SubCommander.Instance if you don't want or need TTY formating.
+   --  CLIC.Subcommander.Instance if you don't want or need TTY formating.
 
 private
 
@@ -177,4 +178,4 @@ private
    --  lead to some undefined behavior. This manual check is necessary because
    --  the GNAT library does not perform it.
 
-end SubCommander;
+end CLIC.Subcommander;

@@ -1,6 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-package body SubCommander is
+package body CLIC.Subcommander is
 
    -------------------
    -- Define_Switch --
@@ -203,4 +203,4 @@ package body SubCommander is
       --  No duplication detected
       return True;
    end Verify_No_Duplicates;
-end SubCommander;
+end CLIC.Subcommander;

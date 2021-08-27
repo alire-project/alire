@@ -6,9 +6,9 @@ generic
    Version           : String; --  Version of the program
 
    with procedure Set_Global_Switches
-     (Config : in out SubCommander.Switches_Configuration);
+     (Config : in out CLIC.Subcommander.Switches_Configuration);
    --  This procedure should define the global switches using the
-   --  Register_Switch procedures of the SubCommander package.
+   --  Register_Switch procedures of the CLIC.Subcommander package.
 
    with procedure Put (Str : String); -- Used to print help and usage
    with procedure Put_Line (Str : String); -- Used to print help and usage
@@ -19,14 +19,14 @@ generic
    --  code. Typicaly use GNAT.OS_Lib.OS_Exit.
 
    --  The procedures below are used to format the output such as usage and
-   --  help. Use SubCommander.No_TTY if you don't want or need formating.
+   --  help. Use CLIC.Subcommander.No_TTY if you don't want or need formating.
    with function TTY_Chapter (Str : String) return String;
    with function TTY_Description (Str : String) return String;
    with function TTY_Version (Str : String) return String;
    with function TTY_Underline (Str : String) return String;
    with function TTY_Emph (Str : String) return String;
 
-package SubCommander.Instance is
+package CLIC.Subcommander.Instance is
 
    procedure Register (Cmd : not null Command_Access);
    --  Register a sub-command
@@ -85,7 +85,7 @@ private
    overriding
    procedure Setup_Switches
      (This    : in out Builtin_Help;
-      Config  : in out SubCommander.Switches_Configuration)
+      Config  : in out CLIC.Subcommander.Switches_Configuration)
    is null;
 
    overriding
@@ -96,4 +96,4 @@ private
    function Usage_Custom_Parameters (This : Builtin_Help) return String
    is ("[<command>|<topic>]");
 
-end SubCommander.Instance;
+end CLIC.Subcommander.Instance;

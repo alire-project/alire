@@ -1,15 +1,15 @@
 with AAA.Strings;
 
-with SubCommander;
+with CLIC.Subcommander;
 
 with Alire.Toolchains;
 
 package Alr.Commands.Topics.Toolchains is
 
-   type Topic is new SubCommander.Help_Topic with null record;
+   type Topic is new CLIC.Subcommander.Help_Topic with null record;
 
    overriding
-   function Name (This : Topic) return SubCommander.Identifier
+   function Name (This : Topic) return CLIC.Subcommander.Identifier
    is ("toolchains");
 
    overriding

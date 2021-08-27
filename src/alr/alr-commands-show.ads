@@ -5,7 +5,7 @@ package Alr.Commands.Show is
    type Command is new Commands.Command with private;
 
    overriding
-   function Name (Cmd : Command) return SubCommander.Identifier
+   function Name (Cmd : Command) return CLIC.Subcommander.Identifier
    is ("show");
 
    overriding
@@ -18,7 +18,7 @@ package Alr.Commands.Show is
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out SubCommander.Switches_Configuration);
+      Config : in out CLIC.Subcommander.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
      ("See information about a release");

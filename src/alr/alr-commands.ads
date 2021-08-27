@@ -6,10 +6,10 @@ with Alire.Solver;
 with Alire.TTY;
 with Alire.GPR;
 
-with SubCommander;
+with CLIC.Subcommander;
 
 private with Ada.Text_IO;
-private with SubCommander.Instance;
+private with CLIC.Subcommander.Instance;
 
 pragma Warnings (Off);
 private with Alr.OS_Lib; -- For the benefit of many child packages that use it
@@ -31,7 +31,7 @@ package Alr.Commands is
    -------------
 
    type Command
-   is abstract limited new SubCommander.Command
+   is abstract limited new CLIC.Subcommander.Command
    with private;
    --  This type encapsulates configuration and execution of a specific
    --  command.
@@ -89,14 +89,14 @@ package Alr.Commands is
    --  parameters.
 
    procedure Add_GPR_Scenario_Switch
-     (Config : in out SubCommander.Switches_Configuration);
+     (Config : in out CLIC.Subcommander.Switches_Configuration);
    --  This will add a command line switch that handles the "-X" scenario
    --  variable switches and fill the Scenario data above.
 
 private
 
    type Command
-   is abstract limited new SubCommander.Command
+   is abstract limited new CLIC.Subcommander.Command
      with record
       Optional_Root : Alire.Roots.Optional.Root;
    end record;
@@ -125,9 +125,9 @@ private
 
    procedure Put_Error (Str : String);
    procedure Set_Global_Switches
-     (Config : in out SubCommander.Switches_Configuration);
+     (Config : in out CLIC.Subcommander.Switches_Configuration);
 
-   package Sub_Cmd is new SubCommander.Instance
+   package Sub_Cmd is new CLIC.Subcommander.Instance
      (Main_Command_Name   => "alr",
       Version             => Alr.Version,
       Put                 => Ada.Text_IO.Put,

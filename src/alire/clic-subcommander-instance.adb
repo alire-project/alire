@@ -10,7 +10,7 @@ with Ada.Strings.Unbounded.Hash;
 with AAA.Table_IO;
 with AAA.Text_IO;
 
-package body SubCommander.Instance is
+package body CLIC.Subcommander.Instance is
 
    package Command_Maps is new Ada.Containers.Hashed_Maps
      (Key_Type        => Ada.Strings.Unbounded.Unbounded_String,
@@ -839,4 +839,4 @@ package body SubCommander.Instance is
       Display_Help (Args (1));
    end Execute;
 
-end SubCommander.Instance;
+end CLIC.Subcommander.Instance;

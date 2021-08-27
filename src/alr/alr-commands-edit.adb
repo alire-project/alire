@@ -146,9 +146,9 @@ package body Alr.Commands.Edit is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out SubCommander.Switches_Configuration)
+      Config : in out CLIC.Subcommander.Switches_Configuration)
    is
-      use SubCommander;
+      use CLIC.Subcommander;
    begin
       Define_Switch (Config,
                      Cmd.Prj'Access,

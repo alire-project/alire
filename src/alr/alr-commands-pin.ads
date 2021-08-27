@@ -7,7 +7,7 @@ package Alr.Commands.Pin is
    type Command is new Commands.Command with private;
 
    overriding
-   function Name (Cmd : Command) return SubCommander.Identifier
+   function Name (Cmd : Command) return CLIC.Subcommander.Identifier
    is ("pin");
 
    overriding
@@ -25,7 +25,7 @@ package Alr.Commands.Pin is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out SubCommander.Switches_Configuration);
+      Config : in out CLIC.Subcommander.Switches_Configuration);
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
