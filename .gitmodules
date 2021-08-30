@@ -45,3 +45,6 @@
 [submodule "deps/si_units"]
 	path = deps/si_units
 	url = https://github.com/HeisenbugLtd/si_units.git
+[submodule "deps/stopwatch"]
+	path = deps/stopwatch
+	url = https://github.com/mosteo/stopwatch

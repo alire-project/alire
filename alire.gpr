@@ -10,6 +10,7 @@ with "semantic_versioning";
 with "simple_logging";
 with "si_units";
 with "spdx";
+with "stopwatch";
 with "toml_slicer";
 with "uri";
 with "xml_ez_out";
