@@ -94,9 +94,9 @@ package body Alr.Commands is
    -------------------------
 
    procedure Set_Global_Switches
-     (Config : in out CLIC.Subcommander.Switches_Configuration)
+     (Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use CLIC.Subcommander;
+      use CLIC.Subcommand;
    begin
       Define_Switch (Config,
                      Command_Line_Config_Path'Access,
@@ -494,11 +494,11 @@ package body Alr.Commands is
    -----------------------------
 
    procedure Add_GPR_Scenario_Switch
-     (Config : in out CLIC.Subcommander.Switches_Configuration)
+     (Config : in out CLIC.Subcommand.Switches_Configuration)
    is
 
    begin
-      CLIC.Subcommander.Define_Switch
+      CLIC.Subcommand.Define_Switch
         (Config,
          Callback => Handle_X_Switch'Access,
          Switch   => "-X!",

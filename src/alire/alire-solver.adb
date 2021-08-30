@@ -14,7 +14,8 @@ with Alire.Root;
 with Alire.Toolchains;
 with Alire.Utils;
 with Alire.Utils.TTY;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 with Stopwatch;
 
@@ -162,12 +163,12 @@ package body Alire.Solver is
       --------------------------
 
       procedure Ask_User_To_Continue is
-         use Utils.User_Input;
+         use CLIC.User_Input;
          Answer : Answer_Kind := No;
       begin
          Timer.Hold;
 
-         if Utils.User_Input.Not_Interactive or else not Options.Interactive
+         if Not_Interactive or else not Options.Interactive
          then
             Trace.Debug ("Forcing stop of solution search after "
                          & Timer.Image & " seconds");

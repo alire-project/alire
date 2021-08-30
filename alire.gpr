@@ -3,6 +3,7 @@ with "ada_toml";
 with "alire_common";
 with "ajunitgen";
 with "ansi";
+with "clic";
 with "gnatcoll";
 with "minirest";
 with "optional";

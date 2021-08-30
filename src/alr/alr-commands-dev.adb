@@ -61,9 +61,9 @@ package body Alr.Commands.Dev is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out CLIC.Subcommander.Switches_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use CLIC.Subcommander;
+      use CLIC.Subcommand;
 
       function Command_Line_Contains (Arg : String) return Boolean is
         (for some I in 1 .. Ada.Command_Line.Argument_Count =>

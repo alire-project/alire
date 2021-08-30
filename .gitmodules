@@ -48,3 +48,6 @@
 [submodule "deps/stopwatch"]
 	path = deps/stopwatch
 	url = https://github.com/mosteo/stopwatch
+[submodule "deps/clic"]
+	path = deps/clic
+	url = https://github.com/alire-project/clic.git

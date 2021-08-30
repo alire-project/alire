@@ -8,7 +8,7 @@ package Alr.Commands.Version is
    type Command is new Commands.Command with null record;
 
    overriding
-   function Name (Cmd : Command) return CLIC.Subcommander.Identifier
+   function Name (Cmd : Command) return CLIC.Subcommand.Identifier
    is ("version");
 
    overriding

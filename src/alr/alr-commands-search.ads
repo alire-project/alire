@@ -7,7 +7,7 @@ package Alr.Commands.Search is
    type Command is new Commands.Command with private;
 
    overriding
-   function Name (Cmd : Command) return CLIC.Subcommander.Identifier
+   function Name (Cmd : Command) return CLIC.Subcommand.Identifier
    is ("search");
 
    overriding
@@ -28,7 +28,7 @@ package Alr.Commands.Search is
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out CLIC.Subcommander.Switches_Configuration);
+      Config : in out CLIC.Subcommand.Switches_Configuration);
 
 private
 

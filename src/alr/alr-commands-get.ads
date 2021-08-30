@@ -5,7 +5,7 @@ package Alr.Commands.Get is
    type Command is new Commands.Command with private;
 
    overriding
-   function Name (Cmd : Command) return CLIC.Subcommander.Identifier
+   function Name (Cmd : Command) return CLIC.Subcommand.Identifier
    is ("get");
 
    overriding
@@ -18,7 +18,7 @@ package Alr.Commands.Get is
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out CLIC.Subcommander.Switches_Configuration);
+      Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
       ("Fetches a crate release");

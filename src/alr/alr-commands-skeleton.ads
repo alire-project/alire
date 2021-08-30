@@ -30,7 +30,7 @@ package Alr.Commands.Skeleton is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out CLIC.Subcommander.Switches_Configuration) is null;
+      Config : in out CLIC.Subcommand.Switches_Configuration) is null;
 
    overriding
    function Short_Description (Cmd : Command) return String

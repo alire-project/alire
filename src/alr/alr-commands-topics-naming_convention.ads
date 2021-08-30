@@ -1,15 +1,15 @@
 with AAA.Strings;
 
-with CLIC.Subcommander;
+with CLIC.Subcommand;
 
 with Alire.Crates;
 
 package Alr.Commands.Topics.Naming_Convention is
 
-   type Topic is new CLIC.Subcommander.Help_Topic with null record;
+   type Topic is new CLIC.Subcommand.Help_Topic with null record;
 
    overriding
-   function Name (This : Topic) return CLIC.Subcommander.Identifier
+   function Name (This : Topic) return CLIC.Subcommand.Identifier
    is ("identifiers");
 
    overriding

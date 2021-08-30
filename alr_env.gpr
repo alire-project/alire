@@ -17,7 +17,8 @@ aggregate project Alr_Env is
                          "deps/toml_slicer",
                          "deps/uri-ada",
                          "deps/xmlezout",
-                         "deps/spdx");
+                         "deps/spdx",
+                         "deps/clic");
 
    for Project_Files use ("alr.gpr");
 

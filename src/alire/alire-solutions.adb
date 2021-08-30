@@ -1418,14 +1418,14 @@ package body Alire.Solutions is
 
       procedure Visit (State : Dependency_State) is
       begin
-         Trace.Debug ("Marking visited: " & TTY.Name (State.Crate));
+         Trace.Debug ("Marking visited: " & Utils.TTY.Name (State.Crate));
          Visited.Include (State.Crate);
          Pending.Exclude (State.Crate);
 
          if State.Has_Release then
             for Mil of State.Release.Provides loop
                Trace.Debug ("Marking visited (provided): "
-                            & TTY.Name (Mil.Crate));
+                            & Utils.TTY.Name (Mil.Crate));
                   Visited.Include (Mil.Crate);
             end loop;
          end if;

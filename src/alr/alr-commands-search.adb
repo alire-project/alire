@@ -306,9 +306,9 @@ package body Alr.Commands.Search is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out CLIC.Subcommander.Switches_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use CLIC.Subcommander;
+      use CLIC.Subcommand;
    begin
       Define_Switch
         (Config,
