@@ -56,15 +56,18 @@ private
 
    procedure Generate_Ada_Config (This     : Global_Config;
                                   Crate    : Crate_Name;
-                                  Filepath : Absolute_Path);
+                                  Filepath : Absolute_Path;
+                                  Version  : String);
 
    procedure Generate_GPR_Config (This     : Global_Config;
                                   Crate    : Crate_Name;
                                   Filepath : Absolute_Path;
-                                  Withs    : Alire.Utils.String_Set);
+                                  Withs    : Alire.Utils.String_Set;
+                                  Version  : String);
 
    procedure Generate_C_Config (This     : Global_Config;
                                 Crate    : Crate_Name;
-                                Filepath : Absolute_Path);
+                                Filepath : Absolute_Path;
+                                Version  : String);
 
 end Alire.Crate_Configuration;
