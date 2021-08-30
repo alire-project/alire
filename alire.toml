@@ -15,7 +15,7 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.2.1"
+aaa = "~0.2.3"
 ada_toml = "~0.1"
 ajunitgen = "^1.0.1"
 ansiada = "~0.1"
@@ -35,7 +35,6 @@ macos   = { OS = "macOS" }
 
 # Most dependencies require precise versions during the development cycle:
 [[pins]]
-aaa = { url = "https://github.com/mosteo/aaa.git", commit = "32ee4c80001ae388d8ae43b8a3aac94ccba30614" }
 ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "ade3cc905cef405dbf53e16a54f6fb458482710f" }
 ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
 ansiada = { url = "https://github.com/mosteo/ansi-ada.git", commit = "acf9afca3afe1f8b8843c061f3cef860d7567307" }
