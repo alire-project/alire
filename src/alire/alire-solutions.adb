@@ -222,13 +222,6 @@ package body Alire.Solutions is
                       return Boolean
    is (for some Solved of This.Releases => Solved.Provides (Release));
 
-   --------------
-   -- Required --
-   --------------
-
-   function Required (This : Solution) return State_Map'Class
-   is (This.Dependencies);
-
    ---------------
    -- Resetting --
    ---------------
@@ -1374,5 +1367,121 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Narrow_New_Dependencies;
+
+   --------------
+   -- Traverse --
+   --------------
+
+   procedure Traverse
+     (This  : Solution;
+      Doing : access procedure
+        (This  : Solution;
+         State : Dependency_State);
+      Root  : Alire.Releases.Containers.Optional :=
+        Alire.Releases.Containers.Optional_Releases.Empty)
+   is
+      Pending : State_Map := This.Dependencies;
+      Visited : Containers.Crate_Name_Sets.Set;
+      Round   : Natural := 0;
+
+      -----------
+      -- Visit --
+      -----------
+
+      procedure Visit (State : Dependency_State) is
+      begin
+         Trace.Debug ("Marking visited: " & TTY.Name (State.Crate));
+         Visited.Include (State.Crate);
+         Pending.Exclude (State.Crate);
+
+         if State.Has_Release then
+            for Mil of State.Release.Provides loop
+               Trace.Debug ("Marking visited (provided): "
+                            & TTY.Name (Mil.Crate));
+                  Visited.Include (Mil.Crate);
+            end loop;
+         end if;
+
+         Trace.Debug ("Visiting now: " & State.TTY_Image);
+         Doing (This, State);
+      end Visit;
+
+   begin
+
+      --  Visit first dependencies that do not have releases (and hence no
+      --  dependencies) or that are preinstalled.
+
+      for Dep of This.Dependencies loop
+         if not Dep.Has_Release or else Dep.Is_Shared then
+            Visit (Dep);
+         end if;
+      end loop;
+
+      --  Visit regular resolved dependencies, once their dependencies are
+      --  already visited:
+
+      while not Pending.Is_Empty loop
+         Round := Round + 1;
+
+         declare
+            To_Remove : State_Map;
+         begin
+
+            --  In the 1st step of each round we identify releases that don't
+            --  have unvisited dependencies.
+
+            for Dep of Pending loop
+
+               if not Dep.Is_Solved then
+                  Trace.Debug ("Round" & Round'Img & ": NOOP "
+                               & Dep.Release.Milestone.Image);
+
+                  To_Remove.Insert (Dep.Crate, Dep);
+
+               elsif
+                 (for some Rel_Dep of Dep.Release.Flat_Dependencies
+                    (Alire.Root.Platform_Properties) =>
+                        not Visited.Contains (Rel_Dep.Crate))
+               then
+                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
+                                 Dep.Release.Milestone.Image);
+
+               else
+                  Trace.Debug ("Round" & Round'Img & ": VISIT ready " &
+                                 Dep.Release.Milestone.Image);
+
+                  To_Remove.Insert (Dep.Crate, Dep);
+               end if;
+            end loop;
+
+            --  In the 2nd step of each round we actually visit all releases
+            --  that were marked as safe to visit in the 1st step of the round.
+
+            if To_Remove.Is_Empty then
+               raise Program_Error
+                 with "No release visited in round" & Round'Img;
+            else
+               for Dep of To_Remove loop
+                  Visit (Dep);
+               end loop;
+            end if;
+         end;
+      end loop;
+
+      --  Finally, visit the root, if given
+
+      if Root.Has_Element then
+         --  Create a temporary solved state for the root
+         declare
+            Root_State : constant Dependency_State :=
+                           Dependencies.States.New_State
+                             (Root.Element.To_Dependency.Value)
+                             .Solving (Root.Element);
+         begin
+            Visit (Root_State);
+         end;
+      end if;
+
+   end Traverse;
 
 end Alire.Solutions;

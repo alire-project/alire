@@ -10,6 +10,7 @@ package Alire.Releases.Containers is
 
    package Optional_Releases is new Optional.Values (Releases.Release,
                                                      Release_Image);
+   subtype Optional is Optional_Releases.Optional;
 
    package Release_Sets
    is new Ada.Containers.Indefinite_Ordered_Sets (Releases.Release,
