@@ -302,7 +302,8 @@ package Alire.Solutions is
    --  Returns the proper releases in the solution (regular and detected
    --  externals). This also includes releases found at a linked folder.
 
-   function Required (This : Solution) return State_Map'Class;
+   function Required (This : Solution) return State_Map
+                      renames All_Dependencies;
    --  Returns all dependencies required to fulfill this solution,
    --  independently of their solving state.
 
@@ -401,6 +402,18 @@ package Alire.Solutions is
    --  replace "any" dependencies with the proper tilde or caret, depending on
    --  what was found in the solution. E.g., if the user provided lib=*, and it
    --  is solved as lib=2.0, replace lib=* with lib^2.0 in the result.
+
+   procedure Traverse
+     (This  : Solution;
+      Doing : access procedure
+        (This  : Solution;
+         State : Dependency_State);
+      Root  : Alire.Releases.Containers.Optional :=
+        Alire.Releases.Containers.Optional_Releases.Empty);
+   --  Visit every dependency in the solution, starting at leaves up to
+   --  the optional root release, calling Doing for each one. This allows
+   --  a safe-order traversal of a solution. This procedure is currently
+   --  sequential but it could be parallelized in the future.
 
 private
 

@@ -1,6 +1,7 @@
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
+with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
@@ -145,10 +146,63 @@ package body Alire.Roots is
 
    procedure Deploy_Dependencies (This : in out Roots.Root)
    is
-      Was_There : Boolean;
-      Pending   : Alire.Solutions.Release_Map := This.Solution.Releases;
-      Deployed  : Containers.Crate_Name_Sets.Set;
-      Round     : Natural := 0;
+
+      --------------------
+      -- Deploy_Release --
+      --------------------
+
+      procedure Deploy_Release (Sol : Solutions.Solution;
+                                Dep : Dependencies.States.State)
+      is
+         pragma Unreferenced (Sol);
+         Was_There : Boolean;
+      begin
+         if Dep.Is_Linked then
+            Trace.Debug ("deploy: skip linked release");
+            return;
+
+         elsif Release (This).Provides (Dep.Crate) then
+            Trace.Debug ("deploy: skip root");
+            return;
+
+         elsif not Dep.Has_Release then
+            Trace.Debug ("deploy: skip dependency without release");
+            return;
+
+         end if;
+
+         --  At this point, the state contains a release
+
+         declare
+            Rel : constant Releases.Release := Dep.Release;
+         begin
+            if Rel.Origin.Kind in Origins.Binary_Archive then
+
+               --  Binary releases are always installed as shared releases
+               Shared.Share (Rel);
+
+            elsif Dep.Is_Shared and then not Rel.Origin.Is_Regular then
+
+               --  Externals shouldn't leave a trace in the binary cache
+               Trace.Debug ("deploy: skip shared external");
+
+            else
+
+               --  Remaining cases expect to receive a Deploy call, even
+               --  externals in the working directory
+               Rel.Deploy (Env             => This.Environment,
+                           Parent_Folder   =>
+                             Ada.Directories.Containing_Directory
+                               (This.Release_Base (Rel.Name)),
+                           Was_There       => Was_There,
+                           Create_Manifest =>
+                             Dep.Is_Shared,
+                           Include_Origin  =>
+                             Dep.Is_Shared);
+            end if;
+         end;
+      end Deploy_Release;
+
    begin
 
       --  Prepare environment for any post-fetch actions. This must be done
@@ -157,124 +211,10 @@ package body Alire.Roots is
 
       This.Export_Build_Environment;
 
-      --  Mark any dependencies without a corresponding regular release as
-      --  already deployed (in practice, we don't have to deploy them, and
-      --  dependents don't need to wait for their deployment). Likewhise for
-      --  installed dependencies, which are already deployed.
+      --  Visit dependencies in a safe order to be fetched, and their actions
+      --  ran
 
-      for Dep of This.Solution.Required loop
-         if not Dep.Has_Release or else Dep.Is_Shared then
-            Deployed.Include (Dep.Crate);
-
-            --  Also mark as deployed any crate provided by shared releases
-
-            if Dep.Has_Release then
-               for Mil of Dep.Release.Provides loop
-                  Deployed.Include (Mil.Crate);
-               end loop;
-            end if;
-
-         end if;
-      end loop;
-
-      --  Deploy regular resolved dependencies:
-
-      while not Pending.Is_Empty loop
-         Round := Round + 1;
-
-         declare
-            To_Remove : Alire.Releases.Containers.Release_Set;
-            function Enum (Deps : Conditional.Dependencies)
-                           return Alire.Dependencies.Containers.List
-                           renames Conditional.Enumerate;
-         begin
-
-            --  TODO: this can be done in parallel within each round
-
-            for Rel of Pending loop
-
-               --  In the 1st step of each round we identify releases that
-               --  don't have undeployed dependencies. We also identify
-               --  releases that need not to be deployed (e.g. linked ones).
-
-               if not This.Solution.State (Rel).Is_Solved then
-                  Trace.Debug ("Round" & Round'Img & ": NOOP " &
-                                 Rel.Milestone.Image);
-
-                  To_Remove.Include (Rel);
-
-               elsif
-                 (for some Dep of Enum (Rel.Dependencies (This.Environment)) =>
-                        not Deployed.Contains (Dep.Crate))
-               then
-                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
-                                 Rel.Milestone.Image);
-
-               else
-                  Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
-                                 Rel.Milestone.Image);
-
-                  To_Remove.Include (Rel);
-
-                  if not Release (This).Provides (Rel.Name) then
-
-                     --  A regular release is deployed normally. A binary
-                     --  release is installed as a shared dependency. A
-                     --  detected external is skipped.
-
-                     if Rel.Origin.Kind in Origins.Binary_Archive then
-
-                        Shared.Share (Rel);
-
-                     elsif This.Solution.State (Rel.Name).Is_Shared
-                       and then Rel.Origin.Kind in Origins.External
-                     then
-
-                        Trace.Debug ("No-op deployment of shared external: "
-                                     & Rel.Milestone.TTY_Image);
-
-                     else
-
-                        Rel.Deploy (Env             => This.Environment,
-                                    Parent_Folder   =>
-                                      Ada.Directories.Containing_Directory
-                                        (This.Release_Base (Rel.Name)),
-                                    Was_There       => Was_There,
-                                    Create_Manifest =>
-                                      This.Solution.State (Rel.Name).Is_Shared,
-                                    Include_Origin  =>
-                                     This.Solution.State (Rel.Name).Is_Shared);
-
-                     end if;
-
-                  else
-                     Trace.Debug
-                       ("Skipping checkout of root crate as dependency");
-                  end if;
-               end if;
-            end loop;
-
-            --  In the 2nd step of each round we mark as deployed all releases
-            --  that were deployed in the 1st step of the round.
-
-            if To_Remove.Is_Empty then
-               raise Program_Error
-                 with "No release checked out in round" & Round'Img;
-            else
-               for Rel of To_Remove loop
-                  Pending.Remove (Rel);
-
-                  Trace.Debug ("Marking deployed: " & Rel.Name.As_String);
-                  Deployed.Include (Rel.Name);
-                  for Mil of Rel.Provides loop
-                     Trace.Debug ("Marking deployed (provided): "
-                                  & Mil.Crate.As_String);
-                     Deployed.Include (Mil.Crate);
-                  end loop;
-               end loop;
-            end if;
-         end;
-      end loop;
+      This.Solution.Traverse (Doing => Deploy_Release'Access);
 
       --  Show hints for missing externals to the user after all the noise of
       --  dependency post-fetch compilations.
@@ -282,6 +222,7 @@ package body Alire.Roots is
       This.Solution.Print_Hints (This.Environment);
 
       --  Update/Create configuration files
+
       This.Generate_Configuration;
 
       --  Check that the solution does not contain suspicious dependencies,
