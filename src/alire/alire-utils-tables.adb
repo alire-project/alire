@@ -1,5 +1,3 @@
-with Alire.Utils.TTY;
-
 package body Alire.Utils.Tables is
 
    ------------

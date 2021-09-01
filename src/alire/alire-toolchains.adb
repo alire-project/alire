@@ -1,4 +1,3 @@
-with AAA.Strings;
 with AAA.Text_IO;
 
 with Ada.Containers.Indefinite_Vectors;
@@ -10,7 +9,8 @@ with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Shared;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 with Semantic_Versioning.Extended;
 
@@ -34,7 +34,7 @@ package body Alire.Toolchains is
           (Positive, Releases.Release, Releases."=");
 
       type Selections is record
-         Choices : Utils.String_Vector;
+         Choices : AAA.Strings.Vector;
          Targets : Release_Vectors.Vector;
          --  These two variables are in sync; so the picked choice says the
          --  release to use at the same position in the respective vector.
@@ -162,11 +162,11 @@ package body Alire.Toolchains is
 
       procedure Pick_Up_Tool (Crate : Crate_Name; Selection : Selections) is
          Choice : constant Positive :=
-                    Utils.User_Input.Query_Multi
-                      (Question  =>
-                                  "Please select the " & Crate.TTY_Image
-                                  & " version for use with this configuration",
-                       Choices   => Selection.Choices);
+           CLIC.User_Input.Query_Multi
+             (Question  =>
+                "Please select the " & Crate.TTY_Image
+              & " version for use with this configuration",
+              Choices   => Selection.Choices);
       begin
          if Selection.Choices (Choice) = "None" then
 
@@ -203,7 +203,7 @@ package body Alire.Toolchains is
                       & Tool_Dependency (Crate).TTY_Image);
          else
             Put_Info (Crate.TTY_Image & " is currently not configured. ("
-                      & TTY.Alr
+                      & Utils.TTY.Alr
                       & " will use the version found in the environment.)");
          end if;
          Trace.Info ("");
@@ -230,8 +230,8 @@ package body Alire.Toolchains is
          .Append
            ("In this assistant you can set up the default toolchain to be "
             & "used with any crate that does not specify its own top-level "
-            & "dependency on a version of " & TTY.Name ("gnat") & " or "
-            & TTY.Name ("gprbuild."))
+            & "dependency on a version of " & Utils.TTY.Name ("gnat") & " or "
+            & Utils.TTY.Name ("gprbuild."))
          .Append ("")
          .Append
            ("If you choose " & TTY.Italic ("""None""") & ", Alire will use "

@@ -1,7 +1,8 @@
 with Alire.Errors;
 with Alire.Milestones;
 with Alire.Releases.Containers;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 package Alire.Shared is
 
@@ -23,7 +24,7 @@ package Alire.Shared is
 
    procedure Remove
      (Release : Releases.Release;
-      Confirm : Boolean := not Utils.User_Input.Not_Interactive)
+      Confirm : Boolean := not CLIC.User_Input.Not_Interactive)
      with Pre => Available.Contains (Release)
      or else raise Checked_Error with
        Errors.Set ("Requested release is not installed: "
@@ -32,7 +33,7 @@ package Alire.Shared is
 
    procedure Remove
      (Target : Milestones.Milestone;
-      Confirm : Boolean := not Utils.User_Input.Not_Interactive);
+      Confirm : Boolean := not CLIC.User_Input.Not_Interactive);
    --  Behaves as the previous Remove
 
 end Alire.Shared;

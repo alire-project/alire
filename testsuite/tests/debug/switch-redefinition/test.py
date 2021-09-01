@@ -11,12 +11,12 @@ from drivers.asserts import assert_match
 p = run_alr('dev', '--check-switch-redefinition-1',
             complain_on_error=False)
 assert p.status != 0, "alr should have errored"
-assert_match('ERROR: Redefined switch: -h\n.*', p.out)
+assert_match('ERROR: Duplicate switch definition detected\n.*', p.out)
 
 # Run internal dev command with specific option for this test, second check:
 p = run_alr('dev', '--check-switch-redefinition-2',
             complain_on_error=False)
 assert p.status != 0, "alr should have errored"
-assert_match('ERROR: Redefined switch: --help\n.*', p.out)
+assert_match('ERROR: Duplicate switch definition detected\n.*', p.out)
 
 print('SUCCESS')

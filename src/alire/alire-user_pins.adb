@@ -3,15 +3,13 @@ with Ada.Directories;
 with Alire.Directories;
 with Alire.Origins;
 with Alire.Roots.Optional;
-with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.Utils.TTY;
 with Alire.VFS;
 
 with GNAT.OS_Lib;
 
 package body Alire.User_Pins is
-
-   package TTY renames Alire.Utils.TTY;
 
    use type UString;
 
@@ -189,7 +187,7 @@ package body Alire.User_Pins is
 
       procedure Update (Branch : String) is
       begin
-         Trace.Detail ("Checking out pin " & TTY.Name (Crate) & " at "
+         Trace.Detail ("Checking out pin " & Utils.TTY.Name (Crate) & " at "
                        & TTY.URL (Destination));
 
          --  If the fetch URL has been changed, fall back to checkout
@@ -198,8 +196,8 @@ package body Alire.User_Pins is
            (Repo   => Destination,
             Public => False) /= This.URL
          then
-            Put_Info ("Switching pin " & TTY.Name (Crate) & " to origin at "
-                      & TTY.URL (+This.URL));
+            Put_Info ("Switching pin " & Utils.TTY.Name (Crate) &
+                        " to origin at " & TTY.URL (+This.URL));
             Directories.Delete_Tree (Destination);
             Checkout; -- Pending branch tracking implementation
             return;
@@ -271,16 +269,17 @@ package body Alire.User_Pins is
          then
             Raise_Checked_Error
               ("Requested and retrieved crates do not match: "
-               & TTY.Name (Crate) & " /= "
-               & TTY.Name (Root.Value.Release.Name));
+               & Utils.TTY.Name (Crate) & " /= "
+               & Utils.TTY.Name (Root.Value.Release.Name));
          end if;
 
          --  Warn if raw project
 
          if not Root.Is_Valid then
             Put_Warning
-              ("Pin for " & TTY.Name (Crate) & " does not contain an Alire "
-               & "manifest. It will be used as a raw GNAT project.");
+              ("Pin for " & Utils.TTY.Name (Crate) &
+                 " does not contain an Alire " &
+                 "manifest. It will be used as a raw GNAT project.");
          end if;
 
       end;

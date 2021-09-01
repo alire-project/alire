@@ -8,7 +8,6 @@ with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platform;
-with Alire.TTY;
 
 with GNATCOLL.VFS;
 

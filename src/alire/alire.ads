@@ -6,6 +6,7 @@ with GNAT.OS_Lib;
 pragma Warnings (On);
 
 with Simple_Logging;
+with CLIC.TTY;
 
 package Alire with Preelaborate is
 
@@ -226,10 +227,7 @@ package Alire with Preelaborate is
 
    package Trace renames Simple_Logging;
 
-   Is_TTY : Boolean renames Simple_Logging.Is_TTY;
-   --  Flag to enable ASCII control sequences for progress indicators. When
-   --  redirecting the output these do not work and are too noisy. Defaults
-   --  to False.
+   package TTY renames CLIC.TTY;
 
    Log_Level : Simple_Logging.Levels renames Simple_Logging.Level;
    --  This one selects the verbosity level of the logging library. The usage

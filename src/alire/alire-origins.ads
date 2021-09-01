@@ -5,7 +5,6 @@ with Alire.Interfaces;
 with Alire.Properties;
 with Alire.TOML_Adapters;
 private with Alire.TOML_Keys;
-with Alire.Utils.TTY;
 with Alire.VCSs.Git;
 with Alire.VCSs.Hg;
 
@@ -13,10 +12,9 @@ private with Ada.Containers.Indefinite_Vectors;
 private with Ada.Strings.Unbounded;
 
 with TOML; use all type TOML.Any_Value_Kind;
+with Alire.Utils;
 
 package Alire.Origins is
-
-   package TTY renames Alire.Utils.TTY;
 
    type Kinds is
      (Binary_Archive, -- A pre-compiled binary (dynamic expr + source archive)
@@ -109,7 +107,7 @@ package Alire.Origins is
 
    function Is_Valid_Commit (S : String) return Boolean
    is (S'Length = Git_Commit'Length and then
-       (for all Char of S => Char in Utils.Hexadecimal_Character));
+       (for all Char of S => Char in Alire.Utils.Hexadecimal_Character));
 
    function Short_Commit (Commit : String) return String;
    --  First characters in the commit

@@ -12,7 +12,8 @@ with Alire.Properties.Actions.Executor;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 with Alr.Commands.Build;
 with Alr.Platform;
@@ -86,7 +87,7 @@ package body Alr.Commands.Get is
 
       if not Cmd.Only then
          declare
-            use Alire.Utils.User_Input;
+            use CLIC.User_Input;
          begin
             Solution := Query.Resolve
               (Rel.Dependencies (Platform.Properties),
@@ -101,15 +102,14 @@ package body Alr.Commands.Get is
                Trace.Warning ("Could not find a complete solution for "
                               & Rel.Milestone.TTY_Image);
 
-               if Alire.Utils.User_Input.Query
+               if CLIC.User_Input.Query
                  (Question =>
                     "Build will fail unless externals are made available,"
                     & " do you want to continue?",
                   Valid    => (Yes | No => True, others => False),
                   Default  => (if Alire.Force then Yes else No)) = No
                then
-                  Trace.Info ("Crate retrieval abandoned.");
-                  raise Command_Failed;
+                  Reportaise_Command_Failed ("Crate retrieval abandoned.");
                end if;
             end if;
          end;
@@ -177,6 +177,7 @@ package body Alr.Commands.Get is
 
          if Cmd.Build then
             Build_OK := Commands.Build.Execute (Cmd,
+                                                AAA.Strings.Empty_Vector,
                                                 Export_Build_Env => False);
             --  Environment is already set up
          else
@@ -210,7 +211,7 @@ package body Alr.Commands.Get is
       end if;
 
       if not Build_OK then
-         raise Command_Failed with "Build ended with errors";
+         Reportaise_Command_Failed ("Build ended with errors");
          --  This is not displayed at default level, but ensures exit code /= 0
       end if;
    end Retrieve;
@@ -219,7 +220,10 @@ package body Alr.Commands.Get is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
 
       procedure Check_Unavailable_External (Name : Alire.Crate_Name) is
          --  Better user feedback if crate is only available through externals.
@@ -291,18 +295,18 @@ package body Alr.Commands.Get is
       end Check_Unavailable_External;
 
    begin
-      if Num_Arguments > 1 then
+      if Args.Count > 1 then
          Reportaise_Wrong_Arguments ("Too many arguments");
       end if;
 
-      if Num_Arguments /= 1 then
+      if Args.Count /= 1 then
          Trace.Error ("No crate requested");
-         raise Wrong_Command_Arguments with "One crate to get expected";
+         Reportaise_Wrong_Arguments ("One crate to get expected");
       end if;
 
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
-           Alire.Dependencies.From_String (Argument (1));
+           Alire.Dependencies.From_String (Args (1));
       begin
          if Cmd.Build and Cmd.Only then
             Reportaise_Wrong_Arguments
@@ -313,7 +317,7 @@ package body Alr.Commands.Get is
 
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed
-              ("Crate [" & Argument (1) & "] does not exist in the catalog.");
+              ("Crate [" & Args (1) & "] does not exist in the catalog.");
          end if;
 
          Check_Unavailable_External (Allowed.Crate);
@@ -336,8 +340,8 @@ package body Alr.Commands.Get is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Retrieve a crate, in the case of regular ones, or install"
                 & " a system package provided by the platform."
                 & " A regular crate is deployed under an immediate folder"
@@ -349,11 +353,12 @@ package body Alr.Commands.Get is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch (Config,
                      Cmd.Build'Access,

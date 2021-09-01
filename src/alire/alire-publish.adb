@@ -29,12 +29,13 @@ with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
+with CLIC.User_Input;
+
 with TOML.File_IO;
 
 package body Alire.Publish is
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use Directories.Operators;
 
@@ -148,7 +149,7 @@ package body Alire.Publish is
    -------------------
    --  Checks the presence of recommended/mandatory fileds in the release
    procedure Check_Release (Release : Releases.Release) is
-      use Utils.User_Input;
+      use CLIC.User_Input;
 
       Recommend : Utils.String_Vector; -- Optional
       Missing   : Utils.String_Vector; -- Mandatory
@@ -215,7 +216,7 @@ package body Alire.Publish is
       --  Force.
 
       Ada.Text_IO.New_Line;
-      if Utils.User_Input.Query
+      if Query
         ("Do you want to proceed with this information?",
          Valid   => (Yes | No => True, others => False),
          Default => (if Force or else
@@ -418,8 +419,9 @@ package body Alire.Publish is
             Raise_Checked_Error
               (Errors.Wrap
                  ("Current workspace does not match the crate being published",
-                  "Working crate is " & TTY.Name (Workspace.Value.Release.Name)
-                  & ", publishing crate is " & TTY.Name (Name)));
+                  "Working crate is " &
+                    Utils.TTY.Name (Workspace.Value.Release.Name)
+                  & ", publishing crate is " & Utils.TTY.Name (Name)));
          end if;
 
          TOML_Origin.Set (TOML_Keys.Origin, Context.Origin.To_TOML);
@@ -485,6 +487,8 @@ package body Alire.Publish is
 
    procedure Prepare_Archive (Context : in out Data) is
       use Utils;
+      use CLIC.User_Input;
+
       Target_Dir : constant Relative_Path :=
                      Paths.Working_Folder_Inside_Root / "archives";
       Release    : constant Releases.Release :=
@@ -503,7 +507,6 @@ package body Alire.Publish is
                           & (if Is_Repo
                              then ".tgz"
                              else ".tbz2"));
-      use Utils.User_Input;
 
       -----------------
       -- Git_Archive --
@@ -614,7 +617,7 @@ package body Alire.Publish is
          -----------------
 
          function Get_Default (Remote_URL : String)
-                               return User_Input.Answer_Kind
+                               return Answer_Kind
          is (if Force or else URI.Scheme (Remote_URL) in URI.HTTP
              then Yes
              else No);
@@ -622,8 +625,8 @@ package body Alire.Publish is
          --  We don't use the following answer because the validation function
          --  already stores the information we need.
 
-         Unused : constant User_Input.Answer_With_Input :=
-                    User_Input.Validated_Input
+         Unused : constant Answer_With_Input :=
+                    Validated_Input
                       (Question =>
                           "Please upload the archive generated"
                           & " at " & TTY.URL (Archive)

@@ -3,13 +3,17 @@ with Ada.Directories;
 with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.Paths;
-with Alire.TTY;
 with Alire.Utils;
+with Alire.GPR;
 
 with Alr.Spawn;
 with Alr.Platform;
 
 package body Alr.Commands.Clean is
+
+   Scenario : Alire.GPR.Scenario;
+   --  This will be filled in during parsing of command line with any seen "-X"
+   --  parameters.
 
    -----------------------
    -- Delete_Temp_Files --
@@ -39,7 +43,7 @@ package body Alr.Commands.Clean is
          Alire.Directories.Force_Delete (Path);
       end Delete;
 
-      Targets : Alire.Utils.String_Set;
+      Targets : AAA.Strings.Set;
 
       ----------------
       -- Add_Target --
@@ -49,15 +53,14 @@ package body Alr.Commands.Clean is
                             Unused_Stop : in out Boolean)
       is
          use Ada.Directories;
-         use Alire.Utils;
+         use AAA.Strings;
          Name : constant String := Simple_Name (Item);
       begin
-         if Starts_With (Name, "alr-") and then Ends_With (Name, ".tmp") then
+         if Has_Prefix (Name, "alr-") and then Has_Suffix (Name, ".tmp") then
             Targets.Include (Ada.Directories.Full_Name (Item));
          end if;
       end Add_Target;
 
-      package TTY renames Alire.TTY;
    begin
 
       --  Current workspace
@@ -118,9 +121,15 @@ package body Alr.Commands.Clean is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       use Alire.Utils;
    begin
+
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
 
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Valid_Session;
@@ -178,30 +187,31 @@ package body Alr.Commands.Clean is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
-      .Append ("no options:")
-      .Append ("   gprclean -r will be called to clean up the"
-               & " build environment.")
-      .New_Line
-      .Append ("--cache:")
-      .Append ("   All downloaded dependencies will be deleted.")
-      .New_Line
-      .Append ("--temp:")
-      .Append ("   All alr-???.tmp files in the subtree will be deleted."
-               & " These files may remain when alr is interrupted via"
-               & " Ctrl-C or other forceful means.")
-     );
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("no options:")
+       .Append ("   gprclean -r will be called to clean up the"
+                & " build environment.")
+       .New_Line
+       .Append ("--cache:")
+       .Append ("   All downloaded dependencies will be deleted.")
+       .New_Line
+       .Append ("--temp:")
+       .Append ("   All alr-???.tmp files in the subtree will be deleted."
+                & " These files may remain when alr is interrupted via"
+                & " Ctrl-C or other forceful means.")
+      );
 
    --------------------
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch (Config,
                      Cmd.Cache'Access,
@@ -211,6 +221,8 @@ package body Alr.Commands.Clean is
                      Cmd.Temp'Access,
                      Long_Switch => "--temp",
                      Help        => "Delete dangling temporary files");
+
+      Add_GPR_Scenario_Switch (Config);
    end Setup_Switches;
 
 end Alr.Commands.Clean;

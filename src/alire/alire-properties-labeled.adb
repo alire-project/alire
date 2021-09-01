@@ -1,8 +1,4 @@
-with Alire.Utils.TTY;
-
 package body Alire.Properties.Labeled is
-
-   package TTY renames Utils.TTY;
 
    ------------
    -- Filter --

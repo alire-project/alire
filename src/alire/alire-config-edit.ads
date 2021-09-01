@@ -1,3 +1,4 @@
+with AAA.Strings;
 with Alire.Directories;
 
 package Alire.Config.Edit is
@@ -40,7 +41,7 @@ package Alire.Config.Edit is
    --  by Alire. When Show_Origin is true, the configuration file where each
    --  key was loaded is also listed.
 
-   function Builtins_Info return Alire.Utils.String_Vector;
+   function Builtins_Info return AAA.Strings.Vector;
    --  Return a String_Vector with the documentation of builtin configuration
    --  options in text format.
 
@@ -56,9 +57,9 @@ private
    --  Import TOML Table in the Config_Map global variable
 
    procedure Load_Config;
-   --  Clear an reload all configuration. Also set some values elsewhere used
-   --  to break circularities. Bottom line, this procedure must leave the
-   --  program-wide configuration ready.
+   --  Clear and reload all configuration. Also set some values elsewhere
+   --  used to break circularities. Bottom line, this procedure must leave
+   --  the program-wide configuration ready.
 
    function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
    --  Load a TOML config file and return No_TOML_Value if the file is invalid

@@ -1,4 +1,5 @@
 with Alire.Config.Edit;
+with CLIC.User_Input; use CLIC.User_Input;
 
 package body Alire.Utils.User_Input.Query_Config is
 

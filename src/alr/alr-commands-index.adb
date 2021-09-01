@@ -3,11 +3,9 @@ with AAA.Table_IO;
 with Alire.Config.Edit;
 with Alire.Features.Index;
 with Alire.Index_On_Disk;
-with Alire.Utils.TTY;
+with Alire.Utils;
 
 package body Alr.Commands.Index is
-
-   package TTY renames Alire.Utils.TTY;
 
    --  Forward declarations
 
@@ -82,8 +80,14 @@ package body Alr.Commands.Index is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Name (Cmd) & " doesn't take arguments");
+      end if;
+
       --  Check no multi-action
       case Alire.Utils.Count_True
         ((Cmd.Add.all /= "",
@@ -192,8 +196,8 @@ package body Alr.Commands.Index is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Add, remove, list and update indexes used by the current"
                & " alr configuration.")
       .New_Line
@@ -223,56 +227,58 @@ package body Alr.Commands.Index is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration) is
+      Config : in out CLIC.Subcommand.Switches_Configuration)
+   is
+      use CLIC.Subcommand;
    begin
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Add'Access,
          Long_Switch => "--add=",
          Argument    => "URL",
          Help        => "Add an index");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Bfr'Access,
          Long_Switch => "--before=",
          Argument    => "NAME",
          Help        => "Priority order (defaults to last)");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Check'Access,
          Long_Switch => "--check",
          Help        =>
            "Check index contents for unknown configuration values");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Del'Access,
          Long_Switch => "--del=",
          Argument    => "NAME",
          Help        => "Remove an index");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
          Help        => "List configured indexes (default)");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Name'Access,
          Long_Switch => "--name=",
          Argument    => "NAME",
          Help        => "User given name for the index");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Update_All'Access,
          Long_Switch => "--update-all",
          Help        => "Update configured indexes");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Rset'Access,
          Long_Switch => "--reset-community",

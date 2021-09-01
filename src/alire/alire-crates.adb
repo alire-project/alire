@@ -15,8 +15,8 @@ package body Alire.Crates is
    -- Naming_Convention --
    -----------------------
 
-   function Naming_Convention return Utils.String_Vector is
-     (Utils.Empty_Vector
+   function Naming_Convention return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Identifiers for crates and indexes must use "
                & "lowercase alphanumeric characters from the latin "
                & "alphabet. Underscores can also be used except as "

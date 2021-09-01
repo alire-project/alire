@@ -81,7 +81,6 @@ package body Alire.Releases is
    -------------------------
    --  Warn of ^0.x dependencies that probably should be ~0.x
    function Check_Caret_Warning (This : Release) return Boolean is
-      use Alire.Utils;
       Newline    : constant String := ASCII.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop

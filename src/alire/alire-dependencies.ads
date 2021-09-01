@@ -80,8 +80,6 @@ package Alire.Dependencies with Preelaborate is
 
 private
 
-   package TTY renames Utils.TTY;
-
    type Dependency (Name_Len : Natural) is
      new Interfaces.Classificable
      and Interfaces.Colorable
@@ -131,7 +129,7 @@ private
 
    overriding
    function TTY_Image (Dep : Dependency) return String is
-     (TTY.Name (+Dep.Crate) & TTY.Version (Dep.Versions.Image));
+     (Utils.TTY.Name (+Dep.Crate) & TTY.Version (Dep.Versions.Image));
 
    overriding
    function To_YAML (Dep : Dependency) return String is

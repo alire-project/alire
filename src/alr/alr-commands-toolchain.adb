@@ -8,7 +8,8 @@ with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
-with Alire.Utils;
+with Alire.Utils; use Alire.Utils;
+with Alire.Utils.TTY;
 
 with Semantic_Versioning.Extended;
 
@@ -21,9 +22,9 @@ package body Alr.Commands.Toolchain is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch
         (Config,
@@ -158,7 +159,7 @@ package body Alr.Commands.Toolchain is
                          else Dep.Name);
             begin
                Table
-                 .Append (TTY.Name (Dep.Name))
+                 .Append (Alire.Utils.TTY.Name (Dep.Name))
                  .Append (TTY.Version (Dep.Version.Image))
                  .Append (if Toolchains.Tool_Is_Configured (Tool)
                              and then Dep.To_Dependency.Value =
@@ -196,7 +197,7 @@ package body Alr.Commands.Toolchain is
          if Available.Is_Empty then
             Reportaise_Command_Failed
               ("Requested crate has no installed releases: "
-               & TTY.Name (Target));
+               & Alire.Utils.TTY.Name (Alire.To_Name (Target)));
          elsif Available.Length not in 1 then
             Reportaise_Command_Failed
               ("Requested crate has several installed releases, "
@@ -211,7 +212,7 @@ package body Alr.Commands.Toolchain is
 
       --  If no version was given, find if only one is installed
 
-      if not Utils.Contains (Target, "=") then
+      if not Contains (Target, "=") then
          Uninstall (Cmd, Target & "=" & Find_Version);
          return;
       end if;
@@ -227,7 +228,9 @@ package body Alr.Commands.Toolchain is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args : AAA.Strings.Vector)
+   is
    begin
 
       --  Validation
@@ -239,23 +242,23 @@ package body Alr.Commands.Toolchain is
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      if Num_Arguments > 1 then
+      if Args.Count > 1 then
          Reportaise_Wrong_Arguments
            ("One crate with optional version expected: crate[version set]");
       end if;
 
-      if (Cmd.Install or Cmd.Uninstall) and then Num_Arguments /= 1 then
+      if (Cmd.Install or Cmd.Uninstall) and then Args.Count /= 1 then
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
-      if Num_Arguments = 1 and then
+      if Args.Count = 1 and then
         not (Cmd.Install or Cmd.Uninstall or Cmd.S_Select)
       then
          Reportaise_Wrong_Arguments
            ("Specify the action to perform with the crate");
       end if;
 
-      if Cmd.S_Select and then Num_Arguments > 1 then
+      if Cmd.S_Select and then Args.Count > 1 then
          Reportaise_Wrong_Arguments
            ("Toolchain installation accepts at most one argument");
       end if;
@@ -265,7 +268,7 @@ package body Alr.Commands.Toolchain is
            ("--local requires --select or --disable-assistant");
       end if;
 
-      if Cmd.Disable and then Num_Arguments /= 0 then
+      if Cmd.Disable and then Args.Count /= 0 then
          Reportaise_Wrong_Arguments
            ("Disabling the assistant does not admit any extra arguments");
       end if;
@@ -280,19 +283,19 @@ package body Alr.Commands.Toolchain is
             Cmd.Requires_Valid_Session;
          end if;
 
-         if Num_Arguments = 0 then
+         if Args.Count = 0 then
             Alire.Toolchains.Assistant (if Cmd.Local
                                         then Alire.Config.Local
                                         else Alire.Config.Global);
          else
-            Install (Cmd, Argument (1), Set_As_Default => True);
+            Install (Cmd, Args (1), Set_As_Default => True);
          end if;
 
       elsif Cmd.Uninstall then
-         Uninstall (Cmd, Argument (1));
+         Uninstall (Cmd, Args (1));
 
       elsif Cmd.Install then
-         Install (Cmd, Argument (1), Set_As_Default => False);
+         Install (Cmd, Args (1), Set_As_Default => False);
 
       elsif Cmd.Disable then
          Alire.Toolchains.Set_Automatic_Assistant (False,

@@ -1,11 +1,8 @@
 with Alire.OS_Lib.Subprocess;
-with Alire.Utils.TTY;
 
 with Alr.Commands;
 
 package body Alr.Spawn is
-
-   package TTY renames Alire.Utils.TTY;
 
    -------------
    -- Command --
