@@ -5,6 +5,7 @@ Assorted helpers that are reused by several tests.
 from subprocess import run
 from zipfile import ZipFile
 
+import hashlib
 import re
 import os
 import platform
@@ -152,3 +153,13 @@ def zip_dir(path, filename):
             for file in files:
                 abs_file = os.path.join(dir, file)
                 zip.write(abs_file, abs_file)
+
+
+def md5sum(file):
+    """Return the hex md5 hash of a file"""
+    with open(file, "rb") as f:
+        file_hash = hashlib.md5()
+        while chunk := f.read(8192):
+            file_hash.update(chunk)
+
+    return file_hash.hexdigest()

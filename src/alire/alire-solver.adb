@@ -12,15 +12,22 @@ with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
+with Alire.Utils;
 with Alire.Utils.TTY;
+
+with CLIC.User_Input;
+
+with Stopwatch;
 
 package body Alire.Solver is
 
    Solution_Found : exception;
    --  Used to prematurely end search when a complete solution exists
 
+   Solution_Timeout : exception;
+   --  Used on search timeout; solution might not even exist or be incomplete
+
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use all type Dependencies.States.Fulfillments;
    use all type Dependencies.States.Transitivities;
@@ -105,10 +112,13 @@ package body Alire.Solver is
    is
       Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
+      Timer    : Stopwatch.Instance;
+      Timeout  : Duration := Options.Timeout;
+
       use Alire.Conditional.For_Dependencies;
 
       Unavailable_Crates      : Containers.Crate_Name_Sets.Set;
-      Unavailable_Direct_Deps : Utils.String_Sets.Set;
+      Unavailable_Direct_Deps : Alire.Utils.String_Sets.Set;
       --  Some dependencies may be unavailable because the crate does not
       --  exist, the requested releases do not exist, or the intersection of
       --  versions is empty. In this case, we can prematurely end the search
@@ -147,6 +157,65 @@ package body Alire.Solver is
       Dupes : Natural := 0;
       --  Some solutions are found twice when some dependencies are subsets of
       --  other dependencies.
+
+      --------------------------
+      -- Ask_User_To_Continue --
+      --------------------------
+
+      procedure Ask_User_To_Continue is
+         use CLIC.User_Input;
+         Answer : Answer_Kind := No;
+      begin
+         Timer.Hold;
+
+         if Not_Interactive or else not Options.Interactive
+         then
+            Trace.Debug ("Forcing stop of solution search after "
+                         & Timer.Image & " seconds");
+            raise Solution_Timeout;
+         end if;
+
+         if Solutions.Is_Empty then
+            Put_Warning ("No solution found after "
+                         & Stopwatch.Image (Timeout, Decimals => 0)
+                         & " seconds.");
+
+         else
+            if not Solutions.First_Element.Is_Complete then
+               Put_Warning ("Complete solution not found after "
+                            & Stopwatch.Image (Timeout, Decimals => 0)
+                            & " seconds.");
+               Put_Info ("The best incomplete solution yet is:");
+            else
+               Put_Warning ("Solution space not fully explored after "
+                            & Stopwatch.Image (Timeout, Decimals => 0)
+                            & " seconds.");
+               Put_Info ("The best complete solution yet is:");
+
+            end if;
+
+            Trace.Info ("");
+            Solutions.First_Element.Print_States (Level => Trace.Info);
+            Trace.Info ("");
+         end if;
+
+         if Answer /= Always then
+            Answer := Query
+              (Question =>
+                 "Do you want to keep solving for a few more seconds?",
+               Valid    => (others => True),
+               Default  => (if Not_Interactive then No else Yes));
+         end if;
+
+         if Answer /= No then
+            Timeout := Timeout + Options.Timeout_More;
+            Timer.Release;
+         else
+            Trace.Debug ("User forced stop of solution search after "
+                         & Timer.Image & " seconds");
+            raise Solution_Timeout;
+         end if;
+      end Ask_User_To_Continue;
 
       --------------
       -- Complete --
@@ -272,7 +341,7 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Specific_GNAT (Remaining).Value.Crate = R.Name)'Image
+                       (Specific_GNAT (Remaining).Value.Crate = R.Name)'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in dependencies: "
                      & Specific_GNAT (Remaining).Value.TTY_Image);
@@ -287,7 +356,7 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
                        (Toolchains
-                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Image
+                        .Tool_Dependency (GNAT_Crate).Crate = R.Name)'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to configured compiler: "
                      & Toolchains.Tool_Dependency (GNAT_Crate).TTY_Image);
@@ -616,6 +685,10 @@ package body Alire.Solver is
 
          begin
 
+            if Timer.Elapsed > Timeout then
+               Ask_User_To_Continue;
+            end if;
+
             if Pins.Depends_On (Dep.Crate) and then
                Pins.State (Dep.Crate).Is_Linked
             then
@@ -698,7 +771,9 @@ package body Alire.Solver is
                --  below.
 
                if Options.Detecting = Detect then
+                  Timer.Hold;
                   Index.Detect_Externals (Dep.Crate, Props);
+                  Timer.Release;
                end if;
 
                --  Check the releases now, from newer to older (unless required
@@ -871,7 +946,7 @@ package body Alire.Solver is
                Dupes := Dupes + 1;
             end if;
 
-            Progress.Step ("Solving dependencies"
+            Progress.Step ("Solving dependencies... "
                            & Utils.Trim (Complete'Img) & "/"
                            & Utils.Trim (Partial'Img) & "/"
                            & Utils.Trim (Dupes'Image)
@@ -967,7 +1042,7 @@ package body Alire.Solver is
                   Unavailable_Direct_Deps.Include (Dep.Value.Image);
                   Trace.Debug
                     ("Direct dependency has no fulfilling releases: "
-                     & TTY.Name (Dep.Value.Image));
+                     & Utils.TTY.Name (Dep.Value.Image));
                end if;
 
             end loop;
@@ -1041,6 +1116,8 @@ package body Alire.Solver is
                  Remaining => Empty,
                  Solution  => Solution);
       exception
+         when Solution_Timeout =>
+            Trace.Debug ("Solution search ended forcibly before completion");
          when Solution_Found =>
             Trace.Debug ("Solution search ended with first complete solution");
       end;
@@ -1075,7 +1152,10 @@ package body Alire.Solver is
                                 raise Program_Error with "Unreachable code"),
                        Detecting    => Options.Detecting,
                        Hinting      => Options.Hinting,
-                       Sharing      => Options.Sharing)));
+                       Sharing      => Options.Sharing,
+                       Timeout      => Options.Timeout,
+                       Timeout_More => Options.Timeout_More,
+                       Interactive  => Options.Interactive)));
          else
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies.");

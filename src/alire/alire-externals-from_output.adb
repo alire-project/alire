@@ -1,6 +1,8 @@
+with Alire.Directories;
 with Alire.Index;
 with Alire.Origins;
 with Alire.OS_Lib.Subprocess;
+with Alire.Paths;
 with Alire.Releases;
 with Alire.TOML_Keys;
 
@@ -18,6 +20,7 @@ package body Alire.Externals.From_Output is
    function Detect (This : External;
                     Name : Crate_Name) return Releases.Containers.Release_Set
    is
+      use Directories.Operators;
       Location : GNAT.OS_Lib.String_Access :=
                    GNAT.OS_Lib.Locate_Exec_On_Path
                      (This.Command.First_Element);
@@ -26,6 +29,15 @@ package body Alire.Externals.From_Output is
          Trace.Debug
            ("External not detected because executable is not in PATH: "
             & This.Command.First_Element);
+         return (Releases.Containers.Release_Sets.Empty_Set with null record);
+      elsif Utils.Contains (Location.all,
+                            Paths.Working_Folder_Inside_Root
+                            / Paths.Cache_Folder_Inside_Working_Folder
+                            / Paths.Deps_Folder_Inside_Cache_Folder)
+      then
+         Trace.Debug
+           ("External skipped because executable is deployed by Alire: "
+            & Location.all);
          return (Releases.Containers.Release_Sets.Empty_Set with null record);
       else
          GNAT.OS_Lib.Free (Location);

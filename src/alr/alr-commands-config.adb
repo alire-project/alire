@@ -7,7 +7,10 @@ package body Alr.Commands.Config is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       Enabled : Natural := 0;
 
       Lvl : constant Alire.Config.Level := (if Cmd.Global
@@ -48,14 +51,14 @@ package body Alr.Commands.Config is
       end if;
 
       if Cmd.List then
-         case Num_Arguments is
+         case Args.Count is
             when 0 =>
                Trace.Always (Alire.Config.Edit.List
                              (Filter => "*",
                               Show_Origin => Cmd.Show_Origin));
             when 1 =>
                Trace.Always (Alire.Config.Edit.List
-                             (Filter => Argument (1),
+                             (Filter => Args.First_Element,
                               Show_Origin => Cmd.Show_Origin));
             when others =>
                Reportaise_Wrong_Arguments
@@ -63,29 +66,30 @@ package body Alr.Commands.Config is
          end case;
 
       elsif Cmd.Get then
-         if Num_Arguments /= 1 then
+         if Args.Count /= 1 then
             Reportaise_Wrong_Arguments ("Unset expects one argument");
          end if;
 
-         if not Alire.Config.Is_Valid_Config_Key (Argument (1)) then
+         if not Alire.Config.Is_Valid_Config_Key (Args.First_Element) then
             Reportaise_Wrong_Arguments ("Invalid configration key '" &
-                                          Argument (1) & "'");
+                                          Args.First_Element & "'");
          end if;
 
-         if Alire.Config.Defined (Argument (1)) then
-            Trace.Always (Alire.Config.Get_As_String (Argument (1)));
+         if Alire.Config.Defined (Args.First_Element) then
+            Trace.Always (Alire.Config.Get_As_String (Args.First_Element));
          else
-            Reportaise_Command_Failed ("Configuration key '" & Argument (1) &
+            Reportaise_Command_Failed ("Configuration key '" &
+                                         Args.First_Element &
                                          "' is not defined");
          end if;
       elsif Cmd.Set then
-         if Num_Arguments /= 2 then
+         if Args.Count /= 2 then
             Reportaise_Wrong_Arguments ("Set expects two arguments");
          end if;
 
          declare
-            Key : constant String := Argument (1);
-            Val : constant String := Argument (2);
+            Key : constant String := Args.Element (1);
+            Val : constant String := Args.Element (2);
          begin
 
             if not Alire.Config.Is_Valid_Config_Key (Key) then
@@ -97,12 +101,12 @@ package body Alr.Commands.Config is
          end;
 
       elsif Cmd.Unset then
-         if Num_Arguments /= 1 then
+         if Args.Count /= 1 then
             Reportaise_Wrong_Arguments ("Unset expects one argument");
          end if;
 
          declare
-            Key : constant String := Argument (1);
+            Key : constant String := Args.Element (1);
          begin
             if not Alire.Config.Is_Valid_Config_Key (Key) then
                Reportaise_Wrong_Arguments ("Invalid configration key '" &
@@ -120,8 +124,8 @@ package body Alr.Commands.Config is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Provides a command line interface to the Alire configuration" &
                  " option files.")
       .New_Line
@@ -154,46 +158,48 @@ package body Alr.Commands.Config is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration) is
+      Config : in out CLIC.Subcommand.Switches_Configuration)
+   is
+      use CLIC.Subcommand;
    begin
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.List'Access,
          Long_Switch => "--list",
          Help        => "List configuration options");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Show_Origin'Access,
          Long_Switch => "--show-origin",
          Help        => "Show origin of configuration values in --list");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Get'Access,
          Long_Switch => "--get",
          Help        => "Print value of a configuration option");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Set'Access,
          Long_Switch => "--set",
          Help        => "Set a configuration option");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Unset'Access,
          Long_Switch => "--unset",
          Help        => "Unset a configuration option");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Global'Access,
          Long_Switch => "--global",
          Help        => "Set and Unset global configuration instead" &
                          " of the local one");
 
-      GNAT.Command_Line.Define_Switch
+      Define_Switch
         (Config      => Config,
          Output      => Cmd.Builtins_Doc'Access,
          Long_Switch => "--builtins-doc",

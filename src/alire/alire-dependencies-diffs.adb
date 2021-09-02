@@ -66,8 +66,8 @@ package body Alire.Dependencies.Diffs is
          for Dep of List loop
             Table
               .Append ("   " & Icon)
-              .Append (TTY.Name (+Dep.Crate))
-              .Append (TTY.Version (Dep.Versions.Image))
+              .Append (Utils.TTY.Name (+Dep.Crate))
+              .Append (Utils.TTY.Version (Dep.Versions.Image))
               .Append (Comment)
               .New_Row;
          end loop;

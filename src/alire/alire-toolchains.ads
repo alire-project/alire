@@ -1,10 +1,13 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-private with Alire.Config;
+with AAA.Strings;
+
+with Alire.Config;
 with Alire.Dependencies;
 private with Alire.Milestones;
-with Alire.TTY;
+with Alire.Releases;
 with Alire.Utils;
+with Alire.Utils.TTY;
 
 package Alire.Toolchains is
 
@@ -20,13 +23,22 @@ package Alire.Toolchains is
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
-   procedure Assistant;
+   procedure Assistant (Level : Config.Level);
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.
+   --  This information may apply config-wide or workspace-wide. Installation
+   --  goes, in any case, to the config cache location.
 
    --  The following functions will transform any `gnat_XXX` dependency on
    --  plain `gnat`. This way we need to to litter the callers with similar
    --  transformations, as we always want whatever gnat_XXX is used for "gnat".
+
+   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
+   --  Enable/Disable the automatic assistant on next run
+
+   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level);
+   --  Mark the given release as the default to be used. Does not check that it
+   --  be already installed.
 
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean;
    --  Say if a tool is actually configured by the user
@@ -38,12 +50,12 @@ package Alire.Toolchains is
    procedure Unconfigure (Crate : Crate_Name);
    --  Set the crate as not configured.
 
-   Description : constant Utils.String_Vector
-     := Utils.Empty_Vector
+   Description : constant AAA.Strings.Vector
+     := AAA.Strings.Empty_Vector
        .Append ("Alire indexes binary releases of GNAT and gprbuild. The "
                 & "compilers are indexed with their target name, e.g., "
-                & TTY.Name ("gnat_native") & " or "
-                & TTY.Name ("gnat_riscv_elf") & ". ")
+                & Utils.TTY.Name ("gnat_native") & " or "
+                & Utils.TTY.Name ("gnat_riscv_elf") & ". ")
      .Append ("")
      .Append ("Use " & TTY.Terminal ("alr toolchain --help") & " to obtain "
               & "information about toolchain management. Alire can be "

@@ -1,6 +1,7 @@
 with Ada.Calendar;
 with Ada.Directories;
 with Ada.Exceptions;
+with Ada.Containers;
 
 with Alire.Crates;
 with Alire.Defaults;
@@ -14,7 +15,6 @@ with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
-with Alire.Utils.User_Input;
 
 with Alr.Files;
 with Alr.Paths;
@@ -26,11 +26,13 @@ with Alr.Testing.Markdown;
 with Alr.Testing.Text;
 with Alr.Utils;
 
-with GNAT.Command_Line;
-
 with GNATCOLL.VFS;
 
+with CLIC.User_Input;
+
 package body Alr.Commands.Test is
+
+   use type Ada.Containers.Count_Type;
 
    package Query renames Alire.Solver;
 
@@ -350,17 +352,20 @@ package body Alr.Commands.Test is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
-      Test_All : constant Boolean := Num_Arguments = 0;
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
+      Test_All : constant Boolean := Args.Count = 0;
 
       procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
                            Stop : in out Boolean)
       is
          pragma Unreferenced (Item, Stop);
       begin
-         Put_Line ("Current folder is not empty, testing aborted " &
-                     "(use --continue to resume a partial test)");
-         raise Command_Failed;
+         Reportaise_Command_Failed
+           ("Current folder is not empty, testing aborted " &
+              "(use --continue to resume a partial test)");
       end Not_Empty;
 
       Candidates : Alire.Releases.Containers.Release_Sets.Set;
@@ -383,8 +388,8 @@ package body Alr.Commands.Test is
          --------------
 
          function Is_Match (Name : Alire.Crate_Name) return Boolean is
-           (for some I in 1 .. Num_Arguments =>
-               Utils.Contains (+Name, Argument (I)));
+           (for some I in Args.First_Index .. Args.Last_Index =>
+               Utils.Contains (+Name, Args (I)));
 
       begin
 
@@ -407,10 +412,10 @@ package body Alr.Commands.Test is
                end if;
             end loop;
          else
-            for J in 1 .. Num_Arguments loop
+            for J in Args.First_Index .. Args.Last_Index loop
                declare
                   Allowed  : constant Alire.Dependencies.Dependency :=
-                               Alire.Dependencies.From_String (Argument (J));
+                               Alire.Dependencies.From_String (Args (J));
                   Crate    : constant Alire.Crates.Crate :=
                                Alire.Index.Crate (Allowed.Crate);
                   Releases : constant Alire.Releases.Containers.Release_Set :=
@@ -468,11 +473,11 @@ package body Alr.Commands.Test is
    begin
       --  Validate command line
       if not Cmd.Search then
-         for I in 1 .. Num_Arguments loop
+         for I in Integer range Args.First_Index .. Args.Last_Index loop
             declare
                Cry_Me_A_River : constant Alire.Dependencies.Dependency :=
                                   Alire.Dependencies.From_String
-                                    (Argument (I)) with Unreferenced;
+                                    (Args (I)) with Unreferenced;
             begin
                null; -- Just check that no exception is raised
             end;
@@ -480,10 +485,9 @@ package body Alr.Commands.Test is
       end if;
 
       --  Validate exclusive options
-      if Cmd.Full and then (Num_Arguments /= 0 or else Cmd.Search) then
-         Trace.Always
+      if Cmd.Full and then (Args.Count /= 0 or else Cmd.Search) then
+         Reportaise_Command_Failed
            ("Either use --full or specify crate names, but not both");
-         raise Command_Failed;
       end if;
 
       --  Check in empty folder!
@@ -496,7 +500,7 @@ package body Alr.Commands.Test is
            (Ada.Directories.Current_Directory, Not_Empty'Access);
       end if;
 
-      Alire.Utils.User_Input.Not_Interactive := True;
+      CLIC.User_Input.Not_Interactive := True;
 
       --  Start testing
       if Test_All then
@@ -507,8 +511,8 @@ package body Alr.Commands.Test is
                Trace.Detail ("Testing all releases");
             end if;
          else
-            Trace.Always ("No releases specified; use --full to test'em all!");
-            raise Command_Failed;
+            Reportaise_Command_Failed
+              ("No releases specified; use --full to test'em all!");
          end if;
       end if;
 
@@ -519,8 +523,7 @@ package body Alr.Commands.Test is
       Find_Candidates;
 
       if Candidates.Is_Empty then
-         Trace.Info ("No releases for the requested crates");
-         raise Command_Failed;
+         Reportaise_Command_Failed ("No releases for the requested crates");
       else
          Trace.Detail ("Testing" & Candidates.Length'Img & " releases");
       end if;
@@ -536,8 +539,8 @@ package body Alr.Commands.Test is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Tests the retrievability and buildability of all or"
                 & " specific releases. Unless --continue or --redo is given,"
                 & " the command expects to be run in an empty folder.")
@@ -553,11 +556,12 @@ package body Alr.Commands.Test is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch
         (Config,

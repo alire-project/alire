@@ -457,9 +457,9 @@ package body Alire.Config.Edit is
    -- Builtins_Info --
    -------------------
 
-   function Builtins_Info return Alire.Utils.String_Vector is
-      use Alire.Utils;
-      Results : Alire.Utils.String_Vector;
+   function Builtins_Info return AAA.Strings.Vector is
+      use AAA.Strings;
+      Results : AAA.Strings.Vector;
    begin
       for Ent of Builtins loop
          Results.Append (String'("- " & To_String (Ent.Key) &

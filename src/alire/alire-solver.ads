@@ -114,11 +114,24 @@ package Alire.Solver is
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
       Sharing      : Sharing_Policies      := Allow_Shared;
+
+      Timeout      : Duration              := 5.0;
+      --  Time until reporting problems finding a complete solution
+
+      Timeout_More : Duration              := 10.0;
+      --  Extra period if the user wants to keep looking
+
+      Interactive  : Boolean               := True;
+      --  If not interactive, the first timeout will be applied without asking
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
    --  A reasonable combo that will return the first complete solution found,
    --  or otherwise consider a subset of incomplete solutions.
+
+   Default_Options_Not_Interactive : constant Query_Options :=
+                                       (Interactive => False,
+                                        others      => <>);
 
    Exhaustive_Options : constant Query_Options :=
                           (Completeness => All_Incomplete,

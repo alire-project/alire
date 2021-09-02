@@ -1,7 +1,7 @@
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Properties.Actions.Runners;
-with Alire.TTY;
+with Alire.Utils.TTY;
 
 package body Alire.Properties.Actions.Executor is
 
@@ -85,7 +85,8 @@ package body Alire.Properties.Actions.Executor is
       Now (Moment) := True; -- Cannot be done in the initialization
 
       if not Release.On_Platform_Actions (Env, Now).Is_Empty then
-         Put_Info ("Running " & TTY.Name (Utils.To_Lower_Case (Moment'Image))
+         Put_Info ("Running " &
+                     Utils.TTY.Name (Utils.To_Lower_Case (Moment'Image))
                    & " actions for " & Release.Milestone.TTY_Image & "...");
       end if;
 

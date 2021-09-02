@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alr.Platform;
 with Alr.Utils;
 
@@ -6,11 +8,16 @@ package Alr.Commands.Version is
    type Command is new Commands.Command with null record;
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return CLIC.Subcommand.Identifier
+   is ("version");
+
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector);
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector;
+                              return AAA.Strings.Vector;
 
    overriding
    function Short_Description (Cmd : Command) return String

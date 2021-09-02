@@ -8,8 +8,9 @@ with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
 with Alire.Utils;
-with Alire.Utils.User_Input;
 with Alire.Config.Edit;
+
+with CLIC.User_Input;
 
 with Alr.OS_Lib; use Alr.OS_Lib;
 
@@ -42,7 +43,7 @@ package body Alr.Platforms.Windows is
      (Install_Dir : Alire.Absolute_Path)
       return Boolean
    is
-      use Alire.Utils.User_Input;
+      use CLIC.User_Input;
    begin
 
       if Cfg.Get ("msys2.do_not_install", False) then

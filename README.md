@@ -20,7 +20,7 @@ https://alire.ada.dev/
 
 ## TL;DR ##
 
-Available for Debian stable / Ubuntu >=17.10 / macOS / Windows
+Available for Linux/macOS/Windows.
 
 Download the latest stable version from the [Releases](https://github.com/alire-project/alire/releases) page. See the [Getting Started](doc/getting-started.md) guide for binary downloads.
 
@@ -45,6 +45,15 @@ The binary will be found at `bin/alr`. You can run `alr version` to see version 
 
 Sourcing the `scripts/alr-completion.bash` file will provide bash tab autocompletion.
 
+## Building with `alr`
+
+If you already have a recent enough `alr` binary, you can alternative build
+`alr` by simply running `alr build` at the root of the repository. This command
+will retrieve all necessary dependencies prior to launching the build.
+
+The master branch should normally be able to build itself in this fashion, as
+this is one of our integration tests.
+
 ## Design principles ##
 
 alr is tailored to userspace, in a similar way to Python's virtualenv. A
@@ -68,9 +77,12 @@ environment `alr` is using with `alr printenv`.
 ## Supported platforms ##
 
 Alire requires a recent Ada 2012 compiler. In practice, this currently means
-[GNAT Community](https://www.adacore.com/download) or GNAT FSF 7.2 onward. The
-continuous integration checks are run against Debian stable, Ubuntu LTS,
-Windows and MacOS.
+the latest [GNAT Community](https://www.adacore.com/download) or a somewhat
+recent GNAT FSF. Continuous integration is run against the Windows and macOS
+Github Actions images, and a suite of Linux [docker
+images](https://github.com/alire-project/alire/blob/538a3549a1dbbc6c09728cb987c71187578381b2/.github/workflows/ci-docker.yml#L20)
+that includes at least Debian stable, Ubuntu LTS, CentOS, Arch and Fedora. The
+packaged GNAT is used when available from the distribution.
 
 Note that platform-provided Ada libraries (such as Debian's GtkAda) require the
 use of the platform Ada compiler. Otherwise these libraries will be

@@ -13,10 +13,12 @@ aggregate project Alr_Env is
                          "deps/semantic_versioning",
                          "deps/simple_logging",
                          "deps/si_units",
+                         "deps/stopwatch",
                          "deps/toml_slicer",
                          "deps/uri-ada",
                          "deps/xmlezout",
-                         "deps/spdx");
+                         "deps/spdx",
+                         "deps/clic");
 
    for Project_Files use ("alr.gpr");
 

@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 private with GNAT.Strings;
 
 package Alr.Commands.Publish is
@@ -7,12 +9,17 @@ package Alr.Commands.Publish is
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return CLIC.Subcommand.Identifier
+   is ("publish");
+
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector);
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append ("Checks a release and generates an index manifest")
        .New_Line
        .Append ("See full details at")
@@ -36,7 +43,7 @@ package Alr.Commands.Publish is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration);
+      Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding
    function Short_Description (Cmd : Command) return String

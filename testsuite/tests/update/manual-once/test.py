@@ -2,7 +2,7 @@
 Verify that, after manually touching the manifest, updates happen only once
 """
 
-from drivers.alr import run_alr, init_local_crate
+from drivers.alr import run_alr, init_local_crate, alr_touch_manifest
 from drivers.asserts import assert_eq, assert_match
 
 import os
@@ -17,9 +17,7 @@ import os
 def prepare_crate(name):
     """Prepare a crate with outdated lockfile"""
     init_local_crate(name)
-    # Set the modification time of the lockfile behind that of the manifest
-    info = os.stat("alire.toml")
-    os.utime("alire.lock", (info.st_atime, info.st_mtime - 1))
+    alr_touch_manifest()
 
 warning_text = "Synchronizing workspace"
 

@@ -18,7 +18,6 @@ with Semantic_Versioning.Extended;
 package body Alire.Solutions is
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use type Ada.Containers.Count_Type;
    use type Semantic_Versioning.Version;
@@ -221,13 +220,6 @@ package body Alire.Solutions is
                       Release : Alire.Releases.Release)
                       return Boolean
    is (for some Solved of This.Releases => Solved.Provides (Release));
-
-   --------------
-   -- Required --
-   --------------
-
-   function Required (This : Solution) return State_Map'Class
-   is (This.Dependencies);
 
    ---------------
    -- Resetting --
@@ -715,10 +707,11 @@ package body Alire.Solutions is
             if Dep.Has_Release then
                Trace.Log
                  ("   "
-                  & TTY.Name (Dep.Crate) & "="
+                  & Utils.TTY.Name (Dep.Crate) & "="
                   & TTY.Version (Dep.Release.Version.Image)
                   & (if Dep.Crate /= Dep.Release.Name -- provided by
-                     then " (" & TTY.Italic (TTY.Name (Dep.Release.Name)) & ")"
+                    then " (" & TTY.Italic
+                      (Utils.TTY.Name (Dep.Release.Name)) & ")"
                      else "")
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
@@ -890,7 +883,7 @@ package body Alire.Solutions is
          for Dep of This.Dependencies loop
             if Dep.Is_Linked then
                Table
-                 .Append (TTY.Name (Dep.Crate))
+                 .Append (Utils.TTY.Name (Dep.Crate))
                  .Append (TTY.URL ("file:") & Dep.Link.Relative_Path)
                  .Append (if Dep.Link.Is_Remote
                           then Dep.Link.TTY_URL_With_Reference (Detailed)
@@ -898,7 +891,7 @@ package body Alire.Solutions is
                  .New_Row;
             elsif Dep.Is_Pinned then
                Table
-                 .Append (TTY.Name (Dep.Crate))
+                 .Append (Utils.TTY.Name (Dep.Crate))
                  .Append (TTY.Version (Dep.Pin_Version.Image))
                  .New_Row;
             end if;
@@ -907,6 +900,34 @@ package body Alire.Solutions is
          Table.Print (Always);
       end if;
    end Print_Pins;
+
+   ------------------
+   -- Print_States --
+   ------------------
+
+   procedure Print_States (This   : Solution;
+                           Indent : String := "   ";
+                           Level  : Trace.Levels := Trace.Info)
+   is
+      Table : Utils.Tables.Table;
+   begin
+      Table.Header (Indent & "RELEASE");
+      Table.Header ("DEPENDENCY");
+      Table.New_Row;
+
+      for State of This.Dependencies loop
+         if State.Has_Release then
+            Table.Append (Indent & State.Release.Milestone.TTY_Image);
+         else
+            Table.Append (Indent & TTY.Warn ("(none)"));
+         end if;
+
+         Table.Append (State.TTY_Image);
+         Table.New_Row;
+      end loop;
+
+      Table.Print (Level => Level);
+   end Print_States;
 
    ----------------
    -- Print_Tree --
@@ -1187,7 +1208,7 @@ package body Alire.Solutions is
       end loop;
 
       raise Program_Error with Errors.Set
-        ("No dependency in solution matches crate " & TTY.Name (Crate));
+        ("No dependency in solution matches crate " & Utils.TTY.Name (Crate));
    end State;
 
    -----------
@@ -1374,5 +1395,121 @@ package body Alire.Solutions is
          end loop;
       end return;
    end Narrow_New_Dependencies;
+
+   --------------
+   -- Traverse --
+   --------------
+
+   procedure Traverse
+     (This  : Solution;
+      Doing : access procedure
+        (This  : Solution;
+         State : Dependency_State);
+      Root  : Alire.Releases.Containers.Optional :=
+        Alire.Releases.Containers.Optional_Releases.Empty)
+   is
+      Pending : State_Map := This.Dependencies;
+      Visited : Containers.Crate_Name_Sets.Set;
+      Round   : Natural := 0;
+
+      -----------
+      -- Visit --
+      -----------
+
+      procedure Visit (State : Dependency_State) is
+      begin
+         Trace.Debug ("Marking visited: " & Utils.TTY.Name (State.Crate));
+         Visited.Include (State.Crate);
+         Pending.Exclude (State.Crate);
+
+         if State.Has_Release then
+            for Mil of State.Release.Provides loop
+               Trace.Debug ("Marking visited (provided): "
+                            & Utils.TTY.Name (Mil.Crate));
+                  Visited.Include (Mil.Crate);
+            end loop;
+         end if;
+
+         Trace.Debug ("Visiting now: " & State.TTY_Image);
+         Doing (This, State);
+      end Visit;
+
+   begin
+
+      --  Visit first dependencies that do not have releases (and hence no
+      --  dependencies) or that are preinstalled.
+
+      for Dep of This.Dependencies loop
+         if not Dep.Has_Release or else Dep.Is_Shared then
+            Visit (Dep);
+         end if;
+      end loop;
+
+      --  Visit regular resolved dependencies, once their dependencies are
+      --  already visited:
+
+      while not Pending.Is_Empty loop
+         Round := Round + 1;
+
+         declare
+            To_Remove : State_Map;
+         begin
+
+            --  In the 1st step of each round we identify releases that don't
+            --  have unvisited dependencies.
+
+            for Dep of Pending loop
+
+               if not Dep.Is_Solved then
+                  Trace.Debug ("Round" & Round'Img & ": NOOP "
+                               & Dep.Release.Milestone.Image);
+
+                  To_Remove.Insert (Dep.Crate, Dep);
+
+               elsif
+                 (for some Rel_Dep of Dep.Release.Flat_Dependencies
+                    (Alire.Root.Platform_Properties) =>
+                        not Visited.Contains (Rel_Dep.Crate))
+               then
+                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
+                                 Dep.Release.Milestone.Image);
+
+               else
+                  Trace.Debug ("Round" & Round'Img & ": VISIT ready " &
+                                 Dep.Release.Milestone.Image);
+
+                  To_Remove.Insert (Dep.Crate, Dep);
+               end if;
+            end loop;
+
+            --  In the 2nd step of each round we actually visit all releases
+            --  that were marked as safe to visit in the 1st step of the round.
+
+            if To_Remove.Is_Empty then
+               raise Program_Error
+                 with "No release visited in round" & Round'Img;
+            else
+               for Dep of To_Remove loop
+                  Visit (Dep);
+               end loop;
+            end if;
+         end;
+      end loop;
+
+      --  Finally, visit the root, if given
+
+      if Root.Has_Element then
+         --  Create a temporary solved state for the root
+         declare
+            Root_State : constant Dependency_State :=
+                           Dependencies.States.New_State
+                             (Root.Element.To_Dependency.Value)
+                             .Solving (Root.Element);
+         begin
+            Visit (Root_State);
+         end;
+      end if;
+
+   end Traverse;
 
 end Alire.Solutions;

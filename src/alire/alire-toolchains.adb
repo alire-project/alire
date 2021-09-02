@@ -1,4 +1,3 @@
-with AAA.Strings;
 with AAA.Text_IO;
 
 with Ada.Containers.Indefinite_Vectors;
@@ -10,7 +9,8 @@ with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Shared;
-with Alire.Utils.User_Input;
+
+with CLIC.User_Input;
 
 with Semantic_Versioning.Extended;
 
@@ -28,13 +28,13 @@ package body Alire.Toolchains is
    -- Assistant --
    ---------------
 
-   procedure Assistant is
+   procedure Assistant (Level : Config.Level) is
       package Release_Vectors is new
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
 
       type Selections is record
-         Choices : Utils.String_Vector;
+         Choices : AAA.Strings.Vector;
          Targets : Release_Vectors.Vector;
          --  These two variables are in sync; so the picked choice says the
          --  release to use at the same position in the respective vector.
@@ -152,9 +152,7 @@ package body Alire.Toolchains is
 
          --  Store tool milestone after successful deployment
 
-         Config.Edit.Set (Path  => Config.Edit.Filepath (Config.Global),
-                          Key   => Tool_Key (Release.Name),
-                          Value => Release.Milestone.Image);
+         Set_As_Default (Release, Level);
 
       end Install;
 
@@ -164,11 +162,11 @@ package body Alire.Toolchains is
 
       procedure Pick_Up_Tool (Crate : Crate_Name; Selection : Selections) is
          Choice : constant Positive :=
-                    Utils.User_Input.Query_Multi
-                      (Question  =>
-                                  "Please select the " & Crate.TTY_Image
-                                  & " version for use with this configuration",
-                       Choices   => Selection.Choices);
+           CLIC.User_Input.Query_Multi
+             (Question  =>
+                "Please select the " & Crate.TTY_Image
+              & " version for use with this configuration",
+              Choices   => Selection.Choices);
       begin
          if Selection.Choices (Choice) = "None" then
 
@@ -176,7 +174,7 @@ package body Alire.Toolchains is
 
             --  Clean up stored version
 
-            Config.Edit.Unset (Path  => Config.Edit.Filepath (Config.Global),
+            Config.Edit.Unset (Path  => Config.Edit.Filepath (Level),
                                Key   => Tool_Key (Crate));
 
          else
@@ -205,7 +203,7 @@ package body Alire.Toolchains is
                       & Tool_Dependency (Crate).TTY_Image);
          else
             Put_Info (Crate.TTY_Image & " is currently not configured. ("
-                      & TTY.Alr
+                      & Utils.TTY.Alr
                       & " will use the version found in the environment.)");
          end if;
          Trace.Info ("");
@@ -232,8 +230,8 @@ package body Alire.Toolchains is
          .Append
            ("In this assistant you can set up the default toolchain to be "
             & "used with any crate that does not specify its own top-level "
-            & "dependency on a version of " & TTY.Name ("gnat") & " or "
-            & TTY.Name ("gprbuild."))
+            & "dependency on a version of " & Utils.TTY.Name ("gnat") & " or "
+            & Utils.TTY.Name ("gprbuild."))
          .Append ("")
          .Append
            ("If you choose " & TTY.Italic ("""None""") & ", Alire will use "
@@ -246,9 +244,7 @@ package body Alire.Toolchains is
 
       --  The user has already chosen, so disable the assistant
 
-      Config.Edit.Set (Config.Edit.Filepath (Config.Global),
-                       Config.Keys.Toolchain_Assistant,
-                       "false");
+      Set_Automatic_Assistant (False, Level);
 
       --  Finally deploy selections
 
@@ -257,6 +253,30 @@ package body Alire.Toolchains is
       end loop;
 
    end Assistant;
+
+   --------------------
+   -- Set_As_Default --
+   --------------------
+
+   procedure Set_As_Default (Release : Releases.Release; Level : Config.Level)
+   is
+   begin
+      Config.Edit.Set (Path  => Config.Edit.Filepath (Level),
+                       Key   => Tool_Key (Release.Name),
+                       Value => Release.Milestone.Image);
+   end Set_As_Default;
+
+   -----------------------------
+   -- Set_Automatic_Assistant --
+   -----------------------------
+
+   procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
+   is
+   begin
+      Config.Edit.Set (Config.Edit.Filepath (Level),
+                       Config.Keys.Toolchain_Assistant,
+                       (if Enabled then "true" else "false"));
+   end Set_Automatic_Assistant;
 
    ------------------------
    -- Tool_Is_Configured --
@@ -279,8 +299,10 @@ package body Alire.Toolchains is
 
    procedure Unconfigure (Crate : Crate_Name) is
    begin
-      Config.Edit.Unset (Config.Edit.Filepath (Config.Global),
-                         Tool_Key (Crate));
+      for Level in Config.Level loop
+         Config.Edit.Unset (Config.Edit.Filepath (Level),
+                            Tool_Key (Crate));
+      end loop;
    end Unconfigure;
 
 end Alire.Toolchains;

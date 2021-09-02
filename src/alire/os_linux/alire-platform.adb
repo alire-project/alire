@@ -14,8 +14,11 @@ package body Alire.Platform is
    function Default_Config_Folder return String is
       use OS_Lib;
    begin
-      return (OS_Lib.Getenv ("XDG_CONFIG_HOME",
-              Default => OS_Lib.Getenv ("HOME") / ".config" / "alire"));
+      return
+        OS_Lib.Getenv
+          ("XDG_CONFIG_HOME",
+           Default => OS_Lib.Getenv ("HOME", Default => "/tmp") / ".config")
+        / "alire";
    end Default_Config_Folder;
 
    ------------------

@@ -1,6 +1,7 @@
 with Alire.Origins;
 with Alire.Publish;
 with Alire.URI;
+with Alire.Utils;
 
 package body Alr.Commands.Publish is
 
@@ -11,10 +12,12 @@ package body Alr.Commands.Publish is
    -------------
 
    overriding
-   procedure Execute (Cmd : in out Command) is
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
 
       function Revision return String
-      is (if Num_Arguments >= 2 then Argument (2) else "");
+      is (if Args.Count >= 2 then Args (2) else "");
 
       Options : constant Alire.Publish.All_Options :=
                   Alire.Publish.New_Options
@@ -37,22 +40,22 @@ package body Alr.Commands.Publish is
 
       elsif Cmd.Tar then
 
-         if Num_Arguments > 2 then
+         if Args.Count > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");
          end if;
 
          Alire.Publish.Directory_Tar
-           (Path     => (if Num_Arguments >= 1 then Argument (1) else "."),
-            Revision => (if Num_Arguments >= 2 then Argument (2) else "HEAD"),
+           (Path     => (if Args.Count >= 1 then Args (1) else "."),
+            Revision => (if Args.Count >= 2 then Args (2) else "HEAD"),
             Options  => Options);
 
       else
-         if Num_Arguments < 1 then
+         if Args.Count < 1 then
             Alire.Publish.Local_Repository (Options => Options);
 
-         elsif Num_Arguments > 2 then
+         elsif Args.Count > 2 then
             Reportaise_Wrong_Arguments
               ("Unknown extra arguments, only a mandatory URL"
                & " and optional revision are expected");
@@ -63,7 +66,7 @@ package body Alr.Commands.Publish is
 
             declare
                use Alire.Origins;
-               URL : constant String := Argument (1);
+               URL : constant String := Args (1);
             begin
                if URI.Scheme (URL) in URI.File_Schemes then
                   if Archive_Format (URI.Local_Path (URL)) /= Unknown then
@@ -97,9 +100,9 @@ package body Alr.Commands.Publish is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch
         (Config,

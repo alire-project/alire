@@ -1,15 +1,16 @@
+with AAA.Strings;
+
 with Alire.Conditional;
 with Alire.Externals.Lists;
 with Alire.Policies;
 with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
-with Alire.Utils;
 
 with Semantic_Versioning;
 
 package Alire.Crates is
 
-   function Naming_Convention return Utils.String_Vector;
+   function Naming_Convention return AAA.Strings.Vector;
    --  Return a description of the naming restrictions on crates/indexes.
 
    type Sections is (Index_Release,

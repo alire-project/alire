@@ -15,6 +15,7 @@ package body Plop is
       pragma Import(C, Test_C_Print, "test_c_print");
 
    begin
+      Put_Line ("Ada -> Crate_Version: " & Libcrate_Config_Config.Crate_Version);
       Put_Line ("Ada -> Var_Bool: " & Libcrate_Config_Config.Var_Bool'Img);
       Put_Line ("Ada -> Var_String: '" & Libcrate_Config_Config.Var_String & "'");
       Put_Line ("Ada -> Var_Int: " & My_Int'Img);

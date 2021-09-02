@@ -5,7 +5,7 @@ other commands that require a valid workspace
 
 import os.path
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, alr_touch_manifest
 from shutil import rmtree
 # from drivers.asserts import assert_eq, assert_match
 
@@ -25,7 +25,7 @@ for cmd in ['build', 'pin', 'run', 'show', 'with', 'printenv']:
         file.write('[[depends-on]]\nlibhello="1"')
 
     # Make the lockfile "older" (otherwise timestamp is identical)
-    os.utime('alire.lock', (0, 0))
+    alr_touch_manifest()
 
     # Run the command
     run_alr(cmd)

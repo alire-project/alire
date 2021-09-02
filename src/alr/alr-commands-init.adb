@@ -7,7 +7,6 @@ with Alire.Config;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Solutions;
-with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 
 with Alr.Utils;
@@ -18,7 +17,6 @@ with TOML;
 
 package body Alr.Commands.Init is
 
-   package TTY renames Alire.Utils.TTY;
    package UI renames Alire.Utils.User_Input;
 
    Sed_Pattern : constant String := "PROJECT_SKEL";
@@ -27,12 +25,13 @@ package body Alr.Commands.Init is
    -- Generate --
    --------------
 
-   procedure Generate (Cmd : Command) is
+   procedure Generate (Cmd  : Command;
+                       Args : AAA.Strings.Vector) is
 
       package TIO renames Ada.Text_IO;
 
       For_Library : constant Boolean := not Cmd.Bin;
-      Name        : constant String := Argument (1);
+      Name        : constant String := Args (1);
       Lower_Name  : constant String := Utils.To_Lower_Case (Name);
       Upper_Name  : constant String := Utils.To_Upper_Case (Name);
       Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
@@ -114,7 +113,8 @@ package body Alr.Commands.Init is
             return;
          end if;
          Put_Line ("abstract project " & Mixed_Name & "_Config is");
-         TIO.Put (File, "end " & Mixed_Name & "_Config;");
+         Put_Line ("   Crate_Version := ""0.0.0"";");
+         Put_Line ("end " & Mixed_Name & "_Config;");
          TIO.Close (File);
 
          --  Main project file
@@ -127,7 +127,7 @@ package body Alr.Commands.Init is
          Put_New_Line;
          if For_Library then
             Put_Line ("   for Library_Name use """ & Mixed_Name & """;");
-            Put_Line ("   for Library_Version use ""0.0.0"";");
+            Put_Line ("   for Library_Version use Project'Library_Name & "".so."" & " & Mixed_Name & "_Config.Crate_Version;");
             Put_New_Line;
          end if;
          Put_Line ("   for Source_Dirs use (""src"");");
@@ -400,22 +400,23 @@ package body Alr.Commands.Init is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
-      if Num_Arguments /= 1 then
-         Trace.Error ("No crate name given");
-         raise Wrong_Command_Arguments;
+      if Args.Count /= 1 then
+         Reportaise_Wrong_Arguments ("No crate name given");
       end if;
 
       if not (Cmd.Bin or Cmd.Lib) then
-         Log ("Please provide either --bin or --lib");
-         raise Command_Failed;
+         Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
 
       --  Validation finished
 
       declare
-         Name  : constant String := Argument (1);
+         Name  : constant String := Args (1);
          Check : constant Alire.Crate_Name := +Name with Unreferenced;
       begin
          if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
@@ -425,7 +426,7 @@ package body Alr.Commands.Init is
                & " alr; please choose another name");
          end if;
 
-         Generate (Cmd);
+         Generate (Cmd, Args);
       end;
    end Execute;
 
@@ -435,8 +436,8 @@ package body Alr.Commands.Init is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Initializes a new crate containing a ready-to-build GNAT"
                & " project. The crate is created as a child of the current"
                & " directory, containing minimal sources for an executable"
@@ -449,11 +450,12 @@ package body Alr.Commands.Init is
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch (Config,
                      Cmd.Bin'Access,

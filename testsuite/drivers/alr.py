@@ -40,8 +40,7 @@ def prepare_env(config_dir, env):
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
-    run_alr("config", "--global", "--set", "toolchain.assistant", "false",
-            "-c", config_dir)
+    run_alr("toolchain", "--disable-assistant", "-c", config_dir)
     #  Pass config location explicitly since env is not yet applied
 
     # If distro detection is disabled via environment, configure so in alr
@@ -211,7 +210,7 @@ def init_local_crate(name="xxx", binary=True, enter=True):
 
 
 def alr_lockfile():
-    return "alire.lock"
+    return os.path.join("alire", "alire.lock")
 
 
 def alr_manifest():

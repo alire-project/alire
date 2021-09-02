@@ -1,6 +1,7 @@
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
+with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Manifest;
@@ -17,10 +18,11 @@ with GNAT.OS_Lib;
 
 with Semantic_Versioning.Extended;
 
+with CLIC.User_Input;
+
 package body Alire.Roots is
 
    package Semver renames Semantic_Versioning;
-   package TTY renames Utils.TTY;
 
    use type UString;
 
@@ -145,10 +147,63 @@ package body Alire.Roots is
 
    procedure Deploy_Dependencies (This : in out Roots.Root)
    is
-      Was_There : Boolean;
-      Pending   : Alire.Solutions.Release_Map := This.Solution.Releases;
-      Deployed  : Containers.Crate_Name_Sets.Set;
-      Round     : Natural := 0;
+
+      --------------------
+      -- Deploy_Release --
+      --------------------
+
+      procedure Deploy_Release (Sol : Solutions.Solution;
+                                Dep : Dependencies.States.State)
+      is
+         pragma Unreferenced (Sol);
+         Was_There : Boolean;
+      begin
+         if Dep.Is_Linked then
+            Trace.Debug ("deploy: skip linked release");
+            return;
+
+         elsif Release (This).Provides (Dep.Crate) then
+            Trace.Debug ("deploy: skip root");
+            return;
+
+         elsif not Dep.Has_Release then
+            Trace.Debug ("deploy: skip dependency without release");
+            return;
+
+         end if;
+
+         --  At this point, the state contains a release
+
+         declare
+            Rel : constant Releases.Release := Dep.Release;
+         begin
+            if Rel.Origin.Kind in Origins.Binary_Archive then
+
+               --  Binary releases are always installed as shared releases
+               Shared.Share (Rel);
+
+            elsif Dep.Is_Shared and then not Rel.Origin.Is_Regular then
+
+               --  Externals shouldn't leave a trace in the binary cache
+               Trace.Debug ("deploy: skip shared external");
+
+            else
+
+               --  Remaining cases expect to receive a Deploy call, even
+               --  externals in the working directory
+               Rel.Deploy (Env             => This.Environment,
+                           Parent_Folder   =>
+                             Ada.Directories.Containing_Directory
+                               (This.Release_Base (Rel.Name)),
+                           Was_There       => Was_There,
+                           Create_Manifest =>
+                             Dep.Is_Shared,
+                           Include_Origin  =>
+                             Dep.Is_Shared);
+            end if;
+         end;
+      end Deploy_Release;
+
    begin
 
       --  Prepare environment for any post-fetch actions. This must be done
@@ -157,124 +212,10 @@ package body Alire.Roots is
 
       This.Export_Build_Environment;
 
-      --  Mark any dependencies without a corresponding regular release as
-      --  already deployed (in practice, we don't have to deploy them, and
-      --  dependents don't need to wait for their deployment). Likewhise for
-      --  installed dependencies, which are already deployed.
+      --  Visit dependencies in a safe order to be fetched, and their actions
+      --  ran
 
-      for Dep of This.Solution.Required loop
-         if not Dep.Has_Release or else Dep.Is_Shared then
-            Deployed.Include (Dep.Crate);
-
-            --  Also mark as deployed any crate provided by shared releases
-
-            if Dep.Has_Release then
-               for Mil of Dep.Release.Provides loop
-                  Deployed.Include (Mil.Crate);
-               end loop;
-            end if;
-
-         end if;
-      end loop;
-
-      --  Deploy regular resolved dependencies:
-
-      while not Pending.Is_Empty loop
-         Round := Round + 1;
-
-         declare
-            To_Remove : Alire.Releases.Containers.Release_Set;
-            function Enum (Deps : Conditional.Dependencies)
-                           return Alire.Dependencies.Containers.List
-                           renames Conditional.Enumerate;
-         begin
-
-            --  TODO: this can be done in parallel within each round
-
-            for Rel of Pending loop
-
-               --  In the 1st step of each round we identify releases that
-               --  don't have undeployed dependencies. We also identify
-               --  releases that need not to be deployed (e.g. linked ones).
-
-               if not This.Solution.State (Rel).Is_Solved then
-                  Trace.Debug ("Round" & Round'Img & ": NOOP " &
-                                 Rel.Milestone.Image);
-
-                  To_Remove.Include (Rel);
-
-               elsif
-                 (for some Dep of Enum (Rel.Dependencies (This.Environment)) =>
-                        not Deployed.Contains (Dep.Crate))
-               then
-                  Trace.Debug ("Round" & Round'Img & ": SKIP not-ready " &
-                                 Rel.Milestone.Image);
-
-               else
-                  Trace.Debug ("Round" & Round'Img & ": CHECKOUT ready " &
-                                 Rel.Milestone.Image);
-
-                  To_Remove.Include (Rel);
-
-                  if not Release (This).Provides (Rel.Name) then
-
-                     --  A regular release is deployed normally. A binary
-                     --  release is installed as a shared dependency. A
-                     --  detected external is skipped.
-
-                     if Rel.Origin.Kind in Origins.Binary_Archive then
-
-                        Shared.Share (Rel);
-
-                     elsif This.Solution.State (Rel.Name).Is_Shared
-                       and then Rel.Origin.Kind in Origins.External
-                     then
-
-                        Trace.Debug ("No-op deployment of shared external: "
-                                     & Rel.Milestone.TTY_Image);
-
-                     else
-
-                        Rel.Deploy (Env             => This.Environment,
-                                    Parent_Folder   =>
-                                      Ada.Directories.Containing_Directory
-                                        (This.Release_Base (Rel.Name)),
-                                    Was_There       => Was_There,
-                                    Create_Manifest =>
-                                      This.Solution.State (Rel.Name).Is_Shared,
-                                    Include_Origin  =>
-                                     This.Solution.State (Rel.Name).Is_Shared);
-
-                     end if;
-
-                  else
-                     Trace.Debug
-                       ("Skipping checkout of root crate as dependency");
-                  end if;
-               end if;
-            end loop;
-
-            --  In the 2nd step of each round we mark as deployed all releases
-            --  that were deployed in the 1st step of the round.
-
-            if To_Remove.Is_Empty then
-               raise Program_Error
-                 with "No release checked out in round" & Round'Img;
-            else
-               for Rel of To_Remove loop
-                  Pending.Remove (Rel);
-
-                  Trace.Debug ("Marking deployed: " & Rel.Name.As_String);
-                  Deployed.Include (Rel.Name);
-                  for Mil of Rel.Provides loop
-                     Trace.Debug ("Marking deployed (provided): "
-                                  & Mil.Crate.As_String);
-                     Deployed.Include (Mil.Crate);
-                  end loop;
-               end loop;
-            end if;
-         end;
-      end loop;
+      This.Solution.Traverse (Doing => Deploy_Release'Access);
 
       --  Show hints for missing externals to the user after all the noise of
       --  dependency post-fetch compilations.
@@ -282,6 +223,7 @@ package body Alire.Roots is
       This.Solution.Print_Hints (This.Environment);
 
       --  Update/Create configuration files
+
       This.Generate_Configuration;
 
       --  Check that the solution does not contain suspicious dependencies,
@@ -333,7 +275,7 @@ package body Alire.Roots is
               and then Pins.State (Crate).Pin_Version /= Pin.Version
             then
                Put_Warning ("Incompatible version pins requested for crate "
-                            & TTY.Name (Crate)
+                            & Utils.TTY.Name (Crate)
                             & "; fix versions or override with a link pin.");
             end if;
 
@@ -364,7 +306,8 @@ package body Alire.Roots is
             if Upstream.Contains (Crate) then
                Raise_Checked_Error
                  ("Pin circularity detected when adding pin "
-                  & TTY.Name (This.Name) & " --> " & TTY.Name (Crate)
+                  & Utils.TTY.Name (This.Name) & " --> " &
+                    Utils.TTY.Name (Crate)
                   & ASCII.LF & "Last manifest in the cycle is "
                   & TTY.URL (This.Crate_File));
             end if;
@@ -388,8 +331,8 @@ package body Alire.Roots is
               and then Pins.State (Crate).Link /= Pin
             then
                Raise_Checked_Error
-                 ("Conflicting pin links for crate " & TTY.Name (Crate)
-                  & ": Crate " & TTY.Name (Release (This).Name)
+                 ("Conflicting pin links for crate " & Utils.TTY.Name (Crate)
+                  & ": Crate " & Utils.TTY.Name (Release (This).Name)
                   & " wants to link " & TTY.URL (Pin.Image (User => True))
                   & ", but a previous link exists to "
                   & TTY.URL (Pins.State (Crate).Link.Image (User => True)));
@@ -400,7 +343,7 @@ package body Alire.Roots is
 
             if Linked.Contains (Crate) then
                Trace.Debug ("Skipping adding of already added link target: "
-                            & TTY.Name (Crate));
+                            & Utils.TTY.Name (Crate));
                return;
             else
                Linked.Insert (Crate);
@@ -423,9 +366,10 @@ package body Alire.Roots is
                   if Target.Value.Name /= Crate then
                      Raise_Checked_Error
                        ("Mismatched crates for pin linking to "
-                        & TTY.URL (Pin.Path) & ": expected " & TTY.Name (Crate)
+                        & TTY.URL (Pin.Path) & ": expected " &
+                          Utils.TTY.Name (Crate)
                         & " but found "
-                        & TTY.Name (Target.Value.Name));
+                        & Utils.TTY.Name (Target.Value.Name));
                   end if;
                else
                   Trace.Debug
@@ -470,8 +414,9 @@ package body Alire.Roots is
 
                --  Avoid obvious self-pinning
 
-               Trace.Debug ("Crate " & TTY.Name (This.Name)
-                            & " adds pin for crate " & TTY.Name (Crate));
+               Trace.Debug ("Crate " & Utils.TTY.Name (This.Name)
+                            & " adds pin for crate "
+                            & Utils.TTY.Name (Crate));
 
                case Pin.Kind is
                   when To_Version =>
@@ -480,7 +425,7 @@ package body Alire.Roots is
                      Add_Link_Pin (Crate, Pin);
                end case;
 
-               Trace.Detail ("Crate " & TTY.Name (This.Name)
+               Trace.Detail ("Crate " & Utils.TTY.Name (This.Name)
                              & " adds pin " & Pins.State (Crate).TTY_Image);
             end;
          end loop;
@@ -722,6 +667,39 @@ package body Alire.Roots is
       end if;
    end Release_Base;
 
+   ----------------------
+   -- Migrate_Lockfile --
+   ----------------------
+   --  This function is intended to migrate lockfiles in the old root location
+   --  to inside the alire folder. It could be conceivably removed down the
+   --  line during a major release.
+   function Migrate_Lockfile (This : Root;
+                              Path : Any_Path)
+                              return Any_Path
+   is
+      package Adirs renames Ada.Directories;
+      Old_Path : constant Any_Path :=
+                   Adirs.Containing_Directory
+                     (Adirs.Containing_Directory (Path))
+                   / Lockfiles.Simple_Name;
+   begin
+      if Adirs.Exists (Old_Path) then
+         Directories.Backup_If_Existing (Old_Path,
+                                         Base_Dir => This.Working_Folder);
+
+         if Adirs.Exists (Path) then
+            Put_Info ("Removing old lockfile at " & TTY.URL (Old_Path));
+            Adirs.Delete_File (Old_Path);
+         else
+            Put_Info ("Migrating lockfile from "
+                      & TTY.URL (Old_Path) & " to " & TTY.URL (Path));
+            Adirs.Rename (Old_Path, Path);
+         end if;
+      end if;
+
+      return Path;
+   end Migrate_Lockfile;
+
    ---------------
    -- Lock_File --
    ---------------
@@ -729,7 +707,7 @@ package body Alire.Roots is
    function Lock_File (This : Root) return Absolute_Path
    is (if This.Lockfile /= ""
        then +This.Lockfile
-       else Lockfiles.File_Name (+This.Path));
+       else Migrate_Lockfile (This, Lockfiles.File_Name (+This.Path)));
 
    ----------------
    -- Crate_File --
@@ -920,7 +898,7 @@ package body Alire.Roots is
       This.Sync_Dependencies
         (Allowed  => Allowed,
          Silent   => Silent,
-         Interact => Interact and not Alire.Utils.User_Input.Not_Interactive);
+         Interact => Interact and not CLIC.User_Input.Not_Interactive);
    end Update;
 
    --------------------
@@ -985,7 +963,7 @@ package body Alire.Roots is
       for Crate of Allowed loop
          if not Old.Depends_On (Crate) then
             Raise_Checked_Error ("Requested crate is not a dependency: "
-                                 & TTY.Name (Crate));
+                                 & Utils.TTY.Name (Crate));
          end if;
 
          if Old.Pins.Contains (Crate) then

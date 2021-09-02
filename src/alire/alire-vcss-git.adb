@@ -2,7 +2,6 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils.Tools;
-with Alire.Utils.TTY;
 
 package body Alire.VCSs.Git is
 

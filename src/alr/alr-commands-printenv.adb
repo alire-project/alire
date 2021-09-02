@@ -7,9 +7,16 @@ package body Alr.Commands.Printenv is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
       Enabled : Natural := 0;
    begin
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       --  Check no multi-action
       Enabled := Enabled + (if Cmd.Details then 1 else 0);
       Enabled := Enabled + (if Cmd.Unix_Shell then 1 else 0);
@@ -46,8 +53,8 @@ package body Alr.Commands.Printenv is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
+                              return AAA.Strings.Vector is
+     (AAA.Strings.Empty_Vector
       .Append ("Print the environment variables used to build the crate." &
                  " This command can be used to setup a build environment," &
                  " for instance before starting an IDE.")
@@ -63,9 +70,9 @@ package body Alr.Commands.Printenv is
 
    overriding procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
-      use GNAT.Command_Line;
+      use CLIC.Subcommand;
    begin
       Define_Switch (Config,
                      Cmd.Details'Access,

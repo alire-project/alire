@@ -23,6 +23,7 @@ with Semantic_Versioning;
 with TOML;
 
 private with Alire.OS_Lib;
+private with CLIC.TTY;
 private with Alire.Utils.TTY;
 
 package Alire.Releases is
@@ -465,7 +466,7 @@ private
         (Alire.TOML_Keys.Description).First_Element.Image, ' '));
 
    function TTY_Description (R : Release) return String
-   is (Utils.TTY.Description (R.Description));
+   is (CLIC.TTY.Description (R.Description));
 
    function Milestone (R : Release) return Milestones.Milestone
    is (Milestones.New_Milestone (R.Name, R.Version));

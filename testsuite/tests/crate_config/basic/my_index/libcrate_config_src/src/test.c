@@ -2,6 +2,7 @@
 #include "libcrate_config_config.h"
 
 void test_c_print(void) {
+    printf("C -> Crate_Version: %s\n", CRATE_VERSION);
     printf("C -> Var_Bool: %d\n", Var_Bool);
     printf("C -> Var_String: '%s'\n", Var_String);
     printf("C -> Var_Int: %d\n", Var_Int);

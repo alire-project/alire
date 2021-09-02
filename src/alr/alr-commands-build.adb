@@ -10,9 +10,12 @@ package body Alr.Commands.Build is
    -- Execute --
    -------------
 
-   overriding procedure Execute (Cmd : in out Command) is
+   overriding
+   procedure Execute (Cmd  : in out Command;
+                      Args :        AAA.Strings.Vector)
+   is
    begin
-      if not Execute (Cmd, Export_Build_Env => True) then
+      if not Execute (Cmd, Args, Export_Build_Env => True) then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -22,8 +25,16 @@ package body Alr.Commands.Build is
    -------------
 
    function Execute (Cmd              : in out Commands.Command'Class;
-                     Export_Build_Env : Boolean) return Boolean is
+                     Args             :        AAA.Strings.Vector;
+                     Export_Build_Env :        Boolean)
+                     return Boolean
+   is
    begin
+
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
+      end if;
+
       Cmd.Requires_Full_Index;
 
       Cmd.Requires_Valid_Session;
@@ -54,7 +65,7 @@ package body Alr.Commands.Build is
          loop
 
             Spawn.Gprbuild (Gpr_File,
-                            Extra_Args    => Scenario.As_Command_Line);
+                            Extra_Args => Scenario.As_Command_Line);
          end loop;
 
       exception
@@ -91,26 +102,23 @@ package body Alr.Commands.Build is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector is
-     (Alire.Utils.Empty_Vector
-      .Append ("Invokes gprbuild to compile all targets in the current"
-               & " crate."));
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("Invokes gprbuild to compile all targets in the current"
+         & " crate."));
 
    --------------------
    -- Setup_Switches --
    --------------------
 
-   overriding procedure Setup_Switches
+   overriding
+   procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration)
+      Config : in out CLIC.Subcommand.Switches_Configuration)
    is
       pragma Unreferenced (Cmd);
-      use GNAT.Command_Line;
    begin
-      Define_Switch (Config,
-                     "-X!",
-                     Help => "Scenario variable for gprbuild",
-                     Argument => "Var=Arg");
+      Add_GPR_Scenario_Switch (Config);
    end Setup_Switches;
 
 end Alr.Commands.Build;

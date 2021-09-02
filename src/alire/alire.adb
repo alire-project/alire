@@ -70,7 +70,7 @@ package body Alire is
 
    procedure Put_Failure (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (Utils.TTY.Error ("✗ ") & Text, Level);
+      Trace.Log (TTY.Error ("✗ ") & Text, Level);
    end Put_Failure;
 
    --------------
@@ -79,7 +79,7 @@ package body Alire is
 
    procedure Put_Info (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (Utils.TTY.Info (Text), Level);
+      Trace.Log (TTY.Info (Text), Level);
    end Put_Info;
 
    -----------------
@@ -88,7 +88,7 @@ package body Alire is
 
    procedure Put_Success (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (Utils.TTY.Success (Text), Level);
+      Trace.Log (TTY.Success (Text), Level);
    end Put_Success;
 
    -----------------
@@ -97,7 +97,7 @@ package body Alire is
 
    procedure Put_Warning (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (Utils.TTY.Warn ("⚠ ") & Text, Level);
+      Trace.Log (TTY.Warn ("⚠ ") & Text, Level);
    end Put_Warning;
 
    ------------
@@ -162,7 +162,7 @@ package body Alire is
    ---------------
 
    function TTY_Image (This : Crate_Name) return String
-   is (Utils.TTY.Name (This.Name));
+   is (Utils.TTY.Name (This));
 
    ---------------------
    -- Outcome_Failure --
@@ -237,7 +237,6 @@ package body Alire is
    -----------------------
 
    procedure Recoverable_Error (Msg : String; Recover : Boolean := Force) is
-      use Alire.Utils;
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin

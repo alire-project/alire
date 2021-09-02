@@ -1,8 +1,6 @@
-with Alire.TTY;
+with AAA.Strings;
 
 package Alr.Commands.Toolchain is
-
-   package TTY renames Alire.TTY;
 
    --  Installation of binary toolchain crates into the ${ALR_CONFIG}/cache
    --  shared configuration.
@@ -10,12 +8,17 @@ package Alr.Commands.Toolchain is
    type Command is new Commands.Command with private;
 
    overriding
-   procedure Execute (Cmd : in out Command);
+   function Name (Cmd : Command) return CLIC.Subcommand.Identifier
+   is ("toolchain");
 
    overriding
-   function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
-   is (Alire.Utils.Empty_Vector
+   procedure Execute (Cmd : in out Command;
+                      Args :        AAA.Strings.Vector);
+
+   overriding
+   function Long_Description (Cmd  : Command)
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
        .Append
          ("Download toolchain elements, like" & " " & TTY.Emph ("GNAT")
           & " and " & TTY.Emph ("gprbuid") & ", in the shared cache of the"
@@ -26,7 +29,11 @@ package Alr.Commands.Toolchain is
        .New_Line
        .Append
          ("Use --select without arguments to run the assistant to "
-          & "select the default toolchain for this configuration.")
+          & "select the default toolchain for this configuration. "
+          & "Adding --local will instead make the selection apply "
+          & "only to the workspace (overridding a possible "
+          & "configuration-wide selection). Giving a release argument will "
+          & "skip the assistant and set the release as the default.")
        .New_Line
        .Append
          ("Specify --install/--uninstall and a crate name with optional "
@@ -40,7 +47,7 @@ package Alr.Commands.Toolchain is
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out GNAT.Command_Line.Command_Line_Configuration);
+      Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding
    function Short_Description (Cmd : Command) return String
@@ -48,12 +55,15 @@ package Alr.Commands.Toolchain is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[-u|--uninstall] [-i|--install crate[version set]] | --select");
+   is ("[-u|--uninstall] [-i|--install crate[version set]] |"
+       & " --select [--local] [release]");
 
 private
 
    type Command is new Commands.Command with record
+      Disable   : aliased Boolean := False;
       Install   : aliased Boolean := False;
+      Local     : aliased Boolean := False;
       S_Select  : aliased Boolean := False;
       Uninstall : aliased Boolean := False;
    end record;

@@ -33,7 +33,7 @@ os.remove('./test_post_fetch')
 # Build with error
 os.mkdir('src')
 Path('src/empty.adb').touch()
-p = run_alr('build', 'hello_world', complain_on_error=False)
+p = run_alr('build', complain_on_error=False)
 assert_match(".*compilation of empty.adb failed.*", p.out)
 
 # Post build shouldn't be here because of build failure
@@ -45,7 +45,7 @@ os.remove('./test_pre_build')
 os.remove('src/empty.adb')
 
 # Build without error
-run_alr('build', 'hello_world', complain_on_error=False)
+run_alr('build', complain_on_error=False)
 
 # pre/post-build expected for successful build
 check_not_expected('./test_post_fetch')

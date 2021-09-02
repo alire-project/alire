@@ -2,7 +2,8 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
-with Alire.TTY;
+
+with Alire.Utils.TTY;
 
 package body Alire.Index is
 
@@ -132,13 +133,14 @@ package body Alire.Index is
            ("Not redoing detection of externals for crate " & (+Name));
       elsif not External_Aliases.Contains (Name) then
          Trace.Debug ("Skipping detection for crate without externals: "
-                      & TTY.Name (Name));
+                      & Utils.TTY.Name (Name));
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
 
          for Provider of External_Aliases (Name) loop
-            Trace.Debug ("Detecting via provider " & TTY.Name (Provider));
+            Trace.Debug ("Detecting via provider " &
+                           Utils.TTY.Name (Provider));
             for Release of Contents (Provider).Externals.Detect (Provider, Env)
             loop
                Trace.Debug ("Adding external: " & Release.Milestone.Image);

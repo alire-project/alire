@@ -1,5 +1,14 @@
 package body Alire.Utils.Tables is
 
+   ------------
+   -- Header --
+   ------------
+
+   procedure Header (T : in out Table; Cell : String) is
+   begin
+      T.Append (TTY.Emph (To_Upper_Case (Cell)));
+   end Header;
+
    -----------
    -- Print --
    -----------
