@@ -19,8 +19,9 @@ package Alire.Shared is
    function Install_Path return Any_Path;
    --  Returns the base folder in which all shared releases live
 
-   procedure Share (Release : Releases.Release);
-   --  Deploy a release in the shared location for the configuration
+   procedure Share (Release  : Releases.Release;
+                    Location : Any_Path := Install_Path);
+   --  Deploy a release in the specified location
 
    procedure Remove
      (Release : Releases.Release;
