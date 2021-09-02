@@ -125,7 +125,7 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: scripts/installer/alire-install.exe
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-installer-windows.exe
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-installer-x86_64-windows.exe
         asset_content_type: application/vnd.microsoft.portable-executable
 
     - name: Package binaries
@@ -140,5 +140,5 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr-bin-windows.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-windows.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-x86_64-windows.zip
         asset_content_type: application/zip
