@@ -31,8 +31,8 @@ package body Alr.Commands.Version is
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
 
-      Trace.Always ("Alr version: " & Alr.Version);
-      Trace.Always ("Alire Library version: " & Alire.Version);
+      Trace.Always ("Alr version: " & Alire.Version.Current);
+      Trace.Always ("Alire Library version: " & Alire.Version.Current);
       Trace.Always ("alr status is " & Bootstrap.Status_Line);
       Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
       Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
