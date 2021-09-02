@@ -1,9 +1,10 @@
 with AAA.Strings;
 
 with Alire.Directories;
+with Alire.GPR;
 with Alire.Roots.Optional;
 with Alire.Solver;
-with Alire.GPR;
+with Alire.Version;
 
 with CLIC.Subcommand;
 
@@ -128,7 +129,7 @@ private
 
    package Sub_Cmd is new CLIC.Subcommand.Instance
      (Main_Command_Name   => "alr",
-      Version             => Alr.Version,
+      Version             => Alire.Version.Current,
       Put                 => Ada.Text_IO.Put,
       Put_Line            => Ada.Text_IO.Put_Line,
       Put_Error           => Put_Error,

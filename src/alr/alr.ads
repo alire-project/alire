@@ -5,8 +5,6 @@ with CLIC.TTY;
 
 package Alr with Preelaborate is
 
-   Version : constant String := Alire.Version;
-
    --  Nothing of note in this root package. Entities declared here are
    --  generally useful everywhere or in many packages: Exceptions for
    --  commands, tracing for all

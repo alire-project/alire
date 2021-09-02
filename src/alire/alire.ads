@@ -10,15 +10,6 @@ with CLIC.TTY;
 
 package Alire with Preelaborate is
 
-   Version : constant String := "1.1.0-dev+local-toolchain";
-   --  1.1.0-dev: begin post-1.0 changes
-   --  1.0.0:     no changes since rc3
-   --  1.0.0-rc3: added help colors PR
-   --  1.0.0-rc2: move community index to stable-1.0 branch
-   --  1.0.0-rc1: release candidate for 1.0
-   --  0.8.1-dev: update to devel-0.5 index branch
-   --  0.8.0-dev: post-0.7-beta changes
-
    Checked_Error : exception;
    --  A Checked_Error is an explicitly diagnosed error condition, usually in
    --  relation with user inputs (e.g., parsing of TOML files or other inputs).
