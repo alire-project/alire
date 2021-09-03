@@ -40,7 +40,7 @@ package body Alr.Commands.Toolchain is
          Cmd.Install'Access,
          Switch      => "-i",
          Long_Switch => "--install",
-         Help        => "Install one or more toolchain component(s)");
+         Help        => "Install one or more toolchain component");
 
       Define_Switch
         (Config,
@@ -67,7 +67,7 @@ package body Alr.Commands.Toolchain is
          Cmd.Uninstall'Access,
          Switch      => "-u",
          Long_Switch => "--uninstall",
-         Help        => "Uninstall one or more toolchain component(s)");
+         Help        => "Uninstall one or more toolchain component");
    end Setup_Switches;
 
    -------------
@@ -255,11 +255,6 @@ package body Alr.Commands.Toolchain is
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      --  if Args.Count > 1 then
-      --     Reportaise_Wrong_Arguments
-      --     ("One crate with optional version expected: crate[version set]");
-      --  end if;
-
       if (Cmd.Install or Cmd.Uninstall) and then Args.Is_Empty then
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
@@ -271,11 +266,6 @@ package body Alr.Commands.Toolchain is
            ("Specify the action to perform with the crate");
       end if;
 
-      --  if Cmd.S_Select and then Args.Count > 1 then
-      --     Reportaise_Wrong_Arguments
-      --       ("Toolchain installation accepts at most one argument");
-      --  end if;
-
       if Cmd.Local and then not (Cmd.S_Select or else Cmd.Disable) then
          Reportaise_Wrong_Arguments
            ("--local requires --select or --disable-assistant");
@@ -283,12 +273,8 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.Install_Dir.all /= "" and then not Cmd.Install then
          Reportaise_Wrong_Arguments
-           ("--install-dir only compatible --install action");
+           ("--install-dir is only compatible with --install action");
       end if;
-      --  if Cmd.Disable and then Args.Count /= 0 then
-      --     Reportaise_Wrong_Arguments
-      --       ("Disabling the assistant does not admit any extra arguments");
-      --  end if;
 
       --  Dispatch to subcommands
 
@@ -318,7 +304,7 @@ package body Alr.Commands.Toolchain is
                                         else Alire.Config.Global);
          else
             for Elt of Args loop
-               Install (Cmd, Args (1), Set_As_Default => True);
+               Install (Cmd, Elt, Set_As_Default => True);
             end loop;
          end if;
 

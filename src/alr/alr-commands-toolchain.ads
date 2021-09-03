@@ -35,12 +35,12 @@ package Alr.Commands.Toolchain is
           & "Adding --local will instead make the selection apply "
           & "only to the workspace (overridding a possible "
           & "configuration-wide selection). Giving one or more release"
-          & " argument will skip the assistant and set the release(s) as the"
+          & " argument will skip the assistant and set the release as the"
           & " default.")
        .New_Line
        .Append
-         ("Specify --install/--uninstall and one or more crate name(s) with"
-          & " optional version(s) set to make available or remove a tool.")
+         ("Specify --install/--uninstall and one or more crate name with"
+          & " optional version set to make available or remove a tool.")
        .New_Line
        .Append
          ("Run `" & TTY.Terminal ("alr help toolchains") & "` for further "

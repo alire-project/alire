@@ -27,7 +27,7 @@ assert_match(".*\n"  # Headers
              p.out)
 
 # Capture version
-version = re.search("[0-9.]+", p.out, re.MULTILINE).group()
+version = re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
 
 # When no compiler is selected, only the gnat_external one should be used
 # unless a targeted compiler dependency is used
@@ -42,13 +42,13 @@ match_solution(f"gnat={version} (gnat_external) (installed)", escape=True)
 # Check that adding a second dependency on native packaged compiler is honored.
 # Both dependencies should appear in the solution.
 alr_with("gnat_native")
-match_solution("gnat=2.0.0 (gnat_native) (installed)", escape=True)
-match_solution("gnat_native=2.0.0 (installed)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native) (installed)", escape=True)
+match_solution("gnat_native=8888.0.0 (installed)", escape=True)
 
 # The previous dependency also should have caused the installation of the
 # native compiler as an available compiler, which we will check:
 p = run_alr("toolchain")
-assert_match(".*gnat_native.*2.0.0.*Available.*",
+assert_match(".*gnat_native.*8888.0.0.*Available.*",
              p.out)
 
 # Move to a new crate
@@ -69,16 +69,16 @@ assert_match(".*gnat_cross_1.*9999.*Available.*",
 alr_with("gnat")
 match_solution(f"gnat={version} (gnat_external) (installed)", escape=True)
 
-# Depend on any gnat but the externally available. Since we have gnat_native=2
+# Depend on any gnat but the externally available. Since we have gnat_native=8888
 # and gnat_cross_1=9999, normal version comparison would select the cross
 # compiler, but native compilers take precedence. So the solution should
 # match v2.
 alr_with("gnat", delete=True, manual=False)
 alr_with(f"gnat/={version}")
-match_solution("gnat=2.0.0 (gnat_native)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 
 # If we uninstall the native compiler, the cross compiler will be preferred now
-run_alr("toolchain", "--uninstall", "gnat_native=2")
+run_alr("toolchain", "--uninstall", "gnat_native=8888")
 
 run_alr("update")
 match_solution("gnat=9999.0.0 (gnat_cross_1)", escape=True)
@@ -86,10 +86,10 @@ match_solution("gnat=9999.0.0 (gnat_cross_1)", escape=True)
 # Let's reinstall the newest native compiler and verify the previous situation
 run_alr("toolchain", "--install", "gnat_native")
 p = run_alr("toolchain")
-assert_match(".*gnat_native.*2.0.0.*Available.*",
+assert_match(".*gnat_native.*8888.0.0.*Available.*",
              p.out)
 run_alr("update")
-match_solution("gnat=2.0.0 (gnat_native)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native)", escape=True)
 
 # We can force the use of the cross-compiler by selecting it as default:
 run_alr("config", "--global",

@@ -1,9 +1,9 @@
 description = "Fake GNAT native crate"
 name = "gnat_native"
-version = "1.0.0"
+version = "8888.0.0"
 maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
-provides = ["gnat=1.0"]
+provides = ["gnat=8888.0"]
 
 # Test dynamic expression, but for all OSes
 [origin."case(os)"."..."]

@@ -20,8 +20,9 @@ assert_match(".*\n"  # Headers
              p.out)
 
 # Capture version
-version = re.search("[0-9.]+", p.out, re.MULTILINE).group()
+version = re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
 
+print(version)
 # When no compiler is selected, since the external one is available, it should
 # be used before offering to download a new compiler.
 
@@ -50,7 +51,7 @@ match_solution("gnat=1.0.0 (gnat_cross_2) (installed)", escape=True)
 
 run_alr("toolchain", "--install", "gnat_native")
 run_alr("update")
-match_solution("gnat=2.0.0 (gnat_native) (installed)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native) (installed)", escape=True)
 
 # If we remove the version exclusion, the external compiler will still be
 # preferred as there is no selected compiler yet.
@@ -61,7 +62,7 @@ match_solution(f"gnat={version} (gnat_external) (installed)", escape=True)
 
 # But, if the user selects a compiler as preferred, it will be used first
 
-run_alr("config", "--set", "toolchain.use.gnat", "gnat_cross_2=1.0.0")
+run_alr("config", "--set", "toolchain.use.gnat", "gnat_cross_2=7777.0.0")
 run_alr("update")
 match_solution("gnat=1.0.0 (gnat_cross_2) (installed)", escape=True)
 
