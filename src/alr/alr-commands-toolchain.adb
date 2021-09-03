@@ -318,7 +318,9 @@ package body Alr.Commands.Toolchain is
             Install (Cmd, Elt, Set_As_Default => False);
          end loop;
 
-      else
+      elsif not Cmd.Disable then
+
+         --  When no command is specified, print the list
          Cmd.List;
       end if;
 
