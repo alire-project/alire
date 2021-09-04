@@ -170,7 +170,7 @@ package body Alr.Commands.Init is
          Put_Line ("      when ""enabled"" => null;");
          Put_Line ("      when others =>");
          Put_Line ("         Runtime_Checks_Switches :=");
-         Put_Line ("           (""-gnatp""); -- Supress checks");
+         Put_Line ("           (""-gnatp""); -- Suppress checks");
          Put_Line ("   end case;");
          Put_New_Line;
          Put_Line ("   Style_Checks_Switches := ();");
