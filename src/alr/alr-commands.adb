@@ -374,6 +374,7 @@ package body Alr.Commands is
 
       if No_TTY then
          CLIC.TTY.Force_Disable_TTY;
+         Trace.Is_TTY := False;
       end if;
 
       if Platform.Operating_System not in Alire.Platforms.Windows and then
