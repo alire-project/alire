@@ -1,10 +1,6 @@
 with Ada.Containers;
-with Ada.Containers.Indefinite_Ordered_Sets;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Finalization;
-
-private with Ada.Strings.Fixed;
-private with Ada.Strings.Maps;
 
 package Alire.Utils with Preelaborate is
 
@@ -45,64 +41,6 @@ package Alire.Utils with Preelaborate is
 
    function Quote (S : String) return String;
 
-   function To_Lower_Case (S : String) return String;
-   function To_Upper_Case (S : String) return String;
-   function To_Mixed_Case (S : String) return String;
-
-   function Contains (Text : String; Sub : String) return Boolean;
-
-   function Crunch (Text : String) return String;
-   --  Remove consecutive spaces
-
-   function Head (Str : String; Separator : Character) return String;
-   --  if Str contains Separator, the lhs is returned
-   --  Otherwise Str is returned
-
-   function Tail (Str : String; Separator : Character) return String;
-   --  If Str contains Separator, the rhs is returned
-   --  Otherwise ""
-
-   function Trim (S : String; Target : Character := ' ') return String;
-   --  Remove Target at S extremes
-
-   function Starts_With (Full_String, Substring : String) return Boolean is
-     (Full_String'Length >= Substring'Length
-      and then Full_String
-        (Full_String'First
-         .. Full_String'First + Substring'Length - 1) = Substring);
-   --  Return whether Full_String starts with the given Substring
-
-   function Ends_With (Full_String, Substring : String) return Boolean is
-     (Full_String'Length >= Substring'Length
-      and then Full_String (Full_String'Last - Substring'Length + 1
-                            .. Full_String'Last) = Substring);
-   --  Return whether Full_String ends with the given Substring
-
-   function Replace (Text  : String;
-                     Match : String;
-                     Subst : String)
-                     return String;
-   --  Replace all occurrences of Match in Text with Subst
-
-   type Halves is (Head, Tail);
-
-   function Split (Text      : String;
-                   Separator : Character;
-                   Side      : Halves := Head;
-                   From      : Halves := Head;
-                   Count     : Positive := 1;
-                   Raises    : Boolean  := True) return String;
-   --  Split in two at seeing Count times the separator
-   --  Start the search according to From, and return Side at that point
-   --  If not enough separators are seen then raises or whole string
-
-   function Shorten (Text       : String;
-                     Max_Length : Natural;
-                     Trim_Side  : Halves := Head)
-                     return String with
-     Pre => Max_Length >= 5;
-   --  Replaces the given end with "(...)" if the text is too long
-
    function To_Native (Path : Any_Path) return String;
 
    generic
@@ -128,93 +66,9 @@ package Alire.Utils with Preelaborate is
    function Convert (V : Vector) return Other_Vector;
    --  Convert between two vector types
 
-   package String_Sets is new Ada.Containers.Indefinite_Ordered_Sets (String);
-   subtype String_Set is String_Sets.Set;
-   Empty_Set : String_Set renames String_Sets.Empty_Set;
-
-   --------------------
-   -- String_Vectors --
-   --------------------
-
-   --  To simplify somewhat managing lists of strings
-
-   package String_Vectors
-   is new Ada.Containers.Indefinite_Vectors (Positive, String);
-
-   type String_Vector is new String_Vectors.Vector with null record;
-
-   Empty_Vector : constant String_Vector;
-
-   function Append (V : String_Vector;
-                    S : String) return String_Vector;
-   --  Returns a copy of V with S appended at the end
-
-   function Append (L, R : String_Vector) return String_Vector;
-   --  Append R at the end of L.
-
-   procedure Append_Line (V : in out String_Vector;
-                          S : String;
-                          C : Ada.Containers.Count_Type := 1)
-                          renames Append;
-
-   function Append_To_Last_Line (V : String_Vector;
-                                 S : String)
-                                 return String_Vector;
-   --  Appends S to the last line in V. Does *not* add a new line. If V is
-   --  empty, then a vector with a single line equal to S is returned.
-
-   function Count (V : String_Vector) return Natural;
-   --  FSM do I hate the Containers.Count_Type...
-
-   function Flatten (V         : String_Vector;
-                     Separator : String := " ")
-                     return String;
-   --  Concatenate all elements
-
-   function Indent (V      : String_Vector;
-                    Spaces : String := "   ")
-                    return   String_Vector;
-
-   function New_Line (V : String_Vector) return String_Vector;
-   --  Append an empty line to V
-
-   function Split (S         : String;
-                   Separator : Character;
-                   Trim      : Boolean := False)
-                   return String_Vector;
-   --  Split a string in substrings at Separator positions. A Separator at
-   --  S'First or S'Last will result in an empty string also being included.
-   --  If Trim, whitespace is removed around entries.
-
-   function Tail (V : String_Vector) return String_Vector with
-     Pre => not V.Is_Empty or else
-     raise Checked_Error with "Cannot take tail of empty vector";
-   --  Return V without its first element. Practical for spawns that take
-   --  String_Vector for arguments.
-
-   not overriding
-   function To_Vector (S : String) return String_Vector;
-
-   procedure Write (V         : String_Vector;
-                    Filename  : Any_Path;
-                    Separator : String := ASCII.LF & "");
-   --  Dump contents to a given file
-
 private
 
-   Empty_Vector : constant String_Vector :=
-     (String_Vectors.Empty_Vector with null record);
-
-   function Count (V : String_Vector) return Natural
-   is (Natural (String_Vectors.Vector (V).Length));
-
-   function Quote (S : String) return String is
-     ("""" & S & """");
-
-   function Trim (S : String; Target : Character := ' ') return String is
-     (Ada.Strings.Fixed.Trim
-        (S,
-         Left  => Ada.Strings.Maps.To_Set (Target),
-         Right => Ada.Strings.Maps.To_Set (Target)));
+   function Quote (S : String) return String
+   is ("""" & S & """");
 
 end Alire.Utils;

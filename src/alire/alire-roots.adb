@@ -131,8 +131,8 @@ package body Alire.Roots is
                             & Utils.TTY.Name (Release.Name) & "/"
                             & TTY.URL (Gpr_File)
                             & (if Count > 1
-                              then " (" & Utils.Trim (Current'Image)
-                              & "/" & Utils.Trim (Count'Image) & ")"
+                              then " (" & AAA.Strings.Trim (Current'Image)
+                              & "/" & AAA.Strings.Trim (Count'Image) & ")"
                               else "")
                             & "...");
 
@@ -206,11 +206,11 @@ package body Alire.Roots is
 
    function Direct_Withs (This      : in out Root;
                           Dependent : Releases.Release)
-                          return Utils.String_Set
+                          return AAA.Strings.Set
    is
       Sol : Solutions.Solution renames This.Solution;
    begin
-      return Files : Utils.String_Set do
+      return Files : AAA.Strings.Set do
 
          --  Traverse direct dependencies of the given release
 
@@ -717,10 +717,10 @@ package body Alire.Roots is
    -- Project_Paths --
    -------------------
 
-   function Project_Paths (This : in out Root) return Utils.String_Set
+   function Project_Paths (This : in out Root) return AAA.Strings.Set
    is
       use Alire.OS_Lib;
-      Paths : Utils.String_Set;
+      Paths : AAA.Strings.Set;
    begin
 
       for Rel of This.Solution.Releases.Including (Release (This)) loop
@@ -741,7 +741,7 @@ package body Alire.Roots is
 
       --  To match the output of root crate paths and Ada.Directories full path
       --  normalization, a path separator in the last position is removed.
-      return Result : Utils.String_Set do
+      return Result : AAA.Strings.Set do
          for Path of Paths loop
             if Path'Length /= 0
               and then

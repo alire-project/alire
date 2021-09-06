@@ -1,5 +1,6 @@
+with AAA.Strings;
+
 with Alire.Errors;
-with Alire.Utils;
 
 private with URI;
 
@@ -86,7 +87,7 @@ package Alire.URI with Preelaborate is
 
    function Is_HTTP_Or_Git (This : URL) return Boolean
    is (Scheme (This) in Git | Pure_Git | HTTP
-       or else Alire.Utils.Ends_With (This, ".git"));
+       or else AAA.Strings.Has_Suffix (This, ".git"));
    --  Heuristic to detect a possible git remote. Implementation public so
    --  there is no doubt to what it does.
 
@@ -94,7 +95,7 @@ private
 
    package U renames Standard.URI;
 
-   function L (Str : String) return String renames Utils.To_Lower_Case;
+   function L (Str : String) return String renames AAA.Strings.To_Lower_Case;
 
    ---------------
    -- Authority --

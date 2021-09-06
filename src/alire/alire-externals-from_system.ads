@@ -2,7 +2,6 @@ private with Alire.Conditional_Trees;
 private with Alire.Interfaces;
 private with Alire.Platforms;
 private with Alire.TOML_Keys;
-private with Alire.Utils;
 
 private with TOML;
 
@@ -23,7 +22,7 @@ package Alire.Externals.From_System is
    overriding
    function Detail (This   : External;
                     Distro : Platforms.Distributions)
-                    return Utils.String_Vector;
+                    return AAA.Strings.Vector;
 
    overriding
    function Kind (This : External) return String is ("System package");
@@ -39,7 +38,7 @@ private
      new Interfaces.Classificable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable with record
-      Packages : Utils.String_Vector;
+      Packages : AAA.Strings.Vector;
    end record;
 
    overriding

@@ -9,7 +9,7 @@ package body Alire.VCSs.Git is
    -- Run_Git --
    -------------
 
-   procedure Run_Git (Arguments : Utils.String_Vector) is
+   procedure Run_Git (Arguments : AAA.Strings.Vector) is
    begin
       --  Make sure git is installed
       Utils.Tools.Check_Tool (Utils.Tools.Git);
@@ -21,8 +21,8 @@ package body Alire.VCSs.Git is
    -- Run_Git_And_Capture --
    -------------------------
 
-   function Run_Git_And_Capture (Arguments : Utils.String_Vector)
-                                 return Utils.String_Vector
+   function Run_Git_And_Capture (Arguments : AAA.Strings.Vector)
+                                 return AAA.Strings.Vector
    is
    begin
       --  Make sure git is installed
@@ -43,12 +43,12 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
         Run_Git_And_Capture (Empty_Vector & "branch");
    begin
       for Line of Output loop
          if Line'Length > 0 and then Line (Line'First) = '*' then
-            return Utils.Tail (Line, ' ');
+            return Tail (Line, ' ');
          end if;
       end loop;
 
@@ -81,17 +81,17 @@ package body Alire.VCSs.Git is
                    return Outcome
    is
       pragma Unreferenced (This);
-      Extra : constant String_Vector :=
+      Extra : constant Vector :=
                 Empty_Vector
                 & (if Log_Level < Trace.Info
                    then "-q"
                    else "--progress");
-      Depth_Opts : constant String_Vector :=
+      Depth_Opts : constant Vector :=
                      (if Depth /= 0 and then Commit (From) = ""
-                      then Empty_Vector & "--depth" & Utils.Trim (Depth'Image)
+                      then Empty_Vector & "--depth" & Trim (Depth'Image)
                                         & "--no-single-branch" -- but all tips
                    else Empty_Vector);
-      Branch_Opts : constant String_Vector :=
+      Branch_Opts : constant Vector :=
                       (if Branch /= ""
                        then Empty_Vector & "--branch" & Branch
                        else Empty_Vector);
@@ -135,7 +135,7 @@ package body Alire.VCSs.Git is
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
    begin
       declare
-         Output : constant Utils.String_Vector :=
+         Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture
                    (Empty_Vector
                     & "log" & Rev
@@ -166,11 +166,11 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture (Empty_Vector & "config" & "--list");
    begin
       for Line of Output loop
-         if Starts_With (Line, "remote." & Origin & ".url") then
+         if Has_Prefix (Line, "remote." & Origin & ".url") then
             declare
                URL : constant Alire.URL := Tail (Line, '=');
             begin
@@ -195,7 +195,7 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
         Run_Git_And_Capture (Empty_Vector & "status");
    begin
 
@@ -204,7 +204,7 @@ package body Alire.VCSs.Git is
       --  "HEAD detached at <commit>". Other changes come next.
 
       return not Output.Is_Empty
-        and then Utils.Contains (Output.First_Element, "HEAD detached");
+        and then Contains (Output.First_Element, "HEAD detached");
    end Is_Detached;
 
    function Is_Repository (This : VCS;
@@ -212,7 +212,7 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
-      Unused : Utils.String_Vector;
+      Unused : AAA.Strings.Vector;
    begin
       return
         OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
@@ -232,7 +232,7 @@ package body Alire.VCSs.Git is
                     return String is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture (Empty_Vector & "remote");
    begin
       if Output.Is_Empty then
@@ -255,7 +255,7 @@ package body Alire.VCSs.Git is
                            From : URL;
                            Ref  : String := "HEAD") return String
    is
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture (Empty_Vector & "ls-remote" & From);
    begin
       --  Sample output from git (space is tab):
@@ -282,7 +282,7 @@ package body Alire.VCSs.Git is
          Result    : String := Not_Found;
       begin
          for Line of Output loop
-            if Ends_With (Line, Ref) then
+            if Has_Suffix (Line, Ref) then
                if Result = Not_Found then
                   Result := Head (Line, ASCII.HT);
                else
@@ -315,7 +315,7 @@ package body Alire.VCSs.Git is
       --  human output it might break at any time I guess. Worst case, we would
       --  report an 'Ahead' as 'Dirty'.
 
-      Out_1 : constant Utils.String_Vector :=
+      Out_1 : constant AAA.Strings.Vector :=
         Run_Git_And_Capture (Empty_Vector & "status" & "--porcelain");
 
       Untracked_File : Natural := 0;
@@ -328,7 +328,7 @@ package body Alire.VCSs.Git is
             --  "git status" makes git to return a dirty tree. We filter these
             --  out then.
             null;
-         elsif Starts_With (Line, "??") then
+         elsif Has_Prefix (Line, "??") then
             Untracked_File := Untracked_File + 1;
          else
             Tracked_File := Tracked_File + 1;
@@ -368,12 +368,12 @@ package body Alire.VCSs.Git is
    function Transform_To_Public (Remote : String) return URL is
       Domain : constant String := Head (Tail (Remote, '@'), ':');
    begin
-      if Starts_With (Remote, "git@") and then
+      if Has_Prefix (Remote, "git@") and then
         Known_Transformable_Hosts.Contains (Domain)
       then
          return  Public : constant URL :=
            "https://" & Domain & "/" & Tail (Remote, ':')
-           & (if Ends_With (Remote, ".git")
+           & (if Has_Suffix (Remote, ".git")
               then ""
               else ".git")
          do
@@ -406,7 +406,7 @@ package body Alire.VCSs.Git is
    is
       Guard : Directories.Guard (Directories.Enter (Repo))
         with Unreferenced;
-      Extra : constant String_Vector :=
+      Extra : constant Vector :=
                 (if Log_Level < Trace.Info
                  then Empty_Vector & "-q"
                  else Empty_Vector & "--progress");
@@ -458,7 +458,7 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Run_Git_And_Capture
                    (Empty_Vector
                     & "log" & "-n1" & "--oneline" & "--no-abbrev-commit");

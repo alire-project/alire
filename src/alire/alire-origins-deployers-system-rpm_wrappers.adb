@@ -1,5 +1,6 @@
+with AAA.Strings; use AAA.Strings;
+
 with Alire.OS_Lib.Subprocess;
-with Alire.Utils;             use Alire.Utils;
 with Alire.Errors;
 
 with GNAT.Regpat;
@@ -27,7 +28,7 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
       Wrapper : constant String := Wrapper_Command (This);
 
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Subprocess.Checked_Spawn_And_Capture
                    (Wrapper,
                     Empty_Vector &
@@ -65,7 +66,7 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
       Wrapper : constant String := Wrapper_Command (This);
 
-      Output    : constant Utils.String_Vector :=
+      Output    : constant AAA.Strings.Vector :=
         Subprocess.Checked_Spawn_And_Capture
           (Wrapper,
            Empty_Vector &

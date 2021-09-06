@@ -219,7 +219,7 @@ package body Alire.TOML_Adapters is
       end if;
 
       for Pair of Queue.Value.Iterate_On_Table loop
-         if Utils.Starts_With (+Pair.Key, Prefix) then
+         if AAA.Strings.Has_Prefix (+Pair.Key, Prefix) then
             return Key : constant String := +Pair.Key do
                Value := Pair.Value;
                Queue.Value.Unset (Pair.Key);
@@ -354,7 +354,7 @@ package body Alire.TOML_Adapters is
    -- "+" --
    ---------
 
-   function "+" (Vect : Utils.String_Vector) return TOML.TOML_Value is
+   function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value is
       Result : constant TOML.TOML_Value := TOML.Create_Array;
    begin
       for Str of Vect loop
@@ -399,10 +399,9 @@ package body Alire.TOML_Adapters is
    -- To_Vector --
    ---------------
 
-   function To_Vector (Val : TOML.TOML_Value) return Utils.String_Vector is
-      use Alire.Utils;
+   function To_Vector (Val : TOML.TOML_Value) return AAA.Strings.Vector is
 
-      Result : String_Vector := Empty_Vector;
+      Result : Vector := Empty_Vector;
    begin
       for I in 1 .. Val.Length loop
          Result.Append (Val.Item (I).As_String);

@@ -462,6 +462,8 @@ package body Alire.Conditional_Trees is
                             Key   : String;
                             Val   : TOML.TOML_Value)
    is
+      use AAA.Strings;
+
       --  Add one property to the parent table.
       --  Atomic values are automatically converted into arrays, if
       --    more than one for the same key appears (e.g., executables)
@@ -478,9 +480,9 @@ package body Alire.Conditional_Trees is
 
       if (for some Char of Key => Char = '.') then
          Tree_TOML_Add (Table,
-                        Key => Utils.Head (Key, '.'),
+                        Key => Head (Key, '.'),
                         Val => TOML_Adapters.Create_Table
-                          (Utils.Tail (Key, '.'), Val));
+                          (Tail (Key, '.'), Val));
          return;
       end if;
 

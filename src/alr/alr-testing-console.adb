@@ -1,5 +1,4 @@
 with Alr.Commands.Version;
-with Alr.Utils;
 
 with GNAT.IO; use GNAT.IO;
 
@@ -36,7 +35,7 @@ package body Alr.Testing.Console is
              " UNAV:" & This.Results (Unavailable)'Img &
              " UNRS:" & This.Results (Unresolvable)'Img &
              " CURR:" & This.Current'Img & "/" &
-             Utils.Trim (This.Tests'Img) & " " & Rel.Milestone.Image);
+             AAA.Strings.Trim (This.Tests'Img) & " " & Rel.Milestone.Image);
    end Start_Test;
 
    --------------
@@ -48,7 +47,7 @@ package body Alr.Testing.Console is
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
                        Elapsed :        Duration;
-                       Log     :        Utils.String_Vector)
+                       Log     :        AAA.Strings.Vector)
    is
       pragma Unreferenced (Rel, Log);
       type CS is delta 0.01 digits 6;

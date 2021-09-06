@@ -1,5 +1,5 @@
 with Alire.OS_Lib.Subprocess;
-with Alire.Utils;
+with AAA.Strings; use AAA.Strings;
 
 with GNAT.Regpat;
 
@@ -44,8 +44,7 @@ package body Alire.Platform is
          return Cached_Distro;
       else
          declare
-            use Utils;
-            Release : constant Utils.String_Vector :=
+            Release : constant AAA.Strings.Vector :=
                         Subprocess.Checked_Spawn_And_Capture
                 ("cat", Empty_Vector & OS_Identity_File);
 
@@ -70,7 +69,7 @@ package body Alire.Platform is
                      Normalized : constant String :=
                        To_Lower_Case (Line);
 
-                     Values : String_Vector;
+                     Values : AAA.Strings.Vector;
                   begin
                      Match (Regexp, Normalized, Matches);
                      if Matches (1) /= No_Match then

@@ -115,7 +115,7 @@ package body Alire.Crate_Configuration is
                         Conf_Dir / (+Rel.Name & "_config.gpr"),
                         (if Ent.Auto_GPR_With
                          then Root.Direct_Withs (Rel)
-                         else Alire.Utils.Empty_Set),
+                         else AAA.Strings.Empty_Set),
                         Version_Str);
                   end if;
 
@@ -170,7 +170,7 @@ package body Alire.Crate_Configuration is
                     " Missing call to Use_Default_Values()?");
             end if;
 
-            if Alire.Utils.Starts_With (Key, +Crate & ".") then
+            if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
                TIO.New_Line (File);
                TIO.Put_Line (File, Type_Def.To_Ada_Declaration (Elt.Value));
             end if;
@@ -188,7 +188,7 @@ package body Alire.Crate_Configuration is
    procedure Generate_GPR_Config (This     : Global_Config;
                                   Crate    : Crate_Name;
                                   Filepath : Absolute_Path;
-                                  Withs    : Alire.Utils.String_Set;
+                                  Withs    : AAA.Strings.Set;
                                   Version  : String)
    is
       File : TIO.File_Type;
@@ -223,7 +223,7 @@ package body Alire.Crate_Configuration is
                     " Missing call to Use_Default_Values()?");
             end if;
 
-            if Alire.Utils.Starts_With (Key, +Crate & ".") then
+            if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
                TIO.New_Line (File);
                TIO.Put_Line (File, Type_Def.To_GPR_Declaration (Elt.Value));
             end if;
@@ -274,7 +274,7 @@ package body Alire.Crate_Configuration is
                     " Missing call to Use_Default_Values()?");
             end if;
 
-            if Alire.Utils.Starts_With (Key, +Crate & ".") then
+            if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
                TIO.New_Line (File);
                TIO.Put_Line (File, Type_Def.To_C_Declaration (Elt.Value));
             end if;

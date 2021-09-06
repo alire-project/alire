@@ -3,6 +3,7 @@ with Ada.Directories;
 
 with Alire.Environment;
 with Alire.Platform;
+with Alire.Utils;
 
 with GNAT.Regexp;
 
@@ -11,6 +12,7 @@ with TOML.File_IO;
 package body Alire.Config.Edit is
 
    use Ada.Strings.Unbounded;
+   use AAA.Strings;
    use TOML;
 
    type String_Access is access String;
@@ -51,7 +53,7 @@ package body Alire.Config.Edit is
    -----------------------
 
    procedure Remove_From_Table (Table : TOML_Value; Key : Config_Key) is
-      Id   : constant String := Utils.Split (Key, '.', Raises => False);
+      Id   : constant String := Split (Key, '.', Raises => False);
       Leaf : constant Boolean := Id = Key;
    begin
       if not Table.Has (Id) then
@@ -66,7 +68,7 @@ package body Alire.Config.Edit is
             Sub : constant TOML_Value := Table.Get (Id);
          begin
             if Sub.Kind = TOML_Table then
-               Remove_From_Table (Sub, Utils.Split (Key, '.', Utils.Tail));
+               Remove_From_Table (Sub, Split (Key, '.', Tail));
             else
                raise Program_Error;
             end if;
@@ -82,7 +84,7 @@ package body Alire.Config.Edit is
                            Key   : Config_Key;
                            Val   : TOML_Value)
    is
-      Id   : constant String := Utils.Split (Key, '.', Raises => False);
+      Id   : constant String := Split (Key, '.', Raises => False);
       Leaf : constant Boolean := Id = Key;
    begin
       if Leaf then
@@ -99,7 +101,7 @@ package body Alire.Config.Edit is
          Sub : constant TOML_Value := Table.Get (Id);
       begin
          if Sub.Kind = TOML_Table then
-            Add_In_Table (Sub, Utils.Split (Key, '.', Utils.Tail), Val);
+            Add_In_Table (Sub, Split (Key, '.', Tail), Val);
          else
             Raise_Checked_Error ("Configuration key already defined");
          end if;
@@ -458,7 +460,6 @@ package body Alire.Config.Edit is
    -------------------
 
    function Builtins_Info return AAA.Strings.Vector is
-      use AAA.Strings;
       Results : AAA.Strings.Vector;
    begin
       for Ent of Builtins loop

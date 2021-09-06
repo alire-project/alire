@@ -1,5 +1,7 @@
 with Ada.Directories;
 
+with AAA.Strings;
+
 with Alire.Root;
 with Alire.URI;
 with Alire.Utils.TTY;
@@ -283,17 +285,17 @@ package body Alire.Origins is
    --------------------
 
    function Archive_Format (Name : String) return Source_Archive_Format is
-      use Utils;
+      use AAA.Strings;
    begin
-      if Ends_With (Name, ".zip") then
+      if Has_Suffix (Name, ".zip") then
          return Zip_Archive;
 
-      elsif Ends_With (Name, ".tar")
-        or else Ends_With (Name, ".tar.gz")
-        or else Ends_With (Name, ".tgz")
-        or else Ends_With (Name, ".tar.bz2")
-        or else Ends_With (Name, ".tbz2")
-        or else Ends_With (Name, ".tar.xz")
+      elsif Has_Suffix (Name, ".tar")
+        or else Has_Suffix (Name, ".tar.gz")
+        or else Has_Suffix (Name, ".tgz")
+        or else Has_Suffix (Name, ".tar.bz2")
+        or else Has_Suffix (Name, ".tbz2")
+        or else Has_Suffix (Name, ".tar.xz")
       then
          return Tarball;
 
@@ -362,20 +364,21 @@ package body Alire.Origins is
    -------------
 
    function New_VCS (URL : Alire.URL; Commit : String) return Origin is
+      use AAA.Strings;
       use all type URI.Schemes;
       Scheme      : constant URI.Schemes := URI.Scheme (URL);
       Transformed : constant Alire.URL := VCSs.Git.Transform_To_Public (URL);
       VCS_URL : constant String :=
-                  (if Utils.Contains (URL, "file:") then
-                      Utils.Tail (URL, ':') -- Remove file: that confuses git
-                   elsif Utils.Starts_With (URL, "git@") and then
+                  (if Contains (URL, "file:") then
+                      Tail (URL, ':') -- Remove file: that confuses git
+                   elsif Has_Prefix (URL, "git@") and then
                       Transformed /= URL -- known and transformable
                    then
                       Transformed
                    elsif Scheme in URI.VCS_Schemes then
-                      Utils.Tail (URL, '+') -- remove prefix vcs+
+                      Tail (URL, '+') -- remove prefix vcs+
                    elsif Scheme in URI.HTTP then -- A plain URL... check VCS
-                     (if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git")
+                     (if Has_Suffix (To_Lower_Case (URL), ".git")
                       then URL
                       elsif VCSs.Git.Known_Transformable_Hosts.Contains
                         (URI.Authority (URL))
@@ -508,7 +511,7 @@ package body Alire.Origins is
       --  continue loading normally.
 
       if (for some Key of Table.Unwrap.Keys =>
-            Utils.Starts_With (+Key, "case("))
+            AAA.Strings.Has_Prefix (+Key, "case("))
         or else
           (Table.Unwrap.Has (Keys.Binary) and then
            Table.Unwrap.Get (Keys.Binary).As_Boolean)
@@ -603,7 +606,7 @@ package body Alire.Origins is
             if Hashed then
                return Table.Failure
                  ("hashes cannot be provided for origins of kind "
-                  & Utils.To_Mixed_Case (This.Kind'Img));
+                  & AAA.Strings.To_Mixed_Case (This.Kind'Img));
             end if;
          end case;
 
@@ -675,7 +678,7 @@ package body Alire.Origins is
    function Short_Unique_Id (This : Origin) return String
    is (Short_Commit
          (if This.Kind in Source_Archive | Binary_Archive
-          then Utils.Tail (String (This.Get_Hashes.First_Element), ':')
+          then AAA.Strings.Tail (String (This.Get_Hashes.First_Element), ':')
           else This.Commit));
 
    -------------
@@ -693,17 +696,18 @@ package body Alire.Origins is
          when VCS_Kinds =>
             Table.Set (Keys.URL,
                        +(Prefixes (This.Kind).all
-                       & (if URI.Scheme (This.URL) in URI.None
+                         & (if URI.Scheme (This.URL) in URI.None
                            --  not needed for remote repos, but for testing
                            --  ones used locally:
-                          then "file:"
-                          else "")
-                       & This.URL));
+                           then "file:"
+                           else "")
+                         & This.URL));
             Table.Set (Keys.Commit, +This.Commit);
 
          when External =>
             Table.Set (Keys.URL,
-                       +(Prefixes (This.Kind).all & (+This.Data.Description)));
+                       +(Prefixes (This.Kind).all &
+                         (+This.Data.Description)));
 
          when Binary_Archive =>
             Table := TOML.Merge (Table,

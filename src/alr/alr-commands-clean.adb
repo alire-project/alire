@@ -5,7 +5,6 @@ with Alire.Directories;
 with Alire.GPR;
 with Alire.Paths;
 with Alire.Spawn;
-with Alire.Utils;
 
 with Alr.Platform;
 
@@ -124,7 +123,7 @@ package body Alr.Commands.Clean is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use Alire.Utils;
+      use AAA.Strings;
    begin
 
       if Args.Count /= 0 then

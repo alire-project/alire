@@ -6,7 +6,7 @@ package body Alire.Hashes is
 
    function Digest (Hash : Any_Hash) return Any_Digest is
    begin
-      return Any_Digest (Utils.Tail (String (Hash), ':'));
+      return Any_Digest (Tail (String (Hash), ':'));
    exception
       when E : others =>
          Log_Exception (E);

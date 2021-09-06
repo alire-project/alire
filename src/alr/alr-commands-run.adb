@@ -6,7 +6,7 @@ with Alr.Commands.Build;
 with Alr.Files;
 with Alr.OS_Lib;
 with Alr.Platform;
-with Alr.Utils;
+with Alire.Utils;
 
 with GNAT.OS_Lib;
 
@@ -26,7 +26,7 @@ package body Alr.Commands.Run is
                            Exe_Name : String) is
       use Ada.Text_IO;
 
-      Found_At : constant Utils.String_Vector :=
+      Found_At : constant AAA.Strings.Vector :=
         Files.Locate_File_Under (Cmd.Root.Path,
                                  Exe_Name, Max_Depth => Max_Search_Depth);
    begin
@@ -53,7 +53,7 @@ package body Alr.Commands.Run is
       use type GNAT.Strings.String_Access;
 
       Name       : constant String := Cmd.Root.Release.Name_Str;
-      Declared   : constant Utils.String_Vector :=
+      Declared   : constant AAA.Strings.Vector :=
                      Cmd.Root.Release.Executables (Platform.Properties);
 
       ----------
@@ -62,7 +62,7 @@ package body Alr.Commands.Run is
       --  List declared/found executables
 
       procedure List is
-         Candidates : constant Utils.String_Vector := Files.Locate_File_Under
+         Candidates : constant AAA.Strings.Vector := Files.Locate_File_Under
            (Cmd.Root.Path,
             Cmd.Root.Release.Default_Executable,
             Max_Depth => Max_Search_Depth);
@@ -119,7 +119,7 @@ package body Alr.Commands.Run is
       end if;
 
       declare
-         Declared : Utils.String_Vector;
+         Declared : AAA.Strings.Vector;
       begin
          Declared := Cmd.Root.Release.Executables (Platform.Properties);
 
@@ -182,11 +182,12 @@ package body Alr.Commands.Run is
             Target : constant String :=
               (if Alire.OS_Lib.Exe_Suffix /= ""
                 and then
-                 not Utils.Contains (Target_WO_Ext, Alire.OS_Lib.Exe_Suffix)
+                 not AAA.Strings.Contains (Target_WO_Ext,
+                   Alire.OS_Lib.Exe_Suffix)
                then Target_WO_Ext & Alire.OS_Lib.Exe_Suffix
                else Target_WO_Ext);
 
-            Target_Exes : Utils.String_Vector :=
+            Target_Exes : AAA.Strings.Vector :=
                             Files.Locate_File_Under
                               (Cmd.Root.Path,
                                Target,
@@ -210,7 +211,7 @@ package body Alr.Commands.Run is
 
             if Target_Exes.Is_Empty then
                Reportaise_Command_Failed
-                 ("Executable " & Utils.Quote (Target) & " not found");
+                 ("Executable " & Alire.Utils.Quote (Target) & " not found");
             elsif Natural (Target_Exes.Length) > 1 then
                Trace.Error ("Too many candidates found:");
                for Candid of Target_Exes loop

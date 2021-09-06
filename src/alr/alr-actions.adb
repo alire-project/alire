@@ -20,8 +20,8 @@ package body Alr.Actions is
 
       Guard : Folder_Guard (Enter_Folder (This.Working_Folder))
         with Unreferenced;
-      Cmd  : constant String_Vector := This.Command_Line;
-      Args : String_Vector := Cmd;
+      Cmd  : constant AAA.Strings.Vector := This.Command_Line;
+      Args : AAA.Strings.Vector := Cmd;
    begin
       Args.Delete_First;
 

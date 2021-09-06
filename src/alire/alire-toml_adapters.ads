@@ -1,8 +1,7 @@
 private with Ada.Finalization;
 
-with Alire.Utils;
-
 with TOML; use all type TOML.Any_Value_Kind;
+with AAA.Strings; use AAA.Strings;
 
 package Alire.TOML_Adapters with Preelaborate is
 
@@ -128,7 +127,7 @@ package Alire.TOML_Adapters with Preelaborate is
    function "+" (S : String) return TOML.TOML_Value is
       (TOML.Create_String (S));
 
-   function "+" (Vect : Utils.String_Vector) return TOML.TOML_Value;
+   function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value;
 
    function To_Array (V : TOML.TOML_Value) return TOML.TOML_Value with
      Pre  => V.Kind in TOML.Atom_Value_Kind or V.Kind = TOML.TOML_Array,
@@ -149,7 +148,7 @@ package Alire.TOML_Adapters with Preelaborate is
    --  Take some enumeration image and turn it into a TOML-style key, replacing
    --  every "_" with a "-" and in lower case.
 
-   function To_Vector (Val : TOML.TOML_Value) return Utils.String_Vector
+   function To_Vector (Val : TOML.TOML_Value) return AAA.Strings.Vector
      with
        Pre => Val.Kind = TOML.TOML_Array;
    --  Take a TOML value and turn it into a vector of strings
@@ -209,12 +208,12 @@ private
    -----------
 
    function Adafy (Key : String) return String is
-     (if Utils.To_Lower_Case (Key) = "others"
-      then Utils.To_Lower_Case (Key)
+     (if To_Lower_Case (Key) = "others"
+      then To_Lower_Case (Key)
       else
-      Utils.To_Mixed_Case
-        (Utils.Replace
-             (Utils.Replace
+      To_Mixed_Case
+        (Replace
+             (Replace
                   (Key,
                    Match => "-",
                    Subst => "_"),
@@ -225,8 +224,8 @@ private
    ----------------------
 
    function Tomify (Image : String) return String is
-     (Utils.Replace
-        (Utils.To_Lower_Case (Image),
+     (Replace
+        (To_Lower_Case (Image),
          Match => "_",
          Subst => "-"));
 
@@ -236,8 +235,8 @@ private
 
    function Tomify_Enum (E : Enum) return TOML.TOML_Value is
      (TOML.Create_String
-        (Utils.Replace
-             (Utils.To_Lower_Case (E'Img),
+        (Replace
+             (To_Lower_Case (E'Img),
               Match => "_",
               Subst => "-")));
 

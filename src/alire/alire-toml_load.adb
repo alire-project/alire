@@ -4,11 +4,12 @@ with Alire.Errors;
 with Alire.Platforms;
 with Alire.Properties.From_TOML;
 with Alire.TOML_Keys;
-with Alire.Utils;
 
 with TOML.File_IO;
 
 package body Alire.TOML_Load is
+
+   use AAA.Strings;
 
    --  Instantiate loaders at library level
 
@@ -63,8 +64,8 @@ package body Alire.TOML_Load is
                           Result : TOML.Read_Result) return String
    is ((+Result.Message) & " at "
         & File & ":"
-        & Utils.Trim (Result.Location.Line'Img) & ":"
-        & Utils.Trim (Result.Location.Column'Img));
+        & Trim (Result.Location.Line'Img) & ":"
+        & Trim (Result.Location.Column'Img));
 
    ------------------------
    -- Load_Crate_Section --

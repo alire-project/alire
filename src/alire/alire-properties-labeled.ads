@@ -152,7 +152,7 @@ private
 
    overriding
    function Image (L : Label) return String
-   is (Utils.To_Mixed_Case (L.Name'Img) & ": " & L.Value);
+   is (AAA.Strings.To_Mixed_Case (L.Name'Img) & ": " & L.Value);
 
    overriding
    function To_YAML (L : Label) return String

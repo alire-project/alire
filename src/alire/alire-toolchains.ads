@@ -81,10 +81,10 @@ private
    --------------
    --  Construct the "toolchain.use.crate" keys
    function Tool_Key (Crate : Crate_Name) return Config.Config_Key
-   is (if Utils.Starts_With (Crate.As_String, "gnat_")
+   is (if AAA.Strings.Has_Prefix (Crate.As_String, "gnat_")
        then Tool_Key (GNAT_Crate)
        else Config.Config_Key
-              (String (Config.Keys.Toolchain_Use) & "." & Crate.As_String));
+              (Config.Keys.Toolchain_Use & "." & Crate.As_String));
 
    --------------------
    -- Tool_Milestone --

@@ -1,6 +1,7 @@
+with AAA.Strings;
+
 with Alire.Properties;
 with Alire.Releases;
-with Alire.Utils;
 
 package Alire.Properties.Actions.Executor is
 
@@ -17,8 +18,8 @@ package Alire.Properties.Actions.Executor is
       Capture    : Boolean;
       Err_To_Out : Boolean;
       Code       : out Integer;
-      Output     : out Utils.String_Vector;
-      Prefix     : Utils.String_Vector := Utils.Empty_Vector);
+      Output     : out AAA.Strings.Vector;
+      Prefix     : AAA.Strings.Vector := AAA.Strings.Empty_Vector);
    --  More general invocation. Prefix is prepended to the command (e.g., for
    --  dockerization). When capture is true, the rest of parameters are also
    --  used; otherwise output goes untouched straight to console.

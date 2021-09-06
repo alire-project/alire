@@ -1,5 +1,4 @@
 with Ada.Directories;
-with Ada.Strings.Fixed;
 with Ada.Text_IO;
 
 with Alire.Config;
@@ -21,6 +20,7 @@ with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
 with TOML.File_IO;
+with Ada.Strings.Fixed;
 
 package body Alire.Releases is
 
@@ -85,7 +85,7 @@ package body Alire.Releases is
    begin
       for Dep of This.Flat_Dependencies loop
          if Config.Get (Config.Keys.Warning_Caret, Default => True) and then
-           Utils.Contains (Dep.Versions.Image, "^0")
+           AAA.Strings.Contains (Dep.Versions.Image, "^0")
          then
             Warnings.Warn_Once
               ("Possible tilde intended instead of caret for a 0.x version."
@@ -493,12 +493,12 @@ package body Alire.Releases is
 
    function Props_To_Strings (Props : Alire.Properties.Vector;
                     Label : Alire.Properties.Labeled.Labels)
-                    return Utils.String_Vector is
+                    return AAA.Strings.Vector is
       --  Extract values of a particular label
       Filtered : constant Alire.Properties.Vector :=
                    Alire.Properties.Labeled.Filter (Props, Label);
    begin
-      return Strs : Utils.String_Vector do
+      return Strs : AAA.Strings.Vector do
          for P of Filtered loop
             Strs.Append (Alire.Properties.Labeled.Label (P).Value);
          end loop;
@@ -528,14 +528,14 @@ package body Alire.Releases is
 
    function Executables (R : Release;
                          P : Alire.Properties.Vector)
-                         return Utils.String_Vector
+                         return AAA.Strings.Vector
    is
-      Exes : constant Utils.String_Vector :=
+      Exes : constant AAA.Strings.Vector :=
         Props_To_Strings (R.All_Properties (P), Executable);
    begin
       if OS_Lib.Exe_Suffix /= "" then
          declare
-            With_Suffix : Utils.String_Vector;
+            With_Suffix : AAA.Strings.Vector;
          begin
             for I in Exes.Iterate loop
                With_Suffix.Append (Exes (I) & OS_Lib.Exe_Suffix);
@@ -553,13 +553,13 @@ package body Alire.Releases is
    function Project_Files (R         : Release;
                            P         : Alire.Properties.Vector;
                            With_Path : Boolean)
-                           return Utils.String_Vector
+                           return AAA.Strings.Vector
    is
-      use Utils;
+      use AAA.Strings;
 
-      With_Paths : Utils.String_Vector :=
+      With_Paths : AAA.Strings.Vector :=
         Props_To_Strings (R.All_Properties (P), Project_File);
-      Without    : Utils.String_Vector;
+      Without    : AAA.Strings.Vector;
    begin
       if With_Paths.Is_Empty
         and then
@@ -594,14 +594,15 @@ package body Alire.Releases is
 
    function Project_Paths (R         : Release;
                            P         : Alire.Properties.Vector)
-                           return      Utils.String_Set
+                           return      AAA.Strings.Set
    is
-      use Utils;
       use Ada.Strings;
-      Files : constant String_Vector :=
+      use AAA.Strings;
+
+      Files : constant AAA.Strings.Vector :=
         Project_Files (R, P, With_Path => True);
    begin
-      return Paths : String_Set do
+      return Paths : AAA.Strings.Set do
          for File of Files loop
             if Contains (File, "/") then
                Paths.Include
@@ -638,7 +639,7 @@ package body Alire.Releases is
 
    function Has_Property (R : Release; Key : String) return Boolean
    is (for some Prop of Conditional.Enumerate (R.Properties) =>
-          Prop.Key = Utils.To_Lower_Case (Key));
+          Prop.Key = AAA.Strings.To_Lower_Case (Key));
 
    ------------------------
    -- Labeled_Properties --
@@ -659,7 +660,7 @@ package body Alire.Releases is
    function Labeled_Properties (R     : Release;
                                 P     : Alire.Properties.Vector;
                                 Label : Alire.Properties.Labeled.Labels)
-                                return Utils.String_Vector
+                                return AAA.Strings.Vector
    is
    begin
       return Props_To_Strings (R.All_Properties (P), Label);
@@ -733,7 +734,7 @@ package body Alire.Releases is
    -----------------------
 
    function Property_Contains (R : Release; Str : String) return Boolean is
-      use Utils;
+      use AAA.Strings;
 
       Search : constant String := To_Lower_Case (Str);
    begin
@@ -741,11 +742,11 @@ package body Alire.Releases is
          declare
             Text : constant String :=
                      To_Lower_Case
-                       ((if Utils.Contains (P.Image, ":")
-                        then Utils.Tail (P.Image, ':')
+                       ((if Contains (P.Image, ":")
+                        then Tail (P.Image, ':')
                         else P.Image));
          begin
-            if Utils.Contains (Text, Search) then
+            if Contains (Text, Search) then
                return True;
             end if;
          end;
@@ -1041,7 +1042,7 @@ package body Alire.Releases is
    begin
       if not Descr.Is_Empty then
          --  Image returns "Description: Blah" so we have to cut.
-         return Utils.Tail (Descr.First_Element.Image, ' ');
+         return AAA.Strings.Tail (Descr.First_Element.Image, ' ');
       else
          return "";
       end if;
@@ -1065,9 +1066,8 @@ package body Alire.Releases is
       ---------------
 
       function Is_Native (This : Release) return Boolean is
-         use Utils;
       begin
-         return Ends_With (This.Name.As_String, "_native");
+         return AAA.Strings.Has_Suffix (This.Name.As_String, "_native");
          --  A lil' bit of magic to recognize the native compilers
       end Is_Native;
 

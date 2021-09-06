@@ -1,4 +1,4 @@
-with Alire.Utils;
+with AAA.Strings; use AAA.Strings;
 
 package Alire.Hashes with Preelaborate is
 
@@ -69,7 +69,7 @@ private
 
    function Is_Known (Kind_Img : String) return Boolean is
      (for some Kind in Kinds =>
-         Utils.To_Lower_Case (Kind'Img) = Utils.To_Lower_Case (Kind_Img));
+         To_Lower_Case (Kind'Img) = To_Lower_Case (Kind_Img));
 
    --------------------
    -- Is_Well_Formed --
@@ -77,20 +77,20 @@ private
 
    function Is_Well_Formed (Hash_Img : String) return Boolean is
      (for some Char of Hash_Img => Char = ':' and then
-      Is_Known (Utils.Head (Hash_Img, ':')));
+      Is_Known (Head (Hash_Img, ':')));
 
    ----------
    -- Kind --
    ----------
 
    function Kind (Hash : Any_Hash) return Kinds is
-     (Kinds'Value (Utils.Head (String (Hash), ':')));
+     (Kinds'Value (Head (String (Hash), ':')));
 
    --------------
    -- New_Hash --
    --------------
 
    function New_Hash (Kind : Kinds; Digest : Any_Digest) return Any_Hash is
-     (Any_Hash (Utils.To_Lower_Case (Kind'Img) & ":" & String (Digest)));
+     (Any_Hash (String'(To_Lower_Case (Kind'Img) & ":" & String (Digest))));
 
 end Alire.Hashes;

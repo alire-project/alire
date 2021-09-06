@@ -1,10 +1,10 @@
 with Ada.Containers.Vectors;
 
 with Alire.Directories;
-private with Alire.Utils;
 
 private with GNATCOLL.OS.Constants;
 with GNATCOLL.VFS;
+with AAA.Strings; use AAA.Strings;
 
 package Alire.VFS is
 
@@ -94,7 +94,7 @@ private
    function To_Portable (Path : Relative_Path) return Portable_Path
    is (case GNATCOLL.OS.Constants.OS is
           when MacOS | Unix => Portable_Path (Path),
-          when Windows      => Portable_Path (Utils.Replace (Path, "\", "/")));
+          when Windows      => Portable_Path (Replace (Path, "\", "/")));
 
    ---------------
    -- To_Native --
@@ -104,6 +104,6 @@ private
    is (case GNATCOLL.OS.Constants.OS is
           when MacOS | Unix => Relative_Path (Path),
           when Windows      => Relative_Path
-                                 (Utils.Replace (String (Path), "/", "\")));
+                                 (Replace (String (Path), "/", "\")));
 
 end Alire.VFS;

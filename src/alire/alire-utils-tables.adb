@@ -6,7 +6,7 @@ package body Alire.Utils.Tables is
 
    procedure Header (T : in out Table; Cell : String) is
    begin
-      T.Append (TTY.Emph (To_Upper_Case (Cell)));
+      T.Append (TTY.Emph (AAA.Strings.To_Upper_Case (Cell)));
    end Header;
 
    -----------

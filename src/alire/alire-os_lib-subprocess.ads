@@ -1,4 +1,4 @@
-with Alire.Utils;
+with AAA.Strings;
 
 package Alire.OS_Lib.Subprocess is
 
@@ -9,7 +9,7 @@ package Alire.OS_Lib.Subprocess is
 
    procedure Checked_Spawn
      (Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False);
    --  Either succeeds or raises Checked_Error with the code and output as
    --  info.
@@ -19,18 +19,18 @@ package Alire.OS_Lib.Subprocess is
 
    function Checked_Spawn_And_Capture
      (Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
       Err_To_Out          : Boolean := False;
-      Valid_Exit_Codes    : Code_Array := (1 => 0)) return Utils.String_Vector;
+      Valid_Exit_Codes    : Code_Array := (1 => 0)) return AAA.Strings.Vector;
    --  Either succeeds or raises Checked_Error with the code and output as
    --  info. Output is captured and returned on success. The exit code is
    --  checked against the Valid_Exit_Codes.
 
    function Unchecked_Spawn_And_Capture
      (Command             : String;
-      Arguments           : Utils.String_Vector;
-      Output              : in out Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
+      Output              : in out AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
       Err_To_Out          : Boolean := False) return Integer;
    --  Returns the output and exit code of the spawned command

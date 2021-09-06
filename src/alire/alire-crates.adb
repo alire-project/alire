@@ -18,9 +18,9 @@ package body Alire.Crates is
    function Naming_Convention return AAA.Strings.Vector is
      (AAA.Strings.Empty_Vector
       .Append ("Identifiers for crates and indexes must use "
-               & "lowercase alphanumeric characters from the latin "
-               & "alphabet. Underscores can also be used except as "
-               & "the first character.")
+        & "lowercase alphanumeric characters from the latin "
+        & "alphabet. Underscores can also be used except as "
+        & "the first character.")
       .New_Line
       .Append ("Length must be of" & Alire.Min_Name_Length'Img
                & " to" & Alire.Max_Name_Length'Img

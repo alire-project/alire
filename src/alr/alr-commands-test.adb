@@ -24,7 +24,6 @@ with Alr.Testing.Console;
 with Alr.Testing.JUnit;
 with Alr.Testing.Markdown;
 with Alr.Testing.Text;
-with Alr.Utils;
 
 with GNATCOLL.VFS;
 
@@ -90,13 +89,13 @@ package body Alr.Commands.Test is
 
       Reporters : Testing.Collections.Collection;
 
-      No_Log : constant Utils.String_Vector :=
-                 (Utils.String_Vectors.Empty_Vector with null record);
+      No_Log : constant AAA.Strings.Vector :=
+                 (AAA.Strings.Vectors.Empty_Vector with null record);
 
       Is_Available, Is_Resolvable : Boolean;
 
       Timestamp                   : constant String :=
-        Utils.Trim
+        AAA.Strings.Trim
           (Long_Long_Integer'Image
              (Long_Long_Integer (Clock - Time_Of (1970, 1, 1))));
 
@@ -107,7 +106,7 @@ package body Alr.Commands.Test is
       ------------------
 
       procedure Test_Release (R : Alire.Releases.Release) is
-         Output : Utils.String_Vector;
+         Output : AAA.Strings.Vector;
          Start  : Time;
 
          -----------------
@@ -115,11 +114,12 @@ package body Alr.Commands.Test is
          -----------------
 
          procedure Test_Action is
+            use AAA.Strings;
+
             use Ada.Directories;
             use Alire.OS_Lib.Subprocess;
-            use Alire.Utils;
 
-            Docker_Prefix : constant String_Vector :=
+            Docker_Prefix : constant AAA.Strings.Vector :=
                               Empty_Vector
                               & "sudo"
                               & "docker"
@@ -135,7 +135,7 @@ package body Alr.Commands.Test is
                               --  Map current user
                               & Docker_Image;
 
-            Custom_Alr : constant String_Vector :=
+            Custom_Alr : constant AAA.Strings.Vector :=
                            Empty_Vector
                            & "alr" & "-c" & "/tmp/alire";
             --  When running inside docker as regular user we need config to be
@@ -146,7 +146,7 @@ package body Alr.Commands.Test is
             ------------------
 
             procedure Default_Test is
-               Alr_Args : constant String_Vector :=
+               Alr_Args : constant AAA.Strings.Vector :=
                             Empty_Vector &
                             "get" &
                             "--build" &
@@ -154,12 +154,12 @@ package body Alr.Commands.Test is
                             "-n" &
                             R.Milestone.Image;
 
-               Docker_Default : constant String_Vector :=
+               Docker_Default : constant AAA.Strings.Vector :=
                                   Docker_Prefix
                                   & Custom_Alr
                                   & Alr_Args;
 
-               Alr_Default : constant String_Vector := "alr" & Alr_Args;
+               Alr_Default : constant AAA.Strings.Vector := "alr" & Alr_Args;
 
                Exit_Code : Integer;
             begin
@@ -239,7 +239,7 @@ package body Alr.Commands.Test is
                         Prefix     =>
                           (if Alire.Utils.Command_Line_Contains (Docker_Switch)
                            then Docker_Prefix
-                           else Alire.Utils.Empty_Vector));
+                           else AAA.Strings.Empty_Vector));
 
                      if Exit_Code /= 0 then
                         raise Child_Failed;
@@ -373,7 +373,7 @@ package body Alr.Commands.Test is
       Docker_Image : constant String :=
                        (if Cmd.Docker.all = ""
                         then Alire.Defaults.Docker_Test_Image
-                        else Utils.Replace (Cmd.Docker.all, "=", ""));
+                        else AAA.Strings.Replace (Cmd.Docker.all, "=", ""));
 
       use Alire.Releases.Containers.Release_Sets;
 
@@ -389,7 +389,7 @@ package body Alr.Commands.Test is
 
          function Is_Match (Name : Alire.Crate_Name) return Boolean is
            (for some I in Args.First_Index .. Args.Last_Index =>
-               Utils.Contains (+Name, Args (I)));
+               AAA.Strings.Contains (+Name, Args (I)));
 
       begin
 
@@ -443,9 +443,9 @@ package body Alr.Commands.Test is
 
       procedure Pull_Docker is
          use Alire.OS_Lib.Subprocess;
-         use Alire.Utils;
+         use AAA.Strings;
 
-         Output    : String_Vector;
+         Output    : AAA.Strings.Vector;
          Exit_Code : Integer;
       begin
          if Alire.Utils.Command_Line_Contains (Docker_Switch) then

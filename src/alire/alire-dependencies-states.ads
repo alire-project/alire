@@ -284,11 +284,11 @@ private
    overriding function Image (This : State) return String
    is (This.As_Dependency.Image
        & " ("
-       & Utils.To_Lower_Case
+       & AAA.Strings.To_Lower_Case
          (if This.Transitivity /= Unknown
           then This.Transitivity'Img & ","
           else "")
-       & Utils.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
+       & AAA.Strings.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
           then "," & This.Fulfilled.Target.Element.Image (User => True)
                    & (if not This.Fulfilled.Target.Element.Is_Broken
@@ -535,11 +535,11 @@ private
    overriding function TTY_Image (This : State) return String
    is (This.As_Dependency.TTY_Image
        & " ("
-       & Utils.To_Lower_Case
+       & AAA.Strings.To_Lower_Case
          (if This.Transitivity /= Unknown
           then This.Transitivity'Img & ","
           else "")
-       & Utils.To_Lower_Case
+       & AAA.Strings.To_Lower_Case
          (case This.Fulfilled.Fulfillment is
              when Missed => TTY.Error (This.Fulfilled.Fulfillment'Img),
              when Hinted => TTY.Warn (This.Fulfilled.Fulfillment'Img),

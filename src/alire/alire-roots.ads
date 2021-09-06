@@ -2,6 +2,8 @@ private with AAA.Caches.Files;
 with Ada.Directories;
 private with Ada.Finalization;
 
+with AAA.Strings;
+
 with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.GPR;
@@ -12,7 +14,6 @@ with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils;
 
 package Alire.Roots is
 
@@ -73,7 +74,7 @@ package Alire.Roots is
 
    function Direct_Withs (This      : in out Root;
                           Dependent : Releases.Release)
-                          return Utils.String_Set;
+                          return AAA.Strings.Set;
    --  Obtain the project files required by Dependent in This.Solution
 
    function Environment (This : Root) return Properties.Vector;
@@ -92,7 +93,7 @@ package Alire.Roots is
    function Path (This : Root) return Absolute_Path;
 
    function Project_Paths (This : in out Root)
-                           return Utils.String_Set;
+                           return AAA.Strings.Set;
    --  Return all the paths that should be set in GPR_PROJECT_PATH for the
    --  solution in this root. This includes all releases' paths and any linked
    --  directories.

@@ -1,4 +1,4 @@
-with Alire.Utils;
+with AAA.Strings;
 
 package Alire.GPR with Preelaborate is
 
@@ -19,7 +19,7 @@ package Alire.GPR with Preelaborate is
 
    subtype Value is String;
 
-   type Value_Vector is new Utils.String_Vector with null record;
+   type Value_Vector is new AAA.Strings.Vector with null record;
 
    function Enum_Variable (Name   : String;
                            Values : Value_Vector'Class) return Variable;
@@ -48,7 +48,7 @@ package Alire.GPR with Preelaborate is
 
    procedure Add_Argument (S : in out Scenario; Var : String; Val : String);
 
-   function As_Command_Line (S : Scenario) return Utils.String_Vector;
+   function As_Command_Line (S : Scenario) return AAA.Strings.Vector;
    --  -Xvar1=val -Xvar2=val ...
 
    function Is_Empty (S : Scenario) return Boolean;
@@ -95,13 +95,13 @@ private
    function "or" (L : Value_Vector; R : Value) return Value_Vector
    is (L & R);
 
-   type Scenario is new Utils.String_Vector with null record;
+   type Scenario is new AAA.Strings.Vector with null record;
 
    overriding
    function Is_Empty (S : Scenario) return Boolean
-   is (Utils.String_Vector (S).Is_Empty);
+   is (AAA.Strings.Vector (S).Is_Empty);
 
    Empty_Scenario : constant Scenario :=
-     (Utils.String_Vectors.Empty_Vector with null record);
+     (AAA.Strings.Vectors.Empty_Vector with null record);
 
 end Alire.GPR;

@@ -142,7 +142,7 @@ package body Alr.Commands.Show is
          for External of Alire.Index.Crate (Name).Externals loop
             Table.New_Row;
             declare
-               Detail : constant Utils.String_Vector :=
+               Detail : constant AAA.Strings.Vector :=
                           External.Detail
                             (if Cmd.System
                              then Alire.Platform.Distribution

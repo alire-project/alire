@@ -1,6 +1,7 @@
 with Alire.Utils.Tables;
 with Alire.User_Pins;
 with Alire.Utils.TTY;
+with AAA.Strings; use AAA.Strings;
 
 package body Alire.Solutions.Diffs is
 
@@ -58,7 +59,7 @@ package body Alire.Solutions.Diffs is
    type Crate_Changes is record
       Icon,
       Best_Version : UString;
-      Detail       : Utils.String_Vector;
+      Detail       : AAA.Strings.Vector;
    end record;
 
    ----------------
@@ -69,7 +70,7 @@ package body Alire.Solutions.Diffs is
    is
       use UStrings;
    begin
-      if Icon /= "" and then not Utils.Contains (+Change.Icon, Icon) then
+      if Icon /= "" and then not Contains (+Change.Icon, Icon) then
          Append (Change.Icon, Icon);
       end if;
 
@@ -209,7 +210,7 @@ package body Alire.Solutions.Diffs is
            Former.Transitivity /= Latter.Transitivity
          then
             Add_Change (Chg, "",
-                        Utils.To_Lower_Case (Latter.Transitivity'Img));
+                        AAA.Strings.To_Lower_Case (Latter.Transitivity'Img));
          end if;
       end Transitivity_Changed;
 
