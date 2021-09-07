@@ -1,3 +1,7 @@
+with CLIC.Config.Info;
+with CLIC.Config.Edit;
+
+with Alire.Config;
 with Alire.Config.Edit;
 with Alire.Root;
 
@@ -53,13 +57,17 @@ package body Alr.Commands.Config is
       if Cmd.List then
          case Args.Count is
             when 0 =>
-               Trace.Always (Alire.Config.Edit.List
-                             (Filter => "*",
-                              Show_Origin => Cmd.Show_Origin));
+               Trace.Always
+                 (CLIC.Config.Info.List
+                    (Alire.Config.DB,
+                     Filter => "*",
+                     Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when 1 =>
-               Trace.Always (Alire.Config.Edit.List
-                             (Filter => Args.First_Element,
-                              Show_Origin => Cmd.Show_Origin));
+               Trace.Always
+                 (CLIC.Config.Info.List
+                    (Alire.Config.DB,
+                     Filter => Args.First_Element,
+                     Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when others =>
                Reportaise_Wrong_Arguments
                  ("List expects at most one argument");
@@ -70,13 +78,13 @@ package body Alr.Commands.Config is
             Reportaise_Wrong_Arguments ("Unset expects one argument");
          end if;
 
-         if not Alire.Config.Is_Valid_Config_Key (Args.First_Element) then
+         if not CLIC.Config.Is_Valid_Config_Key (Args.First_Element) then
             Reportaise_Wrong_Arguments ("Invalid configration key '" &
                                           Args.First_Element & "'");
          end if;
 
-         if Alire.Config.Defined (Args.First_Element) then
-            Trace.Always (Alire.Config.Get_As_String (Args.First_Element));
+         if Alire.Config.DB.Defined (Args.First_Element) then
+            Trace.Always (Alire.Config.DB.Get_As_String (Args.First_Element));
          else
             Reportaise_Command_Failed ("Configuration key '" &
                                          Args.First_Element &
@@ -92,12 +100,18 @@ package body Alr.Commands.Config is
             Val : constant String := Args.Element (2);
          begin
 
-            if not Alire.Config.Is_Valid_Config_Key (Key) then
+            if not CLIC.Config.Is_Valid_Config_Key (Key) then
                Reportaise_Wrong_Arguments ("Invalid configration key '" &
                  Key & "'");
             end if;
 
-            Alire.Config.Edit.Set (Alire.Config.Edit.Filepath (Lvl), Key, Val);
+            if not CLIC.Config.Edit.Set
+              (Alire.Config.Edit.Filepath (Lvl),
+               Key, Val,
+               Check => Alire.Config.Edit.Valid_Builtin'Access)
+            then
+               Reportaise_Command_Failed ("Cannot set config key");
+            end if;
          end;
 
       elsif Cmd.Unset then
@@ -108,12 +122,16 @@ package body Alr.Commands.Config is
          declare
             Key : constant String := Args.Element (1);
          begin
-            if not Alire.Config.Is_Valid_Config_Key (Key) then
+            if not CLIC.Config.Is_Valid_Config_Key (Key) then
                Reportaise_Wrong_Arguments ("Invalid configration key '" &
                  Key & "'");
             end if;
 
-            Alire.Config.Edit.Unset (Alire.Config.Edit.Filepath (Lvl), Key);
+            if not CLIC.Config.Edit.Unset
+              (Alire.Config.Edit.Filepath (Lvl), Key)
+            then
+               Reportaise_Command_Failed ("Cannot unset config key");
+            end if;
          end;
       end if;
    end Execute;

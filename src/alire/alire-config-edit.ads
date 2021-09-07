@@ -1,17 +1,17 @@
+with TOML;
+
+with CLIC.Config;
+
 with AAA.Strings;
 with Alire.Directories;
 
 package Alire.Config.Edit is
 
-   procedure Unset (Path : Absolute_Path; Key : Config_Key);
-
-   procedure Set (Path : Absolute_Path; Key : Config_Key; Value : String);
-
    --  Shortcuts that use the standard config locations:
 
-   procedure Set_Locally (Key : Config_Key; Value : String);
+   procedure Set_Locally (Key : CLIC.Config.Config_Key; Value : String);
 
-   procedure Set_Globally (Key : Config_Key; Value : String);
+   procedure Set_Globally (Key : CLIC.Config.Config_Key; Value : String);
 
    --  To ease the pain with circularities in old GNAT versions, we have also
    --  here all non-preelaborable things related to config loading. This
@@ -34,13 +34,6 @@ package Alire.Config.Edit is
    --  Return path of the configuration file coresponding to the given
    --  configuration level.
 
-   function List (Filter      : String := ".*";
-                  Show_Origin : Boolean := False)
-                  return String;
-   --  Return a String that contains a list of configuration key/value as seen
-   --  by Alire. When Show_Origin is true, the configuration file where each
-   --  key was loaded is also listed.
-
    function Builtins_Info return AAA.Strings.Vector;
    --  Return a String_Vector with the documentation of builtin configuration
    --  options in text format.
@@ -48,22 +41,17 @@ package Alire.Config.Edit is
    procedure Print_Builtins_Doc;
    --  Print a Markdown documentation for the built-in configuration options
 
-private
+   function Valid_Builtin (Key   : CLIC.Config.Config_Key;
+                           Value : TOML.TOML_Value)
+                           return Boolean;
+   --  Check that the combination satisfies builtin rules
 
-   procedure Import (Table  : TOML.TOML_Value;
-                     Lvl    : Level;
-                     Source : String;
-                     Prefix : String := "");
-   --  Import TOML Table in the Config_Map global variable
+private
 
    procedure Load_Config;
    --  Clear and reload all configuration. Also set some values elsewhere
    --  used to break circularities. Bottom line, this procedure must leave
    --  the program-wide configuration ready.
-
-   function Load_Config_File (Path : Absolute_Path) return TOML.TOML_Value;
-   --  Load a TOML config file and return No_TOML_Value if the file is invalid
-   --  or doesn't exist.
 
    type Builtin_Kind is (Cfg_Int, Cfg_Float, Cfg_Bool,
                          Cfg_String, Cfg_Absolute_Path,
@@ -77,13 +65,10 @@ private
 
    function Image (Kind : Builtin_Kind) return String;
 
-   function Is_Builtin (Key : Config_Key) return Boolean;
+   function Is_Builtin (Key : CLIC.Config.Config_Key) return Boolean;
 
-   function Kind_Of_Builtin (Key : Config_Key) return Builtin_Kind
+   function Kind_Of_Builtin (Key : CLIC.Config.Config_Key) return Builtin_Kind
      with Pre => Is_Builtin (Key);
-
-   function Valid_Builtin (Key : Config_Key; Value : TOML.TOML_Value)
-                           return Boolean;
 
    --------------
    -- Builtins --

@@ -11,6 +11,7 @@ with Alire.Root;
 with Alire.Shared;
 
 with CLIC.User_Input;
+with CLIC.Config.Edit;
 
 with Semantic_Versioning.Extended;
 
@@ -174,9 +175,12 @@ package body Alire.Toolchains is
 
             --  Clean up stored version
 
-            Config.Edit.Unset (Path  => Config.Edit.Filepath (Level),
-                               Key   => Tool_Key (Crate));
-
+            if not CLIC.Config.Edit.Unset
+              (Path  => Config.Edit.Filepath (Level),
+               Key   => Tool_Key (Crate))
+            then
+               Raise_Checked_Error ("Cannot unset config key");
+            end if;
          else
 
             Put_Info
@@ -261,9 +265,13 @@ package body Alire.Toolchains is
    procedure Set_As_Default (Release : Releases.Release; Level : Config.Level)
    is
    begin
-      Config.Edit.Set (Path  => Config.Edit.Filepath (Level),
-                       Key   => Tool_Key (Release.Name),
-                       Value => Release.Milestone.Image);
+      if not CLIC.Config.Edit.Set
+        (Path  => Config.Edit.Filepath (Level),
+         Key   => Tool_Key (Release.Name),
+         Value => Release.Milestone.Image)
+      then
+         Raise_Checked_Error ("Cannot set config key");
+      end if;
    end Set_As_Default;
 
    -----------------------------
@@ -273,9 +281,12 @@ package body Alire.Toolchains is
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
    is
    begin
-      Config.Edit.Set (Config.Edit.Filepath (Level),
-                       Config.Keys.Toolchain_Assistant,
-                       (if Enabled then "true" else "false"));
+      if not CLIC.Config.Edit.Set (Config.Edit.Filepath (Level),
+                                   Config.Keys.Toolchain_Assistant,
+                                   (if Enabled then "true" else "false"))
+      then
+         Raise_Checked_Error ("Cannot set config key");
+      end if;
    end Set_Automatic_Assistant;
 
    ------------------------
@@ -283,7 +294,7 @@ package body Alire.Toolchains is
    ------------------------
 
    function Tool_Is_Configured (Crate : Crate_Name) return Boolean
-   is (Config.Defined (Tool_Key (Crate)));
+   is (Config.DB.Defined (Tool_Key (Crate)));
 
    ---------------------
    -- Tool_Dependency --
@@ -291,7 +302,7 @@ package body Alire.Toolchains is
 
    function Tool_Dependency (Crate : Crate_Name) return Dependencies.Dependency
    is (Dependencies.New_Dependency
-       (Milestones.New_Milestone (Config.Get (Tool_Key (Crate), ""))));
+       (Milestones.New_Milestone (Config.DB.Get (Tool_Key (Crate), ""))));
 
    -----------------
    -- Unconfigure --
@@ -300,8 +311,12 @@ package body Alire.Toolchains is
    procedure Unconfigure (Crate : Crate_Name) is
    begin
       for Level in Config.Level loop
-         Config.Edit.Unset (Config.Edit.Filepath (Level),
-                            Tool_Key (Crate));
+         if not CLIC.Config.Edit.Unset
+           (Config.Edit.Filepath (Level),
+            Tool_Key (Crate))
+         then
+            Raise_Checked_Error ("Cannot unset config key");
+         end if;
       end loop;
    end Unconfigure;
 

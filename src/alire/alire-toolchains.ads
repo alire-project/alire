@@ -1,5 +1,7 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
+private with CLIC.Config;
+
 with AAA.Strings;
 
 with Alire.Config;
@@ -80,10 +82,10 @@ private
    -- Tool_Key --
    --------------
    --  Construct the "toolchain.use.crate" keys
-   function Tool_Key (Crate : Crate_Name) return Config.Config_Key
+   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key
    is (if AAA.Strings.Has_Prefix (Crate.As_String, "gnat_")
        then Tool_Key (GNAT_Crate)
-       else Config.Config_Key
+       else CLIC.Config.Config_Key
               (Config.Keys.Toolchain_Use & "." & Crate.As_String));
 
    --------------------
@@ -91,6 +93,6 @@ private
    --------------------
    --  Return the milestone stored by the user for this tool
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone
-   is (Milestones.New_Milestone (Config.Get (Tool_Key (Crate), "")));
+   is (Milestones.New_Milestone (Config.DB.Get (Tool_Key (Crate), "")));
 
 end Alire.Toolchains;

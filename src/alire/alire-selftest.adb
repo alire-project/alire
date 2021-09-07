@@ -1,5 +1,5 @@
-with Alire.Config.Edit;
 with Alire.Utils;
+with Alire.Config.Edit;
 with Alire.VCSs.Git;
 
 package body Alire.Selftest is
@@ -11,9 +11,9 @@ package body Alire.Selftest is
       Key  : constant String := "test_key";
       Val  : constant String := "nominal";
    begin
-      Config.Edit.Set (Config.Edit.Filepath (Config.Global), Key, Val);
-      pragma Assert (Config.Defined (Key));
-      pragma Assert (Config.Get (Key, "snafu") = Val);
+      Config.Edit.Set_Globally (Key, Val);
+      pragma Assert (Config.DB.Defined (Key));
+      pragma Assert (Config.DB.Get (Key, "snafu") = Val);
    end Check_Config_Changes;
 
    ------------------------

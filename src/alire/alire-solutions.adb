@@ -1357,7 +1357,7 @@ package body Alire.Solutions is
 
       --  Do nothing when deps are being removed.
 
-      if not Config.Get (Config.Keys.Solver_Autonarrow, True) or else
+      if not Config.DB.Get (Config.Keys.Solver_Autonarrow, True) or else
         not Diff.Removed.Is_Empty
       then
          return New_Deps;

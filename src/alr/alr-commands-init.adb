@@ -284,9 +284,9 @@ package body Alr.Commands.Init is
       procedure Generate_Manifest is
          use Alire.Config;
       begin
-         if not Defined (Keys.User_Email) or else
-           not Defined (Keys.User_Name) or else
-           not Defined (Keys.User_Github_Login)
+         if not DB.Defined (Keys.User_Email) or else
+           not DB.Defined (Keys.User_Name) or else
+           not DB.Defined (Keys.User_Github_Login)
          then
             AAA.Text_IO.Put_Paragraph
               ("Alire needs some user information to initialize the crate"

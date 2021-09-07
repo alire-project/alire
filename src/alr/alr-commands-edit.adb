@@ -62,7 +62,7 @@ package body Alr.Commands.Edit is
       use Alire.Config;
 
       Editor_Cmd  : constant String :=
-        Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
+        Alire.Config.DB.Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
 
       Edit_Args : AAA.Strings.Vector := AAA.Strings.Split (Editor_Cmd, ' ');
    begin
