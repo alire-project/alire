@@ -2,11 +2,11 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Directories;
-with Alire.Paths;
-with Alire.Utils;
 with Alire.GPR;
+with Alire.Paths;
+with Alire.Spawn;
+with Alire.Utils;
 
-with Alr.Spawn;
 with Alr.Platform;
 
 package body Alr.Commands.Clean is
@@ -142,12 +142,12 @@ package body Alr.Commands.Clean is
            (Platform.Properties, With_Path => True)
          loop
 
-            Spawn.Command ("gprclean",
-                           Empty_Vector &
-                             "-r" &
-                             "-P" & Gpr_File &
-                             Scenario.As_Command_Line,
-                           Understands_Verbose => True);
+            Alire.Spawn.Command ("gprclean",
+                                 Empty_Vector &
+                                   "-r" &
+                                   "-P" & Gpr_File &
+                                   Scenario.As_Command_Line,
+                                 Understands_Verbose => True);
          end loop;
 
          return;

@@ -1,9 +1,3 @@
-with Alire.Errors;
-with Alire.Properties.Actions.Executor;
-
-with Alr.Spawn;
-with Alr.Platform;
-
 package body Alr.Commands.Build is
 
    -------------
@@ -39,61 +33,17 @@ package body Alr.Commands.Build is
 
       Cmd.Requires_Valid_Session;
 
-      if Export_Build_Env then
-         Cmd.Root.Export_Build_Environment;
+      if Cmd.Root.Build (Scenario, Export_Build_Env) then
+
+         Trace.Detail ("Compilation finished successfully");
+         Trace.Detail ("Use alr run --list to check available executables");
+
+         return True;
+
+      else
+         return False;
       end if;
 
-      --  PRE-BUILD ACTIONS
-      begin
-         Alire.Properties.Actions.Executor.Execute_Actions
-           (Release => Cmd.Root.Release,
-            Env     => Platform.Properties,
-            Moment  => Alire.Properties.Actions.Pre_Build);
-      exception
-         when others =>
-            Trace.Warning ("A pre-build action failed, " &
-                             "re-run with -vv -d for details");
-            return False;
-      end;
-
-      --  COMPILATION
-      begin
-
-         --  Build all the project files
-         for Gpr_File of Cmd.Root.Release.Project_Files
-           (Platform.Properties, With_Path => True)
-         loop
-
-            Spawn.Gprbuild (Gpr_File,
-                            Extra_Args => Scenario.As_Command_Line);
-         end loop;
-
-      exception
-         when E : Alire.Checked_Error =>
-            Trace.Error (Alire.Errors.Get (E, Clear => False));
-            return False;
-         when E : others =>
-            Alire.Log_Exception (E);
-            return False;
-      end;
-
-      --  POST-BUILD ACTIONS
-      begin
-         Alire.Properties.Actions.Executor.Execute_Actions
-           (Release => Cmd.Root.Release,
-            Env     => Platform.Properties,
-            Moment  => Alire.Properties.Actions.Post_Build);
-      exception
-         when others =>
-            Trace.Warning ("A post-build action failed, " &
-                             "re-run with -vv -d for details");
-            return False;
-      end;
-
-      Trace.Detail ("Compilation finished successfully");
-      Trace.Detail ("Use alr run --list to check available executables");
-
-      return True;
    end Execute;
 
    ----------------------

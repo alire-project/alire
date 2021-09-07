@@ -1,8 +1,7 @@
+with Alire_Early_Elaboration;
 with Alire.OS_Lib.Subprocess;
 
-with Alr.Commands;
-
-package body Alr.Spawn is
+package body Alire.Spawn is
 
    -------------
    -- Command --
@@ -14,7 +13,7 @@ package body Alr.Spawn is
    is
       Unused_Output : Alire.Utils.String_Vector;
    begin
-      if Commands.Is_Quiet then
+      if Alire_Early_Elaboration.Switch_Q then
          Unused_Output :=
            Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
              (Cmd, Args, Understands_Verbose, Err_To_Out => True);
@@ -51,4 +50,4 @@ package body Alr.Spawn is
                Understands_Verbose => True);
    end Gprbuild;
 
-end Alr.Spawn;
+end Alire.Spawn;

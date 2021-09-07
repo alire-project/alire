@@ -192,7 +192,7 @@ package body Alire.Releases is
                          This.Milestone.Image);
       else
          Was_There := False;
-         Put_Info ("Deploying release " & This.Milestone.TTY_Image & "...");
+         Put_Info ("Deploying " & This.Milestone.TTY_Image & "...");
          Alire.Origins.Deployers.Deploy (This, Folder).Assert;
 
          --  For deployers that do nothing, we ensure the folder exists so all

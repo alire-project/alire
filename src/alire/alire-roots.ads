@@ -3,6 +3,8 @@ with Ada.Directories;
 private with Ada.Finalization;
 
 with Alire.Containers;
+with Alire.Dependencies.States;
+with Alire.GPR;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -195,6 +197,21 @@ package Alire.Roots is
    --  modification procedures, or somehow outside alire after This was
    --  created, we need to reload the manifest. The solution remains
    --  untouched (use Update to recompute a fresh solution).
+
+   procedure Traverse
+     (This  : in out Root;
+      Doing : access procedure
+        (This     : in out Root;
+         Solution : Solutions.Solution;
+         State    : Dependencies.States.State));
+   --  Recursively visit all dependencies in a safe order, ending with the root
+
+   function Build (This             : in out Root;
+                   Scenario         : GPR.Scenario;
+                   Export_Build_Env : Boolean)
+                   return Boolean;
+   --  Recursively build all dependencies and finally the root release. Return
+   --  True on successful build.
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
