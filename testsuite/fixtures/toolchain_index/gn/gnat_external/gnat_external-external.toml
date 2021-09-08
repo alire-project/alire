@@ -7,6 +7,6 @@ maintainers-logins = ["mosteo"]
 [[external]]
 kind = "version-output"
 # We look for make instead that should be always installed.
-version-command = ["gnat", "--version"]
-version-regexp = "^GNAT ([\\d\\.]+).*|^GNAT Community ([\\d]{4}).*"
+version-command = ["make", "--version"]
+version-regexp = ".*Make ([\\d\\.]+).*"
 provides = "gnat"
