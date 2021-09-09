@@ -103,7 +103,21 @@ package body Alire.Roots is
                            (This.Environment, With_Path => True).Length);
             Current : Positive := 1;
          begin
-            if Release.Auto_GPR_With then
+            if not Release.Auto_GPR_With then
+
+               Put_Info (TTY.Bold ("Not") & " pre-building "
+                         & Utils.TTY.Name (Release.Name)
+                         & " (auto with disabled)",
+                         Trace.Detail);
+
+            elsif Release.Executables (This.Environment).Is_Empty then
+
+               Put_Info (TTY.Bold ("Not") & " pre-building "
+                         & Utils.TTY.Name (Release.Name)
+                         & " (no executables declared)",
+                         Trace.Detail);
+
+            else
 
                --  Build all the project files
                for Gpr_File of Release.Project_Files
@@ -124,10 +138,6 @@ package body Alire.Roots is
                   Current := Current + 1;
                end loop;
 
-            else
-               Put_Info (TTY.Bold ("Not") & " building "
-                         & Utils.TTY.Name (Release.Name)
-                         & " (auto with disabled)");
             end if;
 
          exception
