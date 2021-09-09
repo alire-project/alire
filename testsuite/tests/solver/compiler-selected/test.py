@@ -18,7 +18,7 @@ init_local_crate("xxx")
 alr_with("gnat*")
 
 # Will appear in the solution as generic fulfilled by the preferred compiler
-match_solution("gnat=2.0.0 (gnat_native) (installed)", escape=True)
+match_solution("gnat=8888.0.0 (gnat_native) (installed)", escape=True)
 
 # Selecting another default will cause a corresponding change in the solution
 run_alr("config", "--set", "toolchain.use.gnat", "gnat_cross_2=1")
