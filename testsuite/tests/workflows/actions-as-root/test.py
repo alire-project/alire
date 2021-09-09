@@ -1,5 +1,5 @@
 """
-Test pre-build/post-build/post-fetch executions
+Test pre-build/post-build/post-fetch executions on a crate that is the root
 """
 
 from drivers.alr import run_alr, init_local_crate, add_action, alr_with
