@@ -326,6 +326,9 @@ package body Alire.Roots is
          --------------------
 
          procedure Run_Post_Fetch (Release : Releases.Release) is
+            CD : Directories.Guard
+              (Directories.Enter (This.Release_Base (Release.Name)))
+              with Unreferenced;
          begin
             Alire.Properties.Actions.Executor.Execute_Actions
               (Release,
@@ -346,7 +349,9 @@ package body Alire.Roots is
             --  releases get their post-fetch run whenever there is a change to
             --  dependencies. This will run them more than once, but is better
             --  than never running them and breaking something.
-            Run_Post_Fetch (Dep.Release);
+            if Dep.Has_Release then
+               Run_Post_Fetch (Dep.Release);
+            end if;
             return;
 
          elsif Release (This).Provides (Dep.Crate) or else
@@ -388,12 +393,17 @@ package body Alire.Roots is
                            Parent_Folder   =>
                              Ada.Directories.Containing_Directory
                                (This.Release_Base (Rel.Name)),
-                           Perform_Actions => True,
+                           Perform_Actions => False,
                            Was_There       => Was_There,
                            Create_Manifest =>
                              Dep.Is_Shared,
                            Include_Origin  =>
                              Dep.Is_Shared);
+
+               --  Always run the post-fetch on update of dependencies, in
+               --  case there is some interaction with some other updated
+               --  dependency, even for crates that didn't change.
+               Run_Post_Fetch (Rel);
             end if;
          end;
       end Deploy_Release;
