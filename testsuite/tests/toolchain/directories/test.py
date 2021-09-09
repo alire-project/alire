@@ -13,6 +13,7 @@ from drivers.helpers import contents
 p = run_alr("version")
 config_dir = re.search("config folder is ([^\n.]*)", p.out).group(1)
 config_dir = config_dir.replace("\\", "/")
+cache_dir = os.path.join(config_dir, "cache")
 # The 'contents` function we use to compare these strings normalizes all paths
 # to forward slashes, so we do the same with the config_dir
 
@@ -22,23 +23,25 @@ unk_re = "[0-9]+\.[0-9]+\.[0-9]+_[0-9a-f]{8}"  # Unknown version + Unknown hash
 def config_path_re(crate):
     return re.escape(f"{config_dir}/cache/dependencies/{crate}_") + unk_re
 
+def check_content(crate):
+    paths = contents(cache_dir, crate)
+    try:
+        assert len(paths) >= 1 and \
+            re.search(config_path_re(crate), paths[0]), \
+            "Unexpected contents: " + str(paths)
+    except:
+        print(f"erroneous regex was: {config_path_re(crate)}")
+        print(f"erroneous path was: {paths[0]}")
+        raise
+
 
 # First we test manual installation
 run_alr("toolchain", "--install", "gnat_native")
-# This next call returns all paths related to the installed compiler
-paths = contents(config_dir, "gnat_native")
-try:
-    assert len(paths) >= 1 and \
-        re.search(config_path_re("gnat_native"), paths[0]), \
-        "Unexpected contents: " + str(paths)
-except:
-    print(f"erroneous regex was: {config_path_re('gnat_native')}")
-    print(f"erroneous path was: {paths[0]}")
-    raise
+check_content("gnat_native")
 
 # Uninstall the compiler and verify absence
-run_alr("toolchain", "--uninstall", "gnat_native")
-paths = contents(config_dir, "gnat_native")
+run_alr("toolchain", "--uninstall", "gnat_native", quiet=False)
+paths = contents(cache_dir, "gnat_native")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
 
 # Require the external compiler and verify no trace appears in install folder
@@ -46,7 +49,7 @@ assert len(paths) == 0, "Unexpected contents: " + str(paths)
 init_local_crate("xxx")
 alr_with("gnat_external")
 match_solution("gnat_external=.* \(installed\)")
-paths = contents(config_dir, "gnat_external")
+paths = contents(cache_dir, "gnat_external")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
 paths = contents(".", "gnat_external")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
@@ -55,9 +58,6 @@ assert len(paths) == 0, "Unexpected contents: " + str(paths)
 alr_with("gnat_external", delete=True, manual=False)
 alr_with("gnat_cross_1")
 match_solution("gnat_cross_1=.* \(installed\)")
-paths = contents(config_dir, "gnat_cross_1")
-assert len(paths) >= 1 and \
-    re.search(config_path_re("gnat_cross_1"), paths[0]), \
-    "Unexpected contents: " + str(paths)
+check_content("gnat_cross_1")
 
 print('SUCCESS')

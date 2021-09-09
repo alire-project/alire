@@ -97,7 +97,8 @@ package body Alire.Shared is
    -- Share --
    -----------
 
-   procedure Share (Release : Releases.Release)
+   procedure Share (Release  : Releases.Release;
+                    Location : Any_Path := Install_Path)
    is
       Already_Installed : Boolean := False;
 
@@ -155,8 +156,7 @@ package body Alire.Shared is
       end if;
 
       --  See if it can be skipped
-
-      if Available.Contains (Release) then
+      if Location = Install_Path and then Available.Contains (Release) then
          Trace.Detail ("Skipping installation of already available release: "
                        & Release.Milestone.TTY_Image);
          return;
@@ -165,7 +165,7 @@ package body Alire.Shared is
       --  Deploy at the install location
 
       Release.Deploy (Env             => Root.Platform_Properties,
-                      Parent_Folder   => Install_Path,
+                      Parent_Folder   => Location,
                       Was_There       => Already_Installed,
                       Perform_Actions => True,
                       Create_Manifest => True,
