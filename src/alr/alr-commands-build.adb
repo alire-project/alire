@@ -1,3 +1,5 @@
+with Stopwatch;
+
 package body Alr.Commands.Build is
 
    -------------
@@ -33,16 +35,21 @@ package body Alr.Commands.Build is
 
       Cmd.Requires_Valid_Session;
 
-      if Cmd.Root.Build (Scenario, Export_Build_Env) then
+      declare
+         Timer : Stopwatch.Instance;
+      begin
+         if Cmd.Root.Build (Scenario, Export_Build_Env) then
 
-         Trace.Detail ("Compilation finished successfully");
-         Trace.Detail ("Use alr run --list to check available executables");
+            Trace.Info ("Build finished successfully in "
+                        & TTY.Bold (Timer.Image) & " seconds.");
+            Trace.Detail ("Use alr run --list to check available executables");
 
-         return True;
+            return True;
 
-      else
-         return False;
-      end if;
+         else
+            return False;
+         end if;
+      end;
 
    end Execute;
 

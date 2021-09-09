@@ -7,7 +7,6 @@ from drivers.alr import add_action
 from os import chdir
 from os.path import join
 from shutil import rmtree, which
-# from drivers.asserts import assert_eq, assert_match
 
 # We test with a locally pinned dependency, which should make no difference as
 # it is a regular release in the eyes of the build process
@@ -18,10 +17,7 @@ init_local_crate("depended", binary=True, enter=False)
 alr_with("depended", path="depended")
 
 # Add a pre-build action to the root crate that attempts to run bin/depended
-with open(alr_manifest(), "a") as manifest:
-    manifest.writelines(["[[actions]]\n",
-                         "type = 'pre-build'\n",
-                         "command = ['depended/bin/depended']\n"])
+add_action("pre-build", ["depended/bin/depended"])
 
 run_alr("build")
 
@@ -41,22 +37,20 @@ chdir("..")
 rmtree("alire")
 rmtree("depended/alire")
 
-with open(alr_manifest(), "a") as manifest:
-    manifest.writelines(["[[actions]]\n",
-                         "type = 'pre-build'\n",
-                         "command = ['depended']\n"])
+add_action("pre-build", ["depended"])
 
 # Finally verify that a non-existant executable is actually failing. We do this
 # using "root" as an intermediate crate, to ensure that "pre-build" is also
 # being run for all dependencies and not only the root one.
 
 add_action("pre-build", ["fake_alr_test_exec"])
+
 init_local_crate("root_test")
 alr_with("root", path="..")
 
 p = run_alr("build", complain_on_error=False)
 assert p.status != 0, "Command should have failed"
 assert 'Command ["fake_alr_test_exec"] exited with code 1' in p.out, \
-    "Output does not contain expected error"
+    "Output does not contain expected error, but: " + p.out
 
 print('SUCCESS')

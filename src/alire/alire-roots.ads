@@ -210,8 +210,10 @@ package Alire.Roots is
                    Scenario         : GPR.Scenario;
                    Export_Build_Env : Boolean)
                    return Boolean;
-   --  Recursively build all dependencies and finally the root release. Return
-   --  True on successful build.
+   --  Recursively build all dependencies that declare executables, and finally
+   --  the root release. Also executes all pre-build/post-build actions for
+   --  all releases in the solution (even those not built). Returns True on
+   --  successful build.
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
