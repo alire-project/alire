@@ -107,7 +107,7 @@ package body Alire.OS_Lib.Subprocess is
       if Exit_Code /= 0 then
          Raise_Checked_Error
            ("Command " & Image (Command, Arguments) &
-              " exited with code" & Exit_Code'Img);
+              " exited with code " & Utils.Trim (Exit_Code'Image));
       end if;
    end Checked_Spawn;
 

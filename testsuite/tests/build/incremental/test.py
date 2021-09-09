@@ -50,7 +50,7 @@ alr_with("root", path="..")
 
 p = run_alr("build", complain_on_error=False)
 assert p.status != 0, "Command should have failed"
-assert 'Command ["fake_alr_test_exec"] exited with code 1' in p.out, \
+assert 'Command ["fake_alr_test_exec"] exited with code' in p.out, \
     "Output does not contain expected error, but: " + p.out
 
 print('SUCCESS')
