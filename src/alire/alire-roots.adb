@@ -1,15 +1,17 @@
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
-with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Environment;
+with Alire.Errors;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.OS_Lib;
+with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
 with Alire.Shared;
 with Alire.Solutions.Diffs;
+with Alire.Spawn;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
@@ -25,6 +27,166 @@ package body Alire.Roots is
    package Semver renames Semantic_Versioning;
 
    use type UString;
+
+   -----------
+   -- Build --
+   -----------
+
+   function Build (This             : in out Root;
+                   Scenario         : GPR.Scenario;
+                   Export_Build_Env : Boolean)
+                   return Boolean
+   is
+      Build_Failed : exception;
+
+      --------------------------
+      -- Build_Single_Release --
+      --------------------------
+
+      procedure Build_Single_Release (This     : in out Root;
+                                      Solution : Solutions.Solution;
+                                      State    : Dependencies.States.State)
+      is
+         pragma Unreferenced (Solution);
+
+         --  Relocate to the release folder
+         CD : Directories.Guard
+           (if State.Has_Release and then State.Release.Origin.Is_Regular
+            then Directories.Enter (This.Release_Base (State.Crate))
+            else Directories.Stay) with Unreferenced;
+
+         ---------------------------
+         -- Run_Pre_Build_Actions --
+         ---------------------------
+
+         procedure Run_Pre_Build_Actions (Release : Releases.Release) is
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release,
+               Env     => This.Environment,
+               Moment  => Alire.Properties.Actions.Pre_Build);
+         exception
+            when E : others =>
+               Trace.Warning ("A pre-build action failed, " &
+                                "re-run with -vv -d for details");
+               Log_Exception (E);
+               raise Build_Failed;
+         end Run_Pre_Build_Actions;
+
+         ----------------------------
+         -- Run_Post_Build_Actions --
+         ----------------------------
+
+         procedure Run_Post_Build_Actions (Release : Releases.Release) is
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release,
+               Env     => This.Environment,
+               Moment  => Alire.Properties.Actions.Post_Build);
+         exception
+            when E : others =>
+               Trace.Warning ("A post-build action failed, " &
+                                "re-run with -vv -d for details");
+               Log_Exception (E);
+               raise Build_Failed;
+         end Run_Post_Build_Actions;
+
+         -------------------
+         -- Call_Gprbuild --
+         -------------------
+
+         procedure Call_Gprbuild (Release : Releases.Release) is
+            use Directories.Operators;
+            Count : constant Natural :=
+                      Natural
+                        (Release.Project_Files
+                           (This.Environment, With_Path => True).Length);
+            Current : Positive := 1;
+            Is_Root : constant Boolean :=
+                        Release.Name = This.Release.Constant_Reference.Name;
+         begin
+            if not Is_Root and then not Release.Auto_GPR_With then
+
+               Put_Info (TTY.Bold ("Not") & " pre-building "
+                         & Utils.TTY.Name (Release.Name)
+                         & " (auto with disabled)",
+                         Trace.Detail);
+
+            elsif not Is_Root and then
+              Release.Executables (This.Environment).Is_Empty
+            then
+
+               Put_Info (TTY.Bold ("Not") & " pre-building "
+                         & Utils.TTY.Name (Release.Name)
+                         & " (no executables declared)",
+                         Trace.Detail);
+
+            else
+
+               --  Build all the project files
+               for Gpr_File of Release.Project_Files
+                 (This.Environment, With_Path => True)
+               loop
+                  Put_Info ("Building "
+                            & Utils.TTY.Name (Release.Name) & "/"
+                            & TTY.URL (Gpr_File)
+                            & (if Count > 1
+                              then " (" & Utils.Trim (Current'Image)
+                              & "/" & Utils.Trim (Count'Image) & ")"
+                              else "")
+                            & "...");
+
+                  Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
+                                  Extra_Args => Scenario.As_Command_Line);
+
+                  Current := Current + 1;
+               end loop;
+
+            end if;
+
+         exception
+            when E : Alire.Checked_Error =>
+               Trace.Error (Errors.Get (E, Clear => False));
+               Log_Exception (E);
+               raise Build_Failed;
+            when E : others =>
+               Log_Exception (E);
+               raise Build_Failed;
+         end Call_Gprbuild;
+
+      begin
+
+         if not State.Has_Release then
+            Put_Info (State.As_Dependency.TTY_Image & ": no build needed.");
+            return;
+         end if;
+
+         declare
+            Release : constant Releases.Release := State.Release;
+         begin
+
+            Run_Pre_Build_Actions (Release);
+
+            Call_Gprbuild (Release);
+
+            Run_Post_Build_Actions (Release);
+
+         end;
+
+      end Build_Single_Release;
+
+   begin
+      if Export_Build_Env then
+         This.Export_Build_Environment;
+      end if;
+
+      This.Traverse (Build_Single_Release'Access);
+
+      return True;
+   exception
+      when Build_Failed =>
+         return False;
+   end Build;
 
    -------------------
    -- Build_Context --
@@ -1105,5 +1267,34 @@ package body Alire.Roots is
 
       This.Sync_Pins_From_Manifest (Exhaustive => False);
    end Reload_Manifest;
+
+   --------------
+   -- Traverse --
+   --------------
+
+   procedure Traverse
+     (This  : in out Root;
+      Doing : access procedure
+        (This     : in out Root;
+         Solution : Solutions.Solution;
+         State    : Dependencies.States.State))
+   is
+
+      -------------------
+      -- Traverse_Wrap --
+      -------------------
+
+      procedure Traverse_Wrap (Solution : Solutions.Solution;
+                               State    : Dependencies.States.State)
+      is
+      begin
+         Doing (This, Solution, State);
+      end Traverse_Wrap;
+
+   begin
+      This.Solution.Traverse
+        (Traverse_Wrap'Access,
+         Root => Releases.Containers.Optional_Releases.Unit (Release (This)));
+   end Traverse;
 
 end Alire.Roots;

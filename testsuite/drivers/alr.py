@@ -404,3 +404,18 @@ def alr_with(dep="", path="", url="", commit="", branch="",
                 args += ["--branch", f"{branch}"]
 
             return run_alr(*args, force=force)
+
+
+def add_action(type, command):
+    """
+    Add an action to the manifest in the current directory.
+    :param str type: "pre-build", etc
+    :param list command: array/list of strings that make up the command
+    """
+    if not os.path.isfile(alr_manifest()):
+        raise RuntimeError("Manifest not found")
+
+    with open(alr_manifest(), "a") as manifest:
+        manifest.write("[[actions]]\n")
+        manifest.write(f"type = '{type}'\n")
+        manifest.write(f"command = {command}\n")

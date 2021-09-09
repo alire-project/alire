@@ -12,7 +12,6 @@ with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
-with Alire.Utils;
 with Alire.Utils.TTY;
 
 with CLIC.User_Input;

@@ -1,6 +1,6 @@
 with Alire.Utils;
 
-package Alr.Spawn is
+package Alire.Spawn is
 
    --  Encapsulates all external spawns
    --  Any of those may raise Command_Failed or GNAT.OS_Lib exceptions
@@ -20,4 +20,4 @@ package Alr.Spawn is
    --  Out-of-tree build takes place in
    --    $crate / Alire.Paths.Build_Folder ($crate/alire/build).
 
-end Alr.Spawn;
+end Alire.Spawn;
