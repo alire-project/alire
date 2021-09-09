@@ -102,15 +102,19 @@ package body Alire.Roots is
                         (Release.Project_Files
                            (This.Environment, With_Path => True).Length);
             Current : Positive := 1;
+            Is_Root : constant Boolean :=
+                        Release.Name = This.Release.Constant_Reference.Name;
          begin
-            if not Release.Auto_GPR_With then
+            if not Is_Root and then not Release.Auto_GPR_With then
 
                Put_Info (TTY.Bold ("Not") & " pre-building "
                          & Utils.TTY.Name (Release.Name)
                          & " (auto with disabled)",
                          Trace.Detail);
 
-            elsif Release.Executables (This.Environment).Is_Empty then
+            elsif not Is_Root and then
+              Release.Executables (This.Environment).Is_Empty
+            then
 
                Put_Info (TTY.Bold ("Not") & " pre-building "
                          & Utils.TTY.Name (Release.Name)
