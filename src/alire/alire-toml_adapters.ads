@@ -154,6 +154,10 @@ package Alire.TOML_Adapters with Preelaborate is
        Pre => Val.Kind = TOML.TOML_Array;
    --  Take a TOML value and turn it into a vector of strings
 
+   function Merge_Tables (L, R : TOML.TOML_Value) return TOML.TOML_Value with
+     Pre => L.Kind in TOML.TOML_Table and then R.Kind in TOML.TOML_Table,
+     Post => Merge_Tables'Result.Kind in TOML.TOML_Table;
+
    generic
       type Enum is (<>);
    function Tomify_Enum (E : Enum) return TOML.TOML_Value;

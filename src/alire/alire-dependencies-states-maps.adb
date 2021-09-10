@@ -69,7 +69,7 @@ package body Alire.Dependencies.States.Maps is
       --  Stored as an array of individual states:
       --  [[state]]
    begin
-      return Arr : constant TOML_Value := Create_Array (TOML_Table) do
+      return Arr : constant TOML_Value := Create_Array do
          for Dep of This loop
             Arr.Append (Dep.To_TOML);
          end loop;

@@ -49,7 +49,7 @@ package body Alire.Properties.Scenarios is
                         Table.Checked_Error
                           ("At least two values required in scenario");
                      end if;
-                     if Val.Item_Kind = TOML_String then
+                     if Val.Item (1).Kind = TOML_String then
                         declare
                            use GPR;
                            Values : GPR.Value_Vector;
@@ -143,8 +143,7 @@ package body Alire.Properties.Scenarios is
       case V.Var.Element.Kind is
          when Enumeration =>
             declare
-               Arr : constant TOML.TOML_Value :=
-                 TOML.Create_Array (TOML.TOML_String);
+               Arr : constant TOML.TOML_Value := TOML.Create_Array;
             begin
                for Val of V.Var.Element.Values loop
                   Arr.Append (+Val);

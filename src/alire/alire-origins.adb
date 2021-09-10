@@ -706,11 +706,14 @@ package body Alire.Origins is
                        +(Prefixes (This.Kind).all & (+This.Data.Description)));
 
          when Binary_Archive =>
-            Table := TOML.Merge (Table,
-                                 This.Data.Bin_Archive.As_Data.To_TOML);
+            Table := TOML_Adapters.Merge_Tables
+              (Table,
+               This.Data.Bin_Archive.As_Data.To_TOML);
 
          when Source_Archive =>
-            Table := TOML.Merge (Table, This.Data.Src_Archive.To_TOML);
+            Table := TOML_Adapters.Merge_Tables
+              (Table,
+               This.Data.Src_Archive.To_TOML);
 
          when System =>
             Table.Set (Keys.URL,

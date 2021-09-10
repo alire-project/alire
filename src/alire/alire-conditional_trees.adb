@@ -493,7 +493,7 @@ package body Alire.Conditional_Trees is
          begin
             case Current.Kind is
                when TOML_Table =>
-                  Table.Set (Key, TOML.Merge (Current, Val));
+                  Table.Set (Key, TOML_Adapters.Merge_Tables (Current, Val));
                when TOML_Array =>
                   case Val.Kind is
                      when TOML.Atom_Value_Kind | TOML.TOML_Table =>
