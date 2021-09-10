@@ -135,6 +135,30 @@ package body Alire.TOML_Adapters is
                      Context : String) return Key_Queue is
      (From (Value, Context));
 
+   ------------------
+   -- Merge_Tables --
+   ------------------
+
+   function Merge_Tables (L, R : TOML.TOML_Value) return TOML.TOML_Value
+   is
+      use TOML;
+      function Merge_Internal (Key  : Unbounded_UTF8_String;
+                      L, R : TOML_Value)
+                      return TOML_Value
+      is
+         pragma Unreferenced (Key);
+      begin
+         if L.Kind = TOML_Table and then R.Kind = L.Kind then
+            return TOML.Merge (L, R, Merge_Internal'Access);
+         else
+            Raise_Checked_Error
+              ("Ill-shaped TOML information cannot be merged");
+         end if;
+      end Merge_Internal;
+   begin
+      return TOML.Merge (L, R, Merge_Entries => Merge_Internal'Access);
+   end Merge_Tables;
+
    ---------
    -- Pop --
    ---------
@@ -374,7 +398,7 @@ package body Alire.TOML_Adapters is
          return V;
       else
          declare
-            Arr : constant TOML_Value := Create_Array (V.Kind);
+            Arr : constant TOML_Value := Create_Array;
          begin
             Arr.Append (V);
             return Arr;
