@@ -223,6 +223,11 @@ package body Alire.Releases is
               (Release => This,
                Env     => Env,
                Moment  => Post_Fetch);
+         exception
+            when E : others =>
+               Log_Exception (E);
+               Trace.Warning ("A post-fetch action failed, " &
+                                "re-run with -vv -d for details");
          end;
       end if;
 

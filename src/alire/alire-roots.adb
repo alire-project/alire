@@ -314,18 +314,54 @@ package body Alire.Roots is
       -- Deploy_Release --
       --------------------
 
-      procedure Deploy_Release (Sol : Solutions.Solution;
-                                Dep : Dependencies.States.State)
+      procedure Deploy_Release (This : in out Root;
+                                Sol  : Solutions.Solution;
+                                Dep  : Dependencies.States.State)
       is
          pragma Unreferenced (Sol);
          Was_There : Boolean;
+
+         --------------------
+         -- Run_Post_Fetch --
+         --------------------
+
+         procedure Run_Post_Fetch (Release : Releases.Release) is
+            CD : Directories.Guard
+              (Directories.Enter (This.Release_Base (Release.Name)))
+              with Unreferenced;
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release,
+               Env     => This.Environment,
+               Moment  => Alire.Properties.Actions.Post_Fetch);
+         exception
+            when E : others =>
+               Log_Exception (E);
+               Raise_Checked_Error ("A post-fetch action failed, " &
+                                      "re-run with -vv -d for details");
+         end Run_Post_Fetch;
+
       begin
          if Dep.Is_Linked then
             Trace.Debug ("deploy: skip linked release");
+
+            --  To allow local workflows to work as in a real fetching, linked
+            --  releases get their post-fetch run whenever there is a change to
+            --  dependencies. This will run them more than once, but is better
+            --  than never running them and breaking something.
+            if Dep.Has_Release then
+               Run_Post_Fetch (Dep.Release);
+            end if;
             return;
 
-         elsif Release (This).Provides (Dep.Crate) then
+         elsif Release (This).Provides (Dep.Crate) or else
+           (Dep.Has_Release and then Dep.Release.Name = Release (This).Name)
+         then
             Trace.Debug ("deploy: skip root");
+            --  The root release is never really "fetched" (unless for an alr
+            --  get, but e.g. not when cloned). So, we run their post-fetch
+            --  when dependencies are updated.
+            Run_Post_Fetch (Dep.Release);
             return;
 
          elsif not Dep.Has_Release then
@@ -357,11 +393,17 @@ package body Alire.Roots is
                            Parent_Folder   =>
                              Ada.Directories.Containing_Directory
                                (This.Release_Base (Rel.Name)),
+                           Perform_Actions => False,
                            Was_There       => Was_There,
                            Create_Manifest =>
                              Dep.Is_Shared,
                            Include_Origin  =>
                              Dep.Is_Shared);
+
+               --  Always run the post-fetch on update of dependencies, in
+               --  case there is some interaction with some other updated
+               --  dependency, even for crates that didn't change.
+               Run_Post_Fetch (Rel);
             end if;
          end;
       end Deploy_Release;
@@ -377,7 +419,7 @@ package body Alire.Roots is
       --  Visit dependencies in a safe order to be fetched, and their actions
       --  ran
 
-      This.Solution.Traverse (Doing => Deploy_Release'Access);
+      This.Traverse (Doing => Deploy_Release'Access);
 
       --  Show hints for missing externals to the user after all the noise of
       --  dependency post-fetch compilations.

@@ -1,0 +1,41 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+executables = ["hello_world"]
+
+[[actions."case(os)".linux]]
+type = "post-fetch"
+command = ["touch", "test_post_fetch"]
+[[actions."case(os)".linux]]
+type = "pre-build"
+command = ["touch", "test_pre_build"]
+[[actions."case(os)".linux]]
+type = "post-build"
+command = ["touch", "test_post_build"]
+
+[[actions."case(os)".macos]]
+type = "post-fetch"
+command = ["touch", "test_post_fetch"]
+[[actions."case(os)".macos]]
+type = "pre-build"
+command = ["touch", "test_pre_build"]
+[[actions."case(os)".macos]]
+type = "post-build"
+command = ["touch", "test_post_build"]
+
+[[actions."case(os)".windows]]
+type = "post-fetch"
+command = ["cmd", "/C", "copy NUL test_post_fetch"]
+[[actions."case(os)".windows]]
+type = "pre-build"
+command = ["cmd", "/C", "copy NUL test_pre_build"]
+[[actions."case(os)".windows]]
+type = "post-build"
+command = ["cmd", "/C", "copy NUL test_post_build"]
+
+[origin]
+url = "file:../../../hello_src"
