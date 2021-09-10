@@ -74,8 +74,8 @@ package body Alire.GitHub is
    -------------------
 
    function Branch_Exists
-     (User   : String := Config.Get (Config.Keys.User_Github_Login,
-                                     Default => "");
+     (User   : String := Config.DB.Get (Config.Keys.User_Github_Login,
+                                        Default => "");
       Repo   : String := Index.Community_Repo_Name;
       Branch : String := Index.Community_Branch)
       return Boolean
@@ -86,8 +86,8 @@ package body Alire.GitHub is
    -----------------
 
    function Repo_Exists
-     (User : String := Config.Get (Config.Keys.User_Github_Login,
-                                   Default => "");
+     (User : String := Config.DB.Get (Config.Keys.User_Github_Login,
+                                      Default => "");
       Repo : String := Index.Community_Repo_Name)
       return Boolean
    is (API_Call ("repos" / User / Repo).Succeeded);
@@ -97,8 +97,8 @@ package body Alire.GitHub is
    -----------------
 
    function User_Exists
-     (User : String := Config.Get (Config.Keys.User_Github_Login,
-                                   Default => ""))
+     (User : String := Config.DB.Get (Config.Keys.User_Github_Login,
+                                      Default => ""))
       return Boolean
    is (API_Call ("users" / User).Succeeded);
 

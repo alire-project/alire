@@ -238,7 +238,7 @@ package body Alr.Commands is
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
 
       Manual_Only : constant Boolean :=
-                      Alire.Config.Get
+                      Alire.Config.DB.Get
                         (Alire.Config.Keys.Update_Manually, False);
 
       package Conf renames Alire.Config;
@@ -256,7 +256,7 @@ package body Alr.Commands is
       --  user for its preference at this time.
 
       if Cmd not in Commands.Toolchain.Command'Class and then
-        Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True)
+        Conf.DB.Get (Conf.Keys.Toolchain_Assistant, Default => True)
       then
          Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant (Conf.Global);

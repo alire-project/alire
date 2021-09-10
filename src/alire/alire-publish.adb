@@ -450,12 +450,12 @@ package body Alire.Publish is
          --  Show the upload URL in normal circumstances, or a more generic
          --  message otherwise (when lacking a github login).
 
-         if Config.Defined (Config.Keys.User_Github_Login) then
+         if Config.DB.Defined (Config.Keys.User_Github_Login) then
             Put_Info
               ("Please upload this file to "
                & TTY.URL
                  (Index.Community_Host & "/"
-                  & Config.Get (Config.Keys.User_Github_Login, "") & "/"
+                  & Config.DB.Get (Config.Keys.User_Github_Login, "") & "/"
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
@@ -684,7 +684,7 @@ package body Alire.Publish is
 
       --  User has an account
 
-      if not Config.Defined (Config.Keys.User_Github_Login) then
+      if not Config.DB.Defined (Config.Keys.User_Github_Login) then
          Put_Info ("Publishing to the community index"
                    & " requires a GitHub account.");
       else

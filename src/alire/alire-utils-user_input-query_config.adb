@@ -15,15 +15,15 @@ package body Alire.Utils.User_Input.Query_Config is
    is
       use Alire.Config;
    begin
-      if Config.Defined (Config_Key) then
-         return Config.Get (Config_Key, Default);
+      if Config.DB.Defined (Config_Key) then
+         return Config.DB.Get (Config_Key, Default);
       else
          declare
             Result : constant String :=
               Query_String (Question, Default, Validation);
          begin
             if Result /= Default then
-               Edit.Set (Config.Edit.Filepath (Global), Config_Key, Result);
+               Alire.Config.Edit.Set_Globally (Config_Key, Result);
             end if;
 
             return Result;

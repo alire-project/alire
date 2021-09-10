@@ -84,7 +84,8 @@ package body Alire.Releases is
       Newline    : constant String := ASCII.LF & "   ";
    begin
       for Dep of This.Flat_Dependencies loop
-         if Config.Get (Config.Keys.Warning_Caret, Default => True) and then
+         if Config.DB.Get (Config.Keys.Warning_Caret, Default => True)
+           and then
            AAA.Strings.Contains (Dep.Versions.Image, "^0")
          then
             Warnings.Warn_Once
