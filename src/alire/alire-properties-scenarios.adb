@@ -49,21 +49,22 @@ package body Alire.Properties.Scenarios is
                         Table.Checked_Error
                           ("At least two values required in scenario");
                      end if;
-                     if Val.Item (1).Kind = TOML_String then
-                        declare
-                           use GPR;
-                           Values : GPR.Value_Vector;
-                        begin
-                           for I in 1 .. Val.Length loop
-                              Values := Values or Val.Item (I).As_String;
-                           end loop;
-                           Props := Props and New_Property
-                             (GPR.Enum_Variable (Key, Values));
-                        end;
-                     else
-                        Table.Checked_Error
-                          ("scenario values must be a string array");
-                     end if;
+
+                     declare
+                        use GPR;
+                        Values : GPR.Value_Vector;
+                     begin
+                        for I in 1 .. Val.Length loop
+                           if Val.Item (I).Kind /= TOML_String then
+                              Table.Checked_Error
+                                ("scenario values must be a string array");
+                           end if;
+
+                           Values := Values or Val.Item (I).As_String;
+                        end loop;
+                        Props := Props and New_Property
+                          (GPR.Enum_Variable (Key, Values));
+                     end;
                   end if;
                end;
             end loop;
