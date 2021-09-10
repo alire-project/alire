@@ -14,6 +14,12 @@ assert p.status != 0, "Call should have failed"
 p = run_alr("toolchain", "--select", "--uninstall", complain_on_error=False)
 assert p.status != 0, "Call should have failed"
 
+p = run_alr("toolchain", "--select", "--install-dir", complain_on_error=False)
+assert p.status != 0, "Call should have failed"
+
+p = run_alr("toolchain", "--uninstall", "--install-dir", complain_on_error=False)
+assert p.status != 0, "Call should have failed"
+
 # Bonus: test a proper invocation
 p = run_alr("toolchain")
 

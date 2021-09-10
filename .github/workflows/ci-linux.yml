@@ -87,7 +87,7 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr-bin-linux.zip
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-linux.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-bin-x86_64-linux.zip
         asset_content_type: application/zip
 
     ############
@@ -124,5 +124,5 @@ jobs:
       with:
         upload_url: ${{ steps.get_release.outputs.upload_url }}
         asset_path: alr.AppImage
-        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}.AppImage
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-x86_64.AppImage
         asset_content_type: application/x-elf

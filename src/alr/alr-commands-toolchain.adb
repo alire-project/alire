@@ -1,3 +1,6 @@
+
+with GNAT.Strings; use GNAT.Strings;
+
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
@@ -37,7 +40,13 @@ package body Alr.Commands.Toolchain is
          Cmd.Install'Access,
          Switch      => "-i",
          Long_Switch => "--install",
-         Help        => "Install a toolchain component");
+         Help        => "Install one or more toolchain component");
+
+      Define_Switch
+        (Config,
+         Cmd.Install_Dir'Access,
+         Long_Switch => "--install-dir=",
+         Help        => "Toolchain component(s) installation directory");
 
       Define_Switch
         (Config,
@@ -58,7 +67,7 @@ package body Alr.Commands.Toolchain is
          Cmd.Uninstall'Access,
          Switch      => "-u",
          Long_Switch => "--uninstall",
-         Help        => "Uninstall a toolchain component");
+         Help        => "Uninstall one or more toolchain component");
    end Setup_Switches;
 
    -------------
@@ -102,7 +111,11 @@ package body Alr.Commands.Toolchain is
 
          --  And perform the actual installation
 
-         Shared.Share (Rel);
+         if Cmd.Install_Dir.all /= "" then
+            Shared.Share (Rel, Cmd.Install_Dir.all);
+         else
+            Shared.Share (Rel);
+         end if;
 
          if Set_As_Default then
             Alire.Toolchains.Set_As_Default
@@ -236,31 +249,21 @@ package body Alr.Commands.Toolchain is
       --  Validation
 
       if Alire.Utils.Count_True
-        ((Cmd.Disable, Cmd.Install, Cmd.S_Select, Cmd.Uninstall)) > 1
+        ((Cmd.Install, Cmd.S_Select, Cmd.Uninstall)) > 1
       then
          Reportaise_Wrong_Arguments
            ("The provided switches cannot be used simultaneously");
       end if;
 
-      if Args.Count > 1 then
-         Reportaise_Wrong_Arguments
-           ("One crate with optional version expected: crate[version set]");
-      end if;
-
-      if (Cmd.Install or Cmd.Uninstall) and then Args.Count /= 1 then
+      if (Cmd.Install or Cmd.Uninstall) and then Args.Is_Empty then
          Reportaise_Wrong_Arguments ("No release specified");
       end if;
 
-      if Args.Count = 1 and then
+      if not Args.Is_Empty and then
         not (Cmd.Install or Cmd.Uninstall or Cmd.S_Select)
       then
          Reportaise_Wrong_Arguments
            ("Specify the action to perform with the crate");
-      end if;
-
-      if Cmd.S_Select and then Args.Count > 1 then
-         Reportaise_Wrong_Arguments
-           ("Toolchain installation accepts at most one argument");
       end if;
 
       if Cmd.Local and then not (Cmd.S_Select or else Cmd.Disable) then
@@ -268,12 +271,24 @@ package body Alr.Commands.Toolchain is
            ("--local requires --select or --disable-assistant");
       end if;
 
-      if Cmd.Disable and then Args.Count /= 0 then
+      if Cmd.Install_Dir.all /= "" and then not Cmd.Install then
          Reportaise_Wrong_Arguments
-           ("Disabling the assistant does not admit any extra arguments");
+           ("--install-dir is only compatible with --install action");
       end if;
 
       --  Dispatch to subcommands
+
+      if Cmd.Disable then
+         Alire.Toolchains.Set_Automatic_Assistant (False,
+                                                   (if Cmd.Local
+                                                    then Alire.Config.Local
+                                                    else Alire.Config.Global));
+         Alire.Put_Info
+           ("Assistant disabled in "
+            & TTY.Emph (if Cmd.Local then "local" else "global")
+            & " configuration.");
+
+      end if;
 
       if Cmd.S_Select then
 
@@ -288,28 +303,25 @@ package body Alr.Commands.Toolchain is
                                         then Alire.Config.Local
                                         else Alire.Config.Global);
          else
-            Install (Cmd, Args (1), Set_As_Default => True);
+            for Elt of Args loop
+               Install (Cmd, Elt, Set_As_Default => True);
+            end loop;
          end if;
 
       elsif Cmd.Uninstall then
-         Uninstall (Cmd, Args (1));
+         for Elt of Args loop
+            Uninstall (Cmd, Elt);
+         end loop;
 
       elsif Cmd.Install then
-         Install (Cmd, Args (1), Set_As_Default => False);
+         for Elt of Args loop
+            Install (Cmd, Elt, Set_As_Default => False);
+         end loop;
 
-      elsif Cmd.Disable then
-         Alire.Toolchains.Set_Automatic_Assistant (False,
-                                                   (if Cmd.Local
-                                                    then Alire.Config.Local
-                                                    else Alire.Config.Global));
-         Alire.Put_Info
-           ("Assistant disabled in "
-            & TTY.Emph (if Cmd.Local then "local" else "global")
-            & " configuration.");
+      elsif not Cmd.Disable then
 
-      else
+         --  When no command is specified, print the list
          Cmd.List;
-
       end if;
 
    exception

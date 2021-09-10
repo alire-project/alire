@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+private with GNAT.Strings;
+
 package Alr.Commands.Toolchain is
 
    --  Installation of binary toolchain crates into the ${ALR_CONFIG}/cache
@@ -32,12 +34,13 @@ package Alr.Commands.Toolchain is
           & "select the default toolchain for this configuration. "
           & "Adding --local will instead make the selection apply "
           & "only to the workspace (overridding a possible "
-          & "configuration-wide selection). Giving a release argument will "
-          & "skip the assistant and set the release as the default.")
+          & "configuration-wide selection). Giving one or more releases"
+          & " argument will skip the assistant and set the release as the"
+          & " default.")
        .New_Line
        .Append
-         ("Specify --install/--uninstall and a crate name with optional "
-          & "version set to make available or remove a tool.")
+         ("Specify --install/--uninstall and one or more crates name with"
+          & " optional version set to make available or remove a tool.")
        .New_Line
        .Append
          ("Run `" & TTY.Terminal ("alr help toolchains") & "` for further "
@@ -56,16 +59,17 @@ package Alr.Commands.Toolchain is
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[-u|--uninstall] [-i|--install crate[version set]] |"
-       & " --select [--local] [release]");
+       & " --select [--local] [releases] [--disable-assistant]");
 
 private
 
    type Command is new Commands.Command with record
-      Disable   : aliased Boolean := False;
-      Install   : aliased Boolean := False;
-      Local     : aliased Boolean := False;
-      S_Select  : aliased Boolean := False;
-      Uninstall : aliased Boolean := False;
+      Disable     : aliased Boolean := False;
+      Install     : aliased Boolean := False;
+      Install_Dir : aliased GNAT.Strings.String_Access := null;
+      Local       : aliased Boolean := False;
+      S_Select    : aliased Boolean := False;
+      Uninstall   : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Toolchain;
