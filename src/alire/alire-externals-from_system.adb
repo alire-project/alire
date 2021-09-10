@@ -124,7 +124,7 @@ package body Alire.Externals.From_System is
          Candidates := Candidates + Natural (Packages.Packages.Length);
       end loop;
 
-      return Utils.Trim (Candidates'Image)
+      return AAA.Strings.Trim (Candidates'Image)
         & (if Candidates = 1
            then " candidate system package"
            else " candidate system packages");
@@ -137,9 +137,9 @@ package body Alire.Externals.From_System is
    overriding
    function Detail (This   : External;
                     Distro : Platforms.Distributions)
-                    return Utils.String_Vector
+                    return AAA.Strings.Vector
    is
-      Result : Utils.String_Vector;
+      Result : AAA.Strings.Vector;
       use Alire.Properties;
       use type Platforms.Distributions;
    begin
@@ -159,8 +159,8 @@ package body Alire.Externals.From_System is
             begin
                if not On_Distro.Is_Empty then
                   Result.Append
-                    (TOML_Adapters.Adafy (Concrete_Distro'Image) & ": "
-                     & On_Distro.Image_One_Line);
+                    (TOML_Adapters.Adafy (Concrete_Distro'Image) &
+                       ": " & On_Distro.Image_One_Line);
                end if;
             end;
          end if;

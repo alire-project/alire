@@ -1,6 +1,8 @@
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Tags;
 
+with AAA.Strings;
+
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.Containers;
@@ -204,7 +206,7 @@ package Alire.Releases is
 
    function Executables (R : Release;
                          P : Alire.Properties.Vector)
-                         return Utils.String_Vector;
+                         return AAA.Strings.Vector;
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)
 
@@ -212,13 +214,13 @@ package Alire.Releases is
 
    function Project_Paths (R : Release;
                            P : Alire.Properties.Vector)
-                           return Utils.String_Set;
+                           return AAA.Strings.Set;
    --  Deduced from Project_Files
 
    function Project_Files (R         : Release;
                            P         : Alire.Properties.Vector;
                            With_Path : Boolean)
-                           return Utils.String_Vector;
+                           return AAA.Strings.Vector;
    --  with relative path on demand
 
    function Unique_Folder (R : Release) return Folder_String;
@@ -254,7 +256,7 @@ package Alire.Releases is
      (R     : Release;
       P     : Alire.Properties.Vector;
       Label : Alire.Properties.Labeled.Labels)
-      return Utils.String_Vector;
+      return AAA.Strings.Vector;
    --  Get all values for a given property for a given platform properties
 
    function Author (R : Release) return Alire.Properties.Vector;
@@ -461,7 +463,7 @@ private
 
    function Description (R : Release) return Description_String
    --  Image returns "Description: Blah" so we have to cut.
-   is (Utils.Tail
+   is (AAA.Strings.Tail
        (Conditional.Enumerate (R.Properties).Filter
         (Alire.TOML_Keys.Description).First_Element.Image, ' '));
 
@@ -472,7 +474,7 @@ private
    is (Milestones.New_Milestone (R.Name, R.Version));
 
    function Default_Executable (R : Release) return String
-   is (Utils.Replace (+R.Name, ":", "_") & OS_Lib.Exe_Suffix);
+   is (AAA.Strings.Replace (+R.Name, ":", "_") & OS_Lib.Exe_Suffix);
 
    function License (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
@@ -504,8 +506,9 @@ private
 
    use all type Origins.Kinds;
    function Unique_Folder (R : Release) return Folder_String
-   is (Utils.Head (+R.Name, Extension_Separator) & "_" &
-         Utils.Head (Utils.Head (Image (R.Version), '-'), '+') & "_" &
+   is (AAA.Strings.Head (+R.Name, Extension_Separator) & "_" &
+         AAA.Strings.Head
+         (AAA.Strings.Head (Image (R.Version), '-'), '+') & "_" &
          --  Remove patch/build strings that may violate folder valid chars
        (case R.Origin.Kind is
            when Binary_Archive => R.Origin.Short_Unique_Id,

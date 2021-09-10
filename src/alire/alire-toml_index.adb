@@ -204,7 +204,7 @@ package body Alire.TOML_Index is
       -----------------
 
       function Locate_Root (Result : out Load_Result) return Any_Path is
-         Repo_Version_Files : constant Utils.String_Vector :=
+         Repo_Version_Files : constant AAA.Strings.Vector :=
                                 Alire.Directories.Find_Files_Under
                                   (Folder    => Index.Index_Directory,
                                    Name      => "index.toml",
@@ -269,6 +269,7 @@ package body Alire.TOML_Index is
    is
       pragma Unreferenced (Stop);
       use Ada.Directories;
+      use AAA.Strings;
    begin
       if Kind (Item) /= Ordinary_File then
          return;
@@ -303,7 +304,7 @@ package body Alire.TOML_Index is
             Raise_Checked_Error ("Unexpected file in index: " & Path);
          end if;
 
-         if not Utils.Contains (File, "-") then
+         if not Contains (File, "-") then
             Raise_Checked_Error ("Malformed manifest file name: " & Path);
          end if;
 
@@ -313,16 +314,15 @@ package body Alire.TOML_Index is
 
          declare
             --  Name/version deducted from file name, to double check
-            FS_Name    : constant Crate_Name := +Utils.Head (File, '-');
-            FS_Version : constant String :=
-                           Utils.Tail (Base_Name (File), '-');
+            FS_Name    : constant Crate_Name := +Head (File, '-');
+            FS_Version : constant String := Tail (Base_Name (File), '-');
          begin
 
             --  Preliminary checks based on file name
 
-            if not Utils.Starts_With
-              (Full_String => +FS_Name,
-               Substring   => Simple_Name (Shelf))
+            if not Has_Prefix
+              (Full   => +FS_Name,
+               Prefix => Simple_Name (Shelf))
             then
                Raise_Checked_Error ("Mismatch between manifest and shelf: "
                                     & Path);
@@ -487,7 +487,7 @@ package body Alire.TOML_Index is
       Name : constant String := +Crate;
    begin
       return Portable_Path
-               ("index/" & Name (Name'First .. Name'First + 1) & "/" & Name);
+        ("index/" & Name (Name'First .. Name'First + 1) & "/" & Name);
    end Manifest_Path;
 
 end Alire.TOML_Index;

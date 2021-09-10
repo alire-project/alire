@@ -6,7 +6,6 @@ with Alire.Dependencies;
 with Alire.Policies;
 with Alire.Properties;
 with Alire.Releases.Containers;
-with Alire.Utils;
 
 with Semantic_Versioning;
 
@@ -44,7 +43,7 @@ package Alire.Index is
 
    Version : constant Semantic_Versioning.Version :=
                Semantic_Versioning.New_Version
-                 (Utils.Tail (Community_Branch, '-'));
+                 (AAA.Strings.Tail (Community_Branch, '-'));
    --  The index version understood by alire must match the one in the indexes
    --  being loaded.
 

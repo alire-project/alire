@@ -2,12 +2,13 @@ with Ada.Directories;
 
 with GNAT.OS_Lib;
 
+with AAA.Strings;
+
 with Alire;
 with Alire.Platform;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
-with Alire.Utils;
 with Alire.Config.Edit;
 
 with CLIC.User_Input;
@@ -98,7 +99,7 @@ package body Alr.Platforms.Windows is
    function Install_Msys2 (Install_Dir : Alire.Absolute_Path)
                            return Alire.Outcome
    is
-      use Alire.Utils;
+      use AAA.Strings;
 
       Result : Alire.Outcome;
    begin
@@ -118,7 +119,7 @@ package body Alr.Platforms.Windows is
          --  Run msys2's installer
          Alire.OS_Lib.Subprocess.Checked_Spawn
            (Install_Dir / Msys2_Installer,
-            Alire.Utils.Empty_Vector &
+            Empty_Vector &
               "in" &
               "--confirm-command" &
               "--accept-messages" &

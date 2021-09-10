@@ -1,10 +1,11 @@
+with AAA.Strings;
+
 with Alire.Conditional;
 with Alire.Containers;
 with Alire.Platforms;
 with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.TOML_Adapters;
-with Alire.Utils;
 
 package Alire.Externals is
 
@@ -28,7 +29,7 @@ package Alire.Externals is
 
    function Detail (This   : External;
                     Distro : Platforms.Distributions)
-                    return Utils.String_Vector is abstract;
+                    return AAA.Strings.Vector is abstract;
    --  Detailed longer textual description of specifics. If Distro /= Unknown,
    --  show only the relevant distro information.
 

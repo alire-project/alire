@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.Conditional_Trees.Case_Nodes;
 with Alire.Errors;
 with Alire.TOML_Keys;
@@ -31,7 +33,7 @@ package body Alire.Conditional_Trees.TOML_Load is
                              Case_Val : TOML_Value)
                              return Tree
       is
-         use Utils;
+         use AAA.Strings;
 
          ---------------------
          -- Process_Entries --
@@ -40,6 +42,7 @@ package body Alire.Conditional_Trees.TOML_Load is
          function Process_Entries (Case_Table : TOML_Adapters.Key_Queue)
                                    return Tree
          is
+
             Var : constant Expressions.Variable :=
                     Expressions.From
                       (Key => Head (Tail (Case_Key, '('), ')'));
@@ -50,8 +53,8 @@ package body Alire.Conditional_Trees.TOML_Load is
                declare
                   Item_Val : TOML_Value;
                   Item_Key : constant String := Case_Table.Pop (Item_Val);
-                  Values   : constant Utils.String_Vector :=
-                               Utils.Split (Item_Key, '|', Trim => True);
+                  Values   : constant AAA.Strings.Vector :=
+                    AAA.Strings.Split (Item_Key, '|', Trim => True);
                   --  A single item may store several cases separated by '|'
                begin
                   exit when Item_Key = "";
@@ -97,7 +100,7 @@ package body Alire.Conditional_Trees.TOML_Load is
          end Process_Entries;
 
       begin
-         if Starts_With (Case_Key, "case(") and then
+         if Has_Prefix (Case_Key, "case(") and then
            Case_Key (Case_Key'Last) = ')'
          then
             return Process_Entries (Parent.Descend (Case_Val, Case_Key));

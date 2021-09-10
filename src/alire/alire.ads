@@ -1,6 +1,13 @@
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
+pragma Warnings (Off, "no entities of * are referenced");
+with AAA.Strings;
+pragma Unreferenced (AAA.Strings);
+--  AAA.Strings is used everywhere in Alire, so we make it with-visible for all
+--  units.
+pragma Warnings (On, "no entities of * are referenced");
+
 pragma Warnings (Off);
 with GNAT.OS_Lib;
 pragma Warnings (On);

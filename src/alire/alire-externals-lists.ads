@@ -21,7 +21,7 @@ package Alire.Externals.Lists is
    function Hints (This : List;
                    Name : Crate_Name;
                    Env  : Properties.Vector := Properties.No_Properties)
-                   return Utils.String_Vector;
+                   return AAA.Strings.Vector;
    --  Given an external list, evaluate all that apply under Env platform
    --  properties and, for those that fail to detect, return their hint
    --  message if any. If Env is empty, return all hints unconditionally.

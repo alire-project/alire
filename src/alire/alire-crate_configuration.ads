@@ -7,7 +7,6 @@ private with Ada.Strings.Unbounded;
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Indefinite_Holders;
-private with Alire.Utils;
 
 package Alire.Crate_Configuration is
 
@@ -62,7 +61,7 @@ private
    procedure Generate_GPR_Config (This     : Global_Config;
                                   Crate    : Crate_Name;
                                   Filepath : Absolute_Path;
-                                  Withs    : Alire.Utils.String_Set;
+                                  Withs    : AAA.Strings.Set;
                                   Version  : String);
 
    procedure Generate_C_Config (This     : Global_Config;

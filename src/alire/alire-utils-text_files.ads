@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 package Alire.Utils.Text_Files is
 
    --  A convenience type to hold a complete text file in memory as a vector of
@@ -14,10 +16,11 @@ package Alire.Utils.Text_Files is
    --  original is renamed to ".prev". Backup_Dir optionally designates where
    --  the backup file will be moved.
 
-   function Lines (This : aliased in out File) return access String_Vector;
+   function Lines (This : aliased in out File)
+                   return access AAA.Strings.Vector;
 
    procedure Append_Lines (File       : Any_Path;
-                           Lines      : String_Vector;
+                           Lines      : AAA.Strings.Vector;
                            Backup     : Boolean  := True;
                            Backup_Dir : Any_Path := "");
    --  Add the given lines to the end of the file
@@ -28,8 +31,8 @@ private
      new Ada.Finalization.Limited_Controlled
    with record
       Name       : Any_Path (1 .. Length);
-      Lines      : aliased String_Vector; -- The final contents
-      Orig       : String_Vector;         -- The original contents
+      Lines      : aliased AAA.Strings.Vector; -- The final contents
+      Orig       : AAA.Strings.Vector;         -- The original contents
       Backup     : Boolean := True;
       Backup_Dir : Any_Path (1 .. Backup_Len);
    end record;

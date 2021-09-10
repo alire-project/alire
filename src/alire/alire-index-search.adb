@@ -2,6 +2,8 @@ with Alire.Utils.Tables;
 
 package body Alire.Index.Search is
 
+   use AAA.Strings;
+
    ------------------
    -- Print_Crates --
    ------------------
@@ -9,15 +11,15 @@ package body Alire.Index.Search is
    procedure Print_Crates (Substring : String := "") is
       Table  : Utils.Tables.Table;
       Found  : Natural := 0;
-      Lookup : constant String := Utils.To_Lower_Case (Substring);
+      Lookup : constant String := AAA.Strings.To_Lower_Case (Substring);
 
       Busy   : Simple_Logging.Ongoing :=
                  Simple_Logging.Activity ("Searching");
    begin
       for Crate of Alire.Index.All_Crates.all loop
          if Lookup = "" or else
-           Utils.Contains (Utils.To_Lower_Case (+Crate.Name), Lookup) or else
-           Utils.Contains (Utils.To_Lower_Case (Crate.Description), Lookup)
+           Contains (To_Lower_Case (+Crate.Name), Lookup) or else
+           Contains (To_Lower_Case (Crate.Description), Lookup)
          then
             Found := Found + 1;
             Table.New_Row;

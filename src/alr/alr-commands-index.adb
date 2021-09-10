@@ -173,13 +173,13 @@ package body Alr.Commands.Index is
          Count := Count + 1;
          Table.New_Row;
          Table
-           .Append (Utils.Trim (Count'Img))
+           .Append (AAA.Strings.Trim (Count'Img))
            .Append (Index.Name)
            .Append (Index.Origin)
            .Append (Index.Index_Directory);
 
          if Alire.Log_Level = Alire.Trace.Debug then
-            Table.Append (Utils.Trim (Index.Priority'Img));
+            Table.Append (AAA.Strings.Trim (Index.Priority'Img));
          end if;
       end loop;
 

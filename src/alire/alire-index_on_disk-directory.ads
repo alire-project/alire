@@ -1,5 +1,3 @@
-with Alire.Utils;
-
 package Alire.Index_On_Disk.Directory is
 
    --  A local index that is taken from a local filesystem path
@@ -10,7 +8,7 @@ package Alire.Index_On_Disk.Directory is
    function New_Handler (From   : URL;
                          Name   : Restricted_Name;
                          Parent : Any_Path) return Index with
-     Pre => Utils.Starts_With (From, "file://")
+     Pre => AAA.Strings.Has_Prefix (From, "file://")
               and then
             Check_Absolute_Path (From (From'First + 7 .. From'Last));
    --  file:// + absolute path

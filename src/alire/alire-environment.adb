@@ -27,8 +27,8 @@ package body Alire.Environment is
 
    function Already_Defines (Existing, Value : String) return Boolean
    --  Check that Value is a path-delimited identical value in Existing
-   is (for some Part of Utils.String_Vector'
-         (Utils.Split (Existing, GNAT.OS_Lib.Path_Separator)) =>
+   is (for some Part of AAA.Strings.Vector'
+         (AAA.Strings.Split (Existing, GNAT.OS_Lib.Path_Separator)) =>
           Part = Value);
 
    ---------
@@ -125,7 +125,7 @@ package body Alire.Environment is
       --  supplied project files.
 
       declare
-         Sorted_Paths : constant Alire.Utils.String_Set :=
+         Sorted_Paths : constant AAA.Strings.Set :=
                           Tool_Root.Current.Project_Paths;
       begin
          if not Sorted_Paths.Is_Empty then

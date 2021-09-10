@@ -1,7 +1,5 @@
 with AAA.Enum_Tools;
 
-with Alire.Utils;
-
 package body Alire.Properties.From_TOML is
 
    ------------
@@ -41,7 +39,7 @@ package body Alire.Properties.From_TOML is
                         From.Recoverable_Error
                           ("property '" & Key
                            & "' must not appear in section "
-                           & Utils.To_Lower_Case (Section'Image));
+                           & AAA.Strings.To_Lower_Case (Section'Image));
                         exit Process_Property;
                      end if;
 

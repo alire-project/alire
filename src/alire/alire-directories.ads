@@ -1,7 +1,8 @@
 with Ada.Directories;
 
+with AAA.Strings;
+
 with Alire.OS_Lib;
-with Alire.Utils;
 
 private with Ada.Finalization;
 
@@ -51,7 +52,7 @@ package Alire.Directories is
    function Find_Files_Under (Folder    : String;
                               Name      : String;
                               Max_Depth : Natural := Natural'Last)
-                              return Utils.String_Vector;
+                              return AAA.Strings.Vector;
    --  Recursively search for a file
    --  Depth 0 means given folder only
    --  Returns all instances found

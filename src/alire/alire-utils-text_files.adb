@@ -1,5 +1,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
+with AAA.Strings; use AAA.Strings;
+
 with Alire.Directories;
 
 package body Alire.Utils.Text_Files is
@@ -9,7 +11,7 @@ package body Alire.Utils.Text_Files is
    ------------------
 
    procedure Append_Lines (File       : Any_Path;
-                           Lines      : String_Vector;
+                           Lines      : AAA.Strings.Vector;
                            Backup     : Boolean  := True;
                            Backup_Dir : Any_Path := "")
    is
@@ -50,7 +52,8 @@ package body Alire.Utils.Text_Files is
    -- Lines --
    -----------
 
-   function Lines (This : aliased in out File) return access String_Vector
+   function Lines (This : aliased in out File)
+                   return access AAA.Strings.Vector
    is (This.Lines'Access);
 
    ----------

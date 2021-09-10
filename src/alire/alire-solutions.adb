@@ -727,7 +727,7 @@ package body Alire.Solutions is
                                           & Dep.Link.TTY_URL_With_Reference
                                               (Detailed)
                                      else "") -- no remote
-                             else Utils.To_Lower_Case
+                             else AAA.Strings.To_Lower_Case
                                (Dep.Release.Origin.Kind'Img))
                           & ")" -- origin completed
                      else ""),   -- no details

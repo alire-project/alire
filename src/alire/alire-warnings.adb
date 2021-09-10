@@ -1,8 +1,6 @@
-with Alire.Utils;
-
 package body Alire.Warnings is
 
-   Already_Emitted : Utils.String_Set;
+   Already_Emitted : AAA.Strings.Set;
 
    ---------------
    -- Warn_Once --

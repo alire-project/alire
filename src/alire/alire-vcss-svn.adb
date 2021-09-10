@@ -1,7 +1,7 @@
+with AAA.Strings; use AAA.Strings;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
-with Alire.Utils;             use Alire.Utils;
 with Alire.Utils.Tools;
 
 package body Alire.VCSs.SVN is
@@ -17,12 +17,12 @@ package body Alire.VCSs.SVN is
                    return Outcome
    is
       pragma Unreferenced (This);
-      Extra : constant String_Vector :=
+      Extra : constant Vector :=
         (if Log_Level < Trace.Info
          then Empty_Vector & "-q"
          else Empty_Vector);
 
-      Commit_Arg : constant String_Vector :=
+      Commit_Arg : constant Vector :=
         (if Commit (From) /= ""
          then Empty_Vector & String'("-r" & Commit (From))
          else Empty_Vector);
@@ -58,7 +58,7 @@ package body Alire.VCSs.SVN is
       pragma Unreferenced (This);
       Guard : Directories.Guard (Directories.Enter (Repo))
         with Unreferenced;
-      Extra : constant String_Vector :=
+      Extra : constant Vector :=
         (if Log_Level < Trace.Info
          then Empty_Vector & "-q"
          else Empty_Vector);

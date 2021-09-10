@@ -1,7 +1,6 @@
 with Alire.Conditional;
 with Alire.TOML_Adapters;
 with Alire.TOML_Keys;
-with Alire.Utils;
 
 package Alire.Properties.Bool with Preelaborate is
 
@@ -51,7 +50,7 @@ private
 
    overriding
    function Image (V : Property) return String
-   is (Utils.To_Mixed_Case (V.Name'Img) & ": " & V.To_YAML);
+   is (AAA.Strings.To_Mixed_Case (V.Name'Img) & ": " & V.To_YAML);
 
    overriding
    function To_YAML (V : Property) return String

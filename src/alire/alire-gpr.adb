@@ -45,10 +45,10 @@ package body Alire.GPR is
    -- As_Command_Line --
    ---------------------
 
-   function As_Command_Line (S : Scenario) return Utils.String_Vector is
-      use Alire.Utils;
+   function As_Command_Line (S : Scenario) return AAA.Strings.Vector is
+      use AAA.Strings;
 
-      Result : String_Vector := Empty_Vector;
+      Result : Vector := Empty_Vector;
 
       Cdr : Scenario := S;
    begin

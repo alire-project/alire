@@ -1,5 +1,5 @@
 with Alire.OS_Lib; use Alire.OS_Lib.Operators;
-with Alire.Utils;
+with AAA.Strings;
 
 with TOML;
 
@@ -13,7 +13,7 @@ package Alire.Config with Preelaborate is
                                  '-' | '.' | '_')
       and then Key (Key'First) not in '-' | '.' | '_'
       and then Key (Key'Last) not in '-' | '.' | '_'
-       and then not Utils.Contains (Key, ".."));
+       and then not AAA.Strings.Contains (Key, ".."));
    --  Rule that define a valid configuration key. Dots are used to separate
    --  levels of configuration groups.
    --   eg:

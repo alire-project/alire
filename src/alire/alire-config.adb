@@ -19,7 +19,7 @@ package body Alire.Config is
    begin
       case F.Kind is
          when Regular =>
-            return Utils.Trim (F.Value'Image);
+            return AAA.Strings.Trim (F.Value'Image);
          when NaN | Infinity =>
             return (if F.Positive then "" else "-") &
             (if F.Kind = NaN then "nan" else "inf");
@@ -36,7 +36,7 @@ package body Alire.Config is
          when TOML_Boolean =>
             return (if Val.As_Boolean then "true" else "false");
          when TOML_Integer =>
-            return Utils.Trim (Val.As_Integer'Img);
+            return AAA.Strings.Trim (Val.As_Integer'Img);
          when TOML_Float =>
             return Image (Val.As_Float);
          when TOML_String =>

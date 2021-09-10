@@ -1,7 +1,6 @@
 with AAA.Strings;
 
 with Alr.Platform;
-with Alr.Utils;
 
 package Alr.Commands.Version is
 
@@ -31,15 +30,13 @@ package Alr.Commands.Version is
 
 private
 
-   use Utils;
-
    -----------------
    -- Fingerprint --
    -----------------
 
    function Fingerprint return String is
-       (To_Mixed_Case (Platform.Operating_System'Img) & " " &
-        To_Mixed_Case (Platform.Word_Size'Img) & " " &
-        To_Mixed_Case (Platform.Distribution'Img));
+       (AAA.Strings.To_Mixed_Case (Platform.Operating_System'Img) & " " &
+        AAA.Strings.To_Mixed_Case (Platform.Word_Size'Img) & " " &
+        AAA.Strings.To_Mixed_Case (Platform.Distribution'Img));
 
 end Alr.Commands.Version;

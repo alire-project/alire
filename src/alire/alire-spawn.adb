@@ -8,10 +8,10 @@ package body Alire.Spawn is
    -------------
 
    procedure Command (Cmd                 : String;
-                      Args                : Alire.Utils.String_Vector;
+                      Args                : AAA.Strings.Vector;
                       Understands_Verbose : Boolean := False)
    is
-      Unused_Output : Alire.Utils.String_Vector;
+      Unused_Output : AAA.Strings.Vector;
    begin
       if Alire_Early_Elaboration.Switch_Q then
          Unused_Output :=
@@ -28,9 +28,9 @@ package body Alire.Spawn is
    --------------
 
    procedure Gprbuild (Project_File : String;
-                       Extra_Args   : Alire.Utils.String_Vector)
+                       Extra_Args   : AAA.Strings.Vector)
    is
-      use Alire.Utils;
+      use AAA.Strings;
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path ("gprbuild") = "" then
          Alire.Raise_Checked_Error

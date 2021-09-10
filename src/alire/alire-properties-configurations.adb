@@ -8,6 +8,8 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alire.Properties.Configurations is
 
+   use AAA.Strings;
+
    -------------
    -- To_Type --
    -------------
@@ -825,11 +827,11 @@ package body Alire.Properties.Configurations is
             begin
                exit when Key = "";
 
-               if Key = Utils.Tail (TOML_Keys.Config_Vars, '.') then
+               if Key = Tail (TOML_Keys.Config_Vars, '.') then
                   Nested := Definitions_From_TOML
                     (From.Descend (Key, Val, "variables"));
 
-               elsif Key = Utils.Tail (TOML_Keys.Config_Values, '.') then
+               elsif Key = Tail (TOML_Keys.Config_Values, '.') then
                   Nested := Assignments_From_TOML
                     (From.Descend (Key, Val, "settings"));
 

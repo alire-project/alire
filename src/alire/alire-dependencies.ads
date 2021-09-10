@@ -133,7 +133,7 @@ private
 
    overriding
    function To_YAML (Dep : Dependency) return String is
-     ("{crate: """ & Utils.To_Lower_Case (+Dep.Crate) &
+     ("{crate: """ & AAA.Strings.To_Lower_Case (+Dep.Crate) &
         """, version: """ & Dep.Versions.Image &
         """}");
 
