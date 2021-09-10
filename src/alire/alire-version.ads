@@ -1,6 +1,7 @@
 package Alire.Version with Preelaborate is
 
-   Current : constant String := "1.1.0-rc2";
+   Current : constant String := "1.1.0-rc3";
+   --  1.1.0-rc3: toolchain with multiple switches, minor fixes
    --  1.1.0-rc2: toolchain non-interactive, lockfile under alire
    --  1.1.0-rc1: crate config, toolchains, manifest pins
    --  1.1.0-dev: begin post-1.0 changes
