@@ -48,6 +48,11 @@ package Alire.Toolchains is
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
 
+   function Tool_Release (Crate : Crate_Name) return Releases.Release;
+   --  Will raise Checked_Error for unconfigured, or configured but without the
+   --  release being deployed (e.g. the user messed with files and deleted it
+   --  manually).
+
    procedure Unconfigure (Crate : Crate_Name);
    --  Set the crate as not configured.
 

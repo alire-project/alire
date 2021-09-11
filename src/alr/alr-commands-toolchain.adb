@@ -7,12 +7,14 @@ with Alire.Config.Edit;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Milestones;
+with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
 with Alire.Utils.TTY;
+with Alire.Warnings;
 
 with Semantic_Versioning.Extended;
 
@@ -79,18 +81,79 @@ package body Alr.Commands.Toolchain is
                       Set_As_Default : Boolean)
    is
       use Alire;
+      use all type Origins.Kinds;
+
+      Dep : constant Dependencies.Dependency :=
+              Dependencies.From_String (Request);
+
+      type Origin_States is (Unset, Frozen, Mixed);
+      --  To detect what tool origins are already in use: Unset none, Frozen
+      --  one kind, Mixed more than one kind.
+      Origin_Status : Origin_States := Unset;
+      Origin_Kind   : Origins.Kinds; -- The Frozen kind in use
+
+      ----------------------
+      -- Identify_Origins --
+      ----------------------
+
+      procedure Identify_Origins is
+      begin
+         for Tool of Toolchains.Tools loop
+            if Toolchains.Tool_Is_Configured (Tool) and then
+              not Toolchains.Tool_Release (Tool).Provides (Dep.Crate)
+            then
+               declare
+                  Other_Tool : constant Releases.Release :=
+                                 Toolchains.Tool_Release (Tool);
+               begin
+                  Trace.Debug ("Configured tool " & Utils.TTY.Name (Tool)
+                               & " has origin kind "
+                               & Other_Tool.Origin.Kind'Image);
+                  case Origin_Status is
+                     when Unset =>
+                        Origin_Status := Frozen;
+                        Origin_Kind   := Other_Tool.Origin.Kind;
+                     when Frozen =>
+                        if Other_Tool.Origin.Kind /= Origin_Kind then
+                           Origin_Status := Mixed;
+                        end if;
+                     when Mixed =>
+                        null; -- We are beyond salvation at this point
+                  end case;
+               end;
+            end if;
+         end loop;
+
+         if Origin_Status = Mixed then
+            Warnings.Warn_Once
+              ("Default toolchain contains mixed-procedence tools");
+         end if;
+      end Identify_Origins;
+
    begin
+
+      --  We want to ensure that we are installing compatible tools. The user
+      --  can force through this, so we consider that a bad situation may
+      --  already exist. The following call checks what origins are already in
+      --  use by configured tools. This is only relevant when setting defaults,
+      --  though.
+      if Set_As_Default then
+         Identify_Origins;
+      end if;
 
       Cmd.Requires_Full_Index;
 
       Installation :
       declare
-         Dep : constant Dependencies.Dependency :=
-                 Dependencies.From_String (Request);
          Rel : constant Releases.Release :=
                  Solver.Find (Name    => Dep.Crate,
                               Allowed => Dep.Versions,
                               Policy  => Query_Policy);
+
+         function The_Other (Tool : Crate_Name) return Crate_Name
+         is (if Tool = GPRbuild_Crate then GNAT_Crate else GPRbuild_Crate);
+         --  This will break the moment we have another tool in the toolchain
+
       begin
 
          --  Only allow sharing toolchain elements in this command:
@@ -109,12 +172,40 @@ package body Alr.Commands.Toolchain is
                       & Rel.Milestone.TTY_Image);
          end if;
 
+         --  Check for mixed-origin clashes
+
+         if Origin_Status = Frozen and then Rel.Origin.Kind /= Origin_Kind then
+            Recoverable_Error
+              ("Currently configured " & Utils.TTY.Name (The_Other (Dep.Crate))
+               & " has origin " & TTY.Emph (Origin_Kind'Image)
+               & " but newly selected " & Utils.TTY.Name (Dep.Crate)
+               & " has origin " & TTY.Emph (Rel.Origin.Kind'Image) & ASCII.LF
+               & "Mixing tool origins may result in a broken toolchain");
+         end if;
+
          --  And perform the actual installation
 
          if Cmd.Install_Dir.all /= "" then
-            Shared.Share (Rel, Cmd.Install_Dir.all);
+            if Rel.Origin.Is_Regular then
+               Shared.Share (Rel, Cmd.Install_Dir.all);
+            else
+               Reportaise_Command_Failed
+                 ("Releases with external origins cannot be installed at "
+                  & "specific locations; origin for "
+                  & Rel.Milestone.TTY_Image & " is: " & Rel.Origin.Kind'Image);
+            end if;
          else
-            Shared.Share (Rel);
+            if Rel.Origin.Is_Regular then
+               Shared.Share (Rel);
+            elsif Rel.Origin.Is_System then
+               Origins.Deployers.Deploy (Rel).Assert;
+            elsif Rel.Origin.Kind = External then
+               Put_Info ("External tool needs no installation: "
+                         & Rel.Milestone.TTY_Image);
+            else
+               Raise_Checked_Error ("Unexpected release origin: "
+                                    & Rel.Origin.Kind'Image);
+            end if;
          end if;
 
          if Set_As_Default then

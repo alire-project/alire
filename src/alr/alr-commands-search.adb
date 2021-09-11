@@ -173,7 +173,7 @@ package body Alr.Commands.Search is
            (Crate : Alire.Crates.Crate) is
          begin
             if Cmd.Full then
-               for Release of Crate.Releases loop
+               for Release of reverse Crate.Releases loop
                   List_Release (Release);
                   Busy.Step;
                end loop;
