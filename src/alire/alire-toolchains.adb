@@ -100,8 +100,10 @@ package body Alire.Toolchains is
          declare
             First : Boolean := True;
          begin
-            for Release of reverse Index.Releases_Satisfying (Any_Tool (Crate),
-                                                              Env)
+            for Release of reverse
+              Releases.Containers.From_Set -- This sorts by version
+                (Index.Releases_Satisfying (Any_Tool (Crate),
+                 Env))
             loop
                if Release.Origin.Is_Regular then
 
@@ -110,7 +112,7 @@ package body Alire.Toolchains is
                   --  already guarantees that the last compiler in the
                   --  collection will be a native one (if there is one).
 
-                  if First then
+                  if First and then Release.Name.As_String = "gnat_native" then
                      First := False;
                      Add_Choice (Release.Milestone.TTY_Image, Release,
                                  Prepend => True);
