@@ -259,7 +259,9 @@ package body Alire.Index is
    function Releases_Satisfying (Dep              : Dependencies.Dependency;
                                  Env              : Properties.Vector;
                                  Use_Equivalences : Boolean := True;
-                                 Available_Only   : Boolean := True)
+                                 Available_Only   : Boolean := True;
+                                 With_Origin      : Origins.Kinds_Set :=
+                                   (others => True))
                                  return Releases.Containers.Release_Set
    is
       Result : Releases.Containers.Release_Set;
@@ -269,7 +271,8 @@ package body Alire.Index is
 
       if Exists (Dep.Crate) then
          for Release of Crate (Dep.Crate).Releases loop
-            if Release.Satisfies (Dep)
+            if With_Origin (Release.Origin.Kind)
+              and then Release.Satisfies (Dep)
               and then (not Available_Only or else Release.Is_Available (Env))
             then
                Result.Insert (Release);
@@ -281,7 +284,8 @@ package body Alire.Index is
 
       if Use_Equivalences and then Aliases.Contains (Dep.Crate) then
          for Release of Aliases (Dep.Crate) loop
-            if Release.Satisfies (Dep)
+            if With_Origin (Release.Origin.Kind)
+              and then Release.Satisfies (Dep)
               and then (not Available_Only or else Release.Is_Available (Env))
             then
                Result.Include (Release);

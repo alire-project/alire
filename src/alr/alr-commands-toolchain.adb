@@ -4,6 +4,7 @@ with GNAT.Strings; use GNAT.Strings;
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
+with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Milestones;
@@ -19,6 +20,8 @@ with Alire.Warnings;
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Toolchain is
+
+   package Name_Sets renames Alire.Containers.Crate_Name_Sets;
 
    --------------------
    -- Setup_Switches --
@@ -78,6 +81,7 @@ package body Alr.Commands.Toolchain is
 
    procedure Install (Cmd            : in out Command;
                       Request        : String;
+                      Pending        : Name_Sets.Set;
                       Set_As_Default : Boolean)
    is
       use Alire;
@@ -99,10 +103,16 @@ package body Alr.Commands.Toolchain is
       procedure Identify_Origins is
       begin
          for Tool of Toolchains.Tools loop
-            if Toolchains.Tool_Is_Configured (Tool) and then
-              not Toolchains.Tool_Release (Tool).Provides (Dep.Crate)
+            --  A tool that is already configured, and not pending in the
+            --  command-line, will impose an origin compatibility constraint
+            if Toolchains.Tool_Is_Configured (Tool)
+              and then not
+                (for some P of Pending =>
+                   Toolchains.Tool_Release (Tool).Provides (P))
+              and then not Toolchains.Tool_Release (Tool).Provides (Dep.Crate)
             then
                declare
+                  --  The one already selected we want to be compatible with
                   Other_Tool : constant Releases.Release :=
                                  Toolchains.Tool_Release (Tool);
                begin
@@ -127,6 +137,9 @@ package body Alr.Commands.Toolchain is
          if Origin_Status = Mixed then
             Warnings.Warn_Once
               ("Default toolchain contains mixed-procedence tools");
+         else
+            Trace.Debug ("Tool compatibility identified as "
+                         & Origin_Status'Image);
          end if;
       end Identify_Origins;
 
@@ -139,16 +152,38 @@ package body Alr.Commands.Toolchain is
       --  though.
       if Set_As_Default then
          Identify_Origins;
+         if Origin_Status = Frozen then
+            Put_Info ("Already selected tool imposes on remaining tools to be "
+                      & "of origin " & Origin_Kind'Image,
+                      Trace.Detail);
+         end if;
       end if;
 
       Cmd.Requires_Full_Index;
 
       Installation :
       declare
+
+         -------------------
+         -- Origin_Filter --
+         -------------------
+
+         function Origin_Filter return Origins.Kinds_Set
+         is
+            Filter : Origins.Kinds_Set := (others => False);
+         begin
+            Filter (Origin_Kind) := True;
+            return Filter;
+         end Origin_Filter;
+
          Rel : constant Releases.Release :=
                  Solver.Find (Name    => Dep.Crate,
                               Allowed => Dep.Versions,
-                              Policy  => Query_Policy);
+                              Policy  => Query_Policy,
+                              Origins =>
+                                 (if not Force and then Origin_Status = Frozen
+                                  then Origin_Filter
+                                  else (others => True)));
 
          function The_Other (Tool : Crate_Name) return Crate_Name
          is (if Tool = GPRbuild_Crate then GNAT_Crate else GPRbuild_Crate);
@@ -226,6 +261,8 @@ package body Alr.Commands.Toolchain is
       when E : Alire.Query_Unsuccessful =>
          Alire.Log_Exception (E);
          Trace.Error (Alire.Errors.Get (E));
+         Trace.Error ("Use --force to override compatibility checks between "
+                      & "installed toolchain components");
    end Install;
 
    ----------
@@ -335,6 +372,10 @@ package body Alr.Commands.Toolchain is
    procedure Execute (Cmd  : in out Command;
                       Args : AAA.Strings.Vector)
    is
+      Pending : Name_Sets.Set;
+      --  We do not want tools that are later in the command-line to be taken
+      --  into account prematurely for compatibility of origins. We store here
+      --  crates still to be dealt with.
    begin
 
       --  Validation
@@ -396,7 +437,12 @@ package body Alr.Commands.Toolchain is
                                         Allow_Incompatible => Alire.Force);
          else
             for Elt of Args loop
-               Install (Cmd, Elt, Set_As_Default => True);
+               Pending.Insert (Alire.Dependencies.From_String (Elt).Crate);
+            end loop;
+
+            for Elt of Args loop
+               Install (Cmd, Elt, Pending, Set_As_Default => True);
+               Pending.Exclude (Alire.Dependencies.From_String (Elt).Crate);
             end loop;
          end if;
 
@@ -406,8 +452,10 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
+         Cmd.Requires_Full_Index;
+
          for Elt of Args loop
-            Install (Cmd, Elt, Set_As_Default => False);
+            Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
          end loop;
 
       elsif not Cmd.Disable then
