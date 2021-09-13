@@ -1073,7 +1073,7 @@ package body Alire.Releases is
       --  by specifying a targeted gnat_xxx compiler.
 
       if Is_External (L) xor Is_External (R) then
-         return Is_External (L);
+         return Is_External (R);
       end if;
 
       --  Native goes next in preferences (preferred to cross-compilers)

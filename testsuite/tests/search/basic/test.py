@@ -30,8 +30,8 @@ assert_eq(format_table(
 # List all releases crates
 p = run_alr('search', '--list', '--full')
 assert_eq(format_table(
-    ('hello', '', '1.0.0', '"Hello, world!" demonstration project', ''),
     ('hello', '', '1.0.1', '"Hello, world!" demonstration project', ''),
+    ('hello', '', '1.0.0', '"Hello, world!" demonstration project', ''),
     ('libhello', '', '1.0.0',
      '"Hello, world!" demonstration project support library', ''),
 ), p.out)

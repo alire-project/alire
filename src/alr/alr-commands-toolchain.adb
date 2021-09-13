@@ -7,6 +7,7 @@ with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
+with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
@@ -16,6 +17,8 @@ with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Warnings;
+
+with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
@@ -101,14 +104,34 @@ package body Alr.Commands.Toolchain is
       ----------------------
 
       procedure Identify_Origins is
+
+         ----------------------
+         -- Equivalent_Crate --
+         ----------------------
+
+         function Equivalent_Crate (L, R : Crate_Name) return Boolean
+         is (L = R
+             or else
+               (AAA.Strings.Has_Prefix (L.As_String, "gnat_")
+                and then R = GNAT_Crate)
+             or else
+               (AAA.Strings.Has_Prefix (R.As_String, "gnat_")
+                and then L = GNAT_Crate)
+             or else
+               (AAA.Strings.Has_Prefix (L.As_String, "gnat_")
+                and then AAA.Strings.Has_Prefix (R.As_String, "gnat_")));
+
       begin
          for Tool of Toolchains.Tools loop
+
             --  A tool that is already configured, and not pending in the
             --  command-line, will impose an origin compatibility constraint
+
             if Toolchains.Tool_Is_Configured (Tool)
               and then not
                 (for some P of Pending =>
-                   Toolchains.Tool_Release (Tool).Provides (P))
+                   Toolchains.Tool_Release (Tool).Provides (P) or else
+                   Equivalent_Crate (P, Tool))
               and then not Toolchains.Tool_Release (Tool).Provides (Dep.Crate)
             then
                declare
@@ -260,9 +283,14 @@ package body Alr.Commands.Toolchain is
    exception
       when E : Alire.Query_Unsuccessful =>
          Alire.Log_Exception (E);
-         Trace.Error (Alire.Errors.Get (E));
-         Trace.Error ("Use --force to override compatibility checks between "
-                      & "installed toolchain components");
+         if Set_As_Default then
+            Trace.Error (Alire.Errors.Get (E));
+            Reportaise_Command_Failed
+              ("Use --force to override compatibility checks between "
+               & "installed toolchain components");
+         else
+            Reportaise_Command_Failed (Alire.Errors.Get (E));
+         end if;
    end Install;
 
    ----------
@@ -425,6 +453,8 @@ package body Alr.Commands.Toolchain is
       if Cmd.S_Select then
 
          Cmd.Requires_Full_Index;
+         Alire.Index.Detect_Externals
+           (Alire.GNAT_External_Crate, Platform.Properties);
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
@@ -453,6 +483,8 @@ package body Alr.Commands.Toolchain is
 
       elsif Cmd.Install then
          Cmd.Requires_Full_Index;
+         Alire.Index.Detect_Externals
+           (Alire.GNAT_External_Crate, Platform.Properties);
 
          for Elt of Args loop
             Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
