@@ -199,6 +199,8 @@ package body Alr.Commands.Toolchain is
             return Filter;
          end Origin_Filter;
 
+         Any_Origin : constant Origins.Kinds_Set := (others => True);
+
          Rel : constant Releases.Release :=
                  Solver.Find (Name    => Dep.Crate,
                               Allowed => Dep.Versions,
@@ -206,11 +208,13 @@ package body Alr.Commands.Toolchain is
                               Origins =>
                                  (if not Force and then Origin_Status = Frozen
                                   then Origin_Filter
-                                  else (others => True)));
+                                  else Any_Origin));
 
          function The_Other (Tool : Crate_Name) return Crate_Name
          is (if Tool = GPRbuild_Crate then GNAT_Crate else GPRbuild_Crate);
-         --  This will break the moment we have another tool in the toolchain
+         --  This will break the moment we have another tool in the toolchain,
+         --  so leave a canary here:
+         pragma Assert (Natural (Alire.Toolchains.Tools.Length) = 2);
 
       begin
 
