@@ -28,7 +28,8 @@ package body Alire.Toolchains is
    -- Assistant --
    ---------------
 
-   procedure Assistant (Level : Config.Level) is
+   procedure Assistant (Level              : Config.Level;
+                        Allow_Incompatible : Boolean := False) is
       package Release_Vectors is new
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
@@ -43,6 +44,26 @@ package body Alire.Toolchains is
       Selected : Releases.Containers.Release_Set;
       --  We store here all selected releases, so they are deployed in batch
       --  after all the user interactions.
+
+      use all type Origins.Kinds;
+      Origin_Frozen : Boolean := False;
+      Chosen_Origin : Origins.Kinds;
+      --  GNAT and gprbuild should go in tandem; either from system packages,
+      --  from some external user-provided location, or from indexed releases.
+      --  Otherwise they don't see each other. When the user picks the first
+      --  tool with a certain origin, only matching origins are allowed for
+      --  the remaining tool.
+
+      None : constant String := "None";
+
+      ---------------------
+      -- Is_Valid_Choice --
+      ---------------------
+
+      function Is_Valid_Choice (R : Releases.Release) return Boolean
+      is (Allow_Incompatible
+          or else not Origin_Frozen
+          or else Chosen_Origin = R.Origin.Kind);
 
       --------------------------
       -- Fill_Version_Choices --
@@ -72,13 +93,12 @@ package body Alire.Toolchains is
             end if;
          end Add_Choice;
 
-         use all type Origins.Kinds;
          Env : constant Properties.Vector := Root.Platform_Properties;
       begin
          Index.Detect_Externals (Crate, Root.Platform_Properties);
 
          --  Always offer to configure nothing
-         Result.Choices.Append ("None");
+         Result.Choices.Append (None);
          Result.Targets.Append (Releases.New_Empty_Release (Crate));
          --  Just a placeholder that won't be used anywere, but keeps boot
          --  collections in sync.
@@ -87,7 +107,9 @@ package body Alire.Toolchains is
          for Release of reverse Index.Releases_Satisfying (Any_Tool (Crate),
                                                            Env)
          loop
-            if Release.Origin.Kind in System | External then
+            if Release.Origin.Kind in System | External and then
+              Is_Valid_Choice (Release)
+            then
                Add_Choice (Release.Milestone.TTY_Image
                            & TTY.Dim (" [" & Release.Notes & "]"),
                            Release);
@@ -105,7 +127,8 @@ package body Alire.Toolchains is
                 (Index.Releases_Satisfying (Any_Tool (Crate),
                  Env))
             loop
-               if Release.Origin.Is_Regular then
+               if Release.Origin.Is_Regular and then Is_Valid_Choice (Release)
+               then
 
                   --  We want the newest native compiler packaged by Alire to
                   --  be the default. Sorting of the GNAT crate in Releases
@@ -122,6 +145,23 @@ package body Alire.Toolchains is
                end if;
             end loop;
          end Add_Binary_Versions;
+
+         --  If it turns out that the first choice is None, this means that
+         --  the user has selected a external/system toolchain, and no native
+         --  options are offered. In this case, we move None to the second
+         --  position.
+
+         if Result.Choices.First_Element = None and then
+           Natural (Result.Choices.Length) >= 1
+         then
+            Result.Choices.Delete_First;
+            Result.Targets.Delete_First;
+            Result.Choices.Insert (Before => 2, New_Item => None, Count => 1);
+            Result.Targets.Insert
+              (Before   => 2,
+               New_Item => Releases.New_Empty_Release (Crate),
+               Count    => 1);
+         end if;
 
          return Result;
       end Fill_Version_Choices;
@@ -170,7 +210,7 @@ package body Alire.Toolchains is
               & " version for use with this configuration",
               Choices   => Selection.Choices);
       begin
-         if Selection.Choices (Choice) = "None" then
+         if Selection.Choices (Choice) = None then
 
             Put_Info ("Selected to rely on a user-provided binary.");
 
@@ -187,8 +227,22 @@ package body Alire.Toolchains is
 
             --  Store for later installation
 
-            Selected.Insert (Selection.Targets (Choice));
+            declare
+               Selected_Release : constant Releases.Release :=
+                                    Selection.Targets (Choice);
+            begin
+               Selected.Insert (Selected_Release);
 
+               --  And verify we are not mixing external/indexed tools
+
+               if not Origin_Frozen then
+                  Origin_Frozen := True;
+                  Chosen_Origin := Selected_Release.Origin.Kind;
+               elsif Chosen_Origin /= Selected_Release.Origin.Kind then
+                  raise Program_Error with
+                    "Mixed selection should not be offered";
+               end if;
+            end;
          end if;
       end Pick_Up_Tool;
 
@@ -240,7 +294,23 @@ package body Alire.Toolchains is
             & "whatever version is found in the environment.")
         );
 
+      if Allow_Incompatible then
+         Put_Warning ("Selection of incompatible tools is "
+                      & TTY.Emph ("enabled"), Trace.Warning);
+      end if;
+
       for Tool of Tools loop
+         if not Allow_Incompatible
+           and then Tool /= Tools.First_Element
+           and then not Selected.Is_Empty
+         then
+            Trace.Info ("");
+            Put_Info ("Choices for the following tool are narrowed down to "
+                      & "releases compatible with just selected "
+                      & Selected.First_Element.Milestone.TTY_Image);
+            Trace.Detail ("Origin allowed for compatible tools is currently: "
+                          & Chosen_Origin'Image);
+         end if;
          Set_Up (Tool);
       end loop;
 

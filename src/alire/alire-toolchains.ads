@@ -23,7 +23,8 @@ package Alire.Toolchains is
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
-   procedure Assistant (Level : Config.Level);
+   procedure Assistant (Level              : Config.Level;
+                        Allow_Incompatible : Boolean := False);
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.
    --  This information may apply config-wide or workspace-wide. Installation

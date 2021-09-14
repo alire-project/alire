@@ -299,9 +299,10 @@ package body Alr.Commands.Toolchain is
          end if;
 
          if Args.Count = 0 then
-            Alire.Toolchains.Assistant (if Cmd.Local
-                                        then Alire.Config.Local
-                                        else Alire.Config.Global);
+            Alire.Toolchains.Assistant ((if Cmd.Local
+                                         then Alire.Config.Local
+                                         else Alire.Config.Global),
+                                        Allow_Incompatible => Alire.Force);
          else
             for Elt of Args loop
                Install (Cmd, Elt, Set_As_Default => True);
