@@ -388,10 +388,18 @@ package body Alr.Commands is
          --  Also use a fancier busy spinner
       end if;
 
-      if Command_Line_Config_Path     /= null and then
+      if Command_Line_Config_Path /= null and then
          Command_Line_Config_Path.all /= ""
       then
-         Alire.Config.Edit.Set_Path (Command_Line_Config_Path.all);
+         if not Alire.Check_Absolute_Path (Command_Line_Config_Path.all) then
+            --  Make an absolute path from user relative path
+            Alire.Config.Edit.Set_Path
+              (Ada.Directories.Full_Name (Command_Line_Config_Path.all));
+         else
+
+            --  Use absolute path from user
+            Alire.Config.Edit.Set_Path (Command_Line_Config_Path.all);
+         end if;
       end if;
 
       Create_Alire_Folders;
