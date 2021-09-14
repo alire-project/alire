@@ -240,6 +240,11 @@ package body Alire is
       Info : constant String := " (This error can be overridden with "
                                 & TTY.Terminal ("--force") & ".)";
    begin
+      if Msg'Length > 0 and then Msg (Msg'Last) /= '.' then
+         Recoverable_Error (Msg & ".", Recover);
+         return;
+      end if;
+
       if Recover then
          Warnings.Warn_Once (Msg);
       else

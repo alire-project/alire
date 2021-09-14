@@ -362,8 +362,27 @@ package body Alire.Toolchains is
    ---------------------
 
    function Tool_Dependency (Crate : Crate_Name) return Dependencies.Dependency
-   is (Dependencies.New_Dependency
-       (Milestones.New_Milestone (Config.Get (Tool_Key (Crate), ""))));
+   is (Dependencies.New_Dependency (Tool_Milestone (Crate)));
+
+   ------------------
+   -- Tool_Release --
+   ------------------
+
+   function Tool_Release (Crate : Crate_Name) return Releases.Release
+   is
+   begin
+      if not Tool_Is_Configured (Crate) then
+         Raise_Checked_Error ("Requested tool is not configured: "
+                              & Utils.TTY.Name (Crate));
+      else
+         return Shared.Release (Tool_Milestone (Crate));
+      end if;
+   exception
+      when E : Constraint_Error =>
+         Log_Exception (E);
+         Raise_Checked_Error ("Requested tool configured but not installed: "
+                              & Utils.TTY.Name (Crate));
+   end Tool_Release;
 
    -----------------
    -- Unconfigure --

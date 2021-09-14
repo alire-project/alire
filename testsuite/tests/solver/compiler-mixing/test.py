@@ -18,6 +18,7 @@ assert_match(".*\n"  # Headers
 
 # Capture version
 version = re.search("gnat_external ([0-9.]+)", p.out, re.MULTILINE).group(1)
+
 # Prepare a couple of dependencies, one depending on gnat, and another one
 # depending on gnat_native.
 

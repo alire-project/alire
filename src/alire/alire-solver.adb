@@ -7,7 +7,6 @@ with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
 with Alire.Optional;
-with Alire.Origins;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
@@ -68,13 +67,15 @@ package body Alire.Solver is
      (Name : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any;
-      Policy  : Age_Policies)
+      Policy  : Age_Policies;
+      Origins : Alire.Origins.Kinds_Set := (others => True))
       return Release
    is
       Candidates : constant Releases.Containers.Release_Set :=
                      Index.Releases_Satisfying
                        (Dependencies.New_Dependency (Name, Allowed),
-                        Root.Platform_Properties);
+                        Root.Platform_Properties,
+                        With_Origin => Origins);
    begin
       if not Candidates.Is_Empty then
          if Policy = Newest then
@@ -84,7 +85,7 @@ package body Alire.Solver is
          end if;
       end if;
 
-      raise Checked_Error with
+      raise Query_Unsuccessful with
         "Release within requested version not found: "
         & Dependencies.New_Dependency (Name, Allowed).Image;
    end Find;
