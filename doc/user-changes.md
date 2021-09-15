@@ -6,9 +6,22 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### User defined command aliases
+
+PR [#853](https://github.com/alire-project/alire/pull/853)
+
+It is now possible to define in configuration (local or global) aliases for the
+`alr` commands.
+
+```console
+$ alr config --set --global alias.graph 'show --graph'
+$ alr graph
+```
+Will run the `alr show` command with the `--graph` switch.
+
 ### New command `alr exec <command line>`
 
-PR [#853](https://github.com/alire-project/alire/pull/)
+PR [#853](https://github.com/alire-project/alire/pull/853)
 
 This new command takes an executable and arguments and run them in the Alire
 environment/context of the current crate.
@@ -17,7 +30,6 @@ environment/context of the current crate.
 $ alr exec sh -c 'echo ${ALIRE}'
 True
 ```
->>>>>>> Alr.Commands.Exec: new command to run executables/scripts in the Alire context
 
 ### Pass alr build switches to gprbuild
 

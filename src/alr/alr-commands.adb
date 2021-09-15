@@ -39,6 +39,7 @@ with Alr.Commands.Withing;
 
 with Alr.Commands.Topics.Naming_Convention;
 with Alr.Commands.Topics.Toolchains;
+with Alr.Commands.Topics.Aliases;
 
 with GNAT.OS_Lib;
 with GNAT.Source_Info;
@@ -408,6 +409,8 @@ package body Alr.Commands is
       Create_Alire_Folders;
 
       begin
+         Sub_Cmd.Load_Aliases (Alire.Config.DB);
+
          Sub_Cmd.Execute;
          Log ("alr " & Sub_Cmd.What_Command & " done", Detail);
       exception
@@ -550,4 +553,6 @@ begin
    -- Help topics --
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
    Sub_Cmd.Register (new Topics.Toolchains.Topic);
+   Sub_Cmd.Register (new Topics.Aliases.Topic);
+
 end Alr.Commands;
