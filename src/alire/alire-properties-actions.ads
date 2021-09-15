@@ -9,7 +9,8 @@ package Alire.Properties.Actions with Preelaborate is
       Post_Fetch, -- After being downloaded
       Pre_Build,  -- Before being compiled as the working release
       Post_Build, -- After being compiled as the working release
-      Test        -- On demand for testing of releases
+      Test,       -- On demand for testing of releases
+      On_Demand   -- On demand from command-line
      );
 
    type Action (<>) is abstract new Properties.Property with private;
