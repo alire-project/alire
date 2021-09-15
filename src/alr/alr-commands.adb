@@ -490,6 +490,7 @@ package body Alr.Commands is
          Alire.GPR.Add_Argument (Scenario, S (1), S (2));
       end;
    end Handle_X_Switch;
+
    -----------------------------
    -- Add_GPR_Scenario_Switch --
    -----------------------------

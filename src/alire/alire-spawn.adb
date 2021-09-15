@@ -40,13 +40,15 @@ package body Alire.Spawn is
 
       Command ("gprbuild",
                Empty_Vector &
+
                  "-gnatwU" &
+                 --  Supress warnings on unused (may happen in prj_alr.ads)
+
                  "-j0" &
                  "-p" &
-                 --  Supress warnings on unused (may happen in prj_alr.ads)
-                 Extra_Args &
                  "-P" &
-                 Project_File,
+                 Project_File &
+                 Extra_Args,
                Understands_Verbose => True);
    end Gprbuild;
 

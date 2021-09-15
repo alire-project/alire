@@ -26,11 +26,6 @@ package body Alr.Commands.Build is
                      return Boolean
    is
    begin
-
-      if Args.Count /= 0 then
-         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
-      end if;
-
       Cmd.Requires_Full_Index;
 
       Cmd.Requires_Valid_Session;
@@ -38,7 +33,7 @@ package body Alr.Commands.Build is
       declare
          Timer : Stopwatch.Instance;
       begin
-         if Cmd.Root.Build (Scenario, Export_Build_Env) then
+         if Cmd.Root.Build (Args, Export_Build_Env) then
 
             Trace.Info ("Build finished successfully in "
                         & TTY.Bold (Timer.Image) & " seconds.");
@@ -72,10 +67,6 @@ package body Alr.Commands.Build is
    procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out CLIC.Subcommand.Switches_Configuration)
-   is
-      pragma Unreferenced (Cmd);
-   begin
-      Add_GPR_Scenario_Switch (Config);
-   end Setup_Switches;
+   is null;
 
 end Alr.Commands.Build;
