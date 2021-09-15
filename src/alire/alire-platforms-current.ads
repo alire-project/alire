@@ -1,6 +1,6 @@
 limited with Alire.Environment;
 private with Alire.OS_Lib.Subprocess;
-with Alire.Platforms;
+private with Alire.Platforms.Common;
 with Alire.Properties;
 private with Alire.Properties.Platform;
 
@@ -60,6 +60,8 @@ package Alire.Platforms.Current is
    function Distribution_Is_Known return Boolean is
      (Platforms."/=" (Distribution, Platforms.Distro_Unknown));
 
+   function Host_Architecture return Platforms.Architectures;
+
    function On_Windows return Boolean;
    --  Say if we are on Windows, until the OS detection is moved here from
    --  Alr.Platform.
@@ -85,6 +87,13 @@ private
        then Platforms.Distro_Unknown
        else Detected_Distribution);
 
+   -----------------------
+   -- Host_Architecture --
+   -----------------------
+
+   function Host_Architecture return Platforms.Architectures
+   renames Common.Machine_Hardware_Name;
+
    ----------------
    -- On_Windows --
    ----------------
@@ -103,10 +112,11 @@ private
 
    function Properties return Alire.Properties.Vector
    is (Platprop.Distribution_Is (Distribution) and
-         Platprop.System_Is (Operating_System) and
-         Platprop.Target_Is (Target) and
-         Platprop.Toolchain_Is (Toolchain) and
-         Platprop.Word_Size_Is (Word_Size));
+       Platprop.Host_Arch_Is (Host_Architecture) and
+       Platprop.System_Is (Operating_System) and
+       Platprop.Target_Is (Target) and
+       Platprop.Toolchain_Is (Toolchain) and
+       Platprop.Word_Size_Is (Word_Size));
 
    ------------
    -- Target --

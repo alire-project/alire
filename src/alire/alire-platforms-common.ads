@@ -7,6 +7,9 @@ private package Alire.Platforms.Common is
 
    use OS_Lib.Operators; -- Bring in "/" for paths
 
+   function Machine_Hardware_Name return Architectures;
+   --  As reported by uname, already turned into our architecture enum
+
    ----------------------
    -- XDG_Cache_Folder --
    ----------------------
