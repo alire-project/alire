@@ -8,11 +8,11 @@ from drivers.asserts import assert_match
 import re
 
 assert_match('.*interaction flags are:.*force:TRUE.*',
-             run_alr('version', '--force').out,
+             run_alr('--force', 'version').out,
              flags=re.S)
 
 assert_match('.*interaction flags are:.*force:TRUE.*',
-             run_alr('version', '-f').out,
+             run_alr('-f', 'version').out,
              flags=re.S)
 
 print('SUCCESS')

@@ -23,7 +23,7 @@ run_alr('with', 'superhello')
 # Add a pinned directory and a missing dependency
 os.mkdir("fake")
 run_alr('with', 'wip', '--use', 'fake')
-run_alr('with', 'unobtanium', '--force')
+run_alr('with', 'unobtanium', force=True)
 
 # Check output
 p = run_alr('with', '--versions')

@@ -22,8 +22,8 @@ run_alr('with', 'superhello')
 
 # Add more dependencies, without a proper release
 os.mkdir("fake")
-run_alr('with', 'wip', '--use', 'fake', '--force')  # force bc dir is missing
-run_alr('with', 'unobtanium', '--force')
+run_alr('with', 'wip', '--use', 'fake', force=True)  # force bc dir is missing
+run_alr('with', 'unobtanium', force=True)
 
 # Verify printout (but for test-dependent path)
 # Note that superhello was auto-narrowed down to ^1, but missed ones did not

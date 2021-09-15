@@ -12,7 +12,7 @@ from drivers.asserts import assert_match
 import re
 
 # Run get on a native package and see what happens depending on platform
-p = run_alr('get', '--non-interactive', '--only', 'make',
+p = run_alr('--non-interactive', 'get', '--only', 'make',
             complain_on_error=False, quiet=False)
 
 if distro_is_known():

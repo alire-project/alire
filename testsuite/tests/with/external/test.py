@@ -16,7 +16,7 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # Add a dependency on 'make', defined in the index as only a hint
-run_alr('with', 'make', '--force')
+run_alr('with', 'make', force=True)
 
 # Verify that it appears in the solution as unavailable external
 p = run_alr('with', '--solve')

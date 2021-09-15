@@ -15,13 +15,13 @@ run_alr('init', '--bin', 'xxx')
 os.chdir('xxx')
 
 # 1st test, adding an entirely inexistent crate
-run_alr('with', 'unobtanium', '--force')
+run_alr('with', 'unobtanium', force=True)
 
 # 2nd test, adding a dependency that exists but with missing version
-run_alr('with', 'libhello^3', '--force')
+run_alr('with', 'libhello^3', force=True)
 
 # 3rd test, adding a dependency that has missing dependencies
-run_alr('with', 'hello^3', '--force')
+run_alr('with', 'hello^3', force=True)
 
 # Check that the solution contains the requested dependencies
 p = run_alr('with', '--solve')

@@ -18,7 +18,7 @@ with open("alire.toml", "wt") as manifest:
     manifest.write("\n---\n")
 
 # Attempt to publish; should fail with the expected syntax error
-p = run_alr("publish", "--force", complain_on_error=False)
+p = run_alr("publish", force=True, complain_on_error=False)
 assert_match(".*invalid syntax at.*alire\.toml.*", p.out)
 
 print('SUCCESS')
