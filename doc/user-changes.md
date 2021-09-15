@@ -4,6 +4,37 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+### Pass alr build switches to gprbuild
+
+PR [#850](https://github.com/alire-project/alire/pull/850)
+
+All the switches and arguments for `alr build` are now passed to the underlying
+`gprbuild` execution.
+
+For instance:
+```console
+$ alr build -f
+```
+will force recompilation.
+
+### Global switches only allowed before sub-command
+
+PR [#850](https://github.com/alire-project/alire/pull/850)
+
+Before this change the global switches (`-f`, `-n`, `--config=`, etc.) could be
+placed anywhere on the command line. For instance, the following two commands
+were equivalent:
+```console
+$ alr -f show
+$ alr show -f
+```
+
+Global switches are now only allowed before the sub-command name. Such that:
+```console
+$ alr -f show # Is OK
+$ alr show -f # Is not OK (unrecognized option '-f' for 'show')
+```
+
 ### Lockfile moved to `alire` folder
 
 PR [#789](https://github.com/alire-project/alire/pull/789)
