@@ -1,3 +1,5 @@
+with AAA.Enum_Tools;
+
 package body Alire.Properties.Actions.Runners is
 
    -------------
@@ -56,6 +58,9 @@ package body Alire.Properties.Actions.Runners is
          Has_Name : Boolean;
          Path     : TOML_Value;
          Has_Path : Boolean;
+         Moment   : Moments;
+
+         function Is_Valid is new AAA.Enum_Tools.Is_Valid (Moments);
       begin
          if not From.Pop (TOML_Keys.Action_Type, Kind) then
             From.Checked_Error ("action type missing");
@@ -73,6 +78,16 @@ package body Alire.Properties.Actions.Runners is
            or else (Has_Path and then Path.Kind /= TOML_String)
          then
             From.Checked_Error ("actions type, and folder must be strings");
+         end if;
+
+         if not Is_Valid (TOML_Adapters.Adafy (Kind.As_String)) then
+            From.Checked_Error ("action type is invalid: " & Kind.As_String);
+         else
+            Moment := Moments'Value (TOML_Adapters.Adafy (Kind.As_String));
+         end if;
+
+         if Moment = On_Demand and then not Has_Name then
+            From.Checked_Error ("on-demand actions require a name");
          end if;
 
          if Has_Name and then
@@ -97,10 +112,10 @@ package body Alire.Properties.Actions.Runners is
 
          From.Report_Extra_Keys;
 
-         return Result : constant Conditional.Properties := New_Value
+         return New_Value
            (New_Run
               (Moment                =>
-                 Moments'Value (TOML_Adapters.Adafy (Kind.As_String)),
+                 Moment,
 
                Name                  =>
                  (if Has_Name then Name.As_String else ""),
@@ -109,16 +124,7 @@ package body Alire.Properties.Actions.Runners is
                  TOML_Adapters.To_Vector (TOML_Adapters.To_Array (Command)),
 
                Working_Folder        =>
-                 (if Has_Path then Path.As_String else ".")))
-         do
-            declare
-               Action : Run renames Run (Result.Value);
-            begin
-               if Action.Moment = On_Demand and then Action.Name = "" then
-                  From.Checked_Error ("On-demand actions require a name");
-               end if;
-            end;
-         end return;
+                 (if Has_Path then Path.As_String else ".")));
       end Create_One;
 
       Raw : constant TOML_Value := From.Pop;
