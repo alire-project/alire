@@ -6,6 +6,19 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### New command `alr exec <command line>`
+
+PR [#853](https://github.com/alire-project/alire/pull/)
+
+This new command takes an executable and arguments and run them in the Alire
+environment/context of the current crate.
+
+```console
+$ alr exec sh -c 'echo ${ALIRE}'
+True
+```
+>>>>>>> Alr.Commands.Exec: new command to run executables/scripts in the Alire context
+
 ### Pass alr build switches to gprbuild
 
 PR [#850](https://github.com/alire-project/alire/pull/850)

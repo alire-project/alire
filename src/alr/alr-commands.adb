@@ -21,6 +21,7 @@ with Alr.Commands.Clean;
 with Alr.Commands.Config;
 with Alr.Commands.Dev;
 with Alr.Commands.Edit;
+with Alr.Commands.Exec;
 with Alr.Commands.Get;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
@@ -533,6 +534,7 @@ begin
    Sub_Cmd.Register ("Build", new Edit.Command);
    Sub_Cmd.Register ("Build", new Run.Command);
    Sub_Cmd.Register ("Build", new Test.Command);
+   Sub_Cmd.Register ("Build", new Exec.Command);
 
    Sub_Cmd.Register ("Index", new Get.Command);
    Sub_Cmd.Register ("Index", new Index.Command);
