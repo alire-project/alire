@@ -71,13 +71,19 @@ package body Alr.Commands.Version is
         .Append (if Alire.Toolchains.Assistant_Enabled
                  then "enabled"
                  else "disabled").New_Row;
-      for Tool of Alire.Toolchains.Tools loop
-         Table
-           .Append (String (Alire.Toolchains.Tool_Key (Tool)) & ":")
-           .Append (if Alire.Toolchains.Tool_Is_Configured (Tool)
-                    then Alire.Toolchains.Tool_Milestone (Tool).Image
-                    else "not configured").New_Row;
-      end loop;
+      declare
+         I : Positive := 1;
+      begin
+         for Tool of Alire.Toolchains.Tools loop
+            Table
+              .Append ("tool #" & Utils.Trim (I'Image)
+                       & " " & Tool.As_String & ":")
+              .Append (if Alire.Toolchains.Tool_Is_Configured (Tool)
+                       then Alire.Toolchains.Tool_Milestone (Tool).Image
+                       else "not configured").New_Row;
+            I := I + 1;
+         end loop;
+      end;
 
       Table.Append ("").New_Row;
       Table.Append ("WORKSPACE").New_Row;
@@ -88,7 +94,7 @@ package body Alr.Commands.Version is
         .Append (case Root.Status is
                     when Valid  => Root.Value.Release.Milestone.Image,
                     when others => "N/A").New_Row;
-      Table.Append ("root error:")
+      Table.Append ("root load error:")
         .Append (case Root.Status is
                     when Broken  => Cmd.Optional_Root.Message,
                     when Valid   => "none",
