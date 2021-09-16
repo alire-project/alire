@@ -9,7 +9,8 @@ package Alire.Properties.Actions with Preelaborate is
       Post_Fetch, -- After being downloaded/on dependency updates
       Pre_Build,  -- Before being compiled
       Post_Build, -- After being compiled
-      Test        -- On demand for testing of releases
+      Test,       -- On demand for testing of releases
+      On_Demand   -- On demand from command-line
      );
 
    --  The "lifecycle" of releases in Alire is described here. For all pre/post

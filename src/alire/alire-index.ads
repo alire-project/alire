@@ -3,6 +3,7 @@ pragma Unreferenced (Alire_Early_Elaboration);
 
 with Alire.Crates.Containers;
 with Alire.Dependencies;
+with Alire.Origins;
 with Alire.Policies;
 with Alire.Properties;
 with Alire.Releases.Containers;
@@ -93,7 +94,9 @@ package Alire.Index is
    function Releases_Satisfying (Dep              : Dependencies.Dependency;
                                  Env              : Properties.Vector;
                                  Use_Equivalences : Boolean := True;
-                                 Available_Only   : Boolean := True)
+                                 Available_Only   : Boolean := True;
+                                 With_Origin      : Origins.Kinds_Set :=
+                                   (others => True))
                                  return Releases.Containers.Release_Set;
    --  Return all releases in the catalog able to provide this dependency,
    --  also optionally considering their "provides" equivalences, and also

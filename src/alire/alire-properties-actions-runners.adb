@@ -1,3 +1,5 @@
+with AAA.Enum_Tools;
+
 package body Alire.Properties.Actions.Runners is
 
    -------------
@@ -21,6 +23,9 @@ package body Alire.Properties.Actions.Runners is
       if This.Working_Folder /= "" then
          Table.Set (TOML_Keys.Action_Folder,  +This.Working_Folder);
       end if;
+      if This.Name /= "" then
+         Table.Set (TOML_Keys.Name, +This.Name);
+      end if;
       Arr.Append (Table);
       return Arr;
    end To_TOML;
@@ -41,15 +46,21 @@ package body Alire.Properties.Actions.Runners is
       -- Create_One --
       ----------------
 
-      function Create_One (Raw : TOML.TOML_Value)
+      function Create_One (Raw : TOML.TOML_Value; Index : Positive)
                            return Conditional.Properties
       is
          From    : constant TOML_Adapters.Key_Queue :=
-                     From_TOML.From.Descend (Raw, "action");
-         Kind    : TOML_Value;
-         Command : TOML_Value;
-         Path    : TOML_Value;
-         Used    : Boolean;
+                     From_TOML.From.Descend (Raw, "action #"
+                                             & AAA.Strings.Trim (Index'Image));
+         Kind     : TOML_Value;
+         Command  : TOML_Value;
+         Name     : TOML_Value;
+         Has_Name : Boolean;
+         Path     : TOML_Value;
+         Has_Path : Boolean;
+         Moment   : Moments;
+
+         function Is_Valid is new AAA.Enum_Tools.Is_Valid (Moments);
       begin
          if not From.Pop (TOML_Keys.Action_Type, Kind) then
             From.Checked_Error ("action type missing");
@@ -57,13 +68,36 @@ package body Alire.Properties.Actions.Runners is
             From.Checked_Error ("action command missing");
          end if;
 
-         Used := From.Pop (TOML_Keys.Action_Folder, Path);
-         --  The path key for an action is optional.
+         Has_Path := From.Pop (TOML_Keys.Action_Folder, Path);
+         --  The path key for an action is optional
+
+         Has_Name := From.Pop (TOML_Keys.Name, Name);
+         --  Name is optional but for custom actions
 
          if Kind.Kind /= TOML_String
-           or else (Used and then Path.Kind /= TOML_String)
+           or else (Has_Path and then Path.Kind /= TOML_String)
          then
-            From.Checked_Error ("actions type and folder must be strings");
+            From.Checked_Error ("actions type, and folder must be strings");
+         end if;
+
+         if not Is_Valid (TOML_Adapters.Adafy (Kind.As_String)) then
+            From.Checked_Error ("action type is invalid: " & Kind.As_String);
+         else
+            Moment := Moments'Value (TOML_Adapters.Adafy (Kind.As_String));
+         end if;
+
+         if Moment = On_Demand and then not Has_Name then
+            From.Checked_Error ("on-demand actions require a name");
+         end if;
+
+         if Has_Name and then
+           (Name.Kind /= TOML_String or else Name.As_String not in Action_Name)
+         then
+            From.Checked_Error
+              ("action name must be a string made of "
+               & "'a' .. 'z', '0' .. '9', '-', starting with a letter and not "
+               & "ending with a dash nor containing consecutive dashes"
+               & ASCII.LF & "Offending name is: " & Name.As_String);
          end if;
 
          if Command.Kind /= TOML_Array
@@ -81,20 +115,23 @@ package body Alire.Properties.Actions.Runners is
          return New_Value
            (New_Run
               (Moment                =>
-                 Moments'Value (TOML_Adapters.Adafy (Kind.As_String)),
+                 Moment,
+
+               Name                  =>
+                 (if Has_Name then Name.As_String else ""),
 
                Relative_Command_Line =>
                  TOML_Adapters.To_Vector (TOML_Adapters.To_Array (Command)),
 
                Working_Folder        =>
-                 (if Used then Path.As_String else ".")));
+                 (if Has_Path then Path.As_String else ".")));
       end Create_One;
 
       Raw : constant TOML_Value := From.Pop;
 
    begin
       if Raw.Kind = TOML_Table then
-         return Create_One (Raw);
+         return Create_One (Raw, 1);
       end if;
 
       --  It should be an array that we we'll load one by one:
@@ -110,7 +147,7 @@ package body Alire.Properties.Actions.Runners is
 
       return Props : Conditional.Properties do
          for I in 1 .. Raw.Length loop
-            Props := Props and Create_One (Raw.Item (I));
+            Props := Props and Create_One (Raw.Item (I), I);
          end loop;
       end return;
    end From_TOML;

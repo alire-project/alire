@@ -20,9 +20,12 @@ package body Alire.Config.Edit is
    -- Set_Locally --
    -----------------
 
-   procedure Set_Locally (Key : CLIC.Config.Config_Key; Value : String) is
+   procedure Set_Locally (Key   : CLIC.Config.Config_Key;
+                          Value : String;
+                          Check : CLIC.Config.Check_Import := null)
+   is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value) then
+      if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
          Raise_Checked_Error ("Cannot set local config key");
       end if;
 
@@ -34,15 +37,34 @@ package body Alire.Config.Edit is
    -- Set_Globally --
    ------------------
 
-   procedure Set_Globally (Key : CLIC.Config.Config_Key; Value : String) is
+   procedure Set_Globally (Key   : CLIC.Config.Config_Key;
+                          Value : String;
+                           Check : CLIC.Config.Check_Import := null)
+   is
    begin
-      if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value) then
+      if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check) then
          Raise_Checked_Error ("Cannot set global config key");
       end if;
 
       --  Reload after change
       Load_Config;
    end Set_Globally;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (Level : Config.Level;
+                  Key   : CLIC.Config.Config_Key;
+                  Value : String;
+                  Check : CLIC.Config.Check_Import := null)
+   is
+   begin
+      case Level is
+         when Local  => Set_Locally (Key, Value, Check);
+         when Global => Set_Globally (Key, Value, Check);
+      end case;
+   end Set;
 
    --------------
    -- Filepath --
@@ -125,7 +147,7 @@ package body Alire.Config.Edit is
    -- Path --
    ----------
 
-   function Path return String is
+   function Path return Absolute_Path is
    begin
       if Config_Path /= null then -- Case with switch (TODO)
          return Config_Path.all;
@@ -139,7 +161,7 @@ package body Alire.Config.Edit is
    -- Set_Path --
    --------------
 
-   procedure Set_Path (Path : String) is
+   procedure Set_Path (Path : Absolute_Path) is
    begin
       if Config_Path /= null then
          raise Constraint_Error with "Custom path already set";

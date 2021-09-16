@@ -4,19 +4,27 @@ with GNAT.Strings; use GNAT.Strings;
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
+with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
+with Alire.Index;
 with Alire.Milestones;
+with Alire.Origins.Deployers;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
 with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
 with Alire.Utils.TTY;
+with Alire.Warnings;
+
+with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Toolchain is
+
+   package Name_Sets renames Alire.Containers.Crate_Name_Sets;
 
    --------------------
    -- Setup_Switches --
@@ -76,21 +84,138 @@ package body Alr.Commands.Toolchain is
 
    procedure Install (Cmd            : in out Command;
                       Request        : String;
+                      Pending        : Name_Sets.Set;
                       Set_As_Default : Boolean)
    is
       use Alire;
+      use all type Origins.Kinds;
+
+      Dep : constant Dependencies.Dependency :=
+              Dependencies.From_String (Request);
+
+      type Origin_States is (Unset, Frozen, Mixed);
+      --  To detect what tool origins are already in use: Unset none, Frozen
+      --  one kind, Mixed more than one kind.
+      Origin_Status : Origin_States := Unset;
+      Origin_Kind   : Origins.Kinds; -- The Frozen kind in use
+
+      ----------------------
+      -- Identify_Origins --
+      ----------------------
+
+      procedure Identify_Origins is
+
+         ----------------------
+         -- Equivalent_Crate --
+         ----------------------
+
+         function Equivalent_Crate (L, R : Crate_Name) return Boolean
+         is (L = R
+             or else
+               (AAA.Strings.Has_Prefix (L.As_String, "gnat_")
+                and then R = GNAT_Crate)
+             or else
+               (AAA.Strings.Has_Prefix (R.As_String, "gnat_")
+                and then L = GNAT_Crate)
+             or else
+               (AAA.Strings.Has_Prefix (L.As_String, "gnat_")
+                and then AAA.Strings.Has_Prefix (R.As_String, "gnat_")));
+
+      begin
+         for Tool of Toolchains.Tools loop
+
+            --  A tool that is already configured, and not pending in the
+            --  command-line, will impose an origin compatibility constraint
+
+            if Toolchains.Tool_Is_Configured (Tool)
+              and then not
+                (for some P of Pending =>
+                   Toolchains.Tool_Release (Tool).Provides (P) or else
+                   Equivalent_Crate (P, Tool))
+              and then not Toolchains.Tool_Release (Tool).Provides (Dep.Crate)
+            then
+               declare
+                  --  The one already selected we want to be compatible with
+                  Other_Tool : constant Releases.Release :=
+                                 Toolchains.Tool_Release (Tool);
+               begin
+                  Trace.Debug ("Configured tool " & Utils.TTY.Name (Tool)
+                               & " has origin kind "
+                               & Other_Tool.Origin.Kind'Image);
+                  case Origin_Status is
+                     when Unset =>
+                        Origin_Status := Frozen;
+                        Origin_Kind   := Other_Tool.Origin.Kind;
+                     when Frozen =>
+                        if Other_Tool.Origin.Kind /= Origin_Kind then
+                           Origin_Status := Mixed;
+                        end if;
+                     when Mixed =>
+                        null; -- We are beyond salvation at this point
+                  end case;
+               end;
+            end if;
+         end loop;
+
+         if Origin_Status = Mixed then
+            Warnings.Warn_Once
+              ("Default toolchain contains mixed-procedence tools");
+         else
+            Trace.Debug ("Tool compatibility identified as "
+                         & Origin_Status'Image);
+         end if;
+      end Identify_Origins;
+
    begin
+
+      --  We want to ensure that we are installing compatible tools. The user
+      --  can force through this, so we consider that a bad situation may
+      --  already exist. The following call checks what origins are already in
+      --  use by configured tools. This is only relevant when setting defaults,
+      --  though.
+      if Set_As_Default then
+         Identify_Origins;
+         if Origin_Status = Frozen then
+            Put_Info ("Already selected tool imposes on remaining tools to be "
+                      & "of origin " & Origin_Kind'Image,
+                      Trace.Detail);
+         end if;
+      end if;
 
       Cmd.Requires_Full_Index;
 
       Installation :
       declare
-         Dep : constant Dependencies.Dependency :=
-                 Dependencies.From_String (Request);
+
+         -------------------
+         -- Origin_Filter --
+         -------------------
+
+         function Origin_Filter return Origins.Kinds_Set
+         is
+            Filter : Origins.Kinds_Set := (others => False);
+         begin
+            Filter (Origin_Kind) := True;
+            return Filter;
+         end Origin_Filter;
+
+         Any_Origin : constant Origins.Kinds_Set := (others => True);
+
          Rel : constant Releases.Release :=
                  Solver.Find (Name    => Dep.Crate,
                               Allowed => Dep.Versions,
-                              Policy  => Query_Policy);
+                              Policy  => Query_Policy,
+                              Origins =>
+                                 (if not Force and then Origin_Status = Frozen
+                                  then Origin_Filter
+                                  else Any_Origin));
+
+         function The_Other (Tool : Crate_Name) return Crate_Name
+         is (if Tool = GPRbuild_Crate then GNAT_Crate else GPRbuild_Crate);
+         --  This will break the moment we have another tool in the toolchain,
+         --  so leave a canary here:
+         pragma Assert (Natural (Alire.Toolchains.Tools.Length) = 2);
+
       begin
 
          --  Only allow sharing toolchain elements in this command:
@@ -109,12 +234,40 @@ package body Alr.Commands.Toolchain is
                       & Rel.Milestone.TTY_Image);
          end if;
 
+         --  Check for mixed-origin clashes
+
+         if Origin_Status = Frozen and then Rel.Origin.Kind /= Origin_Kind then
+            Recoverable_Error
+              ("Currently configured " & Utils.TTY.Name (The_Other (Dep.Crate))
+               & " has origin " & TTY.Emph (Origin_Kind'Image)
+               & " but newly selected " & Utils.TTY.Name (Dep.Crate)
+               & " has origin " & TTY.Emph (Rel.Origin.Kind'Image) & ASCII.LF
+               & "Mixing tool origins may result in a broken toolchain");
+         end if;
+
          --  And perform the actual installation
 
          if Cmd.Install_Dir.all /= "" then
-            Shared.Share (Rel, Cmd.Install_Dir.all);
+            if Rel.Origin.Is_Regular then
+               Shared.Share (Rel, Cmd.Install_Dir.all);
+            else
+               Reportaise_Command_Failed
+                 ("Releases with external origins cannot be installed at "
+                  & "specific locations; origin for "
+                  & Rel.Milestone.TTY_Image & " is: " & Rel.Origin.Kind'Image);
+            end if;
          else
-            Shared.Share (Rel);
+            if Rel.Origin.Is_Regular then
+               Shared.Share (Rel);
+            elsif Rel.Origin.Is_System then
+               Origins.Deployers.Deploy (Rel).Assert;
+            elsif Rel.Origin.Kind = External then
+               Put_Info ("External tool needs no installation: "
+                         & Rel.Milestone.TTY_Image);
+            else
+               Raise_Checked_Error ("Unexpected release origin: "
+                                    & Rel.Origin.Kind'Image);
+            end if;
          end if;
 
          if Set_As_Default then
@@ -134,7 +287,14 @@ package body Alr.Commands.Toolchain is
    exception
       when E : Alire.Query_Unsuccessful =>
          Alire.Log_Exception (E);
-         Trace.Error (Alire.Errors.Get (E));
+         if Set_As_Default then
+            Trace.Error (Alire.Errors.Get (E));
+            Reportaise_Command_Failed
+              ("Use --force to override compatibility checks between "
+               & "installed toolchain components");
+         else
+            Reportaise_Command_Failed (Alire.Errors.Get (E));
+         end if;
    end Install;
 
    ----------
@@ -244,6 +404,10 @@ package body Alr.Commands.Toolchain is
    procedure Execute (Cmd  : in out Command;
                       Args : AAA.Strings.Vector)
    is
+      Pending : Name_Sets.Set;
+      --  We do not want tools that are later in the command-line to be taken
+      --  into account prematurely for compatibility of origins. We store here
+      --  crates still to be dealt with.
    begin
 
       --  Validation
@@ -293,18 +457,26 @@ package body Alr.Commands.Toolchain is
       if Cmd.S_Select then
 
          Cmd.Requires_Full_Index;
+         Alire.Index.Detect_Externals
+           (Alire.GNAT_External_Crate, Platform.Properties);
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
          end if;
 
          if Args.Count = 0 then
-            Alire.Toolchains.Assistant (if Cmd.Local
-                                        then Alire.Config.Local
-                                        else Alire.Config.Global);
+            Alire.Toolchains.Assistant ((if Cmd.Local
+                                         then Alire.Config.Local
+                                         else Alire.Config.Global),
+                                        Allow_Incompatible => Alire.Force);
          else
             for Elt of Args loop
-               Install (Cmd, Elt, Set_As_Default => True);
+               Pending.Insert (Alire.Dependencies.From_String (Elt).Crate);
+            end loop;
+
+            for Elt of Args loop
+               Install (Cmd, Elt, Pending, Set_As_Default => True);
+               Pending.Exclude (Alire.Dependencies.From_String (Elt).Crate);
             end loop;
          end if;
 
@@ -314,8 +486,12 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
+         Cmd.Requires_Full_Index;
+         Alire.Index.Detect_Externals
+           (Alire.GNAT_External_Crate, Platform.Properties);
+
          for Elt of Args loop
-            Install (Cmd, Elt, Set_As_Default => False);
+            Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
          end loop;
 
       elsif not Cmd.Disable then

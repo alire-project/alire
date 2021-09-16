@@ -9,22 +9,31 @@ package Alire.Config.Edit is
 
    --  Shortcuts that use the standard config locations:
 
-   procedure Set_Locally (Key : CLIC.Config.Config_Key; Value : String);
+   procedure Set_Locally (Key   : CLIC.Config.Config_Key;
+                          Value : String;
+                          Check : CLIC.Config.Check_Import := null);
 
-   procedure Set_Globally (Key : CLIC.Config.Config_Key; Value : String);
+   procedure Set_Globally (Key   : CLIC.Config.Config_Key;
+                           Value : String;
+                           Check : CLIC.Config.Check_Import := null);
+
+   procedure Set (Level : Config.Level;
+                  Key   : CLIC.Config.Config_Key;
+                  Value : String;
+                  Check : CLIC.Config.Check_Import := null);
 
    --  To ease the pain with circularities in old GNAT versions, we have also
    --  here all non-preelaborable things related to config loading. This
    --  way, querying stays preelaborable.
 
-   function Path return String;
+   function Path return Absolute_Path;
    --  The in-use global config folder path.
    --  In order of decreasing precedence:
    --  * A manually set path with Set_Path (below)
    --  * An ALR_CONFIG env given folder
    --  * Default per-platform path (see alire-platforms-*)
 
-   procedure Set_Path (Path : String);
+   procedure Set_Path (Path : Absolute_Path);
    --  Override global config folder path
 
    function Indexes_Directory return Absolute_Path is (Path / "indexes");

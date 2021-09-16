@@ -105,13 +105,10 @@ package body Alr.Commands.Config is
                  Key & "'");
             end if;
 
-            if not CLIC.Config.Edit.Set
-              (Alire.Config.Edit.Filepath (Lvl),
+            Alire.Config.Edit.Set
+              (Lvl,
                Key, Val,
-               Check => Alire.Config.Edit.Valid_Builtin'Access)
-            then
-               Reportaise_Command_Failed ("Cannot set config key");
-            end if;
+               Check => Alire.Config.Edit.Valid_Builtin'Access);
          end;
 
       elsif Cmd.Unset then

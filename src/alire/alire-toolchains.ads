@@ -25,7 +25,8 @@ package Alire.Toolchains is
    function Any_Tool (Crate : Crate_Name) return Dependencies.Dependency;
    --  Returns a dependency on crate*
 
-   procedure Assistant (Level : Config.Level);
+   procedure Assistant (Level              : Config.Level;
+                        Allow_Incompatible : Boolean := False);
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.
    --  This information may apply config-wide or workspace-wide. Installation
@@ -48,6 +49,11 @@ package Alire.Toolchains is
    function Tool_Dependency (Crate : Crate_Name) return Dependencies.Dependency
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
+
+   function Tool_Release (Crate : Crate_Name) return Releases.Release;
+   --  Will raise Checked_Error for unconfigured, or configured but without the
+   --  release being deployed (e.g. the user messed with files and deleted it
+   --  manually).
 
    procedure Unconfigure (Crate : Crate_Name);
    --  Set the crate as not configured.

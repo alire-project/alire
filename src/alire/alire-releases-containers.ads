@@ -19,6 +19,16 @@ package Alire.Releases.Containers is
    type Release_Set is new Release_Sets.Set with null record;
    Empty_Release_Set : constant Release_Set;
 
+   function Is_Older (This, Than : Releases.Release) return Boolean;
+
+   package Release_Set_By_Version
+   is new Ada.Containers.Indefinite_Ordered_Sets (Releases.Release,
+                                                  Is_Older,
+                                                  Releases."=");
+
+   function From_Set (This : Release_Set)
+                      return Release_Set_By_Version.Set;
+
    function Image_One_Line (This : Release_Set) return String;
 
    function Satisfying (This : Release_Set;

@@ -406,7 +406,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             return run_alr(*args, force=force)
 
 
-def add_action(type, command):
+def add_action(type, command, name=""):
     """
     Add an action to the manifest in the current directory.
     :param str type: "pre-build", etc
@@ -419,3 +419,5 @@ def add_action(type, command):
         manifest.write("[[actions]]\n")
         manifest.write(f"type = '{type}'\n")
         manifest.write(f"command = {command}\n")
+        if name != "":
+            manifest.write(f"name = '{name}'\n")
