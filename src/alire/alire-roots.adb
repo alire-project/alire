@@ -1,15 +1,17 @@
 with Alire.Conditional;
 with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
-with Alire.Dependencies.States;
 with Alire.Directories;
 with Alire.Environment;
+with Alire.Errors;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.OS_Lib;
+with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
 with Alire.Shared;
 with Alire.Solutions.Diffs;
+with Alire.Spawn;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
@@ -25,6 +27,166 @@ package body Alire.Roots is
    package Semver renames Semantic_Versioning;
 
    use type UString;
+
+   -----------
+   -- Build --
+   -----------
+
+   function Build (This             : in out Root;
+                   Cmd_Args         : AAA.Strings.Vector;
+                   Export_Build_Env : Boolean)
+                   return Boolean
+   is
+      Build_Failed : exception;
+
+      --------------------------
+      -- Build_Single_Release --
+      --------------------------
+
+      procedure Build_Single_Release (This     : in out Root;
+                                      Solution : Solutions.Solution;
+                                      State    : Dependencies.States.State)
+      is
+         pragma Unreferenced (Solution);
+
+         --  Relocate to the release folder
+         CD : Directories.Guard
+           (if State.Has_Release and then State.Release.Origin.Is_Regular
+            then Directories.Enter (This.Release_Base (State.Crate))
+            else Directories.Stay) with Unreferenced;
+
+         ---------------------------
+         -- Run_Pre_Build_Actions --
+         ---------------------------
+
+         procedure Run_Pre_Build_Actions (Release : Releases.Release) is
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release,
+               Env     => This.Environment,
+               Moment  => Alire.Properties.Actions.Pre_Build);
+         exception
+            when E : others =>
+               Trace.Warning ("A pre-build action failed, " &
+                                "re-run with -vv -d for details");
+               Log_Exception (E);
+               raise Build_Failed;
+         end Run_Pre_Build_Actions;
+
+         ----------------------------
+         -- Run_Post_Build_Actions --
+         ----------------------------
+
+         procedure Run_Post_Build_Actions (Release : Releases.Release) is
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release,
+               Env     => This.Environment,
+               Moment  => Alire.Properties.Actions.Post_Build);
+         exception
+            when E : others =>
+               Trace.Warning ("A post-build action failed, " &
+                                "re-run with -vv -d for details");
+               Log_Exception (E);
+               raise Build_Failed;
+         end Run_Post_Build_Actions;
+
+         -------------------
+         -- Call_Gprbuild --
+         -------------------
+
+         procedure Call_Gprbuild (Release : Releases.Release) is
+            use Directories.Operators;
+            Count : constant Natural :=
+                      Natural
+                        (Release.Project_Files
+                           (This.Environment, With_Path => True).Length);
+            Current : Positive := 1;
+            Is_Root : constant Boolean :=
+                        Release.Name = This.Release.Constant_Reference.Name;
+         begin
+            if not Is_Root and then not Release.Auto_GPR_With then
+
+               Put_Info (TTY.Bold ("Not") & " pre-building "
+                         & Utils.TTY.Name (Release.Name)
+                         & " (auto with disabled)",
+                         Trace.Detail);
+
+            elsif not Is_Root and then
+              Release.Executables (This.Environment).Is_Empty
+            then
+
+               Put_Info (TTY.Bold ("Not") & " pre-building "
+                         & Utils.TTY.Name (Release.Name)
+                         & " (no executables declared)",
+                         Trace.Detail);
+
+            else
+
+               --  Build all the project files
+               for Gpr_File of Release.Project_Files
+                 (This.Environment, With_Path => True)
+               loop
+                  Put_Info ("Building "
+                            & Utils.TTY.Name (Release.Name) & "/"
+                            & TTY.URL (Gpr_File)
+                            & (if Count > 1
+                              then " (" & AAA.Strings.Trim (Current'Image)
+                              & "/" & AAA.Strings.Trim (Count'Image) & ")"
+                              else "")
+                            & "...");
+
+                  Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
+                                  Extra_Args => Cmd_Args);
+
+                  Current := Current + 1;
+               end loop;
+
+            end if;
+
+         exception
+            when E : Alire.Checked_Error =>
+               Trace.Error (Errors.Get (E, Clear => False));
+               Log_Exception (E);
+               raise Build_Failed;
+            when E : others =>
+               Log_Exception (E);
+               raise Build_Failed;
+         end Call_Gprbuild;
+
+      begin
+
+         if not State.Has_Release then
+            Put_Info (State.As_Dependency.TTY_Image & ": no build needed.");
+            return;
+         end if;
+
+         declare
+            Release : constant Releases.Release := State.Release;
+         begin
+
+            Run_Pre_Build_Actions (Release);
+
+            Call_Gprbuild (Release);
+
+            Run_Post_Build_Actions (Release);
+
+         end;
+
+      end Build_Single_Release;
+
+   begin
+      if Export_Build_Env then
+         This.Export_Build_Environment;
+      end if;
+
+      This.Traverse (Build_Single_Release'Access);
+
+      return True;
+   exception
+      when Build_Failed =>
+         return False;
+   end Build;
 
    -------------------
    -- Build_Context --
@@ -44,11 +206,11 @@ package body Alire.Roots is
 
    function Direct_Withs (This      : in out Root;
                           Dependent : Releases.Release)
-                          return Utils.String_Set
+                          return AAA.Strings.Set
    is
       Sol : Solutions.Solution renames This.Solution;
    begin
-      return Files : Utils.String_Set do
+      return Files : AAA.Strings.Set do
 
          --  Traverse direct dependencies of the given release
 
@@ -152,18 +314,54 @@ package body Alire.Roots is
       -- Deploy_Release --
       --------------------
 
-      procedure Deploy_Release (Sol : Solutions.Solution;
-                                Dep : Dependencies.States.State)
+      procedure Deploy_Release (This : in out Root;
+                                Sol  : Solutions.Solution;
+                                Dep  : Dependencies.States.State)
       is
          pragma Unreferenced (Sol);
          Was_There : Boolean;
+
+         --------------------
+         -- Run_Post_Fetch --
+         --------------------
+
+         procedure Run_Post_Fetch (Release : Releases.Release) is
+            CD : Directories.Guard
+              (Directories.Enter (This.Release_Base (Release.Name)))
+              with Unreferenced;
+         begin
+            Alire.Properties.Actions.Executor.Execute_Actions
+              (Release,
+               Env     => This.Environment,
+               Moment  => Alire.Properties.Actions.Post_Fetch);
+         exception
+            when E : others =>
+               Log_Exception (E);
+               Raise_Checked_Error ("A post-fetch action failed, " &
+                                      "re-run with -vv -d for details");
+         end Run_Post_Fetch;
+
       begin
          if Dep.Is_Linked then
             Trace.Debug ("deploy: skip linked release");
+
+            --  To allow local workflows to work as in a real fetching, linked
+            --  releases get their post-fetch run whenever there is a change to
+            --  dependencies. This will run them more than once, but is better
+            --  than never running them and breaking something.
+            if Dep.Has_Release then
+               Run_Post_Fetch (Dep.Release);
+            end if;
             return;
 
-         elsif Release (This).Provides (Dep.Crate) then
+         elsif Release (This).Provides (Dep.Crate) or else
+           (Dep.Has_Release and then Dep.Release.Name = Release (This).Name)
+         then
             Trace.Debug ("deploy: skip root");
+            --  The root release is never really "fetched" (unless for an alr
+            --  get, but e.g. not when cloned). So, we run their post-fetch
+            --  when dependencies are updated.
+            Run_Post_Fetch (Dep.Release);
             return;
 
          elsif not Dep.Has_Release then
@@ -195,11 +393,17 @@ package body Alire.Roots is
                            Parent_Folder   =>
                              Ada.Directories.Containing_Directory
                                (This.Release_Base (Rel.Name)),
+                           Perform_Actions => False,
                            Was_There       => Was_There,
                            Create_Manifest =>
                              Dep.Is_Shared,
                            Include_Origin  =>
                              Dep.Is_Shared);
+
+               --  Always run the post-fetch on update of dependencies, in
+               --  case there is some interaction with some other updated
+               --  dependency, even for crates that didn't change.
+               Run_Post_Fetch (Rel);
             end if;
          end;
       end Deploy_Release;
@@ -215,7 +419,7 @@ package body Alire.Roots is
       --  Visit dependencies in a safe order to be fetched, and their actions
       --  ran
 
-      This.Solution.Traverse (Doing => Deploy_Release'Access);
+      This.Traverse (Doing => Deploy_Release'Access);
 
       --  Show hints for missing externals to the user after all the noise of
       --  dependency post-fetch compilations.
@@ -513,10 +717,10 @@ package body Alire.Roots is
    -- Project_Paths --
    -------------------
 
-   function Project_Paths (This : in out Root) return Utils.String_Set
+   function Project_Paths (This : in out Root) return AAA.Strings.Set
    is
       use Alire.OS_Lib;
-      Paths : Utils.String_Set;
+      Paths : AAA.Strings.Set;
    begin
 
       for Rel of This.Solution.Releases.Including (Release (This)) loop
@@ -537,7 +741,7 @@ package body Alire.Roots is
 
       --  To match the output of root crate paths and Ada.Directories full path
       --  normalization, a path separator in the last position is removed.
-      return Result : Utils.String_Set do
+      return Result : AAA.Strings.Set do
          for Path of Paths loop
             if Path'Length /= 0
               and then
@@ -1105,5 +1309,34 @@ package body Alire.Roots is
 
       This.Sync_Pins_From_Manifest (Exhaustive => False);
    end Reload_Manifest;
+
+   --------------
+   -- Traverse --
+   --------------
+
+   procedure Traverse
+     (This  : in out Root;
+      Doing : access procedure
+        (This     : in out Root;
+         Solution : Solutions.Solution;
+         State    : Dependencies.States.State))
+   is
+
+      -------------------
+      -- Traverse_Wrap --
+      -------------------
+
+      procedure Traverse_Wrap (Solution : Solutions.Solution;
+                               State    : Dependencies.States.State)
+      is
+      begin
+         Doing (This, Solution, State);
+      end Traverse_Wrap;
+
+   begin
+      This.Solution.Traverse
+        (Traverse_Wrap'Access,
+         Root => Releases.Containers.Optional_Releases.Unit (Release (This)));
+   end Traverse;
 
 end Alire.Roots;

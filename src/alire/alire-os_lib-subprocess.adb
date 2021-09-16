@@ -7,24 +7,26 @@ with ANSI; use ANSI;
 
 package body Alire.OS_Lib.Subprocess is
 
+   use AAA.Strings;
+
    function To_Argument_List
-     (Args : Utils.String_Vector)
+     (Args : AAA.Strings.Vector)
       return GNAT.OS_Lib.Argument_List_Access;
 
    procedure Cleanup (List : in out GNAT.OS_Lib.Argument_List_Access);
 
-   function Image (Cmd : String; Args : Utils.String_Vector) return String;
+   function Image (Cmd : String; Args : AAA.Strings.Vector) return String;
 
    function Spawn
      (Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False)
       return Integer;
 
    function Spawn_And_Capture
-     (Output              : in out Utils.String_Vector;
+     (Output              : in out AAA.Strings.Vector;
       Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
       Err_To_Out          : Boolean := False)
       return Integer;
@@ -35,7 +37,7 @@ package body Alire.OS_Lib.Subprocess is
    -- To_Argument_List --
    ----------------------
 
-   function To_Argument_List (Args : Utils.String_Vector)
+   function To_Argument_List (Args : AAA.Strings.Vector)
                               return GNAT.OS_Lib.Argument_List_Access
    is
       use GNAT.OS_Lib;
@@ -65,7 +67,7 @@ package body Alire.OS_Lib.Subprocess is
    -- Image --
    -----------
 
-   function Image (Cmd : String; Args : Utils.String_Vector) return String
+   function Image (Cmd : String; Args : AAA.Strings.Vector) return String
    is ("[""" & Cmd &
        (if Args.Is_Empty
         then ""
@@ -95,7 +97,7 @@ package body Alire.OS_Lib.Subprocess is
 
    procedure Checked_Spawn
      (Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False)
    is
       Exit_Code : constant Integer :=
@@ -107,7 +109,7 @@ package body Alire.OS_Lib.Subprocess is
       if Exit_Code /= 0 then
          Raise_Checked_Error
            ("Command " & Image (Command, Arguments) &
-              " exited with code" & Exit_Code'Img);
+              " exited with code " & AAA.Strings.Trim (Exit_Code'Image));
       end if;
    end Checked_Spawn;
 
@@ -117,12 +119,12 @@ package body Alire.OS_Lib.Subprocess is
 
    function Checked_Spawn_And_Capture
      (Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
       Err_To_Out          : Boolean := False;
-      Valid_Exit_Codes    : Code_Array := (1 => 0)) return Utils.String_Vector
+      Valid_Exit_Codes    : Code_Array := (1 => 0)) return AAA.Strings.Vector
    is
-      Output    : Utils.String_Vector;
+      Output    : AAA.Strings.Vector;
       Exit_Code : constant Integer :=
                     Spawn_And_Capture
                       (Output              => Output,
@@ -150,8 +152,8 @@ package body Alire.OS_Lib.Subprocess is
 
    function Unchecked_Spawn_And_Capture
      (Command             : String;
-      Arguments           : Utils.String_Vector;
-      Output              : in out Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
+      Output              : in out AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
       Err_To_Out          : Boolean := False) return Integer
    is (Spawn_And_Capture
@@ -167,19 +169,18 @@ package body Alire.OS_Lib.Subprocess is
 
    function Spawn
      (Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False)
       return Integer
    is
-      use Alire.Utils;
       use GNAT.OS_Lib;
 
-      Extra    : constant String_Vector :=
+      Extra    : constant AAA.Strings.Vector :=
                    (if Understands_Verbose and then Log_Level > Info
                     then Empty_Vector & "-v"
                     else Empty_Vector);
 
-      Full_Args : constant String_Vector := Extra & Arguments;
+      Full_Args : constant AAA.Strings.Vector := Extra & Arguments;
       Arg_List : Argument_List_Access := To_Argument_List (Full_Args);
 
       Exit_Code : Integer;
@@ -218,22 +219,21 @@ package body Alire.OS_Lib.Subprocess is
    -----------------------
 
    function Spawn_And_Capture
-     (Output              : in out Utils.String_Vector;
+     (Output              : in out AAA.Strings.Vector;
       Command             : String;
-      Arguments           : Utils.String_Vector;
+      Arguments           : AAA.Strings.Vector;
       Understands_Verbose : Boolean := False;
       Err_To_Out          : Boolean := False)
      return Integer
    is
-      use Alire.Utils;
       use GNAT.OS_Lib;
       File     : File_Descriptor;
       Name     : String_Access;
 
-      Extra    : constant String_Vector :=
+      Extra    : constant AAA.Strings.Vector :=
         (if Understands_Verbose then Empty_Vector & "-v" else Empty_Vector);
 
-      Full_Args : constant String_Vector := Extra & Arguments;
+      Full_Args : constant AAA.Strings.Vector := Extra & Arguments;
       Arg_List : Argument_List_Access := To_Argument_List (Full_Args);
 
       use Ada.Text_IO;

@@ -27,7 +27,7 @@ package Alr.Testing.Collections is
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
                        Elapsed :        Duration;
-                       Log     :        Utils.String_Vector);
+                       Log     :        AAA.Strings.Vector);
 
 private
 

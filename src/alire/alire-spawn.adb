@@ -1,20 +1,19 @@
+with Alire_Early_Elaboration;
 with Alire.OS_Lib.Subprocess;
 
-with Alr.Commands;
-
-package body Alr.Spawn is
+package body Alire.Spawn is
 
    -------------
    -- Command --
    -------------
 
    procedure Command (Cmd                 : String;
-                      Args                : Alire.Utils.String_Vector;
+                      Args                : AAA.Strings.Vector;
                       Understands_Verbose : Boolean := False)
    is
-      Unused_Output : Alire.Utils.String_Vector;
+      Unused_Output : AAA.Strings.Vector;
    begin
-      if Commands.Is_Quiet then
+      if Alire_Early_Elaboration.Switch_Q then
          Unused_Output :=
            Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
              (Cmd, Args, Understands_Verbose, Err_To_Out => True);
@@ -29,9 +28,9 @@ package body Alr.Spawn is
    --------------
 
    procedure Gprbuild (Project_File : String;
-                       Extra_Args   : Alire.Utils.String_Vector)
+                       Extra_Args   : AAA.Strings.Vector)
    is
-      use Alire.Utils;
+      use AAA.Strings;
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path ("gprbuild") = "" then
          Alire.Raise_Checked_Error
@@ -41,14 +40,16 @@ package body Alr.Spawn is
 
       Command ("gprbuild",
                Empty_Vector &
+
                  "-gnatwU" &
+                 --  Suppress warnings on unused (may happen in prj_alr.ads)
+
                  "-j0" &
                  "-p" &
-                 --  Supress warnings on unused (may happen in prj_alr.ads)
-                 Extra_Args &
                  "-P" &
-                 Project_File,
+                 Project_File &
+                 Extra_Args,
                Understands_Verbose => True);
    end Gprbuild;
 
-end Alr.Spawn;
+end Alire.Spawn;

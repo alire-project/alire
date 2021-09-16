@@ -11,7 +11,6 @@ with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
 with Alire.Toolchains;
-with Alire.Utils;
 with Alire.Utils.TTY;
 
 with CLIC.User_Input;
@@ -119,7 +118,7 @@ package body Alire.Solver is
       use Alire.Conditional.For_Dependencies;
 
       Unavailable_Crates      : Containers.Crate_Name_Sets.Set;
-      Unavailable_Direct_Deps : Alire.Utils.String_Sets.Set;
+      Unavailable_Direct_Deps : AAA.Strings.Sets.Set;
       --  Some dependencies may be unavailable because the crate does not
       --  exist, the requested releases do not exist, or the intersection of
       --  versions is empty. In this case, we can prematurely end the search
@@ -129,7 +128,7 @@ package body Alire.Solver is
       --  introduced by the user), or otherwise it does make sense to explore
       --  alternate solutions that may not require the impossible dependencies.
 
-      Unavailable_All_Deps : Utils.String_Sets.Set;
+      Unavailable_All_Deps : AAA.Strings.Sets.Set;
       --  Still, we can keep track of indirect unsolvable deps to speed-up the
       --  search by not reattempting branches that contain such a dependency.
 
@@ -292,7 +291,7 @@ package body Alire.Solver is
                begin
                   if Deps.Is_Iterable then
                      for Dep of Deps loop
-                        if Utils.Starts_With (Dep.Value.Crate.As_String,
+                        if AAA.Strings.Has_Prefix (Dep.Value.Crate.As_String,
                                               "gnat_") -- Ugly hack
                         then
                            return Dep;
@@ -935,6 +934,8 @@ package body Alire.Solver is
             end Contains_All_Satisfiable;
 
             Pre_Length : constant Count_Type := Solutions.Length;
+
+            use AAA.Strings;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
                          & Expanded.Image_One_Line
@@ -948,9 +949,9 @@ package body Alire.Solver is
             end if;
 
             Progress.Step ("Solving dependencies... "
-                           & Utils.Trim (Complete'Img) & "/"
-                           & Utils.Trim (Partial'Img) & "/"
-                           & Utils.Trim (Dupes'Image)
+                           & Trim (Complete'Img) & "/"
+                           & Trim (Partial'Img) & "/"
+                           & Trim (Dupes'Image)
                            & " (complete/partial/dupes)");
 
             if Options.Completeness = First_Complete

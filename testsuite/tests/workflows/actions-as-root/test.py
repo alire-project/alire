@@ -1,23 +1,25 @@
 """
-Test pre-build/post-build/post-fetch executions
+Test pre-build/post-build/post-fetch executions on a crate that is the root
 """
 
-from drivers.alr import run_alr
+from drivers.alr import run_alr, init_local_crate, add_action, alr_with
 from drivers.asserts import assert_match
-from drivers.helpers import compare, contents
+from drivers.helpers import compare, contents, on_windows
 from pathlib import Path
 
 import os
 
+
 def check_expected(expected):
-    if not expected in contents('.'):
+    if not (expected in contents('.')):
         assert False, "%s expected in %s\n Got: %s" % \
-               (expected, dir, str(contents(dir)))
+               (expected, '.', str(contents('.')))
+
 
 def check_not_expected(expected):
     if expected in contents('.'):
         assert False, "%s is unexpected in %s\n Got: %s" % \
-               (expected, dir, str(contents(dir)))
+               (expected, '.', str(contents('.')))
 
 
 # Get and check post fetch action
@@ -51,5 +53,29 @@ run_alr('build', complain_on_error=False)
 check_not_expected('./test_post_fetch')
 check_expected('./test_pre_build')
 check_expected('./test_post_build')
+
+# updating dependencies causes the post-fetch action on the root crate to run:
+run_alr('update')
+check_expected('./test_post_fetch')
+check_expected('./test_pre_build')
+check_expected('./test_post_build')
+
+# Add a linked dependency. Since these are never "fetched", in order to
+# complete their action cycle, post-fetch is also run on updates
+
+init_local_crate("depended", binary=False, enter=True)
+# Add a similar action
+if on_windows():
+    add_action("post-fetch", ["cmd", "/C", "copy NUL test_post_fetch_dep"])
+else:
+    add_action("post-fetch", ["touch", "test_post_fetch_dep"])
+
+
+check_not_expected('./test_post_fetch_dep')
+os.chdir("..")  # Back to parent crate
+alr_with("depended", path="depended", update=False)
+run_alr("update")
+check_not_expected('./test_post_fetch_dep')
+check_expected('./depended/test_post_fetch_dep')
 
 print('SUCCESS')

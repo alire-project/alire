@@ -1,9 +1,9 @@
-with Alire.Utils;
+with AAA.Strings;
 
 package body Alire.Expressions.Enums is
 
    type Enum_Values is new Expressions.Values with record
-      Values : Utils.String_Set;
+      Values : AAA.Strings.Set;
    end record;
 
    overriding

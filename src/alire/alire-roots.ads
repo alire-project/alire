@@ -2,7 +2,10 @@ private with AAA.Caches.Files;
 with Ada.Directories;
 private with Ada.Finalization;
 
+with AAA.Strings;
+
 with Alire.Containers;
+with Alire.Dependencies.States;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -10,7 +13,6 @@ with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils;
 
 package Alire.Roots is
 
@@ -71,7 +73,7 @@ package Alire.Roots is
 
    function Direct_Withs (This      : in out Root;
                           Dependent : Releases.Release)
-                          return Utils.String_Set;
+                          return AAA.Strings.Set;
    --  Obtain the project files required by Dependent in This.Solution
 
    function Environment (This : Root) return Properties.Vector;
@@ -90,7 +92,7 @@ package Alire.Roots is
    function Path (This : Root) return Absolute_Path;
 
    function Project_Paths (This : in out Root)
-                           return Utils.String_Set;
+                           return AAA.Strings.Set;
    --  Return all the paths that should be set in GPR_PROJECT_PATH for the
    --  solution in this root. This includes all releases' paths and any linked
    --  directories.
@@ -195,6 +197,23 @@ package Alire.Roots is
    --  modification procedures, or somehow outside alire after This was
    --  created, we need to reload the manifest. The solution remains
    --  untouched (use Update to recompute a fresh solution).
+
+   procedure Traverse
+     (This  : in out Root;
+      Doing : access procedure
+        (This     : in out Root;
+         Solution : Solutions.Solution;
+         State    : Dependencies.States.State));
+   --  Recursively visit all dependencies in a safe order, ending with the root
+
+   function Build (This             : in out Root;
+                   Cmd_Args         : AAA.Strings.Vector;
+                   Export_Build_Env : Boolean)
+                   return Boolean;
+   --  Recursively build all dependencies that declare executables, and finally
+   --  the root release. Also executes all pre-build/post-build actions for
+   --  all releases in the solution (even those not built). Returns True on
+   --  successful build.
 
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 

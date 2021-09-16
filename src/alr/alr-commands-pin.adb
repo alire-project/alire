@@ -74,13 +74,13 @@ package body Alr.Commands.Pin is
 
       --  Check if we are given a particular version
 
-      if Alire.Utils.Contains (Target, "=") then
+      if AAA.Strings.Contains (Target, "=") then
 
          if Cmd.Unpin then
             Reportaise_Wrong_Arguments ("Unpinning does not require version");
          end if;
 
-         Version := Semver.Parse (Alire.Utils.Tail (Dep.Image, '='),
+         Version := Semver.Parse (AAA.Strings.Tail (Dep.Image, '='),
                                   Relaxed => False);
 
          Trace.Debug ("Pin requested for exact version: "
@@ -122,7 +122,7 @@ package body Alr.Commands.Pin is
                  Alire.Dependencies.From_String (Spec);
       begin
          if not Dep.Versions.Is_Any then
-            if not Alire.Utils.Starts_With (Dep.Versions.Image, "=") then
+            if not AAA.Strings.Has_Prefix (Dep.Versions.Image, "=") then
                Reportaise_Wrong_Arguments
                  ("Plain crate name or crate=version argument expected for"
                   & " pinning, but got: " & TTY.Emph (Spec));

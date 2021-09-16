@@ -1,5 +1,4 @@
 with Alire.TOML_Keys;
-with Alire.Utils;
 
 package body Alire.Properties.Environment is
 
@@ -134,7 +133,7 @@ package body Alire.Properties.Environment is
 
          --  Create the VAR.action.Value nested tables
 
-         Child.Set (Utils.To_Lower_Case (This.Action'Img),
+         Child.Set (AAA.Strings.To_Lower_Case (This.Action'Img),
                     Create_String (Value (This)));
 
          Result.Set (Name (This),

@@ -1,54 +1,12 @@
 with Ada.Command_Line;
 
-with Ada.Streams.Stream_IO;
+with AAA.Strings; use AAA.Strings;
+with Ada.Strings.Maps;
 
-with GNAT.Case_Util;
 with GNAT.OS_Lib;
 with GNAT.Regpat;
 
 package body Alire.Utils is
-
-   ------------
-   -- Append --
-   ------------
-
-   function Append (V : String_Vector;
-                    S : String) return String_Vector is
-   begin
-      return R : String_Vector := V do
-         R.Append (S);
-      end return;
-   end Append;
-
-   ------------
-   -- Append --
-   ------------
-
-   function Append (L, R : String_Vector) return String_Vector is
-   begin
-      return Result : String_Vector := L do
-         Result.Append (R);
-      end return;
-   end Append;
-
-   -------------------------
-   -- Append_To_Last_Line --
-   -------------------------
-
-   function Append_To_Last_Line (V : String_Vector;
-                                 S : String)
-                                 return String_Vector
-   is
-   begin
-      if V.Is_Empty then
-         return To_Vector (S);
-      else
-         return R : String_Vector := V do
-            R.Delete_Last;
-            R.Append_Line (V.Last_Element & S);
-         end return;
-      end if;
-   end Append_To_Last_Line;
 
    ---------------------------
    -- Command_Line_Contains --
@@ -57,22 +15,13 @@ package body Alire.Utils is
    function Command_Line_Contains (Prefix : String) return Boolean is
    begin
       for I in 1 .. Ada.Command_Line.Argument_Count loop
-         if Starts_With (Full_String => Ada.Command_Line.Argument (I),
-                         Substring   => Prefix)
-         then
+         if Has_Prefix (Ada.Command_Line.Argument (I), Prefix) then
             return True;
          end if;
       end loop;
 
       return False;
    end Command_Line_Contains;
-
-   --------------
-   -- Contains --
-   --------------
-
-   function Contains (Text : String; Sub : String) return Boolean is
-     (Ada.Strings.Fixed.Count (Text, Sub) > 0);
 
    -------------
    -- Convert --
@@ -178,95 +127,6 @@ package body Alire.Utils is
       end return;
    end Count_True;
 
-   ------------
-   -- Crunch --
-   ------------
-
-   function Crunch (Text : String) return String is
-      Result : String (Text'Range);
-      Src    : Natural := Text'First;
-      Dst    : Natural := Result'First;
-   begin
-      --  Trim initial spaces:
-      while Src <= Text'Last and then Text (Src) = ' ' loop
-         Src := Src + 1;
-      end loop;
-
-      --  Remove excess spaces:
-      while Src <= Text'Last loop
-         if Src = Text'First
-           or else
-            Text (Src) /= ' '
-           or else
-            Text (Src - 1) /= ' '
-         then
-            Result (Dst) := Text (Src);
-            Dst := Dst + 1;
-         end if;
-         Src := Src + 1;
-      end loop;
-
-      return Result (Result'First .. Dst - 1);
-   end Crunch;
-
-   ----------
-   -- Head --
-   ----------
-
-   function Head (Str : String; Separator : Character) return String is
-   begin
-      for I in Str'Range loop
-         if Str (I) = Separator then
-            return Str (Str'First .. I - 1);
-         end if;
-      end loop;
-
-      return Str;
-   end Head;
-
-   -------------
-   -- Flatten --
-   -------------
-
-   function Flatten (V         : String_Vector;
-                     Separator : String := " ")
-                     return String
-   is
-
-      function Flatten (Pos : Positive; V : String_Vector) return String;
-
-      -------------
-      -- Flatten --
-      -------------
-
-      function Flatten (Pos : Positive; V : String_Vector) return String is
-        (if Pos = V.Count
-         then V (Pos)
-         else V (Pos) & Separator & Flatten (Pos + 1, V));
-
-   begin
-      if V.Is_Empty then
-         return "";
-      else
-         return Flatten (1, V);
-      end if;
-   end Flatten;
-
-   ------------
-   -- Indent --
-   ------------
-
-   function Indent (V      : String_Vector;
-                    Spaces : String := "   ")
-                    return   String_Vector is
-   begin
-      return R : String_Vector do
-         for Line of V loop
-            R.Append (String'(Spaces & Line));
-         end loop;
-      end return;
-   end Indent;
-
    -------------------------------
    -- Is_Valid_Full_Person_Name --
    -------------------------------
@@ -284,7 +144,7 @@ package body Alire.Utils is
       and then User'Length in 1 .. 39
       and then User (User'First) /= '-'
       and then User (User'Last) /= '-'
-      and then not Contains (User, "--"));
+      and then not AAA.Strings.Contains (User, "--"));
 
    ------------------
    -- Is_Valid_Tag --
@@ -294,194 +154,7 @@ package body Alire.Utils is
      ((for all C of Tag => C in '0' .. '9' | 'a' .. 'z' | '-')
       and then Tag (Tag'First) /= '-'
       and then Tag (Tag'Last) /= '-'
-      and then not Contains (Tag, "--"));
-
-   --------------
-   -- New_Line --
-   --------------
-
-   function New_Line (V : String_Vector) return String_Vector
-   is (V.Append (""));
-
-   -------------
-   -- Replace --
-   -------------
-
-   function Replace (Text  : String;
-                     Match : String;
-                     Subst : String)
-                     return String
-   is
-      use Ada.Strings.Fixed;
-      First : Natural;
-   begin
-      First := Index (Text, Match);
-      if First = 0 then
-         return Text;
-      else
-         return
-           Text (Text'First .. First - 1)
-           & Subst
-           & Replace (Text (First + Match'Length .. Text'Last), Match, Subst);
-      end if;
-   end Replace;
-
-   -------------
-   -- Shorten --
-   -------------
-
-   function Shorten (Text       : String;
-                     Max_Length : Natural;
-                     Trim_Side  : Halves := Head)
-                     return String
-   is
-      Ellipsis : constant String := "(...)";
-   begin
-      if Text'Length <= Max_Length then
-         return Text;
-      elsif Trim_Side = Head then
-         return Ellipsis
-                & Ada.Strings.Fixed.Tail (Text, Max_Length - Ellipsis'Length);
-      else
-         return Ada.Strings.Fixed.Head (Text, Max_Length - Ellipsis'Length)
-                & Ellipsis;
-      end if;
-   end Shorten;
-
-   -----------
-   -- Split --
-   -----------
-
-   function Split (Text      : String;
-                   Separator : Character;
-                   Side      : Halves := Head;
-                   From      : Halves := Head;
-                   Count     : Positive := 1;
-                   Raises    : Boolean  := True) return String
-   is
-      Seen : Natural := 0;
-      Pos  : Integer := (if From = Head then Text'First else Text'Last);
-      Inc  : constant Integer := (if From = Head then 1 else -1);
-   begin
-      loop
-         if Text (Pos) = Separator then
-            Seen := Seen + 1;
-
-            if Seen = Count then
-               if Side = Head then
-                  return Text (Text'First .. Pos - 1);
-               else
-                  return Text (Pos + 1 .. Text'Last);
-               end if;
-            end if;
-         end if;
-
-         Pos := Pos + Inc;
-
-         exit when Pos not in Text'Range;
-      end loop;
-
-      if Raises then
-         raise Constraint_Error with "Not enought separators found";
-      else
-         return Text;
-      end if;
-   end Split;
-
-   -----------
-   -- Split --
-   -----------
-
-   function Split (S         : String;
-                   Separator : Character;
-                   Trim      : Boolean := False)
-                   return String_Vector
-   is
-      function Do_Trim (S : String) return String
-      is (if Trim then Utils.Trim (S) else S);
-
-      Prev : Integer := S'First - 1;
-   begin
-      return V : String_Vector do
-         for I in S'Range loop
-            if S (I) = Separator then
-               V.Append (Do_Trim (S (Prev + 1 .. I - 1)));
-               Prev := I;
-            end if;
-         end loop;
-         V.Append (Do_Trim (S (Prev + 1 .. S'Last)));
-      end return;
-   end Split;
-
-   ----------
-   -- Tail --
-   ----------
-
-   function Tail (Str : String; Separator : Character) return String is
-   begin
-      for I in Str'Range loop
-         if Str (I) = Separator then
-            return Str (I + 1 .. Str'Last);
-         end if;
-      end loop;
-
-      return "";
-   end Tail;
-
-   ----------
-   -- Tail --
-   ----------
-
-   function Tail (V : String_Vector) return String_Vector is
-   begin
-      return Result : String_Vector := V do
-         Result.Delete_First;
-      end return;
-   end Tail;
-
-   -------------------
-   -- To_Lower_Case --
-   -------------------
-
-   function To_Lower_Case (S : String) return String is
-   begin
-      return SLC : String := S do
-         GNAT.Case_Util.To_Lower (SLC);
-      end return;
-   end To_Lower_Case;
-
-   -------------------
-   -- To_Upper_Case --
-   -------------------
-
-   function To_Upper_Case (S : String) return String is
-   begin
-      return SLC : String := S do
-         GNAT.Case_Util.To_Upper (SLC);
-      end return;
-   end To_Upper_Case;
-
-   -------------------
-   -- To_Mixed_Case --
-   -------------------
-
-   function To_Mixed_Case (S : String) return String is
-   begin
-      return SMC : String := S do
-         GNAT.Case_Util.To_Mixed (SMC);
-      end return;
-   end To_Mixed_Case;
-
-   ---------------
-   -- To_Vector --
-   ---------------
-
-   function To_Vector (S : String) return String_Vector is
-   begin
-      return V : String_Vector do
-         V.Append (S);
-      end return;
-   end To_Vector;
+      and then not AAA.Strings.Contains (Tag, "--"));
 
    --------------------
    -- Image_One_Line --
@@ -523,26 +196,5 @@ package body Alire.Utils is
          end loop;
       end return;
    end To_Native;
-
-   -----------
-   -- Write --
-   -----------
-
-   procedure Write (V         : String_Vector;
-                    Filename  : Any_Path;
-                    Separator : String := ASCII.LF & "")
-   is
-      use Ada.Streams.Stream_IO;
-      F : File_Type;
-   begin
-      Create (F, Out_File, Filename);
-
-      for Line of V loop
-         String'Write (Stream (F), Line);
-         String'Write (Stream (F), Separator);
-      end loop;
-
-      Close (F);
-   end Write;
 
 end Alire.Utils;

@@ -9,6 +9,8 @@ with Alire.Releases;
 with Alire.Utils;
 with Alire.Utils.TTY;
 
+with CLIC.Config;
+
 package Alire.Toolchains is
 
    package Name_Sets is
@@ -50,7 +52,7 @@ package Alire.Toolchains is
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
 
-   function Tool_Key (Crate : Crate_Name) return Config.Config_Key;
+   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key;
 
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone;
 
@@ -93,23 +95,23 @@ private
    -----------------------
 
    function Assistant_Enabled return Boolean
-   is (Config.Get (Config.Keys.Toolchain_Assistant, Default => True));
+   is (Config.DB.Get (Config.Keys.Toolchain_Assistant, Default => True));
 
    --------------
    -- Tool_Key --
    --------------
    --  Construct the "toolchain.use.crate" keys
-   function Tool_Key (Crate : Crate_Name) return Config.Config_Key
-   is (if Utils.Starts_With (Crate.As_String, "gnat_")
+   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key
+   is (if AAA.Strings.Has_Prefix (Crate.As_String, "gnat_")
        then Tool_Key (GNAT_Crate)
-       else Config.Config_Key
-              (String (Config.Keys.Toolchain_Use) & "." & Crate.As_String));
+       else CLIC.Config.Config_Key
+              (Config.Keys.Toolchain_Use & "." & Crate.As_String));
 
    --------------------
    -- Tool_Milestone --
    --------------------
    --  Return the milestone stored by the user for this tool
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone
-   is (Milestones.New_Milestone (Config.Get (Tool_Key (Crate), "")));
+   is (Milestones.New_Milestone (Config.DB.Get (Tool_Key (Crate), "")));
 
 end Alire.Toolchains;

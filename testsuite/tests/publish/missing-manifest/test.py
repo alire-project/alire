@@ -26,8 +26,8 @@ zip_dir("xxx", "xxx.zip")
 # A "remote" source archive. We force to allow the test to skip the remote
 # check. Curl requires an absolute path to work.
 target = os.path.join(os.getcwd(), "xxx.zip")
-p = run_alr("publish", f"file:{target}", "--force", "--skip-build",
-            complain_on_error=False)
+p = run_alr("publish", f"file:{target}", "--skip-build",
+            complain_on_error=False, force=True)
 
 # Should fail reporting the missing manifest
 assert_match(".*Remote sources are missing the 'alire.toml' manifest file.*",

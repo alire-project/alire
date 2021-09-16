@@ -40,7 +40,7 @@ def prepare_env(config_dir, env):
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
-    run_alr("toolchain", "--disable-assistant", "-c", config_dir)
+    run_alr("-c", config_dir, "toolchain", "--disable-assistant")
     #  Pass config location explicitly since env is not yet applied
 
     # If distro detection is disabled via environment, configure so in alr
@@ -74,13 +74,13 @@ def run_alr(*args, **kwargs):
         raise ValueError('Invalid argument: {}'.format(first_unknown_kwarg))
 
     argv = ['alr']
-    argv.append('-n')  # always non-interactive
+    argv.insert(1, '-n')  # always non-interactive
     if debug:
-        argv.append('-d')
+        argv.insert(1, '-d')
     if force:
-        argv.append('-f')
+        argv.insert(1, '-f')
     if quiet:
-        argv.append('-q')
+        argv.insert(1, '-q')
     argv.extend(args)
     p = Run(argv)
     if p.status != 0 and complain_on_error:

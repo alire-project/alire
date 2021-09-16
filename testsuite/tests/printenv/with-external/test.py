@@ -13,7 +13,7 @@ import platform
 
 
 # Retrieve a crate with an external dependency
-run_alr('get', 'libhello=0.9-test-unav-native', '--force')
+run_alr('get', 'libhello=0.9-test-unav-native', force=True)
 os.chdir('libhello_0.9.0_filesystem')
 
 # Run it not quietly to ensure that at normal level

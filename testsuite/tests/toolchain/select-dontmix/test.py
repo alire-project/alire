@@ -17,7 +17,7 @@ assert p.status != 0, "Expected error didn't happend"
 assert_match(".*Use --force to override compatibility checks.*", p.out)
 
 # Same thing works if forced
-run_alr("toolchain", "--select", "gnat_external", "gprbuild=8888", "-f")
+run_alr("toolchain", "--select", "gnat_external", "gprbuild=8888", force=True)
 
 # Now, not forcing the native gprbuild also succeeds by automatically selecting
 # gprbuild as external too
@@ -45,7 +45,7 @@ assert_match(".*Use --force to override compatibility checks.*", p.out)
 
 # This can be forced again, and then we can ask for a gprbuild and again the
 # proper one will be picked up automatically
-run_alr("toolchain", "--select", "gnat_external", "-f")
+run_alr("toolchain", "--select", "gnat_external", force=True)
 run_alr("toolchain", "--select", "gprbuild")
 p = run_alr("toolchain")
 assert_match(f".*gprbuild     .*{ver}.*Default.*", p.out)

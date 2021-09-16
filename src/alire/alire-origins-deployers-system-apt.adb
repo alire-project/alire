@@ -1,5 +1,6 @@
+with AAA.Strings; use AAA.Strings;
+
 with Alire.OS_Lib.Subprocess;
-with Alire.Utils;             use Alire.Utils;
 with Alire.Errors;
 
 with GNAT.Regpat;
@@ -18,7 +19,7 @@ package body Alire.Origins.Deployers.System.Apt is
       --  The following call is faster than using apt and the output does not
       --  depend on the system locale, so we can check the Status line safely.
 
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Subprocess.Checked_Spawn_And_Capture
                    ("dpkg",
                     Empty_Vector & "-s" & This.Base.Package_Name,
@@ -48,7 +49,7 @@ package body Alire.Origins.Deployers.System.Apt is
       --  The show command of apt-cache is locale independent, so we can check
       --  the Version: field safely.
 
-      Output    : constant Utils.String_Vector :=
+      Output    : constant AAA.Strings.Vector :=
                     Subprocess.Checked_Spawn_And_Capture
                       ("apt-cache",
                        Empty_Vector &

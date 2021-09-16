@@ -1,5 +1,6 @@
+with AAA.Strings; use AAA.Strings;
+
 with Alire.OS_Lib.Subprocess;
-with Alire.Utils;             use Alire.Utils;
 with Alire.Errors;
 
 with GNAT.Regpat;
@@ -16,7 +17,7 @@ package body Alire.Origins.Deployers.System.Pacman is
 
       Package_Match : constant String := "^" & Package_Name & "$";
 
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Subprocess.Checked_Spawn_And_Capture
                    ("pacman",
                     Empty_Vector &
@@ -39,7 +40,7 @@ package body Alire.Origins.Deployers.System.Pacman is
    function Already_Installed (This : Deployer) return Boolean is
       Pck    : String renames This.Base.Package_Name;
 
-      Output : constant Utils.String_Vector :=
+      Output : constant AAA.Strings.Vector :=
                  Subprocess.Checked_Spawn_And_Capture
                    ("pacman",
                     Empty_Vector &

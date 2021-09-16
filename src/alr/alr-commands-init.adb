@@ -9,8 +9,6 @@ with Alire.Paths;
 with Alire.Solutions;
 with Alire.Utils.User_Input.Query_Config;
 
-with Alr.Utils;
-
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with TOML;
@@ -29,12 +27,13 @@ package body Alr.Commands.Init is
                        Args : AAA.Strings.Vector) is
 
       package TIO renames Ada.Text_IO;
+      use AAA.Strings;
 
       For_Library : constant Boolean := not Cmd.Bin;
       Name        : constant String := Args (1);
-      Lower_Name  : constant String := Utils.To_Lower_Case (Name);
-      Upper_Name  : constant String := Utils.To_Upper_Case (Name);
-      Mixed_Name  : constant String := Utils.To_Mixed_Case (Name);
+      Lower_Name  : constant String := AAA.Strings.To_Lower_Case (Name);
+      Upper_Name  : constant String := AAA.Strings.To_Upper_Case (Name);
+      Mixed_Name  : constant String := AAA.Strings.To_Mixed_Case (Name);
 
       Directory     : constant Virtual_File :=
         (if Cmd.In_Place
@@ -55,7 +54,6 @@ package body Alr.Commands.Init is
       function Escape (S : String) return String
       --  We trick the TOML exporter to get a valid escaped string
       is
-         use Alire.Utils;
          use TOML;
          Table : constant TOML_Value := Create_Table;
       begin
@@ -286,9 +284,9 @@ package body Alr.Commands.Init is
       procedure Generate_Manifest is
          use Alire.Config;
       begin
-         if not Defined (Keys.User_Email) or else
-           not Defined (Keys.User_Name) or else
-           not Defined (Keys.User_Github_Login)
+         if not DB.Defined (Keys.User_Email) or else
+           not DB.Defined (Keys.User_Name) or else
+           not DB.Defined (Keys.User_Github_Login)
          then
             AAA.Text_IO.Put_Paragraph
               ("Alire needs some user information to initialize the crate"
@@ -404,6 +402,7 @@ package body Alr.Commands.Init is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use AAA.Strings;
    begin
       if Args.Count /= 1 then
          Reportaise_Wrong_Arguments ("No crate name given");
@@ -419,7 +418,7 @@ package body Alr.Commands.Init is
          Name  : constant String := Args (1);
          Check : constant Alire.Crate_Name := +Name with Unreferenced;
       begin
-         if Utils.To_Lower_Case (Name) = Utils.To_Lower_Case (Sed_Pattern)
+         if To_Lower_Case (Name) = To_Lower_Case (Sed_Pattern)
          then
             Reportaise_Command_Failed
               ("The crate name is invalid, as it is used internally by"

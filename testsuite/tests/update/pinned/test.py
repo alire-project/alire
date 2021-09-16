@@ -24,7 +24,7 @@ p = run_alr('update', 'libhello', complain_on_error=False)
 assert p.status != 0, "should have erred"
 
 # Check that force updating the pinned crate does not err
-run_alr('update', '--force', 'libhello')
+run_alr('update', 'libhello', force=True)
 
 # Check that the solution is still the expected one
 p = run_alr('with', '--solve')

@@ -338,8 +338,8 @@ static, i.e. they cannot depend on the context.
    executables = ["my_main"]
    ```
 
- - `actions`: optional dynamic list of actions to perform when installing this
-   package.  The general action syntax is:
+ - `actions`: optional dynamic list of actions to perform when certain events
+   take place in a workspace.  The general action syntax is:
 
    ```toml
    [[actions]]
@@ -348,20 +348,42 @@ static, i.e. they cannot depend on the context.
    ```
 
    `<command>` is an array of strings for a shell command to run in the
-   source directory. `<kind>` can be either:
+   source directory. 
 
-   - `post-fetch`: the command is to be run right after getting the package
-      sources. This action is run for all releases in a workspace.
+   For events that cause a workspace-wide triggering of actions (all
+   `pre_/post_` actions described next), the actions are invoked in a
+   dependency-safe order, starting at the leaves of the dependency graph
+   (releases with no dependencies) and moving up to the root release (the working
+   release, or the release being obtained with `alr get`). In this context, the
+   root release is considered part of the dependency solution, and so its
+   actions are executed too, always in the last place.
+   
+   `<kind>` can be either:
 
-   - `pre-build`: the command is to be run right before GPRbuild is run. This
-      kind of action is run only for the root crate in a workspace.
+   - `post-fetch`: the command is to be run whenever there are new sources
+     deployed in the workspace, in any release in the solution. All releases
+     `post-fetch` actions are run after the new deployment is complete. Initial
+     retrieval, subsequent modification of dependencies, pinning a
+     directory or repository is considered a deployment of new sources. A manual
+     `alr update`, even if it results in no changes, will also trigger this
+     action in every release in the solution.
 
-   - `post-build`: the command is to be run right after GPRbuild has been
-      run. This kind of action is run only for the root crate in a workspace.
+   - `pre-build`: the command is to be run right before the build of the
+     workspace starts. This kind of action is run for all releases in the
+     solution.
+
+   - `post-build`: the command is to be run right after a build has
+     successfully completed. This kind of action is run for all releases in the
+     solution.
 
    - `test`: the command is run on demand for crate testing within the Alire
-      ecosystem (using `alr test`). This kind of action is fun only for the
-      root crate being tested.
+      ecosystem (using `alr test`). This kind of action is run only for the
+      root crate being tested, after its build succeeds, and after any
+      `post-build` actions.
+
+   Since actions may end being run more than once they should take this into
+   account and allow multiple runs with the expected results intended by the
+   packager.
 
    Actions accept dynamic expressions. For example:
 

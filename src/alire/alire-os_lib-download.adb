@@ -1,5 +1,7 @@
 with Ada.Directories;
 
+with AAA.Strings; use AAA.Strings;
+
 with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Utils;             use Alire.Utils;

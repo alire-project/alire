@@ -36,6 +36,11 @@ package Alr.Commands is
    --  This type encapsulates configuration and execution of a specific
    --  command.
 
+   overriding
+   function Switches_As_Args (This : Command) return Boolean
+   is (False);
+   --  Default for alr commands is to parse the switches
+
    -----------------------------------------
    -- Supporting subprograms for commands --
    -----------------------------------------

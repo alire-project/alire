@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.Paths;
 with Alire.Releases;
 with Alire.TOML_Keys;
@@ -20,10 +22,10 @@ package body Alire.Manifest is
       Utils.Text_Files.Append_Lines
         (File       => Name,
          Lines      =>
-           Utils.Empty_Vector
-         .Append ("[[" & TOML_Keys.Depends_On & "]]" & Warning)
-         .Append (Dep.Manifest_Image & Warning),
-         Backup     => False);
+           AAA.Strings.Empty_Vector
+             .Append ("[[" & TOML_Keys.Depends_On & "]]" & Warning)
+             .Append (Dep.Manifest_Image & Warning),
+           Backup     => False);
       --  No need to backup, as this is done already on a copy of the manifest
 
    end Append;
@@ -40,9 +42,9 @@ package body Alire.Manifest is
       Utils.Text_Files.Append_Lines
         (File       => File,
          Lines      =>
-           Utils.Empty_Vector
-                .Append ("[[" & TOML_Keys.Pins & "]]" & Warning)
-                .Append (Pin.To_Manifest_Line (Crate) & " " & Warning),
+           AAA.Strings.Empty_Vector
+             .Append ("[[" & TOML_Keys.Pins & "]]" & Warning)
+             .Append (Pin.To_Manifest_Line (Crate) & " " & Warning),
          Backup     => False);
       --  No need to backup as this is done on a copy of the manifest already
    end Append;

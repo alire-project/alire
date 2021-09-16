@@ -1,9 +1,9 @@
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
-with Alire.Utils;
-
 package body Alire.Errors is
+
+   use AAA.Strings;
 
    --  Internally, an error is stored with a unique id, which is an integer.
    --  The exception message gets replaced with this integer. As long as the
@@ -14,7 +14,7 @@ package body Alire.Errors is
      (Positive, String);
 
    function To_Int (Id : Unique_Id) return Integer is
-     (Integer'Value (Utils.Tail (String (Id), ':')));
+     (Integer'Value (AAA.Strings.Tail (String (Id), ':')));
 
    -----------
    -- Store --
@@ -76,7 +76,7 @@ package body Alire.Errors is
       --  When we store an error, we do so with the current error stack
       Store.Set (Stack (Text), Id);
 
-      return Id_Marker & Utils.Trim (Id'Img);
+      return Id_Marker & Trim (Id'Img);
    end Set;
 
    ---------
@@ -122,8 +122,7 @@ package body Alire.Errors is
    ------------------
 
    procedure Pretty_Print (Error : String) is
-      use Utils;
-      Lines : constant String_Vector := Split (Error, ASCII.LF);
+      Lines : constant AAA.Strings.Vector := Split (Error, ASCII.LF);
    begin
       for I in Lines.First_Index .. Lines.Last_Index loop
          declare

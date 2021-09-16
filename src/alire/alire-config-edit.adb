@@ -1,178 +1,70 @@
 with Ada.Text_IO;
-with Ada.Directories;
 
 with Alire.Environment;
 with Alire.Platform;
+with Alire.Utils;
 
-with GNAT.Regexp;
-
-with TOML.File_IO;
+with CLIC.Config.Edit;
+with CLIC.Config.Load;
 
 package body Alire.Config.Edit is
 
    use Ada.Strings.Unbounded;
+   use AAA.Strings;
    use TOML;
 
    type String_Access is access String;
    Config_Path : String_Access;
 
-   procedure Write_Config_File (Table : TOML_Value; Path : Absolute_Path)
-     with Pre => Table.Kind = TOML_Table;
-
-   procedure Remove_From_Table (Table : TOML_Value; Key : Config_Key)
-     with Pre => Table.Kind = TOML_Table;
-
-   procedure Add_In_Table (Table : TOML_Value;
-                           Key   : Config_Key;
-                           Val   : TOML_Value)
-     with Pre => Table.Kind = TOML_Table;
-
-   -----------------------
-   -- Write_Config_File --
-   -----------------------
-
-   procedure Write_Config_File (Table : TOML_Value; Path : Absolute_Path) is
-      use Ada.Text_IO;
-      use Ada.Directories;
-      File : File_Type;
-   begin
-
-      --  Create the directory for the config file, in case it doesn't exists
-      Create_Path (Containing_Directory (Path));
-
-      Create (File, Out_File, Path);
-      Trace.Debug ("Write config: '" & TOML.Dump_As_String (Table) & "'");
-      Put (File, TOML.Dump_As_String (Table));
-      Close (File);
-   end Write_Config_File;
-
-   -----------------------
-   -- Remove_From_Table --
-   -----------------------
-
-   procedure Remove_From_Table (Table : TOML_Value; Key : Config_Key) is
-      Id   : constant String := Utils.Split (Key, '.', Raises => False);
-      Leaf : constant Boolean := Id = Key;
-   begin
-      if not Table.Has (Id) then
-         --  The key doesn't exist
-         return;
-      end if;
-
-      if Leaf then
-         Table.Unset (Id);
-      else
-         declare
-            Sub : constant TOML_Value := Table.Get (Id);
-         begin
-            if Sub.Kind = TOML_Table then
-               Remove_From_Table (Sub, Utils.Split (Key, '.', Utils.Tail));
-            else
-               raise Program_Error;
-            end if;
-         end;
-      end if;
-   end Remove_From_Table;
-
-   ------------------
-   -- Add_In_Table --
-   ------------------
-
-   procedure Add_In_Table (Table : TOML_Value;
-                           Key   : Config_Key;
-                           Val   : TOML_Value)
-   is
-      Id   : constant String := Utils.Split (Key, '.', Raises => False);
-      Leaf : constant Boolean := Id = Key;
-   begin
-      if Leaf then
-         Table.Set (Id, Val);
-         return;
-      end if;
-
-      if not Table.Has (Id) then
-         --  The subkey doesn't exist, create a table for it
-         Table.Set (Id, Create_Table);
-      end if;
-
-      declare
-         Sub : constant TOML_Value := Table.Get (Id);
-      begin
-         if Sub.Kind = TOML_Table then
-            Add_In_Table (Sub, Utils.Split (Key, '.', Utils.Tail), Val);
-         else
-            Raise_Checked_Error ("Configuration key already defined");
-         end if;
-      end;
-   end Add_In_Table;
-
-   -----------
-   -- Unset --
-   -----------
-
-   procedure Unset (Path : Absolute_Path; Key : Config_Key) is
-      Table : constant TOML_Value := Load_Config_File (Path);
-   begin
-
-      if Table.Is_Null then
-         --  The configuration file doesn't exist or is not valid
-         return;
-      end if;
-
-      Remove_From_Table (Table, Key);
-      Write_Config_File (Table, Path);
-   end Unset;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set (Path : Absolute_Path; Key : Config_Key; Value : String) is
-      Table : TOML_Value := Load_Config_File (Path);
-
-      To_Add : constant TOML_Value := To_TOML_Value (Value);
-   begin
-      if To_Add.Is_Null then
-         Raise_Checked_Error ("Invalid configuration value: '" & Value & "'");
-      end if;
-
-      if not Valid_Builtin (Key, To_Add) then
-         Raise_Checked_Error ("Invalid value '" & Value &
-                                "' for builtin configuration. " &
-                                Image (Kind_Of_Builtin (Key)) &
-                                " expected.");
-      end if;
-
-      if Table.Is_Null then
-         --  The configuration file doesn't exist or is not valid. Create an
-         --  empty table.
-         Table := TOML.Create_Table;
-      end if;
-
-      Add_In_Table (Table, Key, To_Add);
-
-      Write_Config_File (Table, Path);
-
-      Load_Config; -- Reload with the new set value
-   end Set;
-
    -----------------
    -- Set_Locally --
    -----------------
 
-   procedure Set_Locally (Key : Config_Key; Value : String) is
+   procedure Set_Locally (Key   : CLIC.Config.Config_Key;
+                          Value : String;
+                          Check : CLIC.Config.Check_Import := null)
+   is
    begin
-      Set (Filepath (Local), Key, Value);
+      if not CLIC.Config.Edit.Set (Filepath (Local), Key, Value, Check) then
+         Raise_Checked_Error ("Cannot set local config key");
+      end if;
+
+      --  Reload after change
+      Load_Config;
    end Set_Locally;
 
    ------------------
    -- Set_Globally --
    ------------------
 
-   procedure Set_Globally (Key : Config_Key; Value : String) is
+   procedure Set_Globally (Key   : CLIC.Config.Config_Key;
+                          Value : String;
+                           Check : CLIC.Config.Check_Import := null)
+   is
    begin
-      Set (Filepath (Global), Key, Value);
+      if not CLIC.Config.Edit.Set (Filepath (Global), Key, Value, Check) then
+         Raise_Checked_Error ("Cannot set global config key");
+      end if;
+
+      --  Reload after change
+      Load_Config;
    end Set_Globally;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set (Level : Config.Level;
+                  Key   : CLIC.Config.Config_Key;
+                  Value : String;
+                  Check : CLIC.Config.Check_Import := null)
+   is
+   begin
+      case Level is
+         when Local  => Set_Locally (Key, Value, Check);
+         when Global => Set_Globally (Key, Value, Check);
+      end case;
+   end Set;
 
    --------------
    -- Filepath --
@@ -200,87 +92,20 @@ package body Alire.Config.Edit is
       end case;
    end Filepath;
 
-   ------------
-   -- Import --
-   ------------
-
-   procedure Import (Table  : TOML_Value;
-                     Lvl    : Level;
-                     Source : String;
-                     Prefix : String := "")
-   is
-   begin
-      for Ent of Iterate_On_Table (Table) loop
-         declare
-            Key : constant String :=
-              (if Prefix = "" then "" else Prefix & ".") &
-              To_String (Ent.Key);
-
-         begin
-            if not Is_Valid_Config_Key (Key) then
-               Trace.Error ("Invalid configuration key '" & Key & "' in " &
-                           "'" & Source & "'");
-            elsif Ent.Value.Kind = TOML_Table then
-
-               --  Recursive call on the table
-               Import (Ent.Value, Lvl, Source, Key);
-            else
-
-               Trace.Debug ("Load config key: '" & Key & "' = '" &
-                              Ent.Value.Kind'Img & "'");
-
-               if Ent.Value.Kind  not in  TOML_String | TOML_Float |
-                                          TOML_Integer | TOML_Boolean
-               then
-                  Trace.Error ("Invalid type '" & Ent.Value.Kind'Img &
-                                 "' for key '" & Key &
-                                 "' in configuration file '" &
-                                 Source & "'");
-                  Trace.Error ("'" & Key & "' is ignored");
-               elsif not Valid_Builtin (Key, Ent.Value) then
-                  Trace.Error ("Invalid value for builtin key '" & Key &
-                                 "' in configuration file '" &
-                                 Source & "'");
-                  Trace.Error ("'" & Key & "' is ignored");
-               else
-                  --  Insert the config value, potentially replacing a previous
-                  --  definition.
-                  Config_Map.Include (To_Unbounded_String (Key),
-                                      (Source => To_Unbounded_String (Source),
-                                       Value  => Ent.Value,
-                                       Lvl    => Lvl));
-               end if;
-            end if;
-         end;
-      end loop;
-   end Import;
-
-   -----------
-   -- Image --
-   -----------
-
-   function Image (Kind : Builtin_Kind) return String
-   is (case Kind is
-          when Cfg_Int           => "Integer",
-          when Cfg_Float         => "Float",
-          when Cfg_Bool          => "Boolean",
-          when Cfg_String        => "String",
-          when Cfg_Absolute_Path => "Absolute path",
-          when Cfg_Email         => "Email address",
-          when Cfg_GitHub_Login  => "GitHub login");
-
    ----------------
    -- Is_Builtin --
    ----------------
 
-   function Is_Builtin (Key : Config_Key) return Boolean
+   function Is_Builtin (Key : CLIC.Config.Config_Key) return Boolean
    is (for some Cfg of Builtins => To_String (Cfg.Key) = Key);
 
    ---------------------
    -- Kind_Of_Builtin --
    ---------------------
 
-   function Kind_Of_Builtin (Key : Config_Key) return Builtin_Kind is
+   function Kind_Of_Builtin (Key : CLIC.Config.Config_Key)
+                             return Builtin_Kind
+   is
    begin
       for Ent of Builtins loop
          if To_String (Ent.Key) = Key then
@@ -291,103 +116,32 @@ package body Alire.Config.Edit is
       Raise_Checked_Error ("Kind is only valid for builtin config key");
    end Kind_Of_Builtin;
 
-   ----------
-   -- List --
-   ----------
-
-   function List (Filter      : String := ".*";
-                  Show_Origin : Boolean := False)
-                  return String
-   is
-      use GNAT.Regexp;
-
-      Re     : constant Regexp := Compile (Filter, Glob => True);
-
-      Result : Unbounded_String;
-   begin
-      for C in Config_Map.Iterate loop
-         declare
-            Val : constant Config_Value := Config_Map (C);
-            Key : constant String := To_String (Config_Maps.Key (C));
-         begin
-            if Match (Key, Re) then
-               if Show_Origin then
-                  Append (Result, Val.Source & " (" & Val.Lvl'Img & "): ");
-               end if;
-
-               Append (Result, Key & "=");
-               Append (Result, Image (Val.Value));
-               Append (Result, ASCII.LF);
-            end if;
-         end;
-      end loop;
-      return To_String (Result);
-   end List;
-
    -----------------
    -- Load_Config --
    -----------------
 
    procedure Load_Config is
    begin
-      Config_Map.Clear;
+      DB.Clear;
 
       for Lvl in Level loop
-
          if Lvl /= Local or else Directories.Detect_Root_Path /= "" then
-            declare
-               Config : constant TOML_Value :=
-                 Load_Config_File (Filepath (Lvl));
-            begin
-               if not Config.Is_Null then
-                  Import (Config, Lvl, Source => Filepath (Lvl));
-               end if;
-            end;
+            CLIC.Config.Load.From_TOML (C      => DB,
+                                        Origin => Lvl'Img,
+                                        Path   => Filepath (Lvl),
+                                        Check  => Valid_Builtin'Access);
          end if;
       end loop;
 
       --  Set variables elsewhere
 
       Platform.Disable_Distribution_Detection :=
-        Get (Keys.Distribution_Disable_Detection, False);
+        DB.Get (Keys.Distribution_Disable_Detection, False);
       if Platform.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
 
    end Load_Config;
-
-   ----------------------
-   -- Load_Config_File --
-   ----------------------
-
-   function Load_Config_File (Path : Absolute_Path) return TOML_Value is
-   begin
-
-      if GNAT.OS_Lib.Is_Read_Accessible_File (Path) then
-         declare
-            Config : constant TOML.Read_Result :=
-              TOML.File_IO.Load_File (Path);
-         begin
-            if Config.Success then
-               if Config.Value.Kind /= TOML.TOML_Table then
-                  Trace.Error ("Bad config file '" & Path &
-                                 "': TOML table expected.");
-               else
-                  return Config.Value;
-               end if;
-            else
-               Trace.Detail ("error while loading '" & Path & "':");
-               Trace.Detail
-                 (Ada.Strings.Unbounded.To_String (Config.Message));
-            end if;
-         end;
-      else
-         Trace.Detail ("Config file is not readable or doesn't exist: '" &
-                         Path & "'");
-      end if;
-
-      return No_TOML_Value;
-   end Load_Config_File;
 
    ----------
    -- Path --
@@ -420,45 +174,68 @@ package body Alire.Config.Edit is
    -- Valid_Builtin --
    -------------------
 
-   function Valid_Builtin (Key : Config_Key; Value : TOML_Value)
+   function Valid_Builtin (Key : CLIC.Config.Config_Key;
+                           Value : TOML_Value)
                            return Boolean
    is
+      Result : Boolean := True;
    begin
       for Ent of Builtins loop
          if To_String (Ent.Key) = Key then
             case Ent.Kind is
             when Cfg_Int =>
-               return Value.Kind = TOML_Integer;
+               Result := Value.Kind = TOML_Integer;
             when Cfg_Float =>
-               return Value.Kind = TOML_Float;
+               Result := Value.Kind = TOML_Float;
             when Cfg_Bool =>
-               return Value.Kind = TOML_Boolean;
+               Result := Value.Kind = TOML_Boolean;
             when Cfg_String =>
-               return Value.Kind = TOML_String;
+               Result := Value.Kind = TOML_String;
             when Cfg_Absolute_Path =>
-               return Value.Kind = TOML_String
+               Result := Value.Kind = TOML_String
                  and then Check_Absolute_Path (Value.As_String);
             when Cfg_Email =>
-               return Value.Kind = TOML_String
-                 and then Utils.Could_Be_An_Email (Value.As_String,
-                                                   With_Name => False);
+               Result := Value.Kind = TOML_String
+                 and then Alire.Utils.Could_Be_An_Email (Value.As_String,
+                                                         With_Name => False);
             when Cfg_GitHub_Login =>
-               return Value.Kind = TOML_String
+               Result := Value.Kind = TOML_String
                  and then Utils.Is_Valid_GitHub_Username (Value.As_String);
             end case;
+
+            exit;
          end if;
       end loop;
 
-      --  Not a builtin
-      return True;
+      if not Result then
+         Trace.Error ("Invalid value '" & CLIC.Config.Image (Value)  &
+                        "' for builtin configuration '" & Key & "'. " &
+                        Image (Kind_Of_Builtin (Key)) &
+                        " expected.");
+      end if;
+
+      return Result;
    end Valid_Builtin;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Kind : Builtin_Kind) return String
+   is (case Kind is
+          when Cfg_Int           => "Integer",
+          when Cfg_Float         => "Float",
+          when Cfg_Bool          => "Boolean",
+          when Cfg_String        => "String",
+          when Cfg_Absolute_Path => "Absolute path",
+          when Cfg_Email         => "Email address",
+          when Cfg_GitHub_Login  => "GitHub login");
 
    -------------------
    -- Builtins_Info --
    -------------------
 
    function Builtins_Info return AAA.Strings.Vector is
-      use AAA.Strings;
       Results : AAA.Strings.Vector;
    begin
       for Ent of Builtins loop

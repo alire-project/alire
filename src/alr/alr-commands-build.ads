@@ -9,6 +9,11 @@ package Alr.Commands.Build is
    is ("build");
 
    overriding
+   function Switches_As_Args (This : Command) return Boolean
+   is (True);
+   --  For the build command we want all the args to pass them to gprbuild
+
+   overriding
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector);
 
@@ -35,6 +40,6 @@ package Alr.Commands.Build is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("");
+   is ("[gprbuild switches and arguments]");
 
 end Alr.Commands.Build;

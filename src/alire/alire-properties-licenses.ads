@@ -8,6 +8,7 @@ with TOML;
 
 private with Ada.Containers.Indefinite_Holders;
 private with SPDX;
+with AAA.Strings; use AAA.Strings;
 
 package Alire.Properties.Licenses is
 
@@ -65,7 +66,7 @@ private
    overriding
    function To_YAML (L : License) return String is
      (Alire.Utils.YAML.YAML_Stringify
-        (Utils.Replace (L.Image, "License: ", "")));
+        (Replace (L.Image, "License: ", "")));
    --  Remove the prefix "License: " which is not machine-intended.
 
 end Alire.Properties.Licenses;

@@ -55,7 +55,7 @@ package body Alire.Dependencies is
       EVS         : constant SV.Extended.Version_Set :=
                       SV.Extended.Value (Version_Str);
    begin
-      return New_Dependency (+Utils.To_Lower_Case (Key), EVS);
+      return New_Dependency (+AAA.Strings.To_Lower_Case (Key), EVS);
       --  TODO: if no operator appears the version, this results in strict
       --  match. Rust, for example, assumes caret (^) in this case. Do we want
       --  to do the same?

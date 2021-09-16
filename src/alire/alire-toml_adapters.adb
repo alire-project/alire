@@ -135,6 +135,30 @@ package body Alire.TOML_Adapters is
                      Context : String) return Key_Queue is
      (From (Value, Context));
 
+   ------------------
+   -- Merge_Tables --
+   ------------------
+
+   function Merge_Tables (L, R : TOML.TOML_Value) return TOML.TOML_Value
+   is
+      use TOML;
+      function Merge_Internal (Key  : Unbounded_UTF8_String;
+                      L, R : TOML_Value)
+                      return TOML_Value
+      is
+         pragma Unreferenced (Key);
+      begin
+         if L.Kind = TOML_Table and then R.Kind = L.Kind then
+            return TOML.Merge (L, R, Merge_Internal'Access);
+         else
+            Raise_Checked_Error
+              ("Ill-shaped TOML information cannot be merged");
+         end if;
+      end Merge_Internal;
+   begin
+      return TOML.Merge (L, R, Merge_Entries => Merge_Internal'Access);
+   end Merge_Tables;
+
    ---------
    -- Pop --
    ---------
@@ -219,7 +243,7 @@ package body Alire.TOML_Adapters is
       end if;
 
       for Pair of Queue.Value.Iterate_On_Table loop
-         if Utils.Starts_With (+Pair.Key, Prefix) then
+         if AAA.Strings.Has_Prefix (+Pair.Key, Prefix) then
             return Key : constant String := +Pair.Key do
                Value := Pair.Value;
                Queue.Value.Unset (Pair.Key);
@@ -354,7 +378,7 @@ package body Alire.TOML_Adapters is
    -- "+" --
    ---------
 
-   function "+" (Vect : Utils.String_Vector) return TOML.TOML_Value is
+   function "+" (Vect : AAA.Strings.Vector) return TOML.TOML_Value is
       Result : constant TOML.TOML_Value := TOML.Create_Array;
    begin
       for Str of Vect loop
@@ -374,7 +398,7 @@ package body Alire.TOML_Adapters is
          return V;
       else
          declare
-            Arr : constant TOML_Value := Create_Array (V.Kind);
+            Arr : constant TOML_Value := Create_Array;
          begin
             Arr.Append (V);
             return Arr;
@@ -399,10 +423,9 @@ package body Alire.TOML_Adapters is
    -- To_Vector --
    ---------------
 
-   function To_Vector (Val : TOML.TOML_Value) return Utils.String_Vector is
-      use Alire.Utils;
+   function To_Vector (Val : TOML.TOML_Value) return AAA.Strings.Vector is
 
-      Result : String_Vector := Empty_Vector;
+      Result : Vector := Empty_Vector;
    begin
       for I in 1 .. Val.Length loop
          Result.Append (Val.Item (I).As_String);

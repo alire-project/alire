@@ -4,11 +4,11 @@ with Alire.Index.Search;
 with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
+with Alire.Utils;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 
 with Alr.Platform;
-with Alr.Utils;
 
 with Semantic_Versioning;
 
@@ -43,9 +43,9 @@ package body Alr.Commands.Search is
              or else
              R.Property_Contains (Cmd.Prop.all)
              or else
-             Utils.Contains (R.Notes, Cmd.Prop.all)
+             AAA.Strings.Contains (R.Notes, Cmd.Prop.all)
              or else
-             Utils.Contains (R.Description,
+             AAA.Strings.Contains (R.Description,
                              Cmd.Prop.all))
            and then
              (Cmd.External or else not R.Origin.Is_System)
@@ -229,7 +229,7 @@ package body Alr.Commands.Search is
          if Cmd.List then
             Trace.Detail ("Searching...");
          else
-            Trace.Detail ("Searching " & Utils.Quote (Args (1)) & "...");
+            Trace.Detail ("Searching " & Alire.Utils.Quote (Args (1)) & "...");
          end if;
 
          while Has_Element (I) loop
@@ -248,7 +248,7 @@ package body Alr.Commands.Search is
                else
 
                   --  Search into release names
-                  if Utils.Contains (+Crate.Name, Pattern) then
+                  if AAA.Strings.Contains (+Crate.Name, Pattern) then
                      List_Crate (Crate);
                   end if;
 

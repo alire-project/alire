@@ -1,5 +1,7 @@
 with Ada.Directories;
 
+with AAA.Strings; use AAA.Strings;
+
 with Alire.Errors;
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
@@ -29,7 +31,7 @@ package body Alire.Origins.Deployers.Source_Archive is
 
       use type GNATCOLL.OS.OS_Type;
 
-      Unused : String_Vector;
+      Unused : AAA.Strings.Vector;
    begin
 
       --  Make sure tar is installed

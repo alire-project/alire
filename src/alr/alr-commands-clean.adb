@@ -2,18 +2,13 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Directories;
-with Alire.Paths;
-with Alire.Utils;
 with Alire.GPR;
+with Alire.Paths;
+with Alire.Spawn;
 
-with Alr.Spawn;
 with Alr.Platform;
 
 package body Alr.Commands.Clean is
-
-   Scenario : Alire.GPR.Scenario;
-   --  This will be filled in during parsing of command line with any seen "-X"
-   --  parameters.
 
    -----------------------
    -- Delete_Temp_Files --
@@ -124,7 +119,7 @@ package body Alr.Commands.Clean is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use Alire.Utils;
+      use AAA.Strings;
    begin
 
       if Args.Count /= 0 then
@@ -142,12 +137,12 @@ package body Alr.Commands.Clean is
            (Platform.Properties, With_Path => True)
          loop
 
-            Spawn.Command ("gprclean",
-                           Empty_Vector &
-                             "-r" &
-                             "-P" & Gpr_File &
-                             Scenario.As_Command_Line,
-                           Understands_Verbose => True);
+            Alire.Spawn.Command ("gprclean",
+                                 Empty_Vector &
+                                   "-r" &
+                                   "-P" & Gpr_File &
+                                   Scenario.As_Command_Line,
+                                 Understands_Verbose => True);
          end loop;
 
          return;

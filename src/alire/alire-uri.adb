@@ -15,13 +15,13 @@ package body Alire.URI is
             External
          elsif Img = "file" then
             File
-         elsif Utils.Starts_With (Img, "git+") then
+         elsif AAA.Strings.Has_Prefix (Img, "git+") then
               Git
-         elsif Utils.Starts_With (Img, "git@") then
+         elsif AAA.Strings.Has_Prefix (Img, "git@") then
               Pure_Git
-         elsif Utils.Starts_With (Img, "hg+") then
+         elsif AAA.Strings.Has_Prefix (Img, "hg+") then
               Hg
-         elsif Utils.Starts_With (Img, "svn+") then
+         elsif AAA.Strings.Has_Prefix (Img, "svn+") then
               SVN
          elsif Img = "http" then
             HTTP

@@ -1,7 +1,8 @@
-with Alire.Utils;
 with Alire.VCSs.Git;
 
 package body Alire.VCSs is
+
+   use AAA.Strings;
 
    -----------
    -- Clone --
@@ -25,8 +26,8 @@ package body Alire.VCSs is
    ------------
 
    function Commit (Origin : URL) return String is
-     (if Utils.Contains (Origin, "#")
-      then Utils.Tail (Origin, '#')
+     (if Contains (Origin, "#")
+      then Tail (Origin, '#')
       else "");
 
    ----------
@@ -34,7 +35,7 @@ package body Alire.VCSs is
    ----------
 
    function Kind (Origin : URL) return Kinds is
-     (if Utils.Starts_With (Origin, "git+") then VCS_Git
+     (if Has_Prefix (Origin, "git+") then VCS_Git
       else VCS_Unknown);
 
    ----------
@@ -42,16 +43,16 @@ package body Alire.VCSs is
    ----------
 
    function Repo (Origin : URL) return String is
-     (Utils.Head (Repo_And_Commit (Origin), '#'));
+     (Head (Repo_And_Commit (Origin), '#'));
 
    ---------------------
    -- Repo_And_Commit --
    ---------------------
 
    function Repo_And_Commit (Origin : URL) return String
-   is (if Utils.Contains (Origin, "+http")
-       then Utils.Tail (Origin, '+')
-       elsif Utils.Starts_With (Origin, "file://")
+   is (if Contains (Origin, "+http")
+       then Tail (Origin, '+')
+       elsif Has_Prefix (Origin, "file://")
        then Origin (Origin'First + 7 .. Origin'Last)
        else Origin);
 

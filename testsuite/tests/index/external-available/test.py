@@ -28,7 +28,7 @@ assert_match(".*Executable make --version .* False.*",
 # 3rd test: crate is not detected because it is unavailable. It would be
 # detectable otherwise (make is installed in all test images)
 
-p = run_alr('show', '--no-tty', 'crate', '--external-detect', quiet=False)
+p = run_alr('--no-tty', 'show', 'crate', '--external-detect', quiet=False)
 
 assert_match("Not found: crate\*.*",
              p.out, flags=re.S)

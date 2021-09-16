@@ -116,7 +116,8 @@ package body Alire.Shared is
          --  that does not cause problems, we make an exception for it.
 
          use Containers.Crate_Name_Sets;
-         Allowed_Dependencies : constant Set := To_Set (To_Name ("make"));
+         Allowed_Dependencies : constant Containers.Crate_Name_Sets.Set :=
+           To_Set (To_Name ("make"));
 
       begin
          if Release.Dependencies.Is_Empty or else

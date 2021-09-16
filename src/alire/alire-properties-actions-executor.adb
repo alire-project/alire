@@ -14,12 +14,11 @@ package body Alire.Properties.Actions.Executor is
       Capture    : Boolean;
       Err_To_Out : Boolean;
       Code       : out Integer;
-      Output     : out Utils.String_Vector;
-      Prefix     : Utils.String_Vector := Utils.Empty_Vector)
+      Output     : out AAA.Strings.Vector;
+      Prefix     : AAA.Strings.Vector := AAA.Strings.Empty_Vector)
    is
       use Directories;
       use OS_Lib;
-      use Utils;
 
       Guard : Directories.Guard (Enter (This.Working_Folder))
         with Unreferenced;
@@ -27,7 +26,7 @@ package body Alire.Properties.Actions.Executor is
       --  true for post-build root crate actions, post-fetch deployments,
       --  test runs...
 
-      Cmd   : constant String_Vector := Prefix & This.Command_Line;
+      Cmd   : constant AAA.Strings.Vector := Prefix.Append (This.Command_Line);
 
    begin
       if Capture then
@@ -54,7 +53,7 @@ package body Alire.Properties.Actions.Executor is
                               Moment  : Moments)
    is
       Unused_Code   : Integer;
-      Unused_Output : Utils.String_Vector;
+      Unused_Output : AAA.Strings.Vector;
    begin
       Execute_Actions
         (Release    => Release,
@@ -77,8 +76,8 @@ package body Alire.Properties.Actions.Executor is
       Capture    : Boolean;
       Err_To_Out : Boolean;
       Code       : out Integer;
-      Output     : out Utils.String_Vector;
-      Prefix     : Utils.String_Vector := Utils.Empty_Vector)
+      Output     : out AAA.Strings.Vector;
+      Prefix     : AAA.Strings.Vector := AAA.Strings.Empty_Vector)
    is
       Now : Releases.Moment_Array := (others => False);
    begin
@@ -86,7 +85,7 @@ package body Alire.Properties.Actions.Executor is
 
       if not Release.On_Platform_Actions (Env, Now).Is_Empty then
          Put_Info ("Running " &
-                     Utils.TTY.Name (Utils.To_Lower_Case (Moment'Image))
+                     Utils.TTY.Name (AAA.Strings.To_Lower_Case (Moment'Image))
                    & " actions for " & Release.Milestone.TTY_Image & "...");
       end if;
 

@@ -64,7 +64,8 @@ package body Alr.Commands.Version is
                  then "OK"
                  else "ERROR: " & Index_Outcome.Message).New_Row;
       for Index of Indexes loop
-         Table.Append ("index #" & Utils.Trim (Index.Priority'Image) & ":")
+         Table.Append ("index #"
+                       & AAA.Strings.Trim (Index.Priority'Image) & ":")
            .Append ("(" & Index.Name & ") " & Index.Origin).New_Row;
       end loop;
       Table.Append ("toolchain assistant:")
@@ -76,7 +77,7 @@ package body Alr.Commands.Version is
       begin
          for Tool of Alire.Toolchains.Tools loop
             Table
-              .Append ("tool #" & Utils.Trim (I'Image)
+              .Append ("tool #" & AAA.Strings.Trim (I'Image)
                        & " " & Tool.As_String & ":")
               .Append (if Alire.Toolchains.Tool_Is_Configured (Tool)
                        then Alire.Toolchains.Tool_Milestone (Tool).Image

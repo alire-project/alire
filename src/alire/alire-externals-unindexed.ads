@@ -17,7 +17,7 @@ package Alire.Externals.Unindexed is
    overriding
    function Detail (This          : External;
                     Unused_Distro : Platforms.Distributions)
-                    return Utils.String_Vector;
+                    return AAA.Strings.Vector;
    --  Return all custom hints or else a default message
 
    overriding

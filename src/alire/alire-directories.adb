@@ -31,12 +31,12 @@ package body Alire.Directories is
       procedure Del (Path : Absolute_Path);
       --  Remove a path to a temporary
 
-      function Get return Utils.String_Set;
+      function Get return AAA.Strings.Set;
       --  Retrieve all current temporaries
 
    private
 
-      Registry : Utils.String_Set;
+      Registry : AAA.Strings.Set;
 
    end Temp_Registry;
 
@@ -64,7 +64,7 @@ package body Alire.Directories is
       -- Get --
       ---------
 
-      function Get return Utils.String_Set is (Registry);
+      function Get return AAA.Strings.Set is (Registry);
 
    end Temp_Registry;
 
@@ -145,7 +145,7 @@ package body Alire.Directories is
    ------------------------
 
    procedure Delete_Temporaries is
-      Paths : constant Utils.String_Set := Temp_Registry.Get;
+      Paths : constant AAA.Strings.Set := Temp_Registry.Get;
    begin
       if Paths.Is_Empty then
          Trace.Debug ("No temporaries to remove");
@@ -228,7 +228,7 @@ package body Alire.Directories is
          Trace.Debug ("Forcing writability of dir " & Path);
          OS_Lib.Subprocess.Checked_Spawn
            ("attrib",
-            Utils.Empty_Vector
+            AAA.Strings.Empty_Vector
             .Append ("-R") -- Remove read-only
             .Append ("/D") -- On dirs
             .Append ("/S") -- Recursively
@@ -274,9 +274,9 @@ package body Alire.Directories is
    function Find_Files_Under (Folder    : String;
                               Name      : String;
                               Max_Depth : Natural := Natural'Last)
-                              return Utils.String_Vector
+                              return AAA.Strings.Vector
    is
-      Found : Utils.String_Vector;
+      Found : AAA.Strings.Vector;
 
       procedure Locate (Folder        : String;
                         Current_Depth : Natural;

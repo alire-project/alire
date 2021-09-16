@@ -8,7 +8,6 @@ with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platform;
 with Alire.Platforms;
-with Alire.Properties.Actions.Executor;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
@@ -162,24 +161,17 @@ package body Alr.Commands.Get is
             return;
          end if;
 
-         --  Check out rest of dependencies and optionally compile
+         --  Check out rest of dependencies and optionally compile. This will
+         --  execute also all post-fetch actions, root itself included.
 
          Cmd.Root.Deploy_Dependencies;
 
-         --  Execute the checked out release post_fetch actions, now that
-         --  dependencies are in place. The complete build environment has
-         --  been set up already by Deploy_Dependencies.
-
-         Alire.Properties.Actions.Executor.Execute_Actions
-           (Release => Rel,
-            Env     => Platform.Properties,
-            Moment  => Alire.Properties.Actions.Post_Fetch);
-
          if Cmd.Build then
+            --  The complete build environment has been set up already by
+            --  Deploy_Dependencies, so we must not do it again.
             Build_OK := Commands.Build.Execute (Cmd,
                                                 AAA.Strings.Empty_Vector,
                                                 Export_Build_Env => False);
-            --  Environment is already set up
          else
             Build_OK := True;
          end if;

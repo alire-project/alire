@@ -2,12 +2,13 @@ with Ada.Directories;
 
 with GNAT.OS_Lib;
 
+with AAA.Strings;
+
 with Alire;
 with Alire.Platform;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
-with Alire.Utils;
 with Alire.Config.Edit;
 
 with CLIC.User_Input;
@@ -46,7 +47,7 @@ package body Alr.Platforms.Windows is
       use CLIC.User_Input;
    begin
 
-      if Cfg.Get ("msys2.do_not_install", False) then
+      if Cfg.DB.Get ("msys2.do_not_install", False) then
 
          --  User already requested that msys2 should not be installed
 
@@ -81,9 +82,8 @@ package body Alr.Platforms.Windows is
                    Default  => No) = Yes
          then
             --  Save user choice in the global config
-            Cfg.Edit.Set (Path  => Cfg.Edit.Filepath (Cfg.Global),
-                          Key   => "msys2.do_not_install",
-                          Value => "true");
+            Cfg.Edit.Set_Globally (Key   => "msys2.do_not_install",
+                                   Value => "true");
          end if;
 
          --  We are not allowed to install
@@ -98,7 +98,7 @@ package body Alr.Platforms.Windows is
    function Install_Msys2 (Install_Dir : Alire.Absolute_Path)
                            return Alire.Outcome
    is
-      use Alire.Utils;
+      use AAA.Strings;
 
       Result : Alire.Outcome;
    begin
@@ -118,7 +118,7 @@ package body Alr.Platforms.Windows is
          --  Run msys2's installer
          Alire.OS_Lib.Subprocess.Checked_Spawn
            (Install_Dir / Msys2_Installer,
-            Alire.Utils.Empty_Vector &
+            Empty_Vector &
               "in" &
               "--confirm-command" &
               "--accept-messages" &
@@ -130,11 +130,10 @@ package body Alr.Platforms.Windows is
             return Alire.Outcome_Failure ("Cannot setup msys2 environment");
       end;
 
-      if not Cfg.Defined ("msys2.install_dir") then
+      if not Cfg.DB.Defined ("msys2.install_dir") then
          --  Save msys2 install dir in the global config
-         Cfg.Edit.Set (Path  => Cfg.Edit.Filepath (Cfg.Global),
-                       Key   => "msys2.install_dir",
-                       Value => Install_Dir);
+         Cfg.Edit.Set_Globally (Key   => "msys2.install_dir",
+                                Value => Install_Dir);
       end if;
 
       return Alire.Outcome_Success;
@@ -151,7 +150,7 @@ package body Alr.Platforms.Windows is
         Cache_Folder (Platforms.Windows.New_Platform) / "msys64";
 
       Cfg_Install_Dir : constant String :=
-        Cfg.Get ("msys2.install_dir", Default_Install_Dir);
+        Cfg.DB.Get ("msys2.install_dir", Default_Install_Dir);
 
       Pacman : constant String :=
         Alire.OS_Lib.Subprocess.Locate_In_Path ("pacman");

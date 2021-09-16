@@ -57,7 +57,7 @@ package body Alr.Testing.Collections is
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
                        Elapsed :        Duration;
-                       Log     :        Utils.String_Vector) is
+                       Log     :        AAA.Strings.Vector) is
    begin
       for Reporter of This loop
          Reporter.End_Test (Rel, Outcome, Elapsed, Log);

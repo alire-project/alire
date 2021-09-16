@@ -19,7 +19,7 @@ package Alr.Commands.Skeleton is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return Alire.Utils.String_Vector
+                              return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
        .Append ("Replace this description with yours.")
        .Append ("Every single line will be reformatted into 79-column-wide"

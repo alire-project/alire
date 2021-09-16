@@ -7,7 +7,7 @@ package Alire.Properties.Actions.Runners with Preelaborate is
    type Run (<>) is new Action with private;
    --  Encapsulates the execution of an external command
 
-   function Command_Line   (This : Run) return Utils.String_Vector;
+   function Command_Line   (This : Run) return AAA.Strings.Vector;
    function Working_Folder (This : Run) return String;
 
    overriding
@@ -33,7 +33,7 @@ private
       Name                  : String (1 .. Name_Len);
       --  Optional, except for custom actions, which require a name.
 
-      Relative_Command_Line : Utils.String_Vector;
+      Relative_Command_Line : AAA.Strings.Vector;
       Working_Folder        : Any_Path (1 .. Folder_Len);
    end record
      with Type_Invariant =>
@@ -43,7 +43,7 @@ private
 
    overriding
    function Image (This : Run) return String
-   is (Utils.To_Mixed_Case (This.Moment'Img)
+   is (AAA.Strings.To_Mixed_Case (This.Moment'Img)
        & (if This.Name /= "" then " (" & This.Name & ")" else "")
        & " run: ${CRATE_DIR}" &
         (if This.Working_Folder /= "" then "/" else "") &
@@ -51,13 +51,13 @@ private
 
    overriding
    function To_YAML (This : Run) return String
-   is (Utils.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
+   is (AAA.Strings.To_Mixed_Case (This.Moment'Img) & " run: <project>" &
         (if This.Working_Folder /= "" then "/" else "") &
         This.Working_Folder & "/" & This.Relative_Command_Line.Flatten);
 
    function New_Run (Moment                : Moments;
                      Name                  : String;
-                     Relative_Command_Line : Utils.String_Vector;
+                     Relative_Command_Line : AAA.Strings.Vector;
                      Working_Folder        : Any_Path)
                      return Run'Class
    --  Working folder will be entered for execution
@@ -71,7 +71,7 @@ private
          Relative_Command_Line,
          Utils.To_Native (Working_Folder)));
 
-   function Command_Line (This : Run) return Utils.String_Vector
+   function Command_Line (This : Run) return AAA.Strings.Vector
    is (This.Relative_Command_Line);
 
    function Working_Folder (This : Run) return String

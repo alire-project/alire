@@ -141,8 +141,8 @@ package body Alire.Dependencies.Graphs is
       function B (Str : String) return String is ("[ " & Str & " ]");
       function Q (Str : String) return String is ("""" & Str & """");
 
-      Source : Utils.String_Vector;
-      Alt    : Utils.String_Vector;
+      Source : AAA.Strings.Vector;
+      Alt    : AAA.Strings.Vector;
 
       Filtered : constant Graph := This.Filtering_Unused (Solution.Crates);
    begin
@@ -171,7 +171,9 @@ package body Alire.Dependencies.Graphs is
          Source.Write (Tmp.Filename, Separator => " ");
          OS_Lib.Subprocess.Checked_Spawn
            (Paths.Scripts_Graph_Easy,
-            Utils.Empty_Vector.Append ("--as=boxart").Append (Tmp.Filename));
+            AAA.Strings.Empty_Vector
+            .Append ("--as=boxart")
+            .Append (Tmp.Filename));
       end;
    end Plot;
 

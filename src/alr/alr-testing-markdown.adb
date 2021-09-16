@@ -46,7 +46,7 @@ package body Alr.Testing.Markdown is
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
                        Elapsed :        Duration;
-                       Log     :        Utils.String_Vector)
+                       Log     :        AAA.Strings.Vector)
    is
       pragma Unreferenced (Log);
       type CS is delta 0.01 digits 6;

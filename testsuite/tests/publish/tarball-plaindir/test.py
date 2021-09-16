@@ -22,7 +22,7 @@ with open(os.path.join("alire", canary), "wt") as file:
 # Publish it. We need to give input to alr, so we directly call it. We use the
 # generated location as the "online" location, and this works because we are
 # forcing.
-p = run(["alr", "publish", "--skip-build", "--tar", "-q", "-f", "-n"],
+p = run(["alr", "-q", "-f", "-n", "publish", "--skip-build", "--tar"],
         input=f"file:{os.getcwd()}/alire/archives/xxx-0.0.0.tbz2\n".encode())
 p.check_returncode()
 

@@ -1,13 +1,14 @@
+with AAA.Strings;
 with Alire.Utils;
 
 package Alire.VCSs.Git is
 
-   Known_Transformable_Hosts : constant Utils.String_Vector;
+   Known_Transformable_Hosts : constant AAA.Strings.Vector;
    --  Known hosts that honor the git@ --> https:// transformation
 
    subtype Git_Commit is String (1 .. 40) with
      Dynamic_Predicate =>
-       (for all Char of Git_Commit => Char in Hexadecimal_Character);
+       (for all Char of Git_Commit => Char in Utils.Hexadecimal_Character);
 
    function Is_Valid_Commit (S : String) return Boolean
    is (S'Length = Git_Commit'Length and then
@@ -122,9 +123,9 @@ private
 
    function Handler return VCS is (null record);
 
-   use Utils;
+   use AAA.Strings;
 
-   Known_Transformable_Hosts : constant String_Vector :=
+   Known_Transformable_Hosts : constant AAA.Strings.Vector :=
                                  Empty_Vector
                                  & "github.com"
                                  & "gitlab.com";

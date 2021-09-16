@@ -155,10 +155,11 @@ package body Alire.Dependencies.States is
    -- To_TOML --
    -------------
 
-   overriding function To_TOML (This : State) return TOML.TOML_Value
+   overriding
+   function To_TOML (This : State) return TOML.TOML_Value
    is
       use TOML_Adapters;
-      use Utils;
+      use AAA.Strings;
 
       -------------
       -- To_TOML --

@@ -1,4 +1,3 @@
-private with Alire.Utils;
 private with GNAT.Regpat;
 
 package Alire.Externals.From_Output is
@@ -19,7 +18,7 @@ package Alire.Externals.From_Output is
    overriding
    function Detail (This          : External;
                     Unused_Distro : Platforms.Distributions)
-                    return Utils.String_Vector;
+                    return AAA.Strings.Vector;
 
    overriding
    function Kind (This : External) return String is ("Executable");
@@ -31,7 +30,7 @@ private
    use type GNAT.Regpat.Program_Size;
 
    type External is new Externals.External with record
-      Command : Utils.String_Vector;
+      Command : AAA.Strings.Vector;
       Regexp  : GNAT.Regpat.Pattern_Matcher (GNAT.Regpat.Max_Program_Size - 1);
       --  There's a off-by-one bug when using Max_Program_Size that results in
       --  freezes/storage errors.

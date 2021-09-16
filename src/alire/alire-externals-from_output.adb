@@ -1,3 +1,5 @@
+with AAA.Strings; use AAA.Strings;
+
 with Alire.Directories;
 with Alire.Index;
 with Alire.Origins;
@@ -30,10 +32,10 @@ package body Alire.Externals.From_Output is
            ("External not detected because executable is not in PATH: "
             & This.Command.First_Element);
          return (Releases.Containers.Release_Sets.Empty_Set with null record);
-      elsif Utils.Contains (Location.all,
-                            Paths.Working_Folder_Inside_Root
-                            / Paths.Cache_Folder_Inside_Working_Folder
-                            / Paths.Deps_Folder_Inside_Cache_Folder)
+      elsif Contains (Location.all,
+                      Paths.Working_Folder_Inside_Root
+                      / Paths.Cache_Folder_Inside_Working_Folder
+                      / Paths.Deps_Folder_Inside_Cache_Folder)
       then
          Trace.Debug
            ("External skipped because executable is deployed by Alire: "
@@ -74,7 +76,7 @@ package body Alire.Externals.From_Output is
                         .Providing (This.Provides)
                         .Replacing (Origins.New_External ("path " & Path))
                         .Replacing (Notes => "Detected at " -- length is 12
-                                    & Utils.Shorten
+                                    & Shorten
                                       (String (Path),
                                        Max_Description_Length - 12)));
                   end;
@@ -130,7 +132,7 @@ package body Alire.Externals.From_Output is
    overriding
    function Detail (This          : External;
                     Unused_Distro : Platforms.Distributions)
-                    return Utils.String_Vector is
-      (Utils.Empty_Vector.Append (+This.Regstr));
+                    return AAA.Strings.Vector is
+      (AAA.Strings.Empty_Vector.Append (+This.Regstr));
 
 end Alire.Externals.From_Output;

@@ -4,6 +4,7 @@ with Semantic_Versioning;
 
 private with Alire.Utils.TTY;
 private with Alire.Utils;
+with AAA.Strings; use AAA.Strings;
 
 package Alire.Milestones with Preelaborate is
 
@@ -48,8 +49,8 @@ private
 
    function New_Milestone (Image : String) return Milestone
    is (New_Milestone
-       (Name    => To_Name (Utils.Head (Image, '=')),
-        Version => Semantic_Versioning.New_Version (Utils.Tail (Image, '='))));
+       (Name    => To_Name (Head (Image, '=')),
+        Version => Semantic_Versioning.New_Version (Tail (Image, '='))));
 
    function Crate (M : Milestone) return Crate_Name is (M.Name);
 

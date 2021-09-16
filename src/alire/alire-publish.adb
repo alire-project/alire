@@ -1,6 +1,8 @@
 with Ada.Directories;
 with Ada.Text_IO;
 
+with AAA.Strings;
+
 with Alire.Config.Edit;
 with Alire.Crates;
 with Alire.Directories;
@@ -38,9 +40,10 @@ package body Alire.Publish is
    package Semver renames Semantic_Versioning;
 
    use Directories.Operators;
+   use AAA.Strings;
 
-   Trusted_Sites : constant Utils.String_Vector :=
-                     Utils.Empty_Vector
+   Trusted_Sites : constant AAA.Strings.Vector :=
+                     AAA.Strings.Empty_Vector
                        .Append ("bitbucket.org")
                        .Append ("github.com")
                        .Append ("gitlab.com")
@@ -151,8 +154,8 @@ package body Alire.Publish is
    procedure Check_Release (Release : Releases.Release) is
       use CLIC.User_Input;
 
-      Recommend : Utils.String_Vector; -- Optional
-      Missing   : Utils.String_Vector; -- Mandatory
+      Recommend : AAA.Strings.Vector; -- Optional
+      Missing   : AAA.Strings.Vector; -- Mandatory
 
       Caret_Pre_1 : Boolean := False; -- To warn about this
 
@@ -270,7 +273,7 @@ package body Alire.Publish is
       --  a child alr.
       OS_Lib.Subprocess.Checked_Spawn
         ("alr",
-         Utils.Empty_Vector
+         AAA.Strings.Empty_Vector
          .Append ("--non-interactive")
          .Append ("build"));
 
@@ -447,12 +450,12 @@ package body Alire.Publish is
          --  Show the upload URL in normal circumstances, or a more generic
          --  message otherwise (when lacking a github login).
 
-         if Config.Defined (Config.Keys.User_Github_Login) then
+         if Config.DB.Defined (Config.Keys.User_Github_Login) then
             Put_Info
               ("Please upload this file to "
                & TTY.URL
                  (Index.Community_Host & "/"
-                  & Config.Get (Config.Keys.User_Github_Login, "") & "/"
+                  & Config.DB.Get (Config.Keys.User_Github_Login, "") & "/"
                   & Index.Community_Repo_Name
                   & "/upload/"
                   & Index.Community_Branch & "/"
@@ -461,7 +464,7 @@ package body Alire.Publish is
          else
             Put_Info
               ("Please create a pull request against the community index at "
-               & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
+               & TTY.URL (Tail (Index.Community_Repo, '+'))
                & " including this file at "
                & TTY.URL (String (TOML_Index.Manifest_Path (Name))));
          end if;
@@ -486,7 +489,6 @@ package body Alire.Publish is
    --  plain tar otherwise.
 
    procedure Prepare_Archive (Context : in out Data) is
-      use Utils;
       use CLIC.User_Input;
 
       Target_Dir : constant Relative_Path :=
@@ -598,7 +600,7 @@ package body Alire.Publish is
             Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
 
             Context.Origin := Origins.New_Source_Archive
-              (Utils.Trim (Remote_URL), -- remove unwanted extra whitespaces
+              (Trim (Remote_URL), -- remove unwanted extra whitespaces
                Ada.Directories.Simple_Name (Archive));
             --  This origin creation may raise if URL is improper
 
@@ -682,7 +684,7 @@ package body Alire.Publish is
 
       --  User has an account
 
-      if not Config.Defined (Config.Keys.User_Github_Login) then
+      if not Config.DB.Defined (Config.Keys.User_Github_Login) then
          Put_Info ("Publishing to the community index"
                    & " requires a GitHub account.");
       else
@@ -711,7 +713,7 @@ package body Alire.Publish is
             Raise_Checked_Error
               ("You must fork the community index to your GitHub account"
                & ASCII.LF & "Please visit "
-               & TTY.URL (Utils.Tail (Index.Community_Repo, '+'))
+               & TTY.URL (Tail (Index.Community_Repo, '+'))
                & " and fork the repository.");
          else
             Put_Success ("User has forked the community repository");
@@ -752,7 +754,7 @@ package body Alire.Publish is
       if URI.Scheme (URL) not in URI.HTTP then
          --  A git@ URL is private to the user and should not be used for
          --  packaging:
-         if Utils.Starts_With (URL, "git@") then
+         if AAA.Strings.Has_Prefix (URL, "git@") then
             Raise_Checked_Error
               ("The origin cannot use a private git remote: " & URL);
          end if;
@@ -780,7 +782,7 @@ package body Alire.Publish is
            or else
             (for some Site of Trusted_Sites =>
                URI.Authority (URL) = Site or else
-               Utils.Ends_With (URI.Authority (URL), "." & Site))
+               Has_Suffix (URI.Authority (URL), "." & Site))
          then
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Authority (URL));
@@ -955,7 +957,6 @@ package body Alire.Publish is
             end if;
 
             declare
-               use Utils;
                Raw_URL   : constant String :=
                              Git.Fetch_URL
                                (Root_Path,
@@ -966,7 +967,7 @@ package body Alire.Publish is
                --  With an added ".git", if it hadn't one. Not usable in local
                --  filesystem.
                              Raw_URL
-                             & (if Ends_With (To_Lower_Case (Raw_URL), ".git")
+                             & (if Has_Suffix (To_Lower_Case (Raw_URL), ".git")
                                 then ""
                                 else ".git");
             begin
@@ -1010,7 +1011,7 @@ package body Alire.Publish is
    begin
       --  Preliminary argument checks
 
-      if Utils.Ends_With (Utils.To_Lower_Case (URL), ".git") and then
+      if Has_Suffix (AAA.Strings.To_Lower_Case (URL), ".git") and then
         Commit = ""
       then
          Raise_Checked_Error
@@ -1020,7 +1021,6 @@ package body Alire.Publish is
       --  Create origin, which will do more checks, and proceed
 
       declare
-         use Utils;
          Context : Data :=
                      (Options => Options,
 

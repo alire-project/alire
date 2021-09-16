@@ -1,7 +1,6 @@
 with Ada.Containers;
 
 with Alire; use Alire;
-with Alire.Utils; use Alire.Utils;
 with Alire.OS_Lib.Subprocess;
 with Alire.Config;
 
@@ -14,12 +13,14 @@ package body Alr.Commands.Edit is
    -- Start_Editor --
    ------------------
 
-   procedure Start_Editor (Args : in out String_Vector; Prj : Relative_Path) is
+   procedure Start_Editor (Args : in out AAA.Strings.Vector;
+                           Prj : Relative_Path)
+   is
       Pattern : constant String := "${GPR_FILE}";
 
       Cmd : constant String := Args.First_Element;
 
-      Replaced_Args : String_Vector;
+      Replaced_Args : AAA.Strings.Vector;
    begin
 
       Args.Delete_First;
@@ -44,7 +45,7 @@ package body Alr.Commands.Edit is
       end loop;
 
       Trace.Info ("Editing crate with: ['" & Cmd & "' '" &
-                    Flatten (Replaced_Args, "', '") & "']");
+                    AAA.Strings.Flatten (Replaced_Args, "', '") & "']");
       Alire.OS_Lib.Subprocess.Checked_Spawn (Cmd, Replaced_Args);
    end Start_Editor;
 
@@ -61,9 +62,9 @@ package body Alr.Commands.Edit is
       use Alire.Config;
 
       Editor_Cmd  : constant String :=
-        Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
+        Alire.Config.DB.Get (Keys.Editor_Cmd, "gnatstudio -P ${GPR_FILE}");
 
-      Edit_Args : String_Vector := Split (Editor_Cmd, ' ');
+      Edit_Args : AAA.Strings.Vector := AAA.Strings.Split (Editor_Cmd, ' ');
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
@@ -99,7 +100,7 @@ package body Alr.Commands.Edit is
       end;
 
       declare
-         Project_Files : constant Alire.Utils.String_Vector :=
+         Project_Files : constant AAA.Strings.Vector :=
            Cmd.Root.Release.Project_Files
              (Platform.Properties, With_Path => True);
       begin

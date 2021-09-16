@@ -14,14 +14,14 @@ package body Alire is
 
    overriding
    function "=" (L, R : Crate_Name) return Boolean is
-     (Utils.To_Lower_Case (+L) = Utils.To_Lower_Case (+R));
+     (AAA.Strings.To_Lower_Case (+L) = AAA.Strings.To_Lower_Case (+R));
 
    ---------
    -- "<" --
    ---------
 
    function "<" (L, R : Crate_Name) return Boolean is
-     (Utils.To_Lower_Case (+L) < Utils.To_Lower_Case (+R));
+     (AAA.Strings.To_Lower_Case (+L) < AAA.Strings.To_Lower_Case (+R));
 
    -------------------------
    -- Check_Absolute_Path --

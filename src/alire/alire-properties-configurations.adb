@@ -8,6 +8,8 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alire.Properties.Configurations is
 
+   use AAA.Strings;
+
    -------------
    -- To_Type --
    -------------
@@ -43,14 +45,11 @@ package body Alire.Properties.Configurations is
       Res : Unbounded_String;
       First : Boolean := True;
    begin
-      if Str_Array.Kind /= TOML_Array
-        and then
-         Str_Array.Item_Kind /= TOML_String
-      then
-         raise Program_Error with "Invalid TOML kind for enum values";
-      end if;
-
       for Index in 1 .. Str_Array.Length loop
+         if Str_Array.Item (Index).Kind /= TOML_String then
+            raise Program_Error with "Invalid TOML kind for enum values";
+         end if;
+
          declare
             Val : constant String := Str_Array.Item (Index).As_String;
             Val_Str : constant Unbounded_String := +(if Wrap_With_Quotes
@@ -137,12 +136,8 @@ package body Alire.Properties.Configurations is
             return Image (Val.As_Integer);
 
          when TOML_Array =>
-            if Val.Item_Kind /= TOML_String then
-               Raise_Checked_Error ("Unexpected kind '" & Val.Item_Kind'Img &
-                                      "' in array conversion to String");
-            else
-               return To_String (Val);
-            end if;
+            --  Type of elements is checked inside following call
+            return To_String (Val);
          when others =>
             Raise_Checked_Error ("Unexpected kind '" & Val.Kind'Img &
                                    "' in conversion to String");
@@ -700,10 +695,9 @@ package body Alire.Properties.Configurations is
                when Enum =>
                   if From.Pop ("values", Type_Def.Values) then
                      if Type_Def.Values.Kind /= TOML_Array
-                       or else
-                        not Type_Def.Values.Item_Kind_Set
-                       or else
-                         Type_Def.Values.Item_Kind /= TOML_String
+                       or else Type_Def.Values.Length = 0
+                       or else (for some I in 1 .. Type_Def.Values.Length =>
+                                  Type_Def.Values.Item (I).Kind /= TOML_String)
                      then
                         From.Checked_Error
                           ("'values' must be a not empty array of strings");
@@ -825,11 +819,11 @@ package body Alire.Properties.Configurations is
             begin
                exit when Key = "";
 
-               if Key = Utils.Tail (TOML_Keys.Config_Vars, '.') then
+               if Key = Tail (TOML_Keys.Config_Vars, '.') then
                   Nested := Definitions_From_TOML
                     (From.Descend (Key, Val, "variables"));
 
-               elsif Key = Utils.Tail (TOML_Keys.Config_Values, '.') then
+               elsif Key = Tail (TOML_Keys.Config_Values, '.') then
                   Nested := Assignments_From_TOML
                     (From.Descend (Key, Val, "settings"));
 

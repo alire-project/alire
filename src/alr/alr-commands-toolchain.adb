@@ -229,7 +229,7 @@ package body Alr.Commands.Toolchain is
 
          --  Inform of how the requested crate has been narrowed down
 
-         if not Alire.Utils.Starts_With (Dep.Versions.Image, "=") then
+         if not AAA.Strings.Has_Prefix (Dep.Versions.Image, "=") then
             Put_Info ("Requested crate resolved as "
                       & Rel.Milestone.TTY_Image);
          end if;
@@ -385,7 +385,7 @@ package body Alr.Commands.Toolchain is
 
       --  If no version was given, find if only one is installed
 
-      if not Contains (Target, "=") then
+      if not AAA.Strings.Contains (Target, "=") then
          Uninstall (Cmd, Target & "=" & Find_Version);
          return;
       end if;

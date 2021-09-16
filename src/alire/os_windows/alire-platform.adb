@@ -1,8 +1,9 @@
 with Ada.Directories;
 with GNAT.OS_Lib;
 
+with AAA.Strings;
+
 with Alire.Environment;
-with Alire.Utils;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 
@@ -18,14 +19,14 @@ package body Alire.Platform is
    ------------------
 
    function Detect_Msys2 return Boolean is
-      use Alire.Utils;
+      use AAA.Strings;
    begin
       --  Try to detect if Msys2's pacman tool is already in path
       declare
-         Unused : Utils.String_Vector;
+         Unused : Vector;
       begin
          Unused := OS_Lib.Subprocess.Checked_Spawn_And_Capture
-           ("pacman", Utils.Empty_Vector & ("-V"),
+           ("pacman", Empty_Vector & ("-V"),
             Err_To_Out => True);
          return True;
       exception when others =>

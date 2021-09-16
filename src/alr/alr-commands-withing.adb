@@ -9,7 +9,6 @@ with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
-with Alire.Utils;
 
 with Alr.OS_Lib;
 with Alr.Platform;
@@ -55,7 +54,7 @@ package body Alr.Commands.Withing is
                    Args :        AAA.Strings.Vector)
    is
       use Ada.Text_IO;
-      use Alire.Utils;
+      use AAA.Strings;
 
       -------------
       -- Extract --

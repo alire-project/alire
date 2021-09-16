@@ -7,7 +7,6 @@ with Alire.Index_On_Disk.Directory;
 with Alire.Index_On_Disk.Git;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
-with Alire.Utils;
 with Alire.VCSs;
 
 with GNAT.OS_Lib;
@@ -167,7 +166,7 @@ package body Alire.Index_On_Disk is
 
          --  Ensure the given path is not one of our own configured indexes
 
-         if Utils.Starts_With (Path, Parent) then
+         if AAA.Strings.Has_Prefix (Path, Parent) then
             Result := Outcome_Failure
               ("Given index path is inside Alire configuration path");
             return New_Invalid_Index;
@@ -191,7 +190,7 @@ package body Alire.Index_On_Disk is
       --  Warn about http[s]:// URLs being not supported and suggest git+http
       --  instead.
 
-      if Utils.Starts_With (Origin, HTTP_Prefix) then
+      if AAA.Strings.Has_Prefix (Origin, HTTP_Prefix) then
          Result := Outcome_Failure
            ("HTTP/HTTPS URLs are not valid index origins. "
             & "You may want git+" & Origin & " instead.");
@@ -201,11 +200,11 @@ package body Alire.Index_On_Disk is
       --  Process "file://" URLs and anything that looks like a file name as a
       --  local index.
 
-      if Utils.Starts_With (Origin, File_Prefix) then
+      if AAA.Strings.Has_Prefix (Origin, File_Prefix) then
          return Process_Local_Index
            (Origin (Origin'First + File_Prefix'Length ..  Origin'Last));
       elsif Origin (Origin'First) = '/'
-            or else not Utils.Contains (Origin, "+")
+            or else not AAA.Strings.Contains (Origin, "+")
       then
          return Process_Local_Index (Origin);
       end if;
@@ -284,7 +283,7 @@ package body Alire.Index_On_Disk is
          --  TODO: simply try to load it once the loaded index is not global
          --  For now, instead, locate index version file:
          declare
-            Repo_Version_Files : constant Utils.String_Vector :=
+            Repo_Version_Files : constant AAA.Strings.Vector :=
                                    Directories.Find_Files_Under
                                      (Folder    => This.Index_Directory,
                                       Name      => "index.toml",

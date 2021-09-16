@@ -51,7 +51,7 @@ package body Alire.Properties.Actions.Runners is
       is
          From    : constant TOML_Adapters.Key_Queue :=
                      From_TOML.From.Descend (Raw, "action #"
-                                             & Utils.Trim (Index'Image));
+                                             & AAA.Strings.Trim (Index'Image));
          Kind     : TOML_Value;
          Command  : TOML_Value;
          Name     : TOML_Value;

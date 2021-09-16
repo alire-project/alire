@@ -14,7 +14,7 @@ fake_dep = "unobtainium"
 init_local_crate()
 
 # Add a dependency
-run_alr("with", fake_dep, "--force")
+run_alr("with", fake_dep, force=True)
 
 # Pin to a local folder
 os.mkdir(fake_dep)

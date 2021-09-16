@@ -18,6 +18,16 @@ def invalid_key(*args):
     assert "Invalid configration key" in p.out, \
            "Missing error message in: '%s" % p.out
 
+def invalid_builtin(*args):
+    print("Running: alr config %s" % " ".join([item for item in args]))
+
+    p = run_alr('config', *args, complain_on_error=False, quiet=False)
+
+    assert p.status != 0, "command should fail"
+
+    assert "Invalid value " in p.out, \
+           "Missing error message in: '%s" % p.out
+
 def check_value(key, expected_value, local=True):
     if local:
         get = run_alr('config', '--get', key)
@@ -60,6 +70,12 @@ invalid_key('--get', '--global', '%')
 invalid_key('--get', '--global', '&')
 invalid_key('--get', '--global', '#')
 invalid_key('--get', '--global', '^')
+
+####################
+# invalid builtins #
+####################
+invalid_builtin('--set', '--global', 'user.github_login', 'This is not a valid login')
+invalid_builtin('--set', '--global', 'user.email', '@ This is not @ valid email address@')
 
 ###############################
 # Global Set, Get, Unset, Get #

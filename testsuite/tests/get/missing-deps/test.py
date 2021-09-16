@@ -11,7 +11,7 @@ from glob import glob
 
 
 # Get the "hello" crate with version 3, which has missing libhello=3 dep
-run_alr('get', 'hello=3', '--force')
+run_alr('get', 'hello=3', force=True)
 os.chdir(glob('hello*')[0])
 
 # Check missing dependency is shown as external

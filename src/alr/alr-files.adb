@@ -9,7 +9,7 @@ package body Alr.Files is
    function Locate_Any_GPR_File return Natural is
       use Ada.Directories;
 
-      Candidates : Utils.String_Vector;
+      Candidates : AAA.Strings.Vector;
 
       procedure Check (File : Directory_Entry_Type) is
       begin

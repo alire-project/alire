@@ -50,7 +50,7 @@ package body Alire.Externals.Lists is
    function Hints (This : List;
                    Name : Crate_Name;
                    Env  : Properties.Vector := Properties.No_Properties)
-                   return Utils.String_Vector
+                   return AAA.Strings.Vector
    is
       Hints : Properties.Vector;
       use type Properties.Vector;
@@ -80,7 +80,7 @@ package body Alire.Externals.Lists is
          end if;
       end loop;
 
-      return Result : Utils.String_Vector do
+      return Result : AAA.Strings.Vector do
          for Hint of Hints loop
             Result.Append (Properties.Labeled.Label'Class (Hint).Value);
          end loop;

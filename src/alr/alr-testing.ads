@@ -1,6 +1,6 @@
-with Alire.Types;
+with AAA.Strings;
 
-with Alr.Utils;
+with Alire.Types;
 
 package Alr.Testing is
 
@@ -30,6 +30,6 @@ package Alr.Testing is
                        Rel     :        Alire.Types.Release;
                        Outcome :        Outcomes;
                        Elapsed :        Duration;
-                       Log     :        Utils.String_Vector) is null;
+                       Log     :        AAA.Strings.Vector) is null;
 
 end Alr.Testing;
