@@ -1,8 +1,10 @@
 with Alire.Config.Edit;
 with Alire.Features.Index;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Properties;
 with Alire.Roots.Optional;
+with Alire.Toolchains;
 with Alire.Utils.Tables;
 
 with Alr.Bootstrap;
@@ -27,7 +29,6 @@ package body Alr.Commands.Version is
    is
       use all type Alire.Roots.Optional.States;
       Table : Alire.Utils.Tables.Table;
-      Not_Applicable : constant String := "(N/A)";
       Index_Outcome : Alire.Outcome;
       Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
                   Alire.Features.Index.Find_All
@@ -66,6 +67,17 @@ package body Alr.Commands.Version is
          Table.Append ("index #" & Utils.Trim (Index.Priority'Image) & ":")
            .Append ("(" & Index.Name & ") " & Index.Origin).New_Row;
       end loop;
+      Table.Append ("toolchain assistant:")
+        .Append (if Alire.Toolchains.Assistant_Enabled
+                 then "enabled"
+                 else "disabled").New_Row;
+      for Tool of Alire.Toolchains.Tools loop
+         Table
+           .Append (String (Alire.Toolchains.Tool_Key (Tool)) & ":")
+           .Append (if Alire.Toolchains.Tool_Is_Configured (Tool)
+                    then Alire.Toolchains.Tool_Milestone (Tool).Image
+                    else "not configured").New_Row;
+      end loop;
 
       Table.Append ("").New_Row;
       Table.Append ("WORKSPACE").New_Row;
@@ -75,15 +87,17 @@ package body Alr.Commands.Version is
       Table.Append ("root release:")
         .Append (case Root.Status is
                     when Valid  => Root.Value.Release.Milestone.Image,
-                    when others => Not_Applicable).New_Row;
+                    when others => "N/A").New_Row;
       Table.Append ("root error:")
         .Append (case Root.Status is
-                    when Broken => Cmd.Optional_Root.Message,
-                    when others => Not_Applicable).New_Row;
+                    when Broken  => Cmd.Optional_Root.Message,
+                    when Valid   => "none",
+                    when Outside => "N/A").New_Row;
       Table.Append ("root folder:")
         .Append (case Root.Status is
-                    when Outside => Not_Applicable,
-                    when others  => Root.Value.Path).New_Row;
+                    when Outside => "N/A",
+                    when Broken  => "N/A",
+                    when Valid   => Root.Value.Path).New_Row;
       Table.Append ("current folder:").Append (Alire.Directories.Current)
         .New_Row;
 
@@ -94,6 +108,13 @@ package body Alr.Commands.Version is
       end loop;
 
       Table.Print (Level => Always);
+   exception
+      when E : others =>
+         Alire.Log_Exception (E);
+         Trace.Error ("Unexpected error during information gathering");
+         Trace.Error ("Gathered information up to the error is:");
+         Table.Print (Level => Always);
+         raise;
    end Execute;
 
    ----------------------
