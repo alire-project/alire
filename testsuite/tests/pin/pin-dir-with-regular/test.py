@@ -16,7 +16,7 @@ os.chdir('xxx')
 run_alr('with', 'libhello')
 
 # Add a missing crate
-run_alr('with', 'unobtanium', '--force')
+run_alr('with', 'unobtanium', force=True)
 
 # Pin the missing crate
 alr_pin('unobtanium', path='/')

@@ -25,7 +25,7 @@ else:
 
 # 2nd test: hint is displayed when the hint belongs to a dependency, on get
 
-p = run_alr('get', 'crate_master', '--force', quiet=False)
+p = run_alr('get', 'crate_master', force=True, quiet=False)
 
 assert_match
 (".*"  # Skip previous user interaction and warning about incomplete solution

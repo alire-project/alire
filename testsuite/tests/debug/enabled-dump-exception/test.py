@@ -17,10 +17,10 @@ stderr: raised PROGRAM_ERROR : Raising forcibly.*
 
 
 # Check debug dump (we intentionally disable debug flag in run_alr)
-check_output(run_alr('dev', '--raise', '-d',
+check_output(run_alr('-d', 'dev', '--raise',
                      debug=False, complain_on_error=False).out)
 # Long flag version
-check_output(run_alr('dev', '--raise', '--debug',
+check_output(run_alr('--debug', 'dev', '--raise',
                      debug=False, complain_on_error=False).out)
 
 # Check ordinary non-debug output:

@@ -6,7 +6,6 @@ with AAA.Strings;
 
 with Alire.Containers;
 with Alire.Dependencies.States;
-with Alire.GPR;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
 with Alire.Paths;
@@ -208,7 +207,7 @@ package Alire.Roots is
    --  Recursively visit all dependencies in a safe order, ending with the root
 
    function Build (This             : in out Root;
-                   Scenario         : GPR.Scenario;
+                   Cmd_Args         : AAA.Strings.Vector;
                    Export_Build_Env : Boolean)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally

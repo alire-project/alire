@@ -20,7 +20,7 @@ os.chdir('xxx')
 
 # Add dependency as regular crate; this has missing dependencies so we have to
 # force. This brings in hello=4.
-run_alr('with', 'hello', '--force')
+run_alr('with', 'hello', force=True)
 
 # Pin the hello crate as local dir dependency. The version in the folder is
 # different to the one we had in the solution, so this should cause a downgrade

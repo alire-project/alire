@@ -10,10 +10,6 @@ with Alr.Platform;
 
 package body Alr.Commands.Clean is
 
-   Scenario : Alire.GPR.Scenario;
-   --  This will be filled in during parsing of command line with any seen "-X"
-   --  parameters.
-
    -----------------------
    -- Delete_Temp_Files --
    -----------------------

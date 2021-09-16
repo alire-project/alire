@@ -39,7 +39,7 @@ head_commit = init_git_repo("xxx")
 # A "remote" source archive. We force to allow the test to skip the remote
 # check. Curl requires an absolute path to work.
 target = os.path.join(os.getcwd(), "xxx.zip")
-run_alr("publish", f"file:{target}", "--force")
+run_alr("publish", f"file:{target}", force=True)
 # Should complete without error, check the generated file is in place
 verify_manifest()
 
@@ -48,7 +48,7 @@ rmtree("alire")
 
 # Same test, using directly the source repository
 target = os.path.join(os.getcwd(), "xxx")
-run_alr("publish", f"git+file:{target}", head_commit, "--force")
+run_alr("publish", f"git+file:{target}", head_commit, force=True)
 verify_manifest()
 
 # Copy the new index manifest into the index

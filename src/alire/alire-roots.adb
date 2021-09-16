@@ -33,7 +33,7 @@ package body Alire.Roots is
    -----------
 
    function Build (This             : in out Root;
-                   Scenario         : GPR.Scenario;
+                   Cmd_Args         : AAA.Strings.Vector;
                    Export_Build_Env : Boolean)
                    return Boolean
    is
@@ -137,7 +137,7 @@ package body Alire.Roots is
                             & "...");
 
                   Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
-                                  Extra_Args => Scenario.As_Command_Line);
+                                  Extra_Args => Cmd_Args);
 
                   Current := Current + 1;
                end loop;
