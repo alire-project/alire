@@ -2,7 +2,6 @@ with Alire;
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 with Alire.Root;
 
-with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.Last_Chance_Handler;
 with Alr.Platform.Init;
@@ -22,6 +21,8 @@ begin
    --  type to shared specification. All of this should be done on Issue #335.
 
    Alire.Root.Set_Platform_Properties (Alr.Platform.Properties);
+
+   Trace.Debug ("alr platform configured");
 
    Commands.Execute;
 exception
