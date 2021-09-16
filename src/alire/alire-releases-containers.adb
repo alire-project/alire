@@ -1,3 +1,5 @@
+with AAA.Strings;
+
 with Alire.Errors;
 
 with Semantic_Versioning.Extended;
@@ -33,6 +35,21 @@ package body Alire.Releases.Containers is
 
       return Result;
    end Elements_Providing;
+
+   --------------
+   -- From_Set --
+   --------------
+
+   function From_Set (This : Release_Set)
+                      return Release_Set_By_Version.Set
+   is
+   begin
+      return Result : Release_Set_By_Version.Set do
+         for Rel of This loop
+            Result.Insert (Rel);
+         end loop;
+      end return;
+   end From_Set;
 
    ------------
    -- Insert --
@@ -125,6 +142,27 @@ package body Alire.Releases.Containers is
          New_Map.Include (Release.Name, Release);
       end return;
    end Including;
+
+   --------------
+   -- Is_Older --
+   --------------
+
+   function Is_Older (This, Than : Releases.Release) return Boolean
+   is (This.Version < Than.Version
+       or else
+         (This.Version = Than.Version
+          and then This.Version.Build < Than.Version.Build)
+       or else
+         (This.Version = Than.Version
+          and then This.Version.Build = Than.Version.Build
+          and then This.Provides (GNAT_Crate)
+          and then Than.Provides (GNAT_Crate)
+          and then not AAA.Strings.Has_Suffix (This.Name.As_String, "_native")
+          and then AAA.Strings.Has_Suffix (Than.Name.As_String, "_native"))
+       or else
+         (This.Version = Than.Version
+          and then This.Version.Build = Than.Version.Build
+          and then Than.Name < This.Name));
 
    ------------
    -- Remove --

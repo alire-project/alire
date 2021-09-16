@@ -393,7 +393,7 @@ package body Alire.Config.Edit is
    -- Path --
    ----------
 
-   function Path return String is
+   function Path return Absolute_Path is
    begin
       if Config_Path /= null then -- Case with switch (TODO)
          return Config_Path.all;
@@ -407,7 +407,7 @@ package body Alire.Config.Edit is
    -- Set_Path --
    --------------
 
-   procedure Set_Path (Path : String) is
+   procedure Set_Path (Path : Absolute_Path) is
    begin
       if Config_Path /= null then
          raise Constraint_Error with "Custom path already set";

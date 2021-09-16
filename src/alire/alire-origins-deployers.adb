@@ -65,7 +65,9 @@ package body Alire.Origins.Deployers is
       use Directories.Operators;
       Temp_Dir      : Directories.Temp_File :=
                         Directories.With_Name
-                          (Ada.Directories.Containing_Directory (Folder)
+                          ((if Folder /= "" -- Empty for system releases
+                            then Ada.Directories.Containing_Directory (Folder)
+                            else Directories.Current)
                            / Directories.Temp_Name);
       --  We use a temporary location to fetch and verify, as otherwise any
       --  failure before final deployment may result in considering a crate

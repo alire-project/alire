@@ -27,6 +27,9 @@ package Alire.Origins is
       System          -- System package
      );
 
+   type Kinds_Set is array (Kinds) of Boolean
+     with Default_Component_Value => False;
+
    type String_Access is access constant String;
    type Prefix_Array is array (Kinds) of String_Access;
    Prefixes : constant Prefix_Array;

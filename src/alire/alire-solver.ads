@@ -1,5 +1,6 @@
 with Alire.Dependencies;
 with Alire.Index;
+with Alire.Origins;
 with Alire.Properties;
 with Alire.Solutions;
 with Alire.Types;
@@ -95,7 +96,8 @@ package Alire.Solver is
      (Name    : Alire.Crate_Name;
       Allowed : Semantic_Versioning.Extended.Version_Set :=
         Semantic_Versioning.Extended.Any;
-      Policy  : Age_Policies)
+      Policy  : Age_Policies;
+      Origins : Alire.Origins.Kinds_Set := (others => True))
       return Release
      with Pre =>
        Exists (Name, Allowed) or else
