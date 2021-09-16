@@ -1,5 +1,7 @@
 package Alire.Version with Preelaborate is
 
+   --  Remember to update Alire.Index branch if needed too
+
    Current : constant String := "1.1.0";
    --  1.1.0:     toolchain compatibility checks
    --  1.1.0-rc3: toolchain with multiple switches, minor fixes
