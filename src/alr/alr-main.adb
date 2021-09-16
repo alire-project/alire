@@ -2,7 +2,6 @@ with Alire;
 with Alire_Early_Elaboration; pragma Elaborate_All (Alire_Early_Elaboration);
 with Alire.Root;
 
-with Alr.Bootstrap;
 with Alr.Commands;
 with Alr.Last_Chance_Handler;
 with Alr.Platform.Init;
@@ -23,7 +22,7 @@ begin
 
    Alire.Root.Set_Platform_Properties (Alr.Platform.Properties);
 
-   Trace.Detail ("alr build is " & Bootstrap.Status_Line);
+   Trace.Debug ("alr platform configured");
 
    Commands.Execute;
 exception

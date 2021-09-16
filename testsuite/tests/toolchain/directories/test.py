@@ -11,9 +11,10 @@ from drivers.helpers import contents
 
 # Identify config location
 p = run_alr("version")
-config_dir = re.search("config folder is ([^\n.]*)", p.out).group(1)
+config_dir = re.search("config folder:([^\n]*)", p.out).group(1).strip()
 config_dir = config_dir.replace("\\", "/")
 cache_dir = os.path.join(config_dir, "cache")
+
 # The 'contents` function we use to compare these strings normalizes all paths
 # to forward slashes, so we do the same with the config_dir
 

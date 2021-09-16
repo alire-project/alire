@@ -1,10 +1,13 @@
+with Alire.Config.Edit;
+with Alire.Features.Index;
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Properties;
 with Alire.Roots.Optional;
+with Alire.Toolchains;
+with Alire.Utils.Tables;
 
 with Alr.Bootstrap;
-with Alr.Files;
-with Alr.OS_Lib;
 with Alr.Paths;
 
 with GNAT.Compiler_Version;
@@ -24,59 +27,100 @@ package body Alr.Commands.Version is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use Ada.Text_IO;
       use all type Alire.Roots.Optional.States;
+      Table : Alire.Utils.Tables.Table;
+      Index_Outcome : Alire.Outcome;
+      Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
+                  Alire.Features.Index.Find_All
+                    (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
+      Root : constant Alire.Roots.Optional.Root :=
+               Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
 
-      Trace.Always ("Alr version: " & Alire.Version.Current);
-      Trace.Always ("Alire Library version: " & Alire.Version.Current);
-      Trace.Always ("alr status is " & Bootstrap.Status_Line);
-      Trace.Always ("config folder is " & Paths.Alr_Config_Folder);
-      Trace.Always ("source folder is " & Paths.Alr_Source_Folder);
+      Table.Append ("APPLICATION").Append ("").New_Row;
+      Table.Append ("alr version:").Append (Alire.Version.Current).New_Row;
+      Table.Append ("libalire version:")
+        .Append (Alire.Version.Current).New_Row;
+      Table.Append ("compilation date:")
+        .Append (GNAT.Source_Info.Compilation_ISO_Date & " "
+                 & GNAT.Source_Info.Compilation_Time).New_Row;
+      Table.Append ("compiler version:").Append (GNAT_Version.Version).New_Row;
 
-      Trace.Always
-        ("interaction flags are:"
-         & " force:" & Alire.Force'Img
-         & " not-interactive:" & CLIC.User_Input.Not_Interactive'Img);
-
-      case Cmd.Optional_Root.Status is
-         when Outside =>
-            Trace.Always ("alr root is empty");
-         when Broken =>
-            Trace.Always ("alr root has invalid metadata: "
-                          & TTY.Error (Cmd.Optional_Root.Message));
-         when Valid =>
-            Trace.Always ("alr root is " & Cmd.Root.Release.Milestone.Image);
-      end case;
-
+      Table.Append ("").New_Row;
+      Table.Append ("CONFIGURATION").New_Row;
+      Table.Append ("config folder:").Append (Paths.Alr_Config_Folder).New_Row;
+      Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
+      Table.Append ("non-interactive flag:")
+        .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
+      Table.Append ("community index branch:")
+        .Append (Alire.Index.Community_Branch).New_Row;
+      Table.Append ("indexes folder:")
+        .Append (Alire.Config.Edit.Indexes_Directory).New_Row;
+      Table.Append ("indexes metadata:")
+        .Append (if Index_Outcome.Success
+                 then "OK"
+                 else "ERROR: " & Index_Outcome.Message).New_Row;
+      for Index of Indexes loop
+         Table.Append ("index #" & Utils.Trim (Index.Priority'Image) & ":")
+           .Append ("(" & Index.Name & ") " & Index.Origin).New_Row;
+      end loop;
+      Table.Append ("toolchain assistant:")
+        .Append (if Alire.Toolchains.Assistant_Enabled
+                 then "enabled"
+                 else "disabled").New_Row;
       declare
-         Guard : Folder_Guard (Enter_Working_Folder) with Unreferenced;
+         I : Positive := 1;
       begin
-         Trace.Always ("alr root detection has settled on path: " &
-                         OS_Lib.Current_Folder);
-         Trace.Always ("alr is finding" & Files.Locate_Any_GPR_File'Img &
-                         " GPR project files");
-         Trace.Always
-           ("alr session state is [" & Cmd.Optional_Root.Status'Img & "]");
+         for Tool of Alire.Toolchains.Tools loop
+            Table
+              .Append ("tool #" & Utils.Trim (I'Image)
+                       & " " & Tool.As_String & ":")
+              .Append (if Alire.Toolchains.Tool_Is_Configured (Tool)
+                       then Alire.Toolchains.Tool_Milestone (Tool).Image
+                       else "not configured").New_Row;
+            I := I + 1;
+         end loop;
       end;
 
-      Log ("alr compiled on [" &
-             GNAT.Source_Info.Compilation_ISO_Date & " " &
-             GNAT.Source_Info.Compilation_Time & "] with GNAT version [" &
-             GNAT_Version.Version & "]",
-           Always);
+      Table.Append ("").New_Row;
+      Table.Append ("WORKSPACE").New_Row;
 
-      Trace.Always ("platform fingerprint: " & Version.Fingerprint);
-      Put ("platform properties:");
+      Table.Append ("root status:")
+        .Append (Root.Status'Image).New_Row;
+      Table.Append ("root release:")
+        .Append (case Root.Status is
+                    when Valid  => Root.Value.Release.Milestone.Image,
+                    when others => "N/A").New_Row;
+      Table.Append ("root load error:")
+        .Append (case Root.Status is
+                    when Broken  => Cmd.Optional_Root.Message,
+                    when Valid   => "none",
+                    when Outside => "N/A").New_Row;
+      Table.Append ("root folder:")
+        .Append (case Root.Status is
+                    when Outside => "N/A",
+                    when Broken  => "N/A",
+                    when Valid   => Root.Value.Path).New_Row;
+      Table.Append ("current folder:").Append (Alire.Directories.Current)
+        .New_Row;
+
+      Table.Append ("").New_Row;
+      Table.Append ("SYSTEM").New_Row;
       for Prop of Platform.Properties loop
-         Put (" " & Prop.Image);
+         Table.Append (Prop.Key & ":").Append (Prop.Image).New_Row;
       end loop;
-      New_Line;
-      Trace.Always ("community index required branch: "
-                    & Alire.Index.Community_Branch);
+
+      Table.Print (Level => Always);
+   exception
+      when E : others =>
+         Alire.Log_Exception (E);
+         Trace.Error ("Unexpected error during information gathering");
+         Trace.Error ("Gathered information up to the error is:");
+         Table.Print (Level => Always);
+         raise;
    end Execute;
 
    ----------------------

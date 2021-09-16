@@ -4,7 +4,7 @@ with AAA.Strings;
 
 with Alire.Config;
 with Alire.Dependencies;
-private with Alire.Milestones;
+with Alire.Milestones;
 with Alire.Releases;
 with Alire.Utils;
 with Alire.Utils.TTY;
@@ -37,6 +37,8 @@ package Alire.Toolchains is
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
    --  Enable/Disable the automatic assistant on next run
 
+   function Assistant_Enabled return Boolean;
+
    procedure Set_As_Default (Release : Releases.Release; Level : Config.Level);
    --  Mark the given release as the default to be used. Does not check that it
    --  be already installed.
@@ -47,6 +49,10 @@ package Alire.Toolchains is
    function Tool_Dependency (Crate : Crate_Name) return Dependencies.Dependency
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
+
+   function Tool_Key (Crate : Crate_Name) return Config.Config_Key;
+
+   function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone;
 
    function Tool_Release (Crate : Crate_Name) return Releases.Release;
    --  Will raise Checked_Error for unconfigured, or configured but without the
@@ -81,6 +87,13 @@ package Alire.Toolchains is
               & "interactions.");
 
 private
+
+   -----------------------
+   -- Assistant_Enabled --
+   -----------------------
+
+   function Assistant_Enabled return Boolean
+   is (Config.Get (Config.Keys.Toolchain_Assistant, Default => True));
 
    --------------
    -- Tool_Key --

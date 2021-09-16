@@ -256,7 +256,7 @@ package body Alr.Commands is
       --  user for its preference at this time.
 
       if Cmd not in Commands.Toolchain.Command'Class and then
-        Conf.Get (Conf.Keys.Toolchain_Assistant, Default => True)
+        Alire.Toolchains.Assistant_Enabled
       then
          Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant (Conf.Global);
