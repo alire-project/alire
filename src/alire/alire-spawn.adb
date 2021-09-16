@@ -42,7 +42,7 @@ package body Alire.Spawn is
                Empty_Vector &
 
                  "-gnatwU" &
-                 --  Supress warnings on unused (may happen in prj_alr.ads)
+                 --  Suppress warnings on unused (may happen in prj_alr.ads)
 
                  "-j0" &
                  "-p" &
