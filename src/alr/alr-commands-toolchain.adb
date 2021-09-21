@@ -478,6 +478,17 @@ package body Alr.Commands.Toolchain is
                Install (Cmd, Elt, Pending, Set_As_Default => True);
                Pending.Exclude (Alire.Dependencies.From_String (Elt).Crate);
             end loop;
+
+            Alire.Toolchains.Set_Automatic_Assistant
+              (False,
+               (if Cmd.Local
+                then Alire.Config.Local
+                else Alire.Config.Global));
+            Trace.Detail
+              ("Assistant disabled in "
+               & TTY.Emph (if Cmd.Local then "local" else "global")
+               & " configuration because of toolchain selection via "
+               & "command line.");
          end if;
 
       elsif Cmd.Uninstall then
