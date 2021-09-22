@@ -152,7 +152,7 @@ package body Alire.Toolchains is
          --  position.
 
          if Result.Choices.First_Element = None and then
-           Natural (Result.Choices.Length) >= 1
+           Natural (Result.Choices.Length) > 1
          then
             Result.Choices.Delete_First;
             Result.Targets.Delete_First;
