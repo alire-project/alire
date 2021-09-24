@@ -2,6 +2,8 @@ with Alr.Commands.Version;
 
 with GNAT.IO; use GNAT.IO;
 
+with Stopwatch;
+
 package body Alr.Testing.Console is
 
    Tab : constant Character := ASCII.HT;
@@ -50,8 +52,7 @@ package body Alr.Testing.Console is
                        Log     :        AAA.Strings.Vector)
    is
       pragma Unreferenced (Rel, Log);
-      type CS is delta 0.01 digits 6;
-
+      Elapsed_Image : String renames Stopwatch.Image (Elapsed, Decimals => 2);
    begin
       This.Results (Outcome) := This.Results (Outcome) + 1;
 
@@ -61,13 +62,13 @@ package body Alr.Testing.Console is
          when Fail =>
             Put_Line (Tab & "FAILED");
          when Pass =>
-            Put_Line (Tab & "tested in" & CS'Image (CS (Elapsed)) & "s");
+            Put_Line (Tab & "tested in " & Elapsed_Image & "s");
          when Skip =>
             Put_Line (Tab & "skipped");
          when Unavailable =>
             Put_Line (Tab & "unavailable");
          when Unresolvable =>
-            Put_Line (Tab & "unresolvable in" & CS'Image (CS (Elapsed)) & "s");
+            Put_Line (Tab & "unresolvable in " & Elapsed_Image & "s");
       end case;
    end End_Test;
 
