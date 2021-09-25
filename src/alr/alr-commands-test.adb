@@ -148,10 +148,10 @@ package body Alr.Commands.Test is
             procedure Default_Test is
                Alr_Args : constant AAA.Strings.Vector :=
                             Empty_Vector &
-                            "get" &
-                            "--build" &
                             "-d" &
                             "-n" &
+                            "get" &
+                            "--build" &
                             R.Milestone.Image;
 
                Docker_Default : constant AAA.Strings.Vector :=
