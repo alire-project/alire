@@ -9,6 +9,12 @@ package Alr.Commands.Clean is
    is ("clean");
 
    overriding
+   function Switch_Parsing (This : Command)
+                            return CLIC.Subcommand.Switch_Parsing_Kind
+   is (CLIC.Subcommand.Before_Double_Dash);
+   --  For the clean command we want the args after -- to pass them to gprclean
+
+   overriding
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector);
 
@@ -27,7 +33,7 @@ package Alr.Commands.Clean is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--cache] [--temp]");
+   is ("[--cache] [--temp] [--] [gprclean switches and arguments]");
 
 private
 

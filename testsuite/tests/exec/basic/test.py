@@ -15,9 +15,14 @@ import re
 run_alr('get', 'hello')
 os.chdir(glob('hello*')[0])
 
-# Run it not quietly to ensure that at normal level
-# the output is not broken by some log message
-p = run_alr('exec', 'sh', '-c',
+p = run_alr('exec', 'echo', 'test string',
+            quiet=False) # -q will hide the output of the exec command
+
+assert_match('test string',
+             p.out, flags=re.S)
+
+# exec using -- to separate arguments to the spawned command
+p = run_alr('exec', '--', 'sh', '-c',
             'echo "print GPR_PROJECT_PATH from'
             ' alire context:" ${GPR_PROJECT_PATH}',
             quiet=False) # -q will hide the output of the exec command

@@ -1,7 +1,6 @@
 with AAA.Strings;
 
 with Alire.Directories;
-with Alire.GPR;
 with Alire.Roots.Optional;
 with Alire.Solver;
 with Alire.Version;
@@ -37,8 +36,9 @@ package Alr.Commands is
    --  command.
 
    overriding
-   function Switches_As_Args (This : Command) return Boolean
-   is (False);
+   function Switch_Parsing (This : Command)
+                            return CLIC.Subcommand.Switch_Parsing_Kind
+   is (CLIC.Subcommand.Parse_All);
    --  Default for alr commands is to parse the switches
 
    -----------------------------------------
@@ -88,15 +88,6 @@ package Alr.Commands is
 
    function Enter_Working_Folder return Alire.Directories.Destination;
    --  Attempt to find the root alire working dir if deeper inside it
-
-   Scenario : Alire.GPR.Scenario;
-   --  This will be filled in during parsing of command line with any seen "-X"
-   --  parameters.
-
-   procedure Add_GPR_Scenario_Switch
-     (Config : in out CLIC.Subcommand.Switches_Configuration);
-   --  This will add a command line switch that handles the "-X" scenario
-   --  variable switches and fill the Scenario data above.
 
 private
 

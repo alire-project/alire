@@ -12,7 +12,6 @@ package body Alr.Commands.Exec is
    is
       use AAA.Strings;
    begin
-
       if Args.Is_Empty then
          Reportaise_Wrong_Arguments
            (Cmd.Name & " takes at least one argument");

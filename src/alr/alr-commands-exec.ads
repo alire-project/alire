@@ -9,8 +9,9 @@ package Alr.Commands.Exec is
    is ("exec");
 
    overriding
-   function Switches_As_Args (This : Command) return Boolean
-   is (True);
+   function Switch_Parsing (This : Command)
+                            return CLIC.Subcommand.Switch_Parsing_Kind
+   is (CLIC.Subcommand.Before_Double_Dash);
 
    overriding
    procedure Execute (Cmd  : in out Command;
@@ -38,7 +39,7 @@ package Alr.Commands.Exec is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("<executable/script> [<switches and arguments>]");
+   is ("[--] <executable/script> [<switches and arguments>]");
 
 private
 

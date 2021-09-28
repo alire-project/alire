@@ -19,7 +19,7 @@ $ alr graph
 ```
 Will run the `alr show` command with the `--graph` switch.
 
-### New command `alr exec <command line>`
+### New command `alr exec -- <command line>`
 
 PR [#853](https://github.com/alire-project/alire/pull/853)
 
@@ -27,20 +27,33 @@ This new command takes an executable and arguments and run them in the Alire
 environment/context of the current crate.
 
 ```console
-$ alr exec sh -c 'echo ${ALIRE}'
+$ alr exec -- sh -c 'echo ${ALIRE}'
 True
 ```
+
+### Pass alr clean switches to gprclean
+
+PR [#853](https://github.com/alire-project/alire/pull/853)
+
+Using the `--` delimiter the switches and arguments for `alr clean` can now be
+passed to the underlying `gprclean` execution.
+
+For instance:
+```console
+$ alr clean -- -XTEST=42
+```
+
 
 ### Pass alr build switches to gprbuild
 
 PR [#850](https://github.com/alire-project/alire/pull/850)
 
-All the switches and arguments for `alr build` are now passed to the underlying
-`gprbuild` execution.
+Using the `--` delimiter, the switches and arguments for `alr build` are now
+passed to the underlying `gprbuild` execution.
 
 For instance:
 ```console
-$ alr build -f
+$ alr build -- -f
 ```
 will force recompilation.
 
