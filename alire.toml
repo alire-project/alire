@@ -41,10 +41,11 @@ macos   = { OS = "macOS" }
 
 # Most dependencies require precise versions during the development cycle:
 [[pins]]
+aaa = { url = "https://github.com/mosteo/aaa.git", commit = "22fcef5c465ece2f9cf5c57b36c340d4d4154811" }
 ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
 ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "2a671ffb1039a036f2bb68bdc88afc8d3dc68c10" }
 ansiada = { url = "https://github.com/mosteo/ansi-ada.git", commit = "acf9afca3afe1f8b8843c061f3cef860d7567307" }
-clic = { url = "https://github.com/alire-project/clic.git", commit = "a58e1a90f39169bdb883243b5ac6b2b8a99fa34f" }
+clic = { url = "https://github.com/alire-project/clic.git", commit = "50fa7aed80e60972b96a873223256f7f88890d7d" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "f3bd1c51d12962879f52733e790b394f5bbfe05f" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "4550aa356d55b9cd55f26acd34701f646021c5ff" }
 optional = { url = "https://github.com/mosteo/optional.git", commit = "0c7d20c0c8b48ccb6b25fb648d48382e598c25c3" }
