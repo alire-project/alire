@@ -170,7 +170,6 @@ package body Alr.Commands.Run is
          --  the single one declared, or if none, the default named one.
 
          declare
-            use all type Ada.Containers.Count_Type;
             Target_WO_Ext : constant String :=
               (if Args.Count = 1
                then Args (1)
