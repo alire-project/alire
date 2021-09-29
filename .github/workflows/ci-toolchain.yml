@@ -1,0 +1,58 @@
+name: CI self+toolchain
+# Build Alire with `alr build` and using a toolchain installed from Alire
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '**.md'
+      - '**.rst'
+      - '**.txt'
+
+jobs:
+
+  build:
+    name: ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: 
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+    - name: Check out
+      uses: actions/checkout@v2
+
+    - uses: actions/cache@v2
+      with:
+        path: ./cache/gnat-ce-2020
+        key: ${{ runner.os }}-gnat-ce-2020
+
+    - name: Install toolchain
+      uses: ada-actions/toolchain@ce2020 # macOS hasn't 2021
+      with:
+        distrib: community
+        install_dir: ./cache/gnat-ce-2020
+
+    - name: Build alr with default indexed toolchain
+      uses: alire-project/setup-alire@v1
+      with:
+        branch: master
+
+    - name: Show dependencies/pins
+      run: alr -n -q with --solve
+
+    - name: Show build environment
+      run: alr -n printenv
+
+    - run: alr -n build
+
+    # For some reason I cannot pinpoint, the Windows build is seeing two
+    # different environments that mess things up. The build succeeds though.
+    - name: Show built version
+      if: matrix.os != 'windows-latest'
+      run: ./bin/alr -n version
