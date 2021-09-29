@@ -1,6 +1,7 @@
 with Alr.Commands.Version;
 
 with Semantic_Versioning;
+with Stopwatch;
 
 package body Alr.Testing.Markdown is
 
@@ -49,7 +50,7 @@ package body Alr.Testing.Markdown is
                        Log     :        AAA.Strings.Vector)
    is
       pragma Unreferenced (Log);
-      type CS is delta 0.01 digits 6;
+      Elapsed_Image : String renames Stopwatch.Image (Elapsed, Decimals => 2);
    begin
       Put_Line
         (This.File.all,
@@ -72,7 +73,7 @@ package body Alr.Testing.Markdown is
             BT (+Rel.Milestone.Crate) & " | " &
             BT (Semantic_Versioning.Image
              (Rel.Milestone.Version)) & " | " &
-            BT (CS (Elapsed)'Img) & " s |");
+            BT (Elapsed_Image) & " s |");
 
       Flush (This.File.all);
    end End_Test;
