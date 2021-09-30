@@ -987,6 +987,7 @@ package body Alire.Releases is
                                  Alire.Properties.Vectors,
                                  Alire.Properties.Vector);
 
+      Deps : constant String := R.Dependencies.To_YAML;
    begin
       return
         "crate: " & Utils.YAML.YAML_Stringify (R.Name_Str) & ASCII.LF &
@@ -998,7 +999,17 @@ package body Alire.Releases is
         "version: " & Utils.YAML.YAML_Stringify (R.Version_Image) & ASCII.LF &
         "short_description: " & Utils.YAML.YAML_Stringify (R.Description) &
         ASCII.LF &
-        "dependencies: " & R.Dependencies.To_YAML & ASCII.LF &
+
+        "dependencies: " &  (if Deps'Length = 0
+                               or else
+                                Deps (Deps'First) /= '['
+                             then
+                                --  Add array brackets when there's only one
+                                --  dependency or no dependency.
+                                "[" & Deps & "]"
+                             else
+                                Deps) & ASCII.LF &
+
         "configuration_variables: " &
            Props_To_YAML (R.Config_Variables) & ASCII.LF &
         "configuration_values: " &
