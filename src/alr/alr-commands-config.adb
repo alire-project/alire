@@ -60,7 +60,7 @@ package body Alr.Commands.Config is
                Trace.Always
                  (CLIC.Config.Info.List
                     (Alire.Config.DB,
-                     Filter => "*",
+                     Filter => ".*",
                      Show_Origin => Cmd.Show_Origin).Flatten (ASCII.LF));
             when 1 =>
                Trace.Always

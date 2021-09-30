@@ -21,6 +21,7 @@ with Alr.Commands.Clean;
 with Alr.Commands.Config;
 with Alr.Commands.Dev;
 with Alr.Commands.Edit;
+with Alr.Commands.Exec;
 with Alr.Commands.Get;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
@@ -38,9 +39,9 @@ with Alr.Commands.Withing;
 
 with Alr.Commands.Topics.Naming_Convention;
 with Alr.Commands.Topics.Toolchains;
+with Alr.Commands.Topics.Aliases;
 
 with GNAT.OS_Lib;
-with GNAT.Source_Info;
 
 with GNATCOLL.VFS;
 with Alr.Platform;
@@ -407,6 +408,8 @@ package body Alr.Commands is
       Create_Alire_Folders;
 
       begin
+         Sub_Cmd.Load_Aliases (Alire.Config.DB);
+
          Sub_Cmd.Execute;
          Log ("alr " & Sub_Cmd.What_Command & " done", Detail);
       exception
@@ -478,46 +481,6 @@ package body Alr.Commands is
       Cmd.Optional_Root := Alire.Roots.Optional.Outcome_Success (Root);
    end Set;
 
-   ---------------------
-   -- Handle_X_Switch --
-   ---------------------
-
-   procedure Handle_X_Switch (Switch, Value : String) is
-      use AAA.Strings;
-   begin
-      if Switch /= "-X" then
-         Reportaise_Command_Failed ("Unexpected switch '" & Switch & "' in " &
-                                      GNAT.Source_Info.Enclosing_Entity);
-      end if;
-
-      declare
-         S : constant Vector := Split (Value, '=');
-      begin
-         if S.Count /= 2 then
-            Reportaise_Wrong_Arguments ("Invalid switch '" &
-                                          Switch & Value & "'");
-         end if;
-         Alire.GPR.Add_Argument (Scenario, S (1), S (2));
-      end;
-   end Handle_X_Switch;
-
-   -----------------------------
-   -- Add_GPR_Scenario_Switch --
-   -----------------------------
-
-   procedure Add_GPR_Scenario_Switch
-     (Config : in out CLIC.Subcommand.Switches_Configuration)
-   is
-
-   begin
-      CLIC.Subcommand.Define_Switch
-        (Config,
-         Callback => Handle_X_Switch'Access,
-         Switch   => "-X!",
-         Help     => "Scenario variable for gprbuild/gprclean",
-         Argument => "Var=Arg");
-   end Add_GPR_Scenario_Switch;
-
 begin
 
    -- Commands --
@@ -533,6 +496,7 @@ begin
    Sub_Cmd.Register ("Build", new Edit.Command);
    Sub_Cmd.Register ("Build", new Run.Command);
    Sub_Cmd.Register ("Build", new Test.Command);
+   Sub_Cmd.Register ("Build", new Exec.Command);
 
    Sub_Cmd.Register ("Index", new Get.Command);
    Sub_Cmd.Register ("Index", new Index.Command);
@@ -548,4 +512,6 @@ begin
    -- Help topics --
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
    Sub_Cmd.Register (new Topics.Toolchains.Topic);
+   Sub_Cmd.Register (new Topics.Aliases.Topic);
+
 end Alr.Commands;

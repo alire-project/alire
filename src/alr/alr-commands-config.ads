@@ -27,7 +27,7 @@ package Alr.Commands.Config is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[--list] [--show-origin] [key_glob] |" &
+     ("[--list] [--show-origin] [key_regex] |" &
         " --get <key> |" &
         " --set <key> <value> |" &
         " --unset <key>");

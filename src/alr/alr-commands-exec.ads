@@ -1,18 +1,17 @@
 with AAA.Strings;
 
-package Alr.Commands.Clean is
+package Alr.Commands.Exec is
 
    type Command is new Commands.Command with private;
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
-   is ("clean");
+   is ("exec");
 
    overriding
    function Switch_Parsing (This : Command)
                             return CLIC.Subcommand.Switch_Parsing_Kind
    is (CLIC.Subcommand.Before_Double_Dash);
-   --  For the clean command we want the args after -- to pass them to gprclean
 
    overriding
    procedure Execute (Cmd  : in out Command;
@@ -20,26 +19,30 @@ package Alr.Commands.Clean is
 
    overriding
    function Long_Description (Cmd : Command)
-                              return AAA.Strings.Vector;
+                              return AAA.Strings.Vector
+   is (AAA.Strings.Empty_Vector
+       .Append ("Alr sets up the environment variables (GPR_PROJECT_PATH, ")
+       .Append ("PATH, etc.) and then spawns the given command.")
+       .New_Line
+       .Append ("This can be used to run tools or scripts on Alire projects.")
+      );
 
    overriding
    procedure Setup_Switches
      (Cmd    : in out Command;
-      Config : in out CLIC.Subcommand.Switches_Configuration);
+      Config : in out CLIC.Subcommand.Switches_Configuration)
+   is null;
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("GPRclean working release and manage cached releases");
+   is ("Run the given command in the alire project context");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--cache] [--temp] [--] [gprclean switches and arguments]");
+   is ("[--] <executable/script> [<switches and arguments>]");
 
 private
 
-   type Command is new Commands.Command with record
-      Cache : aliased Boolean := False;
-      Temp  : aliased Boolean := False;
-   end record;
+   type Command is new Commands.Command with null record;
 
-end Alr.Commands.Clean;
+end Alr.Commands.Exec;

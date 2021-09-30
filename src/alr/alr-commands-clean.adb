@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Directories;
-with Alire.GPR;
 with Alire.Paths;
 with Alire.Spawn;
 
@@ -122,10 +121,6 @@ package body Alr.Commands.Clean is
       use AAA.Strings;
    begin
 
-      if Args.Count /= 0 then
-         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
-      end if;
-
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Valid_Session;
          Cmd.Root.Export_Build_Environment;
@@ -141,11 +136,15 @@ package body Alr.Commands.Clean is
                                  Empty_Vector &
                                    "-r" &
                                    "-P" & Gpr_File &
-                                   Scenario.As_Command_Line,
+                                   Args,
                                  Understands_Verbose => True);
          end loop;
 
          return;
+      end if;
+
+      if Args.Count /= 0 then
+         Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
       end if;
 
       if Cmd.Cache then
@@ -216,8 +215,6 @@ package body Alr.Commands.Clean is
                      Cmd.Temp'Access,
                      Long_Switch => "--temp",
                      Help        => "Delete dangling temporary files");
-
-      Add_GPR_Scenario_Switch (Config);
    end Setup_Switches;
 
 end Alr.Commands.Clean;

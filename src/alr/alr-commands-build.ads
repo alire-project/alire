@@ -9,9 +9,10 @@ package Alr.Commands.Build is
    is ("build");
 
    overriding
-   function Switches_As_Args (This : Command) return Boolean
-   is (True);
-   --  For the build command we want all the args to pass them to gprbuild
+   function Switch_Parsing (This : Command)
+                            return CLIC.Subcommand.Switch_Parsing_Kind
+   is (CLIC.Subcommand.Before_Double_Dash);
+   --  For the build command we want the args after -- to pass them to gprbuild
 
    overriding
    procedure Execute (Cmd  : in out Command;
@@ -40,6 +41,6 @@ package Alr.Commands.Build is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[gprbuild switches and arguments]");
+   is ("[--] [gprbuild switches and arguments]");
 
 end Alr.Commands.Build;
