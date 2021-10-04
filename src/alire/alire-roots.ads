@@ -101,8 +101,10 @@ package Alire.Roots is
    function Release (This  : in out Root;
                      Crate : Crate_Name)
                      return Releases.Release
-     with Pre =>
-     (Crate = This.Release.Name or else This.Solution.Depends_On (Crate));
+     with
+       Pre => (Crate = This.Release.Name
+               or else This.Solution.Depends_On (Crate)),
+       Post => Release'Result.Provides (Crate);
    --  Retrieve a release, that can be either the root or any in the solution
 
    function Release_Base (This  : in out Root;

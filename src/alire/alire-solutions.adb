@@ -1202,7 +1202,7 @@ package body Alire.Solutions is
       end if;
 
       for Dep of This.Dependencies loop
-         if Dep.Has_Release and then Dep.Release.Provides (Dep.Crate) then
+         if Dep.Has_Release and then Dep.Release.Provides (Crate) then
             return Dep;
          end if;
       end loop;
