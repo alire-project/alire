@@ -13,7 +13,6 @@ with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.Toolchains.Solutions;
-with Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Platform;
 
@@ -157,11 +156,15 @@ package body Alire.Environment is
       Rel    : constant Releases.Release := Root.Current.Release (Crate);
       Origin : constant String := Rel.Name_Str;
    begin
-      Trace.Debug ("Loading environment for release: " &
-                     Utils.TTY.Name (Crate));
+      Trace.Debug ("Loading environment for crate "
+                   & Alire.Utils.TTY.Name (Crate)
+                   & " release: " & Rel.Milestone.TTY_Image);
 
       --  Environment variables defined in the crate manifest
       for Act of Rel.Environment (Env) loop
+         Trace.Debug ("Processing env entry: " & Act.Name
+                      & " of type " & Act.Action'Image
+                      & " with value " & Act.Value);
          begin
             declare
                Value : constant String :=

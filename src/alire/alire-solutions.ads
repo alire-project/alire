@@ -310,7 +310,12 @@ package Alire.Solutions is
    function State (This  : Solution;
                    Crate : Crate_Name)
                    return Dependency_State
-     with Pre => This.Depends_On (Crate);
+     with
+       Pre => This.Depends_On (Crate),
+       Post => State'Result.Crate = Crate or else
+         (State'Result.Has_Release
+          and then State'Result.Release.Provides (Crate));
+
    --  Returns the solving state of a dependency in the solution
 
    function State (This    : Solution;
