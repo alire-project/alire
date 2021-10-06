@@ -271,7 +271,11 @@ package body Alr.Commands.Init is
          end if;
 
          Put_Line ("obj/");
-         Put_Line ("lib/");
+         if For_Library then
+            Put_Line ("lib/");
+         else
+            Put_Line ("bin/");
+         end if;
          Put_Line ("alire/");
          Put_Line ("config/");
          TIO.Close (File);
