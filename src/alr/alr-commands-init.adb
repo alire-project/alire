@@ -270,10 +270,14 @@ package body Alr.Commands.Init is
             TIO.Create (File, TIO.Out_File, Filename);
          end if;
 
-         Put_Line ("obj/");
-         Put_Line ("lib/");
-         Put_Line ("alire/");
-         Put_Line ("config/");
+         Put_Line ("/obj/");
+         if For_Library then
+            Put_Line ("/lib/");
+         else
+            Put_Line ("/bin/");
+         end if;
+         Put_Line ("/alire/");
+         Put_Line ("/config/");
          TIO.Close (File);
       end Generate_Gitignore;
 
