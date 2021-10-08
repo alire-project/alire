@@ -5,6 +5,9 @@ maintainers = ["alejandro@mosteo.com"]
 maintainers-logins = ["mylogin"]
 provides = ["gnat=8888.0"]
 
+# Although the compiler is fake, we use this path in some tests
+environment.TEST_PATH.append = "${CRATE_ROOT}/bin"
+
 # Test dynamic expression, but for all OSes
 [origin."case(os)"."..."]
 url = "file:../../../crates/libhello_1.0.0.tgz"
