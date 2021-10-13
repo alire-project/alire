@@ -48,12 +48,23 @@ package body Alire.Externals.From_Output is
       declare
          use GNAT.Regpat;
          Matches : Match_Array (1 .. Match_Count'Last);
-         Output  : constant String :=
-                     OS_Lib.Subprocess.Checked_Spawn_And_Capture
+         Lines   : Utils.String_Vector;
+         Status  : constant Integer :=
+                     OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
                        (This.Command.First_Element,
-                        This.Command.Tail).Flatten ("" & ASCII.LF);
+                        This.Command.Tail,
+                        Lines);
+         Output  : constant String :=
+                     Lines.Flatten ("" & ASCII.LF);
          --  ASCII.LF is used by Regpat for new lines
       begin
+         if Status /= 0 then
+            Trace.Debug
+              ("External command [" & This.Command.First_Element
+               & "] erred with code: " & Utils.Trim (Status'Image));
+            return Releases.Containers.Empty_Release_Set;
+         end if;
+
          return Releases : Alire.Releases.Containers.Release_Set do
             Trace.Debug ("Looking for external in version string: " & Output);
             Match (This.Regexp, Output, Matches);

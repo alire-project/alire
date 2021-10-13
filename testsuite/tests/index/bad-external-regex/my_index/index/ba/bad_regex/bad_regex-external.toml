@@ -1,0 +1,10 @@
+description = "An external with bad switches"
+name = "bad_regex"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "version-output"
+version-regexp = "*" # No char before * is improper
+version-command = ["make", "--version"]
