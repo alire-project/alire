@@ -48,7 +48,7 @@ package body Alire.Externals.From_Output is
       declare
          use GNAT.Regpat;
          Matches : Match_Array (1 .. Match_Count'Last);
-         Lines   : Utils.String_Vector;
+         Lines   : AAA.Strings.Vector;
          Status  : constant Integer :=
                      OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
                        (This.Command.First_Element,
@@ -61,7 +61,7 @@ package body Alire.Externals.From_Output is
          if Status /= 0 then
             Trace.Debug
               ("External command [" & This.Command.First_Element
-               & "] erred with code: " & Utils.Trim (Status'Image));
+               & "] erred with code: " & AAA.Strings.Trim (Status'Image));
             return Releases.Containers.Empty_Release_Set;
          end if;
 
