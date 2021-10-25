@@ -217,12 +217,8 @@ package body Alire.Toolchains is
 
             --  Clean up stored version
 
-            if not CLIC.Config.Edit.Unset
-              (Path  => Config.Edit.Filepath (Level),
-               Key   => Tool_Key (Crate))
-            then
-               Raise_Checked_Error ("Cannot unset config key");
-            end if;
+            Unconfigure (Crate, Level);
+
          else
 
             Put_Info
@@ -393,16 +389,27 @@ package body Alire.Toolchains is
    -- Unconfigure --
    -----------------
 
-   procedure Unconfigure (Crate : Crate_Name) is
+   procedure Unconfigure (Crate         : Crate_Name;
+                          Level         : Config.Level;
+                          Fail_If_Unset : Boolean := True) is
    begin
-      for Level in Config.Level loop
-         if not CLIC.Config.Edit.Unset
-           (Config.Edit.Filepath (Level),
-            Tool_Key (Crate))
-         then
-            Raise_Checked_Error ("Cannot unset config key");
-         end if;
-      end loop;
+      if CLIC.Config.Defined (Config.DB, Tool_Key (Crate)) and then
+        not CLIC.Config.Edit.Unset
+          (Config.Edit.Filepath (Level),
+           Tool_Key (Crate))
+      then
+         declare
+            Msg : constant String :=
+                    "Cannot unset config key " & Tool_Key (Crate)
+                  & " at config level " & Level'Image;
+         begin
+            if Fail_If_Unset then
+               Raise_Checked_Error (Msg);
+            else
+               Trace.Debug (Msg);
+            end if;
+         end;
+      end if;
    end Unconfigure;
 
 end Alire.Toolchains;

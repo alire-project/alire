@@ -120,7 +120,7 @@ package body Alr.Commands.Config is
             Key : constant String := Args.Element (1);
          begin
             if not CLIC.Config.Is_Valid_Config_Key (Key) then
-               Reportaise_Wrong_Arguments ("Invalid configration key '" &
+               Reportaise_Wrong_Arguments ("Invalid configuration key '" &
                  Key & "'");
             end if;
 
