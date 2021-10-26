@@ -61,8 +61,10 @@ package Alire.Toolchains is
    --  release being deployed (e.g. the user messed with files and deleted it
    --  manually).
 
-   procedure Unconfigure (Crate : Crate_Name);
-   --  Set the crate as not configured.
+   procedure Unconfigure (Crate         : Crate_Name;
+                          Level         : Config.Level;
+                          Fail_If_Unset : Boolean := True);
+   --  Set the crate as not configured. If not set and Fail_If_Unset, raise
 
    Description : constant AAA.Strings.Vector
      := AAA.Strings.Empty_Vector

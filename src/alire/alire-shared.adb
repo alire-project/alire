@@ -213,8 +213,12 @@ package body Alire.Shared is
          Put_Warning ("Removing it anyway; it will be also removed from the "
                       & "default toolchain.");
 
-         --  So remove it
-         Toolchains.Unconfigure (Release.Name);
+         --  So remove it at any level. We currently do not have a way to know
+         --  from which level we have to remove this configuration.
+         Toolchains.Unconfigure (Release.Name, Config.Global,
+                                 Fail_If_Unset => False);
+         Toolchains.Unconfigure (Release.Name, Config.Local,
+                                 Fail_If_Unset => False);
       end if;
 
       if not Confirm or else Query
