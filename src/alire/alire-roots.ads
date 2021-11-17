@@ -210,7 +210,8 @@ package Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean)
+                   Export_Build_Env : Boolean;
+                   Cov_Instr        : Boolean := False)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for

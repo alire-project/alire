@@ -19,6 +19,7 @@ with Alire.Toolchains;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
+with Alr.Commands.Coverage;
 with Alr.Commands.Dev;
 with Alr.Commands.Edit;
 with Alr.Commands.Exec;
@@ -497,6 +498,7 @@ begin
    Sub_Cmd.Register ("Build", new Run.Command);
    Sub_Cmd.Register ("Build", new Test.Command);
    Sub_Cmd.Register ("Build", new Exec.Command);
+   Sub_Cmd.Register ("Build", new Coverage.Command);
 
    Sub_Cmd.Register ("Index", new Get.Command);
    Sub_Cmd.Register ("Index", new Index.Command);

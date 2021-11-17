@@ -34,7 +34,8 @@ package body Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean)
+                   Export_Build_Env : Boolean;
+                   Cov_Instr        : Boolean := False)
                    return Boolean
    is
       Build_Failed : exception;
@@ -97,6 +98,8 @@ package body Alire.Roots is
 
          procedure Call_Gprbuild (Release : Releases.Release) is
             use Directories.Operators;
+            use AAA.Strings;
+
             Count : constant Natural :=
                       Natural
                         (Release.Project_Files
@@ -136,8 +139,18 @@ package body Alire.Roots is
                               else "")
                             & "...");
 
-                  Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
-                                  Extra_Args => Cmd_Args);
+                  Spawn.Gprbuild
+                    (This.Release_Base (Release.Name) / Gpr_File,
+                     Extra_Args => Cmd_Args &
+                     (if Is_Root and then Cov_Instr then
+                        --  Add switches to build instrumented code. Only to
+                        --  the root crate beacause dependencies may not have
+                        --  instrumentation.
+                        Empty_Vector
+                        .Append ("--src-subdirs=gnatcov-instr")
+                        .Append ("--implicit-with=gnatcov_rts_full")
+                      else
+                        Empty_Vector));
 
                   Current := Current + 1;
                end loop;

@@ -215,6 +215,15 @@ package body Alr.Commands.Init is
          Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
          Put_Line ("   end Binder;");
          Put_New_Line;
+         Put_Line ("   package Coverage is");
+         Put_Line ("      Cov_Level := (""--level=stmt+decision"");");
+         Put_Line ("      for Switches (""instrument"") use (""--dump-trigger=atexit"") & Cov_Level;");
+         Put_Line ("      for Switches (""coverage"") use (""--annotate=xcov"",");
+         Put_Line ("                                     ""--output-dir"", ""gnatcov_out"") &");
+         Put_Line ("                                     Cov_Level;");
+         Put_Line ("   end Coverage;");
+
+         Put_New_Line;
          TIO.Put (File, "end " & Mixed_Name & ";");
          pragma Style_Checks ("M80");
 

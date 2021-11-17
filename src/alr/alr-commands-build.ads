@@ -2,7 +2,9 @@ with AAA.Strings;
 
 package Alr.Commands.Build is
 
-   type Command is new Commands.Command with null record;
+   type Command is new Commands.Command with record
+      Cov_Instr : aliased Boolean := False; -- Build for instrumented coverage
+   end record;
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
@@ -20,7 +22,8 @@ package Alr.Commands.Build is
 
    function Execute (Cmd              : in out Commands.Command'Class;
                      Args             :        AAA.Strings.Vector;
-                     Export_Build_Env :        Boolean)
+                     Export_Build_Env :        Boolean;
+                     Cov_Instr        :        Boolean := False)
                      return Boolean;
    --  Returns True if compilation succeeded. For invocations after some other
    --  command that already has set up the build environment we need to avoid
@@ -41,6 +44,6 @@ package Alr.Commands.Build is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--] [gprbuild switches and arguments]");
+   is ("[--cov-instr] [--] [gprbuild switches and arguments]");
 
 end Alr.Commands.Build;
