@@ -8,8 +8,6 @@ with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Solutions;
 with Alire.Utils.User_Input.Query_Config;
-with Alire.Properties.Configurations;
-with Alr.Utils;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
@@ -114,14 +112,7 @@ package body Alr.Commands.Init is
          end if;
          Put_Line ("abstract project " & Mixed_Name & "_Config is");
          Put_Line ("   Crate_Version := ""0.0.0"";");
-         Put_Line ("end " & Mixed_Name & "_Config;");
 
-         declare
-            use Alire.Properties.Configurations;
-            Build_Mode : constant Config_Type_Definition := Builtin_Build_Mode;
-         begin
-            Put_Line (To_GPR_Declaration (Build_Mode, Default (Build_Mode)));
-         end;
          TIO.Put (File, "end " & Mixed_Name & "_Config;");
          TIO.Close (File);
 
@@ -154,65 +145,6 @@ package body Alr.Commands.Init is
             Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");
          end if;
          Put_New_Line;
-<<<<<<< HEAD
-         Put_Line ("   type Enabled_Kind is (""enabled"", ""disabled"");");
-         Put_Line ("   Compile_Checks : Enabled_Kind := External (""" & Upper_Name & "_COMPILE_CHECKS"", ""disabled"");");
-         Put_Line ("   Runtime_Checks : Enabled_Kind := External (""" & Upper_Name & "_RUNTIME_CHECKS"", ""disabled"");");
-         Put_Line ("   Style_Checks : Enabled_Kind := External (""" & Upper_Name & "_STYLE_CHECKS"", ""disabled"");");
-         Put_Line ("   Contracts_Checks : Enabled_Kind := External (""" & Upper_Name & "_CONTRACTS"", ""disabled"");");
-         Put_New_Line;
-         Put_Line ("   type Build_Kind is (""debug"", ""optimize"");");
-         Put_Line ("   Build_Mode : Build_Kind := External (""" & Upper_Name & "_BUILD_MODE"", ""optimize"");");
-         Put_New_Line;
-         Put_Line ("   Compile_Checks_Switches := ();");
-         Put_Line ("   case Compile_Checks is");
-         Put_Line ("      when ""enabled"" =>");
-         Put_Line ("         Compile_Checks_Switches :=");
-         Put_Line ("           (""-gnatwa"",  -- All warnings");
-         Put_Line ("            ""-gnatVa"",  -- All validity checks");
-         Put_Line ("            ""-gnatwe""); -- Warnings as errors");
-         Put_Line ("      when others => null;");
-         Put_Line ("   end case;");
-         Put_New_Line;
-         Put_Line ("   Runtime_Checks_Switches := ();");
-         Put_Line ("   case Runtime_Checks is");
-         Put_Line ("      when ""enabled"" => null;");
-         Put_Line ("      when others =>");
-         Put_Line ("         Runtime_Checks_Switches :=");
-         Put_Line ("           (""-gnatp""); -- Suppress checks");
-         Put_Line ("   end case;");
-         Put_New_Line;
-         Put_Line ("   Style_Checks_Switches := ();");
-         Put_Line ("   case Style_Checks is");
-         Put_Line ("      when ""enabled"" =>");
-         Put_Line ("         Style_Checks_Switches :=");
-         Put_Line ("           (""-gnatyg"",   -- GNAT Style checks");
-         Put_Line ("            ""-gnaty-d"",  -- Disable no DOS line terminators");
-         Put_Line ("            ""-gnatyM80"", -- Maximum line length");
-         Put_Line ("            ""-gnatyO"");  -- Overriding subprograms explicitly marked as such");
-         Put_Line ("      when others => null;");
-         Put_Line ("   end case;");
-         Put_New_Line;
-         Put_Line ("   Contracts_Switches := ();");
-         Put_Line ("   case Contracts_Checks is");
-         Put_Line ("      when ""enabled"" =>");
-         Put_Line ("         Contracts_Switches :=");
-         Put_Line ("           (""-gnata""); --  Enable assertions and contracts");
-         Put_Line ("      when others => null;");
-         Put_Line ("   end case;");
-         Put_New_Line;
-         Put_Line ("   Build_Switches := ();");
-         Put_Line ("   case Build_Mode is");
-         Put_Line ("      when ""optimize"" =>");
-         Put_Line ("         Build_Switches := (""-O3"",     -- Optimization");
-         Put_Line ("                            ""-gnatn""); -- Enable inlining");
-         Put_Line ("      when ""debug"" =>");
-         Put_Line ("         Build_Switches := (""-g"",   -- Debug info");
-         Put_Line ("                            ""-Og""); -- No optimization");
-         Put_Line ("   end case;");
-         Put_New_Line;
-=======
->>>>>>> e8652207... Build profiles prototype
          Put_Line ("   package Compiler is");
          Put_Line ("      for Default_Switches (""Ada"") use " & Mixed_Name & "_Config.GNAT_Switches;");
          Put_Line ("   end Compiler;");

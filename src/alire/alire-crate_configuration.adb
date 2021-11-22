@@ -10,6 +10,9 @@ with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
 
+with Alire.Properties.Build_Profile;
+with Alire.Utils.Switches; use Alire.Utils.Switches;
+with Alire.Utils.Switches.Knowledge;
 with Alire.Directories;
 
 with TOML; use TOML;
@@ -22,6 +25,115 @@ package body Alire.Crate_Configuration is
    is (Type_Name = "crate_version");
    --  Return True if Type_Name is reserved for Alire internal use
 
+   ----------------------------
+   -- Make_Build_Profile_Map --
+   ----------------------------
+
+   procedure Make_Build_Profile_Map (This    : in out Global_Config;
+                                     Root     : Alire.Roots.Root;
+                                     Solution : Solutions.Solution)
+   is
+      use Properties.Build_Profile;
+
+      -----------------
+      -- Set_Profile --
+      -----------------
+
+      procedure Set_Profile (Crate : Crate_Name; P : Profile_Kind) is
+      begin
+         if This.Profile_Map.Contains (Crate) then
+            This.Profile_Map.Replace (Crate, P);
+         else
+            Raise_Checked_Error ("Unknow crate in build profile: '" &
+                                   String'(+Crate) & "'");
+         end if;
+      end Set_Profile;
+
+   begin
+
+      --  Populate map with crates in the solution
+      for Rel of Solution.Releases.Including (Root.Release) loop
+         This.Profile_Map.Insert (Rel.Name,
+                                  (if Rel.Name = Root.Name
+                                   then Development
+                                   else Release));
+      end loop;
+
+      for Prop of Root.Release.On_Platform_Properties
+        (Root.Environment,
+         Properties.Build_Profile.Variable'Tag)
+      loop
+         declare
+            Prof : constant Properties.Build_Profile.Variable
+              := Properties.Build_Profile.Variable (Prop);
+         begin
+
+            if Prof.Has_Wildcard then
+
+               --  If wildcard is defined, apply it to all crates
+               declare
+                  Wildcard_Profile : constant Profile_Kind
+                    := Prof.Wildcard;
+               begin
+                  for Cursor in This.Profile_Map.Iterate loop
+                     This.Profile_Map.Replace_Element
+                       (Cursor, Wildcard_Profile);
+                  end loop;
+               end;
+            end if;
+
+            declare
+               use Properties.Build_Profile.Profile_Selection_Maps;
+               Sel : constant Profile_Selection_Maps.Map
+                 := Prof.Selection;
+            begin
+               for Cursor in Sel.Iterate loop
+                  Set_Profile (Key (Cursor), Element (Cursor));
+               end loop;
+            end;
+         end;
+      end loop;
+
+      for Cursor in This.Profile_Map.Iterate loop
+         --  Set build_Mode value in configuration variables
+         This.Set_Value
+           (Profile_Maps.Key (Cursor),
+            (Name => +Builtin_Build_Profile.Name,
+             Value => TOML.Create_String (Profile_Maps.Element (Cursor)'Img)));
+      end loop;
+
+   end Make_Build_Profile_Map;
+
+   ----------------------
+   -- Make_Swiches_Map --
+   ----------------------
+
+   procedure Make_Swiches_Map (This     : in out Global_Config;
+                               Root     : Alire.Roots.Root;
+                               Solution : Solutions.Solution)
+   is
+   begin
+      for Rel of Solution.Releases.Including (Root.Release) loop
+         declare
+            Profile : constant Profile_Kind
+              := This.Profile_Map.Element (Rel.Name);
+
+            List : Alire.Utils.Switches.Switch_List;
+         begin
+            case Profile is
+               when Release =>
+                  List := Get_List (Default_Release_Switches);
+               when Validation =>
+                  List := Get_List (Default_Validation_Switches);
+               when Development =>
+                  List := Get_List (Default_Development_Switches);
+            end case;
+
+            This.Switches_Map.Insert (Rel.Name, List);
+         end;
+      end loop;
+   end Make_Swiches_Map;
+
    ----------
    -- Load --
    ----------
@@ -30,6 +142,7 @@ package body Alire.Crate_Configuration is
                    Root : in out Alire.Roots.Root)
    is
       Solution : constant Solutions.Solution := Root.Solution;
+
    begin
 
       if not Solution.Is_Complete then
@@ -41,6 +154,10 @@ package body Alire.Crate_Configuration is
          This.Load_Definitions (Root  => Root,
                                 Crate => Rel.Name);
       end loop;
+
+      Make_Build_Profile_Map (This, Root, Solution);
+
+      Make_Swiches_Map (This, Root, Solution);
 
       for Rel of Solution.Releases.Including (Root.Release) loop
          This.Load_Settings (Root  => Root,
@@ -181,6 +298,45 @@ package body Alire.Crate_Configuration is
       TIO.Close (File);
    end Generate_Ada_Config;
 
+   ---------------------------
+   -- Pretty_Print_Switches --
+   ---------------------------
+
+   procedure Pretty_Print_Switches (File : TIO.File_Type;
+                                    L      : Switch_List;
+                                    Indent : Natural)
+   is
+      Indent_Str : constant String (1 .. Indent) := (others => ' ');
+      First : Boolean := True;
+   begin
+
+      Alire.Utils.Switches.Knowledge.Populate;
+
+      TIO.Put_Line (File, Indent_Str & "(");
+      for Sw of L loop
+         TIO.Put (File, Indent_Str & " ");
+         if not First then
+            TIO.Put (File, ",");
+         else
+            TIO.Put (File, " ");
+            First := False;
+         end if;
+         TIO.Put (File, """" & Sw & """");
+
+         declare
+            Info : constant String := Utils.Switches.Knowledge.Get_Info (Sw);
+         begin
+            if Info'Length /= 0 then
+               TIO.Put (File, " -- " & Info);
+            end if;
+         end;
+
+         TIO.New_Line (File);
+      end loop;
+
+      TIO.Put_Line (File, Indent_Str & ");");
+   end Pretty_Print_Switches;
+
    -------------------------
    -- Generate_GPR_Config --
    -------------------------
@@ -207,6 +363,13 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "abstract project " & (+Crate) & "_Config is");
 
       TIO.Put_Line (File, "   Crate_Version := """ & Version & """;");
+
+      TIO.Put_Line (File, "   Ada_Compiler_Switches := " &
+                      "External_As_List (""ADAFLAGS"", "" "") &");
+
+      Pretty_Print_Switches (File,
+                             This.Switches_Map.Element (Crate),
+                             Indent => 10);
 
       for C in This.Map.Iterate loop
          declare
@@ -285,6 +448,42 @@ package body Alire.Crate_Configuration is
       TIO.Close (File);
    end Generate_C_Config;
 
+   --------------------
+   -- Add_Definition --
+   --------------------
+
+   procedure Add_Definition (This     : in out Global_Config;
+                             Crate    : Crate_Name;
+                             Type_Def : Config_Type_Definition)
+   is
+      Type_Name_Lower : constant String :=
+        Ada.Characters.Handling.To_Lower (Type_Def.Name);
+
+      Name : constant Unbounded_String := +(+Crate & "." & Type_Name_Lower);
+   begin
+
+      Trace.Always ("Add_Defintion: " & (+Name));
+
+      if Is_Reserved_Name (Type_Name_Lower) then
+         Raise_Checked_Error
+           ("Configuration variable name '" & (+Name) &
+              "' is reserved for Alire internal use");
+      end if;
+
+      if This.Map.Contains (Name) then
+         Raise_Checked_Error
+           ("Configuration variable '" & (+Name) & "' already defined");
+      end if;
+
+      declare
+         Setting : Config_Setting;
+      begin
+         Setting.Type_Def.Replace_Element (Type_Def);
+         Setting.Value := TOML.No_TOML_Value;
+         This.Map.Insert (Name, Setting);
+      end;
+   end Add_Definition;
+
    ----------------------
    -- Load_Definitions --
    ----------------------
@@ -294,54 +493,63 @@ package body Alire.Crate_Configuration is
                                Crate : Crate_Name)
    is
 
-      --------------------
-      -- Add_Definition --
-      --------------------
-
-      procedure Add_Definition (Type_Def : Config_Type_Definition) is
-         Type_Name_Lower : constant String :=
-           Ada.Characters.Handling.To_Lower (Type_Def.Name);
-
-         Name : constant Unbounded_String := +(+Crate & "." & Type_Name_Lower);
-      begin
-
-         if Is_Reserved_Name (Type_Name_Lower) then
-            Raise_Checked_Error
-              ("Configuration variable name '" & (+Name) &
-                 "' is reserved for Alire internal use");
-         end if;
-
-         if This.Map.Contains (Name) then
-            if Type_Name_Lower = "build_mode" then
-               Raise_Checked_Error
-                 ("Configuration variable '" & (+Name) & "' is reserved");
-            else
-               Raise_Checked_Error
-                 ("Configuration variable '" & (+Name) & "' already defined");
-            end if;
-         end if;
-
-         declare
-            Setting : Config_Setting;
-         begin
-            Setting.Type_Def.Replace_Element (Type_Def);
-            Setting.Value := TOML.No_TOML_Value;
-            This.Map.Insert (Name, Setting);
-         end;
-      end Add_Definition;
-
       Rel : constant Releases.Release := Root.Release (Crate);
 
    begin
       --  Add built-in definition
-      Add_Definition (Alire.Properties.Configurations.Builtin_Build_Mode);
+      This.Add_Definition (Crate,
+                           Properties.Configurations.Builtin_Build_Profile);
 
       for Prop of Rel.On_Platform_Properties (Root.Environment,
                                               Config_Type_Definition'Tag)
       loop
-         Add_Definition (Config_Type_Definition (Prop));
+         This.Add_Definition (Crate, Config_Type_Definition (Prop));
       end loop;
    end Load_Definitions;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (This  : in out Global_Config;
+                        Crate : Crate_Name;
+                        Val   : Assignment)
+   is
+      Val_Name_Lower : constant String :=
+        Ada.Characters.Handling.To_Lower (+Val.Name);
+      Crate_Str : constant String := +Crate;
+      Name : constant Unbounded_String := (+Crate_Str) & "." & Val_Name_Lower;
+   begin
+
+      --  TODO check if setting configuration of a dependency
+
+      if not This.Map.Contains (Name) then
+         Raise_Checked_Error
+           ("Unknown configuration variable '" & (+Name) & "'");
+      end if;
+
+      declare
+         Ref : constant Config_Maps.Reference_Type :=
+           This.Map.Reference (Name);
+      begin
+
+         if not Valid (Ref.Type_Def.Element, Val.Value) then
+            Raise_Checked_Error
+              ("Invalid value from '" & Crate_Str &
+                 "'" & " for type " & Image (Ref.Type_Def.Element));
+         end if;
+
+         if Ref.Value /= No_TOML_Value and then Ref.Value /= Val.Value then
+            Raise_Checked_Error
+              ("Conflicting value for configuration variable '" &
+               (+Name) & "' from '" & (+Ref.Set_By) & "' and '"
+               & (+Crate) & "'.");
+         else
+            Ref.Value := Val.Value;
+            Ref.Set_By := +(+Crate);
+         end if;
+      end;
+   end Set_Value;
 
    -------------------
    -- Load_Settings --
@@ -354,46 +562,6 @@ package body Alire.Crate_Configuration is
 
       Rel : constant Releases.Release := Root.Release (Crate);
 
-      ---------------
-      -- Set_Value --
-      ---------------
-
-      procedure Set_Value (Crate : Unbounded_String; Val : Assignment) is
-         Val_Name_Lower : constant String :=
-           Ada.Characters.Handling.To_Lower (+Val.Name);
-         Name : constant Unbounded_String := Crate & "." & Val_Name_Lower;
-      begin
-
-         --  TODO check if setting configuration of a dependency
-
-         if not This.Map.Contains (Name) then
-            Raise_Checked_Error
-              ("Unknown configuration variable '" & (+Name) & "'");
-         end if;
-
-         declare
-            Ref : constant Config_Maps.Reference_Type :=
-              This.Map.Reference (Name);
-         begin
-
-            if not Valid (Ref.Type_Def.Element, Val.Value) then
-               Raise_Checked_Error
-                 ("Invalid value from '" & (+Crate) &
-                    "'" & " for type " & Image (Ref.Type_Def.Element));
-            end if;
-
-            if Ref.Value /= No_TOML_Value and then Ref.Value /= Val.Value then
-               Raise_Checked_Error
-                 ("Conflicting value for configuration variable '" &
-                  (+Name) & "' from '" & (+Ref.Set_By) & "' and '"
-                  & (+Crate) & "'.");
-            else
-               Ref.Value := Val.Value;
-               Ref.Set_By := +(+Crate);
-            end if;
-         end;
-      end Set_Value;
-
    begin
 
       for Prop of Rel.On_Platform_Properties (Root.Environment,
@@ -404,7 +572,7 @@ package body Alire.Crate_Configuration is
               Config_Value_Assignment (Prop);
          begin
             for Elt of List.List loop
-               Set_Value (List.Crate, Elt);
+               This.Set_Value (To_Name (+List.Crate), Elt);
             end loop;
          end;
       end loop;

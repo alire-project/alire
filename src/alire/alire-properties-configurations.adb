@@ -2,6 +2,8 @@ with TOML; use TOML;
 
 with Alire.Utils.YAML;
 
+with Alire.Utils.Switches;
+
 with Ada.Characters.Handling;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -496,28 +498,6 @@ package body Alire.Properties.Configurations is
       use ASCII;
       Name : constant String := +This.Name;
       Indent : constant String := "   ";
-
-      function GNAT_Switches (Mode : String; Indent : String := "")
-                              return String
-      is
-      begin
-         pragma Style_Checks ("M120");
-         if Mode = "Release" then
-            return "(""-O3"", -- Optimize for performance" & LF &
-              Indent & """-gnatp"", -- Supress checks" & LF &
-              Indent & """-gnatw.X"", -- Disable warnings for No_Exception_Propagation" & LF &
-              Indent & """-gnatQ""  -- Don't quit. Generate ALI and tree files even if illegalities" & LF &
-              Indent & ")";
-         elsif Mode = "Develop" then
-            return "(""-Og"",  -- Optimize for debug" & LF &
-              Indent & """-g"", -- Debug info" & LF &
-              Indent & """-gnatw.X"", -- Disable warnings for No_Exception_Propagation" & LF &
-              Indent & """-gnatQ""  -- Don't quit. Generate ALI and tree files even if illegalities" & LF &
-              Indent & ")";
-         else
-            return "()";
-         end if;
-      end GNAT_Switches;
    begin
       case This.Kind is
 
@@ -532,12 +512,7 @@ package body Alire.Properties.Configurations is
             return Indent & "type " & Name & "_Kind is (" &
               To_String (This.Values, Wrap_With_Quotes => True) & ");" & LF &
               Indent & Name & " : " & Name & "_Kind := """ & Value.As_String
-              & """;"
-              & (if Name = "Build_Mode"
-                 then LF & Indent & "GNAT_Switches := " &
-                   GNAT_Switches (Value.As_String,
-                   Indent & "                  ") & ";"
-                 else "");
+              & """;";
 
          when Real =>
 
@@ -914,21 +889,22 @@ package body Alire.Properties.Configurations is
       end return;
    end Config_Entry_From_TOML;
 
-   ------------------------
-   -- Builtin_Build_Mode --
-   ------------------------
+   ---------------------------
+   -- Builtin_Build_Profile --
+   ---------------------------
 
-   function Builtin_Build_Mode return Config_Type_Definition is
+   function Builtin_Build_Profile return Config_Type_Definition is
 
       Ret : constant Config_Type_Definition :=
         (Kind    => Enum,
-         Name    => +"Build_Mode",
-         Default => TOML.Create_String ("Release"),
-         Values  => TOML.Create_Array (Item_Kind => TOML.TOML_String));
+         Name    => +"Build_Profile",
+         Default => No_TOML_Value,
+         Values  => TOML.Create_Array);
    begin
-      Ret.Values.Append (TOML.Create_String ("Release"));
-      Ret.Values.Append (TOML.Create_String ("Develop"));
+      for P in Alire.Utils.Switches.Profile_Kind loop
+         Ret.Values.Append (TOML.Create_String (P'Img));
+      end loop;
       return Ret;
-   end Builtin_Build_Mode;
+   end Builtin_Build_Profile;
 
 end Alire.Properties.Configurations;

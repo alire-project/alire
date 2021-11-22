@@ -7,6 +7,9 @@ private with Ada.Strings.Unbounded;
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Indefinite_Holders;
+private with Ada.Containers.Indefinite_Ordered_Maps;
+
+private with Alire.Utils.Switches;
 
 package Alire.Crate_Configuration is
 
@@ -21,6 +24,8 @@ package Alire.Crate_Configuration is
 private
 
    use Alire.Properties.Configurations;
+   use type Alire.Utils.Switches.Profile_Kind;
+   use type Alire.Utils.Switches.Switch_List;
 
    package Config_Type_Definition_Holder
    is new Ada.Containers.Indefinite_Holders (Config_Type_Definition);
@@ -37,17 +42,36 @@ private
       Hash            => Ada.Strings.Unbounded.Hash,
       Equivalent_Keys => Ada.Strings.Unbounded."=");
 
+   package Profile_Maps
+   is new Ada.Containers.Indefinite_Ordered_Maps
+     (Crate_Name, Alire.Utils.Switches.Profile_Kind);
+
+   package Switches_Maps
+   is new Ada.Containers.Indefinite_Ordered_Maps
+     (Crate_Name, Alire.Utils.Switches.Switch_List);
+
    type Global_Config is tagged limited record
       Map : Config_Maps.Map;
+
+      Profile_Map  : Profile_Maps.Map;
+      Switches_Map : Switches_Maps.Map;
    end record;
 
    procedure Use_Default_Values (Conf : in out Global_Config);
    --  Use default value for unset variable, raise Checked_Error if a variable
    --  has no default value.
 
+   procedure Add_Definition (This     : in out Global_Config;
+                             Crate    : Crate_Name;
+                             Type_Def : Config_Type_Definition);
+
    procedure Load_Definitions (This  : in out Global_Config;
                                Root  : in out Roots.Root;
                                Crate : Crate_Name);
+
+   procedure Set_Value (This  : in out Global_Config;
+                        Crate : Crate_Name;
+                        Val   : Assignment);
 
    procedure Load_Settings (This  : in out Global_Config;
                             Root  : in out Roots.Root;
@@ -58,11 +82,11 @@ private
                                   Filepath : Absolute_Path;
                                   Version  : String);
 
-   procedure Generate_GPR_Config (This     : Global_Config;
-                                  Crate    : Crate_Name;
-                                  Filepath : Absolute_Path;
-                                  Withs    : AAA.Strings.Set;
-                                  Version  : String);
+   procedure Generate_GPR_Config (This        : Global_Config;
+                                  Crate       : Crate_Name;
+                                  Filepath    : Absolute_Path;
+                                  Withs       : AAA.Strings.Set;
+                                  Version     : String);
 
    procedure Generate_C_Config (This     : Global_Config;
                                 Crate    : Crate_Name;
