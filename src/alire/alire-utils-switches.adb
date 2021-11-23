@@ -74,7 +74,8 @@ package body Alire.Utils.Switches is
                               .Append (GNAT_Optimize_Performance)
                               .Append (GNAT_Enable_Inlining),
           when Size        => Empty_List
-                              .Append (GNAT_Optimize_Size),
+                              .Append (GNAT_Optimize_Size)
+                              .Append (GNAT_Enable_Inlining),
           when Debug       => Empty_List
                               .Append (GNAT_Optimize_Debug),
           when Custom      => S.List);
@@ -95,10 +96,39 @@ package body Alire.Utils.Switches is
 
    function Get_List (S : Contracts_Switches) return Switch_List
    is (case S.Kind is
-          when No         => Empty_List.Append (GNAT_Supress_Runtime_Check),
+          when No         => Empty_List,
+          when Yes        => Empty_List.Append (GNAT_Asserts_And_Contracts),
+          when Custom     => S.List);
+
+   --------------
+   -- Get_List --
+   --------------
+
+   function Get_List (S : Runtime_Checks_Switches) return Switch_List
+   is (case S.Kind is
+          when None       => Empty_List.Append (GNAT_Supress_Runtime_Check),
           when Default    => Empty_List,
+          when Overflow   => Empty_List
+                             .Append (GNAT_Supress_Runtime_Check)
+                             .Append (GNAT_Enable_Overflow_Check),
           when Everything => Empty_List.Append (GNAT_Enable_Overflow_Check),
           when Custom     => S.List);
+
+   --------------
+   -- Get_List --
+   --------------
+
+   function Get_List (S : Compile_Checks_Switches) return Switch_List
+   is (case S.Kind is
+          when None     => Empty_List,
+          when Warnings => Empty_List
+                           .Append (GNAT_All_Warnings)
+                           .Append (GNAT_All_Validity_Checks),
+          when Errors   => Empty_List
+                           .Append (GNAT_All_Warnings)
+                           .Append (GNAT_All_Validity_Checks)
+                           .Append (GNAT_Warnings_As_Errors),
+          when Custom   => S.List);
 
    --------------
    -- Get_List --
@@ -111,11 +141,11 @@ package body Alire.Utils.Switches is
                          .Append ("-gnaty3")
                          .Append ("-gnatya")
                          .Append ("-gnatyA")
-                         .Append ("-gnatB")
+                         .Append ("-gnatyB")
                          .Append ("-gnatyb")
                          .Append ("-gnatyc")
-                         .Append ("-gnatyD")
                          .Append ("-gnaty-d")
+                         .Append ("-gnatyD")
                          .Append ("-gnatye")
                          .Append ("-gnatyf")
                          .Append ("-gnatyh")
@@ -143,6 +173,8 @@ package body Alire.Utils.Switches is
       return Empty_List
              .Append (Get_List (C.Optimization))
              .Append (Get_List (C.Debug_Info))
+             .Append (Get_List (C.Runtime_Checks))
+             .Append (Get_List (C.Compile_Checks))
              .Append (Get_List (C.Contracts))
              .Append (Get_List (C.Style_Checks));
    end Get_List;

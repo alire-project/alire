@@ -11,8 +11,10 @@ with Alire.Origins;
 with Alire.Warnings;
 
 with Alire.Properties.Build_Profile;
+with Alire.Properties.Build_Switches;
 with Alire.Utils.Switches; use Alire.Utils.Switches;
 with Alire.Utils.Switches.Knowledge;
+with Alire.Utils.Switches.Modifiers;
 with Alire.Directories;
 
 with TOML; use TOML;
@@ -118,18 +120,40 @@ package body Alire.Crate_Configuration is
             Profile : constant Profile_Kind
               := This.Profile_Map.Element (Rel.Name);
 
-            List : Alire.Utils.Switches.Switch_List;
+            Config : Alire.Utils.Switches.Switches_Configuration
+              := (case Profile is
+                     when Release => Default_Release_Switches,
+                     when Validation => Default_Validation_Switches,
+                     when Development => Default_Development_Switches);
+
+            Modif : Alire.Utils.Switches.Modifiers.Profile_Modifier;
          begin
+
+            --  Get switches modifier from the release
+            for Prop of Rel.On_Platform_Properties
+              (Root.Environment,
+               Properties.Build_Switches.Variable'Tag)
+            loop
+               declare
+                  Prof : constant Properties.Build_Switches.Variable
+                    := Properties.Build_Switches.Variable (Prop);
+               begin
+                  Modif := Prof.Modifier;
+               end;
+            end loop;
+
+            Alire.Utils.Switches.Modifiers.Apply (Config, Modif.Wildcard);
+
             case Profile is
                when Release =>
-                  List := Get_List (Default_Release_Switches);
+                  Modifiers.Apply (Config, Modif.Release);
                when Validation =>
-                  List := Get_List (Default_Validation_Switches);
+                  Modifiers.Apply (Config, Modif.Validation);
                when Development =>
-                  List := Get_List (Default_Development_Switches);
+                  Modifiers.Apply (Config, Modif.Development);
             end case;
 
-            This.Switches_Map.Insert (Rel.Name, List);
+            This.Switches_Map.Insert (Rel.Name, Get_List (Config));
          end;
       end loop;
    end Make_Swiches_Map;
@@ -461,8 +485,6 @@ package body Alire.Crate_Configuration is
 
       Name : constant Unbounded_String := +(+Crate & "." & Type_Name_Lower);
    begin
-
-      Trace.Always ("Add_Defintion: " & (+Name));
 
       if Is_Reserved_Name (Type_Name_Lower) then
          Raise_Checked_Error

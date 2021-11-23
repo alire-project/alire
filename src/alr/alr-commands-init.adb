@@ -112,6 +112,8 @@ package body Alr.Commands.Init is
          end if;
          Put_Line ("abstract project " & Mixed_Name & "_Config is");
          Put_Line ("   Crate_Version := ""0.0.0"";");
+         Put_Line ("   Ada_Compiler_Switches := " &
+                     "External_As_List (""ADAFLAGS"", "" "");");
 
          TIO.Put (File, "end " & Mixed_Name & "_Config;");
          TIO.Close (File);
@@ -146,7 +148,7 @@ package body Alr.Commands.Init is
          end if;
          Put_New_Line;
          Put_Line ("   package Compiler is");
-         Put_Line ("      for Default_Switches (""Ada"") use " & Mixed_Name & "_Config.GNAT_Switches;");
+         Put_Line ("      for Default_Switches (""Ada"") use " & Mixed_Name & "_Config.Ada_Compiler_Switches;");
          Put_Line ("   end Compiler;");
          Put_New_Line;
          Put_Line ("   package Binder is");

@@ -1,11 +1,15 @@
 with Alire.Conditional;
 with Alire.TOML_Adapters;
+with Alire.Utils.Switches.Modifiers;
 
 private with TOML;
 
 package Alire.Properties.Build_Switches with Preelaborate is
 
    type Variable is new Property with private;
+
+   function Modifier (This : Variable)
+                      return Alire.Utils.Switches.Modifiers.Profile_Modifier;
 
    --  Inherited operations
 

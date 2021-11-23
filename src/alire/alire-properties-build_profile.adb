@@ -9,8 +9,8 @@ package body Alire.Properties.Build_Profile is
    -----------
 
    overriding
-   function Image (This : Variable) return String is
-      ("Build Profile: ");
+   function Image (This : Variable) return String
+   is ("Build Profile: ");
 
    ---------
    -- Key --
@@ -57,8 +57,6 @@ package body Alire.Properties.Build_Profile is
             Profile : constant TOML_Value := Env.Get (Crate);
          begin
 
-            Trace.Always ("Build profiles: Crate: '" & Crate_Str & "'");
-
             if Profile.Kind /= TOML_String then
                From.Checked_Error ("Should be string");
             end if;
@@ -68,8 +66,6 @@ package body Alire.Properties.Build_Profile is
             begin
 
                if Crate_Str = "*" then
-
-                  Trace.Always ("We have a wildcard!!!");
 
                   if Var.Wildcard_Found then
                      From.Checked_Error
@@ -134,7 +130,6 @@ package body Alire.Properties.Build_Profile is
    begin
       return Result : Profile_Selection_Maps.Map do
          for Crate of This.T.Keys loop
-            Trace.Always ("Building selection map: " & (+Crate));
             if (+Crate) /= "*" then
                declare
                   Val : constant TOML.TOML_Value := This.T.Get (Crate);
