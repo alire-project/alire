@@ -2,6 +2,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;
 with Ada.Text_IO;
 with Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Vectors;
 
 with Alire_Early_Elaboration;
 with Alire.Solutions;
@@ -14,7 +15,6 @@ with Alire.Properties.Build_Profile;
 with Alire.Properties.Build_Switches;
 with Alire.Utils.Switches; use Alire.Utils.Switches;
 with Alire.Utils.Switches.Knowledge;
-with Alire.Utils.Switches.Modifiers;
 with Alire.Directories;
 
 with TOML; use TOML;
@@ -22,6 +22,34 @@ with TOML; use TOML;
 package body Alire.Crate_Configuration is
 
    package TIO renames Ada.Text_IO;
+
+   package Crate_Name_Vect
+   is new Ada.Containers.Indefinite_Vectors (Natural, Crate_Name);
+
+   -----------------------
+   -- Make_Release_Vect --
+   -----------------------
+
+   function Make_Release_Vect (Root : in out Alire.Roots.Root)
+                               return Crate_Name_Vect.Vector
+   is
+      Result : Crate_Name_Vect.Vector;
+
+      procedure Filter (This : in out Alire.Roots.Root;
+                      Solution : Solutions.Solution;
+                      State : Solutions.Dependency_State)
+      is
+         pragma Unreferenced (This, Solution);
+      begin
+         if State.Has_Release and then not State.Is_Provided then
+            Result.Append (State.Crate);
+         end if;
+      end Filter;
+
+   begin
+      Root.Traverse (Filter'Access);
+      return Result;
+   end Make_Release_Vect;
 
    function Is_Reserved_Name (Type_Name : String) return Boolean
    is (Type_Name = "crate_version");
@@ -31,9 +59,9 @@ package body Alire.Crate_Configuration is
    -- Make_Build_Profile_Map --
    ----------------------------
 
-   procedure Make_Build_Profile_Map (This    : in out Global_Config;
-                                     Root     : Alire.Roots.Root;
-                                     Solution : Solutions.Solution)
+   procedure Make_Build_Profile_Map (This     : in out Global_Config;
+                                     Root     : in out Alire.Roots.Root;
+                                     Rel_Vect : Crate_Name_Vect.Vector)
    is
       use Properties.Build_Profile;
 
@@ -54,9 +82,9 @@ package body Alire.Crate_Configuration is
    begin
 
       --  Populate map with crates in the solution
-      for Rel of Solution.Releases.Including (Root.Release) loop
-         This.Profile_Map.Insert (Rel.Name,
-                                  (if Rel.Name = Root.Name
+      for Crate of Rel_Vect loop
+         This.Profile_Map.Insert (Crate,
+                                  (if Crate = Root.Name
                                    then Development
                                    else Release));
       end loop;
@@ -111,14 +139,16 @@ package body Alire.Crate_Configuration is
    ----------------------
 
    procedure Make_Swiches_Map (This     : in out Global_Config;
-                               Root     : Alire.Roots.Root;
-                               Solution : Solutions.Solution)
+                               Root     : in out Alire.Roots.Root;
+                               Rel_Vect : Crate_Name_Vect.Vector)
    is
    begin
-      for Rel of Solution.Releases.Including (Root.Release) loop
+      for Crate of Rel_Vect loop
          declare
+            Rel : constant Releases.Release := Root.Release (Crate);
+
             Profile : constant Profile_Kind
-              := This.Profile_Map.Element (Rel.Name);
+              := This.Profile_Map.Element (Crate);
 
             Config : Alire.Utils.Switches.Switches_Configuration
               := (case Profile is
@@ -126,7 +156,7 @@ package body Alire.Crate_Configuration is
                      when Validation => Default_Validation_Switches,
                      when Development => Default_Development_Switches);
 
-            Modif : Alire.Utils.Switches.Modifiers.Profile_Modifier;
+            Modif : Properties.Build_Switches.Profile_Modifier;
          begin
 
             --  Get switches modifier from the release
@@ -142,15 +172,15 @@ package body Alire.Crate_Configuration is
                end;
             end loop;
 
-            Alire.Utils.Switches.Modifiers.Apply (Config, Modif.Wildcard);
+            Properties.Build_Switches.Apply (Config, Modif.Wildcard);
 
             case Profile is
                when Release =>
-                  Modifiers.Apply (Config, Modif.Release);
+                  Properties.Build_Switches.Apply (Config, Modif.Release);
                when Validation =>
-                  Modifiers.Apply (Config, Modif.Validation);
+                  Properties.Build_Switches.Apply (Config, Modif.Validation);
                when Development =>
-                  Modifiers.Apply (Config, Modif.Development);
+                  Properties.Build_Switches.Apply (Config, Modif.Development);
             end case;
 
             This.Switches_Map.Insert (Rel.Name, Get_List (Config));
@@ -167,6 +197,7 @@ package body Alire.Crate_Configuration is
    is
       Solution : constant Solutions.Solution := Root.Solution;
 
+      Rel_Vect : constant Crate_Name_Vect.Vector := Make_Release_Vect (Root);
    begin
 
       if not Solution.Is_Complete then
@@ -174,18 +205,16 @@ package body Alire.Crate_Configuration is
                              & " because of missing dependencies");
       end if;
 
-      for Rel of Solution.Releases.Including (Root.Release) loop
-         This.Load_Definitions (Root  => Root,
-                                Crate => Rel.Name);
+      for Crate of Rel_Vect loop
+         This.Load_Definitions (Root, Crate);
       end loop;
 
-      Make_Build_Profile_Map (This, Root, Solution);
+      Make_Build_Profile_Map (This, Root, Rel_Vect);
 
-      Make_Swiches_Map (This, Root, Solution);
+      Make_Swiches_Map (This, Root, Rel_Vect);
 
-      for Rel of Solution.Releases.Including (Root.Release) loop
-         This.Load_Settings (Root  => Root,
-                             Crate => Rel.Name);
+      for Create of Rel_Vect loop
+         This.Load_Settings (Root, Create);
       end loop;
 
       Use_Default_Values (This);
@@ -225,51 +254,54 @@ package body Alire.Crate_Configuration is
                              & " because of missing dependencies");
       end if;
 
-      for Rel of Solution.Releases.Including (Root.Release) loop
+      for Crate of Make_Release_Vect (Root) loop
+         declare
+            Rel : constant Releases.Release := Root.Release (Crate);
+         begin
+            --  We don't create config files for external releases, since they
+            --  are not sources built by Alire.
+            if Rel.Origin.Kind /= Alire.Origins.External then
 
-         --  We don't create config files for external releases, since they are
-         --  not sources built by Alire.
-         if Rel.Origin.Kind /= Alire.Origins.External then
+               declare
+                  Ent : constant Config_Entry := Get_Config_Entry (Rel);
 
-            declare
-               Ent : constant Config_Entry := Get_Config_Entry (Rel);
+                  Conf_Dir : constant Absolute_Path :=
+                    Root.Release_Base (Rel.Name) / Ent.Output_Dir;
 
-               Conf_Dir : constant Absolute_Path :=
-                 Root.Release_Base (Rel.Name) / Ent.Output_Dir;
+                  Version_Str : constant String := Rel.Version.Image;
+               begin
 
-               Version_Str : constant String := Rel.Version.Image;
-            begin
+                  if not Ent.Disabled then
+                     Ada.Directories.Create_Path (Conf_Dir);
 
-               if not Ent.Disabled then
-                  Ada.Directories.Create_Path (Conf_Dir);
+                     if Ent.Generate_Ada then
+                        This.Generate_Ada_Config
+                          (Rel.Name,
+                           Conf_Dir / (+Rel.Name & "_config.ads"),
+                           Version_Str);
+                     end if;
 
-                  if Ent.Generate_Ada then
-                     This.Generate_Ada_Config
-                       (Rel.Name,
-                        Conf_Dir / (+Rel.Name & "_config.ads"),
-                        Version_Str);
+                     if Ent.Generate_GPR then
+                        This.Generate_GPR_Config
+                          (Rel.Name,
+                           Conf_Dir / (+Rel.Name & "_config.gpr"),
+                           (if Ent.Auto_GPR_With
+                            then Root.Direct_Withs (Rel)
+                            else AAA.Strings.Empty_Set),
+                           Version_Str);
+                     end if;
+
+                     if Ent.Generate_C then
+                        This.Generate_C_Config
+                          (Rel.Name,
+                           Conf_Dir / (+Rel.Name & "_config.h"),
+                           Version_Str);
+                     end if;
                   end if;
+               end;
 
-                  if Ent.Generate_GPR then
-                     This.Generate_GPR_Config
-                       (Rel.Name,
-                        Conf_Dir / (+Rel.Name & "_config.gpr"),
-                        (if Ent.Auto_GPR_With
-                         then Root.Direct_Withs (Rel)
-                         else AAA.Strings.Empty_Set),
-                        Version_Str);
-                  end if;
-
-                  if Ent.Generate_C then
-                     This.Generate_C_Config
-                       (Rel.Name,
-                        Conf_Dir / (+Rel.Name & "_config.h"),
-                        Version_Str);
-                  end if;
-               end if;
-            end;
-
-         end if;
+            end if;
+         end;
       end loop;
    end Generate_Config_Files;
 
