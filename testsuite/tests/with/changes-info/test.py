@@ -16,7 +16,8 @@ os.chdir('xxx')
 ###############################################################################
 # Add a regular solvable dependency
 p = run_alr('with', 'libhello', quiet=False)
-assert_match(re.escape("""Requested changes:
+assert_match(".*" +
+             re.escape("""Requested changes:
 
    + libhello ^2.0.0 (add)
 

@@ -4,9 +4,6 @@ with Ada.Directories;
 with Ada.Text_IO;
 
 with Alire.Config;
-with Alire.Lockfiles;
-with Alire.Paths;
-with Alire.Solutions;
 with Alire.Utils.User_Input.Query_Config;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
@@ -40,7 +37,6 @@ package body Alr.Commands.Init is
          then Get_Current_Dir
          else Create (+Name, Normalize => True));
       Src_Directory : constant Virtual_File := Directory / "src";
-      Config_Directory : constant Virtual_File := Directory / "config";
 
       File : TIO.File_Type;
 
@@ -98,25 +94,22 @@ package body Alr.Commands.Init is
       procedure Generate_Project_File is
          Filename : constant String :=
             +Full_Name (Directory / (+Lower_Name & ".gpr"));
-
-         Config_Filename : constant String :=
-            +Full_Name (Config_Directory / (+Lower_Name & "_config.gpr"));
       begin
          --  Use more than 80 colums for more readable strings
          pragma Style_Checks ("M200");
 
-         --  Config project file
-         if not Create (Config_Filename) then
-            Trace.Warning ("Cannot create '" & Config_Filename & "'");
-            return;
-         end if;
-         Put_Line ("abstract project " & Mixed_Name & "_Config is");
-         Put_Line ("   Crate_Version := ""0.0.0"";");
-         Put_Line ("   Ada_Compiler_Switches := " &
-                     "External_As_List (""ADAFLAGS"", "" "");");
-
-         TIO.Put (File, "end " & Mixed_Name & "_Config;");
-         TIO.Close (File);
+         --  --  Config project file
+         --  if not Create (Config_Filename) then
+         --     Trace.Warning ("Cannot create '" & Config_Filename & "'");
+         --     return;
+         --  end if;
+         --  Put_Line ("abstract project " & Mixed_Name & "_Config is");
+         --  Put_Line ("   Crate_Version := ""0.0.0"";");
+         --  Put_Line ("   Ada_Compiler_Switches := " &
+         --              "External_As_List (""ADAFLAGS"", "" "");");
+         --
+         --  TIO.Put (File, "end " & Mixed_Name & "_Config;");
+         --  TIO.Close (File);
 
          --  Main project file
          if not Create (Filename) then
@@ -312,12 +305,7 @@ package body Alr.Commands.Init is
       --  Crate dir
       Directory.Make_Dir;
 
-      --  Empty alire dir
-      Virtual_File'(Directory / (+Alire.Paths.Working_Folder_Inside_Root))
-        .Make_Dir;
-
       if not Cmd.No_Skel then
-         Config_Directory.Make_Dir;
          Generate_Project_File;
          Src_Directory.Make_Dir;
          if For_Library then
@@ -329,11 +317,6 @@ package body Alr.Commands.Init is
       end if;
 
       Generate_Manifest;
-
-      Alire.Lockfiles.Write
-        ((Solution => Alire.Solutions.Empty_Valid_Solution),
-         Alire.Lockfiles.File_Name
-           (String (Filesystem_String'(Directory.Full_Name))));
 
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;

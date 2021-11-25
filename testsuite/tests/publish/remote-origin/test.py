@@ -27,8 +27,6 @@ run_alr("index", "--add", "my_index", "--name", "my_index")
 
 # Prepare a repo and a zipball to be used as "remote" targets for publishing
 run_alr("init", "--bin", "xxx")
-# Remove the alire cache
-rmtree(os.path.join("xxx", "alire"))
 
 # Create the zip
 zip_dir("xxx", "xxx.zip")
