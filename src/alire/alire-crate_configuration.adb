@@ -153,7 +153,6 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "package " & (+Crate) & "_Config is");
       TIO.Put_Line (File, "   pragma Pure;");
       TIO.Put_Line (File, "   pragma No_Elaboration_Code_All;");
-      TIO.Put_Line (File, "   pragma Preelaborate;");
 
       TIO.Put_Line (File, "   Crate_Version : constant String := """ &
                       Version & """;");
