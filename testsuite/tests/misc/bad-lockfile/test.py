@@ -2,17 +2,15 @@
 A test that a bad lockfile is recovered from (losing pins)
 """
 
-from drivers.alr import run_alr, alr_lockfile
+from drivers.alr import run_alr, alr_lockfile, init_local_crate
 
 import os
 import re
 
 # Create a new crate
-run_alr('init', '--bin', 'xxx')
+init_local_crate(name='xxx')
 
 # And muck its lockfile
-os.chdir('xxx')
-
 BADLINE = "SHOULND'T BE HERE"
 
 with open(alr_lockfile(), "a") as myfile:

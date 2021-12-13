@@ -2,6 +2,8 @@ with TOML; use TOML;
 
 with Alire.Utils.YAML;
 
+with Alire.Utils.Switches;
+
 with Ada.Characters.Handling;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -886,5 +888,23 @@ package body Alire.Properties.Configurations is
          Props.Append (Conditional.For_Properties.New_Value (Ent));
       end return;
    end Config_Entry_From_TOML;
+
+   ---------------------------
+   -- Builtin_Build_Profile --
+   ---------------------------
+
+   function Builtin_Build_Profile return Config_Type_Definition is
+
+      Ret : constant Config_Type_Definition :=
+        (Kind    => Enum,
+         Name    => +"Build_Profile",
+         Default => No_TOML_Value,
+         Values  => TOML.Create_Array);
+   begin
+      for P in Alire.Utils.Switches.Profile_Kind loop
+         Ret.Values.Append (TOML.Create_String (P'Img));
+      end loop;
+      return Ret;
+   end Builtin_Build_Profile;
 
 end Alire.Properties.Configurations;

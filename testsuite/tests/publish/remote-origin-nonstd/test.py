@@ -27,8 +27,6 @@ run_alr("index", "--add", "my_index", "--name", "my_index")
 
 # Prepare a repo and a zipball to be used as "remote" targets for publishing
 run_alr("init", "--bin", "xxx")
-# Remove the alire cache
-rmtree(os.path.join("xxx", "alire"))
 # Rename the manifest location
 os.rename(os.path.join("xxx", "alire.toml"), os.path.join("xxx", "xxx.toml"))
 

@@ -194,7 +194,7 @@ def index_version():
     return index_branch().split('-')[1]
 
 
-def init_local_crate(name="xxx", binary=True, enter=True):
+def init_local_crate(name="xxx", binary=True, enter=True, update=True):
     """
     Initialize a local crate and enter its folder for further testing.
 
@@ -205,6 +205,12 @@ def init_local_crate(name="xxx", binary=True, enter=True):
     :param bool enter: Enter the created crate directory
     """
     run_alr("init", name, "--bin" if binary else "--lib")
+
+    if update:
+        os.chdir(name)
+        run_alr("update")
+        os.chdir("..")
+
     if enter:
         os.chdir(name)
 
@@ -217,7 +223,7 @@ def alr_manifest():
     return "alire.toml"
 
 
-def alr_touch_manifest(path="."):
+def alr_touch_manifest():
     """
     Make the lockfile older than the manifest, to ensure editions to the
     manifest are detected.
@@ -380,7 +386,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
                         update=False)
 
             # Make the lockfile "older" (otherwise timestamp is identical)
-            os.utime(alr_lockfile(), (0, 0))
+            alr_touch_manifest();
 
             if update:
                 return run_alr("with", force=force)

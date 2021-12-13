@@ -4,6 +4,8 @@ with Alire.Crates;
 with Alire.Properties.Actions;
 with Alire.Properties.Configurations;
 with Alire.Properties.Environment;
+with Alire.Properties.Build_Profile;
+with Alire.Properties.Build_Switches;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
 with Alire.Properties.Scenarios;
@@ -19,6 +21,8 @@ package Alire.Properties.From_TOML is
    type Property_Keys is (Actions,
                           Authors,
                           Auto_GPR_With,
+                          Build_Profile,
+                          Build_Switches,
                           Configuration,
                           Description,
                           Environment,
@@ -104,20 +108,22 @@ package Alire.Properties.From_TOML is
    --  provide, shared by all external definitions found therein
 
    Release_Loaders : constant Loader_Array (Property_Keys) :=
-     (Actions       => Properties.Actions.From_TOML'Access,
-      Authors       => Labeled.From_TOML'Access,
-      Auto_GPR_With => Bool.From_TOML'Access,
-      Description   => Labeled.From_TOML'Access,
-      Configuration =>
+     (Actions        => Properties.Actions.From_TOML'Access,
+      Authors        => Labeled.From_TOML'Access,
+      Auto_GPR_With  => Bool.From_TOML'Access,
+      Build_Profile  => Properties.Build_Profile.From_TOML'Access,
+      Build_Switches => Properties.Build_Switches.From_TOML'Access,
+      Description    => Labeled.From_TOML'Access,
+      Configuration  =>
         Properties.Configurations.Config_Entry_From_TOML'Access,
-      Environment      =>
+      Environment    =>
         Properties.Environment.From_TOML'Access,
-      Executables   => Labeled.From_TOML'Access,
+      Executables    => Labeled.From_TOML'Access,
       GPR_Externals |
       GPR_Set_Externals
-                    => Scenarios.From_TOML'Access,
-      Hint          => null,
-      Licenses      => Properties.Licenses.From_TOML'Access,
+                     => Scenarios.From_TOML'Access,
+      Hint           => null,
+      Licenses       => Properties.Licenses.From_TOML'Access,
       Long_Description   |
       Maintainers        |
       Maintainers_Logins |
@@ -126,7 +132,7 @@ package Alire.Properties.From_TOML is
       Project_Files      |
       Tags               |
       Version            |
-      Website       => Labeled.From_TOML'Access);
+      Website        => Labeled.From_TOML'Access);
    --  This loader applies to a normal release manifest
 
    --  The following array determines which properties accept dynamic
@@ -134,6 +140,7 @@ package Alire.Properties.From_TOML is
 
    Is_Dynamic : constant array (Property_Keys) of Boolean
      := (Actions           |
+         Build_Profile     |
          Configuration     |
          Environment       |
          Executables       |

@@ -18,11 +18,7 @@ assert_match(".*Identifiers must be.*", p.out)
 # Plain init
 run_alr('init', '--bin', 'xxx')
 compare(contents('xxx'), ['xxx/.gitignore',
-                          'xxx/alire',
                           'xxx/alire.toml',
-                          'xxx/alire/alire.lock',
-                          'xxx/config',
-                          'xxx/config/xxx_config.gpr',
                           'xxx/src',
                           'xxx/src/xxx.adb',
                           'xxx/xxx.gpr'])
@@ -32,19 +28,13 @@ os.mkdir('aaa')
 run_alr('init', '--bin', 'aaa')
 compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/aaa.gpr',
-                          'aaa/alire',
                           'aaa/alire.toml',
-                          'aaa/alire/alire.lock',
-                          'aaa/config',
-                          'aaa/config/aaa_config.gpr',
                           'aaa/src',
                           'aaa/src/aaa.adb'])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
-compare(contents('yyy'), ['yyy/alire',
-                          'yyy/alire.toml',
-                          'yyy/alire/alire.lock'
+compare(contents('yyy'), ['yyy/alire.toml',
                           ])
 
 # Init with existing crate
@@ -71,11 +61,7 @@ os.mkdir('zzz')
 os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
 compare(contents('.'), ['./.gitignore',
-                        './alire',
                         './alire.toml',
-                        './alire/alire.lock',
-                        './config',
-                        './config/zzz_config.gpr',
                         './src',
                         './src/zzz.adb',
                         './zzz.gpr'])

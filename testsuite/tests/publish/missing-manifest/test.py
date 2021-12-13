@@ -15,8 +15,6 @@ import os
 
 # Prepare a repo and a zipball to be used as "remote", without a manifest
 run_alr("init", "--bin", "xxx")
-# Remove the alire cache
-rmtree(os.path.join("xxx", "alire"))
 # Remove the manifest
 os.remove(os.path.join("xxx", "alire.toml"))
 
