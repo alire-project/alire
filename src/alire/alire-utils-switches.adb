@@ -145,7 +145,8 @@ package body Alire.Utils.Switches is
                          .Append ("-gnatyb")
                          .Append ("-gnatyc")
                          .Append ("-gnaty-d")
-                         .Append ("-gnatyD")
+                         --  -gnatyD is not available in GNAT 9
+                         --  .Append ("-gnatyD")
                          .Append ("-gnatye")
                          .Append ("-gnatyf")
                          .Append ("-gnatyh")
