@@ -34,21 +34,21 @@ check_config(bin_config, 'DEVELOPMENT', ['-Og', '-g', '-gnatwa', '-gnata', '-gna
 
 # Create custom Release profile for lib_1
 with open('../lib_1/alire.toml', "a") as manifest:
-    manifest.write('[build_switches]\n')
+    manifest.write('[build-switches]\n')
     manifest.write('release.optimization = "size"\n')
     manifest.write('release.contracts = "yes"\n')
 
 
 # Create custom wildcard profile for lib_2
 with open('../lib_2/alire.toml', "a") as manifest:
-    manifest.write('[build_switches]\n')
+    manifest.write('[build-switches]\n')
     manifest.write('"*".optimization = "debug"\n')
     manifest.write('"*".contracts = "no"\n')
 
 
 # Check if we can change the profile of a dependency
 with open(alr_manifest(), "a") as manifest:
-    manifest.write('[build_profile]\n')
+    manifest.write('[build-profile]\n')
     manifest.write('lib_2 = "validation"\n')
 
 run_alr('update')

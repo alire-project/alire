@@ -32,7 +32,7 @@ manifests = [alr_manifest(), '../lib_1/alire.toml', '../lib_2/alire.toml']
 
 for path in manifests:
     with open(path, "a") as manifest:
-        manifest.write('[build_switches]\n')
+        manifest.write('[build-switches]\n')
         manifest.write('"*".optimization = ["-opt-switch", "-opt-switch2"]\n')
         manifest.write('"*".debug_info = ["-debug-info-switch"]\n')
         manifest.write('"*".runtime_checks = ["-runtime-checks-switch"]\n')

@@ -318,6 +318,7 @@ package body Alire.Properties.Build_Switches is
 
    overriding
    function To_TOML (This : Variable) return TOML.TOML_Value is
+      pragma Unreferenced (This);
    begin
       return No_TOML_Value;
    end To_TOML;
