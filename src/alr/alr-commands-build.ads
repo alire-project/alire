@@ -2,7 +2,7 @@ with AAA.Strings;
 
 package Alr.Commands.Build is
 
-   type Command is new Commands.Command with null record;
+   type Command is new Commands.Command with private;
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier
@@ -43,4 +43,10 @@ package Alr.Commands.Build is
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[--] [gprbuild switches and arguments]");
 
+private
+   type Command is new Commands.Command with record
+      Release_Mode    : aliased Boolean := False;
+      Validation_Mode : aliased Boolean := False;
+      Dev_Mode        : aliased Boolean := False;
+   end record;
 end Alr.Commands.Build;

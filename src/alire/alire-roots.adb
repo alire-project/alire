@@ -15,6 +15,7 @@ with Alire.Spawn;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
+with Alire.Utils.Switches;
 
 with GNAT.OS_Lib;
 
@@ -176,6 +177,18 @@ package body Alire.Roots is
       end Build_Single_Release;
 
    begin
+
+      --  Check if crate configuration should be re-generated
+      declare
+         use Alire.Utils.Switches;
+         use Alire.Crate_Configuration;
+      begin
+         if Last_Build_Profile /= Root_Build_Profile
+         then
+            This.Generate_Configuration;
+         end if;
+      end;
+
       if Export_Build_Env then
          This.Export_Build_Environment;
       end if;

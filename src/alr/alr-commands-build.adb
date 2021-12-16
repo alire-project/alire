@@ -1,4 +1,7 @@
 with Stopwatch;
+with Alire.Utils;
+with Alire.Utils.Switches;
+with Alire.Crate_Configuration;
 
 package body Alr.Commands.Build is
 
@@ -10,8 +13,27 @@ package body Alr.Commands.Build is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use Alire.Utils.Switches;
    begin
-      if not Execute (Cmd, Args, Export_Build_Env => True) then
+
+      if Alire.Utils.Count_True ((Cmd.Release_Mode,
+                                 Cmd.Validation_Mode,
+                                 Cmd.Dev_Mode)) > 1
+      then
+         Reportaise_Wrong_Arguments ("Only one build mode can be selected");
+      end if;
+
+      if Cmd.Release_Mode then
+         Alire.Crate_Configuration.Root_Build_Profile := Release;
+      elsif Cmd.Validation_Mode then
+         Alire.Crate_Configuration.Root_Build_Profile := Validation;
+      elsif Cmd.Dev_Mode then
+         Alire.Crate_Configuration.Root_Build_Profile := Development;
+      end if;
+
+      if not Execute (Cmd, Args,
+                      Export_Build_Env => True)
+      then
          Reportaise_Command_Failed ("Compilation failed.");
       end if;
    end Execute;
@@ -67,6 +89,22 @@ package body Alr.Commands.Build is
    procedure Setup_Switches
      (Cmd    : in out Command;
       Config : in out CLIC.Subcommand.Switches_Configuration)
-   is null;
+   is
+      use CLIC.Subcommand;
+   begin
+      Define_Switch (Config,
+                     Cmd.Release_Mode'Access,
+                     "", "--release",
+                     "Set root crate build mode to Release");
+      Define_Switch (Config,
+                     Cmd.Validation_Mode'Access,
+                     "", "--validation",
+                     "Set root crate build mode to Validation");
+      Define_Switch (Config,
+                     Cmd.Dev_Mode'Access,
+                     "", "--development",
+                     "Set root crate build mode to Development (default)");
+
+   end Setup_Switches;
 
 end Alr.Commands.Build;

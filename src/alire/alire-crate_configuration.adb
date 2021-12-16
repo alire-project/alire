@@ -10,6 +10,8 @@ with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
+with Alire.Config;
+with Alire.Config.Edit;
 
 with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
@@ -85,8 +87,8 @@ package body Alire.Crate_Configuration is
       for Crate of Rel_Vect loop
          This.Profile_Map.Insert (Crate,
                                   (if Crate = Root.Name
-                                   then Development
-                                   else Release));
+                                   then Root_Build_Profile
+                                   else Default_Deps_Build_Profile));
       end loop;
 
       for Prop of Root.Release.On_Platform_Properties
@@ -253,6 +255,10 @@ package body Alire.Crate_Configuration is
          Warnings.Warn_Once ("Generating possibly incomplete configuration"
                              & " because of missing dependencies");
       end if;
+
+      Trace.Detail ("Generating crate config files");
+
+      Set_Last_Build_Profile (Root_Build_Profile);
 
       for Crate of Make_Release_Vect (Root) loop
          declare
@@ -661,5 +667,28 @@ package body Alire.Crate_Configuration is
          end;
       end loop;
    end Use_Default_Values;
+
+   ------------------------
+   -- Last_Build_Profile --
+   ------------------------
+
+   function Last_Build_Profile return Utils.Switches.Profile_Kind is
+      Str : constant String := Config.DB.Get ("last_build_profile",
+                                             Default_Root_Build_Profile'Img);
+   begin
+      return Profile_Kind'Value (Str);
+   exception
+      when Constraint_Error =>
+         return Default_Root_Build_Profile;
+   end Last_Build_Profile;
+
+   ----------------------------
+   -- Set_Last_Build_Profile --
+   ----------------------------
+
+   procedure Set_Last_Build_Profile (P : Utils.Switches.Profile_Kind) is
+   begin
+      Config.Edit.Set_Locally ("last_build_profile", P'Img);
+   end Set_Last_Build_Profile;
 
 end Alire.Crate_Configuration;
