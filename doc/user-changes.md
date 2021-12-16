@@ -6,6 +6,31 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### Root crate build profile
+
+PR [#896](https://github.com/alire-project/alire/pull/896)
+
+The default build profile for the root crate is `Development` by default. This
+can be changed with the `--release`, `--validation` and `--development`
+switches for `alr build`.
+
+```console
+$ alr build --release     # build with release profile
+$ alr build --validation  # build with validation profile
+$ alr build --development # build with development profile
+$ alr build               # build with development profile
+```
+
+### Build profiles and switches
+
+PR [#895](https://github.com/alire-project/alire/pull/895)
+
+As part of the crate configuration feature, Alire will generate a list of
+compiler switches in the configuration GPR file. The list of switches is
+controlled from two features:
+ - build-profiles
+ - build-switches
+
 ### User defined command aliases
 
 PR [#853](https://github.com/alire-project/alire/pull/853)
@@ -288,8 +313,8 @@ The `licenses` in crate manifests now expects a valid [SPDX
 expression](https://spdx.org/licenses/). Custom license identifiers are
 accepted with the format: `custom-[0-9a-zA-Z.-]+`.
 
-Example: 
-```toml 
+Example:
+```toml
 licenses = "MIT OR custom-my-own-license"
 ```
 
@@ -389,11 +414,11 @@ information of dependencies. Namely, the combined dependencies on a crate are
 shown, with the release in the solution, and the last known version for the
 crate:
 ```
-CRATE      DEPENDENCY      SOLVED  LATEST 
+CRATE      DEPENDENCY      SOLVED  LATEST
 a_project  (root)          0.0.0   unknown
-hello      ^1              1.0.1   4.0.0  
-libhello   (^1.0) & (~1.0) 1.0.1   2.0.0  
-superhello *               1.0.0   1.0.0  
+hello      ^1              1.0.1   4.0.0
+libhello   (^1.0) & (~1.0) 1.0.1   2.0.0
+superhello *               1.0.0   1.0.0
 unobtanium *               missing unknown
 wip        *               /fake   unknown
 ```
