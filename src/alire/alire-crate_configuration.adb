@@ -11,7 +11,7 @@ with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
 
-with Alire.Properties.Build_Profile;
+with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
 with Alire.Utils.Switches; use Alire.Utils.Switches;
 with Alire.Utils.Switches.Knowledge;
@@ -63,7 +63,7 @@ package body Alire.Crate_Configuration is
                                      Root     : in out Alire.Roots.Root;
                                      Rel_Vect : Crate_Name_Vect.Vector)
    is
-      use Properties.Build_Profile;
+      use Properties.Build_Profiles;
 
       -----------------
       -- Set_Profile --
@@ -91,11 +91,11 @@ package body Alire.Crate_Configuration is
 
       for Prop of Root.Release.On_Platform_Properties
         (Root.Environment,
-         Properties.Build_Profile.Variable'Tag)
+         Properties.Build_Profiles.Variable'Tag)
       loop
          declare
-            Prof : constant Properties.Build_Profile.Variable
-              := Properties.Build_Profile.Variable (Prop);
+            Prof : constant Properties.Build_Profiles.Variable
+              := Properties.Build_Profiles.Variable (Prop);
          begin
 
             if Prof.Has_Wildcard then
@@ -113,7 +113,7 @@ package body Alire.Crate_Configuration is
             end if;
 
             declare
-               use Properties.Build_Profile.Profile_Selection_Maps;
+               use Properties.Build_Profiles.Profile_Selection_Maps;
                Sel : constant Profile_Selection_Maps.Map
                  := Prof.Selection;
             begin

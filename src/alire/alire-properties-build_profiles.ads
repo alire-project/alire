@@ -6,7 +6,7 @@ with Alire.Utils.Switches;
 
 private with TOML;
 
-package Alire.Properties.Build_Profile with Preelaborate is
+package Alire.Properties.Build_Profiles with Preelaborate is
 
    use type Utils.Switches.Profile_Kind;
 
@@ -48,4 +48,4 @@ private
       T : TOML.TOML_Value;
    end record;
 
-end Alire.Properties.Build_Profile;
+end Alire.Properties.Build_Profiles;

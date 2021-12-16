@@ -4,7 +4,7 @@ with Alire.Crates;
 with Alire.Properties.Actions;
 with Alire.Properties.Configurations;
 with Alire.Properties.Environment;
-with Alire.Properties.Build_Profile;
+with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
 with Alire.Properties.Labeled;
 with Alire.Properties.Licenses;
@@ -21,7 +21,7 @@ package Alire.Properties.From_TOML is
    type Property_Keys is (Actions,
                           Authors,
                           Auto_GPR_With,
-                          Build_Profile,
+                          Build_Profiles,
                           Build_Switches,
                           Configuration,
                           Description,
@@ -111,7 +111,7 @@ package Alire.Properties.From_TOML is
      (Actions        => Properties.Actions.From_TOML'Access,
       Authors        => Labeled.From_TOML'Access,
       Auto_GPR_With  => Bool.From_TOML'Access,
-      Build_Profile  => Properties.Build_Profile.From_TOML'Access,
+      Build_Profiles => Properties.Build_Profiles.From_TOML'Access,
       Build_Switches => Properties.Build_Switches.From_TOML'Access,
       Description    => Labeled.From_TOML'Access,
       Configuration  =>
@@ -140,7 +140,7 @@ package Alire.Properties.From_TOML is
 
    Is_Dynamic : constant array (Property_Keys) of Boolean
      := (Actions           |
-         Build_Profile     |
+         Build_Profiles    |
          Configuration     |
          Environment       |
          Executables       |

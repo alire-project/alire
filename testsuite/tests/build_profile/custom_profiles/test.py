@@ -48,7 +48,7 @@ with open('../lib_2/alire.toml', "a") as manifest:
 
 # Check if we can change the profile of a dependency
 with open(alr_manifest(), "a") as manifest:
-    manifest.write('[build-profile]\n')
+    manifest.write('[build-profiles]\n')
     manifest.write('lib_2 = "validation"\n')
 
 run_alr('update')
