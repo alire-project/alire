@@ -1017,7 +1017,7 @@ By default, the root crate is in `Development` and the dependencies are in
    lib_to_debug    = "development"
    ```
 
-Each crate can customise the compiler switches corresponding to its profiles
+Each crate can customize the compiler switches corresponding to its profiles
 using the `[build-switches]` table. In general, this should be avoided to
 preserve consistency in the ecosystem. However, there are cases where it makes
 sense for a crates to change its build switches. For instance, a SPARK crate
