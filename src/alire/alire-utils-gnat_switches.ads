@@ -21,4 +21,6 @@ is
    GNAT_All_Warnings                          : constant Switch := "-gnatwa";
    GNAT_All_Validity_Checks                   : constant Switch := "-gnatVa";
    GNAT_Warnings_As_Errors                    : constant Switch := "-gnatwe";
+   GNAT_Function_Sections                     : constant Switch := "-ffunction-sections";
+   GNAT_Data_Sections                         : constant Switch := "-fdata-sections";
 end Alire.Utils.GNAT_Switches;

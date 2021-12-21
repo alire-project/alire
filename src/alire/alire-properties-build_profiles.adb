@@ -2,7 +2,7 @@ with Alire.TOML_Keys;
 
 with Alire.Utils.Switches; use Alire.Utils.Switches;
 
-package body Alire.Properties.Build_Profile is
+package body Alire.Properties.Build_Profiles is
 
    -----------
    -- Image --
@@ -20,7 +20,7 @@ package body Alire.Properties.Build_Profile is
    function Key (This : Variable) return String is
       pragma Unreferenced (This);
    begin
-      return TOML_Keys.Build_Profile;
+      return TOML_Keys.Build_Profiles;
    end Key;
 
    ---------------
@@ -42,7 +42,7 @@ package body Alire.Properties.Build_Profile is
             & From.Unwrap.Kind'Img);
       end if;
 
-      if From.Pop_Single_Table (Env, TOML_Table) /= TOML_Keys.Build_Profile
+      if From.Pop_Single_Table (Env, TOML_Table) /= TOML_Keys.Build_Profiles
       then
          raise Program_Error;
          --  Can't happen, unless the dispatch to us itself was erroneous
@@ -165,4 +165,4 @@ package body Alire.Properties.Build_Profile is
       raise Program_Error;
    end Wildcard;
 
-end Alire.Properties.Build_Profile;
+end Alire.Properties.Build_Profiles;

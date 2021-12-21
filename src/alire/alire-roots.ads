@@ -217,6 +217,9 @@ package Alire.Roots is
    --  all releases in the solution (even those not built). Returns True on
    --  successful build.
 
+   procedure Generate_Configuration (This : in out Root);
+   --  Generate or re-generate the crate configuration files
+
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
    function Working_Folder (This : Root) return Absolute_Path;

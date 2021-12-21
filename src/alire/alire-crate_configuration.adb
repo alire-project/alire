@@ -10,8 +10,10 @@ with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
+with Alire.Config;
+with Alire.Config.Edit;
 
-with Alire.Properties.Build_Profile;
+with Alire.Properties.Build_Profiles;
 with Alire.Properties.Build_Switches;
 with Alire.Utils.Switches; use Alire.Utils.Switches;
 with Alire.Utils.Switches.Knowledge;
@@ -63,7 +65,7 @@ package body Alire.Crate_Configuration is
                                      Root     : in out Alire.Roots.Root;
                                      Rel_Vect : Crate_Name_Vect.Vector)
    is
-      use Properties.Build_Profile;
+      use Properties.Build_Profiles;
 
       -----------------
       -- Set_Profile --
@@ -85,17 +87,17 @@ package body Alire.Crate_Configuration is
       for Crate of Rel_Vect loop
          This.Profile_Map.Insert (Crate,
                                   (if Crate = Root.Name
-                                   then Development
-                                   else Release));
+                                   then Root_Build_Profile
+                                   else Default_Deps_Build_Profile));
       end loop;
 
       for Prop of Root.Release.On_Platform_Properties
         (Root.Environment,
-         Properties.Build_Profile.Variable'Tag)
+         Properties.Build_Profiles.Variable'Tag)
       loop
          declare
-            Prof : constant Properties.Build_Profile.Variable
-              := Properties.Build_Profile.Variable (Prop);
+            Prof : constant Properties.Build_Profiles.Variable
+              := Properties.Build_Profiles.Variable (Prop);
          begin
 
             if Prof.Has_Wildcard then
@@ -113,7 +115,7 @@ package body Alire.Crate_Configuration is
             end if;
 
             declare
-               use Properties.Build_Profile.Profile_Selection_Maps;
+               use Properties.Build_Profiles.Profile_Selection_Maps;
                Sel : constant Profile_Selection_Maps.Map
                  := Prof.Selection;
             begin
@@ -253,6 +255,10 @@ package body Alire.Crate_Configuration is
          Warnings.Warn_Once ("Generating possibly incomplete configuration"
                              & " because of missing dependencies");
       end if;
+
+      Trace.Detail ("Generating crate config files");
+
+      Set_Last_Build_Profile (Root_Build_Profile);
 
       for Crate of Make_Release_Vect (Root) loop
          declare
@@ -661,5 +667,28 @@ package body Alire.Crate_Configuration is
          end;
       end loop;
    end Use_Default_Values;
+
+   ------------------------
+   -- Last_Build_Profile --
+   ------------------------
+
+   function Last_Build_Profile return Utils.Switches.Profile_Kind is
+      Str : constant String := Config.DB.Get ("last_build_profile",
+                                             Default_Root_Build_Profile'Img);
+   begin
+      return Profile_Kind'Value (Str);
+   exception
+      when Constraint_Error =>
+         return Default_Root_Build_Profile;
+   end Last_Build_Profile;
+
+   ----------------------------
+   -- Set_Last_Build_Profile --
+   ----------------------------
+
+   procedure Set_Last_Build_Profile (P : Utils.Switches.Profile_Kind) is
+   begin
+      Config.Edit.Set_Locally ("last_build_profile", P'Img);
+   end Set_Last_Build_Profile;
 
 end Alire.Crate_Configuration;

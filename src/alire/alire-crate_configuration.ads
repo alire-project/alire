@@ -1,5 +1,6 @@
 with TOML;
 
+with Alire.Utils.Switches;
 with Alire.Properties.Configurations;
 limited with Alire.Roots;
 
@@ -9,9 +10,16 @@ private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Indefinite_Holders;
 private with Ada.Containers.Indefinite_Ordered_Maps;
 
-private with Alire.Utils.Switches;
-
 package Alire.Crate_Configuration is
+
+   Default_Root_Build_Profile : constant Utils.Switches.Profile_Kind :=
+     Utils.Switches.Development;
+
+   Default_Deps_Build_Profile : constant Utils.Switches.Profile_Kind :=
+     Utils.Switches.Release;
+
+   Root_Build_Profile : Utils.Switches.Profile_Kind :=
+     Default_Root_Build_Profile;
 
    type Global_Config is tagged limited private;
 
@@ -20,6 +28,13 @@ package Alire.Crate_Configuration is
 
    procedure Generate_Config_Files (This : Global_Config;
                                     Root : in out Alire.Roots.Root);
+
+   procedure Set_Last_Build_Profile (P : Utils.Switches.Profile_Kind);
+   --  Record in local user configuration the last profile used in crate
+   --  configuration.
+
+   function Last_Build_Profile return Utils.Switches.Profile_Kind;
+   --  Get the last profile used from user configuration
 
 private
 

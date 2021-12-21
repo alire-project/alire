@@ -58,6 +58,8 @@ package body Alire.Utils.Switches.Knowledge is
       Register (GNAT_All_Warnings, "Enable all warnings");
       Register (GNAT_All_Validity_Checks, "All validity checks");
       Register (GNAT_Warnings_As_Errors, "Warnings as errors");
+      Register (GNAT_Function_Sections, "Separate ELF section for each function");
+      Register (GNAT_Data_Sections, "Separate ELF section for each variable");
 
       Register ("-gnaty3", "Specify indentation level of 3");
       Register ("-gnatya", "Check attribute casing");

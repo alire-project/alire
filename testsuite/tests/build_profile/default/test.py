@@ -34,7 +34,7 @@ check_config(bin_config, 'DEVELOPMENT', ['-Og', '-g', '-gnatwa', '-gnata', '-gna
 
 # Check if we can change the profile of a dependency
 with open(alr_manifest(), "a") as manifest:
-    manifest.write('[build-profile]\n')
+    manifest.write('[build-profiles]\n')
     manifest.write('lib_1 = "development"\n')
 run_alr('update')
 check_config(lib1_config, 'DEVELOPMENT', ['-Og'])

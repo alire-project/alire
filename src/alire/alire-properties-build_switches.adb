@@ -30,7 +30,7 @@ package body Alire.Properties.Build_Switches is
    function Key (This : Variable) return String is
       pragma Unreferenced (This);
    begin
-      return TOML_Keys.Build_Profile;
+      return TOML_Keys.Build_Switches;
    end Key;
 
    ---------------

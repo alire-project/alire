@@ -261,8 +261,8 @@ static, i.e. they cannot depend on the context.
    project documentation on [extended version
    sets](https://github.com/alire-project/semantic_versioning#types).
 
-   See also the [section on compiler dependencies](#compiler-versions-and-cross-compilers) 
-   for more details on how to use the `depends-on` property for cross-compiling or 
+   See also the [section on compiler dependencies](#compiler-versions-and-cross-compilers)
+   for more details on how to use the `depends-on` property for cross-compiling or
    compiler version selection.
 
  - `project-files`: optional list of strings. Each is a path, relative to the
@@ -348,7 +348,7 @@ static, i.e. they cannot depend on the context.
    ```
 
    `<command>` is an array of strings for a shell command to run in the
-   source directory. 
+   source directory.
 
    For events that cause a workspace-wide triggering of actions (all
    `pre_/post_` actions described next), the actions are invoked in a
@@ -357,7 +357,7 @@ static, i.e. they cannot depend on the context.
    release, or the release being obtained with `alr get`). In this context, the
    root release is considered part of the dependency solution, and so its
    actions are executed too, always in the last place.
-   
+
    `<kind>` can be either:
 
    - `post-fetch`: the command is to be run whenever there are new sources
@@ -532,6 +532,85 @@ static, i.e. they cannot depend on the context.
    crate_1.var1 = 42
    crate_1.var2 = true
    crate_2.var1 = "Debug"
+   ```
+
+ - `build-profiles`: optional table of strings that sets the build profile of
+   crates in the solution.
+
+   For more information on build profiles and switches, see [Build profiles and
+   switches](#build-profiles-and-switches).
+
+   There are 3 build profiles available in Alire:
+    - `Development`
+    - `Release`
+    - `Validation`
+
+   Example:
+   ```toml
+   [build-profiles]
+   depend1 = "validation" # Set depend1 build profile to validation
+   depend2 = "development" # Set depend2 build profile to development
+   my_crate = "release" # Set my_crate build profile to release
+   ```
+   A wildcard key can be used to set the build profile of all crates that are
+   not otherwise specified:
+   ```toml
+   [build-profiles]
+   "*" = "validation" # Set all build profiles to validation
+   ```
+
+ - `build-switches`: optional table of build profile switches definitions.
+
+   For more information on build profiles and switches, see [Build profiles and
+   switches](#build-profiles-and-switches).
+
+   The keys of the table are either build profiles or the wildcard `"*"`:
+    - `Development`
+    - `Release`
+    - `Validation`
+
+   The values are profile definitions, themselves tables with switch categories
+   as keys and switches selection as values. This list of switch categories and
+   their corresponding selection is as follow:
+    - `Optimization`
+      - `Performance`
+      - `Size`
+      - `Debug`
+    - `Debug_Info`
+      - `No`
+      - `Yes`
+    - `Runtime_Checks`
+      - `None`
+      - `Default`
+      - `Overflow`
+      - `Everything`
+    - `Compile_Checks`
+      - `None`
+      - `Warnings`
+      - `Errors`
+    - `Contracts`
+      - `No`
+      - `Yes`
+    - `Style_Checks`
+      - `No`
+      - `Yes`
+
+   For example, to enable all run-time checks in the release profile:
+   ```toml
+   [build-switches]
+   release.runtime_checks = "Everything"
+   ```
+   To disable style checks for all profiles:
+   ```toml
+   [build-switches]
+   "*".style_checks = "No"
+   ```
+
+    All switch categories also accept a custom list of switches, for instance:
+   ```toml
+   [build-switches]
+   release.optimization = ["-O1"]
+   validation.style_checks = ["-gnatyg"]
    ```
 
  - `provides`: specifies a list of releases of another crate for which the
@@ -904,6 +983,87 @@ It can be used in the main GPR file like so:
 ```
 With the files `test-sort__bubble.adb`, `test-sort__quick.adb` and
 `test-sort__merge.adb` each implementing a different algorithm.
+
+## Build Profiles and Switches
+
+As part of crate configuration, Alire will generate a list of compiler switches
+in the configuration GPR file. The list of switches for a given crate is
+controlled from two features:
+ - build-profiles
+ - build-switches
+
+There are 3 build profiles available in Alire:
+ - `Development`
+ - `Release`
+ - `Validation`
+
+By default, the root crate is in `Development` and the dependencies are in
+`Release`. The defaults can be overridden in two ways:
+ - The build profile of the root crate can be changed with a switch to the
+   `alr build` command:
+    - `$ alr build --release`
+    - `$ alr build --validation`
+    - `$ alr build --development` (default)
+ - In the root crate manifest, the build profile of each crate in the solution
+   can be changed with the `[build-profiles]` table.
+
+   This can be used, for instance, in a unit test crate to set the crate under
+   test in `validation` profile, or to debug one of the dependencies.
+
+   Example:
+   ```toml
+   [build-profiles]
+   lib_under_test  = "validation"
+   lib_to_debug    = "development"
+   ```
+
+Each crate can customize the compiler switches corresponding to its profiles
+using the `[build-switches]` table. In general, this should be avoided to
+preserve consistency in the ecosystem. However, there are cases where it makes
+sense for a crates to change its build switches. For instance, a SPARK crate
+that is proved to be safe from errors can disable run-time checks in all
+profiles:
+```toml
+[build-switches]
+"*".runtime_checks = "none"
+```
+
+It is also possible to specify a custom list of compiler switches for a
+category:
+```toml
+[build-switches]
+release.optimization = ["-O1", "-gnatn"]
+```
+
+### Using switches in GPR file
+
+Alire will generate a list of switches in the crate configuration GPR file. It
+will look something like this:
+
+```ada
+abstract project my_crate_Config is
+   [...]
+   Ada_Compiler_Switches := External_As_List ("ADAFLAGS", " ") &
+          (
+            "-Os" -- Optimize for code size
+           ,"-gnatn" -- Enable inlining
+          );
+   [...]
+```
+
+In the main GPR file, "with" the crate config GPR and use the
+`Ada_Compiler_Switches` variable to define compiler switches:
+
+```ada
+with "config/my_crate_config.gpr";
+project My_Crate is
+
+   [...]
+
+   package Compiler is
+      for Default_Switches ("Ada") use My_Crate_Config.Ada_Compiler_Switches;
+   end Compiler;
+```
 
 ## Compiler versions and cross-compilers
 

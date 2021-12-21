@@ -9,7 +9,7 @@ package Alire.TOML_Keys with Preelaborate is
    Author         : constant String := "authors";
    Auto_GPR_With  : constant String := "auto-gpr-with";
    Available      : constant String := "available";
-   Build_Profile  : constant String := "build-profile";
+   Build_Profiles : constant String := "build-profiles";
    Build_Switches : constant String := "build-switches";
    Case_Others    : constant String := "...";
    Compiler       : constant String := "compiler";

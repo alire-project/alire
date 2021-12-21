@@ -72,12 +72,18 @@ package body Alire.Utils.Switches is
    is (case S.Kind is
           when Performance => Empty_List
                               .Append (GNAT_Optimize_Performance)
-                              .Append (GNAT_Enable_Inlining),
+                              .Append (GNAT_Enable_Inlining)
+                              .Append (GNAT_Function_Sections)
+                              .Append (GNAT_Data_Sections),
           when Size        => Empty_List
                               .Append (GNAT_Optimize_Size)
-                              .Append (GNAT_Enable_Inlining),
+                              .Append (GNAT_Enable_Inlining)
+                              .Append (GNAT_Function_Sections)
+                              .Append (GNAT_Data_Sections),
           when Debug       => Empty_List
-                              .Append (GNAT_Optimize_Debug),
+                              .Append (GNAT_Optimize_Debug)
+                              .Append (GNAT_Function_Sections)
+                              .Append (GNAT_Data_Sections),
           when Custom      => S.List);
 
    --------------
