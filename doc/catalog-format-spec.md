@@ -552,7 +552,7 @@ static, i.e. they cannot depend on the context.
    depend2 = "development" # Set depend2 build profile to development
    my_crate = "release" # Set my_crate build profile to release
    ```
-   A wildcard key can be used to set the build profile of all crate that are
+   A wildcard key can be used to set the build profile of all crates that are
    not otherwise specified:
    ```toml
    [build-profiles]
