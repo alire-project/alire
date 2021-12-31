@@ -22,7 +22,7 @@ package body Alire.Externals.From_System is
       --  No need to look for anything if the distro is unknown:
       if not Platform.Distribution_Is_Known then
          Trace.Detail ("Cannot look for system packages for crate " & (+Name)
-                       & "in unknown distribution");
+                       & " in unknown distribution");
          return (Releases.Containers.Release_Sets.Empty_Set with null record);
       end if;
 
