@@ -82,6 +82,9 @@ package body Alr.Commands.Init is
       procedure Generate_Gitignore;
       --  Generate or append .gitignore
 
+      procedure Generate_Workspace;
+      --  Generate a Visual Studio Code workspace file
+
       procedure Generate_Manifest;
       --  Generates the initial manifest by hand. This is more legible than
       --  exporting using To_TOML functions. We still use TOML encoding for
@@ -214,6 +217,34 @@ package body Alr.Commands.Init is
          TIO.Close (File);
       end Generate_Gitignore;
 
+      ------------------------
+      -- Generate_Workspace --
+      ------------------------
+
+      procedure Generate_Workspace is
+         Filename : constant String :=
+            +Full_Name (Directory / "workspace.code-workspace");
+      begin
+         if Ada.Directories.Exists (Filename) then
+            TIO.Open (File, TIO.Append_File, Filename);
+         else
+            TIO.Create (File, TIO.Out_File, Filename);
+         end if;
+
+         Put_Line ("{");
+         Put_Line ("   ""folders"": [");
+         Put_Line ("       {");
+         Put_Line ("           ""path"": "".""");
+         Put_Line ("       }");
+         Put_Line ("   ],");
+         Put_Line ("   ""settings"": {");
+         Put_Line ("       ""ada.projectFile"": """ & Lower_Name & ".gpr""");
+         Put_Line ("   }");
+         Put_Line ("}");
+
+         TIO.Close (File);
+      end Generate_Workspace;
+
       -----------------------
       -- Generate_Manifest --
       -----------------------
@@ -314,6 +345,7 @@ package body Alr.Commands.Init is
             Generate_Program_Main;
          end if;
          Generate_Gitignore;
+         Generate_Workspace;
       end if;
 
       Generate_Manifest;
