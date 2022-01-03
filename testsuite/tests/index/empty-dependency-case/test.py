@@ -1,6 +1,6 @@
 """
 Test that an empty nested table in dependencies does not cause an error.
-Bugfix #
+Bugfix #906: https://github.com/alire-project/alire/pull/906
 """
 
 from drivers.alr import run_alr, init_local_crate, alr_manifest
