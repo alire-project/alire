@@ -233,7 +233,7 @@ package body Alr.Commands.Run is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector is
      (AAA.Strings.Empty_Vector
-      .Append ("Compiles the crate (unless --skip-compile is specified)"
+      .Append ("Compiles the crate (unless --skip-build is specified)"
                & " and then executes the default or given resulting"
                & " executable. ")
       .New_Line
