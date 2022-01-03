@@ -151,17 +151,17 @@ package body Alire.Conditional_Trees is
    -------------
 
    overriding
-   function Flatten (This : Vector_Node) return Node'Class is
+   function Flatten (This : Vector_Node) return Tree'Class is
       Result : Tree;
    begin
       for Child of This.Values loop
          case This.Conjunction is
-            when Anded => Result := Result and Child.Flatten.To_Tree;
-            when Ored =>  Result := Result or  Child.Flatten.To_Tree;
+            when Anded => Result := Result and Tree (Child.Flatten);
+            when Ored =>  Result := Result or  Tree (Child.Flatten);
          end case;
       end loop;
 
-      return Result.Root;
+      return Result;
    end Flatten;
 
    ----------
@@ -276,27 +276,27 @@ package body Alire.Conditional_Trees is
 
    function Enumerate (This : Tree) return Collection is
       Col : Collection with Warnings => Off;
-
-      procedure Visit (Inner : Node'Class) is
-         Flat : constant Node'Class := Inner.Flatten;
-         --  This call recursively should result in a flat vector at worst
-      begin
-         if Flat in Leaf_Node then
-            Append (Col, Leaf_Node (Flat).Value.Constant_Reference);
-         elsif Flat in Vector_Node then
-            for Child of Vector_Node (Flat).Values loop
+      Flat : constant Tree :=
+               (if This.Is_Empty
+                then This
+                else Tree (This.Constant_Reference.Flatten));
+   begin
+      if not Flat.Is_Empty then
+         if Flat.Constant_Reference in Leaf_Node then
+            Append (Col, Leaf_Node (Flat.Constant_Reference.Element.all)
+                         .Value.Constant_Reference);
+         elsif Flat.Constant_Reference in Vector_Node then
+            for Child of Vector_Node (Flat.Constant_Reference.Element.all)
+                         .Values
+            loop
                Append (Col, Leaf_Node (Child).Value.Constant_Reference);
             end loop;
          else
             raise Program_Error with
               "Flattened nodes must be leaves or vectors";
          end if;
-      end Visit;
-
-   begin
-      if not This.Is_Empty then
-         Visit (This.Constant_Reference);
       end if;
+
       return Col;
    end Enumerate;
 
