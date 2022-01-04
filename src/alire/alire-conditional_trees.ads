@@ -61,13 +61,6 @@ package Alire.Conditional_Trees with Preelaborate is
    function Leaf_Count (This : Node) return Positive is abstract;
    --  Return leaves under this node; for non-leaf nodes, obtain recursively.
 
-   function Flatten (This : Node) return Node'Class is abstract;
-   --  with Post'Class => Flatten'Result in Leaf_Node or else
-   --                     Flatten'Result in Vector_Node;
-   --  Above Post kept for reference but gnat bugs out during instantiation.
-   --  Recursively merge all subtree elements in a single value or vector.
-   --  Since it cannot result in an empty tree, it returns a proper node.
-
    procedure Recursive_Traversal
      (This  : in out Node;
       Apply : access procedure (Value : in out Values)) is abstract;
@@ -92,6 +85,14 @@ package Alire.Conditional_Trees with Preelaborate is
    --  associated values will be dropped from the tree. This structure is thus
    --  used to store conditional/dynamic properties and dependencies.
    --  Iteration is only over direct children, when the tree is AND/OR vector.
+
+   function Flatten (This : Node) return Tree'Class is abstract
+   with Post'Class => Flatten'Result.Is_Empty or else
+                      Flatten'Result.Is_Value or else
+                      Flatten'Result.Is_Vector;
+   --  Above Post kept for reference but gnat bugs out during instantiation.
+   --  Recursively merge all subtree elements in a single value or vector. It
+   --  can result in an empty tree if a vector is empty, so it returns a tree.
 
    function Root (This : Tree) return Node'Class
      with Pre => not This.Is_Empty;
@@ -321,7 +322,7 @@ private
                       Unused  : Properties.Vector) return Tree'Class;
 
    overriding
-   function Flatten (This : Leaf_Node) return Node'Class;
+   function Flatten (This : Leaf_Node) return Tree'Class;
 
    overriding
    function Is_Conditional (N : Leaf_Node) return Boolean;
@@ -364,7 +365,7 @@ private
                       return Tree'Class is (New_Leaf (This.Value.Element));
 
    overriding
-   function Flatten (This : Leaf_Node) return Node'Class is (This);
+   function Flatten (This : Leaf_Node) return Tree'Class is (To_Tree (This));
 
    overriding
    function Is_Conditional (N : Leaf_Node) return Boolean is (False);
@@ -399,7 +400,7 @@ private
                       return Tree'Class;
 
    overriding
-   function Flatten (This : Vector_Node) return Node'Class;
+   function Flatten (This : Vector_Node) return Tree'Class;
 
    function Conjunction (This : Vector_Node) return Conjunctions;
 

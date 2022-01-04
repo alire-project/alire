@@ -16,7 +16,7 @@ package body Alire.Conditional_Trees.Case_Nodes is
                       return Tree'Class;
 
    overriding
-   function Flatten (This : Case_Node) return Node'Class;
+   function Flatten (This : Case_Node) return Tree'Class;
 
    overriding
    function Image (This : Case_Node) return String;
@@ -183,23 +183,23 @@ package body Alire.Conditional_Trees.Case_Nodes is
    -------------
 
    overriding
-   function Flatten (This : Case_Node) return Node'Class is
+   function Flatten (This : Case_Node) return Tree'Class is
       Flat : Tree;
    begin
       for Key of This.Cases.Keys (Exclude_Others => True, Ada_Like => False)
       loop
          if not This.Cases.Element (+Key).Is_Empty then
-            Flat := Flat and To_Tree (This.Cases.Element (+Key).Root.Flatten);
+            Flat := Flat and Tree (This.Cases.Element (+Key).Root.Flatten);
          end if;
       end loop;
 
       if This.Cases.Has_Others then
          if not This.Cases.Other.Is_Empty then
-            Flat := Flat and To_Tree (This.Cases.Other.Root.Flatten);
+            Flat := Flat and Tree (This.Cases.Other.Root.Flatten);
          end if;
       end if;
 
-      return Flat.Root;
+      return Flat;
    end Flatten;
 
    -------------------------
