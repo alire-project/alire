@@ -29,7 +29,7 @@ the preferred compiler, if any.
 ## Manual compiler installation
 
 Besides selecting a default compiler with `alr toolchain --select`, the user
-may install other compilers via `alt toolchain --install`. Installed but
+may install other compilers via `alr toolchain --install`. Installed but
 unselected compilers will not be used, though, unless a crate explicitly
 requests them via dependencies.
 
