@@ -71,7 +71,7 @@ package body Alire.Properties.Licenses is
                    "': " & SPDX.Error (SPDX_Exp) &
                    " . SPDX expression expected (https://spdx.org/licenses/)");
          else
-            Trace.Warning ("Deprecated license indentifier '" & From &
+            Trace.Warning ("Deprecated license identifier '" & From &
                              "'. Please replace with an SPDX expression " &
                              "(https://spdx.org/licenses/)");
 
