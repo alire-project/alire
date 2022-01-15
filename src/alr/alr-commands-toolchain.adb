@@ -159,7 +159,7 @@ package body Alr.Commands.Toolchain is
 
          if Origin_Status = Mixed then
             Warnings.Warn_Once
-              ("Default toolchain contains mixed-procedence tools");
+              ("Default toolchain contains mixed-precedence tools");
          else
             Trace.Debug ("Tool compatibility identified as "
                          & Origin_Status'Image);
