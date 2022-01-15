@@ -15,7 +15,7 @@ def invalid_key(*args):
 
     assert p.status != 0, "command should fail"
 
-    assert "Invalid configration key" in p.out, \
+    assert "Invalid configuration key" in p.out, \
            "Missing error message in: '%s" % p.out
 
 def invalid_builtin(*args):
