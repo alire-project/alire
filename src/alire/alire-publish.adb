@@ -283,9 +283,9 @@ package body Alire.Publish is
    -------------------------
    -- Check_User_Manifest --
    -------------------------
-   --  Ensure that we are at a valid root, or else that the nonstadard manifest
-   --  file is loadable. Either way, the contents of the release described by
-   --  the manifest are vetted for completeness.
+   --  Ensure that we are at a valid root, or else that the nonstandard
+   --  manifest file is loadable. Either way, the contents of the release
+   --  described by the manifest are vetted for completeness.
    procedure Check_User_Manifest (Context : in out Data) is
       use all type Roots.Optional.States;
    begin
