@@ -836,7 +836,7 @@ package body Alire.Publish is
    ---------------
    -- Run_Steps --
    ---------------
-   --  Gives feedback on the current step and dispatchs to its actual code
+   --  Gives feedback on the current step and dispatches to its actual code
    procedure Run_Steps (Context : in out Data;
                         Steps   : Step_Array)
    is
