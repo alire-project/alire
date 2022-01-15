@@ -160,7 +160,7 @@ package body Alire.Properties.Build_Switches is
             when Constraint_Error =>
                From.Checked_Error
                  ("Invalid switch selector '" & T.As_String &
-                    "' for catergory '" & Cat'Img & "'");
+                    "' for category '" & Cat'Img & "'");
          end;
 
       else
