@@ -561,7 +561,7 @@ package body Alire.Solutions is
 
       --  Prefer more fulfilled releases when the solution is incomplete.
       --  The rationale is that fewer solved releases will mean more unknown
-      --  missing indirect depdendencies.
+      --  missing indirect dependencies.
 
       if This.Releases.Length > Than.Releases.Length then
          return True;
