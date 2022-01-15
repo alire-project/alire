@@ -117,7 +117,7 @@ package Alire.Conditional with Preelaborate is
    function Is_Available (This : Availability;
                           Env  : Alire.Properties.Vector)
                           return Boolean;
-   --  Evaluate availability in an environment. In adition to resolving the
+   --  Evaluate availability in an environment. In addition to resolving the
    --  tree for the environment, we then need to traverse the tree evaluating
    --  the boolean expressions to arrive to a final boolean value. (Formerly
    --  done via Boolean_Trees).
