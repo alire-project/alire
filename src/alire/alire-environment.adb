@@ -320,7 +320,8 @@ package body Alire.Environment is
                else
                   Raise_Checked_Error
                     (Errors.Wrap
-                       ("Trying to set an alredy defined environment variable",
+                       ("Trying to set an already defined environment "
+                        & "variable",
                         (+Key) & " is already defined as '" & (+Value)
                         & "' but new value is '" & (+Act.Value) & "'"));
                end if;
