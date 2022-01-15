@@ -307,7 +307,7 @@ package body Alire.Solver is
             begin
 
                --  The following checks are not guaranteed to find the proper
-               --  GNAT to use, as a yet-unknonw dependency might add a precise
+               --  GNAT to use, as a yet-unknown dependency might add a precise
                --  GNAT later on. It should however cover the common case
                --  in which the GNAT dependencies are in the root crate. If
                --  all else fails, in the end there is a real problem of the
