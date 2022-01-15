@@ -439,8 +439,8 @@ package body Alire.Solver is
                              and Target
                              and Remaining).Image_One_Line);
 
-                  --  Even if the release is OK for the dependency, we
-                  --  agregated dependencies for the crate in the solution
+                  --  Even if the release is OK for the dependency, the
+                  --  aggregated dependencies for the crate in the solution
                   --  can be another matter, so we recheck again.
 
                elsif not R.Satisfies (Solution.Dependency (Dep.Crate)) then
