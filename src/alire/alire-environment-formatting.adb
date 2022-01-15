@@ -43,7 +43,7 @@ package body Alire.Environment.Formatting is
    is
    begin
       --  There is not possible escape character between the start and
-      --  the end of the formating pattern.
+      --  the end of the formatting pattern.
       return Index (Str, "}", From);
    end Find_End;
 
