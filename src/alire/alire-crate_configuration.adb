@@ -76,7 +76,7 @@ package body Alire.Crate_Configuration is
          if This.Profile_Map.Contains (Crate) then
             This.Profile_Map.Replace (Crate, P);
          else
-            Raise_Checked_Error ("Unknow crate in build profile: '" &
+            Raise_Checked_Error ("Unknown crate in build profile: '" &
                                    String'(+Crate) & "'");
          end if;
       end Set_Profile;
