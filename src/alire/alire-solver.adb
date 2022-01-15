@@ -124,7 +124,7 @@ package body Alire.Solver is
       --  versions is empty. In this case, we can prematurely end the search
       --  instead of keeping looking for a valid combination, as these
       --  dependencies will never be satisfied. NOTE that these unavailable
-      --  impossibilites must be top-level DIRECT dependencies (i.e.,
+      --  impossibilities must be top-level DIRECT dependencies (i.e.,
       --  introduced by the user), or otherwise it does make sense to explore
       --  alternate solutions that may not require the impossible dependencies.
 
