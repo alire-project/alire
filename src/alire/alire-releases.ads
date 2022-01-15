@@ -125,7 +125,7 @@ package Alire.Releases is
    --  property of the release.
 
    function Forbidden (R : Release) return Conditional.Dependencies;
-   --  Get all forbidden dependencies in platform-independen fashion
+   --  Get all forbidden dependencies in platform-independent fashion
 
    function Forbidden (R : Release;
                        P : Alire.Properties.Vector)
