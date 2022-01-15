@@ -79,7 +79,7 @@ package body Alire.Publish is
    -- Starting_Manifest --
    -----------------------
    --  The initial manifest in the workspace, at the standard location, or
-   --  overriden to be taken from somewhere else.
+   --  overridden to be taken from somewhere else.
    function Starting_Manifest (This : Data) return Any_Path
    is (if This.Options.Nonstandard_Manifest
        then This.Options.Manifest
