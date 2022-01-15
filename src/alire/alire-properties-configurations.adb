@@ -647,7 +647,7 @@ package body Alire.Properties.Configurations is
                when Int =>
                   if From.Pop ("first", First) then
                      if First.Kind /= TOML_Integer then
-                        From.Checked_Error ("first must be interger");
+                        From.Checked_Error ("first must be integer");
                      end if;
 
                      Type_Def.Int_First := First.As_Integer;
