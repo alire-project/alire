@@ -204,7 +204,8 @@ package body Alire.User_Pins is
          end if;
 
          --  Finally update. In case the branch has just been changed by the
-         --  user in the manifest, the following call wil also take care of it.
+         --  user in the manifest, the following call will also take care of
+         --  it.
 
          if not VCSs.Git.Handler.Update (Destination, Branch).Success then
             Raise_Checked_Error
