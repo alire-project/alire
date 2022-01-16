@@ -743,9 +743,9 @@ package body Alire.Properties.Configurations is
       end return;
    end Definitions_From_TOML;
 
-   ----------------------------
-   -- Assignements_From_TOML --
-   ----------------------------
+   ---------------------------
+   -- Assignments_From_TOML --
+   ---------------------------
 
    function Assignments_From_TOML (From : TOML_Adapters.Key_Queue)
                                     return Conditional.Properties
@@ -764,7 +764,7 @@ package body Alire.Properties.Configurations is
       begin
          if Raw.Kind /= TOML_Table then
             Raise_Checked_Error
-              (TOML_Keys.Config_Values & " assignements must be a table");
+              (TOML_Keys.Config_Values & " assignments must be a table");
          end if;
 
          Val.Crate := +Crate;
