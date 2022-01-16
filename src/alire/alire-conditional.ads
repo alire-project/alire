@@ -86,7 +86,7 @@ package Alire.Conditional with Preelaborate is
    --  that was formerly used only for availability.
 
    type Available is
-     new Interfaces.Classificable
+     new Interfaces.Classifiable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with record

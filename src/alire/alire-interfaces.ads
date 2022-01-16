@@ -4,14 +4,14 @@ with TOML;
 
 package Alire.Interfaces with Preelaborate is
 
-   -------------------
-   -- Classificable --
-   -------------------
+   ------------------
+   -- Classifiable --
+   ------------------
 
-   type Classificable is limited interface;
+   type Classifiable is limited interface;
    --  Used to classify properties/dependencies when exporting to TOML
 
-   function Key (This : Classificable) return String is abstract;
+   function Key (This : Classifiable) return String is abstract;
 
    ----------------
    -- Imaginable --
