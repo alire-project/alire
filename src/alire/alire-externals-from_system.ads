@@ -35,7 +35,7 @@ private
    --  To reuse the conditional expressions parser we need a bit of boilerplate
 
    type Package_Vector is
-     new Interfaces.Classificable
+     new Interfaces.Classifiable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable with record
       Packages : AAA.Strings.Vector;

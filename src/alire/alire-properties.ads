@@ -17,7 +17,7 @@ package Alire.Properties with Preelaborate is
    --  checks can proceed.
 
    type Property is abstract
-     new Interfaces.Classificable
+     new Interfaces.Classifiable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with null record;

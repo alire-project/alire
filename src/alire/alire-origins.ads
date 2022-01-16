@@ -211,7 +211,7 @@ private
    function S (Str : Unbounded_String) return String is (To_String (Str));
 
    type Archive_Data is
-     new Interfaces.Classificable
+     new Interfaces.Classifiable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable with
    record
