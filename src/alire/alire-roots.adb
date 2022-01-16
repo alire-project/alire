@@ -1048,7 +1048,7 @@ package body Alire.Roots is
          --  satisfied with the result of the previous edition.
 
          This.Sync_Manifest_And_Lockfile_Timestamps;
-         --  It may happend that the solution didn't change (edition of
+         --  It may happen that the solution didn't change (edition of
          --  manifest is not related to dependencies), in which case we need
          --  to manually mark the lockfile as older.
 

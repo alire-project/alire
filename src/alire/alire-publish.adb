@@ -79,7 +79,7 @@ package body Alire.Publish is
    -- Starting_Manifest --
    -----------------------
    --  The initial manifest in the workspace, at the standard location, or
-   --  overriden to be taken from somewhere else.
+   --  overridden to be taken from somewhere else.
    function Starting_Manifest (This : Data) return Any_Path
    is (if This.Options.Nonstandard_Manifest
        then This.Options.Manifest
@@ -283,9 +283,9 @@ package body Alire.Publish is
    -------------------------
    -- Check_User_Manifest --
    -------------------------
-   --  Ensure that we are at a valid root, or else that the nonstadard manifest
-   --  file is loadable. Either way, the contents of the release described by
-   --  the manifest are vetted for completeness.
+   --  Ensure that we are at a valid root, or else that the nonstandard
+   --  manifest file is loadable. Either way, the contents of the release
+   --  described by the manifest are vetted for completeness.
    procedure Check_User_Manifest (Context : in out Data) is
       use all type Roots.Optional.States;
    begin
@@ -836,7 +836,7 @@ package body Alire.Publish is
    ---------------
    -- Run_Steps --
    ---------------
-   --  Gives feedback on the current step and dispatchs to its actual code
+   --  Gives feedback on the current step and dispatches to its actual code
    procedure Run_Steps (Context : in out Data;
                         Steps   : Step_Array)
    is

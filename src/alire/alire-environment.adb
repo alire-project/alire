@@ -219,7 +219,7 @@ package body Alire.Environment is
    procedure Print_Shell (This : Context; Kind : Platforms.Shells) is
    begin
       --  TODO: PowerShell or CMD version for Windows. Is it possible to detect
-      --  the kind of shell we are runnning in?
+      --  the kind of shell we are running in?
       for Elt of This.Compile loop
          case Kind is
          when Platforms.Unix =>

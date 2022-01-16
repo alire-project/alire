@@ -29,7 +29,7 @@ package Alr.Commands.Run is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[executable] [--args=ARGS] [--skip-compile] | [--list]");
+   is ("[executable] [--args=ARGS] [--skip-build] | [--list]");
 
 private
 

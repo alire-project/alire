@@ -4,7 +4,7 @@ package Alire.Utils.Tools is
      (Easy_Graph, Git, Tar, Unzip, Curl, Mercurial, Subversion);
 
    function Available (Tool : Tool_Kind) return Boolean;
-   --  Say if tool is already available (attemps detection for the tool, but
+   --  Say if tool is already available (attempts detection for the tool, but
    --  does not install it if missing).
 
    procedure Check_Tool (Tool : Tool_Kind; Fail : Boolean := True);

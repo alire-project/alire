@@ -13,7 +13,7 @@ package Alr.Session is
    --    (just for the case where it is not the canonical one, that is: while developing)
 
    Hash           : constant String := "bootstrap";
-   --  In the curren per-session setup, this should always match unless the dependencies files has been
+   --  In the current per-session setup, this should always match unless the dependencies files has been
    --    tampered with in such a way that its timestamp has not been updated
 
    Full_Index     : constant Boolean := False;

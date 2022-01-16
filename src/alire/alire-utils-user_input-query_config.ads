@@ -18,7 +18,7 @@ package Alire.Utils.User_Input.Query_Config is
    ---------------------
    -- Query or config --
    ---------------------
-   --  The following fuction will get their value from:
+   --  The following function will get their value from:
    --   - The config if defined
    --   - The user if in interactive mode
    --   - A default value otherwise

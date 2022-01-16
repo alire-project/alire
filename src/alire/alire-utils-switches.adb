@@ -112,10 +112,10 @@ package body Alire.Utils.Switches is
 
    function Get_List (S : Runtime_Checks_Switches) return Switch_List
    is (case S.Kind is
-          when None       => Empty_List.Append (GNAT_Supress_Runtime_Check),
+          when None       => Empty_List.Append (GNAT_Suppress_Runtime_Check),
           when Default    => Empty_List,
           when Overflow   => Empty_List
-                             .Append (GNAT_Supress_Runtime_Check)
+                             .Append (GNAT_Suppress_Runtime_Check)
                              .Append (GNAT_Enable_Overflow_Check),
           when Everything => Empty_List.Append (GNAT_Enable_Overflow_Check),
           when Custom     => S.List);
