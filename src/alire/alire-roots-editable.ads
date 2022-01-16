@@ -24,7 +24,7 @@ package Alire.Roots.Editable is
    --  the user to accept, in which case Edited.Commit is called. Edited
    --  is expected to be a temporary copy of Original. Performs an
    --  Edited.Reload_Manifest, so any changes done to the Edited manifest
-   --  about dependency/pin adition/removal are applied.
+   --  about dependency/pin addition/removal are applied.
 
    --  A few proxies so useful predicates can be kept
 

@@ -85,7 +85,7 @@ package body Alire.Origins.Deployers.Source_Archive is
       when E : Checked_Error =>
          Trace.Warning ("tar failed: " & Errors.Get (E, Clear => False));
 
-         --  Reraise current occurence
+         --  Reraise current occurrence
          raise;
    end Untar;
 

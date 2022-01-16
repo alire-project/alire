@@ -7,7 +7,7 @@ with Semantic_Versioning.Extended;
 
 package Alire.Types is
 
-   --  Recopilation of types for convenient use and documentation
+   --  Collection of types for convenient use and documentation
 
    subtype Dependency is Dependencies.Dependency;
    --  A single dependency on a single crate+versions

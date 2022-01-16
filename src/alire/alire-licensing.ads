@@ -1,5 +1,5 @@
---  Deprecated: This package provides a depracated version of license
---  indentification and will be removed in a future release.
+--  Deprecated: This package provides a deprecated version of license
+--  identification and will be removed in a future release.
 
 package Alire.Licensing with Preelaborate is
 

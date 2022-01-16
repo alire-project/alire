@@ -547,7 +547,7 @@ package body Alire.Solutions is
                end case;
          end case;
 
-         --  Disambiguate prefering a complete solution with less releases
+         --  Disambiguate preferring a complete solution with less releases
 
          if This.Releases.Length < Than.Releases.Length then
             return True;
@@ -561,7 +561,7 @@ package body Alire.Solutions is
 
       --  Prefer more fulfilled releases when the solution is incomplete.
       --  The rationale is that fewer solved releases will mean more unknown
-      --  missing indirect depdendencies.
+      --  missing indirect dependencies.
 
       if This.Releases.Length > Than.Releases.Length then
          return True;

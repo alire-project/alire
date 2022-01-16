@@ -86,7 +86,7 @@ package Alire.VCSs.Git is
                     return Outcome;
    --  Update and track Branch, if given.
 
-   type States is (Dirty,     -- Uncommited local changes
+   type States is (Dirty,     -- Uncommitted local changes
                    No_Remote, -- Clean, no remote configured
                    Clean,     -- Clean, up to date with remote
                    Ahead);    -- Clean, ahead of remote (needs pull)

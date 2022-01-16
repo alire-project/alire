@@ -17,7 +17,7 @@ package Alire.Platforms with Preelaborate is
                           Ubuntu,
                           Msys2,
                           Arch,
-                          Rhel, -- RedHat Entreprise Linux
+                          Rhel, -- RedHat Enterprise Linux
                           Centos,
                           Fedora,
                           Distro_Unknown);
