@@ -453,7 +453,7 @@ package body Alire.Solutions is
               and then Release.Satisfies (Dep)
             then
                Trace.Debug
-                 ("Marking " & Dep.TTY_Image & " as solved colaterally by "
+                 ("Marking " & Dep.TTY_Image & " as solved collaterally by "
                   & Release.Milestone.TTY_Image);
                Result.Dependencies :=
                  Result.Dependencies.Including

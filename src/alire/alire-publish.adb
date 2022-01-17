@@ -898,7 +898,7 @@ package body Alire.Publish is
       case Root.Status is
       when Outside =>
          if Options.Nonstandard_Manifest then
-            Trace.Debug ("Using non-stardard manifest location: "
+            Trace.Debug ("Using non-standard manifest location: "
                          & Options.Manifest);
          else
             Raise_Checked_Error ("No Alire workspace found at "

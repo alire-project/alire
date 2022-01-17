@@ -79,7 +79,7 @@ package body Alr.Commands.Config is
          end if;
 
          if not CLIC.Config.Is_Valid_Config_Key (Args.First_Element) then
-            Reportaise_Wrong_Arguments ("Invalid configration key '" &
+            Reportaise_Wrong_Arguments ("Invalid configuration key '" &
                                           Args.First_Element & "'");
          end if;
 
@@ -101,7 +101,7 @@ package body Alr.Commands.Config is
          begin
 
             if not CLIC.Config.Is_Valid_Config_Key (Key) then
-               Reportaise_Wrong_Arguments ("Invalid configration key '" &
+               Reportaise_Wrong_Arguments ("Invalid configuration key '" &
                  Key & "'");
             end if;
 
