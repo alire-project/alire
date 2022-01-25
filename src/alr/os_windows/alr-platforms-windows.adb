@@ -143,7 +143,7 @@ package body Alr.Platforms.Windows is
            Cache_Folder (Platforms.Windows.New_Platform) / "msys64";
 
          Cfg_Install_Dir : constant String :=
-           Cfg.Get ("msys2.install_dir", Default_Install_Dir);
+           Cfg.DB.Get ("msys2.install_dir", Default_Install_Dir);
       begin
          Set_Msys2_Env (Cfg_Install_Dir);
       end;
@@ -151,14 +151,14 @@ package body Alr.Platforms.Windows is
       --  First update for the index and core packages
       Alire.OS_Lib.Subprocess.Checked_Spawn
         ("pacman",
-         Alire.Utils.Empty_Vector
+         AAA.Strings.Empty_Vector
          & "--noconfirm"
          & "-Syu");
 
-      --  Second update to update remaining packages
+      --  Second update for remaining packages
       Alire.OS_Lib.Subprocess.Checked_Spawn
         ("pacman",
-         Alire.Utils.Empty_Vector
+         AAA.Strings.Empty_Vector
          & "--noconfirm"
          & "-Su");
 
