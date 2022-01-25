@@ -155,7 +155,7 @@ package body Alr.Platforms.Windows is
          & "--noconfirm"
          & "-Syu");
 
-      --  Second update to update remaining packages
+      --  Second update for remaining packages
       Alire.OS_Lib.Subprocess.Checked_Spawn
         ("pacman",
          AAA.Strings.Empty_Vector
