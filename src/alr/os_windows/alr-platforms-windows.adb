@@ -18,9 +18,9 @@ package body Alr.Platforms.Windows is
 
    package Cfg renames Alire.Config;
 
-   Msys2_Installer     : constant String := "msys2-x86_64-20210604.exe";
+   Msys2_Installer     : constant String := "msys2-x86_64-20220118.exe";
    Msys2_Installer_URL : constant String :=
-     "https://github.com/msys2/msys2-installer/releases/download/2021-06-04/"
+     "https://github.com/msys2/msys2-installer/releases/download/2022-01-18/"
      & Msys2_Installer;
 
    -------------------
@@ -137,6 +137,32 @@ package body Alr.Platforms.Windows is
                        Value => Install_Dir);
       end if;
 
+      --  Load msys2 environment to attempt first full update according to
+      --  official setup instructions.
+      declare
+         Default_Install_Dir : constant Alire.Absolute_Path :=
+           Cache_Folder (Platforms.Windows.New_Platform) / "msys64";
+
+         Cfg_Install_Dir : constant String :=
+           Cfg.Get ("msys2.install_dir", Default_Install_Dir);
+      begin
+         Set_Msys2_Env (Cfg_Install_Dir);
+      end;
+
+      --  First update for the index and core packages
+      Alire.OS_Lib.Subprocess.Checked_Spawn
+        ("pacman",
+         Alire.Utils.Empty_Vector
+         & "--noconfirm"
+         & "-Syu");
+
+      --  Second update to update remaining packages
+      Alire.OS_Lib.Subprocess.Checked_Spawn
+        ("pacman",
+         Alire.Utils.Empty_Vector
+         & "--noconfirm"
+         & "-Su");
+
       return Alire.Outcome_Success;
    end Install_Msys2;
 
@@ -185,10 +211,18 @@ package body Alr.Platforms.Windows is
             Alire.Recoverable_Error (Result.Message);
             return;
          end if;
+
+      else
+
+         --  Msys2 was already installed and we need to load its environment.
+         --  Otherwise the installation procedure already has loaded it for the
+         --  first update.
+
+         --  Set the PATH and other environment variable for msys2
+         Set_Msys2_Env (Cfg_Install_Dir);
+
       end if;
 
-      --  Set the PATH and other environment variable for msys2
-      Set_Msys2_Env (Cfg_Install_Dir);
    end Setup_Msys2;
 
    ----------
