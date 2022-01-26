@@ -2,7 +2,8 @@ package Alire.Version with Preelaborate is
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "1.1.1";
+   Current : constant String := "1.1.2";
+   --  1.1.2:     latest msys2 and ensure it's fully updated
    --  1.1.1:     fixes in #862 #866 #875 #876
    --  1.1.0:     toolchain compatibility checks
    --  1.1.0-rc3: toolchain with multiple switches, minor fixes
