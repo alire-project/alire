@@ -31,7 +31,7 @@ toml_slicer = "~0.1"
 uri_ada = "^1"
 spdx = "~0.2"
 
-# For some reason static-pic is giving hell in CLIC
+# For some reason static-pic is causing problems in CLIC
 [gpr-set-externals]
 CLIC_LIBRARY_TYPE="static"
 
@@ -42,8 +42,8 @@ macos   = { OS = "macOS" }
 # Most dependencies require precise versions during the development cycle:
 [[pins]]
 aaa = { url = "https://github.com/mosteo/aaa.git", commit = "22fcef5c465ece2f9cf5c57b36c340d4d4154811" }
-ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
 ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "2a671ffb1039a036f2bb68bdc88afc8d3dc68c10" }
+ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
 ansiada = { url = "https://github.com/mosteo/ansi-ada.git", commit = "acf9afca3afe1f8b8843c061f3cef860d7567307" }
 clic = { url = "https://github.com/alire-project/clic.git", commit = "5a1f32326013784113a336a1aded509270dacc76" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "f3bd1c51d12962879f52733e790b394f5bbfe05f" }
