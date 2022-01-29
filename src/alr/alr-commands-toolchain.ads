@@ -23,7 +23,7 @@ package Alr.Commands.Toolchain is
    is (AAA.Strings.Empty_Vector
        .Append
          ("Download toolchain elements, like" & " " & TTY.Emph ("GNAT")
-          & " and " & TTY.Emph ("gprbuid") & ", in the shared cache of the"
+          & " and " & TTY.Emph ("gprbuild") & ", in the shared cache of the"
           & " active configuration.")
        .New_Line
        .Append
