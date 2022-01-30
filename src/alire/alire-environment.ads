@@ -44,7 +44,7 @@ package Alire.Environment is
    --  variables.
 
    procedure Print_Details (This : Context);
-   --  Print details about the environement context. What are the variables
+   --  Print details about the environment context. What are the variables
    --  definitions and their origin.
 
 private

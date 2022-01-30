@@ -14,7 +14,7 @@ package Alire.Dependencies with Preelaborate is
    --  A single dependency is a crate name plus a version set
 
    type Dependency (<>) is
-     new Interfaces.Classificable -- since the crate name is the key
+     new Interfaces.Classifiable -- since the crate name is the key
      and Interfaces.Colorable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
@@ -81,7 +81,7 @@ package Alire.Dependencies with Preelaborate is
 private
 
    type Dependency (Name_Len : Natural) is
-     new Interfaces.Classificable
+     new Interfaces.Classifiable
      and Interfaces.Colorable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable

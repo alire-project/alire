@@ -125,7 +125,7 @@ package Alire.Releases is
    --  property of the release.
 
    function Forbidden (R : Release) return Conditional.Dependencies;
-   --  Get all forbidden dependencies in platform-independen fashion
+   --  Get all forbidden dependencies in platform-independent fashion
 
    function Forbidden (R : Release;
                        P : Alire.Properties.Vector)
@@ -343,7 +343,7 @@ package Alire.Releases is
       Include_Origin  : Boolean := False);
    --  Deploy the sources of this release under the given Parent_Folder. If
    --  Create_Manifest, any packaged manifest will be moved out of the way
-   --  and an autoritative manifest will be generated from index information.
+   --  and an authoritative manifest will be generated from index information.
    --  The created manifest may optionally Include_Origin information.
 
 private

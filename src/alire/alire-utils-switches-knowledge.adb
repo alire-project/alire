@@ -51,7 +51,7 @@ package body Alire.Utils.Switches.Knowledge is
       Register (GNAT_Enable_Inlining, "Enable inlining");
       Register (GNAT_Asserts_And_Contracts, "Enable assertions and contracts");
       Register (GNAT_Debug_Info, "Generate debug info");
-      Register (GNAT_Supress_Runtime_Check, "Supress run-time checks");
+      Register (GNAT_Suppress_Runtime_Check, "Suppress run-time checks");
       Register (GNAT_Enable_Overflow_Check, "Enable numeric overflow checking");
       Register (GNAT_Disable_Warn_No_Exception_Propagation, "Disable warnings for No_Exception_Propagation");
       Register (GNAT_Dont_Quit, "Don't quit. Generate ALI and tree files even if illegalities");

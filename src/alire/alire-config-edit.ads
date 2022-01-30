@@ -40,7 +40,7 @@ package Alire.Config.Edit is
 
    function Filepath (Lvl : Level) return Absolute_Path
      with Pre => Lvl /= Local or else Directories.Detect_Root_Path /= "";
-   --  Return path of the configuration file coresponding to the given
+   --  Return path of the configuration file corresponding to the given
    --  configuration level.
 
    function Builtins_Info return AAA.Strings.Vector;

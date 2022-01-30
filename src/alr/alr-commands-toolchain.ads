@@ -33,7 +33,7 @@ package Alr.Commands.Toolchain is
          ("Use --select without arguments to run the assistant to "
           & "select the default toolchain for this configuration. "
           & "Adding --local will instead make the selection apply "
-          & "only to the workspace (overridding a possible "
+          & "only to the workspace (overriding a possible "
           & "configuration-wide selection). Giving one or more releases"
           & " argument will skip the assistant and set the release as the"
           & " default.")

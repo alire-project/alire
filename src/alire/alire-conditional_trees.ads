@@ -12,7 +12,7 @@ with TOML; use all type TOML.Any_Value_Kind;
 
 generic
    type Values (<>) is
-     new Interfaces.Classificable
+     new Interfaces.Classifiable
      and Interfaces.Tomifiable
      and Interfaces.Yamlable
    with private;

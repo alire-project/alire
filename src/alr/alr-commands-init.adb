@@ -98,7 +98,7 @@ package body Alr.Commands.Init is
          Filename : constant String :=
             +Full_Name (Directory / (+Lower_Name & ".gpr"));
       begin
-         --  Use more than 80 colums for more readable strings
+         --  Use more than 80 columns for more readable strings
          pragma Style_Checks ("M200");
 
          --  --  Config project file

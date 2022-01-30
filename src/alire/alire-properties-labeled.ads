@@ -50,7 +50,7 @@ package Alire.Properties.Labeled with Preelaborate is
       --  A website other than the repository
 
       Tag
-      --  One word that indentify one of the topic convered by a crate
+      --  One word that identify one of the topic convered by a crate
      );
 
    type Cardinalities is (Unique, Multiple); -- Are they atoms or arrays?

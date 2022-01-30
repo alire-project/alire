@@ -124,7 +124,7 @@ package body Alire.Solver is
       --  versions is empty. In this case, we can prematurely end the search
       --  instead of keeping looking for a valid combination, as these
       --  dependencies will never be satisfied. NOTE that these unavailable
-      --  impossibilites must be top-level DIRECT dependencies (i.e.,
+      --  impossibilities must be top-level DIRECT dependencies (i.e.,
       --  introduced by the user), or otherwise it does make sense to explore
       --  alternate solutions that may not require the impossible dependencies.
 
@@ -307,7 +307,7 @@ package body Alire.Solver is
             begin
 
                --  The following checks are not guaranteed to find the proper
-               --  GNAT to use, as a yet-unknonw dependency might add a precise
+               --  GNAT to use, as a yet-unknown dependency might add a precise
                --  GNAT later on. It should however cover the common case
                --  in which the GNAT dependencies are in the root crate. If
                --  all else fails, in the end there is a real problem of the
@@ -439,8 +439,8 @@ package body Alire.Solver is
                              and Target
                              and Remaining).Image_One_Line);
 
-                  --  Even if the release is OK for the dependency, we
-                  --  agregated dependencies for the crate in the solution
+                  --  Even if the release is OK for the dependency, the
+                  --  aggregated dependencies for the crate in the solution
                   --  can be another matter, so we recheck again.
 
                elsif not R.Satisfies (Solution.Dependency (Dep.Crate)) then

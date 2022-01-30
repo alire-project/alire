@@ -76,7 +76,7 @@ package body Alire.Crate_Configuration is
          if This.Profile_Map.Contains (Crate) then
             This.Profile_Map.Replace (Crate, P);
          else
-            Raise_Checked_Error ("Unknow crate in build profile: '" &
+            Raise_Checked_Error ("Unknown crate in build profile: '" &
                                    String'(+Crate) & "'");
          end if;
       end Set_Profile;
@@ -136,13 +136,13 @@ package body Alire.Crate_Configuration is
 
    end Make_Build_Profile_Map;
 
-   ----------------------
-   -- Make_Swiches_Map --
-   ----------------------
+   -----------------------
+   -- Make_Switches_Map --
+   -----------------------
 
-   procedure Make_Swiches_Map (This     : in out Global_Config;
-                               Root     : in out Alire.Roots.Root;
-                               Rel_Vect : Crate_Name_Vect.Vector)
+   procedure Make_Switches_Map (This     : in out Global_Config;
+                                Root     : in out Alire.Roots.Root;
+                                Rel_Vect : Crate_Name_Vect.Vector)
    is
    begin
       for Crate of Rel_Vect loop
@@ -188,7 +188,7 @@ package body Alire.Crate_Configuration is
             This.Switches_Map.Insert (Rel.Name, Get_List (Config));
          end;
       end loop;
-   end Make_Swiches_Map;
+   end Make_Switches_Map;
 
    ----------
    -- Load --
@@ -213,7 +213,7 @@ package body Alire.Crate_Configuration is
 
       Make_Build_Profile_Map (This, Root, Rel_Vect);
 
-      Make_Swiches_Map (This, Root, Rel_Vect);
+      Make_Switches_Map (This, Root, Rel_Vect);
 
       for Create of Rel_Vect loop
          This.Load_Settings (Root, Create);
