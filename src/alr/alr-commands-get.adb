@@ -44,6 +44,8 @@ package body Alr.Commands.Get is
 
       Build_OK : Boolean := False;
       Solution : Alire.Solutions.Solution;
+
+      use all type Alire.Origins.Kinds;
    begin
       Trace.Detail ("Using " & Rel.Milestone.TTY_Image
                     & " for requested "
@@ -167,11 +169,21 @@ package body Alr.Commands.Get is
          Cmd.Root.Deploy_Dependencies;
 
          if Cmd.Build then
-            --  The complete build environment has been set up already by
-            --  Deploy_Dependencies, so we must not do it again.
-            Build_OK := Commands.Build.Execute (Cmd,
-                                                AAA.Strings.Empty_Vector,
-                                                Export_Build_Env => False);
+            if Rel.Origin.Kind in Binary_Archive then
+
+               --  No need to build a binary release
+               Alire.Put_Info ("Skipping build step for binary release "
+                               & Rel.Milestone.TTY_Image);
+               Build_OK := True;
+
+            else
+
+               --  The complete build environment has been set up already by
+               --  Deploy_Dependencies, so we must not do it again.
+               Build_OK := Commands.Build.Execute (Cmd,
+                                                   AAA.Strings.Empty_Vector,
+                                                   Export_Build_Env => False);
+            end if;
          else
             Build_OK := True;
          end if;
@@ -188,7 +200,9 @@ package body Alr.Commands.Get is
                     else " with missing dependencies")
                  & (if Cmd.Build
                    then (if Build_OK
-                         then " and built."
+                         then (if Rel.Origin.Kind in Binary_Archive
+                               then " and deployed."
+                               else " and built.")
                          else " but its build failed.")
                    else "."),
                  Level => (if not Cmd.Build or else Build_OK
