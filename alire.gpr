@@ -28,6 +28,14 @@ library project Alire is
       when others    => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
    end case;
 
+   package Naming is
+      case Alire_Common.Host_OS is
+         when "windows" =>
+         when "osx"     =>
+         when others    => for body ("Alire.Platforms.Current") use "alire-platforms-current__linux.adb";
+      end case;
+   end Naming;
+
    for Source_Dirs use Src_Dirs;
 
    for Library_Dir use "lib";

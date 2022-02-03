@@ -3,7 +3,7 @@ with AAA.Strings; use AAA.Strings;
 
 with GNAT.Regpat;
 
-package body Alire.Platform is
+package body Alire.Platforms.Current is
 
    --  Linux implementation
 
@@ -32,7 +32,6 @@ package body Alire.Platform is
 
    function Detected_Distribution return Platforms.Distributions is
       use Alire.OS_Lib;
-      use all type Alire.Platforms.Distributions;
    begin
       if Distro_Cached then
          return Cached_Distro;
@@ -142,4 +141,4 @@ package body Alire.Platform is
    procedure Load_Environment (Ctx : in out Alire.Environment.Context)
    is null;
 
-end Alire.Platform;
+end Alire.Platforms.Current;

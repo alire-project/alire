@@ -1,7 +1,7 @@
 with Alire.Conditional_Trees.TOML_Load;
 with Alire.Index;
 with Alire.Origins.Deployers.System;
-with Alire.Platform;
+with Alire.Platforms.Current;
 with Alire.Properties.Platform;
 with Alire.Releases;
 with Alire.Root;
@@ -20,7 +20,7 @@ package body Alire.Externals.From_System is
       package System renames Origins.Deployers.System;
    begin
       --  No need to look for anything if the distro is unknown:
-      if not Platform.Distribution_Is_Known then
+      if not Platforms.Current.Distribution_Is_Known then
          Trace.Detail ("Cannot look for system packages for crate " & (+Name)
                        & " in unknown distribution");
          return (Releases.Containers.Release_Sets.Empty_Set with null record);

@@ -4,7 +4,7 @@ with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
-with Alire.Platform;
+with Alire.Platforms.Current;
 with Alire.Platforms;
 with Alire.Releases.Containers;
 with Alire.Root;
@@ -145,7 +145,7 @@ package body Alr.Commands.Show is
                Detail : constant AAA.Strings.Vector :=
                           External.Detail
                             (if Cmd.System
-                             then Alire.Platform.Distribution
+                             then Alire.Platforms.Current.Distribution
                              else Alire.Platforms.Distro_Unknown);
                Available : Alire.Conditional.Availability :=
                              (if Cmd.System

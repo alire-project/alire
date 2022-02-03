@@ -3,7 +3,7 @@ limited with Alire.Environment;
 
 private with GNATCOLL.OS.Constants;
 
-package Alire.Platform is
+package Alire.Platforms.Current is
 
    --  Alr.Platforms will be progressively migrated in here as needed.
 
@@ -62,4 +62,4 @@ private
    is (GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows);
    pragma Warnings (On);
 
-end Alire.Platform;
+end Alire.Platforms.Current;

@@ -7,7 +7,7 @@ with Ada.Unchecked_Deallocation;
 with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
-with Alire.Platform;
+with Alire.Platforms.Current;
 
 with GNATCOLL.VFS;
 
@@ -223,7 +223,7 @@ package body Alire.Directories is
    begin
       if Exists (Path) and then
         Kind (Path) = Directory and then
-        Platform.On_Windows
+        Platforms.Current.On_Windows
       then
          Trace.Debug ("Forcing writability of dir " & Path);
          OS_Lib.Subprocess.Checked_Spawn

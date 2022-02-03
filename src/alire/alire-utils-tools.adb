@@ -1,7 +1,6 @@
 with Alire.OS_Lib.Subprocess; use Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib;
-with Alire.Platforms;
-with Alire.Platform;
+with Alire.Platforms.Current;
 with Alire.Origins.Deployers.System;
 with CLIC.User_Input;
 
@@ -49,7 +48,7 @@ package body Alire.Utils.Tools is
 
    function System_Package_For_Tool (Tool : Tool_Kind) return String is
       use Alire.Platforms;
-      use Alire.Platform;
+      use Alire.Platforms.Current;
    begin
       case Distribution is
 
