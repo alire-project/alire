@@ -1,6 +1,6 @@
 with Alire.OS_Lib;
 
-package body Alire.Platform is
+package body Alire.Platforms.Current is
 
    --  macOS implementation
 
@@ -36,4 +36,4 @@ package body Alire.Platform is
    procedure Load_Environment (Ctx : in out Alire.Environment.Context)
    is null;
 
-end Alire.Platform;
+end Alire.Platforms.Current;

@@ -1,4 +1,4 @@
-with Alire.Platform;
+with Alire.Platforms.Current;
 
 with Alr.OS_Lib;
 
@@ -28,6 +28,6 @@ package body Alr.Platforms.MacOS is
 
    overriding function Distribution (This : OS_Variant)
                                      return Alire.Platforms.Distributions
-   is (Alire.Platform.Distribution);
+   is (Alire.Platforms.Current.Distribution);
 
 end Alr.Platforms.MacOS;
