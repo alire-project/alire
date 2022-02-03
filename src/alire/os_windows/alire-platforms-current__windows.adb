@@ -7,7 +7,7 @@ with Alire.Environment;
 with Alire.OS_Lib;            use Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 
-package body Alire.Platform is
+package body Alire.Platforms.Current is
 
    --  Windows implementation
 
@@ -136,4 +136,4 @@ package body Alire.Platform is
 
    end Load_Environment;
 
-end Alire.Platform;
+end Alire.Platforms.Current;

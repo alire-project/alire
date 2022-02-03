@@ -5,11 +5,11 @@ with GNAT.OS_Lib;
 with AAA.Strings;
 
 with Alire;
-with Alire.Platform;
+with Alire.Config.Edit;
 with Alire.OS_Lib;
 with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
-with Alire.Config.Edit;
+with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
@@ -254,7 +254,7 @@ package body Alr.Platforms.Windows is
    overriding
    function Distribution (This : Linux_Variant)
                           return Alire.Platforms.Distributions
-   is (Alire.Platform.Distribution);
+   is (Alire.Platforms.Current.Distribution);
 
 begin
    Setup_Msys2;
