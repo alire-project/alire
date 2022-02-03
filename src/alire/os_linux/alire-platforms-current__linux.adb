@@ -1,5 +1,7 @@
 with AAA.Strings; use AAA.Strings;
 
+with Alire.Platforms.Common;
+
 with GNAT.Regpat;
 
 package body Alire.Platforms.Current is
@@ -12,22 +14,13 @@ package body Alire.Platforms.Current is
    -- Cache_Folder --
    ------------------
 
-   function Cache_Folder return String is
-     (OS_Lib.Getenv ("XDG_CACHE_HOME",
-      Default => OS_Lib.Getenv ("HOME") / ".cache" / "alire"));
+   function Cache_Folder return String is (Common.Config_Folder);
 
    -------------------
    -- Config_Folder --
    -------------------
 
-   function Config_Folder return String is
-   begin
-      return
-        OS_Lib.Getenv
-          ("XDG_CONFIG_HOME",
-           Default => OS_Lib.Getenv ("HOME", Default => "/tmp") / ".config")
-          / "alire";
-   end Config_Folder;
+   function Config_Folder return String is (Common.Config_Folder);
 
    ---------------------------
    -- Detected_Distribution --

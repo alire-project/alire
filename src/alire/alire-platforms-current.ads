@@ -34,7 +34,8 @@ package Alire.Platforms.Current is
    --  Root directory of the distribution
 
    procedure Load_Environment (Ctx : in out Alire.Environment.Context);
-   --  Set environment variables from the platform
+   --  Set environment variables from the platform. Used by Windows to
+   --  initialize msys2 environment.
 
    -----------------------
    --  Self identification
