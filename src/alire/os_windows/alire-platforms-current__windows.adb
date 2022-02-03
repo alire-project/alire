@@ -5,7 +5,6 @@ with AAA.Strings;
 
 with Alire.Environment;
 with Alire.OS_Lib;            use Alire.OS_Lib;
-with Alire.OS_Lib.Subprocess;
 
 package body Alire.Platforms.Current is
 
@@ -13,6 +12,25 @@ package body Alire.Platforms.Current is
 
    Distrib_Detected : Boolean := False;
    Distrib : Platforms.Distributions := Platforms.Distro_Unknown;
+
+   ----------
+   -- Home --
+   ----------
+
+   function Home return String
+   is (OS_Lib.Getenv ("HOMEDRIVE") & OS_Lib.Getenv ("HOMEPATH"));
+
+   ------------------
+   -- Cache_Folder --
+   ------------------
+
+   function Cache_Folder return String is (Home / ".cache" / "alire");
+
+   -------------------
+   -- Config_Folder --
+   -------------------
+
+   function Config_Folder return String is (Home / ".config" / "alire");
 
    ------------------
    -- Detect_Msys2 --
@@ -50,15 +68,6 @@ package body Alire.Platforms.Current is
          Raise_Checked_Error ("Cannot locate pacman in msys2 distrib");
       end if;
    end Detect_Msys2_Root;
-
-   ---------------------------
-   -- Default_Config_Folder --
-   ---------------------------
-
-   function Default_Config_Folder return String is
-   begin
-      return Getenv ("HOMEDRIVE") & Getenv ("HOMEPATH") / ".config" / "alire";
-   end Default_Config_Folder;
 
    --------------------
    -- Detect_Distrib --
@@ -135,5 +144,11 @@ package body Alire.Platforms.Current is
       end case;
 
    end Load_Environment;
+
+   ----------------------
+   -- Operating_System --
+   ----------------------
+
+   function Operating_System return Operating_Systems is (Windows);
 
 end Alire.Platforms.Current;

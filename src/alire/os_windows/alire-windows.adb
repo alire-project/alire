@@ -1,23 +1,18 @@
 with Ada.Directories;
 
-with GNAT.OS_Lib;
-
-with AAA.Strings;
-
-with Alire;
 with Alire.Config.Edit;
-with Alire.OS_Lib;
-with Alire.OS_Lib.Subprocess;
 with Alire.OS_Lib.Download;
+with Alire.OS_Lib.Subprocess;
 with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
-with Alr.OS_Lib; use Alr.OS_Lib;
+package body Alire.Windows is
 
-package body Alr.Platforms.Windows is
+   use OS_Lib;
+   use Platforms.Current;
 
-   package Cfg renames Alire.Config;
+   package Cfg renames Config;
 
    Msys2_Installer     : constant String := "msys2-x86_64-20220118.exe";
    Msys2_Installer_URL : constant String :=
@@ -51,22 +46,22 @@ package body Alr.Platforms.Windows is
 
          --  User already requested that msys2 should not be installed
 
-         Alr.Trace.Detail ("Alire is configured not to install msys2.");
-         Alr.Trace.Detail
+         Trace.Detail ("Alire is configured not to install msys2.");
+         Trace.Detail
            ("Run 'alr config --global --set msys2.do_not_install false'" &
               " if you want Alire to install msys2.");
          return False;
       end if;
 
-      Alr.Trace.Always ("Alire can use the msys2 Windows system package" &
-                          " manager to provide easy install");
-      Alr.Trace.Always ("of tools (git, unzip, make, etc.) as well as" &
-                          " libraries (libsdl, libusb, etc.)");
+      Trace.Always ("Alire can use the msys2 Windows system package" &
+                      " manager to provide easy install");
+      Trace.Always ("of tools (git, unzip, make, etc.) as well as" &
+                      " libraries (libsdl, libusb, etc.)");
 
-      Alr.Trace.Always
+      Trace.Always
         ("The use of msys2 is recommend for a better user experience.");
 
-      Alr.Trace.Always ("(msys2 will be installed in '" & Install_Dir & "').");
+      Trace.Always ("(msys2 will be installed in '" & Install_Dir & "').");
 
       if Query ("Do you want Alire to install msys2? (recommended)",
                 Valid    => (Yes | No => True, others => False),
@@ -140,10 +135,11 @@ package body Alr.Platforms.Windows is
       --  official setup instructions.
       declare
          Default_Install_Dir : constant Alire.Absolute_Path :=
-           Cache_Folder (Platforms.Windows.New_Platform) / "msys64";
+                                 Cache_Folder / "msys64";
 
          Cfg_Install_Dir : constant String :=
-           Cfg.DB.Get ("msys2.install_dir", Default_Install_Dir);
+                             Cfg.DB.Get ("msys2.install_dir",
+                                         Default_Install_Dir);
       begin
          Set_Msys2_Env (Cfg_Install_Dir);
       end;
@@ -173,13 +169,14 @@ package body Alr.Platforms.Windows is
       Result : Alire.Outcome;
 
       Default_Install_Dir : constant Alire.Absolute_Path :=
-        Cache_Folder (Platforms.Windows.New_Platform) / "msys64";
+                              Cache_Folder / "msys64";
 
       Cfg_Install_Dir : constant String :=
-        Cfg.DB.Get ("msys2.install_dir", Default_Install_Dir);
+                          Cfg.DB.Get ("msys2.install_dir",
+                                      Default_Install_Dir);
 
       Pacman : constant String :=
-        Alire.OS_Lib.Subprocess.Locate_In_Path ("pacman");
+                 Alire.OS_Lib.Subprocess.Locate_In_Path ("pacman");
 
    begin
       if Pacman /= "" then
@@ -207,7 +204,7 @@ package body Alr.Platforms.Windows is
          if not Result.Success then
             --  This error is recoverable as msys2 is not required for alr to
             --  work.
-            Alire.Recoverable_Error (Result.Message);
+            Alire.Recoverable_Error (Message (Result));
             return;
          end if;
 
@@ -224,38 +221,6 @@ package body Alr.Platforms.Windows is
 
    end Setup_Msys2;
 
-   ----------
-   -- Home --
-   ----------
-
-   function Home return String
-   is (OS_Lib.Getenv ("HOMEDRIVE") & OS_Lib.Getenv ("HOMEPATH"));
-
-   ------------------
-   -- Cache_Folder --
-   ------------------
-
-   overriding
-   function Cache_Folder (This : Linux_Variant) return String
-   is  (Home / ".cache" / "alire");
-
-   -------------------
-   -- Config_Folder --
-   -------------------
-
-   overriding
-   function Config_Folder (This : Linux_Variant) return String
-   is (Home / ".config" / "alire");
-
-   ------------------
-   -- Distribution --
-   ------------------
-
-   overriding
-   function Distribution (This : Linux_Variant)
-                          return Alire.Platforms.Distributions
-   is (Alire.Platforms.Current.Distribution);
-
 begin
    Setup_Msys2;
-end Alr.Platforms.Windows;
+end Alire.Windows;

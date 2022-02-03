@@ -7,17 +7,21 @@ private package Alire.Platforms.Common is
 
    use OS_Lib.Operators; -- Bring in "/" for paths
 
-   function Cache_Folder return String
+   ----------------------
+   -- XDG_Cache_Folder --
+   ----------------------
+
+   function XDG_Cache_Folder return String
    is (OS_Lib.Getenv
          ("XDG_CACHE_HOME",
           Default => OS_Lib.Getenv ("HOME") / ".cache")
        / "alire");
 
-   -------------------
-   -- Config_Folder --
-   -------------------
+   -----------------------
+   -- XDG_Config_Folder --
+   -----------------------
 
-   function Config_Folder return String
+   function XDG_Config_Folder return String
    is (OS_Lib.Getenv
          ("XDG_CONFIG_HOME",
           Default => OS_Lib.Getenv ("HOME", Default => "/tmp") / ".config")

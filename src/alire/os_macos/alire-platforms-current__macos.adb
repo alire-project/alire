@@ -9,13 +9,13 @@ package body Alire.Platforms.Current is
    -- Cache_Folder --
    ------------------
 
-   function Cache_Folder return String is (Common.Config_Folder);
+   function Cache_Folder return String is (Common.XDG_Config_Folder);
 
    -------------------
    -- Config_Folder --
    -------------------
 
-   function Config_Folder return String is (Common.Config_Folder);
+   function Config_Folder return String is (Common.XDG_Config_Folder);
 
    ------------------
    -- Distribution --

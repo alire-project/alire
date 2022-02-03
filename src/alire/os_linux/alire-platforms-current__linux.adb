@@ -8,19 +8,17 @@ package body Alire.Platforms.Current is
 
    --  Linux implementation
 
-   use OS_Lib.Operators; -- Bring in "/" for paths
-
    ------------------
    -- Cache_Folder --
    ------------------
 
-   function Cache_Folder return String is (Common.Config_Folder);
+   function Cache_Folder return String is (Common.XDG_Config_Folder);
 
    -------------------
    -- Config_Folder --
    -------------------
 
-   function Config_Folder return String is (Common.Config_Folder);
+   function Config_Folder return String is (Common.XDG_Config_Folder);
 
    ---------------------------
    -- Detected_Distribution --
