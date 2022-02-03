@@ -10,6 +10,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.OS_Lib.Subprocess;
+with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
 with Alire.Solutions;
@@ -18,7 +19,6 @@ with Alire.Utils;
 
 with Alr.Files;
 with Alr.Paths;
-with Alr.Platform;
 with Alr.Testing.Collections;
 with Alr.Testing.Console;
 with Alr.Testing.JUnit;
@@ -33,7 +33,8 @@ package body Alr.Commands.Test is
 
    use type Ada.Containers.Count_Type;
 
-   package Query renames Alire.Solver;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
 
    Docker_Switch : constant String := "--docker";
 

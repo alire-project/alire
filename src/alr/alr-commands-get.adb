@@ -7,7 +7,6 @@ with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platforms.Current;
-with Alire.Platforms;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
@@ -15,14 +14,14 @@ with Alire.Solver;
 with CLIC.User_Input;
 
 with Alr.Commands.Build;
-with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Get is
 
-   package Query  renames Alire.Solver;
-   package Semver renames Semantic_Versioning;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
+   package Semver   renames Semantic_Versioning;
 
    --------------
    -- Retrieve --

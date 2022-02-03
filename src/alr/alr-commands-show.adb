@@ -5,7 +5,6 @@ with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Platforms.Current;
-with Alire.Platforms;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Roots.Optional;
@@ -14,16 +13,15 @@ with Alire.Solver;
 with Alire.Utils.Tables;
 with Alire.Utils;
 
-with Alr.Platform;
-
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Show is
 
    use type Ada.Containers.Count_Type;
 
-   package Query  renames Alire.Solver;
-   package Semver renames Semantic_Versioning;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
+   package Semver   renames Semantic_Versioning;
 
    ------------
    -- Report --

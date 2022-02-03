@@ -153,7 +153,7 @@ package body Alire.Config.Edit is
          return Config_Path.all;
       else
          return OS_Lib.Getenv (Environment.Config,
-                               Platforms.Current.Default_Config_Folder);
+                               Platforms.Current.Config_Folder);
       end if;
    end Path;
 

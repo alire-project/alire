@@ -12,6 +12,7 @@ with Alire.Errors;
 with Alire.Features.Index;
 with Alire.Lockfiles;
 with Alire.Paths;
+with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
@@ -44,7 +45,6 @@ with Alr.Commands.Topics.Aliases;
 with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;
-with Alr.Platform;
 
 package body Alr.Commands is
 
@@ -380,9 +380,9 @@ package body Alr.Commands is
       --  Use CLIC.TTY selection/detection of TTY
       Trace.Is_TTY := CLIC.TTY.Is_TTY;
 
-      if Platform.Operating_System not in Alire.Platforms.Windows and then
-        not No_Color and then
-        not No_TTY
+      if not Alire.Platforms.Current.On_Windows
+        and then not No_Color
+        and then not No_TTY
       then
          CLIC.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable

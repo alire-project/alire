@@ -1,6 +1,7 @@
 with Alire.Crates.Containers;
 with Alire.Externals;
 with Alire.Index.Search;
+with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Solutions;
 with Alire.Solver;
@@ -8,11 +9,11 @@ with Alire.Utils;
 with Alire.Utils.Tables;
 with Alire.Utils.TTY;
 
-with Alr.Platform;
-
 with Semantic_Versioning;
 
 package body Alr.Commands.Search is
+
+   package Platform renames Alire.Platforms.Current;
 
    -------------
    -- Execute --

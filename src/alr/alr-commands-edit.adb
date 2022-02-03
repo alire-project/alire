@@ -1,10 +1,10 @@
 with Ada.Containers;
 
 with Alire; use Alire;
-with Alire.OS_Lib.Subprocess;
 with Alire.Config;
+with Alire.OS_Lib.Subprocess;
+with Alire.Platforms.Current;
 
-with Alr.Platform;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Alr.Commands.Edit is
@@ -102,7 +102,7 @@ package body Alr.Commands.Edit is
       declare
          Project_Files : constant AAA.Strings.Vector :=
            Cmd.Root.Release.Project_Files
-             (Platform.Properties, With_Path => True);
+             (Platforms.Current.Properties, With_Path => True);
       begin
          if Project_Files.Length = 0 then
             Reportaise_Command_Failed
