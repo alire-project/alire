@@ -30,9 +30,15 @@ library project Alire is
 
    package Naming is
       case Alire_Common.Host_OS is
-         when "windows" => for body ("Alire.Platforms.Current") use "alire-platforms-current__windows.adb";
-         when "osx"     => for body ("Alire.Platforms.Current") use "alire-platforms-current__macos.adb";
-         when others    => for body ("Alire.Platforms.Current") use "alire-platforms-current__linux.adb";
+         when "windows" =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__windows.adb";
+            for body ("Alire.Platforms.Init")    use "alire-platforms-init__windows.adb";
+         when "osx"     =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__macos.adb";
+            for body ("Alire.Platforms.Init")    use "alire-platforms-init__noop.adb";
+         when others    =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__linux.adb";
+            for body ("Alire.Platforms.Init")    use "alire-platforms-init__noop.adb";
       end case;
    end Naming;
 

@@ -7,7 +7,7 @@ with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
-package body Alire.Windows is
+package body Alire.Platforms.Init is
 
    use OS_Lib;
    use Platforms.Current;
@@ -223,4 +223,4 @@ package body Alire.Windows is
 
 begin
    Setup_Msys2;
-end Alire.Windows;
+end Alire.Platforms.Init;
