@@ -1,19 +1,21 @@
 with Alire.OS_Lib;
+with Alire.Platforms.Common;
 
-package body Alire.Platform is
+package body Alire.Platforms.Current is
 
    --  macOS implementation
 
-   ---------------------------
-   -- Default_Config_Folder --
-   ---------------------------
+   ------------------
+   -- Cache_Folder --
+   ------------------
 
-   function Default_Config_Folder return String is
-      use OS_Lib;
-   begin
-      return (OS_Lib.Getenv ("XDG_CONFIG_HOME",
-              Default => OS_Lib.Getenv ("HOME") / ".config" / "alire"));
-   end Default_Config_Folder;
+   function Cache_Folder return String is (Common.XDG_Config_Folder);
+
+   -------------------
+   -- Config_Folder --
+   -------------------
+
+   function Config_Folder return String is (Common.XDG_Config_Folder);
 
    ------------------
    -- Distribution --
@@ -36,4 +38,10 @@ package body Alire.Platform is
    procedure Load_Environment (Ctx : in out Alire.Environment.Context)
    is null;
 
-end Alire.Platform;
+   ----------------------
+   -- Operating_System --
+   ----------------------
+
+   function Operating_System return Platforms.Operating_Systems is (MacOS);
+
+end Alire.Platforms.Current;

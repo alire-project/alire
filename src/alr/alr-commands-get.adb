@@ -6,8 +6,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
-with Alire.Platform;
-with Alire.Platforms;
+with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
@@ -15,14 +14,14 @@ with Alire.Solver;
 with CLIC.User_Input;
 
 with Alr.Commands.Build;
-with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Get is
 
-   package Query  renames Alire.Solver;
-   package Semver renames Semantic_Versioning;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
+   package Semver   renames Semantic_Versioning;
 
    --------------
    -- Retrieve --
@@ -265,7 +264,7 @@ package body Alr.Commands.Get is
 
          --  Otherwise emit appropriate information, according to environment
 
-         if Alire.Platform.Distribution_Is_Known then
+         if Alire.Platforms.Current.Distribution_Is_Known then
 
             --  At this point we are failing for sure. Warn if there are
             --  external definitions to raise user awareness.

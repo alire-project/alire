@@ -14,7 +14,7 @@ with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.Toolchains.Solutions;
 with Alire.Utils.TTY;
-with Alire.Platform;
+with Alire.Platforms.Current;
 
 with GNAT.IO;
 
@@ -96,7 +96,7 @@ package body Alire.Environment is
       Tool_Root.Set (Solution);
 
       --  Load platform environment
-      Alire.Platform.Load_Environment (This);
+      Alire.Platforms.Current.Load_Environment (This);
 
       --  Warnings when setting up an incomplete environment
 

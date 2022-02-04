@@ -3,9 +3,8 @@ with Ada.Directories;
 with Alire.Config.Edit;
 with Alire.Directories;
 with Alire.Paths;
+with Alire.Platforms.Current;
 with Alire.Spawn;
-
-with Alr.Platform;
 
 package body Alr.Commands.Clean is
 
@@ -129,7 +128,7 @@ package body Alr.Commands.Clean is
 
          --  Clean all the project files
          for Gpr_File of Cmd.Root.Release.Project_Files
-           (Platform.Properties, With_Path => True)
+           (Alire.Platforms.Current.Properties, With_Path => True)
          loop
 
             Alire.Spawn.Command ("gprclean",

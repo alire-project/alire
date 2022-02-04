@@ -4,8 +4,7 @@ with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
-with Alire.Platform;
-with Alire.Platforms;
+with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Roots.Optional;
@@ -14,16 +13,15 @@ with Alire.Solver;
 with Alire.Utils.Tables;
 with Alire.Utils;
 
-with Alr.Platform;
-
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Show is
 
    use type Ada.Containers.Count_Type;
 
-   package Query  renames Alire.Solver;
-   package Semver renames Semantic_Versioning;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
+   package Semver   renames Semantic_Versioning;
 
    ------------
    -- Report --
@@ -145,7 +143,7 @@ package body Alr.Commands.Show is
                Detail : constant AAA.Strings.Vector :=
                           External.Detail
                             (if Cmd.System
-                             then Alire.Platform.Distribution
+                             then Alire.Platforms.Current.Distribution
                              else Alire.Platforms.Distro_Unknown);
                Available : Alire.Conditional.Availability :=
                              (if Cmd.System

@@ -1,4 +1,4 @@
-with Alire.Platforms;
+with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Roots.Optional;
 
@@ -14,14 +14,7 @@ package Alire.Root is
    --  Returns an optional root, that may be empty if none detected, or broken
    --  if the manifest is not loadable.
 
-   function Platform_Properties return Properties.Vector;
-
-   procedure Set_Platform_Properties (Env : Properties.Vector);
-   --  Until we do The Big Refactor of moving platform detection from Alr into
-   --  Alire, this is a stopgag measure to be able to encapsulate properties in
-   --  the Current Root. TODO: remove during the refactor.
-
-   function Platform_OS return Platforms.Operating_Systems;
-   --  TODO: remove during the same refactor as above
+   function Platform_Properties return Properties.Vector
+     renames Platforms.Current.Properties;
 
 end Alire.Root;

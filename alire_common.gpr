@@ -38,6 +38,9 @@ abstract project Alire_Common is
                --  Enable full errors, verbose details
                "-gnatf",
 
+               --  Report Elaboration Circularity Details
+               "-gnatd_F",
+
                --  Enable all warnings and treat them as errors
                "-gnatwae")
               & Style_Check_Switches;

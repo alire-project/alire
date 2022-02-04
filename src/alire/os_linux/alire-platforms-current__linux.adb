@@ -1,29 +1,28 @@
-with Alire.OS_Lib.Subprocess;
 with AAA.Strings; use AAA.Strings;
+
+with Alire.Platforms.Common;
 
 with GNAT.Regpat;
 
-package body Alire.Platform is
+package body Alire.Platforms.Current is
 
    --  Linux implementation
 
-   ---------------------------
-   -- Default_Config_Folder --
-   ---------------------------
-
-   function Default_Config_Folder return String is
-      use OS_Lib;
-   begin
-      return
-        OS_Lib.Getenv
-          ("XDG_CONFIG_HOME",
-           Default => OS_Lib.Getenv ("HOME", Default => "/tmp") / ".config")
-        / "alire";
-   end Default_Config_Folder;
-
    ------------------
-   -- Distribution --
+   -- Cache_Folder --
    ------------------
+
+   function Cache_Folder return String is (Common.XDG_Config_Folder);
+
+   -------------------
+   -- Config_Folder --
+   -------------------
+
+   function Config_Folder return String is (Common.XDG_Config_Folder);
+
+   ---------------------------
+   -- Detected_Distribution --
+   ---------------------------
 
    OS_Identity_File : constant String := "/etc/os-release";
 
@@ -32,7 +31,6 @@ package body Alire.Platform is
 
    function Detected_Distribution return Platforms.Distributions is
       use Alire.OS_Lib;
-      use all type Alire.Platforms.Distributions;
    begin
       if Distro_Cached then
          return Cached_Distro;
@@ -142,4 +140,11 @@ package body Alire.Platform is
    procedure Load_Environment (Ctx : in out Alire.Environment.Context)
    is null;
 
-end Alire.Platform;
+   ----------------------
+   -- Operating_System --
+   ----------------------
+
+   function Operating_System return Alire.Platforms.Operating_Systems
+   is (Alire.Platforms.Linux);
+
+end Alire.Platforms.Current;
