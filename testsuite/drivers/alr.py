@@ -37,16 +37,22 @@ def prepare_env(config_dir, env):
     config_dir = os.path.abspath(config_dir)
     mkdir(config_dir)
     env['ALR_CONFIG'] = config_dir
+    #  We pass config location explicitly in the following calls since env is
+    #  not yet applied.
+
+    # Disable autoconfig of the community index, to prevent unintended use of
+    # it in tests, besides the overload of fetching it
+    run_alr("-c", config_dir, "config", "--global",
+            "--set", "catalog.autoconfig", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
     run_alr("-c", config_dir, "toolchain", "--disable-assistant")
-    #  Pass config location explicitly since env is not yet applied
 
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":
-            run_alr("config", "--global",
+            run_alr("-c", config_dir, "config", "--global",
                     "--set", "distribution.disable_detection", "true")
 
 
