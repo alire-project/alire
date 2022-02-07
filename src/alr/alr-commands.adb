@@ -1,4 +1,5 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -369,7 +370,28 @@ package body Alr.Commands is
    -------------
 
    procedure Execute is
+
+      ----------------------
+      -- Log_Command_Line --
+      ----------------------
+
+      procedure Log_Command_Line is
+         use Ada.Command_Line;
+      begin
+         Trace.Debug ("Begin command line:");
+         Trace.Debug ("   Arg 0 (len" & Command_Name'Length'Image
+                      & "): " & Command_Name);
+         for I in 1 .. Argument_Count loop
+            Trace.Debug ("   Arg" & I'Image
+                         & " (len" & Argument (I)'Length'Image
+                         & "): " & Argument (I));
+         end loop;
+         Trace.Debug ("End command line.");
+      end Log_Command_Line;
+
    begin
+
+      Log_Command_Line;
 
       Sub_Cmd.Parse_Global_Switches;
 
