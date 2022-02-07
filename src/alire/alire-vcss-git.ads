@@ -12,7 +12,11 @@ package Alire.VCSs.Git is
 
    function Is_Valid_Commit (S : String) return Boolean
    is (S'Length = Git_Commit'Length and then
-       (for all Char of S => Char in Utils.Hexadecimal_Character));
+         (for all Char of S => Char in Utils.Hexadecimal_Character));
+
+   No_Commit : constant Git_Commit := (others => '0');
+   --  This is actually returned by e.g. `git worktree`, even if it could be a
+   --  real commit. I guess the chances are deemed too low.
 
    type VCS (<>) is new VCSs.VCS with private;
 
@@ -116,6 +120,17 @@ package Alire.VCSs.Git is
    function Transform_To_Public (Remote : String) return URL;
    --  For a Known_Transformable_Host, return the https:// equivalent of a
    --  git@... address. Otherwise return Remote unmodified.
+
+   type Worktree_Data is record
+      Worktree : Unbounded_Absolute_Path := +""; --  When not a git repo
+      Head     : Git_Commit := No_Commit;        -- When not on a commit
+      Branch   : UString    := +"detached";      -- When on detached head
+   end record;
+
+   function Worktree (This : VCS;
+                      Repo : Directory_Path)
+                      return Worktree_Data;
+   --  Retrieve bundled info on a working repo; wraps `git worktree`
 
 private
 

@@ -207,6 +207,10 @@ package body Alire.VCSs.Git is
         and then Contains (Output.First_Element, "HEAD detached");
    end Is_Detached;
 
+   -------------------
+   -- Is_Repository --
+   -------------------
+
    function Is_Repository (This : VCS;
                            Path : Directory_Path) return Boolean
    is
@@ -447,6 +451,64 @@ package body Alire.VCSs.Git is
       when E : others =>
          return Alire.Errors.Get (E);
    end Update;
+
+   --------------
+   -- Worktree --
+   --------------
+
+   function Worktree (This : VCS;
+                      Repo : Directory_Path)
+                      return Worktree_Data
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : AAA.Strings.Vector;
+      Code   : Integer;
+
+      --------------------
+      -- Worktree_Error --
+      --------------------
+
+      function Worktree_Error (Output : AAA.Strings.Vector;
+                               Error  : String) return String
+      is (Error & " in `git worktree list`: " & Output.Flatten ("\n"));
+
+   begin
+      Code :=
+        OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+          (Command             => "git",
+           Arguments           =>
+             Empty_Vector
+           & "worktree"
+           & "list"
+           & "--porcelain",
+           Output              => Output,
+           Err_To_Out          => True);
+
+      return Data : Worktree_Data do
+         if Code /= 0 then
+            Trace.Debug ("git worktree list failed with code: "
+                         & Trim (Code'Image));
+            return;
+         end if;
+
+         Assert (Natural (Output.Length) >= 3,
+                 Worktree_Error (Output, "Unexpected output length (lines)"));
+
+         Assert (Head (Output (1), ' ') = "worktree",
+                 Worktree_Error (Output, "Unexpected 1st line"));
+
+         Assert (Head (Output (2), ' ') = "HEAD",
+                 Worktree_Error (Output, "Unexpected 2nd line"));
+
+         Assert (Head (Output (3), ' ') = "branch",
+                 Worktree_Error (Output, "Unexpected 3rd line"));
+
+         Data.Worktree := +Tail (Output (1), ' ');
+         Data.Head     :=  Tail (Output (2), ' ');
+         Data.Branch   := +Tail (Output (3), ' ');
+      end return;
+   end Worktree;
 
    -----------------
    -- Head_Commit --
