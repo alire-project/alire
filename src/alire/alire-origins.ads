@@ -79,6 +79,7 @@ package Alire.Origins is
    --  Append commit as '#commit'
    function TTY_URL_With_Commit (This : Origin) return String
      with Pre => This.Kind in VCS_Kinds;
+   function Is_Monorepo (This : Origin) return Boolean;
 
    function Path (This : Origin) return String
      with Pre => This.Kind = Filesystem;
@@ -282,7 +283,7 @@ private
          when VCS_Kinds =>
             Repo_URL : Unbounded_String;
             Commit   : Unbounded_String;
-            Subdir   : UString;
+            Subdir   : Unbounded_Relative_Path;
 
          when Source_Archive =>
             Src_Archive : Archive_Data;
@@ -317,5 +318,8 @@ private
                  Filesystem     => Prefix_File'Access,
                  System         => Prefix_System'Access,
                  Archive_Kinds  => null);
+
+   function Is_Monorepo (This : Origin) return Boolean
+   is (This.Kind in VCS_Kinds and then This.Subdir /= "");
 
 end Alire.Origins;

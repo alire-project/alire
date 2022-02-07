@@ -292,7 +292,7 @@ package body Alire.Roots is
       --  And generate its working files, if they do not exist
 
       declare
-         Working_Dir : Guard (Enter (This.Unique_Folder))
+         Working_Dir : Guard (Enter (This.Base_Folder))
            with Unreferenced;
          Root        : Alire.Roots.Root :=
                          Alire.Roots.New_Root
@@ -870,11 +870,11 @@ package body Alire.Roots is
             Rel : constant Releases.Release := Release (This, Crate);
          begin
             if This.Solution.State (Crate).Is_Shared then
-               return Shared.Install_Path / Rel.Unique_Folder;
+               return Shared.Install_Path / Rel.Base_Folder;
             else
                return This.Cache_Dir
                       / Paths.Deps_Folder_Inside_Cache_Folder
-                      / Rel.Unique_Folder;
+                      / Rel.Base_Folder;
             end if;
          end;
       elsif This.Solution.State (Crate).Is_Linked then

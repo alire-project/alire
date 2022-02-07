@@ -223,7 +223,11 @@ package Alire.Releases is
                            return AAA.Strings.Vector;
    --  with relative path on demand
 
-   function Unique_Folder (R : Release) return Folder_String;
+   function Deployment_Folder (R : Release) return Folder_String;
+   --  The folder under which the release origin will be deployed
+
+   function Base_Folder (R : Release) return Relative_Path;
+   --  Checkout_Folder / (if R in monorepo, rel_path to it, else "")
 
    --  NOTE: property retrieval functions do not distinguish between
    --  public/private, since that's merely informative for the users.
