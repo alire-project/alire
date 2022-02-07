@@ -504,21 +504,6 @@ private
    is (Conditional.Enumerate (R.Properties).Filter
        (Alire.TOML_Keys.Config_Values));
 
-   use all type Origins.Kinds;
-   function Unique_Folder (R : Release) return Folder_String
-   is (AAA.Strings.Head (+R.Name, Extension_Separator) & "_" &
-         AAA.Strings.Head
-         (AAA.Strings.Head (Image (R.Version), '-'), '+') & "_" &
-         --  Remove patch/build strings that may violate folder valid chars
-       (case R.Origin.Kind is
-           when Binary_Archive => R.Origin.Short_Unique_Id,
-           when External       => "external",
-           when Filesystem     => "filesystem",
-           when System         => "system",
-           when Source_Archive => R.Origin.Short_Unique_Id,
-           when Git | Hg       => R.Origin.Short_Unique_Id,
-           when SVN            => R.Origin.Commit));
-
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency'Class)
                        return Boolean

@@ -363,6 +363,67 @@ package body Alire.Releases is
       end return;
    end Retagging;
 
+   -------------------
+   -- Unique_Folder --
+   -------------------
+
+   function Unique_Folder (R : Release) return Folder_String
+   is
+      use all type Origins.Kinds;
+
+      -------------------
+      -- Monorepo_Path --
+      -------------------
+
+      function Monorepo_Path return Relative_Path is
+         --  For a monorepo we want to reuse the checkout, so instead of the
+         --  name of the release we use the simple name of the URL, no version
+         --  (as a monorepo may contain differently versioned crates) and the
+         --  commit ID.
+         use AAA.Strings;
+      begin
+         return
+           Ada.Directories.Base_Name (Tail (R.Origin.URL, '/'))
+           & "_"
+           & (case R.Origin.Kind is
+                 when Git | Hg => R.Origin.Short_Unique_Id,
+                 when SVN => R.Origin.Commit,
+                 when others => raise Program_Error
+                   with "monorepo folder only applies to VCS origins");
+      end Monorepo_Path;
+
+      ------------------
+      -- Release_Path --
+      ------------------
+
+      function Release_Path return Relative_Path
+      is (
+          --  Name of the release
+          R.Name_Str & "_" &
+
+         --  Version without pre-release/build strings
+            AAA.Strings.Head
+            (AAA.Strings.Head (Image (R.Version), '-'), '+') & "_" &
+          --  Remove patch/build strings that may violate folder valid chars
+
+          --  Unique hash when available
+          (case R.Origin.Kind is
+                when Binary_Archive => R.Origin.Short_Unique_Id,
+                when External       => "external",
+                when Filesystem     => "filesystem",
+                when System         => "system",
+                when Source_Archive => R.Origin.Short_Unique_Id,
+                when Git | Hg       => R.Origin.Short_Unique_Id,
+                when SVN            => R.Origin.Commit));
+
+   begin
+      if R.Origin.Kind in Origins.VCS_Kinds and then R.Origin.Subdir /= "" then
+         return Monorepo_Path;
+      else
+         return Release_Path;
+      end if;
+   end Unique_Folder;
+
    ---------------
    -- Upgrading --
    ---------------
