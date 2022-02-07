@@ -85,7 +85,7 @@ private
 
    Builtins : constant array (Natural range <>) of Builtin_Entry :=
      (
-      (+Keys.Catalog_Autoconfig,
+      (+Keys.Index_Auto_Community,
        Cfg_Bool,
        +("When unset (default) or true, the community index will be added " &
           "automatically when required if no other index is configured.")),

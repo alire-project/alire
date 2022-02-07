@@ -43,7 +43,7 @@ def prepare_env(config_dir, env):
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it
     run_alr("-c", config_dir, "config", "--global",
-            "--set", "catalog.autoconfig", "false")
+            "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.

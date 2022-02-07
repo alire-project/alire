@@ -152,11 +152,11 @@ package body Alire.Features.Index is
                   Find_All (Config.Edit.Indexes_Directory, Result);
       use Sets;
    begin
-      if not Config.DB.Get (Config.Keys.Catalog_Autoconfig, Default => True)
+      if not Config.DB.Get (Config.Keys.Index_Auto_Community, Default => True)
       then
          Warnings.Warn_Once
            ("Not configuring the community index, disabled via "
-            & Config.Keys.Catalog_Autoconfig);
+            & Config.Keys.Index_Auto_Community);
          return Outcome_Success;
       end if;
 

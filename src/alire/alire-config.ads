@@ -25,14 +25,14 @@ package Alire.Config with Preelaborate is
 
       Editor_Cmd  : constant Config_Key := "editor.cmd";
 
-      Catalog_Autoconfig : constant Config_Key := "catalog.autoconfig";
-      --  When unset (default) or true, add the community index if no other
-      --  index is already configured.
-
       Distribution_Disable_Detection : constant Config_Key :=
                                          "distribution.disable_detection";
       --  When set to True, distro will be reported as unknown, and in turn no
       --  native package manager will be used.
+
+      Index_Auto_Community : constant Config_Key := "index.auto_community";
+      --  When unset (default) or true, add the community index if no other
+      --  index is already configured.
 
       Solver_Autonarrow : constant Config_Key := "solver.autonarrow";
       --  When true, `alr with` will substitute "any" dependencies by the
