@@ -3,6 +3,7 @@ with Ada.Directories;
 with Alire.Config.Edit;
 with Alire.Index;
 with Alire.OS_Lib;
+with Alire.Warnings;
 
 with GNAT.OS_Lib;
 
@@ -151,6 +152,14 @@ package body Alire.Features.Index is
                   Find_All (Config.Edit.Indexes_Directory, Result);
       use Sets;
    begin
+      if not Config.DB.Get (Config.Keys.Index_Auto_Community, Default => True)
+      then
+         Warnings.Warn_Once
+           ("Not configuring the community index, disabled via "
+            & Config.Keys.Index_Auto_Community);
+         return Outcome_Success;
+      end if;
+
       Trace.Debug ("Resetting community index...");
       for I in Indexes.Iterate loop
          Assert (Result);

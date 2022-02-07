@@ -30,6 +30,10 @@ package Alire.Config with Preelaborate is
       --  When set to True, distro will be reported as unknown, and in turn no
       --  native package manager will be used.
 
+      Index_Auto_Community : constant Config_Key := "index.auto_community";
+      --  When unset (default) or true, add the community index if no other
+      --  index is already configured.
+
       Solver_Autonarrow : constant Config_Key := "solver.autonarrow";
       --  When true, `alr with` will substitute "any" dependencies by the
       --  appropriate caret/tilde.
