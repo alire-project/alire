@@ -159,9 +159,26 @@ package body Alire.Releases is
          --  (as a monorepo may contain differently versioned crates) and the
          --  commit ID.
          use AAA.Strings;
+
+         --------------
+         -- Sanitize --
+         --------------
+         --  Repository names may still contain problematic chars, we replace
+         --  all of those with a '_'.
+         function Sanitize (Name : String) return String is
+         begin
+            return Safe : String := Name do
+               for I in Safe'Range loop
+                  if Safe (I) & "" not in Folder_String then
+                     Safe (I) := '_';
+                  end if;
+               end loop;
+            end return;
+         end Sanitize;
+
       begin
          return
-           Ada.Directories.Base_Name (Tail (R.Origin.URL, '/'))
+           Sanitize (Ada.Directories.Base_Name (Tail (R.Origin.URL, '/')))
            & "_"
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,
@@ -260,6 +277,9 @@ package body Alire.Releases is
       end Create_Authoritative_Manifest;
 
    begin
+
+      Trace.Debug ("Deploying " & This.Milestone.TTY_Image
+                   & " into " & TTY.URL (Folder));
 
       --  Deploy if the target dir is not already there
 

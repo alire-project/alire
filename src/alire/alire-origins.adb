@@ -593,9 +593,10 @@ package body Alire.Origins is
                              (Keys.Subdir, TOML_String).As_String
                            else "");
             begin
-               This := New_VCS (URL,
-                                Commit,
-                                VFS.To_Native (Portable_Path (Subdir)));
+               This := New_VCS
+                 (URL,
+                  Commit => Commit,
+                  Subdir => VFS.To_Native (Portable_Path (Subdir)));
             end;
 
          when HTTP             =>

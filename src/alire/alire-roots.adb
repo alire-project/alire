@@ -404,8 +404,7 @@ package body Alire.Roots is
                --  externals in the working directory
                Rel.Deploy (Env             => This.Environment,
                            Parent_Folder   =>
-                             Ada.Directories.Containing_Directory
-                               (This.Release_Base (Rel.Name)),
+                             This.Dependencies_Dir (Rel.Name),
                            Perform_Actions => False,
                            Was_There       => Was_There,
                            Create_Manifest =>
@@ -854,6 +853,28 @@ package body Alire.Roots is
 
    use OS_Lib;
 
+   -------------------------
+   -- Release_Deploy_Base --
+   -------------------------
+
+   function Dependencies_Dir (This  : in out Root;
+                                 Crate : Crate_Name)
+                                 return Any_Path
+   is
+   begin
+      if This.Solution.State (Crate).Is_Solved then
+         if This.Solution.State (Crate).Is_Shared then
+            return Shared.Install_Path;
+         else
+            return This.Cache_Dir
+              / Paths.Deps_Folder_Inside_Cache_Folder;
+         end if;
+      else
+         raise Program_Error
+           with "deploy base only applies to solved releases";
+      end if;
+   end Dependencies_Dir;
+
    ------------------
    -- Release_Base --
    ------------------
@@ -869,13 +890,7 @@ package body Alire.Roots is
          declare
             Rel : constant Releases.Release := Release (This, Crate);
          begin
-            if This.Solution.State (Crate).Is_Shared then
-               return Shared.Install_Path / Rel.Base_Folder;
-            else
-               return This.Cache_Dir
-                      / Paths.Deps_Folder_Inside_Cache_Folder
-                      / Rel.Base_Folder;
-            end if;
+            return This.Dependencies_Dir (Crate) / Rel.Base_Folder;
          end;
       elsif This.Solution.State (Crate).Is_Linked then
          return This.Solution.State (Crate).Link.Path;
