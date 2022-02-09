@@ -6,6 +6,43 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### Support for crates in repository subfolders (monorepos)
+
+PR [#939](https://github.com/alire-project/alire/pull/939)
+
+A crate can be now located nested within a repository and still be published
+as a repository origin. This enables simpler publishing of such crates, as `alr
+publish` will recognize the situation. For example, let us say we have this
+structure:
+
+```
+my_repo
+  +-- my_crate (a crate)
+  +-- my_crate_examples (also a crate, depending on my_crate)
+```
+
+Running `alr publish` at `./git_repo/my_crate` or
+`./git_repo/my_crate_examples` will detect that the crate is not at the
+root and adjust the origin metadata to take into account the extra path.
+
+Other typical hierarchies that should likewise work without issue are:
+
+```
+my_crate (also a repository)
+  +-- examples
+
+my_repo
+  +-- crate1
+        +-- examples
+  +-- crate2
+        +-- examples
+```
+
+At this time `alr publish` will not remove pins, so that is still a manual
+adjustment that the user may have to perform prior to publishing; that is, the
+manifest at each nested crate must be readied for publishing manually (just as
+for any other regular crate).
+
 ### Root crate build profile
 
 PR [#896](https://github.com/alire-project/alire/pull/896)
