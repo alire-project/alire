@@ -6,8 +6,8 @@ use it as a dependency
 import os
 import shutil
 
-from drivers.alr import run_alr, init_local_crate, alr_with
-from drivers.helpers import init_git_repo
+from drivers.alr import run_alr, init_local_crate, alr_with, alr_publish
+from drivers.helpers import init_git_repo, on_windows
 # from drivers.asserts import assert_eq, assert_match
 from subprocess import run
 
@@ -35,29 +35,24 @@ assert "No Alire workspace found" in p.out, "Unexpected output: " + p.out
 # We are now at monoproject/mycrate.
 os.chdir("mycrate")
 run_alr("show")  # Verify the crate is detected properly
-run_alr("publish", force=True)  # Force due to missing optional crate info
 
-# Prepare destination at index
-os.chdir(start_dir)
-os.makedirs(os.path.join("my_index", "index", "my", "mycrate"))
-
-# Move published manifest to proper index location
-os.rename(os.path.join("monoproject", "mycrate",
-                       "alire", "releases", "mycrate-0.0.0.toml"),
-          os.path.join("my_index", "index",
-                       "my", "mycrate", "mycrate-0.0.0.toml"))
+# This call creates the manifest and puts it in place in the index
+alr_publish("mycrate", "0.0.0", index_path=os.path.join(start_dir, "my_index"))
 
 # Verify that the crate can be got and compiled, and expected location
+os.chdir(start_dir)
 run_alr("get", "--build", "mycrate")
 assert os.path.isdir(os.path.join(f"monoproject_{commit[:8]}", "mycrate")), \
     "Expected directory does not exist"
 
-# Verify that the crate is usable as a dependency, and expected location
+# Verify that the crate is usable as a dependency, and expected binary location
 init_local_crate("top")
 alr_with("mycrate")
 run_alr("build")
-assert os.path.isdir(os.path.join("alire", "cache", "dependencies",
-                                  f"monoproject_{commit[:8]}", "mycrate")), \
-    "Expected directory does not exist"
+assert os.path.isfile(os.path.join(
+    "alire", "cache", "dependencies",
+    f"monoproject_{commit[:8]}", "mycrate", "bin",
+    f"mycrate{'.exe' if on_windows() else ''}")), \
+    "Expected binary does not exist"
 
 print('SUCCESS')
