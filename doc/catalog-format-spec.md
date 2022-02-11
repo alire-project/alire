@@ -29,6 +29,9 @@ atomic data types:
  - mere strings (`"Hello, world!"`);
  - booleans (`true`, `false`);
 
+When a string denotes a relative path intended to be portable across operating
+systems, it must use forward slashes as directory separator: `"path/to/my/resource"`.
+
 We can then split composite data in two kinds: lists (TOML's arrays) and
 mappings (JSON's tables). Lists are just sequences of other values, for
 instance a list of strings:
@@ -425,10 +428,16 @@ static, i.e. they cannot depend on the context.
         VCS-specific revision to be checked out (a git/hg hash, a svn
         revision).
 
+      - `subdir`: optional relative path, only valid for repository origins,
+        that when provided indicates that the crate is not located at the
+        repository root. This option enables the possibility of publishing
+        several crates from the same repository (sometimes referred to as a
+        *monorepo*).
+
    Examples of origin tables:
 
    ```toml
-   # Clone a git repository
+   # Clone a git repository with a crate at its root
    [origin]
    url = "git+https://github.com/example-user/example-project"
    commit = "ec8b267bb8b777c6887059059924d823e9443439"
@@ -439,6 +448,14 @@ static, i.e. they cannot depend on the context.
    origin = "https://example.org/0123456789"
    archive-name = "archive.tar.gz"
    hashes = ["sha512:bf6082573dc537836ea8506a2c9a75dc7837440c35c5b02a52add52e38293640d99e90a9706690591f8899b8b4935824b195f230b3aa1c4da10911e3caf954c04ac"]
+   ```
+
+   ```toml
+   # Clone a git repository with the crate in a subdirectory
+   [origin]
+   url = "git+https://github.com/example-user/example-project"
+   commit = "ec8b267bb8b777c6887059059924d823e9443439"
+   subdir = "examples"
    ```
 
  - `available`: optional dynamic boolean expression.  If it evaluates to
