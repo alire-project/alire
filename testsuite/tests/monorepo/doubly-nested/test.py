@@ -51,14 +51,14 @@ assert os.path.isdir(os.path.join("alire", "cache", "dependencies",
                                   "myparent", "mychild")), \
     "Expected directory does not exist"
 
-# Verify that withing the parent does not result in a new checkout
+# Verify that "with"ing the parent does not result in a new checkout
 alr_with("myparent", update=False)
 p = run_alr("-v", "update", quiet=False)
 assert "Skipping checkout of already available myparent=0.0.0" in p.out, \
     "Expected output not found: " + p.out
 
 # Verify the build is successful. As the dependencies were created with --bin,
-# they will be built even if not with'ed in the Ada code to make their binary
+# they will be built even if not "with"ed in the Ada code to make their binary
 # available to the root crate during the build process.
 run_alr("build")
 

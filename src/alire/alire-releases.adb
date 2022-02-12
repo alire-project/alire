@@ -212,7 +212,7 @@ package body Alire.Releases is
                 when SVN            => R.Origin.Commit));
 
    begin
-      if R.Origin.Kind in Origins.VCS_Kinds and then R.Origin.Subdir /= "" then
+      if R.Origin.Is_Monorepo then
          return Monorepo_Path;
       else
          return Release_Path;

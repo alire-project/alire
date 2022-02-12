@@ -853,9 +853,9 @@ package body Alire.Roots is
 
    use OS_Lib;
 
-   -------------------------
-   -- Release_Deploy_Base --
-   -------------------------
+   ----------------------
+   -- Dependencies_Dir --
+   ----------------------
 
    function Dependencies_Dir (This  : in out Root;
                                  Crate : Crate_Name)

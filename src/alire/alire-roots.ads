@@ -294,8 +294,8 @@ private
    --  root a regular one to all effects.
 
    function Dependencies_Dir (This  : in out Root;
-                                 Crate : Crate_Name)
-                                 return Any_Path;
+                              Crate : Crate_Name)
+                              return Any_Path;
    --  The path at which dependencies have to be deployed, which for regular
    --  releases is simply ./alire/cache/dependencies.
 
