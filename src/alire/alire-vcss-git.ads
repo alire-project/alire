@@ -117,6 +117,13 @@ package Alire.VCSs.Git is
                          return String;
    --  Obtain the currently checked out Rev in the repository
 
+   not overriding
+   function Get_Rel_Path_Inside_Repo (This : VCS;
+                                      Dir  : Directory_Path)
+                                      return Relative_Path;
+   --  Return the relative path from the VCSs root to Dir. Will raise if Dir is
+   --  not a real dir or not actually inside a gir repo.
+
    function Transform_To_Public (Remote : String) return URL;
    --  For a Known_Transformable_Host, return the https:// equivalent of a
    --  git@... address. Otherwise return Remote unmodified.

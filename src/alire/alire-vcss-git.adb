@@ -1,7 +1,10 @@
+with Ada.Directories;
+
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils.Tools;
+with Alire.VFS;
 
 package body Alire.VCSs.Git is
 
@@ -504,7 +507,13 @@ package body Alire.VCSs.Git is
          Assert (Head (Output (3), ' ') = "branch",
                  Worktree_Error (Output, "Unexpected 3rd line"));
 
-         Data.Worktree := +Tail (Output (1), ' ');
+         --  Git on windows returns an absolute but forward-slashed path.
+         --  Depending on if it is a Windows git or a msys2 git it will [not]
+         --  have also a drive letter. So we convert this path to a native one,
+         --  as promised by the type in use.
+
+         Data.Worktree :=
+           +VFS.To_Native (Portable_Path (Tail (Output (1), ' ')));
          Data.Head     :=  Tail (Output (2), ' ');
          Data.Branch   := +Tail (Output (3), ' ');
       end return;
@@ -527,5 +536,42 @@ package body Alire.VCSs.Git is
    begin
       return Head (Output.First_Element, ' ');
    end Head_Commit;
+
+   ------------------------------
+   -- Get_Rel_Path_Inside_Repo --
+   ------------------------------
+
+   function Get_Rel_Path_Inside_Repo (This : VCS;
+                                      Dir  : Directory_Path)
+                                      return Relative_Path
+   is
+      use all type UString;
+      Result : UString;
+      Root   : constant Absolute_Path := +This.Worktree (Dir).Worktree;
+      Curr   : Unbounded_Absolute_Path := +Ada.Directories.Full_Name (Dir);
+   begin
+      if not GNAT.OS_Lib.Is_Directory (Dir) then
+         Raise_Checked_Error ("Starting dir not a real dir: " & Dir);
+      end if;
+
+      if VFS.Is_Same_Dir (Root, Dir) then
+         return ".";
+      end if;
+
+      --  We simply go up until being at the git root. The equivalence of
+      --  directories is ensured by VFS.Is_Same_Dir even for a root returned
+      --  by git using different short/long naming on Windows.
+
+      while not VFS.Is_Same_Dir (Root, +Curr) loop
+         if Result /= "" then
+            Result := GNAT.OS_Lib.Directory_Separator & Result;
+         end if;
+
+         Result := Ada.Directories.Simple_Name (+Curr) & Result;
+         Curr   := +Ada.Directories.Containing_Directory (+Curr);
+      end loop;
+
+      return +Result;
+   end Get_Rel_Path_Inside_Repo;
 
 end Alire.VCSs.Git;

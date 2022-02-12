@@ -28,6 +28,11 @@ package Alire.VFS is
    --  Some types are renamed here to be able to rely on this spec without
    --  needing to mix both Alire.VFS and GNATCOLL.VFS.
 
+   function Is_Same_Dir (P1, P2 : Any_Path) return Boolean;
+   --  Check if two paths are to the same dir, even if they're given as
+   --  different equivalent full paths in the filesystem (e.g., Windows
+   --  short and long names).
+
    --  Basic types:
 
    subtype Filesystem_String is GNATCOLL.VFS.Filesystem_String;

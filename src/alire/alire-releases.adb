@@ -158,7 +158,6 @@ package body Alire.Releases is
          --  name of the release we use the simple name of the URL, no version
          --  (as a monorepo may contain differently versioned crates) and the
          --  commit ID.
-         use AAA.Strings;
 
          --------------
          -- Sanitize --
@@ -176,9 +175,27 @@ package body Alire.Releases is
             end return;
          end Sanitize;
 
+         -----------------
+         -- Simple_Name --
+         -----------------
+
+         function Simple_Name (URL : String) return String is
+            --  For local repos, on Windows, we may find '\' in the URL, so
+            --  here we get as simple name of a repo whatever is after the
+            --  last '/' or '\'.
+         begin
+            for I in reverse URL'Range loop
+               if URL (I) in '\' | '/' | ':' then
+                  return URL (I + 1 .. URL'Last);
+               end if;
+            end loop;
+
+            Raise_Checked_Error ("Malformed URL: " & URL);
+         end Simple_Name;
+
       begin
          return
-           Sanitize (Ada.Directories.Base_Name (Tail (R.Origin.URL, '/')))
+           Sanitize (Ada.Directories.Base_Name (Simple_Name (R.Origin.URL)))
            & "_"
            & (case R.Origin.Kind is
                  when Git | Hg => R.Origin.Short_Unique_Id,

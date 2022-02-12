@@ -26,6 +26,7 @@ with Alire.TOML_Load;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
+with Alire.VFS;
 
 with GNATCOLL.OS.Constants;
 
@@ -375,7 +376,8 @@ package body Alire.Publish is
       then
          Raise_Checked_Error
            ("Remote sources are missing the '"
-            & Context.Options.Manifest & "' manifest file.");
+            & Context.Options.Manifest & "' manifest file expected at "
+            & Deploy_Path (Context) / Context.Options.Manifest);
       end if;
 
       --  For a non-standard manifest, move it in place (akin to how `alr get`
@@ -946,7 +948,7 @@ package body Alire.Publish is
       procedure Check_Nested_Crate (Root_Path : Absolute_Path) is
          Git_Info  : constant VCSs.Git.Worktree_Data := Git.Worktree (Path);
       begin
-         if +Git_Info.Worktree /= Root_Path then
+         if not VFS.Is_Same_Dir (+Git_Info.Worktree, Root_Path) then
 
             --  To make our life easier for now, do not allow complex cases
             --  like using a manifest from elsewhere to package a nested crate.
@@ -961,23 +963,10 @@ package body Alire.Publish is
               ("Crate at " & TTY.URL (Root_Path)
                & " is nested in repo at " & TTY.URL (+Git_Info.Worktree));
 
-            --  Attempt to get the portable relative path between git and
-            --  crate. If this fails, somehow the crate is not inside the
-            --  repo, and we fail.
-
             declare
-               Nested_Path : constant Any_Path :=
-                               Directories.Find_Relative_Path
-                                 (Parent => +Git_Info.Worktree,
-                                  Child  => Root_Path);
+               Nested_Path : constant Relative_Path :=
+                               Git.Get_Rel_Path_Inside_Repo (Root_Path);
             begin
-               if Check_Absolute_Path (Nested_Path) then
-                  Raise_Checked_Error
-                    ("Crate path [" & TTY.URL (Root_Path)
-                     & "] lies outside git worktree ["
-                     & TTY.URL (+Git_Info.Worktree) & "]");
-               end if;
-
                Trace.Debug ("Publishing nested crate at "
                             & TTY.URL (Nested_Path));
                Subdir := +Nested_Path;
@@ -993,7 +982,7 @@ package body Alire.Publish is
          Root_Path : constant Absolute_Path :=
                        (if Options.Nonstandard_Manifest
                         then Ada.Directories.Full_Name (Path)
-                        else Root.Value.Path);
+                        else Ada.Directories.Full_Name (Root.Value.Path));
       begin
 
          if not Git.Is_Repository (Root_Path) then
