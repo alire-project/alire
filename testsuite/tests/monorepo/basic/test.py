@@ -55,4 +55,10 @@ assert os.path.isfile(os.path.join(
     f"mycrate{'.exe' if on_windows() else ''}")), \
     "Expected binary does not exist"
 
+# Also that the info file is there
+assert os.path.isfile(os.path.join(
+    "alire", "cache", "dependencies",
+    f"mycrate_0.0.0_in_monoproject_{commit[:8]}")), \
+    "Expected info file does not exist"
+
 print('SUCCESS')
