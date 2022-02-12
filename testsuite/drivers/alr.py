@@ -435,6 +435,29 @@ def add_action(type, command, name=""):
             manifest.write(f"name = '{name}'\n")
 
 
+def alr_submit(manifest, index_path):
+    """
+    Move a manifest with origin into its proper location in an index
+    """
+    assert os.path.isfile(manifest), f"Manifest file not found: {manifest}"
+
+    # Extract crate name
+    file = os.path.basename(manifest)
+    name = file.split('-')[0]
+
+    # Prepare destination at index
+    if not os.path.isdir(index_path):
+        raise RuntimeError("Given index path does not exist or "
+                           "not a folder: " + index_path)
+
+    # Create folder hierarchy in the index
+    os.makedirs(os.path.join(index_path, "index", name[:2], name))
+
+    # Move published manifest to proper index location
+    os.rename(manifest,
+              os.path.join(index_path, "index", name[:2], name, file))
+
+
 def alr_publish(name,
                 version="0.0.0",
                 submit=True,
@@ -447,15 +470,5 @@ def alr_publish(name,
     # Force due to missing optional crate info by `alr init`
 
     if submit:
-        # Prepare destination at index
-        if not os.path.isdir(index_path):
-            raise RuntimeError("Given index path does not exist or "
-                               "not a folder: " + index_path)
-
-        # Create folder hierarchy in the index
-        os.makedirs(os.path.join(index_path, "index", name[:2], name))
-
-        # Move published manifest to proper index location
-        os.rename(os.path.join("alire", "releases", f"{name}-{version}.toml"),
-                  os.path.join(index_path, "index",
-                               name[:2], name, f"{name}-{version}.toml"))
+        alr_submit(os.path.join("alire", "releases", f"{name}-{version}.toml"),
+                   index_path)
