@@ -141,9 +141,9 @@ package body Alire.Releases is
       end if;
    end Base_Folder;
 
-   -------------------
-   -- Unique_Folder --
-   -------------------
+   -----------------------
+   -- Deployment_Folder --
+   -----------------------
 
    function Deployment_Folder (R : Release) return Folder_String
    is
