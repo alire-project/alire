@@ -1,3 +1,5 @@
+with Ada.Text_IO;
+
 package body Alire.User_Pins.Maps is
 
    ---------------
@@ -42,5 +44,19 @@ package body Alire.User_Pins.Maps is
       return Result;
 
    end From_TOML;
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This : Map; Prefix : String := "") is
+      use Ada.Text_IO;
+   begin
+      for I in This.Iterate loop
+         Put_Line (Prefix
+                   & This (I)
+                   .To_Manifest_Line (Crate => Pin_Maps.Key (I)));
+      end loop;
+   end Print;
 
 end Alire.User_Pins.Maps;
