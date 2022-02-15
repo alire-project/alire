@@ -34,6 +34,8 @@ p = run_alr("with", "--solve")
 assert_eq("""\
 Dependencies (direct):
    hello*
+Pins (direct):
+   hello = { version='7.7.7' }
 Dependencies (external):
    hello=7.7.7 (direct,missed,pin=7.7.7) (pinned)
 Dependencies (graph):

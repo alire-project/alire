@@ -33,8 +33,10 @@ assert_eq('libchild 0.2.0\n',
 
 # Check that there are no dependencies
 p = run_alr('with')
-assert_eq('Dependencies (direct):\n'
-          '   (empty)\n',
+assert_eq("Dependencies (direct):\n"
+          "   (empty)\n"
+          "Pins (direct):\n"
+          "   libchild = { version='0.2.0' }\n",
           p.out)
 
 # But the pinned release is still in the solution

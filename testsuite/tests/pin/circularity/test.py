@@ -71,6 +71,10 @@ Dependencies (direct):
    dep2*
    dep3*
    dep4*
+Pins (direct):
+   dep2 = { path='../dep2' }
+   dep3 = { path='../dep3' }
+   dep4 = { path='../dep4' }
 Dependencies (solution):
    dep2=0.0.0 (pinned) (origin: ../dep2)
    dep3=0.0.0 (pinned) (origin: ../dep3)

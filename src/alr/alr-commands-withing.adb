@@ -149,6 +149,11 @@ package body Alr.Commands.Withing is
          And_Or  => Root_Release.Dependencies.Contains_ORs,
          Sorted  => True);
 
+      if not Root_Release.Pins.Is_Empty then
+         Put_Line ("Pins (direct):");
+         Root_Release.Pins.Print (Prefix => "   ");
+      end if;
+
       if Cmd.Solve then
          Cmd.Requires_Full_Index; -- Load possible hints
          Cmd.Root.Solution.Print (Root_Release,

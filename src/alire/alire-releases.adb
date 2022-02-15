@@ -708,6 +708,12 @@ package body Alire.Releases is
                                Sorted => True,
                                And_Or => R.Dependencies.Contains_ORs);
       end if;
+
+      --  PINS
+      if not R.Pins.Is_Empty then
+         Put_Line ("Pins (direct):");
+         R.Pins.Print (Prefix => "   ");
+      end if;
    end Print;
 
    --------------
