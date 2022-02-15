@@ -1188,7 +1188,10 @@ package body Alire.Roots is
       Allowed  : Containers.Crate_Name_Sets.Set :=
         Alire.Containers.Crate_Name_Sets.Empty_Set)
    is
-      Old : constant Solutions.Solution := This.Solution;
+      Old : constant Solutions.Solution :=
+              (if This.Has_Lockfile
+               then This.Solution
+               else Solutions.Empty_Valid_Solution);
    begin
       --  Ensure requested crates are in solution first.
 
