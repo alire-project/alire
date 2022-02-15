@@ -84,7 +84,7 @@ Alire allows you to initialize an empty binary or library crate with ease:
     All the questions are optional for now, you can just press enter to use the
     default values.
 
-    The `alr init` command will crate a basic `crate` structure in the `myproj`
+    The `alr init` command will create a basic `crate` structure in the `myproj`
     directory.
 
 1. Enter the folder: `cd myproj`
@@ -92,7 +92,7 @@ Alire allows you to initialize an empty binary or library crate with ease:
 1. Run the program: `alr run`
 
 We can now edit the sources of this executable in the `src/` directory.
-For instance, add an "Hello world" to `src/myproj.adb`:
+For instance, add a "Hello world" to `src/myproj.adb`:
 ```ada
 with Ada.Text_IO;
 procedure Myproj is
@@ -118,8 +118,7 @@ Hello, world!
 
 ### The Alire manifest
 
-Besides the `alr` command, your the main interface with Alire is the
-`manifest`.
+Besides the `alr` command, the main interface with Alire is the `manifest`.
 
 The manifest is a text file named `alire.toml` in the root directory of the
 crate. It contains all sorts of information about the crate, some mandatory

@@ -4,7 +4,7 @@
 languages.
 
 It is a way for developers to easily build upon projects (libraries or
-programs) shared by the community, but also easily share their projects for
+programs) shared by the community, but also to easily share their projects for
 others to build upon.
 
 In the Alire vocabulary, sources of projects/libraries/programs are provided by
