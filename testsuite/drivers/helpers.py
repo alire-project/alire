@@ -136,10 +136,23 @@ def init_git_repo(path):
     with open(".gitignore", "wt") as file:
         file.write("*.tmp\n")
 
+    head = commit_all(".")
+    os.chdir(start_cwd)
+    return head
+
+
+def commit_all(path):
+    """
+    Commit all changes in a repo and return the HEAD commit
+    """
+    start_cwd = os.getcwd()
+    os.chdir(path)
+
     assert run(["git", "add", "."]).returncode == 0
     assert run(["git", "commit", "-m", "repo created"]).returncode == 0
     head_commit = run(["git", "log", "-n1", "--no-abbrev", "--oneline"],
                       capture_output=True).stdout.split()[0]
+
     os.chdir(start_cwd)
     return head_commit.decode()
 
