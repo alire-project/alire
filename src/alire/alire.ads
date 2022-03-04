@@ -151,6 +151,11 @@ package Alire with Preelaborate is
    subtype Relative_Path is Any_Path;
    --  A relative path
 
+   subtype Unbounded_Relative_Path is UString
+     with Dynamic_Predicate =>
+       +Unbounded_Relative_Path = "" or else
+     not Check_Absolute_Path (+Unbounded_Relative_Path);
+
    subtype Simple_File is String
      with
        Dynamic_Predicate =>

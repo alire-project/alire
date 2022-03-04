@@ -109,7 +109,10 @@ private
    ----------------
 
    function Local_Path (This : URL) return String
-   is (U.Permissive_Path (This));
+   is (case Scheme (This) is
+          when None => This,
+          when File => U.Permissive_Path (This),
+          when others => raise Program_Error with "not applicable");
 
    ----------
    -- Path --

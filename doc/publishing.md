@@ -182,9 +182,18 @@ you manage multiple project files with different dependencies, or there are
 other reasons to keep the sources together even if they generate several
 crates), you have several options.
 
-The simplest one would be to make each crate a subdirectory within the
+The simplest one is to store each crate in a subdirectory within the
 repository, with its corresponding Alire manifest, sources and project files.
-Then, you can use `alr publish --tar` normally inside each subdirectory.
+With the repository up-to-date with the remote, and the local copy checked out
+at the desired commit, issuing `alr publish` in each subdirectory will properly
+recognize that the crate is nested below the repository root. Furthermore, when
+using this method, all nested crates will share the same storage when retrieved
+as dependencies.
+
+A similar alternative would be to publish each crate relying on source archives
+In this case you can use `alr publish --tar` normally inside each subdirectory.
+Compared with the previous options, there is no disadvantage to this method if
+you favor source archives.
 
 Another possibility would be to use a bit of scripting to create temporary
 subfolders with the described organization, and again using `alr publish --tar`
@@ -197,7 +206,8 @@ with the `--manifest` switch to create their respective crate. In this case,
 `alr` temporarily uses the given file as the root manifest, so all sources will
 be packaged for each crate. This is a bit wasteful, but as long as each crate's
 project files are properly defined (no shared sources), this remains an option
-to split the sources into crates.
+to split the sources into crates. With the current support for autodetection of
+crates in subdirectories, this option is not recommended for new repositories.
 
 ### Starting from other configurations
 

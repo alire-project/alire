@@ -192,7 +192,8 @@ package body Alire.Shared is
       Confirm : Boolean := not CLIC.User_Input.Not_Interactive)
    is
       use CLIC.User_Input;
-      Path : constant Absolute_Path := Install_Path / Release.Unique_Folder;
+      Path : constant Absolute_Path :=
+               Install_Path / Release.Deployment_Folder;
    begin
       if not Release.Origin.Is_Regular then
          Raise_Checked_Error

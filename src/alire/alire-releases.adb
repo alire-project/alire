@@ -126,6 +126,116 @@ package body Alire.Releases is
       return Alire.Dependencies.Containers.Optionals.Empty;
    end Dependency_On;
 
+   -----------------
+   -- Base_Folder --
+   -----------------
+
+   function Base_Folder (R : Release) return Relative_Path
+   is
+      use Directories.Operators;
+   begin
+      if R.Origin.Is_Monorepo then
+         return R.Deployment_Folder / R.Origin.Subdir;
+      else
+         return R.Deployment_Folder;
+      end if;
+   end Base_Folder;
+
+   -----------------------
+   -- Deployment_Folder --
+   -----------------------
+
+   function Deployment_Folder (R : Release) return Folder_String
+   is
+      use all type Origins.Kinds;
+
+      -------------------
+      -- Monorepo_Path --
+      -------------------
+
+      function Monorepo_Path return Relative_Path is
+         --  For a monorepo we want to reuse the checkout, so instead of the
+         --  name of the release we use the simple name of the URL, no version
+         --  (as a monorepo may contain differently versioned crates) and the
+         --  commit ID.
+
+         --------------
+         -- Sanitize --
+         --------------
+         --  Repository names may still contain problematic chars, we replace
+         --  all of those with a '_'.
+         function Sanitize (Name : String) return String is
+         begin
+            return Safe : String := Name do
+               for I in Safe'Range loop
+                  if Safe (I) & "" not in Folder_String then
+                     Safe (I) := '_';
+                  end if;
+               end loop;
+            end return;
+         end Sanitize;
+
+         -----------------
+         -- Simple_Name --
+         -----------------
+
+         function Simple_Name (URL : String) return String is
+            --  For local repos, on Windows, we may find '\' in the URL, so
+            --  here we get as simple name of a repo whatever is after the
+            --  last '/' or '\'.
+         begin
+            for I in reverse URL'Range loop
+               if URL (I) in '\' | '/' | ':' then
+                  return URL (I + 1 .. URL'Last);
+               end if;
+            end loop;
+
+            Raise_Checked_Error ("Malformed URL: " & URL);
+         end Simple_Name;
+
+      begin
+         return
+           Sanitize (Ada.Directories.Base_Name (Simple_Name (R.Origin.URL)))
+           & "_"
+           & (case R.Origin.Kind is
+                 when Git | Hg => R.Origin.Short_Unique_Id,
+                 when SVN => R.Origin.Commit,
+                 when others => raise Program_Error
+                   with "monorepo folder only applies to VCS origins");
+      end Monorepo_Path;
+
+      ------------------
+      -- Release_Path --
+      ------------------
+
+      function Release_Path return Relative_Path
+      is (
+          --  Name of the release
+          R.Name_Str & "_" &
+
+         --  Version without pre-release/build strings
+            AAA.Strings.Head
+            (AAA.Strings.Head (Image (R.Version), '-'), '+') & "_" &
+          --  Remove patch/build strings that may violate folder valid chars
+
+          --  Unique hash when available
+          (case R.Origin.Kind is
+                when Binary_Archive => R.Origin.Short_Unique_Id,
+                when External       => "external",
+                when Filesystem     => "filesystem",
+                when System         => "system",
+                when Source_Archive => R.Origin.Short_Unique_Id,
+                when Git | Hg       => R.Origin.Short_Unique_Id,
+                when SVN            => R.Origin.Commit));
+
+   begin
+      if R.Origin.Is_Monorepo then
+         return Monorepo_Path;
+      else
+         return Release_Path;
+      end if;
+   end Deployment_Folder;
+
    ------------
    -- Deploy --
    ------------
@@ -141,7 +251,7 @@ package body Alire.Releases is
    is
       use Alire.Directories;
       use all type Alire.Properties.Actions.Moments;
-      Folder : constant Any_Path := Parent_Folder / This.Unique_Folder;
+      Folder : constant Any_Path := Parent_Folder / This.Deployment_Folder;
 
       ------------------------------
       -- Backup_Upstream_Manifest --
@@ -184,6 +294,9 @@ package body Alire.Releases is
       end Create_Authoritative_Manifest;
 
    begin
+
+      Trace.Debug ("Deploying " & This.Milestone.TTY_Image
+                   & " into " & TTY.URL (Folder));
 
       --  Deploy if the target dir is not already there
 

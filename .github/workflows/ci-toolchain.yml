@@ -1,5 +1,7 @@
 name: CI self+toolchain
 # Build Alire with `alr build` and using a toolchain installed from Alire
+# NOTE that tests are not run, this test only checks alr is able to self build.
+# (Should we also run self-tests here or is it overkill?)
 
 on:
   pull_request:

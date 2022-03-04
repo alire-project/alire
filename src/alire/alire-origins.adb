@@ -5,6 +5,7 @@ with AAA.Strings;
 with Alire.Root;
 with Alire.URI;
 with Alire.Utils.TTY;
+with Alire.VFS;
 
 package body Alire.Origins is
 
@@ -19,6 +20,7 @@ package body Alire.Origins is
       Commit       : constant String := "commit";
       Hashes       : constant String := "hashes";
       Origin       : constant String := "origin";
+      Subdir       : constant String := "subdir";
       URL          : constant String := "url";
 
    end Keys;
@@ -50,7 +52,9 @@ package body Alire.Origins is
    ------------------
 
    function New_External (Description : String) return Origin is
-     (Data => (External, Description => +Description, Hashes => <>));
+     (Data => (External,
+               Description => +Description,
+               Hashes      => <>));
 
    --------------------
    -- New_Filesystem --
@@ -66,25 +70,41 @@ package body Alire.Origins is
    -------------
 
    function New_Git (URL    : Alire.URL;
-                     Commit : Git_Commit)
+                     Commit : Git_Commit;
+                     Subdir : Relative_Path := "")
                      return Origin is
-     (Data => (Git, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+     (Data => (Git,
+               Repo_URL => +URL,
+               Commit   => +Commit,
+               Hashes   => <>,
+               Subdir   => +Subdir));
 
    ------------
    -- New_Hg --
    ------------
 
    function New_Hg (URL    : Alire.URL;
-                    Commit : Hg_Commit)
+                    Commit : Hg_Commit;
+                    Subdir : Relative_Path := "")
                     return Origin is
-     (Data => (Hg, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+     (Data => (Hg,
+               Repo_URL => +URL,
+               Commit   => +Commit,
+               Hashes   => <>,
+               Subdir   => +Subdir));
 
    -------------
    -- New_SVN --
    -------------
 
-   function New_SVN (URL : Alire.URL; Commit : String) return Origin is
-     (Data => (SVN, Repo_URL => +URL, Commit => +Commit, Hashes => <>));
+   function New_SVN (URL    : Alire.URL;
+                     Commit : String;
+                     Subdir : Relative_Path := "") return Origin is
+     (Data => (SVN,
+               Repo_URL => +URL,
+               Commit   => +Commit,
+               Hashes   => <>,
+               Subdir   => +Subdir));
 
    ----------------
    -- New_System --
@@ -98,6 +118,13 @@ package body Alire.Origins is
    ----------
 
    function Kind (This : Origin) return Kinds is (This.Data.Kind);
+
+   ------------
+   -- Subdir --
+   ------------
+
+   function Subdir (This : Origin) return Relative_Path
+   is (+This.Data.Subdir);
 
    ---------
    -- URL --
@@ -363,7 +390,9 @@ package body Alire.Origins is
    -- New_VCS --
    -------------
 
-   function New_VCS (URL : Alire.URL; Commit : String) return Origin is
+   function New_VCS (URL    : Alire.URL;
+                     Commit : String;
+                     Subdir : Relative_Path := "") return Origin is
       use AAA.Strings;
       use all type URI.Schemes;
       Scheme      : constant URI.Schemes := URI.Scheme (URL);
@@ -404,16 +433,16 @@ package body Alire.Origins is
                  ("invalid git commit id, " &
                     "40 digits hexadecimal expected");
             end if;
-            return New_Git (VCS_URL, Commit);
+            return New_Git (VCS_URL, Commit, Subdir);
          when Hg =>
             if Commit'Length /= Hg_Commit'Length then
                Raise_Checked_Error
                  ("invalid mercurial commit id, " &
                     "40 digits hexadecimal expected");
             end if;
-            return New_Hg (VCS_URL, Commit);
+            return New_Hg (VCS_URL, Commit, Subdir);
          when SVN =>
-            return New_SVN (VCS_URL, Commit);
+            return New_SVN (VCS_URL, Commit, Subdir);
          when others =>
             Raise_Checked_Error ("Expected a VCS origin but got scheme: "
                                  & Scheme'Image);
@@ -558,8 +587,16 @@ package body Alire.Origins is
             declare
                Commit : constant String := Table.Checked_Pop
                  (Keys.Commit, TOML_String).As_String;
+               Subdir : constant String :=
+                          (if Table.Contains (Keys.Subdir)
+                           then Table.Checked_Pop
+                             (Keys.Subdir, TOML_String).As_String
+                           else "");
             begin
-               This := New_VCS (URL, Commit);
+               This := New_VCS
+                 (URL,
+                  Commit => Commit,
+                  Subdir => VFS.To_Native (Portable_Path (Subdir)));
             end;
 
          when HTTP             =>
@@ -703,6 +740,10 @@ package body Alire.Origins is
                            else "")
                          & This.URL));
             Table.Set (Keys.Commit, +This.Commit);
+            if This.Subdir /= "" then
+               Table.Set (Keys.Subdir,
+                          +String (VFS.To_Portable (This.Subdir)));
+            end if;
 
          when External =>
             Table.Set (Keys.URL,

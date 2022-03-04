@@ -398,7 +398,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
                         update=False)
 
             # Make the lockfile "older" (otherwise timestamp is identical)
-            alr_touch_manifest();
+            alr_touch_manifest()
 
             if update:
                 return run_alr("with", force=force)
@@ -439,3 +439,42 @@ def add_action(type, command, name=""):
         manifest.write(f"command = {command}\n")
         if name != "":
             manifest.write(f"name = '{name}'\n")
+
+
+def alr_submit(manifest, index_path):
+    """
+    Move a manifest with origin into its proper location in an index
+    """
+    assert os.path.isfile(manifest), f"Manifest file not found: {manifest}"
+
+    # Extract crate name
+    file = os.path.basename(manifest)
+    name = file.split('-')[0]
+
+    # Prepare destination at index
+    if not os.path.isdir(index_path):
+        raise RuntimeError("Given index path does not exist or "
+                           "not a folder: " + index_path)
+
+    # Create folder hierarchy in the index
+    os.makedirs(os.path.join(index_path, "index", name[:2], name))
+
+    # Move published manifest to proper index location
+    os.rename(manifest,
+              os.path.join(index_path, "index", name[:2], name, file))
+
+
+def alr_publish(name,
+                version="0.0.0",
+                submit=True,
+                index_path=os.path.join("..", "my_index")):
+    """
+    Run `alr publish` at the current location and optionally move the produced
+    manifest to its intended location in a local index.
+    """
+    run_alr("publish", force=True)
+    # Force due to missing optional crate info by `alr init`
+
+    if submit:
+        alr_submit(os.path.join("alire", "releases", f"{name}-{version}.toml"),
+                   index_path)

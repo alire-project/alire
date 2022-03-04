@@ -119,7 +119,7 @@ package body Alr.Commands.Get is
       --  but delay its post-fetch:
       declare
          Root_Dir : Alire.Directories.Temp_File :=
-                      Alire.Directories.With_Name (Rel.Unique_Folder);
+                      Alire.Directories.With_Name (Rel.Deployment_Folder);
       begin
          --  Create the Root for the given release, and store it for possible
          --  future use.
@@ -145,7 +145,7 @@ package body Alr.Commands.Get is
       end;
 
       declare
-         Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
+         Guard : Folder_Guard (Enter_Folder (Rel.Base_Folder))
            with Unreferenced;
       begin
          --  When --only was used, mark as only to be updated manually and bail
