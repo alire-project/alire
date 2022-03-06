@@ -131,8 +131,10 @@ package body Alire.Errors is
             Trace.Error ((if I > Lines.First_Index then "   " else "")
                          --  Indentation
 
-                         & Line
-                         --  The error proper
+                         & (if I < Lines.Last_Index and Line (Line'Last) = '.'
+                           then Line (Line'First .. Line'Last - 1)
+                           else Line)
+                         --  The error proper, trimming unwanted final '.'
 
                          & (if I < Lines.Last_Index
                               and then Line (Line'Last) /= ':'
@@ -150,6 +152,15 @@ package body Alire.Errors is
 
    function Wrap (Upper, Lower : String) return String
    is (Upper & ASCII.LF & Lower);
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (This : Wrapper) is
+   begin
+      Pretty_Print (This.Text);
+   end Print;
 
    --------------------
    -- ERROR STACKING --

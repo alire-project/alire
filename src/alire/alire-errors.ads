@@ -72,6 +72,31 @@ package Alire.Errors with Preelaborate is
    --  Convenience to concatenate two error messages: a new wrapping text and
    --  an existing error within a exception being wrapped.
 
+   type Wrapper (<>) is tagged private;
+   --  Convenience to chain calls to Wrap in their natural order. Just a
+   --  wrapper over the previous calls.
+
+   function New_Wrapper return Wrapper;
+   --  Start an empty error message sequence
+
+   function New_Wrapper (Text : String) return Wrapper;
+   --  Start error sequence with its top unindented message
+
+   function Wrap (This : Wrapper; Text : String) return Wrapper;
+   --  Add an indented detail error msg to the current wrapping chain, unless
+   --  the wrapper is empty in which case the message will be top level.
+
+   function Wrap (This : Wrapper; Ex : Ada.Exceptions.Exception_Occurrence)
+                  return Wrapper;
+   --  Add an exception message instead of a given text, at top or nested level
+
+   procedure Print (This : Wrapper);
+   --  Complete the chain of errors and log it at error level
+
+   function Set (This : Wrapper) return String;
+   --  Store the msgs in This and return an Id for use as exception message
+   --  (see Set above).
+
    -----------
    -- Scope --
    -----------
@@ -109,5 +134,43 @@ private
    function Is_Error_Id (Str : String) return Boolean is
      (Str'Length > Id_Marker'Length and then
       Str (Str'First .. Str'First + Id_Marker'Length - 1) = Id_Marker);
+
+   -------------
+   -- Wrapper --
+   -------------
+
+   type Wrapper (Length : Natural) is tagged record
+      Text : String (1 .. Length);
+   end record;
+
+   function New_Wrapper return Wrapper is (Length => 0, Text => "");
+
+   -----------------
+   -- New_Wrapper --
+   -----------------
+
+   function New_Wrapper (Text : String) return Wrapper
+   is (Length => Text'Length, Text => Text);
+
+   ----------
+   -- Wrap --
+   ----------
+
+   function Wrap (This : Wrapper; Text : String) return Wrapper
+   is (if This.Text /= ""
+       then New_Wrapper (Wrap (This.Text, Text))
+       else New_Wrapper (Text));
+
+   function Wrap (This : Wrapper; Ex : Ada.Exceptions.Exception_Occurrence)
+                  return Wrapper
+   is (This.Wrap (Get (Ex)));
+   --  Start a chain with an exception message instead of a given text
+
+   ---------
+   -- Set --
+   ---------
+
+   function Set (This : Wrapper) return String
+   is (Set (This.Text));
 
 end Alire.Errors;

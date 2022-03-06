@@ -15,6 +15,13 @@ private package Alire.Platforms.Common is
    function On_Windows return Boolean;
    --  Says if we are on Windows
 
+   ---------------------
+   -- Unix_Home_Folder --
+   ---------------------
+
+   function Unix_Home_Folder return String
+   is (OS_Lib.Getenv ("HOME", Default => "/tmp"));
+
    ----------------------
    -- XDG_Cache_Folder --
    ----------------------
@@ -22,7 +29,7 @@ private package Alire.Platforms.Common is
    function XDG_Cache_Folder return String
    is (OS_Lib.Getenv
          ("XDG_CACHE_HOME",
-          Default => OS_Lib.Getenv ("HOME") / ".cache")
+          Default => Unix_Home_Folder / ".cache")
        / "alire");
 
    -----------------------
@@ -32,7 +39,7 @@ private package Alire.Platforms.Common is
    function XDG_Config_Folder return String
    is (OS_Lib.Getenv
          ("XDG_CONFIG_HOME",
-          Default => OS_Lib.Getenv ("HOME", Default => "/tmp") / ".config")
+          Default => Unix_Home_Folder / ".config")
        / "alire");
 
 private

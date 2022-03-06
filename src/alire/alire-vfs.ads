@@ -52,6 +52,10 @@ package Alire.VFS is
    --  A virtual file is the portable wrapper over file/dir names, that may
    --  then exists or not on disk.
 
+   function New_Virtual_File (Path : Any_Path) return Virtual_File
+   is (New_Virtual_File (From_FS (Path)));
+   --  Just a shortcut
+
    --  Name retrieval
 
    function Simple_Name (File : Virtual_File) return Filesystem_String with

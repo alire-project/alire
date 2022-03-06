@@ -8,6 +8,7 @@ with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
+with Alire.VFS;
 
 with GNATCOLL.VFS;
 
@@ -419,6 +420,13 @@ package body Alire.Directories is
               Exception_Information (E));
    end Finalize;
 
+   ------------------
+   -- Is_Directory --
+   ------------------
+
+   function Is_Directory (Path : Any_Path) return Boolean
+   is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Directory);
+
    ----------------
    -- TEMP FILES --
    ----------------
@@ -542,11 +550,117 @@ package body Alire.Directories is
          raise;
    end Finalize;
 
+   --------------------
+   -- Merge_Contents --
+   --------------------
+
+   procedure Merge_Contents (Src, Dst              : Any_Path;
+                             Skip_Top_Level_Files  : Boolean;
+                             Fail_On_Existing_File : Boolean)
+   is
+
+      Base   : constant Absolute_Path := Adirs.Full_Name (Src);
+      Target : constant Absolute_Path := Adirs.Full_Name (Dst);
+
+      -----------
+      -- Merge --
+      -----------
+
+      procedure Merge
+        (Item : Ada.Directories.Directory_Entry_Type;
+         Stop : in out Boolean)
+      is
+         use all type Adirs.File_Kind;
+
+         Rel_Path : constant Relative_Path :=
+                      Find_Relative_Path (Base, Adirs.Full_Name (Item));
+         --  If this proves to be too slow, we should do our own recursion,
+         --  building the relative path along the way, as this is recomputing
+         --  it for every file needlessly.
+
+         Dst : constant Absolute_Path := Target / Rel_Path;
+         Src : constant Absolute_Path := Adirs.Full_Name (Item);
+      begin
+         Stop := False;
+
+         --  Check if we must skip (we delete source file)
+
+         if Adirs.Kind (Item) = Ordinary_File
+           and then Skip_Top_Level_Files
+           and then Base = Parent (Src)
+         then
+            Trace.Debug ("   Merge: Not merging top-level file " & Src);
+            Adirs.Delete_File (Src);
+            return;
+         end if;
+
+         --  Create a new dir if necessary
+
+         if Adirs.Kind (Item) = Directory then
+            if not Is_Directory (Dst) then
+               Trace.Debug ("   Merge: Creating destination dir " & Dst);
+               Adirs.Create_Directory (Dst);
+            end if;
+
+            return;
+            --  Nothing else to do for a directory. If we controlled the
+            --  recursion we could more efficiently rename now into place.
+         end if;
+
+         --  Move a file into place
+
+         Trace.Debug ("   Merge: Moving " & Adirs.Full_Name (Item)
+                    & " into " & Dst);
+         if Adirs.Exists (Dst) then
+            if Fail_On_Existing_File then
+               Recoverable_Error ("Cannot move " & TTY.URL (Src)
+                                  & " into place, file already exists: "
+                                  & TTY.URL (Dst));
+            elsif Adirs.Kind (Dst) /= Ordinary_File then
+               Raise_Checked_Error ("Cannot replace " & TTY.URL (Dst)
+                                    & " as it is not a regular file");
+            else
+               Trace.Debug ("   Merge: Deleting in preparation to replace: "
+                            & Dst);
+               Adirs.Delete_File (Dst);
+            end if;
+         end if;
+
+         --  We use GNATCOLL.VFS here as some binary packages contain softlinks
+         --  to .so libs that we must copy too, and these are troublesome
+         --  with regular Ada.Directories (that has no concept of softlink).
+         --  Also, some of these softlinks are broken and although they are
+         --  presumably safe to discard, let's just go for an identical copy.
+
+         declare
+            VF : constant VFS.Virtual_File :=
+                   VFS.New_Virtual_File (VFS.From_FS (Src));
+            OK : Boolean := False;
+         begin
+            if VF.Is_Symbolic_Link then
+               VF.Rename (VFS.New_Virtual_File (Dst), OK);
+               if not OK then
+                  Raise_Checked_Error ("Failed to move softlink: "
+                                       & TTY.URL (Src));
+               end if;
+            else
+               Adirs.Rename (Old_Name => Src,
+                             New_Name => Dst);
+            end if;
+         end;
+      end Merge;
+
+   begin
+      Traverse_Tree (Start   => Src,
+                     Doing   => Merge'Access,
+                     Recurse => True);
+   end Merge_Contents;
+
    -------------------
    -- Traverse_Tree --
    -------------------
 
-   procedure Traverse_Tree (Start   : Relative_Path;
+   procedure Traverse_Tree (Start   : Any_Path;
                             Doing   : access procedure
                               (Item : Ada.Directories.Directory_Entry_Type;
                                Stop : in out Boolean);
