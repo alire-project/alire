@@ -234,6 +234,9 @@ package Alire.Roots is
    function Pins_Dir (This : Root) return Absolute_Path;
    --  The folder where remote pins are checked out for this root
 
+   function Prefix_Dir (This : Root) return Absolute_Path;
+   --  The folder gprinstall uses as prefix by default
+
    function Lock_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.lock" file inside Working_Folder
 

@@ -97,6 +97,7 @@ package body Alire.Roots is
          -------------------
 
          procedure Call_Gprbuild (Release : Releases.Release) is
+            use AAA.Strings;
             use Directories.Operators;
             Count : constant Natural :=
                       Natural
@@ -143,6 +144,27 @@ package body Alire.Roots is
                   Current := Current + 1;
                end loop;
 
+            end if;
+
+            --  Gprinstall everything
+
+            if Is_Root then
+               Put_Info ("Installing projects...");
+
+               for Gpr_File of Release.Project_Files
+                 (This.Environment, With_Path => True)
+               loop
+                  Spawn.Command
+                    ("gprinstall",
+                     AAA.Strings.To_Vector ("-r")
+                     & "-f" -- force overwrite
+                     & "-m" -- minimal install (only needed sources)
+                     & "-p" -- create missing dirs
+                     & "-r" -- recursively install projects
+                     & String'("--prefix=" & (This.Prefix_Dir))
+                     & "-P" & Gpr_File
+                    );
+               end loop;
             end if;
 
          exception
@@ -210,6 +232,11 @@ package body Alire.Roots is
    begin
       return Context : Alire.Environment.Context do
          Context.Load (This);
+
+         --  Finally set the prefix for installed resources in this root
+         Context.Set (Name   => "ALIRE_PREFIX",
+                      Value  => This.Prefix_Dir,
+                      Origin => "root");
       end return;
    end Build_Context;
 
@@ -963,6 +990,13 @@ package body Alire.Roots is
 
    function Pins_Dir (This : Root) return Absolute_Path
    is (This.Cache_Dir / "pins");
+
+   ----------------
+   -- Prefix_Dir --
+   ----------------
+
+   function Prefix_Dir (This : Root) return Absolute_Path
+   is (This.Working_Folder / Paths.Prefix_Folder_Inside_Working_Folder);
 
    --------------------
    -- Working_Folder --

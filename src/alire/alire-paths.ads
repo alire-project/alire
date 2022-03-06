@@ -9,6 +9,9 @@ package Alire.Paths with Preelaborate is
 
    Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
 
+   Prefix_Folder_Inside_Working_Folder : constant Relative_Path := "prefix";
+   --  The folder gprinstall uses as prefix
+
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
    function Working_Folder_Inside_Root return Relative_Path
