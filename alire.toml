@@ -52,5 +52,5 @@ optional = { url = "https://github.com/mosteo/optional.git", commit = "0c7d20c0c
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning.git", commit = "fe4e72e40786589a66d53662639f894fcdb3419c" }
 simple_logging = { url = "https://github.com/alire-project/simple_logging.git", commit = "02a7de7568af6af7cedd1048901fae8e9477b1d9" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch.git", commit = "86e7302d29f360f98f568b6015755229949b2194" }
-toml_slicer = { url = "https://github.com/mosteo/toml_slicer.git", commit = "1c0286bd724c6f257a36fc89412fcefd4f555228" }
+toml_slicer = { url = "https://github.com/mosteo/toml_slicer.git", commit = "8b9dff0f450394b07ea71f0eb9b39d9c20e21f9c" }
 uri_ada = { url = "https://github.com/mosteo/uri-ada.git", commit = "b61eba59099b3ab39e59e228fe4529927f9e849e" }
