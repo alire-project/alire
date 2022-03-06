@@ -42,7 +42,9 @@ package Alire.Solver is
      );
    --  Allow the solver to further explore incomplete solution space. Each
    --  value takes more time than the precedent one. All_Incomplete can take
-   --  a veeery long time when many crates/releases must be considered.
+   --  a veeery long time when many crates/releases must be considered. TODO:
+   --  All these policies can go away once we move from a recursive solver to
+   --  a non-recursive priority-based one.
 
    type Detection_Policies is (Detect, Dont_Detect);
    --  * Detect: externals will be detected and added to the index once needed.
@@ -60,9 +62,15 @@ package Alire.Solver is
    --  * Only_Local: only crates in the local workspace will be used.
 
    type Timeout_Policies is
-     (Ask,     -- Normal interaction with user
-      Stop,    -- Abort at first timeout
-      Continue -- Never ask and continue searching
+     (Ask,      -- Normal interaction with user
+      Stop,     -- Abort at first timeout
+      Continue, -- Never ask and continue searching
+      Continue_While_Complete_Then_Stop
+      --  If there are complete solutions unexplored, continue searching.
+      --  Once complete are exhausted, the timeout timer will be reset and the
+      --  policy downgraded to Stop. This is intended to abort as soon as we
+      --  know there aren't complete solutions, but also to be able to provide
+      --  a decent incomplete solution so the problem can be diagnosed.
      );
 
    subtype Pin_Map  is User_Pins.Maps.Map;
@@ -121,6 +129,9 @@ package Alire.Solver is
    type Query_Options is record
       Age          : Age_Policies          := Newest;
       Completeness : Completeness_Policies := First_Complete;
+      Exhaustive   : Boolean               := True;
+      --  When Exhaustive, Completeness is progressively downgraded. Otherwise
+      --  only the given Completeness is used.
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
       Sharing      : Sharing_Policies      := Allow_Shared;
@@ -142,22 +153,7 @@ package Alire.Solver is
    --  A reasonable combo that will return the first complete solution found,
    --  or otherwise consider a subset of incomplete solutions.
 
-   Default_Options_Not_Interactive : constant Query_Options :=
-                                       (On_Timeout => Stop,
-                                        others     => <>);
-
-   Exhaustive_Options : constant Query_Options :=
-                          (Completeness => All_Incomplete,
-                           others       => <>);
-   --  Explore the full solution space
-
-   Find_Best_Options  : constant Query_Options :=
-                          (Completeness => All_Complete,
-                           others       => <>);
-   --  Find all complete solutions and return the "best" one (see
-   --  Solutions.Is_Better). It does not yet make sense to use this setting
-   --  because with the current Is_Better implementation, the first complete
-   --  solution found is the one considered better anyway.
+   --  See child package Predefined_Options for more.
 
    function Resolve (Deps    : Alire.Types.Abstract_Dependencies;
                      Props   : Properties.Vector;

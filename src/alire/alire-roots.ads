@@ -1,5 +1,4 @@
 private with AAA.Caches.Files;
-with Ada.Directories;
 private with Ada.Finalization;
 
 with AAA.Strings;
@@ -200,8 +199,7 @@ package Alire.Roots is
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
 
-   procedure Reload_Manifest (This : in out Root)
-     with Pre => This.Path = Ada.Directories.Current_Directory;
+   procedure Reload_Manifest (This : in out Root);
    --  If changes have been done to the manifest, either via the dependency/pin
    --  modification procedures, or somehow outside alire after This was
    --  created, we need to reload the manifest. The solution remains
@@ -218,15 +216,41 @@ package Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Export_Build_Env : Boolean;
+                   Build_All_Deps   : Boolean := False;
+                   Build_Root       : Boolean := True;
                    Saved_Profiles   : Boolean := True)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
-   --  all releases in the solution (even those not built). Returns True on
-   --  successful build. By default, profiles stored in the persistent crate
-   --  configuration are used (i.e. last explicit build); otherwise the ones
-   --  given in This.Configuration are used. These come in order of increasing
-   --  priority from: defaults -> manifests -> explicit set via API.
+   --  all releases in the solution (even those not built). Returns True
+   --  on successful build. When Build_All_Deps, all dependencies are built
+   --  explicitly; otherwise only those declaring executables are built.
+   --  However, when we are building for an installation, gprbuild will look
+   --  for all executables, even those undeclared, which furthermore aren't
+   --  built by gprbuild when their projects are used as dependencies. In
+   --  short, in that case we have to build all projects explicitly. By
+   --  default, profiles stored in the persistent crate configuration are used
+   --  (i.e. last explicit build); otherwise the ones given in
+   --  This.Configuration are used. These come in order of increasing priority
+   --  from: defaults -> manifests -> explicit set via API.
+
+   procedure Install
+     (This       : in out Root;
+      Prefix     : Absolute_Path;
+      With_Root  : Boolean := False;
+      Cmd_Args   : AAA.Strings.Vector := AAA.Strings.Empty_Vector;
+      Export_Env : Boolean := True);
+   --  Call gprinstall -r on the root project files and --prefix=Prefix.
+   --  Cmd_Args are passed to gprinstall. If With_Root, the root release will
+   --  also be installed. This is wanted when installing a local workspace,
+   --  but unwanted when installed indexed crates into a regular prefix with
+   --  a hidden root.
+
+   procedure Uninstall (This   : in out Root;
+                        Prefix : Absolute_Path;
+                        Crates : Containers.Crate_Name_Sets.Set) is null;
+   --  Call gprinstall --uninstall on the files for the given crates
+   --  TODO
 
    function Configuration (This : in out Root)
                            return Crate_Configuration.Global_Config;
@@ -266,6 +290,9 @@ package Alire.Roots is
 
    function Pins_Dir (This : Root) return Absolute_Path;
    --  The folder where remote pins are checked out for this root
+
+   function Prefix_Dir (This : Root) return Absolute_Path;
+   --  The folder gprinstall uses as prefix by default
 
    function Lock_File (This : Root) return Absolute_Path;
    --  The "/path/to/alire.lock" file inside Working_Folder

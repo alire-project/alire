@@ -4,6 +4,7 @@ with Alire.Directories;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.Roots.Optional;
+with Alire.Solver.Predefined_Options;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
@@ -32,7 +33,10 @@ package body Alire.Roots.Editable is
    -- Confirm_And_Commit --
    ------------------------
 
-   procedure Confirm_And_Commit (This : in out Root) is
+   procedure Confirm_And_Commit (This    : in out Root;
+                                 Options : Solver.Query_Options :=
+                                   Solver.Default_Options)
+   is
       Original : Roots.Root renames This.Orig;
       Edited   : Roots.Root renames This.Edit;
    begin
@@ -55,7 +59,7 @@ package body Alire.Roots.Editable is
 
          --  Compute the new solution
 
-         Edited.Set (Solution => Edited.Compute_Update);
+         Edited.Set (Solution => Edited.Compute_Update (Options => Options));
 
          --  Then show the effects on the solution
 
@@ -74,8 +78,9 @@ package body Alire.Roots.Editable is
    -- Add_Dependency --
    --------------------
 
-   procedure Add_Dependency (This : in out Root;
-                             Dep  : Dependencies.Dependency)
+   procedure Add_Dependency (This        : in out Root;
+                             Dep         : Dependencies.Dependency;
+                             Narrow_Down : Boolean := True)
    is
 
       --------------------
@@ -83,6 +88,7 @@ package body Alire.Roots.Editable is
       --------------------
 
       function Find_Updatable return Dependencies.Dependency is
+         --  This safely fails by returning the original dependency
       begin
 
          --  Solve with the new dependency and take the updatable set for the
@@ -99,7 +105,8 @@ package body Alire.Roots.Editable is
                                   .Dependencies (This.Edit.Environment)
                                   and Dep,
                        Props   => This.Edit.Environment,
-                       Pins    => This.Edit.Pins);
+                       Pins    => This.Edit.Pins,
+                       Options => Solver.Predefined_Options.Complete_Only);
          begin
             if Sol.State (Dep.Crate).Has_Release then
                return
@@ -110,13 +117,12 @@ package body Alire.Roots.Editable is
             else
                return Dep;
             end if;
-
-         exception
-            when Query_Unsuccessful =>
-               Put_Warning ("No solution found when adding dependency: "
-                            & Dep.TTY_Image);
-               return Dep;
          end;
+      exception
+         when Query_Unsuccessful =>
+            Put_Warning ("No solution found when adding dependency: "
+                         & Dep.TTY_Image);
+            return Dep;
       end Find_Updatable;
 
    begin
@@ -133,7 +139,7 @@ package body Alire.Roots.Editable is
 
       declare
          Dep : constant Dependencies.Dependency :=
-                 (if Add_Dependency.Dep.Versions.Is_Any
+                 (if Add_Dependency.Dep.Versions.Is_Any and then Narrow_Down
                   then Find_Updatable
                   else Add_Dependency.Dep);
       begin

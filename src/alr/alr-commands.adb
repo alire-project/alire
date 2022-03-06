@@ -28,6 +28,7 @@ with Alr.Commands.Exec;
 with Alr.Commands.Get;
 with Alr.Commands.Index;
 with Alr.Commands.Init;
+with Alr.Commands.Install;
 with Alr.Commands.Pin;
 with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
@@ -560,6 +561,7 @@ begin
    -- Commands --
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
    Sub_Cmd.Register ("General", new Config.Command);
+   Sub_Cmd.Register ("General", new Install.Command);
    Sub_Cmd.Register ("General", new Printenv.Command);
    Sub_Cmd.Register ("General", new Toolchain.Command);
    Sub_Cmd.Register ("General", new Version.Command);

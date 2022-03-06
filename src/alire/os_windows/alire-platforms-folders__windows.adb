@@ -1,5 +1,3 @@
-with Alire.OS_Lib; use Alire.OS_Lib;
-
 package body Alire.Platforms.Folders is
 
    ----------
