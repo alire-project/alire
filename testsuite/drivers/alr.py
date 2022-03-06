@@ -467,14 +467,17 @@ def alr_submit(manifest, index_path):
 def alr_publish(name,
                 version="0.0.0",
                 submit=True,
-                index_path=os.path.join("..", "my_index")):
+                index_path=os.path.join("..", "my_index"),
+                quiet=True):
     """
     Run `alr publish` at the current location and optionally move the produced
     manifest to its intended location in a local index.
     """
-    run_alr("publish", force=True)
+    p = run_alr("publish", force=True, quiet=quiet)
     # Force due to missing optional crate info by `alr init`
 
     if submit:
         alr_submit(os.path.join("alire", "releases", f"{name}-{version}.toml"),
                    index_path)
+
+    return p
