@@ -23,18 +23,21 @@ with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
+with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.VFS;
 
+with CLIC.User_Input;
+
 with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
-with CLIC.User_Input;
-
 with TOML.File_IO;
+
+with TOML_Slicer;
 
 package body Alire.Publish is
 
@@ -194,6 +197,15 @@ package body Alire.Publish is
       Trace.Info ("The release to be published contains this information:");
       Ada.Text_IO.New_Line;
       Release.Print;
+
+      --  Warn if the release contains pins
+
+      if not Release.Pins.Is_Empty then
+         Ada.Text_IO.New_Line;
+         Trace.Warning ("The release manifest "
+                      & TTY.Warn ("contains pins that will be removed")
+                      & " in the published version.");
+      end if;
 
       --  Detect missing recommended fields
 
@@ -389,6 +401,15 @@ package body Alire.Publish is
            (Context.Tmp_Deploy_Dir.Filename / Context.Options.Manifest,
             Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
       end if;
+
+      --  Remove pins at this point, as this manifest will be the basis for the
+      --  published one; also this way the build test will not rely on pins.
+
+      TOML_Slicer.Remove_Array
+        (File_Name  => Packaged_Manifest (Context),
+         Array_Name => TOML_Keys.Pins,
+         Backup     => True,
+         Backup_Dir => Deploy_Path (Context));
 
    end Deploy_Sources;
 
