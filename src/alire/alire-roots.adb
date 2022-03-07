@@ -146,27 +146,6 @@ package body Alire.Roots is
 
             end if;
 
-            --  Gprinstall everything
-
-            if Is_Root then
-               Put_Info ("Installing projects...");
-
-               for Gpr_File of Release.Project_Files
-                 (This.Environment, With_Path => True)
-               loop
-                  Spawn.Command
-                    ("gprinstall",
-                     AAA.Strings.To_Vector ("-r")
-                     & "-f" -- force overwrite
-                     & "-m" -- minimal install (only needed sources)
-                     & "-p" -- create missing dirs
-                     & "-r" -- recursively install projects
-                     & String'("--prefix=" & (This.Prefix_Dir))
-                     & "-P" & Gpr_File
-                    );
-               end loop;
-            end if;
-
          exception
             when E : Alire.Checked_Error =>
                Trace.Error (Errors.Get (E, Clear => False));
@@ -239,6 +218,42 @@ package body Alire.Roots is
                       Origin => "root");
       end return;
    end Build_Context;
+
+   -------------
+   -- Install --
+   -------------
+
+   procedure Install (This      : in out Root;
+                     Prefix     : Absolute_Path;
+                     Cmd_Args   : AAA.Strings.Vector;
+                     Export_Env : Boolean)
+   is
+      use AAA.Strings;
+   begin
+
+      if Export_Env then
+         This.Export_Build_Environment;
+      end if;
+
+      --  Gprinstall everything
+
+      Put_Info ("Installing projects...");
+
+      for Gpr_File of Release (This).Project_Files
+        (This.Environment, With_Path => True)
+      loop
+         Spawn.Command
+           ("gprinstall",
+            AAA.Strings.To_Vector ("-r")
+            & "-m" -- minimal install (only needed sources)
+            & "-p" -- create missing dirs
+            & "-r" -- recursively install projects
+            & String'("--prefix=" & Prefix)
+            & "-P" & Gpr_File
+            & Cmd_Args
+           );
+      end loop;
+   end Install;
 
    ------------------
    -- Direct_Withs --

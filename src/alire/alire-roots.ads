@@ -217,6 +217,12 @@ package Alire.Roots is
    --  all releases in the solution (even those not built). Returns True on
    --  successful build.
 
+   procedure Install (This       : in out Root;
+                      Prefix     : Absolute_Path;
+                      Cmd_Args   : AAA.Strings.Vector;
+                      Export_Env : Boolean);
+   --  Call gprbuild -r on the root project files and --prefix=Prefix
+
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files
 
