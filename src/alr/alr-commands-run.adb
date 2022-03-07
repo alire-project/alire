@@ -37,7 +37,7 @@ package body Alr.Commands.Run is
          when others =>
             New_Line;
             for Bin of Found_At loop
-               Put_Line ("      (found at " & Found_At.First_Element & ")");
+               Put_Line ("      (found at " & Bin & ")");
             end loop;
       end case;
    end Check_Report;
