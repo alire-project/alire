@@ -52,4 +52,31 @@ package body Alire.Spawn is
                Understands_Verbose => True);
    end Gprbuild;
 
+   ----------------
+   -- Gprinstall --
+   ----------------
+
+   procedure Gprinstall
+     (Project_File : Absolute_File;
+      Prefix       : Absolute_Path;
+      Recursive    : Boolean;
+      Quiet        : Boolean;
+      Extra_Args   : AAA.Strings.Vector)
+   is
+      use AAA.Strings;
+   begin
+      Spawn.Command
+        ("gprinstall",
+         AAA.Strings.Empty_Vector
+         & (if Recursive then To_Vector ("-r") else Empty_Vector)
+         & (if Quiet     then To_Vector ("-q") else Empty_Vector)
+         & "-f"
+         & "-m" -- minimal install (only needed sources)
+         & "-p" -- create missing dirs
+         & String'("--prefix=" & Prefix)
+         & "-P" & Project_File
+         & Extra_Args
+        );
+   end Gprinstall;
+
 end Alire.Spawn;

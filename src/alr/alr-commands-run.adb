@@ -27,8 +27,9 @@ package body Alr.Commands.Run is
       use Ada.Text_IO;
 
       Found_At : constant AAA.Strings.Vector :=
-        Files.Locate_File_Under (Cmd.Root.Path,
-                                 Exe_Name, Max_Depth => Max_Search_Depth);
+        Files.Locate_File_Under (Cmd.Root.Prefix_Dir,
+                                 Exe_Name,
+                                 Max_Depth => Max_Search_Depth);
    begin
       Put ("   " & Exe_Name);
       case Found_At.Length is
@@ -64,7 +65,7 @@ package body Alr.Commands.Run is
 
       procedure List is
          Candidates : constant AAA.Strings.Vector := Files.Locate_File_Under
-           (Cmd.Root.Path,
+           (Cmd.Root.Prefix_Dir,
             Cmd.Root.Release.Default_Executable,
             Max_Depth => Max_Search_Depth);
          --  Candidate default executable

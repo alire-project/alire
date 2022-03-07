@@ -110,7 +110,7 @@ package body Alire.Roots is
             if not Is_Root and then not Release.Auto_GPR_With then
 
                Put_Info (TTY.Bold ("Not") & " pre-building "
-                         & Utils.TTY.Name (Release.Name)
+                         & Release.Milestone.TTY_Image
                          & " (auto with disabled)",
                          Trace.Detail);
 
@@ -119,7 +119,7 @@ package body Alire.Roots is
             then
 
                Put_Info (TTY.Bold ("Not") & " pre-building "
-                         & Utils.TTY.Name (Release.Name)
+                         & Release.Milestone.TTY_Image
                          & " (no executables declared)",
                          Trace.Detail);
 
@@ -130,7 +130,7 @@ package body Alire.Roots is
                  (This.Environment, With_Path => True)
                loop
                   Put_Info ("Building "
-                            & Utils.TTY.Name (Release.Name) & "/"
+                            & Release.Milestone.TTY_Image & "/"
                             & TTY.URL (Gpr_File)
                             & (if Count > 1
                               then " (" & AAA.Strings.Trim (Current'Image)
@@ -140,6 +140,16 @@ package body Alire.Roots is
 
                   Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
                                   Extra_Args => Cmd_Args);
+
+                  --  Also install it to our sandboxed prefix
+
+                  Spawn.Gprinstall
+                    (Project_File => This.Release_Base (Release.Name)
+                                     / Gpr_File,
+                     Prefix       => This.Prefix_Dir,
+                     Recursive    => False,
+                     Quiet        => True,
+                     Extra_Args   => AAA.Strings.Empty_Vector);
 
                   Current := Current + 1;
                end loop;
@@ -196,6 +206,11 @@ package body Alire.Roots is
 
       This.Traverse (Build_Single_Release'Access);
 
+      --  Final installation of all projects in our sandbox
+      This.Install (Prefix     => This.Prefix_Dir,
+                    Cmd_Args   => AAA.Strings.Empty_Vector,
+                    Export_Env => False);
+
       return True;
    exception
       when Build_Failed =>
@@ -208,6 +223,7 @@ package body Alire.Roots is
 
    function Build_Context (This : in out Root) return Alire.Environment.Context
    is
+      use Directories.Operators;
    begin
       return Context : Alire.Environment.Context do
          Context.Load (This);
@@ -216,6 +232,11 @@ package body Alire.Roots is
          Context.Set (Name   => "ALIRE_PREFIX",
                       Value  => This.Prefix_Dir,
                       Origin => "root");
+
+         --  And the path for installed binaries
+         Context.Append (Name   => "PATH",
+                         Value  => This.Prefix_Dir / "bin",
+                         Origin => "root");
       end return;
    end Build_Context;
 
@@ -242,16 +263,12 @@ package body Alire.Roots is
       for Gpr_File of Release (This).Project_Files
         (This.Environment, With_Path => True)
       loop
-         Spawn.Command
-           ("gprinstall",
-            AAA.Strings.To_Vector ("-r")
-            & "-m" -- minimal install (only needed sources)
-            & "-p" -- create missing dirs
-            & "-r" -- recursively install projects
-            & String'("--prefix=" & Prefix)
-            & "-P" & Gpr_File
-            & Cmd_Args
-           );
+         Spawn.Gprinstall
+           (Project_File => Ada.Directories.Full_Name (Gpr_File),
+            Prefix       => Prefix,
+            Recursive    => True,
+            Quiet        => Alire.Log_Level < Info,
+            Extra_Args   => Cmd_Args);
       end loop;
    end Install;
 
