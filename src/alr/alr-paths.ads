@@ -2,10 +2,8 @@ with Ada.Directories;
 
 with Alire;
 with Alire.Config.Edit;
-with Alire.Environment;
 
 with Alr.Defaults;
-with Alr.OS_Lib;
 
 package Alr.Paths is
 
@@ -45,11 +43,6 @@ package Alr.Paths is
    function Alr_Config_Folder return Absolute_Path;
    --  Root folder containing persistent configuration: indexes, templates
 
-   function Alr_Source_Folder return Absolute_Path;
-   --  Folder inside Alr_Config_Folder containing a clone of the alr repo
-   --  This folder can be overridden via environment variable
-   --  Alire.Environment.Source.
-
    Alr_Working_Folder : constant Relative_Path;
    --  Folder within a working release that will contain metadata/build files,
    --  dependency releases, and session.
@@ -86,9 +79,6 @@ private
 
    function Alr_Config_Folder return String
    is (Alire.Config.Edit.Path);
-
-   function Alr_Source_Folder return String
-   is (OS_Lib.Getenv (Alire.Environment.Source, Alr_Config_Folder / "alire"));
 
    function Dependencies_Folder return String
    is (Alr_Working_Cache_Folder / "dependencies");

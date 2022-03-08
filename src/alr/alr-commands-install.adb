@@ -1,5 +1,7 @@
 with Ada.Directories;
 
+with Alire.Platforms.Current;
+
 with Stopwatch;
 
 package body Alr.Commands.Install is
@@ -18,17 +20,19 @@ package body Alr.Commands.Install is
       Cmd.Requires_Valid_Session;
 
       declare
-         Timer : Stopwatch.Instance;
+         Timer  : Stopwatch.Instance;
+         Prefix : constant Alire.Absolute_Path :=
+                    (if Cmd.Prefix.all = ""
+                     then Alire.Platforms.Current.Prefix_Folder
+                     else Adirs.Full_Name (Cmd.Prefix.all));
       begin
          Cmd.Root.Install
-           (Prefix     =>
-              (if Cmd.Prefix.all = ""
-               then Cmd.Root.Prefix_Dir
-               else Adirs.Full_Name (Cmd.Prefix.all)),
+           (Prefix     => Prefix,
             Cmd_Args   => Args,
             Export_Env => True);
 
-         Trace.Info ("Install finished successfully in "
+         Trace.Info ("Install to " & TTY.URL (Prefix)
+                     & " finished successfully in "
                      & TTY.Bold (Timer.Image) & " seconds.");
       end;
    end Execute;
@@ -41,8 +45,9 @@ package body Alr.Commands.Install is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
-       .Append ("Invokes gprbuild to compile all targets in the current"
-         & " crate."));
+       .Append ("Invokes gprinstall to install all projects.")
+       .Append ("The default install location is "
+         & TTY.URL (Alire.Platforms.Current.Prefix_Folder)));
 
    --------------------
    -- Setup_Switches --

@@ -1,5 +1,6 @@
 limited with Alire.Environment;
 private with Alire.OS_Lib.Subprocess;
+private with Alire.Paths;
 with Alire.Platforms;
 with Alire.Properties;
 private with Alire.Properties.Platform;
@@ -74,7 +75,12 @@ package Alire.Platforms.Current is
    --  Return the platform information wrapped in a vector of properties useful
    --  for dynamic expression resolution in indices/releases.
 
+   function Prefix_Folder return Absolute_Path;
+   --  Default installation location outside of sandboxes
+
 private
+
+   use OS_Lib.Operators;
 
    ------------------
    -- Distribution --
@@ -93,6 +99,13 @@ private
    function On_Windows return Boolean
    is (GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows);
    pragma Warnings (On);
+
+   -------------------
+   -- Prefix_Folder --
+   -------------------
+
+   function Prefix_Folder return Absolute_Path
+   is (Config_Folder / Paths.Prefix_Folder_Inside_Working_Folder);
 
    ----------------
    -- Properties --
