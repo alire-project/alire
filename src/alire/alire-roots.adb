@@ -141,16 +141,6 @@ package body Alire.Roots is
                   Spawn.Gprbuild (This.Release_Base (Release.Name) / Gpr_File,
                                   Extra_Args => Cmd_Args);
 
-                  --  Also install it to our sandboxed prefix
-
-                  Spawn.Gprinstall
-                    (Project_File => This.Release_Base (Release.Name)
-                                     / Gpr_File,
-                     Prefix       => This.Prefix_Dir,
-                     Recursive    => False,
-                     Quiet        => True,
-                     Extra_Args   => AAA.Strings.Empty_Vector);
-
                   Current := Current + 1;
                end loop;
 
@@ -205,11 +195,6 @@ package body Alire.Roots is
       end if;
 
       This.Traverse (Build_Single_Release'Access);
-
-      --  Final installation of all projects in our sandbox
-      This.Install (Prefix     => This.Prefix_Dir,
-                    Cmd_Args   => AAA.Strings.Empty_Vector,
-                    Export_Env => False);
 
       return True;
    exception
