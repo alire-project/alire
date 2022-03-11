@@ -2,6 +2,8 @@ with AAA.Enum_Tools;
 
 with Alire.OS_Lib.Subprocess;
 
+with System;
+
 package body Alire.Platforms.Common is
 
    Arch_Detected : Boolean       := False;
@@ -16,6 +18,22 @@ package body Alire.Platforms.Common is
       if Arch_Detected then
          return Arch_Value;
       end if;
+
+      --  Custom detection for Windows without requiring msys2
+
+      if On_Windows then
+         Arch_Detected := True;
+         case Standard.System.Word_Size is
+            when 64 =>
+               Arch_Value := X86_64;
+            when others =>
+               Arch_Value := Architecture_Unknown;
+         end case;
+
+         return Arch_Value;
+      end if;
+
+      --  Detection in unix-like platforms
 
       Detect : declare
          function Is_Known_Arch is new AAA.Enum_Tools.Is_Valid (Architectures);

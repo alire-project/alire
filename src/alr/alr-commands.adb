@@ -389,6 +389,7 @@ package body Alr.Commands is
          Trace.Debug ("End command line.");
       end Log_Command_Line;
 
+      use all type Alire.Platforms.Operating_Systems;
    begin
 
       Log_Command_Line;
@@ -402,7 +403,7 @@ package body Alr.Commands is
       --  Use CLIC.TTY selection/detection of TTY
       Trace.Is_TTY := CLIC.TTY.Is_TTY;
 
-      if not Alire.Platforms.Current.On_Windows
+      if Alire.Platforms.Current.Operating_System /= Alire.Platforms.Windows
         and then not No_Color
         and then not No_TTY
       then

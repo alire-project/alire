@@ -4,8 +4,6 @@ private with Alire.Platforms.Common;
 with Alire.Properties;
 private with Alire.Properties.Platform;
 
-private with GNATCOLL.OS.Constants;
-
 private with System;
 
 package Alire.Platforms.Current is
@@ -62,10 +60,6 @@ package Alire.Platforms.Current is
 
    function Host_Architecture return Platforms.Architectures;
 
-   function On_Windows return Boolean;
-   --  Say if we are on Windows, until the OS detection is moved here from
-   --  Alr.Platform.
-
    function Target return Platforms.Targets;
 
    function Toolchain return Platforms.Toolchains;
@@ -93,15 +87,6 @@ private
 
    function Host_Architecture return Platforms.Architectures
    renames Common.Machine_Hardware_Name;
-
-   ----------------
-   -- On_Windows --
-   ----------------
-
-   pragma Warnings (Off, "condition is always"); -- Silence warning of OS check
-   function On_Windows return Boolean
-   is (GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows);
-   pragma Warnings (On);
 
    ----------------
    -- Properties --
