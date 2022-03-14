@@ -1,7 +1,5 @@
 with AAA.Strings; use AAA.Strings;
 
-with Alire.Platforms.Common;
-
 with GNAT.Regpat;
 
 package body Alire.Platforms.Current is

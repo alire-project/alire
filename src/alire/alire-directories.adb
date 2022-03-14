@@ -223,7 +223,7 @@ package body Alire.Directories is
    begin
       if Exists (Path) and then
         Kind (Path) = Directory and then
-        Platforms.Current.On_Windows
+        Platforms.Current.Operating_System in Platforms.Windows
       then
          Trace.Debug ("Forcing writability of dir " & Path);
          OS_Lib.Subprocess.Checked_Spawn

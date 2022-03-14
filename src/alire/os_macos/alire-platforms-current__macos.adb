@@ -1,5 +1,4 @@
 with Alire.OS_Lib;
-with Alire.Platforms.Common;
 
 package body Alire.Platforms.Current is
 
