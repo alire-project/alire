@@ -23,6 +23,8 @@ package Alire.Properties.Build_Switches with Preelaborate is
             Contracts    : Contracts_Switches;
          when Style_Checks =>
             Style_Checks : Style_Checks_Switches;
+         when Ada_Version =>
+            Ada_Version : Ada_Version_Switches;
       end case;
    end record;
 

@@ -611,6 +611,14 @@ static, i.e. they cannot depend on the context.
     - `Style_Checks`
       - `No`
       - `Yes`
+    - `Ada_Version`
+      - `Compiler_Default`
+      - `Ada83`
+      - `Ada95`
+      - `Ada05`
+      - `Ada12`
+      - `Ada2022`
+      - `GNAT_Extensions`
 
    For example, to enable all run-time checks in the release profile:
    ```toml

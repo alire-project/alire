@@ -37,6 +37,7 @@ with open('../lib_1/alire.toml', "a") as manifest:
     manifest.write('[build-switches]\n')
     manifest.write('release.optimization = "size"\n')
     manifest.write('release.contracts = "yes"\n')
+    manifest.write('release.ada_version = "ada12"\n')
 
 
 # Create custom wildcard profile for lib_2
@@ -44,6 +45,7 @@ with open('../lib_2/alire.toml', "a") as manifest:
     manifest.write('[build-switches]\n')
     manifest.write('"*".optimization = "debug"\n')
     manifest.write('"*".contracts = "no"\n')
+    manifest.write('"*".ada_version = "gnat_extensions"\n')
 
 
 # Check if we can change the profile of a dependency
@@ -52,8 +54,8 @@ with open(alr_manifest(), "a") as manifest:
     manifest.write('lib_2 = "validation"\n')
 
 run_alr('update')
-check_config(lib1_config, 'RELEASE', ['-Os', '-gnata'])
-check_config(lib2_config, 'VALIDATION', ['-Og'])
+check_config(lib1_config, 'RELEASE', ['-Os', '-gnata', '-gnat12'])
+check_config(lib2_config, 'VALIDATION', ['-Og', '-gnatX'])
 check_config(bin_config, 'DEVELOPMENT', ['-gnata'])
 
 # Check that the project builds

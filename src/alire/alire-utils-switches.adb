@@ -175,6 +175,21 @@ package body Alire.Utils.Switches is
    -- Get_List --
    --------------
 
+   function Get_List (S : Ada_Version_Switches) return Switch_List
+   is (case S.Kind is
+          when Compiler_Default => Empty_List,
+          when Ada83            => Empty_List.Append (GNAT_Ada83),
+          when Ada95            => Empty_List.Append (GNAT_Ada95),
+          when Ada05            => Empty_List.Append (GNAT_Ada05),
+          when Ada12            => Empty_List.Append (GNAT_Ada12),
+          when Ada2022          => Empty_List.Append (GNAT_Ada2022),
+          when GNAT_Extensions  => Empty_List.Append (GNAT_Ada_Extensions),
+          when Custom           => S.List);
+
+   --------------
+   -- Get_List --
+   --------------
+
    function Get_List (C : Switches_Configuration) return Switch_List is
    begin
       return Empty_List
@@ -183,7 +198,8 @@ package body Alire.Utils.Switches is
              .Append (Get_List (C.Runtime_Checks))
              .Append (Get_List (C.Compile_Checks))
              .Append (Get_List (C.Contracts))
-             .Append (Get_List (C.Style_Checks));
+             .Append (Get_List (C.Style_Checks))
+             .Append (Get_List (C.Ada_Version));
    end Get_List;
 
 end Alire.Utils.Switches;
