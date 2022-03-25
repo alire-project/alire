@@ -21,21 +21,24 @@ os.chdir(glob('hello*')[0])
 p = run_alr('printenv', quiet=False)
 assert_eq(0, p.status)
 
-expected_gpr_path = []
-expected_gpr_path += [['.*', 'hello_1.0.1_filesystem']]
-expected_gpr_path += [['.*', 'alire', 'cache', 'dependencies', 'libhello_1\.0\.0_filesystem']]
-
-for i, path in enumerate(expected_gpr_path):
+def make_path(list):
     if platform.system() == 'Windows':
-        expected_gpr_path[i] = "\\\\".join(path)
+        return "\\\\".join(list)
     else:
-        expected_gpr_path[i] = "/".join(path)
+        return "/".join(list)
 
-expected_gpr_path = os.pathsep.join(expected_gpr_path)
+expected_hello_path = make_path(['.*', 'hello_1.0.1_filesystem'])
+expected_libhello_path = make_path(['.*', 'alire', 'cache', 'dependencies', 'libhello_1\.0\.0_filesystem'])
+
+expected_gpr_path = os.pathsep.join([expected_hello_path, expected_libhello_path])
 
 assert_match('export ALIRE="True"\n'
              '.*'
              'export GPR_PROJECT_PATH="' + expected_gpr_path + '"\n'
+             '.*'
+             'export HELLO_PREFIX="' + expected_hello_path + '"\n'
+             '.*'
+             'export LIBHELLO_PREFIX="' + expected_libhello_path + '"\n'
              '.*'
              'export TEST_GPR_EXTERNAL="gpr_ext_B"\n'
              '.*',
