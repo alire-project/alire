@@ -23,4 +23,11 @@ is
    GNAT_Warnings_As_Errors                    : constant Switch := "-gnatwe";
    GNAT_Function_Sections                     : constant Switch := "-ffunction-sections";
    GNAT_Data_Sections                         : constant Switch := "-fdata-sections";
+   GNAT_Ada83                                 : constant Switch := "-gnat83";
+   GNAT_Ada95                                 : constant Switch := "-gnat95";
+   GNAT_Ada05                                 : constant Switch := "-gnat05";
+   GNAT_Ada12                                 : constant Switch := "-gnat12";
+   GNAT_Ada2022                               : constant Switch := "-gnat2022";
+   GNAT_Ada_Extensions                        : constant Switch := "-gnatX";
+
 end Alire.Utils.GNAT_Switches;

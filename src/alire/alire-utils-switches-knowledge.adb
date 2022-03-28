@@ -61,6 +61,13 @@ package body Alire.Utils.Switches.Knowledge is
       Register (GNAT_Function_Sections, "Separate ELF section for each function");
       Register (GNAT_Data_Sections, "Separate ELF section for each variable");
 
+      Register (GNAT_Ada83, "Ada 83 Compatibility Mode");
+      Register (GNAT_Ada95, "Ada 95 Mode");
+      Register (GNAT_Ada05, "Ada 2005 Mode");
+      Register (GNAT_Ada12, "Ada 2012 Mode");
+      Register (GNAT_Ada2022, "Ada 2022 Mode");
+      Register (GNAT_Ada_Extensions, "Enable GNAT Extensions");
+
       Register ("-gnaty3", "Specify indentation level of 3");
       Register ("-gnatya", "Check attribute casing");
       Register ("-gnatyA", "Use of array index numbers in array attributes");
