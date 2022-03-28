@@ -92,6 +92,27 @@ package body Alr.Commands is
    function Is_Quiet return Boolean is (Log_Quiet);
 
    -------------------------
+   -- Set_Builtin_Aliases --
+   -------------------------
+
+   procedure Set_Builtin_Aliases is
+   begin
+      Sub_Cmd.Set_Alias ("gnatprove",
+                         AAA.Strings.Empty_Vector
+                         .Append ("exec")
+                         .Append ("-P1")
+                         .Append ("--")
+                         .Append ("gnatprove"));
+
+      Sub_Cmd.Set_Alias ("gnatcov",
+                         AAA.Strings.Empty_Vector
+                         .Append ("exec")
+                         .Append ("-P1")
+                         .Append ("--")
+                         .Append ("gnatcov"));
+   end Set_Builtin_Aliases;
+
+   -------------------------
    -- Set_Global_Switches --
    -------------------------
 
@@ -431,6 +452,9 @@ package body Alr.Commands is
       Create_Alire_Folders;
 
       begin
+
+         Set_Builtin_Aliases;
+
          Sub_Cmd.Load_Aliases (Alire.Config.DB);
 
          Sub_Cmd.Execute;
