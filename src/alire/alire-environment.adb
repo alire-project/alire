@@ -213,7 +213,7 @@ package body Alire.Environment is
       end loop;
 
       --  Set the crate PREFIX location for access to resources
-      This.Set (AAA.Strings.To_Upper_Case (+Rel.Name) & "_PREFIX",
+      This.Set (AAA.Strings.To_Upper_Case (+Rel.Name) & "_ALIRE_PREFIX",
                 Release_Base,
                 "Crate prefix for resources location");
    end Load;
