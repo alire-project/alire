@@ -54,7 +54,12 @@ package body Alire.Crate_Configuration is
    end Make_Release_Vect;
 
    function Is_Reserved_Name (Type_Name : String) return Boolean
-   is (Type_Name = "crate_version");
+   is (Type_Name = "crate_version" or else
+       Type_Name = "crate_name" or else
+       Type_Name = "ada_compiler_switches" or else
+       Type_Name = "c_compiler_switches" or else
+       Type_Name = "ada_linker_switches" or else
+       Type_Name = "c_linker_switches");
    --  Return True if Type_Name is reserved for Alire internal use
 
    ----------------------------
@@ -335,6 +340,8 @@ package body Alire.Crate_Configuration is
 
       TIO.Put_Line (File, "   Crate_Version : constant String := """ &
                       Version & """;");
+      TIO.Put_Line (File, "   Crate_Name : constant String := """ &
+                      (+Crate) & """;");
 
       for C in This.Map.Iterate loop
          declare
@@ -427,6 +434,7 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "abstract project " & (+Crate) & "_Config is");
 
       TIO.Put_Line (File, "   Crate_Version := """ & Version & """;");
+      TIO.Put_Line (File, "   Crate_Name := """ & (+Crate) & """;");
 
       TIO.Put_Line (File, "   Ada_Compiler_Switches := " &
                       "External_As_List (""ADAFLAGS"", "" "") &");
@@ -485,6 +493,7 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "#ifndef " & Crate_Upper & "_CONFIG_H");
       TIO.Put_Line (File, "#define " & Crate_Upper & "_CONFIG_H");
       TIO.Put_Line (File, "#define CRATE_VERSION """ & Version & """");
+      TIO.Put_Line (File, "#define CRATE_NAME """ & (+Crate) & """");
 
       for C in This.Map.Iterate loop
          declare
