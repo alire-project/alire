@@ -907,4 +907,13 @@ package body Alire.Properties.Configurations is
       return Ret;
    end Builtin_Build_Profile;
 
+   --------------------
+   -- String_Typedef --
+   --------------------
+
+   function String_Typedef (Name : String) return Config_Type_Definition
+   is (Kind    => Str,
+       Name    => +Name,
+       Default => No_TOML_Value);
+
 end Alire.Properties.Configurations;

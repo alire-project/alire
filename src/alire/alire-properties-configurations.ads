@@ -98,6 +98,7 @@ package Alire.Properties.Configurations with Preelaborate is
 
    function Builtin_Build_Profile return Config_Type_Definition;
 
+   function String_Typedef (Name : String) return Config_Type_Definition;
 private
 
    type Config_Entry is new Properties.Property with record

@@ -1009,6 +1009,32 @@ It can be used in the main GPR file like so:
 With the files `test-sort__bubble.adb`, `test-sort__quick.adb` and
 `test-sort__merge.adb` each implementing a different algorithm.
 
+## Platform Specific Code
+
+In the crate configuration Alire also generates a few built-in values to
+identify the host platform:
+ - `Alire_Host_OS`
+ - `Alire_Host_Arch`
+ - `Alire_Host_Distro`
+
+They can be used in the main GPR file to add a different source directory
+based on the OS. For instance:
+```ada
+   for Source_Dirs use ("src",
+                        "src/" & Test_Config.Alire_Host_OS);
+```
+with the following directory tree:
+```
++-- src
+    +-- host_specific.ads
+    +-- linux
+    |   +-- host_specific.adb
+    +-- macos
+    |   +-- host_specific.adb
+    +-- windows
+        +-- host_specific.adb
+```
+
 ## Build Profiles and Switches
 
 As part of crate configuration, Alire will generate a list of compiler switches
