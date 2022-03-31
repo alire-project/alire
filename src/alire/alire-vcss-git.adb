@@ -86,7 +86,7 @@ package body Alire.VCSs.Git is
       pragma Unreferenced (This);
       Extra : constant Vector :=
                 Empty_Vector
-                & (if Log_Level < Trace.Info
+                & (if Log_Level < Trace.Info or else not CLIC.TTY.Is_TTY
                    then "-q"
                    else "--progress");
       Depth_Opts : constant Vector :=
