@@ -41,7 +41,9 @@ package body Alr.Commands.Get is
       Diff     : Alire.Solutions.Diffs.Diff;
       --  Used to present dependencies to the user
 
-      Build_OK : Boolean := False;
+      Build_OK      : Boolean := False;
+      Build_Skipped : Boolean := False;
+
       Solution : Alire.Solutions.Solution;
 
       use all type Alire.Origins.Kinds;
@@ -175,6 +177,15 @@ package body Alr.Commands.Get is
                                & Rel.Milestone.TTY_Image);
                Build_OK := True;
 
+            elsif not Rel.Auto_GPR_With and then not Alire.Force then
+
+               Alire.Put_Warning
+                 ("Release cannot be built automatically as it is marked with "
+                  & TTY.Emph ("'auto-gpr-with = false'") & " in its manifest. "
+                  & "Use " & TTY.Emph ("--force") & " to override.");
+
+               Build_Skipped := True;
+
             else
 
                --  The complete build environment has been set up already by
@@ -197,12 +208,14 @@ package body Alr.Commands.Get is
                  & (if Solution.Is_Complete
                     then ""
                     else " with missing dependencies")
-                 & (if Cmd.Build
-                   then (if Build_OK
-                         then (if Rel.Origin.Kind in Binary_Archive
-                               then " and deployed."
-                               else " and built.")
-                         else " but its build failed.")
+                 & (if Cmd.Build then
+                     (if Build_OK then
+                        (if Rel.Origin.Kind in Binary_Archive
+                         then " and deployed."
+                         else " and built.")
+                      elsif Build_Skipped then
+                         " but its build was skipped."
+                      else " but its build failed.")
                    else "."),
                  Level => (if not Cmd.Build or else Build_OK
                            then Info
@@ -215,7 +228,7 @@ package body Alr.Commands.Get is
          Trace.Info ("There are no dependencies.");
       end if;
 
-      if not Build_OK then
+      if not (Build_OK or else Build_Skipped) then
          Reportaise_Command_Failed ("Build ended with errors");
          --  This is not displayed at default level, but ensures exit code /= 0
       end if;
