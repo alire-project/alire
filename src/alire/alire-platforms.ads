@@ -2,13 +2,21 @@ package Alire.Platforms with Preelaborate is
 
    --  Platform information necessary for some releases
 
-   type Architectures is (ARM,
-                          AARCH64,
-                          AARCH64_BE,
-                          I386,
-                          I686,
-                          X86_64,
-                          Architecture_Unknown);
+   type Extended_Architectures is
+     (ARM64, -- Equivalent to AARCH64
+      End_Of_Duplicates,
+      --  Up to this point, these are architectures that we want to rename to
+      --  some of the following because they are equivalent.
+      ARM,
+      AARCH64,
+      AARCH64_BE,
+      I386,
+      I686,
+      X86_64,
+      Architecture_Unknown);
+
+   subtype Architectures is Extended_Architectures range
+     Extended_Architectures'Succ (End_Of_Duplicates) .. Architecture_Unknown;
    --  See e.g. https://stackoverflow.com/a/45125525/761390
 
    type Operating_Systems is (Linux,
@@ -61,5 +69,16 @@ package Alire.Platforms with Preelaborate is
                       );
 
    type Shells is (Unix, PowerShell, WinCmd);
+
+private
+
+   function Arch_Mapping (Arch : Extended_Architectures) return Architectures
+   is (case Arch is
+          when ARM64  => AARCH64,
+          when others =>
+            (if Arch in Architectures
+             then Arch
+             else raise Program_Error
+               with "Mapping missing for given architecture: " & Arch'Image));
 
 end Alire.Platforms;

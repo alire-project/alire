@@ -36,7 +36,8 @@ package body Alire.Platforms.Common is
       --  Detection in unix-like platforms
 
       Detect : declare
-         function Is_Known_Arch is new AAA.Enum_Tools.Is_Valid (Architectures);
+         function Is_Known_Arch is
+           new AAA.Enum_Tools.Is_Valid (Extended_Architectures);
 
          Output : AAA.Strings.Vector;
 
@@ -59,7 +60,8 @@ package body Alire.Platforms.Common is
          else
             if Is_Known_Arch (Name) then
                Trace.Debug ("uname known machine string is: " & Name);
-               Arch_Value := Architectures'Value (Name);
+               Arch_Value :=
+                 Arch_Mapping (Extended_Architectures'Value (Name));
             else
                Trace.Debug ("uname unknown machine string is: " & Name);
             end if;
