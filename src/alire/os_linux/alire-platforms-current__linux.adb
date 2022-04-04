@@ -6,18 +6,6 @@ package body Alire.Platforms.Current is
 
    --  Linux implementation
 
-   ------------------
-   -- Cache_Folder --
-   ------------------
-
-   function Cache_Folder return String is (Common.XDG_Config_Folder);
-
-   -------------------
-   -- Config_Folder --
-   -------------------
-
-   function Config_Folder return String is (Common.XDG_Config_Folder);
-
    ---------------------------
    -- Detected_Distribution --
    ---------------------------

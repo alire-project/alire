@@ -1,6 +1,7 @@
 with Ada.Text_IO;
 
 with Alire.Environment;
+with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Utils;
 
@@ -153,7 +154,7 @@ package body Alire.Config.Edit is
          return Config_Path.all;
       else
          return OS_Lib.Getenv (Environment.Config,
-                               Platforms.Current.Config_Folder);
+                               Platforms.Folders.Config);
       end if;
    end Path;
 
