@@ -2,8 +2,6 @@ with TOML; use TOML;
 
 with Alire.Utils.YAML;
 
-with Alire.Utils.Switches;
-
 with Ada.Characters.Handling;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
@@ -54,9 +52,10 @@ package body Alire.Properties.Configurations is
 
          declare
             Val : constant String := Str_Array.Item (Index).As_String;
-            Val_Str : constant Unbounded_String := +(if Wrap_With_Quotes
-                                                     then """" & Val & """"
-                                                     else Val);
+            Val_Str : constant Unbounded_String :=
+              +(if Wrap_With_Quotes
+                then """" & To_Mixed_Case (Val) & """"
+                else To_Mixed_Case (Val));
          begin
             if First then
                Res := Res & Val_Str;
@@ -428,7 +427,7 @@ package body Alire.Properties.Configurations is
                                 return String
    is
       use ASCII;
-      Name : constant String := +This.Name;
+      Name : constant String := To_Mixed_Case (+This.Name);
       Indent : constant String := "   ";
    begin
       case This.Kind is
@@ -445,7 +444,7 @@ package body Alire.Properties.Configurations is
             return Indent & "type " & Name & "_Kind is (" &
               To_String (This.Values) & ");" & LF &
               Indent & Name & " : constant " & Name & "_Kind := " &
-              Value.As_String & ";";
+              To_Mixed_Case (Value.As_String) & ";";
 
          when Real =>
 
@@ -511,8 +510,8 @@ package body Alire.Properties.Configurations is
          when Enum =>
             return Indent & "type " & Name & "_Kind is (" &
               To_String (This.Values, Wrap_With_Quotes => True) & ");" & LF &
-              Indent & Name & " : " & Name & "_Kind := """ & Value.As_String
-              & """;";
+              Indent & Name & " : " & Name & "_Kind := """ &
+              To_Mixed_Case (Value.As_String) & """;";
 
          when Real =>
 
@@ -543,7 +542,7 @@ package body Alire.Properties.Configurations is
                               return String
    is
       use ASCII;
-      Name : constant String := +This.Name;
+      Name : constant String := To_Upper_Case (+This.Name);
 
    begin
       case This.Kind is
@@ -552,8 +551,8 @@ package body Alire.Properties.Configurations is
             return "#define " & Name & " """ & Value.As_String & """";
 
          when Bool =>
-            return "#define " & Name & "_True 1" & LF &
-              "#define " & Name & "_False 0" & LF &
+            return "#define " & Name & "_TRUE 1" & LF &
+              "#define " & Name & "_FALSE 0" & LF &
               "#define " & Name & " " &
             (if Value.As_Boolean then "1" else "0");
 
@@ -569,7 +568,8 @@ package body Alire.Properties.Configurations is
                      Elt : constant String :=
                        This.Values.Item (Index).As_String;
                   begin
-                     Ret := Ret & "#define " & Name & "_" & Elt  &
+                     Ret := Ret & "#define " & Name & "_" &
+                       To_Upper_Case (Elt) &
                        Count'Img & LF;
 
                      if Elt = Value.As_String then
@@ -586,14 +586,14 @@ package body Alire.Properties.Configurations is
 
          when Real =>
             return
-              "#define " & Name & "_First " & Image (This.Real_First) & LF &
-              "#define " & Name & "_Last " & Image (This.Real_Last) & LF &
+              "#define " & Name & "_FIRST " & Image (This.Real_First) & LF &
+              "#define " & Name & "_LAST " & Image (This.Real_Last) & LF &
               "#define " & Name & " " & Image (Value.As_Float);
 
          when Int =>
             return
-              "#define " & Name & "_First " & Image (This.Int_First) & LF &
-              "#define " & Name & "_Last " & Image (This.Int_Last) & LF &
+              "#define " & Name & "_FIRST " & Image (This.Int_First) & LF &
+              "#define " & Name & "_LAST " & Image (This.Int_Last) & LF &
               "#define " & Name & " " & Image (Value.As_Integer);
 
       end case;
@@ -889,22 +889,31 @@ package body Alire.Properties.Configurations is
       end return;
    end Config_Entry_From_TOML;
 
-   ---------------------------
-   -- Builtin_Build_Profile --
-   ---------------------------
+   -----------------------
+   -- Builtin_From_Enum --
+   -----------------------
 
-   function Builtin_Build_Profile return Config_Type_Definition is
+   function Typedef_From_Enum return Config_Type_Definition is
 
       Ret : constant Config_Type_Definition :=
         (Kind    => Enum,
-         Name    => +"Build_Profile",
+         Name    => +Type_Name,
          Default => No_TOML_Value,
          Values  => TOML.Create_Array);
    begin
-      for P in Alire.Utils.Switches.Profile_Kind loop
+      for P in T loop
          Ret.Values.Append (TOML.Create_String (P'Img));
       end loop;
       return Ret;
-   end Builtin_Build_Profile;
+   end Typedef_From_Enum;
+
+   --------------------
+   -- String_Typedef --
+   --------------------
+
+   function String_Typedef (Name : String) return Config_Type_Definition
+   is (Kind    => Str,
+       Name    => +Name,
+       Default => No_TOML_Value);
 
 end Alire.Properties.Configurations;

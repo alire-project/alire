@@ -68,6 +68,33 @@ def on_windows():
     return platform.system() == "Windows"
 
 
+def distribution():
+
+    if os.environ.get('ALIRE_DISABLE_DISTRO') == 'true':
+        return 'DISTRO_UNKNOWN'
+
+    known_distro = ["debian", "ubuntu", "msys2", "arch", "rhel", "centos", "fedora"]
+
+    if os.path.exists("/etc/os-release"):
+
+        for key in ['id', 'id_like']:
+            with open("/etc/os-release") as f:
+                for line in f:
+                    split = line.strip().split('=')
+                    if len(split) == 2:
+                        val = split[1].lower().strip('"')
+                        print("val = '%s'" % val)
+                        if split[0].lower() == key and val in known_distro:
+                            return val
+
+        return 'DISTRO_UNKNOWN'
+
+    elif on_windows():
+        return 'MSYS2'
+    else:
+        return 'DISTRO_UNKNOWN'
+
+
 def path_separator():
     return ':' if os.name != 'nt' else ';'
 

@@ -5,18 +5,6 @@ package body Alire.Platforms.Current is
    --  macOS implementation
 
    ------------------
-   -- Cache_Folder --
-   ------------------
-
-   function Cache_Folder return String is (Common.XDG_Config_Folder);
-
-   -------------------
-   -- Config_Folder --
-   -------------------
-
-   function Config_Folder return String is (Common.XDG_Config_Folder);
-
-   ------------------
    -- Distribution --
    ------------------
 

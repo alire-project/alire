@@ -11,7 +11,8 @@ from drivers.helpers import content_of
 test_dir = os.getcwd()
 
 crate_name = "xxx"
-for name in ["crate_version", "Crate_VERsion"]:
+for name in ["crate_version", "Crate_VERsion", "crate_name", "alire_",
+             "ada_compiler_switches", "c_compiler_switches"]:
     init_local_crate(name=crate_name)
 
     with open(alr_manifest(), "at") as manifest:

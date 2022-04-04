@@ -38,6 +38,8 @@ project Libcrate_Config is
          Src_Dirs := Src_Dirs & ("invalid value for Var_Int_Last");
    end case;
 
+   Src_Dirs := Src_Dirs & ("src/" & Libcrate_Config_Config.Alire_Host_OS);
+
    for Source_Dirs use Src_Dirs;
 
 end Libcrate_Config;
