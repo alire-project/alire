@@ -85,10 +85,9 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Extra : constant Vector :=
-                Empty_Vector
-                & (if Log_Level < Trace.Info or else not CLIC.TTY.Is_TTY
-                   then "-q"
-                   else "--progress");
+                     (if Log_Level < Trace.Info or else not CLIC.TTY.Is_TTY
+                      then Empty_Vector & "-q"
+                      else Empty_Vector);
       Depth_Opts : constant Vector :=
                      (if Depth /= 0 and then Commit (From) = ""
                       then Empty_Vector & "--depth" & Trim (Depth'Image)
@@ -416,7 +415,7 @@ package body Alire.VCSs.Git is
       Extra : constant Vector :=
                 (if Log_Level < Trace.Info
                  then Empty_Vector & "-q"
-                 else Empty_Vector & "--progress");
+                 else Empty_Vector);
    begin
 
       --  Switch branch if changed
