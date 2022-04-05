@@ -74,11 +74,10 @@ private
 
    function Arch_Mapping (Arch : Extended_Architectures) return Architectures
    is (case Arch is
-          when ARM64  => AARCH64,
-          when others =>
-            (if Arch in Architectures
-             then Arch
-             else raise Program_Error
-               with "Mapping missing for given architecture: " & Arch'Image));
+          when ARM64         => AARCH64,
+          when Architectures => Arch,
+          when others        =>
+             raise Program_Error
+               with "Mapping missing for given architecture: " & Arch'Image);
 
 end Alire.Platforms;
