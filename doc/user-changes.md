@@ -6,6 +6,14 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### UTF-8 Source Encoding
+
+PR [#9711](https://github.com/alire-project/alire/pull/971)
+
+As part of the build profile feature, the GNAT switch `-gnatW8` is
+unconditionally added to the list of compiler switches in the configuration GPR
+file. This switch enables the use of UTF-8 for source file encoding.
+
 ### Support for crates in repository subfolders (monorepos)
 
 PR [#939](https://github.com/alire-project/alire/pull/939)

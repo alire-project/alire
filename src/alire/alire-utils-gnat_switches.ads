@@ -29,5 +29,6 @@ is
    GNAT_Ada12                                 : constant Switch := "-gnat12";
    GNAT_Ada2022                               : constant Switch := "-gnat2022";
    GNAT_Ada_Extensions                        : constant Switch := "-gnatX";
+   GNAT_UTF8_Encoding                         : constant Switch := "-gnatW8";
 
 end Alire.Utils.GNAT_Switches;
