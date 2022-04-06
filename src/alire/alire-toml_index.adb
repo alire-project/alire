@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Crates;
 with Alire.Directories;
-with Alire.Errors;
 with Alire.TOML_Adapters;
 
 with Alire.Hashes.SHA256_Impl; pragma Unreferenced (Alire.Hashes.SHA256_Impl);
@@ -101,7 +100,30 @@ package body Alire.TOML_Index is
       Value    : TOML.TOML_Value;
       Key      : constant String := "version";
       Version  : Semantic_Versioning.Version;
+      Suggest_Update : Boolean := False;
+
       use type Semantic_Versioning.Version;
+
+      ----------------------
+      -- Compare_Branches --
+      ----------------------
+
+      procedure Compare_Branches (Local : String) is
+         Local_Kind    : constant String := AAA.Strings.Head (Local, "-");
+         --  Local_Version : constant Semantic_Versioning.Version :=
+         --                    Semantic_Versioning.Parse
+         --                      (AAA.Strings.Tail (Local, "-"));
+      begin
+         if Local_Kind /= Alire.Index.Branch_Kind then
+            Put_Warning
+              ("This alr build expects and index branch of kind: "
+               & TTY.Emph (Alire.Index.Branch_Kind)
+               & " but your community index is branch is "
+               & TTY.Emph (Local));
+            Suggest_Update := True;
+         end if;
+      end Compare_Branches;
+
    begin
       --  Read "index.toml"
 
@@ -121,58 +143,65 @@ package body Alire.TOML_Index is
                     & "only 'version' is expected");
       else
 
+         Version := Semantic_Versioning.Parse (Value.Get (Key).As_String,
+                                               Relaxed => False);
+
          --  Check for a branch mismatch first
 
          if Index.Name = Alire.Index.Community_Name then
-            if VCSs.Git.Handler.Branch (Index.Index_Directory) /=
-              Alire.Index.Community_Branch
-            then
-               Trace.Debug ("Expected community index branch: "
-                            & Alire.Index.Community_Branch);
-               Trace.Debug ("But got community index branch: "
-                            & VCSs.Git.Handler.Branch (Index.Index_Directory));
-               Set_Error
-                 (Result, Index.Index_Directory,
-                  Errors.Wrap
-                    ("Mismatched branch in checked out community index",
-                     Errors.Wrap
-                       ("Expected branch '" & Alire.Index.Community_Branch
-                        & "' but found '"
-                        & VCSs.Git.Handler.Branch (Index.Index_Directory)
-                        & "'",
-                        Errors.Wrap
-                          ("If you have updated alr, you may need to reset "
-                           & " the community index with"
-                           & " 'alr index --reset-community'",
-                           "Note that this operation will delete any local"
-                           & " changes to the community index."))));
-
-               return;
-            end if;
+            Compare_Branches
+              (Local    => VCSs.Git.Handler.Branch (Index.Index_Directory));
          end if;
 
          --  Check that index version is the expected one, or give minimal
          --  advice if it does not match.
 
-         Version := Semantic_Versioning.Parse (Value.Get (Key).As_String,
-                                               Relaxed => False);
+         if Alire.Index.Valid_Versions.Contains (Version) and then
+           Version /= Alire.Index.Version
+         then
+            Put_Warning ("Index version (" & Version.Image
+                         & ") is older than the newest supported by alr ("
+                         & Alire.Index.Version.Image & ")");
+            Suggest_Update := True;
+         elsif not Alire.Index.Valid_Versions.Contains (Version) then
 
-         if Alire.Index.Version < Version then
-            Set_Error (Result, Filename,
-                       "index version (" & Version.Image
-                       & ") is newer than that expected by alr ("
-                       & Alire.Index.Version.Image & ")."
-                       & " You may have to update alr");
-         elsif Version < Alire.Index.Version then
-            Set_Error (Result, Filename,
-                       "index version (" & Version.Image
-                       & ") is older than that expected by alr ("
-                       & Alire.Index.Version.Image & ")." & ASCII.LF
-                       & " Updating your local index might solve the issue "
+            --  Index is either too old or too new
+
+            if Alire.Index.Version < Version then
+               Set_Error (Result, Filename,
+                          "index version (" & Version.Image
+                          & ") is newer than that expected by alr ("
+                          & Alire.Index.Version.Image & ")."
+                          & " You may have to update alr");
+            elsif Version < Semver.Parse (Alire.Index.Min_Compatible_Version)
+            then
+               Set_Error
+                 (Result, Filename,
+                  "index version (" & Version.Image
+                  & ") is older than that expected by alr ("
+                  & Alire.Index.Min_Compatible_Version & ")." & ASCII.LF
+                  & (if Index.Name = Alire.Index.Community_Name then
+                       " Resetting ("
+                       & TTY.Terminal ("alr index --reset--community")
+                       & ") the community index may solve the issue"
+                       & ". " & ASCII.LF
+                    else
+                       " Updating your local index might solve the issue "
                        & "(alr index --update-all). " & ASCII.LF
                        & "Otherwise, remove the " & "index with name '"
                        & TTY.Emph (Index.Name)
-                       & "' (alr index --del " & Index.Name & ")");
+                       & "' (alr index --del " & Index.Name & ")"));
+            end if;
+
+         end if;
+
+         if Suggest_Update then
+            Put_Info
+              ("If you experience any problems loading this index, "
+               & "you may need to reset the community index with"
+               & " '" & TTY.Terminal ("alr index --reset-community") & "'. "
+               & "Note that this operation will delete any local"
+               & " changes to the community index.");
          end if;
 
          if Alire.Index.Version /= Version then
