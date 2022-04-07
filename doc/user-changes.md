@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### UTF-8 Source Encoding
 
-PR [#9711](https://github.com/alire-project/alire/pull/971)
+PR [#972](https://github.com/alire-project/alire/pull/972)
 
 As part of the build profile feature, the GNAT switch `-gnatW8` is
 unconditionally added to the list of compiler switches in the configuration GPR
