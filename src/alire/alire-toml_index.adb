@@ -116,13 +116,27 @@ package body Alire.TOML_Index is
       begin
          if Local_Kind /= Alire.Index.Branch_Kind then
             Put_Warning
-              ("This alr build expects and index branch of kind: "
+              ("This alr build expects an index branch with prefix '"
                & TTY.Emph (Alire.Index.Branch_Kind)
-               & " but your community index is branch is "
-               & TTY.Emph (Local));
+               & "' but your community index branch is '"
+               & TTY.Emph (Local) & "'");
             Suggest_Update := True;
          end if;
       end Compare_Branches;
+
+      --------------------------------
+      -- Get_Local_Community_Branch --
+      --------------------------------
+
+      function Get_Local_Community_Branch return String is
+      begin
+         --  This will raise if somehow the index is not in a git repository
+         return VCSs.Git.Handler.Branch (Index.Index_Directory);
+      exception
+         when E : Checked_Error =>
+            Log_Exception (E);
+            return "undefined";
+      end Get_Local_Community_Branch;
 
    begin
       --  Read "index.toml"
@@ -149,8 +163,7 @@ package body Alire.TOML_Index is
          --  Check for a branch mismatch first
 
          if Index.Name = Alire.Index.Community_Name then
-            Compare_Branches
-              (Local    => VCSs.Git.Handler.Branch (Index.Index_Directory));
+            Compare_Branches (Local => Get_Local_Community_Branch);
          end if;
 
          --  Check that index version is the expected one, or give minimal
@@ -159,7 +172,8 @@ package body Alire.TOML_Index is
          if Alire.Index.Valid_Versions.Contains (Version) and then
            Version /= Alire.Index.Version
          then
-            Put_Warning ("Index version (" & Version.Image
+            Put_Warning ("Index '" & TTY.Emph (Index.Name)
+                         & "' version (" & Version.Image
                          & ") is older than the newest supported by alr ("
                          & Alire.Index.Version.Image & ")");
             Suggest_Update := True;
@@ -178,13 +192,12 @@ package body Alire.TOML_Index is
                Set_Error
                  (Result, Filename,
                   "index version (" & Version.Image
-                  & ") is older than that expected by alr ("
-                  & Alire.Index.Min_Compatible_Version & ")." & ASCII.LF
+                  & ") is too old. The minimum compatible version is "
+                  & Alire.Index.Min_Compatible_Version & ASCII.LF
                   & (if Index.Name = Alire.Index.Community_Name then
-                       " Resetting ("
+                       " Resetting the community index ("
                        & TTY.Terminal ("alr index --reset--community")
-                       & ") the community index may solve the issue"
-                       & ". " & ASCII.LF
+                       & ") may solve the issue. " & ASCII.LF
                     else
                        " Updating your local index might solve the issue "
                        & "(alr index --update-all). " & ASCII.LF

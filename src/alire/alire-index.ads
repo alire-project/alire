@@ -43,9 +43,9 @@ package Alire.Index is
    --  The branch used for the community index. Must be updated when new index
    --  features are introduced.
 
-   Min_Compatible_Version : constant String := "1.1";
-   --  1.0 might be compatible but as nobody is using it anymore we may as well
-   --  go for the sure value.
+   Min_Compatible_Version : constant String := "1.0.9";
+   --  1.0.9 never existed, but this way we can test old index compatibility
+
    Max_Compatible_Version : constant String :=
                               AAA.Strings.Tail (Community_Branch, '-');
 
