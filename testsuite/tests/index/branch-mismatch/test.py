@@ -30,7 +30,7 @@ p = run_alr("search", "--crates",  # Causes loading of the index
             quiet=False)
 
 assert_match(".*This alr build expects an index branch with prefix '.*'"
-             " but your community index is branch is 'master'.*",
+             " but your community index branch is 'master'.*",
              p.out)
 
 
