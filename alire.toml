@@ -45,7 +45,7 @@ aaa = { url = "https://github.com/mosteo/aaa.git", commit = "22fcef5c465ece2f9cf
 ada_toml = { url = "https://github.com/pmderodat/ada-toml.git", commit = "2a671ffb1039a036f2bb68bdc88afc8d3dc68c10" }
 ajunitgen = { url = "https://github.com/mosteo/ajunitgen.git", commit = "e5d01db5e7834d15c4066f0a8e33d780deae3cc9" }
 ansiada = { url = "https://github.com/mosteo/ansi-ada.git", commit = "acf9afca3afe1f8b8843c061f3cef860d7567307" }
-clic = { url = "https://github.com/alire-project/clic.git", commit = "3ba91a010582606f0cccf10c5d6526278ae29adb" }
+clic = { url = "https://github.com/alire-project/clic.git", commit = "cd20803e53cea0a660f613ba6e79b9104a10ad9b" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "e250e4e42d9743b782788cf61b4ddc10a45e69e2" }
 minirest = { url = "https://github.com/mosteo/minirest.git", commit = "4550aa356d55b9cd55f26acd34701f646021c5ff" }
 optional = { url = "https://github.com/mosteo/optional.git", commit = "0c7d20c0c8b48ccb6b25fb648d48382e598c25c3" }
