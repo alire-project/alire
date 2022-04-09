@@ -70,7 +70,8 @@ package body Alire is
 
    procedure Put_Failure (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (TTY.Error ("✗ ") & Text, Level);
+      Trace.Log (TTY.Text_With_Fallback (TTY.Error ("✗ "), "ERROR: ") & Text,
+                 Level);
    end Put_Failure;
 
    --------------
@@ -97,7 +98,9 @@ package body Alire is
 
    procedure Put_Warning (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (TTY.Warn ("⚠ ") & Text, Level);
+      Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
+                 & Text,
+                 Level);
    end Put_Warning;
 
    ------------
