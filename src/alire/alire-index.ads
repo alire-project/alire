@@ -8,7 +8,7 @@ with Alire.Policies;
 with Alire.Properties;
 with Alire.Releases.Containers;
 
-with Semantic_Versioning;
+with Semantic_Versioning.Extended;
 
 package Alire.Index is
 
@@ -40,13 +40,28 @@ package Alire.Index is
      and then (for some C of Branch_String => C = '-');
 
    Community_Branch : constant String := "stable-1.1";
-   --  The branch used for the community index
+   --  The branch used for the community index. Must be updated when new index
+   --  features are introduced.
+
+   Min_Compatible_Version : constant String := "1.0.9";
+   --  1.0.9 never existed, but this way we can test old index compatibility
+
+   Max_Compatible_Version : constant String :=
+                              AAA.Strings.Tail (Community_Branch, '-');
+
+   --  We store here the indexes we are able to load. As long as we do not
+   --  break back compatibility, we can keep on simply updating the minor value
+   Valid_Versions : constant Semantic_Versioning.Extended.Version_Set :=
+                        Semantic_Versioning.Extended.Value
+                          ("^" & Min_Compatible_Version
+                           & " & <=" & Max_Compatible_Version);
 
    Version : constant Semantic_Versioning.Version :=
-               Semantic_Versioning.New_Version
-                 (AAA.Strings.Tail (Community_Branch, '-'));
+                      Semantic_Versioning.New_Version (Max_Compatible_Version);
    --  The index version understood by alire must match the one in the indexes
    --  being loaded.
+
+   Branch_Kind : constant String := AAA.Strings.Head (Community_Branch, "-");
 
    subtype Release is Alire.Releases.Release;
 

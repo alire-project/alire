@@ -1,0 +1,4 @@
+driver: python-script
+indexes:
+    community:
+        in_fixtures: false

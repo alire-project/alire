@@ -57,6 +57,8 @@ package body Alr.Commands.Version is
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
       Table.Append ("community index branch:")
         .Append (Alire.Index.Community_Branch).New_Row;
+      Table.Append ("compatible index versions:")
+        .Append (Alire.Index.Valid_Versions.Image).New_Row;
       Table.Append ("indexes folder:")
         .Append (Alire.Config.Edit.Indexes_Directory).New_Row;
       Table.Append ("indexes metadata:")
