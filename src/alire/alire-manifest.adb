@@ -9,8 +9,6 @@ with TOML_Slicer;
 
 package body Alire.Manifest is
 
-   Warning : constant String := "  # Added by alr";
-
    ------------
    -- Append --
    ------------
@@ -23,8 +21,8 @@ package body Alire.Manifest is
         (File       => Name,
          Lines      =>
            AAA.Strings.Empty_Vector
-             .Append ("[[" & TOML_Keys.Depends_On & "]]" & Warning)
-             .Append (Dep.Manifest_Image & Warning),
+             .Append ("[[" & TOML_Keys.Depends_On & "]]")
+             .Append (Dep.Manifest_Image),
            Backup     => False);
       --  No need to backup, as this is done already on a copy of the manifest
 
@@ -43,8 +41,8 @@ package body Alire.Manifest is
         (File       => File,
          Lines      =>
            AAA.Strings.Empty_Vector
-             .Append ("[[" & TOML_Keys.Pins & "]]" & Warning)
-             .Append (Pin.To_Manifest_Line (Crate) & " " & Warning),
+             .Append ("[[" & TOML_Keys.Pins & "]]")
+             .Append (Pin.To_Manifest_Line (Crate)),
          Backup     => False);
       --  No need to backup as this is done on a copy of the manifest already
    end Append;
