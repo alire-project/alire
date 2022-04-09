@@ -110,9 +110,6 @@ package body Alire.TOML_Index is
 
       procedure Compare_Branches (Local : String) is
          Local_Kind    : constant String := AAA.Strings.Head (Local, "-");
-         --  Local_Version : constant Semantic_Versioning.Version :=
-         --                    Semantic_Versioning.Parse
-         --                      (AAA.Strings.Tail (Local, "-"));
       begin
          if Local_Kind /= Alire.Index.Branch_Kind then
             Put_Warning
