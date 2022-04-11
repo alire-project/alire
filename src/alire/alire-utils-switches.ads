@@ -147,7 +147,7 @@ is
          Debug_Info     => (Kind => Yes),
          Runtime_Checks => (Kind => Default),
          Compile_Checks => (Kind => Warnings),
-         Contracts      => (Kind => Yes),
+         Contracts      => (Kind => No),
          Style_Checks   => (Kind => Yes),
          Ada_Version    => (Kind => Compiler_Default));
 

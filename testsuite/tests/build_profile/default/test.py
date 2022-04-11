@@ -30,7 +30,7 @@ bin_config = "config/bin_1_config.gpr"
 # Check default profiles for root and dependency
 check_config(lib1_config, 'Release', ['-O3', '-gnatn'])
 check_config(lib2_config, 'Release', ['-O3', '-gnatn'])
-check_config(bin_config, 'Development', ['-Og', '-g', '-gnatwa', '-gnata', '-gnaty3'])
+check_config(bin_config, 'Development', ['-Og', '-g', '-gnatwa', '-gnaty3'])
 
 # Check if we can change the profile of a dependency
 with open(alr_manifest(), "a") as manifest:
