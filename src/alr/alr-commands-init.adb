@@ -98,19 +98,6 @@ package body Alr.Commands.Init is
          --  Use more than 80 columns for more readable strings
          pragma Style_Checks ("M200");
 
-         --  --  Config project file
-         --  if not Create (Config_Filename) then
-         --     Trace.Warning ("Cannot create '" & Config_Filename & "'");
-         --     return;
-         --  end if;
-         --  Put_Line ("abstract project " & Mixed_Name & "_Config is");
-         --  Put_Line ("   Crate_Version := ""0.0.0"";");
-         --  Put_Line ("   Ada_Compiler_Switches := " &
-         --              "External_As_List (""ADAFLAGS"", "" "");");
-         --
-         --  TIO.Put (File, "end " & Mixed_Name & "_Config;");
-         --  TIO.Close (File);
-
          --  Main project file
          if not Create (Filename) then
             Trace.Warning ("Cannot create '" & Filename & "'");
@@ -124,7 +111,7 @@ package body Alr.Commands.Init is
             Put_Line ("   for Library_Version use Project'Library_Name & "".so."" & " & Mixed_Name & "_Config.Crate_Version;");
             Put_New_Line;
          end if;
-         Put_Line ("   for Source_Dirs use (""src"");");
+         Put_Line ("   for Source_Dirs use (""src/"", ""config/"");");
          Put_Line ("   for Object_Dir use ""obj/"" & " & Mixed_Name & "_Config.Build_Profile;");
          Put_Line ("   for Create_Missing_Dirs use ""True"";");
          if For_Library then
