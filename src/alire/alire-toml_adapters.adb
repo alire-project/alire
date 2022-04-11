@@ -1,5 +1,3 @@
-with Alire.Errors;
-
 package body Alire.TOML_Adapters is
 
    --------------

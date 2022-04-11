@@ -1,7 +1,10 @@
 private with Ada.Finalization;
 
-with TOML; use all type TOML.Any_Value_Kind;
 with AAA.Strings; use AAA.Strings;
+
+private with Alire.Errors;
+
+with TOML; use all type TOML.Any_Value_Kind;
 
 package Alire.TOML_Adapters with Preelaborate is
 
@@ -212,7 +215,11 @@ private
    -----------
 
    function Adafy (Key : String) return String is
-     (if To_Lower_Case (Key) = "others"
+     (if (for some Char of Key => Char = '_')
+      then raise Alire.Checked_Error with Errors.Set
+        ("TOML keys should use hyphens instead of underscores, but found key: "
+         & Key)
+      elsif To_Lower_Case (Key) = "others"
       then To_Lower_Case (Key)
       else
       To_Mixed_Case
