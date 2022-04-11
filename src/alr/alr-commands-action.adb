@@ -1,7 +1,11 @@
+with AAA.Enum_Tools;
+
 with Alire.Dependencies.States;
-with Alire.Properties.Actions;
+with Alire.Directories;
+with Alire.Properties.Actions.Executor;
 with Alire.Releases;
 with Alire.Solutions;
+with Alire.TOML_Adapters;
 
 package body Alr.Commands.Action is
 
@@ -84,7 +88,77 @@ package body Alr.Commands.Action is
    -- Run --
    ---------
 
-   procedure Run (Cmd : in out Command; Arg : String) is null;
+   procedure Run (Cmd : in out Command; Arg : String) is
+
+      use Alire.Properties.Actions;
+
+      Moment : Moments;
+
+      Some_Output : Boolean := False;
+
+      -------------
+      -- Run_One --
+      -------------
+
+      procedure Run_One
+        (This     : in out Alire.Roots.Root;
+         Solution : Alire.Solutions.Solution;
+         State    : Alire.Dependencies.States.State)
+      is
+         pragma Unreferenced (Solution, This);
+
+         -----------------
+         -- Run_Release --
+         -----------------
+
+         procedure Run_Release (Rel : Alire.Releases.Release) is
+            Selected_Moment : Alire.Releases.Moment_Array := (others => False);
+            use Alire.Directories;
+         begin
+            Selected_Moment (Moment) := True;
+
+            if not Rel.On_Platform_Actions (Cmd.Root.Environment,
+                                            Selected_Moment).Is_Empty
+            then
+               Some_Output := True;
+               declare
+                  CWD : Guard (Enter (Cmd.Root.Release_Base (Rel.Name)))
+                    with Unreferenced;
+               begin
+                  Alire.Properties.Actions.Executor.Execute_Actions
+                    (Rel,
+                     Env     => Cmd.Root.Environment,
+                     Moment  => Moment);
+               end;
+            end if;
+         end Run_Release;
+
+      begin
+         if Cmd.Recursive or else State.Crate = Cmd.Root.Release.Name then
+            if State.Has_Release then
+               Run_Release (State.Release);
+            end if;
+         end if;
+      end Run_One;
+
+      subtype Valid_Moments is
+        Moments range Moments'First .. Moments'Pred (On_Demand);
+
+      function Is_Valid is new AAA.Enum_Tools.Is_Valid (Valid_Moments);
+
+   begin
+
+      if Is_Valid (Alire.TOML_Adapters.Adafy (Arg)) then
+         Moment := Moments'Value (Alire.TOML_Adapters.Adafy (Arg));
+      else
+         Reportaise_Wrong_Arguments ("Invalid action: " & Arg);
+      end if;
+
+      Cmd.Root.Traverse (Doing => Run_One'Access);
+      if not Some_Output then
+         Put_Line ("No actions to run.");
+      end if;
+   end Run;
 
    -------------
    -- Execute --
