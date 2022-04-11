@@ -30,7 +30,7 @@ bin_config = 'config/bin_1_config.gpr'
 # Check default profiles for root and dependency
 check_config(lib1_config, 'Release', ['-O3', '-gnatn'])
 check_config(lib2_config, 'Release', ['-O3', '-gnatn'])
-check_config(bin_config, 'Development', ['-Og', '-g', '-gnatwa', '-gnata', '-gnaty3'])
+check_config(bin_config, 'Development', ['-Og', '-g', '-gnatwa', '-gnaty3'])
 
 # Create custom Release profile for lib_1
 with open('../lib_1/alire.toml', "a") as manifest:
@@ -56,7 +56,7 @@ with open(alr_manifest(), "a") as manifest:
 run_alr('update')
 check_config(lib1_config, 'Release', ['-Os', '-gnata', '-gnat12'])
 check_config(lib2_config, 'Validation', ['-Og', '-gnatX'])
-check_config(bin_config, 'Development', ['-gnata'])
+check_config(bin_config, 'Development', ['-Og', '-g', '-gnatwa', '-gnaty3'])
 
 # Check that the project builds
 run_alr('build')
