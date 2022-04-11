@@ -25,7 +25,7 @@ command = ["hello"]
 linux = true
 [available."case(os)".windows."case(word-size)"]
 "..." = false
-bits_64 = true
+bits-64 = true
 [executables."case(word-size)"]
 "..." = "bye"
 bits-32 = "hello32"
