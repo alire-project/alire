@@ -20,7 +20,7 @@ assert_eq(expected_output, p.out)
 p = run_alr("action", "post-build")
 assert_eq("No actions to run.\n", p.out)
 
-# Test trigger of non-existant action
+# Test trigger of non-existent action
 p = run_alr("action", "made-up", complain_on_error=False)
 assert_eq("ERROR: Invalid action: made-up\n", p.out)
 
