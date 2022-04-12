@@ -6,6 +6,22 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### New subcommand for listing and manual triggering of actions
+
+PR [#983](https://github.com/alire-project/alire/pull/983)
+
+Actions defined in a working release can be listed now with `alr action`. A
+specific kind of action can be triggered by specifying its kind. Actions in the
+complete dependency tree can be listed and triggered with the `--recursive`
+switch.
+
+```console
+$ alr action                # Display actions defined in the root release
+$ alr action --recursive    # Display all actions in the root and dependencies
+$ alr action post-build     # Run post-build actions in the root release
+$ alr action post-build -r  # Run post-build actions in the root and dependencies
+```
+
 ### Support for crates in repository subfolders (monorepos)
 
 PR [#939](https://github.com/alire-project/alire/pull/939)
