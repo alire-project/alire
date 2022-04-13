@@ -107,7 +107,7 @@ package body Alr.Commands is
       Sub_Cmd.Set_Alias ("gnatcov",
                          AAA.Strings.Empty_Vector
                          .Append ("exec")
-                         .Append ("-P1")
+                         .Append ("-P2")
                          .Append ("--")
                          .Append ("gnatcov"));
    end Set_Builtin_Aliases;
