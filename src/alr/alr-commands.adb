@@ -18,6 +18,7 @@ with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
 
+with Alr.Commands.Action;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
@@ -537,6 +538,7 @@ begin
    Sub_Cmd.Register ("General", new Toolchain.Command);
    Sub_Cmd.Register ("General", new Version.Command);
 
+   Sub_Cmd.Register ("Build", new Action.Command);
    Sub_Cmd.Register ("Build", new Build.Command);
    Sub_Cmd.Register ("Build", new Clean.Command);
    Sub_Cmd.Register ("Build", new Dev.Command);
