@@ -7,7 +7,7 @@ with Alire.Config.Edit;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
-with Alire.Features.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
 with Alire.Hashes;
 with Alire.Index;
@@ -183,8 +183,9 @@ package body Alire.Publish is
 
       --  Check not duplicated
 
-      Features.Index.Setup_And_Load (From   => Config.Edit.Indexes_Directory,
-                                     Strict => True);
+      Index_On_Disk.Loading.Setup_And_Load
+        (From   => Config.Edit.Indexes_Directory,
+         Strict => True);
       if Index.Exists (Release.Name, Release.Version) then
          Raise_Checked_Error
            ("Target release " & Release.Milestone.TTY_Image

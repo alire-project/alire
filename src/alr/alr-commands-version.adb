@@ -1,6 +1,6 @@
 with Alire.Config.Edit;
-with Alire.Features.Index;
 with Alire.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Properties;
 with Alire.Roots.Optional;
@@ -30,8 +30,8 @@ package body Alr.Commands.Version is
       use all type Alire.Roots.Optional.States;
       Table : Alire.Utils.Tables.Table;
       Index_Outcome : Alire.Outcome;
-      Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
-                  Alire.Features.Index.Find_All
+      Indexes : constant Alire.Index_On_Disk.Loading.Index_On_Disk_Set :=
+                  Alire.Index_On_Disk.Loading.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
       Root : constant Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);

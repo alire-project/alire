@@ -2,7 +2,6 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Index;
-with Alire.OS_Lib;
 with Alire.Warnings;
 
 with GNAT.OS_Lib;
@@ -10,7 +9,7 @@ with GNAT.OS_Lib;
 with TOML;
 with TOML.File_IO;
 
-package body Alire.Features.Index is
+package body Alire.Index_On_Disk.Loading is
 
    --  Forward declarations
 
@@ -198,14 +197,14 @@ package body Alire.Features.Index is
                              Force  : Boolean := False)
    is
       Result  : Outcome;
-      Indexes : Features.Index.Index_On_Disk_Set;
+      Indexes : Index_On_Disk_Set;
    begin
       if Alire.Index.Crate_Count /= 0 and then not Force then
          Trace.Detail ("Index already loaded, loading skipped");
          return;
       end if;
 
-      Indexes := Features.Index.Find_All (From, Result);
+      Indexes := Find_All (From, Result);
       if not Result.Success then
          Raise_Checked_Error (Message (Result));
          return;
@@ -215,8 +214,7 @@ package body Alire.Features.Index is
          Trace.Detail
            ("No indexes configured, adding default community index");
          declare
-            Outcome : constant Alire.Outcome :=
-                        Features.Index.Add_Or_Reset_Community;
+            Outcome : constant Alire.Outcome := Add_Or_Reset_Community;
          begin
             if not Outcome.Success then
                Raise_Checked_Error
@@ -227,7 +225,7 @@ package body Alire.Features.Index is
       end if;
 
       declare
-         Outcome : constant Alire.Outcome := Features.Index.Load_All
+         Outcome : constant Alire.Outcome := Load_All
            (From   => Alire.Config.Edit.Indexes_Directory,
             Strict => Strict);
       begin
@@ -254,7 +252,6 @@ package body Alire.Features.Index is
       ---------------
 
       procedure Check_One (Dir : Dirs.Directory_Entry_Type) is
-         use OS_Lib.Operators;
          Metafile : constant String :=
                       Dirs.Full_Name (Dir) / Index_On_Disk.Metadata_Filename;
          Metadata : TOML.TOML_Value;
@@ -388,4 +385,4 @@ package body Alire.Features.Index is
       return Outcome_Success;
    end Update_All;
 
-end Alire.Features.Index;
+end Alire.Index_On_Disk.Loading;

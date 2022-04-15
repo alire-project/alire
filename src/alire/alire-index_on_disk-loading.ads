@@ -1,8 +1,6 @@
 with Ada.Containers.Indefinite_Ordered_Sets;
 
-with Alire.Index_On_Disk;
-
-package Alire.Features.Index is
+package Alire.Index_On_Disk.Loading is
 
    -------------------
    -- Index loading --
@@ -52,4 +50,4 @@ package Alire.Features.Index is
    --  re-adds it at the required branch by Index.Community_Branch with the
    --  same priority (i.e., maintaining the relative ordering);
 
-end Alire.Features.Index;
+end Alire.Index_On_Disk.Loading;

@@ -10,7 +10,7 @@ with Alire.Platforms;
 with Alire_Early_Elaboration;
 with Alire.Config.Edit;
 with Alire.Errors;
-with Alire.Features.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -245,7 +245,7 @@ package body Alr.Commands is
                                   Force_Reload : Boolean := False) is
       pragma Unreferenced (Cmd);
    begin
-      Alire.Features.Index.Setup_And_Load
+      Alire.Index_On_Disk.Loading.Setup_And_Load
         (From   => Alire.Config.Edit.Indexes_Directory,
          Strict => Strict,
          Force  => Force_Reload);
