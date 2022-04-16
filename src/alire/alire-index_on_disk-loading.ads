@@ -9,11 +9,11 @@ package Alire.Index_On_Disk.Loading is
    package Sets is new Ada.Containers.Indefinite_Ordered_Sets
      (Index_On_Disk.Index'Class, Index_On_Disk."<", Index_On_Disk."=");
 
-   subtype Index_On_Disk_Set is Sets.Set;
+   type Set is new Sets.Set with null record;
 
    function Find_All
      (Under  : Absolute_Path;
-      Result : out Outcome) return Index_On_Disk_Set;
+      Result : out Outcome) return Set;
    --  Find all indexes available on a disk location. If valid indexes are
    --  found or none, set Result to Outcome_Success and return the
    --  corresponding set. If at least one found index is invalid, set Result to

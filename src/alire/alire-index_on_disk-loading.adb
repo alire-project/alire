@@ -26,7 +26,7 @@ package body Alire.Index_On_Disk.Loading is
                  Before : String := "") return Outcome is
 
       Result  : Outcome;
-      Indexes : constant Index_On_Disk_Set := Find_All (Under, Result);
+      Indexes : constant Set := Find_All (Under, Result);
 
       -----------------------
       -- Adjust_Priorities --
@@ -147,7 +147,7 @@ package body Alire.Index_On_Disk.Loading is
    function Add_Or_Reset_Community return Outcome is
       Result : Outcome with Warnings => Off;
       --  Spurious warning to be silenced in Debian stable/Ubuntu LTS GNATs.
-      Indexes : constant Sets.Set :=
+      Indexes : constant Set :=
                   Find_All (Config.Edit.Indexes_Directory, Result);
       use Sets;
    begin
@@ -197,7 +197,7 @@ package body Alire.Index_On_Disk.Loading is
                              Force  : Boolean := False)
    is
       Result  : Outcome;
-      Indexes : Index_On_Disk_Set;
+      Indexes : Set;
    begin
       if Alire.Index.Crate_Count /= 0 and then not Force then
          Trace.Detail ("Index already loaded, loading skipped");
@@ -241,11 +241,11 @@ package body Alire.Index_On_Disk.Loading is
 
    function Find_All
      (Under  : Absolute_Path;
-      Result : out Outcome) return Index_On_Disk_Set
+      Result : out Outcome) return Set
    is
       package Dirs renames Ada.Directories;
 
-      Set : Index_On_Disk_Set;
+      Indexes : Set;
 
       ---------------
       -- Check_One --
@@ -280,7 +280,7 @@ package body Alire.Index_On_Disk.Loading is
                                Result => Result);
                begin
                   if Result.Success then
-                     Set.Insert (Index);
+                     Indexes.Insert (Index);
                   end if;
                end;
             end if;
@@ -306,12 +306,12 @@ package body Alire.Index_On_Disk.Loading is
       end if;
 
       if not Result.Success then
-         return Sets.Empty_Set;
+         return Empty;
       end if;
 
-      Trace.Detail ("Found" & Set.Length'Img & " indexes");
+      Trace.Detail ("Found" & Indexes.Length'Img & " indexes");
 
-      return Set;
+      return Indexes;
    end Find_All;
 
    --------------
@@ -321,7 +321,7 @@ package body Alire.Index_On_Disk.Loading is
    function Load_All (From : Absolute_Path; Strict : Boolean) return Outcome
    is
       Result  : Outcome;
-      Indexes : constant Index_On_Disk_Set := Find_All (From, Result);
+      Indexes : constant Set := Find_All (From, Result);
    begin
       if not Result.Success then
          return Result;
@@ -364,7 +364,7 @@ package body Alire.Index_On_Disk.Loading is
 
    function Update_All (Under : Absolute_Path) return Outcome is
       Result  : Outcome;
-      Indexes : constant Index_On_Disk_Set := Find_All (Under, Result);
+      Indexes : constant Set := Find_All (Under, Result);
    begin
       if not Result.Success then
          return Result;
