@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Index;
+with Alire.Platforms.Current;
 with Alire.Warnings;
 
 with GNAT.OS_Lib;
@@ -313,6 +314,53 @@ package body Alire.Index_On_Disk.Loading is
 
       return Indexes;
    end Find_All;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (Crate            : Crate_Name;
+                   Detect_Externals : Boolean;
+                   Strict           : Boolean;
+                   From             : Set := Default;
+                   Path             : Any_Path := "")
+   is
+   begin
+
+      --  Use default location if no alternatives given, or find indexes to use
+
+      if From.Is_Empty and then Path = "" then
+         Load (Crate, Detect_Externals, Strict, From,
+               Config.Edit.Indexes_Directory);
+         return;
+      elsif Path /= "" then
+         declare
+            Result  : Outcome;
+            Indexes : constant Set := Find_All (Path, Result);
+         begin
+            Result.Assert;
+            Load (Crate, Detect_Externals, Strict, Indexes, Path => "");
+            return;
+         end;
+      end if;
+
+      --  At this point we must have a populated set
+
+      pragma Assert (not From.Is_Empty);
+
+      --  Deal with externals first
+
+      if Detect_Externals then
+         Alire.Index.Detect_Externals (Crate, Platforms.Current.Properties);
+      end if;
+
+      --  Now load
+
+      for Index of From loop
+         Index.Load (Crate, Strict);
+      end loop;
+
+   end Load;
 
    --------------
    -- Load_All --

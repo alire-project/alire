@@ -117,6 +117,13 @@ package body Alire.Index_On_Disk is
    end Load;
 
    ----------
+   -- Load --
+   ----------
+
+   procedure Load (This : Index'Class; Crate : Crate_Name; Strict : Boolean)
+   is null;
+
+   ----------
    -- Name --
    ----------
 
