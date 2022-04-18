@@ -348,17 +348,17 @@ package body Alire.Index_On_Disk.Loading is
 
       pragma Assert (not From.Is_Empty);
 
-      --  Deal with externals first
-
-      if Detect_Externals then
-         Alire.Index.Detect_Externals (Crate, Platforms.Current.Properties);
-      end if;
-
       --  Now load
 
       for Index of From loop
          Index.Load (Crate, Strict);
       end loop;
+
+      --  Deal with externals after their detectors are loaded
+
+      if Detect_Externals then
+         Alire.Index.Detect_Externals (Crate, Platforms.Current.Properties);
+      end if;
 
    end Load;
 

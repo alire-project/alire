@@ -241,12 +241,6 @@ package body Alr.Commands.Show is
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Args.Count = 1 or else
-        Cmd.Graph or else Cmd.Solve or else Cmd.Tree
-      then
-         Cmd.Requires_Full_Index;
-      end if;
-
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
            (if Args.Count = 1
@@ -254,12 +248,13 @@ package body Alr.Commands.Show is
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Args.Count = 1 and not Alire.Index.Exists (Allowed.Crate) then
-            raise Alire.Query_Unsuccessful;
-         end if;
+         if Args.Count = 1 then
+            Cmd.Load (Allowed.Crate,
+                      Externals => Cmd.Detect);
 
-         if Cmd.Detect then
-            Alire.Index.Detect_Externals (Allowed.Crate, Platform.Properties);
+            if not Alire.Index.Exists (Allowed.Crate) then
+               raise Alire.Query_Unsuccessful;
+            end if;
          end if;
 
          --  Execute

@@ -87,6 +87,10 @@ package Alire with Preelaborate is
 
    function TTY_Image (This : Crate_Name) return String;
 
+   function Index_Prefix (This : Crate_Name) return String
+     with Post => Index_Prefix'Result'Length = 2;
+   --  The two first letters in the crate name
+
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then
      Restricted_Name (Restricted_Name'First) /= '_' and then
@@ -288,6 +292,9 @@ private
    function Length (This : Crate_Name) return Positive is (This.Len);
 
    function As_String (This : Crate_Name) return String is (This.Name);
+
+   function Index_Prefix (This : Crate_Name) return String
+   is (This.Name (This.Name'First .. This.Name'First + 1));
 
    function "+" (P : Crate_Name) return String is (P.Name);
    function "+" (P : String) return Crate_Name

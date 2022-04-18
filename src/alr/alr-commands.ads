@@ -69,6 +69,13 @@ package Alr.Commands is
    --  performing a silent update. If not Sync, only a minimal empty lockfile
    --  is created.
 
+   procedure Load (Cmd       : Command'Class;
+                   Crate     : Alire.Crate_Name;
+                   Externals : Boolean := False;
+                   Strict    : Boolean := False);
+   --  Load a specific crate from the index. Optionally detect externals and
+   --  enforce no unknown enum index values.
+
    ---------------------------
    --  command-line helpers --
    ---------------------------

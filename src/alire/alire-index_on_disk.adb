@@ -120,8 +120,10 @@ package body Alire.Index_On_Disk is
    -- Load --
    ----------
 
-   procedure Load (This : Index'Class; Crate : Crate_Name; Strict : Boolean)
-   is null;
+   procedure Load (This : Index'Class; Crate : Crate_Name; Strict : Boolean) is
+   begin
+      TOML_Index.Load (This, Crate, Strict);
+   end Load;
 
    ----------
    -- Name --

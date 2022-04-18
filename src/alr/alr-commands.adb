@@ -236,6 +236,23 @@ package body Alr.Commands is
       raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (Cmd       : Command'Class;
+                   Crate     : Alire.Crate_Name;
+                   Externals : Boolean := False;
+                   Strict    : Boolean := False)
+   is
+      pragma Unreferenced (Cmd);
+   begin
+      Alire.Index_On_Disk.Loading.Load
+        (Crate            => Crate,
+         Detect_Externals => Externals,
+         Strict           => Strict);
+   end Load;
+
    -------------------------
    -- Requires_Full_Index --
    -------------------------
