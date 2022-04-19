@@ -3,7 +3,7 @@ with Ada.Text_IO;
 
 with AAA.Strings;
 
-with Alire.Config.Edit;
+with Alire.Config;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
@@ -184,9 +184,7 @@ package body Alire.Publish is
 
       --  Check not duplicated
 
-      Index_On_Disk.Loading.Setup_And_Load
-        (From   => Config.Edit.Indexes_Directory,
-         Strict => True);
+      Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
          Raise_Checked_Error
            ("Target release " & Release.Milestone.TTY_Image

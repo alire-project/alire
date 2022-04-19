@@ -270,10 +270,8 @@ package body Alr.Commands is
                                   Force_Reload : Boolean := False) is
       pragma Unreferenced (Cmd);
    begin
-      Alire.Index_On_Disk.Loading.Setup_And_Load
-        (From   => Alire.Config.Edit.Indexes_Directory,
-         Strict => Strict,
-         Force  => Force_Reload);
+      Alire.Index_On_Disk.Loading.Load_All (Strict => Strict,
+                                            Force  => Force_Reload).Assert;
    end Requires_Full_Index;
 
    ----------------------------

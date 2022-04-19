@@ -8,6 +8,7 @@ with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platforms.Current;
@@ -166,6 +167,9 @@ package body Alr.Commands.Toolchain is
       end Identify_Origins;
 
    begin
+
+      Alire.Index.Detect_Externals (Alire.GNAT_Crate,
+                                    Alire.Platforms.Current.Properties);
 
       --  We want to ensure that we are installing compatible tools. The user
       --  can force through this, so we consider that a bad situation may
@@ -378,6 +382,9 @@ package body Alr.Commands.Toolchain is
 
    begin
 
+      Cmd.Requires_Full_Index;
+      --  Needed until "provides" are fixed
+
       --  If no version was given, find if only one is installed
 
       if not AAA.Strings.Contains (Target, "=") then
@@ -451,8 +458,8 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.S_Select then
 
-         Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
+         Cmd.Requires_Full_Index;
+         --  We need this temporarily as "provides" still don't work 100%
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
@@ -464,6 +471,7 @@ package body Alr.Commands.Toolchain is
                                          else Alire.Config.Global),
                                         Allow_Incompatible => Alire.Force);
          else
+
             for Elt of Args loop
                Pending.Insert (Alire.Dependencies.From_String (Elt).Crate);
             end loop;
@@ -491,14 +499,20 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
-         Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
+
+         Alire.Index_On_Disk.Loading.Load_All.Assert;
+         --  We need these two temporarily as "provides" still don't work
+         --  100%
 
          for Elt of Args loop
             Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
          end loop;
 
       elsif not Cmd.Disable then
+
+         Alire.Index_On_Disk.Loading.Load_All.Assert;
+         --  We need these two temporarily as "provides" still don't work
+         --  100%
 
          --  When no command is specified, print the list
          Cmd.List;

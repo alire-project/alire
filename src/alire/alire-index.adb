@@ -157,9 +157,12 @@ package body Alire.Index is
    -- All_Crates --
    ----------------
 
-   function All_Crates return access constant Crates.Containers.Maps.Map is
+   function All_Crates (Opts : Query_Options := Query_Defaults)
+                        return access constant Crates.Containers.Maps.Map is
    begin
-      Index_Loading.Load_All.Assert;
+      if Opts.Load_From_Disk then
+         Index_Loading.Load_All.Assert;
+      end if;
 
       return Contents'Access;
    end All_Crates;
@@ -168,8 +171,23 @@ package body Alire.Index is
    -- Crate --
    -----------
 
-   function Crate (Name : Crate_Name) return Crates.Crate
-   is (Contents (Name));
+   function Crate (Name : Crate_Name;
+                   Opts : Query_Options := Query_Defaults)
+                   return Crates.Crate
+   is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Detect_Externals => Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
+      if not Contents.Contains (Name) then
+         Raise_Checked_Error ("Requested crate not in index: " & (+Name));
+      end if;
+
+      return Contents (Name);
+   end Crate;
 
    -----------------
    -- Crate_Count --
@@ -236,9 +254,9 @@ package body Alire.Index is
          end if;
       end loop;
 
-      raise Checked_Error with
-        "Requested milestone not in index: "
-        & (+Name) & "=" & Semantic_Versioning.Image (Version);
+      Raise_Checked_Error
+        ("Requested milestone not in index: "
+         & (+Name) & "=" & Semantic_Versioning.Image (Version));
    end Find;
 
    -------------------

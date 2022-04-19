@@ -50,7 +50,7 @@ package body Alire.Externals.From_System is
                                       & Candidate);
 
                         Releases.Insert
-                          (Index.Crate (Name).Base
+                          (Index.Crate (Name, Index.Query_Mem_Only).Base
                            .Retagging (Result.Value)
                            .Providing (This.Provides)
                            .Replacing (Origins.New_System (Candidate))

@@ -5,6 +5,7 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
+with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Optional;
 with Alire.Releases.Containers;
@@ -608,7 +609,8 @@ package body Alire.Solver is
 
                   for Release of Index.Releases_Satisfying
                     (Dependencies.New_Dependency (Dep.Crate, Pin_Version),
-                     Props)
+                     Props,
+                     Opts => Index_Query_Options)
                   loop
 
                      --  There is a valid crate for this pin and dependency
@@ -782,7 +784,8 @@ package body Alire.Solver is
                   --  We still want to go through to external hinting.
                   declare
                      Candidates : constant Releases.Containers.Release_Set :=
-                                    Index.Releases_Satisfying (Dep, Props);
+                                    Index.Releases_Satisfying
+                                      (Dep, Props, Index_Query_Options);
 
                      procedure Consider (R : Release) is
                      begin
@@ -1033,7 +1036,9 @@ package body Alire.Solver is
 
                --  Regular unavailable releases
 
-               if Index.Releases_Satisfying (Dep.Value, Props).Is_Empty then
+               if Index.Releases_Satisfying (Dep.Value, Props,
+                                             Index_Query_Options).Is_Empty
+               then
                   Unavailable_Direct_Deps.Include (Dep.Value.Image);
                   Trace.Debug
                     ("Direct dependency has no fulfilling releases: "
@@ -1077,6 +1082,10 @@ package body Alire.Solver is
       --  Valid solution in the sense that solving has been attempted
 
    begin
+
+      Index_On_Disk.Loading.Load_All.Assert;
+      Index.Detect_All_Externals (Props);
+      --  We need these two temporarily as "provides" still don't work 100%
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
 

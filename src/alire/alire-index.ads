@@ -96,16 +96,17 @@ package Alire.Index is
    --  The following queries will automatically load crates from the indexes
 
    type Query_Options is record
-      Detect_Externals : Boolean := True;
+      Detect_Externals : Boolean := False;
       Load_From_Disk   : Boolean := True;
    end record;
 
    Query_Defaults : constant Query_Options := (others => <>);
+   Query_Fully    : constant Query_Options := (others => True);
+   Query_Mem_Only : constant Query_Options := (others => False);
 
-   function Crate (Name : Crate_Name) return Crates.Crate
-     with Pre =>
-       Exists (Name) or else
-       raise Checked_Error with "Requested crate not in index: " & (+Name);
+   function Crate (Name : Crate_Name;
+                   Opts : Query_Options := Query_Defaults)
+                   return Crates.Crate;
 
    function Exists (Name : Crate_Name;
                     Opts : Query_Options := Query_Defaults)
@@ -133,12 +134,7 @@ package Alire.Index is
 
    function Find (Name    : Crate_Name;
                   Version : Semantic_Versioning.Version;
-                  Opts    : Query_Options := Query_Defaults) return Release
-     with Pre =>
-       Exists (Name, Version) or else
-     raise Checked_Error with
-       "Requested milestone not in index: "
-       & (+Name) & "=" & Semantic_Versioning.Image (Version);
+                  Opts    : Query_Options := Query_Defaults) return Release;
 
    --  Counts
 
@@ -150,7 +146,7 @@ package Alire.Index is
    --  a proper type to be returned and manipulated via the functions in this
    --  package.
 
-   function All_Crates return access constant Crates.Containers.Maps.Map;
-   --  Using this call will force a full index load
+   function All_Crates (Opts : Query_Options := Query_Defaults)
+                        return access constant Crates.Containers.Maps.Map;
 
 end Alire.Index;

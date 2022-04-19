@@ -266,7 +266,8 @@ package body Alire.Toolchains is
 
          --  Find the newest regular release in our index:
          if not Index.Releases_Satisfying (Any_Tool (Crate),
-                                           Root.Platform_Properties).Is_Empty
+                                           Root.Platform_Properties,
+                                           Opts => Index.Query_Fully).Is_Empty
          then
             Pick_Up_Tool (Crate, Fill_Version_Choices (Crate));
          else

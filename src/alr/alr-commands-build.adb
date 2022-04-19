@@ -22,6 +22,12 @@ package body Alr.Commands.Build is
          Reportaise_Wrong_Arguments ("Only one build mode can be selected");
       end if;
 
+      --  If a build profile has been set in the manifest we apply it now.
+      --  There will be a default otherwise.
+
+      Alire.Crate_Configuration.Root_Build_Profile :=
+        Cmd.Root.Configuration.Build_Profile (Cmd.Root.Name);
+
       if Cmd.Release_Mode then
          Alire.Crate_Configuration.Root_Build_Profile := Release;
       elsif Cmd.Validation_Mode then
