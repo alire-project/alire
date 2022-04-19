@@ -97,6 +97,7 @@ package Alire.Properties.Configurations with Preelaborate is
    generic
       type T is (<>);
       Type_Name : String;
+      Lower_Case : Boolean := False;
    function Typedef_From_Enum return Config_Type_Definition;
 
    function String_Typedef (Name : String) return Config_Type_Definition;

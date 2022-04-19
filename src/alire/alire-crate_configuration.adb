@@ -27,7 +27,8 @@ package body Alire.Crate_Configuration is
 
    function Builtin_Build_Profile is new Typedef_From_Enum
      (Alire.Utils.Switches.Profile_Kind,
-      "Build_Profile");
+      "Build_Profile",
+      Lower_Case => True);
 
    use Config_Type_Definition_Holder;
 
@@ -172,7 +173,8 @@ package body Alire.Crate_Configuration is
          This.Set_Value
            (Profile_Maps.Key (Cursor),
             (Name => +Builtin_Build_Profile.Name,
-             Value => TOML.Create_String (Profile_Maps.Element (Cursor)'Img)));
+             Value => TOML.Create_String
+               (To_Lower_Case (Profile_Maps.Element (Cursor)'Img))));
       end loop;
 
    end Make_Build_Profile_Map;
