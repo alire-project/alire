@@ -158,7 +158,11 @@ package body Alire.Index is
    ----------------
 
    function All_Crates return access constant Crates.Containers.Maps.Map is
-     (Contents'Access);
+   begin
+      Index_Loading.Load_All.Assert;
+
+      return Contents'Access;
+   end All_Crates;
 
    -----------
    -- Crate --

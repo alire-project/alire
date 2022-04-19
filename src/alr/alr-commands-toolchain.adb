@@ -181,8 +181,6 @@ package body Alr.Commands.Toolchain is
          end if;
       end if;
 
-      Cmd.Requires_Full_Index;
-
       Installation :
       declare
 
@@ -301,12 +299,11 @@ package body Alr.Commands.Toolchain is
    ----------
 
    procedure List (Cmd : in out Command) is
+      pragma Unreferenced (Cmd);
       use Alire;
       use type Dependencies.Dependency;
       Table : AAA.Table_IO.Table;
    begin
-      Cmd.Requires_Full_Index;
-
       if Alire.Shared.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
                      & TTY.URL (Alire.Config.Edit.Path));
@@ -380,7 +377,6 @@ package body Alr.Commands.Toolchain is
       end Find_Version;
 
    begin
-      Cmd.Requires_Full_Index;
 
       --  If no version was given, find if only one is installed
 
@@ -455,7 +451,6 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.S_Select then
 
-         Cmd.Requires_Full_Index;
          Alire.Index.Detect_Externals
            (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
 
@@ -496,7 +491,6 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
-         Cmd.Requires_Full_Index;
          Alire.Index.Detect_Externals
            (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
 

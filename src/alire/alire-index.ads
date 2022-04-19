@@ -151,5 +151,6 @@ package Alire.Index is
    --  package.
 
    function All_Crates return access constant Crates.Containers.Maps.Map;
+   --  Using this call will force a full index load
 
 end Alire.Index;

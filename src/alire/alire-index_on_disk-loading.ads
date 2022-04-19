@@ -13,6 +13,9 @@ package Alire.Index_On_Disk.Loading is
 
    function Default return Set;
 
+   function Default_Path return Absolute_Path;
+   --  Where to look for indexes if no path given
+
    function Find_All
      (Under  : Absolute_Path;
       Result : out Outcome;
@@ -35,8 +38,11 @@ package Alire.Index_On_Disk.Loading is
    --  configured location. If Force, load even if some crates are already
    --  loaded. If no index is configured, set up the default community index.
 
-   function Load_All (From : Absolute_Path; Strict : Boolean) return Outcome;
-   --  Load all indexes available at the given location
+   function Load_All (From   : Absolute_Path := Default_Path;
+                      Strict : Boolean := False;
+                      Force  : Boolean := False) return Outcome;
+   --  Load all indexes available at the given location. If force, reload even
+   --  if an index was already loaded previously.
 
    procedure Load (Crate            : Crate_Name;
                    Detect_Externals : Boolean;

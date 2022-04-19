@@ -13,11 +13,14 @@ with TOML.File_IO;
 
 package body Alire.Index_On_Disk.Loading is
 
-   Loaded : Containers.Crate_Name_Sets.Set;
+   Crates_Loaded : Containers.Crate_Name_Sets.Set;
    --  Avoid reloading individual crates that have been already loaded. This
    --  presumes there is no change in the index set in use through a run, which
    --  is currently impossible to do. As the in-memory index makes a similar
    --  assumption, this is not making worse the current situation.
+
+   Indexes_Loaded : AAA.Strings.Set;
+   --  Likewise, to avoid fully reloading of indexes
 
    Cached_Set : Set;
    --  Likewise, avoid detecting time and again the same indexes
@@ -217,6 +220,13 @@ package body Alire.Index_On_Disk.Loading is
       Cached_Set.Clear;
    end Drop_Index_Cache;
 
+   ------------------
+   -- Default_Path --
+   ------------------
+
+   function Default_Path return Absolute_Path
+   is (Config.Edit.Indexes_Directory);
+
    --------------------
    -- Setup_And_Load --
    --------------------
@@ -256,7 +266,8 @@ package body Alire.Index_On_Disk.Loading is
       declare
          Outcome : constant Alire.Outcome := Load_All
            (From   => Alire.Config.Edit.Indexes_Directory,
-            Strict => Strict);
+            Strict => Strict,
+            Force  => Force);
       begin
          if not Outcome.Success then
             Raise_Checked_Error (Message (Outcome));
@@ -392,12 +403,12 @@ package body Alire.Index_On_Disk.Loading is
 
       --  Now load
 
-      if not Loaded.Contains (Crate) then
+      if not Crates_Loaded.Contains (Crate) then
          for Index of From loop
             Index.Load (Crate, Strict);
          end loop;
 
-         Loaded.Include (Crate);
+         Crates_Loaded.Include (Crate);
       end if;
 
       --  Deal with externals after their detectors are loaded
@@ -412,7 +423,10 @@ package body Alire.Index_On_Disk.Loading is
    -- Load_All --
    --------------
 
-   function Load_All (From : Absolute_Path; Strict : Boolean) return Outcome
+   function Load_All (From   : Absolute_Path := Default_Path;
+                      Strict : Boolean := False;
+                      Force  : Boolean := False)
+                      return Outcome
    is
       Result  : Outcome;
       Indexes : constant Set := Find_All (From, Result);
@@ -422,13 +436,17 @@ package body Alire.Index_On_Disk.Loading is
       end if;
 
       for Index of Indexes loop
-         declare
-            Result : constant Outcome := Index.Load (Strict);
-         begin
-            if not Result.Success then
-               return Result;
-            end if;
-         end;
+         if Force or else not Indexes_Loaded.Contains (Index.Name) then
+            declare
+               Result : constant Outcome := Index.Load (Strict);
+            begin
+               if not Result.Success then
+                  return Result;
+               end if;
+            end;
+
+            Indexes_Loaded.Include (Index.Name);
+         end if;
       end loop;
 
       return Outcome_Success;
