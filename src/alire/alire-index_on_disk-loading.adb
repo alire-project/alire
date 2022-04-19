@@ -376,6 +376,11 @@ package body Alire.Index_On_Disk.Loading is
             Indexes : constant Set := Find_All (Path, Result);
          begin
             Result.Assert;
+            if Indexes.Is_Empty then
+               Warnings.Warn_Once ("No indexes configured");
+               return;
+            end if;
+
             Load (Crate, Detect_Externals, Strict, Indexes, Path => "");
             return;
          end;
