@@ -307,7 +307,6 @@ package body Alr.Commands is
       if Cmd not in Commands.Toolchain.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
-         Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant (Conf.Global);
       end if;
 
@@ -350,7 +349,6 @@ package body Alr.Commands is
 
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
-                     Cmd.Requires_Full_Index (Strict => False);
                      Checked.Sync_From_Manifest (Silent   => False,
                                                  Interact => False);
                      return;
@@ -403,7 +401,6 @@ package body Alr.Commands is
          --  upcoming) we are done. Otherwise, do a silent update.
 
          if Sync then
-            Cmd.Requires_Full_Index (Strict => False);
             Checked.Sync_From_Manifest (Silent   => False,
                                         Interact => False,
                                         Force    => True);

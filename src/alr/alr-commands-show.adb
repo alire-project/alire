@@ -250,13 +250,8 @@ package body Alr.Commands.Show is
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Args.Count = 1 then
-            Cmd.Load (Allowed.Crate,
-                      Externals => Cmd.Detect);
-
-            if not Alire.Index.Exists (Allowed.Crate) then
-               raise Alire.Query_Unsuccessful;
-            end if;
+         if Args.Count = 1 and then not Alire.Index.Exists (Allowed.Crate) then
+            raise Alire.Query_Unsuccessful;
          end if;
 
          --  Execute

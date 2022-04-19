@@ -110,6 +110,10 @@ package body Alire.Solver is
                      Options : Query_Options := Default_Options)
                      return Solution
    is
+      Index_Query_Options : constant Index.Query_Options :=
+                              (Load_From_Disk   => True,
+                               Detect_Externals => Options.Detecting = Detect);
+
       Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
       Timer    : Stopwatch.Instance;
@@ -759,22 +763,11 @@ package body Alire.Solver is
 
                Check_Version_Pin;
 
-            elsif Index.Exists (Dep.Crate) or else
+            elsif Index.Exists (Dep.Crate, Index_Query_Options) or else
                   Index.Has_Externals (Dep.Crate) or else
-              not Index.Releases_Satisfying (Dep, Props).Is_Empty
-              --  TODO: Worth caching?
+              not Index.Releases_Satisfying (Dep, Props,
+                                             Index_Query_Options).Is_Empty
             then
-
-               --  Detect externals for this dependency now, so they are
-               --  available as regular releases. Note that if no release
-               --  fulfills the dependency, it will be resolved as a hint
-               --  below.
-
-               if Options.Detecting = Detect then
-                  Timer.Hold;
-                  Index.Detect_Externals (Dep.Crate, Props);
-                  Timer.Release;
-               end if;
 
                --  Check the releases now, from newer to older (unless required
                --  in reverse). We keep track that none is valid, as this is

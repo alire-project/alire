@@ -93,32 +93,47 @@ package Alire.Index is
    --  BASIC QUERIES  --
    ---------------------
 
+   --  The following queries will automatically load crates from the indexes
+
+   type Query_Options is record
+      Detect_Externals : Boolean := True;
+      Load_From_Disk   : Boolean := True;
+   end record;
+
+   Query_Defaults : constant Query_Options := (others => <>);
+
    function Crate (Name : Crate_Name) return Crates.Crate
      with Pre =>
        Exists (Name) or else
        raise Checked_Error with "Requested crate not in index: " & (+Name);
 
-   function Exists (Name : Crate_Name) return Boolean;
+   function Exists (Name : Crate_Name;
+                    Opts : Query_Options := Query_Defaults)
+                    return Boolean;
 
    function Exists (Name : Crate_Name;
-                    Version : Semantic_Versioning.Version)
+                    Version : Semantic_Versioning.Version;
+                    Opts : Query_Options := Query_Defaults)
                     return Boolean;
 
    function Has_Externals (Name : Crate_Name) return Boolean;
 
-   function Releases_Satisfying (Dep              : Dependencies.Dependency;
-                                 Env              : Properties.Vector;
-                                 Use_Equivalences : Boolean := True;
-                                 Available_Only   : Boolean := True;
-                                 With_Origin      : Origins.Kinds_Set :=
-                                   (others => True))
-                                 return Releases.Containers.Release_Set;
+   function Releases_Satisfying
+     (Dep              : Dependencies.Dependency;
+      Env              : Properties.Vector;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set :=
+        (others => True))
+      return Releases.Containers.Release_Set;
    --  Return all releases in the catalog able to provide this dependency,
    --  also optionally considering their "provides" equivalences, and also
    --  optionally including unavailable on the platform.
 
    function Find (Name    : Crate_Name;
-                  Version : Semantic_Versioning.Version) return Release
+                  Version : Semantic_Versioning.Version;
+                  Opts    : Query_Options := Query_Defaults) return Release
      with Pre =>
        Exists (Name, Version) or else
      raise Checked_Error with

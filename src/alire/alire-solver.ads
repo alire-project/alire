@@ -77,11 +77,13 @@ package Alire.Solver is
    --  Merely check the catalog
 
    function Exists (Name    : Alire.Crate_Name;
-                    Version : Semantic_Versioning.Version)
+                    Version : Semantic_Versioning.Version;
+                    Opts    : Index.Query_Options := Index.Query_Defaults)
                     return Boolean renames Alire.Index.Exists;
 
    function Find (Name    : Alire.Crate_Name;
-                  Version : Semantic_Versioning.Version)
+                  Version : Semantic_Versioning.Version;
+                  Opts    : Index.Query_Options := Index.Query_Defaults)
                   return Release
    renames Alire.Index.Find;
 
