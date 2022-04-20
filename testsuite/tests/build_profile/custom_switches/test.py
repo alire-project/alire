@@ -53,8 +53,8 @@ expected_switches = ['-opt-switch',
                      '-style-switch2',
                      '-ada-version']
 
-check_config(lib1_config, 'Release', expected_switches)
-check_config(lib2_config, 'Release', expected_switches)
-check_config(bin_config, 'Development', expected_switches)
+check_config(lib1_config, 'release', expected_switches)
+check_config(lib2_config, 'release', expected_switches)
+check_config(bin_config, 'development', expected_switches)
 
 print('SUCCESS')
