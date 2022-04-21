@@ -7,14 +7,16 @@ repository](https://github.com/alire-project/alire/releases).
 
 ## `alr` on Linux and macOS
 
-On Linux and macOS, `Alire` is simply provided in an archive.
+On Linux, `Alire` is simply provided in an archive.
 
 Once the archive is extracted you have to add `alr` in the environment `PATH`:
 ```bash
 $ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
 ```
 
-You will also have to add your GNAT toolchain in the environment`PATH`.
+Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not 
+work for you, or if you are on another host architecture like ARM, you have the option 
+to look at the GNAT toolchains from the Linux distribution.
 
 ## `alr` on Windows
 
@@ -27,6 +29,22 @@ to automatically install required tools such as `git` or `make` that you would
 otherwise have to install manually. `msys2` will also provide external
 libraries required by some projects in the Alire index, allowing you to build
 more projects out of the box.
+
+Alire provides GNAT toolchains hosted on x86-64 for Windows. Those toolchains 
+should work for all cases, if not, let us know.
+
+## `alr` on macOS
+
+On macOS, `Alire` is simply provided in an archive.
+
+Once the archive is extracted you have to add `alr` in the environment `PATH`:
+```bash
+$ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
+```
+
+Alire provides GNAT toolchains hosted on x86-64 for macOS. If those toolchains do not 
+work for you, or if you are on another host architecture like the Apple M1, you have
+the option look at the GNAT toolchains from the community.
 
 ## `alr` for other platforms
 
