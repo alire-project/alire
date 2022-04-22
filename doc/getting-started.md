@@ -5,7 +5,7 @@
 You can download the last release of Alire at the [GitHub
 repository](https://github.com/alire-project/alire/releases).
 
-## `alr` on Linux and macOS
+## `alr` on Linux
 
 On Linux, `Alire` is simply provided in an archive.
 
@@ -42,13 +42,20 @@ Once the archive is extracted you have to add `alr` in the environment `PATH`:
 $ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
 ```
 
+If you try to run it on recent versions of macOS, you will get a popup saying 
+`“alr” cannot be opened because the developer cannot be verified.` and inviting 
+you to move it to the bin. The way round this is to remove the quarantine attribute,
+```console
+$ xattr -d com.apple.quarantine bin/alr
+```
+
 Alire provides GNAT toolchains hosted on x86-64 for macOS. If those toolchains do not 
 work for you, or if you are on another host architecture like the Apple M1, you have
-the option look at the GNAT toolchains from the community.
+the option to look at the GNAT toolchains from the community.
 
 ## `alr` for other platforms
 
-If `alr` is not available on you platform, you can try to build it from
+If `alr` is not available on your platform, you can try to build it from
 sources. Go to the [GitHub repository](https://github.com/alire-project/alire/)
 for more information.
 
