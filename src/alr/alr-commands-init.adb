@@ -37,6 +37,8 @@ package body Alr.Commands.Init is
          then Get_Current_Dir
          else Create (+Name, Normalize => True));
       Src_Directory : constant Virtual_File := Directory / "src";
+      Share_Directory : constant Virtual_File :=
+         Directory / "share" / Filesystem_String (Lower_Name);
 
       File : TIO.File_Type;
 
@@ -134,6 +136,10 @@ package body Alr.Commands.Init is
          Put_Line ("   package Binder is");
          Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
          Put_Line ("   end Binder;");
+         Put_New_Line;
+         Put_Line ("   package Install is");
+         Put_Line ("      for Artifacts (""."") use (""share"");");
+         Put_Line ("   end Install;");
          Put_New_Line;
          TIO.Put (File, "end " & Mixed_Name & ";");
          pragma Style_Checks ("M80");
@@ -295,6 +301,7 @@ package body Alr.Commands.Init is
       if not Cmd.No_Skel then
          Generate_Project_File;
          Src_Directory.Make_Dir;
+         Share_Directory.Make_Dir;
          if For_Library then
             Generate_Root_Package;
          else
