@@ -12,7 +12,7 @@ import os
 
 
 def verify_manifest():
-    target = os.path.join("alire", "releases", "xxx-0.0.0.toml")
+    target = os.path.join("alire", "releases", "xxx-0.1.0-dev.toml")
     assert os.path.isfile(target), \
         "Index manifest not found at expected location"
     # Minimally check the expected contents are in the file
@@ -50,8 +50,8 @@ run_alr("publish", f"git+file:{target}", head_commit, force=True)
 verify_manifest()
 
 # Copy the new index manifest into the index
-copyfile(os.path.join("alire", "releases", "xxx-0.0.0.toml"),
-         os.path.join("my_index", "xx", "xxx", "xxx-0.0.0.toml"))
+copyfile(os.path.join("alire", "releases", "xxx-0.1.0-dev.toml"),
+         os.path.join("my_index", "xx", "xxx", "xxx-0.1.0-dev.toml"))
 
 p = run_alr("search", "--crates")
 assert "xxx" in p.out, "Crate not found in index contents"

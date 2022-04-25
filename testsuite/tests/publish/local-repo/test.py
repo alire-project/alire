@@ -13,7 +13,7 @@ import os
 
 
 def verify_manifest():
-    target = os.path.join("alire", "releases", "xxx-0.0.0.toml")
+    target = os.path.join("alire", "releases", "xxx-0.1.0-dev.toml")
     assert os.path.isfile(target), \
         "Index manifest not found at expected location"
     # Clean up for next test
