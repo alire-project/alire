@@ -36,7 +36,7 @@ os.chdir(crate)
 assert_match(".*\[\[pins\]\].*", content_of(alr_manifest()))
 
 # We publish with the pin in the manifest
-p = alr_publish(crate, "0.0.0",
+p = alr_publish(crate, "0.1.0-dev",
                 index_path=os.path.join(start_dir, "my_index"),
                 submit=False,
                 quiet=False)
@@ -46,7 +46,7 @@ assert_match(".*contains pins that will be removed.*", p.out)
 
 # Verify no pins in the generated file
 assert "[[pins]]" not in \
-    content_of(os.path.join("alire", "releases", f"{crate}-0.0.0.toml")), \
+    content_of(os.path.join("alire", "releases", f"{crate}-0.1.0-dev.toml")), \
     "Unexpected contents in published file"
 
 print('SUCCESS')

@@ -17,16 +17,16 @@ init_local_crate("xxx", enter=True)
 # generated location as the "online" location, and this works because we are
 # forcing.
 p = run(["alr", "-q", "-f", "-n", "publish", "--skip-build", "--tar"],
-        input=f"file:{os.getcwd()}/alire/archives/xxx-0.0.0.tbz2\n".encode())
+        input=f"file:{os.getcwd()}/alire/archives/xxx-0.1.0-dev.tbz2\n".encode())
 p.check_returncode()
 
 # Add improper subdir to manifest
-with open("alire/releases/xxx-0.0.0.toml", "at") as file:
+with open("alire/releases/xxx-0.1.0-dev.toml", "at") as file:
     file.write("subdir='.'\n")
 
 # Submit manifest to index
 os.chdir("..")
-alr_submit("xxx/alire/releases/xxx-0.0.0.toml", "my_index")
+alr_submit("xxx/alire/releases/xxx-0.1.0-dev.toml", "my_index")
 
 # Should complain on subdir field
 p = run_alr("show", "xxx", complain_on_error=False)

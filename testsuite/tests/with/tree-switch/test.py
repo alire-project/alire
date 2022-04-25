@@ -28,7 +28,7 @@ run_alr('with', 'unobtanium', force=True)
 # Verify printout (but for test-dependent path)
 # Note that superhello was auto-narrowed down to ^1, but missed ones did not
 p = run_alr('with', '--tree')
-assert_match(re.escape('''xxx=0.0.0
+assert_match(re.escape('''xxx=0.1.0-dev
 +-- hello=1.0.1 (^1)
 |   +-- libhello=1.0.1 (^1.0)
 +-- superhello=1.0.0 (^1.0.0)

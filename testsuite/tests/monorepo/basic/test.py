@@ -37,7 +37,7 @@ os.chdir("mycrate")
 run_alr("show")  # Verify the crate is detected properly
 
 # This call creates the manifest and puts it in place in the index
-alr_publish("mycrate", "0.0.0", index_path=os.path.join(start_dir, "my_index"))
+alr_publish("mycrate", "0.1.0-dev", index_path=os.path.join(start_dir, "my_index"))
 
 # Verify that the crate can be got and compiled, and expected location
 os.chdir(start_dir)
@@ -58,7 +58,7 @@ assert os.path.isfile(os.path.join(
 # Also that the info file is there
 assert os.path.isfile(os.path.join(
     "alire", "cache", "dependencies",
-    f"mycrate_0.0.0_in_monoproject_{commit[:8]}")), \
+    f"mycrate_0.1.0_in_monoproject_{commit[:8]}")), \
     "Expected info file does not exist"
 
 print('SUCCESS')

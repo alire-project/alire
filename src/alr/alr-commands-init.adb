@@ -238,7 +238,7 @@ package body Alr.Commands.Init is
             end if;
             Put_Line ("name = " & Q (Lower_Name));
             Put_Line ("description = " & Q ("Shiny new project"));
-            Put_Line ("version = " & Q ("0.0.0"));
+            Put_Line ("version = " & Q ("0.1.0-dev"));
             Put_New_Line;
             Put_Line ("authors = " & Arr (Q (Username)));
             Put_Line ("maintainers = "
