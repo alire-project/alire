@@ -65,7 +65,7 @@ package Alire.Index_On_Disk.Loading is
 
 private
 
-   function Default return Set is (Empty);
+   function Default return Set is (Sets.Empty_Set with null record);
    --  Workaround for a visibility bug that manifests in body otherwise
 
 end Alire.Index_On_Disk.Loading;

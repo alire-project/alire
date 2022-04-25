@@ -307,7 +307,7 @@ package body Alire.Index_On_Disk.Loading is
       end if;
 
       if not Result.Success then
-         return Empty;
+         return Default;
       end if;
 
       Trace.Detail ("Found" & Indexes.Length'Img & " indexes");
