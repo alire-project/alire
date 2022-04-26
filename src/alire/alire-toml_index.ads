@@ -25,6 +25,13 @@ package Alire.TOML_Index is
    --  Load the whole TOML catalog for the given index. If Strict, don't allow
    --  unknown enum values.
 
+   procedure Load
+     (Index    : Index_On_Disk.Index'Class;
+      Crate    : Crate_Name;
+      Strict   : Boolean);
+   --  Load just the releases for the given crate. Does not fail if the crate
+   --  does not exist in the index.
+
 private
 
    procedure Index_Release (Path : Relative_Path;

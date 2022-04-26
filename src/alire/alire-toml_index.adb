@@ -228,6 +228,37 @@ package body Alire.TOML_Index is
                     "malformed version string: " & Value.Get (Key).As_String);
    end Check_Index;
 
+   -----------------
+   -- Locate_Root --
+   -----------------
+
+   function Locate_Root (Index  : Index_On_Disk.Index'Class;
+                         Result : out Load_Result) return Any_Path is
+      Repo_Version_Files : constant AAA.Strings.Vector :=
+                             Alire.Directories.Find_Files_Under
+                               (Folder    => Index.Index_Directory,
+                                Name      => "index.toml",
+                                Max_Depth => 1);
+   begin
+      case Natural (Repo_Version_Files.Length) is
+         when 0 =>
+            Result := Outcome_Failure ("No index.toml file found in index");
+            return "";
+         when 1 =>
+            return Root : constant Any_Path :=
+              Ada.Directories.Containing_Directory
+                (Repo_Version_Files.First_Element)
+            do
+               Trace.Detail ("Loading index found at " & Root);
+               Result := Outcome_Success;
+            end return;
+         when others =>
+            Result :=
+              Outcome_Failure ("Several index.toml files found in index");
+            return "";
+      end case;
+   end Locate_Root;
+
    ----------
    -- Load --
    ----------
@@ -238,37 +269,7 @@ package body Alire.TOML_Index is
       Result   : out Load_Result)
    is
 
-      -----------------
-      -- Locate_Root --
-      -----------------
-
-      function Locate_Root (Result : out Load_Result) return Any_Path is
-         Repo_Version_Files : constant AAA.Strings.Vector :=
-                                Alire.Directories.Find_Files_Under
-                                  (Folder    => Index.Index_Directory,
-                                   Name      => "index.toml",
-                                   Max_Depth => 1);
-      begin
-         case Natural (Repo_Version_Files.Length) is
-            when 0 =>
-               Result := Outcome_Failure ("No index.toml file found in index");
-               return "";
-            when 1 =>
-               return Root : constant Any_Path :=
-                 Ada.Directories.Containing_Directory
-                   (Repo_Version_Files.First_Element)
-               do
-                  Trace.Detail ("Loading index found at " & Root);
-                  Result := Outcome_Success;
-               end return;
-            when others =>
-               Result :=
-                 Outcome_Failure ("Several index.toml files found in index");
-               return "";
-         end case;
-      end Locate_Root;
-
-      Root : constant Any_Path := Locate_Root (Result);
+      Root : constant Any_Path := Locate_Root (Index, Result);
       --  Locate a dir containing a 'index.toml' metadata file inside the repo.
       --  This is the directory containing the actual crates.
    begin
@@ -297,6 +298,40 @@ package body Alire.TOML_Index is
          when E : Checked_Error =>
             Result := Outcome_From_Exception (E);
       end;
+   end Load;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load
+     (Index    : Index_On_Disk.Index'Class;
+      Crate    : Crate_Name;
+      Strict   : Boolean)
+   is
+      use Alire.Directories.Operators;
+
+      Result : Load_Result;
+      Root   : constant Any_Path := Locate_Root (Index, Result);
+      --  Locate a dir containing a 'index.toml' metadata file inside the repo.
+      --  This is the directory containing the actual crates.
+      Crate_Root : constant Any_Path := Root / Crate.Index_Prefix;
+   begin
+      Result.Assert;
+
+      TOML_Index.Strict := Load.Strict;
+
+      Trace.Debug ("Loading single crate " & Utils.TTY.Name (Crate)
+                   & " from " & Root);
+
+      if GNAT.OS_Lib.Is_Directory (Crate_Root) then
+         Alire.Directories.Traverse_Tree
+           (Start   => Crate_Root,
+            Doing   => Load_Manifest'Access,
+            Recurse => True);
+      else
+         Trace.Debug ("Requested crate does not exist in index");
+      end if;
    end Load;
 
    -------------------

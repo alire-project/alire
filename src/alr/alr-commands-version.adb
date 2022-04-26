@@ -30,7 +30,7 @@ package body Alr.Commands.Version is
       use all type Alire.Roots.Optional.States;
       Table : Alire.Utils.Tables.Table;
       Index_Outcome : Alire.Outcome;
-      Indexes : constant Alire.Index_On_Disk.Loading.Index_On_Disk_Set :=
+      Indexes : constant Alire.Index_On_Disk.Loading.Set :=
                   Alire.Index_On_Disk.Loading.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
       Root : constant Alire.Roots.Optional.Root :=

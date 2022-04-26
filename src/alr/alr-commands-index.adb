@@ -45,7 +45,7 @@ package body Alr.Commands.Index is
 
    procedure Delete (Name : String) is
       Result  : Alire.Outcome;
-      Indexes : constant Index_Load.Index_On_Disk_Set :=
+      Indexes : constant Index_Load.Set :=
                   Index_Load.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Result);
       Found   : Boolean := False;
@@ -148,7 +148,7 @@ package body Alr.Commands.Index is
       use Alire;
 
       Result  : Alire.Outcome;
-      Indexes : constant Index_Load.Index_On_Disk_Set :=
+      Indexes : constant Index_Load.Set :=
                   Index_Load.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Result);
 
