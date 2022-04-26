@@ -31,12 +31,6 @@ package body Alire.TOML_Index is
    package Dirs   renames Ada.Directories;
    package Semver renames Semantic_Versioning;
 
-   Strict : Boolean := False;
-   --  Allow or not unknown values in enums. This isn't easily moved to an
-   --  argument given the current design.
-
-   function Strict_Loading return Boolean is (Strict);
-
    procedure Set_Error
      (Result            : out Load_Result;
       Filename, Message : String;
@@ -278,7 +272,7 @@ package body Alire.TOML_Index is
          return;
       end if;
 
-      TOML_Index.Strict := Load.Strict;
+      Strict_Index_Loading := Load.Strict;
 
       Trace.Detail ("Loading full catalog from " & Root);
 
@@ -377,7 +371,7 @@ package body Alire.TOML_Index is
             Load_From_Catalog_Internal (File_Name => Path,
                                         Name      => FS_Name,
                                         Version   => FS_Version,
-                                        Strict    => Strict);
+                                        Strict    => Strict_Index_Loading);
          end;
       end;
    end Load_Manifest;

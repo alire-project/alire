@@ -25,10 +25,6 @@ package Alire.TOML_Index is
    --  Load the whole TOML catalog for the given index. If Strict, don't allow
    --  unknown enum values.
 
-   function Strict_Loading return Boolean;
-   --  Return whether loading is currently in strict mode (no unknown enum
-   --  values, warnings as errors).
-
 private
 
    procedure Index_Release (Path : Relative_Path;

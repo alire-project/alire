@@ -279,6 +279,16 @@ package Alire with Preelaborate is
    GNAT_External_Crate : constant Crate_Name;
    GPRbuild_Crate      : constant Crate_Name;
 
+   -------------
+   -- Globals --
+   -------------
+
+   Strict_Index_Loading : Boolean := False;
+   --  When enabled, warnings during loading are promoted to errors, and
+   --  unknown enumeration values are rejected. TODO: pass loading options
+   --  around in a more decent way. Also, this must be here to avoid
+   --  circularities between index loaders and properties.
+
 private
 
    type Crate_Name (Len : Natural) is tagged record

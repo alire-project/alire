@@ -1,5 +1,4 @@
 with Alire.Errors;
-with Alire.TOML_Index;
 with Alire.Warnings;
 
 package body Alire.Properties.Licenses is
@@ -102,7 +101,7 @@ package body Alire.Properties.Licenses is
                       "valid SPDX expression (https://spdx.org/licenses/)";
    begin
       if Value.Kind = TOML_Array then
-         if TOML_Index.Strict_Loading then
+         if Strict_Index_Loading then
             Raise_Checked_Error (Deprecation);
          else
             Warnings.Warn_Once (Errors.Stack (Deprecation));
