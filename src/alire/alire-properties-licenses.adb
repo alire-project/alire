@@ -1,4 +1,5 @@
 with Alire.Errors;
+with Alire.TOML_Index;
 with Alire.Warnings;
 
 package body Alire.Properties.Licenses is
@@ -94,13 +95,18 @@ package body Alire.Properties.Licenses is
       use all type Conditional.Properties;
       Props : Conditional.Properties;
       Value : constant TOML.TOML_Value := From.Pop;
+
+      Deprecation : constant String :=
+                      "Array of license in manifest is deprecated. " &
+                      "License should be a single string containing a " &
+                      "valid SPDX expression (https://spdx.org/licenses/)";
    begin
       if Value.Kind = TOML_Array then
-         Warnings.Warn_Once
-           (Errors.Stack
-              ("Array of license in manifest is deprecated. " &
-                 "License should be a single string containing a " &
-                 "valid SPDX expression (https://spdx.org/licenses/)"));
+         if TOML_Index.Strict_Loading then
+            Raise_Checked_Error (Deprecation);
+         else
+            Warnings.Warn_Once (Errors.Stack (Deprecation));
+         end if;
 
          for I in 1 .. Value.Length loop
             if Value.Item (I).Kind = TOML_String then

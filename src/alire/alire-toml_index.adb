@@ -35,6 +35,8 @@ package body Alire.TOML_Index is
    --  Allow or not unknown values in enums. This isn't easily moved to an
    --  argument given the current design.
 
+   function Strict_Loading return Boolean is (Strict);
+
    procedure Set_Error
      (Result            : out Load_Result;
       Filename, Message : String;
