@@ -1,6 +1,7 @@
 with Ada.Directories;
 
 with Alire.Config.Edit;
+with Alire.Containers;
 with Alire.Index;
 with Alire.Platforms.Current;
 with Alire.Warnings;
@@ -11,6 +12,15 @@ with TOML;
 with TOML.File_IO;
 
 package body Alire.Index_On_Disk.Loading is
+
+   Loaded : Containers.Crate_Name_Sets.Set;
+   --  Avoid reloading individual crates that have been already loaded. This
+   --  presumes there is no change in the index set in use through a run, which
+   --  is currently impossible to do. As the in-memory index makes a similar
+   --  assumption, this is not making worse the current situation.
+
+   Cached_Set : Set;
+   --  Likewise, avoid detecting time and again the same indexes
 
    --  Forward declarations
 
@@ -137,6 +147,9 @@ package body Alire.Index_On_Disk.Loading is
 
          Trace.Debug ("Adding index " & Origin & " at " & Under);
 
+         Cached_Set.Clear;
+         --  Reset cache so next detection finds the new index
+
          return Index.Add_With_Metadata;
       end;
    end Add;
@@ -178,6 +191,9 @@ package body Alire.Index_On_Disk.Loading is
       end loop;
 
       --  If we reach here, the index wasn't configured yet:
+
+      Cached_Set.Clear;
+      --  Reset cache so next detection finds the new index
 
       Trace.Debug ("Index was not set, adding it...");
       return Add (Origin => Alire.Index.Community_Repo &
@@ -295,9 +311,15 @@ package body Alire.Index_On_Disk.Loading is
       end Check_One;
 
    begin
+      Result := Outcome_Success;
+
+      if not Cached_Set.Is_Empty then
+         Trace.Debug ("Reusing cached set of indexes");
+         return Cached_Set;
+      end if;
+
       Trace.Debug ("Looking for indexes at " & Under);
 
-      Result := Outcome_Success;
       if GNAT.OS_Lib.Is_Directory (Under) then
          Dirs.Search (Directory => Under,
                       Pattern   => "*",
@@ -311,6 +333,8 @@ package body Alire.Index_On_Disk.Loading is
       end if;
 
       Trace.Detail ("Found" & Indexes.Length'Img & " indexes");
+
+      Cached_Set := Indexes;
 
       return Indexes;
    end Find_All;
@@ -350,9 +374,13 @@ package body Alire.Index_On_Disk.Loading is
 
       --  Now load
 
-      for Index of From loop
-         Index.Load (Crate, Strict);
-      end loop;
+      if not Loaded.Contains (Crate) then
+         for Index of From loop
+            Index.Load (Crate, Strict);
+         end loop;
+
+         Loaded.Include (Crate);
+      end if;
 
       --  Deal with externals after their detectors are loaded
 
