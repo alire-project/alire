@@ -37,7 +37,7 @@ package body Alire.Index_On_Disk.Loading is
                  Before : String := "") return Outcome is
 
       Result  : Outcome;
-      Indexes : constant Set := Find_All (Under, Result);
+      Indexes : constant Set := Find_All (Under, Result, Cached => False);
 
       -----------------------
       -- Adjust_Priorities --
@@ -162,7 +162,9 @@ package body Alire.Index_On_Disk.Loading is
       Result : Outcome with Warnings => Off;
       --  Spurious warning to be silenced in Debian stable/Ubuntu LTS GNATs.
       Indexes : constant Set :=
-                  Find_All (Config.Edit.Indexes_Directory, Result);
+                  Find_All (Config.Edit.Indexes_Directory,
+                            Result,
+                            Cached => False);
       use Sets;
    begin
       if not Config.DB.Get (Config.Keys.Index_Auto_Community, Default => True)
@@ -180,6 +182,7 @@ package body Alire.Index_On_Disk.Loading is
          if Indexes (I).Name = Alire.Index.Community_Name then
             Trace.Debug ("Index was already set, deleting and re-adding...");
             Assert (Indexes (I).Delete);
+
             return Add (Origin => Alire.Index.Community_Repo &
                           "#" & Alire.Index.Community_Branch,
                         Name   => Alire.Index.Community_Name,
@@ -204,6 +207,15 @@ package body Alire.Index_On_Disk.Loading is
       when E : Checked_Error =>
          return Outcome_From_Exception (E);
    end Add_Or_Reset_Community;
+
+   ----------------------
+   -- Drop_Index_Cache --
+   ----------------------
+
+   procedure Drop_Index_Cache is
+   begin
+      Cached_Set.Clear;
+   end Drop_Index_Cache;
 
    --------------------
    -- Setup_And_Load --
@@ -258,7 +270,8 @@ package body Alire.Index_On_Disk.Loading is
 
    function Find_All
      (Under  : Absolute_Path;
-      Result : out Outcome) return Set
+      Result : out Outcome;
+      Cached : Boolean := True) return Set
    is
       package Dirs renames Ada.Directories;
 
@@ -313,7 +326,7 @@ package body Alire.Index_On_Disk.Loading is
    begin
       Result := Outcome_Success;
 
-      if not Cached_Set.Is_Empty then
+      if Cached and then not Cached_Set.Is_Empty then
          Trace.Debug ("Reusing cached set of indexes");
          return Cached_Set;
       end if;

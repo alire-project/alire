@@ -15,11 +15,13 @@ package Alire.Index_On_Disk.Loading is
 
    function Find_All
      (Under  : Absolute_Path;
-      Result : out Outcome) return Set;
-   --  Find all indexes available on a disk location. If valid indexes are
-   --  found or none, set Result to Outcome_Success and return the
+      Result : out Outcome;
+      Cached : Boolean := True) return Set;
+   --  Find all indexes available on a disk location. If valid indexes
+   --  are found or none, set Result to Outcome_Success and return the
    --  corresponding set. If at least one found index is invalid, set Result to
-   --  an outcome failure and return en empty set.
+   --  an outcome failure and return en empty set. If cached, return the last
+   --  known set of indexes. See also Drop_Index_Cache below too.
    --
    --  We abort at the first invalid index as it's likely in this case that
    --  users misconfigured something, so this helps them notice the issue
@@ -62,6 +64,9 @@ package Alire.Index_On_Disk.Loading is
    --  Adds the community index, if not already configured. If configured,
    --  re-adds it at the required branch by Index.Community_Branch with the
    --  same priority (i.e., maintaining the relative ordering);
+
+   procedure Drop_Index_Cache;
+   --  Force detection of indexes on disk on next call to Find_All
 
 private
 
