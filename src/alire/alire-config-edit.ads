@@ -155,8 +155,9 @@ private
 
       (+Keys.Warning_Old_Index,
        Cfg_Bool,
-       +("When unset (default) or true, the community index will be added " &
-          "automatically when required if no other index is configured.")),
+       +("When unset (default) or true, a warning will be emitted when " &
+           "using a compatible index with a lower version than the newest" &
+           " known.")),
 
       (+Keys.Toolchain_Assistant,
        Cfg_Bool,
