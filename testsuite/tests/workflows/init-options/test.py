@@ -72,8 +72,8 @@ compare(contents('.'), ['./.gitignore',
                         './share/zzz',
                         './src',
                         './src/zzz.adb',
-                        './zzz.gpr',
-                        './workspace.code-workspace'])
+                        './workspace.code-workspace'
+                        './zzz.gpr'])
 
 
 print('SUCCESS')
