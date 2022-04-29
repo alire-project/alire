@@ -153,6 +153,11 @@ private
        +("If true, Alire will warn about the use of caret (^) "
          & "for pre-1 dependencies.")),
 
+      (+Keys.Warning_Old_Index,
+       Cfg_Bool,
+       +("When unset (default) or true, the community index will be added " &
+          "automatically when required if no other index is configured.")),
+
       (+Keys.Toolchain_Assistant,
        Cfg_Bool,
        +("If true, and assistant to select the default toolchain will run "

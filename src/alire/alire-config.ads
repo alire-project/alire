@@ -60,9 +60,23 @@ package Alire.Config with Preelaborate is
       Warning_Caret : constant Config_Key := "warning.caret";
       --  Set to false to disable warnings about caret/tilde use for ^0 deps.
 
+      Warning_Old_Index : constant Config_Key := "warning.old_index";
+      --  Warn about old but compatible index in use
+
       Msys2_Do_Not_Install : constant Config_Key := "msys2.do_not_install";
       Msys2_Install_Dir    : constant Config_Key := "msys2.install_dir";
       Msys2_Installer      : constant Config_Key := "msys2.installer";
       Msys2_Installer_URL  : constant Config_Key := "msys2.installer_url";
    end Keys;
+
+   --------------
+   -- Defaults --
+   --------------
+
+   package Defaults is
+
+      Warning_Old_Index : constant Boolean := True;
+
+   end Defaults;
+
 end Alire.Config;

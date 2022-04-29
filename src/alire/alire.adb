@@ -96,11 +96,20 @@ package body Alire is
    -- Put_Warning --
    -----------------
 
-   procedure Put_Warning (Text : String; Level : Trace.Levels := Info) is
+   procedure Put_Warning (Text           : String;
+                          Level          : Trace.Levels := Info;
+                          Disable_Config : String := "")
+   is
    begin
       Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
                  & Text,
                  Level);
+      if Disable_Config /= "" then
+         Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
+                    & "You can disable this warning with configuration key '"
+                    & TTY.Emph (Disable_Config) & "'",
+                    Level);
+      end if;
    end Put_Warning;
 
    ------------
