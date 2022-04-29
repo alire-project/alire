@@ -5,6 +5,7 @@ with Alire.Errors;
 with Alire.Directories;
 with Alire.Index_On_Disk.Directory;
 with Alire.Index_On_Disk.Git;
+with Alire.Index_On_Disk.Loading;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.VCSs;
@@ -91,6 +92,9 @@ package body Alire.Index_On_Disk is
          return Outcome_Failure ("Expected index directory does not exist: " &
                                    This.Metadata_Directory);
       end if;
+
+      --  Force a reload of cached indexes in any posterior index load
+      Loading.Drop_Index_Cache;
 
       return Outcome_Success;
    exception
