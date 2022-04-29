@@ -84,7 +84,7 @@ package body Alr.Commands.Init is
       procedure Generate_Gitignore;
       --  Generate or append .gitignore
 
-      procedure Generate_Workspace;
+      procedure Generate_VSCode_Workspace;
       --  Generate a Visual Studio Code workspace file
 
       procedure Generate_Manifest;
@@ -210,11 +210,11 @@ package body Alr.Commands.Init is
          TIO.Close (File);
       end Generate_Gitignore;
 
-      ------------------------
-      -- Generate_Workspace --
-      ------------------------
+      -------------------------------
+      -- Generate_VSCode_Workspace --
+      -------------------------------
 
-      procedure Generate_Workspace is
+      procedure Generate_VSCode_Workspace is
          Filename : constant String :=
             +Full_Name (Directory / "workspace.code-workspace");
       begin
@@ -236,7 +236,7 @@ package body Alr.Commands.Init is
          Put_Line ("}");
 
          TIO.Close (File);
-      end Generate_Workspace;
+      end Generate_VSCode_Workspace;
 
       -----------------------
       -- Generate_Manifest --
@@ -339,7 +339,7 @@ package body Alr.Commands.Init is
             Generate_Program_Main;
          end if;
          Generate_Gitignore;
-         Generate_Workspace;
+         Generate_VSCode_Workspace;
       end if;
 
       Generate_Manifest;

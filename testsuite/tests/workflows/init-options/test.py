@@ -23,7 +23,8 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/share/xxx',
                           'xxx/src',
                           'xxx/src/xxx.adb',
-                          'xxx/xxx.gpr'])
+                          'xxx/xxx.gpr',
+                          'workspace.code-workspace'])
 
 # Plain init, existing empty dir
 os.mkdir('aaa')
@@ -34,7 +35,8 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/share',
                           'aaa/share/aaa',
                           'aaa/src',
-                          'aaa/src/aaa.adb'])
+                          'aaa/src/aaa.adb',
+                          'workspace.code-workspace'])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
@@ -70,7 +72,8 @@ compare(contents('.'), ['./.gitignore',
                         './share/zzz',
                         './src',
                         './src/zzz.adb',
-                        './zzz.gpr'])
+                        './zzz.gpr',
+                        'workspace.code-workspace'])
 
 
 print('SUCCESS')
