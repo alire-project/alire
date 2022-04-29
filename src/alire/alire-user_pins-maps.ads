@@ -16,4 +16,7 @@ package Alire.User_Pins.Maps is
      or else raise Checked_Error
        with Errors.Set ("array expected but got a " & This.Unwrap.Kind'Image);
 
+   procedure Print (This : Map; Prefix : String := "");
+   --  Print to stdout each Pin.To_Manifest_Line
+
 end Alire.User_Pins.Maps;

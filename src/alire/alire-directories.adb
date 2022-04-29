@@ -7,7 +7,7 @@ with Ada.Unchecked_Deallocation;
 with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
-with Alire.Platform;
+with Alire.Platforms.Current;
 
 with GNATCOLL.VFS;
 
@@ -223,7 +223,7 @@ package body Alire.Directories is
    begin
       if Exists (Path) and then
         Kind (Path) = Directory and then
-        Platform.On_Windows
+        Platforms.Current.Operating_System in Platforms.Windows
       then
          Trace.Debug ("Forcing writability of dir " & Path);
          OS_Lib.Subprocess.Checked_Spawn
@@ -654,6 +654,19 @@ package body Alire.Directories is
       end return;
    end With_Name;
 
+   ------------
+   -- In_Dir --
+   ------------
+
+   function In_Dir (Dir  : Directory_Path;
+                    Name : File_Path := "")
+                    return Temp_File
+   is
+   begin
+      return Temp : constant Temp_File :=
+        With_Name (Dir / (if Name /= "" then Name else Temp_Name));
+   end In_Dir;
+
    --------------
    -- REPLACER --
    --------------
@@ -700,5 +713,25 @@ package body Alire.Directories is
 
       --  The temporary copy will be cleaned up by This.Temp_Copy finalization
    end Replace;
+
+   -----------
+   -- Touch --
+   -----------
+
+   procedure Touch (File : File_Path) is
+      use GNAT.OS_Lib;
+      Success : Boolean := False;
+   begin
+      if Is_Regular_File (File) then
+         Set_File_Last_Modify_Time_Stamp (File, Current_Time);
+      elsif Ada.Directories.Exists (File) then
+         Raise_Checked_Error ("Can't touch non-regular file: " & File);
+      else
+         Close (Create_File (File, Binary), Success);
+         if not Success then
+            Raise_Checked_Error ("Could not touch new file: " & File);
+         end if;
+      end if;
+   end Touch;
 
 end Alire.Directories;

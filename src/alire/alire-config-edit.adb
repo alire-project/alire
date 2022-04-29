@@ -1,7 +1,8 @@
 with Ada.Text_IO;
 
 with Alire.Environment;
-with Alire.Platform;
+with Alire.Platforms.Folders;
+with Alire.Platforms.Current;
 with Alire.Utils;
 
 with CLIC.Config.Edit;
@@ -135,9 +136,9 @@ package body Alire.Config.Edit is
 
       --  Set variables elsewhere
 
-      Platform.Disable_Distribution_Detection :=
+      Platforms.Current.Disable_Distribution_Detection :=
         DB.Get (Keys.Distribution_Disable_Detection, False);
-      if Platform.Disable_Distribution_Detection then
+      if Platforms.Current.Disable_Distribution_Detection then
          Trace.Debug ("Distribution detection disabled by configuration");
       end if;
 
@@ -153,7 +154,7 @@ package body Alire.Config.Edit is
          return Config_Path.all;
       else
          return OS_Lib.Getenv (Environment.Config,
-                               Platform.Default_Config_Folder);
+                               Platforms.Folders.Config);
       end if;
    end Path;
 

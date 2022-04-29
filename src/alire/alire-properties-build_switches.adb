@@ -73,6 +73,8 @@ package body Alire.Properties.Build_Switches is
             Result.Contracts := (Custom, List);
          when Style_Checks =>
             Result.Style_Checks := (Custom, List);
+         when Ada_Version =>
+            Result.Ada_Version := (Custom, List);
          end case;
 
       elsif T.Kind = TOML_String then
@@ -155,6 +157,23 @@ package body Alire.Properties.Build_Switches is
                         when Custom => raise Constraint_Error);
                end;
 
+            when Ada_Version =>
+               declare
+                  K : constant Ada_Version_Kind :=
+                    Ada_Version_Kind'Value (T.As_String);
+               begin
+                  Result.Ada_Version :=
+                    (case K is
+                        when Compiler_Default => (Kind => Compiler_Default),
+                        when Ada83            => (Kind => Ada83),
+                        when Ada95            => (Kind => Ada95),
+                        when Ada05            => (Kind => Ada05),
+                        when Ada12            => (Kind => Ada12),
+                        when Ada2022          => (Kind => Ada2022),
+                        when GNAT_Extensions  => (Kind => GNAT_Extensions),
+                        when Custom           => raise Constraint_Error);
+               end;
+
             end case;
          exception
             when Constraint_Error =>
@@ -223,6 +242,8 @@ package body Alire.Properties.Build_Switches is
             Sw.Contracts := M.Contracts;
          when Style_Checks =>
             Sw.Style_Checks := M.Style_Checks;
+         when Ada_Version =>
+            Sw.Ada_Version := M.Ada_Version;
       end case;
    end Apply;
 

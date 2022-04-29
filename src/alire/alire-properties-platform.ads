@@ -20,6 +20,16 @@ package Alire.Properties.Platform with Preelaborate is
                                         Distro_Key,
                                         Tomify);
 
+   function Host_Arch_Key (A : Platforms.Architectures) return String
+   is (TOML_Keys.Host_Arch);
+
+   function Tomify is new TOML_Adapters.Tomify_Enum (Platforms.Architectures);
+   package Host_Archs is new Values (Platforms.Architectures,
+                                     Platforms.Architectures'Image,
+                                     Platforms.Architectures'Image,
+                                     Host_Arch_Key,
+                                     Tomify);
+
    function OS_Key (OS : Platforms.Operating_Systems) return String
    is (TOML_Keys.OS);
 
@@ -72,6 +82,13 @@ package Alire.Properties.Platform with Preelaborate is
       Name      => "Distribution",
       TOML_Name => TOML_Keys.Distribution);
 
+   package Host_Arch_Cases is new Cases
+     (Enum      => Ps.Architectures,
+      Property  => PrPl.Host_Archs.Property,
+      Element   => PrPl.Host_Archs.Element,
+      Name      => "Architecture",
+      TOML_Name => TOML_Keys.Host_Arch);
+
    package OS_Cases is new Cases
      (Enum      => Ps.Operating_Systems,
       Property  => PrPl.Operating_Systems.Property,
@@ -92,6 +109,9 @@ package Alire.Properties.Platform with Preelaborate is
       Element   => PrPl.Word_Sizes.Element,
       Name      => "Word_Size",
       TOML_Name => TOML_Keys.Word_Size);
+
+   function Host_Arch_Is (A : Platforms.Architectures) return Vector
+   renames Host_Archs.New_Vector;
 
    function Distribution_Is (D : Platforms.Distributions) return Vector
    renames Distributions.New_Vector;

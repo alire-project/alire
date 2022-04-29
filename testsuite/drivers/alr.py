@@ -34,19 +34,31 @@ def prepare_env(config_dir, env):
     This creates the `config_dir` directory and updates `env` (environment
     variables) to point to it as alr's configuration directory.
     """
+
+    # Disable any user's git configuration to ensure reproducible git behavior.
+    # https://github.com/git/git/commit/4179b4897f2de28858acaebd6382c06c91532e98
+    env["GIT_CONFIG_GLOBAL"] = "/dev/null"
+    env["GIT_CONFIG_SYSTEM"] = "/dev/null"
+
     config_dir = os.path.abspath(config_dir)
     mkdir(config_dir)
     env['ALR_CONFIG'] = config_dir
+    #  We pass config location explicitly in the following calls since env is
+    #  not yet applied.
+
+    # Disable autoconfig of the community index, to prevent unintended use of
+    # it in tests, besides the overload of fetching it
+    run_alr("-c", config_dir, "config", "--global",
+            "--set", "index.auto_community", "false")
 
     # Disable selection of toolchain to preserve older behavior. Tests that
     # require a configured compiler will have to set it up explicitly.
     run_alr("-c", config_dir, "toolchain", "--disable-assistant")
-    #  Pass config location explicitly since env is not yet applied
 
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":
-            run_alr("config", "--global",
+            run_alr("-c", config_dir, "config", "--global",
                     "--set", "distribution.disable_detection", "true")
 
 
@@ -386,7 +398,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
                         update=False)
 
             # Make the lockfile "older" (otherwise timestamp is identical)
-            alr_touch_manifest();
+            alr_touch_manifest()
 
             if update:
                 return run_alr("with", force=force)
@@ -427,3 +439,45 @@ def add_action(type, command, name=""):
         manifest.write(f"command = {command}\n")
         if name != "":
             manifest.write(f"name = '{name}'\n")
+
+
+def alr_submit(manifest, index_path):
+    """
+    Move a manifest with origin into its proper location in an index
+    """
+    assert os.path.isfile(manifest), f"Manifest file not found: {manifest}"
+
+    # Extract crate name
+    file = os.path.basename(manifest)
+    name = file.split('-')[0]
+
+    # Prepare destination at index
+    if not os.path.isdir(index_path):
+        raise RuntimeError("Given index path does not exist or "
+                           "not a folder: " + index_path)
+
+    # Create folder hierarchy in the index
+    os.makedirs(os.path.join(index_path, "index", name[:2], name))
+
+    # Move published manifest to proper index location
+    os.rename(manifest,
+              os.path.join(index_path, "index", name[:2], name, file))
+
+
+def alr_publish(name,
+                version="0.0.0",
+                submit=True,
+                index_path=os.path.join("..", "my_index"),
+                quiet=True):
+    """
+    Run `alr publish` at the current location and optionally move the produced
+    manifest to its intended location in a local index.
+    """
+    p = run_alr("publish", force=True, quiet=quiet)
+    # Force due to missing optional crate info by `alr init`
+
+    if submit:
+        alr_submit(os.path.join("alire", "releases", f"{name}-{version}.toml"),
+                   index_path)
+
+    return p

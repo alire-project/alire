@@ -10,6 +10,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.OS_Lib.Subprocess;
+with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
 with Alire.Solutions;
@@ -18,7 +19,6 @@ with Alire.Utils;
 
 with Alr.Files;
 with Alr.Paths;
-with Alr.Platform;
 with Alr.Testing.Collections;
 with Alr.Testing.Console;
 with Alr.Testing.JUnit;
@@ -33,7 +33,8 @@ package body Alr.Commands.Test is
 
    use type Ada.Containers.Count_Type;
 
-   package Query renames Alire.Solver;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
 
    Docker_Switch : constant String := "--docker";
 
@@ -45,7 +46,7 @@ package body Alr.Commands.Test is
    begin
       --  Declared GPR files in include paths
       declare
-         Guard : Folder_Guard (Enter_Folder (R.Unique_Folder))
+         Guard : Folder_Guard (Enter_Folder (R.Base_Folder))
            with Unreferenced;
       begin
          for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
@@ -59,7 +60,7 @@ package body Alr.Commands.Test is
 
       --  Generated executables
       for Exe of R.Executables (Platform.Properties) loop
-         if Files.Locate_File_Under (Folder    => R.Unique_Folder,
+         if Files.Locate_File_Under (Folder    => R.Base_Folder,
                                      Name      => Exe,
                                      Max_Depth => Natural'Last).Is_Empty
          then
@@ -220,7 +221,7 @@ package body Alr.Commands.Test is
 
                declare
                   Guard : Alire.Directories.Guard
-                    (Alire.Directories.Enter (R.Unique_Folder))
+                    (Alire.Directories.Enter (R.Base_Folder))
                     with Unreferenced;
                begin
                   for Action of R.On_Platform_Actions
@@ -281,7 +282,7 @@ package body Alr.Commands.Test is
             Reporters.End_Test
               (R, Testing.Unresolvable, Clock - Start, No_Log);
          elsif not R.Origin.Is_System and then
-           Ada.Directories.Exists (R.Unique_Folder) and then
+           Ada.Directories.Exists (R.Base_Folder) and then
            not Cmd.Redo
          then
             Reporters.End_Test (R, Testing.Skip, Clock - Start, No_Log);
@@ -321,9 +322,9 @@ package body Alr.Commands.Test is
          end if;
 
          Make_Dir
-           (Create (+R.Unique_Folder) / Create (+Paths.Alr_Working_Folder));
+           (Create (+R.Base_Folder) / Create (+Paths.Alr_Working_Folder));
          --  Might not exist for system/failed/skipped
-         Output.Write (R.Unique_Folder /
+         Output.Write (R.Base_Folder /
                          Paths.Alr_Working_Folder /
                            "alr_test_" & Timestamp & ".log");
       end Test_Release;

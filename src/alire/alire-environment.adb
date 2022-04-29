@@ -14,7 +14,7 @@ with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.Toolchains.Solutions;
 with Alire.Utils.TTY;
-with Alire.Platform;
+with Alire.Platforms.Current;
 
 with GNAT.IO;
 
@@ -96,7 +96,7 @@ package body Alire.Environment is
       Tool_Root.Set (Solution);
 
       --  Load platform environment
-      Alire.Platform.Load_Environment (This);
+      Alire.Platforms.Current.Load_Environment (This);
 
       --  Warnings when setting up an incomplete environment
 
@@ -155,6 +155,8 @@ package body Alire.Environment is
       Env    : constant Properties.Vector := Root.Current.Environment;
       Rel    : constant Releases.Release := Root.Current.Release (Crate);
       Origin : constant String := Rel.Name_Str;
+
+      Release_Base : constant String := Root.Current.Release_Base (Rel.Name);
    begin
       Trace.Debug ("Loading environment for crate "
                    & Alire.Utils.TTY.Name (Crate)
@@ -168,8 +170,7 @@ package body Alire.Environment is
          begin
             declare
                Value : constant String :=
-                       Formatting.Format (Root.Current.Release_Base (Rel.Name),
-                                          Act.Value);
+                 Formatting.Format (Release_Base, Act.Value);
             begin
                case Act.Action is
 
@@ -210,6 +211,11 @@ package body Alire.Environment is
             end;
          end if;
       end loop;
+
+      --  Set the crate PREFIX location for access to resources
+      This.Set (AAA.Strings.To_Upper_Case (+Rel.Name) & "_ALIRE_PREFIX",
+                Release_Base,
+                "Crate prefix for resources location");
    end Load;
 
    -----------------

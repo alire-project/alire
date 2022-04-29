@@ -28,15 +28,16 @@ lib2_config = '../lib_2/config/lib_2_config.gpr'
 bin_config = 'config/bin_1_config.gpr'
 
 # Check default profiles for root and dependency
-check_config(lib1_config, 'RELEASE', ['-O3', '-gnatn'])
-check_config(lib2_config, 'RELEASE', ['-O3', '-gnatn'])
-check_config(bin_config, 'DEVELOPMENT', ['-Og', '-g', '-gnatwa', '-gnata', '-gnaty3'])
+check_config(lib1_config, 'release', ['-O3', '-gnatn'])
+check_config(lib2_config, 'release', ['-O3', '-gnatn'])
+check_config(bin_config, 'development', ['-Og', '-g', '-gnatwa', '-gnaty3'])
 
 # Create custom Release profile for lib_1
 with open('../lib_1/alire.toml', "a") as manifest:
     manifest.write('[build-switches]\n')
     manifest.write('release.optimization = "size"\n')
     manifest.write('release.contracts = "yes"\n')
+    manifest.write('release.ada_version = "ada12"\n')
 
 
 # Create custom wildcard profile for lib_2
@@ -44,6 +45,7 @@ with open('../lib_2/alire.toml', "a") as manifest:
     manifest.write('[build-switches]\n')
     manifest.write('"*".optimization = "debug"\n')
     manifest.write('"*".contracts = "no"\n')
+    manifest.write('"*".ada_version = "gnat_extensions"\n')
 
 
 # Check if we can change the profile of a dependency
@@ -52,9 +54,9 @@ with open(alr_manifest(), "a") as manifest:
     manifest.write('lib_2 = "validation"\n')
 
 run_alr('update')
-check_config(lib1_config, 'RELEASE', ['-Os', '-gnata'])
-check_config(lib2_config, 'VALIDATION', ['-Og'])
-check_config(bin_config, 'DEVELOPMENT', ['-gnata'])
+check_config(lib1_config, 'release', ['-Os', '-gnata', '-gnat12'])
+check_config(lib2_config, 'validation', ['-Og', '-gnatX'])
+check_config(bin_config, 'development', ['-Og', '-g', '-gnatwa', '-gnaty3'])
 
 # Check that the project builds
 run_alr('build')

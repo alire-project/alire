@@ -73,6 +73,10 @@ package Alire.Directories is
    --  Finds a single file in a folder with the given extension and return its
    --  absolute path.  If more than one, or none, returns "".
 
+   procedure Touch (File : File_Path);
+   --  If the file exists, update last edition time; otherwise create it. If
+   --  File denotes anything else than a regular file, raise.
+
    procedure Traverse_Tree (Start   : Relative_Path;
                             Doing   : access procedure
                               (Item : Ada.Directories.Directory_Entry_Type;
@@ -140,6 +144,12 @@ package Alire.Directories is
 
    function With_Name (Name : Any_Path) return Temp_File;
    --  Allows initializing the tmp file with a desired name.
+
+   function In_Dir (Dir  : Directory_Path;
+                    Name : File_Path := "")
+                    return Temp_File;
+   --  Allows initializing the location of the temp file, and optionally the
+   --  name.
 
    --  REPLACER: Modify a file "in place" in a safe way (keeping old copy)
 

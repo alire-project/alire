@@ -29,7 +29,8 @@ is
                                 Contracts,
                                 Compile_Checks,
                                 Runtime_Checks,
-                                Style_Checks);
+                                Style_Checks,
+                                Ada_Version);
 
    type Optimization_Kind is (Performance, Size, Debug, Custom);
    type Debug_Info_Kind is (No, Yes, Custom);
@@ -37,6 +38,15 @@ is
    type Compile_Checks_Kind is (None, Warnings, Errors, Custom);
    type Contracts_Kind is (No, Yes, Custom);
    type Style_Checks_Kind is (No, Yes, Custom);
+
+   type Ada_Version_Kind is (Compiler_Default,
+                             --  This value means that no switch will be added
+                             --  and it's up to the compiler to decide which
+                             --  Ada version will be used.
+
+                             Ada83, Ada95, Ada05, Ada12, Ada2022,
+                             GNAT_Extensions,
+                             Custom);
 
    type Optimization_Switches (Kind : Optimization_Kind := Performance)
    is record
@@ -86,12 +96,21 @@ is
       end case;
    end record;
 
+   type Ada_Version_Switches (Kind : Ada_Version_Kind := Compiler_Default)
+   is record
+      case Kind is
+         when Custom => List : Switch_List;
+         when others => null;
+      end case;
+   end record;
+
    function Get_List (S : Optimization_Switches) return Switch_List;
    function Get_List (S : Debug_Info_Switches) return Switch_List;
    function Get_List (S : Runtime_Checks_Switches) return Switch_List;
    function Get_List (S : Compile_Checks_Switches) return Switch_List;
    function Get_List (S : Contracts_Switches) return Switch_List;
    function Get_List (S : Style_Checks_Switches) return Switch_List;
+   function Get_List (S : Ada_Version_Switches) return Switch_List;
 
    type Switches_Configuration is record
       Optimization   : Optimization_Switches;
@@ -100,6 +119,7 @@ is
       Compile_Checks : Compile_Checks_Switches;
       Contracts      : Contracts_Switches;
       Style_Checks   : Style_Checks_Switches;
+      Ada_Version    : Ada_Version_Switches;
    end record;
 
    function Get_List (C : Switches_Configuration) return Switch_List;
@@ -110,7 +130,8 @@ is
          Runtime_Checks => (Kind => Default),
          Compile_Checks => (Kind => None),
          Contracts      => (Kind => No),
-         Style_Checks   => (Kind => No));
+         Style_Checks   => (Kind => No),
+         Ada_Version    => (Kind => Compiler_Default));
 
    Default_Validation_Switches : constant Switches_Configuration
      := (Optimization   => (Kind => Performance),
@@ -118,15 +139,17 @@ is
          Runtime_Checks => (Kind => Everything),
          Compile_Checks => (Kind => Errors),
          Contracts      => (Kind => Yes),
-         Style_Checks   => (Kind => Yes));
+         Style_Checks   => (Kind => Yes),
+         Ada_Version    => (Kind => Compiler_Default));
 
    Default_Development_Switches : constant Switches_Configuration
      := (Optimization   => (Kind => Debug),
          Debug_Info     => (Kind => Yes),
          Runtime_Checks => (Kind => Default),
          Compile_Checks => (Kind => Warnings),
-         Contracts      => (Kind => Yes),
-         Style_Checks   => (Kind => Yes));
+         Contracts      => (Kind => No),
+         Style_Checks   => (Kind => Yes),
+         Ada_Version    => (Kind => Compiler_Default));
 
 private
    Empty_List : constant Switch_List :=

@@ -1,11 +1,12 @@
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
-with Alire.Features.Index;
-with Alire.Index_On_Disk;
+with Alire.Index_On_Disk.Loading;
 with Alire.Utils;
 
 package body Alr.Commands.Index is
+
+   package Index_Load renames Alire.Index_On_Disk.Loading;
 
    --  Forward declarations
 
@@ -25,7 +26,7 @@ package body Alr.Commands.Index is
       Before : constant String := Cmd.Bfr.all;
 
       Result : constant Alire.Outcome :=
-                 Alire.Features.Index.Add
+                 Alire.Index_On_Disk.Loading.Add
                    (Origin => Cmd.Add.all,
                     Name   => Cmd.Name.all,
                     Under  => Alire.Config.Edit.Indexes_Directory,
@@ -44,8 +45,8 @@ package body Alr.Commands.Index is
 
    procedure Delete (Name : String) is
       Result  : Alire.Outcome;
-      Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
-                  Alire.Features.Index.Find_All
+      Indexes : constant Index_Load.Set :=
+                  Index_Load.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Result);
       Found   : Boolean := False;
    begin
@@ -147,8 +148,8 @@ package body Alr.Commands.Index is
       use Alire;
 
       Result  : Alire.Outcome;
-      Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
-                  Alire.Features.Index.Find_All
+      Indexes : constant Index_Load.Set :=
+                  Index_Load.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Result);
 
       Table : AAA.Table_IO.Table;
@@ -212,8 +213,7 @@ package body Alr.Commands.Index is
    ---------------------
 
    procedure Reset_Community is
-      Result : constant Alire.Outcome :=
-                 Alire.Features.Index.Add_Or_Reset_Community;
+      Result : constant Alire.Outcome := Index_Load.Add_Or_Reset_Community;
    begin
       if not Result.Success then
          Reportaise_Command_Failed (Result.Message);
@@ -291,7 +291,7 @@ package body Alr.Commands.Index is
 
    procedure Update_All is
       Result : constant Alire.Outcome :=
-                 Alire.Features.Index.Update_All
+                 Index_Load.Update_All
                    (Alire.Config.Edit.Indexes_Directory);
    begin
       if not Result.Success then

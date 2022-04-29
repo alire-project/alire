@@ -1,7 +1,10 @@
+with Ada.Directories;
+
 with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils.Tools;
+with Alire.VFS;
 
 package body Alire.VCSs.Git is
 
@@ -82,10 +85,9 @@ package body Alire.VCSs.Git is
    is
       pragma Unreferenced (This);
       Extra : constant Vector :=
-                Empty_Vector
-                & (if Log_Level < Trace.Info
-                   then "-q"
-                   else "--progress");
+                     (if Log_Level < Trace.Info or else not CLIC.TTY.Is_TTY
+                      then Empty_Vector & "-q"
+                      else Empty_Vector);
       Depth_Opts : constant Vector :=
                      (if Depth /= 0 and then Commit (From) = ""
                       then Empty_Vector & "--depth" & Trim (Depth'Image)
@@ -206,6 +208,10 @@ package body Alire.VCSs.Git is
       return not Output.Is_Empty
         and then Contains (Output.First_Element, "HEAD detached");
    end Is_Detached;
+
+   -------------------
+   -- Is_Repository --
+   -------------------
 
    function Is_Repository (This : VCS;
                            Path : Directory_Path) return Boolean
@@ -409,7 +415,7 @@ package body Alire.VCSs.Git is
       Extra : constant Vector :=
                 (if Log_Level < Trace.Info
                  then Empty_Vector & "-q"
-                 else Empty_Vector & "--progress");
+                 else Empty_Vector);
    begin
 
       --  Switch branch if changed
@@ -448,6 +454,70 @@ package body Alire.VCSs.Git is
          return Alire.Errors.Get (E);
    end Update;
 
+   --------------
+   -- Worktree --
+   --------------
+
+   function Worktree (This : VCS;
+                      Repo : Directory_Path)
+                      return Worktree_Data
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : AAA.Strings.Vector;
+      Code   : Integer;
+
+      --------------------
+      -- Worktree_Error --
+      --------------------
+
+      function Worktree_Error (Output : AAA.Strings.Vector;
+                               Error  : String) return String
+      is (Error & " in `git worktree list`: " & Output.Flatten ("\n"));
+
+   begin
+      Code :=
+        OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+          (Command             => "git",
+           Arguments           =>
+             Empty_Vector
+           & "worktree"
+           & "list"
+           & "--porcelain",
+           Output              => Output,
+           Err_To_Out          => True);
+
+      return Data : Worktree_Data do
+         if Code /= 0 then
+            Trace.Debug ("git worktree list failed with code: "
+                         & Trim (Code'Image));
+            return;
+         end if;
+
+         Assert (Natural (Output.Length) >= 3,
+                 Worktree_Error (Output, "Unexpected output length (lines)"));
+
+         Assert (Head (Output (1), ' ') = "worktree",
+                 Worktree_Error (Output, "Unexpected 1st line"));
+
+         Assert (Head (Output (2), ' ') = "HEAD",
+                 Worktree_Error (Output, "Unexpected 2nd line"));
+
+         Assert (Head (Output (3), ' ') = "branch",
+                 Worktree_Error (Output, "Unexpected 3rd line"));
+
+         --  Git on windows returns an absolute but forward-slashed path.
+         --  Depending on if it is a Windows git or a msys2 git it will [not]
+         --  have also a drive letter. So we convert this path to a native one,
+         --  as promised by the type in use.
+
+         Data.Worktree :=
+           +VFS.To_Native (Portable_Path (Tail (Output (1), ' ')));
+         Data.Head     :=  Tail (Output (2), ' ');
+         Data.Branch   := +Tail (Output (3), ' ');
+      end return;
+   end Worktree;
+
    -----------------
    -- Head_Commit --
    -----------------
@@ -465,5 +535,42 @@ package body Alire.VCSs.Git is
    begin
       return Head (Output.First_Element, ' ');
    end Head_Commit;
+
+   ------------------------------
+   -- Get_Rel_Path_Inside_Repo --
+   ------------------------------
+
+   function Get_Rel_Path_Inside_Repo (This : VCS;
+                                      Dir  : Directory_Path)
+                                      return Relative_Path
+   is
+      use all type UString;
+      Result : UString;
+      Root   : constant Absolute_Path := +This.Worktree (Dir).Worktree;
+      Curr   : Unbounded_Absolute_Path := +Ada.Directories.Full_Name (Dir);
+   begin
+      if not GNAT.OS_Lib.Is_Directory (Dir) then
+         Raise_Checked_Error ("Starting dir not a real dir: " & Dir);
+      end if;
+
+      if VFS.Is_Same_Dir (Root, Dir) then
+         return ".";
+      end if;
+
+      --  We simply go up until being at the git root. The equivalence of
+      --  directories is ensured by VFS.Is_Same_Dir even for a root returned
+      --  by git using different short/long naming on Windows.
+
+      while not VFS.Is_Same_Dir (Root, +Curr) loop
+         if Result /= "" then
+            Result := GNAT.OS_Lib.Directory_Separator & Result;
+         end if;
+
+         Result := Ada.Directories.Simple_Name (+Curr) & Result;
+         Curr   := +Ada.Directories.Containing_Directory (+Curr);
+      end loop;
+
+      return +Result;
+   end Get_Rel_Path_Inside_Repo;
 
 end Alire.VCSs.Git;

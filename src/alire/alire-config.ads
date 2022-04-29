@@ -30,6 +30,10 @@ package Alire.Config with Preelaborate is
       --  When set to True, distro will be reported as unknown, and in turn no
       --  native package manager will be used.
 
+      Index_Auto_Community : constant Config_Key := "index.auto_community";
+      --  When unset (default) or true, add the community index if no other
+      --  index is already configured.
+
       Solver_Autonarrow : constant Config_Key := "solver.autonarrow";
       --  When true, `alr with` will substitute "any" dependencies by the
       --  appropriate caret/tilde.
@@ -56,5 +60,9 @@ package Alire.Config with Preelaborate is
       Warning_Caret : constant Config_Key := "warning.caret";
       --  Set to false to disable warnings about caret/tilde use for ^0 deps.
 
+      Msys2_Do_Not_Install : constant Config_Key := "msys2.do_not_install";
+      Msys2_Install_Dir    : constant Config_Key := "msys2.install_dir";
+      Msys2_Installer      : constant Config_Key := "msys2.installer";
+      Msys2_Installer_URL  : constant Config_Key := "msys2.installer_url";
    end Keys;
 end Alire.Config;

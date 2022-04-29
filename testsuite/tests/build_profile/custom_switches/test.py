@@ -39,6 +39,7 @@ for path in manifests:
         manifest.write('"*".compile_checks = ["-compile-checks-switch"]\n')
         manifest.write('"*".contracts = ["-contracts-switch"]\n')
         manifest.write('"*".style_checks = ["-style-switch", "-style-switch2"]\n')
+        manifest.write('"*".ada_version = ["-ada-version"]\n')
 
 run_alr('update')
 
@@ -49,10 +50,11 @@ expected_switches = ['-opt-switch',
                      '-compile-checks-switch',
                      '-contracts-switch',
                      '-style-switch',
-                     '-style-switch2']
+                     '-style-switch2',
+                     '-ada-version']
 
-check_config(lib1_config, 'RELEASE', expected_switches)
-check_config(lib2_config, 'RELEASE', expected_switches)
-check_config(bin_config, 'DEVELOPMENT', expected_switches)
+check_config(lib1_config, 'release', expected_switches)
+check_config(lib2_config, 'release', expected_switches)
+check_config(bin_config, 'development', expected_switches)
 
 print('SUCCESS')

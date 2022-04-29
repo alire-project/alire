@@ -27,11 +27,13 @@ package Alire.Publish is
 
    procedure Remote_Origin (URL     : Alire.URL;
                             Commit  : String := "";
+                            Subdir  : Relative_Path := "";
                             Options : All_Options := New_Options);
    --  Requires a remote URL to a source file or a git repository. Commit is
-   --  mandatory in the latter case. Produces a file `crate-version.toml` in
-   --  the current directory or raises Checked_Error with the appropriate error
-   --  message set.
+   --  mandatory in the latter case. If Subdir is /= "", it is a relative path
+   --  inside a repository with the actual location of a nested crate. Produces
+   --  a file `crate-version.toml` in the current directory or raises
+   --  Checked_Error with the appropriate error message set.
 
    procedure Print_Trusted_Sites;
    --  Print our list of allowed sites to host git releases

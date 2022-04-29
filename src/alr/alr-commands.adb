@@ -1,4 +1,5 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -9,13 +10,15 @@ with Alire.Platforms;
 with Alire_Early_Elaboration;
 with Alire.Config.Edit;
 with Alire.Errors;
-with Alire.Features.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Lockfiles;
 with Alire.Paths;
+with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
 
+with Alr.Commands.Action;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
@@ -44,7 +47,6 @@ with Alr.Commands.Topics.Aliases;
 with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;
-with Alr.Platform;
 
 package body Alr.Commands is
 
@@ -89,6 +91,27 @@ package body Alr.Commands is
    --------------
 
    function Is_Quiet return Boolean is (Log_Quiet);
+
+   -------------------------
+   -- Set_Builtin_Aliases --
+   -------------------------
+
+   procedure Set_Builtin_Aliases is
+   begin
+      Sub_Cmd.Set_Alias ("gnatprove",
+                         AAA.Strings.Empty_Vector
+                         .Append ("exec")
+                         .Append ("-P1")
+                         .Append ("--")
+                         .Append ("gnatprove"));
+
+      Sub_Cmd.Set_Alias ("gnatcov",
+                         AAA.Strings.Empty_Vector
+                         .Append ("exec")
+                         .Append ("-P2")
+                         .Append ("--")
+                         .Append ("gnatcov"));
+   end Set_Builtin_Aliases;
 
    -------------------------
    -- Set_Global_Switches --
@@ -213,6 +236,23 @@ package body Alr.Commands is
       raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (Cmd       : Command'Class;
+                   Crate     : Alire.Crate_Name;
+                   Externals : Boolean := False;
+                   Strict    : Boolean := False)
+   is
+      pragma Unreferenced (Cmd);
+   begin
+      Alire.Index_On_Disk.Loading.Load
+        (Crate            => Crate,
+         Detect_Externals => Externals,
+         Strict           => Strict);
+   end Load;
+
    -------------------------
    -- Requires_Full_Index --
    -------------------------
@@ -222,7 +262,7 @@ package body Alr.Commands is
                                   Force_Reload : Boolean := False) is
       pragma Unreferenced (Cmd);
    begin
-      Alire.Features.Index.Setup_And_Load
+      Alire.Index_On_Disk.Loading.Setup_And_Load
         (From   => Alire.Config.Edit.Indexes_Directory,
          Strict => Strict,
          Force  => Force_Reload);
@@ -369,7 +409,29 @@ package body Alr.Commands is
    -------------
 
    procedure Execute is
+
+      ----------------------
+      -- Log_Command_Line --
+      ----------------------
+
+      procedure Log_Command_Line is
+         use Ada.Command_Line;
+      begin
+         Trace.Debug ("Begin command line:");
+         Trace.Debug ("   Arg 0 (len" & Command_Name'Length'Image
+                      & "): " & Command_Name);
+         for I in 1 .. Argument_Count loop
+            Trace.Debug ("   Arg" & I'Image
+                         & " (len" & Argument (I)'Length'Image
+                         & "): " & Argument (I));
+         end loop;
+         Trace.Debug ("End command line.");
+      end Log_Command_Line;
+
+      use all type Alire.Platforms.Operating_Systems;
    begin
+
+      Log_Command_Line;
 
       Sub_Cmd.Parse_Global_Switches;
 
@@ -380,9 +442,9 @@ package body Alr.Commands is
       --  Use CLIC.TTY selection/detection of TTY
       Trace.Is_TTY := CLIC.TTY.Is_TTY;
 
-      if Platform.Operating_System not in Alire.Platforms.Windows and then
-        not No_Color and then
-        not No_TTY
+      if Alire.Platforms.Current.Operating_System /= Alire.Platforms.Windows
+        and then not No_Color
+        and then not No_TTY
       then
          CLIC.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable
@@ -408,6 +470,9 @@ package body Alr.Commands is
       Create_Alire_Folders;
 
       begin
+
+         Set_Builtin_Aliases;
+
          Sub_Cmd.Load_Aliases (Alire.Config.DB);
 
          Sub_Cmd.Execute;
@@ -490,6 +555,7 @@ begin
    Sub_Cmd.Register ("General", new Toolchain.Command);
    Sub_Cmd.Register ("General", new Version.Command);
 
+   Sub_Cmd.Register ("Build", new Action.Command);
    Sub_Cmd.Register ("Build", new Build.Command);
    Sub_Cmd.Register ("Build", new Clean.Command);
    Sub_Cmd.Register ("Build", new Dev.Command);

@@ -7,7 +7,7 @@ with Alire.Config.Edit;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
-with Alire.Features.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
 with Alire.Hashes;
 with Alire.Index;
@@ -23,21 +23,27 @@ with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.TOML_Load;
+with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
+with Alire.VFS;
+
+with CLIC.User_Input;
 
 with GNATCOLL.OS.Constants;
 
 with Semantic_Versioning;
 
-with CLIC.User_Input;
-
 with TOML.File_IO;
+
+with TOML_Slicer;
 
 package body Alire.Publish is
 
    package Semver renames Semantic_Versioning;
+
+   use all type UString;
 
    use Directories.Operators;
    use AAA.Strings;
@@ -58,6 +64,9 @@ package body Alire.Publish is
       Path : UString := +".";
       --  Where to find the local workspace
 
+      Subdir : Unbounded_Relative_Path;
+      --  Subdir inside the root repo, for monorepo crates
+
       Revision : UString := +"HEAD";
       --  A particular revision for publishing from a git repo
 
@@ -75,6 +84,16 @@ package body Alire.Publish is
        then +This.Path
        else Root.Current.Path);
 
+   -----------------
+   -- Deploy_Path --
+   -----------------
+   --  The folder in which we are testing the local build, which will be either
+   --  the temp folder we create, or a nested crate within it for monorepos.
+   function Deploy_Path (This : Data) return Any_Path
+   is (if This.Subdir /= ""
+       then This.Tmp_Deploy_Dir.Filename / (+This.Subdir)
+       else This.Tmp_Deploy_Dir.Filename);
+
    -----------------------
    -- Starting_Manifest --
    -----------------------
@@ -91,7 +110,7 @@ package body Alire.Publish is
    --  The manifest that we have in tmp folder during verification. This is
    --  always named and placed at the expected location.
    function Packaged_Manifest (This : Data) return Any_Path
-   is (This.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
+   is (Deploy_Path (This) / Roots.Crate_File_Name);
 
    -----------------
    -- New_Options --
@@ -164,8 +183,9 @@ package body Alire.Publish is
 
       --  Check not duplicated
 
-      Features.Index.Setup_And_Load (From   => Config.Edit.Indexes_Directory,
-                                     Strict => True);
+      Index_On_Disk.Loading.Setup_And_Load
+        (From   => Config.Edit.Indexes_Directory,
+         Strict => True);
       if Index.Exists (Release.Name, Release.Version) then
          Raise_Checked_Error
            ("Target release " & Release.Milestone.TTY_Image
@@ -178,6 +198,15 @@ package body Alire.Publish is
       Trace.Info ("The release to be published contains this information:");
       Ada.Text_IO.New_Line;
       Release.Print;
+
+      --  Warn if the release contains pins
+
+      if not Release.Pins.Is_Empty then
+         Ada.Text_IO.New_Line;
+         Trace.Warning ("The release manifest "
+                      & TTY.Warn ("contains pins that will be removed")
+                      & " in the published version.");
+      end if;
 
       --  Detect missing recommended fields
 
@@ -254,8 +283,7 @@ package body Alire.Publish is
       --  be, as it contains the user manifest). Auto-update should retrieve
       --  dependencies, and since we are not repackaging, there's no problem
       --  with altering contents under alire or regenerating the lock file.
-      Guard : Directories.Guard
-        (Directories.Enter (Context.Tmp_Deploy_Dir.Filename))
+      Guard : Directories.Guard (Directories.Enter (Deploy_Path (Context)))
         with Unreferenced;
    begin
       if Context.Options.Skip_Build then
@@ -357,11 +385,12 @@ package body Alire.Publish is
       --  Check that the maintainer's manifest is at the expected location
 
       if not GNAT.OS_Lib.Is_Regular_File
-        (Context.Tmp_Deploy_Dir.Filename / Context.Options.Manifest)
+        (Deploy_Path (Context) / Context.Options.Manifest)
       then
          Raise_Checked_Error
            ("Remote sources are missing the '"
-            & Context.Options.Manifest & "' manifest file.");
+            & Context.Options.Manifest & "' manifest file expected at "
+            & Deploy_Path (Context) / Context.Options.Manifest);
       end if;
 
       --  For a non-standard manifest, move it in place (akin to how `alr get`
@@ -373,6 +402,15 @@ package body Alire.Publish is
            (Context.Tmp_Deploy_Dir.Filename / Context.Options.Manifest,
             Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
       end if;
+
+      --  Remove pins at this point, as this manifest will be the basis for the
+      --  published one; also this way the build test will not rely on pins.
+
+      TOML_Slicer.Remove_Array
+        (File_Name  => Packaged_Manifest (Context),
+         Array_Name => TOML_Keys.Pins,
+         Backup     => True,
+         Backup_Dir => Deploy_Path (Context));
 
    end Deploy_Sources;
 
@@ -650,7 +688,7 @@ package body Alire.Publish is
 
    procedure Show_And_Confirm (Context : in out Data) with
      Pre => GNAT.OS_Lib.Is_Regular_File
-       (Context.Tmp_Deploy_Dir.Filename / Roots.Crate_File_Name);
+       (Deploy_Path (Context) / Roots.Crate_File_Name);
    --  Present the final release information for confirmation by the user,
    --  after checking that no critical information is missing, or the release
    --  already exists.
@@ -866,6 +904,7 @@ package body Alire.Publish is
                   (Options        => Options,
                    Origin         => <>,
                    Path           => +Path,
+                   Subdir         => <>,
                    Revision       => +Revision,
                    Tmp_Deploy_Dir => <>);
 
@@ -894,29 +933,78 @@ package body Alire.Publish is
       Root : constant Roots.Optional.Root := Roots.Optional.Search_Root (Path);
       Git  : constant VCSs.Git.VCS := VCSs.Git.Handler;
       use all type Roots.Optional.States;
-   begin
-      case Root.Status is
-      when Outside =>
-         if Options.Nonstandard_Manifest then
-            Trace.Debug ("Using non-standard manifest location: "
-                         & Options.Manifest);
-         else
-            Raise_Checked_Error ("No Alire workspace found at "
-                                 & TTY.URL (Path));
+
+      Subdir : Unbounded_Relative_Path;
+      --  In case we are publishing a nested crate (monorepo), its relative
+      --  path in regard to the git worktree will be stored here by
+      --  Check_Nested_Crate.
+
+      -----------------------
+      -- Check_Root_Status --
+      -----------------------
+
+      procedure Check_Root_Status is
+      begin
+         case Root.Status is
+         when Outside =>
+            if Options.Nonstandard_Manifest then
+               Trace.Debug ("Using non-standard manifest location: "
+                            & Options.Manifest);
+            else
+               Raise_Checked_Error ("No Alire workspace found at "
+                                    & TTY.URL (Path));
+            end if;
+         when Broken =>
+            Raise_Checked_Error
+              (Errors.Wrap
+                 ("Invalid metadata found at " & TTY.URL (Path),
+                  Root.Brokenness));
+         when Valid => null;
+         end case;
+      end Check_Root_Status;
+
+      ------------------------
+      -- Check_Nested_Crate --
+      ------------------------
+
+      procedure Check_Nested_Crate (Root_Path : Absolute_Path) is
+         Git_Info  : constant VCSs.Git.Worktree_Data := Git.Worktree (Path);
+      begin
+         if not VFS.Is_Same_Dir (+Git_Info.Worktree, Root_Path) then
+
+            --  To make our life easier for now, do not allow complex cases
+            --  like using a manifest from elsewhere to package a nested crate.
+
+            if Options.Nonstandard_Manifest then
+               Raise_Checked_Error
+                 ("Nonstandard manifest and nested crates cannot be used "
+                  & "simultaneously.");
+            end if;
+
+            Put_Info
+              ("Crate at " & TTY.URL (Root_Path)
+               & " is nested in repo at " & TTY.URL (+Git_Info.Worktree));
+
+            declare
+               Nested_Path : constant Relative_Path :=
+                               Git.Get_Rel_Path_Inside_Repo (Root_Path);
+            begin
+               Trace.Debug ("Publishing nested crate at "
+                            & TTY.URL (Nested_Path));
+               Subdir := +Nested_Path;
+            end;
          end if;
-      when Broken =>
-         Raise_Checked_Error
-           (Errors.Wrap
-              ("Invalid metadata found at " & TTY.URL (Path),
-               Root.Brokenness));
-      when Valid => null;
-      end case;
+      end Check_Nested_Crate;
+
+   begin
+
+      Check_Root_Status;
 
       declare
-         Root_Path : constant Any_Path :=
+         Root_Path : constant Absolute_Path :=
                        (if Options.Nonstandard_Manifest
-                        then Path
-                        else Root.Value.Path);
+                        then Ada.Directories.Full_Name (Path)
+                        else Ada.Directories.Full_Name (Root.Value.Path));
       begin
 
          if not Git.Is_Repository (Root_Path) then
@@ -926,6 +1014,11 @@ package body Alire.Publish is
          --  Do not continue if the local repo is dirty
 
          Check_Git_Clean (Root_Path, For_Archiving => False);
+
+         --  If the Git root does not match the path to the manifest, we are
+         --  seeing a crate in a subdir, so we go to monorepo mode.
+
+         Check_Nested_Crate (Root_Path);
 
          --  If not given a revision, check the local manifest contents
          --  already. No matter what, it will be checked again on the
@@ -983,14 +1076,17 @@ package body Alire.Publish is
                when URI.None | URI.Unknown =>
                   Publish.Remote_Origin (URL     => "git+file:" & Raw_URL,
                                          Commit  => Commit,
+                                         Subdir  => +Subdir,
                                          Options => Options);
                when URI.File =>
                   Publish.Remote_Origin (URL     => Raw_URL,
                                          Commit  => Commit,
+                                         Subdir  => +Subdir,
                                          Options => Options);
                when URI.HTTP =>
                   Publish.Remote_Origin (URL     => Fetch_URL,
                                          Commit  => Commit,
+                                         Subdir  => +Subdir,
                                          Options => Options);
                when others =>
                   Raise_Checked_Error ("Unsupported scheme: " & Fetch_URL);
@@ -1006,6 +1102,7 @@ package body Alire.Publish is
 
    procedure Remote_Origin (URL     : Alire.URL;
                             Commit  : String := "";
+                            Subdir  : Relative_Path := "";
                             Options : All_Options := New_Options)
    is
    begin
@@ -1018,6 +1115,12 @@ package body Alire.Publish is
            ("URL seems to point to a repository, but no commit was provided.");
       end if;
 
+      --  Verify that subdir is not used with an archive (it is only for VCSs)
+
+      if Subdir /= "" and then Commit = "" then
+         Raise_Checked_Error ("Cannot publish a nested crate from an archive");
+      end if;
+
       --  Create origin, which will do more checks, and proceed
 
       declare
@@ -1027,7 +1130,7 @@ package body Alire.Publish is
                       Origin  =>
                         --  with commit
                         (if Commit /= "" then
-                            Origins.New_VCS (URL, Commit)
+                            Origins.New_VCS (URL, Commit, Subdir)
 
                          --  without commit
                          elsif URI.Scheme (URL) in URI.VCS_Schemes or else
@@ -1041,9 +1144,11 @@ package body Alire.Publish is
                          else
                             Origins.New_Source_Archive (URL)),
 
-                      Path => <>, -- will remain unused
+                      Path           => <>, -- will remain unused
 
-                      Revision  => +Commit,
+                      Subdir         => +Subdir,
+
+                      Revision       => +Commit,
 
                       Tmp_Deploy_Dir => <>);
       begin

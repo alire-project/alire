@@ -10,6 +10,7 @@ with Alire.Errors;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
+with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
@@ -17,8 +18,6 @@ with Alire.Toolchains;
 with Alire.Utils; use Alire.Utils;
 with Alire.Utils.TTY;
 with Alire.Warnings;
-
-with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
@@ -458,7 +457,7 @@ package body Alr.Commands.Toolchain is
 
          Cmd.Requires_Full_Index;
          Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Platform.Properties);
+           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
@@ -499,7 +498,7 @@ package body Alr.Commands.Toolchain is
       elsif Cmd.Install then
          Cmd.Requires_Full_Index;
          Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Platform.Properties);
+           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
 
          for Elt of Args loop
             Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);

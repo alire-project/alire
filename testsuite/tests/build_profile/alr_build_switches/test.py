@@ -37,7 +37,7 @@ def check_config_not_changed():
 
 
 # Check default profiles for root and dependency
-check_config(bin_config, 'DEVELOPMENT')
+check_config(bin_config, 'development')
 
 # Check that the project builds
 run_alr('build')
@@ -45,22 +45,22 @@ run_alr('build')
 # Build in validation mode
 run_alr('build', '--validation')
 check_config_changed()
-check_config(bin_config, 'VALIDATION')
+check_config(bin_config, 'validation')
 
 # Build in validation mode
 run_alr('build', '--development')
 check_config_changed()
-check_config(bin_config, 'DEVELOPMENT')
+check_config(bin_config, 'development')
 
 # Build in release mode
 run_alr('build', '--release')
 check_config_changed()
-check_config(bin_config, 'RELEASE')
+check_config(bin_config, 'release')
 
 # Alr with will re-generate the crate config and default to DEVELOPMENT
 alr_with('lib_1', path='../lib_1')
 check_config_changed()
-check_config(bin_config, 'DEVELOPMENT')
+check_config(bin_config, 'development')
 
 # Build with default profile, the config should not change
 run_alr('build')

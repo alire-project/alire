@@ -9,6 +9,8 @@ with Alire.Origins.Deployers.Source_Archive;
 with Alire.Origins.Deployers.System;
 with Alire.Origins.Deployers.SVN;
 
+with GNAT.OS_Lib;
+
 package body Alire.Origins.Deployers is
 
    ------------------
@@ -59,10 +61,38 @@ package body Alire.Origins.Deployers is
    -- Deploy_Steps --
    ------------------
 
-   function Deploy_Steps (From   : Origin;
+   function Deploy_Steps (Rel    : Releases.Release;
                           Folder : String) return Outcome
    is
       use Directories.Operators;
+
+      ----------------------
+      -- Create_Info_File --
+      ----------------------
+
+      procedure Create_Info_File is
+         Parent   : constant String :=
+                      Ada.Directories.Containing_Directory (Folder);
+         Location : constant String :=
+                      Ada.Directories.Simple_Name (Folder);
+         Filename : constant String :=
+                      Parent
+                        / (Rel.Name_Str & "_"
+                           & AAA.Strings.Head
+                             (AAA.Strings.Head (Rel.Version.Image, '-'), '+')
+                           & "_in_" & Location);
+         use GNAT.OS_Lib;
+         Success : Boolean;
+      begin
+         Close (Create_File (Filename, Text), Success);
+         --  This is merely informative, so any error can be silently ignored
+         --  (we do test for this in the thest suite though).
+         if not Success then
+            Trace.Debug ("Creation of info file failed for: " & Filename);
+         end if;
+      end Create_Info_File;
+
+      From : constant Origin := Rel.Origin;
       Temp_Dir      : Directories.Temp_File :=
                         Directories.With_Name
                           ((if Folder /= "" -- Empty for system releases
@@ -104,6 +134,11 @@ package body Alire.Origins.Deployers is
                                  New_Name => Folder);
       end if;
 
+      --  Add an info file for monorepos to make explicit where a release is
+      if From.Is_Monorepo then
+         Create_Info_File;
+      end if;
+
       return Outcome_Success;
    exception
       when E : others =>
@@ -123,7 +158,7 @@ package body Alire.Origins.Deployers is
                     Folder  : String := "") return Outcome
    is
    begin
-      return Deploy_Steps (Release.Origin, Folder);
+      return Deploy_Steps (Release, Folder);
    end Deploy;
 
    ------------

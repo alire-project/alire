@@ -70,6 +70,9 @@ package Alire.Index_On_Disk is
    function Load (This : Index'Class; Strict : Boolean) return Outcome;
    --  Loads the actual index contents into the in-memory index
 
+   procedure Load (This : Index'Class; Crate : Crate_Name; Strict : Boolean);
+   --  Load releases for just one crate from the index
+
    function Update (This : Index) return Outcome is abstract;
    --  If the index allows updating (e.g. git), do it.
    --  Otherwise, silently do nothing and return success, since at this level

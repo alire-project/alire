@@ -1,0 +1,13 @@
+description = "Main program"
+name = "main"
+version = "1.0.0"
+licenses = "GPL-3.0-only"
+maintainers = ["alejandro@mosteo.com"]
+maintainers-logins = ["mylogin"]
+
+[[actions]]
+type = "post-fetch"
+command = ["echo", "POST-FETCH MAIN"]
+
+[origin]
+url = "file:."

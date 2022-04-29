@@ -4,8 +4,7 @@ with Alire.Conditional;
 with Alire.Dependencies;
 with Alire.Index;
 with Alire.Milestones;
-with Alire.Platform;
-with Alire.Platforms;
+with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Root;
 with Alire.Roots.Optional;
@@ -14,16 +13,15 @@ with Alire.Solver;
 with Alire.Utils.Tables;
 with Alire.Utils;
 
-with Alr.Platform;
-
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Show is
 
    use type Ada.Containers.Count_Type;
 
-   package Query  renames Alire.Solver;
-   package Semver renames Semantic_Versioning;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
+   package Semver   renames Semantic_Versioning;
 
    ------------
    -- Report --
@@ -145,7 +143,7 @@ package body Alr.Commands.Show is
                Detail : constant AAA.Strings.Vector :=
                           External.Detail
                             (if Cmd.System
-                             then Alire.Platform.Distribution
+                             then Alire.Platforms.Current.Distribution
                              else Alire.Platforms.Distro_Unknown);
                Available : Alire.Conditional.Availability :=
                              (if Cmd.System
@@ -243,12 +241,6 @@ package body Alr.Commands.Show is
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Args.Count = 1 or else
-        Cmd.Graph or else Cmd.Solve or else Cmd.Tree
-      then
-         Cmd.Requires_Full_Index;
-      end if;
-
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
            (if Args.Count = 1
@@ -256,12 +248,13 @@ package body Alr.Commands.Show is
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Args.Count = 1 and not Alire.Index.Exists (Allowed.Crate) then
-            raise Alire.Query_Unsuccessful;
-         end if;
+         if Args.Count = 1 then
+            Cmd.Load (Allowed.Crate,
+                      Externals => Cmd.Detect);
 
-         if Cmd.Detect then
-            Alire.Index.Detect_Externals (Allowed.Crate, Platform.Properties);
+            if not Alire.Index.Exists (Allowed.Crate) then
+               raise Alire.Query_Unsuccessful;
+            end if;
          end if;
 
          --  Execute

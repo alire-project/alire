@@ -16,8 +16,7 @@ os.chdir('xxx')
 # Make it depend on libhello, it is auto-narrowed down to ^1
 session_file = os.path.join('alire.toml')
 run_alr('with', 'libhello')
-check_line_in(session_file,
-              'libhello = "^1.0.0"  # Added by alr')
+check_line_in(session_file, 'libhello = "^1.0.0"')
 
 # Add the corresponding "with" line in xxx.gpr.
 #

@@ -1,8 +1,10 @@
 with AAA.Strings;
 
-with Alr.Platform;
+with Alire.Platforms.Current;
 
 package Alr.Commands.Version is
+
+   package Platform renames Alire.Platforms.Current;
 
    type Command is new Commands.Command with null record;
 

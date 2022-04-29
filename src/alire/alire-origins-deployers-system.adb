@@ -1,8 +1,7 @@
 with Alire.Origins.Deployers.System.Apt;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
-with Alire.Platform;
-with Alire.Platforms;
+with Alire.Platforms.Current;
 
 with CLIC.User_Input;
 
@@ -85,7 +84,7 @@ package body Alire.Origins.Deployers.System is
    -----------------------
 
    function Platform_Deployer (From : Origins.Origin) return Deployer'Class is
-     (case Platforms.Distro_Manager (Platform.Distribution) is
+     (case Platforms.Distro_Manager (Platforms.Current.Distribution) is
          when Platforms.Apt | Platforms.Packager_Unknown =>
             System.Apt.Deployer'(Deployers.Deployer'(Base => From)
                                  with others => <>),

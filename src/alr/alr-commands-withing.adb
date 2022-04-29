@@ -5,13 +5,13 @@ with Ada.Text_IO;
 
 with Alire.Dependencies;
 with Alire.Optional;
+with Alire.Platforms.Current;
 with Alire.Releases;
 with Alire.Roots.Editable;
 with Alire.Solutions;
 with Alire.URI;
 
 with Alr.OS_Lib;
-with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
@@ -149,10 +149,15 @@ package body Alr.Commands.Withing is
          And_Or  => Root_Release.Dependencies.Contains_ORs,
          Sorted  => True);
 
+      if not Root_Release.Pins.Is_Empty then
+         Put_Line ("Pins (direct):");
+         Root_Release.Pins.Print (Prefix => "   ");
+      end if;
+
       if Cmd.Solve then
          Cmd.Requires_Full_Index; -- Load possible hints
          Cmd.Root.Solution.Print (Root_Release,
-                                  Platform.Properties,
+                                  Alire.Platforms.Current.Properties,
                                   Detailed => True,
                                   Level    => Always);
       end if;
@@ -267,7 +272,7 @@ package body Alr.Commands.Withing is
             return;
          elsif Cmd.Graph then
             Cmd.Root.Solution.Print_Graph
-              (Cmd.Root.Release, Platform.Properties);
+              (Cmd.Root.Release, Alire.Platforms.Current.Properties);
             return;
          elsif Cmd.Versions then
             Cmd.Root.Solution.Print_Versions (Cmd.Root);

@@ -6,8 +6,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
-with Alire.Platform;
-with Alire.Platforms;
+with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
@@ -15,14 +14,14 @@ with Alire.Solver;
 with CLIC.User_Input;
 
 with Alr.Commands.Build;
-with Alr.Platform;
 
 with Semantic_Versioning.Extended;
 
 package body Alr.Commands.Get is
 
-   package Query  renames Alire.Solver;
-   package Semver renames Semantic_Versioning;
+   package Platform renames Alire.Platforms.Current;
+   package Query    renames Alire.Solver;
+   package Semver   renames Semantic_Versioning;
 
    --------------
    -- Retrieve --
@@ -44,6 +43,8 @@ package body Alr.Commands.Get is
 
       Build_OK : Boolean := False;
       Solution : Alire.Solutions.Solution;
+
+      use all type Alire.Origins.Kinds;
    begin
       Trace.Detail ("Using " & Rel.Milestone.TTY_Image
                     & " for requested "
@@ -118,7 +119,7 @@ package body Alr.Commands.Get is
       --  but delay its post-fetch:
       declare
          Root_Dir : Alire.Directories.Temp_File :=
-                      Alire.Directories.With_Name (Rel.Unique_Folder);
+                      Alire.Directories.With_Name (Rel.Deployment_Folder);
       begin
          --  Create the Root for the given release, and store it for possible
          --  future use.
@@ -144,7 +145,7 @@ package body Alr.Commands.Get is
       end;
 
       declare
-         Guard : Folder_Guard (Enter_Folder (Rel.Unique_Folder))
+         Guard : Folder_Guard (Enter_Folder (Rel.Base_Folder))
            with Unreferenced;
       begin
          --  When --only was used, mark as only to be updated manually and bail
@@ -167,11 +168,21 @@ package body Alr.Commands.Get is
          Cmd.Root.Deploy_Dependencies;
 
          if Cmd.Build then
-            --  The complete build environment has been set up already by
-            --  Deploy_Dependencies, so we must not do it again.
-            Build_OK := Commands.Build.Execute (Cmd,
-                                                AAA.Strings.Empty_Vector,
-                                                Export_Build_Env => False);
+            if Rel.Origin.Kind in Binary_Archive then
+
+               --  No need to build a binary release
+               Alire.Put_Info ("Skipping build step for binary release "
+                               & Rel.Milestone.TTY_Image);
+               Build_OK := True;
+
+            else
+
+               --  The complete build environment has been set up already by
+               --  Deploy_Dependencies, so we must not do it again.
+               Build_OK := Commands.Build.Execute (Cmd,
+                                                   AAA.Strings.Empty_Vector,
+                                                   Export_Build_Env => False);
+            end if;
          else
             Build_OK := True;
          end if;
@@ -188,7 +199,9 @@ package body Alr.Commands.Get is
                     else " with missing dependencies")
                  & (if Cmd.Build
                    then (if Build_OK
-                         then " and built."
+                         then (if Rel.Origin.Kind in Binary_Archive
+                               then " and deployed."
+                               else " and built.")
                          else " but its build failed.")
                    else "."),
                  Level => (if not Cmd.Build or else Build_OK
@@ -251,7 +264,7 @@ package body Alr.Commands.Get is
 
          --  Otherwise emit appropriate information, according to environment
 
-         if Alire.Platform.Distribution_Is_Known then
+         if Alire.Platforms.Current.Distribution_Is_Known then
 
             --  At this point we are failing for sure. Warn if there are
             --  external definitions to raise user awareness.

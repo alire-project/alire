@@ -6,6 +6,59 @@ stay on top of `alr` new features.
 
 ## Release 1.2-dev
 
+### New subcommand for listing and manual triggering of actions
+
+PR [#983](https://github.com/alire-project/alire/pull/983)
+
+Actions defined in a working release can be listed now with `alr action`. A
+specific kind of action can be triggered by specifying its kind. Actions in the
+complete dependency tree can be listed and triggered with the `--recursive`
+switch.
+
+```console
+$ alr action                # Display actions defined in the root release
+$ alr action --recursive    # Display all actions in the root and dependencies
+$ alr action post-build     # Run post-build actions in the root release
+$ alr action post-build -r  # Run post-build actions in the root and dependencies
+```
+
+### Support for crates in repository subfolders (monorepos)
+
+PR [#939](https://github.com/alire-project/alire/pull/939)
+
+A crate can now be located nested within a repository and still be published
+as a repository origin. This enables simpler publishing of such crates, as `alr
+publish` will automatically recognize the situation. For example, let us say we
+have this structure:
+
+```
+my_repo
+  +-- my_crate
+  +-- my_crate_examples
+```
+
+Running `alr publish` at `./git_repo/my_crate` or
+`./git_repo/my_crate_examples` will detect that the crate is not at the
+root and adjust the origin metadata to take into account the extra path.
+
+Other typical hierarchies that should likewise work are:
+
+```
+my_crate (also a repository)
+  +-- examples
+
+my_repo
+  +-- crate1
+        +-- examples
+  +-- crate2
+        +-- examples
+```
+
+At this time `alr publish` will not remove pins, so that is still a manual
+adjustment that the user may have to perform prior to publishing; that is, the
+manifest at each nested crate must be manually readied for publishing (just as
+for any other regular crate).
+
 ### Root crate build profile
 
 PR [#896](https://github.com/alire-project/alire/pull/896)

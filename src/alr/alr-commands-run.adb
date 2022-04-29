@@ -1,11 +1,11 @@
 with Ada.Containers;
 
 with Alire.OS_Lib;
+with Alire.Platforms.Current;
 
 with Alr.Commands.Build;
 with Alr.Files;
 with Alr.OS_Lib;
-with Alr.Platform;
 with Alire.Utils;
 
 with GNAT.OS_Lib;
@@ -37,7 +37,7 @@ package body Alr.Commands.Run is
          when others =>
             New_Line;
             for Bin of Found_At loop
-               Put_Line ("      (found at " & Found_At.First_Element & ")");
+               Put_Line ("      (found at " & Bin & ")");
             end loop;
       end case;
    end Check_Report;
@@ -54,7 +54,8 @@ package body Alr.Commands.Run is
 
       Name       : constant String := Cmd.Root.Release.Name_Str;
       Declared   : constant AAA.Strings.Vector :=
-                     Cmd.Root.Release.Executables (Platform.Properties);
+                     Cmd.Root.Release.Executables
+                       (Alire.Platforms.Current.Properties);
 
       ----------
       -- List --
@@ -121,7 +122,8 @@ package body Alr.Commands.Run is
       declare
          Declared : AAA.Strings.Vector;
       begin
-         Declared := Cmd.Root.Release.Executables (Platform.Properties);
+         Declared :=
+           Cmd.Root.Release.Executables (Alire.Platforms.Current.Properties);
 
          --  LISTING  --
          if Cmd.List then

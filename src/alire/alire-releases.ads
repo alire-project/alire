@@ -223,7 +223,11 @@ package Alire.Releases is
                            return AAA.Strings.Vector;
    --  with relative path on demand
 
-   function Unique_Folder (R : Release) return Folder_String;
+   function Deployment_Folder (R : Release) return Folder_String;
+   --  The folder under which the release origin will be deployed
+
+   function Base_Folder (R : Release) return Relative_Path;
+   --  Deployment_Folder / (if R in monorepo, rel_path to it, else "")
 
    --  NOTE: property retrieval functions do not distinguish between
    --  public/private, since that's merely informative for the users.
@@ -503,21 +507,6 @@ private
    function Config_Settings (R : Release) return Alire.Properties.Vector
    is (Conditional.Enumerate (R.Properties).Filter
        (Alire.TOML_Keys.Config_Values));
-
-   use all type Origins.Kinds;
-   function Unique_Folder (R : Release) return Folder_String
-   is (AAA.Strings.Head (+R.Name, Extension_Separator) & "_" &
-         AAA.Strings.Head
-         (AAA.Strings.Head (Image (R.Version), '-'), '+') & "_" &
-         --  Remove patch/build strings that may violate folder valid chars
-       (case R.Origin.Kind is
-           when Binary_Archive => R.Origin.Short_Unique_Id,
-           when External       => "external",
-           when Filesystem     => "filesystem",
-           when System         => "system",
-           when Source_Archive => R.Origin.Short_Unique_Id,
-           when Git | Hg       => R.Origin.Short_Unique_Id,
-           when SVN            => R.Origin.Commit));
 
    function Satisfies (R   : Release;
                        Dep : Alire.Dependencies.Dependency'Class)

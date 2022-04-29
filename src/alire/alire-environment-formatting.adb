@@ -1,6 +1,6 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Alire.Platform;
+with Alire.Platforms.Current;
 
 package body Alire.Environment.Formatting is
 
@@ -66,7 +66,7 @@ package body Alire.Environment.Formatting is
       begin
 
          if Id = "DISTRIB_ROOT" then
-            Replace_Slice (Str, From, To, Platform.Distribution_Root);
+            Replace_Slice (Str, From, To, Platforms.Current.Distribution_Root);
 
          elsif Id = "CRATE_ROOT" then
             Replace_Slice
