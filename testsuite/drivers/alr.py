@@ -55,6 +55,11 @@ def prepare_env(config_dir, env):
     # require a configured compiler will have to set it up explicitly.
     run_alr("-c", config_dir, "toolchain", "--disable-assistant")
 
+    # Disable warning on old index, to avoid having to update index versions
+    # when they're still compatible.
+    run_alr("-c", config_dir, "config", "--global",
+            "--set", "warning.old_index", "false")
+
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":

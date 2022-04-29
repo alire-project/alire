@@ -1,5 +1,6 @@
 with Ada.Directories;
 
+with Alire.Config;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.TOML_Adapters;
@@ -104,6 +105,10 @@ package body Alire.TOML_Index is
 
       use type Semantic_Versioning.Version;
 
+      Warn_Of_Old_Compatible : constant Boolean :=
+                             Config.DB.Get (Config.Keys.Warning_Old_Index,
+                                            Config.Defaults.Warning_Old_Index);
+
       ----------------------
       -- Compare_Branches --
       ----------------------
@@ -111,12 +116,15 @@ package body Alire.TOML_Index is
       procedure Compare_Branches (Local : String) is
          Local_Kind    : constant String := AAA.Strings.Head (Local, "-");
       begin
-         if Local_Kind /= Alire.Index.Branch_Kind then
+         if Local_Kind /= Alire.Index.Branch_Kind and then
+           Warn_Of_Old_Compatible
+         then
             Put_Warning
               ("This alr build expects an index branch with prefix '"
                & TTY.Emph (Alire.Index.Branch_Kind)
                & "' but your community index branch is '"
-               & TTY.Emph (Local) & "'");
+               & TTY.Emph (Local) & "'",
+               Disable_Config => Config.Keys.Warning_Old_Index);
             Suggest_Update := True;
          end if;
       end Compare_Branches;
@@ -167,12 +175,14 @@ package body Alire.TOML_Index is
          --  advice if it does not match.
 
          if Alire.Index.Valid_Versions.Contains (Version) and then
-           Version /= Alire.Index.Version
+           Version /= Alire.Index.Version and then
+           Warn_Of_Old_Compatible
          then
             Put_Warning ("Index '" & TTY.Emph (Index.Name)
                          & "' version (" & Version.Image
                          & ") is older than the newest supported by alr ("
-                         & Alire.Index.Version.Image & ")");
+                         & Alire.Index.Version.Image & ")",
+                         Disable_Config => Config.Keys.Warning_Old_Index);
             Suggest_Update := True;
          elsif not Alire.Index.Valid_Versions.Contains (Version) then
 
@@ -205,7 +215,7 @@ package body Alire.TOML_Index is
 
          end if;
 
-         if Suggest_Update then
+         if Suggest_Update and then Warn_Of_Old_Compatible then
             Put_Info
               ("If you experience any problems loading this index, "
                & "you may need to reset the community index with"

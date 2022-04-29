@@ -39,12 +39,12 @@ package Alire.Index is
      and then Branch_String (Branch_String'Last) /= '-'
      and then (for some C of Branch_String => C = '-');
 
-   Community_Branch : constant String := "stable-1.1";
+   Community_Branch : constant String := "devel-1.2";
    --  The branch used for the community index. Must be updated when new index
    --  features are introduced.
 
-   Min_Compatible_Version : constant String := "1.0.9";
-   --  1.0.9 never existed, but this way we can test old index compatibility
+   Min_Compatible_Version : constant String := "1.1";
+   --  Update as needed in case of backward-incompatible changes
 
    Max_Compatible_Version : constant String :=
                               AAA.Strings.Tail (Community_Branch, '-');

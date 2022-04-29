@@ -24,6 +24,9 @@ os.system('git ' + gitconfig + ' add .')
 os.system('git ' + gitconfig + ' commit -q -m initialize')
 os.chdir(start)
 
+# Enable the warning we are trying to test
+run_alr("config", "--global", "--set", "warning.old_index", "true")
+
 # Run the test. No alr version should use 'master' for the community index.
 # This produces a warning only, because the index version is valid.
 p = run_alr("search", "--crates",  # Causes loading of the index

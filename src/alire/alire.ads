@@ -264,8 +264,12 @@ package Alire with Preelaborate is
    procedure Put_Info (Text : String; Level : Trace.Levels := Info);
    --  Prepend Text with a blue "🛈", or "Note: " & if no color/tty.
 
-   procedure Put_Warning (Text : String; Level : Trace.Levels := Info);
-   --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty
+   procedure Put_Warning (Text           : String;
+                          Level          : Trace.Levels := Info;
+                          Disable_Config : String := "");
+   --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty. If
+   --  Disable_setting /= "", append a line informing about how to disable
+   --  this warning.
 
    procedure Put_Success (Text : String; Level : Trace.Levels := Info);
    --  Prepend Text with a green check mark, or "Success:" if no color/tty.
