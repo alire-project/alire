@@ -138,4 +138,13 @@ package body Alr.Commands.Version is
                & " and about the crate or sandbox found in the current"
                & " directory, if any."));
 
+   -------------------
+   -- Print_Version --
+   -------------------
+
+   procedure Print_Version is
+   begin
+      Trace.Always ("alr " & Alire.Version.Current);
+   end Print_Version;
+
 end Alr.Commands.Version;

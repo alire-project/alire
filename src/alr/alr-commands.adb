@@ -77,6 +77,9 @@ package body Alr.Commands is
    No_TTY : aliased Boolean := False;
    --  Used to disable control characters in output
 
+   Version_Only : aliased Boolean := False;
+   --  Just display the current version and exit
+
    ---------------
    -- Put_Error --
    ---------------
@@ -157,6 +160,11 @@ package body Alr.Commands is
                      Long_Switch => "--prefer-oldest",
                      Help        => "Prefer oldest versions instead of " &
                        "newest when resolving dependencies");
+
+      Define_Switch (Config,
+                     Version_Only'Access,
+                     Long_Switch => "--version",
+                     Help        => "Displays version and exits");
 
       Define_Switch (Config,
                      Log_Quiet'Access,
@@ -434,6 +442,12 @@ package body Alr.Commands is
       Log_Command_Line;
 
       Sub_Cmd.Parse_Global_Switches;
+
+      --  Early catch of single --version switch without command
+      if Version_Only then
+         Version.Print_Version;
+         return;
+      end if;
 
       if No_TTY then
          CLIC.TTY.Force_Disable_TTY;
