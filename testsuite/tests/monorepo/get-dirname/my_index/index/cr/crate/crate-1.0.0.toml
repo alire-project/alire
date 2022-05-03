@@ -1,0 +1,12 @@
+name = "crate"
+description = "A crate"
+version = "1.0"
+
+authors = ["author"]
+maintainers = ["author@at.me"]
+maintainers-logins = ["author"]
+
+[origin]
+url = "git+https://github.com/author/crate.git"
+commit = "12345678880ab9ed38d58ac08c1c9a16e7697752"
+subdir = "nested"
