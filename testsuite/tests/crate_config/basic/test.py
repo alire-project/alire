@@ -16,6 +16,8 @@ os.chdir("hello_world_0.1.0_filesystem/")
 expected_host_arch = platform.machine().lower()
 if expected_host_arch == "amd64":
     expected_host_arch = "x86_64"
+if expected_host_arch == "arm64":
+    expected_host_arch = "aarch64"
 
 expected_host_os = platform.system().lower()
 if expected_host_os == "darwin":
