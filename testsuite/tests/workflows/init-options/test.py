@@ -23,7 +23,7 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/share/xxx',
                           'xxx/src',
                           'xxx/src/xxx.adb',
-                          'xxx/workspace.code-workspace'
+                          'xxx/workspace.code-workspace',
                           'xxx/xxx.gpr'])
 
 # Plain init, existing empty dir
