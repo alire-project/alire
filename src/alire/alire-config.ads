@@ -43,6 +43,11 @@ package Alire.Config with Preelaborate is
       --  assistant to select a gnat compiler and corresponding gprbuild
       --  will be launched.
 
+      Toolchain_External : constant Config_Key := "toolchain.external";
+      --  We use this key to store whether a tool in the toolchain requires
+      --  external detection. It stores a boolean per tool, e.g, for gprbuild:
+      --  toolchain.external.gprbuild
+
       Toolchain_Use : constant Config_Key := "toolchain.use";
       --  We use this key internally to store the configured tools picked
       --  up by the user. Not really intended to be set up by users, so

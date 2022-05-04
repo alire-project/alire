@@ -22,7 +22,8 @@ package body Alire.Shared is
    -- Available --
    ---------------
 
-   function Available return Releases.Containers.Release_Set is
+   function Available (Detect_Externals : Boolean := True)
+                       return Releases.Containers.Release_Set is
 
       Result : Releases.Containers.Release_Set;
 
@@ -66,11 +67,15 @@ package body Alire.Shared is
 
       --  Include external toolchain members
 
-      Index.Detect_Externals (GNAT_External_Crate,
-                              Root.Platform_Properties);
+      if Detect_Externals then
+         Index.Detect_Externals (GNAT_External_Crate,
+                                 Root.Platform_Properties);
+      end if;
 
       for Tool of Toolchains.Tools loop
-         Index.Detect_Externals (Tool, Root.Platform_Properties);
+         if Detect_Externals then
+            Index.Detect_Externals (Tool, Root.Platform_Properties);
+         end if;
 
          for Release of Index.Releases_Satisfying (Toolchains.Any_Tool (Tool),
                                                    Root.Platform_Properties)
@@ -261,9 +266,11 @@ package body Alire.Shared is
    -- Release --
    -------------
 
-   function Release (Target : Milestones.Milestone) return Releases.Release is
+   function Release (Target           : Milestones.Milestone;
+                     Detect_Externals : Boolean := True)
+                     return Releases.Release is
    begin
-      for Release of Available loop
+      for Release of Available (Detect_Externals) loop
          if Release.Milestone = Target then
             return Release;
          end if;

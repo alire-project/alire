@@ -337,6 +337,10 @@ package body Alire.Toolchains is
         (Level,
          Key   => Tool_Key (Release.Name),
          Value => Release.Milestone.Image);
+      Alire.Config.Edit.Set
+        (Level,
+         Key   => Tool_Key (Release.Name, For_Is_External),
+         Value => Boolean'(not Release.Origin.Is_Regular)'Image);
    end Set_As_Default;
 
    -----------------------------

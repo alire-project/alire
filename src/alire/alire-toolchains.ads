@@ -52,7 +52,17 @@ package Alire.Toolchains is
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
 
-   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key;
+   type Info_Kinds is (For_Use, For_Is_External);
+
+   function Tool_Key (Crate : Crate_Name;
+                      Kind  : Info_Kinds := For_Use)
+                      return CLIC.Config.Config_Key;
+   --  Return the config key corresponding to a tool, for which milestone is in
+   --  use or whether it is external.
+
+   function Tool_Is_External (Crate : Crate_Name) return Boolean;
+   --  Use the stored config to check if the tool is external without having to
+   --  detect it. Defaults to True if unset or tool is not configured.
 
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone;
 
@@ -103,11 +113,25 @@ private
    -- Tool_Key --
    --------------
    --  Construct the "toolchain.use.crate" keys
-   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key
+   function Tool_Key (Crate : Crate_Name;
+             Kind  : Info_Kinds := For_Use)
+             return CLIC.Config.Config_Key
    is (if AAA.Strings.Has_Prefix (Crate.As_String, "gnat_")
-       then Tool_Key (GNAT_Crate)
+       then Tool_Key (GNAT_Crate, Kind)
        else CLIC.Config.Config_Key
-              (Config.Keys.Toolchain_Use & "." & Crate.As_String));
+         ((case Kind is
+             when For_Use => Config.Keys.Toolchain_Use,
+             when For_Is_External => Config.Keys.Toolchain_External)
+          & "." & Crate.As_String));
+
+   ----------------------
+   -- Tool_Is_External --
+   ----------------------
+
+   function Tool_Is_External (Crate : Crate_Name) return Boolean
+   is (Boolean'Value
+       (Config.DB.Get
+          (Tool_Key (Crate, For_Is_External), Default => "True")));
 
    --------------------
    -- Tool_Milestone --
