@@ -1,5 +1,19 @@
 package body Alire.URI is
 
+   -----------------------------------
+   -- Authority_Without_Credentials --
+   -----------------------------------
+
+   function Authority_Without_Credentials (This : URL) return String is
+      Auth : constant String := Authority (This);
+   begin
+      if (for some Char of Auth => Char = '@') then
+         return AAA.Strings.Tail (Auth, '@');
+      else
+         return Auth;
+      end if;
+   end Authority_Without_Credentials;
+
    ------------
    -- Scheme --
    ------------
