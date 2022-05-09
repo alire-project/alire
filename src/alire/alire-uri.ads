@@ -65,6 +65,10 @@ package Alire.URI with Preelaborate is
    --  Extract the Scheme part of a URL
 
    function Authority (This : URL) return String;
+   --  The authority includes credentials : user:pass@websi.te
+
+   function Authority_Without_Credentials (This : URL) return String;
+   --  Only the part after @ in an authority
 
    function Local_Path (This : URL) return String
      with Pre => Scheme (This) in None | File

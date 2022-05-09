@@ -819,14 +819,14 @@ package body Alire.Publish is
              --  as the scheme).
            or else
             (for some Site of Trusted_Sites =>
-               URI.Authority (URL) = Site or else
+               URI.Authority_Without_Credentials (URL) = Site or else
                Has_Suffix (URI.Authority (URL), "." & Site))
          then
             Put_Success ("Origin is hosted on trusted site: "
-                         & URI.Authority (URL));
+                         & URI.Authority_Without_Credentials (URL));
          else
             Raise_Checked_Error ("Origin is hosted on unknown site: "
-                                 & URI.Authority (URL));
+                                 & URI.Authority_Without_Credentials (URL));
          end if;
       end if;
 
@@ -1135,7 +1135,7 @@ package body Alire.Publish is
                          --  without commit
                          elsif URI.Scheme (URL) in URI.VCS_Schemes or else
                             VCSs.Git.Known_Transformable_Hosts.Contains
-                              (URI.Authority (URL))
+                              (URI.Authority_Without_Credentials (URL))
                          then
                             raise Checked_Error with
                               "A commit id is mandatory for a VCS origin"
