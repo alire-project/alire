@@ -9,10 +9,13 @@ package Alire.Shared is
    --  Stuff about shared/binary crates that are deployed not in the local
    --  workspace but in the shared configuration folder.
 
-   function Available return Releases.Containers.Release_Set;
+   function Available (Detect_Externals : Boolean := True)
+                       return Releases.Containers.Release_Set;
    --  Returns the releases installed at the shared location
 
-   function Release (Target : Milestones.Milestone) return Releases.Release;
+   function Release (Target : Milestones.Milestone;
+                     Detect_Externals : Boolean := True)
+                     return Releases.Release;
    --  Retrieve the release corresponding to Target, if it exists. Will raise
    --  Constraint_Error if not among Available.
 

@@ -23,7 +23,8 @@ package body Alire.Toolchains.Solutions is
          elsif Toolchains.Tool_Is_Configured (Tool) then
             Result := Result.Including
               (Release        => Shared.Release
-                 (Tool_Milestone (Tool)),
+                 (Target           => Tool_Milestone (Tool),
+                  Detect_Externals => Tool_Is_External (Tool)),
                Env            => Root.Platform_Properties,
                Add_Dependency => True,
                Shared         => True);
