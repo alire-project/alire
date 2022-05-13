@@ -1,4 +1,4 @@
-name: CI linux
+name: Full sources
 
 on:
   release:
@@ -7,16 +7,9 @@ on:
 jobs:
 
   tar:
-    name: ${{ matrix.os }}
+    name: Full sources asset
 
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-          - windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Install Python 3.x
