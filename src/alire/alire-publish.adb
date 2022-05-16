@@ -12,6 +12,7 @@ with Alire.GitHub;
 with Alire.Hashes;
 with Alire.Index;
 with Alire.Manifest;
+with Alire.Optional;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
@@ -968,9 +969,11 @@ package body Alire.Publish is
       ------------------------
 
       procedure Check_Nested_Crate (Root_Path : Absolute_Path) is
-         Git_Info  : constant VCSs.Git.Worktree_Data := Git.Worktree (Path);
+         Git_Root : constant Optional.Absolute_Path := Git.Root;
       begin
-         if not VFS.Is_Same_Dir (+Git_Info.Worktree, Root_Path) then
+         if Git_Root.Is_Empty or else
+           not VFS.Is_Same_Dir (Git_Root.Value, Root_Path)
+         then
 
             --  To make our life easier for now, do not allow complex cases
             --  like using a manifest from elsewhere to package a nested crate.
@@ -983,7 +986,7 @@ package body Alire.Publish is
 
             Put_Info
               ("Crate at " & TTY.URL (Root_Path)
-               & " is nested in repo at " & TTY.URL (+Git_Info.Worktree));
+               & " is nested in repo at " & TTY.URL (Git_Root.Value));
 
             declare
                Nested_Path : constant Relative_Path :=

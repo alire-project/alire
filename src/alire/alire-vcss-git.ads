@@ -1,4 +1,5 @@
 with AAA.Strings;
+with Alire.Optional;
 with Alire.Utils;
 
 package Alire.VCSs.Git is
@@ -122,7 +123,12 @@ package Alire.VCSs.Git is
                                       Dir  : Directory_Path)
                                       return Relative_Path;
    --  Return the relative path from the VCSs root to Dir. Will raise if Dir is
-   --  not a real dir or not actually inside a gir repo.
+   --  not a real dir or not actually inside a gir repo. This is a wrapper on
+   --  git rev-parse --show-prefix
+
+   function Root (This : VCS) return Optional.Absolute_Path;
+   --  Return the repo absolute root path, if in a repo; otherwise Empty. This
+   --  is a wrapper on git rev-parse --show-toplevel
 
    function Transform_To_Public (Remote : String) return URL;
    --  For a Known_Transformable_Host, return the https:// equivalent of a
