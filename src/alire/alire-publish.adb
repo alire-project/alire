@@ -971,7 +971,7 @@ package body Alire.Publish is
       procedure Check_Nested_Crate (Root_Path : Absolute_Path) is
          Git_Root : constant Optional.Absolute_Path := Git.Root;
       begin
-         if Git_Root.Is_Empty or else
+         if Git_Root.Has_Element and then
            not VFS.Is_Same_Dir (Git_Root.Value, Root_Path)
          then
 
