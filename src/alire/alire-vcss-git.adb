@@ -564,6 +564,7 @@ package body Alire.VCSs.Git is
                                       Dir  : Directory_Path)
                                       return Relative_Path
    is
+      pragma Unreferenced (This);
       use Ada.Directories;
       use Alire.Directories.Operators;
       Guard  : Directories.Guard (Directories.Enter (Full_Name (Dir)))
@@ -579,6 +580,7 @@ package body Alire.VCSs.Git is
    ----------
 
    function Root (This : VCS) return Optional.Absolute_Path is
+      pragma Unreferenced (This);
       Code   : Integer;
       Output : AAA.Strings.Vector;
    begin
