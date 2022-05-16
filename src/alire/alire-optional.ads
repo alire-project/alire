@@ -4,10 +4,8 @@ package Alire.Optional with Preelaborate is
 
    --  Optional basic types
 
-   function Absolute_Path_Image (Path : Absolute_Path)
-                                 return String is (String (Path));
    package Absolute_Paths is
-     new Standard.Optional.Values (Absolute_Path, Absolute_Path_Image);
+     new Standard.Optional.Values (Alire.Absolute_Path, Absolute_Path_Image);
    subtype Absolute_Path is Absolute_Paths.Optional;
 
    package Crate_Names is

@@ -144,6 +144,9 @@ package Alire with Preelaborate is
    subtype Absolute_Path is Any_Path
      with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
 
+   function Absolute_Path_Image (Path : Absolute_Path) return String;
+   --  Needed for later instantiations
+
    subtype Unbounded_Absolute_Path is UString
      with Dynamic_Predicate =>
        +Unbounded_Absolute_Path = "" or else
