@@ -1,0 +1,49 @@
+name: Full sources
+
+on:
+  release:
+    types: [created]
+
+jobs:
+
+  tar:
+    name: Full sources asset
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install Python 3.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install git-archive-all
+      run: pip install git-archive-all
+
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Get release version
+      id: get_version
+      uses: battila7/get-version-action@v2
+
+    - name: Create full tarball
+      run: git-archive-all -9 alr-${{ steps.get_version.outputs.version-without-v }}.zip
+
+    - name: Retrieve upload URL for the release
+      id: get_release
+      uses: bruceadams/get-release@v1.2.1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
+    - name: Upload asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release.outputs.upload_url }}
+        asset_path: alr-${{ steps.get_version.outputs.version-without-v }}.zip
+        asset_name: alr-${{ steps.get_version.outputs.version-without-v }}-full-sources.zip
+        asset_content_type: application/zip
