@@ -123,7 +123,7 @@ package Alire.VCSs.Git is
                                       Dir  : Directory_Path)
                                       return Relative_Path;
    --  Return the relative path from the VCSs root to Dir. Will raise if Dir is
-   --  not a real dir or not actually inside a gir repo. This is a wrapper on
+   --  not a real dir or not actually inside a git repo. This is a wrapper on
    --  git rev-parse --show-prefix
 
    function Root (This : VCS) return Optional.Absolute_Path;
