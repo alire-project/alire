@@ -24,6 +24,13 @@ package body Alire is
      (AAA.Strings.To_Lower_Case (+L) < AAA.Strings.To_Lower_Case (+R));
 
    -------------------------
+   -- Absolute_Path_Image --
+   -------------------------
+
+   function Absolute_Path_Image (Path : Alire.Absolute_Path) return String
+   is (String (Path));
+
+   -------------------------
    -- Check_Absolute_Path --
    -------------------------
 

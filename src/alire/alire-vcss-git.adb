@@ -6,6 +6,8 @@ with Alire.Errors;
 with Alire.Utils.Tools;
 with Alire.VFS;
 
+with GNAT.Source_Info;
+
 package body Alire.VCSs.Git is
 
    -------------
@@ -35,6 +37,24 @@ package body Alire.VCSs.Git is
         OS_Lib.Subprocess.Checked_Spawn_And_Capture
           ("git", Arguments, Err_To_Out => True);
    end Run_Git_And_Capture;
+
+   -----------------------------------
+   -- Unchecked_Run_Git_And_Capture --
+   -----------------------------------
+
+   procedure Unchecked_Run_Git_And_Capture (Arguments : AAA.Strings.Vector;
+                                            Output    : out AAA.Strings.Vector;
+                                            Code      : out Integer)
+   is
+   begin
+      --  Make sure git is installed
+      Utils.Tools.Check_Tool (Utils.Tools.Git);
+      Code := OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+        (Command             => "git",
+         Arguments           => Arguments,
+         Output              => Output,
+         Err_To_Out          => True);
+   end Unchecked_Run_Git_And_Capture;
 
    ------------
    -- Branch --
@@ -544,33 +564,38 @@ package body Alire.VCSs.Git is
                                       Dir  : Directory_Path)
                                       return Relative_Path
    is
-      use all type UString;
-      Result : UString;
-      Root   : constant Absolute_Path := +This.Worktree (Dir).Worktree;
-      Curr   : Unbounded_Absolute_Path := +Ada.Directories.Full_Name (Dir);
+      pragma Unreferenced (This);
+      use Ada.Directories;
+      use Alire.Directories.Operators;
+      Guard  : Directories.Guard (Directories.Enter (Full_Name (Dir)))
+        with Unreferenced;
    begin
-      if not GNAT.OS_Lib.Is_Directory (Dir) then
-         Raise_Checked_Error ("Starting dir not a real dir: " & Dir);
-      end if;
-
-      if VFS.Is_Same_Dir (Root, Dir) then
-         return ".";
-      end if;
-
-      --  We simply go up until being at the git root. The equivalence of
-      --  directories is ensured by VFS.Is_Same_Dir even for a root returned
-      --  by git using different short/long naming on Windows.
-
-      while not VFS.Is_Same_Dir (Root, +Curr) loop
-         if Result /= "" then
-            Result := GNAT.OS_Lib.Directory_Separator & Result;
-         end if;
-
-         Result := Ada.Directories.Simple_Name (+Curr) & Result;
-         Curr   := +Ada.Directories.Containing_Directory (+Curr);
-      end loop;
-
-      return +Result;
+      return "." /
+        Run_Git_And_Capture
+         (Empty_Vector & "rev-parse" & "--show-prefix").First_Element;
    end Get_Rel_Path_Inside_Repo;
+
+   ----------
+   -- Root --
+   ----------
+
+   function Root (This : VCS) return Optional.Absolute_Path is
+      pragma Unreferenced (This);
+      Code   : Integer;
+      Output : AAA.Strings.Vector;
+   begin
+      Unchecked_Run_Git_And_Capture
+        (Empty_Vector & "rev-parse" & "--show-toplevel",
+         Output,
+         Code);
+
+      if Code /= 0 then
+         Trace.Debug ("git rev-parse returned code: " & Code'Image
+                      & " at " & GNAT.Source_Info.Source_Location);
+         return Optional.Absolute_Paths.Empty;
+      else
+         return Optional.Absolute_Paths.Unit (Output.First_Element);
+      end if;
+   end Root;
 
 end Alire.VCSs.Git;
