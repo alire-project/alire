@@ -46,6 +46,11 @@ package body Alr.Commands.Get is
 
       use all type Alire.Origins.Kinds;
    begin
+      if Cmd.Dirname then
+         Trace.Always (Rel.Base_Folder);
+         return;
+      end if;
+
       Trace.Detail ("Using " & Rel.Milestone.TTY_Image
                     & " for requested "
                     & Alire.Dependencies.New_Dependency
@@ -318,6 +323,11 @@ package body Alr.Commands.Get is
               ("--only is incompatible with --build");
          end if;
 
+         if Cmd.Dirname and (Cmd.Build or else Cmd.Only) then
+            Reportaise_Wrong_Arguments
+              ("--dirname is incompatible with other switches");
+         end if;
+
          Cmd.Requires_Full_Index;
 
          if not Alire.Index.Exists (Allowed.Crate) then
@@ -368,6 +378,11 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Build'Access,
                      "-b", "--build", "Build after download");
+
+      Define_Switch (Config,
+                     Cmd.Dirname'Access,
+                     Long_Switch => "--dirname",
+                     Help        => "Display deployment folder");
 
       Define_Switch (Config,
                      Cmd.Only'Access,
