@@ -39,7 +39,7 @@ package Alire.Index is
      and then Branch_String (Branch_String'Last) /= '-'
      and then (for some C of Branch_String => C = '-');
 
-   Community_Branch : constant String := "devel-1.2";
+   Community_Branch : constant String := "stable-1.2";
    --  The branch used for the community index. Must be updated when new index
    --  features are introduced.
 
