@@ -51,6 +51,8 @@ package body Alire_Early_Elaboration is
    procedure Early_Switch_Detection is
       use GNAT.Command_Line;
 
+      Subcommand_Seen : Boolean := False;
+
       --------------------
       -- Check_Switches --
       --------------------
@@ -65,7 +67,10 @@ package body Alire_Early_Elaboration is
          procedure Check_Long_Debug (Switch : String) is
             Target : constant String := "--debug";
          begin
-            if Switch'Length >= Target'Length and then
+            if Switch (Switch'First) /= '-' then
+               Subcommand_Seen := True;
+
+            elsif Switch'Length >= Target'Length and then
               Switch (Switch'First ..
                         Switch'First + Target'Length - 1) = Target
             then
@@ -79,25 +84,33 @@ package body Alire_Early_Elaboration is
          loop
             --  We use the simpler Getopt form to avoid built-in help and other
             --  shenanigans.
-            case Getopt ("* d? --debug? q v") is
+            case Getopt ("* d? --debug? q v c=") is
                when ASCII.NUL =>
                   exit;
                when '*' =>
-                  Check_Long_Debug (Full_Switch);
+                  if not Subcommand_Seen then
+                     Check_Long_Debug (Full_Switch);
+                  end if;
                when 'd' =>
-                  Switch_D := True;
-                  Add_Scopes (Parameter);
+                  if not Subcommand_Seen then
+                     Switch_D := True;
+                     Add_Scopes (Parameter);
+                  end if;
                when 'q' =>
-                  Switch_Q := True;
+                  if not Subcommand_Seen then
+                     Switch_Q := True;
+                  end if;
                when 'v' =>
-                  if Switch_V and then not Switch_VV then
-                     Switch_VV := True;
-                     Switch_V  := False;
-                  elsif not (Switch_V or else Switch_VV) then
-                     Switch_V := True;
-                  else
-                     Alire.Trace.Error ("Only one or two -v allowed");
-                     GNAT.OS_Lib.OS_Exit (1);
+                  if not Subcommand_Seen then
+                     if Switch_V and then not Switch_VV then
+                        Switch_VV := True;
+                        Switch_V  := False;
+                     elsif not (Switch_V or else Switch_VV) then
+                        Switch_V := True;
+                     else
+                        Alire.Trace.Error ("Only one or two -v allowed");
+                        GNAT.OS_Lib.OS_Exit (1);
+                     end if;
                   end if;
                when others =>
                   null;
