@@ -129,9 +129,11 @@ package body Alire.Utils.Switches is
           when None     => Empty_List,
           when Warnings => Empty_List
                            .Append (GNAT_All_Warnings)
+                           .Append (GNAT_Disable_Warn_No_Exception_Propagation)
                            .Append (GNAT_All_Validity_Checks),
           when Errors   => Empty_List
                            .Append (GNAT_All_Warnings)
+                           .Append (GNAT_Disable_Warn_No_Exception_Propagation)
                            .Append (GNAT_All_Validity_Checks)
                            .Append (GNAT_Warnings_As_Errors),
           when Custom   => S.List);
