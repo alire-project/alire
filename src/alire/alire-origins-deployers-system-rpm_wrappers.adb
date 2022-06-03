@@ -19,6 +19,18 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
          when Dnf => "dnf",
          when Yum => "yum");
 
+   ------------------------------
+   -- Package_Name_With_Archit --
+   ------------------------------
+
+   function Package_Name_With_Archit (Name : String) return String
+   is (if Contains (Name, ".")
+       then Name
+       else Name
+            & "."
+            & To_Lower_Case
+                (Platforms.Current.Host_Architecture'Image));
+
    -----------------------
    -- Already_Installed --
    -----------------------
@@ -29,13 +41,7 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
       --  Name of the package narrowed down by architecture, to avoid being
       --  confused by i386 packages
       Full_Pkg_Name : constant String :=
-                        (if Contains (This.Base.Package_Name, ".")
-                         then This.Base.Package_Name
-                         else
-                            This.Base.Package_Name
-                         & "."
-                         & To_Lower_Case
-                           (Platforms.Current.Host_Architecture'Image));
+                        Package_Name_With_Archit (This.Base.Package_Name);
 
       Wrapper : constant String := Wrapper_Command (This);
 
@@ -71,13 +77,7 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
       --  Name of the package narrowed down by architecture, to avoid being
       --  confused by i386 packages
       Full_Pkg_Name : constant String :=
-                    (if Contains (This.Base.Package_Name, ".")
-                     then This.Base.Package_Name
-                     else
-                        This.Base.Package_Name
-                        & "."
-                        & To_Lower_Case
-                            (Platforms.Current.Host_Architecture'Image));
+                        Package_Name_With_Archit (This.Base.Package_Name);
 
       --------------------------
       -- Detect_Not_Installed --
