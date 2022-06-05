@@ -2,8 +2,10 @@ with Ada.Directories;
 
 with Alire.Config.Edit;
 with Alire.Directories;
+with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Platforms.Current;
+with Alire.Root;
 with Alire.Spawn;
 
 package body Alr.Commands.Clean is
@@ -118,7 +120,17 @@ package body Alr.Commands.Clean is
                       Args :        AAA.Strings.Vector)
    is
       use AAA.Strings;
+      use Alire.OS_Lib.Operators;
+
+      Autoconf_File : constant String :=
+        Alire.Root.Current.Working_Folder
+        / Alire.Paths.Cache_Project_File_Name;
+
    begin
+
+      if Ada.Directories.Exists (Autoconf_File) then
+         Ada.Directories.Delete_File (Autoconf_File);
+      end if;
 
       if not (Cmd.Cache or else Cmd.Temp) then
          Cmd.Requires_Valid_Session;

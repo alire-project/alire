@@ -1,4 +1,6 @@
 with Alire_Early_Elaboration;
+with Alire.Paths;
+with Alire.Root;
 with Alire.OS_Lib.Subprocess;
 
 package body Alire.Spawn is
@@ -31,6 +33,13 @@ package body Alire.Spawn is
                        Extra_Args   : AAA.Strings.Vector)
    is
       use AAA.Strings;
+      use Alire.OS_Lib.Operators;
+
+      Autoconf_Param : constant String :=
+        "--autoconf=" &
+        (Alire.Root.Current.Working_Folder
+        / Alire.Paths.Cache_Project_File_Name);
+
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path ("gprbuild") = "" then
          Alire.Raise_Checked_Error
@@ -44,6 +53,7 @@ package body Alire.Spawn is
                  "-j0" & -- Build in parallel
                  "-p"  & -- Create missing obj, lib and exec dirs
                  "-P"  & Project_File &
+                 Autoconf_Param &
                  Extra_Args,
                Understands_Verbose => True);
    end Gprbuild;

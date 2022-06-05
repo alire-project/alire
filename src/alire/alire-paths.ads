@@ -5,6 +5,9 @@ package Alire.Paths with Preelaborate is
    Crate_File_Name : constant String := "alire.toml";
    --  Name of the manifest file in a regular workspace
 
+   Cache_Project_File_Name : constant String := "build.cgpr";
+   --  Name of the "cache" file used by gprbuild
+
    Cache_Folder_Inside_Working_Folder : constant Relative_Path := "cache";
 
    Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
