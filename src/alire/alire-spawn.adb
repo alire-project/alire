@@ -1,6 +1,7 @@
 with Alire_Early_Elaboration;
+with Ada.Directories;
+with Alire.Config;
 with Alire.Paths;
-with Alire.Root;
 with Alire.OS_Lib.Subprocess;
 
 package body Alire.Spawn is
@@ -35,10 +36,22 @@ package body Alire.Spawn is
       use AAA.Strings;
       use Alire.OS_Lib.Operators;
 
+      Containing_Directory : constant String :=
+        Ada.Directories.Containing_Directory (Project_File);
+
+      Toolchain : constant String :=
+        Alire.Config.DB.Get
+          (Alire.Config.Keys.Toolchain_Use & ".gnat",
+           Alire.Paths.Cache_Project_File_Name);
+
+      Autoconf_File : constant String :=
+        Containing_Directory /
+          Alire.Paths.Working_Folder_Inside_Root /
+            Alire.Paths.Cache_Folder_Inside_Working_Folder /
+              Toolchain;
+
       Autoconf_Param : constant String :=
-        "--autoconf=" &
-        (Alire.Root.Current.Working_Folder
-        / Alire.Paths.Cache_Project_File_Name);
+        "--autoconf=" & Autoconf_File;
 
    begin
       if Alire.OS_Lib.Subprocess.Locate_In_Path ("gprbuild") = "" then
