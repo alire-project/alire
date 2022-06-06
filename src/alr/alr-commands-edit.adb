@@ -88,9 +88,9 @@ package body Alr.Commands.Edit is
             if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
 
                Reportaise_Command_Failed
-                 ("GNATstudio not available or not in PATH. " & ASCII.LF &
-                    "You can download the Community edition at: " & ASCII.LF &
-                    "https://www.adacore.com/download");
+                 ("GNAT Studio not available or not in PATH. " & ASCII.LF &
+                    "You can download it at: " & ASCII.LF &
+                    "https://github.com/AdaCore/gnatstudio/releases");
             else
                Reportaise_Command_Failed
                  ("'" & Exec & "' not available or not in PATH.");
