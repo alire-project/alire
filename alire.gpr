@@ -2,7 +2,7 @@ with "aaa";
 with "ada_toml";
 with "alire_common";
 with "ajunitgen";
-with "ansi";
+with "ansiada";
 with "clic";
 with "gnatcoll";
 with "minirest";
