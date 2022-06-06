@@ -4,7 +4,7 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release 1.2-dev
+## Release 1.2
 
 ### New subcommand for listing and manual triggering of actions
 
