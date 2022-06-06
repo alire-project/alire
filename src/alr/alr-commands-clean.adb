@@ -6,6 +6,8 @@ with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Root;
+with Alire.Roots.Optional;
+
 with Alire.Spawn;
 
 package body Alr.Commands.Clean is
@@ -121,15 +123,27 @@ package body Alr.Commands.Clean is
    is
       use AAA.Strings;
       use Alire.OS_Lib.Operators;
+      use Alire.Roots.Optional;
 
-      Autoconf_File : constant String :=
-        Alire.Root.Current.Working_Folder
-        / Alire.Paths.Cache_Project_File_Name;
+      Root : constant Alire.Roots.Optional.Root :=
+        Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
 
    begin
 
-      if Ada.Directories.Exists (Autoconf_File) then
-         Ada.Directories.Delete_File (Autoconf_File);
+      if Root.Status = Valid then
+         declare
+            Autoconf_File : constant String :=
+              Alire.Root.Current.Working_Folder
+                / Alire.Paths.Cache_Project_File_Name;
+         begin
+            if Ada.Directories.Exists (Autoconf_File) then
+
+               Trace.Detail ("Cleaning gprbuild cache file...");
+
+               Ada.Directories.Delete_File (Autoconf_File);
+
+            end if;
+         end;
       end if;
 
       if not (Cmd.Cache or else Cmd.Temp) then
