@@ -63,7 +63,7 @@ for any other regular crate).
 
 PR [#896](https://github.com/alire-project/alire/pull/896)
 
-The default build profile for the root crate is `Development` by default. This
+The default build profile for the root crate is `Development`. This
 can be changed with the `--release`, `--validation` and `--development`
 switches for `alr build`.
 
