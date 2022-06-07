@@ -13,7 +13,7 @@ with "si_units";
 with "spdx";
 with "stopwatch";
 with "toml_slicer";
-with "uri";
+with "uri_ada";
 with "xml_ez_out";
 
 library project Alire is
