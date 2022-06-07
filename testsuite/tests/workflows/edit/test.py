@@ -19,14 +19,14 @@ if gs is None:
     # GNATstudio not in PATH: Check that we get an error saying GS not
     # available
     p = run_alr('edit', complain_on_error=False)
-    assert_match(".*GNATstudio not available or not in PATH.*", p.out)
+    assert_match(".*GNAT Studio not available or not in PATH.*", p.out)
 else:
     # GNATstudio in PATH: Check that we get an error when multiple project
     # files are defined
     p = run_alr('edit', complain_on_error=False)
     assert_match(".*Please specify a project file with --project=.*", p.out)
 
-# Set an editor that doesn't exist (different than GNATstudio)
+# Set an editor that doesn't exist (different than GNAT Studio)
 run_alr('config', '--set', 'editor.cmd', 'doesnt_exist arg1 ab${GPR_FILE}ab arg3')
 p = run_alr('edit', '--project=project1.gpr', complain_on_error=False)
 assert_match("ERROR: 'doesnt_exist' not available or not in PATH.*", p.out)
