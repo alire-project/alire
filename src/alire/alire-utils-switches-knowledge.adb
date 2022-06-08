@@ -60,6 +60,7 @@ package body Alire.Utils.Switches.Knowledge is
       Register (GNAT_Warnings_As_Errors, "Warnings as errors");
       Register (GNAT_Function_Sections, "Separate ELF section for each function");
       Register (GNAT_Data_Sections, "Separate ELF section for each variable");
+      Register (GNAT_Extra_Exception_Info, "Extra information in exception messages");
 
       Register (GNAT_Ada83, "Ada 83 Compatibility Mode");
       Register (GNAT_Ada95, "Ada 95 Mode");
