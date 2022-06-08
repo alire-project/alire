@@ -15,13 +15,20 @@ package body Alr.Commands.Build is
    is
       use Alire.Utils.Switches;
    begin
-
       if Alire.Utils.Count_True ((Cmd.Release_Mode,
                                  Cmd.Validation_Mode,
                                  Cmd.Dev_Mode)) > 1
       then
          Reportaise_Wrong_Arguments ("Only one build mode can be selected");
       end if;
+
+      --  If a build profile has been set in the manifest we apply it now.
+      --  There will be a default otherwise.
+
+      Alire.Crate_Configuration.Root_Build_Profile :=
+        Cmd.Root.Configuration.Build_Profile (Cmd.Root.Name);
+
+      --  Build profile in the command line takes precedence
 
       if Cmd.Release_Mode then
          Alire.Crate_Configuration.Root_Build_Profile := Release;
@@ -48,9 +55,19 @@ package body Alr.Commands.Build is
                      return Boolean
    is
    begin
+
       Cmd.Requires_Full_Index;
 
       Cmd.Requires_Valid_Session;
+
+      --  If we were invoked from another command (e.g. run) we apply the
+      --  profile found in the manifest as no override in the command line can
+      --  appear:
+
+      if Cmd not in Command'Class then
+         Alire.Crate_Configuration.Root_Build_Profile :=
+           Cmd.Root.Configuration.Build_Profile (Cmd.Root.Name);
+      end if;
 
       declare
          Timer : Stopwatch.Instance;

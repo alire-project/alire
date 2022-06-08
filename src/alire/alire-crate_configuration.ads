@@ -12,6 +12,8 @@ private with Ada.Containers.Indefinite_Ordered_Maps;
 
 package Alire.Crate_Configuration is
 
+   --  Types used to store build profiles/switches and declared variables
+
    Default_Root_Build_Profile : constant Utils.Switches.Profile_Kind :=
      Utils.Switches.Development;
 
@@ -21,7 +23,15 @@ package Alire.Crate_Configuration is
    Root_Build_Profile : Utils.Switches.Profile_Kind :=
      Default_Root_Build_Profile;
 
-   type Global_Config is tagged limited private;
+   type Global_Config is tagged private;
+
+   function Is_Valid (This : Global_Config) return Boolean;
+   --  False until Load is called
+
+   function Build_Profile (This  : Global_Config;
+                           Crate : Crate_Name)
+                           return Utils.Switches.Profile_Kind
+     with Pre => This.Is_Valid;
 
    procedure Load (This : in out Global_Config;
                    Root : in out Alire.Roots.Root);
@@ -65,7 +75,7 @@ private
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Alire.Utils.Switches.Switch_List);
 
-   type Global_Config is tagged limited record
+   type Global_Config is tagged record
       Map : Config_Maps.Map;
 
       Profile_Map  : Profile_Maps.Map;

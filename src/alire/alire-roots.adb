@@ -1,5 +1,4 @@
 with Alire.Conditional;
-with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
@@ -245,6 +244,21 @@ package body Alire.Roots is
          end loop;
       end return;
    end Direct_Withs;
+
+   -------------------
+   -- Configuration --
+   -------------------
+
+   function Configuration (This : in out Root)
+                           return Crate_Configuration.Global_Config
+   is
+   begin
+      if not This.Configuration.Is_Valid then
+         Crate_Configuration.Load (This.Configuration, This);
+      end if;
+
+      return This.Configuration;
+   end Configuration;
 
    ----------------------------
    -- Generate_Configuration --
@@ -817,6 +831,7 @@ package body Alire.Roots is
       Path            => +Path,
       Release         => Releases.Containers.To_Release_H (R),
       Cached_Solution => <>,
+      Configuration   => <>,
       Pins            => <>,
       Lockfile        => <>,
       Manifest        => <>);

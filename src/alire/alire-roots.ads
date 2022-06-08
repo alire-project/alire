@@ -5,6 +5,7 @@ private with Ada.Finalization;
 with AAA.Strings;
 
 with Alire.Containers;
+with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
@@ -217,6 +218,11 @@ package Alire.Roots is
    --  all releases in the solution (even those not built). Returns True on
    --  successful build.
 
+   function Configuration (This : in out Root)
+                           return Crate_Configuration.Global_Config;
+   --  Returns the global configuration for the root and dependencies. This
+   --  configuration is computed the first time it is requested.
+
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files
 
@@ -256,6 +262,9 @@ private
       Path            : UString;
       Release         : Releases.Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
+
+      Configuration   : Crate_Configuration.Global_Config;
+      --  Variables and Build profiles configuration
 
       Pins            : Solutions.Solution;
       --  Closure of all pins that are recursively found

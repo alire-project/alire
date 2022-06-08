@@ -64,6 +64,15 @@ package body Alire.Crate_Configuration is
    package Crate_Name_Vect
    is new Ada.Containers.Indefinite_Vectors (Natural, Crate_Name);
 
+   -------------------
+   -- Build_Profile --
+   -------------------
+
+   function Build_Profile (This  : Global_Config;
+                           Crate : Crate_Name)
+                           return Utils.Switches.Profile_Kind
+   is (This.Profile_Map (Crate));
+
    -----------------------
    -- Make_Release_Vect --
    -----------------------
@@ -416,6 +425,14 @@ package body Alire.Crate_Configuration is
       TIO.Put_Line (File, "end " & Crate_Mixed & "_Config;");
       TIO.Close (File);
    end Generate_Ada_Config;
+
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (This : Global_Config) return Boolean
+   is (not This.Profile_Map.Is_Empty);
+   --  Because at a minimum it must contain the root crate profile
 
    ---------------------------
    -- Pretty_Print_Switches --
