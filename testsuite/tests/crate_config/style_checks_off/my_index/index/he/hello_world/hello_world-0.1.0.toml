@@ -1,0 +1,13 @@
+description = "\"Hello, world!\" demonstration project"
+name = "hello_world"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+executables=['main']
+
+[origin]
+url = "file:../../../hello_src"
+
+[configuration.variables]
+test = { type = "Enum", values = ["This_Is_Too_Long", "And_Might_Trigger", "A_Style_Check_Error", "But_We_Disable_Them", "In_The_Generate_Code"], default = "This_Is_Too_Long"}
