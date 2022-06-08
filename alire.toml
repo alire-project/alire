@@ -31,6 +31,10 @@ toml_slicer = "~0.1"
 uri_ada = "^2.0"
 spdx = "~0.2"
 
+# For some reason static-pic is causing problems in CLIC
+[gpr-set-externals]
+CLIC_LIBRARY_TYPE="static"
+
 # Building alr requires the explicit setting of this variable
 [gpr-set-externals."case(os)"]
 macos   = { OS = "macOS" }
