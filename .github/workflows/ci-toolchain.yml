@@ -46,7 +46,7 @@ jobs:
         branch: master
 
     - name: Show dependencies/pins
-      run: alr -n -q with --solve
+      run: alr -n -q with --solve || alr -n -v -d with --solve
 
     - name: Show build environment
       run: alr -n printenv

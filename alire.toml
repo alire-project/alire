@@ -37,4 +37,4 @@ macos   = { OS = "macOS" }
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-#gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "e250e4e42d9743b782788cf61b4ddc10a45e69e2" }
+gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "e250e4e42d9743b782788cf61b4ddc10a45e69e2" }
