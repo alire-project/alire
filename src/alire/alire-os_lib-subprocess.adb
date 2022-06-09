@@ -1,9 +1,10 @@
 with Ada.Text_IO;
 
+with AnsiAda; use AnsiAda;
+
 with CLIC.TTY;
 
 with GNAT.OS_Lib;
-with ANSI; use ANSI;
 
 package body Alire.OS_Lib.Subprocess is
 

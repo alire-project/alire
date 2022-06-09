@@ -2,7 +2,7 @@ with "aaa";
 with "ada_toml";
 with "alire_common";
 with "ajunitgen";
-with "ansi";
+with "ansiada";
 with "clic";
 with "gnatcoll";
 with "minirest";
@@ -13,7 +13,7 @@ with "si_units";
 with "spdx";
 with "stopwatch";
 with "toml_slicer";
-with "uri";
+with "uri_ada";
 with "xml_ez_out";
 
 library project Alire is
