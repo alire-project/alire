@@ -181,8 +181,6 @@ package body Alire.TOML_Load is
                Context => TOML_Keys.Pins));
       end if;
 
-      --  TODO: Process Forbidden
-
       --  Process Available
 
       if Allowed_Tables (Section, Available) then
