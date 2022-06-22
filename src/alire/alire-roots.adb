@@ -1,3 +1,5 @@
+with Ada.Unchecked_Deallocation;
+
 with Alire.Conditional;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
@@ -254,10 +256,10 @@ package body Alire.Roots is
    is
    begin
       if not This.Configuration.Is_Valid then
-         Crate_Configuration.Load (This.Configuration, This);
+         Crate_Configuration.Load (This.Configuration.all, This);
       end if;
 
-      return This.Configuration;
+      return This.Configuration.all;
    end Configuration;
 
    ----------------------------
@@ -1384,5 +1386,20 @@ package body Alire.Roots is
         (Traverse_Wrap'Access,
          Root => Releases.Containers.Optional_Releases.Unit (Release (This)));
    end Traverse;
+
+   overriding
+   procedure Adjust (This : in out Root) is
+   begin
+      This.Configuration :=
+        new Crate_Configuration.Global_Config'(This.Configuration.all);
+   end Adjust;
+
+   overriding
+   procedure Finalize (This : in out Root) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Crate_Configuration.Global_Config, Global_Config_Access);
+   begin
+      Free (This.Configuration);
+   end Finalize;
 
 end Alire.Roots;
