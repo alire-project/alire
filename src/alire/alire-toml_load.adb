@@ -82,7 +82,6 @@ package body Alire.TOML_Load is
       Pins    : in out User_Pins.Maps.Map;
       Avail   : in out Conditional.Availability)
    is
-      pragma Unreferenced (Pins);
       use TOML;
       use type Conditional.Dependencies;
       use type Conditional.Properties;
