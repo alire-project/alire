@@ -1,6 +1,5 @@
 with AAA.Strings;
 
-with Alire.Properties;
 with Alire.Releases;
 
 package Alire.Properties.Actions.Executor is
