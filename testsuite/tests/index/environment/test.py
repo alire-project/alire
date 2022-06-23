@@ -12,9 +12,8 @@ import os
 # With conditionals
 p = run_alr('show', 'hello')
 
+# Test that unconditional properties are in the output
 assert_match('.*'
-             '      when others => Environment: CONDVAR=uvw\n'
-             '.*'
              '   Environment: VAR1=\${VAR1}:abc\n'
              '   Environment: VAR2=xyz:\${VAR2}\n'
              '   Environment: VAR3=pqr\n'
@@ -24,6 +23,13 @@ assert_match('.*'
              '   Environment: VAR7=abc\${_ALIRE_TEST_}abc\n'
              '   Environment: VAR8=abc\\\\\${_ALIRE_TEST_}abc\n'
              '   Environment: VAR9=\${_ALIRE_TEST_}\${_ALIRE_TEST_}\${_ALIRE_TEST_}\n'
+             '.*',
+             p.out, flags=re.S)
+
+# Test that conditional properties are in the output
+assert_match('.*'
+             '   case OS is\n'
+             '      when others => Environment: CONDVAR=uvw\n'
              '.*',
              p.out, flags=re.S)
 
