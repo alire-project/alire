@@ -5,6 +5,7 @@ private with Ada.Finalization;
 with AAA.Strings;
 
 with Alire.Containers;
+with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
@@ -217,6 +218,11 @@ package Alire.Roots is
    --  all releases in the solution (even those not built). Returns True on
    --  successful build.
 
+   function Configuration (This : in out Root)
+                           return Crate_Configuration.Global_Config;
+   --  Returns the global configuration for the root and dependencies. This
+   --  configuration is computed the first time it is requested.
+
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files
 
@@ -251,11 +257,24 @@ private
       Load   => Load_Solution,
       Write  => Write_Solution);
 
+   type Global_Config_Access is access Crate_Configuration.Global_Config;
+
    type Root is new Ada.Finalization.Controlled with record
       Environment     : Properties.Vector;
       Path            : UString;
       Release         : Releases.Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
+
+      Configuration   : Global_Config_Access :=
+                          new Crate_Configuration.Global_Config;
+      --  Variables and Build profiles configuration
+      --  This pointer and the consequently necessary Adjust and Finalize are
+      --  here just because with some compiler versions, the direct use of the
+      --  pointee type results in exceptions during finalization of the main
+      --  program (starting in the guts at b__ generated procedures, so hard to
+      --  debug). It may be worthwhile to try to remove this with future GNAT
+      --  versions. As a data point, with the stock Ubuntu 20.04 GNAT (9.3),
+      --  there is no problem.
 
       Pins            : Solutions.Solution;
       --  Closure of all pins that are recursively found
@@ -264,6 +283,12 @@ private
       Manifest        : Unbounded_Absolute_Path;
       Lockfile        : Unbounded_Absolute_Path;
    end record;
+
+   overriding
+   procedure Adjust (This : in out Root);
+
+   overriding
+   procedure Finalize (This : in out Root);
 
    --  Support for editable roots begins here. These are not expected to be
    --  directly useful to clients, so better kept them under wraps.
