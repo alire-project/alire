@@ -1,5 +1,6 @@
+with Ada.Unchecked_Deallocation;
+
 with Alire.Conditional;
-with Alire.Crate_Configuration;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
@@ -245,6 +246,21 @@ package body Alire.Roots is
          end loop;
       end return;
    end Direct_Withs;
+
+   -------------------
+   -- Configuration --
+   -------------------
+
+   function Configuration (This : in out Root)
+                           return Crate_Configuration.Global_Config
+   is
+   begin
+      if not This.Configuration.Is_Valid then
+         Crate_Configuration.Load (This.Configuration.all, This);
+      end if;
+
+      return This.Configuration.all;
+   end Configuration;
 
    ----------------------------
    -- Generate_Configuration --
@@ -817,6 +833,7 @@ package body Alire.Roots is
       Path            => +Path,
       Release         => Releases.Containers.To_Release_H (R),
       Cached_Solution => <>,
+      Configuration   => <>,
       Pins            => <>,
       Lockfile        => <>,
       Manifest        => <>);
@@ -1369,5 +1386,20 @@ package body Alire.Roots is
         (Traverse_Wrap'Access,
          Root => Releases.Containers.Optional_Releases.Unit (Release (This)));
    end Traverse;
+
+   overriding
+   procedure Adjust (This : in out Root) is
+   begin
+      This.Configuration :=
+        new Crate_Configuration.Global_Config'(This.Configuration.all);
+   end Adjust;
+
+   overriding
+   procedure Finalize (This : in out Root) is
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Crate_Configuration.Global_Config, Global_Config_Access);
+   begin
+      Free (This.Configuration);
+   end Finalize;
 
 end Alire.Roots;
