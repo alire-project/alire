@@ -22,18 +22,16 @@ package body Alr.Commands.Build is
          Reportaise_Wrong_Arguments ("Only one build mode can be selected");
       end if;
 
-      --  If a build profile has been set in the manifest we apply it now.
-      --  There will be a default otherwise.
-
-      Alire.Crate_Configuration.Root_Build_Profile :=
-        Cmd.Root.Configuration.Build_Profile (Cmd.Root.Name);
+      --  Build profile in the command line takes precedence. The configuration
+      --  will have been loaded at this time with all profiles found in
+      --  manifests.
 
       if Cmd.Release_Mode then
-         Alire.Crate_Configuration.Root_Build_Profile := Release;
+         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Release);
       elsif Cmd.Validation_Mode then
-         Alire.Crate_Configuration.Root_Build_Profile := Validation;
+         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Validation);
       elsif Cmd.Dev_Mode then
-         Alire.Crate_Configuration.Root_Build_Profile := Development;
+         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Development);
       end if;
 
       if not Execute (Cmd, Args,
@@ -55,12 +53,12 @@ package body Alr.Commands.Build is
    begin
 
       --  If we were invoked from another command (e.g. run) we apply the
-      --  profile found in the manifest as no override in the command line can
-      --  appear:
+      --  last profile used for building the crate
 
       if Cmd not in Command'Class then
-         Alire.Crate_Configuration.Root_Build_Profile :=
-           Cmd.Root.Configuration.Build_Profile (Cmd.Root.Name);
+         Cmd.Root.Set_Build_Profile
+           (Cmd.Root.Name,
+            Alire.Crate_Configuration.Last_Build_Profile);
       end if;
 
       declare

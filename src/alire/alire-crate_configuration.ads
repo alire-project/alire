@@ -14,14 +14,13 @@ package Alire.Crate_Configuration is
 
    --  Types used to store build profiles/switches and declared variables
 
+   subtype Profile_Kind is Utils.Switches.Profile_Kind;
+
    Default_Root_Build_Profile : constant Utils.Switches.Profile_Kind :=
      Utils.Switches.Development;
 
    Default_Deps_Build_Profile : constant Utils.Switches.Profile_Kind :=
      Utils.Switches.Release;
-
-   Root_Build_Profile : Utils.Switches.Profile_Kind :=
-     Default_Root_Build_Profile;
 
    type Global_Config is tagged private;
 
@@ -31,6 +30,11 @@ package Alire.Crate_Configuration is
    function Build_Profile (This  : Global_Config;
                            Crate : Crate_Name)
                            return Utils.Switches.Profile_Kind
+     with Pre => This.Is_Valid;
+
+   procedure Set_Build_Profile (This    : in out Global_Config;
+                                Crate   : Crate_Name;
+                                Profile : Profile_Kind)
      with Pre => This.Is_Valid;
 
    procedure Load (This : in out Global_Config;

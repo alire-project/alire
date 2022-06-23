@@ -19,10 +19,10 @@ run_alr("build", "--release")
 assert_match(".*last_build_profile=RELEASE.*",
              run_alr("config").out)
 
-# Check implicit profile when build is indirect
+# Check implicit profile when build is indirect is last that was used:
 
-run_alr("run")  # Causes a default build
-assert_match(".*last_build_profile=DEVELOPMENT.*",
+run_alr("run")  # Causes a build with the last used profile
+assert_match(".*last_build_profile=RELEASE.*",
              run_alr("config").out)
 
 # Check explicit profile requested in the manifest
