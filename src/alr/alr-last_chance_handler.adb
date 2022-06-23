@@ -1,6 +1,5 @@
 with Alire.Errors;
 
-with Alr;
 with Alr.OS_Lib;
 
 procedure Alr.Last_Chance_Handler (E : Ada.Exceptions.Exception_Occurrence) is

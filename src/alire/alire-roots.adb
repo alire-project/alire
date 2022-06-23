@@ -280,12 +280,12 @@ package body Alire.Roots is
                                 return Root
    is
       use Directories;
-      Was_There : Boolean with Unreferenced;
+      Unused_Was_There : Boolean;
    begin
       This.Deploy
         (Env             => Env,
          Parent_Folder   => Parent_Folder,
-         Was_There       => Was_There,
+         Was_There       => Unused_Was_There,
          Perform_Actions => Perform_Actions,
          Create_Manifest => True);
 

@@ -386,7 +386,15 @@ package body Alire.Solutions is
                      Release : Alire.Releases.Release;
                      Env     : Properties.Vector)
                      return Boolean
-   is (
+   is
+   begin
+      pragma Warnings (Off, "disjunct");
+      --  Newer (12.1) compiler versions say:
+      --  warning: unused variable "Solved" in disjunct [-gnatw.t]
+      --  warning: consider extracting disjunct from quantified expression
+      --  TODO: review in the future when we have moved on for a while.
+
+      return
        --  Some of the releases in the solution forbid this one release
        (for some Solved of This.Releases =>
           (for some Dep of Solved.Forbidden (Env) =>
@@ -394,8 +402,9 @@ package body Alire.Solutions is
         or else
         --  The candidate release forbids something in the solution
           (for some Dep of Release.Forbidden (Env) =>
-               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))))
-      );
+               (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
+      pragma Warnings (On);
+   end Forbids;
 
    ---------------
    -- Including --
