@@ -338,7 +338,7 @@ package body Alire.TOML_Adapters is
 
       function Image (Val : TOML_Value) return String is
         (case Val.Kind is
-            when TOML_String => Val.As_String,
+            when TOML_String  => Val.As_String,
             when TOML_Boolean => Val.As_Boolean'Img,
             when TOML_Integer => Val.As_Integer'Img,
             when others       => raise Unimplemented);
@@ -363,12 +363,23 @@ package body Alire.TOML_Adapters is
                              & (if Val.Length > 0
                                then " of " & Val.Item (1).Kind'Img
                                else ""));
+               for I in 1 .. Val.Length loop
+                  Trace.Always (Prefix & "array entry" & I'Img & ":");
+                  Print (Val.Item (I), Prefix & "   ");
+               end loop;
             when others =>
-               Trace.Always (Prefix & "value: " & Val.Kind'Img);
+               Trace.Always (Prefix & "value: " & Val.Kind'Img
+                             & "; img: "
+                             & (case Val.Kind is
+                                  when TOML_String  => Val.As_String,
+                                  when TOML_Integer => Val.As_Integer'Image,
+                                  when TOML_Boolean => Val.As_Boolean'Image,
+                                  when others       => "(unimplemented)"));
          end case;
       end Print;
 
    begin
+      Trace.Always ("Printing context: " & Errors.Stack (""));
       Print (Queue.Value, "");
    end Print;
 

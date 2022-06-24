@@ -119,6 +119,16 @@ package body Alire.Conditional_Trees.TOML_Load is
       is
          Table : constant TOML_Adapters.Key_Queue :=
                    From.Descend (Val, "values");
+
+         Case_Result : Tree;
+         --  We store properties coming from cases separately so for the action
+         --  syntax of:
+         --  [[actions]]
+         --  key = val
+         --  [actions.case]
+         --  key = val
+         --  respects the ordering of first the common case and then subcases.
+
       begin
          return Result : Tree do
 
@@ -133,7 +143,7 @@ package body Alire.Conditional_Trees.TOML_Load is
                begin
                   exit when Case_Key = ""; -- Table contains no more cases
 
-                  Result.Append
+                  Case_Result.Append
                     (Process_Case (From, Key, Case_Key, Case_Val));
                end;
             end loop;
@@ -147,6 +157,10 @@ package body Alire.Conditional_Trees.TOML_Load is
                          (Key     => Key,
                           Value   => Val,
                           Context => Key)));
+            end if;
+
+            if not Case_Result.Is_Empty then
+               Result.Append (Case_Result);
             end if;
          end return;
       end Process_Nested_Table;
