@@ -70,6 +70,7 @@ private
 
    type Variable is new Property with record
       Modif : Profile_Modifier;
+      T     : TOML.TOML_Value; -- Original import
    end record;
 
 end Alire.Properties.Build_Switches;
