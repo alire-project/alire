@@ -24,7 +24,7 @@ package Alr.Commands.Show is
      ("See information about a release");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[<crate>[allowed versions]] [--system] [--external[-detect]"
+     ("[<crate>[allowed versions]] [--system] [--external[-detect]]"
       & " | --graph | --jekyll | --solve | --tree");
 
 private
