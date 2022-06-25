@@ -48,7 +48,7 @@ package Alire.Index_On_Disk is
                          Parent :     Any_Path;
                          Result : out Outcome) return Index'Class with
      Pre => From.Kind in TOML.TOML_Table;
-   --  Load from a output Index.To_TOML value
+   --  Load from an output Index.To_TOML value
 
    function New_Handler (Origin :     URL;
                          Name   :     Restricted_Name;

@@ -3,7 +3,6 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
 with Alire.Index_On_Disk.Loading;
-
 with Alire.Utils.TTY;
 
 package body Alire.Index is
@@ -16,24 +15,24 @@ package body Alire.Index is
         "<",        Releases.Containers."=");
    subtype Release_Alias_Map is Release_Set_Maps.Map;
 
-   package External_Alias_Maps is new
-     Ada.Containers.Indefinite_Ordered_Maps (Crate_Name,
-                                             Containers.Crate_Name_Sets.Set,
-                                             "<",
-                                             Containers.Crate_Name_Sets."=");
-   subtype External_Alias_Map is External_Alias_Maps.Map;
-
    use all type Semantic_Versioning.Version;
 
    Contents : aliased Alire.Crates.Containers.Maps.Map;
    --  Regular mapping from crate name to its releases
 
-   Aliases  : Release_Alias_Map;
+   Release_Aliases : Release_Alias_Map;
    --  Mapping from crate name to any release that satisfies it. Currently,
    --  releases are duplicated in memory. These two collections could be made
    --  to share releases via some indirection or pointers.
 
-   External_Aliases : External_Alias_Map;
+   Crate_Aliases : aliased Provides.Crate_Provider_Map;
+   --  During on-demand crate loading, we need to know which crates also
+   --  provide the requested crate. This information is redundant with
+   --  Release_Aliases, but as this simpler information is the one that's
+   --  read/written to disk on index update, we better keep a separate copy
+   --  for simplicity.
+
+   External_Aliases : Provides.Crate_Provider_Map;
    --  For external crates that provide another crate, we need to be aware
    --  when external detection is requested. This mapping goes in the direction
    --  Provided -> Providers.
@@ -90,12 +89,24 @@ package body Alire.Index is
          for Mil of Release.Provides loop
             declare
                Crate : Releases.Containers.Release_Set :=
-                         (if Aliases.Contains (Mil.Crate)
-                          then Aliases (Mil.Crate)
+                         (if Release_Aliases.Contains (Mil.Crate)
+                          then Release_Aliases (Mil.Crate)
                           else Releases.Containers.Empty_Release_Set);
+
+               Providers : Provides.Crate_Providers :=
+                             (if Crate_Aliases.Contains (Mil.Crate)
+                              then Crate_Aliases (Mil.Crate)
+                              else Containers.Crate_Name_Sets.Empty);
             begin
+               --  Add release-level aliases
+
                Crate.Include (Release);
-               Aliases.Include (Mil.Crate, Crate);
+               Release_Aliases.Include (Mil.Crate, Crate);
+
+               --  Add crate-level aliases
+
+               Providers.Include (Release.Name);
+               Crate_Aliases.Include (Mil.Crate, Providers);
             end;
          end loop;
       end Add_Aliases;
@@ -166,6 +177,13 @@ package body Alire.Index is
 
       return Contents'Access;
    end All_Crates;
+
+   -----------------------
+   -- All_Crate_Aliases --
+   -----------------------
+
+   function All_Crate_Aliases return access Provides.Crate_Provider_Map
+   is (Crate_Aliases'Access);
 
    -----------
    -- Crate --
@@ -326,10 +344,10 @@ package body Alire.Index is
          end loop;
       end if;
 
-      --  And any aliases via Provides
+      --  And any Release_Aliases via Provides
 
-      if Use_Equivalences and then Aliases.Contains (Dep.Crate) then
-         for Release of Aliases (Dep.Crate) loop
+      if Use_Equivalences and then Release_Aliases.Contains (Dep.Crate) then
+         for Release of Release_Aliases (Dep.Crate) loop
             if With_Origin (Release.Origin.Kind)
               and then Release.Satisfies (Dep)
               and then (not Available_Only or else Release.Is_Available (Env))
