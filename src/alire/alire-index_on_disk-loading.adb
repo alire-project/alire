@@ -442,11 +442,19 @@ package body Alire.Index_On_Disk.Loading is
          --  Load also all crates that provide the one being requested
 
          if Alire.Index.All_Crate_Aliases.Contains (Crate) then
-            for Provider of Alire.Index.All_Crate_Aliases.all (Crate) loop
-               Trace.Debug ("Loading provider crate " & Provider.As_String
-                            & " for crate " & Crate.As_String);
-               Index.Load (Provider, Strict);
-            end loop;
+            declare
+               Providers : constant Provides.Crate_Providers :=
+                             Alire.Index.All_Crate_Aliases.all (Crate);
+               --  This copy is needed because the loading itself may result in
+               --  modifications to the collection we are iterating over, which
+               --  results in a tampering check (actually an Adjust exception).
+            begin
+               for Provider of Providers loop
+                  Trace.Debug ("Loading provider crate " & Provider.As_String
+                               & " for crate " & Crate.As_String);
+                  Index.Load (Provider, Strict);
+               end loop;
+            end;
          end if;
       end loop;
 
@@ -588,19 +596,30 @@ package body Alire.Index_On_Disk.Loading is
    --------------------
 
    procedure Save_Providers (Indexes_Dir : Any_Path) is
+      use Ada.Directories;
       use Ada.Text_IO;
       File : File_Type;
+      Filename : constant Any_Path := Providers_File (Indexes_Dir);
    begin
-      Create (File, Out_File, Providers_File (Indexes_Dir));
+      if not GNAT.OS_Lib.Is_Directory (Containing_Directory (Filename)) then
+         Trace.Debug ("Skipping saving of providers, as no indexes directory "
+                      & "exists yet, so there are no possible providers");
+         return;
+      end if;
+
+      Create (File, Out_File, Filename);
       TOML.File_IO.Dump_To_File (Alire.Index.All_Crate_Aliases.To_TOML, File);
       Close (File);
    exception
-      when others =>
+      when E : others =>
          --  E.g., on disk full
+         Log_Exception (E);
          if Is_Open (File) then
             Close (File);
          end if;
-         Ada.Directories.Delete_File (Providers_File (Indexes_Dir));
+         if GNAT.OS_Lib.Is_Regular_File (Filename) then
+            Ada.Directories.Delete_File (Filename);
+         end if;
    end Save_Providers;
 
    ----------------
