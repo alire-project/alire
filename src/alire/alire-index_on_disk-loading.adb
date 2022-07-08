@@ -450,9 +450,12 @@ package body Alire.Index_On_Disk.Loading is
                --  results in a tampering check (actually an Adjust exception).
             begin
                for Provider of Providers loop
-                  Trace.Debug ("Loading provider crate " & Provider.As_String
-                               & " for crate " & Crate.As_String);
-                  Index.Load (Provider, Strict);
+                  if Provider /= Crate then
+                     Trace.Debug ("Loading provider crate "
+                                  & Provider.As_String
+                                  & " for crate " & Crate.As_String);
+                     Index.Load (Provider, Strict);
+                  end if;
                end loop;
             end;
          end if;
@@ -590,10 +593,9 @@ package body Alire.Index_On_Disk.Loading is
       Providers_Loaded := False;
       if Exists (Providers_File (Indexes_Dir)) then
          Delete_File (Providers_File (Indexes_Dir));
+         Trace.Debug ("dropped cache of crate aliases at "
+                      & Providers_File (Indexes_Dir));
       end if;
-
-      Trace.Log ("dropped cache of crate aliases at "
-                 & Providers_File (Indexes_Dir));
    end Invalidate_Providers;
 
    --------------------

@@ -32,11 +32,6 @@ package body Alire.Index is
    --  read/written to disk on index update, we better keep a separate copy
    --  for simplicity.
 
-   External_Aliases : Provides.Crate_Provider_Map;
-   --  For external crates that provide another crate, we need to be aware
-   --  when external detection is requested. This mapping goes in the direction
-   --  Provided -> Providers.
-
    ---------
    -- Add --
    ---------
@@ -142,25 +137,52 @@ package body Alire.Index is
 
    procedure Detect_Externals (Name : Crate_Name; Env : Properties.Vector) is
    begin
+      Index_Loading.Load (Name,
+                          Detect_Externals => False,
+                          Strict           => False);
+      --  We don't ask to detect because we are going to do it right after, and
+      --  this breaks a potential infinite recursion.
+
       if Already_Detected.Contains (Name) then
          Trace.Debug
            ("Not redoing detection of externals for crate " & (+Name));
-      elsif not External_Aliases.Contains (Name) then
+      elsif not Has_Externals (Name) then
          Trace.Debug ("Skipping detection for crate without externals: "
                       & Utils.TTY.Name (Name));
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
 
-         for Provider of External_Aliases (Name) loop
-            Trace.Debug ("Detecting via provider " &
-                           Utils.TTY.Name (Provider));
-            for Release of Contents (Provider).Externals.Detect (Provider, Env)
-            loop
-               Trace.Debug ("Adding external: " & Release.Milestone.Image);
-               Add (Release);
+         declare
+            Providers : Provides.Crate_Providers :=
+                          (if Crate_Aliases.Contains (Name)
+                           then Crate_Aliases (Name)
+                           else Containers.Crate_Name_Sets.Empty);
+            --  This copy is needed to avoid tampering with collections if a
+            --  new alias were found during detection.
+         begin
+            Providers.Include (Name);
+            --  Always use the crate itself to look for externals
+
+            for Provider of Providers loop
+               if Contents.Contains (Provider) then
+                  --  It may not exist if this is a virtual crate without
+                  --  releases or detectors.
+
+                  if not Contents (Provider).Externals.Is_Empty then
+                     Trace.Debug ("Detecting via provider: " &
+                                    Utils.TTY.Name (Provider));
+                  end if;
+                  for Release of Contents (Provider).Externals
+                    .Detect (Provider, Env)
+                  loop
+                     Trace.Debug ("Adding external: "
+                                  & Release.Milestone.Image);
+                     Add (Release);
+                  end loop;
+               end if;
             end loop;
-         end loop;
+         end;
       end if;
    end Detect_Externals;
 
@@ -282,24 +304,55 @@ package body Alire.Index is
    -------------------
 
    function Has_Externals (Name : Crate_Name) return Boolean
-   is (External_Aliases.Contains (Name));
-
-   -----------------------------
-   -- Register_External_Alias --
-   -----------------------------
-
-   procedure Register_External_Alias (Provider  : Crate_Name;
-                                      Providing : Crate_Name)
    is
    begin
-      if External_Aliases.Contains (Providing) then
-         External_Aliases (Providing).Include (Provider);
+      Index_Loading.Load (Name, Detect_Externals => False, Strict => False);
+
+      --  Detectors in the crate itself
+
+      if Contents.Contains (Name) and then
+        not Contents (Name).Externals.Is_Empty
+      then
+         return True;
+      end if;
+
+      --  Detectors in other crates that provide it (regular or external)
+
+      if Crate_Aliases.Contains (Name) then
+         for Provider of Crate_Aliases (Name) loop
+            if Contents.Contains (Provider) and then
+              not Contents (Provider).Externals.Is_Empty
+            then
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
+   end Has_Externals;
+
+   --------------------
+   -- Register_Alias --
+   --------------------
+
+   procedure Register_Alias (Provider  : Crate_Name;
+                             Providing : Crate_Name)
+   is
+   begin
+      if Provider = Providing then
+         return;
+         --  We don't want the trivial equivalence here as this pollutes the
+         --  written file too much.
+      end if;
+
+      if Crate_Aliases.Contains (Providing) then
+         Crate_Aliases (Providing).Include (Provider);
       else
-         External_Aliases.Insert
+         Crate_Aliases.Insert
            (Providing,
             Containers.Crate_Name_Sets.To_Set (Provider));
       end if;
-   end Register_External_Alias;
+   end Register_Alias;
 
    -------------------
    -- Release_Count --

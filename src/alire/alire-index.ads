@@ -86,9 +86,10 @@ package Alire.Index is
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
-   procedure Register_External_Alias (Provider  : Crate_Name;
-                                      Providing : Crate_Name);
-   --  Register that Provider has external detectors for Providing
+   procedure Register_Alias (Provider  : Crate_Name;
+                             Providing : Crate_Name);
+   --  Register that Provider has external detectors for Providing, or simply
+   --  it is a regular release that provides Providing.
 
    ---------------------
    --  BASIC QUERIES  --
