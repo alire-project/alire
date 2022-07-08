@@ -475,6 +475,8 @@ package body Alire.Index_On_Disk.Loading is
                       Force  : Boolean := False)
                       return Outcome
    is
+      Spinner : Simple_Logging.Ongoing :=
+                  Simple_Logging.Activity ("Loading indexes");
    begin
       Setup (From);
 
@@ -487,6 +489,7 @@ package body Alire.Index_On_Disk.Loading is
          end if;
 
          for Index of Indexes loop
+            Spinner.Step ("Loading indexes [" & Index.Name & "]");
             if Force or else not Indexes_Loaded.Contains (Index.Name) then
                declare
                   Result : constant Outcome := Index.Load (Strict);
@@ -499,6 +502,7 @@ package body Alire.Index_On_Disk.Loading is
                Indexes_Loaded.Include (Index.Name);
             end if;
          end loop;
+         Spinner.Step ("Loading indexes");
 
          --  Mark all existing crates as already loaded
 
@@ -506,6 +510,7 @@ package body Alire.Index_On_Disk.Loading is
          loop
             Crates_Loaded.Include (Crate.Name);
          end loop;
+         Spinner.Step;
 
          --  Save providers, that must be now up to date after a full loading
 
