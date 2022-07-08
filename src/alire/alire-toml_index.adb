@@ -325,14 +325,14 @@ package body Alire.TOML_Index is
       Root   : constant Any_Path := Locate_Root (Index, Result);
       --  Locate a dir containing a 'index.toml' metadata file inside the repo.
       --  This is the directory containing the actual crates.
-      Crate_Root : constant Any_Path := Root / Crate.Index_Prefix;
+      Crate_Root : constant Any_Path := Root / Crate.Index_Prefix / (+Crate);
    begin
       Result.Assert;
 
       TOML_Index.Strict := Load.Strict;
 
       Trace.Debug ("Loading single crate " & Utils.TTY.Name (Crate)
-                   & " from " & Root);
+                   & " from " & Crate_Root);
 
       if GNAT.OS_Lib.Is_Directory (Crate_Root) then
          Alire.Directories.Traverse_Tree
