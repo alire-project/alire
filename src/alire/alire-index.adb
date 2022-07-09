@@ -114,19 +114,6 @@ package body Alire.Index is
       Add_Aliases;
    end Add;
 
-   --------------------------
-   -- Detect_All_Externals --
-   --------------------------
-
-   procedure Detect_All_Externals (Env : Properties.Vector) is
-   begin
-      Trace.Detail ("Detecting external releases...");
-
-      for Crate of Contents loop
-         Detect_Externals (Crate.Name, Env);
-      end loop;
-   end Detect_All_Externals;
-
    package Name_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
    Already_Detected : Name_Sets.Set;
