@@ -91,7 +91,7 @@ package body Alire.Index is
                Providers : Provides.Crate_Providers :=
                              (if Crate_Aliases.Contains (Mil.Crate)
                               then Crate_Aliases (Mil.Crate)
-                              else Containers.Crate_Name_Sets.Empty);
+                              else Containers.Crate_Name_Sets.Empty_Set);
             begin
                --  Add release-level aliases
 
@@ -144,7 +144,7 @@ package body Alire.Index is
             Providers : Provides.Crate_Providers :=
                           (if Crate_Aliases.Contains (Name)
                            then Crate_Aliases (Name)
-                           else Containers.Crate_Name_Sets.Empty);
+                           else Containers.Crate_Name_Sets.Empty_Set);
             --  This copy is needed to avoid tampering with collections if a
             --  new alias were found during detection.
          begin
