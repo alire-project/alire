@@ -265,3 +265,18 @@ Here's an example:
 This will be shown as:
 
 [![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/hal.json)](https://alire.ada.dev/crates/hal.html)
+
+## Publishing to a local/private index
+
+Having a local index may be useful sometimes, be it for local testing, or for
+private crates not intended for publication.
+
+There is no practical difference between the community index that is cloned
+locally and a private local index stored on disk. Hence, after obtaining the
+manifest file with `alr publish`, it is a matter of placing it at the expected
+location within the index: `/path/to/index/cr/crate_name/crate_name-x.x.x.toml`
+
+If the crate being published locally contains `"provides"` definitions, it is
+necessary to call `alr index --update-all` once to ensure it is properly used
+by the dependency solver. This is only necessary for the first release in a
+crate that uses the `"provides"` feature.
