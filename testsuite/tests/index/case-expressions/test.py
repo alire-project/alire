@@ -6,6 +6,7 @@ from glob import glob
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
+from drivers.helpers import host_architecture
 
 import re
 import platform
@@ -46,6 +47,9 @@ elif platform.system() == 'Darwin':
 else:
     assert_match(".*GPR External: OS := linux.*",
                  p.out, flags=re.S)
+
+assert_match(".*GPR External: HOST_ARCH := " + host_architecture() + ".*",
+             p.out, flags=re.S)
 
 # Check that a case given as "x|y" is properly loaded and shown
 p = run_alr("show", "hello=0.9")
