@@ -35,6 +35,10 @@ package body Alire.TOML_Load is
      (Key      => TOML_Keys.Word_Size,
       Ada_Enum => Platforms.Word_Sizes) with Unreferenced;
 
+   package Host_Arch_Expressions is new Expressions.Enums
+     (Key      => TOML_Keys.Host_Arch,
+      Ada_Enum => Platforms.Architectures) with Unreferenced;
+
    --  The following are entries in the manifest that are not loaded as
    --  properties, but stored separately as complex types.
 
