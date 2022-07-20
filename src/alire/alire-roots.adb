@@ -5,6 +5,7 @@ with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Errors;
+with Alire.Index_On_Disk.Loading;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.OS_Lib;
@@ -1179,6 +1180,9 @@ package body Alire.Roots is
             end if;
          end loop;
       end if;
+
+      --  Need full index until "provides" are fixed
+      Index_On_Disk.Loading.Load_All.Assert;
 
       --  Ensure we have complete pin information
 

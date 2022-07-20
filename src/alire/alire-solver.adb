@@ -5,6 +5,7 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
+with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Optional;
 with Alire.Releases.Containers;
@@ -110,6 +111,10 @@ package body Alire.Solver is
                      Options : Query_Options := Default_Options)
                      return Solution
    is
+      Index_Query_Options : constant Index.Query_Options :=
+                              (Load_From_Disk   => True,
+                               Detect_Externals => Options.Detecting = Detect);
+
       Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
       Timer    : Stopwatch.Instance;
@@ -604,7 +609,8 @@ package body Alire.Solver is
 
                   for Release of Index.Releases_Satisfying
                     (Dependencies.New_Dependency (Dep.Crate, Pin_Version),
-                     Props)
+                     Props,
+                     Opts => Index_Query_Options)
                   loop
 
                      --  There is a valid crate for this pin and dependency
@@ -759,22 +765,11 @@ package body Alire.Solver is
 
                Check_Version_Pin;
 
-            elsif Index.Exists (Dep.Crate) or else
+            elsif Index.Exists (Dep.Crate, Index_Query_Options) or else
                   Index.Has_Externals (Dep.Crate) or else
-              not Index.Releases_Satisfying (Dep, Props).Is_Empty
-              --  TODO: Worth caching?
+              not Index.Releases_Satisfying (Dep, Props,
+                                             Index_Query_Options).Is_Empty
             then
-
-               --  Detect externals for this dependency now, so they are
-               --  available as regular releases. Note that if no release
-               --  fulfills the dependency, it will be resolved as a hint
-               --  below.
-
-               if Options.Detecting = Detect then
-                  Timer.Hold;
-                  Index.Detect_Externals (Dep.Crate, Props);
-                  Timer.Release;
-               end if;
 
                --  Check the releases now, from newer to older (unless required
                --  in reverse). We keep track that none is valid, as this is
@@ -789,7 +784,8 @@ package body Alire.Solver is
                   --  We still want to go through to external hinting.
                   declare
                      Candidates : constant Releases.Containers.Release_Set :=
-                                    Index.Releases_Satisfying (Dep, Props);
+                                    Index.Releases_Satisfying
+                                      (Dep, Props, Index_Query_Options);
 
                      procedure Consider (R : Release) is
                      begin
@@ -1040,7 +1036,9 @@ package body Alire.Solver is
 
                --  Regular unavailable releases
 
-               if Index.Releases_Satisfying (Dep.Value, Props).Is_Empty then
+               if Index.Releases_Satisfying (Dep.Value, Props,
+                                             Index_Query_Options).Is_Empty
+               then
                   Unavailable_Direct_Deps.Include (Dep.Value.Image);
                   Trace.Debug
                     ("Direct dependency has no fulfilling releases: "
@@ -1084,6 +1082,10 @@ package body Alire.Solver is
       --  Valid solution in the sense that solving has been attempted
 
    begin
+
+      Index_On_Disk.Loading.Load_All.Assert;
+      Index.Detect_All_Externals (Props);
+      --  We need these two temporarily as "provides" still don't work 100%
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
 

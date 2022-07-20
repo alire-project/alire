@@ -2,10 +2,13 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
+with Alire.Index_On_Disk.Loading;
 
 with Alire.Utils.TTY;
 
 package body Alire.Index is
+
+   package Index_Loading renames Index_On_Disk.Loading;
 
    package Release_Set_Maps is new
      Ada.Containers.Indefinite_Ordered_Maps
@@ -43,7 +46,7 @@ package body Alire.Index is
                   Policy : Policies.For_Index_Merging :=
                     Policies.Merge_Priorizing_Existing) is
    begin
-      if Exists (Crate.Name) then
+      if Contents.Contains (Crate.Name) then
          declare
             Old : Crates.Crate := Contents (Crate.Name);
          begin
@@ -154,15 +157,37 @@ package body Alire.Index is
    -- All_Crates --
    ----------------
 
-   function All_Crates return access constant Crates.Containers.Maps.Map is
-     (Contents'Access);
+   function All_Crates (Opts : Query_Options := Query_Defaults)
+                        return access constant Crates.Containers.Maps.Map is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load_All.Assert;
+      end if;
+
+      return Contents'Access;
+   end All_Crates;
 
    -----------
    -- Crate --
    -----------
 
-   function Crate (Name : Crate_Name) return Crates.Crate
-   is (Contents (Name));
+   function Crate (Name : Crate_Name;
+                   Opts : Query_Options := Query_Defaults)
+                   return Crates.Crate
+   is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Detect_Externals => Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
+      if not Contents.Contains (Name) then
+         Raise_Checked_Error ("Requested crate not in index: " & (+Name));
+      end if;
+
+      return Contents (Name);
+   end Crate;
 
    -----------------
    -- Crate_Count --
@@ -175,18 +200,30 @@ package body Alire.Index is
    -- Exists --
    ------------
 
-   function Exists (Name : Crate_Name) return Boolean is
-     (Contents.Contains (Name));
+   function Exists (Name : Crate_Name;
+                    Opts : Query_Options := Query_Defaults)
+                    return Boolean
+   is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
+      return Contents.Contains (Name);
+   end Exists;
 
    ------------
    -- Exists --
    ------------
 
    function Exists (Name : Crate_Name;
-                    Version : Semantic_Versioning.Version)
+                    Version : Semantic_Versioning.Version;
+                    Opts : Query_Options := Query_Defaults)
                     return Boolean is
    begin
-      if Exists (Name) then
+      if Exists (Name, Opts) then
          for R of Contents (Name).Releases loop
             if R.Name = Name and then R.Version = Version then
                return True;
@@ -202,17 +239,24 @@ package body Alire.Index is
    ----------
 
    function Find (Name : Crate_Name;
-                  Version : Semantic_Versioning.Version) return Release is
+                  Version : Semantic_Versioning.Version;
+                  Opts    : Query_Options := Query_Defaults) return Release is
    begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
       for R of Contents (Name).Releases loop
          if R.Name = Name and then R.Version = Version then
             return R;
          end if;
       end loop;
 
-      raise Checked_Error with
-        "Requested milestone not in index: "
-        & (+Name) & "=" & Semantic_Versioning.Image (Version);
+      Raise_Checked_Error
+        ("Requested milestone not in index: "
+         & (+Name) & "=" & Semantic_Versioning.Image (Version));
    end Find;
 
    -------------------
@@ -256,20 +300,22 @@ package body Alire.Index is
    -- Releases_Satisfying --
    -------------------------
 
-   function Releases_Satisfying (Dep              : Dependencies.Dependency;
-                                 Env              : Properties.Vector;
-                                 Use_Equivalences : Boolean := True;
-                                 Available_Only   : Boolean := True;
-                                 With_Origin      : Origins.Kinds_Set :=
-                                   (others => True))
-                                 return Releases.Containers.Release_Set
+   function Releases_Satisfying
+     (Dep              : Dependencies.Dependency;
+      Env              : Properties.Vector;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set :=
+        (others => True))
+      return Releases.Containers.Release_Set
    is
       Result : Releases.Containers.Release_Set;
    begin
 
       --  Regular crates
 
-      if Exists (Dep.Crate) then
+      if Exists (Dep.Crate, Opts) then
          for Release of Crate (Dep.Crate).Releases loop
             if With_Origin (Release.Origin.Kind)
               and then Release.Satisfies (Dep)

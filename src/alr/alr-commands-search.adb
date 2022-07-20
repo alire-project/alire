@@ -113,8 +113,6 @@ package body Alr.Commands.Search is
               ("Search substring and --list are incompatible");
          end if;
 
-         Cmd.Requires_Full_Index;
-
          Alire.Index.Search.Print_Crates
            (Substring => (case Args.Count is
                              when 0      => "",
@@ -153,8 +151,6 @@ package body Alr.Commands.Search is
 
       --  End of option verification, start of search. First load the index,
       --  required to look at its entries.
-
-      Cmd.Requires_Full_Index;
 
       Tab.Append (TTY.Bold ("NAME"));
       Tab.Append (TTY.Bold ("STATUS"));

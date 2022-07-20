@@ -8,6 +8,7 @@ with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
 with Alire.Platforms.Current;
@@ -167,6 +168,9 @@ package body Alr.Commands.Toolchain is
 
    begin
 
+      Alire.Index.Detect_Externals (Alire.GNAT_Crate,
+                                    Alire.Platforms.Current.Properties);
+
       --  We want to ensure that we are installing compatible tools. The user
       --  can force through this, so we consider that a bad situation may
       --  already exist. The following call checks what origins are already in
@@ -180,8 +184,6 @@ package body Alr.Commands.Toolchain is
                       Trace.Detail);
          end if;
       end if;
-
-      Cmd.Requires_Full_Index;
 
       Installation :
       declare
@@ -301,12 +303,11 @@ package body Alr.Commands.Toolchain is
    ----------
 
    procedure List (Cmd : in out Command) is
+      pragma Unreferenced (Cmd);
       use Alire;
       use type Dependencies.Dependency;
       Table : AAA.Table_IO.Table;
    begin
-      Cmd.Requires_Full_Index;
-
       if Alire.Shared.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
                      & TTY.URL (Alire.Config.Edit.Path));
@@ -380,7 +381,9 @@ package body Alr.Commands.Toolchain is
       end Find_Version;
 
    begin
+
       Cmd.Requires_Full_Index;
+      --  Needed until "provides" are fixed
 
       --  If no version was given, find if only one is installed
 
@@ -456,8 +459,7 @@ package body Alr.Commands.Toolchain is
       if Cmd.S_Select then
 
          Cmd.Requires_Full_Index;
-         Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
+         --  We need this temporarily as "provides" still don't work 100%
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
@@ -469,6 +471,7 @@ package body Alr.Commands.Toolchain is
                                          else Alire.Config.Global),
                                         Allow_Incompatible => Alire.Force);
          else
+
             for Elt of Args loop
                Pending.Insert (Alire.Dependencies.From_String (Elt).Crate);
             end loop;
@@ -496,15 +499,20 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
-         Cmd.Requires_Full_Index;
-         Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
+
+         Alire.Index_On_Disk.Loading.Load_All.Assert;
+         --  We need these two temporarily as "provides" still don't work
+         --  100%
 
          for Elt of Args loop
             Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
          end loop;
 
       elsif not Cmd.Disable then
+
+         Alire.Index_On_Disk.Loading.Load_All.Assert;
+         --  We need these two temporarily as "provides" still don't work
+         --  100%
 
          --  When no command is specified, print the list
          Cmd.List;

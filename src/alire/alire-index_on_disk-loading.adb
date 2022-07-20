@@ -4,6 +4,7 @@ with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Index;
 with Alire.Platforms.Current;
+with Alire.Utils.TTY;
 with Alire.Warnings;
 
 with GNAT.OS_Lib;
@@ -13,11 +14,14 @@ with TOML.File_IO;
 
 package body Alire.Index_On_Disk.Loading is
 
-   Loaded : Containers.Crate_Name_Sets.Set;
+   Crates_Loaded : Containers.Crate_Name_Sets.Set;
    --  Avoid reloading individual crates that have been already loaded. This
    --  presumes there is no change in the index set in use through a run, which
    --  is currently impossible to do. As the in-memory index makes a similar
    --  assumption, this is not making worse the current situation.
+
+   Indexes_Loaded : AAA.Strings.Set;
+   --  Likewise, to avoid fully reloading of indexes
 
    Cached_Set : Set;
    --  Likewise, avoid detecting time and again the same indexes
@@ -217,13 +221,18 @@ package body Alire.Index_On_Disk.Loading is
       Cached_Set.Clear;
    end Drop_Index_Cache;
 
-   --------------------
-   -- Setup_And_Load --
-   --------------------
+   ------------------
+   -- Default_Path --
+   ------------------
 
-   procedure Setup_And_Load (From   : Absolute_Path;
-                             Strict : Boolean;
-                             Force  : Boolean := False)
+   function Default_Path return Absolute_Path
+   is (Config.Edit.Indexes_Directory);
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (From : Absolute_Path := Default_Path)
    is
       Result  : Outcome;
       Indexes : Set;
@@ -234,10 +243,7 @@ package body Alire.Index_On_Disk.Loading is
       end if;
 
       Indexes := Find_All (From, Result);
-      if not Result.Success then
-         Raise_Checked_Error (Message (Result));
-         return;
-      end if;
+      Result.Assert;
 
       if Indexes.Is_Empty then
          Trace.Detail
@@ -252,17 +258,7 @@ package body Alire.Index_On_Disk.Loading is
             end if;
          end;
       end if;
-
-      declare
-         Outcome : constant Alire.Outcome := Load_All
-           (From   => Alire.Config.Edit.Indexes_Directory,
-            Strict => Strict);
-      begin
-         if not Outcome.Success then
-            Raise_Checked_Error (Message (Outcome));
-         end if;
-      end;
-   end Setup_And_Load;
+   end Setup;
 
    --------------
    -- Find_All --
@@ -364,6 +360,18 @@ package body Alire.Index_On_Disk.Loading is
    is
    begin
 
+      --  If asked to detect externals, we can attempt only that if the
+      --  crate is already loaded. Externals have their own caching to
+      --  avoid re-detections.
+
+      if Crates_Loaded.Contains (Crate) then
+         Trace.Debug ("Not reloading crate " & Utils.TTY.Name (Crate));
+         if Detect_Externals then
+            Alire.Index.Detect_Externals (Crate, Platforms.Current.Properties);
+         end if;
+         return; -- No need to detect indexes and reload again
+      end if;
+
       --  Use default location if no alternatives given, or find indexes to use
 
       if From.Is_Empty and then Path = "" then
@@ -371,11 +379,18 @@ package body Alire.Index_On_Disk.Loading is
                Config.Edit.Indexes_Directory);
          return;
       elsif Path /= "" then
+         Setup (Path);
+
          declare
             Result  : Outcome;
             Indexes : constant Set := Find_All (Path, Result);
          begin
             Result.Assert;
+            if Indexes.Is_Empty then
+               Warnings.Warn_Once ("No indexes configured");
+               return;
+            end if;
+
             Load (Crate, Detect_Externals, Strict, Indexes, Path => "");
             return;
          end;
@@ -387,13 +402,11 @@ package body Alire.Index_On_Disk.Loading is
 
       --  Now load
 
-      if not Loaded.Contains (Crate) then
-         for Index of From loop
-            Index.Load (Crate, Strict);
-         end loop;
+      Crates_Loaded.Include (Crate);
 
-         Loaded.Include (Crate);
-      end if;
+      for Index of From loop
+         Index.Load (Crate, Strict);
+      end loop;
 
       --  Deal with externals after their detectors are loaded
 
@@ -407,26 +420,45 @@ package body Alire.Index_On_Disk.Loading is
    -- Load_All --
    --------------
 
-   function Load_All (From : Absolute_Path; Strict : Boolean) return Outcome
+   function Load_All (From   : Absolute_Path := Default_Path;
+                      Strict : Boolean := False;
+                      Force  : Boolean := False)
+                      return Outcome
    is
-      Result  : Outcome;
-      Indexes : constant Set := Find_All (From, Result);
    begin
-      if not Result.Success then
-         return Result;
-      end if;
+      Setup (From);
 
-      for Index of Indexes loop
-         declare
-            Result : constant Outcome := Index.Load (Strict);
-         begin
-            if not Result.Success then
-               return Result;
+      declare
+         Result  : Outcome;
+         Indexes : constant Set := Find_All (From, Result);
+      begin
+         if not Result.Success then
+            return Result;
+         end if;
+
+         for Index of Indexes loop
+            if Force or else not Indexes_Loaded.Contains (Index.Name) then
+               declare
+                  Result : constant Outcome := Index.Load (Strict);
+               begin
+                  if not Result.Success then
+                     return Result;
+                  end if;
+               end;
+
+               Indexes_Loaded.Include (Index.Name);
             end if;
-         end;
-      end loop;
+         end loop;
 
-      return Outcome_Success;
+         --  Mark all existing crates as already loaded
+
+         for Crate of Alire.Index.All_Crates (Alire.Index.Query_Mem_Only).all
+         loop
+            Crates_Loaded.Include (Crate.Name);
+         end loop;
+
+         return Outcome_Success;
+      end;
    end Load_All;
 
    -------------------------

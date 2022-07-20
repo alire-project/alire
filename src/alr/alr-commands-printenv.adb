@@ -27,8 +27,6 @@ package body Alr.Commands.Printenv is
          Reportaise_Wrong_Arguments ("Specify at most one subcommand");
       end if;
 
-      Cmd.Requires_Full_Index;
-
       Cmd.Requires_Valid_Session;
 
       declare

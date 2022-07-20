@@ -328,8 +328,6 @@ package body Alr.Commands.Get is
               ("--dirname is incompatible with other switches");
          end if;
 
-         Cmd.Requires_Full_Index;
-
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed
               ("Crate [" & Args (1) & "] does not exist in the catalog.");

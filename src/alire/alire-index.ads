@@ -93,37 +93,48 @@ package Alire.Index is
    --  BASIC QUERIES  --
    ---------------------
 
-   function Crate (Name : Crate_Name) return Crates.Crate
-     with Pre =>
-       Exists (Name) or else
-       raise Checked_Error with "Requested crate not in index: " & (+Name);
+   --  The following queries will automatically load crates from the indexes
 
-   function Exists (Name : Crate_Name) return Boolean;
+   type Query_Options is record
+      Detect_Externals : Boolean := False;
+      Load_From_Disk   : Boolean := True;
+   end record;
+
+   Query_Defaults : constant Query_Options := (others => <>);
+   Query_Fully    : constant Query_Options := (others => True);
+   Query_Mem_Only : constant Query_Options := (others => False);
+
+   function Crate (Name : Crate_Name;
+                   Opts : Query_Options := Query_Defaults)
+                   return Crates.Crate;
 
    function Exists (Name : Crate_Name;
-                    Version : Semantic_Versioning.Version)
+                    Opts : Query_Options := Query_Defaults)
+                    return Boolean;
+
+   function Exists (Name : Crate_Name;
+                    Version : Semantic_Versioning.Version;
+                    Opts : Query_Options := Query_Defaults)
                     return Boolean;
 
    function Has_Externals (Name : Crate_Name) return Boolean;
 
-   function Releases_Satisfying (Dep              : Dependencies.Dependency;
-                                 Env              : Properties.Vector;
-                                 Use_Equivalences : Boolean := True;
-                                 Available_Only   : Boolean := True;
-                                 With_Origin      : Origins.Kinds_Set :=
-                                   (others => True))
-                                 return Releases.Containers.Release_Set;
+   function Releases_Satisfying
+     (Dep              : Dependencies.Dependency;
+      Env              : Properties.Vector;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set :=
+        (others => True))
+      return Releases.Containers.Release_Set;
    --  Return all releases in the catalog able to provide this dependency,
    --  also optionally considering their "provides" equivalences, and also
    --  optionally including unavailable on the platform.
 
    function Find (Name    : Crate_Name;
-                  Version : Semantic_Versioning.Version) return Release
-     with Pre =>
-       Exists (Name, Version) or else
-     raise Checked_Error with
-       "Requested milestone not in index: "
-       & (+Name) & "=" & Semantic_Versioning.Image (Version);
+                  Version : Semantic_Versioning.Version;
+                  Opts    : Query_Options := Query_Defaults) return Release;
 
    --  Counts
 
@@ -135,6 +146,7 @@ package Alire.Index is
    --  a proper type to be returned and manipulated via the functions in this
    --  package.
 
-   function All_Crates return access constant Crates.Containers.Maps.Map;
+   function All_Crates (Opts : Query_Options := Query_Defaults)
+                        return access constant Crates.Containers.Maps.Map;
 
 end Alire.Index;

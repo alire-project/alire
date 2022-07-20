@@ -28,8 +28,6 @@ package body Alr.Commands.Build is
       Alire.Crate_Configuration.Root_Build_Profile :=
         Cmd.Root.Configuration.Build_Profile (Cmd.Root.Name);
 
-      --  Build profile in the command line takes precedence
-
       if Cmd.Release_Mode then
          Alire.Crate_Configuration.Root_Build_Profile := Release;
       elsif Cmd.Validation_Mode then
@@ -55,10 +53,6 @@ package body Alr.Commands.Build is
                      return Boolean
    is
    begin
-
-      Cmd.Requires_Full_Index;
-
-      Cmd.Requires_Valid_Session;
 
       --  If we were invoked from another command (e.g. run) we apply the
       --  profile found in the manifest as no override in the command line can

@@ -51,6 +51,8 @@ package body Alr.Commands.Show is
                         (Alire.Dependencies.New_Dependency
                            (Name, Versions),
                          Platform.Properties,
+                         Opts => (Detect_Externals => Cmd.Detect,
+                                  Load_From_Disk   => True),
                          Use_Equivalences => False,
                          Available_Only   => False));
 
@@ -250,13 +252,12 @@ package body Alr.Commands.Show is
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Args.Count = 1 then
-            Cmd.Load (Allowed.Crate,
-                      Externals => Cmd.Detect);
-
-            if not Alire.Index.Exists (Allowed.Crate) then
-               raise Alire.Query_Unsuccessful;
-            end if;
+         if Args.Count = 1 and then
+           not Alire.Index.Exists (Allowed.Crate,
+                                   Opts => (Detect_Externals => Cmd.Detect,
+                                            Load_From_Disk   => True))
+         then
+            raise Alire.Query_Unsuccessful;
          end if;
 
          --  Execute
