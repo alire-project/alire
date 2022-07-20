@@ -72,8 +72,6 @@ package body Alr.Commands.Show is
          end if;
 
          if Cmd.Graph or else Cmd.Solve or else Cmd.Tree then
-            Cmd.Requires_Full_Index (Force_Reload => True);
-
             declare
                Needed : constant Query.Solution :=
                           (if Current

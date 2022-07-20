@@ -74,4 +74,56 @@ package body Alire.Provides is
       return Result;
    end To_TOML;
 
+   ---------------
+   -- From_TOML --
+   ---------------
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Crate_Provider_Map
+   is
+   begin
+      return Result : Crate_Provider_Map do
+         loop
+            declare
+               Val : TOML.TOML_Value;
+               Key : constant String := From.Pop (Val);
+               Set : Containers.Crate_Name_Sets.Set;
+            begin
+               exit when Key = "";
+               From.Assert (Val.Kind in TOML.TOML_Array,
+                            "expected array of strings but got: "
+                            & Val.Kind'Image);
+               for I in 1 .. Val.Length loop
+                  Set.Insert (+Val.Item (I).As_String);
+               end loop;
+
+               Result.Insert (+Key, Set); -- Store Provided --> Providers
+            end;
+         end loop;
+      end return;
+   end From_TOML;
+
+   -------------
+   -- To_TOML --
+   -------------
+
+   function To_TOML (This : Crate_Provider_Map) return TOML.TOML_Value is
+      use Crate_Providers_Maps;
+   begin
+      return Result : constant TOML.TOML_Value := TOML.Create_Table do
+         for I in This.Iterate loop
+            declare
+               Val : constant TOML.TOML_Value := TOML.Create_Array;
+               --  A crate name array
+            begin
+               for Provider of This (I) loop
+                  Val.Append (TOML.Create_String (Provider.As_String));
+               end loop;
+
+               Result.Set (Key (I).As_String, Val);
+            end;
+         end loop;
+      end return;
+   end To_TOML;
+
 end Alire.Provides;

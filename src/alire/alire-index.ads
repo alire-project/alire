@@ -6,6 +6,7 @@ with Alire.Dependencies;
 with Alire.Origins;
 with Alire.Policies;
 with Alire.Properties;
+with Alire.Provides;
 with Alire.Releases.Containers;
 
 with Semantic_Versioning.Extended;
@@ -77,17 +78,14 @@ package Alire.Index is
                   Policy : Policies.For_Index_Merging :=
                     Policies.Merge_Priorizing_Existing);
 
-   procedure Detect_All_Externals (Env : Properties.Vector);
-   --  Goes over the list of crates and applies external detection, indexing
-   --  any found externals. This has effect only the first time it is called.
-
    procedure Detect_Externals (Name : Crate_Name; Env : Properties.Vector);
    --  Add only the externals of this crate. This has effect only the first
    --  time it is called for a crate.
 
-   procedure Register_External_Alias (Provider  : Crate_Name;
-                                      Providing : Crate_Name);
-   --  Register that Provider has external detectors for Providing
+   procedure Register_Alias (Provider  : Crate_Name;
+                             Providing : Crate_Name);
+   --  Register that Provider has external detectors for Providing, or simply
+   --  it is a regular release that provides Providing.
 
    ---------------------
    --  BASIC QUERIES  --
@@ -97,7 +95,10 @@ package Alire.Index is
 
    type Query_Options is record
       Detect_Externals : Boolean := False;
+      --  Whether to trigger external detection, which may be slow in some OSes
+
       Load_From_Disk   : Boolean := True;
+      --  Whether to rely on in-memory info, or load required crates on-demand
    end record;
 
    Query_Defaults : constant Query_Options := (others => <>);
@@ -148,5 +149,8 @@ package Alire.Index is
 
    function All_Crates (Opts : Query_Options := Query_Defaults)
                         return access constant Crates.Containers.Maps.Map;
+
+   function All_Crate_Aliases return access Provides.Crate_Provider_Map;
+   --  For use from the loading functions; not intended for normal clients
 
 end Alire.Index;

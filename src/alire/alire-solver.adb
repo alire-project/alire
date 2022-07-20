@@ -1084,8 +1084,6 @@ package body Alire.Solver is
    begin
 
       Index_On_Disk.Loading.Load_All.Assert;
-      Index.Detect_All_Externals (Props);
-      --  We need these two temporarily as "provides" still don't work 100%
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
 

@@ -1,9 +1,12 @@
 with Ada.Directories;
+with Ada.Text_IO;
 
 with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Index;
 with Alire.Platforms.Current;
+with Alire.Provides;
+with Alire.TOML_Adapters;
 with Alire.Utils.TTY;
 with Alire.Warnings;
 
@@ -23,6 +26,9 @@ package body Alire.Index_On_Disk.Loading is
    Indexes_Loaded : AAA.Strings.Set;
    --  Likewise, to avoid fully reloading of indexes
 
+   Providers_Loaded : Boolean := False;
+   --  Providers for all indexes are loaded the first time any crate is loaded
+
    Cached_Set : Set;
    --  Likewise, avoid detecting time and again the same indexes
 
@@ -30,6 +36,22 @@ package body Alire.Index_On_Disk.Loading is
 
    function Load_Index_Metadata (File  :     String;
                                  Value : out TOML.TOML_Value) return Outcome;
+
+   function Providers_File (Indexes_Dir : Any_Path) return Any_Path
+   is (Indexes_Dir / "providers.toml");
+
+   procedure Load_Providers (Indexes_Dir : Any_Path; Strict : Boolean);
+   --  Load crate providers for all indexes (unless already loaded). If this
+   --  metadata file doesn't exist, a full index load will be triggered and
+   --  the file will be rebuilt.
+
+   procedure Invalidate_Providers (Indexes_Dir : Any_Path);
+   --  Whenever an index is added or updated, we must invalidate the cache on
+   --  disk containing crate virtual providers.
+
+   procedure Save_Providers (Indexes_Dir : Any_Path);
+   --  Write to disk the providers info already in memory (generated after a
+   --  full load).
 
    ---------
    -- Add --
@@ -153,6 +175,9 @@ package body Alire.Index_On_Disk.Loading is
 
          Cached_Set.Clear;
          --  Reset cache so next detection finds the new index
+
+         Invalidate_Providers (Under);
+         --  Force reloading of crate aliases on next crate load
 
          return Index.Add_With_Metadata;
       end;
@@ -381,6 +406,12 @@ package body Alire.Index_On_Disk.Loading is
       elsif Path /= "" then
          Setup (Path);
 
+         Load_Providers (Path, Strict);
+         --  We can load at this point the common cached providers info for all
+         --  indexes at their containing dir. If this info does not exist, it
+         --  will be rebuilt via a full index load and the next call to Load
+         --  will find the crate already loaded.
+
          declare
             Result  : Outcome;
             Indexes : constant Set := Find_All (Path, Result);
@@ -392,6 +423,7 @@ package body Alire.Index_On_Disk.Loading is
             end if;
 
             Load (Crate, Detect_Externals, Strict, Indexes, Path => "");
+
             return;
          end;
       end if;
@@ -406,6 +438,27 @@ package body Alire.Index_On_Disk.Loading is
 
       for Index of From loop
          Index.Load (Crate, Strict);
+
+         --  Load also all crates that provide the one being requested
+
+         if Alire.Index.All_Crate_Aliases.Contains (Crate) then
+            declare
+               Providers : constant Provides.Crate_Providers :=
+                             Alire.Index.All_Crate_Aliases.all (Crate);
+               --  This copy is needed because the loading itself may result in
+               --  modifications to the collection we are iterating over, which
+               --  results in a tampering check (actually an Adjust exception).
+            begin
+               for Provider of Providers loop
+                  if Provider /= Crate then
+                     Trace.Debug ("Loading provider crate "
+                                  & Provider.As_String
+                                  & " for crate " & Crate.As_String);
+                     Index.Load (Provider, Strict);
+                  end if;
+               end loop;
+            end;
+         end if;
       end loop;
 
       --  Deal with externals after their detectors are loaded
@@ -425,6 +478,8 @@ package body Alire.Index_On_Disk.Loading is
                       Force  : Boolean := False)
                       return Outcome
    is
+      Spinner : Simple_Logging.Ongoing :=
+                  Simple_Logging.Activity ("Loading indexes");
    begin
       Setup (From);
 
@@ -437,6 +492,7 @@ package body Alire.Index_On_Disk.Loading is
          end if;
 
          for Index of Indexes loop
+            Spinner.Step ("Loading indexes [" & Index.Name & "]");
             if Force or else not Indexes_Loaded.Contains (Index.Name) then
                declare
                   Result : constant Outcome := Index.Load (Strict);
@@ -449,6 +505,7 @@ package body Alire.Index_On_Disk.Loading is
                Indexes_Loaded.Include (Index.Name);
             end if;
          end loop;
+         Spinner.Step ("Loading indexes");
 
          --  Mark all existing crates as already loaded
 
@@ -456,6 +513,11 @@ package body Alire.Index_On_Disk.Loading is
          loop
             Crates_Loaded.Include (Crate.Name);
          end loop;
+         Spinner.Step;
+
+         --  Save providers, that must be now up to date after a full loading
+
+         Save_Providers (From);
 
          return Outcome_Success;
       end;
@@ -479,6 +541,94 @@ package body Alire.Index_On_Disk.Loading is
       end if;
    end Load_Index_Metadata;
 
+   --------------------
+   -- Load_Providers --
+   --------------------
+
+   procedure Load_Providers (Indexes_Dir : Any_Path; Strict : Boolean) is
+      Filename : constant Any_Path := Providers_File (Indexes_Dir);
+   begin
+      if Providers_Loaded then
+         return;
+      end if;
+
+      if not Ada.Directories.Exists (Filename) then
+         Load_All (From   => Indexes_Dir,
+                   Strict => Strict,
+                   Force  => True).Assert;
+         return;
+      end if;
+
+      declare
+         Load_Result : constant TOML.Read_Result :=
+                         TOML.File_IO.Load_File (Filename);
+      begin
+         if not Load_Result.Success then
+            Trace.Warning ("Corrupted index providers file found at: "
+                           & Filename & "; recreating it...");
+            Trace.Debug ("Load error is: " & TOML.Format_Error (Load_Result));
+            Ada.Directories.Delete_File (Filename);
+            Load_Providers (Indexes_Dir, Strict);
+            return;
+         end if;
+
+         Alire.Index.All_Crate_Aliases.all :=
+           Provides.From_TOML
+             (TOML_Adapters.From
+                (Load_Result.Value,
+                 Context => "Loading index providers from " & Filename));
+
+         Providers_Loaded := True;
+      end;
+   end Load_Providers;
+
+   --------------------------
+   -- Invalidate_Providers --
+   --------------------------
+
+   procedure Invalidate_Providers (Indexes_Dir : Any_Path) is
+      use Ada.Directories;
+   begin
+      Alire.Index.All_Crate_Aliases.Clear;
+      Providers_Loaded := False;
+      if Exists (Providers_File (Indexes_Dir)) then
+         Delete_File (Providers_File (Indexes_Dir));
+         Trace.Debug ("dropped cache of crate aliases at "
+                      & Providers_File (Indexes_Dir));
+      end if;
+   end Invalidate_Providers;
+
+   --------------------
+   -- Save_Providers --
+   --------------------
+
+   procedure Save_Providers (Indexes_Dir : Any_Path) is
+      use Ada.Directories;
+      use Ada.Text_IO;
+      File : File_Type;
+      Filename : constant Any_Path := Providers_File (Indexes_Dir);
+   begin
+      if not GNAT.OS_Lib.Is_Directory (Containing_Directory (Filename)) then
+         Trace.Debug ("Skipping saving of providers, as no indexes directory "
+                      & "exists yet, so there are no possible providers");
+         return;
+      end if;
+
+      Create (File, Out_File, Filename);
+      TOML.File_IO.Dump_To_File (Alire.Index.All_Crate_Aliases.To_TOML, File);
+      Close (File);
+   exception
+      when E : others =>
+         --  E.g., on disk full
+         Log_Exception (E);
+         if Is_Open (File) then
+            Close (File);
+         end if;
+         if GNAT.OS_Lib.Is_Regular_File (Filename) then
+            Ada.Directories.Delete_File (Filename);
+         end if;
+   end Save_Providers;
+
    ----------------
    -- Update_All --
    ----------------
@@ -490,6 +640,13 @@ package body Alire.Index_On_Disk.Loading is
       if not Result.Success then
          return Result;
       end if;
+
+      --  First, invalidate providers metadata as this may change with the
+      --  update.
+
+      Invalidate_Providers (Under);
+
+      --  Now update normally
 
       for Index of Indexes loop
          declare

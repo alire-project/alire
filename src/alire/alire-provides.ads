@@ -1,3 +1,6 @@
+with Ada.Containers.Indefinite_Ordered_Maps;
+
+with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Milestones.Containers;
 with Alire.TOML_Adapters;
@@ -28,6 +31,32 @@ package Alire.Provides with Preelaborate is
 
    function To_TOML (This : Equivalences) return TOML.TOML_Value with
      Post => To_TOML'Result.Kind in TOML.TOML_Array;
+
+   --  For lazy on-demand index load, we need to know which crate may be
+   --  fulfilled by another one. We could go even more fine grained and load
+   --  only specific releases, but as of right now index loading is granular
+   --  per crate, we only use a [provided crate] -> [provider crates] map.
+   --  Likewise, we could have a mapping per index, but we aren't making
+   --  this distinction per crate either.
+
+   subtype Crate_Providers is Containers.Crate_Name_Sets.Set;
+
+   package Crate_Providers_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (Crate_Name,
+                                             Crate_Providers,
+                                             "<",
+                                             Containers.Crate_Name_Sets."=");
+   type Crate_Provider_Map is new Crate_Providers_Maps.Map with null record;
+
+   function From_TOML (From : TOML_Adapters.Key_Queue)
+                       return Crate_Provider_Map
+     with Pre => From.Unwrap.Kind in TOML.TOML_Table;
+   --  Expects a table containing entries like crate = ["crate1", "crate2"],
+   --  So elements are string -> array of string
+
+   function To_TOML (This : Crate_Provider_Map) return TOML.TOML_Value with
+     Post => To_TOML'Result.Kind in TOML.TOML_Table;
+   --  See From_TOML for the generated format
 
 private
 
