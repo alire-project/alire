@@ -2,7 +2,7 @@ package Alire.Version with Preelaborate is
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "1.2.0";
+   Current : constant String := "1.2.1-dev";
    --  1.2.0:     rpm speed-up, silence propagation warning, early switch parse
    --  1.2.0-rc1: release candidate for 1.2
    --  1.1.2:     latest msys2 and ensure it's fully updated
