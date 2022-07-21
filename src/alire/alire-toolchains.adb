@@ -101,7 +101,7 @@ package body Alire.Toolchains is
          --  Always offer to configure nothing
          Result.Choices.Append (None);
          Result.Targets.Append (Releases.New_Empty_Release (Crate));
-         --  Just a placeholder that won't be used anywhere, but keeps boot
+         --  Just a placeholder that won't be used anywhere, but keeps both
          --  collections in sync.
 
          --  Identify possible externals first (but after the newest Alire one)
