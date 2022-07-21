@@ -54,6 +54,7 @@ package body Alire.Publish is
                        .Append ("bitbucket.org")
                        .Append ("github.com")
                        .Append ("gitlab.com")
+                       .Append ("savannah.nongnu.org")
                        .Append ("sf.net");
 
    type Data is limited record
