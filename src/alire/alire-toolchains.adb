@@ -5,6 +5,7 @@ with Ada.Containers.Indefinite_Vectors;
 with Alire.Config.Edit;
 with Alire.Index;
 with Alire.Origins;
+with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.Root;
@@ -326,6 +327,13 @@ package body Alire.Toolchains is
       end loop;
 
    end Assistant;
+
+   procedure Detect_Externals is
+   begin
+      for Tool of Tools loop
+         Index.Detect_Externals (Tool, Platforms.Current.Properties);
+      end loop;
+   end Detect_Externals;
 
    --------------------
    -- Set_As_Default --

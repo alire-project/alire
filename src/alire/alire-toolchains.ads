@@ -76,6 +76,10 @@ package Alire.Toolchains is
                           Fail_If_Unset : Boolean := True);
    --  Set the crate as not configured. If not set and Fail_If_Unset, raise
 
+   procedure Detect_Externals;
+   --  Detect all tools that may have external definitions, so they're
+   --  available for selection/installation.
+
    Description : constant AAA.Strings.Vector
      := AAA.Strings.Empty_Vector
        .Append ("Alire indexes binary releases of GNAT and gprbuild. The "

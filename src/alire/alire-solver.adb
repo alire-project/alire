@@ -5,7 +5,6 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
-with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Optional;
 with Alire.Releases.Containers;
@@ -1085,8 +1084,6 @@ package body Alire.Solver is
       --  Valid solution in the sense that solving has been attempted
 
    begin
-
-      Index_On_Disk.Loading.Load_All.Assert;
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
 

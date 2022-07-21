@@ -7,11 +7,8 @@ with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
-with Alire.Index;
-with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
-with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
@@ -168,14 +165,12 @@ package body Alr.Commands.Toolchain is
 
    begin
 
-      Alire.Index.Detect_Externals (Alire.GNAT_Crate,
-                                    Alire.Platforms.Current.Properties);
-
       --  We want to ensure that we are installing compatible tools. The user
       --  can force through this, so we consider that a bad situation may
       --  already exist. The following call checks what origins are already in
       --  use by configured tools. This is only relevant when setting defaults,
       --  though.
+
       if Set_As_Default then
          Identify_Origins;
          if Origin_Status = Frozen then
@@ -382,9 +377,6 @@ package body Alr.Commands.Toolchain is
 
    begin
 
-      Cmd.Requires_Full_Index;
-      --  Needed until "provides" are fixed
-
       --  If no version was given, find if only one is installed
 
       if not AAA.Strings.Contains (Target, "=") then
@@ -410,6 +402,7 @@ package body Alr.Commands.Toolchain is
       --  We do not want tools that are later in the command-line to be taken
       --  into account prematurely for compatibility of origins. We store here
       --  crates still to be dealt with.
+
    begin
 
       --  Validation
@@ -458,8 +451,7 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.S_Select then
 
-         Cmd.Requires_Full_Index;
-         --  We need this temporarily as "provides" still don't work 100%
+         Alire.Toolchains.Detect_Externals;
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
@@ -500,20 +492,13 @@ package body Alr.Commands.Toolchain is
 
       elsif Cmd.Install then
 
-         Alire.Index_On_Disk.Loading.Load_All.Assert;
-         --  We need these two temporarily as "provides" still don't work
-         --  100%
+         Alire.Toolchains.Detect_Externals;
 
          for Elt of Args loop
             Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
          end loop;
 
       elsif not Cmd.Disable then
-
-         Alire.Index_On_Disk.Loading.Load_All.Assert;
-         --  We need these two temporarily as "provides" still don't work
-         --  100%
-
          --  When no command is specified, print the list
          Cmd.List;
       end if;
