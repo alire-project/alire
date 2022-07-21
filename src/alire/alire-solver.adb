@@ -155,7 +155,10 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
-      Installed : constant Releases.Containers.Release_Set := Shared.Available;
+      Installed : constant Releases.Containers.Release_Set :=
+                                  Shared.Available
+                                    (Detect_Externals =>
+                                        Options.Detecting = Detect);
       --  Installed releases do not change during resolution, we make a local
       --  copy here so they are not read repeatedly from disk.
 

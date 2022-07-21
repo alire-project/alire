@@ -167,7 +167,11 @@ package body Alr.Commands.Search is
          ------------------------
 
          procedure List_All_Or_Latest
-           (Crate : Alire.Crates.Crate) is
+           (Crate : Alire.Crates.Crate)
+         is
+            Progress : Trace.Ongoing :=
+                         Trace.Activity (Crate.Name.Index_Prefix)
+                         with Unreferenced;
          begin
             if Cmd.Full then
                for Release of reverse Crate.Releases loop
@@ -186,6 +190,9 @@ package body Alr.Commands.Search is
 
          procedure List_Externals (Crate : Alire.Crates.Crate)
          is
+            Progress : Trace.Ongoing :=
+                         Trace.Activity (Crate.Name.Index_Prefix)
+                         with Unreferenced;
          begin
             if Cmd.External then
                --  We must show only externals that have failed detection
