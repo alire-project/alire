@@ -334,11 +334,8 @@ package body Alire.Directories is
                                 Child  : Any_Path)
                                 return Any_Path
    is
-      use GNATCOLL.VFS;
    begin
-      return +GNATCOLL.VFS.Relative_Path
-        (File => Create (+Adirs.Full_Name (Child)),
-         From => Create (+Adirs.Full_Name (Parent)));
+      return AAA.Directories.Relative_Path (Parent, Child);
    end Find_Relative_Path;
 
    ----------------------

@@ -15,7 +15,7 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.2.4"
+aaa = "~0.2.7"
 ada_toml = "~0.3"
 ajunitgen = "^1.0.1"
 ansiada = "^1.0"
@@ -41,4 +41,5 @@ macos   = { OS = "macOS" }
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
+aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8cfb34d04ceec340e13" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "e250e4e42d9743b782788cf61b4ddc10a45e69e2" }
