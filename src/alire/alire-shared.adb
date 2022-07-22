@@ -65,16 +65,10 @@ package body Alire.Shared is
             Doing => Detect'Access);
       end if;
 
-      --  Include external toolchain members
-
-      if Detect_Externals then
-         Index.Detect_Externals (GNAT_Crate,
-                                 Root.Platform_Properties);
-         --  Will work via provides for any crate that provides a gnat compiler
-      end if;
+      --  Include external toolchain members when they are in use
 
       for Tool of Toolchains.Tools loop
-         if Detect_Externals then
+         if Detect_Externals and then Toolchains.Tool_Is_External (Tool) then
             Index.Detect_Externals (Tool, Root.Platform_Properties);
          end if;
 

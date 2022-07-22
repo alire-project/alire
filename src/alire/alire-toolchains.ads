@@ -33,7 +33,7 @@ package Alire.Toolchains is
    --  goes, in any case, to the config cache location.
 
    --  The following functions will transform any `gnat_XXX` dependency on
-   --  plain `gnat`. This way we need to to litter the callers with similar
+   --  plain `gnat`. This way we need not to litter the callers with similar
    --  transformations, as we always want whatever gnat_XXX is used for "gnat".
 
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
@@ -75,6 +75,10 @@ package Alire.Toolchains is
                           Level         : Config.Level;
                           Fail_If_Unset : Boolean := True);
    --  Set the crate as not configured. If not set and Fail_If_Unset, raise
+
+   procedure Detect_Externals;
+   --  Detect all tools that may have external definitions, so they're
+   --  available for selection/installation.
 
    Description : constant AAA.Strings.Vector
      := AAA.Strings.Empty_Vector

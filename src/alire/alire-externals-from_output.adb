@@ -47,7 +47,11 @@ package body Alire.Externals.From_Output is
 
       declare
          use GNAT.Regpat;
-         Matches : Match_Array (1 .. 1); -- We should have at most one match
+         Matches : Match_Array (1 .. Match_Count'Last);
+         --  Although we should have at most one match, it turns out that the
+         --  match won't necessarily be on the first position in the array, as
+         --  it depends on the number of () expressions.
+
          Lines   : AAA.Strings.Vector;
          Status  : constant Integer :=
                      OS_Lib.Subprocess.Unchecked_Spawn_And_Capture

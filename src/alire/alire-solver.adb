@@ -5,7 +5,6 @@ with Alire.Conditional;
 with Alire.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
-with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Optional;
 with Alire.Releases.Containers;
@@ -155,7 +154,10 @@ package body Alire.Solver is
       --  to select the solver behavior (e.g. stop after the first complete
       --  solution is found).
 
-      Installed : constant Releases.Containers.Release_Set := Shared.Available;
+      Installed : constant Releases.Containers.Release_Set :=
+                                  Shared.Available
+                                    (Detect_Externals =>
+                                        Options.Detecting = Detect);
       --  Installed releases do not change during resolution, we make a local
       --  copy here so they are not read repeatedly from disk.
 
@@ -1082,8 +1084,6 @@ package body Alire.Solver is
       --  Valid solution in the sense that solving has been attempted
 
    begin
-
-      Index_On_Disk.Loading.Load_All.Assert;
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
 
