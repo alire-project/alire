@@ -165,6 +165,11 @@ package body Alire.Solver is
       --  Some solutions are found twice when some dependencies are subsets of
       --  other dependencies.
 
+      User_Abandoned : Boolean := False;
+      --  Set to true once the user does not want to keep looking for
+      --  solutions, so we do not try with increasing exhaustivity
+      --  configurations.
+
       --------------------------
       -- Ask_User_To_Continue --
       --------------------------
@@ -198,7 +203,6 @@ package body Alire.Solver is
                             & Stopwatch.Image (Timeout, Decimals => 0)
                             & " seconds.");
                Put_Info ("The best complete solution yet is:");
-
             end if;
 
             Trace.Info ("");
@@ -218,6 +222,7 @@ package body Alire.Solver is
             Timeout := Timeout + Options.Timeout_More;
             Timer.Release;
          else
+            User_Abandoned := True;
             Trace.Debug ("User forced stop of solution search after "
                          & Timer.Image & " seconds");
             raise Solution_Timeout;
@@ -1129,7 +1134,8 @@ package body Alire.Solver is
       --  can retry with a larger solution space.
 
       if Solutions.Is_Empty then
-         if Options.Completeness < All_Incomplete then
+         if Options.Completeness < All_Incomplete and then not User_Abandoned
+         then
             Trace.Detail
               ("No solution found with completeness policy of "
                & Options.Completeness'Image
