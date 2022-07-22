@@ -44,5 +44,13 @@ assert_match('export ALIRE="True"\n'
              '.*',
              p.out, flags=re.S)
 
+# Verify that project paths are prepended before anything that the user already
+# has configured in the environment, so for example GNAT libraries do not get
+# mixed (compiler in PATH is ours but libraries are from the user).
+os.environ["GPR_PROJECT_PATH"] = "canary"
+assert_match(
+    '.*'
+    f'export GPR_PROJECT_PATH="{expected_gpr_path}{os.pathsep}canary"\n',
+    run_alr('printenv', quiet=False).out)
 
 print('SUCCESS')
