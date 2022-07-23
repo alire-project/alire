@@ -37,6 +37,8 @@ run_alr("toolchain", "--select", "gnat_native", "gprbuild")
 p = run_alr("toolchain")
 assert_match(".*gprbuild      8888.0.0 Default.*", p.out)
 assert_match(".*gnat_native   8888.0.0 Default.*", p.out)
+assert_match(".*gnat_external [\d\s.]+ Available.*", p.out)
+# The external compiler must be still detected as available, even if unselected
 
 # Now, trying to only select an external gnat fails because of native gprbuild
 p = run_alr("toolchain", "--select", "gnat_external", complain_on_error=False)
@@ -59,6 +61,8 @@ run_alr("toolchain", "--select", "gprbuild", "gnat")
 p = run_alr("toolchain")
 assert_match(".*gprbuild      8888.0.0 Default.*", p.out)
 assert_match(".*gnat_native   8888.0.0 Default.*", p.out)
+assert_match(".*gnat_external [\d\s.]+ Available.*", p.out)
+# The external compiler must be still detected as available, even if unselected
 
 # Finally, note that installing without selecting is not affected by checks,
 # as these are not setting the default toolchain to be used, but merely making
