@@ -8,7 +8,6 @@ with Alire.Toolchains;
 with Alire.Utils.Tables;
 
 with Alr.Bootstrap;
-with Alr.Paths;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -51,7 +50,7 @@ package body Alr.Commands.Version is
 
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
-      Table.Append ("config folder:").Append (Paths.Alr_Config_Folder).New_Row;
+      Table.Append ("config folder:").Append (Alire.Config.Edit.Path).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;

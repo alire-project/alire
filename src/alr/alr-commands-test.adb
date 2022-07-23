@@ -10,6 +10,7 @@ with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
 with Alire.OS_Lib.Subprocess;
+with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
@@ -18,7 +19,6 @@ with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Files;
-with Alr.Paths;
 with Alr.Testing.Collections;
 with Alr.Testing.Console;
 with Alr.Testing.JUnit;
@@ -33,6 +33,7 @@ package body Alr.Commands.Test is
 
    use type Ada.Containers.Count_Type;
 
+   package Paths    renames Alire.Paths;
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
 
@@ -322,11 +323,12 @@ package body Alr.Commands.Test is
          end if;
 
          Make_Dir
-           (Create (+R.Base_Folder) / Create (+Paths.Alr_Working_Folder));
+           (Create (+R.Base_Folder)
+            / Create (+Paths.Working_Folder_Inside_Root));
          --  Might not exist for system/failed/skipped
-         Output.Write (R.Base_Folder /
-                         Paths.Alr_Working_Folder /
-                           "alr_test_" & Timestamp & ".log");
+         Output.Write (R.Base_Folder
+                       / Paths.Working_Folder_Inside_Root
+                       / "alr_test_" & Timestamp & ".log");
       end Test_Release;
 
    begin
