@@ -303,6 +303,10 @@ package body Alr.Commands.Toolchain is
       use type Dependencies.Dependency;
       Table : AAA.Table_IO.Table;
    begin
+      Alire.Toolchains.Detect_Externals;
+      --  Even if we have selected a non-external toolchain, in this case we
+      --  want to force detection of external toolchains to be aware of them.
+
       if Alire.Shared.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
                      & TTY.URL (Alire.Config.Edit.Path));
