@@ -59,6 +59,12 @@ package Alire.Solver is
    --  * Allow_Shared: crates in the shared config can appear in solutions.
    --  * Only_Local: only crates in the local workspace will be used.
 
+   type Timeout_Policies is
+     (Ask,     -- Normal interaction with user
+      Stop,    -- Abort at first timeout
+      Continue -- Never ask and continue searching
+     );
+
    subtype Pin_Map  is User_Pins.Maps.Map;
    subtype Release  is Types.Release;
    subtype Solution is Solutions.Solution;
@@ -118,6 +124,7 @@ package Alire.Solver is
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
       Sharing      : Sharing_Policies      := Allow_Shared;
+      On_Timeout   : Timeout_Policies      := Ask;
 
       Timeout      : Duration              := 5.0;
       --  Time until reporting problems finding a complete solution
@@ -125,8 +132,10 @@ package Alire.Solver is
       Timeout_More : Duration              := 10.0;
       --  Extra period if the user wants to keep looking
 
-      Interactive  : Boolean               := True;
-      --  If not interactive, the first timeout will be applied without asking
+      Elapsed      : Duration              := 0.0;
+      --  Extra elapsed time that has been already used in a previous search
+      --  configuration. No real use case for the user to modify it, but this
+      --  allows avoiding a big-ish refactoring that isn't worth the trouble.
    end record;
 
    Default_Options : constant Query_Options := (others => <>);
@@ -134,8 +143,8 @@ package Alire.Solver is
    --  or otherwise consider a subset of incomplete solutions.
 
    Default_Options_Not_Interactive : constant Query_Options :=
-                                       (Interactive => False,
-                                        others      => <>);
+                                       (On_Timeout => Stop,
+                                        others     => <>);
 
    Exhaustive_Options : constant Query_Options :=
                           (Completeness => All_Incomplete,

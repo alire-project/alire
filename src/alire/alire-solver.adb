@@ -116,8 +116,10 @@ package body Alire.Solver is
 
       Progress : Trace.Ongoing := Trace.Activity ("Solving dependencies");
 
-      Timer    : Stopwatch.Instance;
-      Timeout  : Duration := Options.Timeout;
+      Timer    : Stopwatch.Instance :=
+                   Stopwatch.With_Elapsed (Options.Elapsed);
+
+      Timeout  : Duration := Options.Timeout + Options.Elapsed;
 
       use Alire.Conditional.For_Dependencies;
 
@@ -165,17 +167,23 @@ package body Alire.Solver is
       --  Some solutions are found twice when some dependencies are subsets of
       --  other dependencies.
 
+      User_Answer_Continue : CLIC.User_Input.Answer_Kind :=
+                               CLIC.User_Input.Yes;
+      --  Answer given by the user to the question of continuing search. By
+      --  default we will ask on first timeout.
+
       --------------------------
       -- Ask_User_To_Continue --
       --------------------------
 
       procedure Ask_User_To_Continue is
          use CLIC.User_Input;
-         Answer : Answer_Kind := No;
       begin
          Timer.Hold;
 
-         if Not_Interactive or else not Options.Interactive
+         if Not_Interactive
+           or else Options.On_Timeout = Stop
+           or else User_Answer_Continue = No
          then
             Trace.Debug ("Forcing stop of solution search after "
                          & Timer.Image & " seconds");
@@ -184,21 +192,20 @@ package body Alire.Solver is
 
          if Solutions.Is_Empty then
             Put_Warning ("No solution found after "
-                         & Stopwatch.Image (Timeout, Decimals => 0)
+                         & Timer.Image (Decimals => 0)
                          & " seconds.");
 
          else
             if not Solutions.First_Element.Is_Complete then
                Put_Warning ("Complete solution not found after "
-                            & Stopwatch.Image (Timeout, Decimals => 0)
+                            & Timer.Image (Decimals => 0)
                             & " seconds.");
                Put_Info ("The best incomplete solution yet is:");
             else
                Put_Warning ("Solution space not fully explored after "
-                            & Stopwatch.Image (Timeout, Decimals => 0)
+                            & Timer.Image (Decimals => 0)
                             & " seconds.");
                Put_Info ("The best complete solution yet is:");
-
             end if;
 
             Trace.Info ("");
@@ -206,15 +213,23 @@ package body Alire.Solver is
             Trace.Info ("");
          end if;
 
-         if Answer /= Always then
-            Answer := Query
+         --  Options take precedence over any interaction yet to occur
+
+         if Options.On_Timeout = Continue then
+            User_Answer_Continue := Always;
+         end if;
+
+         --  If interaction still allowed, ask the user what to on timeout
+
+         if User_Answer_Continue /= Always then
+            User_Answer_Continue := Query
               (Question =>
                  "Do you want to keep solving for a few more seconds?",
                Valid    => (others => True),
                Default  => (if Not_Interactive then No else Yes));
          end if;
 
-         if Answer /= No then
+         if User_Answer_Continue /= No then
             Timeout := Timeout + Options.Timeout_More;
             Timer.Release;
          else
@@ -1083,6 +1098,7 @@ package body Alire.Solver is
                    Alire.Solutions.Empty_Valid_Solution;
       --  Valid solution in the sense that solving has been attempted
 
+      use all type CLIC.User_Input.Answer_Kind;
    begin
 
       Trace.Detail ("Solving dependencies with options: " & Image (Options));
@@ -1129,7 +1145,9 @@ package body Alire.Solver is
       --  can retry with a larger solution space.
 
       if Solutions.Is_Empty then
-         if Options.Completeness < All_Incomplete then
+         if Options.Completeness < All_Incomplete
+           and then User_Answer_Continue /= No
+         then
             Trace.Detail
               ("No solution found with completeness policy of "
                & Options.Completeness'Image
@@ -1157,7 +1175,10 @@ package body Alire.Solver is
                        Sharing      => Options.Sharing,
                        Timeout      => Options.Timeout,
                        Timeout_More => Options.Timeout_More,
-                       Interactive  => Options.Interactive)));
+                       Elapsed      => Timer.Elapsed,
+                       On_Timeout   => (if User_Answer_Continue = Always
+                                        then Continue
+                                        else Options.On_Timeout))));
          else
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies.");

@@ -43,3 +43,4 @@ macos   = { OS = "macOS" }
 [[pins]]
 aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8cfb34d04ceec340e13" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "e250e4e42d9743b782788cf61b4ddc10a45e69e2" }
+stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
