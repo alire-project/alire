@@ -21,6 +21,7 @@ package body Alire.Manifest is
         (File       => Name,
          Lines      =>
            AAA.Strings.Empty_Vector
+             .Append ("")
              .Append ("[[" & TOML_Keys.Depends_On & "]]")
              .Append (Dep.Manifest_Image),
            Backup     => False);
@@ -41,6 +42,7 @@ package body Alire.Manifest is
         (File       => File,
          Lines      =>
            AAA.Strings.Empty_Vector
+             .Append ("")
              .Append ("[[" & TOML_Keys.Pins & "]]")
              .Append (Pin.To_Manifest_Line (Crate)),
          Backup     => False);
