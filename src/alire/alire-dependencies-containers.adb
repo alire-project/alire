@@ -1,5 +1,23 @@
 package body Alire.Dependencies.Containers is
 
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Set) return String is
+      Result : AAA.Strings.Vector;
+   begin
+      if This.Is_Empty then
+         return "(empty)";
+      end if;
+
+      for Dep of This loop
+         Result.Append (Dep.TTY_Image);
+      end loop;
+
+      return Result.Flatten (", ");
+   end Image_One_Line;
+
    -----------
    -- Merge --
    -----------
@@ -32,7 +50,7 @@ package body Alire.Dependencies.Containers is
    -- To_Set --
    ------------
 
-   function To_Set (This : List) return Sets.Set is
+   function To_Set (This : List'Class) return Set is
    begin
       return Result : Set do
          for Dep of This loop

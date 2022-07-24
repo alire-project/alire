@@ -3,6 +3,7 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Conditional;
 with Alire.Containers;
+with Alire.Dependencies.Containers;
 with Alire.Dependencies.States;
 with Alire.Errors;
 with Alire.Milestones;
@@ -35,7 +36,30 @@ package body Alire.Solver is
       "<"          => Solutions.Is_Better,
       "="          => Solutions."=");
 
+   type State_Id is mod 2**32 - 1;
+
+   Current_Id : State_Id := 0;
+
+   -------------
+   -- Next_Id --
+   -------------
+
+   function Next_Id return State_Id is
+   begin
+      return Result : constant State_Id := Current_Id do
+         Current_Id := Current_Id + 1;
+      end return;
+   end Next_Id;
+
    type Search_State is record
+      Id     : State_Id := Next_Id;
+
+      Parent : State_Id := 0;
+
+      Seen : Dependencies.Containers.Set;
+      --  Any dependency already seen needs not to be explored, as it has been
+      --  done at some point upwards the search tree.
+
       Expanded,
       --  Nodes already processed
 
@@ -58,11 +82,38 @@ package body Alire.Solver is
    is
       use Conditional.For_Dependencies;
    begin
-      return
-        "EXPANDED: " & State.Expanded.Image_One_Line & "; "
-        & "TARGET: " & State.Target.Image_One_Line & "; "
-        & "REMAIN: " & State.Remaining.Image_One_Line;
+      if Trace.Level = Debug then
+         return ""
+           & "i:" & State.Id'Image & "; p:" & State.Parent'Image & "; "
+           & "TARGET: "   & State.Target.Image_One_Line & "; "
+           & "SEEN: "     & State.Seen.Image_One_Line & "; "
+           & "EXPANDED: " & State.Expanded.Image_One_Line & "; "
+           & "REMAIN: "   & State.Remaining.Image_One_Line & "; "
+         ;
+      else
+         return "";
+      end if;
    end Image_One_Line;
+
+   -----------------
+   -- Print_Debug --
+   -----------------
+
+   procedure Print_Debug (State : Search_State;
+                          Level : Trace.Levels := Trace.Debug)
+   is
+   begin
+      if Level <= Trace.Level then
+         Trace.Log ("  i:"   & State.Id'Image
+                    & "; p:" & State.Parent'Image, Level);
+         Trace.Log ("  TARGET: "     & State.Target.Image_One_Line, Level);
+         Trace.Log ("  SEEN: "       & State.Seen.Image_One_Line, Level);
+         Trace.Log ("  EXPANDED: "   & State.Expanded.Image_One_Line, Level);
+         Trace.Log ("  REMAIN: "     & State.Remaining.Image_One_Line, Level);
+         Trace.Log ("  SOLUTION: "
+                    & State.Solution.All_Dependencies.Image_One_Line, Level);
+      end if;
+   end Print_Debug;
 
    -----------
    -- Image --
@@ -153,7 +204,7 @@ package body Alire.Solver is
       use Alire.Conditional.For_Dependencies;
 
       Unavailable_Crates      : Containers.Crate_Name_Sets.Set;
-      Unavailable_Direct_Deps : AAA.Strings.Sets.Set;
+      Unavailable_Direct_Deps : Dependencies.Containers.Set;
       --  Some dependencies may be unavailable because the crate does not
       --  exist, the requested releases do not exist, or the intersection of
       --  versions is empty. In this case, we can prematurely end the search
@@ -163,7 +214,7 @@ package body Alire.Solver is
       --  introduced by the user), or otherwise it does make sense to explore
       --  alternate solutions that may not require the impossible dependencies.
 
-      Unavailable_All_Deps : AAA.Strings.Sets.Set;
+      Unavailable_All_Deps : Dependencies.Containers.Set;
       --  Still, we can keep track of indirect unsolvable deps to speed-up the
       --  search by not reattempting branches that contain such a dependency.
 
@@ -296,6 +347,8 @@ package body Alire.Solver is
 
       procedure Expand (State : Search_State)
       is
+         use Dependencies.Containers;
+
          St : Search_State renames State;
 
          ------------------
@@ -303,7 +356,12 @@ package body Alire.Solver is
          ------------------
 
          procedure Expand_Value (Dep          : Dependencies.Dependency;
+                                 Raw_Dep      : Dependencies.Dependency;
                                  Allow_Shared : Boolean) is
+            --  Dep is the unique dependency in the solution that aglutinates
+            --  all dependencies on the same crate that have been seen to date.
+            --  Raw_Dep, instead, is the simple dependency that is being tested
+            --  in the current expansion.
 
             --  Ensure the dependency exists in the solution, so the following
             --  procedures can safely count on it being there:
@@ -525,7 +583,10 @@ package body Alire.Solver is
                           Image_One_Line (State) &
                           "; NEW: " & New_Deps.Image_One_Line);
 
-                     Expand ((Expanded  => State.Expanded and R.To_Dependency,
+                     Expand ((Id        => <>,
+                              Parent    => State.Id,
+                              Seen      => State.Seen.Union (To_Set (Raw_Dep)),
+                              Expanded  => State.Expanded and R.To_Dependency,
                               Target    => State.Remaining,
                               Remaining => New_Deps,
                               Solution  => Solution.Including
@@ -544,12 +605,12 @@ package body Alire.Solver is
             --------------------
             --  Mark a crate as missing and continue exploring, depending on
             --  configuration policies, or abandon this search branch.
-            procedure Expand_Missing (Dep    : Alire.Dependencies.Dependency)
+            procedure Expand_Missing
             is
             begin
                if Options.Completeness > All_Complete or else
-                 Unavailable_Crates.Contains (Dep.Crate) or else
-                 Unavailable_Direct_Deps.Contains (Dep.Image)
+                 Unavailable_Crates.Contains (Raw_Dep.Crate) or else
+                 Unavailable_Direct_Deps.Contains (Raw_Dep)
                then
 
                   Trace.Debug
@@ -557,7 +618,10 @@ package body Alire.Solver is
                      & " when the search tree was "
                      & Image_One_Line (State));
 
-                  Expand ((Expanded  => State.Expanded,
+                  Expand ((Id        => <>,
+                           Parent    => State.Id,
+                           Seen      => State.Seen.Union (To_Set (Raw_Dep)),
+                           Expanded  => State.Expanded and Raw_Dep,
                            Target    => State.Remaining,
                            Remaining => Empty,
                            Solution  => Solution.Missing (Dep)));
@@ -584,7 +648,10 @@ package body Alire.Solver is
                           " without adding dependencies to tree " &
                           Image_One_Line (State));
 
-                     Expand ((Expanded  => State.Expanded,
+                     Expand ((Id        => <>,
+                              Parent    => State.Id,
+                              Seen      => State.Seen.Union (To_Set (Raw_Dep)),
+                              Expanded  => State.Expanded,
                               Target    => State.Remaining,
                               Remaining => Empty,
                               Solution  => Solution.Hinting (Dep)));
@@ -646,7 +713,7 @@ package body Alire.Solver is
                      & " when the search tree was "
                      & Image_One_Line (State));
 
-                  Expand_Missing (Dep);
+                  Expand_Missing;
 
                else
 
@@ -660,7 +727,7 @@ package body Alire.Solver is
                      & " when the search tree was "
                      & Image_One_Line (State));
 
-                  Expand_Missing (Dep);
+                  Expand_Missing;
 
                end if;
             end Check_Version_Pin;
@@ -682,23 +749,31 @@ package body Alire.Solver is
 
                for R of reverse Installed.Satisfying (Dep) loop
                   Satisfiable := True;
-
                   Check (R, Is_Shared => True, Is_Reused => False);
                end loop;
-
-               --  We may want still check without taking into account
-               --  installed releases.
-
-               if Installed.Satisfying (Dep).Is_Empty
-                 or else Options.Completeness >= Some_Incomplete
-               then
-                  Expand_Value (Dep          => Dep,
-                                Allow_Shared => False);
-               end if;
 
             end Check_Shared;
 
             use type Alire.Dependencies.Dependency;
+
+            ---------------------
+            -- Skip_Dependency --
+            ---------------------
+
+            procedure Skip_Dependency (Reason : String) is
+               --  Call this one whenever the current dependency has been
+               --  already solved so we can skip directly to the next one.
+            begin
+               Trace.Debug ("SOLVER: SKIP explored (" & Reason & "): "
+                            & Raw_Dep.TTY_Image);
+               Expand ((Id        => <>,
+                        Parent    => State.Id,
+                        Seen      => State.Seen,
+                        Expanded  => State.Expanded,
+                        Target    => State.Remaining,
+                        Remaining => Empty,
+                        Solution  => State.Solution));
+            end Skip_Dependency;
 
          begin
 
@@ -706,9 +781,28 @@ package body Alire.Solver is
                Ask_User_To_Continue;
             end if;
 
+            --  Early skip if this is a known dependency
+
+            if State.Seen.Contains (Raw_Dep) then
+               Skip_Dependency ("seen");
+               return;
+            end if;
+
+            --  Check if it must be solved with a pin
+
             if Pins.Depends_On (Dep.Crate) and then
                Pins.State (Dep.Crate).Is_Linked
             then
+
+               --  Early skip if there is already a pin for this crate caused
+               --  by a different dependency.
+
+               if Solution.Depends_On (Dep.Crate) and then
+                  Solution.State (Dep.Crate).Is_Linked
+               then
+                  Skip_Dependency ("linked");
+                  return;
+               end if;
 
                --  The dependency is softlinked in the starting solution, hence
                --  we need not look further for releases.
@@ -719,7 +813,10 @@ package body Alire.Solver is
                     " when tree is " &
                     Image_One_Line (State));
 
-               Expand ((Expanded  => State.Expanded and Dep,
+               Expand ((Id        => <>,
+                        Parent    => State.Id,
+                        Seen      => State.Seen.Union (To_Set (Raw_Dep)),
+                        Expanded  => State.Expanded and Dep,
                         Target    => State.Remaining and
                           (if Pins.State (Dep.Crate).Has_Release
                            then Pins.State (Dep.Crate)
@@ -742,7 +839,7 @@ package body Alire.Solver is
                Trace.Debug
                  ("SOLVER: re-checking EXISTING releases "
                   & Solution.Releases_Providing (Dep.Crate).Image_One_Line
-                  & " for DIFFERENT dep " & Dep.TTY_Image);
+                  & " for DIFFERENT dep " & Raw_Dep.TTY_Image);
 
                for In_Sol of Solution.Dependencies_Providing (Dep.Crate) loop
                   if In_Sol.Has_Release then
@@ -777,7 +874,6 @@ package body Alire.Solver is
                Check_Version_Pin;
 
             elsif Index.Exists (Dep.Crate, Index_Query_Options) or else
-                  Index.Has_Externals (Dep.Crate) or else
               not Index.Releases_Satisfying (Dep, Props,
                                              Index_Query_Options).Is_Empty
             then
@@ -788,8 +884,8 @@ package body Alire.Solver is
                --  thing from the start, which we can use to enable a partial
                --  solution without exploring the whole solution space:
 
-               if not Unavailable_Direct_Deps.Contains (Dep.Image) and then
-                 not Unavailable_All_Deps.Contains (Dep.Image)
+               if not Unavailable_Direct_Deps.Contains (Raw_Dep) and then
+                 not Unavailable_All_Deps.Contains (Raw_Dep)
                then
                   --  Don't bother checking what we known to not be available.
                   --  We still want to go through to external hinting.
@@ -830,21 +926,16 @@ package body Alire.Solver is
                   end;
                end if;
 
-               --  Beside normal releases, an external may exist for the
-               --  crate, in which case we hint the crate instead of failing
-               --  resolution (if the external failed to find its releases).
-
-               Check_Hinted;
-
                --  If the dependency cannot be satisfied, add it to our damned
                --  list for speed-up.
 
                if not Satisfiable and then
-                 not Unavailable_All_Deps.Contains (Dep.Image)
+                 not Unavailable_All_Deps.Contains (Raw_Dep)
                then
                   Trace.Debug ("SOLVER: marking as unsatisfiable: "
-                               & Dep.TTY_Image);
-                  Unavailable_All_Deps.Include (Dep.Image);
+                               & Raw_Dep.TTY_Image);
+                  Unavailable_All_Deps.Include (Dep);
+                  Unavailable_All_Deps.Include (Raw_Dep);
                end if;
 
                --  There may be a less bad solution if we leave this crate out.
@@ -852,13 +943,25 @@ package body Alire.Solver is
                if not Satisfiable or else Options.Completeness = All_Incomplete
                then
 
-                  Trace.Debug
-                    ("SOLVER: marking crate " & Dep.Image
-                     & " MISSING with Satisfiable=" & Satisfiable'Image
-                     & " when the search tree was "
-                     & Image_One_Line (State));
+                  --  Beside normal releases, an external may exist for the
+                  --  crate, in which case we hint the crate instead of failing
+                  --  resolution (if the external failed to find its releases).
 
-                  Expand_Missing (Dep);
+                  if Index.Has_Externals (Dep.Crate) then
+
+                     Check_Hinted;
+
+                  else
+
+                     Trace.Debug
+                       ("SOLVER: marking crate " & Raw_Dep.Image
+                        & " MISSING with Satisfiable=" & Satisfiable'Image
+                        & " when the search tree was "
+                        & Image_One_Line (State));
+
+                     Expand_Missing;
+
+                  end if;
                end if;
 
             else
@@ -867,11 +970,11 @@ package body Alire.Solver is
                --  mark it as missing an move on:
 
                Trace.Debug
-                 ("SOLVER: catalog LACKS the crate " & Dep.Image
+                 ("SOLVER: catalog LACKS the crate " & Raw_Dep.Image
                   & " when the search tree was "
                   & Image_One_Line (State));
 
-               Expand_Missing (Dep);
+               Expand_Missing;
 
             end if;
          end Expand_Value;
@@ -882,7 +985,10 @@ package body Alire.Solver is
 
          procedure Expand_And_Vector is
          begin
-            Expand ((Expanded  => State.Expanded,
+            Expand ((Id        => <>,
+                     Parent    => State.Id,
+                     Seen      => State.Seen,
+                     Expanded  => State.Expanded,
                      Target    => State.Target.First_Child,
                      Remaining => State.Target.All_But_First_Children
                                   and State.Remaining,
@@ -896,7 +1002,10 @@ package body Alire.Solver is
          procedure Expand_Or_Vector is
          begin
             for I in State.Target.Iterate loop
-               Expand ((Expanded  => State.Expanded,
+               Expand ((Id        => <>,
+                        Parent    => State.Id,
+                        Seen      => State.Seen,
+                        Expanded  => State.Expanded,
                         Target    => State.Target (I),
                         Remaining => State.Remaining,
                         Solution  => State.Solution));
@@ -927,7 +1036,7 @@ package body Alire.Solver is
                         --  Because it does not exist at all, so "complete"
                     and then
                       not Unavailable_Direct_Deps.Contains
-                        (Solution.Dependency (Crate).Image)
+                        (Solution.Dependency (Crate))
                         --  Because no release fulfills it, so "complete"
                   then
                      return False;
@@ -966,8 +1075,11 @@ package body Alire.Solver is
          end Store_Finished;
 
       begin
-         Trace.Debug ("SOLVER: EXPAND");
-         Trace.Debug (Image_One_Line (State));
+         if True or else State.Target.Is_Empty or else State.Target.Is_Value
+         then
+            Trace.Debug ("SOLVER: EXPAND");
+            Print_Debug (State);
+         end if;
 
          if State.Target.Is_Empty then
 
@@ -984,7 +1096,10 @@ package body Alire.Solver is
                --  Take the remaining tree and make it the current target for
                --  solving, since we already exhausted the previous target.
 
-               Expand ((Expanded  => State.Expanded,
+               Expand ((Id        => <>,
+                        Parent    => State.Id,
+                        Seen      => State.Seen,
+                        Expanded  => State.Expanded,
                         Target    => State.Remaining,
                         Remaining => Empty,
                         Solution  => State.Solution));
@@ -1007,6 +1122,9 @@ package body Alire.Solver is
                               --  Add or merge dependency
                              .Dependency (State.Target.Value.Crate),
                               --  And use it in expansion
+               Raw_Dep      => State.Target.Value,
+                              --  We also pass the plain dependency for the
+                              --  Seen collection inside the search state.
                Allow_Shared => Options.Sharing = Allow_Shared);
 
          elsif State.Target.Is_Vector then
@@ -1047,7 +1165,7 @@ package body Alire.Solver is
                if Index.Releases_Satisfying (Dep.Value, Props,
                                              Index_Query_Options).Is_Empty
                then
-                  Unavailable_Direct_Deps.Include (Dep.Value.Image);
+                  Unavailable_Direct_Deps.Include (Dep.Value);
                   Trace.Debug
                     ("Direct dependency has no fulfilling releases: "
                      & Utils.TTY.Name (Dep.Value.Image));
@@ -1101,8 +1219,8 @@ package body Alire.Solver is
       --  Warn if we foresee things taking a loong time...
 
       if Options.Completeness = All_Incomplete then
-         Trace.Warning ("Exploring all possible solutions to dependencies,"
-                        & " this may take some time...");
+         Put_Warning ("Exploring all possible solutions to dependencies,"
+                      & " this may take some time...");
       end if;
 
       --  Get the trivial case out of the way
@@ -1120,7 +1238,10 @@ package body Alire.Solver is
       --  Otherwise expand the full dependencies
 
       begin
-         Expand ((Expanded  => Empty,
+         Expand ((Id        => <>,
+                  Parent    => 0,
+                  Seen      => Dependencies.Containers.Empty,
+                  Expanded  => Empty,
                   Target    => Full_Dependencies,
                   Remaining => Empty,
                   Solution  => Solution));
@@ -1139,6 +1260,14 @@ package body Alire.Solver is
          if Options.Completeness < All_Incomplete
            and then User_Answer_Continue /= No
          then
+            if Options.Completeness <= All_Complete then
+               Put_Warning
+                 ("No complete solution exists, looking for  incomplete ones; "
+                  & "this may take some time...");
+               Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
+                            & "exploring the space of complete solutions");
+            end if;
+
             Trace.Detail
               ("No solution found with completeness policy of "
                & Options.Completeness'Image
@@ -1172,7 +1301,8 @@ package body Alire.Solver is
                                         else Options.On_Timeout))));
          else
             raise Query_Unsuccessful with Errors.Set
-              ("Solver failed to find any solution to fulfill dependencies.");
+              ("Solver failed to find any solution to fulfill dependencies "
+               & "after " & Timer.Image);
          end if;
       else
 
@@ -1225,6 +1355,7 @@ package body Alire.Solver is
                             & TTY.Error (Best_Solution.Misses.Length'Img)
                             & " missing dependencies"
                             else "")
+                          & " in " & Timer.Image & " seconds"
                          );
 
             return Best_Solution;
