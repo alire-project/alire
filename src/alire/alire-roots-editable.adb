@@ -229,6 +229,14 @@ package body Alire.Roots.Editable is
                                   return Crate_Name
    is
       Pin_Root : constant Optional.Root := Optional.Detect_Root (Path);
+
+      -------------------------
+      -- Pin_Is_Parent_Crate --
+      -------------------------
+
+      function Pin_Is_Parent_Crate return Boolean
+      is (Directories.Find_Relative_Path_To (Path) = "..");
+
    begin
       if Crate.Is_Empty and then not Pin_Root.Is_Valid then
          Raise_Checked_Error
@@ -255,11 +263,16 @@ package body Alire.Roots.Editable is
          --  easily remove the dependency by hand afterwards (or add it, if the
          --  dependency is in the closure but not in the root crate).
 
+         --  As a special case, when the pin is a direct parent, we presume we
+         --  are pinning to the main crate from a test/demo subcrate. In that
+         --  case, we don't want to narrow down the version. This is merely
+         --  aesthetic, as pins will always override the version.
+
          if not This.Solution.Depends_On (Crate) then
             This.Add_Dependency
               (Dependencies.New_Dependency
                  (Crate,
-                  (if Pin_Root.Is_Valid
+                  (if Pin_Root.Is_Valid and then not Pin_Is_Parent_Crate
                    then Pin_Root.Updatable_Dependency.Versions
                    else Semver.Extended.Any)));
          end if;
