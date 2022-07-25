@@ -198,6 +198,11 @@ package body Alire.Solver is
 
       Timer    : Stopwatch.Instance :=
                    Stopwatch.With_Elapsed (Options.Elapsed);
+      --  Total time spent searching
+
+      Update_Timer : Stopwatch.Instance;
+      --  To avoid reporting progress too often, as this will have some impact
+      --  on time spent searching.
 
       Timeout  : Duration := Options.Timeout + Options.Elapsed;
 
@@ -246,6 +251,8 @@ package body Alire.Solver is
       Dupes : Natural := 0;
       --  Some solutions are found twice when some dependencies are subsets of
       --  other dependencies.
+
+      Complete : Natural := 0; -- Counter of complete solutions for speed-up
 
       User_Answer_Continue : CLIC.User_Input.Answer_Kind :=
                                CLIC.User_Input.Yes;
@@ -319,27 +326,40 @@ package body Alire.Solver is
          end if;
       end Ask_User_To_Continue;
 
-      --------------
-      -- Complete --
-      --------------
-
-      function Complete return Natural is
-      begin
-         return Count : Natural := 0 do
-            for Sol of Solutions loop
-               if Sol.Is_Complete then
-                  Count := Count + 1;
-               end if;
-            end loop;
-         end return;
-      end Complete;
-
       -------------
       -- Partial --
       -------------
 
       function Partial return Natural
       is (Natural (Solutions.Length) - Complete);
+
+      -------------------
+      -- Progress_Line --
+      -------------------
+
+      function Progress_Line return String
+      is
+         use AAA.Strings;
+      begin
+         return "Solving dependencies: "
+           & Trim (Complete'Img) & "/"
+           & Trim (Partial'Img) & "/"
+           & Trim (Dupes'Image) & "/"
+           & Trim (Next_Id'Image)
+           & " (complete/partial/dupes/states)";
+      end Progress_Line;
+
+      ---------------------
+      -- Progress_Report --
+      ---------------------
+
+      procedure Progress_Report is
+      begin
+         if Update_Timer.Elapsed >= 0.0417 then -- 24fps
+            Update_Timer.Reset;
+            Progress.Step (Progress_Line);
+         end if;
+      end Progress_Report;
 
       ------------
       -- Expand --
@@ -612,7 +632,6 @@ package body Alire.Solver is
                  Unavailable_Crates.Contains (Raw_Dep.Crate) or else
                  Unavailable_Direct_Deps.Contains (Raw_Dep)
                then
-
                   Trace.Debug
                     ("SOLVER: marking MISSING the crate " & Dep.Image
                      & " when the search tree was "
@@ -625,7 +644,6 @@ package body Alire.Solver is
                            Target    => State.Remaining,
                            Remaining => Empty,
                            Solution  => Solution.Missing (Dep)));
-
                else
                   Trace.Debug
                     ("SOLVER: discarding solution MISSING crate " & Dep.Image
@@ -787,6 +805,8 @@ package body Alire.Solver is
                Skip_Dependency ("seen");
                return;
             end if;
+
+            Progress_Report; -- As this is a new real check
 
             --  Check if it must be solved with a pin
 
@@ -1047,13 +1067,15 @@ package body Alire.Solver is
             end Contains_All_Satisfiable;
 
             Pre_Length : constant Count_Type := Solutions.Length;
-
-            use AAA.Strings;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
                          & State.Expanded.Image_One_Line
                          & " complete: " & Solution.Is_Complete'Img
                          & "; composition: " & Solution.Composition'Img);
+
+            if Solution.Is_Complete then
+               Complete := Complete + 1;
+            end if;
 
             Solutions.Include (Solution);
 
@@ -1061,11 +1083,7 @@ package body Alire.Solver is
                Dupes := Dupes + 1;
             end if;
 
-            Progress.Step ("Solving dependencies... "
-                           & Trim (Complete'Img) & "/"
-                           & Trim (Partial'Img) & "/"
-                           & Trim (Dupes'Image)
-                           & " (complete/partial/dupes)");
+            Progress_Report; -- As we found a new solution
 
             if Options.Completeness = First_Complete
               and then Contains_All_Satisfiable
@@ -1265,13 +1283,15 @@ package body Alire.Solver is
                  ("No complete solution exists, looking for  incomplete ones; "
                   & "this may take some time...");
                Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
-                            & "exploring the space of complete solutions");
+                            & "exploring complete solutions");
             end if;
 
             Trace.Detail
               ("No solution found with completeness policy of "
                & Options.Completeness'Image
                & "; attempting to find more incomplete solutions...");
+
+            Progress.Step (Clear => True); -- The nested one will take over
 
             --  Reattempt so we can return an incomplete solution
 
