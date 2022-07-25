@@ -144,6 +144,7 @@ package body Alire.Solutions.Diffs is
              and then Has_Latter and then Latter.Fulfilment in Fulfilment);
 
          use type Alire.User_Pins.Pin;
+
       begin
          --  New hint
          if Gains_State (Hinted) then
@@ -159,7 +160,9 @@ package body Alire.Solutions.Diffs is
 
          --  New unsolvable
          elsif Gains_State (Missed) then
-            Add_Change (Chg, Icon (Missing), TTY.Error ("missing"));
+            Add_Change (Chg, Icon (Missing),
+                        TTY.Error ("missing") & ":"
+                        & TTY.Warn (To_Lower_Case (Latter.Reason'Image)));
 
          --  From hint to proper release
          elsif Has_Former and then Former.Is_Hinted and then

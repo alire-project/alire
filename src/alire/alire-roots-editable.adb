@@ -140,7 +140,8 @@ package body Alire.Roots.Editable is
          Alire.Manifest.Append (Crate_File (This.Edit), Dep);
          This.Reload_Manifest;
 
-         This.Edit.Set (This.Solution.Missing (Dep));
+         This.Edit.Set (This.Solution.Missing (Dep,
+                                               Dependencies.States.Skipped));
       end;
    end Add_Dependency;
 

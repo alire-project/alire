@@ -29,6 +29,7 @@ package body Alire.Solver is
    package Semver renames Semantic_Versioning;
 
    use all type Dependencies.States.Fulfillments;
+   use all type Dependencies.States.Missed_Reasons;
    use all type Dependencies.States.Transitivities;
 
    package Solution_Sets is new Ada.Containers.Indefinite_Ordered_Sets
@@ -626,6 +627,7 @@ package body Alire.Solver is
             --  Mark a crate as missing and continue exploring, depending on
             --  configuration policies, or abandon this search branch.
             procedure Expand_Missing
+              (Reason : Dependencies.States.Missed_Reasons)
             is
             begin
                if Options.Completeness > All_Complete or else
@@ -643,7 +645,7 @@ package body Alire.Solver is
                            Expanded  => State.Expanded and Raw_Dep,
                            Target    => State.Remaining,
                            Remaining => Empty,
-                           Solution  => Solution.Missing (Dep)));
+                           Solution  => Solution.Missing (Dep, Reason)));
                else
                   Trace.Debug
                     ("SOLVER: discarding solution MISSING crate " & Dep.Image
@@ -723,15 +725,19 @@ package body Alire.Solver is
                      --  There may be no satisfying releases, or even so the
                      --  check may still fail, so we must attempt this one too:
 
-                  Trace.Debug
-                    ("SOLVER: marking crate " & Dep.Image
-                     & " MISSING in case pinned version "
-                     & TTY.Version (Pin_Version.Image)
-                     & " is incompatible with other dependencies"
-                     & " when the search tree was "
-                     & Image_One_Line (State));
+                  if Options.Completeness >= Some_Incomplete then
 
-                  Expand_Missing;
+                     Trace.Debug
+                       ("SOLVER: marking crate " & Dep.Image
+                        & " MISSING in case pinned version "
+                        & TTY.Version (Pin_Version.Image)
+                        & " is incompatible with other dependencies"
+                        & " when the search tree was "
+                        & Image_One_Line (State));
+
+                     Expand_Missing (Conflict);
+
+                  end if;
 
                else
 
@@ -745,7 +751,7 @@ package body Alire.Solver is
                      & " when the search tree was "
                      & Image_One_Line (State));
 
-                  Expand_Missing;
+                  Expand_Missing (Conflict);
 
                end if;
             end Check_Version_Pin;
@@ -979,7 +985,11 @@ package body Alire.Solver is
                         & " when the search tree was "
                         & Image_One_Line (State));
 
-                     Expand_Missing;
+                     Expand_Missing (if State.Solution.Depends_On (Dep.Crate)
+                                     then Conflict
+                                     else Unavailable);
+                     --  Note that we use the solution within the state, that
+                     --  still hasn't been informed about the new dependency.
 
                   end if;
                end if;
@@ -994,7 +1004,7 @@ package body Alire.Solver is
                   & " when the search tree was "
                   & Image_One_Line (State));
 
-               Expand_Missing;
+               Expand_Missing (Unindexed);
 
             end if;
          end Expand_Value;
