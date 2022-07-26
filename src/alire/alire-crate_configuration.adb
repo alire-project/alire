@@ -1,10 +1,10 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;
 with Ada.Text_IO;
-with Ada.Containers.Indefinite_Vectors;
 
 with AAA.Strings; use AAA.Strings;
 
+with Alire.Containers;
 with Alire_Early_Elaboration;
 with Alire.Solutions;
 with Alire.Releases;
@@ -31,6 +31,8 @@ package body Alire.Crate_Configuration is
       Lower_Case => True);
 
    use Config_Type_Definition_Holder;
+
+   subtype Crate_Name_Set is Containers.Crate_Name_Sets.Set;
 
    --  The Host info types below could be Enums instead of Strings. This would
    --  have the advantage of providing users the entire list of potential
@@ -61,9 +63,6 @@ package body Alire.Crate_Configuration is
 
    package TIO renames Ada.Text_IO;
 
-   package Crate_Name_Vect
-   is new Ada.Containers.Indefinite_Vectors (Natural, Crate_Name);
-
    -------------------
    -- Build_Profile --
    -------------------
@@ -74,6 +73,13 @@ package body Alire.Crate_Configuration is
    is (This.Profile_Map (Crate));
 
    -----------------------
+   -- Build_Profile_Key --
+   -----------------------
+
+   function Build_Profile_Key (Crate : Crate_Name) return String
+   is (To_Lower_Case (Crate.As_String & "." & Builtin_Build_Profile.Name));
+
+   -----------------------
    -- Set_Build_Profile --
    -----------------------
 
@@ -81,10 +87,8 @@ package body Alire.Crate_Configuration is
                                 Crate   : Crate_Name;
                                 Profile : Profile_Kind)
    is
-      Key : constant String :=
-              To_Lower_Case
-                (Crate.As_String & "." & Builtin_Build_Profile.Name);
-      Val : Config_Setting := This.Map (+Key);
+      Key : constant String := Build_Profile_Key (Crate);
+      Val : Config_Setting  := This.Map (+Key);
    begin
       --  Update config value that holds the profile value
       Val.Value  := TOML.Create_String (To_Lower_Case (Profile'Image));
@@ -93,32 +97,29 @@ package body Alire.Crate_Configuration is
 
       --  Update profile itself
       This.Profile_Map.Include (Crate, Profile);
+
+      --  And its setter
+      This.Setter_Map.Include (Crate, User);
+
+      Trace.Debug ("Build profile of " & Crate.As_String
+                   & " set by user to " & Profile'Image);
    end Set_Build_Profile;
 
-   -----------------------
-   -- Make_Release_Vect --
-   -----------------------
+   ------------------------
+   -- Is_Default_Profile --
+   ------------------------
 
-   function Make_Release_Vect (Root : in out Alire.Roots.Root)
-                               return Crate_Name_Vect.Vector
+   function Is_Default_Profile (This  : Global_Config;
+                                Crate : Crate_Name)
+                                return Boolean
    is
-      Result : Crate_Name_Vect.Vector;
-
-      procedure Filter (This : in out Alire.Roots.Root;
-                      Solution : Solutions.Solution;
-                      State : Solutions.Dependency_State)
-      is
-         pragma Unreferenced (This, Solution);
-      begin
-         if State.Has_Release and then not State.Is_Provided then
-            Result.Append (State.Crate);
-         end if;
-      end Filter;
-
    begin
-      Root.Traverse (Filter'Access);
-      return Result;
-   end Make_Release_Vect;
+      return This.Setter_Map (Crate) = Default;
+   end Is_Default_Profile;
+
+   ----------------------
+   -- Is_Reserved_Name --
+   ----------------------
 
    function Is_Reserved_Name (Type_Name : String) return Boolean
    is (AAA.Strings.Has_Prefix (Type_Name, "alire_") or else
@@ -136,7 +137,7 @@ package body Alire.Crate_Configuration is
 
    procedure Make_Build_Profile_Map (This     : in out Global_Config;
                                      Root     : in out Alire.Roots.Root;
-                                     Rel_Vect : Crate_Name_Vect.Vector)
+                                     Rel_Vect : Crate_Name_Set)
    is
       use Properties.Build_Profiles;
 
@@ -162,6 +163,7 @@ package body Alire.Crate_Configuration is
                                   (if Crate = Root.Name
                                    then Default_Root_Build_Profile
                                    else Default_Deps_Build_Profile));
+         This.Setter_Map.Insert (Crate, Default);
       end loop;
 
       for Prop of Root.Release.On_Platform_Properties
@@ -183,6 +185,8 @@ package body Alire.Crate_Configuration is
                   for Cursor in This.Profile_Map.Iterate loop
                      This.Profile_Map.Replace_Element
                        (Cursor, Wildcard_Profile);
+                     This.Setter_Map.Replace (Profile_Maps.Key (Cursor),
+                                              Manifest);
                   end loop;
                end;
             end if;
@@ -194,6 +198,8 @@ package body Alire.Crate_Configuration is
             begin
                for Cursor in Sel.Iterate loop
                   Set_Profile (Key (Cursor), Element (Cursor));
+                  This.Setter_Map.Replace (Profile_Selection_Maps.Key (Cursor),
+                                           Manifest);
                end loop;
             end;
          end;
@@ -216,7 +222,7 @@ package body Alire.Crate_Configuration is
 
    procedure Make_Switches_Map (This     : in out Global_Config;
                                 Root     : in out Alire.Roots.Root;
-                                Rel_Vect : Crate_Name_Vect.Vector)
+                                Rel_Vect : Crate_Name_Set)
    is
    begin
       for Crate of Rel_Vect loop
@@ -273,7 +279,8 @@ package body Alire.Crate_Configuration is
    is
       Solution : constant Solutions.Solution := Root.Solution;
 
-      Rel_Vect : constant Crate_Name_Vect.Vector := Make_Release_Vect (Root);
+      Rel_Vect : constant Containers.Crate_Name_Sets.Set :=
+                   Root.Nonabstract_Crates;
    begin
 
       if not Solution.Is_Complete then
@@ -336,7 +343,7 @@ package body Alire.Crate_Configuration is
 
       Set_Last_Build_Profile (This.Build_Profile (Root.Name));
 
-      for Crate of Make_Release_Vect (Root) loop
+      for Crate of Root.Nonabstract_Crates loop
          declare
             Rel : constant Releases.Release := Root.Release (Crate);
          begin
@@ -718,7 +725,7 @@ package body Alire.Crate_Configuration is
                (+Name) & "' from '" & (+Ref.Set_By) & "' and '"
                & (+Crate) & "'.");
          else
-            Ref.Value := Val.Value;
+            Ref.Value  := Val.Value;
             Ref.Set_By := +(+Crate);
          end if;
       end;

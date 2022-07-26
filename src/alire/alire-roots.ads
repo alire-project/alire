@@ -115,6 +115,11 @@ package Alire.Roots is
                           return Any_Path;
    --  Find the base folder in which a release can be found for the given root
 
+   function Nonabstract_Crates (This : in out Root)
+                                return Containers.Crate_Name_Sets.Set;
+   --  Return names of crates in the solution, including root, excluding
+   --  those that are provided by another crates. I.e., only actual releases.
+
    function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;
    --  Returns the solution stored in the lockfile
@@ -227,7 +232,14 @@ package Alire.Roots is
                                 Crate   : Crate_Name;
                                 Profile : Crate_Configuration.Profile_Kind)
      with Pre => This.Release.Name = Crate or else
-                 This.Solution.Releases.Contains (Crate);
+     This.Solution.Releases.Contains (Crate);
+
+   procedure Set_Build_Profiles (This    : in out Root;
+                                 Profile : Crate_Configuration.Profile_Kind;
+                                 Force   : Boolean);
+   --  Set all build profiles in the solution to the value given. Override
+   --  values in manifests if Force, otherwise only set crates without a
+   --  profile in their manifest.
 
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files

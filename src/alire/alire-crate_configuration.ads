@@ -32,6 +32,11 @@ package Alire.Crate_Configuration is
                            return Utils.Switches.Profile_Kind
      with Pre => This.Is_Valid;
 
+   function Is_Default_Profile (This  : Global_Config;
+                                Crate : Crate_Name)
+                                return Boolean;
+   --  Say if the current profile for the crate is a default one or not
+
    procedure Set_Build_Profile (This    : in out Global_Config;
                                 Crate   : Crate_Name;
                                 Profile : Profile_Kind)
@@ -59,10 +64,15 @@ private
    package Config_Type_Definition_Holder
    is new Ada.Containers.Indefinite_Holders (Config_Type_Definition);
 
+   type Setters is (Default,  -- Set by alire to a default value
+                    Manifest, -- Set by a crate manifest
+                    User);    -- Set by the alire user through API
+
    type Config_Setting is record
       Type_Def  : Config_Type_Definition_Holder.Holder;
       Value     : TOML.TOML_Value;
       Set_By    : Ada.Strings.Unbounded.Unbounded_String;
+      --  Free-form text as this can be any crate name and other things
    end record;
 
    package Config_Maps is new Ada.Containers.Hashed_Maps
@@ -75,6 +85,10 @@ private
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Alire.Utils.Switches.Profile_Kind);
 
+   package Profile_Setter_Maps
+   is new Ada.Containers.Indefinite_Ordered_Maps
+     (Crate_Name, Setters);
+
    package Switches_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Alire.Utils.Switches.Switch_List);
@@ -83,6 +97,11 @@ private
       Map : Config_Maps.Map;
 
       Profile_Map  : Profile_Maps.Map;
+      --  Mapping crate -> profile, exists for all crates in solution
+
+      Setter_Map   : Profile_Setter_Maps.Map;
+      --  Mapping crate -> setter, exists for all crates in solution
+
       Switches_Map : Switches_Maps.Map;
    end record;
 

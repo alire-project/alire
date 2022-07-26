@@ -14,12 +14,26 @@ package body Alr.Commands.Build is
                       Args :        AAA.Strings.Vector)
    is
       use Alire.Utils.Switches;
+      Profiles_Selected : constant Natural :=
+                            Alire.Utils.Count_True ((Cmd.Release_Mode,
+                                                     Cmd.Validation_Mode,
+                                                    Cmd.Dev_Mode));
+      Profile : Profile_Kind;
    begin
-      if Alire.Utils.Count_True ((Cmd.Release_Mode,
-                                 Cmd.Validation_Mode,
-                                 Cmd.Dev_Mode)) > 1
-      then
+      if Profiles_Selected > 1 then
          Reportaise_Wrong_Arguments ("Only one build mode can be selected");
+      end if;
+
+      if Cmd.Recurse_Unset and then Cmd.Recurse_Force then
+         Reportaise_Wrong_Arguments
+           ("Only one recursive mode can be selected");
+      end if;
+
+      if (Cmd.Recurse_Unset or else Cmd.Recurse_Force)
+        and then Profiles_Selected = 0
+      then
+         Reportaise_Wrong_Arguments
+           ("Must specify a build profile with a recursive profile option");
       end if;
 
       --  Build profile in the command line takes precedence. The configuration
@@ -27,11 +41,22 @@ package body Alr.Commands.Build is
       --  manifests.
 
       if Cmd.Release_Mode then
+         Profile := Release;
          Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Release);
       elsif Cmd.Validation_Mode then
+         Profile := Validation;
          Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Validation);
       elsif Cmd.Dev_Mode then
+         Profile := Development;
          Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Development);
+      end if;
+
+      if Profiles_Selected /= 0 then -- can only be 1
+         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Profile);
+      end if;
+
+      if Cmd.Recurse_Unset or else Cmd.Recurse_Force then
+         Cmd.Root.Set_Build_Profiles (Profile, Force => Cmd.Recurse_Force);
       end if;
 
       if not Execute (Cmd, Args,
@@ -113,6 +138,16 @@ package body Alr.Commands.Build is
                      Cmd.Dev_Mode'Access,
                      "", "--development",
                      "Set root crate build mode to Development (default)");
+
+      Define_Switch (Config,
+                     Cmd.Recurse_Unset'Access,
+                     "", "--recurse-unset",
+                     "Set build mode also for dependencies without "
+                     & "an explicit setting");
+      Define_Switch (Config,
+                     Cmd.Recurse_Force'Access,
+                     "", "--recurse-all",
+                     "Set build mode also for all dependencies");
 
    end Setup_Switches;
 

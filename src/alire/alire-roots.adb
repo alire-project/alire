@@ -289,6 +289,19 @@ package body Alire.Roots is
       This.Configuration.Set_Build_Profile (Crate, Profile);
    end Set_Build_Profile;
 
+   procedure Set_Build_Profiles (This    : in out Root;
+                                 Profile : Crate_Configuration.Profile_Kind;
+                                 Force   : Boolean)
+   is
+   begin
+      This.Load_Configuration;
+      for Rel of This.Solution.Releases.Including (This.Release.Get) loop
+         if Force or else This.Configuration.Is_Default_Profile (Rel.Name) then
+            This.Configuration.Set_Build_Profile (Rel.Name, Profile);
+         end if;
+      end loop;
+   end Set_Build_Profiles;
+
    ----------------------------
    -- Generate_Configuration --
    ----------------------------
@@ -870,6 +883,31 @@ package body Alire.Roots is
 
    function Name (This : Root) return Crate_Name
    is (This.Release.Constant_Reference.Name);
+
+   ------------------------
+   -- Nonabstract_Crates --
+   ------------------------
+
+   function Nonabstract_Crates (This : in out Root)
+                                return Containers.Crate_Name_Sets.Set
+   is
+      Result : Containers.Crate_Name_Sets.Set;
+
+      procedure Filter (This     : in out Alire.Roots.Root;
+                        Solution : Solutions.Solution;
+                        State    : Solutions.Dependency_State)
+      is
+         pragma Unreferenced (This, Solution);
+      begin
+         if State.Has_Release and then not State.Is_Provided then
+            Result.Include (State.Crate);
+         end if;
+      end Filter;
+
+   begin
+      This.Traverse (Filter'Access);
+      return Result;
+   end Nonabstract_Crates;
 
    ----------
    -- Path --

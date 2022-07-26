@@ -48,5 +48,7 @@ private
       Release_Mode    : aliased Boolean := False;
       Validation_Mode : aliased Boolean := False;
       Dev_Mode        : aliased Boolean := False;
+      Recurse_Unset   : aliased Boolean := False;
+      Recurse_Force   : aliased Boolean := False;
    end record;
 end Alr.Commands.Build;
