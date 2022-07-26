@@ -75,16 +75,9 @@ private
    -- Is_Well_Formed --
    --------------------
 
-   pragma Warnings (Off, "conjunct");
-   --  GNAT 12.1 says:
-   --  warning: unused variable "Char" in conjunct [-gnatw.t]
-   --  warning: consider extracting conjunct from quantified expression
-
    function Is_Well_Formed (Hash_Img : String) return Boolean is
-     (for some Char of Hash_Img =>
-         Char = ':' and then
-         Is_Known (Head (Hash_Img, ':')));
-   pragma Warnings (On);
+     ((for some Char of Hash_Img => Char = ':')
+      and then Is_Known (Head (Hash_Img, ':')));
 
    ----------
    -- Kind --
