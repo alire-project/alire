@@ -57,6 +57,7 @@ package body Alr.Commands.Build is
 
       if Cmd.Recurse_Unset or else Cmd.Recurse_Force then
          Cmd.Root.Set_Build_Profiles (Profile, Force => Cmd.Recurse_Force);
+         Cmd.Root.Generate_Configuration;
       end if;
 
       if not Execute (Cmd, Args,
