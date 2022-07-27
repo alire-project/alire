@@ -1128,7 +1128,7 @@ One may know that a particular compiler version has a problem with some code.
 This may be expressed with dependencies on the generic `gnat` crate, which
 although is not found in the catalog, is a crate that all GNAT compilers
 provide. (Such a crate without actual releases, but provided by other crates,
-is called a virtual crate.) For example:
+is called an abstract crate.) For example:
 
 ```toml
 gnat = ">=7"   # We require a minimum compiler version
