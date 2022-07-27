@@ -35,6 +35,35 @@ package body Alire.Solver is
       "<"          => Solutions.Is_Better,
       "="          => Solutions."=");
 
+   type Search_State is record
+      Expanded,
+      --  Nodes already processed
+
+      Target,
+      --  Next subtree to consider
+
+      Remaining : Types.Platform_Dependencies;
+      --  Nodes pending to be considered
+
+      Solution  : Alire.Solutions.Solution;
+      --  Partial or complete solution that stores releases
+      --  and dependencies processed up to now
+   end record;
+
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (State : Search_State) return String
+   is
+      use Conditional.For_Dependencies;
+   begin
+      return
+        "EXPANDED: " & State.Expanded.Image_One_Line & "; "
+        & "TARGET: " & State.Target.Image_One_Line & "; "
+        & "REMAIN: " & State.Remaining.Image_One_Line;
+   end Image_One_Line;
+
    -----------
    -- Image --
    -----------
@@ -265,20 +294,9 @@ package body Alire.Solver is
       -- Expand --
       ------------
 
-      procedure Expand (Expanded,
-                        --  Nodes already processed
-
-                        Target,
-                        --  Next subtree to consider
-
-                        Remaining : Types.Platform_Dependencies;
-                        --  Nodes pending to be considered
-
-                        Solution  : Alire.Solutions.Solution
-                        --  Partial or complete solution that stores releases
-                        --  and dependencies processed up to now
-                       )
+      procedure Expand (State : Search_State)
       is
+         St : Search_State renames State;
 
          ------------------
          -- Expand_Value --
@@ -291,7 +309,7 @@ package body Alire.Solver is
             --  procedures can safely count on it being there:
 
             Solution : constant Alire.Solutions.Solution :=
-                         Expand.Solution.Depending_On (Dep);
+                         State.Solution.Depending_On (Dep);
             --  Note that, since this merge may render the release for the old
             --  dependency invalid, it should be checked again (which Check
             --  below does.)
@@ -355,7 +373,7 @@ package body Alire.Solver is
 
                   return Result;
 
-               elsif not Specific_GNAT (Remaining).Is_Empty then
+               elsif not Specific_GNAT (State.Remaining).Is_Empty then
 
                   --  There is an unsolved dependency on a specific gnat, that
                   --  we must honor sooner or later, so no point on trying
@@ -363,12 +381,12 @@ package body Alire.Solver is
 
                   Trace.Debug
                     ("SOLVER: gnat PASS " & Boolean'
-                       (Specific_GNAT (Remaining).Value.Crate = R.Name)'Img
+                       (Specific_GNAT (St.Remaining).Value.Crate = R.Name)'Img
                      & " for " & R.Milestone.TTY_Image
                      & " due to compiler already in dependencies: "
-                     & Specific_GNAT (Remaining).Value.TTY_Image);
+                     & Specific_GNAT (State.Remaining).Value.TTY_Image);
 
-                  return Specific_GNAT (Remaining).Value.Crate = R.Name;
+                  return Specific_GNAT (State.Remaining).Value.Crate = R.Name;
 
                elsif Toolchains.Tool_Is_Configured (GNAT_Crate) then
 
@@ -443,9 +461,7 @@ package body Alire.Solver is
                        " FORBIDDEN release: " &
                        R.Milestone.Image &
                        " forbidden by current solution when tree is " &
-                       Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
+                       Image_One_Line (State));
 
                --  After all these checks, the candidate release must belong to
                --  a crate that is still unfrozen, so it is a valid new crate
@@ -457,9 +473,7 @@ package body Alire.Solver is
                      & R.Milestone.Image & " FAILS to fulfill dependency "
                      & Dep.TTY_Image
                      & " when the search tree was "
-                     & Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
                   --  Even if the release is OK for the dependency, the
                   --  aggregated dependencies for the crate in the solution
@@ -471,9 +485,7 @@ package body Alire.Solver is
                      & R.Milestone.Image & " FAILS to fulfill dep-in-solution "
                      & Solution.Dependency (Dep.Crate).TTY_Image
                      & " when the search tree was "
-                     & Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
                --  Or it may be that, even being a valid version, it's not for
                --  this environment.
@@ -484,9 +496,7 @@ package body Alire.Solver is
                     ("SOLVER: discarding search branch because "
                      & R.Milestone.Image & " is UNAVAILABLE"
                      & " when the search tree was "
-                     & Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
                --  If we reached here, the release fulfills the dependency, so
                --  we add it to the solution. It might still be a release that
@@ -512,21 +522,19 @@ package body Alire.Solver is
                            else "") &
                           " adding" & New_Deps.Leaf_Count'Img &
                           " dependencies to tree " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining
-                          and New_Deps).Image_One_Line);
+                          Image_One_Line (State) &
+                          "; NEW: " & New_Deps.Image_One_Line);
 
-                     Expand (Expanded  => Expanded and R.To_Dependency,
-                             Target    => Remaining,
-                             Remaining => New_Deps,
-                             Solution  => Solution.Including
-                               (R, Props,
-                                For_Dependency =>
-                                  Optional.Crate_Names.Unit (Dep.Crate),
-                                Shared         =>
-                                  Is_Shared or else
-                                R.Origin.Kind = Binary_Archive));
+                     Expand ((Expanded  => State.Expanded and R.To_Dependency,
+                              Target    => State.Remaining,
+                              Remaining => New_Deps,
+                              Solution  => Solution.Including
+                                (R, Props,
+                                 For_Dependency =>
+                                   Optional.Crate_Names.Unit (Dep.Crate),
+                                 Shared         =>
+                                   Is_Shared or else
+                                 R.Origin.Kind = Binary_Archive)));
                   end;
                end if;
             end Check;
@@ -547,22 +555,18 @@ package body Alire.Solver is
                   Trace.Debug
                     ("SOLVER: marking MISSING the crate " & Dep.Image
                      & " when the search tree was "
-                     & Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
-                  Expand (Expanded  => Expanded,
-                          Target    => Remaining,
-                          Remaining => Empty,
-                          Solution  => Solution.Missing (Dep));
+                  Expand ((Expanded  => State.Expanded,
+                           Target    => State.Remaining,
+                           Remaining => Empty,
+                           Solution  => Solution.Missing (Dep)));
 
                else
                   Trace.Debug
                     ("SOLVER: discarding solution MISSING crate " & Dep.Image
                      & " when the search tree was "
-                     & Tree'(Expanded
-                             and Target
-                             and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
                end if;
             end Expand_Missing;
 
@@ -578,31 +582,25 @@ package body Alire.Solver is
                        ("SOLVER: dependency HINTED: " & (+Dep.Crate) &
                           " via EXTERNAL to satisfy " & Dep.Image &
                           " without adding dependencies to tree " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
+                          Image_One_Line (State));
 
-                     Expand (Expanded  => Expanded,
-                             Target    => Remaining,
-                             Remaining => Empty,
-                             Solution  => Solution.Hinting (Dep));
+                     Expand ((Expanded  => State.Expanded,
+                              Target    => State.Remaining,
+                              Remaining => Empty,
+                              Solution  => Solution.Hinting (Dep)));
                   else
                      Trace.Debug
                        ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
                           " as HINTING is DISABLED, for dep " & Dep.Image &
                           " having externals, when tree is " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
+                          Image_One_Line (State));
                   end if;
                else
                   Trace.Debug
                        ("SOLVER: dependency not hinted: " & (+Dep.Crate) &
                           " for dep " & Dep.Image &
                           " LACKING externals, when tree is " &
-                          Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
+                          Image_One_Line (State));
                end if;
             end Check_Hinted;
 
@@ -646,9 +644,7 @@ package body Alire.Solver is
                      & TTY.Version (Pin_Version.Image)
                      & " is incompatible with other dependencies"
                      & " when the search tree was "
-                     & Tree'(Expanded
-                       and Target
-                       and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
                   Expand_Missing (Dep);
 
@@ -662,9 +658,7 @@ package body Alire.Solver is
                      & TTY.Version (Pin_Version.Image) & " cannot satisfy "
                      & Dep.TTY_Image
                      & " when the search tree was "
-                     & Tree'(Expanded
-                       and Target
-                       and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
                   Expand_Missing (Dep);
 
@@ -723,18 +717,18 @@ package body Alire.Solver is
                  ("SOLVER: dependency LINKED to " &
                     Pins.State (Dep.Crate).Link.Path &
                     " when tree is " &
-                    Tree'(Expanded and Target and Remaining).Image_One_Line);
+                    Image_One_Line (State));
 
-               Expand (Expanded  => Expanded and Dep,
-                       Target    => Remaining and
-                         (if Pins.State (Dep.Crate).Has_Release
-                          then Pins.State (Dep.Crate)
-                                   .Release.Dependencies (Props)
-                          else Empty),
-                       Remaining => Empty,
-                       Solution  =>
-                         Solution.Linking (Dep.Crate,
-                                           Pins.State (Dep.Crate).Link));
+               Expand ((Expanded  => State.Expanded and Dep,
+                        Target    => State.Remaining and
+                          (if Pins.State (Dep.Crate).Has_Release
+                           then Pins.State (Dep.Crate)
+                                    .Release.Dependencies (Props)
+                           else Empty),
+                        Remaining => Empty,
+                        Solution  =>
+                          Solution.Linking (Dep.Crate,
+                                            Pins.State (Dep.Crate).Link)));
                return;
             end if;
 
@@ -862,9 +856,7 @@ package body Alire.Solver is
                     ("SOLVER: marking crate " & Dep.Image
                      & " MISSING with Satisfiable=" & Satisfiable'Image
                      & " when the search tree was "
-                     & Tree'(Expanded
-                       and Target
-                       and Remaining).Image_One_Line);
+                     & Image_One_Line (State));
 
                   Expand_Missing (Dep);
                end if;
@@ -877,9 +869,7 @@ package body Alire.Solver is
                Trace.Debug
                  ("SOLVER: catalog LACKS the crate " & Dep.Image
                   & " when the search tree was "
-                  & Tree'(Expanded
-                          and Target
-                          and Remaining).Image_One_Line);
+                  & Image_One_Line (State));
 
                Expand_Missing (Dep);
 
@@ -892,10 +882,11 @@ package body Alire.Solver is
 
          procedure Expand_And_Vector is
          begin
-            Expand (Expanded  => Expanded,
-                    Target    => Target.First_Child,
-                    Remaining => Target.All_But_First_Children and Remaining,
-                    Solution  => Solution);
+            Expand ((Expanded  => State.Expanded,
+                     Target    => State.Target.First_Child,
+                     Remaining => State.Target.All_But_First_Children
+                                  and State.Remaining,
+                     Solution  => State.Solution));
          end Expand_And_Vector;
 
          ----------------------
@@ -904,11 +895,11 @@ package body Alire.Solver is
 
          procedure Expand_Or_Vector is
          begin
-            for I in Target.Iterate loop
-               Expand (Expanded  => Expanded,
-                       Target    => Target (I),
-                       Remaining => Remaining,
-                       Solution  => Solution);
+            for I in State.Target.Iterate loop
+               Expand ((Expanded  => State.Expanded,
+                        Target    => State.Target (I),
+                        Remaining => State.Remaining,
+                        Solution  => State.Solution));
             end loop;
          end Expand_Or_Vector;
 
@@ -951,7 +942,7 @@ package body Alire.Solver is
             use AAA.Strings;
          begin
             Trace.Debug ("SOLVER: tree FULLY expanded as: "
-                         & Expanded.Image_One_Line
+                         & State.Expanded.Image_One_Line
                          & " complete: " & Solution.Is_Complete'Img
                          & "; composition: " & Solution.Composition'Img);
 
@@ -976,18 +967,16 @@ package body Alire.Solver is
 
       begin
          Trace.Debug ("SOLVER: EXPAND");
-         Trace.Debug ("Frozen: " & Expanded.Image_One_Line);
-         Trace.Debug ("Target: " & Target.Image_One_Line);
-         Trace.Debug ("Remain: " & Remaining.Image_One_Line);
+         Trace.Debug (Image_One_Line (State));
 
-         if Target.Is_Empty then
+         if State.Target.Is_Empty then
 
             --  This is a completed search branch, be the solution complete or
             --  not.
 
-            if Remaining.Is_Empty then
+            if State.Remaining.Is_Empty then
 
-               Store_Finished (Solution);
+               Store_Finished (State.Solution);
                return;
 
             else
@@ -995,15 +984,15 @@ package body Alire.Solver is
                --  Take the remaining tree and make it the current target for
                --  solving, since we already exhausted the previous target.
 
-               Expand (Expanded  => Expanded,
-                       Target    => Remaining,
-                       Remaining => Empty,
-                       Solution  => Solution);
+               Expand ((Expanded  => State.Expanded,
+                        Target    => State.Remaining,
+                        Remaining => Empty,
+                        Solution  => State.Solution));
                return;
             end if;
          end if;
 
-         if Target.Is_Value then
+         if State.Target.Is_Value then
 
             --  We are tackling a new dependency that may have been seen
             --  previously. For that reason we need to: 1) Recheck releases in
@@ -1014,12 +1003,14 @@ package body Alire.Solver is
             --  2 is done here: first add/merge new dep, then use it for expand
 
             Expand_Value
-              (Solution.Depending_On (Target.Value)  -- add or merge dependency
-                   .Dependency (Target.Value.Crate), -- and use it in expansion
+              (State.Solution.Depending_On (State.Target.Value)
+                              --  Add or merge dependency
+                             .Dependency (State.Target.Value.Crate),
+                              --  And use it in expansion
                Allow_Shared => Options.Sharing = Allow_Shared);
 
-         elsif Target.Is_Vector then
-            if Target.Conjunction = Anded then
+         elsif State.Target.Is_Vector then
+            if State.Target.Conjunction = Anded then
                Expand_And_Vector;
             else
                Expand_Or_Vector;
@@ -1129,10 +1120,10 @@ package body Alire.Solver is
       --  Otherwise expand the full dependencies
 
       begin
-         Expand (Expanded  => Empty,
-                 Target    => Full_Dependencies,
-                 Remaining => Empty,
-                 Solution  => Solution);
+         Expand ((Expanded  => Empty,
+                  Target    => Full_Dependencies,
+                  Remaining => Empty,
+                  Solution  => Solution));
       exception
          when Solution_Timeout =>
             Trace.Debug ("Solution search ended forcibly before completion");
