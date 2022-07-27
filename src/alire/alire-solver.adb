@@ -1240,7 +1240,7 @@ package body Alire.Solver is
       begin
          Expand ((Id        => <>,
                   Parent    => 0,
-                  Seen      => Dependencies.Containers.Empty,
+                  Seen      => Dependencies.Containers.Empty_Set,
                   Expanded  => Empty,
                   Target    => Full_Dependencies,
                   Remaining => Empty,

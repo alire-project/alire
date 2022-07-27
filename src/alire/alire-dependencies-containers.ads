@@ -35,6 +35,8 @@ package Alire.Dependencies.Containers with Preelaborate is
 
    type Set is new Sets.Set with null record;
 
+   Empty_Set : constant Set;
+
    function To_Set (This : List'Class) return Set;
    --  For presentation, we prefer dependencies to be shown in order
 
@@ -43,5 +45,7 @@ package Alire.Dependencies.Containers with Preelaborate is
 private
 
    Empty_Map : constant Map := (Maps.Empty_Map with null record);
+
+   Empty_Set : constant Set := (Sets.Empty_Set with null record);
 
 end Alire.Dependencies.Containers;
