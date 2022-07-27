@@ -74,6 +74,28 @@ package body Alire.Crate_Configuration is
    is (This.Profile_Map (Crate));
 
    -----------------------
+   -- Set_Build_Profile --
+   -----------------------
+
+   procedure Set_Build_Profile (This    : in out Global_Config;
+                                Crate   : Crate_Name;
+                                Profile : Profile_Kind)
+   is
+      Key : constant String :=
+              To_Lower_Case
+                (Crate.As_String & "." & Builtin_Build_Profile.Name);
+      Val : Config_Setting := This.Map (+Key);
+   begin
+      --  Update config value that holds the profile value
+      Val.Value  := TOML.Create_String (To_Lower_Case (Profile'Image));
+      Val.Set_By := +"library client";
+      This.Map (+Key) := Val;
+
+      --  Update profile itself
+      This.Profile_Map.Include (Crate, Profile);
+   end Set_Build_Profile;
+
+   -----------------------
    -- Make_Release_Vect --
    -----------------------
 
@@ -138,7 +160,7 @@ package body Alire.Crate_Configuration is
       for Crate of Rel_Vect loop
          This.Profile_Map.Insert (Crate,
                                   (if Crate = Root.Name
-                                   then Root_Build_Profile
+                                   then Default_Root_Build_Profile
                                    else Default_Deps_Build_Profile));
       end loop;
 
@@ -272,6 +294,8 @@ package body Alire.Crate_Configuration is
       end loop;
 
       Use_Default_Values (This);
+
+      Trace.Debug ("Build profiles loaded");
    end Load;
 
    ---------------------------
@@ -310,7 +334,7 @@ package body Alire.Crate_Configuration is
 
       Trace.Detail ("Generating crate config files");
 
-      Set_Last_Build_Profile (Root_Build_Profile);
+      Set_Last_Build_Profile (This.Build_Profile (Root.Name));
 
       for Crate of Make_Release_Vect (Root) loop
          declare
@@ -328,7 +352,6 @@ package body Alire.Crate_Configuration is
 
                   Version_Str : constant String := Rel.Version.Image;
                begin
-
                   if not Ent.Disabled then
                      Ada.Directories.Create_Path (Conf_Dir);
 

@@ -12,6 +12,7 @@ init_local_crate('lib_1', binary=False, enter=False)
 init_local_crate('bin_1', binary=True, enter=True)
 run_alr('update')
 
+
 def check_config(path, profile):
     conf = content_of(path)
     assert_match('.*Build_Profile : Build_Profile_Kind := "%s"' % profile,
@@ -21,6 +22,7 @@ lib1_config = "../lib_1/config/lib_1_config.gpr"
 bin_config = "config/bin_1_config.gpr"
 
 mtime = os.path.getmtime(bin_config)
+
 
 def check_config_changed():
     global mtime

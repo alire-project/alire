@@ -184,8 +184,13 @@ package body Alire.Roots is
          use Alire.Utils.Switches;
          use Alire.Crate_Configuration;
       begin
-         if Last_Build_Profile /= Root_Build_Profile
+         This.Load_Configuration;
+         if Last_Build_Profile /= This.Configuration.Build_Profile (This.Name)
          then
+            Trace.Detail
+              ("Root build profile changed: "
+               & Last_Build_Profile'Image & " --> "
+               & This.Configuration.Build_Profile (This.Name)'Image);
             This.Generate_Configuration;
          end if;
       end;
@@ -255,22 +260,43 @@ package body Alire.Roots is
                            return Crate_Configuration.Global_Config
    is
    begin
-      if not This.Configuration.Is_Valid then
-         Crate_Configuration.Load (This.Configuration.all, This);
-      end if;
+      This.Load_Configuration;
 
       return This.Configuration.all;
    end Configuration;
+
+   ------------------------
+   -- Load_Configuration --
+   ------------------------
+
+   procedure Load_Configuration (This : in out Root) is
+   begin
+      if not This.Configuration.Is_Valid then
+         Crate_Configuration.Load (This.Configuration.all, This);
+      end if;
+   end Load_Configuration;
+
+   -----------------------
+   -- Set_Build_Profile --
+   -----------------------
+
+   procedure Set_Build_Profile (This    : in out Root;
+                                Crate   : Crate_Name;
+                                Profile : Crate_Configuration.Profile_Kind)
+   is
+   begin
+      This.Load_Configuration;
+      This.Configuration.Set_Build_Profile (Crate, Profile);
+   end Set_Build_Profile;
 
    ----------------------------
    -- Generate_Configuration --
    ----------------------------
 
    procedure Generate_Configuration (This : in out Root) is
-      Conf : Alire.Crate_Configuration.Global_Config;
    begin
-      Conf.Load (This);
-      Conf.Generate_Config_Files (This);
+      This.Load_Configuration;
+      This.Configuration.Generate_Config_Files (This);
    end Generate_Configuration;
 
    ------------------

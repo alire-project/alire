@@ -223,6 +223,12 @@ package Alire.Roots is
    --  Returns the global configuration for the root and dependencies. This
    --  configuration is computed the first time it is requested.
 
+   procedure Set_Build_Profile (This    : in out Root;
+                                Crate   : Crate_Name;
+                                Profile : Crate_Configuration.Profile_Kind)
+     with Pre => This.Release.Name = Crate or else
+                 This.Solution.Releases.Contains (Crate);
+
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files
 
@@ -244,6 +250,10 @@ package Alire.Roots is
    --  The "/path/to/alire.lock" file inside Working_Folder
 
 private
+
+   procedure Load_Configuration (This : in out Root);
+   --  Force loading of the configuration; useful since the auto-load is not
+   --  triggered when doing This.Configuration here.
 
    function Load_Solution (Lockfile : String) return Solutions.Solution
    is (Lockfiles.Read (Lockfile).Solution);

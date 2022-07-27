@@ -4,6 +4,16 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
+## Release 1.3-dev
+
+### Reuse build profile of `alr build` when issuing `alr run`
+
+`alr run` will trigger a build to have an up-to-date executable, and before
+this PR this was always a development build. Now, the last profile used during
+an `alr build` will be reused.
+
+PR [#1080](https://github.com/alire-project/alire/pull/1080)
+
 ## Release 1.2
 
 ### New subcommand for listing and manual triggering of actions
