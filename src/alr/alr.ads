@@ -17,7 +17,7 @@ package Alr with Preelaborate is
    --  stack trace).
 
    --  Use some general types for the benefit of all child packages:
-   pragma Warnings (Off);
+   pragma Warnings (Off, "has no effect");
    use all type Alire.Crate_Name;
    use all type Simple_Logging.Levels;
    pragma Warnings (On);

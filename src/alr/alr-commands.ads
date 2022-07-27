@@ -10,9 +10,7 @@ with CLIC.Subcommand;
 private with Ada.Text_IO;
 private with CLIC.Subcommand.Instance;
 
-pragma Warnings (Off);
 private with Alr.OS_Lib; -- For the benefit of many child packages that use it
-pragma Warnings (On);
 
 package Alr.Commands is
 

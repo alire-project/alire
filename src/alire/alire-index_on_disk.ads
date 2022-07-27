@@ -29,7 +29,7 @@ package Alire.Index_On_Disk is
 
    type Index (<>) is abstract new Interfaces.Tomifiable with private;
 
-   pragma Warnings (Off); -- because Post doesn't mention New_Handler'Result
+   pragma Warnings (Off, "postcondition does not mention function result");
    function New_Handler (Origin   :     URL;
                          Name     :     String;
                          Parent   :     Any_Path;
