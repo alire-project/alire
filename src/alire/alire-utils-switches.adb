@@ -93,9 +93,7 @@ package body Alire.Utils.Switches is
    function Get_List (S : Debug_Info_Switches) return Switch_List
    is (case S.Kind is
           when No     => Empty_List,
-          when Yes    => Empty_List
-                         .Append (GNAT_Debug_Info)
-                         .Append (GNAT_Extra_Exception_Info),
+          when Yes    => Empty_List.Append (GNAT_Debug_Info),
           when Custom => S.List);
 
    --------------
