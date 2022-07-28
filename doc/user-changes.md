@@ -6,6 +6,19 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
+### Propagate build profile to dependencies in `alr build`
+
+Two new mutually exclusive switches can be now added when indicating a build
+profile in the command line that propagate this profile to dependencies:
+
+- `alr build --validation --recurse-all`
+- `alr build --validation --recurse-unset`
+
+The `all` variant will override all profiles in the build, even the ones set in
+manifests. Conversely, the `unset` variant will only set profiles for crates
+that do not have an explicit profile set in some manifest (their own or a
+dependent crate).
+
 ### Reuse build profile of `alr build` when issuing `alr run`
 
 `alr run` will trigger a build to have an up-to-date executable, and before
