@@ -745,7 +745,7 @@ package body Alire.Crate_Configuration is
                else
                   Raise_Checked_Error
                     ("Configuration variable '" & Key &
-                       " not set and has no default value.");
+                       "' not set and has no default value.");
                end if;
             end if;
          end;
