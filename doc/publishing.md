@@ -27,8 +27,8 @@ repository, in which the TOML file for the release must be provided.
 
 The community index is supported through two kinds of branches:
 
-- `stable-x.x.x` branches are used by stable versions of `alr`.
-- `devel-x.x.x` branches are used to introduce breaking changes in the index
+- `stable-x.x` branches are used by stable versions of `alr`.
+- `devel-x.x` branches are used to introduce breaking changes in the index
   format, during the development of `alr`.
 
 Your `alr` version knows which branch to use, so you do not need to manually
@@ -41,9 +41,6 @@ becoming immediately available to the latest stable `alr`. Conversely, using
 the latest development branch will make the releases available for testing by
 unstable clients, and will become generally available with the next stable
 release of `alr`.
-
-Note that, as of this writing, only development branches exist, until the first
-stable release of `alr` is made.
 
 ## Checks on contributions
 
@@ -58,6 +55,11 @@ Other checks your submission will go through are:
 - It contains all required metadata.
 - It builds on all of our CI configurations.
     - You can disable an unsupported target with the `available` property.
+
+## Best practices
+
+See the section on [best practices](policies.md#best-practices) for crates
+before publishing your first release.
 
 ## Detailed steps
 
