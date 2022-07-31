@@ -24,7 +24,7 @@ gnatcoll = "^21"
 minirest = "~0.2"
 optional = "~0.1"
 semantic_versioning = "^2.1"
-simple_logging = "^1.2"
+simple_logging = "^1.3"
 si_units = "~0.2"
 stopwatch = "~0.1"
 toml_slicer = "~0.1"
@@ -43,4 +43,5 @@ macos   = { OS = "macOS" }
 [[pins]]
 aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8cfb34d04ceec340e13" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "92bb91130a9ec628b4c48b7ef9fe7f24d9dc25fa" }
+simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "3a086abffdd57b6a43a58ea486afa30f7397b6a3" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
