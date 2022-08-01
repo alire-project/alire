@@ -26,7 +26,7 @@ alr_with("crate_real")
 # need eventually a way to disable equivalences (via pins, or solver config).
 match_solution("crate_real=1.0.0 (origin: filesystem)", escape=True)
 
-# Let's add the drop-in equivalent crate that provides+forbids crate_lone
+# Let's add the drop-in equivalent crate that provides+forbids crate_real
 alr_with("crate_subst")
 match_solution("crate_real=1.0.0 (crate_subst) (origin: filesystem)",
                escape=True)  # This is the substituted release

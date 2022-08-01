@@ -698,6 +698,9 @@ package body Alire.Solver is
             procedure Check_Version_Pin is
                Pin_Version : constant Semver.Version :=
                                Pins.State (Dep.Crate).Pin_Version;
+               Pin_As_Dep  : constant Dependencies.Dependency :=
+                               Dependencies.New_Dependency
+                                 (Dep.Crate, Pin_Version);
             begin
 
                --  For a version pin release, we try only a release with the
@@ -735,7 +738,11 @@ package body Alire.Solver is
                         & " when the search tree was "
                         & Image_One_Line (State));
 
-                     Expand_Missing (Conflict);
+                     Expand_Missing
+                       (if Index.Releases_Satisfying (Pin_As_Dep,
+                                                      Props).Is_Empty
+                        then Unavailable
+                        else Skipped);
 
                   end if;
 
@@ -920,15 +927,21 @@ package body Alire.Solver is
                                     Index.Releases_Satisfying
                                       (Dep, Props, Index_Query_Options);
 
+                     --------------
+                     -- Consider --
+                     --------------
+
                      procedure Consider (R : Release) is
                      begin
+
                         --  A GNAT release may still satisfy the dependency
                         --  but be not a valid candidate if uninstalled and
                         --  the dependency is on generic GNAT, so explicitly
                         --  consider this case:
 
                         Satisfiable := Satisfiable or else
-                          (R.Satisfies (Dep) and then
+                          (R.Satisfies (Dep)
+                           and then
                                (Dep.Crate /= GNAT_Crate or else
                                 Installed.Contains (R)));
 
@@ -985,11 +998,25 @@ package body Alire.Solver is
                         & " when the search tree was "
                         & Image_One_Line (State));
 
-                     Expand_Missing (if State.Solution.Depends_On (Dep.Crate)
-                                     then Conflict
-                                     else Unavailable);
-                     --  Note that we use the solution within the state, that
-                     --  still hasn't been informed about the new dependency.
+                     Expand_Missing
+                       (if Satisfiable
+                        then Skipped
+                        --  If satisfiable then we are skipping it in purpose
+
+                        elsif State.Solution.Depends_On (Dep.Crate)
+                        then Conflict
+                        --  If not satisfiable and the solution already depends
+                        --  on this crate, then we are seeing a conflict. Note
+                        --  that we use the solution within the state, that
+                        --  still hasn't been informed about the new dependency
+                        --  (otherwise we would always see a conflict).
+
+                        else Unavailable
+                        --  The crate is not satisfiable yet there is no
+                        --  conflict, so either there are no valid versions
+                        --  or there are Forbids at play, but we aren't clever
+                        --  enough to discern that (yet?).
+                       );
 
                   end if;
                end if;

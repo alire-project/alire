@@ -15,7 +15,10 @@ package Alire.Dependencies.States is
                          Linked,  -- Supplied for any version by a local dir
                          Solved); -- Solved with an index release/detected hint
 
-   type Missed_Reasons is (Skipped,      -- Left out on purpose during solving
+   type Missed_Reasons is (Skipped,      -- Left out on purpose during solving.
+                           --  Also when only forbidden crates fulfil some dep.
+                           --  Not trivial to distinguish both with the current
+                           --  solver so no explicit Forbidden reason for now.
                            Conflict,     -- Conflicting dependents
                            Unindexed,    -- Crate doesn't exist
                            Unavailable); -- No version fulfils the dependency

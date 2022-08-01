@@ -404,7 +404,6 @@ package body Alire.Solutions is
        --  The candidate release forbids something in the solution
           (for some Dep of Release.Forbidden (Env) =>
                (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
-      pragma Warnings (On);
    end Forbids;
 
    ---------------
