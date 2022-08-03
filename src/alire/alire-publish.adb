@@ -187,15 +187,9 @@ package body Alire.Publish is
 
       Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
-         if not Force then
-            Raise_Checked_Error
-               ("Target release " & Release.Milestone.TTY_Image
-                & " already exist in a loaded index");
-         end if;
-         Ada.Text_IO.New_Line;
-         Trace.Warning
+         Recoverable_Error
             ("Target release " & Release.Milestone.TTY_Image
-             & " already exist in a loaded index (ignored)");
+             & " already exist in a loaded index");
       end if;
 
       --  Present release information to user
