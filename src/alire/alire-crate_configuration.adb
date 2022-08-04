@@ -753,6 +753,7 @@ package body Alire.Crate_Configuration is
    ------------------------
 
    procedure Use_Default_Values (Conf : in out Global_Config) is
+      Config_Fault : Boolean := False;
    begin
       for C in Conf.Map.Iterate loop
          declare
@@ -766,13 +767,17 @@ package body Alire.Crate_Configuration is
                   Elt.Value := Elt.Type_Def.Element.Default;
                   Elt.Set_By := +"default value";
                else
-                  Raise_Checked_Error
+                  Config_Fault := True;
+                  Trace.Error
                     ("Configuration variable '" & Key &
                        "' not set and has no default value.");
                end if;
             end if;
          end;
       end loop;
+      if Config_Fault then
+         Raise_Checked_Error ("Configuration failed");
+      end if;
    end Use_Default_Values;
 
    ------------------------
