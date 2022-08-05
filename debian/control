@@ -1,9 +1,9 @@
 Source: alire
 Section: devel
-Priority: extra
+Priority: optional
 Maintainer: Stephane Carrez <Stephane.Carrez@gmail.com>
-Build-Depends: debhelper (>= 10), autotools-dev, gnat,
- gprbuild (>= 2015-2),
+Build-Depends: debhelper (>= 11), gnat,
+ gprbuild (>= 2015-2), python3
 Standards-Version: 4.1.4
 Homepage: https://github.com/alire-project
 Vcs-Git: https://github.com/alire-project/alire.git

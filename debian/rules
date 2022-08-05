@@ -27,7 +27,8 @@ MANPAGES=alr.1 alr-action.1 alr-build.1 alr-clean.1 alr-config.1 \
 	dh $@ 
 
 override_dh_auto_build:
-	gprbuild -R -m -q -j0 -Palr_env
+	gprbuild -R -m -j0 -Palr_env
+	mkdir -p doc/man1
 	python3 scripts/python/generate-man.py
 
 override_dh_auto_install:
