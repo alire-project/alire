@@ -1,0 +1,20 @@
+Source: alire
+Section: devel
+Priority: extra
+Maintainer: Stephane Carrez <Stephane.Carrez@gmail.com>
+Build-Depends: debhelper (>= 10), autotools-dev, gnat,
+ gprbuild (>= 2015-2),
+Standards-Version: 4.1.4
+Homepage: https://github.com/alire-project
+Vcs-Git: https://github.com/alire-project/alire.git
+Vcs-Browser: https://github.com/alire-project/tree/master
+
+Package: alire
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Ada package manager.
+ A catalog of ready-to-use Ada libraries plus a command-line tool
+ (`alr`) to obtain, build, and incorporate them into your own projects.
+ It aims to fulfill a similar role to Rust's `cargo` or OCaml's `opam`.
+
+

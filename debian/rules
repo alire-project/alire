@@ -1,0 +1,47 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+DH_VERBOSE=1
+export DH_OPTIONS=-v
+
+DEB_BUILD_MAINT_OPTIONS := hardening=+all
+include /usr/share/dpkg/buildflags.mk
+ADAFLAGS += -gnatafno -gnatVa -gnatwa
+
+BIN = $(DESTDIR)/usr/bin
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+MANPAGES=alr.1 alr-action.1 alr-build.1 alr-clean.1 alr-config.1 \
+  alr-dev.1 alr-edit.1 alr-exec.1 alr-get.1 alr-index.1 alr-init.1 \
+  alr-pin.1 alr-printenv.1 alr-publish.1 alr-run.1 alr-search.1 \
+  alr-show.1 alr-test.1 alr-toolchain.1 alr-update.1 alr-version.1 \
+  alr-with.1
+
+%:
+	dh $@ 
+
+override_dh_auto_build:
+	gprbuild -R -m -q -j0 -Palr_env
+	python3 scripts/python/generate-man.py
+
+override_dh_auto_install:
+	dh_installdirs usr/bin
+	dh_install bin/alr /usr/bin
+	for i in $(MANPAGES); do \
+	   dh_installman doc/man1/$$i ; \
+	done
+	dh_strip
+
+override_dh_auto_test:
+	# Ignore
+
+.PHONY: override_dh_installdocs-indep
+
+override_dh_installdocs-indep:
+	dh_installdocs -i
