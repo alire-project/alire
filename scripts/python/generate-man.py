@@ -200,9 +200,9 @@ class Generator:
                 while True:
                     status = proc.poll()
                     line = proc.stdout.readline()
-                    self.emit(outfile, line.decode('utf-8').strip())
-                    if status is not None:
+                    if not line:
                         break
+                    self.emit(outfile, line.decode('utf-8').strip())
 
             self.emit_footer(outfile, name, commands)
 
@@ -223,6 +223,7 @@ class Generator:
         """
         Generate the alire main man page
         """
+        os.makedirs("doc/man1", exist_ok=True)
         self.path = "doc/man1/alr.1"
         with open(self.path, "w") as outfile:
             self.summary = "Ada Library Repository"
@@ -239,6 +240,7 @@ class Generator:
                     line = re.sub(r'`([a-zA-Z]*)`', r'\\fI\1\\fR', line)
                     outfile.write(line)
 
+            self.state = State.In_Description
             # run alr help aliases to print the aliases section
             with subprocess.Popen(["bin/alr", "help", "aliases"], stdout=subprocess.PIPE) as proc:
                 line = proc.stdout.readline()
@@ -247,9 +249,9 @@ class Generator:
                 while True:
                     status = proc.poll()
                     line = proc.stdout.readline()
-                    self.emit(outfile, line.decode('utf-8').strip())
-                    if status is not None:
+                    if not line:
                         break
+                    self.emit(outfile, line.decode('utf-8').strip())
 
             with subprocess.Popen(["bin/alr", "help", "identifiers"], stdout=subprocess.PIPE) as proc:
                 line = proc.stdout.readline()
@@ -258,9 +260,9 @@ class Generator:
                 while True:
                     status = proc.poll()
                     line = proc.stdout.readline()
-                    self.emit(outfile, line.decode('utf-8').strip())
-                    if status is not None:
+                    if not line:
                         break
+                    self.emit(outfile, line.decode('utf-8').strip())
 
             with subprocess.Popen(["bin/alr", "help", "toolchains"], stdout=subprocess.PIPE) as proc:
                 line = proc.stdout.readline()
@@ -269,9 +271,9 @@ class Generator:
                 while True:
                     status = proc.poll()
                     line = proc.stdout.readline()
-                    self.emit(outfile, line.decode('utf-8').strip())
-                    if status is not None:
+                    if not line:
                         break
+                    self.emit(outfile, line.decode('utf-8').strip())
 
             self.emit_footer(outfile, "", self.index_commands)
 
