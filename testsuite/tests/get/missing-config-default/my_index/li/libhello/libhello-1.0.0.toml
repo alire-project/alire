@@ -12,4 +12,5 @@ Var4={type="Integer", first=-1, last=1}
 Var5={type="Real", first=-1.0, last=1.0}
 
 [origin]
-url = "file:../../../crates/libhello_1.0.0"
+url = "file:."
+

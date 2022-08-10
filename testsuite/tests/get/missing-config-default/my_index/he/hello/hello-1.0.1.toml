@@ -10,4 +10,4 @@ maintainers-logins = ["mylogin"]
 libhello = "1.0.0"
 
 [origin]
-url = "file:../../../crates/hello_1.0.0"
+url = "file:."

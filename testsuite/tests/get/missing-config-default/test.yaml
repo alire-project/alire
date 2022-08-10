@@ -1,3 +1,4 @@
 driver: python-script
 indexes:
-    config_index: {}
+    my_index:
+        in_fixtures: false
