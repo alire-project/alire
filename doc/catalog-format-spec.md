@@ -410,7 +410,7 @@ static, i.e. they cannot depend on the context.
    # An explicit empty case alternative, which is not mandatory
    ```
 
-   The aforementioned TOML syntax is only when there is only one conditional
+   The aforementioned TOML syntax is valid when there is only one conditional
    action. For multiple conditional actions, one can write:
 
    ```toml
