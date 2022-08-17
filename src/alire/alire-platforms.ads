@@ -19,12 +19,14 @@ package Alire.Platforms with Preelaborate is
      Extended_Architectures'Succ (End_Of_Duplicates) .. Architecture_Unknown;
    --  See e.g. https://stackoverflow.com/a/45125525/761390
 
-   type Operating_Systems is (Linux,
+   type Operating_Systems is (FreeBSD,
+                              Linux,
                               MacOS,
                               Windows,
                               OS_Unknown);
    subtype Known_Operating_Systems is
-     Operating_Systems range Linux .. Windows;
+     Operating_Systems range
+       Operating_Systems'First .. Operating_Systems'Pred (OS_Unknown);
 
    type Targets is (Native,
                     Unknown_Cross_Target);
