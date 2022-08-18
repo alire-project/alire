@@ -29,6 +29,7 @@ package body Alire.Solver is
    package Semver renames Semantic_Versioning;
 
    use all type Dependencies.States.Fulfillments;
+   use all type Dependencies.States.Missed_Reasons;
    use all type Dependencies.States.Transitivities;
 
    package Solution_Sets is new Ada.Containers.Indefinite_Ordered_Sets
@@ -626,6 +627,7 @@ package body Alire.Solver is
             --  Mark a crate as missing and continue exploring, depending on
             --  configuration policies, or abandon this search branch.
             procedure Expand_Missing
+              (Reason : Dependencies.States.Missed_Reasons)
             is
             begin
                if Options.Completeness > All_Complete or else
@@ -643,7 +645,7 @@ package body Alire.Solver is
                            Expanded  => State.Expanded and Raw_Dep,
                            Target    => State.Remaining,
                            Remaining => Empty,
-                           Solution  => Solution.Missing (Dep)));
+                           Solution  => Solution.Missing (Dep, Reason)));
                else
                   Trace.Debug
                     ("SOLVER: discarding solution MISSING crate " & Dep.Image
@@ -696,6 +698,9 @@ package body Alire.Solver is
             procedure Check_Version_Pin is
                Pin_Version : constant Semver.Version :=
                                Pins.State (Dep.Crate).Pin_Version;
+               Pin_As_Dep  : constant Dependencies.Dependency :=
+                               Dependencies.New_Dependency
+                                 (Dep.Crate, Pin_Version);
             begin
 
                --  For a version pin release, we try only a release with the
@@ -723,15 +728,23 @@ package body Alire.Solver is
                      --  There may be no satisfying releases, or even so the
                      --  check may still fail, so we must attempt this one too:
 
-                  Trace.Debug
-                    ("SOLVER: marking crate " & Dep.Image
-                     & " MISSING in case pinned version "
-                     & TTY.Version (Pin_Version.Image)
-                     & " is incompatible with other dependencies"
-                     & " when the search tree was "
-                     & Image_One_Line (State));
+                  if Options.Completeness >= Some_Incomplete then
 
-                  Expand_Missing;
+                     Trace.Debug
+                       ("SOLVER: marking crate " & Dep.Image
+                        & " MISSING in case pinned version "
+                        & TTY.Version (Pin_Version.Image)
+                        & " is incompatible with other dependencies"
+                        & " when the search tree was "
+                        & Image_One_Line (State));
+
+                     Expand_Missing
+                       (if Index.Releases_Satisfying (Pin_As_Dep,
+                                                      Props).Is_Empty
+                        then Unavailable
+                        else Skipped);
+
+                  end if;
 
                else
 
@@ -745,7 +758,7 @@ package body Alire.Solver is
                      & " when the search tree was "
                      & Image_One_Line (State));
 
-                  Expand_Missing;
+                  Expand_Missing (Conflict);
 
                end if;
             end Check_Version_Pin;
@@ -914,15 +927,21 @@ package body Alire.Solver is
                                     Index.Releases_Satisfying
                                       (Dep, Props, Index_Query_Options);
 
+                     --------------
+                     -- Consider --
+                     --------------
+
                      procedure Consider (R : Release) is
                      begin
+
                         --  A GNAT release may still satisfy the dependency
                         --  but be not a valid candidate if uninstalled and
                         --  the dependency is on generic GNAT, so explicitly
                         --  consider this case:
 
                         Satisfiable := Satisfiable or else
-                          (R.Satisfies (Dep) and then
+                          (R.Satisfies (Dep)
+                           and then
                                (Dep.Crate /= GNAT_Crate or else
                                 Installed.Contains (R)));
 
@@ -979,7 +998,25 @@ package body Alire.Solver is
                         & " when the search tree was "
                         & Image_One_Line (State));
 
-                     Expand_Missing;
+                     Expand_Missing
+                       (if Satisfiable
+                        then Skipped
+                        --  If satisfiable then we are skipping it in purpose
+
+                        elsif State.Solution.Depends_On (Dep.Crate)
+                        then Conflict
+                        --  If not satisfiable and the solution already depends
+                        --  on this crate, then we are seeing a conflict. Note
+                        --  that we use the solution within the state, that
+                        --  still hasn't been informed about the new dependency
+                        --  (otherwise we would always see a conflict).
+
+                        else Unavailable
+                        --  The crate is not satisfiable yet there is no
+                        --  conflict, so either there are no valid versions
+                        --  or there are Forbids at play, but we aren't clever
+                        --  enough to discern that (yet?).
+                       );
 
                   end if;
                end if;
@@ -994,7 +1031,7 @@ package body Alire.Solver is
                   & " when the search tree was "
                   & Image_One_Line (State));
 
-               Expand_Missing;
+               Expand_Missing (Unknown);
 
             end if;
          end Expand_Value;

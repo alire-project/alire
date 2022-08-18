@@ -26,7 +26,8 @@ p = run_alr('with', '--solve')
 assert_match(
     '.*Dependencies \(external\):\n'
     '   ' +
-    re.escape('libhello(=3.0.0) & (^2.0.0) (direct,missed,pin=3.0.0)') + '.*',
+    re.escape('libhello(=3.0.0) & (^2.0.0) '
+              '(direct,missed:conflict,pin=3.0.0)') + '.*',
     p.out, flags=re.S)
 
 

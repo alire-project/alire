@@ -33,7 +33,7 @@ assert_match(re.escape('''xxx=0.1.0-dev
 |   +-- libhello=1.0.1 (^1.0)
 +-- superhello=1.0.0 (^1.0.0)
 |   +-- libhello=1.0.1 (~1.0)
-+-- unobtanium* (direct,missed) (*)
++-- unobtanium* (direct,missed:unknown) (*)
 +-- wip* (direct,linked,path=''') + '.*' + re.escape(') (*)'),
              p.out, flags=re.S)
 

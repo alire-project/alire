@@ -21,6 +21,7 @@ package body Alire.Solutions is
 
    use type Ada.Containers.Count_Type;
    use type Semantic_Versioning.Version;
+   use all type States.Missed_Reasons;
 
    ----------------------
    -- All_Dependencies --
@@ -175,28 +176,32 @@ package body Alire.Solutions is
    -------------
 
    function Missing (This : Solution;
-                     Dep  : Dependencies.Dependency)
+                     Dep    : Dependencies.Dependency;
+                     Reason : States.Missed_Reasons)
                      return Solution
    is (if This.Depends_On (Dep.Crate)
        then (Solved       => True,
              Dependencies =>
-                This.Dependencies.Including (This.State (Dep.Crate).Missing))
+                This.Dependencies.Including
+                  (This.State (Dep.Crate).Missing (Reason)))
        else (Solved       => True,
              Dependencies =>
-                This.Dependencies.Including (States.New_State (Dep).Missing)));
+                This.Dependencies.Including
+                  (States.New_State (Dep).Missing (Reason))));
 
    -------------
    -- Missing --
    -------------
 
    function Missing (This  : Solution;
-                     Crate : Crate_Name)
+                     Crate  : Crate_Name;
+                     Reason : States.Missed_Reasons)
                      return Solution
    is (if This.Dependencies.Contains (Crate)
        then (Solved       => True,
              Dependencies =>
                 This.Dependencies.Including
-               (This.Dependencies (Crate).Missing))
+                  (This.Dependencies (Crate).Missing (Reason)))
        else This);
 
    -------------
@@ -228,7 +233,7 @@ package body Alire.Solutions is
    function Resetting (This  : Solution;
                        Crate : Crate_Name)
                        return Solution
-   is (This.Missing (Crate).User_Unpinning (Crate));
+   is (This.Missing (Crate, Skipped).User_Unpinning (Crate));
 
    -------------
    -- Setting --
@@ -282,7 +287,9 @@ package body Alire.Solutions is
        then (Solved       => True,
              Dependencies =>
                 This.Dependencies.Including
-               (This.Dependencies (Crate).Unlinking.Unpinning.Missing))
+               (This.Dependencies (Crate).Unlinking
+                                         .Unpinning
+                                         .Missing (Skipped)))
        else This);
 
    --------------------
@@ -397,7 +404,6 @@ package body Alire.Solutions is
        --  The candidate release forbids something in the solution
           (for some Dep of Release.Forbidden (Env) =>
                (for some Rel of This.Releases => Rel.Satisfies (Dep.Value))));
-      pragma Warnings (On);
    end Forbids;
 
    ---------------
@@ -445,7 +451,10 @@ package body Alire.Solutions is
          elsif Result.State (Dep_Name).Is_Hinted then
             Result := Result.Hinting (Result.State (Dep_Name).As_Dependency);
          else
-            Result := Result.Missing (Result.State (Dep_Name).As_Dependency);
+            Result := Result.Missing
+              (Result.State (Dep_Name).As_Dependency, Conflict);
+            --  Conflict because there was a pre-existing dependency that the
+            --  release is unable to fulfil.
          end if;
 
          --  In addition, mark as solved other deps satisfied via provides

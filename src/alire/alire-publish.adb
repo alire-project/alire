@@ -187,9 +187,9 @@ package body Alire.Publish is
 
       Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
-         Raise_Checked_Error
-           ("Target release " & Release.Milestone.TTY_Image
-            & " already exist in a loaded index");
+         Recoverable_Error
+            ("Target release " & Release.Milestone.TTY_Image
+             & " already exist in a loaded index");
       end if;
 
       --  Present release information to user
