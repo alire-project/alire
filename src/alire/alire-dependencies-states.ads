@@ -15,6 +15,14 @@ package Alire.Dependencies.States is
                          Linked,  -- Supplied for any version by a local dir
                          Solved); -- Solved with an index release/detected hint
 
+   type Missed_Reasons is (Skipped,      -- Left out on purpose during solving.
+                           --  Also when only forbidden crates fulfil some dep.
+                           --  Not trivial to distinguish both with the current
+                           --  solver so no explicit Forbidden reason for now.
+                           Conflict,     -- Conflicting dependents
+                           Unknown,      -- Crate isn't in any index
+                           Unavailable); -- No version fulfils the dependency
+
    type Transitivities is (Unknown,   -- Needed by limitations in the solver
                            Direct,    -- A dependency of the root release
                            Indirect); -- A dependency introduced transitively
@@ -45,7 +53,8 @@ package Alire.Dependencies.States is
                      return State;
    --  Returns a copy of Base with additional anded versions
 
-   function Missing (Base : State) return State;
+   function Missing (Base   : State;
+                     Reason : Missed_Reasons) return State;
    --  Change fulfilment to Missed in copy of Base
 
    function Pinning (Base : State;
@@ -110,6 +119,9 @@ package Alire.Dependencies.States is
 
    function Fulfilment (This : State) return Fulfillments;
 
+   function Reason (This : State) return Missed_Reasons
+     with Pre => This.Fulfilment = Missed;
+
    function Link (This : State) return Softlink
      with Pre => This.Is_Linked;
 
@@ -146,6 +158,8 @@ package Alire.Dependencies.States is
    overriding function To_TOML (This : State) return TOML.TOML_Value;
 
 private
+
+   function L (S : String) return String renames AAA.Strings.To_Lower_Case;
 
    use type Semantic_Versioning.Extended.Version_Set;
 
@@ -214,6 +228,8 @@ private
          when Solved =>
             Release : Stored_Release; -- This is always valid
             Shared  : Boolean;        -- The release is from shared install
+         when Missed =>
+            Reason  : Missed_Reasons := Skipped; -- Until solving is attempted
          when others => null;
       end case;
    end record;
@@ -289,6 +305,9 @@ private
           then This.Transitivity'Img & ","
           else "")
        & AAA.Strings.To_Lower_Case (This.Fulfilled.Fulfillment'Img)
+       & (if This.Fulfilled.Fulfillment = Missed
+          then ":" & L (This.Fulfilled.Reason'Image)
+          else "")
        & (if This.Fulfilled.Fulfillment = Linked
           then "," & This.Fulfilled.Target.Element.Image (User => True)
                    & (if not This.Fulfilled.Target.Element.Is_Broken
@@ -405,10 +424,12 @@ private
    -- Missing --
    -------------
 
-   function Missing (Base : State) return State
+   function Missing (Base   : State;
+                     Reason : Missed_Reasons) return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
-       Fulfilled    => (Fulfillment => Missed),
+       Fulfilled    => (Fulfillment => Missed,
+                        Reason      => Reason),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
@@ -480,6 +501,13 @@ private
                         Version => Version),
        Transitivity => Base.Transitivity);
 
+   ------------
+   -- Reason --
+   ------------
+
+   function Reason (This : State) return Missed_Reasons
+   is (This.Fulfilled.Reason);
+
    -------------
    -- Release --
    -------------
@@ -541,7 +569,9 @@ private
           else "")
        & AAA.Strings.To_Lower_Case
          (case This.Fulfilled.Fulfillment is
-             when Missed => TTY.Error (This.Fulfilled.Fulfillment'Img),
+             when Missed =>
+                TTY.Error (This.Fulfilled.Fulfillment'Img) & ":"
+                & TTY.Warn (L (This.Fulfilled.Reason'Image)),
              when Hinted => TTY.Warn (This.Fulfilled.Fulfillment'Img),
              when others => This.Fulfilled.Fulfillment'Img)
        & (if This.Fulfilled.Fulfillment = Linked
@@ -569,7 +599,8 @@ private
    function Unlinking (Base : State) return State
    is (Base.As_Dependency with
        Name_Len     => Base.Name_Len,
-       Fulfilled    => (Fulfillment => Missed),
+       Fulfilled    => (Fulfillment => Missed,
+                        Reason      => Skipped),
        Pinning      => Base.Pinning,
        Transitivity => Base.Transitivity);
 
