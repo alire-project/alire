@@ -531,8 +531,12 @@ package body Alire.Crate_Configuration is
                        Elt.Type_Def.Element.To_GPR_Declaration (Elt.Value));
       end loop;
 
-      TIO.Put_Line (File, "   Ada_Compiler_Switches := " &
-                      "External_As_List (""ADAFLAGS"", "" "") &");
+      TIO.Put_Line (File,
+         "   Ada_Compiler_Switches := External_As_List (""ADAFLAGS"", "" "");"
+         );
+
+      TIO.Put_Line (File,
+         "   Ada_Compiler_Switches := Ada_Compiler_Switches &");
 
       Pretty_Print_Switches (File,
                              This.Switches_Map.Element (Crate),
