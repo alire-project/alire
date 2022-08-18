@@ -1031,7 +1031,7 @@ package body Alire.Solver is
                   & " when the search tree was "
                   & Image_One_Line (State));
 
-               Expand_Missing (Unindexed);
+               Expand_Missing (Unknown);
 
             end if;
          end Expand_Value;

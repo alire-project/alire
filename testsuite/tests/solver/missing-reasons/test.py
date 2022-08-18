@@ -27,7 +27,7 @@ match_solution(
     """Dependencies (external):
    hello(=1.0.1) & (=1.0.0) (direct,missed:conflict)
    libhello=777 (direct,missed:unavailable)
-   unobtanium* (direct,missed:unindexed)""",
+   unobtanium* (direct,missed:unknown)""",
     escape=True)
 
 print('SUCCESS')

@@ -20,7 +20,7 @@ package Alire.Dependencies.States is
                            --  Not trivial to distinguish both with the current
                            --  solver so no explicit Forbidden reason for now.
                            Conflict,     -- Conflicting dependents
-                           Unindexed,    -- Crate doesn't exist
+                           Unknown,      -- Crate isn't in any index
                            Unavailable); -- No version fulfils the dependency
 
    type Transitivities is (Unknown,   -- Needed by limitations in the solver
