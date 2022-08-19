@@ -4,6 +4,7 @@ package Alire.Platforms with Preelaborate is
 
    type Extended_Architectures is
      (ARM64, -- Equivalent to AARCH64
+      AMD64, -- Equivalent to X86_64 (FreeBSD)
       End_Of_Duplicates,
       --  Up to this point, these are architectures that we want to rename to
       --  some of the following because they are equivalent.
@@ -21,6 +22,7 @@ package Alire.Platforms with Preelaborate is
 
    type Operating_Systems is (Linux,
                               MacOS,
+                              FreeBSD,
                               Windows,
                               OS_Unknown);
    subtype Known_Operating_Systems is
@@ -76,6 +78,7 @@ private
    is (case Arch is
           when ARM64         => AARCH64,
           when Architectures => Arch,
+          when AMD64         => X86_64,
           when others        =>
              raise Program_Error
                with "Mapping missing for given architecture: " & Arch'Image);
