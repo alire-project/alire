@@ -298,9 +298,9 @@ package body Alire.Roots is
    is
    begin
       This.Load_Configuration;
-      for Rel of This.Solution.Releases.Including (This.Release.Get) loop
-         if Force or else This.Configuration.Is_Default_Profile (Rel.Name) then
-            This.Configuration.Set_Build_Profile (Rel.Name, Profile);
+      for Rel of This.Nonabstract_Crates loop
+         if Force or else This.Configuration.Is_Default_Profile (Rel) then
+            This.Configuration.Set_Build_Profile (Rel, Profile);
          end if;
       end loop;
    end Set_Build_Profiles;
@@ -933,6 +933,7 @@ package body Alire.Roots is
 
    begin
       This.Traverse (Filter'Access);
+      Result.Include (This.Name);
       return Result;
    end Nonabstract_Crates;
 

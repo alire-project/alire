@@ -47,23 +47,12 @@ package Alr.Commands.Build is
 
 private
 
-   Apply_Default : aliased String := "default"; -- To detect explicit setting
-   Apply_Root    : aliased String := "root";    -- Apply only to root release
-   Apply_Unset   : aliased String := "unset";   -- Apply to releases without
-   --  a setting in a manifest
-   Apply_All     : aliased String := "all";     -- Apply to all releases
-
-   Apply_Modes : constant array (Positive range <>)
-     of GNAT.OS_Lib.String_Access := (Apply_Default'Access,
-                                      Apply_Root'Access,
-                                      Apply_Unset'Access,
-                                      Apply_All'Access);
-
    type Command is new Commands.Command with record
       Release_Mode    : aliased Boolean := False;
       Validation_Mode : aliased Boolean := False;
       Dev_Mode        : aliased Boolean := False;
-      Apply_Profile   : aliased GNAT.OS_Lib.String_Access :=
-                          new String'(Apply_Default); -- One of the above
+      Profiles        : aliased GNAT.OS_Lib.String_Access;
+      --  A string of "crate:profile" values, with "*" meaning all crates and
+      --  "%" meaning all crates without a previous setting in a manifest.
    end record;
 end Alr.Commands.Build;

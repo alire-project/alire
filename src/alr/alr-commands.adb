@@ -101,6 +101,16 @@ package body Alr.Commands is
 
    procedure Set_Builtin_Aliases is
    begin
+      Sub_Cmd.Set_Alias ("build-dev",
+                         AAA.Strings.Empty_Vector
+                         .Append ("build")
+                         .Append ("--profiles=*:development"));
+
+      Sub_Cmd.Set_Alias ("build-validation",
+                         AAA.Strings.Empty_Vector
+                         .Append ("build")
+                         .Append ("--profiles=*:validation"));
+
       Sub_Cmd.Set_Alias ("gnatprove",
                          AAA.Strings.Empty_Vector
                          .Append ("exec")

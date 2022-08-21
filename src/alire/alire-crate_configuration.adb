@@ -25,6 +25,9 @@ with TOML; use TOML;
 
 package body Alire.Crate_Configuration is
 
+   Separator : constant Character := ',';
+   Assign    : constant Character := ':';
+
    function Builtin_Build_Profile is new Typedef_From_Enum
      (Alire.Utils.Switches.Profile_Kind,
       "Build_Profile",
@@ -119,6 +122,7 @@ package body Alire.Crate_Configuration is
                                 return Boolean
    is
    begin
+      Trace.Always ("SETTER " & Setters'Image (This.Setter_Map (Crate)));
       return This.Setter_Map (Crate) = Default;
    end Is_Default_Profile;
 
@@ -820,11 +824,11 @@ package body Alire.Crate_Configuration is
 
       return Result : Profile_Maps.Map do
          declare
-            Pairs : constant Vector := Split (Str, ';');
+            Pairs : constant Vector := Split (Str, Separator);
          begin
             for Pair of Pairs loop
-               Result.Insert (+Head (Pair, ':'),
-                              Profile_Kind'Value (Tail (Pair, ':')));
+               Result.Insert (+Head (Pair, Assign),
+                              Profile_Kind'Value (Tail (Pair, Assign)));
             end loop;
          end;
       end return;
@@ -845,10 +849,11 @@ package body Alire.Crate_Configuration is
    begin
       for I in This.Profile_Map.Iterate loop
          Profiles.Append
-           (String'(Key (I).As_String & ":" & Element (I)'Image));
+           (String'(Key (I).As_String & Assign & Element (I)'Image));
       end loop;
 
-      Config.Edit.Set_Locally ("last_build_profile", Profiles.Flatten (";"));
+      Config.Edit.Set_Locally ("last_build_profile",
+                               Profiles.Flatten (Separator));
    end Save_Last_Build_Profiles;
 
 end Alire.Crate_Configuration;
