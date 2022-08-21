@@ -89,6 +89,8 @@ package body Alire.Crate_Configuration is
    is
       Key : constant String := Build_Profile_Key (Crate);
       Val : Config_Setting  := This.Map (+Key);
+
+      Prev_Profile : constant Profile_Kind := This.Profile_Map (Crate);
    begin
       --  Update config value that holds the profile value
       Val.Value  := TOML.Create_String (To_Lower_Case (Profile'Image));
@@ -101,8 +103,11 @@ package body Alire.Crate_Configuration is
       --  And its setter
       This.Setter_Map.Include (Crate, User);
 
-      Trace.Debug ("Build profile of " & Crate.As_String
-                   & " set by user to " & Profile'Image);
+      Trace.Log
+        ("Build profile of " & Crate.As_String & " set by user: "
+         & Prev_Profile'Image & " --> "
+         & Profile'Image,
+         Level => (if Prev_Profile = Profile then Debug else Detail));
    end Set_Build_Profile;
 
    ------------------------
@@ -341,7 +346,7 @@ package body Alire.Crate_Configuration is
 
       Trace.Detail ("Generating crate config files");
 
-      Set_Last_Build_Profile (This.Build_Profile (Root.Name));
+      This.Save_Last_Build_Profiles;
 
       for Crate of Root.Nonabstract_Crates loop
          declare
@@ -463,6 +468,17 @@ package body Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean
    is (not This.Profile_Map.Is_Empty);
    --  Because at a minimum it must contain the root crate profile
+
+   ---------------------
+   -- Must_Regenerate --
+   ---------------------
+
+   function Must_Regenerate (This : Global_Config) return Boolean
+   is
+      use type Profile_Maps.Map;
+   begin
+      return This.Profile_Map /= Last_Build_Profiles;
+   end Must_Regenerate;
 
    ---------------------------
    -- Pretty_Print_Switches --
@@ -791,27 +807,48 @@ package body Alire.Crate_Configuration is
       end if;
    end Use_Default_Values;
 
-   ------------------------
-   -- Last_Build_Profile --
-   ------------------------
+   -------------------------
+   -- Last_Build_Profiles --
+   -------------------------
 
-   function Last_Build_Profile return Utils.Switches.Profile_Kind is
-      Str : constant String := Config.DB.Get ("last_build_profile",
-                                             Default_Root_Build_Profile'Img);
+   function Last_Build_Profiles return Profile_Maps.Map is
+      Str : constant String := Config.DB.Get ("last_build_profile", "");
    begin
-      return Profile_Kind'Value (Str);
+      if Str = "" then
+         return Profile_Maps.Empty_Map;
+      end if;
+
+      return Result : Profile_Maps.Map do
+         declare
+            Pairs : constant Vector := Split (Str, ';');
+         begin
+            for Pair of Pairs loop
+               Result.Insert (+Head (Pair, ':'),
+                              Profile_Kind'Value (Tail (Pair, ':')));
+            end loop;
+         end;
+      end return;
+
    exception
       when Constraint_Error =>
-         return Default_Root_Build_Profile;
-   end Last_Build_Profile;
+         Trace.Debug ("Unexpected format in profiles string: " & Str);
+         return Profile_Maps.Empty_Map;
+   end Last_Build_Profiles;
 
-   ----------------------------
-   -- Set_Last_Build_Profile --
-   ----------------------------
+   ------------------------------
+   -- Save_Last_Build_Profiles --
+   ------------------------------
 
-   procedure Set_Last_Build_Profile (P : Utils.Switches.Profile_Kind) is
+   procedure Save_Last_Build_Profiles (This : Global_Config) is
+      Profiles : Vector;
+      use Profile_Maps;
    begin
-      Config.Edit.Set_Locally ("last_build_profile", P'Img);
-   end Set_Last_Build_Profile;
+      for I in This.Profile_Map.Iterate loop
+         Profiles.Append
+           (String'(Key (I).As_String & ":" & Element (I)'Image));
+      end loop;
+
+      Config.Edit.Set_Locally ("last_build_profile", Profiles.Flatten (";"));
+   end Save_Last_Build_Profiles;
 
 end Alire.Crate_Configuration;

@@ -16,7 +16,6 @@ with Alire.Spawn;
 with Alire.User_Pins.Maps;
 with Alire.Utils.TTY;
 with Alire.Utils.User_Input;
-with Alire.Utils.Switches;
 
 with GNAT.OS_Lib;
 
@@ -36,7 +35,8 @@ package body Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean)
+                   Export_Build_Env : Boolean;
+                   Saved_Profiles   : Boolean := True)
                    return Boolean
    is
       Build_Failed : exception;
@@ -179,21 +179,20 @@ package body Alire.Roots is
 
    begin
 
+      --  Check whether we should override configuration with the last one used
+      --  and stored on disk. Since the first time the one from disk will be be
+      --  empty, we may still have to generate files in the next step.
+
+      if Saved_Profiles then
+         This.Set_Build_Profiles (Crate_Configuration.Last_Build_Profiles);
+      end if;
+
       --  Check if crate configuration should be re-generated
-      declare
-         use Alire.Utils.Switches;
-         use Alire.Crate_Configuration;
-      begin
-         This.Load_Configuration;
-         if Last_Build_Profile /= This.Configuration.Build_Profile (This.Name)
-         then
-            Trace.Detail
-              ("Root build profile changed: "
-               & Last_Build_Profile'Image & " --> "
-               & This.Configuration.Build_Profile (This.Name)'Image);
-            This.Generate_Configuration;
-         end if;
-      end;
+
+      This.Load_Configuration;
+      if This.Configuration.Must_Regenerate then
+         This.Generate_Configuration;
+      end if;
 
       if Export_Build_Env then
          This.Export_Build_Environment;
@@ -289,6 +288,10 @@ package body Alire.Roots is
       This.Configuration.Set_Build_Profile (Crate, Profile);
    end Set_Build_Profile;
 
+   ------------------------
+   -- Set_Build_Profiles --
+   ------------------------
+
    procedure Set_Build_Profiles (This    : in out Root;
                                  Profile : Crate_Configuration.Profile_Kind;
                                  Force   : Boolean)
@@ -298,6 +301,30 @@ package body Alire.Roots is
       for Rel of This.Solution.Releases.Including (This.Release.Get) loop
          if Force or else This.Configuration.Is_Default_Profile (Rel.Name) then
             This.Configuration.Set_Build_Profile (Rel.Name, Profile);
+         end if;
+      end loop;
+   end Set_Build_Profiles;
+
+   ------------------------
+   -- Set_Build_Profiles --
+   ------------------------
+
+   procedure Set_Build_Profiles
+     (This     : in out Root;
+      Profiles : Crate_Configuration.Profile_Maps.Map)
+   is
+      use Crate_Configuration.Profile_Maps;
+      Valid_Crates : constant Containers.Crate_Name_Sets.Set :=
+                       This.Nonabstract_Crates;
+   begin
+      This.Load_Configuration;
+      for I in Profiles.Iterate loop
+         if Valid_Crates.Contains (Key (I)) then
+            This.Set_Build_Profile (Key (I), Element (I));
+         else
+            Trace.Debug
+              ("Discarding build profile for crate not among releases: "
+               & Key (I).As_String);
          end if;
       end loop;
    end Set_Build_Profiles;

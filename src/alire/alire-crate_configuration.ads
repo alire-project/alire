@@ -8,13 +8,18 @@ private with Ada.Strings.Unbounded;
 private with Ada.Containers.Hashed_Maps;
 private with Ada.Strings.Unbounded.Hash;
 private with Ada.Containers.Indefinite_Holders;
-private with Ada.Containers.Indefinite_Ordered_Maps;
+with Ada.Containers.Indefinite_Ordered_Maps;
 
 package Alire.Crate_Configuration is
 
    --  Types used to store build profiles/switches and declared variables
 
    subtype Profile_Kind is Utils.Switches.Profile_Kind;
+
+   use type Profile_Kind;
+
+   package Profile_Maps
+   is new Ada.Containers.Indefinite_Ordered_Maps (Crate_Name, Profile_Kind);
 
    Default_Root_Build_Profile : constant Utils.Switches.Profile_Kind :=
      Utils.Switches.Development;
@@ -48,17 +53,20 @@ package Alire.Crate_Configuration is
    procedure Generate_Config_Files (This : Global_Config;
                                     Root : in out Alire.Roots.Root);
 
-   procedure Set_Last_Build_Profile (P : Utils.Switches.Profile_Kind);
-   --  Record in local user configuration the last profile used in crate
-   --  configuration.
+   procedure Save_Last_Build_Profiles (This : Global_Config);
+   --  Record in local user configuration the last profiles used in crate
+   --  configuration (the ones currently in the given configuration).
 
-   function Last_Build_Profile return Utils.Switches.Profile_Kind;
-   --  Get the last profile used from user configuration
+   function Last_Build_Profiles return Profile_Maps.Map;
+   --  Get the last profile used from user configuration. Note that we can have
+   --  more/fewer crates in a new run if dependencies have changed.
+
+   function Must_Regenerate (This : Global_Config) return Boolean;
+   --  Say if some profile has changed so config files must be regenerated
 
 private
 
    use Alire.Properties.Configurations;
-   use type Alire.Utils.Switches.Profile_Kind;
    use type Alire.Utils.Switches.Switch_List;
 
    package Config_Type_Definition_Holder
@@ -80,10 +88,6 @@ private
       Element_Type    => Config_Setting,
       Hash            => Ada.Strings.Unbounded.Hash,
       Equivalent_Keys => Ada.Strings.Unbounded."=");
-
-   package Profile_Maps
-   is new Ada.Containers.Indefinite_Ordered_Maps
-     (Crate_Name, Alire.Utils.Switches.Profile_Kind);
 
    package Profile_Setter_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps

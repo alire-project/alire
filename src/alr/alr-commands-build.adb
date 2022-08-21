@@ -1,9 +1,10 @@
 with Stopwatch;
 with Alire.Utils;
 with Alire.Utils.Switches;
-with Alire.Crate_Configuration;
 
 package body Alr.Commands.Build is
+
+   Apply_Switch : constant String := "--apply-profile";
 
    -------------
    -- Execute --
@@ -24,16 +25,19 @@ package body Alr.Commands.Build is
          Reportaise_Wrong_Arguments ("Only one build mode can be selected");
       end if;
 
-      if Cmd.Recurse_Unset and then Cmd.Recurse_Force then
-         Reportaise_Wrong_Arguments
-           ("Only one recursive mode can be selected");
-      end if;
-
-      if (Cmd.Recurse_Unset or else Cmd.Recurse_Force)
+      if Cmd.Apply_Profile.all /= Apply_Default
         and then Profiles_Selected = 0
       then
          Reportaise_Wrong_Arguments
-           ("Must specify a build profile with a recursive profile option");
+           ("Must specify a build profile when using "
+            & TTY.Terminal (Apply_Switch));
+      end if;
+
+      if (for all Mode of Apply_Modes =>
+            Mode.all /= Cmd.Apply_Profile.all)
+      then
+         Reportaise_Command_Failed ("Invalid value for " & Apply_Switch & ": "
+                                    & TTY.Error (Cmd.Apply_Profile.all));
       end if;
 
       --  Build profile in the command line takes precedence. The configuration
@@ -42,22 +46,26 @@ package body Alr.Commands.Build is
 
       if Cmd.Release_Mode then
          Profile := Release;
-         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Release);
       elsif Cmd.Validation_Mode then
          Profile := Validation;
-         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Validation);
       elsif Cmd.Dev_Mode then
          Profile := Development;
-         Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Development);
       end if;
+
+      --  Effects on root crate
 
       if Profiles_Selected /= 0 then -- can only be 1
          Cmd.Root.Set_Build_Profile (Cmd.Root.Name, Profile);
       end if;
 
-      if Cmd.Recurse_Unset or else Cmd.Recurse_Force then
-         Cmd.Root.Set_Build_Profiles (Profile, Force => Cmd.Recurse_Force);
-         Cmd.Root.Generate_Configuration;
+      --  Effects on dependencies
+
+      if Cmd.Apply_Profile.all /= Apply_Default and then
+         Cmd.Apply_Profile.all /= Apply_Root
+      then
+         Cmd.Root.Set_Build_Profiles
+           (Profile,
+            Force => Cmd.Apply_Profile.all = Apply_All);
       end if;
 
       if not Execute (Cmd, Args,
@@ -78,19 +86,13 @@ package body Alr.Commands.Build is
    is
    begin
 
-      --  If we were invoked from another command (e.g. run) we apply the
-      --  last profile used for building the crate
-
-      if Cmd not in Command'Class then
-         Cmd.Root.Set_Build_Profile
-           (Cmd.Root.Name,
-            Alire.Crate_Configuration.Last_Build_Profile);
-      end if;
-
       declare
          Timer : Stopwatch.Instance;
       begin
-         if Cmd.Root.Build (Args, Export_Build_Env) then
+         if Cmd.Root.Build (Args,
+                            Export_Build_Env,
+                            Saved_Profiles => Cmd not in Build.Command'Class)
+         then
 
             Trace.Info ("Build finished successfully in "
                         & TTY.Bold (Timer.Image) & " seconds.");
@@ -114,7 +116,21 @@ package body Alr.Commands.Build is
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
        .Append ("Invokes gprbuild to compile all targets in the current"
-         & " crate."));
+         & " crate.")
+       .Append ("")
+       .Append ("A build profile can be selected with the appropriate switch."
+         & " By default the profile is applied to the root release only, "
+         & "whereas dependencies are built in release mode. Use "
+         & Apply_Switch & " to alter this behavior.")
+       .Append ("")
+       .Append (Apply_Switch & "=" & Apply_Root
+         & " (default): apply given profile to root only.")
+       .Append (Apply_Switch & "=" & Apply_Unset
+         & ": apply profile to all releases without an "
+         & "explicit setting in some manifest.")
+       .Append (Apply_Switch & "=" & Apply_All
+         & ": apply profile to all releases unconditionally.")
+      );
 
    --------------------
    -- Setup_Switches --
@@ -130,25 +146,20 @@ package body Alr.Commands.Build is
       Define_Switch (Config,
                      Cmd.Release_Mode'Access,
                      "", "--release",
-                     "Set root crate build mode to Release");
+                     "Set build profile to Release");
       Define_Switch (Config,
                      Cmd.Validation_Mode'Access,
                      "", "--validation",
-                     "Set root crate build mode to Validation");
+                     "Set build profile to Validation");
       Define_Switch (Config,
                      Cmd.Dev_Mode'Access,
                      "", "--development",
-                     "Set root crate build mode to Development (default)");
+                     "Set build profile to Development (default)");
 
       Define_Switch (Config,
-                     Cmd.Recurse_Unset'Access,
-                     "", "--recurse-unset",
-                     "Set build mode also for dependencies without "
-                     & "an explicit setting");
-      Define_Switch (Config,
-                     Cmd.Recurse_Force'Access,
-                     "", "--recurse-all",
-                     "Set build mode also for all dependencies");
+                     Cmd.Apply_Profile'Access,
+                     "", "--apply-profile=",
+                     "Set build profile to one of root (default), unset, all");
 
    end Setup_Switches;
 
