@@ -41,7 +41,7 @@ check_profile("development", config_root)
 check_profile("release", config_dep1)
 
 # Verify both overrides when all are using defaults
-run_alr("build-validation")
+run_alr("build", "--profiles=*:validation")
 for crate in crates:
     check_profile("validation", config[crate])
 
