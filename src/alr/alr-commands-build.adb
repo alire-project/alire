@@ -97,11 +97,11 @@ package body Alr.Commands.Build is
       Profiles_Selected : constant Natural :=
                             Alire.Utils.Count_True ((Cmd.Release_Mode,
                                                      Cmd.Validation_Mode,
-                                                    Cmd.Dev_Mode));
+                                                     Cmd.Dev_Mode));
       Profile : Profile_Kind;
    begin
       if Profiles_Selected > 1 then
-         Reportaise_Wrong_Arguments ("Only one build mode can be selected");
+         Reportaise_Wrong_Arguments ("Only one build profile can be selected");
       end if;
 
       --  Build profile in the command line takes precedence. The configuration
@@ -152,6 +152,8 @@ package body Alr.Commands.Build is
          if Cmd.Root.Build (Args,
                             Export_Build_Env,
                             Saved_Profiles => Cmd not in Build.Command'Class)
+           --  That is, we apply the saved profiles unless the user is
+           --  explicitly invoking `alr build`.
          then
 
             Trace.Info ("Build finished successfully in "
@@ -190,18 +192,11 @@ package body Alr.Commands.Build is
        .Append ("   Use " & TTY.Emph ("%:<profile>") & " to set profiles of "
          & "crates without a setting in a manifest only.")
        .New_Line
-       .Append ("See ALIASES in " & TTY.Terminal ("alr help")
-         & " for common combinations, e.g.:")
-       .Append ("   " & TTY.Emph ("alr build-dev")
-         & ": set development profile for all crates.")
-         .Append ("   " & TTY.Emph ("alr build-validation")
-         & ": set validation profile for all crates.")
-       .New_Line
-       .Append ("Running " & TTY.Terminal ("alr build") & " without profile "
+       .Append ("Running '" & TTY.Terminal ("alr build") & "' without profile "
          & "switches defaults to development (root crate) + release "
-         & " (dependencies). Indirect builds through, e.g., "
-         & TTY.Terminal ("alr run") & " will use the last "
-         & TTY.Terminal ("alr build") & " configuration.")
+         & " (dependencies). Indirect builds through, e.g., '"
+         & TTY.Terminal ("alr run") & "' will use the last '"
+         & TTY.Terminal ("alr build") & "' configuration.")
       );
 
    --------------------

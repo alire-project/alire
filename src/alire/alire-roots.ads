@@ -117,8 +117,9 @@ package Alire.Roots is
 
    function Nonabstract_Crates (This : in out Root)
                                 return Containers.Crate_Name_Sets.Set;
-   --  Return names of crates in the solution, including root, excluding
-   --  those that are provided by another crates. I.e., only actual releases.
+   --  Return names of crates in the solution that have a buildable release,
+   --  including root, excluding those that are provided by another crate.
+   --  I.e., only actual regular releases.
 
    function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;

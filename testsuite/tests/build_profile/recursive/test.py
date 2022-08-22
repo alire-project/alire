@@ -1,5 +1,5 @@
 """
-Check build recursive switches --recurse-unset and --recurse-all
+Check build --profiles switch
 """
 
 from drivers.alr import run_alr, init_local_crate, alr_pin, alr_manifest

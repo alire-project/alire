@@ -122,7 +122,6 @@ package body Alire.Crate_Configuration is
                                 return Boolean
    is
    begin
-      Trace.Always ("SETTER " & Setters'Image (This.Setter_Map (Crate)));
       return This.Setter_Map (Crate) = Default;
    end Is_Default_Profile;
 
@@ -288,8 +287,7 @@ package body Alire.Crate_Configuration is
    is
       Solution : constant Solutions.Solution := Root.Solution;
 
-      Rel_Vect : constant Containers.Crate_Name_Sets.Set :=
-                   Root.Nonabstract_Crates;
+      Rel_Vect : constant Crate_Name_Set := Root.Nonabstract_Crates;
    begin
 
       if not Solution.Is_Complete then
@@ -822,6 +820,10 @@ package body Alire.Crate_Configuration is
          return Profile_Maps.Empty_Map;
       end if;
 
+      --  We store the profiles in the same format as they're given by users in
+      --  the command line for no particular reason:
+      --  last_build_profile=crate1:profile1,crate2:profile2,...
+
       return Result : Profile_Maps.Map do
          declare
             Pairs : constant Vector := Split (Str, Separator);
@@ -847,6 +849,9 @@ package body Alire.Crate_Configuration is
       Profiles : Vector;
       use Profile_Maps;
    begin
+
+      --  See note on Last_Build_Profiles about the format
+
       for I in This.Profile_Map.Iterate loop
          Profiles.Append
            (String'(Key (I).As_String & Assign & Element (I)'Image));
