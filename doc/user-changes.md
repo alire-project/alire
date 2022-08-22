@@ -6,18 +6,26 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
-### Propagate build profile to dependencies in `alr build`
+### Finer control of build profiles in `alr build`
 
-Two new mutually exclusive switches can be now added when indicating a build
-profile in the command line that propagate this profile to dependencies:
+Build profiles can be now tweaked from the command-line with the a new switch:
 
-- `alr build --validation --recurse-all`
-- `alr build --validation --recurse-unset`
+- `alr build --profiles '*:development'`
+  `# Set all profiles to development`
+- `alr build --profiles '%:validation'`
+  `# Set profiles without an override in a manifest to validation`
 
-The `all` variant will override all profiles in the build, even the ones set in
-manifests. Conversely, the `unset` variant will only set profiles for crates
-that do not have an explicit profile set in some manifest (their own or a
-dependent crate).
+Explicit crates can be given, intermixed with one of the wildcards, which apply
+to the rest of crates in the build:
+
+- `alr build --profiles '*:development,libhello:release'`
+  `# Set all profiles to development but for libhello`
+
+The existing switches `--release`, `--validation`, `--development` continue to
+control root crate profile and take the highest priority:
+
+- `alr build --validation --profiles '*:development'`
+  `# Set the working crate to validation and the rest to development`
 
 ### Reuse build profile of `alr build` when issuing `alr run`
 
