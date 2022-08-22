@@ -21,7 +21,7 @@ jobs:
   build:
     name: CI on Linux
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Check out repository
@@ -33,7 +33,7 @@ jobs:
       uses: ada-actions/toolchain@ce2021
       with:
         distrib: community
-    
+
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
       with:
@@ -45,7 +45,7 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         INDEX: ""
-    
+
     - name: Upload binaries
       uses: actions/upload-artifact@v2
       with:
@@ -109,7 +109,7 @@ jobs:
     - name: Create AppImage
       if: (github.event_name == 'release')
       run: >
-        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr 
+        linuxdeploy-x86_64.AppImage --appdir AppDir -e bin/alr
         -d resources/alr.desktop -i resources/alr.png --output appimage
 
     - name: Rename AppImage
