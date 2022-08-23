@@ -16,7 +16,7 @@ jobs:
   build:
     name: CI on unsupported Linux
 
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Check out repository
@@ -28,7 +28,7 @@ jobs:
       uses: ada-actions/toolchain@ce2021
       with:
         distrib: community
-    
+
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
       with:
@@ -40,7 +40,7 @@ jobs:
       env:
         BRANCH: ${{ github.base_ref }}
         ALIRE_DISABLE_DISTRO: true
-    
+
     - name: Upload logs (if failed)
       if: failure()
       uses: actions/upload-artifact@master
