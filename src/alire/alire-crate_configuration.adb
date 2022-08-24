@@ -2,6 +2,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Directories;
 with Ada.Text_IO;
 
+with AAA.Enum_Tools;
 with AAA.Strings; use AAA.Strings;
 
 with Alire.Containers;
@@ -20,13 +21,15 @@ with Alire.Utils.Switches; use Alire.Utils.Switches;
 with Alire.Utils.Switches.Knowledge;
 with Alire.Directories;
 with Alire.Platforms.Current;
+with Alire.Utils.TTY;
 
 with TOML; use TOML;
 
 package body Alire.Crate_Configuration is
 
-   Separator : constant Character := ',';
-   Assign    : constant Character := ':';
+   --  Used in parsing profile lists from command-line or configuration
+   Profile_Assign : constant Character := '=';
+   Profile_Split  : constant Character := ',';
 
    function Builtin_Build_Profile is new Typedef_From_Enum
      (Alire.Utils.Switches.Profile_Kind,
@@ -815,31 +818,89 @@ package body Alire.Crate_Configuration is
 
    function Last_Build_Profiles return Profile_Maps.Map is
       Str : constant String := Config.DB.Get ("last_build_profile", "");
+      Profiles : Parsed_Profiles;
    begin
-      if Str = "" then
-         return Profile_Maps.Empty_Map;
-      end if;
-
-      --  We store the profiles in the same format as they're given by users in
-      --  the command line for no particular reason:
-      --  last_build_profile=crate1:profile1,crate2:profile2,...
-
-      return Result : Profile_Maps.Map do
-         declare
-            Pairs : constant Vector := Split (Str, Separator);
-         begin
-            for Pair of Pairs loop
-               Result.Insert (+Head (Pair, Assign),
-                              Profile_Kind'Value (Tail (Pair, Assign)));
-            end loop;
-         end;
-      end return;
-
+      Profiles := Parse_Profiles (Str, Accept_Wildcards => False);
+      return Profiles.Profiles;
    exception
-      when Constraint_Error =>
+      when E : others =>
+         --  This may happen at most once when first migrating from 1.2
+         Log_Exception (E);
          Trace.Debug ("Unexpected format in profiles string: " & Str);
          return Profile_Maps.Empty_Map;
    end Last_Build_Profiles;
+
+   --------------------
+   -- Parse_Profiles --
+   --------------------
+
+   function Parse_Profiles (Img              : String;
+                            Accept_Wildcards : Boolean) return Parsed_Profiles
+   is
+
+      ----------------
+      -- To_Profile --
+      ----------------
+
+      function To_Profile (Img : String) return Profile_Kind is
+         function Is_Valid is new AAA.Enum_Tools.Is_Valid (Profile_Kind);
+      begin
+         if Is_Valid (Img) then
+            return Profile_Kind'Value (Img);
+         else
+            Raise_Checked_Error ("Invalid profile value: " & TTY.Error (Img)
+                                 & " in profile list: " & Parse_Profiles.Img);
+            raise Program_Error; -- Unreachable
+         end if;
+      end To_Profile;
+
+      Pairs     : constant Vector := Split (Img, Profile_Split);
+
+      Crates_Seen   : Crate_Name_Set;
+      Wildcard_Seen : Natural := 0;
+      Result        : Parsed_Profiles;
+   begin
+      if Img = "" then
+         return Result;
+      end if;
+
+      for Pair of Pairs loop
+         declare
+            Crate   : constant String := Head (Pair, Profile_Assign);
+            Profile : constant String := Tail (Pair, Profile_Assign);
+         begin
+            if Crate in "*" | "%" then
+               if Accept_Wildcards then
+                  Wildcard_Seen := Wildcard_Seen + 1;
+                  if Wildcard_Seen > 1 then
+                     Raise_Checked_Error
+                       ("Only one of '*' or '%' allowed but profiles were: "
+                        & Img);
+                  end if;
+
+                  Result.Default_Apply :=
+                    (if Crate = "*" then To_All else To_Unset);
+                  Result.Default_Profile := To_Profile (Profile);
+               else
+                  Raise_Checked_Error
+                    ("Wildcards not allowed but profiles were: " & Img);
+               end if;
+
+            else
+               if Crates_Seen.Contains (+Crate) then
+                  Raise_Checked_Error
+                    ("Duplicated crate " & Utils.TTY.Name (Crate)
+                     & "in profile list: " & Img);
+               else
+                  Crates_Seen.Insert (+Crate);
+                  Result.Profiles.Insert (+Crate, To_Profile (Profile));
+               end if;
+            end if;
+         end;
+      end loop;
+
+      return Result;
+   end Parse_Profiles;
 
    ------------------------------
    -- Save_Last_Build_Profiles --
@@ -850,15 +911,17 @@ package body Alire.Crate_Configuration is
       use Profile_Maps;
    begin
 
-      --  See note on Last_Build_Profiles about the format
+      --  We store the profiles in the same format as they're given by users in
+      --  the command line for no particular reason:
+      --  last_build_profile=crate1=profile1,crate2=profile2,...
 
       for I in This.Profile_Map.Iterate loop
          Profiles.Append
-           (String'(Key (I).As_String & Assign & Element (I)'Image));
+           (String'(Key (I).As_String & Profile_Assign & Element (I)'Image));
       end loop;
 
       Config.Edit.Set_Locally ("last_build_profile",
-                               Profiles.Flatten (Separator));
+                               Profiles.Flatten (Profile_Split));
    end Save_Last_Build_Profiles;
 
 end Alire.Crate_Configuration;

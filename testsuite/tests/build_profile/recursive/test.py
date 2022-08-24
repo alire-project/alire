@@ -41,11 +41,11 @@ check_profile("development", config_root)
 check_profile("release", config_dep1)
 
 # Verify both overrides when all are using defaults
-run_alr("build", "--profiles=*:validation")
+run_alr("build", "--profiles=*=validation")
 for crate in crates:
     check_profile("validation", config[crate])
 
-run_alr("build", "--profiles=%:validation")
+run_alr("build", "--profiles=%=validation")
 for crate in crates:
     check_profile("validation", config[crate])
 
@@ -55,11 +55,11 @@ with open(alr_manifest(), "at") as manifest:
     manifest.write("[build-profiles]\n"
                    "dep1 = 'release'\n")
 
-run_alr("build", "--profiles=*:validation")
+run_alr("build", "--profiles=*=validation")
 for crate in crates:
     check_profile("validation", config[crate])
 
-run_alr("build", "--profiles=%:validation")
+run_alr("build", "--profiles=%=validation")
 check_profile("validation", config_root)
 check_profile("release", config_dep1)  # Manifest takes precedence in this case
 check_profile("validation", config_dep2)
@@ -69,18 +69,18 @@ check_profile("validation", config_dep2)
 with open(alr_manifest(), "at") as manifest:
     manifest.write("'*' = 'development'\n")
 
-run_alr("build", "--profiles=*:validation")
+run_alr("build", "--profiles=*=validation")
 for crate in crates:
     check_profile("validation", config[crate])
 
-run_alr("build", "--validation", "--profiles=%:validation")
+run_alr("build", "--validation", "--profiles=%=validation")
 check_profile("validation", config_root)   # Root is governed by command line
 check_profile("release", config_dep1)      # Because of explicit crate in manif
 check_profile("development", config_dep2)  # Because of wildcard in manifest
 
 # Check individual overriding, which always prevails
 
-run_alr("build", "--profiles=xxx:release,dep1:validation,dep2:validation")
+run_alr("build", "--profiles=xxx=release,dep1=validation,dep2=validation")
 check_profile("release", config_root)
 check_profile("validation", config_dep1)
 check_profile("validation", config_dep2)

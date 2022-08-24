@@ -1,8 +1,4 @@
-with AAA.Enum_Tools;
-
-with Alire.Containers;
 with Alire.Crate_Configuration;
-with Alire.Utils.TTY;
 with Alire.Utils.Switches;
 
 with Stopwatch;
@@ -16,32 +12,11 @@ package body Alr.Commands.Build is
    --------------------
 
    procedure Apply_Profiles (Cmd : in out Command) is
-      use AAA.Strings;
       use Alire.Crate_Configuration;
 
-      ----------------
-      -- To_Profile --
-      ----------------
-
-      function To_Profile (Img : String) return Profile_Kind is
-         function Is_Valid is new AAA.Enum_Tools.Is_Valid (Profile_Kind);
-      begin
-         if Is_Valid (Img) then
-            return Profile_Kind'Value (Img);
-         else
-            Reportaise_Wrong_Arguments ("Invalid profile value: "
-                                        & TTY.Error (Img));
-            raise Program_Error; -- Unreachable
-         end if;
-      end To_Profile;
-
-      Sep : constant Character := ',';
-      Map : constant Character := ':';
-
-      Pairs : constant Vector := Split (Cmd.Profiles.all, Sep);
-
-      Wildcard_Seen : Natural := 0;
-      Crates_Seen   : Alire.Containers.Crate_Name_Sets.Set;
+      Profiles : constant Parsed_Profiles :=
+                   Parse_Profiles (Cmd.Profiles.all,
+                                   Accept_Wildcards => True);
    begin
       if Cmd.Profiles.all = "" then
          return;
@@ -49,40 +24,22 @@ package body Alr.Commands.Build is
 
       --  Apply wildcard first (only one allowed)
 
-      for Pair of Pairs loop
-         if Head (Pair, Map) in "*" | "%" then
-            Wildcard_Seen := Wildcard_Seen + 1;
-            if Wildcard_Seen > 1 then
-               Reportaise_Wrong_Arguments ("Only one of '*' or '%' allowed");
-            end if;
-
-            Cmd.Root.Set_Build_Profiles (To_Profile (Tail (Pair, Map)),
-                                         Force => Head (Pair, Map) = "*");
-         end if;
-      end loop;
+      if Profiles.Default_Apply /= To_None then
+         Cmd.Root.Set_Build_Profiles
+           (Profiles.Default_Profile,
+            Force => Profiles.Default_Apply = To_All);
+      end if;
 
       --  Apply crates last
 
-      for Pair of Pairs loop
-         if Head (Pair, Map) in "*" | "%" then
-            null; -- skip
-         else
-            declare
-               Crate : constant Alire.Crate_Name := +Head (Pair, Map);
-               Prof  : constant Profile_Kind := To_Profile (Tail (Pair, Map));
-            begin
-               if Crates_Seen.Contains (Crate) then
-                  Reportaise_Wrong_Arguments
-                    ("Duplicated crate in profile list: "
-                     & Alire.Utils.TTY.Name (Crate));
-               else
-                  Crates_Seen.Insert (Crate);
-               end if;
-
-               Cmd.Root.Set_Build_Profile (Crate, Prof);
-            end;
-         end if;
-      end loop;
+      declare
+         use Profile_Maps;
+      begin
+         for I in Profiles.Profiles.Iterate loop
+            Cmd.Root.Set_Build_Profile (Crate   =>  Key (I),
+                                        Profile =>  Element (I));
+         end loop;
+      end;
    end Apply_Profiles;
 
    -------------

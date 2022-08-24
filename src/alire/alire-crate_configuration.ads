@@ -16,7 +16,7 @@ package Alire.Crate_Configuration is
 
    subtype Profile_Kind is Utils.Switches.Profile_Kind;
 
-   use type Profile_Kind;
+   use all type Profile_Kind;
 
    package Profile_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps (Crate_Name, Profile_Kind);
@@ -63,6 +63,24 @@ package Alire.Crate_Configuration is
 
    function Must_Regenerate (This : Global_Config) return Boolean;
    --  Say if some profile has changed so config files must be regenerated
+
+   type Profile_Wildcards is (To_None,    --  No wildcard given
+                              To_Unset, --  '%' (not set otherwise)
+                              To_All);  --  '*' (total override)
+
+   type Parsed_Profiles is record
+      Profiles : Profile_Maps.Map;
+
+      Default_Apply   : Profile_Wildcards := To_None;
+      Default_Profile : Profile_Kind      := Development;
+   end record;
+
+   function Parse_Profiles (Img              : String;
+                            Accept_Wildcards : Boolean) return Parsed_Profiles;
+   --  Convert a string "crate1=profile1,crate2=profile2,[*|%=profile3]" to
+   --  its proper type. Only one of the wildcards may appear, and only when
+   --  Accept_Wildcards (since we shouldn't see them in our internally stored
+   --  last profiles.
 
 private
 
