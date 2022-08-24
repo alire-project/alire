@@ -42,7 +42,18 @@ package body Alire.Crate_Configuration is
    --  "when others" branch. The same valid code could trigger "error: missing
    --  case values" on a future version of Alire. This is not acceptable,
    --  therefore we decide not to use enums here.
-   Host_Info : constant array (Integer range <>) of Config_Setting :=
+
+   type Config_Settings_Array is array (Integer range <>) of Config_Setting;
+
+   ---------------
+   -- Host_Info --
+   ---------------
+   --  This is a function instead of a constant to avoid creating temporary
+   --  files at elaboration time, which in turn removes some errors when
+   --  running in a non-writable directory. Although we do not cache the result
+   --  here, the individual costly detections are cached at Platforms.Current.
+   function Host_Info return Config_Settings_Array
+   is
      ((Type_Def => To_Holder (String_Typedef ("Alire_Host_OS")),
        Value    => TOML.Create_String
          (To_Lower_Case (Alire.Platforms.Current.Operating_System'Img)),
