@@ -1110,14 +1110,12 @@ package body Alire.Solver is
                          & " complete: " & Solution.Is_Complete'Img
                          & "; composition: " & Solution.Composition'Img);
 
-            if Solution.Is_Complete then
-               Complete := Complete + 1;
-            end if;
-
             Solutions.Include (Solution);
 
             if Pre_Length = Solutions.Length then
                Dupes := Dupes + 1;
+            elsif Solution.Is_Complete then
+                  Complete := Complete + 1;
             end if;
 
             Progress_Report; -- As we found a new solution
