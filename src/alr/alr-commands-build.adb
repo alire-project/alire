@@ -143,10 +143,10 @@ package body Alr.Commands.Build is
          & Switch_Profiles & " for more overrides.")
        .New_Line
        .Append (Switch_Profiles & "="
-         & TTY.Emph ("*|%|<crate1>:<profile>[,<crate2>:<profile>...]"))
+         & TTY.Emph ("*|%|<crate1>=<profile>[,<crate2>=<profile>...]"))
        .Append ("   Apply profiles to individual crates.")
-       .Append ("   Use " & TTY.Emph ("*:<profile>") & " to set all profiles.")
-       .Append ("   Use " & TTY.Emph ("%:<profile>") & " to set profiles of "
+       .Append ("   Use " & TTY.Emph ("*=<profile>") & " to set all profiles.")
+       .Append ("   Use " & TTY.Emph ("%=<profile>") & " to set profiles of "
          & "crates without a setting in a manifest only.")
        .New_Line
        .Append ("Running '" & TTY.Terminal ("alr build") & "' without profile "
@@ -184,7 +184,7 @@ package body Alr.Commands.Build is
         (Config,
          Cmd.Profiles'Access,
          "", Switch_Profiles & "=",
-         "Comma-separated list of <crate>:<profile> values (see description)");
+         "Comma-separated list of <crate>=<profile> values (see description)");
 
    end Setup_Switches;
 
