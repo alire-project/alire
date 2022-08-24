@@ -42,6 +42,7 @@ package Alire.Properties.Configurations with Preelaborate is
    function Generate_Ada (This : Config_Entry) return Boolean;
    function Generate_GPR (This : Config_Entry) return Boolean;
    function Generate_C (This : Config_Entry) return Boolean;
+   function Generate_Shell (This : Config_Entry) return Boolean;
    function Auto_GPR_With (This : Config_Entry) return Boolean;
    function Disabled (This : Config_Entry) return Boolean;
 
@@ -69,6 +70,11 @@ package Alire.Properties.Configurations with Preelaborate is
    function To_C_Declaration (This : Config_Type_Definition;
                               Value :  TOML.TOML_Value)
                               return String
+     with Pre => This.Valid (Value);
+
+   function To_Shell_Declaration (This : Config_Type_Definition;
+                                  Value :  TOML.TOML_Value)
+                                 return String
      with Pre => This.Valid (Value);
 
    type Assignment is record
@@ -108,6 +114,7 @@ private
       Gen_Ada       : Boolean := True;
       Gen_GPR       : Boolean := True;
       Gen_C         : Boolean := True;
+      Gen_Shell     : Boolean := False;
       Auto_GPR_With : Boolean := True;
       Disabled      : Boolean := False;
    end record;
@@ -136,6 +143,8 @@ private
    is (This.Gen_GPR);
    function Generate_C (This : Config_Entry) return Boolean
    is (This.Gen_C);
+   function Generate_Shell (This : Config_Entry) return Boolean
+   is (This.Gen_Shell);
    function Auto_GPR_With (This : Config_Entry) return Boolean
    is (This.Auto_GPR_With);
    function Disabled (This : Config_Entry) return Boolean

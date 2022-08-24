@@ -172,6 +172,7 @@ package body Alire.Properties.Configurations is
       Table.Set ("generate_ada", Create_Boolean (This.Gen_Ada));
       Table.Set ("generate_gpr", Create_Boolean (This.Gen_GPR));
       Table.Set ("generate_c", Create_Boolean (This.Gen_C));
+      Table.Set ("generate_shell", Create_Boolean (This.Gen_Shell));
       Table.Set ("auto_gpr_with", Create_Boolean (This.Auto_GPR_With));
       return Table;
    end To_TOML;
@@ -598,6 +599,39 @@ package body Alire.Properties.Configurations is
       end case;
    end To_C_Declaration;
 
+   ----------------------
+   -- To_Shell_Declaration --
+   ----------------------
+
+   function To_Shell_Declaration (This : Config_Type_Definition;
+                                  Value : TOML.TOML_Value)
+                                 return String
+   is
+      --  use ASCII;
+      Name : constant String := To_Upper_Case (+This.Name);
+
+   begin
+      case This.Kind is
+
+         when Str =>
+            return Name & "=""" & Value.As_String & """";
+
+         when Bool =>
+            return Name & "=" &
+            (if Value.As_Boolean then "1" else "0");
+
+         when Enum =>
+            return Name & "=""" & Value.As_String & """";
+
+         when Real =>
+            return Name & "=" & Image (Value.As_Float);
+
+         when Int =>
+            return Name & "=" & Image (Value.As_Integer);
+
+      end case;
+   end To_Shell_Declaration;
+
    ---------------------------
    -- Definitions_From_TOML --
    ---------------------------
@@ -855,6 +889,14 @@ package body Alire.Properties.Configurations is
                elsif Key = "generate_c" then
                   if Val.Kind = TOML_Boolean then
                      Ent.Gen_C := Val.As_Boolean;
+                  else
+                     Raise_Checked_Error ("invalid value for: " & Key &
+                                            "(Boolean expected)");
+                  end if;
+
+               elsif Key = "generate_shell" then
+                  if Val.Kind = TOML_Boolean then
+                     Ent.Gen_Shell := Val.As_Boolean;
                   else
                      Raise_Checked_Error ("invalid value for: " & Key &
                                             "(Boolean expected)");

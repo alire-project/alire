@@ -122,4 +122,9 @@ private
                                 Filepath : Absolute_Path;
                                 Version  : String);
 
+   procedure Generate_Shell_Config (This     : Global_Config;
+                                    Crate    : Crate_Name;
+                                    Filepath : Absolute_Path;
+                                    Version  : String);
+
 end Alire.Crate_Configuration;
