@@ -4,8 +4,6 @@ with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Platforms.Current;
 
-with GNAT.Regpat;
-
 package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
    package Subprocess renames Alire.OS_Lib.Subprocess;
@@ -85,8 +83,9 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
 
       function Detect_Not_Installed return Version_Outcomes.Outcome is
 
-         Regexp : constant String := "^" & Full_Pkg_Name &
-                    "[^\s]+\s+(?:\d+:)?([0-9.]+)";
+         Regexp : constant String :=
+                    "^" & AAA.Strings.To_Lower_Case (Full_Pkg_Name) &
+                    "[^\s]*\s+(?:\d+:)?([0-9.]+)";
          --  A line looks like:
          --  gtk3.x86_64    1:3.24.24-1.fc33    updates
 
@@ -101,28 +100,27 @@ package body Alire.Origins.Deployers.System.RPM_Wrappers is
                             Full_Pkg_Name,
                           Valid_Exit_Codes => (0, 1), -- 1 when not found
                           Err_To_Out       => True);
-
-         use GNAT.Regpat;
-         Matches : Match_Array (1 .. 1);
       begin
          for Line of Output loop
             Trace.Debug ("Extracting native version from " & Wrapper &
-                           " output: " & Line);
-            Match (Regexp, Line, Matches);
-            if Matches (1) /= No_Match then
-               Trace.Debug ("Candidate version string: "
-                            & Line (Matches (1).First .. Matches (1).Last));
-               return
-                 Version_Outcomes.New_Result
-                   (Semantic_Versioning.Parse
-                      (Line (Matches (1).First .. Matches (1).Last),
-                       Relaxed => True)); --  Relaxed because some Fedora
-               --  versions have extra version pts,
-               --  e.g. 5.8-3.fc33
-            else
-               Trace.Debug
-                 ("Unexpected version format, could not identify version");
-            end if;
+                           " output: " & Line & " with regex " & Regexp);
+            declare
+               Match : constant String :=
+                         Utils.First_Match (Regexp,
+                                            AAA.Strings.To_Lower_Case (Line));
+            begin
+               if Match /= "" then
+                  Trace.Debug ("Candidate version string: " & Match);
+                  return
+                    Version_Outcomes.New_Result
+                      (Semantic_Versioning.Parse (Match, Relaxed => True));
+                  --  Relaxed because some Fedora versions have extra version
+                  --  pts, e.g. 5.8-3.fc33
+               else
+                  Trace.Debug
+                    ("Unexpected version format, could not identify version");
+               end if;
+            end;
          end loop;
 
          Trace.Debug ("System deployer could not detect: " & This.Base.Image);
