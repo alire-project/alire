@@ -3,8 +3,6 @@ with AAA.Strings; use AAA.Strings;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 
-with GNAT.Regpat;
-
 package body Alire.Origins.Deployers.System.Pacman is
 
    package Subprocess renames Alire.OS_Lib.Subprocess;
@@ -76,31 +74,29 @@ package body Alire.Origins.Deployers.System.Pacman is
       Package_Line : constant String :=
         Get_Package_Line (This.Base.Package_Name);
 
-      use GNAT.Regpat;
-      Matches : Match_Array (1 .. 1);
    begin
       if Package_Line /= "" then
          Trace.Detail ("Extracting native version from pacman output: " &
                          Package_Line);
 
-         Match (Regexp, Package_Line, Matches);
-         if Matches (1) /= No_Match then
-            Trace.Detail
-              ("Candidate version string: "
-               & Package_Line (Matches (1).First .. Matches (1).Last));
-            return
-              Version_Outcomes.New_Result
-                (Semantic_Versioning.Parse
-                   (Package_Line (Matches (1).First .. Matches (1).Last),
-                    Relaxed => True));
-              --  Versions in Arch can have more than tree numeric fields,
-              --  which runs amok of semantic versioning. If this happens,
-              --  the 4th and extra fields will go into the build part of
-              --  the version, due to Relaxed parsing.
-         else
-            Trace.Detail
-              ("Unexpected version format, could not identify version");
-         end if;
+         declare
+            Match : constant String :=
+                      Utils.First_Match (Regexp, Package_Line);
+         begin
+            if Match /= "" then
+               Trace.Detail ("Candidate version string: " & Match);
+               return
+                 Version_Outcomes.New_Result
+                   (Semantic_Versioning.Parse (Match, Relaxed => True));
+               --  Versions in Arch can have more than tree numeric fields,
+               --  which runs amok of semantic versioning. If this happens,
+               --  the 4th and extra fields will go into the build part of
+               --  the version, due to Relaxed parsing.
+            else
+               Trace.Detail
+                 ("Unexpected version format, could not identify version");
+            end if;
+         end;
       end if;
 
       Trace.Debug ("System deployer could not detect: " & This.Base.Image);
