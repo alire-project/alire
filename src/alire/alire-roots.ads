@@ -115,6 +115,12 @@ package Alire.Roots is
                           return Any_Path;
    --  Find the base folder in which a release can be found for the given root
 
+   function Nonabstract_Crates (This : in out Root)
+                                return Containers.Crate_Name_Sets.Set;
+   --  Return names of crates in the solution that have a buildable release,
+   --  including root, excluding those that are provided by another crate.
+   --  I.e., only actual regular releases.
+
    function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;
    --  Returns the solution stored in the lockfile
@@ -211,12 +217,16 @@ package Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean)
+                   Export_Build_Env : Boolean;
+                   Saved_Profiles   : Boolean := True)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
    --  all releases in the solution (even those not built). Returns True on
-   --  successful build.
+   --  successful build. By default, profiles stored in the persistent crate
+   --  configuration are used (i.e. last explicit build); otherwise the ones
+   --  given in This.Configuration are used. These come in order of increasing
+   --  priority from: defaults -> manifests -> explicit set via API.
 
    function Configuration (This : in out Root)
                            return Crate_Configuration.Global_Config;
@@ -226,8 +236,19 @@ package Alire.Roots is
    procedure Set_Build_Profile (This    : in out Root;
                                 Crate   : Crate_Name;
                                 Profile : Crate_Configuration.Profile_Kind)
-     with Pre => This.Release.Name = Crate or else
-                 This.Solution.Releases.Contains (Crate);
+     with Pre => This.Nonabstract_Crates.Contains (Crate);
+
+   procedure Set_Build_Profiles (This    : in out Root;
+                                 Profile : Crate_Configuration.Profile_Kind;
+                                 Force   : Boolean);
+   --  Set all build profiles in the solution to the value given. Override
+   --  values in manifests if Force, otherwise only set crates without a
+   --  profile in their manifest.
+
+   procedure Set_Build_Profiles
+     (This     : in out Root;
+      Profiles : Crate_Configuration.Profile_Maps.Map);
+   --  Give explicit profiles per crate. These are always overriding.
 
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files

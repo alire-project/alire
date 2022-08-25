@@ -6,6 +6,27 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
+### Finer control of build profiles in `alr build`
+
+Build profiles can be now tweaked from the command-line with the a new switch:
+
+- `alr build --profiles '*=development'`
+  `# Set all profiles to development`
+- `alr build --profiles '%=validation'`
+  `# Set profiles without an override in a manifest to validation`
+
+Explicit crates can be given, intermixed with one of the wildcards, which apply
+to the rest of crates in the build:
+
+- `alr build --profiles '*=development,libhello=release'`
+  `# Set all profiles to development but for libhello`
+
+The existing switches `--release`, `--validation`, `--development` continue to
+control root crate profile and take the highest priority:
+
+- `alr build --validation --profiles '*=development'`
+  `# Set the working crate to validation and the rest to development`
+
 ### Reuse build profile of `alr build` when issuing `alr run`
 
 `alr run` will trigger a build to have an up-to-date executable, and before
