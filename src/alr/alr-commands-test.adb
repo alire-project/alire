@@ -9,6 +9,7 @@ with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
+with Alire.Origins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -44,15 +45,29 @@ package body Alr.Commands.Test is
    -----------------
 
    function Check_Files (R : Alire.Index.Release) return Boolean is
+      use AAA.Strings;
+      use Ada.Directories;
    begin
       --  Declared GPR files in include paths
       declare
          Guard : Folder_Guard (Enter_Folder (R.Base_Folder))
            with Unreferenced;
       begin
+
+         --  Check project files. We allow a binary release to not contain
+         --  project files, but if it declares a non-standard one (why?) it
+         --  should be there.
+
          for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
          loop
-            if not OS_Lib.Is_Regular_File (Gpr) then
+            if not OS_Lib.Is_Regular_File (Gpr) and then
+              R.Origin.Kind in Alire.Origins.Binary_Archive and then
+              To_Lower_Case (Base_Name (Gpr)) = R.Name_Str
+            then
+               Trace.Debug
+                 ("Binary release does not contain default project file: "
+                  & Simple_Name (Gpr));
+            else
                Trace.Error ("Declared project file not found: " & Gpr);
                return False;
             end if;
@@ -60,6 +75,7 @@ package body Alr.Commands.Test is
       end;
 
       --  Generated executables
+
       for Exe of R.Executables (Platform.Properties) loop
          if Files.Locate_File_Under (Folder    => R.Base_Folder,
                                      Name      => Exe,
@@ -153,7 +169,9 @@ package body Alr.Commands.Test is
                             "-d" &
                             "-n" &
                             "get" &
-                            "--build" &
+                            (if R.Origin.Kind in Alire.Origins.Binary_Archive
+                             then Empty_Vector
+                             else To_Vector ("--build")) &
                             R.Milestone.Image;
 
                Docker_Default : constant AAA.Strings.Vector :=
