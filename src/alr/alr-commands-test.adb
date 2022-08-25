@@ -44,7 +44,9 @@ package body Alr.Commands.Test is
    -- Check_Files --
    -----------------
 
-   function Check_Files (R : Alire.Index.Release) return Boolean is
+   function Check_Files (Output : in out AAA.Strings.Vector;
+                         R      : Alire.Index.Release) return Boolean
+   is
       use AAA.Strings;
       use Ada.Directories;
    begin
@@ -60,15 +62,18 @@ package body Alr.Commands.Test is
 
          for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
          loop
-            if not OS_Lib.Is_Regular_File (Gpr) and then
-              R.Origin.Kind in Alire.Origins.Binary_Archive and then
+            if OS_Lib.Is_Regular_File (Gpr) then
+               Output.Append_Line ("Found declared GPR file: " & Gpr);
+            elsif R.Origin.Kind in Alire.Origins.Binary_Archive and then
               To_Lower_Case (Base_Name (Gpr)) = R.Name_Str
             then
-               Trace.Debug
-                 ("Binary release does not contain default project file: "
-                  & Simple_Name (Gpr));
+               Output.Append_Line
+                 ("Warning: Binary release does not contain default "
+                  & "project file: " & Simple_Name (Gpr));
             else
-               Trace.Error ("Declared project file not found: " & Gpr);
+               Output.Append_Line
+                 ("FAIL: Declared project file not found: " & Gpr
+                  & " while at " & Ada.Directories.Current_Directory);
                return False;
             end if;
          end loop;
@@ -81,8 +86,9 @@ package body Alr.Commands.Test is
                                      Name      => Exe,
                                      Max_Depth => Natural'Last).Is_Empty
          then
-            Trace.Error
-              ("Declared executable not found after compilation: " & Exe);
+            Output.Append_Line
+              ("FAIL: Declared executable not found after compilation: "
+               & Exe);
             return False;
          end if;
       end loop;
@@ -202,7 +208,9 @@ package body Alr.Commands.Test is
                end if;
 
                --  Check declared gpr/executables in place
-               if not R.Origin.Is_System and then not Check_Files (R) then
+               if not R.Origin.Is_System and then
+                  not Check_Files (Output, R)
+               then
                   raise Child_Failed with "Declared executable(s) missing";
                end if;
             end Default_Test;
@@ -358,9 +366,24 @@ package body Alr.Commands.Test is
       Reporters.Start_Run ("alr_test_" & Timestamp,
                            Natural (Releases.Length));
 
-      for R of Releases loop
-         Test_Release (R);
-      end loop;
+      declare
+         Old_Level : constant Simple_Logging.Levels := Alire.Log_Level;
+      begin
+
+         --  While we test the releases we do not want any info level output to
+         --  interfere. So, if the level is set at the default, we temporarily
+         --  silence it.
+
+         if Old_Level = Info then
+            Alire.Log_Level := Simple_Logging.Warning;
+         end if;
+
+         for R of Releases loop
+            Test_Release (R);
+         end loop;
+
+         Alire.Log_Level := Old_Level;
+      end;
 
       Reporters.End_Run;
 
