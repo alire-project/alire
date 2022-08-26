@@ -9,6 +9,7 @@ with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
+with Alire.Origins;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -43,30 +44,51 @@ package body Alr.Commands.Test is
    -- Check_Files --
    -----------------
 
-   function Check_Files (R : Alire.Index.Release) return Boolean is
+   function Check_Files (Output : in out AAA.Strings.Vector;
+                         R      : Alire.Index.Release) return Boolean
+   is
+      use AAA.Strings;
+      use Ada.Directories;
    begin
       --  Declared GPR files in include paths
       declare
          Guard : Folder_Guard (Enter_Folder (R.Base_Folder))
            with Unreferenced;
       begin
+
+         --  Check project files. We allow a binary release to not contain
+         --  project files, but if it declares a non-standard one (why?) it
+         --  should be there.
+
          for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
          loop
-            if not OS_Lib.Is_Regular_File (Gpr) then
-               Trace.Error ("Declared project file not found: " & Gpr);
+            if OS_Lib.Is_Regular_File (Gpr) then
+               Output.Append_Line ("Found declared GPR file: " & Gpr);
+            elsif R.Origin.Kind in Alire.Origins.Binary_Archive and then
+              To_Lower_Case (Base_Name (Gpr)) = R.Name_Str
+            then
+               Output.Append_Line
+                 ("Warning: Binary release does not contain default "
+                  & "project file: " & Simple_Name (Gpr));
+            else
+               Output.Append_Line
+                 ("FAIL: Declared project file not found: " & Gpr
+                  & " while at " & Ada.Directories.Current_Directory);
                return False;
             end if;
          end loop;
       end;
 
       --  Generated executables
+
       for Exe of R.Executables (Platform.Properties) loop
          if Files.Locate_File_Under (Folder    => R.Base_Folder,
                                      Name      => Exe,
                                      Max_Depth => Natural'Last).Is_Empty
          then
-            Trace.Error
-              ("Declared executable not found after compilation: " & Exe);
+            Output.Append_Line
+              ("FAIL: Declared executable not found after compilation: "
+               & Exe);
             return False;
          end if;
       end loop;
@@ -153,7 +175,9 @@ package body Alr.Commands.Test is
                             "-d" &
                             "-n" &
                             "get" &
-                            "--build" &
+                            (if R.Origin.Kind in Alire.Origins.Binary_Archive
+                             then Empty_Vector
+                             else To_Vector ("--build")) &
                             R.Milestone.Image;
 
                Docker_Default : constant AAA.Strings.Vector :=
@@ -184,7 +208,9 @@ package body Alr.Commands.Test is
                end if;
 
                --  Check declared gpr/executables in place
-               if not R.Origin.Is_System and then not Check_Files (R) then
+               if not R.Origin.Is_System and then
+                  not Check_Files (Output, R)
+               then
                   raise Child_Failed with "Declared executable(s) missing";
                end if;
             end Default_Test;
@@ -340,9 +366,24 @@ package body Alr.Commands.Test is
       Reporters.Start_Run ("alr_test_" & Timestamp,
                            Natural (Releases.Length));
 
-      for R of Releases loop
-         Test_Release (R);
-      end loop;
+      declare
+         Old_Level : constant Simple_Logging.Levels := Alire.Log_Level;
+      begin
+
+         --  While we test the releases we do not want any info level output to
+         --  interfere. So, if the level is set at the default, we temporarily
+         --  silence it.
+
+         if Old_Level = Info then
+            Alire.Log_Level := Simple_Logging.Warning;
+         end if;
+
+         for R of Releases loop
+            Test_Release (R);
+         end loop;
+
+         Alire.Log_Level := Old_Level;
+      end;
 
       Reporters.End_Run;
 
