@@ -159,9 +159,21 @@ package body Alr.Commands.Test is
                               --  Map current user
                               & Docker_Image;
 
+            Regular_Alr_Switches : constant AAA.Strings.Vector :=
+                                 Empty_Vector
+                                     & "-d"
+                                     & "-n"
+                                     & (if Alire.Force
+                                        then To_Vector ("--force")
+                                        else Empty_Vector);
+
             Custom_Alr : constant AAA.Strings.Vector :=
                            Empty_Vector
-                           & "alr" & "-c" & "/tmp/alire";
+                           & "alr"
+                           & (if Alire.Force
+                              then To_Vector ("--force")
+                              else Empty_Vector)
+                           & "-c" & "/tmp/alire";
             --  When running inside docker as regular user we need config to be
             --  stored in a writable folder.
 
@@ -172,8 +184,7 @@ package body Alr.Commands.Test is
             procedure Default_Test is
                Alr_Args : constant AAA.Strings.Vector :=
                             Empty_Vector &
-                            "-d" &
-                            "-n" &
+                            Regular_Alr_Switches &
                             "get" &
                             (if R.Origin.Kind in Alire.Origins.Binary_Archive
                              then Empty_Vector
@@ -190,12 +201,14 @@ package body Alr.Commands.Test is
                Exit_Code : Integer;
             begin
                if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+                  Output.Append_Line ("Spawning: " & Docker_Default.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
                     (Docker_Default.First_Element,
                      Docker_Default.Tail,
                      Output,
                      Err_To_Out => True);
                else
+                  Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
                     (Alr_Default.First_Element,
                      Alr_Default.Tail,
@@ -221,21 +234,32 @@ package body Alr.Commands.Test is
 
             procedure Custom_Test is
                Exit_Code : Integer;
+               Alr_Custom_Cmd : constant Vector :=
+                                  "alr"
+                                  & Regular_Alr_Switches
+                                  & "get" & R.Milestone.Image;
+               Dkr_Custom_Cmd : constant Vector :=
+                                  Docker_Prefix
+                                  & Custom_Alr
+                                  & "get"
+                                  & R.Milestone.Image;
             begin
 
                --  Fetch the crate
 
                if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+                  Output.Append_Line ("Spawning: " & Dkr_Custom_Cmd.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
-                    (Docker_Prefix.First_Element,
-                     Docker_Prefix.Tail
-                     & Custom_Alr & "get" & R.Name_Str,
+                    (Dkr_Custom_Cmd.First_Element,
+                     Dkr_Custom_Cmd.Tail
+                     & Custom_Alr & "get" & R.Milestone.Image,
                      Output,
                      Err_To_Out => True);
                else
+                  Output.Append_Line ("Spawning: " & Alr_Custom_Cmd.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
-                    ("alr",
-                     Empty_Vector & "-d" & "-n" & "get" & R.Name_Str,
+                    (Alr_Custom_Cmd.First_Element,
+                     Alr_Custom_Cmd.Tail,
                      Output,
                      Err_To_Out => True);
                end if;
