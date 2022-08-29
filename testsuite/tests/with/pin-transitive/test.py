@@ -27,8 +27,8 @@ run_alr("with", "--use=../../direct")
 
 # Verify created pins
 p = run_alr("pin")
-assert_eq("direct   file:../../direct   \n"
-          "indirect file:../../indirect \n",
+assert_eq("direct   file:../../direct\n"
+          "indirect file:../../indirect\n",
           p.out)
 
 # Check pin removal
@@ -38,7 +38,7 @@ os.chdir("../nest/base")
 run_alr("update")
 
 p = run_alr("pin")
-assert_eq("direct file:../../direct \n",
+assert_eq("direct file:../../direct\n",
           p.out)
 
 

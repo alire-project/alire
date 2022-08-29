@@ -40,7 +40,7 @@ Dependencies automatically updated as follows:
 
    · yyy 0.1.0-dev (path=../nest2/yyy)
 
-yyy file:../nest2/yyy \n""",
+yyy file:../nest2/yyy\n""",
           p.out)
 
 print('SUCCESS')

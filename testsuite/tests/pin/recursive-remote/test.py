@@ -42,7 +42,7 @@ s = dir_separator()
 assert_match(re.escape('yyy file:alire/cache/pins/yyy ') +  # local rel path
              '.*' + re.escape(f'{s}nest{s}yyy\n') +         # remote abs url
              re.escape('zzz file:alire/cache/pins/zzz ') +  # local rel path
-             '.*' + re.escape(f'{s}zzz     \n'),            # remote abs url
+             '.*' + re.escape(f'{s}zzz\n'),                 # remote abs url
              p.out)
 
 print('SUCCESS')

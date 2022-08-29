@@ -32,9 +32,9 @@ run_alr('with', 'tier1')
 p = run_alr('with', '--solve')
 assert_match('.*' +
              re.escape('Dependencies (graph):\n'
-                       '   tier1=1.0.0   --> tier2*              \n'
+                       '   tier1=1.0.0   --> tier2*\n'
                        '   xxx=0.1.0-dev --> tier1=1.0.0 (^1.0.0)\n'
-                       '   xxx=0.1.0-dev --> tier2^1.0.0         ') + '.*',
+                       '   xxx=0.1.0-dev --> tier2^1.0.0\n') + '.*',
              p.out, flags=re.S)
 
 

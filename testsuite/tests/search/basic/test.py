@@ -7,8 +7,8 @@ from drivers.asserts import assert_eq
 
 
 def format_line(name, status, version, description, notes):
-    return '{: <9} {: <7} {: <8} {: <54} {: <5}\n'.format(
-        name, status, version, description, notes)
+    return '{: <9} {: <7} {: <8} {: <54} {: <5}'.format(
+        name, status, version, description, notes).rstrip(' ') + '\n'
 
 
 def format_table(*args):

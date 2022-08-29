@@ -18,7 +18,7 @@ assert_eq('Not found: make*\n'
 # External definition
 p = run_alr('show', 'make', '--external')
 assert_eq('Kind       Description    Details            Available\n'
-          'Executable make --version .*Make ([\\d\\.]+).* True     \n',
+          'Executable make --version .*Make ([\\d\\.]+).* True\n',
           p.out)
 
 # External detection
@@ -42,7 +42,7 @@ p = run_alr('show', 'bad_switch', '--external')
 assert_eq('Kind       Description                   '
           'Details            Available\n'
           'Executable make --bad-nonexistent-switch '
-          '.*Make ([\\d\\.]+).* True     \n',
+          '.*Make ([\\d\\.]+).* True\n',
           p.out)
 
 # External detection fails (no release found, but without error)
