@@ -40,7 +40,7 @@ def assert_eq(expected, actual, label=None):
         assert False, '\n'.join(text) + diff
 
 
-def assert_contents(dir: str, expected: list[str], regex: str = ""):
+def assert_contents(dir: str, expected, regex: str = ""):
     """
     Check that entries in dir filtered by regex match the list in contents
     """
