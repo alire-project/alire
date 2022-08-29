@@ -251,8 +251,7 @@ package body Alr.Commands.Test is
                   Output.Append_Line ("Spawning: " & Dkr_Custom_Cmd.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
                     (Dkr_Custom_Cmd.First_Element,
-                     Dkr_Custom_Cmd.Tail
-                     & Custom_Alr & "get" & R.Milestone.Image,
+                     Dkr_Custom_Cmd.Tail,
                      Output,
                      Err_To_Out => True);
                else
