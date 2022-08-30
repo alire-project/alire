@@ -32,6 +32,9 @@ package Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean;
    --  False until Load is called
 
+   procedure Ensure_Complete (This : Global_Config);
+   --  Verify all variables have a value, or report and raise
+
    function Build_Profile (This  : Global_Config;
                            Crate : Crate_Name)
                            return Utils.Switches.Profile_Kind

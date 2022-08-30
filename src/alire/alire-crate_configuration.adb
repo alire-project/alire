@@ -31,6 +31,8 @@ package body Alire.Crate_Configuration is
    Profile_Assign : constant Character := '=';
    Profile_Split  : constant Character := ',';
 
+   Must_Be_Set : constant UString := +"(variable without default still unset)";
+
    function Builtin_Build_Profile is new Typedef_From_Enum
      (Alire.Utils.Switches.Profile_Kind,
       "Build_Profile",
@@ -326,6 +328,21 @@ package body Alire.Crate_Configuration is
       Trace.Debug ("Build profiles loaded");
    end Load;
 
+   ---------------------
+   -- Ensure_Complete --
+   ---------------------
+
+   procedure Ensure_Complete (This : Global_Config) is
+   begin
+      --  The reporting of unset variables is done when the configuration is
+      --  loaded, so no need to duplicate it here.
+
+      if (for some Var of This.Map => Var.Set_By = Must_Be_Set) then
+         Raise_Checked_Error
+           ("Configuration variables without a default remain unset");
+      end if;
+   end Ensure_Complete;
+
    ---------------------------
    -- Generate_Config_Files --
    ---------------------------
@@ -460,15 +477,20 @@ package body Alire.Crate_Configuration is
 
             Key : constant String := To_String (Config_Maps.Key (C));
          begin
-            if Elt.Value = TOML.No_TOML_Value then
-               Raise_Checked_Error
-                 ("Configuration variable should be set at this point." &
-                    " Missing call to Use_Default_Values()?");
-            end if;
+            if Elt.Set_By /= Must_Be_Set then
+               if Elt.Value = TOML.No_TOML_Value then
+                  Raise_Checked_Error
+                    ("Configuration variable should be set at this point." &
+                       " Missing call to Use_Default_Values()?");
+               end if;
 
-            if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
-               TIO.New_Line (File);
-               TIO.Put_Line (File, Type_Def.To_Ada_Declaration (Elt.Value));
+               if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
+                  TIO.New_Line (File);
+                  TIO.Put_Line (File, Type_Def.To_Ada_Declaration (Elt.Value));
+               end if;
+            else
+               Trace.Debug
+                 ("Skipping Ada generation of unset variable " & Key);
             end if;
          end;
       end loop;
@@ -590,15 +612,20 @@ package body Alire.Crate_Configuration is
 
             Key : constant String := To_String (Config_Maps.Key (C));
          begin
-            if Elt.Value = TOML.No_TOML_Value then
-               Raise_Checked_Error
-                 ("Configuration variable should be set at this point." &
-                    " Missing call to Use_Default_Values()?");
-            end if;
+            if Elt.Set_By /= Must_Be_Set then
+               if Elt.Value = TOML.No_TOML_Value then
+                  Raise_Checked_Error
+                    ("Configuration variable should be set at this point." &
+                       " Missing call to Use_Default_Values()?");
+               end if;
 
-            if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
-               TIO.New_Line (File);
-               TIO.Put_Line (File, Type_Def.To_GPR_Declaration (Elt.Value));
+               if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
+                  TIO.New_Line (File);
+                  TIO.Put_Line (File, Type_Def.To_GPR_Declaration (Elt.Value));
+               end if;
+            else
+               Trace.Debug
+                 ("Skipping GPR generation of unset variable " & Key);
             end if;
          end;
       end loop;
@@ -648,15 +675,20 @@ package body Alire.Crate_Configuration is
 
             Key : constant String := To_String (Config_Maps.Key (C));
          begin
-            if Elt.Value = TOML.No_TOML_Value then
-               Raise_Checked_Error
-                 ("Configuration variable should be set at this point." &
-                    " Missing call to Use_Default_Values()?");
-            end if;
+            if Elt.Set_By /= Must_Be_Set then
+               if Elt.Value = TOML.No_TOML_Value then
+                  Raise_Checked_Error
+                    ("Configuration variable should be set at this point." &
+                       " Missing call to Use_Default_Values()?");
+               end if;
 
-            if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
-               TIO.New_Line (File);
-               TIO.Put_Line (File, Type_Def.To_C_Declaration (Elt.Value));
+               if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
+                  TIO.New_Line (File);
+                  TIO.Put_Line (File, Type_Def.To_C_Declaration (Elt.Value));
+               end if;
+            else
+               Trace.Debug
+                 ("Skipping C generation of unset variable " & Key);
             end if;
          end;
       end loop;
@@ -795,7 +827,8 @@ package body Alire.Crate_Configuration is
    -- Use_Default_Values --
    ------------------------
 
-   procedure Use_Default_Values (Conf : in out Global_Config) is
+   procedure Use_Default_Values (Conf : in out Global_Config)
+   is
       Config_Fault : Boolean := False;
    begin
       for C in Conf.Map.Iterate loop
@@ -811,7 +844,9 @@ package body Alire.Crate_Configuration is
                   Elt.Set_By := +"default value";
                else
                   Config_Fault := True;
-                  Trace.Error
+                  Elt.Set_By := Must_Be_Set;
+
+                  Put_Warning
                     ("Configuration variable '" & Key &
                        "' not set and has no default value.");
                end if;
@@ -819,7 +854,7 @@ package body Alire.Crate_Configuration is
          end;
       end loop;
       if Config_Fault then
-         Raise_Checked_Error ("Configuration failed");
+         Trace.Detail ("Configuration variables without values exist");
       end if;
    end Use_Default_Values;
 
