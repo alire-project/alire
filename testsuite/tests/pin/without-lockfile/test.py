@@ -25,7 +25,7 @@ os.remove(alr_lockfile())
 
 # Check that the pin is applied on next command run
 p = run_alr("pin")
-assert_eq(f"{fake_dep} file:{fake_dep} \n", p.out)
+assert_eq(f"{fake_dep} file:{fake_dep}\n", p.out)
 
 
 print('SUCCESS')

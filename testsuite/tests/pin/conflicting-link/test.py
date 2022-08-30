@@ -26,8 +26,8 @@ alr_pin("zzz", path="../zzz")  # This is the doubly-linked same crate
 
 # Should work properly
 p = run_alr("pin")
-assert_eq('yyy file:../nest/yyy \n'
-          'zzz file:../zzz      \n',
+assert_eq('yyy file:../nest/yyy\n'
+          'zzz file:../zzz\n',
           p.out)
 
 #  Now we will pin a different zzz from xxx,
