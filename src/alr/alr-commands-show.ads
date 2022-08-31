@@ -29,15 +29,19 @@ package Alr.Commands.Show is
 
 private
 
+   procedure Validate (Cmd  : in out Command;
+                       Args : AAA.Strings.Vector);
+
    type Command is new Commands.Command with record
-      Detail   : aliased Boolean := False;
-      Detect   : aliased Boolean := False;
-      External : aliased Boolean := False;
-      Graph    : aliased Boolean := False;
-      Solve    : aliased Boolean := False;
-      System   : aliased Boolean := False;
-      Tree     : aliased Boolean := False;
-      Jekyll   : aliased Boolean := False;
+      Dependents : aliased Boolean := False;
+      Detail     : aliased Boolean := False;
+      Detect     : aliased Boolean := False;
+      External   : aliased Boolean := False;
+      Graph      : aliased Boolean := False;
+      Solve      : aliased Boolean := False;
+      System     : aliased Boolean := False;
+      Tree       : aliased Boolean := False;
+      Jekyll     : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Show;
