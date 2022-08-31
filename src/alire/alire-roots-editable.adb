@@ -239,6 +239,14 @@ package body Alire.Roots.Editable is
       is (Directories.Find_Relative_Path_To (Path) = "..");
 
    begin
+      --  When adding a pin from a folder other than the root, notify about it.
+      --  It's likely that the user is confusing about what is going on.
+      if Directories.Current /= +This.Orig.Path then
+         Put_Warning ("Adding pin to " & TTY.URL (Path)
+                      & " in crate " & Utils.TTY.Name (This.Orig.Name)
+                      & " rooted at " & TTY.URL (+This.Orig.Path));
+      end if;
+
       if Crate.Is_Empty and then not Pin_Root.Is_Valid then
          Raise_Checked_Error
            ("No crate name given and link target is not an Alire crate:"
