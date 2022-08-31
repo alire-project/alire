@@ -240,7 +240,7 @@ package body Alire.Roots.Editable is
 
    begin
       --  When adding a pin from a folder other than the root, notify about it.
-      --  It's likely that the user is confusing about what is going on.
+      --  It's likely that the user is confused about what is going on.
       if Directories.Current /= +This.Orig.Path then
          Put_Warning ("Adding pin to " & TTY.URL (Path)
                       & " in crate " & Utils.TTY.Name (This.Orig.Name)
