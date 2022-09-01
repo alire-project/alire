@@ -150,7 +150,8 @@ package body Alr.Commands.Show is
       Cmd.Detect := True;
 
       Alire.Index.Search.Print_Dependents
-        (Cmd.Find_Target_Release (Dep.Crate, Dep.Versions, Current));
+        (Cmd.Find_Target_Release (Dep.Crate, Dep.Versions, Current),
+         Transitive => True);
    end Report_Dependents;
 
    ----------------------

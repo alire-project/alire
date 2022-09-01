@@ -6,7 +6,9 @@ package Alire.Index.Search is
    --  Print a list of crates containing Substring in their name/description,
    --  or all of them when empty.
 
-   procedure Print_Dependents (Release : Releases.Release);
-   --  Print the newest release of a crate that depends on Release
+   procedure Print_Dependents (Release    : Releases.Release;
+                               Transitive : Boolean);
+   --  Print the newest release of a crate that depends on Release. If
+   --  Transitive, find also dependents on dependents and so on.
 
 end Alire.Index.Search;

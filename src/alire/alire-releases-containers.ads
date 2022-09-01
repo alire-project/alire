@@ -1,6 +1,8 @@
 with AAA.Containers.Indefinite_Holders;
 
 with Ada.Containers.Indefinite_Ordered_Sets;
+with Ada.Containers.Indefinite_Vectors;
+
 with Optional.Values;
 
 package Alire.Releases.Containers is
@@ -104,6 +106,11 @@ package Alire.Releases.Containers is
 
    function To_Release_H (R : Releases.Release) return Release_H
                           renames Release_Holders.To_Holder;
+
+   package Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Release);
+
+   subtype Vector is Vectors.Vector;
 
 private
 
