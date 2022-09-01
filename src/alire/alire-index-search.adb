@@ -48,9 +48,9 @@ package body Alire.Index.Search is
    ----------------------
 
    procedure Print_Dependents (Release    : Releases.Release;
-                               Transitive : Boolean)
+                               Transitive : Boolean;
+                               Duplicates : Boolean)
    is
-      Duplicates : constant Boolean := False;
       Table  : Utils.Tables.Table;
       Busy   : Simple_Logging.Ongoing := Simple_Logging.Activity ("Searching");
 

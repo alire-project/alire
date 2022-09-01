@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+private with GNAT.OS_Lib;
+
 package Alr.Commands.Show is
 
    type Command is new Commands.Command with private;
@@ -25,7 +27,8 @@ package Alr.Commands.Show is
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[<crate>[allowed versions]] [--system] [--external[-detect]]"
-      & " | --graph | --jekyll | --solve | --tree");
+      & " | --graph | --jekyll | --solve | --tree "
+      & "| --dependents[=direct|shortest|all]");
 
 private
 
@@ -33,7 +36,7 @@ private
                        Args : AAA.Strings.Vector);
 
    type Command is new Commands.Command with record
-      Dependents : aliased Boolean := False;
+      Dependents : aliased GNAT.OS_Lib.String_Access := new String'("unset");
       Detail     : aliased Boolean := False;
       Detect     : aliased Boolean := False;
       External   : aliased Boolean := False;

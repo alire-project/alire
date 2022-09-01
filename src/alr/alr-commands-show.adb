@@ -151,7 +151,8 @@ package body Alr.Commands.Show is
 
       Alire.Index.Search.Print_Dependents
         (Cmd.Find_Target_Release (Dep.Crate, Dep.Versions, Current),
-         Transitive => True);
+         Transitive => Cmd.Dependents.all in "shortest" | "all",
+         Duplicates => Cmd.Dependents.all = "all");
    end Report_Dependents;
 
    ----------------------
@@ -310,7 +311,7 @@ package body Alr.Commands.Show is
                            Args.Count = 0);
          elsif Cmd.External then
             Report_Externals (Allowed.Crate, Cmd);
-         elsif Cmd.Dependents then
+         elsif Cmd.Dependents.all /= "unset" then
             Cmd.Report_Dependents (Allowed, Args.Count = 0);
          else
             Report (Allowed.Crate,
@@ -342,6 +343,16 @@ package body Alr.Commands.Show is
        .Append ("With --external, the external definitions for a crate are"
                 & " shown, instead of information about a particular release")
        .New_Line
+       .Append ("The --dependents switch accepts these values:")
+       .Append ("   * " & TTY.Terminal ("direct")
+         & " (default) shows direct dependents.")
+       .Append ("   * " & TTY.Terminal ("all")
+         & " shows all dependents, including indirect ones, "
+         & "and all dependency chains.")
+       .Append ("   * " & TTY.Terminal ("shortest")
+         & " shows all dependents, including "
+         & "indirect ones, but only once, and a shortest-length chain.")
+       .New_Line
        .Append (Crate_Version_Sets));
 
    --------------------
@@ -357,8 +368,9 @@ package body Alr.Commands.Show is
    begin
       Define_Switch (Config,
                      Cmd.Dependents'Access,
-                     "", "--dependents",
-                     "Show dependent crates");
+                     "", "--dependents?",
+                     "Show dependent crates (ARG=direct|shortest|all)",
+                     Argument => "=ARG");
 
       Define_Switch (Config,
                      Cmd.Detail'Access,
@@ -418,20 +430,36 @@ package body Alr.Commands.Show is
       end if;
 
       if Cmd.External and then
-        (Cmd.Dependents or Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve
+        (Cmd.Dependents.all /= "unset"
+         or Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve
          or Cmd.Tree)
       then
          Reportaise_Wrong_Arguments
            ("Switch --external can only be combined with --system");
       end if;
 
-      if Cmd.Dependents and then
-        Alire.Utils.Count_True ((Cmd.Detect, Cmd.Detail, Cmd.External,
-                                 Cmd.Graph, Cmd.Solve, Cmd.System,
-                                 Cmd.Tree, Cmd.Jekyll)) > 0
-      then
-         Reportaise_Wrong_Arguments
-           ("Switch --dependents is not compatible with other switches");
+      if Cmd.Dependents.all /= "unset" then
+         if Alire.Utils.Count_True ((Cmd.Detect, Cmd.Detail, Cmd.External,
+                                     Cmd.Graph, Cmd.Solve, Cmd.System,
+                                     Cmd.Tree, Cmd.Jekyll)) > 0
+         then
+            Reportaise_Wrong_Arguments
+              ("Switch --dependents is not compatible with other switches");
+         end if;
+
+         --  Remove optional '='
+         if Cmd.Dependents'Length > 0 and then
+            Cmd.Dependents.all (Cmd.Dependents'First) = '='
+         then
+            Cmd.Dependents := new String'
+              (Cmd.Dependents
+                 (Cmd.Dependents'First + 1 .. Cmd.Dependents'Last));
+         end if;
+
+         if Cmd.Dependents.all not in "" | "direct" | "shortest" | "all" then
+            Reportaise_Wrong_Arguments
+              ("--dependents invalid value: " & Cmd.Dependents.all);
+         end if;
       end if;
    end Validate;
 
