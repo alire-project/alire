@@ -6,9 +6,57 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
+### Find dependents of a release with `alr show --dependents
+
+PR [#1170](https://github.com/alire-project/alire/pull/1170)
+
+A new switch for `alr show` lists the newest release that depends on another
+given release. For example, to find direct dependencies on `libhello`:
+
+```
+$ alr show libhello --dependents
+CRATE  VERSION  DEPENDENCY
+hello  1.0.1    ^1.0.0
+```
+
+To identify all dependents, both direct and indirect,
+use `--dependents=shortest`, which will also show the shortest dependency chain
+from (indirect) dependent to dependee:
+
+```
+$ alr show aws --dependents=shortest
+CRATE                    VERSION  DEPENDENCY  CHAIN
+adabots                  1.2.0    ^21.0.0     adabots=1.2.0»aws=21.0.0
+awa                      2.4.0    ~21.0.0     awa=2.4.0»utilada_aws=2.5.0»aws=21.0.0
+awa_unit                 2.4.0    ~21.0.0     awa_unit=2.4.0»awa=2.4.0»utilada_aws=2.5.0»aws=21.0.0
+matreshka_spikedog_awsd  21.0.0   *           matreshka_spikedog_awsd=21.0.0»aws=21.0.0
+servletada_aws           1.6.0    ~21.0.0     servletada_aws=1.6.0»utilada_aws=2.5.0»aws=21.0.0
+utilada_aws              2.5.0    ~21.0.0     utilada_aws=2.5.0»aws=21.0.0
+webdriver                1.0.0    *           webdriver=1.0.0»aws=21.0.0
+```
+
+Finally, to obtain all paths through which dependents reach a dependency, use
+the `all` value. In this case crates may appear more than once in the listing:
+
+```
+$ alr show --dependents=all cortex_m
+CRATE               VERSION  DEPENDENCY  CHAIN
+minisamd51_bsp      0.1.0    ^0.1.0      minisamd51_bsp=0.1.0»samd51_hal=0.2.0»cortex_m=0.5.0
+minisamd51_example  0.1.1    ^0.1.0      minisamd51_example=0.1.1»minisamd51_bsp=0.1.0»samd51_hal=0.2.0»cortex_m=0.5.0
+pico_bsp            2.0.0    ~0.5.0      pico_bsp=2.0.0»rp2040_hal=2.0.0»cortex_m=0.5.0
+pico_examples       2.0.0    ~0.5.0      pico_examples=2.0.0»rp2040_hal=2.0.0»cortex_m=0.5.0
+pico_examples       2.0.0    ~0.5.0      pico_examples=2.0.0»pico_bsp=2.0.0»rp2040_hal=2.0.0»cortex_m=0.5.0
+pygamer_bsp         0.1.0    ^0.1.0      pygamer_bsp=0.1.0»cortex_m=0.5.0
+pygamer_bsp         0.1.0    ^0.1.0      pygamer_bsp=0.1.0»samd51_hal=0.2.0»cortex_m=0.5.0
+rp2040_hal          2.0.0    ~0.5.0      rp2040_hal=2.0.0»cortex_m=0.5.0
+samd51_hal          0.2.0    ^0.1.0      samd51_hal=0.2.0»cortex_m=0.5.0
+```
+
 ### Finer control of build profiles in `alr build`
 
-Build profiles can be now tweaked from the command-line with the a new switch:
+PR [#1119](https://github.com/alire-project/alire/pull/1119)
+
+Build profiles can be now tweaked from the command-line with a new switch:
 
 - `alr build --profiles '*=development'`
   `# Set all profiles to development`
@@ -29,11 +77,11 @@ control root crate profile and take the highest priority:
 
 ### Reuse build profile of `alr build` when issuing `alr run`
 
+PR [#1080](https://github.com/alire-project/alire/pull/1080)
+
 `alr run` will trigger a build to have an up-to-date executable, and before
 this PR this was always a development build. Now, the last profile used during
 an `alr build` will be reused.
-
-PR [#1080](https://github.com/alire-project/alire/pull/1080)
 
 ## Release 1.2
 
