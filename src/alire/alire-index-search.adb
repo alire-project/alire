@@ -88,19 +88,40 @@ package body Alire.Index.Search is
       ---------
       -- "<" --
       ---------
-
+      --  The objective of this sorting is having the furthest dependent always
+      --  grouped alphabetically (the root of the dependency chain), but then
+      --  have shorter chains first, and lexicographic ordering for chains of
+      --  the same length.
       function "<" (L, R : Releases.Containers.Vector) return Boolean is
          use type Ada.Containers.Count_Type;
          use type Releases.Release;
-
       begin
-         for I in 0 .. Natural (L.Length) - 1 loop
-            if Natural (R.Length) - I < 1 then
-               --  The R chain is shorter, so this one can't come before, all
-               --  else being equal.
-               return False;
+         --  Special check for the first element, which is always compared
+         --  based on values. For the remainder, we check length first.
 
-            elsif "<" (L (L.Last_Index - I), R (R.Last_Index - I)) then
+         if "<" (L.Last_Element, R.Last_Element) then
+            --  The comparator of Releases says L < R when L has a later
+            --  name or newer version, so the result here is reversed.
+            return False;
+
+         elsif "<" (R.Last_Element, L.Last_Element) then
+            --  Same observation as in the previous case.
+            return True;
+         end if;
+
+         --  Now length
+
+         if L.Length < R.Length then
+            return True;
+         elsif L.Length > R.Length then
+            return False;
+         end if;
+
+         --  And then the rest of the chain in lexicographical order. At this
+         --  point we know both have the same length.
+
+         for I in 1 .. Natural (L.Length) - 1 loop -- first already checked
+            if "<" (L (L.Last_Index - I), R (R.Last_Index - I)) then
                --  The comparator of Releases says L < R when L has a later
                --  name or newer version, so the result here is reversed.
                return False;
@@ -112,13 +133,8 @@ package body Alire.Index.Search is
             end if;
          end loop;
 
-         if L.Length = R.Length then
-            return False; -- They seem to be equal, so L is not strict before R
-         end if;
-
-         --  Last possibility is that everything is equal, but R is longer, so
-         --  L comes first.
-         return True;
+         --  No differences found, so they're equal, neither L < R nor R < L
+         return False;
       end "<";
 
       package Sets is new
