@@ -54,6 +54,7 @@ package Alire.Platforms with Preelaborate is
                              Pacman,
                              Yum,
                              Dnf,
+                             Zypper,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
