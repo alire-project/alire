@@ -25,7 +25,7 @@ package Alr.Commands.Test is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Tests the compilation of all or some releases");
+   is ("Test the compilation of all or some releases");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

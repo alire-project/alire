@@ -21,7 +21,7 @@ package Alr.Commands.Get is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-      ("Fetches a crate release");
+      ("Fetch a published crate");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("<crate>[allowed versions]");

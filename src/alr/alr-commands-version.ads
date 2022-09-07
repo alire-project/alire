@@ -22,7 +22,7 @@ package Alr.Commands.Version is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Shows detailed version, configuration, and environment information");
+   is ("Show detailed version, configuration, and environment information");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
