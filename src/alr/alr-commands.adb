@@ -560,29 +560,30 @@ begin
    -- Commands --
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
    Sub_Cmd.Register ("General", new Config.Command);
-   Sub_Cmd.Register ("General", new Printenv.Command);
    Sub_Cmd.Register ("General", new Toolchain.Command);
    Sub_Cmd.Register ("General", new Version.Command);
 
-   Sub_Cmd.Register ("Build", new Action.Command);
-   Sub_Cmd.Register ("Build", new Build.Command);
-   Sub_Cmd.Register ("Build", new Clean.Command);
-   Sub_Cmd.Register ("Build", new Dev.Command);
-   Sub_Cmd.Register ("Build", new Edit.Command);
-   Sub_Cmd.Register ("Build", new Run.Command);
-   Sub_Cmd.Register ("Build", new Test.Command);
-   Sub_Cmd.Register ("Build", new Exec.Command);
-
    Sub_Cmd.Register ("Index", new Get.Command);
    Sub_Cmd.Register ("Index", new Index.Command);
-   Sub_Cmd.Register ("Index", new Init.Command);
-   Sub_Cmd.Register ("Index", new Pin.Command);
    Sub_Cmd.Register ("Index", new Search.Command);
    Sub_Cmd.Register ("Index", new Show.Command);
-   Sub_Cmd.Register ("Index", new Update.Command);
-   Sub_Cmd.Register ("Index", new Withing.Command);
+
+   Sub_Cmd.Register ("Crate", new Build.Command);
+   Sub_Cmd.Register ("Crate", new Clean.Command);
+   Sub_Cmd.Register ("Crate", new Edit.Command);
+   Sub_Cmd.Register ("Crate", new Exec.Command);
+   Sub_Cmd.Register ("Crate", new Init.Command);
+   Sub_Cmd.Register ("Crate", new Pin.Command);
+   Sub_Cmd.Register ("Crate", new Printenv.Command);
+   Sub_Cmd.Register ("Crate", new Run.Command);
+   Sub_Cmd.Register ("Crate", new Update.Command);
+   Sub_Cmd.Register ("Crate", new Withing.Command);
 
    Sub_Cmd.Register ("Publish", new Publish.Command);
+
+   Sub_Cmd.Register ("Internal", new Action.Command);
+   Sub_Cmd.Register ("Internal", new Dev.Command);
+   Sub_Cmd.Register ("Internal", new Test.Command);
 
    -- Help topics --
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
