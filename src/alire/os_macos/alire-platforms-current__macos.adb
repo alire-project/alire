@@ -9,7 +9,7 @@ package body Alire.Platforms.Current is
    ------------------
 
    function Detected_Distribution return Platforms.Distributions is
-      (Platforms.Distro_Unknown);
+      (Platforms.MacOS);
 
    -----------------------
    -- Distribution_Root --

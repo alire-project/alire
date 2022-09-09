@@ -64,6 +64,10 @@ def check_line_in(filename, line):
                 repr(line), filename, content_of(filename))
 
 
+def on_macos():
+    return platform.system() == "Darwin"
+
+
 def on_windows():
     return platform.system() == "Windows"
 
@@ -89,6 +93,8 @@ def distribution():
 
         return 'DISTRO_UNKNOWN'
 
+    elif on_macos():
+        return 'MACOS'
     elif on_windows():
         return 'MSYS2'
     else:

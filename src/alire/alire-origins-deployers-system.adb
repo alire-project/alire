@@ -1,4 +1,5 @@
 with Alire.Origins.Deployers.System.Apt;
+with Alire.Origins.Deployers.System.Homebrew;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
 with Alire.Platforms.Current;
@@ -94,13 +95,16 @@ package body Alire.Origins.Deployers.System is
          when Platforms.Yum =>
             System.RPM_Wrappers.Deployer'(Deployers.Deployer'(Base => From)
                                           with Wrapper =>
-                                             System.RPM_Wrappers.Yum,
+                                            System.RPM_Wrappers.Yum,
                                           others       => <>),
          when Platforms.Dnf =>
             System.RPM_Wrappers.Deployer'(Deployers.Deployer'(Base => From)
                                           with Wrapper =>
-                                             System.RPM_Wrappers.Dnf,
-                                          others       => <>));
+                                            System.RPM_Wrappers.Dnf,
+                                          others       => <>),
+         when Platforms.Homebrew =>
+            System.Homebrew.Deployer'(Deployers.Deployer'(Base => From)
+                                      with others => <>));
       --  NOTE: add here other native package managers as they get
       --  implemented.
 

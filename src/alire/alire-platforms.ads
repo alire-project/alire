@@ -40,6 +40,7 @@ package Alire.Platforms with Preelaborate is
                           Rhel, -- RedHat Enterprise Linux
                           Centos,
                           Fedora,
+                          MacOS,
                           Distro_Unknown);
 
    subtype Known_Distributions is
@@ -54,6 +55,7 @@ package Alire.Platforms with Preelaborate is
                              Pacman,
                              Yum,
                              Dnf,
+                             Homebrew,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
@@ -61,6 +63,7 @@ package Alire.Platforms with Preelaborate is
       Msys2 | Arch    => Pacman,
       Rhel            => Yum,
       Centos | Fedora => Dnf,
+      MacOS           => Homebrew,
       Distro_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
