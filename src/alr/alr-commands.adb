@@ -581,9 +581,9 @@ begin
 
    Sub_Cmd.Register ("Publish", new Publish.Command);
 
-   Sub_Cmd.Register ("Internal", new Action.Command);
-   Sub_Cmd.Register ("Internal", new Dev.Command);
-   Sub_Cmd.Register ("Internal", new Test.Command);
+   Sub_Cmd.Register ("Testing", new Action.Command);
+   Sub_Cmd.Register ("Testing", new Dev.Command);
+   Sub_Cmd.Register ("Testing", new Test.Command);
 
    -- Help topics --
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);
