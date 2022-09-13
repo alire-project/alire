@@ -7,6 +7,7 @@ import re
 import difflib
 
 from drivers.alr import run_alr
+from drivers.helpers import contents
 
 def indent(text, prefix='  '):
     """
@@ -37,6 +38,15 @@ def assert_eq(expected, actual, label=None):
                 'But got:',
                 indent(str(actual))]
         assert False, '\n'.join(text) + diff
+
+
+def assert_contents(dir: str, expected, regex: str = ""):
+    """
+    Check that entries in dir filtered by regex match the list in contents
+    """
+    real = contents(dir, regex)
+    assert real == expected, \
+        f"Wanted contents: {expected}\nBut got: {real}\n"
 
 
 def assert_match(expected_re, actual, label=None, flags=re.S):
