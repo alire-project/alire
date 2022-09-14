@@ -6,6 +6,7 @@ testcases based on Python scripts.
 import difflib
 import os
 import re
+import difflib
 
 from drivers.alr import run_alr
 from drivers.helpers import contents, lines_of

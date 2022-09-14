@@ -91,11 +91,16 @@ package body Alire.Origins.Deployers.System.Apt is
    overriding
    function Install (This : Deployer) return Outcome is
    begin
+      if Force then
+         Put_Warning (TTY.Terminal ("--force") & " in effect, removal of "
+                      & "system packages by apt is allowed");
+      end if;
+
       Subprocess.Checked_Spawn
         ("sudo", Empty_Vector &
            "apt-get" &
            "install" &
-           "--no-remove" &
+           (if Force then Empty_Vector else To_Vector ("--no-remove")) &
            "-q" &
            "-q" &
            "-y" &
