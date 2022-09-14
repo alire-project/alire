@@ -1,5 +1,4 @@
 private with AAA.Caches.Files;
-with Ada.Directories;
 private with Ada.Finalization;
 
 with AAA.Strings;
@@ -200,8 +199,7 @@ package Alire.Roots is
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
 
-   procedure Reload_Manifest (This : in out Root)
-     with Pre => This.Path = Ada.Directories.Current_Directory;
+   procedure Reload_Manifest (This : in out Root);
    --  If changes have been done to the manifest, either via the dependency/pin
    --  modification procedures, or somehow outside alire after This was
    --  created, we need to reload the manifest. The solution remains
