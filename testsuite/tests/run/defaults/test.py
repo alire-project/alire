@@ -11,12 +11,10 @@ target = 'noop_1.0.0_filesystem'
 
 
 def check_run(release, match=""):
-    p = run_alr('get', release,
-                complain_on_error=True, quiet=True)
+    p = run_alr('get', release, quiet=True)
     # Enter working copy and try to run default executable
     os.chdir(target)
-    p = run_alr('run',
-                complain_on_error=not match, quiet=not match)
+    p = run_alr('run', quiet=not match)
     # Check output when pattern was given:
     if match:
         assert_match(match, p.out, flags=re.S)

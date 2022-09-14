@@ -74,6 +74,8 @@ def run_alr(*args, **kwargs):
     :param bool complain_on_error: If true and the subprocess exits with a
         non-zero status code, print information on the standard output (for
         debugging) and raise a CalledProcessError (to abort the test).
+        Conversely if false and the process ends without error, it's presumed
+        an error was expected and CalledProcessError is raised too.
     :param bool quiet: If true (which is the default), append "-q" to the
         command line.
     :param bool debug: If true (which is the default), append "-d" to the
@@ -100,13 +102,17 @@ def run_alr(*args, **kwargs):
         argv.insert(1, '-q')
     argv.extend(args)
     p = Run(argv)
-    if p.status != 0 and complain_on_error:
+    if (p.status != 0 and complain_on_error) or (p.status == 0 and not complain_on_error):
         print('The following command:')
         print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
         print('Exitted with status code {}'.format(p.status))
         print('Output:')
         print(p.out)
-        raise CalledProcessError('alr returned non-zero status code')
+        if complain_on_error:
+            raise CalledProcessError('alr returned non-zero status code')
+        else:
+            raise CalledProcessError('alr returned zero status code but '
+                                     'an error was expected')
 
     # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
     # canonicalization is necessary to make output comparison work on all
