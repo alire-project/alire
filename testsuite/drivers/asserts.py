@@ -3,11 +3,13 @@ This module provides several helpers to perform user-friendly assertions in
 testcases based on Python scripts.
 """
 
+import difflib
+import os
 import re
 import difflib
 
 from drivers.alr import run_alr
-from drivers.helpers import contents
+from drivers.helpers import contents, lines_of
 
 def indent(text, prefix='  '):
     """
@@ -57,6 +59,18 @@ def assert_match(expected_re, actual, label=None, flags=re.S):
                 'But got:',
                 indent(actual)]
         assert False, '\n'.join(text)
+
+
+def assert_profile(profile: str, crate: str, root: str = "."):
+    """
+    Verify that a crate was built with a certain profile
+    root: path to where the crate root is
+    """
+    line = f'   Build_Profile : Build_Profile_Kind := "{profile}";\n'
+    file = os.path.join(root, "config", f"{crate}_config.gpr")
+    assert line in lines_of(file), \
+        f"Unexpected contents: missing line '{line}' in {file}:\n" + \
+        f"{content_of(file)}"
 
 
 def match_solution(regex, escape=False, whole=False):
