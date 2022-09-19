@@ -33,8 +33,17 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Run test script
+    - name: Run test script (without Homebrew)
       run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
+        INDEX: ""
+
+    - name: Run test script (with Homebrew)
+      run: |
+        eval $(brew shellenv)
+        scripts/ci-github.sh
       shell: bash
       env:
         BRANCH: ${{ github.base_ref }}
