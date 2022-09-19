@@ -23,7 +23,7 @@ package Alr.Commands.Show is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("See information about a release");
+     ("Display information about a crate version");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[<crate>[allowed versions]] [--system] [--external[-detect]]"

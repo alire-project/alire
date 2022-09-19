@@ -23,8 +23,7 @@ package Alr.Commands.Init is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Creates a new working release with"
-       & " alire metadata, or generate metadata");
+   is ("Create a new crate for an executable or library");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

@@ -23,7 +23,7 @@ package Alr.Commands.Update is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Updates alire catalog and working release dependencies");
+   is ("Update some or all dependencies to a newer version");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
