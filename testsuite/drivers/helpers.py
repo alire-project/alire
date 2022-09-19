@@ -94,7 +94,11 @@ def distribution():
         return 'DISTRO_UNKNOWN'
 
     elif on_macos():
-        return 'MACOS'
+        if os.environ.get('HOMEBREW_PREFIX'):
+            return 'HOMEBREW'
+        else:
+            return 'DISTRO_UNKNOWN'
+
     elif on_windows():
         return 'MSYS2'
     else:

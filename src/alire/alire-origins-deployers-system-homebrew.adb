@@ -3,11 +3,6 @@ with AAA.Strings; use AAA.Strings;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 
-with Ada.Directories;
-with Ada.Environment_Variables;
-
-with GNAT.Regpat;
-
 with GNATCOLL.JSON;
 
 package body Alire.Origins.Deployers.System.Homebrew is
@@ -16,10 +11,6 @@ package body Alire.Origins.Deployers.System.Homebrew is
 
    --  Ada.Strings.Unbounded is use-visible via Alire.Origins.
    use GNATCOLL.JSON;
-
-   Homebrew_Prefix : constant String
-     := Ada.Environment_Variables.Value ("HOMEBREW_PREFIX", "");
-   Homebrew_Present : constant Boolean := Homebrew_Prefix /= "";
 
    package Subprocess renames Alire.OS_Lib.Subprocess;
 
@@ -68,6 +59,7 @@ package body Alire.Origins.Deployers.System.Homebrew is
          return;
       end if;
 
+      Homebrew_Found_Required_Package :
       declare
          Data : constant JSON_Value := Read (AAA.Strings.Flatten (Info));
 
@@ -150,13 +142,8 @@ package body Alire.Origins.Deployers.System.Homebrew is
             raise JSON_Issue with "JSON info (1) not JSON_Object";
          end if;
          Map_JSON_Object (Get (Arr, 1), Info_Callback'Access);
-      end;
+      end Homebrew_Found_Required_Package;
 
-   --  exception
-   --     when E : JSON_Issue =>
-   --     Trace.Debug ("JSON issue: " & Ada.Exceptions.Exception_Message (E));
-   --        Available_Version := Null_Unbounded_String;
-   --        Installed_Version := Null_Unbounded_String;
    end Get_Info;
 
    -----------------------
@@ -165,22 +152,15 @@ package body Alire.Origins.Deployers.System.Homebrew is
 
    overriding function Already_Installed (This : Deployer) return Boolean
    is
+      Installed_Version : Unbounded_String;
+      Available_Version : Unbounded_String;
    begin
       Trace.Debug ("already_installed? " & This.Base.Package_Name);
-      if Homebrew_Present then
-         declare
-            Cask_Name : constant String
-              := Homebrew_Prefix & "/Cellar/" & This.Base.Package_Name;
-            use Ada.Directories;
-         begin
-            return
-              Exists (Cask_Name)
-              and then Kind (Cask_Name) = Directory;
-         end;
-      else
-         Trace.Debug ("homebrew not found");
-         return False;
-      end if;
+
+      Get_Info (Package_Name => This.Base.Package_Name,
+                Available_Version => Available_Version,
+                Installed_Version => Installed_Version);
+      return Length (Installed_Version) > 0;
    end Already_Installed;
 
    ------------
@@ -192,62 +172,28 @@ package body Alire.Origins.Deployers.System.Homebrew is
    is
 
       function Get_Version_From_String (Candidate : String)
-                                       return Version_Outcomes.Outcome;
-      function Get_Version_From_String (Candidate : String)
                                        return Version_Outcomes.Outcome
-      is
-         Regexp : constant String
-           := "(?:[[:digit:]]:)*([\d\.]+).*";
-         Matches : GNAT.Regpat.Match_Array (1 .. 1);
-         use type GNAT.Regpat.Match_Location;
-      begin
-         GNAT.Regpat.Match (Regexp, Candidate, Matches);
-         if Matches (1) /= GNAT.Regpat.No_Match then
-            Trace.Debug
-              ("Candidate version string: "
-                 & Candidate (Matches (1).First .. Matches (1).Last));
-            return
-              Version_Outcomes.New_Result
-                (Semantic_Versioning.Parse
-                   (Candidate (Matches (1).First .. Matches (1).Last),
-                    Relaxed => True));
-            --  Relaxed because ... not sure
-         else
-            return Version_Outcomes.Outcome_Failure
-              ("unexpected version format",
-               Report => False);
-         end if;
-      end Get_Version_From_String;
+      is (Version_Outcomes.New_Result (Semantic_Versioning.Parse
+                                         (Candidate,
+                                          Relaxed => True)));
 
+      Installed_Version : Unbounded_String;
+      Available_Version : Unbounded_String;
    begin
       Trace.Debug ("detect? " & This.Base.Package_Name);
-      if Homebrew_Present then
 
-         Homebrew :
-         declare
-            Installed_Version : Unbounded_String;
-            Available_Version : Unbounded_String;
-         begin
-            Get_Info (Package_Name => This.Base.Package_Name,
-                      Available_Version => Available_Version,
-                      Installed_Version => Installed_Version);
+      Get_Info (Package_Name => This.Base.Package_Name,
+                Available_Version => Available_Version,
+                Installed_Version => Installed_Version);
 
-            if Length (Installed_Version) > 0 then
-               return Get_Version_From_String (To_String (Installed_Version));
-            elsif Length (Available_Version) > 0 then
-               return Get_Version_From_String (To_String (Available_Version));
-            else
-               return Version_Outcomes.Outcome_Failure
-                 ("no candidate version found",
-                  Report => False);
-            end if;
-         end Homebrew;
-
+      if Length (Installed_Version) > 0 then
+         return Get_Version_From_String (To_String (Installed_Version));
+      elsif Length (Available_Version) > 0 then
+         return Get_Version_From_String (To_String (Available_Version));
       else
-         Trace.Debug ("homebrew not present, could not detect: "
-                        & This.Base.Image);
-         return Version_Outcomes.Outcome_Failure ("could not be detected",
-                                                  Report => False);
+         return Version_Outcomes.Outcome_Failure
+           ("no candidate version found",
+            Report => False);
       end if;
 
    end Detect;
