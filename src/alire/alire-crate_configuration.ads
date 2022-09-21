@@ -121,7 +121,8 @@ private
      (Crate_Name, Alire.Utils.Switches.Switch_List);
 
    type Global_Config is tagged record
-      Map : Config_Maps.Map;
+      Var_Map : Config_Maps.Map;
+      --  Mapping "crate.var" --> setting
 
       Profile_Map  : Profile_Maps.Map;
       --  Mapping crate -> profile, exists for all crates in solution

@@ -107,14 +107,14 @@ package body Alire.Crate_Configuration is
                                 Profile : Profile_Kind)
    is
       Key : constant String := Build_Profile_Key (Crate);
-      Val : Config_Setting  := This.Map (+Key);
+      Val : Config_Setting  := This.Var_Map (+Key);
 
       Prev_Profile : constant Profile_Kind := This.Profile_Map (Crate);
    begin
       --  Update config value that holds the profile value
       Val.Value  := TOML.Create_String (To_Lower_Case (Profile'Image));
       Val.Set_By := +"library client";
-      This.Map (+Key) := Val;
+      This.Var_Map (+Key) := Val;
 
       --  Update profile itself
       This.Profile_Map.Include (Crate, Profile);
@@ -347,7 +347,7 @@ package body Alire.Crate_Configuration is
    is
       use Config_Maps;
    begin
-      for C in This.Map.Iterate loop
+      for C in This.Var_Map.Iterate loop
          if (Crate = "" or else Name (C).As_String = Crate)
            and then Element (C).Set_By = Must_Be_Set
          then
@@ -504,10 +504,10 @@ package body Alire.Crate_Configuration is
                        Elt.Type_Def.Element.To_Ada_Declaration (Elt.Value));
       end loop;
 
-      for C in This.Map.Iterate loop
+      for C in This.Var_Map.Iterate loop
          declare
             Elt : constant Config_Maps.Constant_Reference_Type :=
-              This.Map.Constant_Reference (C);
+              This.Var_Map.Constant_Reference (C);
 
             Type_Def : Config_Type_Definition renames Elt.Type_Def.Element;
 
@@ -639,10 +639,10 @@ package body Alire.Crate_Configuration is
                              This.Switches_Map.Element (Crate),
                              Indent => 10);
 
-      for C in This.Map.Iterate loop
+      for C in This.Var_Map.Iterate loop
          declare
             Elt : constant Config_Maps.Constant_Reference_Type :=
-              This.Map.Constant_Reference (C);
+              This.Var_Map.Constant_Reference (C);
 
             Type_Def : Config_Type_Definition renames Elt.Type_Def.Element;
 
@@ -702,10 +702,10 @@ package body Alire.Crate_Configuration is
                        Elt.Type_Def.Element.To_C_Declaration (Elt.Value));
       end loop;
 
-      for C in This.Map.Iterate loop
+      for C in This.Var_Map.Iterate loop
          declare
             Elt : constant Config_Maps.Constant_Reference_Type :=
-              This.Map.Constant_Reference (C);
+              This.Var_Map.Constant_Reference (C);
 
             Type_Def : Config_Type_Definition renames Elt.Type_Def.Element;
 
@@ -752,7 +752,7 @@ package body Alire.Crate_Configuration is
               "' is reserved for Alire internal use");
       end if;
 
-      if This.Map.Contains (Name) then
+      if This.Var_Map.Contains (Name) then
          Raise_Checked_Error
            ("Configuration variable '" & (+Name) & "' already defined");
       end if;
@@ -762,7 +762,7 @@ package body Alire.Crate_Configuration is
       begin
          Setting.Type_Def.Replace_Element (Type_Def);
          Setting.Value := TOML.No_TOML_Value;
-         This.Map.Insert (Name, Setting);
+         This.Var_Map.Insert (Name, Setting);
       end;
    end Add_Definition;
 
@@ -803,14 +803,14 @@ package body Alire.Crate_Configuration is
 
       --  TODO check if setting configuration of a dependency
 
-      if not This.Map.Contains (Name) then
+      if not This.Var_Map.Contains (Name) then
          Raise_Checked_Error
            ("Unknown configuration variable '" & (+Name) & "'");
       end if;
 
       declare
          Ref : constant Config_Maps.Reference_Type :=
-           This.Map.Reference (Name);
+           This.Var_Map.Reference (Name);
       begin
 
          if not Valid (Ref.Type_Def.Element, Val.Value) then
@@ -867,10 +867,10 @@ package body Alire.Crate_Configuration is
    is
       Config_Fault : Boolean := False;
    begin
-      for C in Conf.Map.Iterate loop
+      for C in Conf.Var_Map.Iterate loop
          declare
             Elt : constant Config_Maps.Reference_Type :=
-              Conf.Map.Reference (C);
+              Conf.Var_Map.Reference (C);
 
             Key : constant String := To_String (Config_Maps.Key (C));
          begin
