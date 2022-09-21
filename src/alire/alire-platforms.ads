@@ -40,6 +40,7 @@ package Alire.Platforms with Preelaborate is
                           Rhel, -- RedHat Enterprise Linux
                           Centos,
                           Fedora,
+                          Suse,
                           Homebrew,
                           Distro_Unknown);
 
@@ -55,6 +56,7 @@ package Alire.Platforms with Preelaborate is
                              Pacman,
                              Yum,
                              Dnf,
+                             Zypper,
                              Homebrew,
                              Packager_Unknown);
 
@@ -63,6 +65,7 @@ package Alire.Platforms with Preelaborate is
       Msys2 | Arch    => Pacman,
       Rhel            => Yum,
       Centos | Fedora => Dnf,
+      Suse            => Zypper,
       Homebrew        => Homebrew,
       Distro_Unknown  => Packager_Unknown);
 

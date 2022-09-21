@@ -2,6 +2,7 @@ with Alire.Origins.Deployers.System.Apt;
 with Alire.Origins.Deployers.System.Homebrew;
 with Alire.Origins.Deployers.System.Pacman;
 with Alire.Origins.Deployers.System.RPM_Wrappers;
+with Alire.Origins.Deployers.System.Zypper;
 with Alire.Platforms.Current;
 
 with CLIC.User_Input;
@@ -100,8 +101,11 @@ package body Alire.Origins.Deployers.System is
          when Platforms.Dnf =>
             System.RPM_Wrappers.Deployer'(Deployers.Deployer'(Base => From)
                                           with Wrapper =>
-                                            System.RPM_Wrappers.Dnf,
+                                             System.RPM_Wrappers.Dnf,
                                           others       => <>),
+         when Platforms.Zypper =>
+            System.Zypper.Deployer'(Deployers.Deployer'(Base => From)
+                                    with others => <>),
          when Platforms.Homebrew =>
             System.Homebrew.Deployer'(Deployers.Deployer'(Base => From)
                                       with others => <>));
