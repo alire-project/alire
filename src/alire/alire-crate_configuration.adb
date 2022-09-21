@@ -328,6 +328,35 @@ package body Alire.Crate_Configuration is
       Trace.Debug ("Build profiles loaded");
    end Load;
 
+   ----------
+   -- Name --
+   ----------
+
+   function Name (C : Config_Maps.Cursor) return Crate_Name is
+   begin
+      return To_Name (AAA.Strings.Head (+Config_Maps.Key (C), "."));
+   end Name;
+
+   ------------------------
+   -- Is_Config_Complete --
+   ------------------------
+   --  Say if all variables in configuration are set, for all or one crate
+   function Is_Config_Complete (This  : Global_Config;
+                                Crate : String := "")
+                                return Boolean
+   is
+      use Config_Maps;
+   begin
+      for C in This.Map.Iterate loop
+         if (Crate = "" or else Name (C).As_String = Crate)
+           and then Element (C).Set_By = Must_Be_Set
+         then
+            return False;
+         end if;
+      end loop;
+      return True;
+   end Is_Config_Complete;
+
    ---------------------
    -- Ensure_Complete --
    ---------------------
@@ -337,7 +366,7 @@ package body Alire.Crate_Configuration is
       --  The reporting of unset variables is done when the configuration is
       --  loaded, so no need to duplicate it here.
 
-      if (for some Var of This.Map => Var.Set_By = Must_Be_Set) then
+      if not This.Is_Config_Complete then
          Raise_Checked_Error
            ("Configuration variables without a default remain unset");
       end if;
@@ -389,43 +418,50 @@ package body Alire.Crate_Configuration is
             --  are not sources built by Alire.
             if Rel.Origin.Kind /= Alire.Origins.External then
 
-               declare
-                  Ent : constant Config_Entry := Get_Config_Entry (Rel);
+               --  Check completeness before generating anything
 
-                  Conf_Dir : constant Absolute_Path :=
-                    Root.Release_Base (Rel.Name) / Ent.Output_Dir;
+               if not This.Is_Config_Complete (Rel.Name_Str) then
+                  Warnings.Warn_Once
+                    ("Skipping generation of incomplete configuration files "
+                     & "for crate " & Utils.TTY.Name (Rel.Name_Str));
+               else
+                  declare
+                     Ent : constant Config_Entry := Get_Config_Entry (Rel);
 
-                  Version_Str : constant String := Rel.Version.Image;
-               begin
-                  if not Ent.Disabled then
-                     Ada.Directories.Create_Path (Conf_Dir);
+                     Conf_Dir : constant Absolute_Path :=
+                                 Root.Release_Base (Rel.Name) / Ent.Output_Dir;
 
-                     if Ent.Generate_Ada then
-                        This.Generate_Ada_Config
-                          (Rel.Name,
-                           Conf_Dir / (+Rel.Name & "_config.ads"),
-                           Version_Str);
+                     Version_Str : constant String := Rel.Version.Image;
+                  begin
+                     if not Ent.Disabled then
+                        Ada.Directories.Create_Path (Conf_Dir);
+
+                        if Ent.Generate_Ada then
+                           This.Generate_Ada_Config
+                             (Rel.Name,
+                              Conf_Dir / (+Rel.Name & "_config.ads"),
+                              Version_Str);
+                        end if;
+
+                        if Ent.Generate_GPR then
+                           This.Generate_GPR_Config
+                             (Rel.Name,
+                              Conf_Dir / (+Rel.Name & "_config.gpr"),
+                              (if Ent.Auto_GPR_With
+                               then Root.Direct_Withs (Rel)
+                               else AAA.Strings.Empty_Set),
+                              Version_Str);
+                        end if;
+
+                        if Ent.Generate_C then
+                           This.Generate_C_Config
+                             (Rel.Name,
+                              Conf_Dir / (+Rel.Name & "_config.h"),
+                              Version_Str);
+                        end if;
                      end if;
-
-                     if Ent.Generate_GPR then
-                        This.Generate_GPR_Config
-                          (Rel.Name,
-                           Conf_Dir / (+Rel.Name & "_config.gpr"),
-                           (if Ent.Auto_GPR_With
-                            then Root.Direct_Withs (Rel)
-                            else AAA.Strings.Empty_Set),
-                           Version_Str);
-                     end if;
-
-                     if Ent.Generate_C then
-                        This.Generate_C_Config
-                          (Rel.Name,
-                           Conf_Dir / (+Rel.Name & "_config.h"),
-                           Version_Str);
-                     end if;
-                  end if;
-               end;
-
+                  end;
+               end if;
             end if;
          end;
       end loop;
@@ -484,7 +520,7 @@ package body Alire.Crate_Configuration is
                        " Missing call to Use_Default_Values()?");
                end if;
 
-               if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
+               if Name (C) = Crate then
                   TIO.New_Line (File);
                   TIO.Put_Line (File, Type_Def.To_Ada_Declaration (Elt.Value));
                end if;
@@ -619,7 +655,7 @@ package body Alire.Crate_Configuration is
                        " Missing call to Use_Default_Values()?");
                end if;
 
-               if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
+               if Name (C) = Crate then
                   TIO.New_Line (File);
                   TIO.Put_Line (File, Type_Def.To_GPR_Declaration (Elt.Value));
                end if;
@@ -682,7 +718,7 @@ package body Alire.Crate_Configuration is
                        " Missing call to Use_Default_Values()?");
                end if;
 
-               if AAA.Strings.Has_Prefix (Key, +Crate & ".") then
+               if Name (C) = Crate then
                   TIO.New_Line (File);
                   TIO.Put_Line (File, Type_Def.To_C_Declaration (Elt.Value));
                end if;
@@ -846,7 +882,7 @@ package body Alire.Crate_Configuration is
                   Config_Fault := True;
                   Elt.Set_By := Must_Be_Set;
 
-                  Put_Warning
+                  Warnings.Warn_Once
                     ("Configuration variable '" & Key &
                        "' not set and has no default value.");
                end if;

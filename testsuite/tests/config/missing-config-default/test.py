@@ -43,6 +43,8 @@ assert_match('.*Configuration variable \'hello.var1\' not set and has no default
              '.*Configuration variable \'libhello.var3\' not set and has no default value.\n'
              '.*Configuration variable \'libhello.var4\' not set and has no default value.\n'
              '.*Configuration variable \'libhello.var5\' not set and has no default value.\n'
+             '.*Skipping generation of incomplete configuration files for crate hello\n'
+             '.*Skipping generation of incomplete configuration files for crate libhello\n'
              '\n'
              'hello=1.0.0 successfully retrieved.',
              p.out)

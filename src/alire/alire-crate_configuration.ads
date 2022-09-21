@@ -110,6 +110,8 @@ private
       Hash            => Ada.Strings.Unbounded.Hash,
       Equivalent_Keys => Ada.Strings.Unbounded."=");
 
+   function Name (C : Config_Maps.Cursor) return Crate_Name;
+
    package Profile_Setter_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Setters);
