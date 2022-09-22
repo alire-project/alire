@@ -7,8 +7,6 @@ with GNATCOLL.JSON;
 
 package body Alire.Origins.Deployers.System.Homebrew is
 
-   pragma Warnings (Off);
-
    --  Ada.Strings.Unbounded is use-visible via Alire.Origins.
    use GNATCOLL.JSON;
 
