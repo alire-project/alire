@@ -41,6 +41,7 @@ package Alire.Platforms with Preelaborate is
                           Centos,
                           Fedora,
                           Suse,
+                          Homebrew,
                           Distro_Unknown);
 
    subtype Known_Distributions is
@@ -56,6 +57,7 @@ package Alire.Platforms with Preelaborate is
                              Yum,
                              Dnf,
                              Zypper,
+                             Homebrew,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
@@ -64,6 +66,7 @@ package Alire.Platforms with Preelaborate is
       Rhel            => Yum,
       Centos | Fedora => Dnf,
       Suse            => Zypper,
+      Homebrew        => Homebrew,
       Distro_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,

@@ -64,6 +64,10 @@ def check_line_in(filename, line):
                 repr(line), filename, content_of(filename))
 
 
+def on_macos():
+    return platform.system() == "Darwin"
+
+
 def on_windows():
     return platform.system() == "Windows"
 
@@ -88,6 +92,12 @@ def distribution():
                             return val
 
         return 'DISTRO_UNKNOWN'
+
+    elif on_macos():
+        if os.environ.get('HOMEBREW_PREFIX'):
+            return 'HOMEBREW'
+        else:
+            return 'DISTRO_UNKNOWN'
 
     elif on_windows():
         return 'MSYS2'
