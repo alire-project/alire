@@ -24,7 +24,7 @@ package Alr.Commands.Withing is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("Manage release dependencies");
+     ("Add or remove dependencies");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
      ("[{ [--del] <crate>[versions]..."

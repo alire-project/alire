@@ -32,6 +32,9 @@ package Alire.Crate_Configuration is
    function Is_Valid (This : Global_Config) return Boolean;
    --  False until Load is called
 
+   procedure Ensure_Complete (This : Global_Config);
+   --  Verify all variables have a value, or report and raise
+
    function Build_Profile (This  : Global_Config;
                            Crate : Crate_Name)
                            return Utils.Switches.Profile_Kind
@@ -107,6 +110,8 @@ private
       Hash            => Ada.Strings.Unbounded.Hash,
       Equivalent_Keys => Ada.Strings.Unbounded."=");
 
+   function Name (C : Config_Maps.Cursor) return Crate_Name;
+
    package Profile_Setter_Maps
    is new Ada.Containers.Indefinite_Ordered_Maps
      (Crate_Name, Setters);
@@ -116,7 +121,8 @@ private
      (Crate_Name, Alire.Utils.Switches.Switch_List);
 
    type Global_Config is tagged record
-      Map : Config_Maps.Map;
+      Var_Map : Config_Maps.Map;
+      --  Mapping "crate.var" --> setting
 
       Profile_Map  : Profile_Maps.Map;
       --  Mapping crate -> profile, exists for all crates in solution

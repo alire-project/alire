@@ -1016,7 +1016,7 @@ The generated GPR will look something like this:
 ```ada
 project Test_Config is
    type Sort_Algorith_Kind is ("bubble", "quick", "merge");
-   Sort_Algorith : Debug_Level_Kind := "quick";
+   Sort_Algorith : Sort_Algorith_Kind := "quick";
 end Test_Config;
 ```
 

@@ -47,7 +47,7 @@ os.remove('./test_pre_build')
 os.remove('src/empty.adb')
 
 # Build without error
-run_alr('build', complain_on_error=False)
+run_alr('build')
 
 # pre/post-build expected for successful build
 check_not_expected('./test_post_fetch')

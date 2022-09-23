@@ -194,6 +194,9 @@ package body Alire.Roots is
          This.Generate_Configuration;
       end if;
 
+      This.Configuration.Ensure_Complete;
+      --  For building the configuration must be complete
+
       if Export_Build_Env then
          This.Export_Build_Environment;
       end if;

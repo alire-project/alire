@@ -10,10 +10,9 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
+with Alire.Utils.Switches;
 
 with CLIC.User_Input;
-
-with Alr.Commands.Build;
 
 with Semantic_Versioning.Extended;
 
@@ -181,12 +180,17 @@ package body Alr.Commands.Get is
                Build_OK := True;
 
             else
+               --  Build in release mode for a `get --build`
+               Cmd.Root.Set_Build_Profile
+                 (Crate   =>  Cmd.Root.Name,
+                  Profile =>  Alire.Utils.Switches.Release);
 
                --  The complete build environment has been set up already by
                --  Deploy_Dependencies, so we must not do it again.
-               Build_OK := Commands.Build.Execute (Cmd,
-                                                   AAA.Strings.Empty_Vector,
-                                                   Export_Build_Env => False);
+               Build_OK := Cmd.Root.Build
+                 (Cmd_Args       =>  AAA.Strings.Empty_Vector,
+                  Saved_Profiles   => False,
+                  Export_Build_Env => False);
             end if;
          else
             Build_OK := True;

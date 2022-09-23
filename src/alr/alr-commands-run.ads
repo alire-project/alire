@@ -25,7 +25,7 @@ package Alr.Commands.Run is
 
    overriding
    function Short_Description (Cmd : Command) return String is
-      ("Launch an executable built by the release");
+      ("Launch an executable built by the crate");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

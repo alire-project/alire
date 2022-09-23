@@ -1,0 +1,12 @@
+description = "Sample crate"
+name = "crate2b"
+version = "2.0.0"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+[[depends-on]]
+crate1="^1.0"
+
+[origin]
+url = "file:../../../crates/crate"

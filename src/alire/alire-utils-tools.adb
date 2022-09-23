@@ -61,9 +61,9 @@ package body Alire.Utils.Tools is
             return (case Tool is
                        when Easy_Graph =>
                       (if Distribution = Centos or else
-                       Distribution = Fedora or else
-                       Distribution = Rhel or else
-                       Distribution = Suse
+                          Distribution = Fedora or else
+                          Distribution = Rhel or else
+                          Distribution = Suse
                        then "perl-Graph-Easy"
                        elsif Distribution /= Msys2 and Distribution /= Arch
                        then "libgraph-easy-perl"
