@@ -135,7 +135,7 @@ package body Alr.Commands.Edit is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector is
      (AAA.Strings.Empty_Vector
-      .Append ("Start GNATstudio with Alire build environment setup.")
+      .Append ("Start GNAT Studio with Alire build environment setup.")
      );
 
    --------------------
