@@ -69,6 +69,8 @@ package body Alire.Utils.Switches.Knowledge is
       Register (GNAT_Ada2022, "Ada 2022 Mode");
       Register (GNAT_Ada_Extensions, "Enable GNAT Extensions");
 
+      Register (GNAT_UTF8_Encoding, "UTF-8 encoding for wide characters");
+
       Register ("-gnaty3", "Specify indentation level of 3");
       Register ("-gnatya", "Check attribute casing");
       Register ("-gnatyA", "Use of array index numbers in array attributes");

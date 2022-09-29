@@ -195,6 +195,9 @@ package body Alire.Utils.Switches is
    function Get_List (C : Switches_Configuration) return Switch_List is
    begin
       return Empty_List
+             --  Unconditional switches
+             .Append (GNAT_UTF8_Encoding) --
+
              .Append (Get_List (C.Optimization))
              .Append (Get_List (C.Debug_Info))
              .Append (Get_List (C.Runtime_Checks))

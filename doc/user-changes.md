@@ -101,6 +101,14 @@ $ alr action post-build     # Run post-build actions in the root release
 $ alr action post-build -r  # Run post-build actions in the root and dependencies
 ```
 
+### UTF-8 Source Encoding
+
+PR [#972](https://github.com/alire-project/alire/pull/972)
+
+As part of the build profile feature, the GNAT switch `-gnatW8` is
+unconditionally added to the list of compiler switches in the configuration GPR
+file. This switch enables the use of UTF-8 for source file encoding.
+
 ### Support for crates in repository subfolders (monorepos)
 
 PR [#939](https://github.com/alire-project/alire/pull/939)
