@@ -128,8 +128,12 @@ package body Alire.Environment is
                           Tool_Root.Current.Project_Paths;
       begin
          if not Sorted_Paths.Is_Empty then
-            for Path of Sorted_Paths loop
-               This.Append ("GPR_PROJECT_PATH", Path, "crates");
+            for Path of reverse Sorted_Paths loop
+               --  Reverse should not matter as our paths shouldn't overlap,
+               --  but at least is nicer for user inspection to respect
+               --  alphabetical order.
+
+               This.Prepend ("GPR_PROJECT_PATH", Path, "crates");
             end loop;
          end if;
       end;

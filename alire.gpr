@@ -2,7 +2,7 @@ with "aaa";
 with "ada_toml";
 with "alire_common";
 with "ajunitgen";
-with "ansi";
+with "ansiada";
 with "clic";
 with "gnatcoll";
 with "minirest";
@@ -13,7 +13,7 @@ with "si_units";
 with "spdx";
 with "stopwatch";
 with "toml_slicer";
-with "uri";
+with "uri_ada";
 with "xml_ez_out";
 
 library project Alire is
@@ -25,6 +25,7 @@ library project Alire is
    case Alire_Common.Host_Os is
       when "windows" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
       when "osx"     => Src_Dirs := Src_Dirs & ("src/alire/os_macos");
+      when "freebsd" => Src_Dirs := Src_Dirs & ("src/alire/os_freebsd");
       when others    => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
    end case;
 
@@ -36,6 +37,9 @@ library project Alire is
          when "osx"     =>
             for body ("Alire.Platforms.Current") use "alire-platforms-current__macos.adb";
             for body ("Alire.Platforms.Folders") use "alire-platforms-folders__macos.adb";
+         when "freebsd" =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__freebsd.adb";
+            for body ("Alire.Platforms.Folders") use "alire-platforms-folders__freebsd.adb";
          when others    =>
             for body ("Alire.Platforms.Current") use "alire-platforms-current__linux.adb";
             for body ("Alire.Platforms.Folders") use "alire-platforms-folders__linux.adb";

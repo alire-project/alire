@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+private with GNAT.OS_Lib;
+
 package Alr.Commands.Show is
 
    type Command is new Commands.Command with private;
@@ -21,23 +23,28 @@ package Alr.Commands.Show is
       Config : in out CLIC.Subcommand.Switches_Configuration);
 
    overriding function Short_Description (Cmd : Command) return String is
-     ("See information about a release");
+     ("Display information about a crate version");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[<crate>[allowed versions]] [--system] [--external[-detect]"
-      & " | --graph | --jekyll | --solve | --tree");
+     ("[<crate>[allowed versions]] [--system] [--external[-detect]]"
+      & " | --graph | --jekyll | --solve | --tree "
+      & "| --dependents[=direct|shortest|all]");
 
 private
 
+   procedure Validate (Cmd  : in out Command;
+                       Args : AAA.Strings.Vector);
+
    type Command is new Commands.Command with record
-      Detail   : aliased Boolean := False;
-      Detect   : aliased Boolean := False;
-      External : aliased Boolean := False;
-      Graph    : aliased Boolean := False;
-      Solve    : aliased Boolean := False;
-      System   : aliased Boolean := False;
-      Tree     : aliased Boolean := False;
-      Jekyll   : aliased Boolean := False;
+      Dependents : aliased GNAT.OS_Lib.String_Access := new String'("unset");
+      Detail     : aliased Boolean := False;
+      Detect     : aliased Boolean := False;
+      External   : aliased Boolean := False;
+      Graph      : aliased Boolean := False;
+      Solve      : aliased Boolean := False;
+      System     : aliased Boolean := False;
+      Tree       : aliased Boolean := False;
+      Jekyll     : aliased Boolean := False;
    end record;
 
 end Alr.Commands.Show;

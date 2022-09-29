@@ -29,7 +29,7 @@ package Alire.Index_On_Disk is
 
    type Index (<>) is abstract new Interfaces.Tomifiable with private;
 
-   pragma Warnings (Off); -- because Post doesn't mention New_Handler'Result
+   pragma Warnings (Off, "postcondition does not mention function result");
    function New_Handler (Origin   :     URL;
                          Name     :     String;
                          Parent   :     Any_Path;
@@ -48,7 +48,7 @@ package Alire.Index_On_Disk is
                          Parent :     Any_Path;
                          Result : out Outcome) return Index'Class with
      Pre => From.Kind in TOML.TOML_Table;
-   --  Load from a output Index.To_TOML value
+   --  Load from an output Index.To_TOML value
 
    function New_Handler (Origin :     URL;
                          Name   :     Restricted_Name;
@@ -69,6 +69,9 @@ package Alire.Index_On_Disk is
 
    function Load (This : Index'Class; Strict : Boolean) return Outcome;
    --  Loads the actual index contents into the in-memory index
+
+   procedure Load (This : Index'Class; Crate : Crate_Name; Strict : Boolean);
+   --  Load releases for just one crate from the index
 
    function Update (This : Index) return Outcome is abstract;
    --  If the index allows updating (e.g. git), do it.

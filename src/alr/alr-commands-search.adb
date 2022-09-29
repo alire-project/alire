@@ -63,9 +63,9 @@ package body Alr.Commands.Search is
                          (R.Dependencies (Platform.Properties),
                           Platform.Properties,
                           Alire.Solutions.Empty_Valid_Solution,
-                          Options => (Age         => Query_Policy,
-                                      Interactive => False,
-                                      others      => <>))
+                          Options => (Age        => Query_Policy,
+                                      On_Timeout => Solver.Stop,
+                                      others     => <>))
                        then " "
                        else Flag_Unsolv)));
             Tab.Append (TTY.Version (Semantic_Versioning.Image (R.Version)));
@@ -113,8 +113,6 @@ package body Alr.Commands.Search is
               ("Search substring and --list are incompatible");
          end if;
 
-         Cmd.Requires_Full_Index;
-
          Alire.Index.Search.Print_Crates
            (Substring => (case Args.Count is
                              when 0      => "",
@@ -154,8 +152,6 @@ package body Alr.Commands.Search is
       --  End of option verification, start of search. First load the index,
       --  required to look at its entries.
 
-      Cmd.Requires_Full_Index;
-
       Tab.Append (TTY.Bold ("NAME"));
       Tab.Append (TTY.Bold ("STATUS"));
       Tab.Append (TTY.Bold ("VERSION"));
@@ -171,7 +167,11 @@ package body Alr.Commands.Search is
          ------------------------
 
          procedure List_All_Or_Latest
-           (Crate : Alire.Crates.Crate) is
+           (Crate : Alire.Crates.Crate)
+         is
+            Progress : Trace.Ongoing :=
+                         Trace.Activity (Crate.Name.Index_Prefix)
+                         with Unreferenced;
          begin
             if Cmd.Full then
                for Release of reverse Crate.Releases loop
@@ -190,6 +190,9 @@ package body Alr.Commands.Search is
 
          procedure List_Externals (Crate : Alire.Crates.Crate)
          is
+            Progress : Trace.Ongoing :=
+                         Trace.Activity (Crate.Name.Index_Prefix)
+                         with Unreferenced;
          begin
             if Cmd.External then
                --  We must show only externals that have failed detection

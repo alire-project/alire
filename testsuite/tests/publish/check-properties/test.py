@@ -17,7 +17,7 @@ assert_match(".*Missing required properties: maintainers.*", p.out)
 # Attempt with crate missing optional recommended properties. No quiet or the
 # warning on optional properties is silenced.
 p = run_alr("publish", "my_index/crates/notags.tgz",
-            quiet=False, complain_on_error=False, force=True)
+            quiet=False, force=True)
 assert_match(".*Missing optional recommended properties:"
              " authors, licenses, tags, website.*",
              p.out)

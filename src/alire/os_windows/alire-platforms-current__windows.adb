@@ -18,10 +18,10 @@ package body Alire.Platforms.Current is
 
    package Cfg renames Config;
 
-   Msys2_Installer     : constant String := "msys2-x86_64-20220118.exe";
-   Msys2_Installer_URL : constant String :=
-     "https://github.com/msys2/msys2-installer/releases/download/2022-01-18/"
-     & Msys2_Installer;
+   Default_Msys2_Installer : constant String := "msys2-x86_64-20220503.exe";
+   Default_Msys2_Installer_URL : constant String :=
+     "https://github.com/msys2/msys2-installer/releases/download/2022-05-03/"
+     & Default_Msys2_Installer;
 
    --  Windows implementation
 
@@ -170,7 +170,7 @@ package body Alire.Platforms.Current is
       use CLIC.User_Input;
    begin
 
-      if Cfg.DB.Get ("msys2.do_not_install", False) then
+      if Cfg.DB.Get (Cfg.Keys.Msys2_Do_Not_Install, False) then
 
          --  User already requested that msys2 should not be installed
 
@@ -205,7 +205,7 @@ package body Alire.Platforms.Current is
                    Default  => No) = Yes
          then
             --  Save user choice in the global config
-            Cfg.Edit.Set_Globally (Key   => "msys2.do_not_install",
+            Cfg.Edit.Set_Globally (Key   => Cfg.Keys.Msys2_Do_Not_Install,
                                    Value => "true");
          end if;
 
@@ -260,6 +260,12 @@ package body Alire.Platforms.Current is
             return Alire.Errors.Get (E);
       end Download_File;
 
+      Msys2_Installer : constant String :=
+        Cfg.DB.Get (Cfg.Keys.Msys2_Installer, Default_Msys2_Installer);
+
+      Msys2_Installer_URL : constant String :=
+        Cfg.DB.Get (Cfg.Keys.Msys2_Installer_URL, Default_Msys2_Installer_URL);
+
       Result : Alire.Outcome;
    begin
       if not Query_User_For_Msys2_Install (Install_Dir) then
@@ -290,9 +296,9 @@ package body Alire.Platforms.Current is
             return Alire.Outcome_Failure ("Cannot setup msys2 environment");
       end;
 
-      if not Cfg.DB.Defined ("msys2.install_dir") then
+      if not Cfg.DB.Defined (Cfg.Keys.Msys2_Install_Dir) then
          --  Save msys2 install dir in the global config
-         Cfg.Edit.Set_Globally (Key   => "msys2.install_dir",
+         Cfg.Edit.Set_Globally (Key   => Cfg.Keys.Msys2_Install_Dir,
                                 Value => Install_Dir);
       end if;
 
@@ -303,7 +309,7 @@ package body Alire.Platforms.Current is
                                  Platforms.Folders.Cache / "msys64";
 
          Cfg_Install_Dir : constant String :=
-                             Cfg.DB.Get ("msys2.install_dir",
+                             Cfg.DB.Get (Cfg.Keys.Msys2_Install_Dir,
                                          Default_Install_Dir);
       begin
          Set_Msys2_Env (Cfg_Install_Dir);
@@ -337,7 +343,7 @@ package body Alire.Platforms.Current is
                               Platforms.Folders.Cache / "msys64";
 
       Cfg_Install_Dir : constant String :=
-                          Cfg.DB.Get ("msys2.install_dir",
+                          Cfg.DB.Get (Cfg.Keys.Msys2_Install_Dir,
                                       Default_Install_Dir);
 
       Pacman : constant String :=

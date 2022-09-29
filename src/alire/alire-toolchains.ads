@@ -33,7 +33,7 @@ package Alire.Toolchains is
    --  goes, in any case, to the config cache location.
 
    --  The following functions will transform any `gnat_XXX` dependency on
-   --  plain `gnat`. This way we need to to litter the callers with similar
+   --  plain `gnat`. This way we need not to litter the callers with similar
    --  transformations, as we always want whatever gnat_XXX is used for "gnat".
 
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level);
@@ -52,7 +52,17 @@ package Alire.Toolchains is
      with Pre => Tool_Is_Configured (Crate);
    --  Return the configured compiler as an exact compiler=version dependency
 
-   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key;
+   type Info_Kinds is (For_Use, For_Is_External);
+
+   function Tool_Key (Crate : Crate_Name;
+                      Kind  : Info_Kinds := For_Use)
+                      return CLIC.Config.Config_Key;
+   --  Return the config key corresponding to a tool, for which milestone is in
+   --  use or whether it is external.
+
+   function Tool_Is_External (Crate : Crate_Name) return Boolean;
+   --  Use the stored config to check if the tool is external without having to
+   --  detect it. Defaults to True if unset or tool is not configured.
 
    function Tool_Milestone (Crate : Crate_Name) return Milestones.Milestone;
 
@@ -65,6 +75,10 @@ package Alire.Toolchains is
                           Level         : Config.Level;
                           Fail_If_Unset : Boolean := True);
    --  Set the crate as not configured. If not set and Fail_If_Unset, raise
+
+   procedure Detect_Externals;
+   --  Detect all tools that may have external definitions, so they're
+   --  available for selection/installation.
 
    Description : constant AAA.Strings.Vector
      := AAA.Strings.Empty_Vector
@@ -103,11 +117,25 @@ private
    -- Tool_Key --
    --------------
    --  Construct the "toolchain.use.crate" keys
-   function Tool_Key (Crate : Crate_Name) return CLIC.Config.Config_Key
+   function Tool_Key (Crate : Crate_Name;
+             Kind  : Info_Kinds := For_Use)
+             return CLIC.Config.Config_Key
    is (if AAA.Strings.Has_Prefix (Crate.As_String, "gnat_")
-       then Tool_Key (GNAT_Crate)
+       then Tool_Key (GNAT_Crate, Kind)
        else CLIC.Config.Config_Key
-              (Config.Keys.Toolchain_Use & "." & Crate.As_String));
+         ((case Kind is
+             when For_Use => Config.Keys.Toolchain_Use,
+             when For_Is_External => Config.Keys.Toolchain_External)
+          & "." & Crate.As_String));
+
+   ----------------------
+   -- Tool_Is_External --
+   ----------------------
+
+   function Tool_Is_External (Crate : Crate_Name) return Boolean
+   is (Boolean'Value
+       (Config.DB.Get
+          (Tool_Key (Crate, For_Is_External), Default => "True")));
 
    --------------------
    -- Tool_Milestone --

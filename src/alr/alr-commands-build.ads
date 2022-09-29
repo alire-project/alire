@@ -1,5 +1,7 @@
 with AAA.Strings;
 
+private with GNAT.OS_Lib;
+
 package Alr.Commands.Build is
 
    type Command is new Commands.Command with private;
@@ -37,16 +39,20 @@ package Alr.Commands.Build is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("GPRbuild current working release");
+   is ("Build the library or executables of the crate");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
    is ("[--] [gprbuild switches and arguments]");
 
 private
+
    type Command is new Commands.Command with record
       Release_Mode    : aliased Boolean := False;
       Validation_Mode : aliased Boolean := False;
       Dev_Mode        : aliased Boolean := False;
+      Profiles        : aliased GNAT.OS_Lib.String_Access;
+      --  A string of "crate:profile" values, with "*" meaning all crates and
+      --  "%" meaning all crates without a previous setting in a manifest.
    end record;
 end Alr.Commands.Build;

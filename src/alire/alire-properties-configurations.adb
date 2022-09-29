@@ -52,10 +52,9 @@ package body Alire.Properties.Configurations is
 
          declare
             Val : constant String := Str_Array.Item (Index).As_String;
-            Val_Str : constant Unbounded_String :=
-              +(if Wrap_With_Quotes
-                then """" & To_Mixed_Case (Val) & """"
-                else To_Mixed_Case (Val));
+            Val_Str : constant Unbounded_String := +(if Wrap_With_Quotes
+                                                     then """" & Val & """"
+                                                     else Val);
          begin
             if First then
                Res := Res & Val_Str;
@@ -427,7 +426,7 @@ package body Alire.Properties.Configurations is
                                 return String
    is
       use ASCII;
-      Name : constant String := To_Mixed_Case (+This.Name);
+      Name : constant String := +This.Name;
       Indent : constant String := "   ";
    begin
       case This.Kind is
@@ -444,7 +443,7 @@ package body Alire.Properties.Configurations is
             return Indent & "type " & Name & "_Kind is (" &
               To_String (This.Values) & ");" & LF &
               Indent & Name & " : constant " & Name & "_Kind := " &
-              To_Mixed_Case (Value.As_String) & ";";
+              Value.As_String & ";";
 
          when Real =>
 
@@ -511,7 +510,7 @@ package body Alire.Properties.Configurations is
             return Indent & "type " & Name & "_Kind is (" &
               To_String (This.Values, Wrap_With_Quotes => True) & ");" & LF &
               Indent & Name & " : " & Name & "_Kind := """ &
-              To_Mixed_Case (Value.As_String) & """;";
+              Value.As_String & """;";
 
          when Real =>
 
@@ -902,7 +901,11 @@ package body Alire.Properties.Configurations is
          Values  => TOML.Create_Array);
    begin
       for P in T loop
-         Ret.Values.Append (TOML.Create_String (P'Img));
+         if Lower_Case then
+            Ret.Values.Append (TOML.Create_String (To_Lower_Case (P'Img)));
+         else
+            Ret.Values.Append (TOML.Create_String (P'Img));
+         end if;
       end loop;
       return Ret;
    end Typedef_From_Enum;

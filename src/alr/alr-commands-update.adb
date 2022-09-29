@@ -43,8 +43,6 @@ package body Alr.Commands.Update is
          Index.Update_All;
       end if;
 
-      Cmd.Requires_Full_Index;
-
       Cmd.Root.Update (Parse_Allowed,
                        Silent   => False,
                        Interact => True);

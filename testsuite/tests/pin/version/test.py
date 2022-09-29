@@ -37,9 +37,9 @@ Dependencies (direct):
 Pins (direct):
    hello = { version='7.7.7' }
 Dependencies (external):
-   hello=7.7.7 (direct,missed,pin=7.7.7) (pinned)
+   hello=7.7.7 (direct,missed:unavailable,pin=7.7.7) (pinned)
 Dependencies (graph):
-   xxx=0.0.0 --> hello*
+   xxx=0.1.0-dev --> hello*
 """, p.out)
 
 print('SUCCESS')

@@ -1,7 +1,9 @@
-with ANSI;
+with AnsiAda;
 with CLIC.TTY;
 
 package Alire.Utils.TTY with Preelaborate is
+
+   package ANSI renames AnsiAda;
 
    function Alr return String is (CLIC.TTY.Terminal ("alr"));
 

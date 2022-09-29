@@ -43,18 +43,49 @@ package body Alire.Properties.From_TOML is
                         exit Process_Property;
                      end if;
 
-                     --  Load property once we know its exact name, allowing
-                     --  expressions were appropriate.
+                     --  If the property is an array of tables (e.g. actions),
+                     --  reconstruct items as a single table to redispatch.
+                     --  This ensures that properties that can have dynamic
+                     --  expressions within each array entry are transparently
+                     --  managed before they reach the actual property loader.
 
-                     Props.Append
-                       (Prop_Loader.Load
-                          (From    => From.Descend
-                               (Key     => Key,
-                                Value   => Val,
-                                Context => Key),
-                           Loader  => Loaders (Prop),
-                           Resolve => Is_Dynamic (Prop),
-                           Strict  => Strict));
+                     if Val.Kind = TOML_Array
+                       and then
+                         (for all I in 1 .. Val.Length =>
+                            Val.Item (I).Kind = TOML_Table)
+                     then
+
+                        --  Load each array entry individually
+
+                        for I in 1 .. Val.Length loop
+                           Props.Append
+                             (Prop_Loader.Load
+                                (From    => From.Descend
+                                     (Key     => Key,
+                                      Value   => Val.Item (I),
+                                      Context => Key & " (array item"
+                                                     & I'Image & ")"),
+                                 Loader  => Loaders (Prop),
+                                 Resolve => Is_Dynamic (Prop),
+                                 Strict  => Strict));
+                        end loop;
+
+                     else
+
+                        --  Load a single property once we know its exact name,
+                        --  allowing expressions were appropriate.
+
+                        Props.Append
+                          (Prop_Loader.Load
+                             (From    => From.Descend
+                                  (Key     => Key,
+                                   Value   => Val,
+                                   Context => Key),
+                              Loader  => Loaders (Prop),
+                              Resolve => Is_Dynamic (Prop),
+                              Strict  => Strict));
+
+                     end if;
 
                   else
                      From.Recoverable_Error ("invalid property: " & Key);

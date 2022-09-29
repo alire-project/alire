@@ -3,7 +3,8 @@ package Alire.Platforms with Preelaborate is
    --  Platform information necessary for some releases
 
    type Extended_Architectures is
-     (ARM64, -- Equivalent to AARCH64
+     (AMD64, -- Equivalent to X86_64 (FreeBSD)
+      ARM64, -- Equivalent to AARCH64
       End_Of_Duplicates,
       --  Up to this point, these are architectures that we want to rename to
       --  some of the following because they are equivalent.
@@ -19,12 +20,14 @@ package Alire.Platforms with Preelaborate is
      Extended_Architectures'Succ (End_Of_Duplicates) .. Architecture_Unknown;
    --  See e.g. https://stackoverflow.com/a/45125525/761390
 
-   type Operating_Systems is (Linux,
+   type Operating_Systems is (FreeBSD,
+                              Linux,
                               MacOS,
                               Windows,
                               OS_Unknown);
    subtype Known_Operating_Systems is
-     Operating_Systems range Linux .. Windows;
+     Operating_Systems range
+       Operating_Systems'First .. Operating_Systems'Pred (OS_Unknown);
 
    type Targets is (Native,
                     Unknown_Cross_Target);
@@ -37,6 +40,8 @@ package Alire.Platforms with Preelaborate is
                           Rhel, -- RedHat Enterprise Linux
                           Centos,
                           Fedora,
+                          Suse,
+                          Homebrew,
                           Distro_Unknown);
 
    subtype Known_Distributions is
@@ -51,6 +56,8 @@ package Alire.Platforms with Preelaborate is
                              Pacman,
                              Yum,
                              Dnf,
+                             Zypper,
+                             Homebrew,
                              Packager_Unknown);
 
    Distro_Manager : constant array (Distributions) of Package_Managers :=
@@ -58,6 +65,8 @@ package Alire.Platforms with Preelaborate is
       Msys2 | Arch    => Pacman,
       Rhel            => Yum,
       Centos | Fedora => Dnf,
+      Suse            => Zypper,
+      Homebrew        => Homebrew,
       Distro_Unknown  => Packager_Unknown);
 
    type Toolchains is (System,
@@ -72,8 +81,11 @@ package Alire.Platforms with Preelaborate is
 
 private
 
+   --  Should be in sync with testsuite/drivers/helpers.py#L106
+
    function Arch_Mapping (Arch : Extended_Architectures) return Architectures
    is (case Arch is
+          when AMD64         => X86_64,
           when ARM64         => AARCH64,
           when Architectures => Arch,
           when others        =>

@@ -14,6 +14,7 @@ is
    GNAT_Enable_Inlining                       : constant Switch := "-gnatn";
    GNAT_Asserts_And_Contracts                 : constant Switch := "-gnata";
    GNAT_Debug_Info                            : constant Switch := "-g";
+   GNAT_Extra_Exception_Info                  : constant Switch := "-gnateE";
    GNAT_Suppress_Runtime_Check                : constant Switch := "-gnatp";
    GNAT_Enable_Overflow_Check                 : constant Switch := "-gnato";
    GNAT_Disable_Warn_No_Exception_Propagation : constant Switch := "-gnatw.X";

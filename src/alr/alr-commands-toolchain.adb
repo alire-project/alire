@@ -7,10 +7,8 @@ with Alire.Config.Edit;
 with Alire.Containers;
 with Alire.Dependencies;
 with Alire.Errors;
-with Alire.Index;
 with Alire.Milestones;
 with Alire.Origins.Deployers;
-with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Solver;
@@ -172,6 +170,7 @@ package body Alr.Commands.Toolchain is
       --  already exist. The following call checks what origins are already in
       --  use by configured tools. This is only relevant when setting defaults,
       --  though.
+
       if Set_As_Default then
          Identify_Origins;
          if Origin_Status = Frozen then
@@ -180,8 +179,6 @@ package body Alr.Commands.Toolchain is
                       Trace.Detail);
          end if;
       end if;
-
-      Cmd.Requires_Full_Index;
 
       Installation :
       declare
@@ -301,11 +298,14 @@ package body Alr.Commands.Toolchain is
    ----------
 
    procedure List (Cmd : in out Command) is
+      pragma Unreferenced (Cmd);
       use Alire;
       use type Dependencies.Dependency;
       Table : AAA.Table_IO.Table;
    begin
-      Cmd.Requires_Full_Index;
+      Alire.Toolchains.Detect_Externals;
+      --  Even if we have selected a non-external toolchain, in this case we
+      --  want to force detection of external toolchains to be aware of them.
 
       if Alire.Shared.Available.Is_Empty then
          Trace.Info ("Nothing installed in configuration prefix "
@@ -380,7 +380,6 @@ package body Alr.Commands.Toolchain is
       end Find_Version;
 
    begin
-      Cmd.Requires_Full_Index;
 
       --  If no version was given, find if only one is installed
 
@@ -407,6 +406,7 @@ package body Alr.Commands.Toolchain is
       --  We do not want tools that are later in the command-line to be taken
       --  into account prematurely for compatibility of origins. We store here
       --  crates still to be dealt with.
+
    begin
 
       --  Validation
@@ -455,9 +455,7 @@ package body Alr.Commands.Toolchain is
 
       if Cmd.S_Select then
 
-         Cmd.Requires_Full_Index;
-         Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
+         Alire.Toolchains.Detect_Externals;
 
          if Cmd.Local then
             Cmd.Requires_Valid_Session;
@@ -469,6 +467,7 @@ package body Alr.Commands.Toolchain is
                                          else Alire.Config.Global),
                                         Allow_Incompatible => Alire.Force);
          else
+
             for Elt of Args loop
                Pending.Insert (Alire.Dependencies.From_String (Elt).Crate);
             end loop;
@@ -496,16 +495,14 @@ package body Alr.Commands.Toolchain is
          end loop;
 
       elsif Cmd.Install then
-         Cmd.Requires_Full_Index;
-         Alire.Index.Detect_Externals
-           (Alire.GNAT_External_Crate, Alire.Platforms.Current.Properties);
+
+         Alire.Toolchains.Detect_Externals;
 
          for Elt of Args loop
             Install (Cmd, Elt, Name_Sets.Empty_Set, Set_As_Default => False);
          end loop;
 
       elsif not Cmd.Disable then
-
          --  When no command is specified, print the list
          Cmd.List;
       end if;

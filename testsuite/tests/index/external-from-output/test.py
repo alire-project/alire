@@ -8,8 +8,7 @@ from drivers.asserts import assert_eq, assert_match
 import re
 
 # Hint that an external exists
-p = run_alr('show', 'make',
-            complain_on_error=False, quiet=False)
+p = run_alr('show', 'make', quiet=False)
 assert_eq('Not found: make*\n'
           'There are external definitions for the crate. '
           'Use --external to show them.\n',
@@ -18,7 +17,7 @@ assert_eq('Not found: make*\n'
 # External definition
 p = run_alr('show', 'make', '--external')
 assert_eq('Kind       Description    Details            Available\n'
-          'Executable make --version .*Make ([\\d\\.]+).* True     \n',
+          'Executable make --version .*Make ([\\d\\.]+).* True\n',
           p.out)
 
 # External detection
@@ -42,7 +41,7 @@ p = run_alr('show', 'bad_switch', '--external')
 assert_eq('Kind       Description                   '
           'Details            Available\n'
           'Executable make --bad-nonexistent-switch '
-          '.*Make ([\\d\\.]+).* True     \n',
+          '.*Make ([\\d\\.]+).* True\n',
           p.out)
 
 # External detection fails (no release found, but without error)

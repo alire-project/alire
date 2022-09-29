@@ -2,10 +2,12 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Containers.Indefinite_Ordered_Sets;
 
 with Alire.Containers;
-
+with Alire.Index_On_Disk.Loading;
 with Alire.Utils.TTY;
 
 package body Alire.Index is
+
+   package Index_Loading renames Index_On_Disk.Loading;
 
    package Release_Set_Maps is new
      Ada.Containers.Indefinite_Ordered_Maps
@@ -13,27 +15,22 @@ package body Alire.Index is
         "<",        Releases.Containers."=");
    subtype Release_Alias_Map is Release_Set_Maps.Map;
 
-   package External_Alias_Maps is new
-     Ada.Containers.Indefinite_Ordered_Maps (Crate_Name,
-                                             Containers.Crate_Name_Sets.Set,
-                                             "<",
-                                             Containers.Crate_Name_Sets."=");
-   subtype External_Alias_Map is External_Alias_Maps.Map;
-
    use all type Semantic_Versioning.Version;
 
    Contents : aliased Alire.Crates.Containers.Maps.Map;
    --  Regular mapping from crate name to its releases
 
-   Aliases  : Release_Alias_Map;
+   Release_Aliases : Release_Alias_Map;
    --  Mapping from crate name to any release that satisfies it. Currently,
    --  releases are duplicated in memory. These two collections could be made
    --  to share releases via some indirection or pointers.
 
-   External_Aliases : External_Alias_Map;
-   --  For external crates that provide another crate, we need to be aware
-   --  when external detection is requested. This mapping goes in the direction
-   --  Provided -> Providers.
+   Crate_Aliases : aliased Provides.Crate_Provider_Map;
+   --  During on-demand crate loading, we need to know which crates also
+   --  provide the requested crate. This information is redundant with
+   --  Release_Aliases, but as this simpler information is the one that's
+   --  read/written to disk on index update, we better keep a separate copy
+   --  for simplicity.
 
    ---------
    -- Add --
@@ -43,7 +40,7 @@ package body Alire.Index is
                   Policy : Policies.For_Index_Merging :=
                     Policies.Merge_Priorizing_Existing) is
    begin
-      if Exists (Crate.Name) then
+      if Contents.Contains (Crate.Name) then
          declare
             Old : Crates.Crate := Contents (Crate.Name);
          begin
@@ -87,12 +84,24 @@ package body Alire.Index is
          for Mil of Release.Provides loop
             declare
                Crate : Releases.Containers.Release_Set :=
-                         (if Aliases.Contains (Mil.Crate)
-                          then Aliases (Mil.Crate)
+                         (if Release_Aliases.Contains (Mil.Crate)
+                          then Release_Aliases (Mil.Crate)
                           else Releases.Containers.Empty_Release_Set);
+
+               Providers : Provides.Crate_Providers :=
+                             (if Crate_Aliases.Contains (Mil.Crate)
+                              then Crate_Aliases (Mil.Crate)
+                              else Containers.Crate_Name_Sets.Empty_Set);
             begin
+               --  Add release-level aliases
+
                Crate.Include (Release);
-               Aliases.Include (Mil.Crate, Crate);
+               Release_Aliases.Include (Mil.Crate, Crate);
+
+               --  Add crate-level aliases
+
+               Providers.Include (Release.Name);
+               Crate_Aliases.Include (Mil.Crate, Providers);
             end;
          end loop;
       end Add_Aliases;
@@ -105,19 +114,6 @@ package body Alire.Index is
       Add_Aliases;
    end Add;
 
-   --------------------------
-   -- Detect_All_Externals --
-   --------------------------
-
-   procedure Detect_All_Externals (Env : Properties.Vector) is
-   begin
-      Trace.Detail ("Detecting external releases...");
-
-      for Crate of Contents loop
-         Detect_Externals (Crate.Name, Env);
-      end loop;
-   end Detect_All_Externals;
-
    package Name_Sets is
      new Ada.Containers.Indefinite_Ordered_Sets (Crate_Name);
    Already_Detected : Name_Sets.Set;
@@ -128,25 +124,52 @@ package body Alire.Index is
 
    procedure Detect_Externals (Name : Crate_Name; Env : Properties.Vector) is
    begin
+      Index_Loading.Load (Name,
+                          Detect_Externals => False,
+                          Strict           => False);
+      --  We don't ask to detect because we are going to do it right after, and
+      --  this breaks a potential infinite recursion.
+
       if Already_Detected.Contains (Name) then
          Trace.Debug
            ("Not redoing detection of externals for crate " & (+Name));
-      elsif not External_Aliases.Contains (Name) then
+      elsif not Has_Externals (Name) then
          Trace.Debug ("Skipping detection for crate without externals: "
                       & Utils.TTY.Name (Name));
       else
          Already_Detected.Insert (Name);
          Trace.Debug ("Looking for externals for crate: " & (+Name));
 
-         for Provider of External_Aliases (Name) loop
-            Trace.Debug ("Detecting via provider " &
-                           Utils.TTY.Name (Provider));
-            for Release of Contents (Provider).Externals.Detect (Provider, Env)
-            loop
-               Trace.Debug ("Adding external: " & Release.Milestone.Image);
-               Add (Release);
+         declare
+            Providers : Provides.Crate_Providers :=
+                          (if Crate_Aliases.Contains (Name)
+                           then Crate_Aliases (Name)
+                           else Containers.Crate_Name_Sets.Empty_Set);
+            --  This copy is needed to avoid tampering with collections if a
+            --  new alias were found during detection.
+         begin
+            Providers.Include (Name);
+            --  Always use the crate itself to look for externals
+
+            for Provider of Providers loop
+               if Contents.Contains (Provider) then
+                  --  It may not exist if this is a virtual crate without
+                  --  releases or detectors.
+
+                  if not Contents (Provider).Externals.Is_Empty then
+                     Trace.Debug ("Detecting via provider: " &
+                                    Utils.TTY.Name (Provider));
+                  end if;
+                  for Release of Contents (Provider).Externals
+                    .Detect (Provider, Env)
+                  loop
+                     Trace.Debug ("Adding external: "
+                                  & Release.Milestone.Image);
+                     Add (Release);
+                  end loop;
+               end if;
             end loop;
-         end loop;
+         end;
       end if;
    end Detect_Externals;
 
@@ -154,15 +177,44 @@ package body Alire.Index is
    -- All_Crates --
    ----------------
 
-   function All_Crates return access constant Crates.Containers.Maps.Map is
-     (Contents'Access);
+   function All_Crates (Opts : Query_Options := Query_Defaults)
+                        return access constant Crates.Containers.Maps.Map is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load_All.Assert;
+      end if;
+
+      return Contents'Access;
+   end All_Crates;
+
+   -----------------------
+   -- All_Crate_Aliases --
+   -----------------------
+
+   function All_Crate_Aliases return access Provides.Crate_Provider_Map
+   is (Crate_Aliases'Access);
 
    -----------
    -- Crate --
    -----------
 
-   function Crate (Name : Crate_Name) return Crates.Crate
-   is (Contents (Name));
+   function Crate (Name : Crate_Name;
+                   Opts : Query_Options := Query_Defaults)
+                   return Crates.Crate
+   is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Detect_Externals => Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
+      if not Contents.Contains (Name) then
+         Raise_Checked_Error ("Requested crate not in index: " & (+Name));
+      end if;
+
+      return Contents (Name);
+   end Crate;
 
    -----------------
    -- Crate_Count --
@@ -175,18 +227,30 @@ package body Alire.Index is
    -- Exists --
    ------------
 
-   function Exists (Name : Crate_Name) return Boolean is
-     (Contents.Contains (Name));
+   function Exists (Name : Crate_Name;
+                    Opts : Query_Options := Query_Defaults)
+                    return Boolean
+   is
+   begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
+      return Contents.Contains (Name);
+   end Exists;
 
    ------------
    -- Exists --
    ------------
 
    function Exists (Name : Crate_Name;
-                    Version : Semantic_Versioning.Version)
+                    Version : Semantic_Versioning.Version;
+                    Opts : Query_Options := Query_Defaults)
                     return Boolean is
    begin
-      if Exists (Name) then
+      if Exists (Name, Opts) then
          for R of Contents (Name).Releases loop
             if R.Name = Name and then R.Version = Version then
                return True;
@@ -202,17 +266,24 @@ package body Alire.Index is
    ----------
 
    function Find (Name : Crate_Name;
-                  Version : Semantic_Versioning.Version) return Release is
+                  Version : Semantic_Versioning.Version;
+                  Opts    : Query_Options := Query_Defaults) return Release is
    begin
+      if Opts.Load_From_Disk then
+         Index_Loading.Load (Name,
+                             Opts.Detect_Externals,
+                             Strict => False);
+      end if;
+
       for R of Contents (Name).Releases loop
          if R.Name = Name and then R.Version = Version then
             return R;
          end if;
       end loop;
 
-      raise Checked_Error with
-        "Requested milestone not in index: "
-        & (+Name) & "=" & Semantic_Versioning.Image (Version);
+      Raise_Checked_Error
+        ("Requested milestone not in index: "
+         & (+Name) & "=" & Semantic_Versioning.Image (Version));
    end Find;
 
    -------------------
@@ -220,24 +291,55 @@ package body Alire.Index is
    -------------------
 
    function Has_Externals (Name : Crate_Name) return Boolean
-   is (External_Aliases.Contains (Name));
-
-   -----------------------------
-   -- Register_External_Alias --
-   -----------------------------
-
-   procedure Register_External_Alias (Provider  : Crate_Name;
-                                      Providing : Crate_Name)
    is
    begin
-      if External_Aliases.Contains (Providing) then
-         External_Aliases (Providing).Include (Provider);
+      Index_Loading.Load (Name, Detect_Externals => False, Strict => False);
+
+      --  Detectors in the crate itself
+
+      if Contents.Contains (Name) and then
+        not Contents (Name).Externals.Is_Empty
+      then
+         return True;
+      end if;
+
+      --  Detectors in other crates that provide it (regular or external)
+
+      if Crate_Aliases.Contains (Name) then
+         for Provider of Crate_Aliases (Name) loop
+            if Contents.Contains (Provider) and then
+              not Contents (Provider).Externals.Is_Empty
+            then
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
+   end Has_Externals;
+
+   --------------------
+   -- Register_Alias --
+   --------------------
+
+   procedure Register_Alias (Provider  : Crate_Name;
+                             Providing : Crate_Name)
+   is
+   begin
+      if Provider = Providing then
+         return;
+         --  We don't want the trivial equivalence here as this pollutes the
+         --  written file too much.
+      end if;
+
+      if Crate_Aliases.Contains (Providing) then
+         Crate_Aliases (Providing).Include (Provider);
       else
-         External_Aliases.Insert
+         Crate_Aliases.Insert
            (Providing,
             Containers.Crate_Name_Sets.To_Set (Provider));
       end if;
-   end Register_External_Alias;
+   end Register_Alias;
 
    -------------------
    -- Release_Count --
@@ -256,20 +358,22 @@ package body Alire.Index is
    -- Releases_Satisfying --
    -------------------------
 
-   function Releases_Satisfying (Dep              : Dependencies.Dependency;
-                                 Env              : Properties.Vector;
-                                 Use_Equivalences : Boolean := True;
-                                 Available_Only   : Boolean := True;
-                                 With_Origin      : Origins.Kinds_Set :=
-                                   (others => True))
-                                 return Releases.Containers.Release_Set
+   function Releases_Satisfying
+     (Dep              : Dependencies.Dependency;
+      Env              : Properties.Vector;
+      Opts             : Query_Options := Query_Defaults;
+      Use_Equivalences : Boolean := True;
+      Available_Only   : Boolean := True;
+      With_Origin      : Origins.Kinds_Set :=
+        (others => True))
+      return Releases.Containers.Release_Set
    is
       Result : Releases.Containers.Release_Set;
    begin
 
       --  Regular crates
 
-      if Exists (Dep.Crate) then
+      if Exists (Dep.Crate, Opts) then
          for Release of Crate (Dep.Crate).Releases loop
             if With_Origin (Release.Origin.Kind)
               and then Release.Satisfies (Dep)
@@ -280,10 +384,10 @@ package body Alire.Index is
          end loop;
       end if;
 
-      --  And any aliases via Provides
+      --  And any Release_Aliases via Provides
 
-      if Use_Equivalences and then Aliases.Contains (Dep.Crate) then
-         for Release of Aliases (Dep.Crate) loop
+      if Use_Equivalences and then Release_Aliases.Contains (Dep.Crate) then
+         for Release of Release_Aliases (Dep.Crate) loop
             if With_Origin (Release.Origin.Kind)
               and then Release.Satisfies (Dep)
               and then (not Available_Only or else Release.Is_Available (Env))

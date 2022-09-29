@@ -29,7 +29,7 @@ assert run(["git", "clone",
 # We are now at monoproject/mycrate.
 os.chdir("monoproject")
 os.chdir("crate1")
-alr_publish("crate1", "0.0.0", index_path=os.path.join(start_dir, "my_index"))
+alr_publish("crate1", "0.1.0-dev", index_path=os.path.join(start_dir, "my_index"))
 
 # We create a second crate at another commit
 os.chdir(os.path.join(start_dir, "monoproject.upstream"))
@@ -41,7 +41,7 @@ commit2 = commit_all("monoproject.upstream")
 os.chdir("monoproject")
 run(["git", "pull"]).check_returncode()
 os.chdir("crate2")
-alr_publish("crate2", "0.0.0", index_path=os.path.join(start_dir, "my_index"))
+alr_publish("crate2", "0.1.0-dev", index_path=os.path.join(start_dir, "my_index"))
 
 # Verify that the crates are usable as a dependency, and expected binary
 # locations
@@ -64,11 +64,11 @@ assert os.path.isfile(os.path.join(
 # Also that the info files are there
 assert os.path.isfile(os.path.join(
     "alire", "cache", "dependencies",
-    f"crate1_0.0.0_in_monoproject_{commit1[:8]}")), \
+    f"crate1_0.1.0_in_monoproject_{commit1[:8]}")), \
     "Expected info file does not exist"
 assert os.path.isfile(os.path.join(
     "alire", "cache", "dependencies",
-    f"crate2_0.0.0_in_monoproject_{commit2[:8]}")), \
+    f"crate2_0.1.0_in_monoproject_{commit2[:8]}")), \
     "Expected info file does not exist"
 
 print('SUCCESS')

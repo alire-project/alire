@@ -64,6 +64,10 @@ def check_line_in(filename, line):
                 repr(line), filename, content_of(filename))
 
 
+def on_macos():
+    return platform.system() == "Darwin"
+
+
 def on_windows():
     return platform.system() == "Windows"
 
@@ -89,6 +93,12 @@ def distribution():
 
         return 'DISTRO_UNKNOWN'
 
+    elif on_macos():
+        if os.environ.get('HOMEBREW_PREFIX'):
+            return 'HOMEBREW'
+        else:
+            return 'DISTRO_UNKNOWN'
+
     elif on_windows():
         return 'MSYS2'
     else:
@@ -102,6 +112,21 @@ def path_separator():
 def dir_separator():
     return '/' if os.name != 'nt' else '\\'
 
+
+def host_architecture():
+    host_arch = platform.machine().lower()
+    if host_arch == "amd64":
+        host_arch = "x86_64"
+    elif host_arch == "arm64":
+        host_arch = "aarch64"
+    return host_arch
+
+
+def host_os():
+    host_os = platform.system().lower()
+    if host_os == "darwin":
+        host_os = 'macos'
+    return host_os
 
 # Add a 'with "something";' at the top of a project file
 def with_project(file, project):

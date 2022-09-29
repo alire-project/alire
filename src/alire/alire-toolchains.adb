@@ -5,6 +5,7 @@ with Ada.Containers.Indefinite_Vectors;
 with Alire.Config.Edit;
 with Alire.Index;
 with Alire.Origins;
+with Alire.Platforms.Current;
 with Alire.Properties;
 with Alire.Releases.Containers;
 with Alire.Root;
@@ -101,7 +102,7 @@ package body Alire.Toolchains is
          --  Always offer to configure nothing
          Result.Choices.Append (None);
          Result.Targets.Append (Releases.New_Empty_Release (Crate));
-         --  Just a placeholder that won't be used anywhere, but keeps boot
+         --  Just a placeholder that won't be used anywhere, but keeps both
          --  collections in sync.
 
          --  Identify possible externals first (but after the newest Alire one)
@@ -266,7 +267,8 @@ package body Alire.Toolchains is
 
          --  Find the newest regular release in our index:
          if not Index.Releases_Satisfying (Any_Tool (Crate),
-                                           Root.Platform_Properties).Is_Empty
+                                           Root.Platform_Properties,
+                                           Opts => Index.Query_Fully).Is_Empty
          then
             Pick_Up_Tool (Crate, Fill_Version_Choices (Crate));
          else
@@ -326,6 +328,13 @@ package body Alire.Toolchains is
 
    end Assistant;
 
+   procedure Detect_Externals is
+   begin
+      for Tool of Tools loop
+         Index.Detect_Externals (Tool, Platforms.Current.Properties);
+      end loop;
+   end Detect_Externals;
+
    --------------------
    -- Set_As_Default --
    --------------------
@@ -337,6 +346,10 @@ package body Alire.Toolchains is
         (Level,
          Key   => Tool_Key (Release.Name),
          Value => Release.Milestone.Image);
+      Alire.Config.Edit.Set
+        (Level,
+         Key   => Tool_Key (Release.Name, For_Is_External),
+         Value => Boolean'(not Release.Origin.Is_Regular)'Image);
    end Set_As_Default;
 
    -----------------------------

@@ -127,6 +127,43 @@ package body Alire.Utils is
       end return;
    end Count_True;
 
+   -----------------
+   -- First_Match --
+   -----------------
+
+   function First_Match (Regex : String; Text : String) return String is
+
+      -----------------------
+      -- Count_Parentheses --
+      -----------------------
+
+      function Count_Parentheses return Positive is
+         Count : Natural := 0;
+      begin
+         for Char of Regex loop
+            if Char = '(' then
+               Count := Count + 1;
+            end if;
+         end loop;
+         return Count;
+      end Count_Parentheses;
+
+      use GNAT.Regpat;
+      Matches : Match_Array (1 .. Count_Parentheses);
+      --  This is a safe estimation, as some '(' may not be part of a capture
+
+   begin
+      Match (Regex, Text, Matches);
+
+      for I in Matches'Range loop
+         if Matches (I) /= No_Match then
+            return Text (Matches (I).First .. Matches (I).Last);
+         end if;
+      end loop;
+
+      return "";
+   end First_Match;
+
    -------------------------------
    -- Is_Valid_Full_Person_Name --
    -------------------------------
@@ -196,5 +233,33 @@ package body Alire.Utils is
          end loop;
       end return;
    end To_Native;
+
+   -------------------------
+   -- Image_Keys_One_Line --
+   -------------------------
+
+   function Image_Keys_One_Line (M : Maps.Map) return String is
+   begin
+      if M.Is_Empty then
+         return When_Empty;
+      else
+         declare
+            use Ada.Strings.Unbounded;
+            US : Unbounded_String;
+            First : Boolean := True;
+         begin
+            for C in M.Iterate loop
+               if First then
+                  Append (US, Maps.Key (C));
+                  First := False;
+               else
+                  Append (US, Separator & Maps.Key (C));
+               end if;
+            end loop;
+
+            return To_String (US);
+         end;
+      end if;
+   end Image_Keys_One_Line;
 
 end Alire.Utils;

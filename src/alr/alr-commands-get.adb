@@ -10,10 +10,9 @@ with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.Solutions.Diffs;
 with Alire.Solver;
+with Alire.Utils.Switches;
 
 with CLIC.User_Input;
-
-with Alr.Commands.Build;
 
 with Semantic_Versioning.Extended;
 
@@ -46,6 +45,11 @@ package body Alr.Commands.Get is
 
       use all type Alire.Origins.Kinds;
    begin
+      if Cmd.Dirname then
+         Trace.Always (Rel.Base_Folder);
+         return;
+      end if;
+
       Trace.Detail ("Using " & Rel.Milestone.TTY_Image
                     & " for requested "
                     & Alire.Dependencies.New_Dependency
@@ -176,12 +180,17 @@ package body Alr.Commands.Get is
                Build_OK := True;
 
             else
+               --  Build in release mode for a `get --build`
+               Cmd.Root.Set_Build_Profile
+                 (Crate   =>  Cmd.Root.Name,
+                  Profile =>  Alire.Utils.Switches.Release);
 
                --  The complete build environment has been set up already by
                --  Deploy_Dependencies, so we must not do it again.
-               Build_OK := Commands.Build.Execute (Cmd,
-                                                   AAA.Strings.Empty_Vector,
-                                                   Export_Build_Env => False);
+               Build_OK := Cmd.Root.Build
+                 (Cmd_Args       =>  AAA.Strings.Empty_Vector,
+                  Saved_Profiles   => False,
+                  Export_Build_Env => False);
             end if;
          else
             Build_OK := True;
@@ -318,7 +327,10 @@ package body Alr.Commands.Get is
               ("--only is incompatible with --build");
          end if;
 
-         Cmd.Requires_Full_Index;
+         if Cmd.Dirname and (Cmd.Build or else Cmd.Only) then
+            Reportaise_Wrong_Arguments
+              ("--dirname is incompatible with other switches");
+         end if;
 
          if not Alire.Index.Exists (Allowed.Crate) then
             Reportaise_Command_Failed
@@ -368,6 +380,11 @@ package body Alr.Commands.Get is
       Define_Switch (Config,
                      Cmd.Build'Access,
                      "-b", "--build", "Build after download");
+
+      Define_Switch (Config,
+                     Cmd.Dirname'Access,
+                     Long_Switch => "--dirname",
+                     Help        => "Display deployment folder");
 
       Define_Switch (Config,
                      Cmd.Only'Access,

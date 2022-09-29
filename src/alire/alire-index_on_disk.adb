@@ -5,6 +5,7 @@ with Alire.Errors;
 with Alire.Directories;
 with Alire.Index_On_Disk.Directory;
 with Alire.Index_On_Disk.Git;
+with Alire.Index_On_Disk.Loading;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
 with Alire.VCSs;
@@ -92,6 +93,9 @@ package body Alire.Index_On_Disk is
                                    This.Metadata_Directory);
       end if;
 
+      --  Force a reload of cached indexes in any posterior index load
+      Loading.Drop_Index_Cache;
+
       return Outcome_Success;
    exception
       when E : others =>
@@ -114,6 +118,15 @@ package body Alire.Index_On_Disk is
    exception
       when E : Checked_Error =>
          return Errors.Get (E);
+   end Load;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (This : Index'Class; Crate : Crate_Name; Strict : Boolean) is
+   begin
+      TOML_Index.Load (This, Crate, Strict);
    end Load;
 
    ----------

@@ -75,8 +75,6 @@ package body Alr.Commands.Edit is
            ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
       end if;
 
-      Cmd.Requires_Full_Index;
-
       Cmd.Requires_Valid_Session;
 
       Cmd.Root.Export_Build_Environment;
@@ -88,9 +86,9 @@ package body Alr.Commands.Edit is
             if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
 
                Reportaise_Command_Failed
-                 ("GNATstudio not available or not in PATH. " & ASCII.LF &
-                    "You can download the Community edition at: " & ASCII.LF &
-                    "https://www.adacore.com/download");
+                 ("GNAT Studio not available or not in PATH. " & ASCII.LF &
+                    "You can download it at: " & ASCII.LF &
+                    "https://github.com/AdaCore/gnatstudio/releases");
             else
                Reportaise_Command_Failed
                  ("'" & Exec & "' not available or not in PATH.");
@@ -137,7 +135,7 @@ package body Alr.Commands.Edit is
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector is
      (AAA.Strings.Empty_Vector
-      .Append ("Start GNATstudio with Alire build environment setup.")
+      .Append ("Start GNAT Studio with Alire build environment setup.")
      );
 
    --------------------

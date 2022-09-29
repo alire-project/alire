@@ -110,15 +110,26 @@ private
            " character. The token ${GPR_FILE} is replaced by" &
            " a path to the project file to open.")),
 
-      (+"msys2.do_not_install",
+      (+Keys.Msys2_Do_Not_Install,
        Cfg_Bool,
        +("If true, Alire will not try to automatically" &
           " install msys2 system package manager. (Windows only)")),
 
-      (+"msys2.install_dir",
+      (+Keys.Msys2_Install_Dir,
        Cfg_Absolute_Path,
        +("Directory where Alire will detect and/or install" &
            " msys2 system package manager. (Windows only)")),
+
+      (+Keys.Msys2_Installer,
+       Cfg_String,
+       +("Filename of the executable msys2 installer, " &
+           "e.g. 'msys2-x86_64-20220319.exe'. (Windows only)")),
+
+      (+Keys.Msys2_Installer_URL,
+       Cfg_String,
+       +("URL of the executable msys2 installer, " &
+           "e.g. 'https://github.com/msys2/msys2-installer/releases/" &
+           "download/2022-03-19/msys2-x86_64-20220319.exe'. (Windows only)")),
 
       (+Keys.Update_Manually,
        Cfg_Bool,
@@ -141,6 +152,12 @@ private
        Cfg_Bool,
        +("If true, Alire will warn about the use of caret (^) "
          & "for pre-1 dependencies.")),
+
+      (+Keys.Warning_Old_Index,
+       Cfg_Bool,
+       +("When unset (default) or true, a warning will be emitted when " &
+           "using a compatible index with a lower version than the newest" &
+           " known.")),
 
       (+Keys.Toolchain_Assistant,
        Cfg_Bool,

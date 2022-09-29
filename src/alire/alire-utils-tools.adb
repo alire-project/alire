@@ -56,12 +56,14 @@ package body Alire.Utils.Tools is
             --  Cannot have package for an unknown distribution
             return "";
 
-         when Msys2 | Debian | Ubuntu | Arch | Centos | Fedora | Rhel =>
+         when Msys2 | Debian | Ubuntu | Arch | Centos | Fedora | Rhel | Suse
+           | Homebrew =>
             return (case Tool is
                        when Easy_Graph =>
                       (if Distribution = Centos or else
-                       Distribution = Fedora or else
-                       Distribution = Rhel
+                          Distribution = Fedora or else
+                          Distribution = Rhel or else
+                          Distribution = Suse
                        then "perl-Graph-Easy"
                        elsif Distribution /= Msys2 and Distribution /= Arch
                        then "libgraph-easy-perl"

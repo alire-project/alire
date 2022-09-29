@@ -2,7 +2,7 @@ with Ada.Containers;
 
 with Alire.Conditional;
 with Alire.Dependencies;
-with Alire.Index;
+with Alire.Index.Search;
 with Alire.Milestones;
 with Alire.Platforms.Current;
 with Alire.Releases.Containers;
@@ -11,7 +11,7 @@ with Alire.Roots.Optional;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils.Tables;
-with Alire.Utils;
+with Alire.Utils.TTY;
 
 with Semantic_Versioning.Extended;
 
@@ -22,6 +22,40 @@ package body Alr.Commands.Show is
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
    package Semver   renames Semantic_Versioning;
+
+   -------------------------
+   -- Find_Target_Release --
+   -------------------------
+   --  May raise Alire.Query_Unsuccessful
+   function Find_Target_Release (Cmd      : in out Command;
+                                 Name     : Alire.Crate_Name;
+                                 Versions : Semver.Extended.Version_Set;
+                                 Current  : Boolean)
+                                 return Alire.Releases.Release
+   is
+   begin
+      declare
+         Candidates : constant Alire.Releases.Containers.Release_Set  :=
+                        (if Current
+                         then Alire.Releases.Containers.To_Set
+                           (Cmd.Root.Release)
+                         else Alire.Index.Releases_Satisfying
+                           (Alire.Dependencies.New_Dependency (Name, Versions),
+                            Platform.Properties,
+                            Opts             =>
+                              (Detect_Externals => Cmd.Detect,
+                               Load_From_Disk   => True),
+                            Use_Equivalences => False,
+                            Available_Only   => False));
+
+         Rel : constant Alire.Releases.Release :=
+                 (if Candidates.Is_Empty
+                  then raise Alire.Query_Unsuccessful
+                  else Candidates.Last_Element); -- Last is newest
+      begin
+         return Rel;
+      end;
+   end Find_Target_Release;
 
    ------------
    -- Report --
@@ -41,23 +75,8 @@ package body Alr.Commands.Show is
       end if;
 
       declare
-         --  Nested so a failure in Query.Find is caught below
-
-         Candidates : constant Alire.Releases.Containers.Release_Set  :=
-                     (if Current
-                      then Alire.Releases.Containers.To_Set
-                        (Cmd.Root.Release)
-                      else Alire.Index.Releases_Satisfying
-                        (Alire.Dependencies.New_Dependency
-                           (Name, Versions),
-                         Platform.Properties,
-                         Use_Equivalences => False,
-                         Available_Only   => False));
-
          Rel : constant Alire.Releases.Release :=
-                 (if Candidates.Is_Empty
-                  then raise Alire.Query_Unsuccessful
-                  else Candidates.Last_Element); -- Last is newest
+                 Cmd.Find_Target_Release (Name, Versions, Current);
       begin
          if Cmd.System then
             Rel.Whenever (Platform.Properties).Print;
@@ -106,7 +125,6 @@ package body Alr.Commands.Show is
                end if;
             end;
          end if;
-
       end;
    exception
       when Alire.Query_Unsuccessful =>
@@ -118,6 +136,24 @@ package body Alr.Commands.Show is
                         & "Use --external to show them.");
          end if;
    end Report;
+
+   -----------------------
+   -- Report_Dependents --
+   -----------------------
+
+   procedure Report_Dependents (Cmd     : in out Command;
+                                Dep     : Alire.Dependencies.Dependency;
+                                Current : Boolean)
+   is
+   begin
+      --  Force detecting externals
+      Cmd.Detect := True;
+
+      Alire.Index.Search.Print_Dependents
+        (Cmd.Find_Target_Release (Dep.Crate, Dep.Versions, Current),
+         Transitive => Cmd.Dependents.all in "shortest" | "all",
+         Duplicates => Cmd.Dependents.all = "all");
+   end Report_Dependents;
 
    ----------------------
    -- Report_Externals --
@@ -212,6 +248,27 @@ package body Alr.Commands.Show is
                        (Name, Versions).TTY_Image);
    end Report_Jekyll;
 
+   --------------------
+   -- Show_Providers --
+   --------------------
+
+   function Show_Providers (Dep : Alire.Dependencies.Dependency) return Boolean
+   is
+      use Alire;
+   begin
+      if Index.All_Crate_Aliases.Contains (Dep.Crate) then
+         Trace.Info ("Crate " & Utils.TTY.Name (Dep.Crate) & " is abstract and"
+                     & " provided by:");
+         for Provider of Index.All_Crate_Aliases.all (Dep.Crate) loop
+            Trace.Info ("   " & Utils.TTY.Name (Provider));
+         end loop;
+
+         return True;
+      else
+         return False;
+      end if;
+   end Show_Providers;
+
    -------------
    -- Execute --
    -------------
@@ -221,31 +278,7 @@ package body Alr.Commands.Show is
                       Args :        AAA.Strings.Vector)
    is
    begin
-      if Args.Count > 1 then
-         Reportaise_Wrong_Arguments ("Too many arguments");
-      end if;
-
-      if Args.Count = 0 then
-         if Alire.Root.Current.Outside then
-            Reportaise_Wrong_Arguments
-              ("Cannot proceed without a crate name");
-         else
-            Cmd.Requires_Valid_Session;
-         end if;
-      end if;
-
-      if Cmd.External and then
-        (Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve or Cmd.Tree)
-      then
-         Reportaise_Wrong_Arguments
-           ("Switch --external can only be combined with --system");
-      end if;
-
-      if Args.Count = 1 or else
-        Cmd.Graph or else Cmd.Solve or else Cmd.Tree
-      then
-         Cmd.Requires_Full_Index;
-      end if;
+      Cmd.Validate (Args);
 
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
@@ -254,15 +287,23 @@ package body Alr.Commands.Show is
             else Alire.Dependencies.From_String
               (Cmd.Root.Release.Milestone.Image));
       begin
-         if Args.Count = 1 and not Alire.Index.Exists (Allowed.Crate) then
-            raise Alire.Query_Unsuccessful;
-         end if;
+         if Args.Count = 1 and then
+           not Alire.Index.Exists (Allowed.Crate,
+                                   Opts => (Detect_Externals => Cmd.Detect,
+                                            Load_From_Disk   => True))
+         then
+            --  Even if the crate does not exist, it may be an abstract crate
+            --  provided by some others (e.g. gnat_native -> gnat).
 
-         if Cmd.Detect then
-            Alire.Index.Detect_Externals (Allowed.Crate, Platform.Properties);
+            if Show_Providers (Allowed) then
+               return;
+            else
+               raise Alire.Query_Unsuccessful;
+            end if;
          end if;
 
          --  Execute
+
          if Cmd.Jekyll then
             Report_Jekyll (Cmd,
                            Allowed.Crate,
@@ -270,6 +311,8 @@ package body Alr.Commands.Show is
                            Args.Count = 0);
          elsif Cmd.External then
             Report_Externals (Allowed.Crate, Cmd);
+         elsif Cmd.Dependents.all /= "unset" then
+            Cmd.Report_Dependents (Allowed, Args.Count = 0);
          else
             Report (Allowed.Crate,
                     Allowed.Versions,
@@ -300,6 +343,16 @@ package body Alr.Commands.Show is
        .Append ("With --external, the external definitions for a crate are"
                 & " shown, instead of information about a particular release")
        .New_Line
+       .Append ("The --dependents switch accepts these values:")
+       .Append ("   * " & TTY.Terminal ("direct")
+         & " (default) shows direct dependents.")
+       .Append ("   * " & TTY.Terminal ("all")
+         & " shows all dependents, including indirect ones, "
+         & "and all dependency chains.")
+       .Append ("   * " & TTY.Terminal ("shortest")
+         & " shows all dependents, including "
+         & "indirect ones, but only once, and a shortest-length chain.")
+       .New_Line
        .Append (Crate_Version_Sets));
 
    --------------------
@@ -313,6 +366,12 @@ package body Alr.Commands.Show is
    is
       use CLIC.Subcommand;
    begin
+      Define_Switch (Config,
+                     Cmd.Dependents'Access,
+                     "", "--dependents?",
+                     "Show dependent crates (ARG=direct|shortest|all)",
+                     Argument => "=ARG");
+
       Define_Switch (Config,
                      Cmd.Detail'Access,
                      "", "--detail",
@@ -349,5 +408,59 @@ package body Alr.Commands.Show is
                      Cmd.Jekyll'Access,
                      "", "--jekyll", "Enable Jekyll output format");
    end Setup_Switches;
+
+   --------------
+   -- Validate --
+   --------------
+
+   procedure Validate (Cmd  : in out Command;
+                       Args : AAA.Strings.Vector) is
+   begin
+      if Args.Count > 1 then
+         Reportaise_Wrong_Arguments ("Too many arguments");
+      end if;
+
+      if Args.Count = 0 then
+         if Alire.Root.Current.Outside then
+            Reportaise_Wrong_Arguments
+              ("Cannot proceed without a crate name");
+         else
+            Cmd.Requires_Valid_Session;
+         end if;
+      end if;
+
+      if Cmd.External and then
+        (Cmd.Dependents.all /= "unset"
+         or Cmd.Detect or Cmd.Jekyll or Cmd.Graph or Cmd.Solve
+         or Cmd.Tree)
+      then
+         Reportaise_Wrong_Arguments
+           ("Switch --external can only be combined with --system");
+      end if;
+
+      if Cmd.Dependents.all /= "unset" then
+         if Alire.Utils.Count_True ((Cmd.Detect, Cmd.Detail, Cmd.External,
+                                     Cmd.Graph, Cmd.Solve, Cmd.System,
+                                     Cmd.Tree, Cmd.Jekyll)) > 0
+         then
+            Reportaise_Wrong_Arguments
+              ("Switch --dependents is not compatible with other switches");
+         end if;
+
+         --  Remove optional '='
+         if Cmd.Dependents'Length > 0 and then
+            Cmd.Dependents.all (Cmd.Dependents'First) = '='
+         then
+            Cmd.Dependents := new String'
+              (Cmd.Dependents
+                 (Cmd.Dependents'First + 1 .. Cmd.Dependents'Last));
+         end if;
+
+         if Cmd.Dependents.all not in "" | "direct" | "shortest" | "all" then
+            Reportaise_Wrong_Arguments
+              ("--dependents invalid value: " & Cmd.Dependents.all);
+         end if;
+      end if;
+   end Validate;
 
 end Alr.Commands.Show;

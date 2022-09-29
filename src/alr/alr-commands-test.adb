@@ -9,7 +9,9 @@ with Alire.Dependencies;
 with Alire.Directories;
 with Alire.Index;
 with Alire.Milestones;
+with Alire.Origins;
 with Alire.OS_Lib.Subprocess;
+with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
@@ -18,7 +20,6 @@ with Alire.Solver;
 with Alire.Utils;
 
 with Alr.Files;
-with Alr.Paths;
 with Alr.Testing.Collections;
 with Alr.Testing.Console;
 with Alr.Testing.JUnit;
@@ -33,6 +34,7 @@ package body Alr.Commands.Test is
 
    use type Ada.Containers.Count_Type;
 
+   package Paths    renames Alire.Paths;
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
 
@@ -42,30 +44,51 @@ package body Alr.Commands.Test is
    -- Check_Files --
    -----------------
 
-   function Check_Files (R : Alire.Index.Release) return Boolean is
+   function Check_Files (Output : in out AAA.Strings.Vector;
+                         R      : Alire.Index.Release) return Boolean
+   is
+      use AAA.Strings;
+      use Ada.Directories;
    begin
       --  Declared GPR files in include paths
       declare
          Guard : Folder_Guard (Enter_Folder (R.Base_Folder))
            with Unreferenced;
       begin
+
+         --  Check project files. We allow a binary release to not contain
+         --  project files, but if it declares a non-standard one (why?) it
+         --  should be there.
+
          for Gpr of R.Project_Files (Platform.Properties, With_Path => True)
          loop
-            if not OS_Lib.Is_Regular_File (Gpr) then
-               Trace.Error ("Declared project file not found: " & Gpr);
+            if OS_Lib.Is_Regular_File (Gpr) then
+               Output.Append_Line ("Found declared GPR file: " & Gpr);
+            elsif R.Origin.Kind in Alire.Origins.Binary_Archive and then
+              To_Lower_Case (Base_Name (Gpr)) = R.Name_Str
+            then
+               Output.Append_Line
+                 ("Warning: Binary release does not contain default "
+                  & "project file: " & Simple_Name (Gpr));
+            else
+               Output.Append_Line
+                 ("FAIL: Declared project file not found: " & Gpr
+                  & " while at " & Ada.Directories.Current_Directory);
                return False;
             end if;
          end loop;
       end;
 
       --  Generated executables
+
       for Exe of R.Executables (Platform.Properties) loop
          if Files.Locate_File_Under (Folder    => R.Base_Folder,
                                      Name      => Exe,
                                      Max_Depth => Natural'Last).Is_Empty
          then
-            Trace.Error
-              ("Declared executable not found after compilation: " & Exe);
+            Output.Append_Line
+              ("FAIL: Declared executable not found after compilation: "
+               & Exe);
             return False;
          end if;
       end loop;
@@ -136,9 +159,21 @@ package body Alr.Commands.Test is
                               --  Map current user
                               & Docker_Image;
 
+            Regular_Alr_Switches : constant AAA.Strings.Vector :=
+                                 Empty_Vector
+                                     & "-d"
+                                     & "-n"
+                                     & (if Alire.Force
+                                        then To_Vector ("--force")
+                                        else Empty_Vector);
+
             Custom_Alr : constant AAA.Strings.Vector :=
                            Empty_Vector
-                           & "alr" & "-c" & "/tmp/alire";
+                           & "alr"
+                           & (if Alire.Force
+                              then To_Vector ("--force")
+                              else Empty_Vector)
+                           & "-c" & "/tmp/alire";
             --  When running inside docker as regular user we need config to be
             --  stored in a writable folder.
 
@@ -149,10 +184,11 @@ package body Alr.Commands.Test is
             procedure Default_Test is
                Alr_Args : constant AAA.Strings.Vector :=
                             Empty_Vector &
-                            "-d" &
-                            "-n" &
+                            Regular_Alr_Switches &
                             "get" &
-                            "--build" &
+                            (if R.Origin.Kind in Alire.Origins.Binary_Archive
+                             then Empty_Vector
+                             else To_Vector ("--build")) &
                             R.Milestone.Image;
 
                Docker_Default : constant AAA.Strings.Vector :=
@@ -165,12 +201,14 @@ package body Alr.Commands.Test is
                Exit_Code : Integer;
             begin
                if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+                  Output.Append_Line ("Spawning: " & Docker_Default.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
                     (Docker_Default.First_Element,
                      Docker_Default.Tail,
                      Output,
                      Err_To_Out => True);
                else
+                  Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
                     (Alr_Default.First_Element,
                      Alr_Default.Tail,
@@ -183,7 +221,9 @@ package body Alr.Commands.Test is
                end if;
 
                --  Check declared gpr/executables in place
-               if not R.Origin.Is_System and then not Check_Files (R) then
+               if not R.Origin.Is_System and then
+                  not Check_Files (Output, R)
+               then
                   raise Child_Failed with "Declared executable(s) missing";
                end if;
             end Default_Test;
@@ -194,21 +234,31 @@ package body Alr.Commands.Test is
 
             procedure Custom_Test is
                Exit_Code : Integer;
+               Alr_Custom_Cmd : constant Vector :=
+                                  "alr"
+                                  & Regular_Alr_Switches
+                                  & "get" & R.Milestone.Image;
+               Dkr_Custom_Cmd : constant Vector :=
+                                  Docker_Prefix
+                                  & Custom_Alr
+                                  & "get"
+                                  & R.Milestone.Image;
             begin
 
                --  Fetch the crate
 
                if Alire.Utils.Command_Line_Contains (Docker_Switch) then
+                  Output.Append_Line ("Spawning: " & Dkr_Custom_Cmd.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
-                    (Docker_Prefix.First_Element,
-                     Docker_Prefix.Tail
-                     & Custom_Alr & "get" & R.Name_Str,
+                    (Dkr_Custom_Cmd.First_Element,
+                     Dkr_Custom_Cmd.Tail,
                      Output,
                      Err_To_Out => True);
                else
+                  Output.Append_Line ("Spawning: " & Alr_Custom_Cmd.Flatten);
                   Exit_Code := Unchecked_Spawn_And_Capture
-                    ("alr",
-                     Empty_Vector & "-d" & "-n" & "get" & R.Name_Str,
+                    (Alr_Custom_Cmd.First_Element,
+                     Alr_Custom_Cmd.Tail,
                      Output,
                      Err_To_Out => True);
                end if;
@@ -322,11 +372,12 @@ package body Alr.Commands.Test is
          end if;
 
          Make_Dir
-           (Create (+R.Base_Folder) / Create (+Paths.Alr_Working_Folder));
+           (Create (+R.Base_Folder)
+            / Create (+Paths.Working_Folder_Inside_Root));
          --  Might not exist for system/failed/skipped
-         Output.Write (R.Base_Folder /
-                         Paths.Alr_Working_Folder /
-                           "alr_test_" & Timestamp & ".log");
+         Output.Write (R.Base_Folder
+                       / Paths.Working_Folder_Inside_Root
+                       / "alr_test_" & Timestamp & ".log");
       end Test_Release;
 
    begin
@@ -338,9 +389,24 @@ package body Alr.Commands.Test is
       Reporters.Start_Run ("alr_test_" & Timestamp,
                            Natural (Releases.Length));
 
-      for R of Releases loop
-         Test_Release (R);
-      end loop;
+      declare
+         Old_Level : constant Simple_Logging.Levels := Alire.Log_Level;
+      begin
+
+         --  While we test the releases we do not want any info level output to
+         --  interfere. So, if the level is set at the default, we temporarily
+         --  silence it.
+
+         if Old_Level = Info then
+            Alire.Log_Level := Simple_Logging.Warning;
+         end if;
+
+         for R of Releases loop
+            Test_Release (R);
+         end loop;
+
+         Alire.Log_Level := Old_Level;
+      end;
 
       Reporters.End_Run;
 
@@ -516,8 +582,6 @@ package body Alr.Commands.Test is
               ("No releases specified; use --full to test'em all!");
          end if;
       end if;
-
-      Cmd.Requires_Full_Index;
 
       --  Pre-find candidates to not have duplicate tests if overlapping
       --  requested.

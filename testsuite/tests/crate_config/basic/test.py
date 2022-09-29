@@ -4,7 +4,7 @@ Test basic crate configuration
 
 from drivers.alr import run_alr
 from drivers.asserts import assert_eq
-from drivers.helpers import distribution
+from drivers.helpers import distribution, host_architecture, host_os
 
 import os
 import platform
@@ -13,13 +13,9 @@ import platform
 run_alr('get', 'hello_world')
 os.chdir("hello_world_0.1.0_filesystem/")
 
-expected_host_arch = platform.machine().lower()
-if expected_host_arch == "amd64":
-    expected_host_arch = "x86_64"
+expected_host_arch = host_architecture()
 
-expected_host_os = platform.system().lower()
-if expected_host_os == "darwin":
-    expected_host_os = 'macos'
+expected_host_os = host_os()
 
 expected_host_distro = distribution().lower()
 

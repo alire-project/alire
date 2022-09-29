@@ -1,5 +1,6 @@
 with Ada.Containers;
 with Ada.Containers.Indefinite_Vectors;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Finalization;
 
 package Alire.Utils with Preelaborate is
@@ -65,6 +66,26 @@ package Alire.Utils with Preelaborate is
                              Val : Other_Vector_Value);
    function Convert (V : Vector) return Other_Vector;
    --  Convert between two vector types
+
+   generic
+      with package Maps is new Ada.Containers.Indefinite_Ordered_Maps
+        (Key_Type => String,
+         Element_Type => <>,
+         "<" => <>,
+         "=" => <>);
+      Separator  : String := " ";
+      When_Empty : String := "(empty)";
+   function Image_Keys_One_Line (M : Maps.Map) return String;
+   --  Flatten String keys of Indefinite_Ordered_Maps into string
+   --  representation.
+
+   function First_Match (Regex : String; Text : String) return String
+     with Pre => (for some Char of Regex => Char = '(');
+   --  Wrapper on GNAT.Regpat. It returns the first match found, which is not
+   --  necessarily the first parenthesized expression. E.g., in a pattern like:
+   --  (abc)|(efg), it will return the "efg" match, even if to GNAT.Regpat that
+   --  is the second matching expression. In case of no match, it will return
+   --  an empty string. At least one capture must be attempted in the Regex.
 
 private
 

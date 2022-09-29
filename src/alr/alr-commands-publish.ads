@@ -47,7 +47,7 @@ package Alr.Commands.Publish is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Help with the publication of a new release");
+   is ("Help publishing a new version of a crate");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

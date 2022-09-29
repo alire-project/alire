@@ -24,4 +24,6 @@ package Alire.Dependencies.States.Maps is
 
    overriding function To_TOML (This : Map) return TOML.TOML_Value;
 
+   function Image_One_Line (This : Map) return String;
+
 end Alire.Dependencies.States.Maps;

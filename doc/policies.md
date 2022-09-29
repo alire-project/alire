@@ -37,9 +37,9 @@ major/minor/patch/build version changes), but not modified.
  - Avoid using `ada` as a prefix for your crate name, this will make the
    project harder to find in a list. `ada` suffix is ok when the project is a
    binding for an existing library (e.g. `sdlada`, `gtkada`).
- 
+
  - Split big projects in multiple crates:
-    
+
     - If your project is a collection of components (like GNATcoll for
       instance) and each component has different dependencies, you should
       consider splitting the collection into multiple Alire crates. The
@@ -48,11 +48,23 @@ major/minor/patch/build version changes), but not modified.
       [gnatcoll_sqlite](https://alire.ada.dev/crates/gnatcoll_sqlite),
       [gnatcoll_sql](https://alire.ada.dev/crates/gnatcoll_sql),
       [gnatcoll_postgres](https://alire.ada.dev/crates/gnatcoll_postgres)).
-    
+
     - If your project is an application/executable/tool, some parts of the
       application may be interesting on their own and could benefit the
       ecosystem. For instance a parser for a standard file format would be
       useful across projects.
+
+- Separate supporting projects into nested crates, in particular when
+  developing libraries:
+
+  - Tests, demos, examples, etc., can be provided in nested crates so they can
+    be conveniently used locally when needed without causing extra build load
+    on clients. See the documentation on
+    [local pins](catalog-format-spec.md#using-pins-for-crate-testing) for
+    details.
+
+  - The manifests of these nested crates need not to be published to the
+    community index if they do not provide an application of general interest.
 
  - GPR project file clashes: to prevent issues when combining the GPR project
    files of different crates, we recommend to follow the rules below:

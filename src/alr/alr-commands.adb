@@ -10,7 +10,7 @@ with Alire.Platforms;
 with Alire_Early_Elaboration;
 with Alire.Config.Edit;
 with Alire.Errors;
-with Alire.Features.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Platforms.Current;
@@ -18,6 +18,7 @@ with Alire.Root;
 with Alire.Solutions;
 with Alire.Toolchains;
 
+with Alr.Commands.Action;
 with Alr.Commands.Build;
 with Alr.Commands.Clean;
 with Alr.Commands.Config;
@@ -76,6 +77,9 @@ package body Alr.Commands is
    No_TTY : aliased Boolean := False;
    --  Used to disable control characters in output
 
+   Version_Only : aliased Boolean := False;
+   --  Just display the current version and exit
+
    ---------------
    -- Put_Error --
    ---------------
@@ -107,7 +111,7 @@ package body Alr.Commands is
       Sub_Cmd.Set_Alias ("gnatcov",
                          AAA.Strings.Empty_Vector
                          .Append ("exec")
-                         .Append ("-P1")
+                         .Append ("-P2")
                          .Append ("--")
                          .Append ("gnatcov"));
    end Set_Builtin_Aliases;
@@ -156,6 +160,11 @@ package body Alr.Commands is
                      Long_Switch => "--prefer-oldest",
                      Help        => "Prefer oldest versions instead of " &
                        "newest when resolving dependencies");
+
+      Define_Switch (Config,
+                     Version_Only'Access,
+                     Long_Switch => "--version",
+                     Help        => "Displays version and exits");
 
       Define_Switch (Config,
                      Log_Quiet'Access,
@@ -235,6 +244,23 @@ package body Alr.Commands is
       raise Wrong_Command_Arguments with Alire.Errors.Set (Message);
    end Reportaise_Wrong_Arguments;
 
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load (Cmd       : Command'Class;
+                   Crate     : Alire.Crate_Name;
+                   Externals : Boolean := False;
+                   Strict    : Boolean := False)
+   is
+      pragma Unreferenced (Cmd);
+   begin
+      Alire.Index_On_Disk.Loading.Load
+        (Crate            => Crate,
+         Detect_Externals => Externals,
+         Strict           => Strict);
+   end Load;
+
    -------------------------
    -- Requires_Full_Index --
    -------------------------
@@ -244,10 +270,8 @@ package body Alr.Commands is
                                   Force_Reload : Boolean := False) is
       pragma Unreferenced (Cmd);
    begin
-      Alire.Features.Index.Setup_And_Load
-        (From   => Alire.Config.Edit.Indexes_Directory,
-         Strict => Strict,
-         Force  => Force_Reload);
+      Alire.Index_On_Disk.Loading.Load_All (Strict => Strict,
+                                            Force  => Force_Reload).Assert;
    end Requires_Full_Index;
 
    ----------------------------
@@ -281,7 +305,6 @@ package body Alr.Commands is
       if Cmd not in Commands.Toolchain.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
-         Cmd.Requires_Full_Index;
          Alire.Toolchains.Assistant (Conf.Global);
       end if;
 
@@ -324,7 +347,6 @@ package body Alr.Commands is
 
                   if Checked.Solution.Is_Attempted then
                      --  Check deps on disk match those in lockfile
-                     Cmd.Requires_Full_Index (Strict => False);
                      Checked.Sync_From_Manifest (Silent   => False,
                                                  Interact => False);
                      return;
@@ -377,7 +399,6 @@ package body Alr.Commands is
          --  upcoming) we are done. Otherwise, do a silent update.
 
          if Sync then
-            Cmd.Requires_Full_Index (Strict => False);
             Checked.Sync_From_Manifest (Silent   => False,
                                         Interact => False,
                                         Force    => True);
@@ -416,6 +437,12 @@ package body Alr.Commands is
       Log_Command_Line;
 
       Sub_Cmd.Parse_Global_Switches;
+
+      --  Early catch of single --version switch without command
+      if Version_Only then
+         Version.Print_Version;
+         return;
+      end if;
 
       if No_TTY then
          CLIC.TTY.Force_Disable_TTY;
@@ -533,28 +560,30 @@ begin
    -- Commands --
    Sub_Cmd.Register ("General", new Sub_Cmd.Builtin_Help);
    Sub_Cmd.Register ("General", new Config.Command);
-   Sub_Cmd.Register ("General", new Printenv.Command);
    Sub_Cmd.Register ("General", new Toolchain.Command);
    Sub_Cmd.Register ("General", new Version.Command);
 
-   Sub_Cmd.Register ("Build", new Build.Command);
-   Sub_Cmd.Register ("Build", new Clean.Command);
-   Sub_Cmd.Register ("Build", new Dev.Command);
-   Sub_Cmd.Register ("Build", new Edit.Command);
-   Sub_Cmd.Register ("Build", new Run.Command);
-   Sub_Cmd.Register ("Build", new Test.Command);
-   Sub_Cmd.Register ("Build", new Exec.Command);
-
    Sub_Cmd.Register ("Index", new Get.Command);
    Sub_Cmd.Register ("Index", new Index.Command);
-   Sub_Cmd.Register ("Index", new Init.Command);
-   Sub_Cmd.Register ("Index", new Pin.Command);
    Sub_Cmd.Register ("Index", new Search.Command);
    Sub_Cmd.Register ("Index", new Show.Command);
-   Sub_Cmd.Register ("Index", new Update.Command);
-   Sub_Cmd.Register ("Index", new Withing.Command);
+
+   Sub_Cmd.Register ("Crate", new Build.Command);
+   Sub_Cmd.Register ("Crate", new Clean.Command);
+   Sub_Cmd.Register ("Crate", new Edit.Command);
+   Sub_Cmd.Register ("Crate", new Exec.Command);
+   Sub_Cmd.Register ("Crate", new Init.Command);
+   Sub_Cmd.Register ("Crate", new Pin.Command);
+   Sub_Cmd.Register ("Crate", new Printenv.Command);
+   Sub_Cmd.Register ("Crate", new Run.Command);
+   Sub_Cmd.Register ("Crate", new Update.Command);
+   Sub_Cmd.Register ("Crate", new Withing.Command);
 
    Sub_Cmd.Register ("Publish", new Publish.Command);
+
+   Sub_Cmd.Register ("Testing", new Action.Command);
+   Sub_Cmd.Register ("Testing", new Dev.Command);
+   Sub_Cmd.Register ("Testing", new Test.Command);
 
    -- Help topics --
    Sub_Cmd.Register (new Topics.Naming_Convention.Topic);

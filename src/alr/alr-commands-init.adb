@@ -37,6 +37,8 @@ package body Alr.Commands.Init is
          then Get_Current_Dir
          else Create (+Name, Normalize => True));
       Src_Directory : constant Virtual_File := Directory / "src";
+      Share_Directory : constant Virtual_File :=
+         Directory / "share" / Filesystem_String (Lower_Name);
 
       File : TIO.File_Type;
 
@@ -98,19 +100,6 @@ package body Alr.Commands.Init is
          --  Use more than 80 columns for more readable strings
          pragma Style_Checks ("M200");
 
-         --  --  Config project file
-         --  if not Create (Config_Filename) then
-         --     Trace.Warning ("Cannot create '" & Config_Filename & "'");
-         --     return;
-         --  end if;
-         --  Put_Line ("abstract project " & Mixed_Name & "_Config is");
-         --  Put_Line ("   Crate_Version := ""0.0.0"";");
-         --  Put_Line ("   Ada_Compiler_Switches := " &
-         --              "External_As_List (""ADAFLAGS"", "" "");");
-         --
-         --  TIO.Put (File, "end " & Mixed_Name & "_Config;");
-         --  TIO.Close (File);
-
          --  Main project file
          if not Create (Filename) then
             Trace.Warning ("Cannot create '" & Filename & "'");
@@ -124,7 +113,7 @@ package body Alr.Commands.Init is
             Put_Line ("   for Library_Version use Project'Library_Name & "".so."" & " & Mixed_Name & "_Config.Crate_Version;");
             Put_New_Line;
          end if;
-         Put_Line ("   for Source_Dirs use (""src"");");
+         Put_Line ("   for Source_Dirs use (""src/"", ""config/"");");
          Put_Line ("   for Object_Dir use ""obj/"" & " & Mixed_Name & "_Config.Build_Profile;");
          Put_Line ("   for Create_Missing_Dirs use ""True"";");
          if For_Library then
@@ -147,6 +136,10 @@ package body Alr.Commands.Init is
          Put_Line ("   package Binder is");
          Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
          Put_Line ("   end Binder;");
+         Put_New_Line;
+         Put_Line ("   package Install is");
+         Put_Line ("      for Artifacts (""."") use (""share"");");
+         Put_Line ("   end Install;");
          Put_New_Line;
          TIO.Put (File, "end " & Mixed_Name & ";");
          pragma Style_Checks ("M80");
@@ -251,7 +244,7 @@ package body Alr.Commands.Init is
             end if;
             Put_Line ("name = " & Q (Lower_Name));
             Put_Line ("description = " & Q ("Shiny new project"));
-            Put_Line ("version = " & Q ("0.0.0"));
+            Put_Line ("version = " & Q ("0.1.0-dev"));
             Put_New_Line;
             Put_Line ("authors = " & Arr (Q (Username)));
             Put_Line ("maintainers = "
@@ -308,6 +301,7 @@ package body Alr.Commands.Init is
       if not Cmd.No_Skel then
          Generate_Project_File;
          Src_Directory.Make_Dir;
+         Share_Directory.Make_Dir;
          if For_Library then
             Generate_Root_Package;
          else

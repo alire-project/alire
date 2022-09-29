@@ -25,7 +25,7 @@ command = ["hello"]
 linux = true
 [available."case(os)".windows."case(word-size)"]
 "..." = false
-bits_64 = true
+bits-64 = true
 [executables."case(word-size)"]
 "..." = "bye"
 bits-32 = "hello32"
@@ -44,10 +44,27 @@ OS = "macos"
 
 [gpr-set-externals."case(os)".windows]
 OS = "windows"
+
+[gpr-set-externals."case(host-arch)"."..."]
+HOST_ARCH = "other"
+[gpr-set-externals."case(host-arch)".arm]
+HOST_ARCH = "arm"
+[gpr-set-externals."case(host-arch)".aarch64]
+HOST_ARCH = "aarch64"
+[gpr-set-externals."case(host-arch)".aarch64-be]
+HOST_ARCH = "aarch64-be"
+[gpr-set-externals."case(host-arch)".I386]
+HOST_ARCH = "I386"
+[gpr-set-externals."case(host-arch)".I686]
+HOST_ARCH = "I686"
+[gpr-set-externals."case(host-arch)".x86-64]
+HOST_ARCH = "x86_64"
+
 [project-files."case(word-size)"]
 "..." = ["bye.gpr"]
 bits-32 = ["hello.gpr", "hello32.gpr"]
 bits-64 = ["hello.gpr"]
+
 
 [origin]
 url = "file:../../../crates/hello_1.0.1"

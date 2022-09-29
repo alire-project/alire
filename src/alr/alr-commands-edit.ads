@@ -25,7 +25,7 @@ package Alr.Commands.Edit is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Start GNATstudio with Alire build environment setup");
+   is ("Start GNAT Studio with Alire build environment setup");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

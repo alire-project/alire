@@ -1,8 +1,8 @@
 with Ada.Directories;
 
+with Alire.Config;
 with Alire.Crates;
 with Alire.Directories;
-with Alire.Errors;
 with Alire.TOML_Adapters;
 
 with Alire.Hashes.SHA256_Impl; pragma Unreferenced (Alire.Hashes.SHA256_Impl);
@@ -101,7 +101,48 @@ package body Alire.TOML_Index is
       Value    : TOML.TOML_Value;
       Key      : constant String := "version";
       Version  : Semantic_Versioning.Version;
+      Suggest_Update : Boolean := False;
+
       use type Semantic_Versioning.Version;
+
+      Warn_Of_Old_Compatible : constant Boolean :=
+                             Config.DB.Get (Config.Keys.Warning_Old_Index,
+                                            Config.Defaults.Warning_Old_Index);
+
+      ----------------------
+      -- Compare_Branches --
+      ----------------------
+
+      procedure Compare_Branches (Local : String) is
+         Local_Kind    : constant String := AAA.Strings.Head (Local, "-");
+      begin
+         if Local_Kind /= Alire.Index.Branch_Kind and then
+           Warn_Of_Old_Compatible
+         then
+            Put_Warning
+              ("This alr build expects an index branch with prefix '"
+               & TTY.Emph (Alire.Index.Branch_Kind)
+               & "' but your community index branch is '"
+               & TTY.Emph (Local) & "'",
+               Disable_Config => Config.Keys.Warning_Old_Index);
+            Suggest_Update := True;
+         end if;
+      end Compare_Branches;
+
+      --------------------------------
+      -- Get_Local_Community_Branch --
+      --------------------------------
+
+      function Get_Local_Community_Branch return String is
+      begin
+         --  This will raise if somehow the index is not in a git repository
+         return VCSs.Git.Handler.Branch (Index.Index_Directory);
+      exception
+         when E : Checked_Error =>
+            Log_Exception (E);
+            return "undefined";
+      end Get_Local_Community_Branch;
+
    begin
       --  Read "index.toml"
 
@@ -121,58 +162,66 @@ package body Alire.TOML_Index is
                     & "only 'version' is expected");
       else
 
+         Version := Semantic_Versioning.Parse (Value.Get (Key).As_String,
+                                               Relaxed => False);
+
          --  Check for a branch mismatch first
 
          if Index.Name = Alire.Index.Community_Name then
-            if VCSs.Git.Handler.Branch (Index.Index_Directory) /=
-              Alire.Index.Community_Branch
-            then
-               Trace.Debug ("Expected community index branch: "
-                            & Alire.Index.Community_Branch);
-               Trace.Debug ("But got community index branch: "
-                            & VCSs.Git.Handler.Branch (Index.Index_Directory));
-               Set_Error
-                 (Result, Index.Index_Directory,
-                  Errors.Wrap
-                    ("Mismatched branch in checked out community index",
-                     Errors.Wrap
-                       ("Expected branch '" & Alire.Index.Community_Branch
-                        & "' but found '"
-                        & VCSs.Git.Handler.Branch (Index.Index_Directory)
-                        & "'",
-                        Errors.Wrap
-                          ("If you have updated alr, you may need to reset "
-                           & " the community index with"
-                           & " 'alr index --reset-community'",
-                           "Note that this operation will delete any local"
-                           & " changes to the community index."))));
-
-               return;
-            end if;
+            Compare_Branches (Local => Get_Local_Community_Branch);
          end if;
 
          --  Check that index version is the expected one, or give minimal
          --  advice if it does not match.
 
-         Version := Semantic_Versioning.Parse (Value.Get (Key).As_String,
-                                               Relaxed => False);
+         if Alire.Index.Valid_Versions.Contains (Version) and then
+           Version /= Alire.Index.Version and then
+           Warn_Of_Old_Compatible
+         then
+            Put_Warning ("Index '" & TTY.Emph (Index.Name)
+                         & "' version (" & Version.Image
+                         & ") is older than the newest supported by alr ("
+                         & Alire.Index.Version.Image & ")",
+                         Disable_Config => Config.Keys.Warning_Old_Index);
+            Suggest_Update := True;
+         elsif not Alire.Index.Valid_Versions.Contains (Version) then
 
-         if Alire.Index.Version < Version then
-            Set_Error (Result, Filename,
-                       "index version (" & Version.Image
-                       & ") is newer than that expected by alr ("
-                       & Alire.Index.Version.Image & ")."
-                       & " You may have to update alr");
-         elsif Version < Alire.Index.Version then
-            Set_Error (Result, Filename,
-                       "index version (" & Version.Image
-                       & ") is older than that expected by alr ("
-                       & Alire.Index.Version.Image & ")." & ASCII.LF
-                       & " Updating your local index might solve the issue "
+            --  Index is either too old or too new
+
+            if Alire.Index.Version < Version then
+               Set_Error (Result, Filename,
+                          "index version (" & Version.Image
+                          & ") is newer than that expected by alr ("
+                          & Alire.Index.Version.Image & ")."
+                          & " You may have to update alr");
+            elsif Version < Semver.Parse (Alire.Index.Min_Compatible_Version)
+            then
+               Set_Error
+                 (Result, Filename,
+                  "index version (" & Version.Image
+                  & ") is too old. The minimum compatible version is "
+                  & Alire.Index.Min_Compatible_Version & ASCII.LF
+                  & (if Index.Name = Alire.Index.Community_Name then
+                       " Resetting the community index ("
+                       & TTY.Terminal ("alr index --reset--community")
+                       & ") may solve the issue. " & ASCII.LF
+                    else
+                       " Updating your local index might solve the issue "
                        & "(alr index --update-all). " & ASCII.LF
                        & "Otherwise, remove the " & "index with name '"
                        & TTY.Emph (Index.Name)
-                       & "' (alr index --del " & Index.Name & ")");
+                       & "' (alr index --del " & Index.Name & ")"));
+            end if;
+
+         end if;
+
+         if Suggest_Update and then Warn_Of_Old_Compatible then
+            Put_Info
+              ("If you experience any problems loading this index, "
+               & "you may need to reset the community index with"
+               & " '" & TTY.Terminal ("alr index --reset-community") & "'. "
+               & "Note that this operation will delete any local"
+               & " changes to the community index.");
          end if;
 
          if Alire.Index.Version /= Version then
@@ -189,6 +238,37 @@ package body Alire.TOML_Index is
                     "malformed version string: " & Value.Get (Key).As_String);
    end Check_Index;
 
+   -----------------
+   -- Locate_Root --
+   -----------------
+
+   function Locate_Root (Index  : Index_On_Disk.Index'Class;
+                         Result : out Load_Result) return Any_Path is
+      Repo_Version_Files : constant AAA.Strings.Vector :=
+                             Alire.Directories.Find_Files_Under
+                               (Folder    => Index.Index_Directory,
+                                Name      => "index.toml",
+                                Max_Depth => 1);
+   begin
+      case Natural (Repo_Version_Files.Length) is
+         when 0 =>
+            Result := Outcome_Failure ("No index.toml file found in index");
+            return "";
+         when 1 =>
+            return Root : constant Any_Path :=
+              Ada.Directories.Containing_Directory
+                (Repo_Version_Files.First_Element)
+            do
+               Trace.Detail ("Loading index found at " & Root);
+               Result := Outcome_Success;
+            end return;
+         when others =>
+            Result :=
+              Outcome_Failure ("Several index.toml files found in index");
+            return "";
+      end case;
+   end Locate_Root;
+
    ----------
    -- Load --
    ----------
@@ -199,37 +279,7 @@ package body Alire.TOML_Index is
       Result   : out Load_Result)
    is
 
-      -----------------
-      -- Locate_Root --
-      -----------------
-
-      function Locate_Root (Result : out Load_Result) return Any_Path is
-         Repo_Version_Files : constant AAA.Strings.Vector :=
-                                Alire.Directories.Find_Files_Under
-                                  (Folder    => Index.Index_Directory,
-                                   Name      => "index.toml",
-                                   Max_Depth => 1);
-      begin
-         case Natural (Repo_Version_Files.Length) is
-            when 0 =>
-               Result := Outcome_Failure ("No index.toml file found in index");
-               return "";
-            when 1 =>
-               return Root : constant Any_Path :=
-                 Ada.Directories.Containing_Directory
-                   (Repo_Version_Files.First_Element)
-               do
-                  Trace.Detail ("Loading index found at " & Root);
-                  Result := Outcome_Success;
-               end return;
-            when others =>
-               Result :=
-                 Outcome_Failure ("Several index.toml files found in index");
-               return "";
-         end case;
-      end Locate_Root;
-
-      Root : constant Any_Path := Locate_Root (Result);
+      Root : constant Any_Path := Locate_Root (Index, Result);
       --  Locate a dir containing a 'index.toml' metadata file inside the repo.
       --  This is the directory containing the actual crates.
    begin
@@ -258,6 +308,40 @@ package body Alire.TOML_Index is
          when E : Checked_Error =>
             Result := Outcome_From_Exception (E);
       end;
+   end Load;
+
+   ----------
+   -- Load --
+   ----------
+
+   procedure Load
+     (Index    : Index_On_Disk.Index'Class;
+      Crate    : Crate_Name;
+      Strict   : Boolean)
+   is
+      use Alire.Directories.Operators;
+
+      Result : Load_Result;
+      Root   : constant Any_Path := Locate_Root (Index, Result);
+      --  Locate a dir containing a 'index.toml' metadata file inside the repo.
+      --  This is the directory containing the actual crates.
+      Crate_Root : constant Any_Path := Root / Crate.Index_Prefix / (+Crate);
+   begin
+      Result.Assert;
+
+      TOML_Index.Strict := Load.Strict;
+
+      Trace.Debug ("Loading single crate " & Utils.TTY.Name (Crate)
+                   & " from " & Crate_Root);
+
+      if GNAT.OS_Lib.Is_Directory (Crate_Root) then
+         Alire.Directories.Traverse_Tree
+           (Start   => Crate_Root,
+            Doing   => Load_Manifest'Access,
+            Recurse => True);
+      else
+         Trace.Debug ("Requested crate does not exist in index");
+      end if;
    end Load;
 
    -------------------

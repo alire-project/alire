@@ -3,15 +3,16 @@ with Ada.Text_IO;
 
 with AAA.Strings;
 
-with Alire.Config.Edit;
+with Alire.Config;
 with Alire.Crates;
 with Alire.Directories;
 with Alire.Errors;
-with Alire.Features.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
 with Alire.Hashes;
 with Alire.Index;
 with Alire.Manifest;
+with Alire.Optional;
 with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
@@ -53,6 +54,7 @@ package body Alire.Publish is
                        .Append ("bitbucket.org")
                        .Append ("github.com")
                        .Append ("gitlab.com")
+                       .Append ("savannah.nongnu.org")
                        .Append ("sf.net");
 
    type Data is limited record
@@ -183,12 +185,11 @@ package body Alire.Publish is
 
       --  Check not duplicated
 
-      Features.Index.Setup_And_Load (From   => Config.Edit.Indexes_Directory,
-                                     Strict => True);
+      Index_On_Disk.Loading.Load_All (Strict => True).Assert;
       if Index.Exists (Release.Name, Release.Version) then
-         Raise_Checked_Error
-           ("Target release " & Release.Milestone.TTY_Image
-            & " already exist in a loaded index");
+         Recoverable_Error
+            ("Target release " & Release.Milestone.TTY_Image
+             & " already exist in a loaded index");
       end if;
 
       --  Present release information to user
@@ -818,14 +819,14 @@ package body Alire.Publish is
              --  as the scheme).
            or else
             (for some Site of Trusted_Sites =>
-               URI.Authority (URL) = Site or else
+               URI.Authority_Without_Credentials (URL) = Site or else
                Has_Suffix (URI.Authority (URL), "." & Site))
          then
             Put_Success ("Origin is hosted on trusted site: "
-                         & URI.Authority (URL));
+                         & URI.Authority_Without_Credentials (URL));
          else
             Raise_Checked_Error ("Origin is hosted on unknown site: "
-                                 & URI.Authority (URL));
+                                 & URI.Authority_Without_Credentials (URL));
          end if;
       end if;
 
@@ -967,9 +968,11 @@ package body Alire.Publish is
       ------------------------
 
       procedure Check_Nested_Crate (Root_Path : Absolute_Path) is
-         Git_Info  : constant VCSs.Git.Worktree_Data := Git.Worktree (Path);
+         Git_Root : constant Optional.Absolute_Path := Git.Root;
       begin
-         if not VFS.Is_Same_Dir (+Git_Info.Worktree, Root_Path) then
+         if Git_Root.Has_Element and then
+           not VFS.Is_Same_Dir (Git_Root.Value, Root_Path)
+         then
 
             --  To make our life easier for now, do not allow complex cases
             --  like using a manifest from elsewhere to package a nested crate.
@@ -982,7 +985,7 @@ package body Alire.Publish is
 
             Put_Info
               ("Crate at " & TTY.URL (Root_Path)
-               & " is nested in repo at " & TTY.URL (+Git_Info.Worktree));
+               & " is nested in repo at " & TTY.URL (Git_Root.Value));
 
             declare
                Nested_Path : constant Relative_Path :=
@@ -1134,7 +1137,7 @@ package body Alire.Publish is
                          --  without commit
                          elsif URI.Scheme (URL) in URI.VCS_Schemes or else
                             VCSs.Git.Known_Transformable_Hosts.Contains
-                              (URI.Authority (URL))
+                              (URI.Authority_Without_Credentials (URL))
                          then
                             raise Checked_Error with
                               "A commit id is mandatory for a VCS origin"

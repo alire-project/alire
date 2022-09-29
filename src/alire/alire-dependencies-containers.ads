@@ -33,13 +33,19 @@ package Alire.Dependencies.Containers with Preelaborate is
      Ada.Containers.Indefinite_Ordered_Sets (Dependency,
                                              Lexicographical_Sort);
 
-   subtype Set is Sets.Set;
+   type Set is new Sets.Set with null record;
 
-   function To_Set (This : List) return Sets.Set;
+   Empty_Set : constant Set;
+
+   function To_Set (This : List'Class) return Set;
    --  For presentation, we prefer dependencies to be shown in order
+
+   function Image_One_Line (This : Set) return String;
 
 private
 
    Empty_Map : constant Map := (Maps.Empty_Map with null record);
+
+   Empty_Set : constant Set := (Sets.Empty_Set with null record);
 
 end Alire.Dependencies.Containers;

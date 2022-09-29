@@ -29,11 +29,11 @@ os.chdir(os.path.join("monoproject", "myparent", "mychild"))
 run_alr("show")  # Verify the crate is detected properly
 
 # This call publishes and "submits" the release to our local index
-alr_publish("mychild", "0.0.0", index_path=index_dir)
+alr_publish("mychild", "0.1.0-dev", index_path=index_dir)
 
 # Publish also its parent for later test
 os.chdir("..")
-alr_publish("myparent", "0.0.0", index_path=index_dir)
+alr_publish("myparent", "0.1.0-dev", index_path=index_dir)
 
 # Verify that the crate can be got and compiled, and expected location
 os.chdir(start_dir)
@@ -54,7 +54,7 @@ assert os.path.isdir(os.path.join("alire", "cache", "dependencies",
 # Verify that "with"ing the parent does not result in a new checkout
 alr_with("myparent", update=False)
 p = run_alr("-v", "update", quiet=False)
-assert "Skipping checkout of already available myparent=0.0.0" in p.out, \
+assert "Skipping checkout of already available myparent=0.1.0-dev" in p.out, \
     "Expected output not found: " + p.out
 
 # Verify the build is successful. As the dependencies were created with --bin,

@@ -87,6 +87,10 @@ package Alire with Preelaborate is
 
    function TTY_Image (This : Crate_Name) return String;
 
+   function Index_Prefix (This : Crate_Name) return String
+     with Post => Index_Prefix'Result'Length = 2;
+   --  The two first letters in the crate name
+
    subtype Restricted_Name is String with Dynamic_Predicate =>
      Restricted_Name'Length >= Min_Name_Length and then
      Restricted_Name (Restricted_Name'First) /= '_' and then
@@ -139,6 +143,9 @@ package Alire with Preelaborate is
 
    subtype Absolute_Path is Any_Path
      with Dynamic_Predicate => Check_Absolute_Path (Absolute_Path);
+
+   function Absolute_Path_Image (Path : Absolute_Path) return String;
+   --  Needed for later instantiations
 
    subtype Unbounded_Absolute_Path is UString
      with Dynamic_Predicate =>
@@ -260,8 +267,12 @@ package Alire with Preelaborate is
    procedure Put_Info (Text : String; Level : Trace.Levels := Info);
    --  Prepend Text with a blue "🛈", or "Note: " & if no color/tty.
 
-   procedure Put_Warning (Text : String; Level : Trace.Levels := Info);
-   --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty
+   procedure Put_Warning (Text           : String;
+                          Level          : Trace.Levels := Info;
+                          Disable_Config : String := "");
+   --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty. If
+   --  Disable_setting /= "", append a line informing about how to disable
+   --  this warning.
 
    procedure Put_Success (Text : String; Level : Trace.Levels := Info);
    --  Prepend Text with a green check mark, or "Success:" if no color/tty.
@@ -288,6 +299,9 @@ private
    function Length (This : Crate_Name) return Positive is (This.Len);
 
    function As_String (This : Crate_Name) return String is (This.Name);
+
+   function Index_Prefix (This : Crate_Name) return String
+   is (This.Name (This.Name'First .. This.Name'First + 1));
 
    function "+" (P : Crate_Name) return String is (P.Name);
    function "+" (P : String) return Crate_Name

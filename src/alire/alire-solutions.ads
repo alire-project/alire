@@ -121,13 +121,15 @@ package Alire.Solutions is
      with Pre => This.Depends_On (Crate);
    --  Fulfill a dependency with a link pin
 
-   function Missing (This : Solution;
-                     Dep  : Dependencies.Dependency)
+   function Missing (This   : Solution;
+                     Dep    : Dependencies.Dependency;
+                     Reason : States.Missed_Reasons)
                      return Solution;
    --  Add/merge dependency as missing in solution
 
-   function Missing (This  : Solution;
-                     Crate : Crate_Name)
+   function Missing (This   : Solution;
+                     Crate  : Crate_Name;
+                     Reason : States.Missed_Reasons)
                      return Solution;
    --  Fulfill an existing dependency as missing, or do nothing otherwise
 

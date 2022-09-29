@@ -44,6 +44,9 @@ aggregate project Alr_Env is
       when "macOS" | "macos" | "OSX" | "osx" =>
          for External ("ALIRE_OS") use "osx";
          for External ("GNATCOLL_OS") use "osx";
+      when "freebsd" =>
+         for External ("ALIRE_OS") use "freebsd";
+         for External ("GNATCOLL_OS") use "unix";
       when others =>
          for External ("ALIRE_OS") use "unix";
          for External ("GNATCOLL_OS") use "unix";

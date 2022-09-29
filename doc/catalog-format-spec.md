@@ -342,12 +342,14 @@ static, i.e. they cannot depend on the context.
    ```
 
  - `actions`: optional dynamic list of actions to perform when certain events
-   take place in a workspace.  The general action syntax is:
+   take place in a workspace. Actions are executed in the order they are
+   defined in the manifest. The general action syntax is:
 
    ```toml
    [[actions]]
    type = <kind>
    command = <command>
+   directory = <relative path>  # Optional
    ```
 
    `<command>` is an array of strings for a shell command to run in the
@@ -360,6 +362,10 @@ static, i.e. they cannot depend on the context.
    release, or the release being obtained with `alr get`). In this context, the
    root release is considered part of the dependency solution, and so its
    actions are executed too, always in the last place.
+
+   `directory` is an optional portable relative path (forward-slashed) from the
+   crate root, in which the action will be executed. This directory must exist
+   or the action will error. Actions are executed by default in the crate root.
 
    `<kind>` can be either:
 
@@ -381,8 +387,9 @@ static, i.e. they cannot depend on the context.
 
    - `test`: the command is run on demand for crate testing within the Alire
       ecosystem (using `alr test`). This kind of action is run only for the
-      root crate being tested, after its build succeeds, and after any
-      `post-build` actions.
+      root crate being tested. The crate is not built beforehand when a test
+      action is defined so, if a build is necessary, it should be explicitly
+      given as part of the action sequence.
 
    Since actions may end being run more than once they should take this into
    account and allow multiple runs with the expected results intended by the
@@ -401,6 +408,20 @@ static, i.e. they cannot depend on the context.
 
    [[actions.'case(os)'.'...']]
    # An explicit empty case alternative, which is not mandatory
+   ```
+
+   The aforementioned TOML syntax is valid when there is only one conditional
+   action. For multiple conditional actions, one can write:
+
+   ```toml
+   [[actions]]
+   [actions.'case(os)'.linux]
+   # Regular contents of an action, applying to the Linux case
+   [actions.'case(os)'.macos]
+   # macOS case
+
+   [[actions]]
+   # Another action, that needs not be also conditional (but could be).
    ```
 
  - `auto-gpr-with`: optional Boolean value that specifies if the project (gpr) files
@@ -995,7 +1016,7 @@ The generated GPR will look something like this:
 ```ada
 project Test_Config is
    type Sort_Algorith_Kind is ("bubble", "quick", "merge");
-   Sort_Algorith : Debug_Level_Kind := "quick";
+   Sort_Algorith : Sort_Algorith_Kind := "quick";
 end Test_Config;
 ```
 
@@ -1128,7 +1149,7 @@ One may know that a particular compiler version has a problem with some code.
 This may be expressed with dependencies on the generic `gnat` crate, which
 although is not found in the catalog, is a crate that all GNAT compilers
 provide. (Such a crate without actual releases, but provided by other crates,
-is called a virtual crate.) For example:
+is called an abstract crate.) For example:
 
 ```toml
 gnat = ">=7"   # We require a minimum compiler version

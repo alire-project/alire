@@ -55,6 +55,11 @@ def prepare_env(config_dir, env):
     # require a configured compiler will have to set it up explicitly.
     run_alr("-c", config_dir, "toolchain", "--disable-assistant")
 
+    # Disable warning on old index, to avoid having to update index versions
+    # when they're still compatible.
+    run_alr("-c", config_dir, "config", "--global",
+            "--set", "warning.old_index", "false")
+
     # If distro detection is disabled via environment, configure so in alr
     if "ALIRE_DISABLE_DISTRO" in env:
         if env["ALIRE_DISABLE_DISTRO"] == "true":
@@ -69,6 +74,8 @@ def run_alr(*args, **kwargs):
     :param bool complain_on_error: If true and the subprocess exits with a
         non-zero status code, print information on the standard output (for
         debugging) and raise a CalledProcessError (to abort the test).
+        Conversely if false and the process ends without error, it's presumed
+        an error was expected and CalledProcessError is raised too.
     :param bool quiet: If true (which is the default), append "-q" to the
         command line.
     :param bool debug: If true (which is the default), append "-d" to the
@@ -95,13 +102,17 @@ def run_alr(*args, **kwargs):
         argv.insert(1, '-q')
     argv.extend(args)
     p = Run(argv)
-    if p.status != 0 and complain_on_error:
+    if (p.status != 0 and complain_on_error) or (p.status == 0 and not complain_on_error):
         print('The following command:')
         print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
         print('Exitted with status code {}'.format(p.status))
         print('Output:')
         print(p.out)
-        raise CalledProcessError('alr returned non-zero status code')
+        if complain_on_error:
+            raise CalledProcessError('alr returned non-zero status code')
+        else:
+            raise CalledProcessError('alr returned zero status code but '
+                                     'an error was expected')
 
     # Convert CRLF line endings (Windows-style) to LF (Unix-style). This
     # canonicalization is necessary to make output comparison work on all
@@ -424,7 +435,7 @@ def alr_with(dep="", path="", url="", commit="", branch="",
             return run_alr(*args, force=force)
 
 
-def add_action(type, command, name=""):
+def add_action(type, command, name="", directory=""):
     """
     Add an action to the manifest in the current directory.
     :param str type: "pre-build", etc
@@ -439,6 +450,8 @@ def add_action(type, command, name=""):
         manifest.write(f"command = {command}\n")
         if name != "":
             manifest.write(f"name = '{name}'\n")
+        if directory != "":
+            manifest.write(f"directory = '{directory}'\n")
 
 
 def alr_submit(manifest, index_path):

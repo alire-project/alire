@@ -24,6 +24,13 @@ package body Alire is
      (AAA.Strings.To_Lower_Case (+L) < AAA.Strings.To_Lower_Case (+R));
 
    -------------------------
+   -- Absolute_Path_Image --
+   -------------------------
+
+   function Absolute_Path_Image (Path : Alire.Absolute_Path) return String
+   is (String (Path));
+
+   -------------------------
    -- Check_Absolute_Path --
    -------------------------
 
@@ -70,7 +77,8 @@ package body Alire is
 
    procedure Put_Failure (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (TTY.Error ("✗ ") & Text, Level);
+      Trace.Log (TTY.Text_With_Fallback (TTY.Error ("✗ "), "ERROR: ") & Text,
+                 Level);
    end Put_Failure;
 
    --------------
@@ -95,9 +103,20 @@ package body Alire is
    -- Put_Warning --
    -----------------
 
-   procedure Put_Warning (Text : String; Level : Trace.Levels := Info) is
+   procedure Put_Warning (Text           : String;
+                          Level          : Trace.Levels := Info;
+                          Disable_Config : String := "")
+   is
    begin
-      Trace.Log (TTY.Warn ("⚠ ") & Text, Level);
+      Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
+                 & Text,
+                 Level);
+      if Disable_Config /= "" then
+         Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
+                    & "You can disable this warning with configuration key '"
+                    & TTY.Emph (Disable_Config) & "'",
+                    Level);
+      end if;
    end Put_Warning;
 
    ------------

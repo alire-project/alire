@@ -10,6 +10,15 @@ for domain in ["badsite.com", "ggithub.com", "github.comm"]:
     p = run_alr("publish", f"http://{domain}/repo.git",
                 "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
                 complain_on_error=False)
-    assert_match(".*Origin is hosted on unknown site.*", p.out)
+    assert_match(f".*Origin is hosted on unknown site: {domain}.*", p.out)
+
+# Try that having credentials doesn't interfere with the previous check and
+# that the domain was recognized properly
+for domain in ["badsite.com", "ggithub.com", "github.comm"]:
+    for creds in ["user", "user:passwd"]:
+        p = run_alr("publish", f"http://{creds}@{domain}/repo.git",
+                    "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+                    complain_on_error=False)
+        assert_match(f".*Origin is hosted on unknown site: {domain}.*", p.out)
 
 print('SUCCESS')

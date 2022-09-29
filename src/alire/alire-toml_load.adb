@@ -35,6 +35,10 @@ package body Alire.TOML_Load is
      (Key      => TOML_Keys.Word_Size,
       Ada_Enum => Platforms.Word_Sizes) with Unreferenced;
 
+   package Host_Arch_Expressions is new Expressions.Enums
+     (Key      => TOML_Keys.Host_Arch,
+      Ada_Enum => Platforms.Architectures) with Unreferenced;
+
    --  The following are entries in the manifest that are not loaded as
    --  properties, but stored separately as complex types.
 
@@ -82,7 +86,6 @@ package body Alire.TOML_Load is
       Pins    : in out User_Pins.Maps.Map;
       Avail   : in out Conditional.Availability)
    is
-      pragma Unreferenced (Pins);
       use TOML;
       use type Conditional.Dependencies;
       use type Conditional.Properties;
@@ -180,8 +183,6 @@ package body Alire.TOML_Load is
               (From.Checked_Pop (TOML_Keys.Pins, TOML_Array),
                Context => TOML_Keys.Pins));
       end if;
-
-      --  TODO: Process Forbidden
 
       --  Process Available
 

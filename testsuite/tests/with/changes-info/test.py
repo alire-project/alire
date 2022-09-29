@@ -37,7 +37,7 @@ assert_match(".*" +
 Changes to dependency solution:
 
    New solution is incomplete.
-   +! unobtanium * (new,missing)""") + ".*",
+   +! unobtanium * (new,missing:unknown)""") + ".*",
              p.out, flags=re.S)
 
 ###############################################################################

@@ -28,6 +28,28 @@ package body Alire.Dependencies.States.Maps is
       end return;
    end From_TOML;
 
+   --------------------
+   -- Image_One_Line --
+   --------------------
+
+   function Image_One_Line (This : Map) return String is
+      Result : AAA.Strings.Vector;
+   begin
+      if This.Is_Empty then
+         return "(empty)";
+      end if;
+
+      for I in This.Iterate loop
+         Result.Append (State_Maps.Key (I).As_String
+                        & "->"
+                        & (if This (I).Has_Release
+                          then This (I).Milestone_Image
+                          else This (I).Fulfilment'Image));
+      end loop;
+
+      return Result.Flatten (", ");
+   end Image_One_Line;
+
    ---------------
    -- Including --
    ---------------

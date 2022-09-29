@@ -15,7 +15,7 @@ p1 = run_alr('-h', 'get',   quiet=False)
 p2 = run_alr('help', 'get', quiet=False)
 
 # Verify we got the expected help
-assert_match("SUMMARY\n   Fetches a crate release.*", p1.out, flags=re.S)
+assert_match("SUMMARY\n   Fetch a published crate.*", p1.out, flags=re.S)
 
 # Verify equality
 assert p1.out == p2.out, "Mismatch in outputs: {} != {}".format(p1.out, p2.out)

@@ -1,3 +1,5 @@
+with Ada.Strings.Fixed;
+
 package body Alire.Utils.Tables is
 
    ------------
@@ -20,8 +22,10 @@ package body Alire.Utils.Tables is
    is
 
       procedure Print (Line : String) is
+         use Ada.Strings;
+         Trim : String renames Fixed.Trim (Line, Right);
       begin
-         Trace.Log (Line, Level);
+         Trace.Log (Trim, Level);
       end Print;
 
    begin

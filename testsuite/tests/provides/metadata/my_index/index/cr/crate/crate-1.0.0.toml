@@ -1,0 +1,11 @@
+description = "Sample crate"
+name = "crate"
+version = "1.0.0"
+licenses = []
+maintainers = ["any@bo.dy"]
+maintainers-logins = ["someone"]
+
+provides = ["aliased=1.0"]
+
+[origin]
+url = "file:."

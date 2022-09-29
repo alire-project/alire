@@ -40,8 +40,6 @@ package body Alr.Commands.Pin is
          --  We let to re-pin without checks because the requested version may
          --  be different.
 
-         Cmd.Requires_Full_Index;
-
          Root.Add_Version_Pin (Dep.Crate, Version);
 
       end Pin;
@@ -55,8 +53,6 @@ package body Alr.Commands.Pin is
          if not Solution.State (Dep.Crate).Is_User_Pinned then
             Reportaise_Command_Failed ("Requested crate is already unpinned");
          end if;
-
-         Cmd.Requires_Full_Index;
 
          Root.Remove_Pin (Dep.Crate);
       end Unpin;
@@ -204,8 +200,6 @@ package body Alr.Commands.Pin is
                   Trace.Info ("Abandoned by user.");
                   return;
                end if;
-
-               Cmd.Requires_Full_Index; -- Next statement recomputes a solution
 
                New_Root.Add_Path_Pin (Crate => Optional_Crate,
                                       Path  => Cmd.URL.all);

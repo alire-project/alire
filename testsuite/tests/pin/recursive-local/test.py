@@ -24,8 +24,8 @@ alr_pin("yyy", path="../nest/yyy")
 
 # Should work properly
 p = run_alr("pin")
-assert_eq('yyy file:../nest/yyy \n'
-          'zzz file:../zzz      \n',
+assert_eq('yyy file:../nest/yyy\n'
+          'zzz file:../zzz\n',
           p.out)
 
 print('SUCCESS')

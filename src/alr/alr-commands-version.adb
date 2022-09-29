@@ -1,6 +1,6 @@
 with Alire.Config.Edit;
-with Alire.Features.Index;
 with Alire.Index;
+with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Properties;
 with Alire.Roots.Optional;
@@ -8,7 +8,6 @@ with Alire.Toolchains;
 with Alire.Utils.Tables;
 
 with Alr.Bootstrap;
-with Alr.Paths;
 
 with GNAT.Compiler_Version;
 with GNAT.Source_Info;
@@ -30,8 +29,8 @@ package body Alr.Commands.Version is
       use all type Alire.Roots.Optional.States;
       Table : Alire.Utils.Tables.Table;
       Index_Outcome : Alire.Outcome;
-      Indexes : constant Alire.Features.Index.Index_On_Disk_Set :=
-                  Alire.Features.Index.Find_All
+      Indexes : constant Alire.Index_On_Disk.Loading.Set :=
+                  Alire.Index_On_Disk.Loading.Find_All
                     (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
       Root : constant Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
@@ -51,12 +50,14 @@ package body Alr.Commands.Version is
 
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
-      Table.Append ("config folder:").Append (Paths.Alr_Config_Folder).New_Row;
+      Table.Append ("config folder:").Append (Alire.Config.Edit.Path).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
       Table.Append ("community index branch:")
         .Append (Alire.Index.Community_Branch).New_Row;
+      Table.Append ("compatible index versions:")
+        .Append (Alire.Index.Valid_Versions.Image).New_Row;
       Table.Append ("indexes folder:")
         .Append (Alire.Config.Edit.Indexes_Directory).New_Row;
       Table.Append ("indexes metadata:")
@@ -135,5 +136,14 @@ package body Alr.Commands.Version is
       .Append ("Shows assorted metadata about the alr executable,"
                & " and about the crate or sandbox found in the current"
                & " directory, if any."));
+
+   -------------------
+   -- Print_Version --
+   -------------------
+
+   procedure Print_Version is
+   begin
+      Trace.Always ("alr " & Alire.Version.Current);
+   end Print_Version;
 
 end Alr.Commands.Version;

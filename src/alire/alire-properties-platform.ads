@@ -8,7 +8,7 @@ package Alire.Properties.Platform with Preelaborate is
    --  The following packages declare types used by requisites so they have to
    --  be public.
 
-   pragma Warnings (Off); -- unreferenced galore follows
+   pragma Warnings (Off, "is not referenced"); -- unreferenced galore follows
 
    function Distro_Key (D : Platforms.Distributions) return String
    is (TOML_Keys.Distribution);

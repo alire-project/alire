@@ -326,6 +326,8 @@ package body Alire.Properties.Build_Switches is
          --  Can't happen, unless the dispatch to us itself was erroneous
       end if;
 
+      Var.T := Env.Clone;
+
       return Props : Conditional.Properties do
          Var.Modif := From_TOML (From, Env);
          Props := Props and Var;
@@ -339,9 +341,8 @@ package body Alire.Properties.Build_Switches is
 
    overriding
    function To_TOML (This : Variable) return TOML.TOML_Value is
-      pragma Unreferenced (This);
    begin
-      return No_TOML_Value;
+      return This.T;
    end To_TOML;
 
    -------------

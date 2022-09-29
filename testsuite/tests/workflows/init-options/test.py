@@ -19,6 +19,8 @@ assert_match(".*Identifiers must be.*", p.out)
 run_alr('init', '--bin', 'xxx')
 compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/alire.toml',
+                          'xxx/share',
+                          'xxx/share/xxx',
                           'xxx/src',
                           'xxx/src/xxx.adb',
                           'xxx/xxx.gpr'])
@@ -29,6 +31,8 @@ run_alr('init', '--bin', 'aaa')
 compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/aaa.gpr',
                           'aaa/alire.toml',
+                          'aaa/share',
+                          'aaa/share/aaa',
                           'aaa/src',
                           'aaa/src/aaa.adb'])
 
@@ -62,6 +66,8 @@ os.chdir('zzz')
 run_alr('init', '--bin', '--in-place', 'zzz')
 compare(contents('.'), ['./.gitignore',
                         './alire.toml',
+                        './share',
+                        './share/zzz',
                         './src',
                         './src/zzz.adb',
                         './zzz.gpr'])

@@ -1,10 +1,10 @@
 private with AAA.Caches.Files;
-with Ada.Directories;
 private with Ada.Finalization;
 
 with AAA.Strings;
 
 with Alire.Containers;
+with Alire.Crate_Configuration;
 with Alire.Dependencies.States;
 limited with Alire.Environment;
 private with Alire.Lockfiles;
@@ -114,6 +114,12 @@ package Alire.Roots is
                           return Any_Path;
    --  Find the base folder in which a release can be found for the given root
 
+   function Nonabstract_Crates (This : in out Root)
+                                return Containers.Crate_Name_Sets.Set;
+   --  Return names of crates in the solution that have a buildable release,
+   --  including root, excluding those that are provided by another crate.
+   --  I.e., only actual regular releases.
+
    function Solution (This : in out Root) return Solutions.Solution with
      Pre => This.Has_Lockfile;
    --  Returns the solution stored in the lockfile
@@ -193,8 +199,7 @@ package Alire.Roots is
    procedure Write_Manifest (This : Root);
    --  Generates the crate.toml manifest at the appropriate location for Root
 
-   procedure Reload_Manifest (This : in out Root)
-     with Pre => This.Path = Ada.Directories.Current_Directory;
+   procedure Reload_Manifest (This : in out Root);
    --  If changes have been done to the manifest, either via the dependency/pin
    --  modification procedures, or somehow outside alire after This was
    --  created, we need to reload the manifest. The solution remains
@@ -210,12 +215,38 @@ package Alire.Roots is
 
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
-                   Export_Build_Env : Boolean)
+                   Export_Build_Env : Boolean;
+                   Saved_Profiles   : Boolean := True)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
    --  all releases in the solution (even those not built). Returns True on
-   --  successful build.
+   --  successful build. By default, profiles stored in the persistent crate
+   --  configuration are used (i.e. last explicit build); otherwise the ones
+   --  given in This.Configuration are used. These come in order of increasing
+   --  priority from: defaults -> manifests -> explicit set via API.
+
+   function Configuration (This : in out Root)
+                           return Crate_Configuration.Global_Config;
+   --  Returns the global configuration for the root and dependencies. This
+   --  configuration is computed the first time it is requested.
+
+   procedure Set_Build_Profile (This    : in out Root;
+                                Crate   : Crate_Name;
+                                Profile : Crate_Configuration.Profile_Kind)
+     with Pre => This.Nonabstract_Crates.Contains (Crate);
+
+   procedure Set_Build_Profiles (This    : in out Root;
+                                 Profile : Crate_Configuration.Profile_Kind;
+                                 Force   : Boolean);
+   --  Set all build profiles in the solution to the value given. Override
+   --  values in manifests if Force, otherwise only set crates without a
+   --  profile in their manifest.
+
+   procedure Set_Build_Profiles
+     (This     : in out Root;
+      Profiles : Crate_Configuration.Profile_Maps.Map);
+   --  Give explicit profiles per crate. These are always overriding.
 
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files
@@ -239,6 +270,10 @@ package Alire.Roots is
 
 private
 
+   procedure Load_Configuration (This : in out Root);
+   --  Force loading of the configuration; useful since the auto-load is not
+   --  triggered when doing This.Configuration here.
+
    function Load_Solution (Lockfile : String) return Solutions.Solution
    is (Lockfiles.Read (Lockfile).Solution);
 
@@ -251,11 +286,24 @@ private
       Load   => Load_Solution,
       Write  => Write_Solution);
 
+   type Global_Config_Access is access Crate_Configuration.Global_Config;
+
    type Root is new Ada.Finalization.Controlled with record
       Environment     : Properties.Vector;
       Path            : UString;
       Release         : Releases.Containers.Release_H;
       Cached_Solution : Cached_Solutions.Cache;
+
+      Configuration   : Global_Config_Access :=
+                          new Crate_Configuration.Global_Config;
+      --  Variables and Build profiles configuration
+      --  This pointer and the consequently necessary Adjust and Finalize are
+      --  here just because with some compiler versions, the direct use of the
+      --  pointee type results in exceptions during finalization of the main
+      --  program (starting in the guts at b__ generated procedures, so hard to
+      --  debug). It may be worthwhile to try to remove this with future GNAT
+      --  versions. As a data point, with the stock Ubuntu 20.04 GNAT (9.3),
+      --  there is no problem.
 
       Pins            : Solutions.Solution;
       --  Closure of all pins that are recursively found
@@ -264,6 +312,12 @@ private
       Manifest        : Unbounded_Absolute_Path;
       Lockfile        : Unbounded_Absolute_Path;
    end record;
+
+   overriding
+   procedure Adjust (This : in out Root);
+
+   overriding
+   procedure Finalize (This : in out Root);
 
    --  Support for editable roots begins here. These are not expected to be
    --  directly useful to clients, so better kept them under wraps.

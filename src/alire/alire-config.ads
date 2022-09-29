@@ -43,6 +43,11 @@ package Alire.Config with Preelaborate is
       --  assistant to select a gnat compiler and corresponding gprbuild
       --  will be launched.
 
+      Toolchain_External : constant Config_Key := "toolchain.external";
+      --  We use this key to store whether a tool in the toolchain requires
+      --  external detection. It stores a boolean per tool, e.g, for gprbuild:
+      --  toolchain.external.gprbuild
+
       Toolchain_Use : constant Config_Key := "toolchain.use";
       --  We use this key internally to store the configured tools picked
       --  up by the user. Not really intended to be set up by users, so
@@ -60,5 +65,23 @@ package Alire.Config with Preelaborate is
       Warning_Caret : constant Config_Key := "warning.caret";
       --  Set to false to disable warnings about caret/tilde use for ^0 deps.
 
+      Warning_Old_Index : constant Config_Key := "warning.old_index";
+      --  Warn about old but compatible index in use
+
+      Msys2_Do_Not_Install : constant Config_Key := "msys2.do_not_install";
+      Msys2_Install_Dir    : constant Config_Key := "msys2.install_dir";
+      Msys2_Installer      : constant Config_Key := "msys2.installer";
+      Msys2_Installer_URL  : constant Config_Key := "msys2.installer_url";
    end Keys;
+
+   --------------
+   -- Defaults --
+   --------------
+
+   package Defaults is
+
+      Warning_Old_Index : constant Boolean := True;
+
+   end Defaults;
+
 end Alire.Config;

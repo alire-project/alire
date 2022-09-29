@@ -20,7 +20,7 @@ package Alr.Commands.Search is
 
    overriding
    function Short_Description (Cmd : Command) return String
-   is ("Search a string in release names and properties");
+   is ("Search for a string in names and properties of crates");
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String

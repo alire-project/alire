@@ -10,9 +10,7 @@ with CLIC.Subcommand;
 private with Ada.Text_IO;
 private with CLIC.Subcommand.Instance;
 
-pragma Warnings (Off);
 private with Alr.OS_Lib; -- For the benefit of many child packages that use it
-pragma Warnings (On);
 
 package Alr.Commands is
 
@@ -68,6 +66,13 @@ package Alr.Commands is
    --  that the manifest, lockfile and dependencies on disk are in sync, by
    --  performing a silent update. If not Sync, only a minimal empty lockfile
    --  is created.
+
+   procedure Load (Cmd       : Command'Class;
+                   Crate     : Alire.Crate_Name;
+                   Externals : Boolean := False;
+                   Strict    : Boolean := False);
+   --  Load a specific crate from the index. Optionally detect externals and
+   --  enforce no unknown enum index values.
 
    ---------------------------
    --  command-line helpers --

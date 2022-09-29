@@ -76,8 +76,8 @@ private
    --------------------
 
    function Is_Well_Formed (Hash_Img : String) return Boolean is
-     (for some Char of Hash_Img => Char = ':' and then
-      Is_Known (Head (Hash_Img, ':')));
+     ((for some Char of Hash_Img => Char = ':')
+      and then Is_Known (Head (Hash_Img, ':')));
 
    ----------
    -- Kind --

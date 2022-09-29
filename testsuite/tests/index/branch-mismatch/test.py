@@ -24,11 +24,16 @@ os.system('git ' + gitconfig + ' add .')
 os.system('git ' + gitconfig + ' commit -q -m initialize')
 os.chdir(start)
 
-# Run the test. No alr version should use 'master' for the community index
-p = run_alr("search", "--crates",  # Causes loading of the index
-            complain_on_error=False)
+# Enable the warning we are trying to test
+run_alr("config", "--global", "--set", "warning.old_index", "true")
 
-assert_match('.*Mismatched branch in checked out community index.*',
+# Run the test. No alr version should use 'master' for the community index.
+# This produces a warning only, because the index version is valid.
+p = run_alr("search", "--crates",  # Causes loading of the index
+            quiet=False)
+
+assert_match(".*This alr build expects an index branch with prefix '.*'"
+             " but your community index branch is 'master'.*",
              p.out)
 
 

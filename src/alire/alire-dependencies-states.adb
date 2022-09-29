@@ -56,6 +56,7 @@ package body Alire.Dependencies.States is
       Link         : constant String := "link";
       Pin_Version  : constant String := "pin_version";
       Pinned       : constant String := "pinned";
+      Reason       : constant String := "reason";
       Release      : constant String := "release";
       Shared       : constant String := "shared";
       Transitivity : constant String := "transitivity";
@@ -103,7 +104,16 @@ package body Alire.Dependencies.States is
                Data.Opt_Rel := Optional_Release (From_TOML.Crate,
                                                  Data.Target.Element.Path);
 
-            when Missed => null;
+            when Missed =>
+               if From.Contains (Keys.Reason) then
+                  Data.Reason :=
+                    Missed_Reasons'Value
+                      (From.Checked_Pop (Keys.Reason, TOML_String).As_String);
+               else
+                  Data.Reason := Unavailable;
+                  --  For back-compatibility. Will be properly informed on next
+                  --  solution update.
+               end if;
 
             when Solved =>
                Data.Release :=
@@ -175,7 +185,10 @@ package body Alire.Dependencies.States is
             when Linked =>
                Table.Set (Keys.Link, Data.Target.Get.To_TOML);
 
-            when Missed => null;
+            when Missed =>
+               Table.Set (Keys.Reason,
+                          +To_Lower_Case (Data.Reason'Img));
+
             when Solved =>
                Table.Set
                  (Keys.Release,

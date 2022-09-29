@@ -143,11 +143,14 @@ package body Alire.Origins.Deployers is
    exception
       when E : others =>
          Log_Exception (E);
-         if Ada.Directories.Exists (Folder) then
+         if Folder /= "" and then Ada.Directories.Exists (Folder) then
             Ada.Directories.Delete_Tree (Folder);
          end if;
          return Outcome_Failure ("Deployment of " & From.Image
-                                 & " to " & Folder & " failed");
+                                 & (if From.Is_System
+                                    then " from system packages"
+                                    else " to " & Folder)
+                                 & " failed");
    end Deploy_Steps;
 
    ------------

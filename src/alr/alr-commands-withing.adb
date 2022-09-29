@@ -155,7 +155,6 @@ package body Alr.Commands.Withing is
       end if;
 
       if Cmd.Solve then
-         Cmd.Requires_Full_Index; -- Load possible hints
          Cmd.Root.Solution.Print (Root_Release,
                                   Alire.Platforms.Current.Properties,
                                   Detailed => True,
@@ -304,14 +303,12 @@ package body Alr.Commands.Withing is
             if Cmd.URL.all /= "" then
                Cmd.Add_With_Pin (New_Root, Args);
             else
-               Cmd.Requires_Full_Index;
                Add (New_Root, Args);
             end if;
 
          elsif Cmd.Del then
             Del (New_Root, Args);
          elsif Cmd.From then
-            Cmd.Requires_Full_Index;
             From (New_Root, Args);
          else
             raise Program_Error with "List should have already happened";
