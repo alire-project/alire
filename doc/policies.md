@@ -98,3 +98,14 @@ major/minor/patch/build version changes), but not modified.
       ```
       Having the `MY_CRATE_LIBRARY_TYPE` external will allow users to override
       the value `LIBRARY_TYPE` just for this crate, if need be.
+
+## Source code
+
+ - If you use non-ASCII characters in the source code, then use UTF-8 encoding
+   for the sources and add `-gnatW8` to compiler options (as provided by
+  `alr init` command). Other crates can use `-gnatW8` and this means the
+   compiler will read your crate sources as UTF-8 and the run-time library
+   will use UTF-8 for text I/O, so make sure your crate is OK with this.
+
+ - Consider to follow or at least familiarize yourself with the
+   [Ada Style Guide](https://ada-lang.io/docs/style-guide/Ada_Style_Guide).
