@@ -144,7 +144,7 @@ package body Alire.Properties.Configurations is
          when TOML_String =>
             return Val.As_String;
          when TOML_Boolean =>
-            return Val.As_Boolean'Img;
+            return To_Lower_Case (Val.As_Boolean'Img);
          when TOML_Float =>
             return Image (Val.As_Float);
          when TOML_Integer =>
