@@ -145,9 +145,10 @@ private
                                Root  : in out Roots.Root;
                                Crate : Crate_Name);
 
-   procedure Set_Value (This  : in out Global_Config;
-                        Crate : Crate_Name;
-                        Val   : Assignment);
+   procedure Set_Value (This   : in out Global_Config;
+                        Crate  : Crate_Name;
+                        Val    : Assignment;
+                        Set_By : String);
 
    procedure Load_Settings (This  : in out Global_Config;
                             Root  : in out Roots.Root;
