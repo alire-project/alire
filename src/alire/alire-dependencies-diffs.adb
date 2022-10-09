@@ -76,9 +76,9 @@ package body Alire.Dependencies.Diffs is
    begin
       if This.Contains_Changes then
          Summarize (This.Added,   "(add)",
-                    (if TTY.Color_Enabled then TTY.OK ("✓") else "+"));
+                    (if TTY.Color_Enabled then TTY.OK (U ("✓")) else "+"));
          Summarize (This.Removed, "(remove)",
-                    (if TTY.Color_Enabled then TTY.Emph ("✗") else "-"));
+                    (if TTY.Color_Enabled then TTY.Emph (U ("✗")) else "-"));
          Table.Print (Info);
       else
          Trace.Info ("   No changes.");

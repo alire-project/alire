@@ -952,11 +952,11 @@ package body Alire.Solutions is
    is
 
       Mid_Node  : constant String :=
-                    (if TTY.Color_Enabled then "├── " else "+-- ");
+                    (if TTY.Color_Enabled then U ("├── ") else "+-- ");
       Last_Node : constant String :=
-                    (if TTY.Color_Enabled then "└── " else "+-- ");
+                    (if TTY.Color_Enabled then U ("└── ") else "+-- ");
       Branch    : constant String :=
-                    (if TTY.Color_Enabled then "│   " else "|   ");
+                    (if TTY.Color_Enabled then U ("│   ") else "|   ");
       No_Branch : constant String := "    ";
 
       procedure Print (Deps   : Dependencies.Containers.Set;

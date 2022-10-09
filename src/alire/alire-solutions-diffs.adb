@@ -32,15 +32,15 @@ package body Alire.Solutions.Diffs is
    is (if TTY.Color_Enabled then
          (case Change is
              when Added      => TTY.OK    ("+"),
-             when Removed    => TTY.Emph  ("✗"),
-             when Hinted     => TTY.Warn  ("↪"),
-             when Upgraded   => TTY.OK    ("⭧"),
-             when Downgraded => TTY.Warn  ("⭨"),
-             when Pinned     => TTY.OK    ("⊙"),
-             when Unpinned   => TTY.Emph  ("𐩒"),
+             when Removed    => TTY.Emph  (U ("✗")),
+             when Hinted     => TTY.Warn  (U ("↪")),
+             when Upgraded   => TTY.OK    (U ("⭧")),
+             when Downgraded => TTY.Warn  (U ("⭨")),
+             when Pinned     => TTY.OK    (U ("⊙")),
+             when Unpinned   => TTY.Emph  (U ("𐩒")),
              when Unchanged  => TTY.OK    ("="),
-             when Missing    => TTY.Error ("⚠"),
-             when Shared     => TTY.Emph  ("♼"))
+             when Missing    => TTY.Error (U ("⚠")),
+             when Shared     => TTY.Emph  (U ("♼")))
        else
          (case Change is
              when Added      => "+",
