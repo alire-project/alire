@@ -25,7 +25,10 @@ abstract project Alire_Common is
       when "disabled" => Style_Check_Switches := ();
    end case;
 
-   Ada_Common_Switches := ("-gnatW8"); -- use UTF-8 Encoding for Source Files
+   Ada_Common_Switches :=
+     (  "-gnatW8" -- use UTF-8 Encoding for Source Files
+      , "-s"      -- Recompile if compiler Switches Have Changed
+     );
 
    package Compiler is
       case Build_Mode is

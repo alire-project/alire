@@ -1,3 +1,5 @@
+private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
 with Alire;
 
 with Simple_Logging;
@@ -31,5 +33,11 @@ package Alr with Preelaborate is
    --  Some Paths constants that help to break circularities
 
    Bootstrap_Hash : constant String := "bootstrap";
+
+private
+
+   function WW (S : Ada.Strings.UTF_Encoding.UTF_8_String)
+                return Wide_Wide_String
+                renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.decode;
 
 end Alr;

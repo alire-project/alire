@@ -31,28 +31,28 @@ package body Alire.Solutions.Diffs is
    function Icon (Change : Changes) return String
    is (if TTY.Color_Enabled then
          (case Change is
-             when Added      => TTY.OK    ("+"),
+             when Added      => TTY.OK    (U ("+")),
              when Removed    => TTY.Emph  (U ("✗")),
              when Hinted     => TTY.Warn  (U ("↪")),
              when Upgraded   => TTY.OK    (U ("⭧")),
              when Downgraded => TTY.Warn  (U ("⭨")),
              when Pinned     => TTY.OK    (U ("⊙")),
              when Unpinned   => TTY.Emph  (U ("𐩒")),
-             when Unchanged  => TTY.OK    ("="),
+             when Unchanged  => TTY.OK    (U ("=")),
              when Missing    => TTY.Error (U ("⚠")),
              when Shared     => TTY.Emph  (U ("♼")))
        else
          (case Change is
-             when Added      => "+",
-             when Removed    => "-",
-             when Hinted     => "~",
-             when Upgraded   => "^",
-             when Downgraded => "v",
-             when Pinned     => "·",
-             when Unpinned   => "o",
-             when Unchanged  => "=",
-             when Missing    => "!",
-             when Shared     => "i"
+             when Added      => U ("+"),
+             when Removed    => U ("-"),
+             when Hinted     => U ("~"),
+             when Upgraded   => U ("^"),
+             when Downgraded => U ("v"),
+             when Pinned     => U ("·"),
+             when Unpinned   => U ("o"),
+             when Unchanged  => U ("="),
+             when Missing    => U ("!"),
+             when Shared     => U ("i")
          ));
 
    --  This type is used to summarize every detected change
