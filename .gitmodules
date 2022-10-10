@@ -15,7 +15,7 @@
 	url = https://github.com/alire-project/simple_logging.git
 [submodule "deps/ada-toml"]
 	path = deps/ada-toml
-	url = https://github.com/pmderodat/ada-toml.git
+	url = https://github.com/mosteo/ada-toml
 [submodule "deps/gnatcoll-slim"]
 	path = deps/gnatcoll-slim
 	url = https://github.com/alire-project/gnatcoll-core.git
