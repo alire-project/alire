@@ -179,6 +179,7 @@ package body Alire.Publish is
       Missing   : AAA.Strings.Vector; -- Mandatory
 
       Caret_Pre_1 : Boolean := False; -- To warn about this
+      Dev_Version : Boolean := False; -- Warn about release of dev versions
 
       function Tomify (S : String) return String renames TOML_Adapters.Tomify;
    begin
@@ -244,6 +245,16 @@ package body Alire.Publish is
                               & TTY.Error (Missing.Flatten (", ")));
       end if;
 
+      Dev_Version := AAA.Strings.Has_Suffix (Release.Version_Image, "-dev");
+      if Dev_Version then
+         Ada.Text_IO.New_Line;
+         Trace.Warning ("The release "
+                        & TTY.Warn ("version ends with '-dev'") & "."
+                        & ASCII.LF
+                        & "Releases submitted to an index should usually"
+                        & " not be pre-release versions.");
+      end if;
+
       --  Final confirmation. We default to Yes if no recommended missing or
       --  Force.
 
@@ -252,7 +263,9 @@ package body Alire.Publish is
         ("Do you want to proceed with this information?",
          Valid   => (Yes | No => True, others => False),
          Default => (if Force or else
-                         (Recommend.Is_Empty and then not Caret_Pre_1)
+                         (Recommend.Is_Empty
+                          and then not Caret_Pre_1
+                          and then not Dev_Version)
                      then Yes
                      else No)) /= Yes
       then
