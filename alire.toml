@@ -45,5 +45,5 @@ aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8c
 clic = { url = "https://github.com/alire-project/clic", commit = "769f7f4af71e4c2d3b37245b175c038572150258" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "92bb91130a9ec628b4c48b7ef9fe7f24d9dc25fa" }
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "c2345fca8b685d6d3fc9334fac81140a0cdbea89" }
-simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "17c3310a5963a7b4975e27bd8b79bd16e6ca27b1" }
+simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "703b15ba6e2392951b65a484ce703209750dd0fc" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
