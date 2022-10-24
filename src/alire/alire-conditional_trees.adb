@@ -2,8 +2,6 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 
 with Alire.TOML_Adapters;
 
-with GNAT.IO;
-
 package body Alire.Conditional_Trees is
 
    Tab : constant String := "   ";
@@ -396,7 +394,7 @@ package body Alire.Conditional_Trees is
                     Sorted  : Boolean := False) is
       pragma Unreferenced (Verbose, Sorted);
    begin
-      GNAT.IO.Put_Line (Prefix & Image (This.Value.Constant_Reference));
+      Trace.Always (Prefix & Image (This.Value.Constant_Reference));
    end Print;
 
    overriding
@@ -410,8 +408,8 @@ package body Alire.Conditional_Trees is
    begin
       if Verbose then
          case This.Conjunction is
-            when Anded => GNAT.IO.Put_Line (Prefix & "All of:");
-            when Ored  => GNAT.IO.Put_Line (Prefix & "First available of:");
+            when Anded => Trace.Always (Prefix & "All of:");
+            when Ored  => Trace.Always (Prefix & "First available of:");
          end case;
       end if;
 
@@ -448,7 +446,7 @@ package body Alire.Conditional_Trees is
                     Sorted  : Boolean := False) is
    begin
       if This.Is_Empty then
-         GNAT.IO.Put_Line (Prefix & "(empty)");
+         Trace.Always (Prefix & "(empty)");
       else
          Print (This.Root, Prefix, And_Or or Verbose, Sorted);
       end if;

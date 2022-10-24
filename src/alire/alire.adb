@@ -77,8 +77,9 @@ package body Alire is
 
    procedure Put_Failure (Text : String; Level : Trace.Levels := Info) is
    begin
-      Trace.Log (TTY.Text_With_Fallback (TTY.Error ("✗ "), "ERROR: ") & Text,
-                 Level);
+      Trace.Log
+        (TTY.Text_With_Fallback (TTY.Error (U ("✗ ")), "ERROR: ") & Text,
+         Level);
    end Put_Failure;
 
    --------------
@@ -108,11 +109,11 @@ package body Alire is
                           Disable_Config : String := "")
    is
    begin
-      Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
+      Trace.Log (TTY.Text_With_Fallback (TTY.Warn (U ("⚠ ")), "warning: ")
                  & Text,
                  Level);
       if Disable_Config /= "" then
-         Trace.Log (TTY.Text_With_Fallback (TTY.Warn ("⚠ "), "warning: ")
+         Trace.Log (TTY.Text_With_Fallback (TTY.Warn (U ("⚠ ")), "warning: ")
                     & "You can disable this warning with configuration key '"
                     & TTY.Emph (Disable_Config) & "'",
                     Level);

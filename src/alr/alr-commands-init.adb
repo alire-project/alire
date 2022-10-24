@@ -1,7 +1,7 @@
 with AAA.Text_IO;
 
 with Ada.Directories;
-with Ada.Text_IO;
+with Ada.Wide_Wide_Text_IO;
 
 with Alire.Config;
 with Alire.Utils.User_Input.Query_Config;
@@ -23,7 +23,7 @@ package body Alr.Commands.Init is
    procedure Generate (Cmd  : Command;
                        Args : AAA.Strings.Vector) is
 
-      package TIO renames Ada.Text_IO;
+      package TIO renames Ada.Wide_Wide_Text_IO;
       use AAA.Strings;
 
       For_Library : constant Boolean := not Cmd.Bin;
@@ -141,7 +141,7 @@ package body Alr.Commands.Init is
          Put_Line ("      for Artifacts (""."") use (""share"");");
          Put_Line ("   end Install;");
          Put_New_Line;
-         TIO.Put (File, "end " & Mixed_Name & ";");
+         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
          pragma Style_Checks ("M80");
 
          TIO.Close (File);
@@ -160,7 +160,7 @@ package body Alr.Commands.Init is
          end if;
          Put_Line ("package " & Mixed_Name & " is");
          Put_New_Line;
-         TIO.Put (File, "end " & Mixed_Name & ";");
+         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
          TIO.Close (File);
       end Generate_Root_Package;
 
@@ -178,7 +178,7 @@ package body Alr.Commands.Init is
          Put_Line ("procedure " & Mixed_Name & " is");
          Put_Line ("begin");
          Put_Line ("   null;");
-         TIO.Put (File, "end " & Mixed_Name & ";");
+         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
          TIO.Close (File);
       end Generate_Program_Main;
 
@@ -291,7 +291,7 @@ package body Alr.Commands.Init is
 
       procedure Put_Line (S : String) is
       begin
-         TIO.Put_Line (File, S);
+         TIO.Put_Line (File, WW (S));
       end Put_Line;
 
    begin

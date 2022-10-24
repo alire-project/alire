@@ -25,10 +25,16 @@ abstract project Alire_Common is
       when "disabled" => Style_Check_Switches := ();
    end case;
 
+   Ada_Common_Switches :=
+     (  "-gnatW8" -- use UTF-8 Encoding for Source Files
+      , "-s"      -- Recompile if compiler Switches Have Changed
+     );
+
    package Compiler is
       case Build_Mode is
          when "debug" =>
-            for Default_Switches ("Ada") use (
+            for Default_Switches ("Ada") use Ada_Common_Switches &
+              (
                --  Build with no optimization in debug mode
                "-g", "-O0",
 
@@ -49,7 +55,8 @@ abstract project Alire_Common is
             --  Likewise for C units
 
          when "release" =>
-            for Default_Switches ("Ada") use (
+            for Default_Switches ("Ada") use Ada_Common_Switches &
+              (
                --  Build with lots of optimizations. Generate debug info
                --  (useful for tracebacks).
                "-O2", "-g",
@@ -72,7 +79,8 @@ abstract project Alire_Common is
    end Builder;
 
    package Binder is
-      for Switches ("Ada") use ("-Es", "-g", "-static");
+      for Switches ("Ada") use
+        ( "-Es", "-g", "-static");
    end Binder;
 
    package Ide is

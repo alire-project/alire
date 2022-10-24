@@ -19,7 +19,7 @@ package body Alire.Utils.User_Input is
    begin
       if not GNAT.OS_Lib.Is_Directory (Dir) then
          return Query
-           (Question => TTY.Error (if TTY.Color_Enabled then "⚠" else "!")
+           (Question => TTY.Error (if TTY.Color_Enabled then U ("⚠") else "!")
                         & " Given path does not exist: " & TTY.URL (Dir)
                         & ASCII.LF & "Do you want to continue anyway?",
             Valid    => (Yes | No => True, others => False),

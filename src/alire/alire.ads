@@ -1,5 +1,6 @@
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
+private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 pragma Warnings (Off, "no entities of * are referenced");
 with AAA.Strings;
@@ -333,5 +334,10 @@ private
 
    GNAT_External_Crate : constant Crate_Name :=
                            (Len => 13, Name => "gnat_external");
+
+   function U (S          : Wide_Wide_String;
+               Output_BOM : Boolean := False)
+               return Ada.Strings.UTF_Encoding.UTF_8_String
+               renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
 
 end Alire;
