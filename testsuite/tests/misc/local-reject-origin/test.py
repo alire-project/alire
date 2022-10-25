@@ -14,6 +14,6 @@ with open("alire.toml", "a") as file:
     file.write("\n[origin]\n")
 
 p = run_alr("show", complain_on_error=False)
-assert_match(".*invalid property: origin.*", p.out)
+assert_match(".*invalid property: 'origin'.*", p.out)
 
 print('SUCCESS')

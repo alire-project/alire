@@ -1,6 +1,9 @@
+with AAA.Enum_Tools;
+
 with TOML; use TOML;
 
 with Alire.Utils.YAML;
+with Alire.Utils.Did_You_Mean;
 
 with Ada.Characters.Handling;
 
@@ -9,6 +12,18 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 package body Alire.Properties.Configurations is
 
    use AAA.Strings;
+
+   type Valid_Keys is (Output_Dir,
+                       Disabled,
+                       Generate_Ada,
+                       Generate_GPR,
+                       Generate_C,
+                       Auto_GPR_With);
+
+   function Is_Valid is new AAA.Enum_Tools.Is_Valid (Valid_Keys);
+   function Valid_Keys_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Valid_Keys, Utils.Did_You_Mean.Lower_Case);
 
    -------------
    -- To_Type --
@@ -828,57 +843,68 @@ package body Alire.Properties.Configurations is
                   Nested := Assignments_From_TOML
                     (From.Descend (Key, Val, "settings"));
 
-               elsif Key = "output_dir" then
-                  if Val.Kind = TOML_String then
-                     Ent.Output_Dir := Val.As_Unbounded_String;
-                  else
-                     Raise_Checked_Error ("invalid value for: " & Key &
-                                            "(string expected)");
-                  end if;
-
-               elsif Key = "generate_ada" then
-                  if Val.Kind = TOML_Boolean then
-                     Ent.Gen_Ada := Val.As_Boolean;
-                  else
-                     Raise_Checked_Error ("invalid value for: " & Key &
-                                            "(boolean expected)");
-                  end if;
-
-               elsif Key = "generate_gpr" then
-                  if Val.Kind = TOML_Boolean then
-                     Ent.Gen_GPR := Val.As_Boolean;
-                  else
-                     Raise_Checked_Error ("invalid value for: " & Key &
-                                            "(Boolean expected)");
-                  end if;
-
-               elsif Key = "generate_c" then
-                  if Val.Kind = TOML_Boolean then
-                     Ent.Gen_C := Val.As_Boolean;
-                  else
-                     Raise_Checked_Error ("invalid value for: " & Key &
-                                            "(Boolean expected)");
-                  end if;
-
-               elsif Key = "auto_gpr_with" then
-                  if Val.Kind = TOML_Boolean then
-                     Ent.Auto_GPR_With := Val.As_Boolean;
-                  else
-                     Raise_Checked_Error ("invalid value for: " & Key &
-                                            "(Boolean expected)");
-                  end if;
-
-               elsif Key = "disabled" then
-                  if Val.Kind = TOML_Boolean then
-                     Ent.Disabled := Val.As_Boolean;
-                  else
-                     Raise_Checked_Error ("invalid value for: " & Key &
-                                            "(Boolean expected)");
-                  end if;
-
                else
-                  Raise_Checked_Error ("Unknown configuration entry: "
-                                       & Key);
+                  if Is_Valid (Key) then
+                     case Valid_Keys'Value (Key) is
+                        when Output_Dir =>
+                           if Val.Kind = TOML_String then
+                              Ent.Output_Dir := Val.As_Unbounded_String;
+                           else
+                              Raise_Checked_Error
+                                ("invalid value for: " & Key &
+                                   "(string expected)");
+                           end if;
+
+                        when Generate_Ada =>
+                           if Val.Kind = TOML_Boolean then
+                              Ent.Gen_Ada := Val.As_Boolean;
+                           else
+                              Raise_Checked_Error
+                                ("invalid value for: " & Key &
+                                   "(boolean expected)");
+                           end if;
+
+                        when Generate_GPR =>
+                           if Val.Kind = TOML_Boolean then
+                              Ent.Gen_GPR := Val.As_Boolean;
+                           else
+                              Raise_Checked_Error
+                                ("invalid value for: " & Key &
+                                                     "(Boolean expected)");
+                           end if;
+
+                        when Generate_C =>
+                           if Val.Kind = TOML_Boolean then
+                              Ent.Gen_C := Val.As_Boolean;
+                           else
+                              Raise_Checked_Error
+                                ("invalid value for: " & Key &
+                                   "(Boolean expected)");
+                           end if;
+
+                        when Auto_GPR_With =>
+                           if Val.Kind = TOML_Boolean then
+                              Ent.Auto_GPR_With := Val.As_Boolean;
+                           else
+                              Raise_Checked_Error
+                                ("invalid value for: " & Key &
+                                   "(Boolean expected)");
+                           end if;
+
+                        when Disabled =>
+                           if Val.Kind = TOML_Boolean then
+                              Ent.Disabled := Val.As_Boolean;
+                           else
+                              Raise_Checked_Error
+                                ("invalid value for: " & Key &
+                                   "(Boolean expected)");
+                           end if;
+                     end case;
+                  else
+                     Raise_Checked_Error ("Unknown configuration entry: '"
+                                          & Key & "'." &
+                                            Valid_Keys_Suggestion (Key));
+                  end if;
                end if;
                Props.Append (Nested);
             end;

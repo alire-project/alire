@@ -1,7 +1,64 @@
 with Alire.TOML_Keys;
 with TOML; use TOML;
 
+with Alire.Utils.Did_You_Mean;
+
 package body Alire.Properties.Build_Switches is
+
+   function Profile_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Profile_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Switches_Categories_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Switches_Categories, Utils.Did_You_Mean.Lower_Case);
+
+   function Optimization_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Optimization_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Debug_Info_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Debug_Info_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Runtime_Checks_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Runtime_Checks_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Compile_Checks_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Compile_Checks_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Contracts_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Contracts_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Style_Checks_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Style_Checks_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   function Ada_Version_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Ada_Version_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   -----------------------
+   -- Switch_Suggestion --
+   -----------------------
+
+   function Switch_Suggestion (Str : String; Cat : Switches_Categories)
+                               return String
+   is
+   begin
+      case Cat is
+         when Optimization => return Optimization_Suggestion (Str);
+         when Debug_Info => return Debug_Info_Suggestion (Str);
+         when Contracts => return Contracts_Suggestion (Str);
+         when Compile_Checks => return Compile_Checks_Suggestion (Str);
+         when Runtime_Checks => return Runtime_Checks_Suggestion (Str);
+         when Style_Checks => return Style_Checks_Suggestion (Str);
+         when Ada_Version => return Ada_Version_Suggestion (Str);
+      end case;
+   end Switch_Suggestion;
 
    --------------
    -- Modifier --
@@ -62,19 +119,19 @@ package body Alire.Properties.Build_Switches is
 
          case Cat is
          when Optimization =>
-            Result.Optimization := (Custom, List);
+            Result.Optimization := (Custom => True, List => List);
          when Debug_Info =>
-            Result.Debug_Info := (Custom, List);
+            Result.Debug_Info := (Custom => True, List => List);
          when Compile_Checks =>
-            Result.Compile_Checks := (Custom, List);
+            Result.Compile_Checks := (Custom => True, List => List);
          when Runtime_Checks =>
-            Result.Runtime_Checks := (Custom, List);
+            Result.Runtime_Checks := (Custom => True, List => List);
          when Contracts =>
-            Result.Contracts := (Custom, List);
+            Result.Contracts := (Custom => True, List => List);
          when Style_Checks =>
-            Result.Style_Checks := (Custom, List);
+            Result.Style_Checks := (Custom => True, List => List);
          when Ada_Version =>
-            Result.Ada_Version := (Custom, List);
+            Result.Ada_Version := (Custom => True, List => List);
          end case;
 
       elsif T.Kind = TOML_String then
@@ -86,12 +143,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Optimization_Kind :=
                     Optimization_Kind'Value (T.As_String);
                begin
-                  Result.Optimization :=
-                    (case K is
-                        when Performance => (Kind => Performance),
-                        when Size        => (Kind => Size),
-                        when Debug       => (Kind => Debug),
-                        when Custom      => raise Constraint_Error);
+                  Result.Optimization := (Custom => False, Value => K);
                end;
 
             when Debug_Info =>
@@ -99,11 +151,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Debug_Info_Kind :=
                     Debug_Info_Kind'Value (T.As_String);
                begin
-                  Result.Debug_Info :=
-                    (case K is
-                        when No     => (Kind => No),
-                        when Yes    => (Kind => Yes),
-                        when Custom => raise Constraint_Error);
+                  Result.Debug_Info := (Custom => False, Value => K);
                end;
 
             when Runtime_Checks =>
@@ -111,13 +159,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Runtime_Checks_Kind :=
                     Runtime_Checks_Kind'Value (T.As_String);
                begin
-                  Result.Runtime_Checks :=
-                    (case K is
-                        when None       => (Kind => None),
-                        when Default    => (Kind => Default),
-                        when Overflow   => (Kind => Overflow),
-                        when Everything => (Kind => Everything),
-                        when Custom  => raise Constraint_Error);
+                  Result.Runtime_Checks := (Custom => False, Value => K);
                end;
 
                when Compile_Checks =>
@@ -125,12 +167,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Compile_Checks_Kind :=
                     Compile_Checks_Kind'Value (T.As_String);
                begin
-                  Result.Compile_Checks :=
-                    (case K is
-                        when None     => (Kind => None),
-                        when Warnings => (Kind => Warnings),
-                        when Errors   => (Kind => Errors),
-                        when Custom   => raise Constraint_Error);
+                  Result.Compile_Checks := (Custom => False, Value => K);
                end;
 
                when Contracts =>
@@ -138,11 +175,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Contracts_Kind :=
                     Contracts_Kind'Value (T.As_String);
                begin
-                  Result.Contracts :=
-                    (case K is
-                        when No     => (Kind => No),
-                        when Yes    => (Kind => Yes),
-                        when Custom => raise Constraint_Error);
+                  Result.Contracts := (Custom => False, Value => K);
                end;
 
             when Style_Checks =>
@@ -150,11 +183,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Style_Checks_Kind :=
                     Style_Checks_Kind'Value (T.As_String);
                begin
-                  Result.Style_Checks :=
-                    (case K is
-                        when No     => (Kind => No),
-                        when Yes    => (Kind => Yes),
-                        when Custom => raise Constraint_Error);
+                  Result.Style_Checks := (Custom => False, Value => K);
                end;
 
             when Ada_Version =>
@@ -162,16 +191,7 @@ package body Alire.Properties.Build_Switches is
                   K : constant Ada_Version_Kind :=
                     Ada_Version_Kind'Value (T.As_String);
                begin
-                  Result.Ada_Version :=
-                    (case K is
-                        when Compiler_Default => (Kind => Compiler_Default),
-                        when Ada83            => (Kind => Ada83),
-                        when Ada95            => (Kind => Ada95),
-                        when Ada05            => (Kind => Ada05),
-                        when Ada12            => (Kind => Ada12),
-                        when Ada2022          => (Kind => Ada2022),
-                        when GNAT_Extensions  => (Kind => GNAT_Extensions),
-                        when Custom           => raise Constraint_Error);
+                  Result.Ada_Version := (Custom => False, Value => K);
                end;
 
             end case;
@@ -179,7 +199,8 @@ package body Alire.Properties.Build_Switches is
             when Constraint_Error =>
                From.Checked_Error
                  ("Invalid switch selector '" & T.As_String &
-                    "' for category '" & Cat'Img & "'");
+                    "' for category '" & Cat'Img & "'." &
+                    Switch_Suggestion (T.As_String, Cat));
          end;
 
       else
@@ -214,7 +235,8 @@ package body Alire.Properties.Build_Switches is
          exception
             when Constraint_Error =>
                From.Checked_Error
-                 ("Invalid switch category: '" & (+Key) & "'");
+                 ("Invalid switch category: '" & (+Key) & "'."
+                  & Switches_Categories_Suggestion (+Key));
          end;
       end loop;
 
@@ -295,7 +317,8 @@ package body Alire.Properties.Build_Switches is
             exception
                when Constraint_Error =>
                   From.Checked_Error
-                    ("Invalid profile name: '" & (+Key) & "'");
+                    ("Invalid profile name: '" & (+Key) & "'." &
+                       Profile_Suggestion (+Key));
             end;
          end if;
       end loop;
