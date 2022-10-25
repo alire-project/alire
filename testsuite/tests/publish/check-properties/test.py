@@ -10,13 +10,13 @@ from drivers.helpers import init_git_repo
 # and the other is missing optional tags.
 
 # Attempt with crate missing maintainer
-p = run_alr("publish", "my_index/crates/nomaint.tgz",
+p = run_alr("publish", "nomaint.tgz",
             complain_on_error=False, force=True)
 assert_match(".*Missing required properties: maintainers.*", p.out)
 
 # Attempt with crate missing optional recommended properties. No quiet or the
 # warning on optional properties is silenced.
-p = run_alr("publish", "my_index/crates/notags.tgz",
+p = run_alr("publish", "notags.tgz",
             quiet=False, force=True)
 assert_match(".*Missing optional recommended properties:"
              " authors, licenses, tags, website.*",

@@ -1,4 +1,4 @@
-# NOTE: this crate is not used in the text, but we need at least one crate in
+# NOTE: this crate is not used in the test, but we need at least one crate in
 # the index or the community index will get cloned due to empty in-memory
 # catalog.
 
