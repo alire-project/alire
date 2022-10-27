@@ -2,32 +2,50 @@ with AAA.Text_IO;
 
 with Ada.Directories;
 with Ada.Wide_Wide_Text_IO;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Alire.Config;
 with Alire.Utils.User_Input.Query_Config;
+with CLIC.User_Input;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with TOML;
 
+with SPDX;
+with CLIC.TTY; use CLIC.TTY;
+
 package body Alr.Commands.Init is
 
    package UI renames Alire.Utils.User_Input;
 
-   Sed_Pattern : constant String := "PROJECT_SKEL";
+   type Crate_Kind is (Library, Binary);
+
+   type Crate_Init_Info is record
+      Name         : Unbounded_String;
+      Kind         : Crate_Kind := Library;
+      GitHub_Login : Unbounded_String;
+      Username     : Unbounded_String;
+      Email        : Unbounded_String;
+      Licenses     : Unbounded_String;
+      Description  : Unbounded_String;
+      Website      : Unbounded_String;
+      Tags         : AAA.Strings.Vector;
+   end record;
 
    --------------
    -- Generate --
    --------------
 
    procedure Generate (Cmd  : Command;
-                       Args : AAA.Strings.Vector) is
+                       Info : Crate_Init_Info)
+   is
 
       package TIO renames Ada.Wide_Wide_Text_IO;
       use AAA.Strings;
 
-      For_Library : constant Boolean := not Cmd.Bin;
-      Name        : constant String := Args (1);
+      For_Library : constant Boolean := Info.Kind = Library;
+      Name        : constant String := To_String (Info.Name);
       Lower_Name  : constant String := AAA.Strings.To_Lower_Case (Name);
       Upper_Name  : constant String := AAA.Strings.To_Upper_Case (Name);
       Mixed_Name  : constant String := AAA.Strings.To_Mixed_Case (Name);
@@ -69,8 +87,18 @@ package body Alr.Commands.Init is
       function Q (S : String) return String is ("""" & S & """");
       --  Quote string
 
+      function Q (S : Unbounded_String) return String
+      is (Q (To_String (S)));
+      --  Quote string
+
       function Arr (S : String) return String is ("[" & S & "]");
       --  Wrap string into TOML array
+
+      function Q_Arr (Arr : AAA.Strings.Vector) return String
+      is (if Arr.Is_Empty
+          then "[]"
+          else "[""" & Arr.Flatten (""", """) & """]");
+      --  String vector to TOML array of strings
 
       procedure Generate_Project_File;
       --  Generate a project file for this crate
@@ -233,9 +261,9 @@ package body Alr.Commands.Init is
             --  Retrieve initial values from config or user. Only the name may
             --  require encoding, as emails and logins cannot contain strange
             --  characters.
-            Login    : constant String := UI.Query_Config.User_GitHub_Login;
-            Username : constant String := Escape (UI.Query_Config.User_Name);
-            Email    : constant String := UI.Query_Config.User_Email;
+            Login    : constant String := To_String (Info.GitHub_Login);
+            Username : constant String := Escape (To_String (Info.Username));
+            Email    : constant String := To_String (Info.Email);
             Filename : constant String :=
               +Full_Name (Directory / (+Alire.Roots.Crate_File_Name));
          begin
@@ -243,13 +271,16 @@ package body Alr.Commands.Init is
                Reportaise_Command_Failed ("Cannot create '" & Filename & "'");
             end if;
             Put_Line ("name = " & Q (Lower_Name));
-            Put_Line ("description = " & Q ("Shiny new project"));
+            Put_Line ("description = " & Q (Info.Description));
             Put_Line ("version = " & Q ("0.1.0-dev"));
             Put_New_Line;
             Put_Line ("authors = " & Arr (Q (Username)));
             Put_Line ("maintainers = "
                       & Arr (Q (Username & " <" & Email & ">")));
             Put_Line ("maintainers-logins = " & Arr (Q (Login)));
+            Put_Line ("licenses = " & Q (Info.Licenses));
+            Put_Line ("website = " & Q (Info.Website));
+            Put_Line ("tags = " & Q_Arr (Info.Tags));
          end;
 
          if Cmd.Bin then
@@ -315,6 +346,212 @@ package body Alr.Commands.Init is
       Alire.Put_Success (TTY.Emph (Lower_Name) & " initialized successfully.");
    end Generate;
 
+   ----------------------
+   -- Query_Crate_Name --
+   ----------------------
+
+   procedure Query_Crate_Name (Args :        AAA.Strings.Vector;
+                               Info : in out Crate_Init_Info)
+   is
+   begin
+      case Args.Length is
+         when 0 => -- Query crate name
+            loop
+               declare
+                  Tentative_Name : constant String :=
+                    CLIC.User_Input.Query_String
+                      (Question   => "Crate name?",
+                       Default    => "",
+                       Validation => null);
+               begin
+                  if Alire.Is_Valid_Name (Tentative_Name) then
+                     Info.Name := To_Unbounded_String (Tentative_Name);
+                     exit;
+                  else
+                     Ada.Text_IO.Put_Line
+                       ("Invalid crate name '"
+                        & Tentative_Name & "': "
+                        & Alire.Error_In_Name (Tentative_Name));
+                  end if;
+               end;
+            end loop;
+
+         when 1 => -- Use crate name from argument
+            declare
+               Arg_Name : constant String := Args.First_Element;
+            begin
+               if not Alire.Is_Valid_Name (Arg_Name) then
+                  Reportaise_Wrong_Arguments
+                    ("Invalid crate name '"
+                     & Arg_Name & "': "
+                     & Alire.Error_In_Name (Arg_Name));
+               else
+                  Info.Name := To_Unbounded_String (Args.First_Element);
+               end if;
+            end;
+
+         when others =>
+            Reportaise_Wrong_Arguments ("'init' takes at most one argument");
+      end case;
+   end Query_Crate_Name;
+
+   ------------------------
+   -- License_Validation --
+   ------------------------
+
+   function License_Validation (Str : String) return Boolean is
+      SP : constant SPDX.Expression := SPDX.Parse (Str,
+                                                   Allow_Custom => True);
+   begin
+      if SPDX.Valid (SP) then
+         return True;
+      else
+         Ada.Text_IO.Put_Line
+           ("Invalid SPDX license expression '" & Str
+            & "': " & SPDX.Error (SP));
+         Ada.Text_IO.Put_Line
+           ("SPDX expression expected (https://spdx.org/licenses/).");
+         Ada.Text_IO.Put_Line ("(Use 'custom-' prefix for custom"
+                               & " license identifier)");
+
+         return False;
+      end if;
+   end License_Validation;
+
+   -------------------
+   -- Query_License --
+   -------------------
+
+   procedure Query_License (Info : in out Crate_Init_Info) is
+      License_Other : constant String := "Other...";
+
+      License_Vect : constant AAA.Strings.Vector :=
+        AAA.Strings.Empty_Vector
+        .Append ("MIT OR Apache-2.0")
+        .Append ("MIT")
+        .Append ("Apache-2.0")
+        .Append ("BSD-3-Clause")
+        .Append ("LGPL-3.0-or-later")
+        .Append ("GPL-3.0-or-later WITH GPL-3.0-with-GCC-exception")
+        .Append ("GPL-3.0-or-later")
+        .Append (License_Other);
+
+      Answer : Natural;
+   begin
+      Answer := CLIC.User_Input.Query_Multi
+        (Question  => "Select a software " & Emph ("license") &
+           " for the crate?",
+         Choices   => License_Vect);
+
+      if Answer not in License_Vect.First_Index .. License_Vect.Last_Index
+        or else
+          License_Vect (Answer) = License_Other
+      then
+         Info.Licenses :=
+           To_Unbounded_String
+             (CLIC.User_Input.Query_String
+                (Question   => "Enter SPDX license expression" &
+                     " (https://spdx.org/licenses/):",
+                 Default    => "",
+                 Validation => License_Validation'Access));
+      else
+         Info.Licenses := To_Unbounded_String (License_Vect (Answer));
+      end if;
+   end Query_License;
+
+   ----------------------
+   -- Query_Crate_Kind --
+   ----------------------
+
+   procedure Query_Crate_Kind (Info : in out Crate_Init_Info) is
+      Kinds : AAA.Strings.Vector;
+      Answer : Natural;
+   begin
+      for Elt in Crate_Kind loop
+         Kinds.Append (Elt'Img);
+      end loop;
+
+      Answer := CLIC.User_Input.Query_Multi
+        (Question  => "Select the " & Emph ("kind of crate") &
+           " you want to create:",
+         Choices   => Kinds);
+
+      Info.Kind := Crate_Kind'Value (Kinds (Answer));
+   end Query_Crate_Kind;
+
+   ----------------------------
+   -- Description_Validation --
+   ----------------------------
+
+   function Description_Validation (Str : String) return Boolean is
+   begin
+      if Str'Length > Alire.Max_Description_Length then
+         Ada.Text_IO.Put_Line ("Description too long:"
+                               & Str'Length'Img & " (max"
+                               & Alire.Max_Description_Length'Img & ")");
+         return False;
+      else
+         return True;
+      end if;
+   end Description_Validation;
+
+   -----------------------
+   -- Query_Description --
+   -----------------------
+
+   procedure Query_Description (Info : in out Crate_Init_Info) is
+   begin
+      Info.Description :=
+        To_Unbounded_String
+          (CLIC.User_Input.Query_String
+             (Question   => "Enter a " & Emph ("short description") &
+                " of the crate:",
+              Default    => "",
+              Validation => Description_Validation'Access));
+   end Query_Description;
+
+   -------------------------
+   -- Tag_List_Validation --
+   -------------------------
+
+   function Tag_List_Validation (Str : String) return Boolean is
+      Vect : constant AAA.Strings.Vector :=
+        AAA.Strings.Split (Str, ',', Trim => True);
+
+      Tags_Ok : Boolean := True;
+   begin
+      for Elt of Vect loop
+         if Elt /= "" and then not Alire.Utils.Is_Valid_Tag (Elt) then
+            Ada.Text_IO.Put_Line ("Invalid tag: '" & Elt & "'");
+            Tags_Ok := False;
+         end  if;
+      end loop;
+
+      return Tags_Ok;
+   end Tag_List_Validation;
+
+   ----------------
+   -- Query_Tags --
+   ----------------
+
+   procedure Query_Tags (Info : in out Crate_Init_Info) is
+      Answer : constant String :=
+        CLIC.User_Input.Query_String
+          (Question => "Enter a comma (',') separated list of " &
+             Emph ("tags") & " to help people find your crate:",
+           Default => "",
+           Validation => Tag_List_Validation'Access);
+
+      Vect : constant AAA.Strings.Vector :=
+        AAA.Strings.Split (Answer, ',', Trim => True);
+   begin
+      for Elt of Vect loop
+         if Elt /= "" then
+            Info.Tags.Append (AAA.Strings.Trim (Elt));
+         end if;
+      end loop;
+   end Query_Tags;
+
    -------------
    -- Execute --
    -------------
@@ -323,31 +560,42 @@ package body Alr.Commands.Init is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      use AAA.Strings;
+      Info : Crate_Init_Info;
    begin
-      if Args.Count /= 1 then
-         Reportaise_Wrong_Arguments ("No crate name given");
-      end if;
 
-      if not (Cmd.Bin or Cmd.Lib) then
+      if Cmd.Bin and then Cmd.Lib then
          Reportaise_Wrong_Arguments ("Please provide either --bin or --lib");
       end if;
 
-      --  Validation finished
+      Query_Crate_Name (Args, Info);
 
-      declare
-         Name  : constant String := Args (1);
-         Check : constant Alire.Crate_Name := +Name with Unreferenced;
-      begin
-         if To_Lower_Case (Name) = To_Lower_Case (Sed_Pattern)
-         then
-            Reportaise_Command_Failed
-              ("The crate name is invalid, as it is used internally by"
-               & " alr; please choose another name");
-         end if;
+      if Cmd.Bin then
+         Info.Kind := Binary;
+      elsif Cmd.Lib then
+         Info.Kind := Library;
+      else
+         Query_Crate_Kind (Info);
+      end if;
 
-         Generate (Cmd, Args);
-      end;
+      Query_Description (Info);
+
+      --  Query User info
+      Info.Username := To_Unbounded_String (UI.Query_Config.User_Name);
+      Info.GitHub_Login := To_Unbounded_String
+        (UI.Query_Config.User_GitHub_Login);
+      Info.Email := To_Unbounded_String (UI.Query_Config.User_Email);
+
+      Query_License (Info);
+
+      Query_Tags (Info);
+
+      Info.Website := To_Unbounded_String
+        (CLIC.User_Input.Query_String
+           (Question   => "Enter a opional " & Emph ("Website URL") &
+              " for the crate:",
+            Default    => "",
+            Validation => null));
+      Generate (Cmd, Info);
    end Execute;
 
    ----------------------

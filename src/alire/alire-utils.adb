@@ -189,6 +189,7 @@ package body Alire.Utils is
 
    function Is_Valid_Tag (Tag : String) return Boolean is
      ((for all C of Tag => C in '0' .. '9' | 'a' .. 'z' | '-')
+      and then Tag'Length in 1 .. Max_Tag_Length
       and then Tag (Tag'First) /= '-'
       and then Tag (Tag'Last) /= '-'
       and then not AAA.Strings.Contains (Tag, "--"));
