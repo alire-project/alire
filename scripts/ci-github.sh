@@ -41,6 +41,9 @@ if [ "${INDEX:-}" != "" ]; then
     alr index --name default --add "$INDEX"
 fi
 
+# Fix GNAT version to check error on macOS
+alr toolchain --select gnat_native=12.1.2 gprbuild=22.0.1
+
 echo ALR SEARCH:
 # List releases for the record
 alr -q -d search --list --external
