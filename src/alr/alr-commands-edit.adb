@@ -83,12 +83,12 @@ package body Alr.Commands.Edit is
          Exec : constant String := Edit_Args.First_Element;
       begin
          if Alire.OS_Lib.Subprocess.Locate_In_Path (Exec) = "" then
-            if Exec = "gnatstudio" or else Exec = "gnatstudio.exe" then
+            if Exec in "gnatstudio" | "gnatstudio.exe" then
 
                Reportaise_Command_Failed
                  ("GNAT Studio not available or not in PATH. " & ASCII.LF &
-                    "You can download it at: " & ASCII.LF &
-                    "https://github.com/AdaCore/gnatstudio/releases");
+                  "You can download it at: " & ASCII.LF &
+                  "https://github.com/AdaCore/gnatstudio/releases");
             else
                Reportaise_Command_Failed
                  ("'" & Exec & "' not available or not in PATH.");

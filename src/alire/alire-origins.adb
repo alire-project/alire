@@ -791,9 +791,7 @@ package body Alire.Origins is
    begin
       Table.Set (Keys.URL, Create_String (This.URL));
 
-      if This.Name /= "" and then
-        This.Name /= URL_Basename (+This.URL)
-      then
+      if This.Name not in "" | URL_Basename (+This.URL) then
          Table.Set (Keys.Archive_Name, Create_String (This.Name));
       end if;
 
