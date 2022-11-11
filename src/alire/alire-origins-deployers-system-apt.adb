@@ -24,13 +24,8 @@ package body Alire.Origins.Deployers.System.Apt is
                     Valid_Exit_Codes => (0, 1), -- returned when not found
                     Err_To_Out       => True);
    begin
-      for Line of Output loop
-         if Line = "Status: install ok installed" then
-            return True;
-         end if;
-      end loop;
-
-      return False;
+      return
+        (for some Line of Output => Line = "Status: install ok installed");
    end Already_Installed;
 
    ------------

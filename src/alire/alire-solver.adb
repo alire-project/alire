@@ -1085,22 +1085,17 @@ package body Alire.Solver is
             --  because it doesn't exist.
             function Contains_All_Satisfiable return Boolean is
             begin
-               for Crate of Solution.Crates loop
-                  if Solution.State (Crate).Fulfilment in Missed | Hinted
-                        --  So the dependency is not solved, but why?
-                    and then
-                      not Unavailable_Crates.Contains (Crate)
-                        --  Because it does not exist at all, so "complete"
-                    and then
-                      not Unavailable_Direct_Deps.Contains
-                        (Solution.Dependency (Crate))
-                        --  Because no release fulfills it, so "complete"
-                  then
-                     return False;
-                  end if;
-               end loop;
+               return
+                 (for all Crate of Solution.Crates =>
+                    not
+                    (Solution.State (Crate).Fulfilment in Missed | Hinted
+               --  So the dependency is not solved, but why?
 
-               return True;
+                     and then not Unavailable_Crates.Contains (Crate)
+               --  Because it does not exist at all, so "complete"
+
+                     and then not Unavailable_Direct_Deps.Contains
+                       (Solution.Dependency (Crate))));
             end Contains_All_Satisfiable;
 
             Pre_Length : constant Count_Type := Solutions.Length;

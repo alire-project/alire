@@ -347,14 +347,11 @@ package body Alire.Crate_Configuration is
    is
       use Config_Maps;
    begin
-      for C in This.Var_Map.Iterate loop
-         if (Crate = "" or else Name (C).As_String = Crate)
-           and then Element (C).Set_By = Must_Be_Set
-         then
-            return False;
-         end if;
-      end loop;
-      return True;
+      return
+        (for all C in This.Var_Map.Iterate =>
+           not
+           ((Crate = "" or else Name (C).As_String = Crate)
+            and then Element (C).Set_By = Must_Be_Set));
    end Is_Config_Complete;
 
    ---------------------
