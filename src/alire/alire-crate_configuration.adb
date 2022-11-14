@@ -819,11 +819,10 @@ package body Alire.Crate_Configuration is
                  "'" & " for type " & Image (Ref.Type_Def.Element));
          end if;
 
-         if Ref.Value /= No_TOML_Value and then Ref.Value /= Val.Value then
+         if Ref.Value not in No_TOML_Value | Val.Value then
             Raise_Checked_Error
-              ("Conflicting value for configuration variable '" &
-               (+Name) & "' from '" & (+Ref.Set_By) & "' and '"
-               & (+Crate) & "'.");
+              ("Conflicting value for configuration variable '" & (+Name) &
+               "' from '" & (+Ref.Set_By) & "' and '" & (+Crate) & "'.");
          else
             Ref.Value  := Val.Value;
             Ref.Set_By := +(+Crate);

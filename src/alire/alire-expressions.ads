@@ -27,11 +27,10 @@ package Alire.Expressions with Preelaborate is
    function Name (This : Variable) return String;
    --  The Ada-like name of this variable
 
-   function Satisfies (Property : Properties.Property'Class;
-                       Var_Key  : String;
-                       Value    : String) return Boolean
-     with Pre => Value /= TOML_Keys.Case_Others and then
-                 Value /= "others";
+   function Satisfies
+     (Property : Properties.Property'Class; Var_Key : String; Value : String)
+      return Boolean with
+     Pre => Value not in TOML_Keys.Case_Others | "others";
    --  Say if a property is satisfied by the value, which must match the
    --  Variable and property type (keys must match). Doesn't accept defaults.
 
