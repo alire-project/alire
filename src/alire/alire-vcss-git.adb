@@ -295,7 +295,7 @@ package body Alire.VCSs.Git is
 
       --  Prepare Ref to make it less ambiguous
 
-      if Ref = "HEAD" or else Ref = "" then
+      if Ref in "HEAD" | "" then
          return This.Remote_Commit (From, ASCII.HT & "HEAD");
       elsif Ref (Ref'First) not in '/' | ASCII.HT then
          return This.Remote_Commit (From, '/' & Ref);

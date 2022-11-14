@@ -37,7 +37,8 @@ private
       Working_Folder        : Any_Path (1 .. Folder_Len);
    end record
      with Type_Invariant =>
-       (Name = "" or else Name in Action_Name)
+
+      (Name in "" | Action_Name)
      and then
        (if Moment = On_Demand then Name /= "");
 

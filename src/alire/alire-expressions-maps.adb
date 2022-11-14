@@ -7,12 +7,13 @@ package body Alire.Expressions.Maps is
    procedure Insert (M : in out Map; V : String; E : Elements)
    is
    begin
-      if V = TOML_Keys.Case_Others or else V = "others" then
+      if V in TOML_Keys.Case_Others | "others" then
          M.Set_Others (E);
       else
          if not M.Base.Is_Valid (V) and then Force then
-            Trace.Debug ("Storing unknown value '" & V & "' for enumeration '"
-                         & Key (M.Base) & "'");
+            Trace.Debug
+              ("Storing unknown value '" & V & "' for enumeration '" &
+               Key (M.Base) & "'");
          end if;
          M.Entries.Insert (V, E);
       end if;
