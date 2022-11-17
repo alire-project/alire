@@ -1,4 +1,5 @@
 with AAA.Enum_Tools;
+with Alire.Utils.Did_You_Mean;
 
 package body Alire.Properties.Actions.Runners is
 
@@ -61,6 +62,11 @@ package body Alire.Properties.Actions.Runners is
          Moment   : Moments;
 
          function Is_Valid is new AAA.Enum_Tools.Is_Valid (Moments);
+
+         function Suggestion
+         is new Utils.Did_You_Mean.Enum_Suggestion
+           (Moments, Utils.Did_You_Mean.Tomify);
+
       begin
          if not From.Pop (TOML_Keys.Action_Type, Kind) then
             From.Checked_Error ("action type missing");
@@ -81,7 +87,8 @@ package body Alire.Properties.Actions.Runners is
          end if;
 
          if not Is_Valid (TOML_Adapters.Adafy (Kind.As_String)) then
-            From.Checked_Error ("action type is invalid: " & Kind.As_String);
+            From.Checked_Error ("action type is invalid: '" & Kind.As_String &
+                               "'." & Suggestion (Kind.As_String));
          else
             Moment := Moments'Value (TOML_Adapters.Adafy (Kind.As_String));
          end if;

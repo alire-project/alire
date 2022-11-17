@@ -67,11 +67,13 @@ package body Alire.Conditional_Trees.TOML_Load is
                      then
                         if Strict then
                            Case_Table.Recoverable_Error
-                             ("invalid enumeration value: " & Item_Key);
+                             ("invalid enumeration value: '" & Item_Key &
+                                "'." & Map.Base.Suggestion (Item_Key));
                         else
                            Trace.Debug
                              (Errors.Stack
-                                ("unknown enumeration value: " & Item_Key));
+                                ("unknown enumeration value: " & Item_Key &
+                                   "'." & Map.Base.Suggestion (Item_Key)));
                         end if;
                      end if;
                   end loop;

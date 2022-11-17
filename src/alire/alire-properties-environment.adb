@@ -1,6 +1,11 @@
 with Alire.TOML_Keys;
+with Alire.Utils.Did_You_Mean;
 
 package body Alire.Properties.Environment is
+
+   function Actions_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Actions, Utils.Did_You_Mean.Lower_Case);
 
    ------------
    -- Action --
@@ -100,7 +105,8 @@ package body Alire.Properties.Environment is
                   when Constraint_Error => -- because Action is invalid
                      From.Checked_Error
                        (": " & (+Var.Name)
-                        & "invalid action: " & Action_Image);
+                        & " invalid action: '" & Action_Image & "'." &
+                          Actions_Suggestion (Action_Image));
                end;
 
                --  Value (already type checked in previous pop)
