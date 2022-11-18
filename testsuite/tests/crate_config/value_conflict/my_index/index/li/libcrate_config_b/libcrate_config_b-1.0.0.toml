@@ -1,0 +1,15 @@
+description = "crate config demonstration project"
+name = "libcrate_config_b"
+version = "1.0.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[depends-on]]
+libcrate_config_a = "*"
+
+[origin]
+url = "file:."
+
+[configuration.values]
+libcrate_config_a.Var_Bool = true
