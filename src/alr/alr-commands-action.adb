@@ -22,11 +22,15 @@ package body Alr.Commands.Action is
       -----------
 
       function Build (Moment : Alire.Properties.Actions.Moments) return String
-      is ((if Moment /= Moments'First then "|" else "")
-          & AAA.Strings.To_Lower_Case (Moment'Image)
-          & (if Moment = Moments'Pred (On_Demand)
-            then ""
-            else Build (Moments'Succ (Moment))));
+      is
+         use AAA.Strings;
+      begin
+         return (if Moment /= Moments'First then "|" else "")
+                & To_Lower_Case (Replace (Moment'Image, "_", "-"))
+                & (if Moment = Moments'Pred (On_Demand)
+                  then ""
+                  else Build (Moments'Succ (Moment)));
+      end Build;
 
    begin
       return Build (Alire.Properties.Actions.Moments'First);
