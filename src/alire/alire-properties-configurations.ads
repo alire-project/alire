@@ -101,6 +101,9 @@ package Alire.Properties.Configurations with Preelaborate is
    function Typedef_From_Enum return Config_Type_Definition;
 
    function String_Typedef (Name : String) return Config_Type_Definition;
+
+   function Image (Val : TOML.TOML_Value) return String;
+
 private
 
    type Config_Entry is new Properties.Property with record

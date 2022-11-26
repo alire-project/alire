@@ -235,7 +235,8 @@ package body Alire.Crate_Configuration is
            (Profile_Maps.Key (Cursor),
             (Name => +Builtin_Build_Profile.Name,
              Value => TOML.Create_String
-               (To_Lower_Case (Profile_Maps.Element (Cursor)'Img))));
+               (To_Lower_Case (Profile_Maps.Element (Cursor)'Img))),
+            Set_By => "Build profile map");
       end loop;
 
    end Make_Build_Profile_Map;
@@ -792,15 +793,15 @@ package body Alire.Crate_Configuration is
    -- Set_Value --
    ---------------
 
-   procedure Set_Value (This  : in out Global_Config;
-                        Crate : Crate_Name;
-                        Val   : Assignment)
+   procedure Set_Value (This   : in out Global_Config;
+                        Crate  : Crate_Name;
+                        Val    : Assignment;
+                        Set_By : String)
    is
       Val_Name_Lower : constant String := To_Lower_Case (+Val.Name);
       Crate_Str : constant String := +Crate;
       Name : constant Unbounded_String := (+Crate_Str) & "." & Val_Name_Lower;
    begin
-
       --  TODO check if setting configuration of a dependency
 
       if not This.Var_Map.Contains (Name) then
@@ -819,14 +820,16 @@ package body Alire.Crate_Configuration is
                  "'" & " for type " & Image (Ref.Type_Def.Element));
          end if;
 
-         if Ref.Value /= No_TOML_Value and then Ref.Value /= Val.Value then
+         if Ref.Value.Is_Present and then not Ref.Value.Equals (Val.Value)
+         then
             Raise_Checked_Error
               ("Conflicting value for configuration variable '" &
-               (+Name) & "' from '" & (+Ref.Set_By) & "' and '"
-               & (+Crate) & "'.");
+               (+Name) & "' from '" & (+Ref.Set_By) & "' (" &
+                 Image (Ref.Value) & ") and '"
+               & Set_By & "' (" & Image (Val.Value) & ").");
          else
             Ref.Value  := Val.Value;
-            Ref.Set_By := +(+Crate);
+            Ref.Set_By := +(Set_By);
          end if;
       end;
    end Set_Value;
@@ -852,7 +855,8 @@ package body Alire.Crate_Configuration is
               Config_Value_Assignment (Prop);
          begin
             for Elt of List.List loop
-               This.Set_Value (To_Name (+List.Crate), Elt);
+               This.Set_Value (To_Name (+List.Crate), Elt,
+                               Set_By => As_String (Crate));
             end loop;
          end;
       end loop;

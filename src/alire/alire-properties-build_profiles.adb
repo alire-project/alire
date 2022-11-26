@@ -1,8 +1,31 @@
 with Alire.TOML_Keys;
 
 with Alire.Utils.Switches; use Alire.Utils.Switches;
+with Alire.Utils.Did_You_Mean;
 
 package body Alire.Properties.Build_Profiles is
+
+   function Profile_Kind_Suggestion
+   is new Utils.Did_You_Mean.Enum_Suggestion
+     (Profile_Kind, Utils.Did_You_Mean.Lower_Case);
+
+   -----------------------
+   -- Check_Profile_Str --
+   -----------------------
+
+   procedure Check_Profile_Str (From : TOML_Adapters.Key_Queue;
+                                Str, Crate_Str : String)
+   is
+      Unused : Profile_Kind;
+   begin
+      Unused := Profile_Kind'Value (Str);
+   exception
+      when Constraint_Error =>
+         From.Checked_Error
+           ("Invalid build profile name: '" & Str
+            & "' for '" & Crate_Str & "'." &
+              Profile_Kind_Suggestion (Str));
+   end Check_Profile_Str;
 
    -----------
    -- Image --
@@ -72,6 +95,7 @@ package body Alire.Properties.Build_Profiles is
                        ("Multiple definition of wildcard (""*"")" &
                           " build profile");
                   else
+                     Check_Profile_Str (From, Profile_Str, Crate_Str);
                      Var.Wildcard_Found := True;
                   end if;
 
@@ -81,16 +105,8 @@ package body Alire.Properties.Build_Profiles is
                        Error_In_Name (Crate_Str) & ")");
                else
 
-                  declare
-                     Unused : Profile_Kind;
-                  begin
-                     Unused := Profile_Kind'Value (Profile_Str);
-                  exception
-                     when Constraint_Error =>
-                        From.Checked_Error
-                          ("Invalid build profile name: '" & Profile_Str
-                           & "' for '" & Crate_Str & "'");
-                  end;
+                  Check_Profile_Str (From, Profile_Str, Crate_Str);
+
                end if;
             end;
 
