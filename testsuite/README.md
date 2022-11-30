@@ -3,7 +3,8 @@ Alire/ALR's testsuite
 
 This directory intends to host a comprehensive testsuite for Alire/ALR as a
 library/tool. The testsuite framework currently requires a Python 3 interpreter
-with the e3-testsuite package (from PyPI) installed.
+with the [e3-testsuite](https://e3-testsuite.readthedocs.io) package (from PyPI)
+installed.
 
 Assuming your environment already has a Python 3 interpreter and has
 `virtualenv` installed, here is a quick cookbook to run the testsuite:
