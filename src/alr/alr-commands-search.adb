@@ -239,10 +239,12 @@ package body Alr.Commands.Search is
          while Has_Element (I) loop
 
             declare
+               use AAA.Strings;
+
                Crate   : Alire.Crates.Crate renames Element (I);
                Pattern : constant String := (if Cmd.List
                                              then ""
-                                             else Args (1));
+                                             else To_Lower_Case (Args (1)));
             begin
                if Cmd.List then
 
@@ -251,8 +253,11 @@ package body Alr.Commands.Search is
 
                else
 
-                  --  Search into release names
-                  if AAA.Strings.Contains (+Crate.Name, Pattern) then
+                  --  Search into release names and descriptions
+                  if Contains (To_Lower_Case (+Crate.Name), Pattern)
+                    or else
+                     Contains (To_Lower_Case (Crate.Description), Pattern)
+                  then
                      List_Crate (Crate);
                   end if;
 

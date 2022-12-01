@@ -37,19 +37,19 @@ assert_eq(format_table(
 ), p.out)
 
 
-# Actually search in the index. First, on crate names
+# Actually search in the index. First, on crate names/description
 p = run_alr('search', 'lib')
 assert_eq(format_table(
     ('libhello', '', '1.0.0',
      '"Hello, world!" demonstration project support library', ''),
 ), p.out)
 
-p = run_alr('search', 'support')
+p = run_alr('search', 'libhello-tag1')
 assert_eq('', p.out)
 
 
 # Then on crate properties
-p = run_alr('search', '--property', 'support')
+p = run_alr('search', '--property', 'libhello-tag1')
 assert_eq(format_table(
     ('libhello', '', '1.0.0',
      '"Hello, world!" demonstration project support library', ''),
