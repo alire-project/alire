@@ -106,8 +106,8 @@ Alire allows you to initialize an empty binary or library crate with ease:
     - `Full name`: Name of the author of the crate
     - `Email address`: Point of contact to author of the crate
 
-    All the questions are optional for now, you can just press enter to use the
-    default values.
+    All the questions are optional, you can just press enter to use the default
+    values.
 
     The `alr init` command will create a basic `crate` structure in the `myproj`
     directory.
