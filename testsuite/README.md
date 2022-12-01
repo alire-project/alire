@@ -6,6 +6,15 @@ library/tool. The testsuite framework currently requires a Python 3 interpreter
 with the [e3-testsuite](https://e3-testsuite.readthedocs.io) package (from PyPI)
 installed.
 
+You also must have [GNAT](https://www.gnu.org/software/gnat) and
+[GPRBuild](https://github.com/AdaCore/gprbuild) in your `PATH`. You can install
+these with, for example:
+```sh
+alr toolchain --install --install-dir=<dir> gnat_native=<version_x> gprbuild=<version_y>
+```
+and add `<dir>/gnat_native_<version_x>_(...)/bin` and
+`<dir>/gprbuild_<version_y>_(...)/bin` to your `PATH`.
+
 Assuming your environment already has a Python 3 interpreter and has
 `virtualenv` installed, here is a quick cookbook to run the testsuite:
 
