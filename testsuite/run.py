@@ -3,7 +3,7 @@
 """
 e3.testsuite-based testsuite for Alire/ALR.
 
-Just execute this script to run the testsuite. It requires a Python2
+Just execute this script to run the testsuite. It requires a Python 3
 interpreter with the e3-core and e3-testsuite packages (from PyPI) installed.
 """
 
