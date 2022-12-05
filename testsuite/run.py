@@ -30,6 +30,16 @@ class Testsuite(e3.testsuite.Testsuite):
         # Some tests rely on an initially empty GPR_PROJECT_PATH variable
         os.environ.pop('GPR_PROJECT_PATH', None)
 
+        # Let's run `alr` from project's dir
+        alr_path = self._get_alr_path()
+        self._prepend_alr_to_path_env_var(alr_path)
+
+    def _get_alr_path(self):
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(project_root, 'bin')
+
+    def _prepend_alr_to_path_env_var(self, alr_path):
+        os.environ['PATH'] = alr_path + os.pathsep + os.environ['PATH']
 
 if __name__ == '__main__':
     suite = Testsuite()
