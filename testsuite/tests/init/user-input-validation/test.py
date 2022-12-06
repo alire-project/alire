@@ -9,7 +9,7 @@ from drivers.asserts import assert_match
 from drivers.helpers import content_of
 
 # Preconfigure needed fields
-name = "Äl O'Reilly O\"Raro"
+name = "Äł O'Reilly O\"Raro"
 run_alr("config", "--global", "--set", "user.email", "abc@de.com")
 run_alr("config", "--global", "--set", "user.github_login", "abcde")
 run_alr("config", "--global", "--set", "user.name", name)
