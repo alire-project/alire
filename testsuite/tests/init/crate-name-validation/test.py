@@ -5,26 +5,24 @@ Check that the crate name is validated properly
 from drivers.alr import run_alr
 from drivers.asserts import assert_match
 
-for crate_type in ['--bin', '--lib']:
+def assert_that(name, fails_with):
+    for crate_type in ['--bin', '--lib']:
+        p = run_alr('init', crate_type, name, complain_on_error=False)
+        assert_match(fails_with, p.out)
 
-    # Min length
-    p = run_alr('init', crate_type, 'a', complain_on_error=False)
-    assert_match('.*Identifier too short.*', p.out)
+# Min length
+assert_that(name='a', fails_with='.*Identifier too short.*')
 
-    # Max length
-    p = run_alr('init', crate_type, 'a' * 65, complain_on_error=False)
-    assert_match('.*Identifier too long.*', p.out)
+# Max length
+assert_that(name='a' * 65, fails_with='.*Identifier too long.*')
 
-    # No leading underscore
-    p = run_alr('init', crate_type, '_aaa', complain_on_error=False)
-    assert_match('.*Identifiers must not begin with an underscore.*', p.out)
+# No leading underscore
+assert_that(name='_aaa', fails_with='.*Identifiers must not begin with an underscore.*')
 
-    # No leading dot
-    p = run_alr('init', crate_type, '.aaa', complain_on_error=False)
-    assert_match('.*Identifiers must not begin with a dot.*', p.out)
+# No leading dot
+assert_that(name='.aaa', fails_with='.*Identifiers must not begin with a dot.*')
 
-    # Lowercase ASCII alnum
-    p = run_alr('init', crate_type, 'gęś', complain_on_error=False)
-    assert_match('.*Identifiers must be lowercase ASCII alphanumerical.*', p.out)
+# Lowercase ASCII alnum
+assert_that(name='aaą', fails_with='.*Identifiers must be lowercase ASCII alphanumerical.*')
 
 print('SUCCESS')
