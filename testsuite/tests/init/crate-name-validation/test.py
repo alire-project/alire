@@ -11,7 +11,7 @@ def assert_that(name, fails_with):
         assert_match(fails_with, p.out)
 
 # Min length
-assert_that(name='a', fails_with='.*Identifier too short.*')
+assert_that(name='aa', fails_with='.*Identifier too short.*')
 
 # Max length
 assert_that(name='a' * 65, fails_with='.*Identifier too long.*')
