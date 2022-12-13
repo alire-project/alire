@@ -63,7 +63,7 @@ package Alire with Preelaborate is
 
    subtype Crate_Character is Character
       with Static_Predicate => Crate_Character in
-         'a' .. 'z' | '0' .. '9' | '_' | Extension_Separator;
+         'a' .. 'z' | '0' .. '9' | '_';
 
    --------------------
    --  Crate Naming  --

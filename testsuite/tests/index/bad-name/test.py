@@ -18,9 +18,6 @@ assert_that(name='a' * 65, fails_with='.*Identifier too long.*')
 # Leading underscore
 assert_that(name='_aaa', fails_with='.*Identifiers must not begin with an underscore.*')
 
-# Leading dot
-assert_that(name='.aaa', fails_with='.*Identifiers must not begin with a dot.*')
-
 # Non lowercase ASCII alnum
 assert_that(name='aaą', fails_with='.*Identifiers must be lowercase ASCII alphanumerical.*')
 
