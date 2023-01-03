@@ -18,9 +18,9 @@ package body Alire.Platforms.Current is
 
    package Cfg renames Config;
 
-   Default_Msys2_Installer : constant String := "msys2-x86_64-20220503.exe";
+   Default_Msys2_Installer : constant String := "msys2-x86_64-20221216.exe";
    Default_Msys2_Installer_URL : constant String :=
-     "https://github.com/msys2/msys2-installer/releases/download/2022-05-03/"
+     "https://github.com/msys2/msys2-installer/releases/download/2022-12-16/"
      & Default_Msys2_Installer;
 
    --  Windows implementation
