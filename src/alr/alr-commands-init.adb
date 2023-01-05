@@ -10,6 +10,8 @@ with CLIC.User_Input;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
+with GPR_Generator;
+
 with TOML;
 
 with SPDX;
@@ -64,7 +66,9 @@ package body Alr.Commands.Init is
       --  Return False if the file already exists
 
       procedure Put_New_Line;
-      procedure Put_Line (S : String);
+      procedure Put_Line (Item : String);
+      procedure Put (Item : String);
+      procedure New_Line;
       --  Shortcuts to write to File
 
       function Escape (S : String) return String
@@ -121,56 +125,91 @@ package body Alr.Commands.Init is
       -- Generate_Project_File --
       ---------------------------
 
-      procedure Generate_Project_File is
+      procedure Generate_Project_File
+      is
+         procedure NL
+           renames New_Line;
+
+         package GPR_File
+           is new GPR_Generator (Put      => Put,
+                                 New_Line => NL);
+         use GPR_File.Shortcuts;
+
          Filename : constant String :=
             +Full_Name (Directory / (+Lower_Name & ".gpr"));
+
+         Build_Profile : constant String
+           := """obj/""" & " & " &
+                  Mixed_Name & "_Config.Build_Profile";
+
+         Library_Name : constant String
+           := "Project'Library_Name & "".so."" & "
+              & Mixed_Name & "_Config.Crate_Version";
+
+         Reloc  : constant String := """relocatable""";
+         Static : constant String := """static""";
+         PIC    : constant String := """static-pic""";
+
+         Library_Type : constant String
+           := "(" & Reloc & ", " & Static & ", " & PIC & ");";
+
       begin
          --  Use more than 80 columns for more readable strings
          pragma Style_Checks ("M200");
+         pragma Style_Checks ("-3");
 
          --  Main project file
          if not Create (Filename) then
             Trace.Warning ("Cannot create '" & Filename & "'");
             return;
          end if;
-         Put_Line ("with ""config/" & Lower_Name & "_config.gpr"";");
-         Put_Line ("project " & Mixed_Name & " is");
-         Put_New_Line;
+
+         GPR_File.NL_Before_IS      := False;
+         GPR_File.NL_After_FOR_List := False;
+         --  GPR File Style
+
+         WC ("config/" & Lower_Name & "_config.gpr");
+         RB (Mixed_Name, GPR_File.Library);
+         NL;
          if For_Library then
-            Put_Line ("   for Library_Name use """ & Mixed_Name & """;");
-            Put_Line ("   for Library_Version use Project'Library_Name & "".so."" & " & Mixed_Name & "_Config.Crate_Version;");
-            Put_New_Line;
+            FU ("Library_Name", Q (Mixed_Name));
+            FU ("Library_Version", E (Library_Name));
+            NL;
          end if;
-         Put_Line ("   for Source_Dirs use (""src/"", ""config/"");");
-         Put_Line ("   for Object_Dir use ""obj/"" & " & Mixed_Name & "_Config.Build_Profile;");
-         Put_Line ("   for Create_Missing_Dirs use ""True"";");
+         FU ("Source_Dirs", (Q ("src/"),
+                             Q ("config/")));
+         FU ("Object_Dir", E (Build_Profile));
+         FU ("Create_Missing_Dirs", Q ("True"));
          if For_Library then
-            Put_Line ("   for Library_Dir use ""lib"";");
-            Put_New_Line;
-            Put_Line ("   type Library_Type_Type is " &
-                        "(""relocatable"", ""static"", ""static-pic"");");
-            Put_Line ("   Library_Type : Library_Type_Type :=");
-            Put_Line ("     external (""" & Upper_Name & "_LIBRARY_TYPE"", external (""LIBRARY_TYPE"", ""static""));");
-            Put_Line ("   for Library_Kind use Library_Type;");
+            FU ("Library_Dir", Q ("lib"));
+            NL;
+            FR ("type Library_Type_Type is " & Library_Type);
+            FR ("Library_Type : Library_Type_Type :=");
+            FR ("  external (""" & Upper_Name & "_LIBRARY_TYPE"", external (""LIBRARY_TYPE"", ""static""));");
+            FU ("Library_Kind", E ("Library_Type"));
          else
-            Put_Line ("   for Exec_Dir use ""bin"";");
-            Put_Line ("   for Main use (""" & Lower_Name & ".adb"");");
+            FU ("Exec_Dir", Q ("bin"), True);
+            FU ("Main", A (Lower_Name & ".adb"));
          end if;
-         Put_New_Line;
-         Put_Line ("   package Compiler is");
-         Put_Line ("      for Default_Switches (""Ada"") use " & Mixed_Name & "_Config.Ada_Compiler_Switches;");
-         Put_Line ("   end Compiler;");
-         Put_New_Line;
-         Put_Line ("   package Binder is");
-         Put_Line ("      for Switches (""Ada"") use (""-Es""); --  Symbolic traceback");
-         Put_Line ("   end Binder;");
-         Put_New_Line;
-         Put_Line ("   package Install is");
-         Put_Line ("      for Artifacts (""."") use (""share"");");
-         Put_Line ("   end Install;");
-         Put_New_Line;
-         TIO.Put (File, WW ("end " & Mixed_Name & ";"));
+         NL;
+         PB ("Compiler");
+         FU ("Default_Switches (""Ada"")",
+             E (Mixed_Name & "_Config.Ada_Compiler_Switches"));
+         PE ("Compiler");
+         NL;
+         PB ("Binder");
+            FU ("Switches (""Ada"")", A ("-Es"));
+            CO ("Symbolic traceback");
+         PE ("Binder");
+         NL;
+         PB ("Install");
+            FU ("Artifacts (""."")", L (Q ("share")));
+         PE ("Install");
+         NL;
+         RE (Mixed_Name);
+
          pragma Style_Checks ("M80");
+         pragma Style_Checks ("3");
 
          TIO.Close (File);
       end Generate_Project_File;
@@ -320,10 +359,29 @@ package body Alr.Commands.Init is
       -- Put_Line --
       --------------
 
-      procedure Put_Line (S : String) is
+      procedure Put_Line (Item : String) is
       begin
-         TIO.Put_Line (File, WW (S));
+         TIO.Put_Line (File, WW (Item));
       end Put_Line;
+
+      ---------
+      -- Put --
+      ---------
+
+      procedure Put (Item : String)
+      is
+      begin
+         TIO.Put (File, WW (Item));
+      end Put;
+
+      --------------
+      -- New_Line --
+      --------------
+
+      procedure New_Line is
+      begin
+         TIO.New_Line (File);
+      end New_Line;
 
    begin
       --  Crate dir
