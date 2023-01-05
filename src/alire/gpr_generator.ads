@@ -1,6 +1,8 @@
 with Ada.Strings.Unbounded;
 
 generic
+   with procedure Put (Item : String) is <>;
+   with procedure New_Line is <>;
 package GPR_Generator
 is
    -------------
@@ -28,8 +30,11 @@ is
    --  Config  --
    --------------
 
-   LF_Before_IS : Boolean := True;
-   Show_LIBRARY : Boolean := False;
+   NL_Before_IS  : Boolean := True;
+   NL_Before_USE : Boolean := True;
+   Show_LIBRARY  : Boolean := False;
+   Indent_Level  : Natural := 0;
+   Space_Count   : Natural := 3;
 
    --------------------
    --  Sub-programs  --
@@ -37,11 +42,11 @@ is
 
    procedure Project_Begin (Name : Project_Name;
                             Kind : Project_Kind);
-   procedure Project_End;
+   procedure Project_End (Name : Project_Name);
    --  Begin/end PROJECT.
 
    procedure Package_Begin (Name : Package_Name);
-   procedure Package_End;
+   procedure Package_End (Name : Project_Name);
    --  Begin/end PACKAGE.
 
    procedure For_Use (Name  : For_Clause_Name;
@@ -53,8 +58,29 @@ is
    procedure With_Clause (Name : GPR_File_Name);
    --  Insert WITH clause.
 
+   procedure Comment (Item : String);
+   --  Insert stand alone comment.
+
+   procedure Free (Item : String);
+   --  Insert free form text.
+
    function Quote (Item : String)
                    return Expr;
    --  Quote Item.
+
+   package Shortcuts
+   is
+      procedure WC (Name : GPR_File_Name)
+        renames With_Clause;
+
+      procedure FU (Name  : For_Clause_Name;
+                    Value : Expr)
+        renames For_Use;
+
+      procedure FU (Name : For_Clause_Name;
+                    List : Expr_List)
+        renames For_Use;
+
+   end Shortcuts;
 
 end GPR_Generator;
