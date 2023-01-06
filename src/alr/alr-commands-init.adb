@@ -174,44 +174,61 @@ package body Alr.Commands.Init is
          GPR_File.NL_After_FOR_List := False;
          --  GPR File Style
 
+         NL;
          WC ("config/" & Lower_Name & "_config.gpr");
+         NL;
          RB (Mixed_Name, GPR_File.Library);
          NL;
+
          if For_Library then
-            FU ("Library_Name", Q (Mixed_Name));
-            FU ("Library_Version", E (Library_Name));
+            FU ("Library_Name   ", QE (Mixed_Name));
+            FU ("Library_Version", EX (Library_Name));
             NL;
          end if;
-         FU ("Source_Dirs", (Q ("src/"),
-                             Q ("config/")));
-         FU ("Object_Dir", E (Build_Profile));
-         FU ("Create_Missing_Dirs", Q ("True"));
+
+         FU ("Create_Missing_Dirs", QE ("True"));
+         NL;
+         FU ("Source_Dirs", List'(QE ("src/"),
+                                  QE ("config/")));
+         FU ("Object_Dir ", EX (Build_Profile));
+
          if For_Library then
-            FU ("Library_Dir", Q ("lib"));
+            FU ("Library_Dir", QE ("lib"));
             NL;
             FR ("type Library_Type_Type is " & Library_Type);
+            NL;
             FR ("Library_Type : Library_Type_Type :=");
             FR ("  " & External_2);
-            FU ("Library_Kind", E ("Library_Type"));
+            NL;
+            FU ("Library_Kind", EX ("Library_Type"));
          else
-            FU ("Exec_Dir", Q ("bin"), True);
-            FU ("Main", A (Lower_Name & ".adb"));
+            FU ("Exec_Dir", QE ("bin"), True);
+            FU ("Main    ", LO (Lower_Name & ".adb"));
          end if;
          NL;
+
          PB ("Compiler");
          FU ("Default_Switches (""Ada"")",
-             E (Mixed_Name & "_Config.Ada_Compiler_Switches"));
+             EX (Mixed_Name & "_Config.Ada_Compiler_Switches"));
          PE ("Compiler");
          NL;
+
          PB ("Binder");
-            FU ("Switches (""Ada"")", A ("-Es"));
-            CO ("Symbolic traceback");
+            NL;
+            FU ("Switches (""Ada"")",
+                LO ("-Es", "Symbolic traceback"),
+                Compact => False);
+            NL;
          PE ("Binder");
          NL;
+
          PB ("Install");
-            FU ("Artifacts (""."")", L (Q ("share")));
+            NL;
+            FU ("Artifacts (""."")", LO ("share"));
+            NL;
          PE ("Install");
          NL;
+
          RE (Mixed_Name);
 
          pragma Style_Checks ("3");

@@ -11,6 +11,19 @@ is
       Oneline : Boolean);
    --  Emit FOR and USE.
 
+   procedure Put_Space (Count : Natural);
+   --  Emit space between -- and comment.
+
+   function To_String
+     (Item : ASU.Unbounded_String)
+      return String
+   renames ASU.To_String;
+
+   function From_String
+     (Item : String)
+      return ASU.Unbounded_String
+   renames ASU.To_Unbounded_String;
+
    -------------------
    -- Project_Begin --
    -------------------
@@ -121,7 +134,7 @@ is
       For_Use_Skeleton (Name, Oneline);
 
       --  Value
-      Put (To_String (Value));
+      Put (To_String (Value.Value));
 
       --  Semicolon
       Put (";");
@@ -145,6 +158,27 @@ is
       Oneline : Boolean  := True;
       Compact : Boolean  := True)
    is
+      procedure Put_Value_Comment (Index : Positive)
+      is
+         Value   : String renames To_String (List (Index).Value);
+         Comment : String renames To_String (List (Index).Comment);
+      begin
+         if Index = List'First then
+            Put ("( ");         --  First element open
+         else
+            Put (", ");         --  Other just comma
+         end if;
+         Put (Value);
+
+         --  Comment
+         if Comment /= "" then
+            Put_Space (Natural'Max (Value_Width, Value'Length));
+            Put ("--");
+            Put_Space (Comment_Space);
+            Put (Comment);
+         end if;
+      end Put_Value_Comment;
+
       L : Natural renames Indent_Level;
    begin
       --  For, Use
@@ -158,11 +192,11 @@ is
       end if;
 
       --  List
-      Put ("(");
       if Compact then
+         Put ("(");
          --  Compact list
          for A in List'Range loop
-            Put (To_String (List (A)));
+            Put (To_String (List (A).Value));
             if A /= List'Last then
                Put (", ");
             end if;
@@ -170,12 +204,7 @@ is
       else
          --  Expanded list
          for A in List'Range loop
-            if A = List'First then
-               Put (" ");
-            else
-               Put (", ");
-            end if;
-            Put (To_String (List (A)));
+            Put_Value_Comment (A);
             New_Line;
             Indent;
          end loop;
@@ -216,6 +245,7 @@ is
          if NL_Before_USE then
             New_Line;
             Indent;
+            Put_Space (USE_Indent);
             Put ("use ");
          else
             Put (" use ");
@@ -251,12 +281,13 @@ is
    -------------------------
 
    function Expression_List_One
-     (Item : String)
+     (Value   : Value_String;
+      Comment : Comment_String := "")
       return Expr_List is
    begin
       return
         Expression_List
-          (Quoted_Expression (Item));
+          (Quoted_Expression (Value, Comment));
    end Expression_List_One;
 
    ----------------
@@ -264,10 +295,12 @@ is
    ----------------
 
    function Expression
-     (Item : String)
+     (Value   : Value_String;
+      Comment : Comment_String := "")
       return Expr is
    begin
-      return To_Unbounded_String (Item);
+      return (Value   => From_String (Value),
+              Comment => From_String (Comment));
    end Expression;
 
    ---------------------
@@ -286,22 +319,25 @@ is
    -----------------------
 
    function Quoted_Expression
-     (Item : String)
+     (Value   : Value_String;
+      Comment : Comment_String := "")
       return Expr
    is
-      use Ada.Strings.Unbounded;
+      use ASU;
    begin
-      return '"' & To_Unbounded_String (Item) & '"';
+      return (Value   => '"' & From_String (Value) & '"',
+              Comment => From_String (Comment));
    end Quoted_Expression;
 
    -------------
    -- Comment --
    -------------
 
-   procedure Comment (Item : String) is
+   procedure Comment (Item : Comment_String) is
    begin
       Indent;
-      Put ("--  ");
+      Put ("--");
+      Put_Space (Comment_Space);
       Put (Item);
       New_Line;
    end Comment;
@@ -340,5 +376,16 @@ is
          end loop;
       end loop;
    end Indent;
+
+   -----------------------
+   -- Put_Comment_Space --
+   -----------------------
+
+   procedure Put_Space (Count : Natural) is
+   begin
+      for A in 1 .. Count loop
+         Put (" ");
+      end loop;
+   end Put_Space;
 
 end GPR_Generator;

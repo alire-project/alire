@@ -5,6 +5,9 @@ generic
    with procedure New_Line is <>;
 package GPR_Generator
 is
+   package ASU
+     renames Ada.Strings.Unbounded;
+
    -----------
    -- Types --
    -----------
@@ -13,9 +16,14 @@ is
    subtype Project_Name    is String;
    subtype Package_Name    is String;
    subtype For_Clause_Name is String;
+   subtype Comment_String  is String;
+   subtype Value_String    is String;
 
    type Expr
-     is new Ada.Strings.Unbounded.Unbounded_String;
+     is record
+        Value   : ASU.Unbounded_String;
+        Comment : ASU.Unbounded_String;
+     end record;
 
    type Expr_List
      is array (Positive range <>)
@@ -37,6 +45,9 @@ is
    NL_After_FOR_Expr : Boolean := False;
    NL_After_PACKAGE  : Boolean := True;
    Show_LIBRARY      : Boolean := False;
+   Value_Width       : Natural := 12;
+   Comment_Space     : Natural := 2;
+   USE_Indent        : Natural := 2;
 
    -----------
    -- State --
@@ -75,7 +86,7 @@ is
    procedure With_Clause (Name : GPR_File_Name);
    --  Insert WITH clause.
 
-   procedure Comment (Item : String);
+   procedure Comment (Item : Comment_String);
    --  Insert stand alone comment.
 
    procedure Free (Item : String);
@@ -87,17 +98,20 @@ is
    --  Expression list.
 
    function Expression_List_One
-     (Item : String)
+     (Value   : Value_String;
+      Comment : Comment_String := "")
       return Expr_List;
    --  Expression list of one element.
 
    function Expression
-     (Item : String)
+     (Value   : Value_String;
+      Comment : Comment_String := "")
       return Expr;
    --  Expression.
 
    function Quoted_Expression
-     (Item : String)
+     (Value   : Value_String;
+      Comment : Comment_String := "")
       return Expr;
    --  Quote expression.
 
@@ -105,6 +119,9 @@ is
    is
       subtype Project_Kind
         is GPR_Generator.Project_Kind;
+
+      subtype List
+        is GPR_Generator.Expr_List;
 
       procedure RB (Name : Project_Name;
                     Kind : Project_Kind)
@@ -135,19 +152,28 @@ is
          Compact : Boolean := True)
         renames For_Use;
 
-      function E (Item : String) return Expr
-        renames Expression;
+      function EX
+        (Value   : Value_String;
+         Comment : Comment_String := "")
+        return Expr
+      renames Expression;
 
-      function Q (Item : String) return Expr
-        renames Quoted_Expression;
+      function QE
+        (Value   : Value_String;
+         Comment : Comment_String := "")
+         return Expr
+      renames Quoted_Expression;
 
-      function L (List : Expr) return Expr_List
+      function EL (List : Expr) return Expr_List
         renames Expression_List;
 
-      function A (Item : String) return Expr_List
-        renames Expression_List_One;
+      function LO
+        (Value   : Value_String;
+         Comment : Comment_String := "")
+         return Expr_List
+      renames Expression_List_One;
 
-      procedure CO (Item : String)
+      procedure CO (Item : Comment_String)
         renames Comment;
 
       procedure FR (Item : String)
