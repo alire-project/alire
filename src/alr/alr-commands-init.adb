@@ -153,10 +153,16 @@ package body Alr.Commands.Init is
          Library_Type : constant String
            := "(" & Reloc & ", " & Static & ", " & PIC & ");";
 
+         External_1 : constant String
+           := "external (""LIBRARY_TYPE"", ""static"")";
+
+         External_2 : constant String
+           := "external (""" & Upper_Name & "_LIBRARY_TYPE"", "
+              & External_1 & ");";
       begin
-         --  Use more than 80 columns for more readable strings
-         pragma Style_Checks ("M200");
          pragma Style_Checks ("-3");
+         --  Suspend eindention checks to let program structure
+         --  be like GPR file structue.
 
          --  Main project file
          if not Create (Filename) then
@@ -185,7 +191,7 @@ package body Alr.Commands.Init is
             NL;
             FR ("type Library_Type_Type is " & Library_Type);
             FR ("Library_Type : Library_Type_Type :=");
-            FR ("  external (""" & Upper_Name & "_LIBRARY_TYPE"", external (""LIBRARY_TYPE"", ""static""));");
+            FR ("  " & External_2);
             FU ("Library_Kind", E ("Library_Type"));
          else
             FU ("Exec_Dir", Q ("bin"), True);
@@ -208,7 +214,6 @@ package body Alr.Commands.Init is
          NL;
          RE (Mixed_Name);
 
-         pragma Style_Checks ("M80");
          pragma Style_Checks ("3");
 
          TIO.Close (File);

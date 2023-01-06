@@ -1,10 +1,15 @@
 package body GPR_Generator
 is
    procedure Gnüf;
+   --  Emit '"'.
+
    procedure Indent;
+   --  Emit indention.
+
    procedure For_Use_Skeleton
      (Name    : String;
       Oneline : Boolean);
+   --  Emit FOR and USE.
 
    -------------------
    -- Project_Begin --
@@ -62,18 +67,28 @@ is
    is
       L : Positive renames Indent_Level;
    begin
+      --  Indent
       Indent;
+
+      --  Package
       Put ("package ");
+
+      --  Name
       Put (Name);
+
+      --  Is
       if NL_Before_IS then
+         --  NL, Is
          New_Line;
          Indent;
          Put ("is ");
-         New_Line;
       else
+         --  Is, Inline
          Put (" is");
-         New_Line;
       end if;
+
+      --  New line
+      New_Line;
       L := L + 1;
    end Package_Begin;
 
@@ -102,10 +117,19 @@ is
       Value   : Expr;
       Oneline : Boolean := False) is
    begin
+      --  For, Use
       For_Use_Skeleton (Name, Oneline);
+
+      --  Value
       Put (To_String (Value));
+
+      --  Semicolon
       Put (";");
+
+      --  NL
       New_Line;
+
+      --  Space
       if NL_After_FOR_Expr then
          New_Line;
       end if;
@@ -123,16 +147,20 @@ is
    is
       L : Natural renames Indent_Level;
    begin
+      --  For, Use
       For_Use_Skeleton (Name, Oneline => Oneline);
 
+      --  Indent
       if not Compact then
          New_Line;
          L := L + 1;
          Indent;
       end if;
 
+      --  List
       Put ("(");
       if Compact then
+         --  Compact list
          for A in List'Range loop
             Put (To_String (List (A)));
             if A /= List'Last then
@@ -140,6 +168,7 @@ is
             end if;
          end loop;
       else
+         --  Expanded list
          for A in List'Range loop
             if A = List'First then
                Put (" ");
@@ -152,6 +181,8 @@ is
          end loop;
       end if;
       Put (");");
+
+      --  New_Line
       New_Line;
       if NL_After_FOR_List then
          New_Line;
@@ -169,12 +200,19 @@ is
      (Name    : String;
       Oneline : Boolean) is
    begin
+      --  Indent
       Indent;
+
+      --  For
       Put ("for ");
       Put (Name);
+
+      --  Use
       if Oneline then
+         --  Inline Use
          Put (" use ");
       else
+         --  NL Use
          if NL_Before_USE then
             New_Line;
             Indent;
@@ -192,11 +230,18 @@ is
    procedure With_Clause
      (Name : GPR_File_Name) is
    begin
+      --  Indent
       Indent;
+
+      --  With
       Put ("with ");
+
+      --  Name in quotes
       Gnüf;
       Put (Name);
       Gnüf;
+
+      --  Semicolon
       Put (";");
       New_Line;
    end With_Clause;

@@ -16,6 +16,7 @@ is
 
    type Expr
      is new Ada.Strings.Unbounded.Unbounded_String;
+
    type Expr_List
      is array (Positive range <>)
      of Expr;
@@ -43,6 +44,7 @@ is
 
    Indent_Level  : Natural := 0;
    Space_Count   : Natural := 3;
+   --  Indent Indent_Level * Space_Count.
 
    ------------------
    -- Sub-programs --
