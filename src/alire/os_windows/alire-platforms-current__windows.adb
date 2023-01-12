@@ -320,7 +320,8 @@ package body Alire.Platforms.Current is
       --  If something fails we can force going ahead in case we don't need
       --  msys2, and this will enable a first run to "succeed".
       declare
-         Update_Attempts : Natural := 1;
+         Update_Attempts : Natural  := 1;
+         Max_Attempts    : constant := 5;
       begin
          loop
             Trace.Info ("Updating MSYS2 after installation...");
@@ -347,12 +348,18 @@ package body Alire.Platforms.Current is
                              Err_To_Out => True
                             );
             begin
+               --  So not to unnecessarily worry users, as this is expected and
+               --  benign in some cases, we don't show it unless this is the
+               --  last attempt before bailing out:
                if Code /= 0 then
-                  Trace.Warning ("MSYS2 ended with non-zero exit status: "
-                                 & AAA.Strings.Trim (Code'Image));
+                  Trace.Log ("MSYS2 ended with non-zero exit status: "
+                             & AAA.Strings.Trim (Code'Image),
+                             (if Update_Attempts > Max_Attempts
+                              then Trace.Warning
+                              else Trace.Debug));
                end if;
 
-               exit when Update_Attempts > 5 -- safeguard just in case
+               exit when Update_Attempts > Max_Attempts -- safeguard JIC
                  or else AAA.Strings.Trim (Output.Flatten) = "";
             end;
 
