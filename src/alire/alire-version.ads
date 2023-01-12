@@ -2,7 +2,8 @@ package Alire.Version with Preelaborate is
 
    --  Remember to update Alire.Index branch if needed too
 
-   Current : constant String := "1.2.1";
+   Current : constant String := "1.2.2";
+   --  1.2.2:     update and fix first update method of msys2 on Windows
    --  1.2.1:     build switches fix and other minor assorted fixes
    --  1.2.0:     rpm speed-up, silence propagation warning, early switch parse
    --  1.2.0-rc1: release candidate for 1.2
