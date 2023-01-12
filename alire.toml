@@ -46,7 +46,8 @@ windows = { ALIRE_OS = "windows" }
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
 aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8cfb34d04ceec340e13" }
-clic = { url = "https://github.com/alire-project/clic", commit = "769f7f4af71e4c2d3b37245b175c038572150258" }
+ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
+clic = { url = "https://github.com/alire-project/clic", commit = "102bc38c7e9469112145e12100449664b5c74764" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "92bb91130a9ec628b4c48b7ef9fe7f24d9dc25fa" }
 semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "c2345fca8b685d6d3fc9334fac81140a0cdbea89" }
 simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "703b15ba6e2392951b65a484ce703209750dd0fc" }
