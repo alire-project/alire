@@ -18,9 +18,9 @@ package body Alire.Platforms.Current is
 
    package Cfg renames Config;
 
-   Default_Msys2_Installer : constant String := "msys2-x86_64-20220503.exe";
+   Default_Msys2_Installer : constant String := "msys2-x86_64-20221216.exe";
    Default_Msys2_Installer_URL : constant String :=
-     "https://github.com/msys2/msys2-installer/releases/download/2022-05-03/"
+     "https://github.com/msys2/msys2-installer/releases/download/2022-12-16/"
      & Default_Msys2_Installer;
 
    --  Windows implementation
@@ -303,7 +303,8 @@ package body Alire.Platforms.Current is
       end if;
 
       --  Load msys2 environment to attempt first full update according to
-      --  official setup instructions.
+      --  official setup instructions at:
+      --  https://www.msys2.org/wiki/MSYS2-installation/
       declare
          Default_Install_Dir : constant Alire.Absolute_Path :=
                                  Platforms.Folders.Cache / "msys64";
@@ -315,19 +316,61 @@ package body Alire.Platforms.Current is
          Set_Msys2_Env (Cfg_Install_Dir);
       end;
 
-      --  First update for the index and core packages
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("pacman",
-         AAA.Strings.Empty_Vector
-         & "--noconfirm"
-         & "-Syu");
+      --  Run full updates until nothing pending, according to docs.
+      --  If something fails we can force going ahead in case we don't need
+      --  msys2, and this will enable a first run to "succeed".
+      declare
+         Update_Attempts : Natural  := 1;
+         Max_Attempts    : constant := 5;
+      begin
+         loop
+            Trace.Info ("Updating MSYS2 after installation...");
+            Alire.OS_Lib.Subprocess.Checked_Spawn
+              ("pacman",
+               AAA.Strings.Empty_Vector
+               & "--noconfirm"
+               & "-Syuu");
 
-      --  Second update for remaining packages
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("pacman",
-         AAA.Strings.Empty_Vector
-         & "--noconfirm"
-         & "-Su");
+            --  Exit when no updates pending. This command may fail with exit
+            --  code /= 0 even though there is no real error, when there is
+            --  a missing database that will be fetched properly by the next
+            --  update.
+            Trace.Info ("Querying MSYS2 for pending updates...");
+            declare
+               Output : AAA.Strings.Vector;
+               Code   : constant Integer :=
+                          Alire.OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
+                            ("pacman",
+                             AAA.Strings.Empty_Vector
+                             & "--noconfirm"
+                             & "-Qu",
+                             Output,
+                             Err_To_Out => True
+                            );
+            begin
+               --  So not to unnecessarily worry users, as this is expected and
+               --  benign in some cases, we don't show it unless this is the
+               --  last attempt before bailing out:
+               if Code /= 0 then
+                  Trace.Log ("MSYS2 ended with non-zero exit status: "
+                             & AAA.Strings.Trim (Code'Image),
+                             (if Update_Attempts > Max_Attempts
+                              then Trace.Warning
+                              else Trace.Debug));
+               end if;
+
+               exit when Update_Attempts > Max_Attempts -- safeguard JIC
+                 or else AAA.Strings.Trim (Output.Flatten) = "";
+            end;
+
+            Update_Attempts := Update_Attempts + 1;
+         end loop;
+      exception
+         when E : Checked_Error =>
+            Log_Exception (E);
+            Recoverable_Error ("While updating msys2 after installation: "
+                               & Errors.Get (E, Clear => False));
+      end;
 
       return Alire.Outcome_Success;
    end Install_Msys2;
