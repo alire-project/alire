@@ -1,7 +1,7 @@
 name: CI self+toolchain
 # Build Alire with `alr build` and using a toolchain installed from Alire
-# NOTE that tests are not run, this test only checks alr is able to self build.
-# (Should we also run self-tests here or is it overkill?)
+# This test uses the latest stable released alr, so the expectation is
+# that master is buildable with the latest stable.
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        os: 
+        os:
           - macos-10.15
           - ubuntu-latest
           - windows-latest
@@ -58,3 +58,17 @@ jobs:
     - name: Show built version
       if: matrix.os != 'windows-latest'
       run: ./bin/alr -n version
+
+    # Run the testsuite with the just build alr. The testsuite picks the proper
+    # alr in the ./bin/alr location.
+
+    - name: Install Python 3.x (required for the testsuite)
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Run test script
+      run: scripts/ci-github.sh
+      shell: bash
+      env:
+        BRANCH: ${{ github.base_ref }}
