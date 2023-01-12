@@ -303,7 +303,8 @@ package body Alire.Platforms.Current is
       end if;
 
       --  Load msys2 environment to attempt first full update according to
-      --  official setup instructions.
+      --  official setup instructions at:
+      --  https://www.msys2.org/wiki/MSYS2-installation/
       declare
          Default_Install_Dir : constant Alire.Absolute_Path :=
                                  Platforms.Folders.Cache / "msys64";
@@ -315,19 +316,42 @@ package body Alire.Platforms.Current is
          Set_Msys2_Env (Cfg_Install_Dir);
       end;
 
-      --  First update for the index and core packages
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("pacman",
-         AAA.Strings.Empty_Vector
-         & "--noconfirm"
-         & "-Syu");
+      --  Run full updates until nothing pending, according to docs.
+      --  If something fails we can force going ahead in case we don't need
+      --  msys2, and this will enable a first run to "succeed".
+      declare
+         Update_Attempts : Natural := 0;
+      begin
+         loop
+            Alire.OS_Lib.Subprocess.Checked_Spawn
+              ("pacman",
+               AAA.Strings.Empty_Vector
+               & "--noconfirm"
+               & "-Syuu");
 
-      --  Second update for remaining packages
-      Alire.OS_Lib.Subprocess.Checked_Spawn
-        ("pacman",
-         AAA.Strings.Empty_Vector
-         & "--noconfirm"
-         & "-Su");
+            --  Exit when no updates pending
+            declare
+               Output : constant AAA.Strings.Vector :=
+                          Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+                            ("pacman",
+                             AAA.Strings.Empty_Vector
+                             & "--noconfirm"
+                             & "-Su",
+                             Err_To_Out => True
+                            );
+            begin
+               exit when Update_Attempts > 5 -- safeguard just in case
+                 or else AAA.Strings.Trim (Output.Flatten) = "";
+            end;
+
+            Update_Attempts := Update_Attempts + 1;
+         end loop;
+      exception
+         when E : Checked_Error =>
+            Log_Exception (E);
+            Recoverable_Error ("While updating msys2 after installation: "
+                               & Ada.Exceptions.Exception_Message (E));
+      end;
 
       return Alire.Outcome_Success;
    end Install_Msys2;
