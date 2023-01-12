@@ -350,7 +350,7 @@ package body Alire.Platforms.Current is
          when E : Checked_Error =>
             Log_Exception (E);
             Recoverable_Error ("While updating msys2 after installation: "
-                               & Ada.Exceptions.Exception_Message (E));
+                               & Errors.Get (E, Clear => False));
       end;
 
       return Alire.Outcome_Success;
