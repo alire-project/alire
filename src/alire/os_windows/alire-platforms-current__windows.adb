@@ -320,26 +320,38 @@ package body Alire.Platforms.Current is
       --  If something fails we can force going ahead in case we don't need
       --  msys2, and this will enable a first run to "succeed".
       declare
-         Update_Attempts : Natural := 0;
+         Update_Attempts : Natural := 1;
       begin
          loop
+            Trace.Info ("Updating MSYS2 after installation...");
             Alire.OS_Lib.Subprocess.Checked_Spawn
               ("pacman",
                AAA.Strings.Empty_Vector
                & "--noconfirm"
                & "-Syuu");
 
-            --  Exit when no updates pending
+            --  Exit when no updates pending. This command may fail with exit
+            --  code /= 0 even though there is no real error, when there is
+            --  a missing database that will be fetched properly by the next
+            --  update.
+            Trace.Info ("Querying MSYS2 for pending updates...");
             declare
-               Output : constant AAA.Strings.Vector :=
-                          Alire.OS_Lib.Subprocess.Checked_Spawn_And_Capture
+               Output : AAA.Strings.Vector;
+               Code   : constant Integer :=
+                          Alire.OS_Lib.Subprocess.Unchecked_Spawn_And_Capture
                             ("pacman",
                              AAA.Strings.Empty_Vector
                              & "--noconfirm"
-                             & "-Su",
+                             & "-Qu",
+                             Output,
                              Err_To_Out => True
                             );
             begin
+               if Code /= 0 then
+                  Trace.Warning ("MSYS2 ended with non-zero exit status: "
+                                 & AAA.Strings.Trim (Code'Image));
+               end if;
+
                exit when Update_Attempts > 5 -- safeguard just in case
                  or else AAA.Strings.Trim (Output.Flatten) = "";
             end;
