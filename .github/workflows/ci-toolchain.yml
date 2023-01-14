@@ -1,7 +1,6 @@
 name: CI self+toolchain
 # Build Alire with `alr build` and using a toolchain installed from Alire
-# This test uses the latest stable released alr, so the expectation is
-# that master is buildable with the latest stable.
+# The `alr` being tested is the one which is being submitted in the PR
 
 on:
   pull_request:
@@ -29,29 +28,20 @@ jobs:
     - name: Check out
       uses: actions/checkout@v2
 
-    - uses: actions/cache@v2
-      with:
-        path: ./cache/gnat-ce-2020
-        key: ${{ runner.os }}-gnat-ce-2020
-
-    - name: Install toolchain
-      uses: ada-actions/toolchain@ce2020 # macOS hasn't 2021
-      with:
-        distrib: community
-        install_dir: ./cache/gnat-ce-2020
-
-    - name: Build alr with default indexed toolchain
+    - name: Set up alr to be able to install the default toolchain
       uses: alire-project/setup-alire@v1
-      with:
-        branch: master
+
+    - name: Build alr with default toolchain
+      run: alr exec -- gprbuild -P alr_env.gpr
 
     - name: Show dependencies/pins
-      run: alr -n -q with --solve || alr -n -v -d with --solve
+      run: ./bin/alr -n -q with --solve || ./bin/alr -n -v -d with --solve
 
     - name: Show build environment
-      run: alr -n printenv
+      run: ./bin/alr -n printenv
 
-    - run: alr -n build
+    - name: SELF-BUILD
+      run: ./bin/alr -n build
 
     # For some reason I cannot pinpoint, the Windows build is seeing two
     # different environments that mess things up. The build succeeds though.
