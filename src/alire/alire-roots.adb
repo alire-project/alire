@@ -240,15 +240,24 @@ package body Alire.Roots is
             --  For dependencies that appear in the solution as releases, get
             --  their project files in the current environment.
 
-            if Sol.Releases.Contains (Dep.Crate)
-              and then
-                Sol.Releases.Element (Dep.Crate).Auto_GPR_With
-            then
-               for File of Sol.Releases.Element (Dep.Crate).Project_Files
-                 (This.Environment, With_Path => False)
-               loop
-                  Files.Include (File);
-               end loop;
+            if Sol.Releases.Contains (Dep.Crate) then
+               if Sol.Releases.Element (Dep.Crate).Auto_GPR_With then
+                  for File of Sol.Releases.Element (Dep.Crate).Project_Files
+                    (This.Environment, With_Path => False)
+                  loop
+                     Files.Include (File);
+                  end loop;
+               end if;
+
+            elsif Sol.Links.Contains (Dep.Crate) then
+
+               --  If a dependency appears as a link but not as a release, this
+               --  means it is a "raw" link (no target manifest); we cannot
+               --  know its project files so we default to using the crate
+               --  name.
+
+               Files.Include (Dep.Crate.As_String & ".gpr");
+
             end if;
          end loop;
       end return;
