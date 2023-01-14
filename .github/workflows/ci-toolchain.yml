@@ -26,13 +26,19 @@ jobs:
 
     steps:
     - name: Check out
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+      with:
+        submodules: true
 
-    - name: Set up alr to be able to install the default toolchain
+    - name: Set up alr with default toolchain
       uses: alire-project/setup-alire@v1
 
     - name: Build alr with default toolchain
       run: alr exec -- gprbuild -P alr_env.gpr
+
+    # The previous alr exec already updated, but that is not the alr we want to test, so redo the update
+    - name: Update dependencies
+      run: ./bin/alr -n update
 
     - name: Show dependencies/pins
       run: ./bin/alr -n -q with --solve || ./bin/alr -n -v -d with --solve
@@ -50,7 +56,7 @@ jobs:
       run: ./bin/alr -n version
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
-    # alr in the ./bin/alr location.
+    # alr in the ./bin/alr location. Run through exec so GNAT is available.
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
@@ -58,7 +64,5 @@ jobs:
         python-version: '3.x'
 
     - name: Run test script
-      run: scripts/ci-github.sh
+      run: ./bin/alr exec -- scripts/ci-github.sh
       shell: bash
-      env:
-        BRANCH: ${{ github.base_ref }}
