@@ -56,13 +56,16 @@ jobs:
       run: ./bin/alr -n version
 
     # Run the testsuite with the just build alr. The testsuite picks the proper
-    # alr in the ./bin/alr location. Run through exec so GNAT is available.
+    # alr in the ./bin/alr location.
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
 
-    - name: Run test script
-      run: ./bin/alr exec -- scripts/ci-github.sh
+    - name: Install e3 testsuite
+      run: pip install --upgrade e3-testsuite
+
+    - name: Run testsuite
+      run: cd testsuite; ./run.py -E
       shell: bash
