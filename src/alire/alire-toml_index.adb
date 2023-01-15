@@ -203,7 +203,7 @@ package body Alire.TOML_Index is
                   & Alire.Index.Min_Compatible_Version & ASCII.LF
                   & (if Index.Name = Alire.Index.Community_Name then
                        " Resetting the community index ("
-                       & TTY.Terminal ("alr index --reset--community")
+                       & TTY.Terminal ("alr index --reset-community")
                        & ") may solve the issue. " & ASCII.LF
                     else
                        " Updating your local index might solve the issue "
