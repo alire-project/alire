@@ -1,4 +1,4 @@
-name: Nigthly
+name: Nightly
 # Create a nightly build from master and upload to the corresponding pre-release
 
 on:
