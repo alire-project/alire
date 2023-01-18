@@ -105,7 +105,7 @@ def run_alr(*args, **kwargs):
     if (p.status != 0 and complain_on_error) or (p.status == 0 and not complain_on_error):
         print('The following command:')
         print('  {}'.format(' '.join(quote_arg(arg) for arg in argv)))
-        print('Exitted with status code {}'.format(p.status))
+        print('Exited with status code {}'.format(p.status))
         print('Output:')
         print(p.out)
         if complain_on_error:
