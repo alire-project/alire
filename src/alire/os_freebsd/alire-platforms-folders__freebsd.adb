@@ -8,7 +8,7 @@ package body Alire.Platforms.Folders is
    -- Cache --
    -----------
 
-   function Cache return String is (Common.XDG_Config_Folder);
+   function Cache return String is (Common.XDG_Cache_Folder);
 
    -----------
    -- Config--
