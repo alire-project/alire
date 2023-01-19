@@ -2,7 +2,7 @@ abstract project Alire_Common is
 
    for Create_Missing_Dirs use "True";
 
-   Host_OS := external ("ALIRE_OS", "default");
+   Host_OS := external ("ALIRE_OS");
    --  Defined in alr_env.gpr.
 
    type Any_Build_Mode is ("debug", "release");
