@@ -92,7 +92,7 @@ def run_alr(*args, **kwargs):
         first_unknown_kwarg = sorted(kwargs)[0]
         raise ValueError('Invalid argument: {}'.format(first_unknown_kwarg))
 
-    argv = ['alr']
+    argv = [os.environ['ALR_PATH']]
     argv.insert(1, '-n')  # always non-interactive
     if debug:
         argv.insert(1, '-d')
