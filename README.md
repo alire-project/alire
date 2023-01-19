@@ -38,7 +38,7 @@ Follow these steps:
 
 1. Clone the repository: `git clone --recurse-submodules https://github.com/alire-project/alire.git`
 1. Enter the cloned repository folder.
-1. Only on macOS: define the environment variable `OS=macOS`
+1. Only on macOS: define the environment variable `ALIRE_OS=macOS`
 1. Build the executable: `gprbuild -j0 -P alr_env`
 
 The binary will be found at `bin/alr`. You can run `alr version` to see version and diagnostics information.
