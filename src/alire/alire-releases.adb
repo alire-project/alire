@@ -915,6 +915,15 @@ package body Alire.Releases is
       return This : Release := New_Empty_Release
         (Name => +From.Unwrap.Get (TOML_Keys.Name).As_String)
       do
+         --  Extract the version ASAP to show it properly during logging
+
+         if From.Contains (TOML_Keys.Version) then
+            This := This.Retagging
+              (Version => Semver.Parse
+                 (From.Unwrap.Get (TOML_Keys.Version).As_String,
+                  Relaxed => True));
+         end if;
+
          Assert (This.From_TOML (From, Source, Strict, File));
       end return;
    end From_TOML;
