@@ -9,6 +9,7 @@ interpreter with the e3-core and e3-testsuite packages (from PyPI) installed.
 
 from __future__ import absolute_import, print_function
 
+from argparse import ArgumentTypeError
 import sys
 import os.path
 
@@ -16,7 +17,7 @@ import e3.testsuite
 import e3.testsuite.driver
 from e3.testsuite.result import TestStatus
 
-
+from drivers.helpers import on_windows
 from drivers.python_script import PythonScriptDriver
 
 
@@ -24,22 +25,28 @@ class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
     test_driver_map = {'python-script': PythonScriptDriver}
 
+    def add_options(self, parser):
+        super().add_options(parser)
+        parser.add_argument('--alr', type=self._alr_path, default=self._default_alr_path(),
+            dest='alr_path', metavar='FILE', help='''Set `alr` binary to run the testsuite
+            against. Defaults to `alr` from project's `bin` directory.''')
+
     def set_up(self):
         super().set_up()
-
+        os.environ['ALR_PATH'] = self.main.args.alr_path
         # Some tests rely on an initially empty GPR_PROJECT_PATH variable
         os.environ.pop('GPR_PROJECT_PATH', None)
 
-        # Let's run `alr` from project's dir
-        alr_path = self._get_alr_path()
-        self._prepend_alr_to_path_env_var(alr_path)
+    def _alr_path(self, alr_file):
+        alr_path = os.path.abspath(alr_file)
+        if not os.path.isfile(alr_path):
+            raise ArgumentTypeError(fr"'{alr_file}' is not a file or does not exist")
+        return alr_path
 
-    def _get_alr_path(self):
+    def _default_alr_path(self):
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        return os.path.join(project_root, 'bin')
+        return os.path.join(project_root, 'bin', f"alr{'.exe' if on_windows() else ''}")
 
-    def _prepend_alr_to_path_env_var(self, alr_path):
-        os.environ['PATH'] = alr_path + os.pathsep + os.environ['PATH']
 
 if __name__ == '__main__':
     suite = Testsuite()
