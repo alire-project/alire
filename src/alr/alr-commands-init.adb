@@ -175,31 +175,25 @@ package body Alr.Commands.Init is
          --  GPR File Style
 
          NL;
-         WC ("config/" & Lower_Name & "_config.gpr");
-         NL;
-         RB (Mixed_Name, GPR_File.Library);
-         NL;
+         WC ("config/" & Lower_Name & "_config.gpr");                 NL;
+         RB (Mixed_Name, GPR_File.Library);                           NL;
 
          if For_Library then
             FU ("Library_Name   ", QE (Mixed_Name));
-            FU ("Library_Version", EX (Library_Name));
-            NL;
+            FU ("Library_Version", EX (Library_Name));                NL;
          end if;
 
-         FU ("Create_Missing_Dirs", QE ("True"));
-         NL;
+         FU ("Create_Missing_Dirs", QE ("True"));                     NL;
          FU ("Source_Dirs", List'(QE ("src/"),
                                   QE ("config/")));
          FU ("Object_Dir ", EX (Build_Profile));
 
          if For_Library then
-            FU ("Library_Dir", QE ("lib"));
-            NL;
+            FU ("Library_Dir", QE ("lib"));                           NL;
             FR ("type Library_Type_Type is " & Library_Type);
-            NL;
+                                                                      NL;
             FR ("Library_Type : Library_Type_Type :=");
-            FR ("  " & External_2);
-            NL;
+            FR ("  " & External_2);                                   NL;
             FU ("Library_Kind", EX ("Library_Type"));
          else
             FU ("Exec_Dir", QE ("bin"), True);
@@ -210,24 +204,17 @@ package body Alr.Commands.Init is
          PB ("Compiler");
          FU ("Default_Switches (""Ada"")",
              EX (Mixed_Name & "_Config.Ada_Compiler_Switches"));
-         PE ("Compiler");
-         NL;
+         PE ("Compiler");                                             NL;
 
-         PB ("Binder");
-            NL;
+         PB ("Binder");                                               NL;
             FU ("Switches (""Ada"")",
                 LO ("-Es", "Symbolic traceback"),
-                Compact => False);
-            NL;
-         PE ("Binder");
-         NL;
+                Compact => False);                                    NL;
+         PE ("Binder");                                               NL;
 
-         PB ("Install");
-            NL;
-            FU ("Artifacts (""."")", LO ("share"));
-            NL;
-         PE ("Install");
-         NL;
+         PB ("Install");                                              NL;
+            FU ("Artifacts (""."")", LO ("share"));                   NL;
+         PE ("Install");                                              NL;
 
          RE (Mixed_Name);
 
