@@ -10,7 +10,8 @@ with "xml_ez_out";
 
 project Alr is
 
-   Src_Dirs := ("src/alr");
+   Src_Dirs := ("src/alr"
+               ,"src/gpr");
 
    case Alire_Common.Host_Os is
       when "windows" => Src_Dirs := Src_Dirs & ("src/alr/os_windows");
