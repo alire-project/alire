@@ -23,6 +23,7 @@ compare(contents('xxx'), ['xxx/.gitignore',
                           'xxx/share/xxx',
                           'xxx/src',
                           'xxx/src/xxx.adb',
+                          'xxx/workspace.code-workspace',
                           'xxx/xxx.gpr'])
 
 # Plain init, existing empty dir
@@ -34,7 +35,8 @@ compare(contents('aaa'), ['aaa/.gitignore',
                           'aaa/share',
                           'aaa/share/aaa',
                           'aaa/src',
-                          'aaa/src/aaa.adb'])
+                          'aaa/src/aaa.adb',
+                          'aaa/workspace.code-workspace'])
 
 # Init without skeleton
 run_alr('init', '--bin', '--no-skel', 'yyy')
@@ -70,6 +72,7 @@ compare(contents('.'), ['./.gitignore',
                         './share/zzz',
                         './src',
                         './src/zzz.adb',
+                        './workspace.code-workspace',
                         './zzz.gpr'])
 
 
