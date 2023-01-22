@@ -58,9 +58,8 @@ package body Alire.Install is
 
          --  Keep track that this was installed
 
-         Directories.Touch (Prefix
-                            / Metadata_Dir_In_Prefix
-                            / Rel.Milestone.Image);
+         Set_Not_Installed (Prefix, Rel.Name);
+         Set_Installed (Prefix, Rel.Milestone);
 
          --  Remove unwanted remains, if any
 
@@ -84,7 +83,7 @@ package body Alire.Install is
                Recoverable_Error
                  ("Requested release " & Rel.Milestone.TTY_Image
                   & " has another version already installed: "
-                  & TTY.Version (Installed (Rel.Name).Version.Image));
+                  & Installed (Rel.Name).TTY_Image);
             end if;
          end if;
       end Check_Conflict;
@@ -135,10 +134,12 @@ package body Alire.Install is
          end if;
       end loop;
 
-      Directories.Create_Tree (Prefix);
+      Directories.Create_Tree (Prefix / Metadata_Dir_In_Prefix);
       --  Ensure destination exists
 
       Add_Targets;
+
+      Put_Info ("Installation complete.");
    end Add;
 
    --------------------
@@ -169,9 +170,12 @@ package body Alire.Install is
       end Find;
 
    begin
-      Directories.Traverse_Tree (Start   => Prefix / Metadata_Dir_In_Prefix,
-                                 Doing   => Find'Access,
-                                 Recurse => False);
+      if Adirs.Exists (Prefix / Metadata_Dir_In_Prefix) then
+         Directories.Traverse_Tree (Start   => Prefix / Metadata_Dir_In_Prefix,
+                                    Doing   => Find'Access,
+                                    Recurse => False);
+      end if;
+
       return Result;
    end Find_Installed;
 
@@ -195,5 +199,29 @@ package body Alire.Install is
       end if;
 
    end Info;
+
+   -------------------
+   -- Set_Installed --
+   -------------------
+
+   procedure Set_Installed (Prefix : Any_Path; Mil : Milestones.Milestone) is
+   begin
+      Directories.Touch (Prefix
+                         / Metadata_Dir_In_Prefix
+                         / Mil.Image);
+   end Set_Installed;
+
+   -----------------------
+   -- Set_Not_Installed --
+   -----------------------
+
+   procedure Set_Not_Installed (Prefix : Any_Path; Crate : Crate_Name) is
+   begin
+      for Mil of Find_Installed (Prefix) loop
+         if Mil.Crate = Crate then
+            Adirs.Delete_File (Prefix / Metadata_Dir_In_Prefix / Mil.Image);
+         end if;
+      end loop;
+   end Set_Not_Installed;
 
 end Alire.Install;

@@ -31,4 +31,9 @@ private
                             return Installed_Milestones;
    --  Identify installed releases in the prefix
 
+   procedure Set_Installed (Prefix : Any_Path; Mil : Milestones.Milestone);
+
+   procedure Set_Not_Installed (Prefix : Any_Path; Crate : Crate_Name);
+   --  Any and all versions will be marked as not installed
+
 end Alire.Install;
