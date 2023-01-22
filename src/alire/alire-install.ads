@@ -1,5 +1,6 @@
 limited with Alire.Dependencies.Containers;
 with Alire.Directories; use Alire.Directories.Operators;
+private with Alire.Milestones.Containers;
 with Alire.Platforms.Folders;
 
 package Alire.Install is
@@ -19,12 +20,15 @@ package Alire.Install is
 
 private
 
-   Gnatinstall_Metadata_Dir_In_Prefix : constant Relative_Path
+   Metadata_Dir_In_Prefix : constant Relative_Path
      := "share" / "gpr" / "manifests";
-   --  Installations performed with gprinstall
+   --  This is used by gprinstall and we will reuse it for our "fake" binary
+   --  installs.
 
-   Alire_Metadata_Dir_In_Prefix : constant Relative_Path
-     := "share" / "alire" / "gprless";
-   --  Installations performed by directly copying a binary release
+   subtype Installed_Milestones is Milestones.Containers.Maps.Map;
+
+   function Find_Installed (Prefix : Any_Path)
+                            return Installed_Milestones;
+   --  Identify installed releases in the prefix
 
 end Alire.Install;

@@ -7,7 +7,11 @@ with Alire.Platforms.Current;
 with Alire.Releases;
 with Alire.Solver;
 
+with Semantic_Versioning;
+
 package body Alire.Install is
+
+   package Adirs renames Ada.Directories;
 
    ---------
    -- Add --
@@ -24,6 +28,10 @@ package body Alire.Install is
       procedure Install_Binary (Rel : Releases.Release) is
          Was_There : Boolean := False;
       begin
+
+         --  Use or regular deployment facilities, in case there is any actions
+         --  to perform.
+
          Rel.Deploy (Env           => Platforms.Current.Properties,
                      Parent_Folder => Prefix,
                      Was_There     => Was_There);
@@ -35,9 +43,11 @@ package body Alire.Install is
             --  Artifacts in there. Unimplemented for now, and not dealt with
             --  in this branch anyway (once there are project files, we would
             --  install in the context of a proper Root.)
-            raise Program_Error with Errors.Set
-              ("Unexpected binary release with project file");
+            Put_Warning ("Ignoring project files for binary release "
+                         & Rel.Milestone.TTY_Image);
          end if;
+
+         --  Now move into the proper place
 
          Put_Info ("Installing " & Rel.Milestone.TTY_Image & "...");
          Directories.Merge_Contents
@@ -46,8 +56,38 @@ package body Alire.Install is
             Skip_Top_Level_Files  => True,
             Fail_On_Existing_File => not Alire.Force);
 
+         --  Keep track that this was installed
+
+         Directories.Touch (Prefix
+                            / Metadata_Dir_In_Prefix
+                            / Rel.Milestone.Image);
+
+         --  Remove unwanted remains, if any
+
          Directories.Force_Delete (Prefix / Rel.Base_Folder);
       end Install_Binary;
+
+      --------------------
+      -- Check_Conflict --
+      --------------------
+
+      procedure Check_Conflict (Rel : Releases.Release) is
+         use type Semantic_Versioning.Version;
+         Installed : constant Installed_Milestones := Find_Installed (Prefix);
+      begin
+         if Installed.Contains (Rel.Name) then
+            if Installed (Rel.Name).Version = Rel.Version then
+               Recoverable_Error
+                 ("Requested release " & Rel.Milestone.TTY_Image
+                  & " is already installed");
+            else
+               Recoverable_Error
+                 ("Requested release " & Rel.Milestone.TTY_Image
+                  & " has another version already installed: "
+                  & TTY.Version (Installed (Rel.Name).Version.Image));
+            end if;
+         end if;
+      end Check_Conflict;
 
       -----------------
       -- Add_Targets --
@@ -65,6 +105,7 @@ package body Alire.Install is
                                  Origins => (Binary_Archive => True,
                                              others         => False));
             begin
+               Check_Conflict (Rel);
                Install_Binary (Rel);
             end;
          end loop;
@@ -100,6 +141,40 @@ package body Alire.Install is
       Add_Targets;
    end Add;
 
+   --------------------
+   -- Find_Installed --
+   --------------------
+
+   function Find_Installed (Prefix : Any_Path)
+                            return Milestones.Containers.Maps.Map
+   is
+      Result : Milestones.Containers.Maps.Map;
+
+      procedure Find
+        (Item : Ada.Directories.Directory_Entry_Type;
+         Stop : in out Boolean)
+      is
+         Name : constant String := Adirs.Simple_Name (Item);
+      begin
+         Stop := False;
+
+         if (for some Char of Name => Char = '=') then
+            declare
+               Milestone : constant Milestones.Milestone :=
+                             Milestones.New_Milestone (Name);
+            begin
+               Result.Insert (Milestone.Crate, Milestone);
+            end;
+         end if;
+      end Find;
+
+   begin
+      Directories.Traverse_Tree (Start   => Prefix / Metadata_Dir_In_Prefix,
+                                 Doing   => Find'Access,
+                                 Recurse => False);
+      return Result;
+   end Find_Installed;
+
    ----------
    -- Info --
    ----------
@@ -109,14 +184,14 @@ package body Alire.Install is
       --  gprinstall stores metadata about each install in share/gpr/manifests.
       --  For binary "just-copy" installs we use a separate metadata location.
 
-      if not Ada.Directories.Exists
-        (Prefix / Gnatinstall_Metadata_Dir_In_Prefix)
-        and then not Ada.Directories.Exists
-          (Prefix / Alire_Metadata_Dir_In_Prefix)
-      then
+      if not Ada.Directories.Exists (Prefix / Metadata_Dir_In_Prefix) then
          Trace.Info ("There is no installation at prefix " & TTY.URL (Prefix));
       else
          Trace.Info ("Installation prefix found at " & TTY.URL (Prefix));
+         Trace.Info ("Contents:");
+         for Milestone of Find_Installed (Prefix) loop
+            Trace.Info ("   " & Milestone.TTY_Image);
+         end loop;
       end if;
 
    end Info;
