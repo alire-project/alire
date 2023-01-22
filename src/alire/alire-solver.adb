@@ -303,11 +303,7 @@ package body Alire.Solver is
 
          --  Options take precedence over any interaction yet to occur
 
-         if Options.On_Timeout = Continue
-           or else
-             (Options.On_Timeout = Continue_While_Complete_Then_Stop
-              and then Options.Completeness < Some_Incomplete)
-         then
+         if Options.On_Timeout = Continue then
             User_Answer_Continue := Always;
          end if;
 
@@ -1276,7 +1272,7 @@ package body Alire.Solver is
       --  Warn if we foresee things taking a loong time...
 
       if Options.Completeness = All_Incomplete then
-         Put_Warning ("Exploring incomplete solutions to dependencies,"
+         Put_Warning ("Exploring all possible solutions to dependencies,"
                       & " this may take some time...");
       end if;
 
@@ -1314,15 +1310,17 @@ package body Alire.Solver is
       --  can retry with a larger solution space.
 
       if Solutions.Is_Empty then
-         if Options.Completeness <= All_Complete then
-            Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
-                            & "exploring complete solutions");
-         end if;
-
          if Options.Completeness < All_Incomplete
-           and then Options.Exhaustive
            and then User_Answer_Continue /= No
          then
+            if Options.Completeness <= All_Complete then
+               Put_Warning
+                 ("No complete solution exists, looking for  incomplete ones; "
+                  & "this may take some time...");
+               Put_Warning ("Spent " & TTY.Emph (Timer.Image) & " seconds "
+                            & "exploring complete solutions");
+            end if;
+
             Trace.Detail
               ("No solution found with completeness policy of "
                & Options.Completeness'Image
@@ -1347,20 +1345,15 @@ package body Alire.Solver is
                                All_Incomplete,
                              when All_Incomplete                =>
                                 raise Program_Error with "Unreachable code"),
-                       Exhaustive   => Options.Exhaustive,
                        Detecting    => Options.Detecting,
                        Hinting      => Options.Hinting,
                        Sharing      => Options.Sharing,
                        Timeout      => Options.Timeout,
                        Timeout_More => Options.Timeout_More,
                        Elapsed      => Timer.Elapsed,
-                       On_Timeout   =>
-                         (if Options.On_Timeout =
-                                Continue_While_Complete_Then_Stop
-                          then Stop
-                          elsif User_Answer_Continue = Always
-                          then Continue
-                          else Options.On_Timeout))));
+                       On_Timeout   => (if User_Answer_Continue = Always
+                                        then Continue
+                                        else Options.On_Timeout))));
          else
             raise Query_Unsuccessful with Errors.Set
               ("Solver failed to find any solution to fulfill dependencies "

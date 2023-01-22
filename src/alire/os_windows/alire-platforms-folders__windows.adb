@@ -1,10 +1,14 @@
+with Alire.OS_Lib;
+
 package body Alire.Platforms.Folders is
+
+   use OS_Lib.Operators;
 
    ----------
    -- Home --
    ----------
 
-   function Home return String
+   function Home return Absolute_Path
    is (OS_Lib.Getenv ("HOMEDRIVE") & OS_Lib.Getenv ("HOMEPATH"));
 
    -----------

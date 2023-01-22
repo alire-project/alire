@@ -17,14 +17,7 @@ package Alire.Spawn is
       Extra_Args    : AAA.Strings.Vector);
    --  Launches gprbuild for the building of a crate.
    --  Extra args can be -Xblah detected from command-line.
-
-   procedure Gprinstall
-     (Project_File : Absolute_File;
-      Prefix       : Absolute_Path;
-      Recursive    : Boolean;
-      Quiet        : Boolean;
-      Extra_Args   : AAA.Strings.Vector);
-   --  Launches
-   --  gprinstall -f -m -p [-r] -P Project_File --prefix=Prefix -- Extra_Args
+   --  Out-of-tree build takes place in
+   --    $crate / Alire.Paths.Build_Folder ($crate/alire/build).
 
 end Alire.Spawn;

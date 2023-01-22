@@ -19,21 +19,12 @@ package Alire.Roots.Editable is
    --  but shared cache with the Original. Changes will be forgotten unless
    --  Confirm_And_Commit is called.
 
-   function Compute_Solution
-     (This    : in out Root;
-      Options : Solver.Query_Options := Solver.Default_Options)
-      return Solutions.Solution;
-   --  Compute a solution for the modified root, in case it is needed before
-   --  Confirm_And_Commit. See the notes in Roots.Compute_Update too.
-
-   procedure Confirm_And_Commit (This    : in out Root;
-                                 Options : Solver.Query_Options :=
-                                   Solver.Default_Options);
-   --  Present differences in the solutions of Original and Edited (computed
-   --  using the given options) and ask the user to accept, in which case
-   --  Edited.Commit is called. Edited is expected to be a temporary copy of
-   --  Original. Performs an Edited.Reload_Manifest, so any changes done to
-   --  the Edited manifest about dependency/pin addition/removal are applied.
+   procedure Confirm_And_Commit (This : in out Root);
+   --  Present differences in the solutions of Original and Edited and ask
+   --  the user to accept, in which case Edited.Commit is called. Edited
+   --  is expected to be a temporary copy of Original. Performs an
+   --  Edited.Reload_Manifest, so any changes done to the Edited manifest
+   --  about dependency/pin addition/removal are applied.
 
    --  A few proxies so useful predicates can be kept
 
@@ -62,12 +53,10 @@ package Alire.Roots.Editable is
    --  created, we need to reload the manifest. The solution remains
    --  untouched (use Update to recompute a fresh solution).
 
-   procedure Add_Dependency (This        : in out Root;
-                             Dep         : Dependencies.Dependency;
-                             Narrow_Down : Boolean := True);
-   --  Add a dependency, or raise Checked_Error if Dep is already among direct
-   --  dependencies. If Narrow_Down, then try to replace a '*' dependency with
-   --  an appropriate caret/tilde one.
+   procedure Add_Dependency (This : in out Root;
+                             Dep  : Dependencies.Dependency);
+   --  Add a dependency, or raise Checked_Error is Dep is already among direct
+   --  dependencies.
 
    procedure Remove_Dependency (This  : in out Root;
                                 Crate : Crate_Name;
@@ -165,15 +154,5 @@ private
 
    function Solution (This : in out Root) return Solutions.Solution
    is (This.Edit.Solution);
-
-   ----------------------
-   -- Compute_Solution --
-   ----------------------
-
-   function Compute_Solution
-     (This    : in out Root;
-      Options : Solver.Query_Options := Solver.Default_Options)
-      return Solutions.Solution
-   is (This.Current.Compute_Update (Options => Options));
 
 end Alire.Roots.Editable;

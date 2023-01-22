@@ -29,8 +29,8 @@ package body Alire.Install is
          Was_There : Boolean := False;
       begin
 
-         --  Use or regular deployment facilities, in case there is any actions
-         --  to perform.
+         --  Use or regular deployment facilities, in case there are any
+         --  actions to perform.
 
          Rel.Deploy (Env           => Platforms.Current.Properties,
                      Parent_Folder => Prefix,
@@ -39,10 +39,10 @@ package body Alire.Install is
          if not Rel.Project_Files (Platforms.Current.Properties,
                                    With_Path => False).Is_Empty
          then
-            --  This would require using the gprinstall, trusting there are
-            --  Artifacts in there. Unimplemented for now, and not dealt with
-            --  in this branch anyway (once there are project files, we would
-            --  install in the context of a proper Root.)
+            --  This would require using gprinstall, trusting there are
+            --  Artifacts in the project file. Unimplemented for now, and not
+            --  dealt with in this branch anyway (once there are project files,
+            --  we would install in the context of a proper Root.)
             Put_Warning ("Ignoring project files for binary release "
                          & Rel.Milestone.TTY_Image);
          end if;
@@ -182,7 +182,7 @@ package body Alire.Install is
    procedure Info (Prefix : Any_Path) is
    begin
       --  gprinstall stores metadata about each install in share/gpr/manifests.
-      --  For binary "just-copy" installs we use a separate metadata location.
+      --  For binary "just-copy" installs we just track the milestone.
 
       if not Ada.Directories.Exists (Prefix / Metadata_Dir_In_Prefix) then
          Trace.Info ("There is no installation at prefix " & TTY.URL (Prefix));

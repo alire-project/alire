@@ -12,7 +12,7 @@ package body Alr.Commands.Install is
    --------------
 
    procedure Validate (Cmd : Command) is null;
-   --  TODO: implement switches validation
+   --  Nothing to validate for now
 
    -------------
    -- Execute --
@@ -58,13 +58,32 @@ package body Alr.Commands.Install is
    -- Long_Description --
    ----------------------
 
+   Binaries : constant String := "gnat, gnatprove, gprbuild, gnatstudio";
+
    overriding
    function Long_Description (Cmd : Command)
                               return AAA.Strings.Vector
    is (AAA.Strings.Empty_Vector
-       .Append ("Manages installations of crates to a common prefix.")
+       .Append ("Manages installations of releases to a common prefix.")
        .Append ("The default install location is "
-         & TTY.URL (Alire.Install.Default_Prefix)));
+         & TTY.URL (Alire.Install.Default_Prefix))
+       .New_Line
+       .Append ("Installation prefixes are intended to make binaries or "
+         & "dynamic libraries available outside of the Alire environment, "
+         & "normally by adding the " & TTY.URL ("<prefix>/bin")
+         &  " folder to the user's path.")
+       .New_Line
+       .Append ("Although Alire will vet trivially detectable conflicts "
+         & "(e.g., trying to install two executable release with different "
+         & "versions), Alire is not aware of the exact binary artifacts "
+         & "produced by compiled crates. Thus, you are ""on your own"" in "
+         & "regard to the final consistency of installations.")
+       .New_Line
+       .Append ("That said, binary crates from the Alire project (" & Binaries
+         & "), as well as crates initialized with `alr` using default "
+         & "templates, should be able to coexist in a same installation prefix"
+         & " without issue.")
+      );
 
    --------------------
    -- Setup_Switches --
