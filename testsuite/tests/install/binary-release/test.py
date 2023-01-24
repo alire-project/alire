@@ -15,7 +15,7 @@ if platform.system() != "Linux":
     print('SUCCESS')
     exit(0)
 
-PREFIX=f"--prefix={os.getcwd()}/install"
+PREFIX=f"--prefix={os.path.join(os.getcwd(), 'install')}"
 
 # Check that the prefix is empty
 p = run_alr("install", PREFIX, quiet=False)
@@ -24,9 +24,9 @@ assert_match("There is no installation at prefix .*",
 
 # Install the binary crate
 p = run_alr("install", PREFIX, "crate", quiet=False)
-assert_eq("""Note: Deploying crate=1.0.0...
+assert_match("""Note: Deploying crate=1.0.0...
 Note: Installing crate=1.0.0...
-Note: Installation complete.
+Success: Install to .* finished successfully in .* seconds.
 """,
              p.out)
 
@@ -42,7 +42,8 @@ assert_match(".*Requested release crate=1.0.0 is already installed.*",
                      quiet=False, complain_on_error=False).out)
 
 # Verify another version cannot be installed
-assert_match(".*Requested release crate=0.1.0 has another version already installed: crate=1.0.0.*",
+assert_match(".*Requested release crate=0.1.0 has another version already installed:\n"
+             ".*   crate=1.0.0.*",
              run_alr("install", PREFIX, "crate=0.1.0",
                      quiet=False, complain_on_error=False).out)
 

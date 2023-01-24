@@ -59,13 +59,14 @@ package Alr.Commands is
    --  Unless Force_Reload, if the index is not empty we no nothing. When
    --  strict, don't allow unknown values in enums.
 
-   procedure Requires_Valid_Session (Cmd          : in out Command'Class;
-                                     Sync         : Boolean := True);
+   procedure Requires_Valid_Session (Cmd   : in out Command'Class;
+                                     Sync  : Boolean := True;
+                                     Error : String := "");
    --  Verifies that a valid working dir is in scope. After calling it,
    --  Cmd.Root will be usable if alr was run inside a Root. If Sync, enforce
    --  that the manifest, lockfile and dependencies on disk are in sync, by
    --  performing a silent update. If not Sync, only a minimal empty lockfile
-   --  is created.
+   --  is created. If Error, replace the first generic error message with it.
 
    procedure Load (Cmd       : Command'Class;
                    Crate     : Alire.Crate_Name;

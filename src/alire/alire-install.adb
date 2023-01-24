@@ -4,14 +4,26 @@ with Alire.Dependencies.Containers;
 with Alire.Errors;
 with Alire.Origins;
 with Alire.Platforms.Current;
-with Alire.Releases;
 with Alire.Solver;
-
-with Semantic_Versioning;
 
 package body Alire.Install is
 
    package Adirs renames Ada.Directories;
+
+   ---------------------
+   -- To_Image_Vector --
+   ---------------------
+
+   function To_Image_Vector (This : Installed_Milestones)
+                             return AAA.Strings.Vector
+   is
+   begin
+      return Result : AAA.Strings.Vector do
+         for M of This loop
+            Result.Append (M.TTY_Image);
+         end loop;
+      end return;
+   end To_Image_Vector;
 
    ---------
    -- Add --
@@ -66,28 +78,6 @@ package body Alire.Install is
          Directories.Force_Delete (Prefix / Rel.Base_Folder);
       end Install_Binary;
 
-      --------------------
-      -- Check_Conflict --
-      --------------------
-
-      procedure Check_Conflict (Rel : Releases.Release) is
-         use type Semantic_Versioning.Version;
-         Installed : constant Installed_Milestones := Find_Installed (Prefix);
-      begin
-         if Installed.Contains (Rel.Name) then
-            if Installed (Rel.Name).Version = Rel.Version then
-               Recoverable_Error
-                 ("Requested release " & Rel.Milestone.TTY_Image
-                  & " is already installed");
-            else
-               Recoverable_Error
-                 ("Requested release " & Rel.Milestone.TTY_Image
-                  & " has another version already installed: "
-                  & Installed (Rel.Name).TTY_Image);
-            end if;
-         end if;
-      end Check_Conflict;
-
       -----------------
       -- Add_Targets --
       -----------------
@@ -104,7 +94,7 @@ package body Alire.Install is
                                  Origins => (Binary_Archive => True,
                                              others         => False));
             begin
-               Check_Conflict (Rel);
+               Check_Conflict (Prefix, Rel);
                Install_Binary (Rel);
             end;
          end loop;
@@ -138,18 +128,56 @@ package body Alire.Install is
       --  Ensure destination exists
 
       Add_Targets;
-
-      Put_Info ("Installation complete.");
    end Add;
+
+   --------------------
+   -- Check_Conflict --
+   --------------------
+
+   procedure Check_Conflict (Prefix : Any_Path; Rel : Releases.Release) is
+      Installed : constant Installed_Milestones := Find_Installed (Prefix);
+   begin
+      if (for some M of Installed => M.Crate = Rel.Name) then
+         if Installed.Contains (Rel.Milestone) then
+            Recoverable_Error
+              ("Requested release " & Rel.Milestone.TTY_Image
+               & " is already installed");
+         else
+            Recoverable_Error
+              (Errors.Wrap
+                 ("Requested release " & Rel.Milestone.TTY_Image
+                  & " has another version already installed: ",
+                  To_Image_Vector (Find_Installed
+                    (Prefix, Rel.Name)).Flatten (ASCII.LF)));
+         end if;
+      end if;
+   end Check_Conflict;
+
+   --------------------
+   -- Find_Installed --
+   --------------------
+
+   function Find_Installed (Prefix : Any_Path;
+                            Crate  : Crate_Name)
+                            return Installed_Milestones is
+   begin
+      return Result : Installed_Milestones do
+         for M of Find_Installed (Prefix) loop
+            if M.Crate = Crate then
+               Result.Include (M);
+            end if;
+         end loop;
+      end return;
+   end Find_Installed;
 
    --------------------
    -- Find_Installed --
    --------------------
 
    function Find_Installed (Prefix : Any_Path)
-                            return Milestones.Containers.Maps.Map
+                            return Installed_Milestones
    is
-      Result : Milestones.Containers.Maps.Map;
+      Result : Installed_Milestones;
 
       procedure Find
         (Item : Ada.Directories.Directory_Entry_Type;
@@ -164,7 +192,7 @@ package body Alire.Install is
                Milestone : constant Milestones.Milestone :=
                              Milestones.New_Milestone (Name);
             begin
-               Result.Insert (Milestone.Crate, Milestone);
+               Result.Insert (Milestone);
             end;
          end if;
       end Find;
@@ -219,6 +247,8 @@ package body Alire.Install is
    begin
       for Mil of Find_Installed (Prefix) loop
          if Mil.Crate = Crate then
+            Trace.Detail ("Deleting installation metadata file: "
+                            & (Prefix / Metadata_Dir_In_Prefix / Mil.Image));
             Adirs.Delete_File (Prefix / Metadata_Dir_In_Prefix / Mil.Image);
          end if;
       end loop;

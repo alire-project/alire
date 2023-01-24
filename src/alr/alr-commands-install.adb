@@ -3,16 +3,27 @@ with Ada.Directories;
 with Alire.Dependencies.Containers;
 with Alire.Install;
 
+with Stopwatch;
+
 package body Alr.Commands.Install is
 
    package Adirs renames Ada.Directories;
+
+   Switch_This : constant String := "--this";
 
    --------------
    -- Validate --
    --------------
 
-   procedure Validate (Cmd : Command) is null;
-   --  Nothing to validate for now
+   procedure Validate (Cmd : in out Command) is
+   begin
+      --  If --this given, we must be in workspace
+      if Cmd.This then
+         Cmd.Requires_Valid_Session
+           (Error => "Cannot use " & CLIC.TTY.Terminal (Switch_This)
+            & " outside of a crate");
+      end if;
+   end Validate;
 
    -------------
    -- Execute --
@@ -22,22 +33,31 @@ package body Alr.Commands.Install is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      Global_Prefix : constant Alire.Absolute_Path :=
-                        Adirs.Full_Name
-                          (if Cmd.Prefix.all /= ""
-                           then Cmd.Prefix.all
-                           else Alire.Install.Default_Prefix);
-   begin
+      Prefix : constant Alire.Absolute_Path :=
+                 Adirs.Full_Name
+                   (if Cmd.Prefix.all /= ""
+                    then Cmd.Prefix.all
+                    else Alire.Install.Default_Prefix);
 
+      Timer : Stopwatch.Instance;
+   begin
       Cmd.Validate;
 
-      if Args.Is_Empty then
+      if Args.Is_Empty and then not Cmd.This then
 
          --  Display info on default/given prefix.
 
-         Alire.Install.Info (Global_Prefix);
+         Alire.Install.Info (Prefix);
 
       else
+
+         --  Install local crate first if requested
+
+         if Cmd.This then
+            Alire.Install.Check_Conflict (Prefix, Cmd.Root.Release);
+            Cmd.Root.Install (Prefix     => Prefix,
+                              Export_Env => True);
+         end if;
 
          --  Install every given dependency
 
@@ -48,8 +68,12 @@ package body Alr.Commands.Install is
                Deps.Append (Alire.Dependencies.From_String (Img));
             end loop;
 
-            Alire.Install.Add (Global_Prefix, Deps);
+            Alire.Install.Add (Prefix, Deps);
          end;
+
+         Alire.Put_Success ("Install to " & TTY.URL (Prefix)
+                            & " finished successfully in "
+                            & TTY.Bold (Timer.Image) & " seconds.");
 
       end if;
    end Execute;
@@ -58,7 +82,7 @@ package body Alr.Commands.Install is
    -- Long_Description --
    ----------------------
 
-   Binaries : constant String := "gnat, gnatprove, gprbuild, gnatstudio";
+   Binaries : constant String := "gnat, gnatprove, gprbuild";
 
    overriding
    function Long_Description (Cmd : Command)
@@ -101,6 +125,11 @@ package body Alr.Commands.Install is
                      "", "--prefix=",
                      "Override installation prefix (default is "
                      & TTY.URL ("${CRATE_ROOT}/alire/prefix)") & ")");
+
+      Define_Switch (Config,
+                     Cmd.This'Access,
+                     "", Switch_This,
+                     "Install current workspace");
    end Setup_Switches;
 
 end Alr.Commands.Install;

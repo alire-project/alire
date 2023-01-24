@@ -9,7 +9,7 @@ package body Alire.Platforms.Folders is
    ----------
 
    function Home return Absolute_Path
-   is (OS_Lib.Getenv ("HOMEDRIVE") & OS_Lib.Getenv ("HOMEPATH"));
+   is (OS_Lib.Getenv ("USERPROFILE"));
 
    -----------
    -- Cache --

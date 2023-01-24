@@ -6,7 +6,30 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
-### New subcommand `alr install
+### Installation of local crates
+
+PR [#1322](https://github.com/alire-project/alire/pull/1322)
+
+`alr install` accepts a new `--this` switch that performs the installation of a
+local crate. For example:
+
+```
+$ alr -n init --bin mycrate && cd mycrate
+$ alr install --this
+$ alr install
+Installation prefix found at /home/user/.alire
+Contents:
+   mycrate=0.1.0-dev
+```
+
+Or, to install the hangman game:
+
+```
+$ alr get hangman && cd hangman*
+$ alr install --this
+```
+
+### New subcommand `alr install`
 
 PR [#1302](https://github.com/alire-project/alire/pull/1302)
 
@@ -18,7 +41,7 @@ This is a experimental feature that will see improvements and tweaks in further
 PRs and as we gather feedback on its usage.
 
 At present, only binary releases can be installed (e.g., compilers, `gprbuild`,
-`gnatprove`, `gnatstudio`). There is no ability to uninstall releases either
+`gnatprove`). There is no ability to uninstall releases either
 (but reinstallation can be forced).
 
 Only one version per executable can be installed, meaning that, for example,

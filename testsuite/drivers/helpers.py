@@ -14,7 +14,7 @@ import stat
 
 
 # Return the entries (sorted) under a given folder, both folders and files
-# Optionally, return only those matching regex
+# Optionally, return only those matching regex. Uses '/' always as separator.
 def contents(dir, regex=""):
     assert os.path.exists(dir), "Bad path for enumeration: {}".format(dir)
     if regex != "":
@@ -231,3 +231,12 @@ def md5sum(file):
             file_hash.update(chunk)
 
     return file_hash.hexdigest()
+
+
+def replace_in_file(filename : str, old : str, new : str):
+    """
+    Replace all occurrences of a string in a file
+    """
+    old_contents = content_of(filename)
+    with open(filename, "wt") as file:
+        file.write(old_contents.replace(old, new))

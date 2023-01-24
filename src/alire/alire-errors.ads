@@ -84,7 +84,8 @@ package Alire.Errors with Preelaborate is
 
    function Wrap (This : Wrapper; Text : String) return Wrapper;
    --  Add an indented detail error msg to the current wrapping chain, unless
-   --  the wrapper is empty in which case the message will be top level.
+   --  the wrapper is empty in which case the message will be top level. If
+   --  Text is "", silently do nothing.
 
    function Wrap (This : Wrapper; Ex : Ada.Exceptions.Exception_Occurrence)
                   return Wrapper;
@@ -92,6 +93,9 @@ package Alire.Errors with Preelaborate is
 
    procedure Print (This : Wrapper);
    --  Complete the chain of errors and log it at error level
+
+   function Get (This : Wrapper) return String;
+   --  Return the entire error sequence
 
    function Set (This : Wrapper) return String;
    --  Store the msgs in This and return an Id for use as exception message
@@ -165,6 +169,9 @@ private
                   return Wrapper
    is (This.Wrap (Get (Ex)));
    --  Start a chain with an exception message instead of a given text
+
+   function Get (This : Wrapper) return String
+   is (This.Text);
 
    ---------
    -- Set --
