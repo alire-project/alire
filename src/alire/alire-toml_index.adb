@@ -393,7 +393,8 @@ package body Alire.TOML_Index is
          end if;
 
          if Simple_Name (Shelf) not in Shelf_Name then
-            Raise_Checked_Error ("Malformed shelf folder name: " & Shelf);
+            Raise_Checked_Error ("Malformed shelf folder name: " & Shelf
+                                 & " for manifest at: " & Path);
          end if;
 
          declare
