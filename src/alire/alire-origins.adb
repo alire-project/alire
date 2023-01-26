@@ -2,6 +2,7 @@ with Ada.Directories;
 
 with AAA.Strings;
 
+with Alire.Platforms.Current;
 with Alire.Root;
 with Alire.URI;
 with Alire.Utils.TTY;
@@ -234,7 +235,10 @@ package body Alire.Origins is
    function Get_Hashes (This : Origin) return Hash_Vectors.Vector
    is (case This.Kind is
           when Filesystem     => This.Data.Hashes,
-          when Binary_Archive => This.Data.Bin_Archive.As_Data.Hashes,
+          when Binary_Archive =>
+            (if This.Is_Available (Platforms.Current.Properties)
+             then This.Data.Bin_Archive.As_Data.Hashes
+             else Hash_Vectors.Empty_Vector),
           when Source_Archive => This.Data.Src_Archive.Hashes,
           when others         => Hash_Vectors.Empty_Vector);
 
