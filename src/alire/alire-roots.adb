@@ -789,6 +789,13 @@ package body Alire.Roots is
                --  case there is some interaction with some other updated
                --  dependency, even for crates that didn't change.
                Run_Post_Fetch (Rel);
+
+               --  If the release was newly deployed, we can inform about its
+               --  nested crates now.
+
+               if not Was_There then
+                  Print_Nested_Crates (This.Release_Base (Rel.Name));
+               end if;
             end if;
          end;
       end Deploy_Release;
@@ -1097,6 +1104,75 @@ package body Alire.Roots is
       Context.Load (This);
       Context.Export;
    end Export_Build_Environment;
+
+   -------------------------
+   -- Print_Nested_Crates --
+   -------------------------
+
+   procedure Print_Nested_Crates (Path : Any_Path)
+   is
+      Starting_Path : constant Absolute_Path :=
+                        Ada.Directories.Full_Name (Path);
+
+      CD : Directories.Guard (Directories.Enter (Starting_Path))
+        with Unreferenced;
+
+      Found : AAA.Strings.Set; -- Milestone --> Description
+
+      procedure Check_Dir
+        (Item : Ada.Directories.Directory_Entry_Type;
+         Stop  : in out Boolean)
+      is
+         pragma Unreferenced (Stop);
+         use Ada.Directories;
+      begin
+         if Kind (Item) /= Directory then
+            return;
+         end if;
+
+         if Simple_Name (Item) = Paths.Working_Folder_Inside_Root
+         then
+            --  This is an alire metadata folder, don't go in. It could also be
+            --  a crate named "alire" but that seems like a bad idea anyway.
+            raise Directories.Traverse_Tree_Prune_Dir;
+         end if;
+
+         --  Try to detect a root in this folder
+
+         declare
+            Opt : constant Optional.Root :=
+                    Optional.Detect_Root (Full_Name (Item));
+         begin
+            if Opt.Is_Valid then
+               Found.Insert
+                 (TTY.URL (Directories.Find_Relative_Path
+                    (Starting_Path, Full_Name (Item))) & "/"
+                  & Opt.Value.Release.Constant_Reference.Milestone.TTY_Image
+                  & ": " & TTY.Emph
+                    (if Opt.Value.Release.Constant_Reference.Description /= ""
+                     then Opt.Value.Release.Constant_Reference.Description
+                     else "(no description)"));
+            end if;
+         end;
+      end Check_Dir;
+
+   begin
+      Directories.Traverse_Tree (Directories.Current,
+                                 Check_Dir'Access,
+                                 Recurse => True,
+                                 Spinner => True);
+
+      if not Found.Is_Empty then
+         Put_Info ("Found" & TTY.Bold (Found.Length'Image)
+                   & " nested "
+                   & (if Found.Length in 1 then "crate" else "crates")
+                   & " in " & TTY.URL (Starting_Path) & ":");
+
+         for Elem of Found loop
+            Trace.Info ("   " & Elem);
+         end loop;
+      end if;
+   end Print_Nested_Crates;
 
    -------------------
    -- Project_Paths --

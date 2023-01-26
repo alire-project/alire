@@ -264,6 +264,10 @@ package Alire.Roots is
    procedure Generate_Configuration (This : in out Root);
    --  Generate or re-generate the crate configuration files
 
+   procedure Print_Nested_Crates (Path : Any_Path);
+   --  Look for nested crates below the given path and print a summary of
+   --  path/milestone:description for each one found. Won't enter `alire` dirs.
+
    --  Files and folders derived from the root path (this obsoletes Alr.Paths):
 
    function Working_Folder (This : Root) return Absolute_Path;
