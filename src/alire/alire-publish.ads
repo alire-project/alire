@@ -38,6 +38,9 @@ package Alire.Publish is
    procedure Print_Trusted_Sites;
    --  Print our list of allowed sites to host git releases
 
+   function Is_Trusted (URL : Alire.URL) return Boolean;
+   --  According to our whitelist
+
 private
 
    type All_Options is tagged record

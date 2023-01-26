@@ -831,9 +831,7 @@ package body Alire.Publish is
              --  for local file on Windows, where drive letters are interpreted
              --  as the scheme).
            or else
-            (for some Site of Trusted_Sites =>
-               URI.Authority_Without_Credentials (URL) = Site or else
-               Has_Suffix (URI.Authority (URL), "." & Site))
+            Is_Trusted (URL)
          then
             Put_Success ("Origin is hosted on trusted site: "
                          & URI.Authority_Without_Credentials (URL));
@@ -934,6 +932,16 @@ package body Alire.Publish is
                   Step_Show_And_Confirm,
                   Step_Generate_Index_Manifest));
    end Directory_Tar;
+
+   ----------------
+   -- Is_Trusted --
+   ----------------
+
+   function Is_Trusted (URL : Alire.URL) return Boolean
+   is (for some Site of Trusted_Sites =>
+          URI.Authority_Without_Credentials (URL) = Site
+       or else
+          Has_Suffix (URI.Authority (URL), "." & Site));
 
    ----------------------
    -- Local_Repository --
