@@ -20,29 +20,31 @@ library project Alire is
 
    for Library_Name use "alire";
 
+   --  Set OS-dependent source files
+
    Src_Dirs := ("src/alire");
 
    case Alire_Common.Host_Os is
-      when "windows" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
-      when "osx"     => Src_Dirs := Src_Dirs & ("src/alire/os_macos");
       when "freebsd" => Src_Dirs := Src_Dirs & ("src/alire/os_freebsd");
-      when others    => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
+      when "linux"   => Src_Dirs := Src_Dirs & ("src/alire/os_linux");
+      when "macos"   => Src_Dirs := Src_Dirs & ("src/alire/os_macos");
+      when "windows" => Src_Dirs := Src_Dirs & ("src/alire/os_windows");
    end case;
 
    package Naming is
       case Alire_Common.Host_OS is
-         when "windows" =>
-            for body ("Alire.Platforms.Current") use "alire-platforms-current__windows.adb";
-            for body ("Alire.Platforms.Folders") use "alire-platforms-folders__windows.adb";
-         when "osx"     =>
-            for body ("Alire.Platforms.Current") use "alire-platforms-current__macos.adb";
-            for body ("Alire.Platforms.Folders") use "alire-platforms-folders__macos.adb";
          when "freebsd" =>
             for body ("Alire.Platforms.Current") use "alire-platforms-current__freebsd.adb";
             for body ("Alire.Platforms.Folders") use "alire-platforms-folders__freebsd.adb";
-         when others    =>
+         when "linux" =>
             for body ("Alire.Platforms.Current") use "alire-platforms-current__linux.adb";
             for body ("Alire.Platforms.Folders") use "alire-platforms-folders__linux.adb";
+         when "macos" =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__macos.adb";
+            for body ("Alire.Platforms.Folders") use "alire-platforms-folders__macos.adb";
+         when "windows" =>
+            for body ("Alire.Platforms.Current") use "alire-platforms-current__windows.adb";
+            for body ("Alire.Platforms.Folders") use "alire-platforms-folders__windows.adb";
       end case;
    end Naming;
 

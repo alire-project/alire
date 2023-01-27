@@ -1,4 +1,10 @@
+with "alire_common.gpr"; -- To gain access to Host_OS without redefining it
+
 aggregate project Alr_Env is
+
+   --  To be able to build with this project file, the user must set the
+   --  host operating system in ALIRE_OS using one of the values defined
+   --  in alire_common.gpr
 
    for Create_Missing_Dirs use "True";
 
@@ -23,32 +29,19 @@ aggregate project Alr_Env is
 
    for Project_Files use ("alr.gpr");
 
-   --  Provide defaults for environment variables that GNATcoll requires
+   --  Set environment variables for dependencies
+
+   case Alire_Common.Host_Os is
+      when "freebsd" => for External ("GNATCOLL_OS") use "unix";
+      when "linux"   => for External ("GNATCOLL_OS") use "unix";
+      when "macos"   => for External ("GNATCOLL_OS") use "osx";
+      when "windows" => for External ("GNATCOLL_OS") use "windows";
+   end case;
 
    for External ("LIBRARY_TYPE") use "static";
    for External ("BUILD") use "DEBUG";
 
-   Host_OS := external ("OS", "default");
-   --  On Windows an OS environment variable is defined, we can use it to
-   --  determine if we are compiling on Windows.
-   --
-   --  On macOS, the nearest equivalent is OSTYPE; however this is
-   --  e.g. "darwin18", so not useful here. Set "macOS" by hand.
+   --  The user must set ALIRE_OS before building. See the list of valid values
+   --  in alire_common.gpr
 
-   --  ALIRE_OS is used in alire_common.gpr.
-   --  GNATCOLL_OS is used in gnatcoll.gpr.
-   case Host_OS is
-      when "Windows_NT" | "windows_nt" | "windows" | "Windows" =>
-         for External ("ALIRE_OS") use "windows";
-         for External ("GNATCOLL_OS") use "windows";
-      when "macOS" | "macos" | "OSX" | "osx" =>
-         for External ("ALIRE_OS") use "osx";
-         for External ("GNATCOLL_OS") use "osx";
-      when "freebsd" =>
-         for External ("ALIRE_OS") use "freebsd";
-         for External ("GNATCOLL_OS") use "unix";
-      when others =>
-         for External ("ALIRE_OS") use "unix";
-         for External ("GNATCOLL_OS") use "unix";
-   end case;
 end Alr_Env;
