@@ -1,6 +1,7 @@
 with AAA.Table_IO;
 
 with Alire.Config.Edit;
+with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Utils;
 
@@ -137,7 +138,8 @@ package body Alr.Commands.Index is
    procedure Check (Cmd : in out Command) is
    begin
       Cmd.Requires_Full_Index (Strict => True);
-      Alire.Put_Success ("No unknown values found in index contents.");
+      Alire.Index.Check_Contents;
+      Alire.Put_Success ("No issues found in index contents.");
    end Check;
 
    ----------
@@ -250,7 +252,7 @@ package body Alr.Commands.Index is
          Output      => Cmd.Check'Access,
          Long_Switch => "--check",
          Help        =>
-           "Check index contents for unknown configuration values");
+           "Runs diagnostics on index contents (unknown values, hosts, etc.)");
 
       Define_Switch
         (Config      => Config,

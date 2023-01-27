@@ -153,4 +153,9 @@ package Alire.Index is
    function All_Crate_Aliases return access Provides.Crate_Provider_Map;
    --  For use from the loading functions; not intended for normal clients
 
+   procedure Check_Contents;
+   --  Applies some checks to alreadly loaded crates that cannot be easily
+   --  applied during load:
+   --  * Whether some origin is not in our allowed hosting sites.
+
 end Alire.Index;
