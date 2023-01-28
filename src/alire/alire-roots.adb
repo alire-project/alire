@@ -646,10 +646,10 @@ package body Alire.Roots is
    -- Create_For_Release --
    ------------------------
 
-   function Create_For_Release (This            : Releases.Release;
-                                Parent_Folder   : Any_Path;
-                                Env             : Alire.Properties.Vector;
-                                Perform_Actions : Boolean := True)
+   function Create_For_Release (This          : Releases.Release;
+                                Parent_Folder : Any_Path;
+                                Env           : Properties.Vector;
+                                Up_To         : Creation_Levels)
                                 return Root
    is
       use Directories;
@@ -659,7 +659,7 @@ package body Alire.Roots is
         (Env             => Env,
          Parent_Folder   => Parent_Folder,
          Was_There       => Unused_Was_There,
-         Perform_Actions => Perform_Actions,
+         Perform_Actions => False, -- Makes no sense until deps in place
          Create_Manifest => True);
 
       --  And generate its working files, if they do not exist

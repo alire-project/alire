@@ -133,7 +133,7 @@ package body Alr.Commands.Get is
               (Rel,
                Ada.Directories.Current_Directory,
                Platform.Properties,
-               Perform_Actions => False));
+               Up_To => Alire.Roots.Deploy));
 
          --  Set the initial solution we just found
 
@@ -188,7 +188,7 @@ package body Alr.Commands.Get is
                --  The complete build environment has been set up already by
                --  Deploy_Dependencies, so we must not do it again.
                Build_OK := Cmd.Root.Build
-                 (Cmd_Args       =>  AAA.Strings.Empty_Vector,
+                 (Cmd_Args         =>  AAA.Strings.Empty_Vector,
                   Saved_Profiles   => False,
                   Export_Build_Env => False);
             end if;
