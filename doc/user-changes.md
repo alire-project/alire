@@ -6,6 +6,23 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
+### Installation of indexed crates
+
+PR [#1322](https://github.com/alire-project/alire/pull/1335)
+
+It is now possible to install an indexed crate directly:
+```
+$ alr install hello
+```
+This is roughly equivalent to
+```alr get hello && cd hello* && alr install```
+
+The main differences are:
+- Cleanup is automatic.
+- Several crates can be installed in one go, e.g.: `alr install hello hangman`.
+- `alr get` will always retrieve the latest version, whereas `alr install` will
+also require a complete solution to dependencies.
+
 ### Installation of local crates
 
 PR [#1322](https://github.com/alire-project/alire/pull/1322)

@@ -9,7 +9,6 @@ with Alire.Install;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.OS_Lib;
-with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
 with Alire.Shared;
@@ -231,109 +230,14 @@ package body Alire.Roots is
    -------------
 
    procedure Install
-     (This       : in out Root;
-      Prefix     : Absolute_Path;
-      Build      : Boolean := True;
-      Export_Env : Boolean := True)
+     (This           : in out Root;
+      Prefix         : Absolute_Path;
+      Build          : Boolean := True;
+      Export_Env     : Boolean := True;
+      Print_Solution : Boolean := True)
    is
       use AAA.Strings;
       use Directories.Operators;
-
-      type Actions is (Doinstall, -- no conflict
-                       Reinstall, -- overwrite
-                       Skip       -- skip install
-                      );
-
-      ---------------------
-      -- Check_Conflicts --
-      ---------------------
-
-      procedure Check_Conflicts (Rel    : Releases.Release;
-                                 Action : out Actions)
-      is
-      begin
-         Action := Doinstall; -- unless we find some problem
-
-         --  Crates declaring executables can only be installed once
-
-         if not Rel.Executables (This.Environment).Is_Empty then
-            declare
-               Installed : constant Alire.Install.Installed_Milestones :=
-                             Alire.Install.Find_Installed
-                               (Prefix, Rel.Name);
-            begin
-
-               --  No problem if the version installed is the same one
-
-               if Installed.Contains (Rel.Milestone) then
-                  Action := (if Force then Reinstall else Skip);
-                  Trace.Debug ("Already installed: " & Rel.Milestone.TTY_Image
-                               & "; action: " & Action'Image);
-                  return;
-
-               elsif not Installed.Is_Empty then
-
-                  --  A different version exists, here we fail unless forced
-
-                  Recoverable_Error
-                    (Errors.New_Wrapper
-                       ("Release " & Rel.Milestone.TTY_Image & " conflicts "
-                        & "with already installed "
-                        & Alire.Install.Find_Installed
-                          (Prefix, Rel.Name).First_Element.TTY_Image)
-                     .Wrap ("Releases installing executables can be "
-                       & "installed only once")
-                     .Wrap ("Forcing this install will overwrite the "
-                       & "release already installed")
-                     .Get);
-
-                  Action := Reinstall;
-
-                  --  If forced to continue, we mark as uninstalled the
-                  --  currently installed version. We are not doing cleanup
-                  --  (yet?) so anything not overwritten will remain.
-
-                  Alire.Install.Set_Not_Installed (Prefix, Rel.Name);
-               end if;
-            end;
-         else
-
-            --  This is a library, several versions are OK but we can skip one
-            --  already available.
-
-            if Alire.Install.Find_Installed (Prefix).Contains (Rel.Milestone)
-            then
-               Action := (if Force then Reinstall else Skip);
-               Trace.Debug ("Already installed: " & Rel.Milestone.TTY_Image
-                            & "; action: " & Action'Image);
-
-            elsif Platforms.Current.Operating_System in Platforms.Windows
-              and then
-              not Alire.Install.Find_Installed (Prefix, Rel.Name).Is_Empty
-            then
-
-               --  Several versions of the same library on Windows are a no-no.
-               --  Note that forcing through this will likely
-
-               Recoverable_Error
-                 (Errors.New_Wrapper
-                    ("Release " & Rel.Milestone.TTY_Image & " conflicts "
-                     & "with already installed "
-                     & Alire.Install.Find_Installed
-                       (Prefix, Rel.Name).First_Element.TTY_Image)
-                  .Wrap ("Windows does not support installing multiple "
-                         & "versions")
-                  .Wrap ("Forcing will cause dependents on the other "
-                         & "versions to break")
-                  .Get);
-
-               Alire.Install.Set_Not_Installed (Prefix, Rel.Name);
-
-            end if;
-
-         end if;
-
-      end Check_Conflicts;
 
       -------------------
       -- Install_Inner --
@@ -356,13 +260,14 @@ package body Alire.Roots is
 
          declare
             use all type Origins.Kinds;
-            Rel : constant Releases.Release := State.Release;
+            Rel    : constant Releases.Release := State.Release;
+            Action : constant Alire.Install.Actions :=
+                       Alire.Install.Check_Conflicts (Prefix, Rel);
          begin
 
-            --  Binary crates may not include a GPR file, that we
-            --  would need to install its artifacts. This may be
-            --  common for compiler releases, so no need to be
-            --  exceedingly alarmist about it.
+            --  Binary crates may not include a GPR file, that we would need
+            --  to install its artifacts. This may be common for compiler
+            --  releases, so no need to be exceedingly alarmist about it.
 
             if Rel.Project_Files (This.Environment,
                                   With_Path => False).Is_Empty
@@ -400,28 +305,34 @@ package body Alire.Roots is
                                                With_Path => True)
             loop
                declare
+                  use all type Alire.Install.Actions;
                   Gpr_Path : constant Any_Path :=
                                This.Release_Base (Rel.Name) / Gpr_File;
-                  Action   : Actions := Doinstall;
                   TTY_Target : constant String
                     := Rel.Milestone.TTY_Image & "/" & TTY.URL (Gpr_File);
                begin
-                  Check_Conflicts (Rel, Action);
-                  --  Libraries with same version already installed,
-                  --  binaries already installed.
 
                   case Action is
-                     when Doinstall =>
+                     when New_Install =>
                         Put_Info ("Installing " & TTY_Target & "...");
                      when Reinstall =>
                         Put_Warning ("Reinstalling " & TTY_Target & "...");
+                     when Replace =>
+                        Put_Warning ("Replacing "
+                                     & Alire.Install.Find_Installed
+                                       (Prefix, Rel.Name)
+                                       .First_Element.TTY_Image
+                                     & " with " & TTY_Target & "...");
+                        --  When replacing, any other version must be marked as
+                        --  uninstalled.
+                        Alire.Install.Set_Not_Installed (Prefix, Rel.Name);
                      when Skip =>
                         Put_Info ("Skipping already installed "
                                   & TTY_Target & "...");
                   end case;
 
                   case Action is
-                     when Doinstall | Reinstall =>
+                     when New_Install | Reinstall | Replace =>
                         Spawn.Gprinstall
                           (Release      => Rel,
                            Project_File => Ada.Directories
@@ -429,7 +340,8 @@ package body Alire.Roots is
                            Prefix       => Prefix,
                            Recursive    => False,
                            Quiet        => True,
-                           Force        => (Force or Action = Reinstall));
+                           Force        => (Force or
+                                              Action in Reinstall | Replace));
 
                         --  Say something if after installing a crate it
                         --  leaves no trace in the prefix. This is the
@@ -457,11 +369,15 @@ package body Alire.Roots is
       --  Show some preliminary info
 
       Put_Info ("Starting installation of "
-                & This.Release.Element.Milestone.TTY_Image & " with "
-                & (if This.Solution.All_Dependencies.Is_Empty
-                  then "no dependencies."
-                  else "solution:"));
-      if not This.Solution.All_Dependencies.Is_Empty then
+                & This.Release.Element.Milestone.TTY_Image
+                & (if Print_Solution
+                  then " with "
+                       & (if This.Solution.All_Dependencies.Is_Empty
+                          then "no dependencies."
+                          else "solution:")
+                  else "..."));
+      if Print_Solution and then not This.Solution.All_Dependencies.Is_Empty
+      then
          This.Solution.Print (Root     => This.Release.Element,
                               Env      => This.Environment,
                               Detailed => False,
@@ -487,10 +403,10 @@ package body Alire.Roots is
       --  relevance to installation.
 
       --  We need to go over all projects in the solution because gprinstall
-      --  only installs binaries generated by the root project, even
-      --  when told to install recursively. So, instead we gprinstall
-      --  non-recursively each individual project in the solution.
-      --  Config projects, being abstract, need no installation.
+      --  only installs binaries generated by the root project, even when told
+      --  to install recursively. So, instead we gprinstall non-recursively
+      --  each individual project in the solution. Config projects, being
+      --  abstract, need no installation.
 
       This.Traverse (Doing => Install_Inner'Access);
    end Install;
@@ -665,7 +581,7 @@ package body Alire.Roots is
       --  And generate its working files, if they do not exist
 
       declare
-         Working_Dir : Guard (Enter (This.Base_Folder))
+         Working_Dir : Guard (Enter (Parent_Folder / This.Base_Folder))
            with Unreferenced;
          Root        : Alire.Roots.Root :=
                          Alire.Roots.New_Root
@@ -684,6 +600,12 @@ package body Alire.Roots is
            (Solution => (if This.Dependencies (Env).Is_Empty
                          then Alire.Solutions.Empty_Valid_Solution
                          else Alire.Solutions.Empty_Invalid_Solution));
+
+         if Up_To = Update then
+            Root.Update (Allowed  => Allow_All_Crates,
+                         Silent   => False,
+                         Interact => False);
+         end if;
 
          return Root;
       end;

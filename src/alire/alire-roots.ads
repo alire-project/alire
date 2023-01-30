@@ -27,8 +27,7 @@ package Alire.Roots is
    --  post-download steps to take. Each level includes previous ones.
    type Creation_Levels is
      (Deploy, -- Do nothing besides fetching the root release
-      Solve,  -- Automatically compute a complete or best-effort solution
-      Update  -- Fetch dependencies for the solution
+      Update  -- Solve and fetch dependencies for the solution
      );
 
    function Create_For_Release (This          : Releases.Release;
@@ -242,10 +241,11 @@ package Alire.Roots is
    --  increasing priority from: defaults -> manifests -> explicit set via API.
 
    procedure Install
-     (This       : in out Root;
-      Prefix     : Absolute_Path;
-      Build      : Boolean := True;
-      Export_Env : Boolean := True);
+     (This           : in out Root;
+      Prefix         : Absolute_Path;
+      Build          : Boolean := True;
+      Export_Env     : Boolean := True;
+      Print_Solution : Boolean := True);
    --  Call gprinstall on the releases in solution using --prefix=Prefix
 
    function Configuration (This : in out Root)

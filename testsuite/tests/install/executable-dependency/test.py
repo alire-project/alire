@@ -30,7 +30,7 @@ ext = (".exe" if on_windows() else "")
 
 # Check actual executables in place
 os.chdir(os.path.join("..", "install", "bin"))  # simplifies paths in check
-assert_contents(".", 
+assert_contents(".",
                 [f"./dep{ext}",
                  f"./xxx{ext}"])
 
@@ -44,7 +44,8 @@ replace_in_file(os.path.join("xxx", "dep", alr_manifest()),
 init_local_crate(name="yyy")
 alr_with("dep", path="../xxx/dep")
 p = run_alr("install", PREFIX_ARG, complain_on_error=False)
-assert_match(".*Release dep=0.2.0 conflicts with already installed dep=0.1.0-dev.*",
+assert_match(".*Release dep=0.2.0 has another version already installed.*"
+             "dep=0.1.0-dev.*",
              p.out)
 
 print("SUCCESS")

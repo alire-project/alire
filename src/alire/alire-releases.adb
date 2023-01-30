@@ -641,7 +641,8 @@ package body Alire.Releases is
    ----------------
 
    function Executables (R : Release;
-                         P : Alire.Properties.Vector)
+                         P : Alire.Properties.Vector :=
+                           Platforms.Current.Properties)
                          return AAA.Strings.Vector
    is
       Exes : constant AAA.Strings.Vector :=
