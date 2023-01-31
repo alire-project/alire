@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Import reusable bits
+pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) > /dev/null
+    . functions.sh
+popd > /dev/null
+
+export ALIRE_OS=$(get_OS)
+
 gprclean -q -r -Palr_env
 
 {

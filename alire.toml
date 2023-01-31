@@ -37,7 +37,11 @@ CLIC_LIBRARY_TYPE="static"
 
 # Building alr requires the explicit setting of this variable
 [gpr-set-externals."case(os)"]
-macos   = { OS = "macOS" }
+freebsd = { ALIRE_OS = "freebsd" }
+linux   = { ALIRE_OS = "linux" }
+macos   = { ALIRE_OS = "macos" }
+windows = { ALIRE_OS = "windows" }
+"..."   = { ALIRE_OS = "unknown" } # Will cause the build to fail
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]

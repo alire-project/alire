@@ -8,13 +8,13 @@ set -o nounset
 
 export PATH+=:${PWD}/bin
 
-# For Darwin, have to define OS=macOS for alr_env.gpr
-# Windows defines it anyway
-# Linux (undefined) selects the default
-
-[ `uname -s` == "Darwin" ] && export OS=macOS
+# Import reusable bits
+pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    . ../dev/functions.sh
+popd
 
 # Build alr
+export ALIRE_OS=$(get_OS) 
 gprbuild -j0 -p -P alr_env
 
 # Disable distro detection if supported
