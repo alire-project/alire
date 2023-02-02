@@ -15,4 +15,7 @@ package Alire.Platforms.Folders is
    --  On Linux/macOS it is ${XDG_CACHE_HOME:-$HOME/.cache}/alire
    --  On Windows it is $Homedrive:$Homepath\.cache\alire
 
+   function Home return Absolute_Path;
+   --  $HOME (Linux/macOS) or $Homedrive:$Homepath (Windows)
+
 end Alire.Platforms.Folders;

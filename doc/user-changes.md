@@ -6,6 +6,51 @@ stay on top of `alr` new features.
 
 ## Release 1.3-dev
 
+### New subcommand `alr install
+
+PR [#1302](https://github.com/alire-project/alire/pull/1302)
+
+A new subcommand `alr install` allows the installation of binaries to a location
+intended to be added to the user's PATH. The default install location is
+`$HOME/.alire`, with binaries going into `$HOME/.alire/bin`.
+
+This is a experimental feature that will see improvements and tweaks in further
+PRs and as we gather feedback on its usage.
+
+At present, only binary releases can be installed (e.g., compilers, `gprbuild`,
+`gnatprove`, `gnatstudio`). There is no ability to uninstall releases either
+(but reinstallation can be forced).
+
+Only one version per executable can be installed, meaning that, for example,
+only one toolchain version can exist in an installation prefix. So, this
+feature is intended to make the user's preferred version of a crate generally
+available in the system for use outside of Alire, but not to replace e.g. the
+ability of Alire to use several compilers, or to reuse compiled libraries as
+dependencies in several workspaces.
+
+Examples:
+
+```
+$ alr install gnatprove
+ⓘ Installing gnatprove=12.1.1...
+ⓘ Installation complete.
+
+$ alr install
+Installation prefix found at /home/jano/.alire
+Contents:
+   gnatprove=12.1.1
+
+$ PATH+=:$HOME/.alire/bin gnatprove --version
+Usage: gnatprove -Pproj [switches] [-cargs switches]
+...
+
+$ alr install gnatprove^11
+error: Requested release gnatprove=11.2.3 has another version already
+installed: gnatprove=12.1.1. (This error can be overridden with --force.)
+
+$ alr --force install gnatprove^11  # Downgrade installation
+```
+
 ### Find dependents of a release with `alr show --dependents
 
 PR [#1170](https://github.com/alire-project/alire/pull/1170)

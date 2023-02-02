@@ -670,6 +670,7 @@ package body Alire.Releases is
                            return AAA.Strings.Vector
    is
       use AAA.Strings;
+      use all type Origins.Kinds;
 
       With_Paths : AAA.Strings.Vector :=
         Props_To_Strings (R.All_Properties (P), Project_File);
@@ -677,10 +678,10 @@ package body Alire.Releases is
    begin
       if With_Paths.Is_Empty
         and then
-         R.Origin.Kind not in Origins.External | Origins.System
+         R.Origin.Kind not in Binary_Archive | External | System
       then
          --  Default project file if no one is specified by the crate. Only if
-         --  the create is not external nor system.
+         --  the create is not binary, external nor system.
          With_Paths.Append (String'((+R.Name) & ".gpr"));
       end if;
 

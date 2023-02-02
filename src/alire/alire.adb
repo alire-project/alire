@@ -47,6 +47,16 @@ package body Alire is
       Put_Line (Standard_Error, "stderr: " & S);
    end Err_Log;
 
+   ---------
+   -- Log --
+   ---------
+
+   function Log (Text : String; Level : Trace.Levels := Info) return String is
+   begin
+      Trace.Log (Text, Level);
+      return Text;
+   end Log;
+
    -------------------
    -- Log_Exception --
    -------------------

@@ -283,6 +283,9 @@ package Alire with Preelaborate is
    --  the opposite of Put_Success when it makes sense to continue, albeit
    --  briefly, without emitting a final error with Raise_Checked_Error.
 
+   function Log (Text : String; Level : Trace.Levels := Info) return String;
+   --  A convenience to be able to log inside declarative blocks. Returns Text.
+
    ---------------
    -- Constants --
    ---------------
