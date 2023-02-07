@@ -513,13 +513,13 @@ PR [#611](https://github.com/alire-project/alire/pull/611).
 
 The code editor launched by `alr edit` can now be configured instead of using
 the hard-coded GNATstudio. Use
-`alr config --set --global editor.cmd "<BINARY> <ARGS>"`
+`alr config --set --global editor.cmd '<BINARY> <ARGS>'`
 for custom editor and command line arguments. The token ${GPR_FILE} is
 replaced by a path to the project file to open.
 
 For instance:
 ```shell
-$ alr config --set --global editor.cmd "emacs ${GPR_FILE}"
+$ alr config --set --global editor.cmd 'emacs ${GPR_FILE}'
 ```
 
 The default editor is still GNATstudio.
