@@ -10,13 +10,13 @@ stay on top of `alr` new features.
 
 PR [#1322](https://github.com/alire-project/alire/pull/1322)
 
-`alr install` accepts a new `--this` switch that performs the installation of a
-local crate. For example:
+`alr install` without arguments performs the installation of the current crate.
+With `--info`, it shows the contents of an installation prefix. For example:
 
 ```
 $ alr -n init --bin mycrate && cd mycrate
-$ alr install --this
 $ alr install
+$ alr install --info
 Installation prefix found at /home/user/.alire
 Contents:
    mycrate=0.1.0-dev
@@ -26,7 +26,7 @@ Or, to install the hangman game:
 
 ```
 $ alr get hangman && cd hangman*
-$ alr install --this
+$ alr install
 ```
 
 ### New subcommand `alr install`

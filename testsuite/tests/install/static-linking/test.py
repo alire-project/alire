@@ -18,7 +18,7 @@ os.environ["LIBRARY_TYPE"] = "static" # It's the default, but just in case
 init_local_crate()
 init_local_crate(name="dep", binary=False, enter=False)
 alr_with("dep", path="dep")
-run_alr("install", PREFIX_ARG, "--this")
+run_alr("install", PREFIX_ARG)
 assert_installed(PREFIX, ["xxx=0.1.0-dev"])
 
 print('SUCCESS')

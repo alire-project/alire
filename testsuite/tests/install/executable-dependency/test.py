@@ -20,7 +20,7 @@ os.environ["LIBRARY_TYPE"] = "static" # It's the default, but just in case
 init_local_crate()
 init_local_crate(name="dep", binary=True, enter=False)
 alr_with("dep", path="dep")
-run_alr("install", PREFIX_ARG, "--this")
+run_alr("install", PREFIX_ARG)
 
 # Check gprbuild manifests
 assert_installed(PREFIX, ["dep=0.1.0-dev",
@@ -43,7 +43,7 @@ replace_in_file(os.path.join("xxx", "dep", alr_manifest()),
                 "0.1.0-dev", "0.2.0")
 init_local_crate(name="yyy")
 alr_with("dep", path="../xxx/dep")
-p = run_alr("install", "--this", PREFIX_ARG, complain_on_error=False)
+p = run_alr("install", PREFIX_ARG, complain_on_error=False)
 assert_match(".*Release dep=0.2.0 conflicts with already installed dep=0.1.0-dev.*",
              p.out)
 

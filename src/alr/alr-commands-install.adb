@@ -9,19 +9,22 @@ package body Alr.Commands.Install is
 
    package Adirs renames Ada.Directories;
 
-   Switch_This : constant String := "--this";
-
    --------------
    -- Validate --
    --------------
 
-   procedure Validate (Cmd : in out Command) is
+   procedure Validate (Cmd : in out Command; Args : AAA.Strings.Vector) is
    begin
-      --  If --this given, we must be in workspace
-      if Cmd.This then
+      --  If nothing given, we must be in workspace
+      if not Cmd.Info and then Args.Is_Empty then
          Cmd.Requires_Valid_Session
-           (Error => "Cannot use " & CLIC.TTY.Terminal (Switch_This)
-            & " outside of a crate");
+           (Error => "Give a crate name to install or enter a local crate");
+      end if;
+
+      if Cmd.Info and then not Args.Is_Empty then
+         Reportaise_Wrong_Arguments
+           ("You cannot request information and "
+            & "install crates simultaenously");
       end if;
    end Validate;
 
@@ -41,23 +44,23 @@ package body Alr.Commands.Install is
 
       Timer : Stopwatch.Instance;
    begin
-      Cmd.Validate;
+      Cmd.Validate (Args);
 
-      if Args.Is_Empty and then not Cmd.This then
+      if Cmd.Info then
 
          --  Display info on default/given prefix.
 
          Alire.Install.Info (Prefix);
 
-      else
+      elsif Args.Is_Empty then
 
          --  Install local crate first if requested
 
-         if Cmd.This then
             Alire.Install.Check_Conflict (Prefix, Cmd.Root.Release);
             Cmd.Root.Install (Prefix     => Prefix,
                               Export_Env => True);
-         end if;
+
+      else
 
          --  Install every given dependency
 
@@ -127,9 +130,9 @@ package body Alr.Commands.Install is
                      & TTY.URL ("${CRATE_ROOT}/alire/prefix)") & ")");
 
       Define_Switch (Config,
-                     Cmd.This'Access,
-                     "", Switch_This,
-                     "Install current workspace");
+                     Cmd.Info'Access,
+                     "", "--info",
+                     "Show info about a installation prefix");
    end Setup_Switches;
 
 end Alr.Commands.Install;

@@ -21,15 +21,15 @@ else:
 if on_windows():
     os.makedirs(os.path.join(os.environ["USERPROFILE"], ".cache", "alire", "msys64"))
 
-p = run_alr("install", quiet=False)
+p = run_alr("install", "--info", quiet=False)
 assert_eq(f"There is no installation at prefix {os.path.join(os.getcwd(), '.alire')}\n", 
           p.out)
 
 # Install a local crate to check prefix creation and contents at expected place
 init_local_crate()
-run_alr("install", "--this")
+run_alr("install")
 os.chdir("..")
-p = run_alr("install", quiet=False)
+p = run_alr("install", "--info", quiet=False)
 assert_eq(f"Installation prefix found at {os.path.join(os.getcwd(), '.alire')}\n"
           "Contents:\n"
           "   xxx=0.1.0-dev\n", 

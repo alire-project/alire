@@ -88,7 +88,7 @@ def assert_installed(prefix : str, milestones : List[str]):
     Check that installed releases match those given in milestones
     """
 
-    p = run_alr("install", f"--prefix={prefix}", quiet=False)
+    p = run_alr("install", "--info", f"--prefix={prefix}", quiet=False)
 
     milestones.sort()
 

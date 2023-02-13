@@ -39,12 +39,12 @@ package Alr.Commands.Install is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[switches] [crate[versions]]...");
+   is ("[[--info] | [crate[versions]]...]");
 
 private
    type Command is new Commands.Command with record
       Target : aliased GNAT.Strings.String_Access; -- Crate[version] to install
       Prefix : aliased GNAT.Strings.String_Access; -- Prefix for gprinstall
-      This   : aliased Boolean := False; -- To install the current workspace
+      Info   : aliased Boolean := False; -- Show prefix info
    end record;
 end Alr.Commands.Install;
