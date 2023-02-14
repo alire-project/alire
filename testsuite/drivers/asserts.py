@@ -10,6 +10,7 @@ import difflib
 
 from drivers.alr import run_alr
 from drivers.helpers import contents, lines_of
+from typing import List
 
 def indent(text, prefix='  '):
     """
@@ -81,3 +82,17 @@ def match_solution(regex, escape=False, whole=False):
                  (regex if not escape else re.escape(regex)) +
                  wrap,
                  p.out)
+
+def assert_installed(prefix : str, milestones : List[str]):
+    """
+    Check that installed releases match those given in milestones
+    """
+
+    p = run_alr("install", "--info", f"--prefix={prefix}", quiet=False)
+
+    milestones.sort()
+
+    assert_eq(f"Installation prefix found at {prefix}\n"
+              "Contents:\n"
+              "   " + "\n   ".join(milestones) + "\n",
+              p.out)

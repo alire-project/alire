@@ -221,7 +221,9 @@ package Alire.Releases is
                            P         : Alire.Properties.Vector;
                            With_Path : Boolean)
                            return AAA.Strings.Vector;
-   --  with relative path on demand
+   --  With relative path on demand. Will always return at least the default
+   --  project file when nothing is declared in the manifest for regular
+   --  crates, but nothing for system/binary/external.
 
    function Deployment_Folder (R : Release) return Folder_String;
    --  The folder under which the release origin will be deployed

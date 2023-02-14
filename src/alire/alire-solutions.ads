@@ -344,10 +344,13 @@ package Alire.Solutions is
                     Root     : Alire.Releases.Release;
                     Env      : Properties.Vector;
                     Detailed : Boolean;
-                    Level    : Trace.Levels);
+                    Level    : Trace.Levels;
+                    Prefix   : String := "";
+                    Graph    : Boolean := True);
    --  Prints releases, and direct and transitive dependencies. Root is the
    --  crate not in solution that introduces the direct dependencies. When
-   --  Detailed, extra information about origins is shown.
+   --  Detailed, extra information about origins is shown. When Prefix, prepend
+   --  to each line. When Graph, print a textual dependency graph at the end.
 
    procedure Print_Graph (This     : Solution;
                           Root     : Alire.Releases.Release;

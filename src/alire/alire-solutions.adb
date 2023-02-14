@@ -697,14 +697,16 @@ package body Alire.Solutions is
                     Root     : Alire.Releases.Release;
                     Env      : Properties.Vector;
                     Detailed : Boolean;
-                    Level    : Trace.Levels) is
+                    Level    : Trace.Levels;
+                    Prefix   : String := "";
+                    Graph    : Boolean := True) is
    begin
 
       --  Outta here if nothing to print
 
       if not This.Solved then
-         Trace.Log ("Dependencies (solution):", Level);
-         Trace.Log ("   No solving attempted", Level);
+         Trace.Log (Prefix & "Dependencies (solution):", Level);
+         Trace.Log (Prefix & "   No solving attempted", Level);
          return;
       elsif This.Dependencies.Is_Empty then
          return;
@@ -713,12 +715,12 @@ package body Alire.Solutions is
       --  Print all releases first, followed by the rest of dependencies
 
       if not This.Releases.Is_Empty then
-         Trace.Log ("Dependencies (solution):", Level);
+         Trace.Log (Prefix & "Dependencies (solution):", Level);
 
          for Dep of This.Dependencies loop
             if Dep.Has_Release then
                Trace.Log
-                 ("   "
+                 (Prefix & "   "
                   & Utils.TTY.Name (Dep.Crate) & "="
                   & TTY.Version (Dep.Release.Version.Image)
                   & (if Dep.Crate /= Dep.Release.Name -- provided by
@@ -756,12 +758,12 @@ package body Alire.Solutions is
       --  although they're properly resolved.
 
       if (for some Dep of This.Dependencies => not Dep.Has_Release) then
-         Trace.Log ("Dependencies (external):", Level);
+         Trace.Log (Prefix & "Dependencies (external):", Level);
          for Dep of This.Dependencies loop
             if not This.State (Dep.Crate).Has_Release
             then
                Trace.Log
-                 ("   "
+                 (Prefix & "   "
                   & Dep.TTY_Image
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                     then TTY.Emph (" (pinned)")
@@ -788,7 +790,8 @@ package body Alire.Solutions is
                       (Name => Dep.Crate,
                        Env  => Env)
                   loop
-                     Trace.Log (TTY.Emph ("      Hint: ") & Hint, Level);
+                     Trace.Log (Prefix & TTY.Emph ("      Hint: ") & Hint,
+                                Level);
                   end loop;
                end if;
             end if;
@@ -798,16 +801,16 @@ package body Alire.Solutions is
       --  Show forbidden, if any
 
       if not This.Forbidden (Env).Is_Empty then
-         Trace.Log ("Dependencies (forbidden):", Level);
+         Trace.Log (Prefix & "Dependencies (forbidden):", Level);
          for Dep of This.Forbidden (Env) loop
-            Trace.Log ("   " & Dep.TTY_Image, Level);
+            Trace.Log (Prefix & "   " & Dep.TTY_Image, Level);
          end loop;
       end if;
 
-      --  Textual and graphical dependency graph
+      --  Textual graph
 
-      if not This.Dependencies.Is_Empty then
-         Trace.Log ("Dependencies (graph):", Level);
+      if Graph and then not This.Dependencies.Is_Empty then
+         Trace.Log (Prefix & "Dependencies (graph):", Level);
          declare
             With_Root : constant Solution :=
                           This.Including (Root, Env, Add_Dependency => True);
@@ -815,7 +818,7 @@ package body Alire.Solutions is
                       Alire.Dependencies.Graphs
                         .From_Solution (With_Root, Env);
          begin
-            Graph.Print (With_Root, Prefix => "   ");
+            Graph.Print (With_Root, Prefix => Prefix & "   ");
          end;
       end if;
    end Print;

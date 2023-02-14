@@ -279,8 +279,9 @@ package body Alr.Commands is
    -- Requires_Valid_Session --
    ----------------------------
 
-   procedure Requires_Valid_Session (Cmd  : in out Command'Class;
-                                     Sync : Boolean := True) is
+   procedure Requires_Valid_Session (Cmd   : in out Command'Class;
+                                     Sync  : Boolean := True;
+                                     Error : String  := "") is
       use Alire;
 
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
@@ -315,8 +316,13 @@ package body Alr.Commands is
 
       if not Unchecked.Is_Valid then
          Raise_Checked_Error
-           (Alire.Errors.Wrap
-              ("Cannot continue with invalid session", Unchecked.Message));
+           (Alire.Errors.New_Wrapper
+            .Wrap
+              (if Error /= ""
+               then Error
+               else "Cannot continue with invalid session")
+            .Wrap (Unchecked.Message)
+            .Get);
       end if;
 
       Unchecked.Value.Check_Stored;

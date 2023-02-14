@@ -216,15 +216,28 @@ package Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Export_Build_Env : Boolean;
+                   Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True)
                    return Boolean;
    --  Recursively build all dependencies that declare executables, and finally
    --  the root release. Also executes all pre-build/post-build actions for
-   --  all releases in the solution (even those not built). Returns True on
-   --  successful build. By default, profiles stored in the persistent crate
-   --  configuration are used (i.e. last explicit build); otherwise the ones
-   --  given in This.Configuration are used. These come in order of increasing
-   --  priority from: defaults -> manifests -> explicit set via API.
+   --  all releases in the solution (even those not built). Returns True
+   --  on successful build. When Build_All_Deps, all dependencies are built
+   --  explicitly; otherwise only those declaring executables are built.
+   --  This is useful when we are going to gprinstall dependencies
+   --  containing undeclared executables, which otherwise wouldn't be built.
+   --  Unfortunately, it's not mandatory to declare the default executable.
+   --  Saved_Profiles determines whether profiles stored in the persistent
+   --  crate configuration are used (i.e. last explicit build); otherwise
+   --  the ones given in This.Configuration are used. These come in order of
+   --  increasing priority from: defaults -> manifests -> explicit set via API.
+
+   procedure Install
+     (This       : in out Root;
+      Prefix     : Absolute_Path;
+      Build      : Boolean := True;
+      Export_Env : Boolean := True);
+   --  Call gprinstall on the releases in solution using --prefix=Prefix
 
    function Configuration (This : in out Root)
                            return Crate_Configuration.Global_Config;

@@ -5,9 +5,11 @@ with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
 with Alire.Errors;
+with Alire.Install;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.OS_Lib;
+with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Roots.Optional;
 with Alire.Shared;
@@ -36,6 +38,7 @@ package body Alire.Roots is
    function Build (This             : in out Root;
                    Cmd_Args         : AAA.Strings.Vector;
                    Export_Build_Env : Boolean;
+                   Build_All_Deps   : Boolean := False;
                    Saved_Profiles   : Boolean := True)
                    return Boolean
    is
@@ -98,6 +101,7 @@ package body Alire.Roots is
          -------------------
 
          procedure Call_Gprbuild (Release : Releases.Release) is
+            use AAA.Strings;
             use Directories.Operators;
             Count : constant Natural :=
                       Natural
@@ -110,16 +114,17 @@ package body Alire.Roots is
             if not Is_Root and then not Release.Auto_GPR_With then
 
                Put_Info (TTY.Bold ("Not") & " pre-building "
-                         & Utils.TTY.Name (Release.Name)
+                         & Release.Milestone.TTY_Image
                          & " (auto with disabled)",
                          Trace.Detail);
 
             elsif not Is_Root and then
               Release.Executables (This.Environment).Is_Empty
+              and then not Build_All_Deps
             then
 
                Put_Info (TTY.Bold ("Not") & " pre-building "
-                         & Utils.TTY.Name (Release.Name)
+                         & Release.Milestone.TTY_Image
                          & " (no executables declared)",
                          Trace.Detail);
 
@@ -130,7 +135,7 @@ package body Alire.Roots is
                  (This.Environment, With_Path => True)
                loop
                   Put_Info ("Building "
-                            & Utils.TTY.Name (Release.Name) & "/"
+                            & Release.Milestone.TTY_Image & "/"
                             & TTY.URL (Gpr_File)
                             & (if Count > 1
                               then " (" & AAA.Strings.Trim (Current'Image)
@@ -220,6 +225,275 @@ package body Alire.Roots is
          Context.Load (This);
       end return;
    end Build_Context;
+
+   -------------
+   -- Install --
+   -------------
+
+   procedure Install
+     (This       : in out Root;
+      Prefix     : Absolute_Path;
+      Build      : Boolean := True;
+      Export_Env : Boolean := True)
+   is
+      use AAA.Strings;
+      use Directories.Operators;
+
+      type Actions is (Doinstall, -- no conflict
+                       Reinstall, -- overwrite
+                       Skip       -- skip install
+                      );
+
+      ---------------------
+      -- Check_Conflicts --
+      ---------------------
+
+      procedure Check_Conflicts (Rel    : Releases.Release;
+                                 Action : out Actions)
+      is
+      begin
+         Action := Doinstall; -- unless we find some problem
+
+         --  Crates declaring executables can only be installed once
+
+         if not Rel.Executables (This.Environment).Is_Empty then
+            declare
+               Installed : constant Alire.Install.Installed_Milestones :=
+                             Alire.Install.Find_Installed
+                               (Prefix, Rel.Name);
+            begin
+
+               --  No problem if the version installed is the same one
+
+               if Installed.Contains (Rel.Milestone) then
+                  Action := (if Force then Reinstall else Skip);
+                  Trace.Debug ("Already installed: " & Rel.Milestone.TTY_Image
+                               & "; action: " & Action'Image);
+                  return;
+
+               elsif not Installed.Is_Empty then
+
+                  --  A different version exists, here we fail unless forced
+
+                  Recoverable_Error
+                    (Errors.New_Wrapper
+                       ("Release " & Rel.Milestone.TTY_Image & " conflicts "
+                        & "with already installed "
+                        & Alire.Install.Find_Installed
+                          (Prefix, Rel.Name).First_Element.TTY_Image)
+                     .Wrap ("Releases installing executables can be "
+                       & "installed only once")
+                     .Wrap ("Forcing this install will overwrite the "
+                       & "release already installed")
+                     .Get);
+
+                  Action := Reinstall;
+
+                  --  If forced to continue, we mark as uninstalled the
+                  --  currently installed version. We are not doing cleanup
+                  --  (yet?) so anything not overwritten will remain.
+
+                  Alire.Install.Set_Not_Installed (Prefix, Rel.Name);
+               end if;
+            end;
+         else
+
+            --  This is a library, several versions are OK but we can skip one
+            --  already available.
+
+            if Alire.Install.Find_Installed (Prefix).Contains (Rel.Milestone)
+            then
+               Action := (if Force then Reinstall else Skip);
+               Trace.Debug ("Already installed: " & Rel.Milestone.TTY_Image
+                            & "; action: " & Action'Image);
+
+            elsif Platforms.Current.Operating_System in Platforms.Windows
+              and then
+              not Alire.Install.Find_Installed (Prefix, Rel.Name).Is_Empty
+            then
+
+               --  Several versions of the same library on Windows are a no-no.
+               --  Note that forcing through this will likely
+
+               Recoverable_Error
+                 (Errors.New_Wrapper
+                    ("Release " & Rel.Milestone.TTY_Image & " conflicts "
+                     & "with already installed "
+                     & Alire.Install.Find_Installed
+                       (Prefix, Rel.Name).First_Element.TTY_Image)
+                  .Wrap ("Windows does not support installing multiple "
+                         & "versions")
+                  .Wrap ("Forcing will cause dependents on the other "
+                         & "versions to break")
+                  .Get);
+
+               Alire.Install.Set_Not_Installed (Prefix, Rel.Name);
+
+            end if;
+
+         end if;
+
+      end Check_Conflicts;
+
+      -------------------
+      -- Install_Inner --
+      -------------------
+
+      procedure Install_Inner (This     : in out Root;
+                               Solution : Solutions.Solution;
+                               State    : Dependencies.States.State) is
+         pragma Unreferenced (Solution);
+      begin
+         if not State.Has_Release then
+            --  This may happen if there's a link to a raw project, or it's a
+            --  missing dependency that somehow didn't make the build fail.
+            Put_Warning ("Skipping " & State.As_Dependency.TTY_Image
+                         & " without release in solution");
+            return;
+         end if;
+
+         --  Safe to get the release at this point
+
+         declare
+            use all type Origins.Kinds;
+            Rel : constant Releases.Release := State.Release;
+         begin
+
+            --  Binary crates may not include a GPR file, that we
+            --  would need to install its artifacts. This may be
+            --  common for compiler releases, so no need to be
+            --  exceedingly alarmist about it.
+
+            if Rel.Project_Files (This.Environment,
+                                  With_Path => False).Is_Empty
+            then
+               declare
+                  Text : constant String :=
+                           "Skipping " & Rel.Milestone.TTY_Image
+                           & " without project files...";
+               begin
+                  if Rel.Provides (GNAT_Crate)
+                    --  A compiler, we don't install those as dependency as it
+                    --  doesn't make sense.
+                    or else
+                      Rel.Origin.Kind in External | System
+                      --  A system or external, nothing for us to install
+                  then
+                     Put_Info (TTY.Dim (Text));
+                  else
+                     --  A binary archive; Those are installed when given
+                     --  as the explicit crate to install, but skipped as a
+                     --  dependency. For binaries that want to be installed
+                     --  even as dependencies, they should pack a project
+                     --  file with Artifacts clauses.
+                     Put_Warning (Text);
+                  end if;
+               end;
+            end if;
+
+            --  Install project files. Gprinstall doesn't mind installing
+            --  several times to the same manifest, which is handy for the rare
+            --  crate with more than one project file. Also, for uninstallable
+            --  crates such as system ones, this skips the step entirely.
+
+            for Gpr_File of Rel.Project_Files (This.Environment,
+                                               With_Path => True)
+            loop
+               declare
+                  Gpr_Path : constant Any_Path :=
+                               This.Release_Base (Rel.Name) / Gpr_File;
+                  Action   : Actions := Doinstall;
+                  TTY_Target : constant String
+                    := Rel.Milestone.TTY_Image & "/" & TTY.URL (Gpr_File);
+               begin
+                  Check_Conflicts (Rel, Action);
+                  --  Libraries with same version already installed,
+                  --  binaries already installed.
+
+                  case Action is
+                     when Doinstall =>
+                        Put_Info ("Installing " & TTY_Target & "...");
+                     when Reinstall =>
+                        Put_Warning ("Reinstalling " & TTY_Target & "...");
+                     when Skip =>
+                        Put_Info ("Skipping already installed "
+                                  & TTY_Target & "...");
+                  end case;
+
+                  case Action is
+                     when Doinstall | Reinstall =>
+                        Spawn.Gprinstall
+                          (Release      => Rel,
+                           Project_File => Ada.Directories
+                           .Full_Name (Gpr_Path),
+                           Prefix       => Prefix,
+                           Recursive    => False,
+                           Quiet        => True,
+                           Force        => (Force or Action = Reinstall));
+
+                        --  Say something if after installing a crate it
+                        --  leaves no trace in the prefix. This is the
+                        --  usual for statically linked libraries.
+
+                        if not Alire.Install
+                          .Find_Installed (Prefix, Rel.Name)
+                          .Contains (Rel.Milestone)
+                        then
+                           Trace.Detail ("Installation of "
+                                         & TTY_Target
+                                         & " had no effect");
+                        end if;
+
+                     when Skip =>
+                        null;
+                  end case;
+               end;
+            end loop;
+         end;
+      end Install_Inner;
+
+   begin
+
+      --  Show some preliminary info
+
+      Put_Info ("Starting installation of "
+                & This.Release.Element.Milestone.TTY_Image & " with "
+                & (if This.Solution.All_Dependencies.Is_Empty
+                  then "no dependencies."
+                  else "solution:"));
+      if not This.Solution.All_Dependencies.Is_Empty then
+         This.Solution.Print (Root     => This.Release.Element,
+                              Env      => This.Environment,
+                              Detailed => False,
+                              Level    => Info,
+                              Prefix   => "   ",
+                              Graph    => False);
+      end if;
+
+      --  Do a build to ensure same scenario seen by gprbuild and gprinstall
+
+      if Build then
+         Assert (This.Build (Cmd_Args         => AAA.Strings.Empty_Vector,
+                             Export_Build_Env => Export_Env,
+                             Build_All_Deps   => True),
+                 Or_Else => "Build failed, cannot perform installation");
+      end if;
+
+      if Export_Env then
+         This.Export_Build_Environment;
+      end if;
+
+      --  Traverse dependencies in proper order just in case this has some
+      --  relevance to installation.
+
+      --  We need to go over all projects in the solution because gprinstall
+      --  only installs binaries generated by the root project, even
+      --  when told to install recursively. So, instead we gprinstall
+      --  non-recursively each individual project in the solution.
+      --  Config projects, being abstract, need no installation.
+
+      This.Traverse (Doing => Install_Inner'Access);
+   end Install;
 
    ------------------
    -- Direct_Withs --
@@ -337,6 +611,11 @@ package body Alire.Roots is
    ----------------------------
 
    procedure Generate_Configuration (This : in out Root) is
+      Guard : Directories.Guard (Directories.Enter (Path (This)))
+        with Unreferenced;
+      --  At some point inside the configuration generation process the config
+      --  is loaded and Config.Edit.Filepath requires being inside the root,
+      --  which can't be directly used because of circularities.
    begin
       This.Load_Configuration;
       This.Configuration.Generate_Config_Files (This);

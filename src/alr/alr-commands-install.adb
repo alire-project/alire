@@ -3,6 +3,8 @@ with Ada.Directories;
 with Alire.Dependencies.Containers;
 with Alire.Install;
 
+with Stopwatch;
+
 package body Alr.Commands.Install is
 
    package Adirs renames Ada.Directories;
@@ -11,8 +13,20 @@ package body Alr.Commands.Install is
    -- Validate --
    --------------
 
-   procedure Validate (Cmd : Command) is null;
-   --  Nothing to validate for now
+   procedure Validate (Cmd : in out Command; Args : AAA.Strings.Vector) is
+   begin
+      --  If nothing given, we must be in workspace
+      if not Cmd.Info and then Args.Is_Empty then
+         Cmd.Requires_Valid_Session
+           (Error => "Give a crate name to install or enter a local crate");
+      end if;
+
+      if Cmd.Info and then not Args.Is_Empty then
+         Reportaise_Wrong_Arguments
+           ("You cannot request information and "
+            & "install crates simultaenously");
+      end if;
+   end Validate;
 
    -------------
    -- Execute --
@@ -22,20 +36,29 @@ package body Alr.Commands.Install is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
-      Global_Prefix : constant Alire.Absolute_Path :=
-                        Adirs.Full_Name
-                          (if Cmd.Prefix.all /= ""
-                           then Cmd.Prefix.all
-                           else Alire.Install.Default_Prefix);
+      Prefix : constant Alire.Absolute_Path :=
+                 Adirs.Full_Name
+                   (if Cmd.Prefix.all /= ""
+                    then Cmd.Prefix.all
+                    else Alire.Install.Default_Prefix);
+
+      Timer : Stopwatch.Instance;
    begin
+      Cmd.Validate (Args);
 
-      Cmd.Validate;
-
-      if Args.Is_Empty then
+      if Cmd.Info then
 
          --  Display info on default/given prefix.
 
-         Alire.Install.Info (Global_Prefix);
+         Alire.Install.Info (Prefix);
+
+      elsif Args.Is_Empty then
+
+         --  Install local crate first if requested
+
+            Alire.Install.Check_Conflict (Prefix, Cmd.Root.Release);
+            Cmd.Root.Install (Prefix     => Prefix,
+                              Export_Env => True);
 
       else
 
@@ -48,8 +71,12 @@ package body Alr.Commands.Install is
                Deps.Append (Alire.Dependencies.From_String (Img));
             end loop;
 
-            Alire.Install.Add (Global_Prefix, Deps);
+            Alire.Install.Add (Prefix, Deps);
          end;
+
+         Alire.Put_Success ("Install to " & TTY.URL (Prefix)
+                            & " finished successfully in "
+                            & TTY.Bold (Timer.Image) & " seconds.");
 
       end if;
    end Execute;
@@ -58,7 +85,7 @@ package body Alr.Commands.Install is
    -- Long_Description --
    ----------------------
 
-   Binaries : constant String := "gnat, gnatprove, gprbuild, gnatstudio";
+   Binaries : constant String := "gnat, gnatprove, gprbuild";
 
    overriding
    function Long_Description (Cmd : Command)
@@ -101,6 +128,11 @@ package body Alr.Commands.Install is
                      "", "--prefix=",
                      "Override installation prefix (default is "
                      & TTY.URL ("${CRATE_ROOT}/alire/prefix)") & ")");
+
+      Define_Switch (Config,
+                     Cmd.Info'Access,
+                     "", "--info",
+                     "Show info about a installation prefix");
    end Setup_Switches;
 
 end Alr.Commands.Install;

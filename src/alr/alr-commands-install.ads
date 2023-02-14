@@ -14,11 +14,15 @@ package Alr.Commands.Install is
    function Switch_Parsing (This : Command)
                             return CLIC.Subcommand.Switch_Parsing_Kind
    is (CLIC.Subcommand.Parse_All);
-   --  For this command we want the args after -- to pass them to gprinstall
+   --  To keep things simple we don't forward switches to neither gprbuild nor
+   --  gprinstall, and any scenarios have to be set up via environment e.g.,
+   --  $ LIBRARY_TYPE=relocatable alr install <whatever>. We could improve on
+   --  this down the line.
 
    overriding
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector);
+   --  Will both build + gprinstall, to ensure both see the same environment
 
    overriding
    function Long_Description (Cmd : Command)
@@ -35,11 +39,12 @@ package Alr.Commands.Install is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[switches] [crate[versions]]...");
+   is ("[[--info] | [crate[versions]]...]");
 
 private
    type Command is new Commands.Command with record
       Target : aliased GNAT.Strings.String_Access; -- Crate[version] to install
       Prefix : aliased GNAT.Strings.String_Access; -- Prefix for gprinstall
+      Info   : aliased Boolean := False; -- Show prefix info
    end record;
 end Alr.Commands.Install;

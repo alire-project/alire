@@ -1,7 +1,8 @@
 limited with Alire.Dependencies.Containers;
 with Alire.Directories; use Alire.Directories.Operators;
-private with Alire.Milestones.Containers;
+with Alire.Milestones.Containers;
 with Alire.Platforms.Folders;
+with Alire.Releases;
 
 package Alire.Install is
 
@@ -15,8 +16,32 @@ package Alire.Install is
    --  Resolve the dependencies and install the resulting releases. If a
    --  crate is given twice it will raise.
 
+   procedure Check_Conflict (Prefix : Any_Path; Rel : Releases.Release);
+   --  Will cause a recoverable error if Rel is already installed, or another
+   --  release from the same crate is. This is regardless Rel containing
+   --  executables or not.
+
    procedure Info (Prefix : Any_Path);
    --  Display information about the given prefix
+
+   subtype Installed_Milestones is Milestones.Containers.Sets.Set;
+
+   function Find_Installed (Prefix : Any_Path)
+                            return Installed_Milestones;
+   --  Identify installed releases in the prefix
+
+   function Find_Installed (Prefix : Any_Path;
+                            Crate  : Crate_Name)
+                            return Installed_Milestones;
+   --  Return milestones for only the given crate
+
+   procedure Set_Installed (Prefix : Any_Path; Mil : Milestones.Milestone);
+   --  Stores an empty file in share/gpr/manifests/crate=version
+
+   procedure Set_Not_Installed (Prefix : Any_Path; Crate : Crate_Name);
+   --  Any and all versions will be marked as not installed. Intended for when
+   --  reinstalling a different executable crate version, as only one can be
+   --  installed.
 
 private
 
@@ -24,16 +49,5 @@ private
      := "share" / "gpr" / "manifests";
    --  This is used by gprinstall and we will reuse it for our "fake" binary
    --  installs.
-
-   subtype Installed_Milestones is Milestones.Containers.Maps.Map;
-
-   function Find_Installed (Prefix : Any_Path)
-                            return Installed_Milestones;
-   --  Identify installed releases in the prefix
-
-   procedure Set_Installed (Prefix : Any_Path; Mil : Milestones.Milestone);
-
-   procedure Set_Not_Installed (Prefix : Any_Path; Crate : Crate_Name);
-   --  Any and all versions will be marked as not installed
 
 end Alire.Install;
