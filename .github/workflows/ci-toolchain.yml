@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         os:
-          - macos-10.15
+          - macos-latest
           - ubuntu-latest
           - windows-latest
 
@@ -33,25 +33,10 @@ jobs:
 
     # Use a stock alr to make the latest toolchain available
 
-    - uses: alire-project/setup-alire@v2
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
       with:
-        toolchain: --disable-assistant
-        version: nightly
-
-    - name: Install latest toolchain
-      run: |
-        alr install gprbuild gnat_native --prefix=tools
-
-    - name: Add toolchain to path (!Windows)
-      if: matrix.os != 'windows-latest'
-      run: |
-        echo "$PWD/tools/bin" >> $GITHUB_PATH
-
-    - name: Add toolchain to path (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        $Target = Join-Path (Get-Location) "\tools\bin"
-        Add-Content $env:GITHUB_PATH $Target
+        crates: gnat_native gprbuild    
 
     - name: Build alr with default toolchain
       shell: bash

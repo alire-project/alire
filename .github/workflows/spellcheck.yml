@@ -15,6 +15,4 @@ jobs:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-review
           locale: "US"
-#          exclude: '*.lock'
-# It seems exclusion is not working: 
-# https://github.com/reviewdog/action-hadolint/issues/35
+          exclude: '*.lock'
