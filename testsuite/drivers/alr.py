@@ -38,7 +38,7 @@ def prepare_env(config_dir, env):
     # Disable any user's git configuration to ensure reproducible git behavior.
     # https://github.com/git/git/commit/4179b4897f2de28858acaebd6382c06c91532e98
     env["GIT_CONFIG_GLOBAL"] = "/dev/null"
-    env["GIT_CONFIG_SYSTEM"] = "/dev/null"
+    env["GIT_CONFIG_SYSTEM"] = "/dev/null"    
 
     config_dir = os.path.abspath(config_dir)
     mkdir(config_dir)
