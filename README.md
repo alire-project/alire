@@ -45,11 +45,11 @@ Follow these steps:
 
 The binary will be found at `bin/alr`. You can run `alr version` to see version and diagnostics information.
 
-Sourcing the `scripts/alr-completion.bash` file will provide bash tab autocompletion.
+Sourcing the `scripts/alr-completion.bash` file will provide Bash tab autocompletion.
 
 ## Building with `alr`
 
-If you already have a recent enough `alr` binary, you can alternative build
+If you already have a recent enough `alr` binary, you can alternatively build
 `alr` by simply running `alr build` at the root of the repository. This command
 will retrieve all necessary dependencies prior to launching the build and 
 configure the environment.
