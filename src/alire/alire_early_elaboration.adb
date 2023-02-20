@@ -160,6 +160,9 @@ package body Alire_Early_Elaboration is
    end TTY_Detection;
 
 begin
+   Simple_Logging.Stdout_Level := Simple_Logging.Info;
+   --  Display warnings and errors to stderr
+
    TTY_Detection;
    Early_Switch_Detection;
 end Alire_Early_Elaboration;

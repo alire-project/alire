@@ -269,7 +269,7 @@ package Alire with Preelaborate is
    --  Prepend Text with a blue "🛈", or "Note: " & if no color/tty.
 
    procedure Put_Warning (Text           : String;
-                          Level          : Trace.Levels := Info;
+                          Level          : Trace.Levels := Warning;
                           Disable_Config : String := "");
    --  Prepend Text with a yellow "⚠", or "Warning: " if no color/tty. If
    --  Disable_setting /= "", append a line informing about how to disable
