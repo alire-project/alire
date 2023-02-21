@@ -30,11 +30,6 @@ jobs:
       with:
         submodules: true
 
-    - uses: actions/cache@v2
-      with:
-        path: ./alire_prefix
-        key: ${{ runner.os }}-gnat-fsf
-
     - name: Install FSF toolchain
       uses: alire-project/alr-install
       with:

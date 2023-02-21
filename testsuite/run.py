@@ -20,6 +20,7 @@ from e3.testsuite.result import TestStatus
 from drivers.helpers import on_windows
 from drivers.python_script import PythonScriptDriver
 
+
 class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
     test_driver_map = {'python-script': PythonScriptDriver}
@@ -33,8 +34,10 @@ class Testsuite(e3.testsuite.Testsuite):
     def set_up(self):
         super().set_up()
         os.environ['ALR_PATH'] = self.main.args.alr_path
-        # Some alr commands spawn another `alr` with must be found in path
-        os.environ["PATH"] += (os.pathsep + os.path.dirname(self.main.args.alr_path))
+        # Some alr commands spawn another `alr` which must be found in path.
+        # This way we ensure the same alr being tested is used.
+        os.environ["PATH"] = \
+            f"{os.path.dirname(self.main.args.alr_path)}{os.pathsep}{os.environ['PATH']}"
         # Some tests rely on an initially empty GPR_PROJECT_PATH variable
         os.environ.pop('GPR_PROJECT_PATH', None)
 
