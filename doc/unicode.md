@@ -1,27 +1,52 @@
 # Unicode guidelines
 
-Unicode is the solution to work with character sets other than ASCII or, in the case of Ada, beyond Latin-1, which was the character set chosen for the `Character` type. There are a number of considerations for the use of Unicode in Ada and in Alire crates, detailed in this section.
+Unicode is the solution to work with character sets other than ASCII or, in the
+case of Ada, beyond Latin-1, which was the character set chosen for the
+`Character` type. There are a number of considerations for the use of Unicode
+in Ada and in Alire crates, detailed in this section.
 
 ## TL;DR
 
-Alire v2.0 and onwards expects sources to be UTF-8 (through the `-gnatW8` switch). Input/Output must be done using specialized crates (e.g. `vss`, `uxstrings`) or with `Wide_Wide_Text_IO` (for unencoded/UTF-32 strings) or with `Streams_IO/GNAT.IO` (for UTF-8-encoded strings). Avoid `Text_IO` unless you are sure of what you're doing (using Latin-1 strings). Some friction may happen with older sources not using UTF-8.
+Alire v2.0 and onwards expects sources to be UTF-8 (through the `-gnatW8`
+switch). Input/Output must be done using specialized crates (e.g. `vss`,
+`uxstrings`) or with `Wide_Wide_Text_IO` (for unencoded/UTF-32 strings) or with
+`Streams_IO/GNAT.IO` (for UTF-8-encoded strings). Avoid `Text_IO` unless you
+are sure of what you're doing (using Latin-1 strings). Some friction may happen
+with older sources not using UTF-8.
 
 Read on for the gory details.
 ## Alire assumptions and configuration
 
-By default, any crate initialized via `alr init` will have the `-gnatW8` switch in its build configuration, which presumes UTF-8 encoding of sources, and tweaks some internals of the compiler accordingly.
+By default, any crate initialized via `alr init` will have the `-gnatW8` switch
+in its build configuration, which presumes UTF-8 encoding of sources, and
+tweaks some internals of the compiler accordingly.
 
-This means that source files **must** use UTF-8 encoding when not using plain ASCII.
+This means that source files **must** use UTF-8 encoding when not using plain
+ASCII.
 
-Since GNAT compiles specifications and generic bodies in the context of the client project, once internalization is enabled in some parts of a build, it becomes necessary for all parts of the build to use the same `-gnatW8` setting. Otherwise, a file containing non-ASCII literals could be interpreted differently depending on the compilation context (as a standalone library or from a client of such a library).
+Since GNAT compiles specifications and generic bodies in the context of the
+client project, once internalization is enabled in some parts of a build, it
+becomes necessary for all parts of the build to use the same `-gnatW8` setting.
+Otherwise, a file containing non-ASCII literals could be interpreted
+differently depending on the compilation context (as a standalone library or
+from a client of such a library).
 
-Unfortunately, most old GNAT projects are likely not to have `-gnatW8` enabled (although an UTF-8 file with BOM marker will have the same effect). For crates that do not contain string literals outside of ASCII or engage on I/O of such strings, this should not make any difference. For those for which internationalization matters, however, there is no sensible way forward but to embrace Unicode, with UTF-8 being the standard encoding nowadays for files and terminals.
+Most old GNAT projects are likely not to have `-gnatW8` enabled (although an
+UTF-8 file with BOM marker will have the same effect). For crates that do not
+contain string literals outside of ASCII or engage on I/O of such strings, this
+should not make any difference. For those for which internationalization
+matters, however, there is no sensible way forward but to embrace Unicode, with
+UTF-8 being the standard encoding nowadays for files and terminals.
 
-This means that a certain amount of breakage might happen for 'legacy' libraries not yet adapted to `-gnatW8`. From the Alire project we are trying to get in front of this problem with early detection of such libraries in the Alire ecosystem, and universally using `-gnatW8` from version 2.0 on.
+This means that a certain amount of breakage might happen for 'legacy'
+libraries not yet adapted to `-gnatW8`. From the Alire project we are trying to
+get in front of this problem with early detection of such libraries in the
+Alire ecosystem, and universally using `-gnatW8` from version 2.0 on.
 
 ## Recommendations
 
-You can use a library designed to shield you from Unicode details, such as `vss` or `uxstrings`.
+You can use a library designed to shield you from Unicode details, such as
+`vss` or `uxstrings`.
 
 Otherwise, these recommendations should keep you safe:
 
@@ -40,7 +65,9 @@ Otherwise, these recommendations should keep you safe:
 1. You can use `GNAT.IO` or `Ada.Streams.Stream_IO` to output properly encoded strings, as they don't manipulate the bytes.
 1. You **cannot** use `Ada.Text_IO` to output UTF-8-encoded `String` variables, as Latin-1 encoding is expected.
 
-You can experiment with the `utf8test` crate at https://github.com/mosteo/utf8test to check how your environment behaves in regard to UTF-8 output.
+You can experiment with the `utf8test` crate at
+https://github.com/mosteo/utf8test to check how your environment behaves in
+regard to UTF-8 output.
 
 ## Ada and GNAT string encoding basics
 
@@ -52,9 +79,16 @@ Properly working with Unicode in Ada relies on these bits of info:
 - `Ada.Text_IO` expects Latin-1-encoded strings (superset of ASCII), incompatible with UTF-8.
 - `Ada.Wide_Wide_Text_IO` expects UTF-32 strings, that is, regular `Wide_Wide_Strings` in practice.
 
-It is common to use `String` to store byte sequences in different encodings. This is a source of problems when going out of ASCII, as depending on how these strings are populated, they may easily end being either Latin-1 or UTF-8 or something else.
+It is common to use `String` to store byte sequences in different encodings.
+This is a source of problems when going out of ASCII, as depending on how these
+strings are populated, they may easily end being either Latin-1 or UTF-8 or
+something else.
 
-UTF-8-encoded strings are more memory-efficient, but cannot be used to iterate over characters without help of support libraries. `Wide_Wide_Strings` retain the 1:1 index-to-character ratio, so they are efficient for such iterations. `Wide_Strings`, which normally hold UTF-16, are probably a middle-ground not useful in general anymore.
+UTF-8-encoded strings are more memory-efficient, but cannot be used to iterate
+over characters without help of support libraries. `Wide_Wide_Strings` retain
+the 1:1 index-to-character ratio, so they are efficient for such iterations.
+`Wide_Strings`, which normally hold UTF-16, are probably a middle-ground not
+useful in general anymore.
 
 ## Migrating 'old' code
 
@@ -68,13 +102,26 @@ UTF-8-encoded strings are more memory-efficient, but cannot be used to iterate o
 
 ## Common pitfalls
 
-A particularity of `-gnatW8` is that it may affect compilation units in other projects, for example when specifications or generic bodies are 'withed', as these are compiled also in the context of the client project. This may cause issues when not all projects use `-gnatW8`, even if projects in isolation work properly.
+A particularity of `-gnatW8` is that it may affect compilation units in other
+projects, for example when specifications or generic bodies are 'withed', as
+these are compiled also in the context of the client project. This may cause
+issues when not all projects use `-gnatW8`, even if projects in isolation work
+properly.
 
-Trouble may thus arise from inconsistencies between source file encoding and `-gnatW8` being in effect, or even simply by saving Latin-1 files as UTF-8 in order to enable `-gnatW8`:
+Trouble may thus arise from inconsistencies between source file encoding and
+`-gnatW8` being in effect, or even simply by saving Latin-1 files as UTF-8 in
+order to enable `-gnatW8`:
 
-- Latin-1 (or other non UTF-8) sources compiled with -gnatW8 will likely cause "illegal wide character" errors, as Latin-1 literals will be invalid UTF-8 sequences.
-- UTF-8 sources compiled without -gnatW8 will result in mangled output as the UTF-8 sequences are misinterpreted as Latin-1, where most bytes are a valid character code.
-- Latin-1 sources saved to UTF-8 and compiled with -gnatW8 may result in "literal out of range of type Standard.Character" errors when characters outside of Latin-1 are assigned to a regular `Character` instead of `Wide_Wide_Character`.
+- Latin-1 (or other non UTF-8) sources compiled with -gnatW8 will likely cause
+"illegal wide character" errors, as Latin-1 literals will be invalid UTF-8
+sequences.
+- UTF-8 sources compiled without -gnatW8 will result in mangled output as the
+UTF-8 sequences are misinterpreted as Latin-1, where most bytes are a valid
+character code.
+- Latin-1 sources saved to UTF-8 and compiled with -gnatW8 may result in
+"literal out of range of type Standard.Character" errors when characters
+outside of Latin-1 are assigned to a regular `Character` instead of
+`Wide_Wide_Character`.
     - Example: `X : String := "€";`
         - Will work without `-gnatW8`, resulting in a three-byte string.
         - Will err with `-gnatW8`, as '€' is out of `Character` range.
@@ -109,10 +156,6 @@ Euro : constant String := "€";
 --  Without -gnatW8 and a UTF-8-encoded file, this results in a 3-byte UTF-8 string.
 --  With -gnatW8 and a UTF-8-encoded file, this results in an error as '€' is outside of Character.
 ```
-
-## Unicode in identifiers
-
-By default, GNAT only allows Latin-1 identifiers. To enable full Unicode identifiers you can use `-gnatiw`. This is generally not recommended, as that may greatly difficult others to work with your code. Alire does not enable full Unicode in identifiers by default.
 
 ## References
 
