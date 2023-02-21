@@ -40,16 +40,17 @@ Follow these steps:
 
 1. Clone the repository: `git clone --recurse-submodules https://github.com/alire-project/alire.git`
 1. Enter the cloned repository folder.
-1. Export the environment variable `ALIRE_OS=<one of: freebsd, linux, macos, windows>`
-1. Build the executable: `gprbuild -j0 -p -P alr_env`
+1. Build the executable:
+   * if you have Bash on your system: `dev/build.sh`
+   * if you don't have Bash on your system: `ALIRE_OS=<one of: freebsd, linux, macos, windows> gprbuild -j0 -p -P alr_env`
 
 The binary will be found at `bin/alr`. You can run `alr version` to see version and diagnostics information.
 
-Sourcing the `scripts/alr-completion.bash` file will provide bash tab autocompletion.
+Sourcing the `scripts/alr-completion.bash` file will provide Bash tab autocompletion.
 
 ## Building with `alr`
 
-If you already have a recent enough `alr` binary, you can alternative build
+If you already have a recent enough `alr` binary, you can alternatively build
 `alr` by simply running `alr build` at the root of the repository. This command
 will retrieve all necessary dependencies prior to launching the build and 
 configure the environment.
