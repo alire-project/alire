@@ -640,6 +640,9 @@ static, i.e. they cannot depend on the context.
       - `Ada12`
       - `Ada2022`
       - `GNAT_Extensions`
+    - `Unicode_Support`
+      - `No_Support`
+      - `Full_Support`
 
    For example, to enable all run-time checks in the release profile:
    ```toml

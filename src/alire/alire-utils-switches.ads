@@ -54,7 +54,7 @@ is
                              GNAT_Extensions);
 
    type Unicode_Support_Kind is
-     (No_Support,  --  Default behavior of GNAT, no switches set
+     (No_Support,  --  Default behavior of GNAT, no switches set (Latin1)
       Full_Support --  -gnatW8, UTF-8 sources, Unicode literals & identifiers
      );
 
