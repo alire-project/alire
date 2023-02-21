@@ -203,19 +203,29 @@ package body Alire.Utils.Switches is
    -- Get_List --
    --------------
 
+   function Get_List (S : Unicode_Support_Switches) return Switch_List
+   is (if S.Custom
+       then S.List
+       else
+         (case S.Value is
+          when No_Support      => Empty_List,
+          when Full_Support    => Empty_List.Append (GNAT_UTF8_Encoding)));
+
+   --------------
+   -- Get_List --
+   --------------
+
    function Get_List (C : Switches_Configuration) return Switch_List is
    begin
       return Empty_List
-             --  Unconditional switches
-             .Append (GNAT_UTF8_Encoding) --
-
              .Append (Get_List (C.Optimization))
              .Append (Get_List (C.Debug_Info))
              .Append (Get_List (C.Runtime_Checks))
              .Append (Get_List (C.Compile_Checks))
              .Append (Get_List (C.Contracts))
              .Append (Get_List (C.Style_Checks))
-             .Append (Get_List (C.Ada_Version));
+             .Append (Get_List (C.Ada_Version))
+             .Append (Get_List (C.Unicode_Support));
    end Get_List;
 
 end Alire.Utils.Switches;

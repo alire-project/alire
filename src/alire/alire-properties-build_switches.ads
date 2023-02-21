@@ -24,7 +24,9 @@ package Alire.Properties.Build_Switches with Preelaborate is
          when Style_Checks =>
             Style_Checks : Style_Checks_Switches;
          when Ada_Version =>
-            Ada_Version : Ada_Version_Switches;
+            Ada_Version    : Ada_Version_Switches;
+         when Unicode_Support =>
+            Unicode_Support : Unicode_Support_Switches;
       end case;
    end record;
 

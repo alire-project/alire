@@ -30,7 +30,8 @@ is
                                 Compile_Checks,
                                 Runtime_Checks,
                                 Style_Checks,
-                                Ada_Version);
+                                Ada_Version,
+                                Unicode_Support);
 
    type Optimization_Kind is (Performance, Size, Debug);
 
@@ -51,6 +52,11 @@ is
 
                              Ada83, Ada95, Ada05, Ada12, Ada2022,
                              GNAT_Extensions);
+
+   type Unicode_Support_Kind is
+     (No_Support,  --  Default behavior of GNAT, no switches set
+      Full_Support --  -gnatW8, UTF-8 sources, Unicode literals & identifiers
+     );
 
    type Optimization_Switches (Custom : Boolean := False)
    is record
@@ -108,6 +114,14 @@ is
       end case;
    end record;
 
+   type Unicode_Support_Switches (Custom : Boolean := False)
+   is record
+      case Custom is
+         when True  => List : Switch_List;
+         when False => Value : Unicode_Support_Kind;
+      end case;
+   end record;
+
    function Get_List (S : Optimization_Switches) return Switch_List;
    function Get_List (S : Debug_Info_Switches) return Switch_List;
    function Get_List (S : Runtime_Checks_Switches) return Switch_List;
@@ -115,45 +129,50 @@ is
    function Get_List (S : Contracts_Switches) return Switch_List;
    function Get_List (S : Style_Checks_Switches) return Switch_List;
    function Get_List (S : Ada_Version_Switches) return Switch_List;
+   function Get_List (S : Unicode_Support_Switches) return Switch_List;
 
    type Switches_Configuration is record
-      Optimization   : Optimization_Switches;
-      Debug_Info     : Debug_Info_Switches;
-      Runtime_Checks : Runtime_Checks_Switches;
-      Compile_Checks : Compile_Checks_Switches;
-      Contracts      : Contracts_Switches;
-      Style_Checks   : Style_Checks_Switches;
-      Ada_Version    : Ada_Version_Switches;
+      Optimization    : Optimization_Switches;
+      Debug_Info      : Debug_Info_Switches;
+      Runtime_Checks  : Runtime_Checks_Switches;
+      Compile_Checks  : Compile_Checks_Switches;
+      Contracts       : Contracts_Switches;
+      Style_Checks    : Style_Checks_Switches;
+      Ada_Version     : Ada_Version_Switches;
+      Unicode_Support : Unicode_Support_Switches;
    end record;
 
    function Get_List (C : Switches_Configuration) return Switch_List;
 
    Default_Release_Switches : constant Switches_Configuration
-     := (Optimization   => (Custom => False, Value => Performance),
-         Debug_Info     => (Custom => False, Value => No),
-         Runtime_Checks => (Custom => False, Value => Default),
-         Compile_Checks => (Custom => False, Value => None),
-         Contracts      => (Custom => False, Value => No),
-         Style_Checks   => (Custom => False, Value => No),
-         Ada_Version    => (Custom => False, Value => Compiler_Default));
+     := (Optimization    => (Custom => False, Value => Performance),
+         Debug_Info      => (Custom => False, Value => No),
+         Runtime_Checks  => (Custom => False, Value => Default),
+         Compile_Checks  => (Custom => False, Value => None),
+         Contracts       => (Custom => False, Value => No),
+         Style_Checks    => (Custom => False, Value => No),
+         Ada_Version     => (Custom => False, Value => Compiler_Default),
+         Unicode_Support => (Custom => False, Value => Full_Support));
 
    Default_Validation_Switches : constant Switches_Configuration
-     := (Optimization   => (Custom => False, Value => Performance),
-         Debug_Info     => (Custom => False, Value => Yes),
-         Runtime_Checks => (Custom => False, Value => Everything),
-         Compile_Checks => (Custom => False, Value => Errors),
-         Contracts      => (Custom => False, Value => Yes),
-         Style_Checks   => (Custom => False, Value => Yes),
-         Ada_Version    => (Custom => False, Value => Compiler_Default));
+     := (Optimization    => (Custom => False, Value => Performance),
+         Debug_Info      => (Custom => False, Value => Yes),
+         Runtime_Checks  => (Custom => False, Value => Everything),
+         Compile_Checks  => (Custom => False, Value => Errors),
+         Contracts       => (Custom => False, Value => Yes),
+         Style_Checks    => (Custom => False, Value => Yes),
+         Ada_Version     => (Custom => False, Value => Compiler_Default),
+         Unicode_Support => (Custom => False, Value => Full_Support));
 
    Default_Development_Switches : constant Switches_Configuration
-     := (Optimization   => (Custom => False, Value => Debug),
-         Debug_Info     => (Custom => False, Value => Yes),
-         Runtime_Checks => (Custom => False, Value => Default),
-         Compile_Checks => (Custom => False, Value => Warnings),
-         Contracts      => (Custom => False, Value => No),
-         Style_Checks   => (Custom => False, Value => Yes),
-         Ada_Version    => (Custom => False, Value => Compiler_Default));
+     := (Optimization    => (Custom => False, Value => Debug),
+         Debug_Info      => (Custom => False, Value => Yes),
+         Runtime_Checks  => (Custom => False, Value => Default),
+         Compile_Checks  => (Custom => False, Value => Warnings),
+         Contracts       => (Custom => False, Value => No),
+         Style_Checks    => (Custom => False, Value => Yes),
+         Ada_Version     => (Custom => False, Value => Compiler_Default),
+         Unicode_Support => (Custom => False, Value => Full_Support));
 
 private
    Empty_List : constant Switch_List :=
