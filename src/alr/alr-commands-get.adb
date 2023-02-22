@@ -164,7 +164,10 @@ package body Alr.Commands.Get is
             Alire.Config.Edit.Set_Locally
               (Alire.Config.Keys.Update_Manually, "true");
 
-            Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+            if not CLIC.User_Input.Not_Interactive then
+               Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+            end if;
+
             return;
          end if;
 
