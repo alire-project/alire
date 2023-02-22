@@ -793,7 +793,8 @@ package body Alire.Roots is
                --  If the release was newly deployed, we can inform about its
                --  nested crates now.
 
-               if not Was_There then
+               if not Was_There and then not CLIC.User_Input.Not_Interactive
+               then
                   Print_Nested_Crates (This.Release_Base (Rel.Name));
                end if;
             end if;

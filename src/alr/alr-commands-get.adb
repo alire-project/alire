@@ -219,7 +219,9 @@ package body Alr.Commands.Get is
                            then Info
                            else Warning));
 
-      Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+      if not CLIC.User_Input.Not_Interactive then
+         Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+      end if;
 
       if Diff.Contains_Changes then
          Trace.Info ("Dependencies were solved as follows:");
