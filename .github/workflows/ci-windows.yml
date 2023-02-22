@@ -26,10 +26,10 @@ jobs:
       with:
         submodules: true
 
-    - name: Install toolchain
-      uses: ada-actions/toolchain@ce2021
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
       with:
-        distrib: community
+        crates: gnat_native gprbuild
 
     - name: Build alr
       run: gprbuild -j0 -p -P alr_env
