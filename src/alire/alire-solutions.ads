@@ -82,6 +82,11 @@ package Alire.Solutions is
    --  Add or merge a dependency without changing its state. For a new
    --  dependency, it will be marked as Pending and with Unknown transitivity.
 
+   function Excluding (This : Solution;
+                       Crate : Crate_Name)
+                       return Solution;
+   --  Remove a dependendency on crate, if it is present
+
    function Hinting (This : Solution;
                      Dep  : Dependencies.Dependency)
                      return Solution;

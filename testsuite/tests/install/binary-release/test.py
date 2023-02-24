@@ -25,7 +25,9 @@ assert_match("There is no installation at prefix .*",
 
 # Install the binary crate
 p = run_alr("install", PREFIX_ARG, "crate", quiet=False)
-assert_match("""Note: Deploying crate=1.0.0...
+assert_match("""Note: Computing solutions...
+Success: Installation targets fully solved
+Note: Deploying crate=1.0.0...
 Note: Installing crate=1.0.0...
 Success: Install to .* finished successfully in .* seconds.
 """,
@@ -38,12 +40,12 @@ assert p.returncode == 0, \
 assert_eq("Bin crate OK\n", p.stdout.decode())
 
 # Verify release cannot be reinstalled
-assert_match(".*Requested release crate=1.0.0 is already installed.*",
+assert_match(".*Skipping already installed crate=1.0.0.*",
              run_alr("install", PREFIX_ARG, "crate",
-                     quiet=False, complain_on_error=False).out)
+                     quiet=False).out)
 
 # Verify another version cannot be installed
-assert_match(".*Requested release crate=0.1.0 has another version already installed:\n"
+assert_match(".*Release crate=0.1.0 has another version already installed:\n"
              ".*   crate=1.0.0.*",
              run_alr("install", PREFIX_ARG, "crate=0.1.0",
                      quiet=False, complain_on_error=False).out)

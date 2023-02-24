@@ -531,7 +531,19 @@ package body Alire.Directories is
             Delete_File (This.Filename);
          elsif Kind (This.Filename) = Directory then
             Trace.Debug ("Deleting temporary folder " & This.Filename & "...");
-            Delete_Tree (This.Filename);
+
+            begin
+               --  May fail in rare circumstances, like containing
+               --  a softlink to a parent folder or itself.
+               --  GNATCOLL.VFS.Remove_Dir also fails.
+               Delete_Tree (This.Filename);
+            exception
+               when E : others =>
+                  Log_Exception (E);
+                  Put_Warning
+                    ("Unable to delete temp dir: " & This.Filename);
+            end;
+
          end if;
       end if;
 

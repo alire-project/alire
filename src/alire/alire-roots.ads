@@ -23,10 +23,17 @@ package Alire.Roots is
 
    type Root (<>) is tagged private;
 
-   function Create_For_Release (This            : Releases.Release;
-                                Parent_Folder   : Any_Path;
-                                Env             : Properties.Vector;
-                                Perform_Actions : Boolean := True)
+   --  When creating a root for a release, this type is used to say how many
+   --  post-download steps to take. Each level includes previous ones.
+   type Creation_Levels is
+     (Deploy, -- Do nothing besides fetching the root release
+      Update  -- Solve and fetch dependencies for the solution
+     );
+
+   function Create_For_Release (This          : Releases.Release;
+                                Parent_Folder : Any_Path;
+                                Env           : Properties.Vector;
+                                Up_To         : Creation_Levels)
                                 return Root;
    --  Prepare a workspace with This release as the root one, with manifest and
    --  lock files. IOWs, does everything but deploying dependencies. Intended
@@ -34,12 +41,13 @@ package Alire.Roots is
    --  the Root is usable. For when retrieval is with --only (e.g., in a
    --  platform where it is unavailable, but we want to inspect the sources),
    --  Perform_Actions allow disabling these operations that make no sense for
-   --  the Release on isolation.
+   --  the Release on isolation. When Solve, a best-effort solution will be
+   --  computed, either complete or doing a single-timeout period to have a
+   --  decent incomplete one. If Update, dependencies will be deployed after
 
    function Load_Root (Path : Any_Path) return Root;
    --  Attempt to detect a root at the given path. The root will be valid if
-   --  path/alire exists, path/alire/*.toml is unique and loadable as a crate
-   --  containing a single release. Otherwise, Checked_Error.
+   --  path/alire.toml exists and is a valid manifest. Otherwise Checked_Error.
 
    --  See Alire.Directories.Detect_Root_Path to use with the following
 
@@ -233,10 +241,11 @@ package Alire.Roots is
    --  increasing priority from: defaults -> manifests -> explicit set via API.
 
    procedure Install
-     (This       : in out Root;
-      Prefix     : Absolute_Path;
-      Build      : Boolean := True;
-      Export_Env : Boolean := True);
+     (This           : in out Root;
+      Prefix         : Absolute_Path;
+      Build          : Boolean := True;
+      Export_Env     : Boolean := True;
+      Print_Solution : Boolean := True);
    --  Call gprinstall on the releases in solution using --prefix=Prefix
 
    function Configuration (This : in out Root)

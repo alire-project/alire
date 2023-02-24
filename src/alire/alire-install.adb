@@ -1,9 +1,14 @@
+with Ada.Containers;
 with Ada.Directories;
 
 with Alire.Dependencies.Containers;
 with Alire.Errors;
+with Alire.Index;
+with Alire.Optional;
 with Alire.Origins;
 with Alire.Platforms.Current;
+with Alire.Roots;
+with Alire.Solutions.Containers;
 with Alire.Solver;
 
 package body Alire.Install is
@@ -78,14 +83,73 @@ package body Alire.Install is
          Directories.Force_Delete (Prefix / Rel.Base_Folder);
       end Install_Binary;
 
-      -----------------
-      -- Add_Targets --
-      -----------------
+      ---------------------
+      -- Install_Regular --
+      ---------------------
 
-      procedure Add_Targets is
-         use all type Origins.Kinds;
+      procedure Install_Regular (Rel : Releases.Release;
+                                 Sol : Solutions.Solution)
+      is
+         use type Ada.Containers.Count_Type;
+         Temp : Directories.Temp_File;
       begin
-         for Dep of Deps loop
+         Put_Info ("Starting deployment of "
+                   & Rel.Milestone.TTY_Image
+                   & " to fulfill " & Sol.State (Rel).As_Dependency.TTY_Image
+                   & " with "
+                   & (if Sol.All_Dependencies.Length <= 1
+                     then "no dependencies."
+                     else "solution:"));
+         if Sol.All_Dependencies.Length > 1 then
+            --  We always depend on the root release at least
+            Sol.Print (Root     => Rel,
+                       Env      => Platforms.Current.Properties,
+                       Detailed => False,
+                       Level    => Info,
+                       Prefix   => "   ",
+                       Graph    => False);
+         end if;
+
+         Trace.Debug ("Deploying installation target "
+                      & Rel.Milestone.TTY_Image
+                      & " to " & Temp.Filename);
+
+         declare
+            Root : Roots.Root := Roots.Create_For_Release
+              (This          => Rel,
+               Parent_Folder => Temp.Filename,
+               Env           => Platforms.Current.Properties,
+               Up_To         => Roots.Deploy);
+         begin
+            Root.Set (Sol.Excluding (Rel.Name));
+            --  We exclude the root release as the Root type will take it into
+            --  account and otherwise it would be as if Rel depended on itself.
+
+            Root.Deploy_Dependencies;
+            Root.Install (Prefix, Print_Solution => False);
+         end;
+      end Install_Regular;
+
+      -----------------------
+      -- Compute_Solutions --
+      -----------------------
+      --  Look for all solutions at once. This way, if some crate is unsolvable
+      --  we fail early on before fetching/compiling anything.
+      function Compute_Solutions return Solutions.Containers.Map is
+         use all type Origins.Kinds;
+         Result : Solutions.Containers.Map;
+
+         --------------------
+         -- Compute_Binary --
+         --------------------
+         --  Look for a binary crate for the dependency. For installation we
+         --  always prefer a binary release over a source one. The user can
+         --  always override by giving specific versions if there were of
+         --  both kinds for the same crate.
+         function Compute_Binary (Dep : Dependencies.Dependency)
+                                  return Boolean
+         is
+         begin
             declare
                Rel : constant Releases.Release
                  := Solver.Find (Name    => Dep.Crate,
@@ -94,19 +158,110 @@ package body Alire.Install is
                                  Origins => (Binary_Archive => True,
                                              others         => False));
             begin
-               Check_Conflict (Prefix, Rel);
-               Install_Binary (Rel);
+               Result.Insert (Dep.Crate,
+                              Solutions
+                              .Empty_Valid_Solution
+                              .Depending_On (Dep)
+                              .Including
+                                (Rel,
+                                 Env => Platforms.Current.Properties,
+                                 For_Dependency =>
+                                   Optional.Crate_Names.Unit (Dep.Crate)));
+               return True;
+            end;
+         exception
+            when Query_Unsuccessful =>
+               Trace.Debug ("No binary release found for " & Dep.TTY_Image);
+               return False;
+         end Compute_Binary;
+
+         ---------------------
+         -- Compute_Regular --
+         ---------------------
+         --  Look for a regular solution to a dependency as fallback if we
+         --  didn't find any binary solution.
+         procedure Compute_Regular (Dep : Dependencies.Dependency) is
+            Sol : constant Solutions.Solution := Solver.Resolve (Dep);
+         begin
+            if Sol.Is_Complete then
+               Result.Insert (Dep.Crate, Sol);
+            else
+               Trace.Error ("Could not find a complete solution for "
+                            & Dep.TTY_Image);
+
+               --  If we found a release for the root dependency we can print
+               --  the partial solution. Otherwise nothing was solved.
+
+               if Sol.Contains_Release (Dep.Crate) then
+                  Trace.Error ("Best incomplete solution is:");
+                  Sol.Print (Root     => Sol.Releases.Element (Dep.Crate),
+                             Env      => Platforms.Current.Properties,
+                             Detailed => False,
+                             Level    => Trace.Error);
+                  Raise_Checked_Error ("Installation cannot continue.");
+               elsif not Index.Exists (Dep.Crate) then
+                  Raise_Checked_Error
+                    ("Requested crate not found: " & Dep.Crate.TTY_Image);
+               else
+                  Raise_Checked_Error
+                    ("No solution could be computed for: " & Dep.TTY_Image);
+               end if;
+            end if;
+         end Compute_Regular;
+
+      begin
+         Put_Info ("Computing solutions...");
+
+         for Dep of Deps loop
+            if not Compute_Binary (Dep) then
+               Compute_Regular (Dep);
+            end if;
+         end loop;
+
+         Put_Success ("Installation targets fully solved");
+
+         return Result;
+      end Compute_Solutions;
+
+      -----------------
+      -- Add_Targets --
+      -----------------
+
+      procedure Add_Targets is
+         --  Try to get complete solutions for everything before starting
+         --  deploying anything. This way, if something isn't installable,
+         --  we fail early on before fetching/compiling things.
+         Sols : constant Solutions.Containers.Map := Compute_Solutions;
+      begin
+
+         --  Now install all solutions
+
+         for I in Sols.Iterate loop
+            declare
+               use all type Origins.Kinds;
+               use Solutions.Containers.Maps;
+               Rel : constant Releases.Release :=
+                       Element (I).Releases.Element (Key (I));
+               Action : constant Actions := Check_Conflicts (Prefix, Rel);
+            begin
+               if Action = Skip then
+                  Put_Info ("Skipping already installed "
+                            & Rel.Milestone.TTY_Image);
+               else
+                  case Rel.Origin.Kind is
+                     when Filesystem | Source_Archive | Origins.VCS_Kinds =>
+                        Install_Regular (Rel, Sols (I));
+                     when Binary_Archive =>
+                        Install_Binary (Rel);
+                     when others =>
+                        Raise_Checked_Error
+                          ("Cannot install " & Rel.Milestone.TTY_Image
+                           & " because origin is of kind "
+                           & Rel.Origin.Kind'Image);
+                  end case;
+               end if;
             end;
          end loop;
-      exception
-         when E : Query_Unsuccessful =>
-            Errors.New_Wrapper
-              .Wrap (E)
-              .Wrap ("Either the release does not exist or it does not "
-                     & "have a binary archive for installation.")
-              .Wrap ("Only binary releases are currently supported.")
-              .Print;
-            Raise_Checked_Error ("Cannot complete installation.");
       end Add_Targets;
 
       Target_Deps : Dependencies.Containers.Map;
@@ -130,28 +285,81 @@ package body Alire.Install is
       Add_Targets;
    end Add;
 
-   --------------------
-   -- Check_Conflict --
-   --------------------
+   ---------------------
+   -- Check_Conflicts --
+   ---------------------
 
-   procedure Check_Conflict (Prefix : Any_Path; Rel : Releases.Release) is
-      Installed : constant Installed_Milestones := Find_Installed (Prefix);
+   function Check_Conflicts (Prefix : Any_Path;
+                             Rel    : Releases.Release)
+                             return Actions
+   is
    begin
-      if (for some M of Installed => M.Crate = Rel.Name) then
-         if Installed.Contains (Rel.Milestone) then
-            Recoverable_Error
-              ("Requested release " & Rel.Milestone.TTY_Image
-               & " is already installed");
-         else
-            Recoverable_Error
-              (Errors.Wrap
-                 ("Requested release " & Rel.Milestone.TTY_Image
-                  & " has another version already installed: ",
-                  To_Image_Vector (Find_Installed
-                    (Prefix, Rel.Name)).Flatten (ASCII.LF)));
+
+      --  Crates declaring executables can only be installed once
+
+      if Rel.Origin.Kind in Origins.Binary_Archive
+        or else not Rel.Executables.Is_Empty
+      then
+         declare
+            Installed : constant Alire.Install.Installed_Milestones :=
+                          Alire.Install.Find_Installed
+                            (Prefix, Rel.Name);
+         begin
+
+            --  No problem if the version installed is the same one
+
+            if Installed.Contains (Rel.Milestone) then
+               return Action : constant Actions :=
+                 (if Force then Reinstall else Skip)
+               do
+                  Trace.Debug ("Already installed: " & Rel.Milestone.TTY_Image
+                               & "; action: " & Action'Image);
+               end return;
+
+            elsif not Installed.Is_Empty then
+
+               --  A different version exists, here we fail unless forced
+
+               Recoverable_Error
+                 (Errors.New_Wrapper
+                    ("Release " & Rel.Milestone.TTY_Image
+                     & " has another version already installed: ")
+                  .Wrap (To_Image_Vector (Find_Installed
+                    (Prefix, Rel.Name)).Flatten (ASCII.LF))
+                  .Wrap ("Releases installing executables can be "
+                    & "installed only once")
+                  .Wrap ("Forcing this install will overwrite the "
+                    & "release already installed")
+                  .Get);
+
+               return Replace;
+
+            end if;
+         end;
+      else
+
+         --  This is a library, several versions are OK but we can skip one
+         --  already available. Or it could be a crate with default undeclared
+         --  executable. In any case, we cannot be sure. Worst case, gprinstall
+         --  will fail later.
+
+         if Alire.Install.Find_Installed (Prefix).Contains (Rel.Milestone)
+         then
+            return Action : constant Actions :=
+              (if Force then Reinstall else Skip)
+            do
+               Trace.Debug ("Already installed: " & Rel.Milestone.TTY_Image
+                            & "; action: " & Action'Image);
+            end return;
          end if;
+
       end if;
-   end Check_Conflict;
+
+      --  In any other case it shuld be safe to install
+
+      return New_Install;
+
+   end Check_Conflicts;
 
    --------------------
    -- Find_Installed --

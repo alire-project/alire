@@ -77,6 +77,20 @@ package body Alire.Solutions is
    is (Solution'(Solved       => True,
                  Dependencies => This.Dependencies.Merging (Dep)));
 
+   ---------------
+   -- Excluding --
+   ---------------
+
+   function Excluding (This  : Solution;
+                       Crate : Crate_Name)
+                       return Solution
+   is
+      Result : Solution := This;
+   begin
+      Result.Dependencies.Exclude (Crate);
+      return Result;
+   end Excluding;
+
    ----------------
    -- Depends_On --
    ----------------
