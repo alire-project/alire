@@ -163,6 +163,11 @@ package body Alr.Commands.Get is
                           " use `alr update` to apply dependency changes");
             Alire.Config.Edit.Set_Locally
               (Alire.Config.Keys.Update_Manually, "true");
+
+            if not CLIC.User_Input.Not_Interactive then
+               Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+            end if;
+
             return;
          end if;
 
@@ -216,6 +221,10 @@ package body Alr.Commands.Get is
                  Level => (if not Cmd.Build or else Build_OK
                            then Info
                            else Warning));
+
+      if not CLIC.User_Input.Not_Interactive then
+         Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+      end if;
 
       if Diff.Contains_Changes then
          Trace.Info ("Dependencies were solved as follows:");
