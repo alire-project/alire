@@ -1,6 +1,7 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Command_Line;
 with Ada.Directories;
+with Ada.Environment_Variables;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with CLIC.TTY;
@@ -461,6 +462,7 @@ package body Alr.Commands is
       if Alire.Platforms.Current.Operating_System /= Alire.Platforms.Windows
         and then not No_Color
         and then not No_TTY
+        and then Ada.Environment_Variables.Value ("TERM", "dumb") /= "dumb"
       then
          CLIC.TTY.Enable_Color (Force => False);
          --  This may still not enable color if TTY is detected to be incapable
