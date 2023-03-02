@@ -180,7 +180,11 @@ package body Alire is
            & " with 'alr help identifiers'";
       end if;
 
-      return +Err;
+      if Err /= "" then
+         return "Invalid name '" & Utils.TTY.Name (S) & "': " & (+Err);
+      else
+         return "";
+      end if;
    end Error_In_Name;
 
    -------------------
