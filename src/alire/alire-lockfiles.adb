@@ -129,7 +129,7 @@ package body Alire.Lockfiles is
       Directories.Create_Tree (Directories.Parent (Filename));
       Create (File, Out_File, Filename);
       Put_Line (File,
-                "# THIS IS GENERATED. DO NOT EDIT.");
+                "# THIS FILE IS GENERATED. DO NOT EDIT.");
       New_Line (File);
 
       TOML.File_IO.Dump_To_File (Contents.To_TOML, File);
