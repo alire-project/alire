@@ -41,9 +41,9 @@ package body Alire.Properties.Build_Switches is
    is new Utils.Did_You_Mean.Enum_Suggestion
      (Ada_Version_Kind, Utils.Did_You_Mean.Lower_Case);
 
-   function Unicode_Support_Suggestion
+   function Source_Encoding_Suggestion
    is new Utils.Did_You_Mean.Enum_Suggestion
-     (Unicode_Support_Kind, Utils.Did_You_Mean.Lower_Case);
+     (Source_Encoding_Kind, Utils.Did_You_Mean.Lower_Case);
 
    -----------------------
    -- Switch_Suggestion --
@@ -61,7 +61,7 @@ package body Alire.Properties.Build_Switches is
          when Runtime_Checks => return Runtime_Checks_Suggestion (Str);
          when Style_Checks => return Style_Checks_Suggestion (Str);
          when Ada_Version => return Ada_Version_Suggestion (Str);
-         when Unicode_Support => return Unicode_Support_Suggestion (Str);
+         when Source_Encoding => return Source_Encoding_Suggestion (Str);
       end case;
    end Switch_Suggestion;
 
@@ -137,8 +137,8 @@ package body Alire.Properties.Build_Switches is
             Result.Style_Checks := (Custom => True, List => List);
          when Ada_Version =>
             Result.Ada_Version := (Custom => True, List => List);
-         when Unicode_Support =>
-            Result.Unicode_Support := (Custom => True, List => List);
+         when Source_Encoding =>
+            Result.Source_Encoding := (Custom => True, List => List);
          end case;
 
       elsif T.Kind = TOML_String then
@@ -201,12 +201,12 @@ package body Alire.Properties.Build_Switches is
                   Result.Ada_Version := (Custom => False, Value => K);
                end;
 
-            when Unicode_Support =>
+            when Source_Encoding =>
                declare
-                  K : constant Unicode_Support_Kind :=
-                        Unicode_Support_Kind'Value (T.As_String);
+                  K : constant Source_Encoding_Kind :=
+                        Source_Encoding_Kind'Value (T.As_String);
                begin
-                  Result.Unicode_Support := (Custom => False, Value => K);
+                  Result.Source_Encoding := (Custom => False, Value => K);
                end;
 
             end case;
@@ -281,8 +281,8 @@ package body Alire.Properties.Build_Switches is
             Sw.Style_Checks := M.Style_Checks;
          when Ada_Version =>
             Sw.Ada_Version := M.Ada_Version;
-         when Unicode_Support =>
-            Sw.Unicode_Support := M.Unicode_Support;
+         when Source_Encoding =>
+            Sw.Source_Encoding := M.Source_Encoding;
       end case;
    end Apply;
 

@@ -203,13 +203,13 @@ package body Alire.Utils.Switches is
    -- Get_List --
    --------------
 
-   function Get_List (S : Unicode_Support_Switches) return Switch_List
+   function Get_List (S : Source_Encoding_Switches) return Switch_List
    is (if S.Custom
        then S.List
        else
          (case S.Value is
-          when No_Support      => Empty_List,
-          when Full_Support    => Empty_List.Append (GNAT_UTF8_Encoding)));
+             when ASCII | Latin_1 => Empty_List,
+             when UTF_8           => Empty_List.Append (GNAT_UTF8_Encoding)));
 
    --------------
    -- Get_List --
@@ -225,7 +225,7 @@ package body Alire.Utils.Switches is
              .Append (Get_List (C.Contracts))
              .Append (Get_List (C.Style_Checks))
              .Append (Get_List (C.Ada_Version))
-             .Append (Get_List (C.Unicode_Support));
+             .Append (Get_List (C.Source_Encoding));
    end Get_List;
 
 end Alire.Utils.Switches;
