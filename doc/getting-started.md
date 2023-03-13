@@ -14,7 +14,7 @@ This may be done for the duration of a terminal session by running the command b
 ```bash
 $ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
-Those wanting to keep this path permanently in their `PATH` environment may do so by pasting the above command into the .bashrc file of their user's account.
+Those wanting to keep this path permanently in their `PATH` environment may do so by pasting the above command into the `.profile` file of their user's account.
 
 Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not 
 work for you, or if you are on another host architecture like ARM, you have the option 
