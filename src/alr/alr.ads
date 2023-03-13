@@ -24,6 +24,7 @@ package Alr with Preelaborate is
    use all type Simple_Logging.Levels;
    pragma Warnings (On);
 
+   package Characters renames Standard.ASCII;
    package Trace renames Simple_Logging;
    package TTY renames CLIC.TTY;
 
