@@ -3,17 +3,18 @@ with Ada.Containers.Indefinite_Vectors;
 package Alire.Vectors.Utils.Vectors
 is
    generic
-      type Index_Type   is positive;
+      type Index_Type   is range <>;
       type Element_type is private;
 
       with function "="
-        (A, B : Element_Type)
-         return Boolean;
+        (Left, Right : Element_Type)
+         return Boolean
+      is <>;
 
       with package Containers
         is Ada.Containers.Indefinite_Vectors
-          (Index_Type   =  Index_Type,
-           Element_Type =  Element_Type);
+          (Index_Type   => Index_Type,
+           Element_Type => Element_Type);
 
    package Indefinite
    is
