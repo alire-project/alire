@@ -77,7 +77,7 @@ package body Alire.Dependencies.Graphs is
                     return Boolean
       is
       begin
-         return +Element.Dependent = Crate;
+         return +Element.Dependent = Item;
       end "=";
 
       package Graf
