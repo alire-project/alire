@@ -17,16 +17,16 @@ is
          type Item_Type (<>) is private;
 
          with function "=" (
-            Item    : Item_Type;
-            Element : Element_Type)
+            Set     : Sets.Set;
+            Element : Element_Type;
+            Item    : Item_Type)
             return Boolean;
    
       package Indefinite
       is
          function Contains
             (
---            Container : Sets.Set;
-            Item      : Item_Type
+            Item : Item_Type
             )
          return Boolean;
 
