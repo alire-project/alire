@@ -97,7 +97,7 @@ package body Alire.Dependencies.Graphs is
       package Ordered_Graph is new
          Alire.Utils.Sets.Ordered
             (
-            Set          => Deps,       -- In the Graph Set
+            Sets         => Deps,       -- In the Graph Set
             Element_Type => Dependency  -- Of Dependency
             );
 
@@ -114,7 +114,7 @@ package body Alire.Dependencies.Graphs is
       package Graf is new
          Ordered_Graph.Indefinite
             (
-            Item_Type => Crate_Name,   -- Search Crate_Name
+--            Item_Type => Crate_Name,   -- Search Crate_Name
             "="       => Is_Dependent  -- With Is_Dependent
             );
 
