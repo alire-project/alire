@@ -11,6 +11,12 @@ is
          Element : Element_Type)
          return Boolean;
 
+      with function "<" (
+         Item    : Item_type;
+         Element : Element_Type)
+         return Boolean
+      is null;
+
       with package Containers
         is new Ada.Containers.Indefinite_Ordered_Sets
           (Element_Type => Element_Type);
@@ -18,7 +24,7 @@ is
    package Indefinite_Ordered
    is
       function Contains
-        (Container : Containers.Vector;
+        (Container : Containers.Set;
          Item      : Item_Type)
          return Boolean;
 
