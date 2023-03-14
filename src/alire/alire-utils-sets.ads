@@ -25,7 +25,7 @@ is
       is
          function Contains
             (
-            Container : Sets.Set;
+--            Container : Sets.Set;
             Item      : Item_Type
             )
          return Boolean;
