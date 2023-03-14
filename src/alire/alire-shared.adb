@@ -98,7 +98,7 @@ package body Alire.Shared is
        then Global_Cache_Path.all
        else OS_Lib.Getenv (Environment.Config,
                            Platforms.Folders.Cache))
-       --  Up to here, is the default prefix or an overriden prefix
+       --  Up to here, it's the default prefix or an overriden prefix
        /
          (if Global_Cache_Path = null and then
              OS_Lib.Getenv (Environment.Config, "") = ""
