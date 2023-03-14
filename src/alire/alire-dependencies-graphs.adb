@@ -81,7 +81,7 @@ package body Alire.Dependencies.Graphs is
    begin
       return
          Graphs.Contains (
-            Container => +Dep.Dependent,
+            Container => Dep.Dependent,
             Item      => Crate);
    --   for Dep of This loop
    --      if +Dep.Dependent = Crate then
