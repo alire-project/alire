@@ -77,11 +77,11 @@ package body Alire.Dependencies.Graphs is
          Alire.Utils.Vectors.Indefinite (
             Index_Type   => Positive,
             Element_Type => Alire.Crate_Name,
-            Container    => This);
+            Container    => Graph);
    begin
       return
          Graphs.Contains (
-            Container => Dep.Dependent,
+            Container => This,
             Item      => Crate);
    --   for Dep of This loop
    --      if +Dep.Dependent = Crate then
