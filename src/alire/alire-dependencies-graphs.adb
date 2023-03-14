@@ -110,22 +110,32 @@ package body Alire.Dependencies.Graphs is
    return
       Boolean
    is
-      function Is_Dependent (
-         Dep   : Dependency;
-         Crate : Crate_Name)
-         return Boolean
-      is
-      begin
-         return +Dep.Dependent = Crate;
-      end Is_Dependent;
-
-      package Graf is new
+      package Set is new
          Alire.Utils.Sets.Ordered
          (
             Sets         => This,        -- In the Graph Set
             Element_Type => Dependency  --  ,   -- Of Dependency
     --     Item_Type    => Crate_Name,   -- Search Crate_Name
     --     "="          => Is_Dependent  -- With Is_Dependent
+         );
+    
+      function Is_Dependent (
+         Dep   : Dependency;
+         Crate : Crate_Name)
+      return
+         Boolean
+      is
+      begin
+         return +Dep.Dependent = Crate;
+      end Is_Dependent;
+
+      package Graf is new
+         Set.Indefinite
+         (
+--            Sets         => This,        -- In the Graph Set
+--       Element_Type => Dependency  --  ,   -- Of Dependency
+            Item_Type    => Crate_Name,   -- Search Crate_Name
+            "="          => Is_Dependent  -- With Is_Dependent
          );
 
    begin
