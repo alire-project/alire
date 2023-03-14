@@ -3,12 +3,12 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 package Alire.Utils.Sets
 is
    generic
-      with package Sets is new
-         Ada.Containers.Indefinite_Ordered_Sets (<>);
---            Element_Type => Element_Type);
-
       type Element_type is private;
       type Item_Type    is private;
+
+      with package Sets is new
+         Ada.Containers.Indefinite_Ordered_Sets (  --  <>);
+            Element_Type => Element_Type);
 
       with function "=" (
          Item    : Item_type;
