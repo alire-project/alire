@@ -1,12 +1,15 @@
 with Ada.Directories;
 
-with Alire.Config.Edit;
+with Alire.Config;
 with Alire.Containers;
 with Alire.Directories;
+with Alire.Environment;
 with Alire.Index;
 with Alire.Manifest;
 with Alire.Origins;
+with Alire.OS_Lib;
 with Alire.Paths;
+with Alire.Platforms.Folders;
 with Alire.Properties.Actions;
 with Alire.Root;
 with Alire.Toolchains.Solutions;
@@ -59,9 +62,9 @@ package body Alire.Shared is
       end Detect;
 
    begin
-      if Ada.Directories.Exists (Install_Path) then
+      if Ada.Directories.Exists (Path) then
          Directories.Traverse_Tree
-           (Start => Install_Path,
+           (Start => Path,
             Doing => Detect'Access);
       end if;
 
@@ -84,21 +87,43 @@ package body Alire.Shared is
       return Result;
    end Available;
 
-   ------------------
-   -- Install_Path --
-   ------------------
+   Global_Cache_Path : access String;
 
-   function Install_Path return String
-   is (Config.Edit.Path
-       / Paths.Cache_Folder_Inside_Working_Folder
-       / Paths.Deps_Folder_Inside_Cache_Folder);
+   ----------
+   -- Path --
+   ----------
+
+   function Path return String
+   is ((if Global_Cache_Path /= null
+       then Global_Cache_Path.all
+       else OS_Lib.Getenv (Environment.Config,
+                           Platforms.Folders.Cache))
+       --  Up to here, is the default prefix or an overriden prefix
+       /
+         (if Global_Cache_Path = null and then
+             OS_Lib.Getenv (Environment.Config, "") = ""
+          then Paths.Deps_Folder_Inside_Cache_Folder
+          else Paths.Cache_Folder_Inside_Working_Folder
+               / Paths.Deps_Folder_Inside_Cache_Folder)
+       --  This second part is either cache/dependencies or just dependencies,
+       --  depending on if the location is shared with the config folder or not
+      );
+
+   --------------
+   -- Set_Path --
+   --------------
+
+   procedure Set_Path (Path : Absolute_Path) is
+   begin
+      Global_Cache_Path := new String'(Path);
+   end Set_Path;
 
    -----------
    -- Share --
    -----------
 
    procedure Share (Release  : Releases.Release;
-                    Location : Any_Path := Install_Path)
+                    Location : Any_Path := Path)
    is
       Already_Installed : Boolean := False;
 
@@ -157,7 +182,7 @@ package body Alire.Shared is
       end if;
 
       --  See if it can be skipped
-      if Location = Install_Path and then Available.Contains (Release) then
+      if Location = Path and then Available.Contains (Release) then
          Trace.Detail ("Skipping installation of already available release: "
                        & Release.Milestone.TTY_Image);
          return;
@@ -193,7 +218,7 @@ package body Alire.Shared is
    is
       use CLIC.User_Input;
       Path : constant Absolute_Path :=
-               Install_Path / Release.Deployment_Folder;
+               Shared.Path / Release.Deployment_Folder;
    begin
       if not Release.Origin.Is_Regular then
          Raise_Checked_Error

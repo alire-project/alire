@@ -4,6 +4,7 @@ with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
 with Alire.Properties;
 with Alire.Roots.Optional;
+with Alire.Shared;
 with Alire.Toolchains;
 with Alire.Utils.Tables;
 
@@ -51,6 +52,7 @@ package body Alr.Commands.Version is
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
       Table.Append ("config folder:").Append (Alire.Config.Edit.Path).New_Row;
+      Table.Append ("cache folder:").Append (Alire.Shared.Path).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;
