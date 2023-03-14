@@ -68,42 +68,44 @@ package body Alire.Dependencies.Graphs is
    -- Has_Dependencies --
    ----------------------
 
-   function "=" (Item    : Alire.Crate_Name;
-                 Element : Dependency)
-                 return Boolean
+   function Is_Dependent (
+      Dep   : Dependency;
+      Crate : Alire.Crate_Name)
+      return Boolean
    is
    begin
-      return +Element.Dependent = Item;
+      return +Dep.Dependent = Crate;
    end "=";
 
    package Graf is new
       Alire.Utils.Sets.Indefinite_Ordered (
-         Sets         => Graph,  --  This,
---            Element_Type => Dependency,
-         Item_Type    => Alire.Crate_Name,
-         "="          => "=");
+         Sets      => Graph,
+         Item_Type => Alire.Crate_Name,
+         "="       => Is_Dependent);
 
-   function Has_Dependencies (This : Graph;
-                              Crate : Alire.Crate_Name)
-                              return Boolean
-   is
-   begin
-      return Graf.Contains (Graph, Crate);
---      for Dep of This loop
---         if +Dep.Dependent = Crate then
---            return True;
---         end if;
---      end loop;
---
---      return False;
-   end Has_Dependencies;
+--   function Has_Dependencies (This : Graph;
+--                              Crate : Alire.Crate_Name)
+--                              return Boolean
+--   is
+--   begin
+--      return Graf.Contains (Graph, Crate);
+----      for Dep of This loop
+----         if +Dep.Dependent = Crate then
+----            return True;
+----         end if;
+----      end loop;
+----
+----      return False;
+--   end Has_Dependencies;
 
---   function Has_Dependecies (
---      This  : Graph;
---      Crate : Alire.Crate_Name)
---      return Boolean
---   renames
---      Graf.Contains (Graph, Crate);
+   function
+      Has_Dependecies             (
+         This  : Graph            ;
+         Crate : Alire.Crate_Name )
+   return
+      Boolean
+   renames
+      Graf.Contains (This, Crate);
 
    -----------
    -- Label --
