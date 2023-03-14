@@ -15,7 +15,7 @@ is
          Item    : Item_type;
          Element : Element_Type)
          return Boolean
-      is null;
+      is <>;
 
       with package Containers
         is new Ada.Containers.Indefinite_Ordered_Sets
