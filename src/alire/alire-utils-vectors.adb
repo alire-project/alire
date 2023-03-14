@@ -4,11 +4,11 @@ is
    is
       function Contains
         (Container : Containers.Vector;
-         Value     : Element_Type)
+         Item      : Element_Type)
          return Boolean
       is
          for Element of Container loop
-            if Element = Value then
+            if Element = Item then
                return True;
             end if;
          end loop;
