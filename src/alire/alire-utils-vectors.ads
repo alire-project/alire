@@ -1,6 +1,6 @@
 with Ada.Containers.Indefinite_Vectors;
 
-package Alire.Vectors.Utils.Vectors
+package Alire.Utils.Vectors
 is
    generic
       type Index_Type   is range <>;
@@ -25,4 +25,4 @@ is
 
    end Indefinite;
 
-end Alire.Vectors.Utils.Vectors;
+end Alire.Utils.Vectors;
