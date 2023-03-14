@@ -77,7 +77,7 @@ package body Alire.Dependencies.Graphs is
    return
       Boolean
    is
-      Dependency_Set : Dep_Sets renames This;
+      Dependency_Graph : Graph renames This;
 
       package Dependency_Sets is new
          Alire.Utils.Sets.Indefinite_Ordered
@@ -98,9 +98,9 @@ package body Alire.Dependencies.Graphs is
 
       function Contains is new
          Dependency_Sets.Contains
-           (Set       => Dependency_Set,  -- In Dependency_Graph
-            Item_Type => Crate_Name,      -- Search Crate_Name
-            "="       => Is_Dependent);   -- With Is_Dependent
+           (Set       => Dependency_Graph,  -- In Dependency_Graph
+            Item_Type => Crate_Name,        -- Search Crate_Name
+            "="       => Is_Dependent);     -- With Is_Dependent
 
    begin
       return
