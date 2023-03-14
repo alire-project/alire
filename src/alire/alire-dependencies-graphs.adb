@@ -80,7 +80,7 @@ package body Alire.Dependencies.Graphs is
       Dependency_Graph : Graph renames This;
 
       package Dependency_Set is new
-         Alire.Utils.Sets.Ordered_Indefinite
+         Alire.Utils.Sets.Indefinite_Ordered
             (
             Sets         => Dep_Sets,   -- In the Graph
             Element_Type => Dependency  -- Of Dependency
@@ -101,7 +101,7 @@ package body Alire.Dependencies.Graphs is
            (Set       => Dependency_Graph,  -- In Dependency_Graph
             Item_Type => Crate_Name,        -- Search Crate_Name
             "="       => Is_Dependent);     -- With Is_Dependent
-   
+
    begin
       return
          Contains (Crate);
