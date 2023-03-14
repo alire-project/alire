@@ -72,15 +72,16 @@ package body Alire.Dependencies.Graphs is
                               Crate : Alire.Crate_Name)
                               return Boolean
    is
-      package Graphs
-      is new
-         Alire.Utils.Vectors.Indefinite (
-            Index_Type   => Positive,
-            Element_Type => Alire.Crate_Name,
-            Container    => Graph);
+--      package Graphs
+--      is new
+--         Alire.Utils.Vectors.Indefinite (
+--            Index_Type   => Positive,
+--            Element_Type => Alire.Crate_Name,
+--            Container    => Graph);
    begin
       return
-         Graphs.Contains (
+--         Graphs.
+         Contains (
             Container => This,
             Item      => Crate);
    --   for Dep of This loop
