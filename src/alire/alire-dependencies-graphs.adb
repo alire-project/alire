@@ -77,13 +77,12 @@ package body Alire.Dependencies.Graphs is
    return
       Boolean
    is
-      Deps : Graph renames This;
+      Dependency_Graph : Graph renames This;
 
-      package Ordered_Graph is new
+      package Dependency_Sets is new
          Alire.Utils.Sets.Ordered
             (
             Sets         => Dep_Sets,   -- In the Graph
---            Set          => Deps,       -- Deps
             Element_Type => Dependency  -- Of Dependency
             );
 
@@ -98,10 +97,11 @@ package body Alire.Dependencies.Graphs is
       end Is_Dependent;
 
       package Graf is new
-         Ordered_Graph.Indefinite
+         Dependency_Sets.Indefinite
             (
-            Item_Type => Crate_Name,   -- Search Crate_Name
-            "="       => Is_Dependent  -- With Is_Dependent
+            Set       => Dependency_Graph,  -- In Dependency_Graph
+            Item_Type => Crate_Name,        -- Search Crate_Name
+            "="       => Is_Dependent       -- With Is_Dependent
             );
 
    begin
