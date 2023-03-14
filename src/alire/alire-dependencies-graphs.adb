@@ -2,6 +2,7 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Utils.Tables;
+with Alire.Utils.Vectors;
 
 package body Alire.Dependencies.Graphs is
 
@@ -74,13 +75,13 @@ package body Alire.Dependencies.Graphs is
       function Contains
       is
          new Alire.Utils.Vectors.Indefinite (
-            Index_Type   => Positive;
+            Index_Type   => Positive,
             Element_Type => Alire.Crate_Name,
             Container    => This);
    begin
       return
          Contains (Container => +Dep.Dependent,
-                   Value     => Crate);
+                   Item      => Crate);
    --   for Dep of This loop
    --      if +Dep.Dependent = Crate then
    --         return True;
