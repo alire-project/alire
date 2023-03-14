@@ -70,32 +70,14 @@ package body Alire.Dependencies.Graphs is
 
    subtype Crate_Name is Alire.Crate_Name;
 
-   package Grafer is new
-      Alire.Utils.Sets.Ordered
-      (
-         Sets         => Graph,        -- In the Graph Set
-         Element_Type => Dependency  --  ,   -- Of Dependency
-    --     Item_Type    => Crate_Name,   -- Search Crate_Name
-    --     "="          => Is_Dependent  -- With Is_Dependent
-      );
-      
-   function Is_Dependent (
-      Dep   : Dependency;
-      Crate : Crate_Name)
-      return Boolean
-   is
-   begin
-      return +Dep.Dependent = Crate;
-   end Is_Dependent;
-
-   package Graf is new
-      Grafer.Indefinite
-      (
-   --      Sets         => Graph,        -- In the Graph Set
-   --      Element_Type => Dependency,   -- Of Dependency
-         Item_Type    => Crate_Name,   -- Search Crate_Name
-         "="          => Is_Dependent  -- With Is_Dependent
-      );
+--   package Graf is new
+--      Grafer.Indefinite
+--      (
+--   --      Sets         => Graph,        -- In the Graph Set
+--   --      Element_Type => Dependency,   -- Of Dependency
+--         Item_Type    => Crate_Name,   -- Search Crate_Name
+--         "="          => Is_Dependent  -- With Is_Dependent
+--      );
 
 --   package Dependency_Graf is new
 --      Alire.Utils.Sets.Indefinite_Ordered
@@ -123,14 +105,32 @@ package body Alire.Dependencies.Graphs is
 
    function
       Has_Dependecies (
-         Graf2  : Graph;
+         This  : Graph;
          Crate : Crate_Name)
    return
       Boolean
    is
+      function Is_Dependent (
+         Dep   : Dependency;
+         Crate : Crate_Name)
+         return Boolean
+      is
+      begin
+         return +Dep.Dependent = Crate;
+      end Is_Dependent;
+
+      package Graf is new
+         Alire.Utils.Sets.Ordered
+         (
+            Sets         => This,        -- In the Graph Set
+            Element_Type => Dependency  --  ,   -- Of Dependency
+    --     Item_Type    => Crate_Name,   -- Search Crate_Name
+    --     "="          => Is_Dependent  -- With Is_Dependent
+         );
+
    begin
       return
-   --      Dependency_Graf.Contains (Graf, Crate);
+   --      Dependency_Graf.Contains (This, Crate);
          Graf.Contains (Crate);
    end Has_Dependecies;
 
