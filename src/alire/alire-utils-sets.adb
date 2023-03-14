@@ -3,7 +3,7 @@ is
    package body Indefinite_Ordered
    is
       function Contains (
-         Container : Containers.Vector;
+         Container : Sets.Set;
          Item      : Item_Type)
          return Boolean
       is
@@ -13,6 +13,7 @@ is
             end if;
          end loop;
          return False;
+
       end Contains;
 
    end Indefinite_Ordered;
