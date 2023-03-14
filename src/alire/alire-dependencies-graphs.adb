@@ -98,9 +98,9 @@ package body Alire.Dependencies.Graphs is
 
       function Contains is new
          Dependency_Sets.Contains
-           (Set       => Dependency_Graph,  -- In Dependency_Graph
-            Item_Type => Crate_Name,        -- Search Crate_Name
-            "="       => Is_Dependent);     -- With Is_Dependent
+           (Set       => Dependency_Graph.Set,  -- In Dependency_Graph
+            Item_Type => Crate_Name,            -- Search Crate_Name
+            "="       => Is_Dependent);         -- With Is_Dependent
 
    begin
       return
