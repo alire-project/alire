@@ -80,10 +80,13 @@ package body Alire.Dependencies.Graphs is
    end Is_Dependent;
 
    package Dependency_Graf is new
-      Alire.Utils.Sets.Indefinite_Ordered (
-         Sets      => Graph,
-         Item_Type => Crate_Name,
-         "="       => Is_Dependent);
+      Alire.Utils.Sets.Indefinite_Ordered
+      (
+         Sets         => Graph,        -- In the Graph Set
+         Element_Type => Dependency,   -- Of Dependency
+         Item_Type    => Crate_Name,   -- Search Crate_Name
+         "="          => Is_Dependent  -- With Is_Dependent
+      );
 
 --   function Has_Dependencies (This : Graph;
 --                              Crate : Alire.Crate_Name)
