@@ -7,7 +7,7 @@ is
       type Item_Type    is private;
 
       with function "=" (
-         Item    : Item_type,
+         Item    : Item_type;
          Element : Element_Type)
          return Boolean;
 
