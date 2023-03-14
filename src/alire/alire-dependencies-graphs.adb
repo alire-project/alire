@@ -84,7 +84,8 @@ package body Alire.Dependencies.Graphs is
          Alire.Utils.Sets.Indefinite_Ordered (
             Sets         => This,
             Element_Type => Dependency,
-            Item_Type    => Alire.Crate_Name);
+            Item_Type    => Alire.Crate_Name,
+            "="          => "=");
    begin
       return Graf.Contains (Graph, Crate);
 --      for Dep of This loop
