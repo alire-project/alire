@@ -104,8 +104,12 @@ package body Alire.Dependencies.Graphs is
          Crate : Alire.Crate_Name)
    return
       Boolean
-   renames
-      Graf.Contains (This, Crate);
+   is
+   begin
+      return
+         Graf.Contains (This, Crate);
+   
+   end Has_Dependecies;
 
    -----------
    -- Label --
