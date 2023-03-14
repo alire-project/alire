@@ -2,6 +2,7 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Utils.Tables;
+with Alire.Utils.Sets;
 
 package body Alire.Dependencies.Graphs is
 
