@@ -75,7 +75,7 @@ package body Alire.Dependencies.Graphs is
    is
    begin
       return +Dep.Dependent = Crate;
-   end "=";
+   end Is_Dependent;
 
    package Graf is new
       Alire.Utils.Sets.Indefinite_Ordered (
@@ -99,9 +99,9 @@ package body Alire.Dependencies.Graphs is
 --   end Has_Dependencies;
 
    function
-      Has_Dependecies             (
-         This  : Graph            ;
-         Crate : Alire.Crate_Name )
+      Has_Dependecies (
+         This  : Graph;
+         Crate : Alire.Crate_Name)
    return
       Boolean
    renames
