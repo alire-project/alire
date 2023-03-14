@@ -20,7 +20,7 @@ is
    is
       function Contains
         (Container : Containers.Vector;
-         Value     : Element_Type)
+         Item      : Element_Type)
          return Boolean;
 
    end Indefinite;
