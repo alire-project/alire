@@ -12,7 +12,7 @@ is
       is <>;
 
       with package Containers
-        is Ada.Containers.Indefinite_Vectors
+        is new Ada.Containers.Indefinite_Vectors
           (Index_Type   => Index_Type,
            Element_Type => Element_Type);
 
