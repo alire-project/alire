@@ -71,14 +71,25 @@ package body Alire.Dependencies.Graphs is
                               Crate : Alire.Crate_Name)
                               return Boolean
    is
-   begin
-      for Dep of This loop
-         if +Dep.Dependent = Crate then
-            return True;
-         end if;
-      end loop;
+      function "=" (Item    : Alire.Crate_Name;
+                    Element : Dependency)
+                    return Boolean
+      is
+      begin
+         return +Dep.Dependent = Crate;
+      end "=";
 
-      return False;
+      package Graf
+         is new Alire.Utils.Sets.Indefinite_Ordered (Graph);
+   begin
+      return Graf.Contains (Graph, Crate);
+--      for Dep of This loop
+--         if +Dep.Dependent = Crate then
+--            return True;
+--         end if;
+--      end loop;
+--
+--      return False;
    end Has_Dependencies;
 
    -----------
