@@ -77,7 +77,7 @@ package body Alire.Dependencies.Graphs is
    return
       Boolean
    is
-      Dependency_Set : Dep_Sets.Set renames This.Set;
+      Dependency_Set : Dep_Sets.Set renames This;
 
       package Dependency_Sets is new
          Alire.Utils.Sets.Indefinite_Ordered
