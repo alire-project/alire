@@ -11,21 +11,14 @@ is
          Element : Element_Type)
          return Boolean;
 
-      with function "<" (
-         Item    : Item_type;
-         Element : Element_Type)
-         return Boolean
-      is <>;
-
-      with package Containers
-        is new Ada.Containers.Indefinite_Ordered_Sets (
-           Element_Type => Element_Type,
-           "<"          => "<");
-
+      with package Sets is new
+         Ada.Containers.Indefinite_Ordered_Sets (
+            Element_Type => Element_Type);
+   
    package Indefinite_Ordered
    is
       function Contains
-        (Container : Containers.Set;
+        (Container : Sets.Set;
          Item      : Item_Type)
          return Boolean;
 
