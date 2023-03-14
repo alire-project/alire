@@ -82,7 +82,7 @@ package body Alire.Dependencies.Graphs is
 
       package Graf is new
          Alire.Utils.Sets.Indefinite_Ordered (
-            Container    => Graph,
+            Sets         => Graph,
             Element_Type => Dependency,
             Item_Type    => Alire.Crate_Name);
    begin
