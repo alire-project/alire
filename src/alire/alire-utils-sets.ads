@@ -18,8 +18,9 @@ is
       is <>;
 
       with package Containers
-        is new Ada.Containers.Indefinite_Ordered_Sets
-          (Element_Type => Element_Type);
+        is new Ada.Containers.Indefinite_Ordered_Sets (
+           Element_Type => Element_Type,
+           "<"          => "<");
 
    package Indefinite_Ordered
    is
