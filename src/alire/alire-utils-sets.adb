@@ -1,21 +1,26 @@
-package body Alire.Vectors.Utils.Sets
+package body Alire.Utils.Sets
 is
-   package body Indefinite_Ordered
+   package body Ordered
    is
-      function Contains (
-         Container : Sets.Set;
-         Item      : Item_Type)
-         return Boolean
+      package body Indefinite
       is
-         for Element of Container loop
-            if Element = Item then
-               return True;
-            end if;
-         end loop;
-         return False;
+         function Contains
+            (
+            Item : Item_Type
+            )
+         return Boolean
+         is
+            for Element of Container loop
+               if Element = Item then
+                  return True;
+               end if;
+            end loop;
+            return False;
 
-      end Contains;
+         end Contains;
 
-   end Indefinite_Ordered;
+      end Indefinite;
 
-end Alire.Vectors.Utils.Sets;
+   end Ordered;
+
+end Alire.Utils.Sets;
