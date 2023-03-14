@@ -70,21 +70,6 @@ package body Alire.Dependencies.Graphs is
 
    subtype Crate_Name is Alire.Crate_Name;
 
---   function Has_Dependencies (This : Graph;
---                              Crate : Alire.Crate_Name)
---                              return Boolean
---   is
---   begin
---      return Graf.Contains (Graph, Crate);
-----      for Dep of This loop
-----         if +Dep.Dependent = Crate then
-----            return True;
-----         end if;
-----      end loop;
-----
-----      return False;
---   end Has_Dependencies;
-
    function
       Has_Dependecies (
          This  : Graph;
@@ -97,7 +82,8 @@ package body Alire.Dependencies.Graphs is
       package Ordered_Graph is new
          Alire.Utils.Sets.Ordered
             (
-            Sets         => Deps,       -- In the Graph Set
+            Sets         => Dep_Sets,   -- In the Graph
+            Set          => Deps,       -- Deps
             Element_Type => Dependency  -- Of Dependency
             );
 
