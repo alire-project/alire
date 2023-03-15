@@ -1,6 +1,7 @@
 with Ada.Unchecked_Deallocation;
 
 with Alire.Conditional;
+with Alire.Config;
 with Alire.Dependencies.Containers;
 with Alire.Directories;
 with Alire.Environment;
@@ -1263,9 +1264,12 @@ package body Alire.Roots is
    begin
       if This.Solution.State (Crate).Is_Solved then
          if This.Solution.State (Crate).Is_Shared then
-            return Shared.Path;
+            return Shared.Install_Path;
+         elsif Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" then
+            return Config.DB.Get (Config.Keys.Dependencies_Dir, "");
          else
-            return This.Cache_Dir
+            return
+              This.Cache_Dir
               / Paths.Deps_Folder_Inside_Cache_Folder;
          end if;
       else

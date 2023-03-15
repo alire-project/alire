@@ -32,6 +32,9 @@ package Alire.Directories is
    function Parent (Path : Any_Path) return String
                     renames Ada.Directories.Containing_Directory;
 
+   function Full_Name (Path : Any_Path) return String
+                       renames Ada.Directories.Full_Name;
+
    function Detect_Root_Path (Starting_At : Absolute_Path := Current)
                               return String;
    --  Return either the valid enclosing root folder, or ""

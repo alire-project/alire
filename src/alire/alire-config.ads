@@ -23,6 +23,8 @@ package Alire.Config with Preelaborate is
       --  A few predefined keys that are used in several places. This list is
       --  not exhaustive.
 
+      Dependencies_Dir : constant Config_Key := "dependencies.dir";
+
       Editor_Cmd  : constant Config_Key := "editor.cmd";
 
       Distribution_Disable_Detection : constant Config_Key :=
