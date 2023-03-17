@@ -18,12 +18,16 @@ import e3.testsuite.driver
 from e3.testsuite.result import TestStatus
 
 from drivers.helpers import on_windows
-from drivers.python_script import PythonScriptDriver
+from drivers.driver.python_script import PythonScriptDriver
+from drivers.driver.docker_wrapper import DockerWrapperDriver
 
 
 class Testsuite(e3.testsuite.Testsuite):
     tests_subdir = 'tests'
-    test_driver_map = {'python-script': PythonScriptDriver}
+    test_driver_map = {
+        'python-script': PythonScriptDriver,
+        'docker-wrapper': DockerWrapperDriver
+        }
 
     def add_options(self, parser):
         super().add_options(parser)

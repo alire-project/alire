@@ -45,7 +45,7 @@ def assert_eq(expected, actual, label=None):
 
 def assert_contents(dir: str, expected, regex: str = ""):
     """
-    Check that entries in dir filtered by regex match the list in contents
+    Check that entries in dir filtered by regex match the list in expected
     """
     real = contents(dir, regex)
     assert real == expected, \
