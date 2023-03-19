@@ -171,6 +171,13 @@ package body Alire.Config.Edit is
       end if;
    end Set_Path;
 
+   -----------------------
+   -- Is_At_Default_Dir --
+   -----------------------
+
+   function Is_At_Default_Dir return Boolean
+   is (Path = Platforms.Folders.Config);
+
    -------------------
    -- Valid_Builtin --
    -------------------
