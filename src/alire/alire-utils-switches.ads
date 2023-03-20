@@ -54,9 +54,8 @@ is
                              GNAT_Extensions);
 
    type Source_Encoding_Kind is
-     (ASCII,   --  Default behavior of GNAT, no switches set
-      Latin_1, --  Default behavior of GNAT, no switches set (Latin1)
-      UTF_8    --  -gnatW8, UTF-8 sources, Unicode literals & identifiers
+     (Compiler_Default, --  Default behavior of GNAT, no switches set (Latin1)
+      UTF_8             --  -gnatW8, UTF-8 sources, full literals & identifiers
      );
 
    type Optimization_Switches (Custom : Boolean := False)

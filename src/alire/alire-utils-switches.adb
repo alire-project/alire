@@ -208,8 +208,8 @@ package body Alire.Utils.Switches is
        then S.List
        else
          (case S.Value is
-             when ASCII | Latin_1 => Empty_List,
-             when UTF_8           => Empty_List.Append (GNAT_UTF8_Encoding)));
+             when Compiler_Default => Empty_List,
+             when UTF_8            => Empty_List.Append (GNAT_UTF8_Encoding)));
 
    --------------
    -- Get_List --
