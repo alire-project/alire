@@ -7,7 +7,8 @@ with Alire.Directories;
 
 package Alire.Config.Edit is
 
-   --  Shortcuts that use the standard config locations:
+   --  Shortcuts that use the standard config locations. These interpret the
+   --  value in string as a TOML type whenever possible.
 
    procedure Set_Locally (Key   : CLIC.Config.Config_Key;
                           Value : String;
@@ -21,6 +22,23 @@ package Alire.Config.Edit is
                   Key   : CLIC.Config.Config_Key;
                   Value : String;
                   Check : CLIC.Config.Check_Import := null);
+
+   --  Typed alternatives
+
+   procedure Set_Boolean (Level : Config.Level;
+                          Key   : CLIC.Config.Config_Key;
+                          Value : Boolean;
+                          Check : CLIC.Config.Check_Import := null);
+
+   procedure Set_Integer (Level : Config.Level;
+                          Key   : CLIC.Config.Config_Key;
+                          Value : Integer;
+                          Check : CLIC.Config.Check_Import := null);
+
+   procedure Set_Float (Level : Config.Level;
+                        Key   : CLIC.Config.Config_Key;
+                        Value : Float;
+                        Check : CLIC.Config.Check_Import := null);
 
    --  To ease the pain with circularities in old GNAT versions, we have also
    --  here all non-preelaborable things related to config loading. This

@@ -5,7 +5,7 @@ with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Utils;
 
-with CLIC.Config.Edit;
+with CLIC.Config.Edit.Typed;
 with CLIC.Config.Load;
 
 package body Alire.Config.Edit is
@@ -13,6 +13,7 @@ package body Alire.Config.Edit is
    use Ada.Strings.Unbounded;
    use AAA.Strings;
    use TOML;
+   package Typed renames CLIC.Config.Edit.Typed;
 
    type String_Access is access String;
    Config_Path : String_Access;
@@ -66,6 +67,49 @@ package body Alire.Config.Edit is
          when Global => Set_Globally (Key, Value, Check);
       end case;
    end Set;
+
+   -----------------
+   -- Set_Boolean --
+   -----------------
+
+   procedure Set_Boolean (Level : Config.Level;
+                          Key   : CLIC.Config.Config_Key;
+                          Value : Boolean;
+                          Check : CLIC.Config.Check_Import := null)
+   is
+
+   begin
+      Assert (Typed.Set_Boolean (Filepath (Level), Key, Value, Check),
+              "Cannot set config key '" & Key & "' at level " & Level'Image);
+   end Set_Boolean;
+
+   -----------------
+   -- Set_Integer --
+   -----------------
+
+   procedure Set_Integer (Level : Config.Level;
+                          Key   : CLIC.Config.Config_Key;
+                          Value : Integer;
+                          Check : CLIC.Config.Check_Import := null)
+   is
+   begin
+      Assert (Typed.Set_Integer (Filepath (Level), Key, Value, Check),
+              "Cannot set config key '" & Key & "' at level " & Level'Image);
+   end Set_Integer;
+
+   ---------------
+   -- Set_Float --
+   ---------------
+
+   procedure Set_Float (Level : Config.Level;
+                        Key   : CLIC.Config.Config_Key;
+                        Value : Float;
+                        Check : CLIC.Config.Check_Import := null)
+   is
+   begin
+      Assert (Typed.Set_Float (Filepath (Level), Key, Value, Check),
+              "Cannot set config key '" & Key & "' at level " & Level'Image);
+   end Set_Float;
 
    --------------
    -- Filepath --
