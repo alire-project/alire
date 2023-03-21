@@ -87,8 +87,9 @@ something else.
 UTF-8-encoded strings are more memory-efficient, but cannot be used to iterate
 over characters without help of support libraries. `Wide_Wide_Strings` retain
 the 1:1 index-to-character ratio, so they are efficient for such iterations.
-`Wide_Strings`, which normally hold UTF-16, are probably a middle-ground not
-useful in general anymore.
+`Wide_Strings`, which are defined to hold 2-byte Unicode code points (although
+conceivably they could also be used with UTF-16), are probably a middle-ground
+not useful in general anymore.
 
 ## Migrating 'old' code
 
