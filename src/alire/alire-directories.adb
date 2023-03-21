@@ -168,16 +168,6 @@ package body Alire.Directories is
       end if;
    end Delete_Temporaries;
 
-   -----------------
-   -- Delete_Tree --
-   -----------------
-
-   procedure Delete_Tree (Path : Any_Path) is
-   begin
-      Ensure_Deletable (Path);
-      Ada.Directories.Delete_Tree (Path);
-   end Delete_Tree;
-
    ----------------------
    -- Detect_Root_Path --
    ----------------------
@@ -568,7 +558,8 @@ package body Alire.Directories is
 
    procedure Merge_Contents (Src, Dst              : Any_Path;
                              Skip_Top_Level_Files  : Boolean;
-                             Fail_On_Existing_File : Boolean)
+                             Fail_On_Existing_File : Boolean;
+                             Remove_From_Source    : Boolean)
    is
 
       Base   : constant Absolute_Path := Adirs.Full_Name (Src);
@@ -602,7 +593,9 @@ package body Alire.Directories is
            and then Base = Parent (Src)
          then
             Trace.Debug ("   Merge: Not merging top-level file " & Src);
-            Adirs.Delete_File (Src);
+            if Remove_From_Source then
+               Adirs.Delete_File (Src);
+            end if;
             return;
          end if;
 
@@ -611,7 +604,7 @@ package body Alire.Directories is
          if Adirs.Kind (Item) = Directory then
             if not Is_Directory (Dst) then
                Trace.Debug ("   Merge: Creating destination dir " & Dst);
-               Adirs.Create_Directory (Dst);
+               Create_Tree (Dst);
             end if;
 
             return;
@@ -619,10 +612,12 @@ package body Alire.Directories is
             --  recursion we could more efficiently rename now into place.
          end if;
 
-         --  Move a file into place
+         --  Copy/Move a file into place
 
-         Trace.Debug ("   Merge: Moving " & Adirs.Full_Name (Item)
-                    & " into " & Dst);
+         Trace.Debug ("   Merge: "
+                     & (if Remove_From_Source then " moving " else " copying ")
+                     & Adirs.Full_Name (Item)
+                     & " into " & Dst);
          if Adirs.Exists (Dst) then
             if Fail_On_Existing_File then
                Recoverable_Error ("Cannot move " & TTY.URL (Src)
@@ -650,14 +645,24 @@ package body Alire.Directories is
             OK : Boolean := False;
          begin
             if VF.Is_Symbolic_Link then
-               VF.Rename (VFS.New_Virtual_File (Dst), OK);
+               if Remove_From_Source then
+                  VF.Rename (VFS.New_Virtual_File (Dst), OK);
+               else
+                  VF.Copy (VFS.Filesystem_String (Dst), OK);
+               end if;
                if not OK then
-                  Raise_Checked_Error ("Failed to move softlink: "
+                  Raise_Checked_Error ("Failed to copy/move softlink: "
                                        & TTY.URL (Src));
                end if;
             else
-               Adirs.Rename (Old_Name => Src,
-                             New_Name => Dst);
+               if Remove_From_Source then
+                  Adirs.Rename (Old_Name => Src,
+                                New_Name => Dst);
+               else
+                  Adirs.Copy_File (Source_Name => Src,
+                                   Target_Name => Dst,
+                                   Form        => "preserve=all_attributes");
+               end if;
             end if;
          end;
       end Merge;

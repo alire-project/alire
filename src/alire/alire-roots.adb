@@ -1263,7 +1263,7 @@ package body Alire.Roots is
    begin
       if This.Solution.State (Crate).Is_Solved then
          if This.Solution.State (Crate).Is_Shared then
-            return Shared.Install_Path;
+            return Shared.Path;
          else
             return This.Cache_Dir
               / Paths.Deps_Folder_Inside_Cache_Folder;

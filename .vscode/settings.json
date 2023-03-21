@@ -1,3 +1,11 @@
 {
-    "ada.projectFile": "alr_env.gpr"
+    "ada.projectFile": "alr_env.gpr",
+    "cSpell.words": [
+        "alire",
+        "rlimit"
+    ],
+    "ada.defaultCharset": "utf-8",
+    "ada.scenarioVariables": {
+        ALIRE_OS="linux",
+    }
 }

@@ -1,3 +1,6 @@
+with AAA.Strings;
+
+with Alire.Index;
 with Alire.Root;
 with Alire.Shared;
 
@@ -10,8 +13,28 @@ package body Alire.Toolchains.Solutions is
    function Add_Toolchain (Solution : Alire.Solutions.Solution)
                               return Alire.Solutions.Solution
    is
+
+      ------------------------
+      -- Redeploy_If_Needed --
+      ------------------------
+
+      procedure Redeploy_If_Needed (Mil : Milestones.Milestone) is
+         use type Milestones.Milestone;
+      begin
+         --  Check that is not already there
+         if (for some Rel of Shared.Available => Rel.Milestone = Mil) then
+            return;
+         end if;
+
+         --  It must be redeployed
+         Put_Warning ("Tool " & Mil.TTY_Image & " is missing, redeploying...");
+
+         Shared.Share (Index.Find (Mil.Crate, Mil.Version));
+      end Redeploy_If_Needed;
+
       Result : Alire.Solutions.Solution := Solution;
    begin
+
       --  For every tool in the toolchain that does not appear in the solution,
       --  we will insert the user-configured tool, if any.
 
@@ -21,6 +44,14 @@ package body Alire.Toolchains.Solutions is
               ("Toolchain environment: solution already depends on "
                & Solution.State (Tool).TTY_Image);
          elsif Toolchains.Tool_Is_Configured (Tool) then
+
+            --  This shouldn't happen normally, but it can happen if the user
+            --  has just changed the cache location.
+            if not Tool_Is_External (Tool) then
+               Redeploy_If_Needed (Tool_Milestone (Tool));
+            end if;
+
+            --  Add the configured tool release to the solution
             Result := Result.Including
               (Release        => Shared.Release
                  (Target           => Tool_Milestone (Tool),

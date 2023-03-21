@@ -8,10 +8,7 @@
 				"$ada"
 			],
 			"label": "Alire: Build alr",
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
+			"group": "build"
 		},
 		{
 			"type": "shell",
@@ -19,7 +16,7 @@
 			"problemMatcher": [
 				"$ada"
 			],
-			"label": "Alire: Compile current file",
+			"label": "Alire: Compile current file"
 		},
 		{
 			"type": "shell",
@@ -27,7 +24,7 @@
 			"problemMatcher": [
 				"$ada"
 			],
-			"label": "Alire: Clean all projects",
+			"label": "Alire: Clean all projects"
 		},
 		{
 			"type": "shell",

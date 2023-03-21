@@ -15,12 +15,12 @@ package body Alire.Platforms.Folders is
    -- Cache --
    -----------
 
-   function Cache return String is (Home / ".cache" / "alire");
+   function Cache return Absolute_Path is (Home / ".cache" / "alire");
 
    ------------
    -- Config --
    ------------
 
-   function Config return String is (Home / ".config" / "alire");
+   function Config return Absolute_Path is (Home / ".config" / "alire");
 
 end Alire.Platforms.Folders;

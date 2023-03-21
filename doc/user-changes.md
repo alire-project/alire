@@ -4,7 +4,20 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release 1.3-dev
+## Release `1.3-dev`
+
+### Binary releases moved to system cache from system config directory
+
+PR [#1349](https://github.com/alire-project/alire/pull/1349)
+
+Alire was storing large binary releases like compilers in the config location,
+which is against best practices.
+
+Users are advised to delete the old location to recover disk space, or to
+manually move the contents to avoid redownloading toolchains.
+
+- Old location: `<user home>/.config/alire/cache`
+- New location: `<user home>/.cache/alire`
 
 ### Installation of indexed crates
 
@@ -168,7 +181,7 @@ PR [#1080](https://github.com/alire-project/alire/pull/1080)
 this PR this was always a development build. Now, the last profile used during
 an `alr build` will be reused.
 
-## Release 1.2
+## Release `1.2`
 
 ### New subcommand for listing and manual triggering of actions
 

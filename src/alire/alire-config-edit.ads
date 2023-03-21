@@ -36,6 +36,9 @@ package Alire.Config.Edit is
    procedure Set_Path (Path : Absolute_Path);
    --  Override global config folder path
 
+   function Is_At_Default_Dir return Boolean;
+   --  Says if we are using the default config location (no -c or env override)
+
    function Indexes_Directory return Absolute_Path is (Path / "indexes");
 
    function Filepath (Lvl : Level) return Absolute_Path

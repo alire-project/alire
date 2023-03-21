@@ -71,7 +71,8 @@ package body Alire.Install is
            (Src                   => Prefix / Rel.Base_Folder,
             Dst                   => Prefix,
             Skip_Top_Level_Files  => True,
-            Fail_On_Existing_File => not Alire.Force);
+            Fail_On_Existing_File => not Alire.Force,
+            Remove_From_Source    => True);
 
          --  Keep track that this was installed
 
