@@ -14,6 +14,30 @@ package body Alire.Selftest is
       Config.Edit.Set_Globally (Key, Val);
       pragma Assert (Config.DB.Defined (Key));
       pragma Assert (Config.DB.Get (Key, "snafu") = Val);
+
+      --  Check typed storing
+
+      --  Raw storing of integer
+      Config.Edit.Set_Globally (Key, "777");
+      pragma Assert (Integer (Config.DB.Get (Key, 0)) = 777);
+
+      --  Typed storing of integer
+      Config.Edit.Set_Integer (Config.Global, Key, 888);
+      pragma Assert (Integer (Config.DB.Get (Key, 0)) = 888);
+
+      --  Raw storing of boolean
+      Config.Edit.Set_Globally (Key, "true");
+      pragma Assert (Config.DB.Get (Key, False) = True);
+
+      --  Typed storing of boolean
+      Config.Edit.Set_Boolean (Config.Global, Key, False);
+      pragma Assert (Config.DB.Get (Key, True) = False);
+
+      --  Raw storing of boolean with wrong type
+      Config.Edit.Set_Globally (Key, "True");
+      --  This causes a string to be stored, as in TOML only "true" is bool
+      pragma Assert (Config.DB.Get (Key, "False") = "True");
+
    end Check_Config_Changes;
 
    ------------------------

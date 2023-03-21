@@ -161,8 +161,10 @@ package body Alr.Commands.Get is
             Trace.Info ("Because --only was used, automatic dependency" &
                           " retrieval is disabled in this workspace:" &
                           " use `alr update` to apply dependency changes");
-            Alire.Config.Edit.Set_Locally
-              (Alire.Config.Keys.Update_Manually, "true");
+            Alire.Config.Edit.Set_Boolean
+              (Alire.Config.Local,
+               Alire.Config.Keys.Update_Manually,
+               True);
 
             if not CLIC.User_Input.Not_Interactive then
                Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);

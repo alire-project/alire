@@ -35,11 +35,6 @@ package Alire.Config.Edit is
                           Value : Integer;
                           Check : CLIC.Config.Check_Import := null);
 
-   procedure Set_Float (Level : Config.Level;
-                        Key   : CLIC.Config.Config_Key;
-                        Value : Float;
-                        Check : CLIC.Config.Check_Import := null);
-
    --  To ease the pain with circularities in old GNAT versions, we have also
    --  here all non-preelaborable things related to config loading. This
    --  way, querying stays preelaborable.

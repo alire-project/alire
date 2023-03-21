@@ -81,6 +81,8 @@ package body Alire.Config.Edit is
    begin
       Assert (Typed.Set_Boolean (Filepath (Level), Key, Value, Check),
               "Cannot set config key '" & Key & "' at level " & Level'Image);
+      --  Reload after change
+      Load_Config;
    end Set_Boolean;
 
    -----------------
@@ -95,21 +97,9 @@ package body Alire.Config.Edit is
    begin
       Assert (Typed.Set_Integer (Filepath (Level), Key, Value, Check),
               "Cannot set config key '" & Key & "' at level " & Level'Image);
+      --  Reload after change
+      Load_Config;
    end Set_Integer;
-
-   ---------------
-   -- Set_Float --
-   ---------------
-
-   procedure Set_Float (Level : Config.Level;
-                        Key   : CLIC.Config.Config_Key;
-                        Value : Float;
-                        Check : CLIC.Config.Check_Import := null)
-   is
-   begin
-      Assert (Typed.Set_Float (Filepath (Level), Key, Value, Check),
-              "Cannot set config key '" & Key & "' at level " & Level'Image);
-   end Set_Float;
 
    --------------
    -- Filepath --
