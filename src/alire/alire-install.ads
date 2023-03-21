@@ -13,13 +13,19 @@ package Alire.Install is
 
    procedure Add (Prefix : Any_Path;
                   Deps   : Dependencies.Containers.List);
-   --  Resolve the dependencies and install the resulting releases. If a
-   --  crate is given twice it will raise.
+   --  Resolve the dependencies and install the resulting releases. If a crate
+   --  is given twice it will raise.
 
-   procedure Check_Conflict (Prefix : Any_Path; Rel : Releases.Release);
-   --  Will cause a recoverable error if Rel is already installed, or another
-   --  release from the same crate is. This is regardless Rel containing
-   --  executables or not.
+   type Actions is (
+                    New_Install, -- no conflict
+                    Reinstall,   -- install same version again
+                    Replace,     -- new version of already installed executable
+                    Skip         -- skip install
+                   );
+
+   function Check_Conflicts (Prefix : Any_Path;
+                             Rel    : Releases.Release)
+                             return Actions;
 
    procedure Info (Prefix : Any_Path);
    --  Display information about the given prefix

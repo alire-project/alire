@@ -49,13 +49,25 @@ package body Alire.Externals.From_System is
                         Trace.Detail ("Success with system package: "
                                       & Candidate);
 
-                        Releases.Insert
-                          (Index.Crate (Name, Index.Query_Mem_Only).Base
-                           .Retagging (Result.Value)
-                           .Providing (This.Provides)
-                           .Replacing (Origins.New_System (Candidate))
-                           .Replacing (Notes => "Provided by system package: "
-                                       & Candidate));
+                        --  A system package may be found more than once if
+                        --  transitional and proper package names are given
+                        --  for detection of the same system package.
+                        declare
+                           Release : constant Alire.Releases.Release
+                             := Index.Crate (Name, Index.Query_Mem_Only).Base
+                             .Retagging (Result.Value)
+                             .Providing (This.Provides)
+                             .Replacing (Origins.New_System (Candidate))
+                             .Replacing (Notes => "Provided by system package:"
+                                         & " " & Candidate);
+                        begin
+                           if Releases.Contains (Release) then
+                              Trace.Debug ("Not readding same system package: "
+                                           & Release.Milestone.Image);
+                           else
+                              Releases.Insert (Release);
+                           end if;
+                        end;
                      end if;
                   end;
                end loop;

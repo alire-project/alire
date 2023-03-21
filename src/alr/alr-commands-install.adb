@@ -36,6 +36,8 @@ package body Alr.Commands.Install is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use all type Alire.Install.Actions;
+
       Prefix : constant Alire.Absolute_Path :=
                  Adirs.Full_Name
                    (if Cmd.Prefix.all /= ""
@@ -54,11 +56,16 @@ package body Alr.Commands.Install is
 
       elsif Args.Is_Empty then
 
-         --  Install local crate first if requested
-
-            Alire.Install.Check_Conflict (Prefix, Cmd.Root.Release);
-            Cmd.Root.Install (Prefix     => Prefix,
-                              Export_Env => True);
+         case Alire.Install.Check_Conflicts (Prefix, Cmd.Root.Release) is
+            when Skip =>
+               Trace.Info
+                 (Cmd.Root.Release.Milestone.TTY_Image
+                  & " is already installed, use " & TTY.Terminal ("--force")
+                  & " to reinstall");
+            when New_Install | Reinstall | Replace =>
+               Cmd.Root.Install (Prefix     => Prefix,
+                                 Export_Env => True);
+         end case;
 
       else
 
@@ -110,6 +117,9 @@ package body Alr.Commands.Install is
          & "), as well as crates initialized with `alr` using default "
          & "templates, should be able to coexist in a same installation prefix"
          & " without issue.")
+       .New_Line
+       .Append ("You can use the --force to reinstall already installed "
+         & "releases.")
       );
 
    --------------------

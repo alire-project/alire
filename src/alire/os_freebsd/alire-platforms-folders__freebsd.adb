@@ -16,4 +16,10 @@ package body Alire.Platforms.Folders is
 
    function Config return String is (Common.XDG_Config_Folder);
 
+   ----------
+   -- Home --
+   ----------
+
+   function Home return Absolute_Path is (Common.Unix_Home_Folder);
+
 end Alire.Platforms.Folders;

@@ -133,7 +133,7 @@ package body Alr.Commands.Get is
               (Rel,
                Ada.Directories.Current_Directory,
                Platform.Properties,
-               Perform_Actions => False));
+               Up_To => Alire.Roots.Deploy));
 
          --  Set the initial solution we just found
 
@@ -163,6 +163,11 @@ package body Alr.Commands.Get is
                           " use `alr update` to apply dependency changes");
             Alire.Config.Edit.Set_Locally
               (Alire.Config.Keys.Update_Manually, "true");
+
+            if not CLIC.User_Input.Not_Interactive then
+               Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+            end if;
+
             return;
          end if;
 
@@ -188,7 +193,7 @@ package body Alr.Commands.Get is
                --  The complete build environment has been set up already by
                --  Deploy_Dependencies, so we must not do it again.
                Build_OK := Cmd.Root.Build
-                 (Cmd_Args       =>  AAA.Strings.Empty_Vector,
+                 (Cmd_Args         =>  AAA.Strings.Empty_Vector,
                   Saved_Profiles   => False,
                   Export_Build_Env => False);
             end if;
@@ -216,6 +221,10 @@ package body Alr.Commands.Get is
                  Level => (if not Cmd.Build or else Build_OK
                            then Info
                            else Warning));
+
+      if not CLIC.User_Input.Not_Interactive then
+         Alire.Roots.Print_Nested_Crates (Cmd.Root.Path);
+      end if;
 
       if Diff.Contains_Changes then
          Trace.Info ("Dependencies were solved as follows:");

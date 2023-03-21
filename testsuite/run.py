@@ -34,6 +34,10 @@ class Testsuite(e3.testsuite.Testsuite):
     def set_up(self):
         super().set_up()
         os.environ['ALR_PATH'] = self.main.args.alr_path
+        # Some alr commands spawn another `alr` which must be found in path.
+        # This way we ensure the same alr being tested is used.
+        os.environ["PATH"] = \
+            f"{os.path.dirname(self.main.args.alr_path)}{os.pathsep}{os.environ['PATH']}"
         # Some tests rely on an initially empty GPR_PROJECT_PATH variable
         os.environ.pop('GPR_PROJECT_PATH', None)
 

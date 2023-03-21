@@ -280,6 +280,15 @@ package body Alr.Commands.Show is
    begin
       Cmd.Validate (Args);
 
+      --  Early case, --nested doesn't require either root or argument
+
+      if Cmd.Nested then
+         Alire.Roots.Print_Nested_Crates (Alire.Directories.Current);
+         return;
+      end if;
+
+      --  Rest of cases require either being inside a root or a crate name
+
       declare
          Allowed : constant Alire.Dependencies.Dependency :=
            (if Args.Count = 1
@@ -407,6 +416,10 @@ package body Alr.Commands.Show is
       Define_Switch (Config,
                      Cmd.Jekyll'Access,
                      "", "--jekyll", "Enable Jekyll output format");
+
+      Define_Switch (Config,
+                     Cmd.Nested'Access,
+                     "", "--nested", "Show info on nested crates");
    end Setup_Switches;
 
    --------------
@@ -421,10 +434,10 @@ package body Alr.Commands.Show is
       end if;
 
       if Args.Count = 0 then
-         if Alire.Root.Current.Outside then
+         if Alire.Root.Current.Outside and not Cmd.Nested then
             Reportaise_Wrong_Arguments
               ("Cannot proceed without a crate name");
-         else
+         elsif not Cmd.Nested then
             Cmd.Requires_Valid_Session;
          end if;
       end if;
@@ -441,7 +454,7 @@ package body Alr.Commands.Show is
       if Cmd.Dependents.all /= "unset" then
          if Alire.Utils.Count_True ((Cmd.Detect, Cmd.Detail, Cmd.External,
                                      Cmd.Graph, Cmd.Solve, Cmd.System,
-                                     Cmd.Tree, Cmd.Jekyll)) > 0
+                                     Cmd.Tree, Cmd.Jekyll, Cmd.Nested)) > 0
          then
             Reportaise_Wrong_Arguments
               ("Switch --dependents is not compatible with other switches");

@@ -29,10 +29,10 @@ jobs:
       with:
         submodules: true
 
-    - name: Install toolchain
-      uses: ada-actions/toolchain@ce2021
+    - name: Install FSF toolchain
+      uses: alire-project/alr-install@v1
       with:
-        distrib: community
+        crates: gnat_native gprbuild
 
     - name: Install Python 3.x (required for the testsuite)
       uses: actions/setup-python@v2

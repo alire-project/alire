@@ -10,6 +10,7 @@ with Alire.Interfaces;
 with Alire.Manifest;
 with Alire.Milestones;
 with Alire.Origins;
+with Alire.Platforms.Current;
 with Alire.Properties.Actions;
 with Alire.Properties.Environment;
 with Alire.Properties.Labeled;
@@ -205,7 +206,8 @@ package Alire.Releases is
    --  Retrieve env vars that are set by this release, key is the var name
 
    function Executables (R : Release;
-                         P : Alire.Properties.Vector)
+                         P : Alire.Properties.Vector :=
+                           Platforms.Current.Properties)
                          return AAA.Strings.Vector;
    --  Only explicitly declared ones
    --  Under some conditions (usually current platform)

@@ -9,10 +9,12 @@ repository](https://github.com/alire-project/alire/releases).
 
 On Linux, `Alire` is simply provided in an archive.
 
-Once the archive is extracted you have to add `alr` in the environment `PATH`:
+Once the archive is extracted you have to add `alr` in the environment `PATH` .
+This may be done for the duration of a terminal session by running the command below: 
 ```bash
-$ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
+$ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
+Those wanting to keep this path permanently in their `PATH` environment may do so by pasting the above command into the `.profile` file of their user's account.
 
 Alire provides GNAT toolchains hosted on x86-64 for Linux. If those toolchains do not 
 work for you, or if you are on another host architecture like ARM, you have the option 
@@ -39,7 +41,7 @@ On macOS, `Alire` is simply provided in an archive.
 
 Once the archive is extracted you have to add `alr` in the environment `PATH`:
 ```bash
-$ export PATH=<PATH_TO_EXTRACTED>/bin/:$PATH
+$ export PATH="<PATH_TO_EXTRACTED>/bin/:$PATH"
 ```
 
 If you try to run it on recent versions of macOS, you will get a popup saying 
