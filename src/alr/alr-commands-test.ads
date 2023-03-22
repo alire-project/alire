@@ -33,9 +33,11 @@ package Alr.Commands.Test is
 
 private
 
+   No_Docker : constant String := "unset";
+
    type Command is new Commands.Command with record
       Cont   : aliased Boolean := False;
-      Docker : aliased GNAT.Strings.String_Access;
+      Docker : aliased GNAT.Strings.String_Access := new String'(No_Docker);
       Full   : aliased Boolean := False;
       Last   : aliased Boolean := False;
       Redo   : aliased Boolean := False;
