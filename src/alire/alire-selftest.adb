@@ -21,10 +21,6 @@ package body Alire.Selftest is
       Config.Edit.Set_Globally (Key, "777");
       pragma Assert (Integer (Config.DB.Get (Key, 0)) = 777);
 
-      --  Typed storing of integer
-      Config.Edit.Set_Integer (Config.Global, Key, 888);
-      pragma Assert (Integer (Config.DB.Get (Key, 0)) = 888);
-
       --  Raw storing of boolean
       Config.Edit.Set_Globally (Key, "true");
       pragma Assert (Config.DB.Get (Key, False) = True);

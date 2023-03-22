@@ -5,7 +5,7 @@ with Alire.Platforms.Folders;
 with Alire.Platforms.Current;
 with Alire.Utils;
 
-with CLIC.Config.Edit.Typed;
+with CLIC.Config.Edit;
 with CLIC.Config.Load;
 
 package body Alire.Config.Edit is
@@ -13,7 +13,6 @@ package body Alire.Config.Edit is
    use Ada.Strings.Unbounded;
    use AAA.Strings;
    use TOML;
-   package Typed renames CLIC.Config.Edit.Typed;
 
    type String_Access is access String;
    Config_Path : String_Access;
@@ -77,29 +76,14 @@ package body Alire.Config.Edit is
                           Value : Boolean;
                           Check : CLIC.Config.Check_Import := null)
    is
-
+      function Set_Boolean_Impl is new CLIC.Config.Edit.Set_Typed
+        (Boolean, TOML_Boolean, Boolean'Image);
    begin
-      Assert (Typed.Set_Boolean (Filepath (Level), Key, Value, Check),
+      Assert (Set_Boolean_Impl (Filepath (Level), Key, Value, Check),
               "Cannot set config key '" & Key & "' at level " & Level'Image);
       --  Reload after change
       Load_Config;
    end Set_Boolean;
-
-   -----------------
-   -- Set_Integer --
-   -----------------
-
-   procedure Set_Integer (Level : Config.Level;
-                          Key   : CLIC.Config.Config_Key;
-                          Value : Integer;
-                          Check : CLIC.Config.Check_Import := null)
-   is
-   begin
-      Assert (Typed.Set_Integer (Filepath (Level), Key, Value, Check),
-              "Cannot set config key '" & Key & "' at level " & Level'Image);
-      --  Reload after change
-      Load_Config;
-   end Set_Integer;
 
    --------------
    -- Filepath --
