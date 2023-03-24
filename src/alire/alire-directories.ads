@@ -39,15 +39,14 @@ package Alire.Directories is
    procedure Create_Tree (Path : Any_Path);
    --  Create Path and all necessary intermediate folders
 
-   procedure Delete_Tree (Path : Any_Path);
-   --  Equivalent to Ensure_Deletable + Ada.Directories.Delete_Tree
-
    procedure Ensure_Deletable (Path : Any_Path);
    --  In Windows, git checkouts are created with read-only file that do not
    --  sit well with Ada.Directories.Delete_Tree.
 
    procedure Force_Delete (Path : Any_Path);
-   --  Calls Ensure_Deletable and then Adirs.Delete_Tree
+   --  Calls Ensure_Deletable and then uses GNATCOLL.VFS deletion
+
+   procedure Delete_Tree (Path : Any_Path) renames Force_Delete;
 
    function Find_Files_Under (Folder    : String;
                               Name      : String;
@@ -78,7 +77,8 @@ package Alire.Directories is
 
    procedure Merge_Contents (Src, Dst              : Any_Path;
                              Skip_Top_Level_Files  : Boolean;
-                             Fail_On_Existing_File : Boolean);
+                             Fail_On_Existing_File : Boolean;
+                             Remove_From_Source    : Boolean);
    --  Move all contents from Src into Dst, recursively. Dirs already existing
    --  on Dst tree will be merged. For existing regular files, either log
    --  at debug level or fail. If Skip, discard files at the Src top-level.

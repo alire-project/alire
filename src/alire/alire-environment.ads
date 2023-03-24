@@ -15,10 +15,6 @@ package Alire.Environment is
    Config : constant String := "ALR_CONFIG";
    --  Folder where current alr will look for configuration
 
-   Source : constant String := "ALR_SOURCE";
-   --  Folder that overrides where alr sources are checked out
-   --  Intended to help developers by pointing it to their sources
-
    type Context is tagged limited private;
 
    procedure Set (This : in out Context; Name, Value, Origin : String);

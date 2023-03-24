@@ -19,11 +19,17 @@ package Alire.Shared is
    --  Retrieve the release corresponding to Target, if it exists. Will raise
    --  Constraint_Error if not among Available.
 
-   function Install_Path return Any_Path;
-   --  Returns the base folder in which all shared releases live
+   function Path return Any_Path;
+   --  Returns the base folder in which all shared releases live:
+   --  * <config>/cache/dependencies if set with --config/-c
+   --  * <config>/cache/dependencies if set through ALR_CONFIG
+   --  * ~/.cache/alire/dependencies by default
+
+   procedure Set_Path (Path : Absolute_Path);
+   --  Override the location of the global cache location
 
    procedure Share (Release  : Releases.Release;
-                    Location : Any_Path := Install_Path);
+                    Location : Any_Path := Path);
    --  Deploy a release in the specified location
 
    procedure Remove
