@@ -69,7 +69,7 @@ package Alr.Commands is
    --  is created. If Error, replace the first generic error message with it.
 
    function Has_Root (Cmd : in out Command'Class) return Boolean;
-   --  True when Requires_Valide_Session would succeed, false otherwise
+   --  True when Requires_Valid_Session would succeed, false otherwise
 
    procedure Load (Cmd       : Command'Class;
                    Crate     : Alire.Crate_Name;

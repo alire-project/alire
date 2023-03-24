@@ -498,6 +498,10 @@ package body Alr.Commands.Test is
    is
       No_Args : constant Boolean := Args.Count = 0;
 
+      ---------------
+      -- Not_Empty --
+      ---------------
+
       procedure Not_Empty (Item : Ada.Directories.Directory_Entry_Type;
                            Stop : in out Boolean)
       is
@@ -638,12 +642,13 @@ package body Alr.Commands.Test is
 
       --  When doing testing over index contents, we request an empty dir
       if not No_Args then
-         Alire.Directories.Traverse_Tree
-           (Ada.Directories.Current_Directory, Not_Empty'Access);
          if Cmd.Cont then
             Trace.Detail ("Resuming tests");
          elsif Cmd.Redo then
             Trace.Detail ("Redoing tests");
+         else
+            Alire.Directories.Traverse_Tree
+              (Ada.Directories.Current_Directory, Not_Empty'Access);
          end if;
       end if;
 

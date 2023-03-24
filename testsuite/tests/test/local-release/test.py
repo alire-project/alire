@@ -21,6 +21,10 @@ init_local_crate("yyy")
 os.chdir("src")
 run_alr("test") # Ending with success is enough
 
+# Check the expected log files exist
+assert_file_exists(os.path.join("..", "alire", "alr_test_local.log"))
+assert_file_exists(os.path.join("..", "alire", "alr_test_local.xml"))
+
 # Check testing with a test action instead of default build
 os.chdir("..")
 init_local_crate("zzz")
