@@ -47,8 +47,8 @@ windows = { ALIRE_OS = "windows" }
 [[pins]]
 aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8cfb34d04ceec340e13" }
 ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
-clic = { url = "https://github.com/alire-project/clic", commit = "102bc38c7e9469112145e12100449664b5c74764" }
+clic = { url = "https://github.com/alire-project/clic", commit = "5b46b3c57fd0c6a62db1608c9f5573b1866e0dbe" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "92bb91130a9ec628b4c48b7ef9fe7f24d9dc25fa" }
-semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "c2345fca8b685d6d3fc9334fac81140a0cdbea89" }
-simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "2b62010b6d66c106c65eb9ae604aabcf64522fac" }
+semantic_versioning = { url = "https://github.com/alire-project/semantic_versioning", commit = "2f23fc5f6b4855b836b599adf292fed9c0ed4144" }
+simple_logging = { url = "https://github.com/alire-project/simple_logging", commit = "3505dc645f3eef6799a486aae223d37e88cfc4d5" }
 stopwatch = { url = "https://github.com/mosteo/stopwatch", commit = "f607a63b714f09bbf6126de9851cbc21cf8666c9" }
