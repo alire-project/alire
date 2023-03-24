@@ -96,3 +96,10 @@ def assert_installed(prefix : str, milestones : List[str]):
               "Contents:\n"
               "   " + "\n   ".join(milestones) + "\n",
               p.out)
+
+
+def assert_file_exists(path : str):
+    """
+    Check that a file exists
+    """
+    assert os.path.exists(path), f"Missing expected file {path}"
