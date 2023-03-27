@@ -543,6 +543,19 @@ package body Alr.Commands is
         .Append ("crate~version" & ASCII.HT & "Minor-compatible version");
    end Crate_Version_Sets;
 
+   --------------
+   -- Has_Root --
+   --------------
+
+   function Has_Root (Cmd : in out Command'Class) return Boolean is
+   begin
+      Cmd.Requires_Valid_Session;
+      return True;
+   exception
+      when Alire.Checked_Error =>
+         return False;
+   end Has_Root;
+
    ----------
    -- Root --
    ----------

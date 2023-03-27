@@ -96,3 +96,20 @@ def assert_installed(prefix : str, milestones : List[str]):
               "Contents:\n"
               "   " + "\n   ".join(milestones) + "\n",
               p.out)
+
+
+def assert_file_exists(path : str):
+    """
+    Check that a file exists
+    """
+    assert os.path.exists(path), f"Missing expected file {path}"
+
+
+def assert_in_file(path : str, expected : str):
+    """
+    Check that a file contains a string
+    """
+    with open(path, "r") as f:
+        contents = f.read()
+    assert expected in contents, \
+        f"Missing expected string '{expected}' in file {path}:\n{contents}"
