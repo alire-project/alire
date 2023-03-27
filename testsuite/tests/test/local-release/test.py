@@ -4,8 +4,8 @@ Check `alr test` of the local release
 
 import os
 
-from drivers.alr import init_local_crate, run_alr, add_action
-from drivers.asserts import assert_file_exists
+from drivers.alr import add_action, init_local_crate, run_alr
+from drivers.asserts import assert_file_exists, assert_in_file
 
 # Create a crate with a local release
 init_local_crate()
@@ -14,6 +14,10 @@ run_alr("test") # Ending with success is enough
 # Check the expected log files exist
 assert_file_exists(os.path.join("alire", "alr_test_local.log"))
 assert_file_exists(os.path.join("alire", "alr_test_local.xml"))
+
+# Check the build is performed in release mode
+assert_in_file(os.path.join("config", "xxx_config.gpr"),
+               'Build_Profile : Build_Profile_Kind := "release";')
 
 # Check testing from a subdirectory in a new crate
 os.chdir("..")

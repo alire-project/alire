@@ -213,7 +213,8 @@ package body Alr.Commands.Test is
                              Empty_Vector &
                              "alr" &
                              Regular_Alr_Switches &
-                             "build";
+                             "build" &
+                             "--release";
 
                --  Used to run inside docker
                Docker_Default : constant AAA.Strings.Vector :=
