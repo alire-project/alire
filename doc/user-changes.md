@@ -6,6 +6,17 @@ stay on top of `alr` new features.
 
 ## Release `1.3-dev`
 
+### Test of a working crate with `alr test`
+
+PR [#1356](https://github.com/alire-project/alire/pull/1356)
+
+This PR enables the use of `alr test` on local crates. Previously, it could only
+be used on indexed ones.
+
+By default, running `alr test` will build the crate in release mode. This
+behavior can be overridden by defining one or more [test
+actions](https://alire.ada.dev/docs/#release-information).
+
 ### Binary releases moved to system cache from system config directory
 
 PR [#1349](https://github.com/alire-project/alire/pull/1349)
