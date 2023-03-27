@@ -14,7 +14,7 @@ pushd $( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 popd
 
 # Build alr
-export ALIRE_OS=$(get_OS) 
+export ALIRE_OS=$(get_OS)
 gprbuild -j0 -p -P alr_env
 
 # Disable distro detection if supported
@@ -63,7 +63,7 @@ fi
 echo Python version: $($run_python --version)
 echo Pip version: $($run_pip --version)
 
-$run_pip install --upgrade e3-testsuite
+$run_pip install --upgrade -r requirements.txt
 echo Python search paths:
 $run_python -c "import sys; print('\n'.join(sys.path))"
 

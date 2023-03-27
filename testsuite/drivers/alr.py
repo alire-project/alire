@@ -44,7 +44,7 @@ def prepare_env(config_dir, env):
     mkdir(config_dir)
     env['ALR_CONFIG'] = config_dir
     #  We pass config location explicitly in the following calls since env is
-    #  not yet applied.
+    #  not yet applied (it's just a dict to be passed later to subprocess)
 
     # Disable autoconfig of the community index, to prevent unintended use of
     # it in tests, besides the overload of fetching it

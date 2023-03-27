@@ -1,0 +1,4 @@
+driver: docker-wrapper
+indexes:
+    toolchain_index:
+        copy_crates_src: True

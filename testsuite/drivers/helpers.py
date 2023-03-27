@@ -64,6 +64,10 @@ def check_line_in(filename, line):
                 repr(line), filename, content_of(filename))
 
 
+def on_linux():
+    return platform.system() == "Linux"
+
+
 def on_macos():
     return platform.system() == "Darwin"
 
@@ -240,3 +244,31 @@ def replace_in_file(filename : str, old : str, new : str):
     old_contents = content_of(filename)
     with open(filename, "wt") as file:
         file.write(old_contents.replace(old, new))
+
+
+class FileLock():
+    """
+    A filesystem-level lock for tests executed from different threads but
+    without shared memory space. Only used on Linux.
+    """
+    def __init__(self, lock_file_path):
+        if not on_linux():
+            raise Exception("FileLock is only supported on Linux")
+
+        self.lock_file_path = lock_file_path
+
+    def __enter__(self):
+        # Create the lock file if it doesn't exist
+        open(self.lock_file_path, 'a').close()
+
+        # Reopen in read mode
+        self.lock_file = open(self.lock_file_path, 'r')
+        # Acquire the file lock or wait for it
+        import fcntl
+        fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_EX)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Release the file lock
+        import fcntl
+        fcntl.flock(self.lock_file.fileno(), fcntl.LOCK_UN)
+        self.lock_file.close()
