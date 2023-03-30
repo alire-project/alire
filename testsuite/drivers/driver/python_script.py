@@ -40,8 +40,8 @@ class PythonScriptDriver(ClassicTestDriver):
 
         # Also give it access to our Python helpers
         python_path = env.get('PYTHONPATH', '')
-        path_for_drivers = os.path.abspath(
-            os.path.dirname(os.path.dirname(__file__)))
+        parent = os.path.dirname
+        path_for_drivers = os.path.abspath(parent(parent(parent(__file__))))
         env['PYTHONPATH'] = '{}{}{}'.format(
             path_for_drivers, os.path.pathsep, python_path
         ) if python_path else path_for_drivers
