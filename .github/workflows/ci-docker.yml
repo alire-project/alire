@@ -17,8 +17,8 @@ jobs:
 
     strategy:
       matrix:
-        tag: # Those are our dockerhub alire/gnat:tag machines
-            - centos-stream-fsf-latest # Test unsupported package manager 
+        tag: # Those are our ghcr.io/alire-project/docker/gnat:tag machines
+            - centos-stream-fsf-latest # Test unsupported package manager
             - debian-stable            # Test current stable Debian compiler
             - fedora-latest            # Test current Fedora compiler
             - ubuntu-lts               # Test current LTS Ubuntu compiler
@@ -31,7 +31,7 @@ jobs:
         submodules: true
 
     - name: Pull docker image
-      run: docker pull alire/gnat:${{ matrix.tag }}
+      run: docker pull ghcr.io/alire-project/docker/gnat:${{ matrix.tag }}
 
     - name: Run test script
       run: >
