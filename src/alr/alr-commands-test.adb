@@ -3,10 +3,12 @@ with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Containers;
 
+with Alire.Config.Edit;
 with Alire.Crates;
 with Alire.Defaults;
 with Alire.Dependencies;
 with Alire.Directories;
+with Alire.Environment;
 with Alire.Errors;
 with Alire.Index;
 with Alire.Milestones;
@@ -16,6 +18,7 @@ with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
+with Alire.Shared;
 with Alire.Solutions;
 with Alire.Solver;
 with Alire.Utils;
@@ -158,11 +161,17 @@ package body Alr.Commands.Test is
             use Ada.Directories;
             use Alire.OS_Lib.Subprocess;
 
+            Docker_Config_Path : constant String := "/tmp/alire";
+
             Docker_Prefix : constant AAA.Strings.Vector :=
                               Empty_Vector
                               & "sudo"
                               & "docker"
                               & "run"
+                              & "-e" & String'(Alire.Environment.Config
+                                               & "=" & Docker_Config_Path)
+                              --  The user won't have a $HOME so we map the
+                              --  host config into a writable guest dir
                               & String'("-v"
                                         & Locate_In_Path ("alr")
                                         & ":/usr/bin/alr")
@@ -172,6 +181,16 @@ package body Alr.Commands.Test is
                               & "-w" & "/work"
                               & "--user" & Alire.OS_Lib.Getenv ("UID", "1000")
                               --  Map current user
+                              & String'("-v"
+                                        & Alire.Config.Edit.Path
+                                        & ":" & Docker_Config_Path)
+                              --  Map current config to default dir in guest
+                              & String'("-v"
+                                        & Alire.Shared.Path
+                                        & ":"
+                                        & Docker_Config_Path
+                                     / Paths.Cache_Folder_Inside_Working_Folder
+                                     / Paths.Deps_Folder_Inside_Cache_Folder)
                               & Docker_Image;
 
             Regular_Alr_Switches : constant AAA.Strings.Vector :=
@@ -181,16 +200,6 @@ package body Alr.Commands.Test is
                                      & (if Alire.Force
                                         then To_Vector ("--force")
                                         else Empty_Vector);
-
-            Custom_Alr : constant AAA.Strings.Vector :=
-                           Empty_Vector
-                           & "alr"
-                           & (if Alire.Force
-                              then To_Vector ("--force")
-                              else Empty_Vector)
-                           & "-c" & "/tmp/alire";
-            --  When running inside docker as regular user we need config to be
-            --  stored in a writable folder.
 
             ------------------
             -- Default_Test --
@@ -211,7 +220,6 @@ package body Alr.Commands.Test is
                --  Used to test the local crate
                Alr_Local : constant AAA.Strings.Vector :=
                              Empty_Vector &
-                             "alr" &
                              Regular_Alr_Switches &
                              "build" &
                              "--release";
@@ -219,12 +227,12 @@ package body Alr.Commands.Test is
                --  Used to run inside docker
                Docker_Default : constant AAA.Strings.Vector :=
                                   Docker_Prefix
-                                  & Custom_Alr
-                                  & Alr_Args;
+                                  & "alr"
+                                  & (if Local then Alr_Local else Alr_Args);
 
                Alr_Default : constant AAA.Strings.Vector
                  := (if Local
-                     then Alr_Local
+                     then "alr" & Alr_Local
                      else "alr" & Alr_Args);
 
                Exit_Code : Integer;
@@ -269,7 +277,6 @@ package body Alr.Commands.Test is
                                   & "get" & R.Milestone.Image;
                Dkr_Custom_Cmd : constant Vector :=
                                   Docker_Prefix
-                                  & Custom_Alr
                                   & "get"
                                   & R.Milestone.Image;
             begin
@@ -633,12 +640,6 @@ package body Alr.Commands.Test is
       if Cmd.Full and then (Args.Count /= 0 or else Cmd.Search) then
          Reportaise_Command_Failed
            ("Either use --full or specify crate names, but not both");
-      end if;
-
-      --  For now, don't allow docker with local test
-      if No_Args and Cmd.Docker.all /= No_Docker then
-         Reportaise_Wrong_Arguments
-           ("Docker local testing is not yet supported.");
       end if;
 
       --  When doing testing over index contents, we request an empty dir
