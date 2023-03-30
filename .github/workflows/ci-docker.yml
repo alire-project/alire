@@ -30,13 +30,12 @@ jobs:
       with:
         submodules: true
 
-    - name: Pull docker image
-      run: docker pull ghcr.io/alire-project/docker/gnat:${{ matrix.tag }}
-
-    - name: Run test script
-      run: >
-        docker run -v${PWD}:/alire -w /alire
-        alire/gnat:${{ matrix.tag }} scripts/ci-github.sh
+    - name: Run test script (${{ matrix.tag }})
+      uses: mosteo-actions/docker-run@v1
+      with:
+        image: ghcr.io/alire-project/docker/gnat:${{matrix.tag}}
+        command: scripts/ci-github.sh
+        params: -v${PWD}:/alire -w /alire
 
     - name: Upload logs (if failed)
       if: failure()
