@@ -113,6 +113,15 @@ private
    function Assistant_Enabled return Boolean
    is (Config.DB.Get (Config.Keys.Toolchain_Assistant, Default => True));
 
+   ----------------------
+   -- Tool_Is_External --
+   ----------------------
+
+   function Tool_Is_External (Crate : Crate_Name) return Boolean
+   is (Boolean'Value
+       (Config.DB.Get_As_String -- because it could be stored as bool or string
+          (Tool_Key (Crate, For_Is_External), "True")));
+
    --------------
    -- Tool_Key --
    --------------
@@ -127,15 +136,6 @@ private
              when For_Use => Config.Keys.Toolchain_Use,
              when For_Is_External => Config.Keys.Toolchain_External)
           & "." & Crate.As_String));
-
-   ----------------------
-   -- Tool_Is_External --
-   ----------------------
-
-   function Tool_Is_External (Crate : Crate_Name) return Boolean
-   is (Boolean'Value
-       (Config.DB.Get
-          (Tool_Key (Crate, For_Is_External), Default => "True")));
 
    --------------------
    -- Tool_Milestone --

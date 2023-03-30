@@ -67,6 +67,24 @@ package body Alire.Config.Edit is
       end case;
    end Set;
 
+   -----------------
+   -- Set_Boolean --
+   -----------------
+
+   procedure Set_Boolean (Level : Config.Level;
+                          Key   : CLIC.Config.Config_Key;
+                          Value : Boolean;
+                          Check : CLIC.Config.Check_Import := null)
+   is
+      function Set_Boolean_Impl is new CLIC.Config.Edit.Set_Typed
+        (Boolean, TOML_Boolean, Boolean'Image);
+   begin
+      Assert (Set_Boolean_Impl (Filepath (Level), Key, Value, Check),
+              "Cannot set config key '" & Key & "' at level " & Level'Image);
+      --  Reload after change
+      Load_Config;
+   end Set_Boolean;
+
    --------------
    -- Filepath --
    --------------

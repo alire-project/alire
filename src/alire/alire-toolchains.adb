@@ -346,10 +346,10 @@ package body Alire.Toolchains is
         (Level,
          Key   => Tool_Key (Release.Name),
          Value => Release.Milestone.Image);
-      Alire.Config.Edit.Set
+      Alire.Config.Edit.Set_Boolean
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
-         Value => Boolean'(not Release.Origin.Is_Regular)'Image);
+         Value => not Release.Origin.Is_Regular);
    end Set_As_Default;
 
    -----------------------------
@@ -359,9 +359,9 @@ package body Alire.Toolchains is
    procedure Set_Automatic_Assistant (Enabled : Boolean; Level : Config.Level)
    is
    begin
-      Config.Edit.Set (Level,
-                       Config.Keys.Toolchain_Assistant,
-                       (if Enabled then "true" else "false"));
+      Config.Edit.Set_Boolean (Level,
+                               Config.Keys.Toolchain_Assistant,
+                               Enabled);
    end Set_Automatic_Assistant;
 
    ------------------------
