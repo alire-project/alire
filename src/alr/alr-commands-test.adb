@@ -191,6 +191,7 @@ package body Alr.Commands.Test is
                                         & Docker_Config_Path
                                      / Paths.Cache_Folder_Inside_Working_Folder
                                      / Paths.Deps_Folder_Inside_Cache_Folder)
+                              --  Map current cache to default dir in guest
                               & Docker_Image;
 
             Regular_Alr_Switches : constant AAA.Strings.Vector :=
