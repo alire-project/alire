@@ -168,6 +168,8 @@ package body Alr.Commands.Test is
                               & "sudo"
                               & "docker"
                               & "run"
+                              & "--rm"
+                              & "--tty=false"
                               & "-e" & String'(Alire.Environment.Config
                                                & "=" & Docker_Config_Path)
                               --  The user won't have a $HOME so we map the

@@ -6,6 +6,9 @@
     ],
     "ada.defaultCharset": "utf-8",
     "ada.scenarioVariables": {
-        ALIRE_OS="linux",
-    }
+        "ALIRE_OS": "linux",
+    },
+    "terminal.integrated.env.linux": {
+        "ALIRE_OS": "linux",
+    },
 }

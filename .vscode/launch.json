@@ -22,7 +22,7 @@
                 "local-docker" // Replace with the test you want to debug
             ],
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }
