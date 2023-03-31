@@ -201,6 +201,16 @@ package body Alr.Commands.Test is
                                         then To_Vector ("--force")
                                         else Empty_Vector);
 
+            -----------------
+            -- Create_Dirs --
+            -----------------
+
+            procedure Create_Dirs is
+            begin
+               Alire.Directories.Create_Tree (Alire.Config.Edit.Path);
+               Alire.Directories.Create_Tree (Alire.Shared.Path);
+            end Create_Dirs;
+
             ------------------
             -- Default_Test --
             ------------------
@@ -343,6 +353,13 @@ package body Alr.Commands.Test is
             end Custom_Test;
 
          begin
+
+            --  A side effect of mapping dirs to docker is that if they don't
+            --  exist they're created with root ownership. Anticipate that and
+            --  create them now if necessary.
+            if Cmd.Docker not in null and then Cmd.Docker.all /= No_Docker then
+               Create_Dirs;
+            end if;
 
             --  Run test actions if there are any, or a default get+build
 

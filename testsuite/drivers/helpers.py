@@ -2,16 +2,14 @@
 Assorted helpers that are reused by several tests.
 """
 
-from subprocess import run
-from zipfile import ZipFile
-
 import hashlib
-import re
 import os
 import platform
+import re
 import shutil
 import stat
-
+from subprocess import run
+from zipfile import ZipFile
 
 # Return the entries (sorted) under a given folder, both folders and files
 # Optionally, return only those matching regex. Uses '/' always as separator.
