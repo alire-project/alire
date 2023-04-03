@@ -1,3 +1,5 @@
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+
 with Alire.Selftest;
 
 package body Alr.Commands.Dev is
@@ -10,6 +12,17 @@ package body Alr.Commands.Dev is
    begin
       null;
    end Custom;
+
+   --------------------------
+   -- Print_UTF_8_Sequence --
+   --------------------------
+
+   procedure Print_UTF_8_Sequence is
+      use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+   begin
+      --  When compiled with -gnatW8, the following should produce valid UTF-8
+      Trace.Always (Encode ("ⓘ✓"));
+   end Print_UTF_8_Sequence;
 
    -------------
    -- Execute --
@@ -38,6 +51,10 @@ package body Alr.Commands.Dev is
 
       if Cmd.Self_Test then
          Alire.Selftest.Run;
+      end if;
+
+      if Cmd.UTF_8_Test then
+         Print_UTF_8_Sequence;
       end if;
    end Execute;
 
@@ -83,6 +100,11 @@ package body Alr.Commands.Dev is
                      Cmd.Self_Test'Access,
                      "", "--test",
                      "Run self-tests");
+
+      Define_Switch (Config,
+                     Cmd.UTF_8_Test'Access,
+                     "", "--utf8",
+                     "Print a known UTF-8 sequence");
    end Setup_Switches;
 
 end Alr.Commands.Dev;

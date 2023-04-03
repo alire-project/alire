@@ -36,6 +36,7 @@ private
       Filtering    : aliased Boolean := False; -- Runs debug scope filtering
       Raise_Except : aliased Boolean := False;
       Self_Test    : aliased Boolean := False;
+      UTF_8_Test   : aliased Boolean := False; -- Produce some UTF-8 output
    end record;
 
 end Alr.Commands.Dev;
