@@ -6,6 +6,24 @@ stay on top of `alr` new features.
 
 ## Release `1.3-dev`
 
+### Global sharing of dependencies via config setting
+
+PR [#1367](https://github.com/alire-project/alire/pull/1367)
+
+A new built-in configuration key can be used to define a directory where all
+dependencies will be stored:
+
+`alr config --set --global dependencies.dir /abs/path/to/existing/dir`
+
+Without `--global`, as usual, the setting will only affect the working crate.
+
+The use of this feature entails a penalty in that crate configuration files will
+be regenerated before every build to ensure consistent build profiles.
+
+Caveat emptor: dependencies built by several dependents with different
+configuration options or scenario variables might cause race conditions or
+other unexpected issues. Use this feature with caution.
+
 ### Test of a working crate with `alr test`
 
 PR [#1356](https://github.com/alire-project/alire/pull/1356)
