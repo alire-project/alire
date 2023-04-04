@@ -5,7 +5,7 @@ Check that globally sharing dependencies works as expected
 import os
 from drivers.alr import alr_with, alr_workspace_cache, init_local_crate, run_alr
 from drivers.asserts import assert_contents, assert_file_exists
-from drivers.helpers import lines_of, replace_in_file
+from drivers.helpers import lines_of
 
 deps_dir = "deps"
 
