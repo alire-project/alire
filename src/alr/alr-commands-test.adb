@@ -3,12 +3,9 @@ with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Containers;
 
-with Alire.Config.Edit;
 with Alire.Crates;
-with Alire.Defaults;
 with Alire.Dependencies;
 with Alire.Directories;
-with Alire.Environment;
 with Alire.Errors;
 with Alire.Index;
 with Alire.Milestones;
@@ -18,10 +15,8 @@ with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Properties.Actions.Executor;
 with Alire.Releases.Containers;
-with Alire.Shared;
 with Alire.Solutions;
 with Alire.Solver;
-with Alire.Utils;
 
 with Alr.Files;
 with Alr.Testing.Collections;
@@ -41,8 +36,6 @@ package body Alr.Commands.Test is
    package Paths    renames Alire.Paths;
    package Platform renames Alire.Platforms.Current;
    package Query    renames Alire.Solver;
-
-   Docker_Switch : constant String := "--docker";
 
    -----------------
    -- Check_Files --
@@ -111,8 +104,7 @@ package body Alr.Commands.Test is
    procedure Do_Test
      (Cmd          : in out Command;
       Releases     : Alire.Releases.Containers.Release_Sets.Set;
-      Local        : Boolean;
-      Docker_Image : String)
+      Local        : Boolean)
    is
       use Ada.Calendar;
       use GNATCOLL.VFS;
@@ -158,43 +150,7 @@ package body Alr.Commands.Test is
          procedure Test_Action is
             use AAA.Strings;
 
-            use Ada.Directories;
             use Alire.OS_Lib.Subprocess;
-
-            Docker_Config_Path : constant String := "/tmp/alire";
-
-            Docker_Prefix : constant AAA.Strings.Vector :=
-                              Empty_Vector
-                              & "sudo"
-                              & "docker"
-                              & "run"
-                              & "--rm"
-                              & "--tty=false"
-                              & "-e" & String'(Alire.Environment.Config
-                                               & "=" & Docker_Config_Path)
-                              --  The user won't have a $HOME so we map the
-                              --  host config into a writable guest dir
-                              & String'("-v"
-                                        & Locate_In_Path ("alr")
-                                        & ":/usr/bin/alr")
-                              --  Map executable
-                              & String'("-v" & Current_Directory & ":/work")
-                              --  Map working folder
-                              & "-w" & "/work"
-                              & "--user" & Alire.OS_Lib.Getenv ("UID", "1000")
-                              --  Map current user
-                              & String'("-v"
-                                        & Alire.Config.Edit.Path
-                                        & ":" & Docker_Config_Path)
-                              --  Map current config to default dir in guest
-                              & String'("-v"
-                                        & Alire.Shared.Path
-                                        & ":"
-                                        & Docker_Config_Path
-                                     / Paths.Cache_Folder_Inside_Working_Folder
-                                     / Paths.Deps_Folder_Inside_Cache_Folder)
-                              --  Map current cache to default dir in guest
-                              & Docker_Image;
 
             Regular_Alr_Switches : constant AAA.Strings.Vector :=
                                  Empty_Vector
@@ -203,16 +159,6 @@ package body Alr.Commands.Test is
                                      & (if Alire.Force
                                         then To_Vector ("--force")
                                         else Empty_Vector);
-
-            -----------------
-            -- Create_Dirs --
-            -----------------
-
-            procedure Create_Dirs is
-            begin
-               Alire.Directories.Create_Tree (Alire.Config.Edit.Path);
-               Alire.Directories.Create_Tree (Alire.Shared.Path);
-            end Create_Dirs;
 
             ------------------
             -- Default_Test --
@@ -237,12 +183,6 @@ package body Alr.Commands.Test is
                              "build" &
                              "--release";
 
-               --  Used to run inside docker
-               Docker_Default : constant AAA.Strings.Vector :=
-                                  Docker_Prefix
-                                  & "alr"
-                                  & (if Local then Alr_Local else Alr_Args);
-
                Alr_Default : constant AAA.Strings.Vector
                  := (if Local
                      then "alr" & Alr_Local
@@ -250,21 +190,12 @@ package body Alr.Commands.Test is
 
                Exit_Code : Integer;
             begin
-               if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-                  Output.Append_Line ("Spawning: " & Docker_Default.Flatten);
-                  Exit_Code := Unchecked_Spawn_And_Capture
-                    (Docker_Default.First_Element,
-                     Docker_Default.Tail,
-                     Output,
-                     Err_To_Out => True);
-               else
-                  Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
-                  Exit_Code := Unchecked_Spawn_And_Capture
-                    (Alr_Default.First_Element,
-                     Alr_Default.Tail,
-                     Output,
-                     Err_To_Out => True);
-               end if;
+               Output.Append_Line ("Spawning: " & Alr_Default.Flatten);
+               Exit_Code := Unchecked_Spawn_And_Capture
+                  (Alr_Default.First_Element,
+                  Alr_Default.Tail,
+                  Output,
+                  Err_To_Out => True);
 
                if Exit_Code /= 0 then
                   raise Child_Failed;
@@ -288,32 +219,18 @@ package body Alr.Commands.Test is
                                   "alr"
                                   & Regular_Alr_Switches
                                   & "get" & R.Milestone.Image;
-               Dkr_Custom_Cmd : constant Vector :=
-                                  Docker_Prefix
-                                  & "get"
-                                  & R.Milestone.Image;
             begin
 
                --  Fetch the crate if not local test
 
                if not Local then
-                  if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-                     Output.Append_Line
-                       ("Spawning: " & Dkr_Custom_Cmd.Flatten);
-                     Exit_Code := Unchecked_Spawn_And_Capture
-                       (Dkr_Custom_Cmd.First_Element,
-                        Dkr_Custom_Cmd.Tail,
-                        Output,
-                        Err_To_Out => True);
-                  else
-                     Output.Append_Line
-                       ("Spawning: " & Alr_Custom_Cmd.Flatten);
-                     Exit_Code := Unchecked_Spawn_And_Capture
-                       (Alr_Custom_Cmd.First_Element,
-                        Alr_Custom_Cmd.Tail,
-                        Output,
-                        Err_To_Out => True);
-                  end if;
+                  Output.Append_Line
+                     ("Spawning: " & Alr_Custom_Cmd.Flatten);
+                  Exit_Code := Unchecked_Spawn_And_Capture
+                     (Alr_Custom_Cmd.First_Element,
+                     Alr_Custom_Cmd.Tail,
+                     Output,
+                     Err_To_Out => True);
 
                   if Exit_Code /= 0 then
                      raise Child_Failed;
@@ -342,11 +259,7 @@ package body Alr.Commands.Test is
                         Capture    => True,
                         Err_To_Out => True,
                         Code       => Exit_Code,
-                        Output     => Output,
-                        Prefix     =>
-                          (if Alire.Utils.Command_Line_Contains (Docker_Switch)
-                           then Docker_Prefix
-                           else AAA.Strings.Empty_Vector));
+                        Output     => Output);
 
                      if Exit_Code /= 0 then
                         raise Child_Failed;
@@ -356,13 +269,6 @@ package body Alr.Commands.Test is
             end Custom_Test;
 
          begin
-
-            --  A side effect of mapping dirs to docker is that if they don't
-            --  exist they're created with root ownership. Anticipate that and
-            --  create them now if necessary.
-            if Cmd.Docker not in null and then Cmd.Docker.all /= No_Docker then
-               Create_Dirs;
-            end if;
 
             --  Run test actions if there are any, or a default get+build
 
@@ -542,11 +448,6 @@ package body Alr.Commands.Test is
 
       Candidates : Alire.Releases.Containers.Release_Sets.Set;
 
-      Docker_Image : constant String :=
-                       (if Cmd.Docker.all = ""
-                        then Alire.Defaults.Docker_Test_Image
-                        else AAA.Strings.Replace (Cmd.Docker.all, "=", ""));
-
       use Alire.Releases.Containers.Release_Sets;
 
       ---------------------
@@ -608,39 +509,6 @@ package body Alr.Commands.Test is
             end loop;
          end if;
       end Find_Candidates;
-
-      --------------------
-      -- Prepare_Docker --
-      --------------------
-
-      procedure Pull_Docker is
-         use Alire.OS_Lib.Subprocess;
-         use AAA.Strings;
-
-         Output    : AAA.Strings.Vector;
-         Exit_Code : Integer;
-      begin
-         if Alire.Utils.Command_Line_Contains (Docker_Switch) then
-
-            Trace.Info ("Running builds in docker image: " & Docker_Image);
-
-            Exit_Code := Unchecked_Spawn_And_Capture
-              ("sudo",
-               Empty_Vector
-               & "docker"
-               & "pull"
-               & Docker_Image,
-               Output,
-               Err_To_Out => True);
-
-            if Exit_Code /= 0 then
-               Reportaise_Command_Failed
-                 ("Failed to pull docker image " & Docker_Image
-                  & " with output: "
-                  & Output.Flatten (Separator => "" & ASCII.LF));
-            end if;
-         end if;
-      end Pull_Docker;
 
    begin
       --  Validate command line
@@ -710,9 +578,7 @@ package body Alr.Commands.Test is
          end if;
       end if;
 
-      Pull_Docker;
-
-      Do_Test (Cmd, Candidates, No_Args, Docker_Image);
+      Do_Test (Cmd, Candidates, No_Args);
    end Execute;
 
    ----------------------
@@ -750,14 +616,6 @@ package body Alr.Commands.Test is
          Cmd.Cont'Access,
          Long_Switch => "--continue",
          Help        => "Skip testing of releases already in folder");
-
-      Define_Switch
-        (Config,
-         Cmd.Docker'Access,
-         Long_Switch => Docker_Switch & "?", -- ? for optional image tag
-         Help        => "Test releases within docker IMAGE"
-                        & " (or " & Alire.Defaults.Docker_Test_Image & ")",
-         Argument    => "=IMAGE");
 
       Define_Switch
         (Config,

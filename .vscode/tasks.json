@@ -16,7 +16,8 @@
 			"problemMatcher": [
 				"$ada"
 			],
-			"label": "Alire: Compile current file"
+			"label": "Alire: Compile current file",
+			"group": "build"
 		},
 		{
 			"type": "shell",
@@ -24,11 +25,19 @@
 			"problemMatcher": [
 				"$ada"
 			],
-			"label": "Alire: Clean all projects"
+			"label": "Alire: Clean all projects",
+			"group": "build"
 		},
 		{
 			"type": "shell",
-			"command": "/usr/bin/python3 testsuite/run.py",
+			"command": "${workspaceFolder}/testsuite/venv/bin/python3",
+			"args": [
+				"${workspaceFolder}/testsuite/run.py",
+				"-M1",
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/testsuite"
+			  },
 			"problemMatcher": [],
 			"label": "Alire: Run testsuite",
 			"group": {

@@ -11,6 +11,7 @@ import stat
 from subprocess import run
 from zipfile import ZipFile
 
+
 # Return the entries (sorted) under a given folder, both folders and files
 # Optionally, return only those matching regex. Uses '/' always as separator.
 def contents(dir, regex=""):
