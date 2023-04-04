@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Removal of `alr test --docker`
 
-PR [#1357](https://github.com/alire-project/alire/pull/1357)
+PR [#1366](https://github.com/alire-project/alire/pull/1366)
 
 The option to test indexed releases with the local `alr` using a Docker image
 has been removed, as it never made too much sense for `alr` to invoke itself,
