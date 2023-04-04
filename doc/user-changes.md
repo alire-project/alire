@@ -4,7 +4,15 @@ This document is a development diary summarizing changes in `alr` that notably
 affect the user experience. It is intended as a one-stop point for users to
 stay on top of `alr` new features.
 
-## Release `1.3-dev`
+## Release `2.0-dev`
+
+### Removal of `alr test --docker`
+
+PR [#1357](https://github.com/alire-project/alire/pull/1357)
+
+The option to test indexed releases with the local `alr` using a Docker image
+has been removed, as it never made too much sense for `alr` to invoke itself,
+and it introduced unwanted complexity into the `alr test` command.
 
 ### Test of a working crate with `alr test`
 
