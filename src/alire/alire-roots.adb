@@ -619,6 +619,13 @@ package body Alire.Roots is
    procedure Deploy_Dependencies (This : in out Roots.Root)
    is
 
+      -----------------------------
+      -- Dependencies_Are_Shared --
+      -----------------------------
+
+      function Dependencies_Are_Shared return Boolean
+      is (Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "");
+
       --------------------
       -- Deploy_Release --
       --------------------
@@ -704,7 +711,7 @@ package body Alire.Roots is
                            Perform_Actions => False,
                            Was_There       => Was_There,
                            Create_Manifest =>
-                             Dep.Is_Shared,
+                             Dep.Is_Shared or else Dependencies_Are_Shared,
                            Include_Origin  =>
                              Dep.Is_Shared);
 
@@ -1264,7 +1271,7 @@ package body Alire.Roots is
    begin
       if This.Solution.State (Crate).Is_Solved then
          if This.Solution.State (Crate).Is_Shared then
-            return Shared.Install_Path;
+            return Shared.Path;
          elsif Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" then
             return Config.DB.Get (Config.Keys.Dependencies_Dir, "");
          else

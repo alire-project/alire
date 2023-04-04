@@ -378,6 +378,6 @@ private
                               return Any_Path;
    --  The path at which dependencies have to be deployed, which for regular
    --  releases is simply ./alire/cache/dependencies, unless overriden by the
-   --  config option cache.dir
+   --  config option `dependencies.dir`
 
 end Alire.Roots;

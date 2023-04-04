@@ -1,7 +1,9 @@
 with Alire.Config.Edit;
+with Alire.Directories;
 with Alire.Index;
 with Alire.Index_On_Disk.Loading;
 with Alire.Milestones;
+with Alire.Paths;
 with Alire.Properties;
 with Alire.Roots.Optional;
 with Alire.Shared;
@@ -27,6 +29,8 @@ package body Alr.Commands.Version is
    procedure Execute (Cmd  : in out Command;
                       Args :        AAA.Strings.Vector)
    is
+      use Alire;
+      use Alire.Directories.Operators;
       use all type Alire.Roots.Optional.States;
       Table : Alire.Utils.Tables.Table;
       Index_Outcome : Alire.Outcome;
@@ -35,6 +39,9 @@ package body Alr.Commands.Version is
                     (Alire.Config.Edit.Indexes_Directory, Index_Outcome);
       Root : constant Alire.Roots.Optional.Root :=
                Alire.Roots.Optional.Search_Root (Alire.Directories.Current);
+
+      Deps_Dir : constant String :=
+        Config.DB.Get (Alire.Config.Keys.Dependencies_Dir, "");
    begin
       if Args.Count /= 0 then
          Reportaise_Wrong_Arguments (Cmd.Name & " doesn't take arguments");
@@ -53,6 +60,13 @@ package body Alr.Commands.Version is
       Table.Append ("CONFIGURATION").New_Row;
       Table.Append ("config folder:").Append (Alire.Config.Edit.Path).New_Row;
       Table.Append ("cache folder:").Append (Alire.Shared.Path).New_Row;
+      Table.Append ("dependencies folder:")
+           .Append (if Deps_Dir = ""
+                    then "<workspace>"
+                      / Paths.Working_Folder_Inside_Root
+                      / Paths.Cache_Folder_Inside_Working_Folder
+                      / Paths.Deps_Folder_Inside_Cache_Folder
+                    else Deps_Dir).New_Row;
       Table.Append ("force flag:").Append (Alire.Force'Image).New_Row;
       Table.Append ("non-interactive flag:")
         .Append (CLIC.User_Input.Not_Interactive'Image).New_Row;

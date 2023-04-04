@@ -320,11 +320,14 @@ package body Alire.Releases is
 
          Backup_Upstream_Manifest;
 
-         if Create_Manifest then
-            Create_Authoritative_Manifest (if Include_Origin
-                                           then Manifest.Index
-                                           else Manifest.Local);
-         end if;
+      end if;
+
+      --  Create manifest if requested
+
+      if Create_Manifest then
+         Create_Authoritative_Manifest (if Include_Origin
+                                          then Manifest.Index
+                                          else Manifest.Local);
       end if;
 
       --  Run post-fetch actions on first retrieval
