@@ -19,10 +19,10 @@
             "cwd": "${workspaceFolder}/testsuite",
             "program": "run.py",
             "args": [
-                "local-docker" // Replace with the test you want to debug
+                "default-cache" // Replace with the test you want to debug
             ],
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true
         }
     ]
 }
