@@ -1,11 +1,10 @@
 import os
 import sys
 
-from e3.fs import sync_tree
-from e3.testsuite.driver.classic import ClassicTestDriver, TestAbortWithFailure
-from e3.testsuite.result import TestStatus
-
 from drivers.alr import prepare_env, prepare_indexes
+from e3.testsuite.driver.classic import (ClassicTestDriver,
+                                         TestAbortWithFailure,
+                                         TestSkip)
 
 
 class PythonScriptDriver(ClassicTestDriver):
@@ -52,14 +51,12 @@ class PythonScriptDriver(ClassicTestDriver):
                        env=env,
                        cwd=self.test_env['working_dir'])
 
-        # Check that stderr is empty
-        if False and p.err:
-            self.result.log += 'non-empty stderr:\n'
-            self.result.log += p.err
-            raise TestAbortWithFailure('non-empty stderr')
-
-        # Check that the last line in stdout is "SUCCESS"
+        # Check that the last line in stdout is "SUCCESS" or "SKIP"
         out_lines = p.out.splitlines()
-        if not out_lines or out_lines[-1] != 'SUCCESS':
+        if out_lines and out_lines[-1] == 'SUCCESS':
+            pass
+        elif out_lines and (reason := out_lines[-1]).startswith('SKIP:'):
+            raise TestSkip(reason.split(":")[-1].strip())
+        else:
             self.result.log += 'missing SUCCESS output line'
             raise TestAbortWithFailure('missing SUCCESS output line')

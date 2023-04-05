@@ -42,6 +42,12 @@ def is_docker_available() -> bool:
     return True
 
 
+def skip_unless_docker_available() -> None:
+    if not is_docker_available():
+        print("SKIP: Docker testing is disabled or not available")
+        exit(0)
+
+
 def get_client():
     if is_docker_available():
         import docker
