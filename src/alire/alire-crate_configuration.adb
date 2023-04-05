@@ -12,7 +12,6 @@ with Alire.Releases;
 with Alire.Roots;
 with Alire.Origins;
 with Alire.Warnings;
-with Alire.Config;
 with Alire.Config.Edit;
 
 with Alire.Properties.Build_Profiles;
@@ -552,7 +551,9 @@ package body Alire.Crate_Configuration is
    is
       use type Profile_Maps.Map;
    begin
-      return This.Profile_Map /= Last_Build_Profiles;
+      return
+         Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" or else
+         This.Profile_Map /= Last_Build_Profiles;
    end Must_Regenerate;
 
    ---------------------------

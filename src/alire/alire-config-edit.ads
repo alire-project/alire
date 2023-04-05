@@ -1,9 +1,11 @@
-with TOML;
+with AAA.Strings;
+
+with Alire.Directories;
+with Alire.Paths;
 
 with CLIC.Config;
 
-with AAA.Strings;
-with Alire.Directories;
+with TOML;
 
 package Alire.Config.Edit is
 
@@ -75,6 +77,7 @@ private
 
    type Builtin_Kind is (Cfg_Int, Cfg_Float, Cfg_Bool,
                          Cfg_String, Cfg_Absolute_Path,
+                         Cfg_Existing_Absolute_Path,
                          Cfg_Email, Cfg_GitHub_Login);
 
    type Builtin_Entry is record
@@ -96,6 +99,19 @@ private
 
    Builtins : constant array (Natural range <>) of Builtin_Entry :=
      (
+      (+Keys.Dependencies_Dir,
+       Cfg_Existing_Absolute_Path,
+      +("Overrides the default storage directory of regular (non-binary) "
+        & " dependencies. When unset, releases are stored inside each "
+        & "workspace at '" & TTY.URL
+          (Paths.Working_Folder_Inside_Root
+           / Paths.Cache_Folder_Inside_Working_Folder
+           / Paths.Deps_Folder_Inside_Cache_Folder) & "'. "
+        & "Sharing dependencies across workspaces may save disk space, but "
+        & "it is generally not recommended as different dependents may need "
+        & "to configure dependencies differently. Use at your own risk."
+       )),
+
       (+Keys.Index_Auto_Community,
        Cfg_Bool,
        +("When unset (default) or true, the community index will be added " &

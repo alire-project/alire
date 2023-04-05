@@ -377,6 +377,7 @@ private
                               Crate : Crate_Name)
                               return Any_Path;
    --  The path at which dependencies have to be deployed, which for regular
-   --  releases is simply ./alire/cache/dependencies.
+   --  releases is simply ./alire/cache/dependencies, unless overriden by the
+   --  config option `dependencies.dir`
 
 end Alire.Roots;

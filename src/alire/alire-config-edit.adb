@@ -220,6 +220,19 @@ package body Alire.Config.Edit is
             when Cfg_Absolute_Path =>
                Result := Value.Kind = TOML_String
                  and then Check_Absolute_Path (Value.As_String);
+            when Cfg_Existing_Absolute_Path =>
+               Result := Value.Kind = TOML_String
+                 and then Check_Absolute_Path (Value.As_String);
+               if Result and then
+                 not Directories.Is_Directory
+                   (Directories.Full_Name (Value.As_String))
+               then
+                  Trace.Error
+                    ("Given path '" & TTY.URL (Value.As_String)
+                     & "' is not an existing directory, "
+                     & "please create it beforehand or recheck it.");
+                  return False;
+               end if;
             when Cfg_Email =>
                Result := Value.Kind = TOML_String
                  and then Alire.Utils.Could_Be_An_Email (Value.As_String,
@@ -254,6 +267,7 @@ package body Alire.Config.Edit is
           when Cfg_Bool          => "Boolean",
           when Cfg_String        => "String",
           when Cfg_Absolute_Path => "Absolute path",
+          when Cfg_Existing_Absolute_Path => "Absolute path already existing",
           when Cfg_Email         => "Email address",
           when Cfg_GitHub_Login  => "GitHub login");
 

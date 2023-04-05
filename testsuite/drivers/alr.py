@@ -238,6 +238,10 @@ def init_local_crate(name="xxx", binary=True, enter=True, update=True):
         os.chdir(name)
 
 
+def alr_workspace_cache():
+    return os.path.join("alire", "cache")
+
+
 def alr_lockfile():
     return os.path.join("alire", "alire.lock")
 

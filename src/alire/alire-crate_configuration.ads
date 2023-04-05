@@ -65,7 +65,9 @@ package Alire.Crate_Configuration is
    --  more/fewer crates in a new run if dependencies have changed.
 
    function Must_Regenerate (This : Global_Config) return Boolean;
-   --  Say if some profile has changed so config files must be regenerated
+   --  Say if some profile has changed so config files must be regenerated.
+   --  This call will always return True if global sharing of dependencies is
+   --  in effect.
 
    type Profile_Wildcards is (To_None,    --  No wildcard given
                               To_Unset, --  '%' (not set otherwise)
