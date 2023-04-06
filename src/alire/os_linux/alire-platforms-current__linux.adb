@@ -1,3 +1,5 @@
+with Ada.Environment_Variables;
+
 with AAA.Strings; use AAA.Strings;
 
 with GNAT.Regpat;
@@ -20,7 +22,22 @@ package body Alire.Platforms.Current is
    begin
       if Distro_Cached then
          return Cached_Distro;
-      elsif not GNAT.OS_Lib.Is_Regular_File (OS_Identity_File) then
+      end if;
+
+      --  Try to get the distribution ID from an environment variable
+      --  Rationale: Map AlmaLinux, CentOS, Rocky Linux, Oracle Linux
+      --  et al to RHEL.
+
+      begin
+         Cached_Distro := Alire.Platforms.Distributions'Value
+           (Ada.Environment_Variables.Value ("ALIRE_DISTRIBUTION"));
+         Distro_Cached := True;
+         return Cached_Distro;
+      exception
+         when others => null;
+      end;
+
+      if not GNAT.OS_Lib.Is_Regular_File (OS_Identity_File) then
          Trace.Debug ("Distribution identity file not found: "
                       & OS_Identity_File);
          Distro_Cached := True;
