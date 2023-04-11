@@ -1,0 +1,2 @@
+- [ ] Switch --shared
+- [ ] Regen config of shared source deps

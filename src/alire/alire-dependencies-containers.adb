@@ -25,7 +25,6 @@ package body Alire.Dependencies.Containers is
    procedure Merge (This : in out Map;
                     Dep  :        Dependencies.Dependency)
    is
-      use type Semantic_Versioning.Extended.Version_Set;
    begin
       if This.Contains (Dep.Crate) then
          declare

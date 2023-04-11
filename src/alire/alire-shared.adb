@@ -1,6 +1,7 @@
 with Ada.Directories;
 
-with Alire.Config;
+with Alire.Config.Edit;
+with Alire.Config.Internal;
 with Alire.Containers;
 with Alire.Directories;
 with Alire.Environment;
@@ -86,6 +87,53 @@ package body Alire.Shared is
 
       return Result;
    end Available;
+
+   ----------------
+   -- Get_Shared --
+   ----------------
+
+   function Get_Shared return Dependencies.Containers.Map is
+      use Config.Internal;
+      Image : constant String := Config.DB.Get (Key (Shared_Dependencies), "");
+   begin
+      return Result : Dependencies.Containers.Map do
+         for Dep_Img of AAA.Strings.Vector'(AAA.Strings.Split (Image, ','))
+         loop
+            declare
+               Dep : constant Dependencies.Dependency :=
+                 Dependencies.From_String (Dep_Img);
+            begin
+               Result.Insert (Dep.Crate, Dep);
+            end;
+         end loop;
+      end return;
+   end Get_Shared;
+
+   -----------------
+   -- Mark_Shared --
+   -----------------
+
+   procedure Mark_Shared (Dep : Dependencies.Dependency) is
+      use Config.Internal;
+      use type Dependencies.Dependency;
+      Current : Dependencies.Containers.Map := Get_Shared;
+      Image : AAA.Strings.Vector;
+   begin
+      if Current.Contains (Dep.Crate) then
+         if Current (Dep.Crate) /= Dep then
+            Current (Dep.Crate) := Current (Dep.Crate).Either_Of (Dep);
+         end if;
+      else
+         Current.Insert (Dep.Crate, Dep);
+      end if;
+
+      for Dep of Current loop
+         Image.Append (Dep.Image);
+      end loop;
+
+      Config.Edit.Set_Locally (Key (Shared_Dependencies),
+                               Image.Flatten (","));
+   end Mark_Shared;
 
    Global_Cache_Path : access String;
 

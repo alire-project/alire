@@ -4,6 +4,7 @@ with Alire.Directories;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.Roots.Optional;
+with Alire.Shared;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
@@ -74,8 +75,9 @@ package body Alire.Roots.Editable is
    -- Add_Dependency --
    --------------------
 
-   procedure Add_Dependency (This : in out Root;
-                             Dep  : Dependencies.Dependency)
+   procedure Add_Dependency (This   : in out Root;
+                             Dep    : Dependencies.Dependency;
+                             Shared : Boolean := False)
    is
 
       --------------------
@@ -120,6 +122,14 @@ package body Alire.Roots.Editable is
       end Find_Updatable;
 
    begin
+
+      --  If sharing requested, store as such in the local config
+
+      if Shared then
+         Alire.Shared.Mark_Shared (Dep);
+         Put_Info ("Dependency marked as shared: " & Dep.TTY_Image);
+         --  TODO: test that marking after being added works
+      end if;
 
       --  Do not add if already a direct dependency
 

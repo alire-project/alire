@@ -1,3 +1,4 @@
+with Alire.Dependencies.Containers;
 with Alire.Errors;
 with Alire.Milestones;
 with Alire.Releases.Containers;
@@ -45,5 +46,12 @@ package Alire.Shared is
      (Target : Milestones.Milestone;
       Confirm : Boolean := not CLIC.User_Input.Not_Interactive);
    --  Behaves as the previous Remove
+
+   procedure Mark_Shared (Dep : Dependencies.Dependency);
+   --  Store in the local configuration that we want this crate to be reused
+   --  from the shared cache. TODO: the solver must look the same config for
+   --  wanted shared to mark as such during solving.
+
+   function Get_Shared return Dependencies.Containers.Map;
 
 end Alire.Shared;

@@ -161,8 +161,6 @@ private
 
    function L (S : String) return String renames AAA.Strings.To_Lower_Case;
 
-   use type Semantic_Versioning.Extended.Version_Set;
-
    type Stored_Release is new Releases.Containers.Release_H with null record;
    --  New type to simplify comparison of optional stored releases
 
@@ -250,6 +248,10 @@ private
       Pinning      : Pinning_Data;
       Transitivity : Transitivities := Unknown;
    end record;
+
+   overriding
+   function Either_Of (L, R : State) return State
+   is (raise Program_Error with "Not intended for use");
 
    -------------------
    -- As_Dependency --

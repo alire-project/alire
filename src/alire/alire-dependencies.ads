@@ -53,6 +53,10 @@ package Alire.Dependencies with Preelaborate is
    --  Returns a line describing the dependency as it would appear in the
    --  manifest, e.g.: my_crate = "^3.2.1"
 
+   function Either_Of (L, R : Dependency) return Dependency
+   with Pre => L.Crate = R.Crate;
+   --  Merge the versions into a single OR dependency
+
    overriding
    function TTY_Image (Dep : Dependency) return String;
 
@@ -120,6 +124,12 @@ private
    function Versions (Dep : Dependency)
                       return Semantic_Versioning.Extended.Version_Set
    is (Dep.Versions);
+
+   use type Semantic_Versioning.Extended.Version_Set;
+
+   function Either_Of (L, R : Dependency) return Dependency
+   is (New_Dependency (L.Crate,
+                       "or" (L.Versions, R.Versions).Simplify));
 
    function Image (Dep : Dependency) return String is
      ((+Dep.Crate) & Dep.Versions.Image);

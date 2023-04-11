@@ -15,7 +15,7 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.2.7"
+aaa = "~0.3.0"
 ada_toml = "~0.3"
 ajunitgen = "^1.0.1"
 ansiada = "^1.0"
@@ -45,7 +45,7 @@ windows = { ALIRE_OS = "windows" }
 
 # Some dependencies require precise versions during the development cycle:
 [[pins]]
-aaa = { url = "https://github.com/mosteo/aaa", commit = "906d9eaf4fb8efabfbc3d8cfb34d04ceec340e13" }
+aaa = { url = "https://github.com/mosteo/aaa", commit = "8d4b0c5921ed4810784682264b30f8f12aae4422" }
 ada_toml = { url = "https://github.com/mosteo/ada-toml", commit = "da4e59c382ceb0de6733d571ecbab7ea4919b33d" }
 clic = { url = "https://github.com/alire-project/clic", commit = "8d26222de71014554999e48c821906fca0e3dc41" }
 gnatcoll = { url = "https://github.com/alire-project/gnatcoll-core.git", commit = "92bb91130a9ec628b4c48b7ef9fe7f24d9dc25fa" }

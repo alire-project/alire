@@ -25,12 +25,14 @@ package body Alr.Commands.Withing is
    -- Add --
    ---------
 
-   procedure Add (Root : in out Alire.Roots.Editable.Root;
-                  Args :        AAA.Strings.Vector)
+   procedure Add (Root   : in out Alire.Roots.Editable.Root;
+                  Args   :        AAA.Strings.Vector;
+                  Shared :        Boolean := False)
    is
    begin
       for I in Args.First_Index .. Args.Last_Index loop
-         Root.Add_Dependency (Alire.Dependencies.From_String (Args (I)));
+         Root.Add_Dependency (Alire.Dependencies.From_String (Args (I)),
+                              Shared);
       end loop;
    end Add;
 
@@ -250,6 +252,7 @@ package body Alr.Commands.Withing is
       Check (Cmd.Del);
       Check (Cmd.From);
       Check (Cmd.Graph);
+      Check (Cmd.Shared);
       Check (Cmd.Solve);
       Check (Cmd.Tree);
       Check (Cmd.Versions);
@@ -285,6 +288,9 @@ package body Alr.Commands.Withing is
          elsif Cmd.From then
             Reportaise_Wrong_Arguments
               ("At least one GPR file to process required");
+         elsif Cmd.Shared then
+            Reportaise_Wrong_Arguments
+              ("At least one dependency required with --shared");
          end if;
       end if;
 
@@ -303,7 +309,7 @@ package body Alr.Commands.Withing is
             if Cmd.URL.all /= "" then
                Cmd.Add_With_Pin (New_Root, Args);
             else
-               Add (New_Root, Args);
+               Add (New_Root, Args, Cmd.Shared);
             end if;
 
          elsif Cmd.Del then
@@ -417,6 +423,11 @@ package body Alr.Commands.Withing is
          Long_Switch => Switch_URL & "=",
          Argument    => "PATH|URL",
          Help        => "Add a dependency pinned to some external source");
+
+      Define_Switch (Config,
+                     Cmd.Shared'Access,
+                     "", "--shared",
+                     "Use the global cache for this dependency");
 
       Define_Switch (Config,
                      Cmd.Solve'Access,

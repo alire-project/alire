@@ -27,7 +27,7 @@ package Alr.Commands.Withing is
      ("Add or remove dependencies");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[{ [--del] <crate>[versions]..."
+     ("[{ [--del|--shared] <crate>[versions]..."
       & " | --from <gpr_file>..."
       & " | <crate>[versions] --use <path> [--commit REF] [--branch NAME]} ]"
       & " | --solve | --tree | --versions");
@@ -40,6 +40,7 @@ private
       Del      : aliased Boolean := False;
       From     : aliased Boolean := False;
       Graph    : aliased Boolean := False;
+      Shared   : aliased Boolean := False;
       Solve    : aliased Boolean := False;
       Tree     : aliased Boolean := False;
       URL      : aliased GNAT.Strings.String_Access;
