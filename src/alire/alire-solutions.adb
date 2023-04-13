@@ -744,7 +744,7 @@ package body Alire.Solutions is
                   & (if Dep.Is_Pinned or else Dep.Is_Linked
                      then TTY.Emph (" (pinned)")
                      elsif Dep.Is_Shared
-                     then TTY.Emph (" (installed)")
+                     then TTY.Emph (" (shared)")
                      else "")
                   & (if Detailed
                      then " (origin: "

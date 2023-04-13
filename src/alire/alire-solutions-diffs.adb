@@ -184,7 +184,7 @@ package body Alire.Solutions.Diffs is
          if (not Has_Former or else not Former.Is_Shared)
            and then Has_Latter and then Latter.Is_Shared
          then
-            Add_Change (Chg, Icon (Shared), TTY.Emph ("installed"));
+            Add_Change (Chg, Icon (Shared), TTY.Emph ("shared"));
 
          elsif Has_Former and then Former.Is_Shared
            and then Has_Latter and then not Latter.Is_Shared
