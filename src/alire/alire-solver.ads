@@ -134,7 +134,10 @@ package Alire.Solver is
       --  only the given Completeness is used.
       Detecting    : Detection_Policies    := Detect;
       Hinting      : Hinting_Policies      := Hint;
-      Sharing      : Sharing_Policies      := Allow_Shared;
+      Sharing      : Sharing_Policies      := Only_Local;
+      --  Shared dependencies can be requested explicitly with --shared, this
+      --  way solutions are guaranteed to be the same no matter what other
+      --  workspaces have shared, which is safer.
       On_Timeout   : Timeout_Policies      := Ask;
 
       Timeout      : Duration              := 5.0;

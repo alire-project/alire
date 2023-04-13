@@ -53,5 +53,7 @@ package Alire.Shared is
    --  wanted shared to mark as such during solving.
 
    function Get_Shared return Dependencies.Containers.Map;
+   --  Retrieve crates marked as shared from the local configuration. Requires
+   --  being inside a root or else it will raise.
 
 end Alire.Shared;

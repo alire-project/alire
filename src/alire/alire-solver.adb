@@ -12,6 +12,7 @@ with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
+with Alire.Roots.Optional;
 with Alire.Toolchains;
 with Alire.Utils.TTY;
 
@@ -249,6 +250,11 @@ package body Alire.Solver is
       --  is stored in a number of trees that are the arguments of the Expand
       --  internal procedure, and in a Solution that is being incrementally
       --  built.
+
+      Requested_Shared : constant Dependencies.Containers.Map
+         := (if Root.Current.Is_Valid
+             then Shared.Get_Shared
+             else Dependencies.Containers.Empty_Map);
 
       Solutions : Solution_Sets.Set;
       --  We store here all solutions found. The solver is currently exhaustive
@@ -615,7 +621,7 @@ package body Alire.Solver is
                        ("SOLVER: dependency FROZEN: " & R.Milestone.Image &
                           " to satisfy " & Dep.TTY_Image &
                         (if Is_Reused then " with REUSED" else "") &
-                        (if Is_Shared then " with INSTALLED" else "") &
+                        (if Is_Shared then " with SHARED" else "") &
                         (if not R.Provides.Is_Empty
                            then " also providing " & R.Provides.Image_One_Line
                            else "") &
@@ -965,7 +971,11 @@ package body Alire.Solver is
                                (Dep.Crate /= GNAT_Crate or else
                                 Installed.Contains (R)));
 
-                        Check (R, Is_Shared => False, Is_Reused => False);
+                        Check (R,
+                               Is_Shared =>
+                                 (for some Dep of Requested_Shared =>
+                                     R.Satisfies (Dep)),
+                               Is_Reused => False);
                      end Consider;
                   begin
                      Trace.Debug ("SOLVER: considering"
