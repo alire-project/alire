@@ -521,9 +521,15 @@ package body Alr.Commands.Init is
       Tags_Ok : Boolean := True;
    begin
       for Elt of Vect loop
-         if Elt /= "" and then not Alire.Utils.Is_Valid_Tag (Elt) then
-            Ada.Text_IO.Put_Line ("Invalid tag: '" & Elt & "'");
-            Tags_Ok := False;
+         if Elt /= "" then
+            declare
+               Tag_Error : constant String := Alire.Utils.Error_In_Tag (Elt);
+            begin
+               if Tag_Error /= "" then
+                  Ada.Text_IO.Put_Line (Tag_Error);
+                  Tags_Ok := False;
+               end if;
+            end;
          end  if;
       end loop;
 

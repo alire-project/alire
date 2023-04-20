@@ -41,6 +41,7 @@ package Alire with Preelaborate is
    Max_Description_Length : constant := 72;
    --  Git line recommendation (although it's 50 for subject line)
 
+   Min_Tag_Length         : constant := 1;
    Max_Tag_Length         : constant := 15;
    --  Maximum length of a single element of the tags field
 
