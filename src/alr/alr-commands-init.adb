@@ -427,8 +427,9 @@ package body Alr.Commands.Init is
 
       License_Vect : constant AAA.Strings.Vector :=
         AAA.Strings.Empty_Vector
-        .Append ("MIT OR Apache-2.0")
+        .Append ("MIT OR Apache-2.0 WITH LLVM-exception")
         .Append ("MIT")
+        .Append ("Apache-2.0 WITH LLVM-exception")
         .Append ("Apache-2.0")
         .Append ("BSD-3-Clause")
         .Append ("LGPL-3.0-or-later")
