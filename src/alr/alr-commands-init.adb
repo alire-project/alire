@@ -84,7 +84,7 @@ package body Alr.Commands.Init is
               '"');
       end Escape;
 
-      function Q (S : String) return String is ("""" & S & """");
+      function Q (S : String) return String is ("""" & Escape (S) & """");
       --  Quote string
 
       function Q (S : Unbounded_String) return String
@@ -262,7 +262,7 @@ package body Alr.Commands.Init is
             --  require encoding, as emails and logins cannot contain strange
             --  characters.
             Login    : constant String := To_String (Info.GitHub_Login);
-            Username : constant String := Escape (To_String (Info.Username));
+            Username : constant String := To_String (Info.Username);
             Email    : constant String := To_String (Info.Email);
             Filename : constant String :=
               +Full_Name (Directory / (+Alire.Roots.Crate_File_Name));
