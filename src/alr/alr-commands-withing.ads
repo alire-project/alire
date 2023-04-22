@@ -40,7 +40,7 @@ private
       Del      : aliased Boolean := False;
       From     : aliased Boolean := False;
       Graph    : aliased Boolean := False;
-      Shared   : aliased Boolean := False;
+      Shared   : aliased GNAT.Strings.String_Access := new String'(Unset);
       Solve    : aliased Boolean := False;
       Tree     : aliased Boolean := False;
       URL      : aliased GNAT.Strings.String_Access;

@@ -716,7 +716,13 @@ package body Alire.Roots is
                            Create_Manifest =>
                              Dep.Is_Shared or else Dependencies_Are_Shared,
                            Include_Origin  =>
-                             Dep.Is_Shared);
+                             Dep.Is_Shared or else Dependencies_Are_Shared);
+               --  Shared dependencies must include a manifest with origin
+               --  information, because they're later loaded by the sharing
+               --  machinery as if coming from an index, which requires an
+               --  origin. The reasons for not including a manifest in regular
+               --  local dependencies are legacy; they probably could be made
+               --  all the same (but it would break a bunch of tests).
 
                --  Always run the post-fetch on update of dependencies, in
                --  case there is some interaction with some other updated
@@ -1271,16 +1277,19 @@ package body Alire.Roots is
                                  Crate : Crate_Name)
                                  return Any_Path
    is
+      Local_Dir : constant Absolute_Path :=
+                    This.Cache_Dir
+                    / Paths.Deps_Folder_Inside_Cache_Folder;
    begin
       if This.Solution.State (Crate).Is_Solved then
-         if This.Solution.State (Crate).Is_Shared then
+         if Shared.Marked_As (Crate) in Shared.No then
+            return Local_Dir;
+         elsif This.Solution.State (Crate).Is_Shared then
             return Shared.Path;
          elsif Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" then
             return Config.DB.Get (Config.Keys.Dependencies_Dir, "");
          else
-            return
-              This.Cache_Dir
-              / Paths.Deps_Folder_Inside_Cache_Folder;
+            return Local_Dir;
          end if;
       else
          raise Program_Error

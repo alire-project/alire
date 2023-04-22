@@ -12,7 +12,6 @@ with Alire.Platforms.Current;
 with Alire.Releases.Containers;
 with Alire.Shared;
 with Alire.Root;
-with Alire.Roots.Optional;
 with Alire.Toolchains;
 with Alire.Utils.TTY;
 
@@ -250,11 +249,6 @@ package body Alire.Solver is
       --  is stored in a number of trees that are the arguments of the Expand
       --  internal procedure, and in a Solution that is being incrementally
       --  built.
-
-      Requested_Shared : constant Dependencies.Containers.Map
-         := (if Root.Current.Is_Valid
-             then Shared.Get_Shared
-             else Dependencies.Containers.Empty_Map);
 
       Solutions : Solution_Sets.Set;
       --  We store here all solutions found. The solver is currently exhaustive
@@ -973,8 +967,7 @@ package body Alire.Solver is
 
                         Check (R,
                                Is_Shared =>
-                                 (for some Dep of Requested_Shared =>
-                                     R.Satisfies (Dep)),
+                                 Shared.Marked_As (R.Name) in Shared.Yes,
                                Is_Reused => False);
                      end Consider;
                   begin

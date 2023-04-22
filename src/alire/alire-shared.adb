@@ -16,6 +16,8 @@ with Alire.Root;
 with Alire.Toolchains.Solutions;
 with Alire.Warnings;
 
+with CLIC.Config;
+
 package body Alire.Shared is
 
    use Directories.Operators;
@@ -88,52 +90,67 @@ package body Alire.Shared is
       return Result;
    end Available;
 
-   ----------------
-   -- Get_Shared --
-   ----------------
+   ----------------------
+   -- Shared_Crate_Key --
+   ----------------------
 
-   function Get_Shared return Dependencies.Containers.Map is
+   function Shared_Crate_Key (Crate : Crate_Name) return CLIC.Config.Config_Key
+   is
       use Config.Internal;
-      Image : constant String := Config.DB.Get (Key (Shared_Dependencies), "");
    begin
-      return Result : Dependencies.Containers.Map do
-         for Dep_Img of AAA.Strings.Vector'(AAA.Strings.Split (Image, ','))
-         loop
-            declare
-               Dep : constant Dependencies.Dependency :=
-                 Dependencies.From_String (Dep_Img);
-            begin
-               Result.Insert (Dep.Crate, Dep);
-            end;
-         end loop;
-      end return;
-   end Get_Shared;
+      return Key (Shared_Dependencies) & "." & Crate.As_String;
+   end Shared_Crate_Key;
 
-   -----------------
-   -- Mark_Shared --
-   -----------------
+   ----------
+   -- Mark --
+   ----------
 
-   procedure Mark_Shared (Dep : Dependencies.Dependency) is
-      use Config.Internal;
-      use type Dependencies.Dependency;
-      Current : Dependencies.Containers.Map := Get_Shared;
-      Image : AAA.Strings.Vector;
+   procedure Mark (Crate  : Crate_Name;
+                   Status : Explicit_Requests)
+   is
+      use all type Config.Level;
+
+      Key : constant CLIC.Config.Config_Key := Shared_Crate_Key (Crate);
+
+      Level : constant Config.Level :=
+                (case Status is
+                    when No_Local  | Yes_Local  => Config.Local,
+                    when No_Global | Yes_Global => Config.Global,
+                    when others                 => Config.Global);
+      Unset_Level : constant Config.Level :=
+                       (case Level is
+                           when Local => Global,
+                           when Global => Local);
    begin
-      if Current.Contains (Dep.Crate) then
-         if Current (Dep.Crate) /= Dep then
-            Current (Dep.Crate) := Current (Dep.Crate).Either_Of (Dep);
-         end if;
-      else
-         Current.Insert (Dep.Crate, Dep);
-      end if;
+      case Status is
+         when Reset =>
+            Config.Edit.Unset (Local, Key);
+            Config.Edit.Unset (Global, Key);
+         when No_Local | No_Global =>
+            Config.Edit.Set (Level, Key, No'Image);
+            Config.Edit.Unset (Unset_Level, Key);
+         when Yes_Local | Yes_Global =>
+            Config.Edit.Set (Level, Key, Yes'Image);
+            Config.Edit.Unset (Unset_Level, Key);
+      end case;
+   end Mark;
 
-      for Dep of Current loop
-         Image.Append (Dep.Image);
-      end loop;
+   ---------------
+   -- Marked_As --
+   ---------------
 
-      Config.Edit.Set_Locally (Key (Shared_Dependencies),
-                               Image.Flatten (","));
-   end Mark_Shared;
+   function Marked_As (Crate : Crate_Name) return Hint
+   is
+   begin
+      return Hint'Value
+        (Config.DB.Get_As_String
+           (Shared_Crate_Key (Crate),
+            Hint'(Default)'Image));
+   end Marked_As;
+
+   -----------------------
+   -- Global_Cache_Path --
+   -----------------------
 
    Global_Cache_Path : access String;
 

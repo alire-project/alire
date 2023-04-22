@@ -3,6 +3,7 @@ private with Ada.Finalization;
 with Alire.Dependencies;
 with Alire.Errors;
 with Alire.Optional;
+with Alire.Shared;
 with Alire.Utils.TTY;
 
 with Semantic_Versioning;
@@ -53,9 +54,9 @@ package Alire.Roots.Editable is
    --  created, we need to reload the manifest. The solution remains
    --  untouched (use Update to recompute a fresh solution).
 
-   procedure Add_Dependency (This   : in out Root;
-                             Dep    : Dependencies.Dependency;
-                             Shared : Boolean := False);
+   procedure Add_Dependency (This    : in out Root;
+                             Dep     : Dependencies.Dependency;
+                             Sharing : Shared.Requests := Shared.Default);
    --  Add a dependency, or raise Checked_Error is Dep is already among direct
    --  dependencies. If Shared, try to add it as a shared dependency.
 

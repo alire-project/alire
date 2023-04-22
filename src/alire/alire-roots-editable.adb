@@ -4,7 +4,6 @@ with Alire.Directories;
 with Alire.Manifest;
 with Alire.Origins;
 with Alire.Roots.Optional;
-with Alire.Shared;
 with Alire.User_Pins;
 with Alire.Utils.User_Input;
 with Alire.VCSs.Git;
@@ -75,9 +74,9 @@ package body Alire.Roots.Editable is
    -- Add_Dependency --
    --------------------
 
-   procedure Add_Dependency (This   : in out Root;
-                             Dep    : Dependencies.Dependency;
-                             Shared : Boolean := False)
+   procedure Add_Dependency (This    : in out Root;
+                             Dep     : Dependencies.Dependency;
+                             Sharing : Shared.Requests := Shared.Default)
    is
 
       --------------------
@@ -123,20 +122,24 @@ package body Alire.Roots.Editable is
 
    begin
 
-      --  If sharing requested, store as such in the local config
-
-      if Shared then
-         Alire.Shared.Mark_Shared (Dep);
-         Put_Info ("Dependency marked as shared: " & Dep.TTY_Image);
-         --  TODO: test that marking after being added works
-      end if;
-
       --  Do not add if already a direct dependency
 
       if Release (This.Edit).Depends_On (Dep.Crate, This.Edit.Environment) then
          raise Checked_Error with Errors.Set
            (Utils.TTY.Name (Dep.Crate) & " is already a direct dependency.");
       end if;
+
+      --  If sharing hints given, store as such in config
+
+      case Sharing is
+         when Shared.Explicit_Requests =>
+            Shared.Mark (Dep.Crate, Sharing);
+            Put_Info ("Crate " & Dep.Crate.TTY_Image
+                      & " marked as " & Shared.Image (Sharing));
+            --  TODO: test that marking after being added works
+         when Shared.Default =>
+            null;
+      end case;
 
       --  If we are given an Any dependency, attempt a solving to narrow down
       --  to a "safely updatable" subset.

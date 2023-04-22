@@ -1,6 +1,0 @@
-- [x] Switch --shared
-- [x] Use "shared" rather than "installed"
-- [ ] Regen config of shared source deps
-- [ ] Way to unshare locally
-- [ ] Way to share/unshare globally
-- [ ] Tests

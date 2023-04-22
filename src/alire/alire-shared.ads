@@ -1,4 +1,3 @@
-with Alire.Dependencies.Containers;
 with Alire.Errors;
 with Alire.Milestones;
 with Alire.Releases.Containers;
@@ -47,13 +46,48 @@ package Alire.Shared is
       Confirm : Boolean := not CLIC.User_Input.Not_Interactive);
    --  Behaves as the previous Remove
 
-   procedure Mark_Shared (Dep : Dependencies.Dependency);
-   --  Store in the local configuration that we want this crate to be reused
-   --  from the shared cache. TODO: the solver must look the same config for
-   --  wanted shared to mark as such during solving.
+   ----
 
-   function Get_Shared return Dependencies.Containers.Map;
-   --  Retrieve crates marked as shared from the local configuration. Requires
-   --  being inside a root or else it will raise.
+   --  The following do not act on releases, but give hints to the solver.
+   --  These implement the `alr with --shared` feature.
+
+   type Requests is
+     (
+      No_Local,   -- The crate must not be shared (workspace)
+      No_Global,  -- The crate must not be shared (global config)
+      Yes_Local,  -- The crate must be shared (workspace)
+      Yes_Global, -- The crate must be shared (global config)
+      Reset,      -- Remove any sharing hints (local and global)
+      Default     -- Use existing sharing hints (local or global)
+     );
+
+   subtype Explicit_Requests
+     is Requests range Requests'First .. Requests'Pred (Default);
+
+   function Image (Request : Explicit_Requests) return String
+   is (case Request is
+          when No_Local   => "not shared in this workspace",
+          when No_Global  => "not shared globally",
+          when Yes_Local  => "shared in this workspace",
+          when Yes_Global => "shared globally",
+          when Reset      => "using default storage");
+
+   procedure Mark (Crate  : Crate_Name;
+                   Status : Explicit_Requests);
+   --  Store in the Level configuration that we want this dep to be reused from
+   --  the shared cache, or prevent its sharing according to `Set_To`. Takes
+   --  care of maintaining consistency across levels. When `Reset`, remove all
+   --  hinting (both local and global) rather than setting a hint.
+
+   type Hint is
+     (
+      No,     -- The crate must not be shared
+      Yes,    -- The crate should be shared if possible
+      Default -- Use the current default storage
+     );
+
+   function Marked_As (Crate : Crate_Name) return Hint;
+   --  Says what's the hinting for the given crate. Requires being inside a
+   --  root or else it will raise.
 
 end Alire.Shared;

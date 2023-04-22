@@ -36,6 +36,10 @@ package Alire.Config.Edit is
    --  here all non-preelaborable things related to config loading. This
    --  way, querying stays preelaborable.
 
+   procedure Unset (Level : Config.Level;
+                    Key   : CLIC.Config.Config_Key);
+   --  Unset a key at a level; silently succeed even if the key was undefined.
+
    function Path return Absolute_Path;
    --  The in-use global config folder path.
    --  In order of decreasing precedence:
