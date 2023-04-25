@@ -165,9 +165,9 @@ package body Alire is
       use type UString;
    begin
       if S'Length < Min_Name_Length then
-         Err := +"Identifier too short.";
+         Err := +"Identifier too short (Min " & Min_Name_Length'Img & ").";
       elsif S'Length > Max_Name_Length then
-         Err := +"Identifier too long.";
+         Err := +"Identifier too long (Max " & Max_Tag_Length'Img & ").";
       elsif S (S'First) = '_' then
          Err := +"Identifiers must not begin with an underscore.";
       elsif (for some C of S => C not in Crate_Character) then

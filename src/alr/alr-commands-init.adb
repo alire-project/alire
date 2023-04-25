@@ -84,7 +84,7 @@ package body Alr.Commands.Init is
               '"');
       end Escape;
 
-      function Q (S : String) return String is ("""" & S & """");
+      function Q (S : String) return String is ("""" & Escape (S) & """");
       --  Quote string
 
       function Q (S : Unbounded_String) return String
@@ -262,7 +262,7 @@ package body Alr.Commands.Init is
             --  require encoding, as emails and logins cannot contain strange
             --  characters.
             Login    : constant String := To_String (Info.GitHub_Login);
-            Username : constant String := Escape (To_String (Info.Username));
+            Username : constant String := To_String (Info.Username);
             Email    : constant String := To_String (Info.Email);
             Filename : constant String :=
               +Full_Name (Directory / (+Alire.Roots.Crate_File_Name));
@@ -427,8 +427,9 @@ package body Alr.Commands.Init is
 
       License_Vect : constant AAA.Strings.Vector :=
         AAA.Strings.Empty_Vector
-        .Append ("MIT OR Apache-2.0")
+        .Append ("MIT OR Apache-2.0 WITH LLVM-exception")
         .Append ("MIT")
+        .Append ("Apache-2.0 WITH LLVM-exception")
         .Append ("Apache-2.0")
         .Append ("BSD-3-Clause")
         .Append ("LGPL-3.0-or-later")
@@ -521,9 +522,15 @@ package body Alr.Commands.Init is
       Tags_Ok : Boolean := True;
    begin
       for Elt of Vect loop
-         if Elt /= "" and then not Alire.Utils.Is_Valid_Tag (Elt) then
-            Ada.Text_IO.Put_Line ("Invalid tag: '" & Elt & "'");
-            Tags_Ok := False;
+         if Elt /= "" then
+            declare
+               Tag_Error : constant String := Alire.Utils.Error_In_Tag (Elt);
+            begin
+               if Tag_Error /= "" then
+                  Ada.Text_IO.Put_Line (Tag_Error);
+                  Tags_Ok := False;
+               end if;
+            end;
          end  if;
       end loop;
 
