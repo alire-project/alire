@@ -132,6 +132,8 @@ package body Alire.Platforms.Current is
 
                Ctx.Append ("C_INCLUDE_PATH", Root / "mingw64" / "include",
                            "msys2");
+               Ctx.Append ("CPLUS_INCLUDE_PATH", Root / "mingw64" / "include",
+                           "msys2");
             end;
 
          when others =>
