@@ -92,7 +92,6 @@ package body Alr.Commands.Search is
          Tab.Append (Ext.Image);
       end List_Undetected;
 
-      use Alire.Releases.Containers.Release_Sets;
    begin
 
       --  First, simpler case of search into crates

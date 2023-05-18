@@ -430,6 +430,17 @@ package Alire.Solutions is
    --  a safe-order traversal of a solution. This procedure is currently
    --  sequential but it could be parallelized in the future.
 
+   function Pin_Dependencies (This  : Solution;
+                              Crate : Crate_Name;
+                              Props : Alire.Properties.Vector)
+                              return Conditional.Dependencies
+   is (if This.State (Crate).Has_Release
+       then This.State (Crate).Release.Dependencies (Props)
+       else Conditional.No_Dependencies);
+   --  If Crate is pinned in This and it has a release, return its
+   --  dependencies; otherwise return Empty. WORKAROUND FOR VISIBILITY BUG
+   --  IN GCC 13.1
+
 private
 
    type Solution is new Interfaces.Tomifiable with record
