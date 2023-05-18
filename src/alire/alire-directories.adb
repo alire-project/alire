@@ -599,6 +599,9 @@ package body Alire.Directories is
             return;
          end if;
 
+         Trace.Debug ("Src path is: " & Src);
+         Trace.Debug ("Rel path is: " & Rel_Path);
+
          --  Create a new dir if necessary
 
          if Adirs.Kind (Item) = Directory then
@@ -655,14 +658,32 @@ package body Alire.Directories is
                                        & TTY.URL (Src));
                end if;
             else
-               if Remove_From_Source then
-                  Adirs.Rename (Old_Name => Src,
-                                New_Name => Dst);
-               else
-                  Adirs.Copy_File (Source_Name => Src,
-                                   Target_Name => Dst,
-                                   Form        => "preserve=all_attributes");
-               end if;
+               begin
+                  Trace.Always
+                    ("DOING: " &
+                     (if Remove_From_Source
+                        then "renaming "
+                        else "copying ")
+                     & Src & " --> " & Dst & ": ");
+                  if Remove_From_Source then
+                     Adirs.Rename (Old_Name => Src,
+                                   New_Name => Dst);
+                  else
+                     Adirs.Copy_File (Source_Name => Src,
+                                      Target_Name => Dst,
+                                      Form       => "preserve=all_attributes");
+                  end if;
+               exception
+                  when E : others =>
+                     Trace.Error
+                       ("When " &
+                        (if Remove_From_Source
+                           then "renaming "
+                           else "copying ")
+                        & Src & " --> " & Dst & ": ");
+                     Log_Exception (E, Error);
+                     raise;
+               end;
             end if;
          end;
       end Merge;
@@ -698,6 +719,10 @@ package body Alire.Directories is
 
       procedure Go_Down (Item : Directory_Entry_Type);
 
+      ----------------------------
+      -- Traverse_Tree_Internal --
+      ----------------------------
+
       procedure Traverse_Tree_Internal
         (Start   : Any_Path;
          Doing   : access procedure
@@ -713,10 +738,39 @@ package body Alire.Directories is
                  Go_Down'Access);
       end Traverse_Tree_Internal;
 
+      -------------
+      -- Go_Down --
+      -------------
+
       procedure Go_Down (Item : Directory_Entry_Type) is
          Stop  : Boolean := False;
          Prune : Boolean := False;
+         VF    : constant VFS.Virtual_File :=
+                   VFS.New_Virtual_File (VFS.From_FS (Full_Name (Item)));
+         --  We use this later to check whether this is a soft link
       begin
+
+         --  Ada.Directories reports softlinks not as special files but as the
+         --  target of the link. This confuses users of Traverse_Tree that may
+         --  see files within a folder that has never been visited before.
+
+         --  Short of introducing new file kinds for softlinks and reporting
+         --  them to clients, for now we just ignore softlinks to dirs, and
+         --  this way only actual folders are traversed.
+
+         if VF.Is_Symbolic_Link and then Kind (Item) = Directory then
+            Trace.Warning ("During tree traversal, skipping softlink: "
+                           & Full_Name (Item));
+            return;
+         end if;
+
+         Trace.Always ("path: " & Full_Name (Item));
+         Trace.Always ("kind: " & Kind (Item)'Image);
+
+         if Kind (Item) = Special_File then
+            raise Program_Error;
+         end if;
+
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
             begin
                Doing (Item, Stop);

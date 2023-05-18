@@ -105,10 +105,11 @@ package Alire.Directories is
                             Recurse : Boolean := False;
                             Spinner : Boolean := False);
    --  Traverse all items in a folder, optionally recursively If recursively,
-   --  the directory entry is passed before entering it "." and ".." are
-   --  ignored. If Stop is set to True, traversal will not continue. See also
-   --  the comments in Traverse_Tree_Prune_Dir. If Spinner, show a busy spinner
-   --  with the current dir being explored.
+   --  the directory entry is passed before entering it. "." and ".."
+   --  are ignored. NOTE: Softlinks to directories are ignored. If Stop is set
+   --  to True, traversal will not continue. See also the comments in
+   --  Traverse_Tree_Prune_Dir. If Spinner, show a busy spinner with
+   --  the current dir being explored.
 
    function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
    --  Size of files under a given point, in bytes. Will return 0 for an
