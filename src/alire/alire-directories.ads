@@ -89,6 +89,9 @@ package Alire.Directories is
    --  the top-level only contains "doinstall", "README" and so on that
    --  are unusable and would be confusing in a binary prefix.
 
+   procedure Remove_Softlinks_In_Tree (Path : Any_Path;
+                                       Recursive : Boolean);
+
    procedure Touch (File : File_Path);
    --  If the file exists, update last edition time; otherwise create it. If
    --  File denotes anything else than a regular file, raise.

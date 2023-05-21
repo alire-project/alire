@@ -233,8 +233,6 @@ package body Alire.Directories is
 
    procedure Force_Delete (Path : Any_Path) is
       use Ada.Directories;
-      use GNATCOLL.VFS;
-      Success : Boolean := False;
    begin
       if Exists (Path) then
          if Kind (Path) = Ordinary_File then
@@ -244,16 +242,8 @@ package body Alire.Directories is
             Trace.Debug ("Deleting temporary folder " & Path & "...");
 
             Ensure_Deletable (Path);
-
-            --  Ada.Directories fails when there are softlinks in a tree, so we
-            --  use GNATCOLL instead.
-            GNATCOLL.VFS.Remove_Dir (Create (+Path),
-                                     Recursive => True,
-                                     Success   => Success);
-            if not Success then
-               raise Program_Error with
-                 Errors.Set ("Could not delete: " & TTY.URL (Path));
-            end if;
+            Remove_Softlinks_In_Tree (Path, Recursive => True);
+            Adirs.Delete_Tree (Path);
          end if;
       end if;
    end Force_Delete;
@@ -599,9 +589,6 @@ package body Alire.Directories is
             return;
          end if;
 
-         Trace.Debug ("Src path is: " & Src);
-         Trace.Debug ("Rel path is: " & Rel_Path);
-
          --  Create a new dir if necessary
 
          if Adirs.Kind (Item) = Directory then
@@ -621,6 +608,7 @@ package body Alire.Directories is
                      & (if Remove_From_Source then " moving " else " copying ")
                      & Adirs.Full_Name (Item)
                      & " into " & Dst);
+
          if Adirs.Exists (Dst) then
             if Fail_On_Existing_File then
                Recoverable_Error ("Cannot move " & TTY.URL (Src)
@@ -659,12 +647,6 @@ package body Alire.Directories is
                end if;
             else
                begin
-                  Trace.Always
-                    ("DOING: " &
-                     (if Remove_From_Source
-                        then "renaming "
-                        else "copying ")
-                     & Src & " --> " & Dst & ": ");
                   if Remove_From_Source then
                      Adirs.Rename (Old_Name => Src,
                                    New_Name => Dst);
@@ -693,6 +675,58 @@ package body Alire.Directories is
                      Doing   => Merge'Access,
                      Recurse => True);
    end Merge_Contents;
+
+   ------------------------------
+   -- Remove_Softlinks_In_Tree --
+   ------------------------------
+
+   procedure Remove_Softlinks_In_Tree (Path      : Any_Path;
+                                       Recursive : Boolean)
+   is
+      use GNATCOLL.VFS;
+
+      Success : Boolean := False;
+
+      ---------------------
+      -- Remove_Internal --
+      ---------------------
+
+      procedure Remove_Internal (Target : Adirs.Directory_Entry_Type) is
+         use Ada.Directories;
+         VF    : constant VFS.Virtual_File :=
+                   VFS.New_Virtual_File
+                     (VFS.From_FS (Full_Name (Target)));
+      begin
+         if VF.Is_Symbolic_Link then
+
+            Trace.Debug ("Deleting softlink: " & VF.Display_Full_Name);
+            VF.Delete (Success);
+            --  Uses unlink under the hood so it should delete just the link
+
+            if not Success then
+               Raise_Checked_Error ("Failed to delete softlink: "
+                                    & VF.Display_Full_Name);
+            end if;
+         else
+            if Kind (Target) = Directory and then Recursive
+              and then Simple_Name (Target) not in "." | ".."
+            then
+               Search (Full_Name (Target),
+                       Pattern => "",
+                       Process => Remove_Internal'Access);
+            end if;
+         end if;
+      end Remove_Internal;
+
+   begin
+      --  GNATCOLL's read_dir returns softlinks as the target kind, so we are
+      --  forced to iterate using Ada.Directories but using GC to check for
+      --  softlinks.
+
+      Ada.Directories.Search (Path,
+                              Pattern => "",
+                              Process => Remove_Internal'Access);
+   end Remove_Softlinks_In_Tree;
 
    -------------------
    -- Traverse_Tree --
@@ -759,13 +793,10 @@ package body Alire.Directories is
          --  this way only actual folders are traversed.
 
          if VF.Is_Symbolic_Link and then Kind (Item) = Directory then
-            Trace.Warning ("During tree traversal, skipping softlink: "
+            Trace.Warning ("Skipping softlink dir during tree traversal: "
                            & Full_Name (Item));
             return;
          end if;
-
-         Trace.Always ("path: " & Full_Name (Item));
-         Trace.Always ("kind: " & Kind (Item)'Image);
 
          if Kind (Item) = Special_File then
             raise Program_Error;
