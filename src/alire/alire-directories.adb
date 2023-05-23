@@ -242,7 +242,7 @@ package body Alire.Directories is
             Trace.Debug ("Deleting temporary folder " & Path & "...");
 
             Ensure_Deletable (Path);
-            Remove_Softlinks_In_Tree (Path, Recursive => True);
+            Remove_Softlinks (Path, Recursive => True);
             Adirs.Delete_Tree (Path);
          end if;
       end if;
@@ -680,7 +680,7 @@ package body Alire.Directories is
    -- Remove_Softlinks_In_Tree --
    ------------------------------
 
-   procedure Remove_Softlinks_In_Tree (Path      : Any_Path;
+   procedure Remove_Softlinks (Path      : Any_Path;
                                        Recursive : Boolean)
    is
       use GNATCOLL.VFS;
@@ -726,7 +726,7 @@ package body Alire.Directories is
       Ada.Directories.Search (Path,
                               Pattern => "",
                               Process => Remove_Internal'Access);
-   end Remove_Softlinks_In_Tree;
+   end Remove_Softlinks;
 
    -------------------
    -- Traverse_Tree --
@@ -796,10 +796,6 @@ package body Alire.Directories is
             Trace.Warning ("Skipping softlink dir during tree traversal: "
                            & Full_Name (Item));
             return;
-         end if;
-
-         if Kind (Item) = Special_File then
-            raise Program_Error;
          end if;
 
          if Simple_Name (Item) /= "." and then Simple_Name (Item) /= ".." then
