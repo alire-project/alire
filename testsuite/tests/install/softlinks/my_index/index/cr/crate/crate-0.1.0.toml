@@ -1,0 +1,11 @@
+description = "Example crate"
+name = "crate"
+version = "0.1.0"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+executables=['main']
+
+[origin.'case(os)'.'...']
+url = "file:../../../crate-0.1.0.tgz"
+hashes = ["sha256:35cc9636468031e1874fe142a6f40557d3befc6dd26cdded0401f440534f4bd6"]
