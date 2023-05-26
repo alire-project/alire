@@ -965,10 +965,12 @@ package body Alire.Solver is
                                (Dep.Crate /= GNAT_Crate or else
                                 Installed.Contains (R)));
 
-                        Check (R,
-                               Is_Shared =>
-                                 Shared.Marked_As (R.Name) in Shared.Yes,
-                               Is_Reused => False);
+                        Check
+                          (R,
+                           Is_Shared =>
+                             R.Origin.Kind in Origins.Source_Kinds and then
+                             Shared.Marked_As (R.Name) in Shared.Yes,
+                           Is_Reused => False);
                      end Consider;
                   begin
                      Trace.Debug ("SOLVER: considering"

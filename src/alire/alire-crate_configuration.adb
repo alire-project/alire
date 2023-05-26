@@ -547,13 +547,19 @@ package body Alire.Crate_Configuration is
    -- Must_Regenerate --
    ---------------------
 
-   function Must_Regenerate (This : Global_Config) return Boolean
+   function Must_Regenerate (This : Global_Config;
+                             Root : in out Alire.Roots.Root)
+                             return Boolean
    is
       use type Profile_Maps.Map;
    begin
       return
-         Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" or else
-         This.Profile_Map /= Last_Build_Profiles;
+        Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" or else
+        (for some Dep of Root.Solution.All_Dependencies =>
+           Dep.Is_Shared and then
+           Dep.Has_Release and then
+           Dep.Release.Origin.Kind in Origins.Source_Kinds) or else
+        This.Profile_Map /= Last_Build_Profiles;
    end Must_Regenerate;
 
    ---------------------------

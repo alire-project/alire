@@ -40,6 +40,9 @@ package Alire.Origins is
    subtype External_Kinds is Kinds
      with Static_Predicate => External_Kinds in External | System;
 
+   subtype Source_Kinds is Kinds range Filesystem .. Source_Archive;
+   --  These are kinds that have actual sources that are deployed and built
+
    subtype VCS_Kinds is Kinds range Git .. SVN;
 
    type Source_Archive_Format is (Unknown, Tarball, Zip_Archive);

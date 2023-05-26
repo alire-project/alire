@@ -195,7 +195,7 @@ package body Alire.Roots is
       --  Check if crate configuration should be re-generated
 
       This.Load_Configuration;
-      if This.Configuration.Must_Regenerate then
+      if This.Configuration.Must_Regenerate (This) then
          This.Generate_Configuration;
       else
          null;
