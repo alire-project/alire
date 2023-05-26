@@ -407,6 +407,20 @@ package body Alr.Commands.Withing is
                 & " specified with --branch. Use `alr update` to refresh the"
                 & " tracking pin contents.")
        .New_Line
+       .Append ("* Adding dependencies with shared storage:")
+       .Append ("Use the --shared switch, with an optional hint value. Sharing"
+                & " hints apply to all versions of the given crates.")
+       .Append ("- yes_local (default): use the shared cache for this"
+                & " workspace.")
+       .Append ("- yes_global: use the shared cache in all workspaces.")
+       .Append ("- no_local: do not use the shared cache for this workspace,"
+                & " even if globally enabled with `yes_global` or through"
+                & " `dependencies.dir` configuration.")
+       .Append ("- no_global: do not use the shared cache in any workspace,"
+                & " even if global sharing through `dependencies.dir`"
+                & " configuration is enabled.")
+       .Append ("- reset: remove all sharing hints for the given crates.")
+       .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
                 & " for comments that contain the sequence 'alr with'. "
