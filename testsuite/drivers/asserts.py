@@ -113,3 +113,14 @@ def assert_in_file(path : str, expected : str):
         contents = f.read()
     assert expected in contents, \
         f"Missing expected string '{expected}' in file {path}:\n{contents}"
+
+
+def match_deploy_dir(crate : str, path_fragment : str):
+    """
+    Check that a deployment directory for a crate matches a regex. The path
+    fragment must be anything between the variable name and the crate name in
+    the output of printenv, e.g.: MAKE_ALIRE_PREFIX=<matchable part><crate name>
+    """
+    p = run_alr("printenv")
+    assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*{path_fragment}[^\\n]*{crate}_.*",
+                 p.out)

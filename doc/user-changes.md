@@ -6,6 +6,21 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Selective sharing of dependencies with `alr with --shared`
+
+PR [#](https://github.com/alire-project/alire/pull/)
+
+As a more granular alternative to PR
+[#1367](https://github.com/alire-project/alire/pull/1367), a single dependency
+can now be shared using the new `--shared` switch of the `with` subcommand:
+
+```
+alr with --shared hello
+```
+
+By default, this is a setting local to the workspace. For more advanced usage,
+please consult the documentation using `alr help with`.
+
 ### Removal of `alr test --docker`
 
 PR [#1366](https://github.com/alire-project/alire/pull/1366)

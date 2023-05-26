@@ -1274,8 +1274,8 @@ package body Alire.Roots is
    ----------------------
 
    function Dependencies_Dir (This  : in out Root;
-                                 Crate : Crate_Name)
-                                 return Any_Path
+                              Crate : Crate_Name)
+                              return Any_Path
    is
       Local_Dir : constant Absolute_Path :=
                     This.Cache_Dir
