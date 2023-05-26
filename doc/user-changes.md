@@ -8,7 +8,7 @@ stay on top of `alr` new features.
 
 ### Selective sharing of dependencies with `alr with --shared`
 
-PR [#](https://github.com/alire-project/alire/pull/)
+PR [#1383](https://github.com/alire-project/alire/pull/1383)
 
 As a more granular alternative to PR
 [#1367](https://github.com/alire-project/alire/pull/1367), a single dependency

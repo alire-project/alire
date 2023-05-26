@@ -197,9 +197,6 @@ package body Alire.Roots is
       This.Load_Configuration;
       if This.Configuration.Must_Regenerate (This) then
          This.Generate_Configuration;
-      else
-         null;
-         --  TODO: regenerate config of shared source releases
       end if;
 
       This.Configuration.Ensure_Complete;

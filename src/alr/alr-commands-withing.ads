@@ -27,7 +27,7 @@ package Alr.Commands.Withing is
      ("Add or remove dependencies");
 
    overriding function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("[{ [--del|--shared] <crate>[versions]..."
+     ("[{ [--del|--shared[=HINT]] <crate>[versions]..."
       & " | --from <gpr_file>..."
       & " | <crate>[versions] --use <path> [--commit REF] [--branch NAME]} ]"
       & " | --solve | --tree | --versions");

@@ -136,7 +136,6 @@ package body Alire.Roots.Editable is
             Shared.Mark (Dep.Crate, Sharing);
             Put_Info ("Crate " & Dep.Crate.TTY_Image
                       & " marked as " & Shared.Image (Sharing));
-            --  TODO: test that marking after being added works
          when Shared.Default =>
             null;
       end case;
