@@ -16,24 +16,12 @@ assert_eq('', p.out)
 
 dir_content = contents('main_1.0.0_filesystem/')
 
-# The directrory for the external dependencies 'make' contains a version number
-# that can be different depending on the platform or version of the
-# distribution. We search through the content to find that directory and use it
-# in the expected output.
-make_dep_dir = "__MAKE_DEPENDENCY_DIR_NOT_FOUND_"
-for elt in dir_content:
-    if re.match('^.*/alire/cache/dependencies/make_.*_external$', elt):
-        make_dep_dir = elt
-
-# Check folder contents
+# Check folder contents. Shared/external/system dependencies should not
+# generate a folder in the cache directory.
 compare(dir_content,
         ['main_1.0.0_filesystem/alire',
          'main_1.0.0_filesystem/alire.toml',
          'main_1.0.0_filesystem/alire/alire.lock',
-         'main_1.0.0_filesystem/alire/cache',
-         'main_1.0.0_filesystem/alire/cache/dependencies',
-         make_dep_dir,
-         make_dep_dir + "/alire",
          'main_1.0.0_filesystem/alire/config.toml',
          'main_1.0.0_filesystem/config',
          'main_1.0.0_filesystem/config/main_config.ads',

@@ -49,7 +49,7 @@ assert len(paths) == 0, "Unexpected contents: " + str(paths)
 # nor in local folder
 init_local_crate("xxx")
 alr_with("gnat_external")
-match_solution("gnat_external=.* \(installed\)")
+match_solution("gnat_external=.* \(shared\)")
 paths = contents(cache_dir, "gnat_external")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
 paths = contents(".", "gnat_external")
@@ -58,7 +58,7 @@ assert len(paths) == 0, "Unexpected contents: " + str(paths)
 # Require a cross compiler and verify it is automatically installed
 alr_with("gnat_external", delete=True, manual=False)
 alr_with("gnat_cross_1")
-match_solution("gnat_cross_1=.* \(installed\)")
+match_solution("gnat_cross_1=.* \(shared\)")
 check_content("gnat_cross_1")
 
 print('SUCCESS')

@@ -968,8 +968,11 @@ package body Alire.Solver is
                         Check
                           (R,
                            Is_Shared =>
-                             R.Origin.Kind in Origins.Source_Kinds and then
-                             Shared.Marked_As (R.Name) in Shared.Yes,
+                             --  Regular releases
+                             (R.Origin.Kind in Origins.Source_Kinds and then
+                              Shared.Marked_As (R.Name) in Shared.Yes)
+                              or else
+                              R.Origin.Kind in Origins.External_Kinds,
                            Is_Reused => False);
                      end Consider;
                   begin
