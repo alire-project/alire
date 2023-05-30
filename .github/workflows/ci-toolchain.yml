@@ -36,7 +36,7 @@ jobs:
     - name: Install FSF toolchain
       uses: alire-project/alr-install@v1
       with:
-        crates: gnat_native gprbuild    
+        crates: gnat_native gprbuild
 
     - name: Build alr with default toolchain
       shell: bash
@@ -44,7 +44,7 @@ jobs:
 
     # We can start using the alr we just built
 
-    - name: Update dependencies 
+    - name: Update dependencies
       run: ./bin/alr -n update
 
     - name: Show dependencies/pins
@@ -54,7 +54,7 @@ jobs:
       run: ./bin/alr -n printenv
 
     - shell: bash
-      run: mv ./bin ./bin-old 
+      run: mv ./bin ./bin-old
       # Windows doesn't allow to replace a running exe so the next command fails otherwise
 
     - name: SELF-BUILD
@@ -76,3 +76,4 @@ jobs:
 
     - name: Run testsuite
       run: cd testsuite; ./run.py -E
+      shell: bash
