@@ -56,9 +56,9 @@ package body Alire.Roots is
 
          --  Relocate to the release folder
          CD : Directories.Guard
-           (if State.Has_Release and then State.Release.Origin.Is_Regular
-            then Directories.Enter (This.Release_Base (State.Crate))
-            else Directories.Stay) with Unreferenced;
+          (if State.Has_Release and then State.Release.Origin.Is_Index_Provided
+           then Directories.Enter (This.Release_Base (State.Crate))
+           else Directories.Stay) with Unreferenced;
 
          ---------------------------
          -- Run_Pre_Build_Actions --
@@ -696,15 +696,9 @@ package body Alire.Roots is
                --  Binary releases are always installed as shared releases
                Shared.Share (Rel);
 
-            elsif Dep.Is_Shared and then not Rel.Origin.Is_Regular then
-
-               --  Externals shouldn't leave a trace in the binary cache
-               Trace.Debug ("deploy: skip shared external");
-
             else
 
-               --  Remaining cases expect to receive a Deploy call, even
-               --  externals in the working directory
+               --  Remaining cases expect to receive a Deploy call
                Rel.Deploy (Env             => This.Environment,
                            Parent_Folder   =>
                              This.Dependencies_Dir (Rel.Name),

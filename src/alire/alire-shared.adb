@@ -81,7 +81,7 @@ package body Alire.Shared is
          for Release of Index.Releases_Satisfying (Toolchains.Any_Tool (Tool),
                                                    Root.Platform_Properties)
          loop
-            if not Release.Origin.Is_Regular then
+            if not Release.Origin.Is_Index_Provided then
                Result.Include (Release);
             end if;
          end loop;
@@ -285,7 +285,7 @@ package body Alire.Shared is
       Path : constant Absolute_Path :=
                Shared.Path / Release.Deployment_Folder;
    begin
-      if not Release.Origin.Is_Regular then
+      if not Release.Origin.Is_Index_Provided then
          Raise_Checked_Error
            ("Only regular releases deployed through Alire can be removed.");
       end if;

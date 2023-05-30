@@ -18,7 +18,8 @@ cache_dir = os.path.join(config_dir, "cache")
 # The 'contents` function we use to compare these strings normalizes all paths
 # to forward slashes, so we do the same with the config_dir
 
-unk_re = "[0-9]+\.[0-9]+\.[0-9]+_[0-9a-f]{8}"  # Unknown version + Unknown hash
+unk_re = "[0-9]+\.[0-9]+\.[0-9]+_([0-9a-f]{8}|external)"
+# Unknown version + (Unknown hash or "external")
 
 
 def config_path_re(crate):
@@ -45,13 +46,11 @@ run_alr("toolchain", "--uninstall", "gnat_native", quiet=False)
 paths = contents(cache_dir, "gnat_native")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
 
-# Require the external compiler and verify no trace appears in install folder
-# nor in local folder
+# Require the external compiler and verify the trace appears in install folder
 init_local_crate("xxx")
 alr_with("gnat_external")
 match_solution("gnat_external=.* \(shared\)")
-paths = contents(cache_dir, "gnat_external")
-assert len(paths) == 0, "Unexpected contents: " + str(paths)
+check_content("gnat_external")
 paths = contents(".", "gnat_external")
 assert len(paths) == 0, "Unexpected contents: " + str(paths)
 

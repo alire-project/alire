@@ -37,6 +37,10 @@ package Alire.Origins is
    subtype Archive_Kinds is Kinds
      with Static_Predicate => Archive_Kinds in Binary_Archive | Source_Archive;
 
+   subtype Deployable_Kinds is Kinds
+     with Static_Predicate => Deployable_Kinds not in External;
+   --  Origins that require deployment
+
    subtype External_Kinds is Kinds
      with Static_Predicate => External_Kinds in External | System;
 
@@ -103,10 +107,11 @@ package Alire.Origins is
    function Package_Name (This : Origin) return String
      with Pre => This.Kind = System;
 
-   function Is_Regular (This : Origin) return Boolean is
+   function Is_Index_Provided (This : Origin) return Boolean is
      (This.Kind not in External | System);
-   --  A regular origin is one that is compiled from sources, instead of coming
-   --  from external definitions (detected or not).
+   --  One that is deployed via built sources or fetched binaries pointed to by
+   --  an index, instead of coming from locally detected executables or system
+   --  packages.
 
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Archive_Kinds;

@@ -129,7 +129,8 @@ package body Alire.Toolchains is
                 (Index.Releases_Satisfying (Any_Tool (Crate),
                  Env))
             loop
-               if Release.Origin.Is_Regular and then Is_Valid_Choice (Release)
+               if Release.Origin.Is_Index_Provided and then
+                  Is_Valid_Choice (Release)
                then
 
                   --  We want the newest native compiler packaged by Alire to
@@ -186,7 +187,7 @@ package body Alire.Toolchains is
 
          --  Deploy as a shared install unless external
 
-         if Release.Origin.Is_Regular then
+         if Release.Origin.Is_Index_Provided then
             Shared.Share (Release);
          else
             Trace.Debug
@@ -349,7 +350,7 @@ package body Alire.Toolchains is
       Alire.Config.Edit.Set_Boolean
         (Level,
          Key   => Tool_Key (Release.Name, For_Is_External),
-         Value => not Release.Origin.Is_Regular);
+         Value => not Release.Origin.Is_Index_Provided);
    end Set_As_Default;
 
    -----------------------------
