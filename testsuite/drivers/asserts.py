@@ -6,11 +6,12 @@ testcases based on Python scripts.
 import difflib
 import os
 import re
-import difflib
+import sys
+from typing import List
 
 from drivers.alr import run_alr
 from drivers.helpers import contents, lines_of
-from typing import List
+
 
 def indent(text, prefix='  '):
     """
@@ -53,13 +54,17 @@ def assert_contents(dir: str, expected, regex: str = ""):
 
 
 def assert_match(expected_re, actual, label=None, flags=re.S):
-    if not re.match(expected_re, actual, flags=flags):
-        text = ['Unexpected {}'.format(label or 'output'),
-                'Expecting a match on:',
-                indent(expected_re),
-                'But got:',
-                indent(actual)]
-        assert False, '\n'.join(text)
+    try:
+        if not re.match(expected_re, actual, flags=flags):
+            text = ['Unexpected {}'.format(label or 'output'),
+                    'Expecting a match on:',
+                    indent(expected_re),
+                    'But got:',
+                    indent(actual)]
+            assert False, '\n'.join(text)
+    except re.error as e:
+        print(f"Invalid regex at assert_match: {expected_re}", file=sys.stderr)
+        raise
 
 
 def assert_profile(profile: str, crate: str, root: str = "."):
@@ -122,5 +127,6 @@ def match_deploy_dir(crate : str, path_fragment : str):
     the output of printenv, e.g.: MAKE_ALIRE_PREFIX=<matchable part><crate name>
     """
     p = run_alr("printenv")
-    assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*{path_fragment}[^\\n]*{crate}_.*",
+    assert_match(f".*[: ]{crate.upper()}_ALIRE_PREFIX=[^\\n]*"
+                 f"{re.escape(path_fragment)}[^\\n]*{crate}_.*",
                  p.out)
