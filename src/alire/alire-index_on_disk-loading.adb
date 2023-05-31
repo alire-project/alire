@@ -279,7 +279,6 @@ package body Alire.Index_On_Disk.Loading is
             if not Outcome.Success then
                Raise_Checked_Error
                  ("Could not add community index: " & Message (Outcome));
-               return;
             end if;
          end;
       end if;
