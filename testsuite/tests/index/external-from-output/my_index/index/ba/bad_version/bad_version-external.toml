@@ -1,0 +1,10 @@
+description = "An external with bad regex that results in empty version"
+name = "bad_version"
+licenses = "GPL-3.0-only"
+maintainers = ["example@example.com"]
+maintainers-logins = ["mylogin"]
+
+[[external]]
+kind = "version-output"
+version-regexp = ".*Ma(ke).*" # Captures "ke" as the version
+version-command = ["make", "--version"]
