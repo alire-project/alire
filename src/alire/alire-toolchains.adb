@@ -355,8 +355,8 @@ package body Alire.Toolchains is
                          & "missing.");
          end if;
 
-         Trace.Info ("You can select a different toolchain at any time with "
-                     & TTY.Terminal ("alr toolchain --select"));
+         Trace.Info ("You can select a different toolchain at any time with `"
+                     & TTY.Terminal ("alr toolchain --select") & "`");
          if not Selected.Is_Empty then
             Trace.Info ("Download will start now:");
          end if;
