@@ -309,7 +309,7 @@ package body Alr.Commands is
       if Cmd not in Commands.Toolchain.Command'Class and then
         Alire.Toolchains.Assistant_Enabled
       then
-         Alire.Toolchains.Assistant (Conf.Global);
+         Alire.Toolchains.Assistant (Conf.Global, First_Run => True);
       end if;
 
       Trace.Debug ("Workspace is being checked and loaded for the first time");
