@@ -54,7 +54,8 @@ package body Alr.Commands.Version is
       Table.Append ("compilation date:")
         .Append (GNAT.Source_Info.Compilation_ISO_Date & " "
                  & GNAT.Source_Info.Compilation_Time).New_Row;
-      Table.Append ("compiler version:").Append (GNAT_Version.Version).New_Row;
+      Table.Append ("compiled with version:")
+        .Append (GNAT_Version.Version).New_Row;
 
       Table.Append ("").New_Row;
       Table.Append ("CONFIGURATION").New_Row;
