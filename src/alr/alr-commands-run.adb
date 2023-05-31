@@ -103,7 +103,7 @@ package body Alr.Commands.Run is
       end List;
 
    begin
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       --  Validation
       if Cmd.List

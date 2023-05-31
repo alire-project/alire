@@ -121,7 +121,7 @@ package body Alr.Commands.Clean is
    begin
 
       if not (Cmd.Cache or else Cmd.Temp) then
-         Cmd.Requires_Valid_Session;
+         Cmd.Requires_Workspace;
          Cmd.Root.Export_Build_Environment;
 
          Trace.Detail ("Cleaning project and dependencies...");

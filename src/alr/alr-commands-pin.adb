@@ -142,7 +142,7 @@ package body Alr.Commands.Pin is
            ("Cannot specify both a branch and a commit simultaneously");
       end if;
 
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       --  Listing of pins
 

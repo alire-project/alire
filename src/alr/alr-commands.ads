@@ -59,17 +59,17 @@ package Alr.Commands is
    --  Unless Force_Reload, if the index is not empty we no nothing. When
    --  strict, don't allow unknown values in enums.
 
-   procedure Requires_Valid_Session (Cmd   : in out Command'Class;
-                                     Sync  : Boolean := True;
-                                     Error : String := "");
-   --  Verifies that a valid working dir is in scope. After calling it,
+   procedure Requires_Workspace (Cmd   : in out Command'Class;
+                                 Sync  : Boolean := True;
+                                 Error : String := "");
+   --  Verifies that a valid workspace is in scope. After calling it,
    --  Cmd.Root will be usable if alr was run inside a Root. If Sync, enforce
    --  that the manifest, lockfile and dependencies on disk are in sync, by
    --  performing a silent update. If not Sync, only a minimal empty lockfile
    --  is created. If Error, replace the first generic error message with it.
 
    function Has_Root (Cmd : in out Command'Class) return Boolean;
-   --  True when Requires_Valid_Session would succeed, false otherwise
+   --  True when Requires_Workspace would succeed, false otherwise
 
    procedure Load (Cmd       : Command'Class;
                    Crate     : Alire.Crate_Name;
@@ -95,8 +95,8 @@ package Alr.Commands is
    --  Returns the instructions to restrict version sets, for use in
    --  Long_Description help functions.
 
-   function Enter_Working_Folder return Alire.Directories.Destination;
-   --  Attempt to find the root alire working dir if deeper inside it
+   function Enter_Workspace_Root return Alire.Directories.Destination;
+   --  Attempt to find the root alire workspace if deeper inside it
 
 private
 

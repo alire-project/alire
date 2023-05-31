@@ -64,7 +64,7 @@ package body Alr.Commands.Show is
    procedure Report (Name     : Alire.Crate_Name;
                      Versions : Semver.Extended.Version_Set;
                      Current  : Boolean;
-                     --  session or command-line requested release
+                     --  workspace or command-line requested release
                      Cmd      : in out Command)
    is
    begin
@@ -438,7 +438,7 @@ package body Alr.Commands.Show is
             Reportaise_Wrong_Arguments
               ("Cannot proceed without a crate name");
          elsif not Cmd.Nested then
-            Cmd.Requires_Valid_Session;
+            Cmd.Requires_Workspace;
          end if;
       end if;
 

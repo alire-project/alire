@@ -241,7 +241,7 @@ package body Alr.Commands.Withing is
       end Check;
 
    begin
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       if Cmd.URL.all /= "" then
          Flags := Flags + 1;

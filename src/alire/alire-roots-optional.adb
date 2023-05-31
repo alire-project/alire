@@ -13,8 +13,8 @@ package body Alire.Roots.Optional is
 
    Root_Not_Detected : constant Root :=
                          (Alire.Outcome_Failure
-                            ("Could not detect a session folder"
-                             & " at current or parent locations",
+                            ("Could not detect an " & Paths.Crate_File_Name
+                             & " manifest at current or parent locations",
                              Report => False) with
                           Data => (Status => Outside));
 
@@ -77,7 +77,7 @@ package body Alire.Roots.Optional is
             Trace.Debug
               ("No root can be detected because given path is empty");
             return Root_Not_Detected;
-            --  This happens when detection of session folders in parent
+            --  This happens when detection of a workspace in parent
             --  folders has been already attempted by the caller, so it
             --  ends calling here with an empty path.
          end if;

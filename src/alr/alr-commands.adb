@@ -198,10 +198,10 @@ package body Alr.Commands is
    end Create_Alire_Folders;
 
    --------------------------
-   -- Enter_Working_Folder --
+   -- Enter_Workspace_Root --
    --------------------------
 
-   function Enter_Working_Folder return Alire.Directories.Destination is
+   function Enter_Workspace_Root return Alire.Directories.Destination is
    begin
       declare
          Candidate_Folder : constant String :=
@@ -212,11 +212,11 @@ package body Alr.Commands is
             return new String'(Candidate_Folder);
          else
             Trace.Debug
-              ("Not entering working folder, no valid alire root found");
+              ("Not entering workspace, no valid alire root found");
             return Alire.Directories.Stay_In_Current;
          end if;
       end;
-   end Enter_Working_Folder;
+   end Enter_Workspace_Root;
 
    ------------------
    -- Query_Policy --
@@ -277,13 +277,13 @@ package body Alr.Commands is
                                             Force  => Force_Reload).Assert;
    end Requires_Full_Index;
 
-   ----------------------------
-   -- Requires_Valid_Session --
-   ----------------------------
+   ------------------------
+   -- Requires_Workspace --
+   ------------------------
 
-   procedure Requires_Valid_Session (Cmd   : in out Command'Class;
-                                     Sync  : Boolean := True;
-                                     Error : String  := "") is
+   procedure Requires_Workspace (Cmd   : in out Command'Class;
+                                 Sync  : Boolean := True;
+                                 Error : String  := "") is
       use Alire;
 
       Unchecked : Alire.Roots.Optional.Root renames Cmd.Optional_Root;
@@ -322,7 +322,7 @@ package body Alr.Commands is
             .Wrap
               (if Error /= ""
                then Error
-               else "Cannot continue with invalid session")
+               else "Cannot continue without a workspace")
             .Wrap (Unchecked.Message)
             .Get);
       end if;
@@ -414,7 +414,7 @@ package body Alr.Commands is
             --  As we just created the empty lockfile, we force the update
          end if;
       end;
-   end Requires_Valid_Session;
+   end Requires_Workspace;
 
    -------------
    -- Execute --
@@ -549,7 +549,7 @@ package body Alr.Commands is
 
    function Has_Root (Cmd : in out Command'Class) return Boolean is
    begin
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
       return True;
    exception
       when Alire.Checked_Error =>
@@ -565,7 +565,7 @@ package body Alr.Commands is
    is
    begin
       if not Cmd.Optional_Root.Is_Valid then
-         Cmd.Requires_Valid_Session;
+         Cmd.Requires_Workspace;
       end if;
 
       return Cmd.Optional_Root.Value;

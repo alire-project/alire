@@ -41,7 +41,7 @@ package Alire.Config with Preelaborate is
       --  appropriate caret/tilde.
 
       Toolchain_Assistant : constant Config_Key := "toolchain.assistant";
-      --  When true (default), on first `Requires_Valid_Session`, the
+      --  When true (default), on first `Requires_Workspace`, the
       --  assistant to select a gnat compiler and corresponding gprbuild
       --  will be launched.
 
