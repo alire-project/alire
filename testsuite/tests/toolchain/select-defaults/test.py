@@ -17,9 +17,18 @@ p = run_alr("show", quiet=False)
 
 # Verify that the newest tools have been selected
 assert_match(".*" + re.escape(
-"""Alire has selected automatically this toolchain:
+"""\
+Alire has selected automatically this toolchain:
    gprbuild=8888.0.0
    gnat_native=8888.0.0"""),
+   p.out)
+
+# Verify that the internal config matches what was said
+p = run_alr("version")
+assert_match(".*" + re.escape(
+"""\
+tool #1 gnat:              gnat_native=8888.0.0
+tool #2 gprbuild:          gprbuild=8888.0.0"""),
    p.out)
 
 print('SUCCESS')
