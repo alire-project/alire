@@ -51,3 +51,6 @@
 [submodule "deps/clic"]
 	path = deps/clic
 	url = https://github.com/alire-project/clic.git
+[submodule "deps/umwi"]
+	path = deps/umwi
+	url = https://github.com/mosteo/umwi
