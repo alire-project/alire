@@ -26,11 +26,13 @@ package Alire.Toolchains is
    --  Returns a dependency on crate*
 
    procedure Assistant (Level              : Config.Level;
-                        Allow_Incompatible : Boolean := False);
+                        Allow_Incompatible : Boolean := False;
+                        First_Run          : Boolean := False);
    --  Runs the interactive assistant to select the default toolchain. By
    --  default, the native Alire-provided compiler for Current_OS is proposed.
    --  This information may apply config-wide or workspace-wide. Installation
-   --  goes, in any case, to the config cache location.
+   --  goes, in any case, to the config cache location. If First_Run, select
+   --  defaults without interacting with the user.
 
    --  The following functions will transform any `gnat_XXX` dependency on
    --  plain `gnat`. This way we need not to litter the callers with similar

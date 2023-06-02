@@ -18,6 +18,8 @@ with Semantic_Versioning.Extended;
 
 package body Alire.Toolchains is
 
+   use type Ada.Containers.Count_Type;
+
    --------------
    -- Any_Tool --
    --------------
@@ -31,7 +33,8 @@ package body Alire.Toolchains is
    ---------------
 
    procedure Assistant (Level              : Config.Level;
-                        Allow_Incompatible : Boolean := False) is
+                        Allow_Incompatible : Boolean := False;
+                        First_Run          : Boolean := False) is
       package Release_Vectors is new
         Ada.Containers.Indefinite_Vectors
           (Positive, Releases.Release, Releases."=");
@@ -205,14 +208,18 @@ package body Alire.Toolchains is
       ------------------
 
       procedure Pick_Up_Tool (Crate : Crate_Name; Selection : Selections) is
-         Choice : constant Positive :=
-           CLIC.User_Input.Query_Multi
-             (Question  =>
-                "Please select the " & Crate.TTY_Image
-              & " version for use with this configuration",
-              Choices   => Selection.Choices);
+         Choice : Positive := 1; -- First one by default
+         --  There's in the worst case one choice, which would be None
       begin
-         if Selection.Choices (Choice) = None then
+         if not First_Run then
+            Choice := CLIC.User_Input.Query_Multi
+              (Question  =>
+                 "Please select the " & Crate.TTY_Image
+               & " version for use with this configuration",
+               Choices   => Selection.Choices);
+         end if;
+
+         if not First_Run and then Selection.Choices (Choice) = None then
 
             Put_Info ("Selected to rely on a user-provided binary.");
 
@@ -222,9 +229,11 @@ package body Alire.Toolchains is
 
          else
 
-            Put_Info
-              ("Selected tool version "
-               & TTY.Bold (Selection.Targets (Choice).Milestone.TTY_Image));
+            if not First_Run then
+               Put_Info
+                 ("Selected tool version "
+                  & TTY.Bold (Selection.Targets (Choice).Milestone.TTY_Image));
+            end if;
 
             --  Store for later installation
 
@@ -254,16 +263,18 @@ package body Alire.Toolchains is
       procedure Set_Up (Crate : Crate_Name) is
       begin
 
-         Trace.Info ("");
-         if Tool_Is_Configured (Crate) then
-            Put_Info ("Currently configured: "
-                      & Tool_Dependency (Crate).TTY_Image);
-         else
-            Put_Info (Crate.TTY_Image & " is currently not configured. ("
-                      & Utils.TTY.Alr
-                      & " will use the version found in the environment.)");
+         if not First_Run then
+            Trace.Info ("");
+            if Tool_Is_Configured (Crate) then
+               Put_Info ("Currently configured: "
+                         & Tool_Dependency (Crate).TTY_Image);
+            else
+               Put_Info (Crate.TTY_Image & " is currently not configured. ("
+                         & Utils.TTY.Alr
+                         & " will use the version found in the environment.)");
+            end if;
+            Trace.Info ("");
          end if;
-         Trace.Info ("");
 
          --  Find the newest regular release in our index:
          if not Index.Releases_Satisfying (Any_Tool (Crate),
@@ -281,20 +292,22 @@ package body Alire.Toolchains is
 
    begin
 
-      AAA.Text_IO.Put_Paragraphs
-        (AAA.Strings.Empty_Vector
-         .Append ("Welcome to the toolchain selection assistant")
-         .Append ("")
-         .Append
-           ("In this assistant you can set up the default toolchain to be "
-            & "used with any crate that does not specify its own top-level "
-            & "dependency on a version of " & Utils.TTY.Name ("gnat") & " or "
-            & Utils.TTY.Name ("gprbuild."))
-         .Append ("")
-         .Append
-           ("If you choose " & TTY.Italic ("""None""") & ", Alire will use "
-            & "whatever version is found in the environment.")
-        );
+      if not First_Run then
+         AAA.Text_IO.Put_Paragraphs
+           (AAA.Strings.Empty_Vector
+            .Append ("Welcome to the toolchain selection assistant")
+            .Append ("")
+            .Append
+              ("In this assistant you can set up the default toolchain to be "
+               & "used with any crate that does not specify its own top-level "
+               & "dependency on a version of " & Utils.TTY.Name ("gnat")
+               & " or " & Utils.TTY.Name ("gprbuild."))
+            .Append ("")
+            .Append
+              ("If you choose " & TTY.Italic ("""None""") & ", Alire will use "
+               & "whatever version is found in the environment.")
+           );
+      end if;
 
       if Allow_Incompatible then
          Put_Warning ("Selection of incompatible tools is "
@@ -305,6 +318,7 @@ package body Alire.Toolchains is
          if not Allow_Incompatible
            and then Tool /= Tools.First_Element
            and then not Selected.Is_Empty
+           and then not First_Run
          then
             Trace.Info ("");
             Put_Info ("Choices for the following tool are narrowed down to "
@@ -315,6 +329,39 @@ package body Alire.Toolchains is
          end if;
          Set_Up (Tool);
       end loop;
+
+      --  Report and offer to stop on first run
+
+      if First_Run then
+         Put_Info ("Alire has selected automatically this toolchain:");
+         for Release of Selected loop
+            Trace.Info ("   " & Release.Milestone.TTY_Image);
+            Trace.Detail ("      origin: "
+                          & Release.Origin.Whenever
+                            (Platforms.Current.Properties).Image);
+         end loop;
+
+         --  Warn if the default choice is somehow wrong
+
+         if Selected.Length < Tools.Length then -- gnat and gprbuild
+            Put_Warning ("Some tools could not be configured automatically:");
+            for Tool of Tools loop
+               if not (for some R of Selected => R.Provides (Tool)) then
+                  Put_Warning ("   " & Utils.TTY.Name (Tool)
+                               & " not configured");
+               end if;
+            end loop;
+            Put_Warning ("This can be caused by the community index being "
+                         & "missing.");
+         end if;
+
+         Trace.Info ("You can select a different toolchain at any time with `"
+                     & TTY.Terminal ("alr toolchain --select") & "`");
+         if not Selected.Is_Empty then
+            Trace.Info ("Download will start now:");
+         end if;
+         CLIC.User_Input.Continue_Or_Abort;
+      end if;
 
       --  The user has already chosen, so disable the assistant
 
@@ -327,6 +374,10 @@ package body Alire.Toolchains is
       end loop;
 
    end Assistant;
+
+   ----------------------
+   -- Detect_Externals --
+   ----------------------
 
    procedure Detect_Externals is
    begin
