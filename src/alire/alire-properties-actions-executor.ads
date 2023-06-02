@@ -8,7 +8,8 @@ package Alire.Properties.Actions.Executor is
                               Env     : Properties.Vector;
                               Moment  : Moments);
    --  Run Release actions that apply to a given environment. IMPORTANT: the
-   --  working directory at the moment of this call should be the release root.
+   --  working directory at the moment of this call should be the workspace
+   --  root.
 
    procedure Execute_Actions
      (Release    : Releases.Release;

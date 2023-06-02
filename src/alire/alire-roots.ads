@@ -19,7 +19,7 @@ package Alire.Roots is
    Crate_File_Name : String renames Paths.Crate_File_Name;
 
    --  Type used to encapsulate the information about the working context.
-   --  A valid alire working dir is one containing an alire/crate.toml file.
+   --  A valid alire workspace is one containing an alire/crate.toml file.
 
    type Root (<>) is tagged private;
 
@@ -60,7 +60,7 @@ package Alire.Roots is
                       Path : Absolute_Path;
                       Env  : Properties.Vector) return Root;
    --  From existing release
-   --  Path must point to the session folder (parent of alire metadata folder)
+   --  Path must point to the workspace (parent of alire metadata folder)
 
    procedure Set (This     : in out Root;
                   Solution : Solutions.Solution) with

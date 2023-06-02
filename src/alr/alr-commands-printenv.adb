@@ -27,7 +27,7 @@ package body Alr.Commands.Printenv is
          Reportaise_Wrong_Arguments ("Specify at most one subcommand");
       end if;
 
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       declare
          Context : constant Alire.Environment.Context :=

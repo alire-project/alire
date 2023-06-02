@@ -12,8 +12,8 @@ package Alire.Paths with Preelaborate is
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
    Working_Folder_Inside_Root : constant Relative_Path := "alire";
-   --  Folder within a working release that will contain metadata/build files,
-   --  dependency releases, and session.
+   --  Folder within a workspace that will contain metadata/build files,
+   --  dependency releases, etc.
 
    Scripts_Graph_Easy            : constant String := "graph-easy";
    --  Script for ASCII graphs
