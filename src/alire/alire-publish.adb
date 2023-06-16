@@ -665,8 +665,12 @@ package body Alire.Publish is
 
          OS_Lib.Subprocess.Checked_Spawn
            ("tar",
-            Empty_Vector
-            & "cfj"
+            (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
+             then Empty_Vector
+             & "-C" & ".." -- Change to the parent directory
+             & "-czf"
+             else Empty_Vector
+             & "cfj")
             & Archive --  Destination file at alire/archives/crate-version.tbz2
 
             & String'("--exclude=./alire")
@@ -674,12 +678,19 @@ package body Alire.Publish is
 
             --  exclude .git and the like, with workaround for macOS bsd tar
             & (if GNATCOLL.OS.Constants.OS in GNATCOLL.OS.MacOS
-               then Empty_Vector
-                    & "--exclude=./.git"
-                    & "--exclude=./.hg"
-                    & "--exclude=./.svn"
-                    & String'("-s,^./," & Milestone & "/,")
-                    --  Prepend empty milestone dir as required for our tars)
+              then Empty_Vector
+              & "--exclude=./.git"
+              & "--exclude=./.hg"
+              & "--exclude=./.svn"
+              & String'("-s,^./," & Milestone & "/,")
+              --  Prepend empty milestone dir as required for our tars
+              & "."
+              elsif GNATCOLL.OS.Constants.OS in GNATCOLL.OS.Windows
+              then Empty_Vector
+              & "--exclude=*.git"
+              & "--exclude=*.hg"
+              & "--exclude=*.svn"
+              & Ada.Directories.Simple_Name (Base_Path (Context))
               else Empty_Vector
                     & "--exclude-backups"      -- exclude .#* *~ #*# patterns
                     & "--exclude-vcs"          -- exclude .git, .hg, etc
@@ -713,60 +724,82 @@ package body Alire.Publish is
 
       Put_Success ("Source archive created successfully.");
 
-      declare
-
-         --------------
-         -- Is_Valid --
-         --------------
-
-         function Is_Valid (Remote_URL : String) return Boolean is
+      --  Test if we can access the alire index. If not, ask the user to
+      --  copy the tarball to it's destination
+      if Ada.Directories.Exists (+Context.Path) then
+         declare
+            Remote_URL : constant String :=
+                           +(Context.Path) & '/' &
+                         Milestone
+                           & (if Is_Repo
+                              then ".tgz"
+                              else ".tar.tbz2");
          begin
-            Trace.Always ("");
-            Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
+            Trace.Always ("Copying archive " & TTY.URL (Archive) &
+                            " to " & Remote_URL);
+
+            Ada.Directories.Copy_File (TTY.URL (Archive), Remote_URL);
 
             Context.Origin := Origins.New_Source_Archive
-              (Trim (Remote_URL), -- remove unwanted extra whitespaces
+              ("file://" & Trim (Remote_URL), -- remove unwanted extra
+               --  whitespaces
                Ada.Directories.Simple_Name (Archive));
-            --  This origin creation may raise if URL is improper
+         end;
+      else
+         declare
+            --------------
+            -- Is_Valid --
+            --------------
 
-            return True;
-         exception
-            when E : others =>
-               Errors.Pretty_Print
-                 (Errors.Wrap
-                    ("The URL does not seem to be valid:",
-                     Errors.Get (E)));
-               return False;
-         end Is_Valid;
+            function Is_Valid (Remote_URL : String) return Boolean is
+            begin
+               Trace.Always ("");
+               Trace.Always ("The URL is: " & TTY.URL (Remote_URL));
 
-         -----------------
-         -- Get_Default --
-         -----------------
+               Context.Origin := Origins.New_Source_Archive
+                 (Trim (Remote_URL), -- remove unwanted extra whitespaces
+                  Ada.Directories.Simple_Name (Archive));
+               --  This origin creation may raise if URL is improper
 
-         function Get_Default (Remote_URL : String)
-                               return Answer_Kind
-         is (if Force or else URI.Scheme (Remote_URL) in URI.HTTP
-             then Yes
-             else No);
+               return True;
+            exception
+               when E : others =>
+                  Errors.Pretty_Print
+                    (Errors.Wrap
+                       ("The URL does not seem to be valid:",
+                        Errors.Get (E)));
+                  return False;
+            end Is_Valid;
 
-         --  We don't use the following answer because the validation function
-         --  already stores the information we need.
+            -----------------
+            -- Get_Default --
+            -----------------
 
-         Unused : constant Answer_With_Input :=
-                    Validated_Input
-                      (Question =>
-                          "Please upload the archive generated"
+            function Get_Default (Remote_URL : String)
+                                  return Answer_Kind
+            is (if Force or else URI.Scheme (Remote_URL) in URI.HTTP
+                then Yes
+                else No);
+
+            --  We don't use the following answer because the validation
+            --  function already stores the information we need.
+
+            Unused : constant Answer_With_Input :=
+                       Validated_Input
+                         (Question =>
+                                       "Please upload the archive generated"
                           & " at " & TTY.URL (Archive)
                           & " to its definitive online storage location."
                           & ASCII.LF
                           & "Once you have uploaded the file, enter its URL:",
-                       Prompt   => "Enter URL> ",
-                       Valid    => (Yes | No => True, others => False),
-                       Default  => Get_Default'Access,
-                       Is_Valid => Is_Valid'Access);
-      begin
-         null; -- Nothing to do, everything happens at Answer_With_Input
-      end;
+                          Prompt   => "Enter URL> ",
+                          Valid    => (Yes | No => True, others => False),
+                          Default  => Get_Default'Access,
+                          Is_Valid => Is_Valid'Access);
+         begin
+            null; -- Nothing to do, everything happens at Answer_With_Input
+         end;
+      end if;
    end Prepare_Archive;
 
    ----------------------

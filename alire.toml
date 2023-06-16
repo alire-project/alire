@@ -15,7 +15,9 @@ project-files = ["alr.gpr"]
 executables = ["alr"]
 
 [[depends-on]]
-aaa = "~0.3.0"
+gnat_native = "*"
+gprbuild = "*"
+aaa = "~0.2.7"
 ada_toml = "~0.3"
 ajunitgen = "^1.0.1"
 ansiada = "^1.0"
