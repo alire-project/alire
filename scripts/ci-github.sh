@@ -51,14 +51,19 @@ echo TESTSUITE:
 echo
 cd testsuite
 
-# On Windows, python3/pip3 don't explicitly exist
+# On Windows, python3/pip3 don't explicitly exist. Also we don't need a venv.
 if [ "${OS:-}" == "Windows_NT" ]; then
     run_python=python
     run_pip=pip
 else
     run_python=python3
     run_pip=pip3
+    # Some distros complain that we are trying to install packages globally,
+    # e.g. latest Debian, so use a virtualenv:
+    $run_python -m venv venv && . venv/bin/activate
 fi
+
+echo PYTHON installing testsuite dependencies...
 
 echo Python version: $($run_python --version)
 echo Pip version: $($run_pip --version)
