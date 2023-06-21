@@ -458,7 +458,7 @@ package body Alr.Commands.Toolchain is
          Alire.Toolchains.Detect_Externals;
 
          if Cmd.Local then
-            Cmd.Requires_Valid_Session;
+            Cmd.Requires_Workspace;
          end if;
 
          if Args.Count = 0 then

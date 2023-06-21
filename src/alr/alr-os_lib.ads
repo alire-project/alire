@@ -48,7 +48,7 @@ package Alr.OS_Lib is
    end Paths;
 
    -----------------------------
-   --  WORKING FOLDER MANAGEMENT
+   --  CURRENT FOLDER MANAGEMENT
 
    subtype Folder_Guard is Alire.Directories.Guard;
 

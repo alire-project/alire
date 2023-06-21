@@ -89,6 +89,11 @@ package Alire.Directories is
    --  the top-level only contains "doinstall", "README" and so on that
    --  are unusable and would be confusing in a binary prefix.
 
+   procedure Remove_Softlinks (Path      : Any_Path;
+                               Recursive : Boolean);
+   --  Remove softlinks only (not their targets) at Path and subdirs when
+   --  Recursive.
+
    procedure Touch (File : File_Path);
    --  If the file exists, update last edition time; otherwise create it. If
    --  File denotes anything else than a regular file, raise.
@@ -105,10 +110,11 @@ package Alire.Directories is
                             Recurse : Boolean := False;
                             Spinner : Boolean := False);
    --  Traverse all items in a folder, optionally recursively If recursively,
-   --  the directory entry is passed before entering it "." and ".." are
-   --  ignored. If Stop is set to True, traversal will not continue. See also
-   --  the comments in Traverse_Tree_Prune_Dir. If Spinner, show a busy spinner
-   --  with the current dir being explored.
+   --  the directory entry is passed before entering it. "." and ".."
+   --  are ignored. NOTE: Softlinks to directories are ignored. If Stop is set
+   --  to True, traversal will not continue. See also the comments in
+   --  Traverse_Tree_Prune_Dir. If Spinner, show a busy spinner with
+   --  the current dir being explored.
 
    function Tree_Size (Path : Any_Path) return Ada.Directories.File_Size;
    --  Size of files under a given point, in bytes. Will return 0 for an

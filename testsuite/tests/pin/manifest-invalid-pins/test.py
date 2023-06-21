@@ -23,7 +23,7 @@ def check(pin, error):
 
     p = run_alr("pin", complain_on_error=False)
     assert p.status != 0, "Unexpected success for pin: " + pin
-    assert_match(".*Cannot continue with invalid session.*" +
+    assert_match(".*Cannot continue.*" +
                  error + ".*\n",
                  p.out)
 

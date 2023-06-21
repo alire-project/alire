@@ -6,6 +6,8 @@ with Ada.Strings.Maps;
 with GNAT.OS_Lib;
 with GNAT.Regpat;
 
+with Alire.Utils.TTY;
+
 package body Alire.Utils is
 
    ---------------------------
@@ -184,15 +186,40 @@ package body Alire.Utils is
       and then not AAA.Strings.Contains (User, "--"));
 
    ------------------
+   -- Error_In_Tag --
+   ------------------
+
+   function Error_In_Tag (Tag : String) return String
+   is
+      Err : UString;
+      use type UString;
+   begin
+      if Tag'Length < 1 then
+         Err := +"Tag too short (Min " & Min_Tag_Length'Img & ").";
+      elsif Tag'Length > Max_Tag_Length then
+         Err := +"Tag too long (Max " & Max_Tag_Length'Img & ").";
+      elsif Tag (Tag'First) = '-' or else Tag (Tag'Last) = '-' then
+         Err := +"Tags must not begin/end with an hyphen.";
+      elsif AAA.Strings.Contains (Tag, "--") then
+         Err := +"Tags cannot have two consecutive hyphens.";
+      elsif (for some C of Tag => C not in Tag_Character) then
+         Err := +"Tags must be lowercase ASCII alphanumerical" &
+           " with optional hyphens.";
+      end if;
+
+      if Err /= "" then
+         return "Invalid Tag '" & Utils.TTY.Name (Tag) & "': " & (+Err);
+      else
+         return "";
+      end if;
+   end Error_In_Tag;
+
+   ------------------
    -- Is_Valid_Tag --
    ------------------
 
-   function Is_Valid_Tag (Tag : String) return Boolean is
-     ((for all C of Tag => C in '0' .. '9' | 'a' .. 'z' | '-')
-      and then Tag'Length in 1 .. Max_Tag_Length
-      and then Tag (Tag'First) /= '-'
-      and then Tag (Tag'Last) /= '-'
-      and then not AAA.Strings.Contains (Tag, "--"));
+   function Is_Valid_Tag (Tag : String) return Boolean
+   is (Error_In_Tag (Tag) = "");
 
    --------------------
    -- Image_One_Line --

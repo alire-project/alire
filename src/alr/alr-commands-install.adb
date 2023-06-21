@@ -17,7 +17,7 @@ package body Alr.Commands.Install is
    begin
       --  If nothing given, we must be in workspace
       if not Cmd.Info and then Args.Is_Empty then
-         Cmd.Requires_Valid_Session
+         Cmd.Requires_Workspace
            (Error => "Give a crate name to install or enter a local crate");
       end if;
 

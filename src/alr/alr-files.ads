@@ -17,6 +17,6 @@ package Alr.Files is
 
    function Locate_Any_GPR_File return Natural;
    --  Says if there's any *.gpr file in current folder (making the cwd a
-   --  plausible alr working dir).
+   --  plausible alr workspace).
 
 end Alr.Files;

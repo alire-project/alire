@@ -38,6 +38,11 @@ package Alire.Utils with Preelaborate is
    --  Check username is valid according to
    --  https://github.com/shinnn/github-username-regex
 
+   subtype Tag_Character is Character
+      with Static_Predicate => Tag_Character in
+         'a' .. 'z' | '0' .. '9' | '-';
+
+   function Error_In_Tag (Tag : String) return String;
    function Is_Valid_Tag (Tag : String) return Boolean;
 
    function Quote (S : String) return String;

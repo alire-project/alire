@@ -140,7 +140,7 @@ package body Alr.Commands.Get is
          Cmd.Root.Set (Solution);
 
          --  At this point, both crate and lock files must exist and
-         --  be correct, so the working session is correct. Errors with
+         --  be correct, so the workspace is correct. Errors with
          --  dependencies can still occur, but these are outside of the
          --  retrieved crate and might be corrected manipulating dependencies
          --  and updating.

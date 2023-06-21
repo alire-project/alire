@@ -75,7 +75,7 @@ package body Alr.Commands.Edit is
            ("No editor defined in config key '" & Keys.Editor_Cmd & "'.");
       end if;
 
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       Cmd.Root.Export_Build_Environment;
 

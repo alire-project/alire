@@ -871,10 +871,7 @@ package body Alire.Solver is
                         Seen      => State.Seen.Union (To_Set (Raw_Dep)),
                         Expanded  => State.Expanded and Dep,
                         Target    => State.Remaining and
-                          (if Pins.State (Dep.Crate).Has_Release
-                           then Pins.State (Dep.Crate)
-                                    .Release.Dependencies (Props)
-                           else Empty),
+                          Pins.Pin_Dependencies (Dep.Crate, Props),
                         Remaining => Empty,
                         Solution  =>
                           Solution.Linking (Dep.Crate,

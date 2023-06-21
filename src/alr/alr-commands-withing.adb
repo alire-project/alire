@@ -284,7 +284,7 @@ package body Alr.Commands.Withing is
       end To_Sharing_Request;
 
    begin
-      Cmd.Requires_Valid_Session;
+      Cmd.Requires_Workspace;
 
       if Cmd.URL.all /= "" then
          Flags := Flags + 1;
