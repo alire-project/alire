@@ -36,6 +36,7 @@ with Alr.Commands.Printenv;
 with Alr.Commands.Publish;
 with Alr.Commands.Run;
 with Alr.Commands.Search;
+with Alr.Commands.Share;
 with Alr.Commands.Show;
 with Alr.Commands.Test;
 with Alr.Commands.Toolchain;
@@ -604,6 +605,7 @@ begin
    Sub_Cmd.Register ("Crate", new Pin.Command);
    Sub_Cmd.Register ("Crate", new Printenv.Command);
    Sub_Cmd.Register ("Crate", new Run.Command);
+   Sub_Cmd.Register ("Crate", new Share.Command);
    Sub_Cmd.Register ("Crate", new Update.Command);
    Sub_Cmd.Register ("Crate", new Withing.Command);
 
