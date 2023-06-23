@@ -1,5 +1,3 @@
-with AAA.Enum_Tools;
-
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Maps;
@@ -10,10 +8,8 @@ with Alire.Optional;
 with Alire.Platforms.Current;
 with Alire.Releases;
 with Alire.Roots.Editable;
-with Alire.Shared;
 with Alire.Solutions;
 with Alire.URI;
-with Alire.Utils.Did_You_Mean;
 
 with Alr.OS_Lib;
 
@@ -23,8 +19,6 @@ with TOML_Slicer;
 
 package body Alr.Commands.Withing is
 
-   use all type Alire.Shared.Requests;
-
    Switch_URL : constant String := "--use";
 
    ---------
@@ -32,13 +26,11 @@ package body Alr.Commands.Withing is
    ---------
 
    procedure Add (Root    : in out Alire.Roots.Editable.Root;
-                  Args    :        AAA.Strings.Vector;
-                  Sharing :        Alire.Shared.Requests := Default)
+                  Args    :        AAA.Strings.Vector)
    is
    begin
       for I in Args.First_Index .. Args.Last_Index loop
-         Root.Add_Dependency (Alire.Dependencies.From_String (Args (I)),
-                              Sharing);
+         Root.Add_Dependency (Alire.Dependencies.From_String (Args (I)));
       end loop;
    end Add;
 
@@ -252,45 +244,10 @@ package body Alr.Commands.Withing is
          end if;
       end Check;
 
-      ------------------------
-      -- To_Sharing_Request --
-      ------------------------
-
-      function To_Sharing_Request (Switch : String)
-                                   return Alire.Shared.Requests
-      is
-         function Is_Valid is
-           new AAA.Enum_Tools.Is_Valid (Alire.Shared.Explicit_Requests);
-         function Suggest is
-           new Alire.Utils.Did_You_Mean.Enum_Suggestion
-             (Alire.Shared.Explicit_Requests,
-              Alire.Utils.Did_You_Mean.Lower_Case);
-      begin
-         if Switch in "" | "=" then
-            return Yes_Local;
-         elsif Switch = Unset then
-            return Default;
-         elsif Switch (Switch'First) = '=' then
-            return
-              To_Sharing_Request (Switch (Switch'First + 1 .. Switch'Last));
-         elsif not Is_Valid (Switch) then
-            Reportaise_Wrong_Arguments
-              ("Invalid value " & TTY.Emph (Switch) & " for --shared. "
-               & Suggest (Switch));
-            raise Program_Error with "Unreachable";
-         else
-            return Alire.Shared.Explicit_Requests'Value (Switch);
-         end if;
-      end To_Sharing_Request;
-
    begin
       Cmd.Requires_Workspace;
 
       if Cmd.URL.all /= "" then
-         Flags := Flags + 1;
-      end if;
-
-      if Cmd.Shared.all /= Commands.Unset then
          Flags := Flags + 1;
       end if;
 
@@ -332,9 +289,6 @@ package body Alr.Commands.Withing is
          elsif Cmd.From then
             Reportaise_Wrong_Arguments
               ("At least one GPR file to process required");
-         elsif Cmd.Shared.all /= Commands.Unset then
-            Reportaise_Wrong_Arguments
-              ("At least one dependency required with --shared");
          end if;
       end if;
 
@@ -353,7 +307,7 @@ package body Alr.Commands.Withing is
             if Cmd.URL.all /= "" then
                Cmd.Add_With_Pin (New_Root, Args);
             else
-               Add (New_Root, Args, To_Sharing_Request (Cmd.Shared.all));
+               Add (New_Root, Args);
             end if;
 
          elsif Cmd.Del then
@@ -406,20 +360,6 @@ package body Alr.Commands.Withing is
                 & " the reference. Alternatively, a branch to track can be"
                 & " specified with --branch. Use `alr update` to refresh the"
                 & " tracking pin contents.")
-       .New_Line
-       .Append ("* Adding dependencies with shared storage:")
-       .Append ("Use the --shared switch, with an optional hint value. Sharing"
-                & " hints apply to all versions of the given crates.")
-       .Append ("- yes_local (default): use the shared cache for this"
-                & " workspace.")
-       .Append ("- yes_global: use the shared cache in all workspaces.")
-       .Append ("- no_local: do not use the shared cache for this workspace,"
-                & " even if globally enabled with `yes_global` or through"
-                & " `dependencies.dir` configuration.")
-       .Append ("- no_global: do not use the shared cache in any workspace,"
-                & " even if global sharing through `dependencies.dir`"
-                & " configuration is enabled.")
-       .Append ("- reset: remove all sharing hints for the given crates.")
        .New_Line
        .Append ("* Adding dependencies from a GPR file:")
        .Append ("The project file given with --from will be scanned looking"
@@ -481,13 +421,6 @@ package body Alr.Commands.Withing is
          Long_Switch => Switch_URL & "=",
          Argument    => "PATH|URL",
          Help        => "Add a dependency pinned to some external source");
-
-      Define_Switch (Config,
-                     Cmd.Shared'Access,
-                     "", "--shared?",
-                     "Configure the global cache use for this dependency",
-                     Argument => "=HINT");
-      --  TODO: explain HINT in help
 
       Define_Switch (Config,
                      Cmd.Solve'Access,

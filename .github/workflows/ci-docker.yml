@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         tag: # Those are our ghcr.io/alire-project/docker/gnat:tag machines
             - centos-stream-fsf-latest # Test unsupported package manager

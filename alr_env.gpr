@@ -23,6 +23,7 @@ aggregate project Alr_Env is
                          "deps/spdx",
                          "deps/stopwatch",
                          "deps/toml_slicer",
+                         "deps/umwi",
                          "deps/uri-ada",
                          "deps/xmlezout"
                         );

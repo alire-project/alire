@@ -1,3 +1,4 @@
+with Alire.Origins;
 with Alire.Utils.Tables;
 with Alire.User_Pins;
 with Alire.Utils.TTY;
@@ -21,7 +22,8 @@ package body Alire.Solutions.Diffs is
       Unpinned,   -- A release being unpinned
       Unchanged,  -- An unchanged dependency/release
       Missing,    -- A missing dependency
-      Shared      -- A release used from the shared installed releases
+      Shared,     -- A release used from the shared installed releases
+      Binary      -- A binary, system or external release
      );
 
    ----------
@@ -33,14 +35,15 @@ package body Alire.Solutions.Diffs is
          (case Change is
              when Added      => TTY.OK    (U ("+")),
              when Removed    => TTY.Emph  (U ("✗")),
-             when Hinted     => TTY.Warn  (U ("↪")),
+             when Hinted     => TTY.Warn  (U ("🔎")), -- alts: 💡🔍🔎
              when Upgraded   => TTY.OK    (U ("⭧")),
              when Downgraded => TTY.Warn  (U ("⭨")),
-             when Pinned     => TTY.OK    (U ("⊙")),
-             when Unpinned   => TTY.Emph  (U ("𐩒")),
+             when Pinned     => TTY.OK    (U ("📌")), -- alts: ⊙📍📌
+             when Unpinned   => TTY.Emph  (U ("🎈")), -- alts: 𐩒🎈
              when Unchanged  => TTY.OK    (U ("=")),
-             when Missing    => TTY.Error (U ("⚠")),
-             when Shared     => TTY.Emph  (U ("♼")))
+             when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
+             when Shared     => TTY.Emph  (U ("♻️ ")), -- alts: ♻️♼
+             when Binary     => TTY.Warn  (U ("📦")))
        else
          (case Change is
              when Added      => U ("+"),
@@ -52,7 +55,8 @@ package body Alire.Solutions.Diffs is
              when Unpinned   => U ("o"),
              when Unchanged  => U ("="),
              when Missing    => U ("!"),
-             when Shared     => U ("i")
+             when Shared     => U ("i"),
+             when Binary     => U ("b")
          ));
 
    --  This type is used to summarize every detected change
@@ -322,6 +326,39 @@ package body Alire.Solutions.Diffs is
 
       end Determine_Relevant_Version;
 
+      ------------------------------
+      -- Releases_Without_Sources --
+      ------------------------------
+
+      procedure Releases_Without_Sources is
+         use all type Origins.Kinds;
+         subtype Report_Kinds is Origins.Kinds with Static_Predicate =>
+           Report_Kinds in Binary_Archive | External | System;
+      begin
+         --  For "special" releases, show extra info: binaries that can
+         --  be very large, or releases that are not from sources (so
+         --  harder to audit, intrinsically shared, ...)
+
+         if not Has_Latter or else not Latter.Has_Release then
+            return;
+         end if;
+
+         declare
+            Rel : constant Alire.Releases.Release :=
+                    This.Latter.Releases.Element (Crate);
+         begin
+            if Rel.Origin.Kind in Report_Kinds then
+               Add_Change (Chg, Icon (Binary),
+                           TTY.Warn
+                             (case Rel.Origin.Kind is
+                                 when Binary_Archive => "binary",
+                                 when External       => "executable in path",
+                                 when System         => "system package",
+                                 when others         => raise Program_Error));
+            end if;
+         end;
+      end Releases_Without_Sources;
+
    begin
 
       --  Go through possible changes and add each marker
@@ -341,6 +378,8 @@ package body Alire.Solutions.Diffs is
       Up_Or_Downgrade;
 
       Determine_Relevant_Version;
+
+      Releases_Without_Sources;
 
       --  Final fill-in for no changes
 
@@ -412,7 +451,7 @@ package body Alire.Solutions.Diffs is
 
                Table.Append (+Changes.Best_Version);
 
-               --  Finally show an explanation of the change depending on
+               --  Show an explanation of the change depending on
                --  status changes.
 
                Table.Append ("(" & Changes.Detail.Flatten (",") & ")");

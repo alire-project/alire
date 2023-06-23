@@ -27,7 +27,7 @@ package Alr.Commands.Share is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String is
-     ("{[--local|--global][--yes|--no]|--reset} <crate>...|[--list]");
+     ("{[--local|--global][--yes|--no|--reset]} <crate>...|[--list]");
 
 private
 

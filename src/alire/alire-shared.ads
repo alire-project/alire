@@ -53,12 +53,13 @@ package Alire.Shared is
 
    type Requests is
      (
-      No_Local,   -- The crate must not be shared (workspace)
-      No_Global,  -- The crate must not be shared (global config)
-      Yes_Local,  -- The crate must be shared (workspace)
-      Yes_Global, -- The crate must be shared (global config)
-      Reset,      -- Remove any sharing hints (local and global)
-      Default     -- Use existing sharing hints (local or global)
+      No_Local,     -- The crate must not be shared (workspace)
+      No_Global,    -- The crate must not be shared (global config)
+      Yes_Local,    -- The crate must be shared (workspace)
+      Yes_Global,   -- The crate must be shared (global config)
+      Reset_Local,  -- Remove any sharing hints (workspace)
+      Reset_Global, -- Remove any sharing hints (workspace)
+      Default       -- Use existing sharing hints (local or global)
      );
 
    subtype Explicit_Requests
@@ -66,11 +67,13 @@ package Alire.Shared is
 
    function Image (Request : Explicit_Requests) return String
    is (case Request is
-          when No_Local   => "not shared in this workspace",
-          when No_Global  => "not shared globally",
-          when Yes_Local  => "shared in this workspace",
-          when Yes_Global => "shared globally",
-          when Reset      => "using default storage");
+          when No_Local     => "not shared in this workspace",
+          when No_Global    => "not shared in global configuration",
+          when Yes_Local    => "shared in this workspace",
+          when Yes_Global   => "shared in global configuration",
+          when Reset_Local  => "using default storage in this workspace",
+          when Reset_Global => "using default storage in global configuration"
+      );
 
    procedure Mark (Crate  : Crate_Name;
                    Status : Explicit_Requests);

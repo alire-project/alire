@@ -14,6 +14,7 @@ with Alire.Platforms.Folders;
 with Alire.Properties.Actions;
 with Alire.Root;
 with Alire.Toolchains.Solutions;
+with Alire.Utils.TTY;
 with Alire.Warnings;
 
 with CLIC.Config;
@@ -123,8 +124,9 @@ package body Alire.Shared is
                            when Global => Local);
    begin
       case Status is
-         when Reset =>
+         when Reset_Local =>
             Config.Edit.Unset (Local, Key);
+         when Reset_Global =>
             Config.Edit.Unset (Global, Key);
          when No_Local | No_Global =>
             Config.Edit.Set (Level, Key, No'Image);
@@ -133,6 +135,9 @@ package body Alire.Shared is
             Config.Edit.Set (Level, Key, Yes'Image);
             Config.Edit.Unset (Unset_Level, Key);
       end case;
+
+      Trace.Debug ("Sharing: crate " & Utils.TTY.Name (Crate)
+                   & " marked as " & TTY.Emph (Image (Status)));
    end Mark;
 
    ---------------

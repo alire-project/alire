@@ -75,8 +75,7 @@ package body Alire.Roots.Editable is
    --------------------
 
    procedure Add_Dependency (This    : in out Root;
-                             Dep     : Dependencies.Dependency;
-                             Sharing : Shared.Requests := Shared.Default)
+                             Dep     : Dependencies.Dependency)
    is
 
       --------------------
@@ -128,17 +127,6 @@ package body Alire.Roots.Editable is
          raise Checked_Error with Errors.Set
            (Utils.TTY.Name (Dep.Crate) & " is already a direct dependency.");
       end if;
-
-      --  If sharing hints given, store as such in config
-
-      case Sharing is
-         when Shared.Explicit_Requests =>
-            Shared.Mark (Dep.Crate, Sharing);
-            Put_Info ("Crate " & Dep.Crate.TTY_Image
-                      & " marked as " & Shared.Image (Sharing));
-         when Shared.Default =>
-            null;
-      end case;
 
       --  If we are given an Any dependency, attempt a solving to narrow down
       --  to a "safely updatable" subset.
