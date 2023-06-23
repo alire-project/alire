@@ -13,32 +13,27 @@ package body Alr.Commands.Share is
    procedure Modify (Cmd   : in out Command;
                      Crate : String)
    is
-      use all type Alire.Shared.Explicit_Requests;
+      use all type Alire.Config.Level;
+      use all type Alire.Shared.Hints;
 
-      --  --yes and --local are defaults, resulting in this sequence:
-      Status : constant Alire.Shared.Explicit_Requests :=
-                 (if Cmd.Reset then
-                    (if Cmd.Global
-                     then Reset_Global
-                     else Reset_Local)
-                  elsif Cmd.No and then Cmd.Global then
-                     No_Global
-                  elsif Cmd.Global then
-                     Yes_Global
-                  elsif Cmd.No then
-                     No_Local
-                  else
-                     Yes_Local);
+      Hint : constant Alire.Shared.Hints :=
+               (if Cmd.Reset then Default
+                elsif Cmd.No then No
+                else Yes);
+      Level : constant Alire.Config.Level :=
+                (if Cmd.Global
+                 then Global
+                 else Local);
    begin
-      if Status in Yes_Local | No_Local | Reset_Local then
+      if not Cmd.Global then
          Cmd.Requires_Workspace;
       end if;
 
-      Alire.Shared.Mark (+Crate, Status);
+      Alire.Shared.Mark (+Crate, Hint, Level);
 
       Alire.Put_Success
         ("Crate " & Alire.Utils.TTY.Name (Crate)
-         & " marked as " & TTY.Emph (Alire.Shared.Image (Status)));
+         & " marked as " & TTY.Emph (Alire.Shared.Image (Hint, Level)));
    end Modify;
 
    --------------

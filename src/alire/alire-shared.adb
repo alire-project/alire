@@ -107,50 +107,32 @@ package body Alire.Shared is
    ----------
 
    procedure Mark (Crate  : Crate_Name;
-                   Status : Explicit_Requests)
+                   Hint   : Hints;
+                   Level  : Config.Level)
    is
-      use all type Config.Level;
-
       Key : constant CLIC.Config.Config_Key := Shared_Crate_Key (Crate);
-
-      Level : constant Config.Level :=
-                (case Status is
-                    when No_Local  | Yes_Local  => Config.Local,
-                    when No_Global | Yes_Global => Config.Global,
-                    when others                 => Config.Global);
-      Unset_Level : constant Config.Level :=
-                       (case Level is
-                           when Local => Global,
-                           when Global => Local);
    begin
-      case Status is
-         when Reset_Local =>
-            Config.Edit.Unset (Local, Key);
-         when Reset_Global =>
-            Config.Edit.Unset (Global, Key);
-         when No_Local | No_Global =>
-            Config.Edit.Set (Level, Key, No'Image);
-            Config.Edit.Unset (Unset_Level, Key);
-         when Yes_Local | Yes_Global =>
-            Config.Edit.Set (Level, Key, Yes'Image);
-            Config.Edit.Unset (Unset_Level, Key);
-      end case;
+      if Hint = Default then
+         Config.Edit.Unset (Level, Key);
+      else
+         Config.Edit.Set (Level, Key, Hint'Image);
+      end if;
 
       Trace.Debug ("Sharing: crate " & Utils.TTY.Name (Crate)
-                   & " marked as " & TTY.Emph (Image (Status)));
+                   & " marked as " & TTY.Emph (Image (Hint, Level)));
    end Mark;
 
    ---------------
    -- Marked_As --
    ---------------
 
-   function Marked_As (Crate : Crate_Name) return Hint
+   function Marked_As (Crate : Crate_Name) return Hints
    is
    begin
-      return Hint'Value
+      return Hints'Value
         (Config.DB.Get_As_String
            (Shared_Crate_Key (Crate),
-            Hint'(Default)'Image));
+            Hints'(Default)'Image));
    end Marked_As;
 
    -----------------------

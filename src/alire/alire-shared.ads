@@ -1,3 +1,4 @@
+with Alire.Config;
 with Alire.Errors;
 with Alire.Milestones;
 with Alire.Releases.Containers;
@@ -51,45 +52,33 @@ package Alire.Shared is
    --  The following do not act on releases, but give hints to the solver.
    --  These implement the `alr with --shared` feature.
 
-   type Requests is
-     (
-      No_Local,     -- The crate must not be shared (workspace)
-      No_Global,    -- The crate must not be shared (global config)
-      Yes_Local,    -- The crate must be shared (workspace)
-      Yes_Global,   -- The crate must be shared (global config)
-      Reset_Local,  -- Remove any sharing hints (workspace)
-      Reset_Global, -- Remove any sharing hints (workspace)
-      Default       -- Use existing sharing hints (local or global)
-     );
-
-   subtype Explicit_Requests
-     is Requests range Requests'First .. Requests'Pred (Default);
-
-   function Image (Request : Explicit_Requests) return String
-   is (case Request is
-          when No_Local     => "not shared in this workspace",
-          when No_Global    => "not shared in global configuration",
-          when Yes_Local    => "shared in this workspace",
-          when Yes_Global   => "shared in global configuration",
-          when Reset_Local  => "using default storage in this workspace",
-          when Reset_Global => "using default storage in global configuration"
-      );
-
-   procedure Mark (Crate  : Crate_Name;
-                   Status : Explicit_Requests);
-   --  Store in the Level configuration that we want this dep to be reused from
-   --  the shared cache, or prevent its sharing according to `Set_To`. Takes
-   --  care of maintaining consistency across levels. When `Reset`, remove all
-   --  hinting (both local and global) rather than setting a hint.
-
-   type Hint is
+   type Hints is
      (
       No,     -- The crate must not be shared
       Yes,    -- The crate should be shared if possible
       Default -- Use the current default storage
      );
 
-   function Marked_As (Crate : Crate_Name) return Hint;
+   function Image (Hint : Hints; Level : Config.Level) return String
+   is ((case Hint is
+          when No      => "not shared",
+          when Yes     => "shared",
+          when Default => "using default storage")
+       & " "
+       &
+       (case Level is
+          when Config.Local  => "in this workspace",
+          when Config.Global => "in global configuration"));
+
+   procedure Mark (Crate  : Crate_Name;
+                   Hint   : Hints;
+                   Level  : Config.Level);
+   --  Store in the Level configuration that we want this dep to be reused from
+   --  the shared cache, or prevent its sharing according to `Set_To`. Takes
+   --  care of maintaining consistency across levels. When `Reset`, remove all
+   --  hinting (both local and global) rather than setting a hint.
+
+   function Marked_As (Crate : Crate_Name) return Hints;
    --  Says what's the hinting for the given crate. Requires being inside a
    --  root or else it will raise.
 
