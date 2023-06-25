@@ -73,7 +73,8 @@ package body Alr.Commands.Share is
            ("--list is incompatible with other switches");
       end if;
 
-      if (Cmd.Yes or Cmd.No or Cmd.Local or Cmd.Global) and then Args.Is_Empty
+      if (Cmd.Yes or Cmd.No or Cmd.Local or Cmd.Global or Cmd.Reset)
+        and then Args.Is_Empty
       then
          Reportaise_Wrong_Arguments
            ("Sharing hints require at least one crate name");

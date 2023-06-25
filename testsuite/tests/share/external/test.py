@@ -22,7 +22,8 @@ assert_match(".*gnat_external=[^\\n]* \(shared\) \(origin: external\)", p.out)
 init_local_crate()
 
 # Add an external crate, requesting it not to be shared
-run_alr("with", "--shared=no_local", "gnat_external")
+run_alr("share", "--no", "gnat_external")
+run_alr("with", "gnat_external")
 
 # Check that the shared flag is in the solution nonetheless
 p = run_alr("with", "--solve")
