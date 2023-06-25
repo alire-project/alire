@@ -74,8 +74,8 @@ package body Alire.Roots.Editable is
    -- Add_Dependency --
    --------------------
 
-   procedure Add_Dependency (This    : in out Root;
-                             Dep     : Dependencies.Dependency)
+   procedure Add_Dependency (This : in out Root;
+                             Dep  : Dependencies.Dependency)
    is
 
       --------------------

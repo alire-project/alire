@@ -50,7 +50,7 @@ package Alire.Shared is
    ----
 
    --  The following do not act on releases, but give hints to the solver.
-   --  These implement the `alr with --shared` feature.
+   --  These implement the `alr share` feature.
 
    type Hints is
      (

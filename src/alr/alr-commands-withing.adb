@@ -25,8 +25,8 @@ package body Alr.Commands.Withing is
    -- Add --
    ---------
 
-   procedure Add (Root    : in out Alire.Roots.Editable.Root;
-                  Args    :        AAA.Strings.Vector)
+   procedure Add (Root : in out Alire.Roots.Editable.Root;
+                  Args :        AAA.Strings.Vector)
    is
    begin
       for I in Args.First_Index .. Args.Last_Index loop

@@ -53,8 +53,8 @@ package Alire.Roots.Editable is
    --  created, we need to reload the manifest. The solution remains
    --  untouched (use Update to recompute a fresh solution).
 
-   procedure Add_Dependency (This    : in out Root;
-                             Dep     : Dependencies.Dependency);
+   procedure Add_Dependency (This : in out Root;
+                             Dep  : Dependencies.Dependency);
    --  Add a dependency, or raise Checked_Error is Dep is already among direct
    --  dependencies.
 

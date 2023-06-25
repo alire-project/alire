@@ -43,7 +43,7 @@ package body Alire.Solutions.Diffs is
              when Unchanged  => TTY.OK    (U ("=")),
              when Missing    => TTY.Error (U ("❗")), -- alts: ⚠️❗‼️
              when Shared     => TTY.Emph  (U ("♻️ ")), -- alts: ♻♻️♼🫴
-             when Binary     => TTY.Emph  (U ("📦")))
+             when Binary     => TTY.Warn  (U ("📦")))
        else
          (case Change is
              when Added      => U ("+"),
