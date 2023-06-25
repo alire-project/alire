@@ -6,20 +6,43 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
-### Selective sharing of dependencies with `alr with --shared`
+### Selective sharing of dependencies with `alr share`
 
 PR [#1383](https://github.com/alire-project/alire/pull/1383)
 
 As a more granular alternative to PR
 [#1367](https://github.com/alire-project/alire/pull/1367), a single dependency
-can now be shared using the new `--shared` switch of the `with` subcommand:
+can now be shared using the new `share` subcommand:
 
 ```
-alr with --shared hello
+alr share hello
 ```
 
-By default, this is a setting local to the workspace. For more advanced usage,
-please consult the documentation using `alr help with`.
+This command sets the sharing flag but does not make the workspace depend on
+the crate. Likewise, one can request a crate to be shared in all workspaces:
+
+```
+alr share --global hello
+```
+
+When the dependency is added, or `alr update` is run, the changes will include
+the sharing flag:
+
+```
+$ alr with hello
+Requested changes:
+
+   ✓ hello ^1.0.2 (add)
+
+Changes to dependency solution:
+
+   +♻️  hello    1.0.2 (new,shared)
+   +   libhello 1.0.1 (new,indirect)
+```
+
+For more advanced usage please consult the documentation using `alr help
+share`. There are options to prevent sharing locally when enabled globally and
+to remove sharing flags.
 
 ### Removal of `alr test --docker`
 
