@@ -66,6 +66,9 @@ private
 
       Tar        : aliased Boolean := False;
       --  Start the assistant from a local folder to be tar'ed and uploaded
+
+      Submit     : aliased Boolean := False;
+      --  Fork the index and create the remote PR automatically
    end record;
 
 end Alr.Commands.Publish;

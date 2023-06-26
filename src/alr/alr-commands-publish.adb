@@ -1,5 +1,5 @@
 with Alire.Origins;
-with Alire.Publish;
+with Alire.Publish.Automate;
 with Alire.URI;
 with Alire.Utils;
 
@@ -90,6 +90,13 @@ package body Alr.Commands.Publish is
             end;
 
          end if;
+      end if;
+
+      --  If we are required to submit, start now that the manifest will have
+      --  been created at the ./alire/releases/crate-x.y.z.toml location.
+
+      if Cmd.Submit then
+         Alire.Publish.Automate.Create_PR;
       end if;
    end Execute;
 
