@@ -9,6 +9,8 @@ package Alire.Paths with Preelaborate is
 
    Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
 
+   Release_Folder_Inside_Working_Folder : constant Relative_Path := "releases";
+
    Temp_Folder_Inside_Working_Folder : constant Relative_Path := "tmp";
 
    Working_Folder_Inside_Root : constant Relative_Path := "alire";

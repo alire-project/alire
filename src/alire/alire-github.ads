@@ -1,26 +1,38 @@
-with Alire.Config;
 with Alire.Index;
+with Alire.Utils.User_Input.Query_Config;
 
 package Alire.GitHub is
 
+   package User_Info renames Alire.Utils.User_Input.Query_Config;
+
+   type Async_Result is (Completed, Pending);
+
    function Branch_Exists
-     (User   : String := Config.DB.Get (Config.Keys.User_Github_Login,
-                                        Default => "");
+     (User   : String := User_Info.User_GitHub_Login;
       Repo   : String := Index.Community_Repo_Name;
       Branch : String := Index.Community_Branch)
       return Boolean;
    --  Check that a branch exists in a user's repository
 
+   function Fork
+     (User    : String := User_Info.User_GitHub_Login;
+      Owner   : String;
+      Repo    : String;
+      Timeout : Duration := 10.0) return Async_Result;
+   --  User is the one into which the fork will appear; Owner is the one we are
+   --  forking Repo from. Forks are done in the background after the request is
+   --  accepted, so we have to busy wait for it to become available. If Timeout
+   --  elapses without succeeding, it will return Pending. It'll only raise if
+   --  the initial request is denied.
+
    function Repo_Exists
-     (User : String := Config.DB.Get (Config.Keys.User_Github_Login,
-                                      Default => "");
+     (User : String := User_Info.User_GitHub_Login;
       Repo : String := Index.Community_Repo_Name)
       return Boolean;
    --  Check that a user has a certain public repo
 
    function User_Exists
-     (User : String := Config.DB.Get (Config.Keys.User_Github_Login,
-                                      Default => ""))
+     (User : String := User_Info.User_GitHub_Login)
      return Boolean;
    --  Check that a user exists in GitHub
 

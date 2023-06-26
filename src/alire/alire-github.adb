@@ -1,7 +1,11 @@
+with Ada.Calendar;
 with Ada.Exceptions;
 
 with Alire.Errors;
+with Alire.OS_Lib;
 with Alire.Utils.TTY;
+
+with CLIC.User_Input;
 
 with Minirest;
 
@@ -20,8 +24,12 @@ package body Alire.GitHub is
    -- API_Call --
    --------------
 
-   function API_Call (Proc : String;
-                      Args : Minirest.Parameters := Minirest.No_Arguments)
+   type Kinds is (GET, POST);
+
+   function API_Call (Proc  : String;
+                      Args  : Minirest.Parameters := Minirest.No_Arguments;
+                      Kind  : Kinds := GET;
+                      Token : String := "")
                       return Minirest.Response
    is
       use Minirest;
@@ -29,29 +37,51 @@ package body Alire.GitHub is
                    Base_URL
                    & (if Proc (Proc'First) /= '/' then "/" else "")
                    & Proc;
+      Headers  : Minirest.Parameters :=
+                   "Accept" = "Application/vnd.github.v3.full+json";
    begin
+      if Token /= "" then
+         Headers := Headers and "Authorization" = "Bearer " & Token;
+      end if;
+
+      Trace.Debug
+        ("GitHub API call " & Kind'Image & " to " & Full_URL);
+      Trace.Debug
+        ("Headers: " & Minirest.Image (Headers));
+      Trace.Debug
+        ("Parameters: " & Minirest.Image (Args));
+
       return This : constant Response :=
-        Minirest.Get
-          (Full_URL,
-           Arguments => Args,
-           Headers   => "Accept" = "Application/vnd.github.v3.full+json")
+        (case Kind is
+            when GET =>
+              Minirest.Get
+               (Full_URL,
+                Arguments => Args,
+                Headers   => Headers),
+            when POST =>
+              Minirest.Post
+                (Full_URL,
+                 Data    => Args,
+                 Headers => Headers))
       do
+         Trace.Debug
+           ("GitHub API response: " & This.Status_Line);
+         Trace.Debug
+           ("Headers: " & This.Raw_Headers.Flatten (ASCII.LF));
+         Trace.Debug
+           ("Data: " & This.Content.Flatten (ASCII.LF));
+
          if not This.Succeeded then
 
             --  Log info about why the API call failed
 
             Trace.Debug ("Failed GitHub request to API: "
                          & Utils.TTY.URL (Full_URL));
-            Trace.Debug ("Status: " & This.Status_Line);
-            Trace.Debug ("Headers: "
-                         & This.Raw_Headers.Flatten ((1 => ASCII.LF)));
-            Trace.Debug ("Contents: "
-                         & This.Content.Flatten ((1 => ASCII.LF)));
 
             --  Raise if API is rate-limiting to avoid misleading failures
 
             if This.Headers.Contains (Header_Rate) and then
-              Integer'Value (This.Headers (Header_Rate)) <= 0
+              Integer'Value (This.Headers.Get (Header_Rate)) <= 0
             then
                Raise_Checked_Error
                  ("GitHub API rate limit exceeded, please wait for a while"
@@ -74,20 +104,98 @@ package body Alire.GitHub is
    -------------------
 
    function Branch_Exists
-     (User   : String := Config.DB.Get (Config.Keys.User_Github_Login,
-                                        Default => "");
+     (User   : String := User_Info.User_GitHub_Login;
       Repo   : String := Index.Community_Repo_Name;
       Branch : String := Index.Community_Branch)
       return Boolean
    is (API_Call ("repos" / User / Repo / "branches" / Branch).Succeeded);
+
+   ----------
+   -- Fork --
+   ----------
+
+   function Fork
+     (User    : String := User_Info.User_GitHub_Login;
+      Owner   : String;
+      Repo    : String;
+      Timeout : Duration := 10.0)
+      return Async_Result
+   is
+      use Ada.Calendar;
+
+      -------------------
+      -- Ask_For_Token --
+      -------------------
+
+      function Ask_For_Token (Reason : String) return String is
+
+         --------------
+         -- Validate --
+         --------------
+
+         function Validate (S : String) return Boolean
+         is (S /= "");
+
+         GH_Token : constant String := OS_Lib.Getenv ("GH_TOKEN", "");
+      begin
+         if GH_Token = "" then
+            Trace.Always
+              (TTY.Terminal ("alr") & " requires a GitHub Personal Access "
+               & "Token (PAT) to " & Reason & ". To avoid being asked for it "
+               & "every time, you can define the GH_TOKEN environment "
+               & "variable.");
+         end if;
+
+         return (if GH_Token /= ""
+                 then GH_Token
+                 else
+                    CLIC.User_Input.Query_String
+                   ("Please provide your GitHub Personal Access Token: ",
+                    Default    => "",
+                    Validation => Validate'Unrestricted_Access));
+      end Ask_For_Token;
+
+      Token : constant String :=
+                Ask_For_Token ("fork the community index to your account");
+
+      Start : constant Time := Clock;
+      Next  : Time := Start + 1.0;
+
+      Response : constant Minirest.Response
+        := API_Call ("repos" / Owner / Repo / "forks",
+                     Kind  => POST,
+                     Token => Token);
+   begin
+      if not Response.Succeeded then
+         Raise_Checked_Error
+           ("Attempt to fork repo [" & Repo & "] owned by [" & Owner & "] via "
+            & "GitHub REST API failed with code:"
+            & Response.Status_Code'Image & " and status: "
+            & Response.Status_Line & Response.Content.Flatten (ASCII.LF));
+      end if;
+
+      declare
+         Wait : Trace.Ongoing := Trace.Activity ("Waiting for GitHub");
+      begin
+         while Clock - Start < Timeout loop
+            delay until Next;
+            Next := Next + 1.0;
+            Wait.Step;
+            if Repo_Exists (User, Repo) then
+               return Completed;
+            end if;
+         end loop;
+      end;
+
+      return Pending;
+   end Fork;
 
    -----------------
    -- Repo_Exists --
    -----------------
 
    function Repo_Exists
-     (User : String := Config.DB.Get (Config.Keys.User_Github_Login,
-                                      Default => "");
+     (User : String := User_Info.User_GitHub_Login;
       Repo : String := Index.Community_Repo_Name)
       return Boolean
    is (API_Call ("repos" / User / Repo).Succeeded);
@@ -97,8 +205,7 @@ package body Alire.GitHub is
    -----------------
 
    function User_Exists
-     (User : String := Config.DB.Get (Config.Keys.User_Github_Login,
-                                      Default => ""))
+     (User : String := User_Info.User_GitHub_Login)
       return Boolean
    is (API_Call ("users" / User).Succeeded);
 

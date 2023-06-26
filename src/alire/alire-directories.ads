@@ -78,6 +78,9 @@ package Alire.Directories is
    function Is_Directory (Path : Any_Path) return Boolean;
    --  Returns false for non-existing paths too
 
+   function Is_File (Path : Any_Path) return Boolean;
+   --  False if Path does not designate a regular file
+
    procedure Merge_Contents (Src, Dst              : Any_Path;
                              Skip_Top_Level_Files  : Boolean;
                              Fail_On_Existing_File : Boolean;

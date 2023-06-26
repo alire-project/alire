@@ -407,6 +407,13 @@ package body Alire.Directories is
    function Is_Directory (Path : Any_Path) return Boolean
    is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Directory);
 
+   -------------
+   -- Is_File --
+   -------------
+
+   function Is_File (Path : Any_Path) return Boolean
+   is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Ordinary_File);
+
    ----------------
    -- TEMP FILES --
    ----------------

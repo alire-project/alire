@@ -46,6 +46,19 @@ package Alire.VCSs.Git is
    --  default remote branch. For any Depth /= 0, apply --depth <Depth>. A
    --  commit may be specified as From#Commit_Id
 
+   type Output is new AAA.Strings.Vector with null record;
+
+   procedure Ignore (This : Output) is null;
+   --  Allows running a git command and ignoring its output
+
+   function Command (Repo  : Directory_Path;
+                     Args  : AAA.Strings.Vector;
+                     Quiet : Boolean := False)
+                     return Output;
+
+   --  Run any command directly. "git" is implicit. "-q" appended when Quiet.
+   --  Will raise on exit code /= 0
+
    not overriding
    function Remote_Commit (This : VCS;
                            From : URL;

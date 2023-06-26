@@ -96,7 +96,7 @@ package body Alr.Commands.Publish is
       --  been created at the ./alire/releases/crate-x.y.z.toml location.
 
       if Cmd.Submit then
-         Alire.Publish.Automate.Create_PR;
+         Alire.Publish.Automate.Create_PR (Cmd.Root);
       end if;
    end Execute;
 
@@ -116,6 +116,12 @@ package body Alr.Commands.Publish is
          Cmd.Manifest'Access,
          "", "--manifest=",
          "Selects a manifest file other than ./alire.toml");
+
+      Define_Switch
+        (Config,
+         Cmd.Submit'Access,
+         "", "--submit",
+         "Create the online pull request onto the community index");
 
       Define_Switch
         (Config,

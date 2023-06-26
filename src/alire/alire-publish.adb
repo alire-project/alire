@@ -462,7 +462,7 @@ package body Alire.Publish is
                             (if Workspace.Is_Valid
                              then Workspace.Value.Working_Folder
                              else "." / Paths.Working_Folder_Inside_Root)
-                            / "releases"
+                            / Paths.Release_Folder_Inside_Working_Folder
                             / TOML_Index.Manifest_File (Name, Version);
          Index_File     : File_Type;
       begin

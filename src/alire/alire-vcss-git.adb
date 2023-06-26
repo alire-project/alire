@@ -144,6 +144,23 @@ package body Alire.VCSs.Git is
          return Alire.Errors.Get (E);
    end Clone;
 
+   -------------
+   -- Command --
+   -------------
+
+   function Command (Repo  : Directory_Path;
+                     Args  : AAA.Strings.Vector;
+                     Quiet : Boolean := False)
+                     return Output
+   is
+      use all type AAA.Strings.Vector;
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      return (Run_Git_And_Capture (
+              (if Quiet then To_Vector ("-q") else Empty_Vector)) & Args
+              with null record);
+   end Command;
+
    ---------------------
    -- Revision_Commit --
    ---------------------
