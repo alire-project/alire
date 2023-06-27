@@ -4,11 +4,14 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils.Tools;
+with Alire.Utils.User_Input.Query_Config;
 with Alire.VFS;
 
 with GNAT.Source_Info;
 
 package body Alire.VCSs.Git is
+
+   package User_Info renames Utils.User_Input.Query_Config;
 
    -------------
    -- Run_Git --
@@ -156,10 +159,70 @@ package body Alire.VCSs.Git is
       use all type AAA.Strings.Vector;
       Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
    begin
-      return (Run_Git_And_Capture (
-              (if Quiet then To_Vector ("-q") else Empty_Vector)) & Args
-              with null record);
+      return
+        (Run_Git_And_Capture
+           (Arguments =>
+              (if Quiet then To_Vector ("-q") else Empty_Vector) & Args)
+         with null record);
    end Command;
+
+   ----------------
+   -- Commit_All --
+   ----------------
+
+   function Commit_All (Repo : Directory_Path;
+                        Msg  : String := "Automatic by alr") return Outcome
+   is
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      Run_Git (Empty_Vector & "add" & ".");
+      Run_Git (Empty_Vector
+               & "-c"
+               & String'("user.email=" & User_Info.User_Email)
+               & "commit"
+               & "-m" & Msg);
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
+   end Commit_All;
+
+   ----------
+   -- Push --
+   ----------
+
+   function Push (Repo  : Directory_Path;
+                  Token : String := "") return Outcome
+   is
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      if Token = "" then
+         Run_Git (Empty_Vector & "push");
+      else
+         --  Create a new remote with our credentials
+         declare
+            Old : constant URL :=
+                    Handler.Remote_URL (Repo, Handler.Remote (Repo));
+            Writurl  : constant URL :=
+                         Replace (Old, "//", "//"
+                                  & User_Info.User_GitHub_Login
+                                  & ":" & Token & "@");
+            Writname : constant String := "writable";
+         begin
+            Run_Git (Empty_Vector
+                     & "remote" & "add" & Writname & Writurl);
+            Run_Git (Empty_Vector
+                     & "push" & Writname);
+            --  Run_Git (Empty_Vector
+            --           & "remote" & "remove" & Writname);
+         end;
+      end if;
+
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
+   end Push;
 
    ---------------------
    -- Revision_Commit --
@@ -288,6 +351,34 @@ package body Alire.VCSs.Git is
          return Output.First_Element;
       end if;
    end Remote;
+
+   ----------------
+   -- Remote_URL --
+   ----------------
+
+   not overriding
+   function Remote_URL (This    : VCS;
+                        Path    : Directory_Path;
+                        Remote  : String := "origin")
+                        return String
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant AAA.Strings.Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "remote" & "-v");
+   begin
+      for Line of Output loop
+         declare
+            Cols : constant Vector := Split (Line, ASCII.HT, Trim => True);
+         begin
+            if Cols (1) = Remote then
+               return AAA.Strings.Split (Cols (2), ' ').First_Element;
+            end if;
+         end;
+      end loop;
+
+      return "";
+   end Remote_URL;
 
    -------------------
    -- Remote_Commit --

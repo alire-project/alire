@@ -59,6 +59,18 @@ package Alire.VCSs.Git is
    --  Run any command directly. "git" is implicit. "-q" appended when Quiet.
    --  Will raise on exit code /= 0
 
+   function Commit_All (Repo : Directory_Path;
+                        Msg  : String := "Automatic by alr")
+                        return Outcome;
+   --  Add and commit all changes in a given repo; commiter will be set to the
+   --  user email stored in our config.
+
+   function Push (Repo  : Directory_Path;
+                  Token : String := "") return Outcome;
+   --  Push to the remote. If an Auth Token is given, a temporary remote that
+   --  includes the token will be created and removed for the push; the local
+   --  branch will be set to track the original remote afterwards.
+
    not overriding
    function Remote_Commit (This : VCS;
                            From : URL;
@@ -91,6 +103,14 @@ package Alire.VCSs.Git is
                     return String;
    --  Retrieve current remote name (usually "origin"). If checked, raise
    --  Checked_Error when no remote configured. Otherwise, return "";
+
+   not overriding
+   function Remote_URL (This    : VCS;
+                        Path    : Directory_Path;
+                        Remote  : String := "origin")
+                        return String;
+   --  Returns the URL for the given remote, or "" if unset. Assumes both fetch
+   --  and push remotes are the same.
 
    overriding
    function Update (This : VCS;

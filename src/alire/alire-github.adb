@@ -5,8 +5,6 @@ with Alire.Errors;
 with Alire.OS_Lib;
 with Alire.Utils.TTY;
 
-with CLIC.User_Input;
-
 with Minirest;
 
 package body Alire.GitHub is
@@ -29,7 +27,7 @@ package body Alire.GitHub is
    function API_Call (Proc  : String;
                       Args  : Minirest.Parameters := Minirest.No_Arguments;
                       Kind  : Kinds := GET;
-                      Token : String := "")
+                      Token : String := OS_Lib.Getenv (Env_GH_Token, ""))
                       return Minirest.Response
    is
       use Minirest;
@@ -118,45 +116,11 @@ package body Alire.GitHub is
      (User    : String := User_Info.User_GitHub_Login;
       Owner   : String;
       Repo    : String;
+      Token   : String;
       Timeout : Duration := 10.0)
       return Async_Result
    is
       use Ada.Calendar;
-
-      -------------------
-      -- Ask_For_Token --
-      -------------------
-
-      function Ask_For_Token (Reason : String) return String is
-
-         --------------
-         -- Validate --
-         --------------
-
-         function Validate (S : String) return Boolean
-         is (S /= "");
-
-         GH_Token : constant String := OS_Lib.Getenv ("GH_TOKEN", "");
-      begin
-         if GH_Token = "" then
-            Trace.Always
-              (TTY.Terminal ("alr") & " requires a GitHub Personal Access "
-               & "Token (PAT) to " & Reason & ". To avoid being asked for it "
-               & "every time, you can define the GH_TOKEN environment "
-               & "variable.");
-         end if;
-
-         return (if GH_Token /= ""
-                 then GH_Token
-                 else
-                    CLIC.User_Input.Query_String
-                   ("Please provide your GitHub Personal Access Token: ",
-                    Default    => "",
-                    Validation => Validate'Unrestricted_Access));
-      end Ask_For_Token;
-
-      Token : constant String :=
-                Ask_For_Token ("fork the community index to your account");
 
       Start : constant Time := Clock;
       Next  : Time := Start + 1.0;

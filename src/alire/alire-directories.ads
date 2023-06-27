@@ -2,11 +2,16 @@ with Ada.Directories;
 
 with AAA.Strings;
 
+with Alire.Errors;
 with Alire.OS_Lib;
 
 private with Ada.Finalization;
 
+with GNAT.OS_Lib;
+
 package Alire.Directories is
+
+   package Adirs renames Ada.Directories;
 
    function "/" (L, R : String) return String renames OS_Lib."/";
 
@@ -167,6 +172,12 @@ package Alire.Directories is
    --  The file is deleted once an object of this type goes out of scope.
    --  If the file/folder was never created on disk nothing will happen.
 
+   function Create (This : in out Temp_File) return GNAT.OS_Lib.File_Descriptor
+     with Post => Create'Result not in GNAT.OS_Lib.Invalid_FD
+     or else raise Checked_Error
+       with Errors.Set ("Could not create temporary file at " & This.Filename);
+   --  Actually creates the file and returns its file descriptor. Idempotent.
+
    function Filename (This : Temp_File) return Absolute_Path;
    --  The filename is a random sequence of 8 characters + ".tmp"
 
@@ -233,6 +244,7 @@ private
    type Temp_File is new Ada.Finalization.Limited_Controlled with record
       Keep : Boolean := False;
       Name : Unbounded_Absolute_Path;
+      FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
    end record;
 
    overriding

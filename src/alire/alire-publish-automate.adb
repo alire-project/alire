@@ -1,22 +1,74 @@
 with Alire.Directories;
 with Alire.GitHub;
+with Alire.Index;
+with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Platforms.Folders;
 with Alire.TOML_Index;
+with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
+with Alire.VFS;
 
 with CLIC.User_Input;
 
 package body Alire.Publish.Automate is
 
+   package User_Info renames Utils.User_Input.Query_Config;
+
    use Directories.Operators;
 
-   ----------
-   -- Repo --
-   ----------
+   subtype Vector is AAA.Strings.Vector;
 
-   function Repo return Absolute_Path
+   ----------------
+   -- Remote_URL --
+   ----------------
+
+   function Remote_URL return String
+   --  Must be a function so the user is not prematurely queried for the login
+   is (Index.Community_Host
+       / User_Info.User_GitHub_Login
+       / Index.Community_Repo_Name);
+
+   ---------------------
+   -- Local_Repo_Path --
+   ---------------------
+
+   function Local_Repo_Path return Absolute_Path
    is (Platforms.Folders.Cache / "publish" / "community");
+
+   -------------------
+   -- Ask_For_Token --
+   -------------------
+
+   function Ask_For_Token (Reason : String) return String is
+
+      --------------
+      -- Validate --
+      --------------
+
+      function Validate (S : String) return Boolean
+      is (S /= "");
+
+      GH_Token : constant String := OS_Lib.Getenv (GitHub.Env_GH_Token, "");
+   begin
+      if GH_Token = "" then
+         Put_Info
+           (TTY.Terminal ("alr") & " requires a GitHub Personal Access "
+            & "Token (PAT) " & Reason & ". To avoid being asked for it "
+            & "every time, you can define the GH_TOKEN environment "
+            & "variable.");
+         Put_Info
+           ("You can create access tokens at " & TTY.URL (GitHub.URL_Tokens));
+      end if;
+
+      return (if GH_Token /= ""
+              then GH_Token
+              else
+                 CLIC.User_Input.Query_String
+                ("Please provide your GitHub Personal Access Token: ",
+                 Default    => "",
+                 Validation => Validate'Unrestricted_Access));
+   end Ask_For_Token;
 
    ---------------
    -- Create_PR --
@@ -24,13 +76,14 @@ package body Alire.Publish.Automate is
 
    procedure Create_PR (Root : Roots.Root) is
 
-      Branch : constant String := "alr_publish_submit";
+      Token : constant String :=
+                Ask_For_Token ("to fork the community index to your account");
 
       ---------------
       -- Fork_Repo --
       ---------------
 
-      procedure Fork_Repo is
+      procedure Fork is
          use all type CLIC.User_Input.Answer_Kind;
          use all type GitHub.Async_Result;
       begin
@@ -51,7 +104,8 @@ package body Alire.Publish.Automate is
          end if;
 
          case GitHub.Fork (Owner => "alire-project",
-                           Repo  => "alire-index")
+                           Repo  => "alire-index",
+                           Token => Token)
          is
             when Pending =>
                Raise_Checked_Error
@@ -60,43 +114,120 @@ package body Alire.Publish.Automate is
             when Completed =>
                Put_Success ("Fork of community index completed");
          end case;
-      end Fork_Repo;
+      end Fork;
 
-      -------------------------------
-      -- Prepare_Local_Index_Clone --
-      -------------------------------
+      -----------
+      -- Clone --
+      -----------
 
-      procedure Prepare_Local_Index_Clone is
-         use all type AAA.Strings.Vector;
+      function Clone return Boolean is
+         --  True when clone happened, False if not needed
       begin
-         if Directories.Is_Directory (Repo)
-           and then VCSs.Git.Handler.Is_Repository (Repo)
+         if Directories.Is_Directory (Local_Repo_Path)
+           and then VCSs.Git.Handler.Is_Repository (Local_Repo_Path)
+           and then VCSs.Git.Handler.Remote_URL (Local_Repo_Path) = Remote_URL
          then
-            --  Simplest case, we already had cloned the repo before
-
-            --  Refresh the repo to ensure it is pristine. To do so, we
-            --  force-create the branch for submission and reset its contents
-
-            VCSs.Git.Handler.Update (Repo, Branch => Branch).Assert;
-
-            VCSs.Git.Command (Repo, To_Vector ("reset") & "--hard").Ignore;
-
-         else
-            --  We need to clone the repo to the user account if it doesn't
-            --  already have a fork
-
-            Fork_Repo;
-            Prepare_Local_Index_Clone;
-            return;
-
+            return False;
          end if;
-      end Prepare_Local_Index_Clone;
+
+         Directories.Force_Delete (Local_Repo_Path);
+         --  Delete a possibly outdated repo
+
+         VCSs.Git.Handler.Clone
+           (From   => Index.Community_Host
+                      / User_Info.User_GitHub_Login
+                      / Index.Community_Repo_Name,
+            Into   => Local_Repo_Path,
+            Branch => Index.Community_Branch).Assert;
+
+         Put_Success ("Community index cloned succesfully");
+         return True;
+      end Clone;
+
+      ----------
+      -- Pull --
+      ----------
+
+      procedure Pull is
+         use all type Vector;
+      begin
+         VCSs.Git.Handler.Update (Local_Repo_Path,
+                                  Branch => Index.Community_Branch).Assert;
+         --  Fetch all remote changes
+
+         VCSs.Git.Command (Repo => Local_Repo_Path,
+                           Args =>
+                             To_Vector ("reset")
+                           & "--hard"
+                           & (VCSs.Git.Handler.Remote (Local_Repo_Path)
+                              / Index.Community_Branch)).Ignore;
+         --  Discard any local changes
+
+         VCSs.Git.Command (Repo => Local_Repo_Path,
+                           Args => To_Vector ("clean") & "-fd").Ignore;
+         --  Drop any spurious files/folders (like other submitted manifests)
+
+         Put_Success ("Local index updated successfully");
+      end Pull;
+
+      Filename : constant String :=
+                   TOML_Index.Manifest_File (Root.Name,
+                                             Root.Release.Version);
 
       Manifest : constant Absolute_Path :=
                    Root.Working_Folder
                      / Paths.Release_Folder_Inside_Working_Folder
-                     / TOML_Index.Manifest_File (Root.Name,
-                                                 Root.Release.Version);
+                     / Filename;
+
+      -------------------
+      -- Copy_Manifest --
+      -------------------
+
+      procedure Copy_Manifest is
+         Target : constant Absolute_Path :=
+                    Local_Repo_Path
+                    / VFS.To_Native (TOML_Index.Manifest_Path (Root.Name))
+                    / Filename;
+      begin
+         Directories.Create_Tree (Directories.Parent (Target));
+         Directories.Adirs.Copy_File (Manifest, Target);
+         Put_Success ("Manifest copied into place: " & TTY.URL (Target),
+                      Trace.Detail);
+      end Copy_Manifest;
+
+      ---------------------
+      -- Commit_And_Push --
+      ---------------------
+
+      procedure Commit_And_Push is
+         use all type VCSs.Git.States;
+      begin
+         if VCSs.Git.Handler.Status (Local_Repo_Path) = Dirty then
+            VCSs.Git.Commit_All
+              (Local_Repo_Path,
+               Msg =>
+                 Root.Name.As_String & " "
+               & Root.Release.Version.Image
+               & " (via `alr push`)").Assert;
+         else
+            Put_Warning
+              ("Nothing to commit: "
+               & "manifest must have been added in a previous run");
+         end if;
+
+         VCSs.Git.Push (Local_Repo_Path, Token).Assert;
+         Put_Success ("Manifest pushed into remote index");
+      end Commit_And_Push;
+
+      ------------
+      -- Submit --
+      ------------
+
+      procedure Submit is
+      begin
+         raise Unimplemented;
+      end Submit;
+
    begin
       if not Directories.Is_File (Manifest) then
          Raise_Checked_Error ("Cannot continue: manifest missing at "
@@ -104,9 +235,20 @@ package body Alire.Publish.Automate is
       end if;
 
       --  Now it's a matter of forking the repo, copying the file, committing
-      --  and pushing changes, and creating the PR...
+      --  and pushing changes, and creating the PR... Some of these steps may
+      --  not be needed and will auto-skip in that case.
 
-      Prepare_Local_Index_Clone;
+      Fork;
+
+      if not Clone then
+         Pull;
+      end if;
+
+      Copy_Manifest;
+
+      Commit_And_Push;
+
+      Submit;
    end Create_PR;
 
 end Alire.Publish.Automate;

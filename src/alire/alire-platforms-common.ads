@@ -23,6 +23,15 @@ private package Alire.Platforms.Common is
    is (OS_Lib.Getenv ("HOME", Default => "/tmp"));
 
    ----------------------
+   -- Unix_Temp_Folder --
+   ----------------------
+
+   function Unix_Temp_Folder return String
+   is (OS_Lib.Getenv ("XDG_RUNTIME_DIR",
+                      Default => OS_Lib.Getenv ("TMPDIR",
+                                                Default => ".")));
+
+   ----------------------
    -- XDG_Cache_Folder --
    ----------------------
 

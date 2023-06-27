@@ -3,6 +3,14 @@ with Alire.Utils.User_Input.Query_Config;
 
 package Alire.GitHub is
 
+   Env_GH_Token : constant String := "GH_TOKEN";
+   --  This is the environment variable used by the `gh` tool to look for the
+   --  user token. We can reuse it so if it's available, we need not pester the
+   --  user for it.
+
+   URL_Tokens   : constant String := "https://github.com/settings/tokens";
+   --  URL in which Personal Access Tokens (PATs) can be created
+
    package User_Info renames Alire.Utils.User_Input.Query_Config;
 
    type Async_Result is (Completed, Pending);
@@ -18,6 +26,7 @@ package Alire.GitHub is
      (User    : String := User_Info.User_GitHub_Login;
       Owner   : String;
       Repo    : String;
+      Token   : String;
       Timeout : Duration := 10.0) return Async_Result;
    --  User is the one into which the fork will appear; Owner is the one we are
    --  forking Repo from. Forks are done in the background after the request is
