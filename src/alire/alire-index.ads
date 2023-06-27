@@ -15,7 +15,7 @@ package Alire.Index is
 
    Community_Host : constant String := "https://github.com";
 
-   Community_Organization : constant String := "alire-project";
+   Community_Organization : constant String := "mosteo";
 
    Community_Repo_Name : constant String := "alire-index";
 

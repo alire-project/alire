@@ -7,6 +7,7 @@ with Alire.Platforms.Folders;
 with Alire.TOML_Index;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
+with Alire.Version;
 with Alire.VFS;
 
 with CLIC.User_Input;
@@ -103,8 +104,8 @@ package body Alire.Publish.Automate is
             end if;
          end if;
 
-         case GitHub.Fork (Owner => "alire-project",
-                           Repo  => "alire-index",
+         case GitHub.Fork (Owner => Index.Community_Organization,
+                           Repo  => Index.Community_Repo_Name,
                            Token => Token)
          is
             when Pending =>
@@ -160,11 +161,11 @@ package body Alire.Publish.Automate is
                              To_Vector ("reset")
                            & "--hard"
                            & (VCSs.Git.Handler.Remote (Local_Repo_Path)
-                              / Index.Community_Branch)).Ignore;
+                              / Index.Community_Branch)).Discard_Output;
          --  Discard any local changes
 
          VCSs.Git.Command (Repo => Local_Repo_Path,
-                           Args => To_Vector ("clean") & "-fd").Ignore;
+                           Args => To_Vector ("clean") & "-fd").Discard_Output;
          --  Drop any spurious files/folders (like other submitted manifests)
 
          Put_Success ("Local index updated successfully");
@@ -200,8 +201,17 @@ package body Alire.Publish.Automate is
       ---------------------
 
       procedure Commit_And_Push is
+         use all type AAA.Strings.Vector;
          use all type VCSs.Git.States;
       begin
+         --  Add files first, so if there's something new it's detected as
+         --  dirty.
+
+         VCSs.Git.Command (Local_Repo_Path,
+                           To_Vector ("add") & ".").Discard_Output;
+
+         --  Now we can check if there's something to commit or not
+
          if VCSs.Git.Handler.Status (Local_Repo_Path) = Dirty then
             VCSs.Git.Commit_All
               (Local_Repo_Path,
@@ -225,7 +235,13 @@ package body Alire.Publish.Automate is
 
       procedure Submit is
       begin
-         raise Unimplemented;
+         GitHub.Create_Pull_Request
+           (Token   => Token,
+            Title   => Root.Name.As_String & " " & Root.Release.Version.Image,
+            Message =>
+              "Created via `alr publish` with `alr " & Version.Current & "`");
+
+         Put_Success ("Pull request created successfully");
       end Submit;
 
    begin

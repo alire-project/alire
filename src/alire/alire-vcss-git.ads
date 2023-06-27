@@ -48,7 +48,7 @@ package Alire.VCSs.Git is
 
    type Output is new AAA.Strings.Vector with null record;
 
-   procedure Ignore (This : Output) is null;
+   procedure Discard_Output (This : Output) is null;
    --  Allows running a git command and ignoring its output
 
    function Command (Repo  : Directory_Path;
@@ -134,6 +134,7 @@ package Alire.VCSs.Git is
    function Status (This : VCS;
                     Repo : Directory_Path)
                     return States;
+   --  Note that untracked files don't cause a Dirty result!
 
    not overriding
    function Fetch_URL (This   : VCS;

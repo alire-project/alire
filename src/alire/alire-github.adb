@@ -108,6 +108,45 @@ package body Alire.GitHub is
       return Boolean
    is (API_Call ("repos" / User / Repo / "branches" / Branch).Succeeded);
 
+   -------------------------
+   -- Create_Pull_Request --
+   -------------------------
+
+   procedure Create_Pull_Request
+     (User                  : String  := User_Info.User_GitHub_Login;
+      Base                  : String  := Index.Community_Organization;
+      Repo                  : String  := Index.Community_Repo_Name;
+      Head_Branch           : String  := Index.Community_Branch;
+      Base_Branch           : String  := Index.Community_Branch;
+      Draft                 : Boolean := False;
+      Maintainer_Can_Modify : Boolean := True;
+      Token                 : String;
+      Title                 : String;
+      Message               : String  -- What goes in the body of the PR
+     )
+   is
+      use all type Minirest.Parameters;
+      Response : constant Minirest.Response
+        := API_Call
+          (Kind  => POST,
+           Token => Token,
+           Proc  => "repos" / Base / Repo / "pulls",
+           Args  =>
+               "title" = Title
+           and "body"  = Message
+           and "base"  = Base_Branch
+           and "head"  = User & ":" & Head_Branch
+           and "draft" = Draft
+           and "maintainer_can_modify" = Maintainer_Can_Modify);
+   begin
+      if not Response.Succeeded then
+         Raise_Checked_Error
+           ("Pull request could not be created: "
+            & Response.Status_Line & " with body "
+            & Response.Content.Flatten (" "));
+      end if;
+   end Create_Pull_Request;
+
    ----------
    -- Fork --
    ----------

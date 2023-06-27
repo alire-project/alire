@@ -195,11 +195,12 @@ package body Alire.VCSs.Git is
                   Token : String := "") return Outcome
    is
       Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Writname : constant String := "writable";
    begin
       if Token = "" then
          Run_Git (Empty_Vector & "push");
       else
-         --  Create a new remote with our credentials
+         --  Create a temporary remote with our credentials and use it to push
          declare
             Old : constant URL :=
                     Handler.Remote_URL (Repo, Handler.Remote (Repo));
@@ -207,20 +208,25 @@ package body Alire.VCSs.Git is
                          Replace (Old, "//", "//"
                                   & User_Info.User_GitHub_Login
                                   & ":" & Token & "@");
-            Writname : constant String := "writable";
          begin
             Run_Git (Empty_Vector
                      & "remote" & "add" & Writname & Writurl);
             Run_Git (Empty_Vector
                      & "push" & Writname);
-            --  Run_Git (Empty_Vector
-            --           & "remote" & "remove" & Writname);
+            Run_Git (Empty_Vector
+                     & "remote" & "remove" & Writname);
          end;
       end if;
 
       return Outcome_Success;
    exception
       when E : others =>
+         --  Ensure token is not left behind even in case of push failure
+         if Handler.Remote_URL (Repo, Writname) /= "" then
+            Run_Git (Empty_Vector
+                     & "remote" & "remove" & Writname);
+         end if;
+
          return Alire.Errors.Get (E);
    end Push;
 
