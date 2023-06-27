@@ -1,5 +1,5 @@
 with Alire.Origins;
-with Alire.Publish.Automate;
+with Alire.Publish;
 with Alire.URI;
 with Alire.Utils;
 
@@ -25,7 +25,8 @@ package body Alr.Commands.Publish is
                        (if Cmd.Manifest.all /= ""
                         then Cmd.Manifest.all
                         else Alire.Roots.Crate_File_Name),
-                     Skip_Build => Cmd.Skip_Build);
+                     Skip_Build => Cmd.Skip_Build,
+                     Submit     => Cmd.Submit);
 
    begin
       if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 or else
@@ -90,13 +91,6 @@ package body Alr.Commands.Publish is
             end;
 
          end if;
-      end if;
-
-      --  If we are required to submit, start now that the manifest will have
-      --  been created at the ./alire/releases/crate-x.y.z.toml location.
-
-      if Cmd.Submit then
-         Alire.Publish.Automate.Create_PR (Cmd.Root);
       end if;
    end Execute;
 

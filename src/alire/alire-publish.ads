@@ -1,4 +1,6 @@
-with Alire.Roots;
+private with Alire.Directories;
+private with Alire.Origins;
+with Alire.Roots.Optional;
 with Alire.URI;
 
 package Alire.Publish is
@@ -6,7 +8,8 @@ package Alire.Publish is
    type All_Options is private;
 
    function New_Options (Skip_Build : Boolean := False;
-                         Manifest   : String  := Roots.Crate_File_Name)
+                         Manifest   : String  := Roots.Crate_File_Name;
+                         Submit     : Boolean := False)
                          return All_Options;
 
    procedure Directory_Tar (Path     : Any_Path := ".";
@@ -41,11 +44,14 @@ package Alire.Publish is
    function Is_Trusted (URL : Alire.URL) return Boolean;
    --  According to our whitelist
 
+   type Data is tagged limited private;
+
 private
 
    type All_Options is tagged record
       Manifest_File : UString;
       Skip_Build    : Boolean := False;
+      Submit        : Boolean := False;
    end record;
 
    function Manifest (Options : All_Options) return Any_Path
@@ -53,5 +59,60 @@ private
 
    function Nonstandard_Manifest (Options : All_Options) return Boolean
    is (Options.Manifest /= Roots.Crate_File_Name);
+
+   --  Data shared across publishing steps, needs to be visible to children
+
+   type Data is tagged limited record
+      Options : All_Options;
+
+      Origin : Origins.Origin := Origins.New_External ("undefined");
+      --  We use external as "undefined" until a proper origin is provided.
+
+      Path   : UString := +".";
+      --  Where to find the local workspace
+
+      Subdir : Unbounded_Relative_Path;
+      --  Subdir inside the root repo, for monorepo crates
+
+      Revision : UString := +"HEAD";
+      --  A particular revision for publishing from a git repo
+
+      Tmp_Deploy_Dir : Directories.Temp_File;
+      --  Place to check the sources
+
+      Root   : Roots.Optional.Root;
+      --  Required valid by the submit steps
+
+      Token  : UString;
+      --  GitHub Personal Access token, required to fork/create PR
+   end record;
+
+   -----------------
+   -- Branch_Name --
+   -----------------
+
+   function Branch_Name (This : Data) return String
+   is (This.Root.Value.Name.As_String & "-"
+       & This.Root.Value.Release.Version.Image);
+
+   -------------
+   -- PR_Name --
+   -------------
+
+   function PR_Name (This : Data) return String
+   is (This.Root.Value.Name.As_String & " "
+       & This.Root.Value.Release.Version.Image);
+
+   ------------------------
+   -- Generated_Filename --
+   ------------------------
+
+   function Generated_Filename (This : Data) return String;
+
+   ------------------------
+   -- Generated_Manifest --
+   ------------------------
+
+   function Generated_Manifest (This : Data) return Absolute_Path;
 
 end Alire.Publish;

@@ -1,7 +1,13 @@
-package Alire.Publish.Automate is
+private package Alire.Publish.Automate is
 
-   --  Facilities to automatically submit PRs to Github
+   --  Steps for the assistant, not intended to be called directly
 
-   procedure Create_PR (Root : Roots.Root);
+   procedure Fork (Context : in out Data);
+
+   procedure Clone (Unused_Context : in out Data);
+
+   procedure Push (Context : in out Data);
+
+   procedure Submit (Context : in out Data);
 
 end Alire.Publish.Automate;

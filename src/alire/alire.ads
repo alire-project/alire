@@ -287,6 +287,9 @@ package Alire with Preelaborate is
    function Log (Text : String; Level : Trace.Levels := Info) return String;
    --  A convenience to be able to log inside declarative blocks. Returns Text.
 
+   function New_Line return String;
+   --  Returns the proper \n sequence based on the platform
+
    ---------------
    -- Constants --
    ---------------

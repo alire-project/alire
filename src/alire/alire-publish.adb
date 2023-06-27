@@ -5,7 +5,6 @@ with AAA.Strings;
 
 with Alire.Config;
 with Alire.Crates;
-with Alire.Directories;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
@@ -17,9 +16,9 @@ with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Properties.From_TOML;
+with Alire.Publish.Automate;
 with Alire.Releases;
 with Alire.Root;
-with Alire.Roots.Optional;
 with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
@@ -56,25 +55,6 @@ package body Alire.Publish is
                        .Append ("gitlab.com")
                        .Append ("savannah.nongnu.org")
                        .Append ("sf.net");
-
-   type Data is limited record
-      Options : All_Options;
-
-      Origin : Origins.Origin := Origins.New_External ("undefined");
-      --  We use external as "undefined" until a proper origin is provided.
-
-      Path : UString := +".";
-      --  Where to find the local workspace
-
-      Subdir : Unbounded_Relative_Path;
-      --  Subdir inside the root repo, for monorepo crates
-
-      Revision : UString := +"HEAD";
-      --  A particular revision for publishing from a git repo
-
-      Tmp_Deploy_Dir : Directories.Temp_File;
-      --  Place to check the sources
-   end record;
 
    ---------------
    -- Base_Path --
@@ -114,15 +94,35 @@ package body Alire.Publish is
    function Packaged_Manifest (This : Data) return Any_Path
    is (Deploy_Path (This) / Roots.Crate_File_Name);
 
+   ------------------------
+   -- Generated_Filename --
+   ------------------------
+
+   function Generated_Filename (This : Data) return String
+   is (TOML_Index.Manifest_File
+       (This.Root.Value.Name,
+          This.Root.Value.Release.Version));
+
+   ------------------------
+   -- Generated_Manifest --
+   ------------------------
+
+   function Generated_Manifest (This : Data) return Absolute_Path
+   is (This.Root.Value.Working_Folder
+       / Paths.Release_Folder_Inside_Working_Folder
+       / This.Generated_Filename);
+
    -----------------
    -- New_Options --
    -----------------
 
    function New_Options (Skip_Build : Boolean := False;
-                         Manifest   : String  := Roots.Crate_File_Name)
+                         Manifest   : String  := Roots.Crate_File_Name;
+                         Submit     : Boolean := False)
                          return All_Options
    is (Manifest_File => +Manifest,
-       Skip_Build    => Skip_Build);
+       Skip_Build    => Skip_Build,
+       Submit        => Submit);
 
    ---------------
    -- Git_Error --
@@ -856,7 +856,11 @@ package body Alire.Publish is
       Step_Deploy_Sources,
       Step_Check_Build,
       Step_Show_And_Confirm,
-      Step_Generate_Index_Manifest);
+      Step_Generate_Index_Manifest,
+      Step_Fork,
+      Step_Clone,
+      Step_Push,
+      Step_Submit);
 
    type Step_Array is array (Positive range <>) of Step_Names;
 
@@ -869,7 +873,11 @@ package body Alire.Publish is
         Step_Deploy_Sources          => Deploy_Sources'Access,
         Step_Check_Build             => Check_Build'Access,
         Step_Show_And_Confirm        => Show_And_Confirm'Access,
-        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
+        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access,
+        Step_Fork                    => Automate.Fork'Access,
+        Step_Clone                   => Automate.Clone'Access,
+        Step_Push                    => Automate.Push'Access,
+        Step_Submit                  => Automate.Submit'Access);
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
@@ -880,7 +888,19 @@ package body Alire.Publish is
           when Step_Deploy_Sources          => "Deploy sources",
           when Step_Check_Build             => "Build release",
           when Step_Show_And_Confirm        => "User review",
-          when Step_Generate_Index_Manifest => "Generate index manifest");
+          when Step_Generate_Index_Manifest => "Generate index manifest",
+          when Step_Fork                    => "Fork community index",
+          when Step_Clone                   => "Clone community index",
+          when Step_Push                    => "Upload manifest",
+          when Step_Submit                  => "Submit manifest for review");
+
+   Submit_Steps : constant Step_Array :=
+                    (Step_Fork,
+                     Step_Clone,
+                     Step_Push,
+                     Step_Submit);
+
+   No_Steps : constant Step_Array (1 .. 0) := (others => <>);
 
    ---------------
    -- Run_Steps --
@@ -917,7 +937,9 @@ package body Alire.Publish is
                    Path           => +Path,
                    Subdir         => <>,
                    Revision       => +Revision,
-                   Tmp_Deploy_Dir => <>);
+                   Tmp_Deploy_Dir => <>,
+                   Root           => <>,
+                   Token          => <>);
 
       Guard   : Directories.Guard (Directories.Enter (Base_Path (Context)))
         with Unreferenced;
@@ -930,7 +952,11 @@ package body Alire.Publish is
                   Step_Deploy_Sources,
                   Step_Check_Build,
                   Step_Show_And_Confirm,
-                  Step_Generate_Index_Manifest));
+                  Step_Generate_Index_Manifest)
+                 &
+                 (if Options.Submit
+                    then Submit_Steps
+                    else No_Steps));
    end Directory_Tar;
 
    ----------------
@@ -1173,7 +1199,9 @@ package body Alire.Publish is
 
                       Revision       => +Commit,
 
-                      Tmp_Deploy_Dir => <>);
+                      Tmp_Deploy_Dir => <>,
+                      Root           => <>,
+                      Token          => <>);
       begin
          Run_Steps (Context,
                     (Step_Verify_Origin,
@@ -1181,7 +1209,11 @@ package body Alire.Publish is
                      Step_Deploy_Sources,
                      Step_Check_Build,
                      Step_Show_And_Confirm,
-                     Step_Generate_Index_Manifest));
+                     Step_Generate_Index_Manifest)
+                    &
+                    (if Options.Submit
+                       then Submit_Steps
+                       else No_Steps));
       end;
    exception
       when E : Checked_Error | Origins.Unknown_Source_Archive_Format_Error =>
