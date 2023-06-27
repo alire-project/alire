@@ -129,25 +129,36 @@ package body Alire.Publish.Automate is
    -- Clone --
    -----------
 
-   procedure Clone (Unused_Context : in out Data) is
+   procedure Clone (Context : in out Data) is
+
+      use all type Vector;
 
       ----------
       -- Pull --
       ----------
 
       procedure Pull is
-         use all type Vector;
+         Remote : constant String := VCSs.Git.Handler.Remote (Local_Repo_Path);
       begin
+         --  Fetch all remote changes
+
          VCSs.Git.Handler.Update (Local_Repo_Path,
                                   Branch => Index.Community_Branch).Assert;
-         --  Fetch all remote changes
+
+         --  Force-checkout the branch we want
+
+         VCSs.Git.Command (Local_Repo_Path,
+                           To_Vector ("checkout")
+                           & String'(Remote / Index.Community_Branch)
+                           & "-B" & Context.Branch_Name).Discard_Output;
+
+         --  And ensure the situation is pristine to add or new manifest
 
          VCSs.Git.Command (Repo => Local_Repo_Path,
                            Args =>
                              To_Vector ("reset")
                            & "--hard"
-                           & (VCSs.Git.Handler.Remote (Local_Repo_Path)
-                             / Index.Community_Branch)).Discard_Output;
+                           & (Remote / Index.Community_Branch)).Discard_Output;
          --  Discard any local changes
 
          VCSs.Git.Command (Repo => Local_Repo_Path,
@@ -176,6 +187,11 @@ package body Alire.Publish.Automate is
          / Index.Community_Repo_Name,
          Into   => Local_Repo_Path,
          Branch => Index.Community_Branch).Assert;
+
+      --  Switch to a branch exclusive of this releas
+      VCSs.Git.Command
+        (Local_Repo_Path,
+         To_Vector ("checkout") & "-B" & Context.Branch_Name).Discard_Output;
 
       Put_Success ("Community index cloned succesfully");
    end Clone;
@@ -247,7 +263,10 @@ package body Alire.Publish.Automate is
 
       procedure Upload is
       begin
-         VCSs.Git.Push (Local_Repo_Path, +Context.Token).Assert;
+         VCSs.Git.Push (Local_Repo_Path,
+                        Token => +Context.Token,
+                        Force => True,
+                        Create => True).Assert;
          Put_Success ("Manifest pushed into remote index");
       end Upload;
 
@@ -281,9 +300,10 @@ package body Alire.Publish.Automate is
       end if;
 
       GitHub.Create_Pull_Request
-        (Token   => +Context.Token,
-         Title   => Context.PR_Name,
-         Message =>
+        (Token       => +Context.Token,
+         Head_Branch => Context.Branch_Name,
+         Title       => Context.PR_Name,
+         Message     =>
            "Created via `alr publish` with `alr " & Version.Current & "`");
 
       Put_Success ("Pull request created successfully");

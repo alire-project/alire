@@ -92,7 +92,8 @@ private
    -----------------
 
    function Branch_Name (This : Data) return String
-   is (This.Root.Value.Name.As_String & "-"
+   is ("release/"
+       & This.Root.Value.Name.As_String & "-"
        & This.Root.Value.Release.Version.Image);
 
    -------------

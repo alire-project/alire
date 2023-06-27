@@ -29,6 +29,12 @@ package Alire.VCSs.Git is
                     return String;
    --  Returns the branch name of the repo checked out at Path.
 
+   function Branches (Repo   : Directory_Path;
+                      Local  : Boolean := True;
+                      Remote : Boolean := True)
+                      return AAA.Strings.Vector;
+   --  List all known branches (without going on-line)
+
    overriding
    function Clone (This : VCS;
                    From : URL;
@@ -65,11 +71,14 @@ package Alire.VCSs.Git is
    --  Add and commit all changes in a given repo; commiter will be set to the
    --  user email stored in our config.
 
-   function Push (Repo  : Directory_Path;
-                  Token : String := "") return Outcome;
-   --  Push to the remote. If an Auth Token is given, a temporary remote that
-   --  includes the token will be created and removed for the push; the local
-   --  branch will be set to track the original remote afterwards.
+   function Push (Repo   : Directory_Path;
+                  Force  : Boolean := False;
+                  Create : Boolean := False;
+                  Token  : String  := "") return Outcome;
+   --  Push to the remote. If Create, use "-u origin <branch>". If an Auth
+   --  Token is given, a temporary remote that includes the token will be
+   --  created and removed for the push; the local branch will be set to
+   --  track the original remote afterwards.
 
    not overriding
    function Remote_Commit (This : VCS;

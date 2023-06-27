@@ -83,6 +83,30 @@ package body Alire.VCSs.Git is
          & Output.Flatten ("\n "));
    end Branch;
 
+   --------------
+   -- Branches --
+   --------------
+
+   function Branches (Repo   : Directory_Path;
+                      Local  : Boolean := True;
+                      Remote : Boolean := True)
+                      return AAA.Strings.Vector
+   is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : constant AAA.Strings.Vector :=
+                 Run_Git_And_Capture
+                   (Empty_Vector
+                    & "branch" & "--format=%(refname:short)"
+                    & (if Local and then Remote then
+                         To_Vector ("-a")
+                      elsif Remote then
+                         To_Vector ("-r")
+                      else
+                         Empty_Vector));
+   begin
+      return Output;
+   end Branches;
+
    -----------
    -- Clone --
    -----------
@@ -191,14 +215,29 @@ package body Alire.VCSs.Git is
    -- Push --
    ----------
 
-   function Push (Repo  : Directory_Path;
-                  Token : String := "") return Outcome
+   function Push (Repo   : Directory_Path;
+                  Force  : Boolean := False;
+                  Create : Boolean := False;
+                  Token  : String := "") return Outcome
    is
       Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
       Writname : constant String := "writable";
+      Force_Flags : constant Vector :=
+                      (if Force then To_Vector ("-f") else Empty_Vector);
+      Create_Flags : constant Vector :=
+                       (if Create
+                        then To_Vector ("-u")
+                             & (if Token /= ""
+                                then Writname
+                                else Handler.Remote (Repo))
+                             & Handler.Branch (Repo)
+                        else Empty_Vector);
    begin
       if Token = "" then
-         Run_Git (Empty_Vector & "push");
+         Run_Git (Empty_Vector
+                  & "push"
+                  & Force_Flags
+                  & Create_Flags);
       else
          --  Create a temporary remote with our credentials and use it to push
          declare
@@ -212,7 +251,11 @@ package body Alire.VCSs.Git is
             Run_Git (Empty_Vector
                      & "remote" & "add" & Writname & Writurl);
             Run_Git (Empty_Vector
-                     & "push" & Writname);
+                     & "push"
+                     & Force_Flags
+                     & (if Create
+                        then Create_Flags
+                        else To_Vector (Writname)));
             Run_Git (Empty_Vector
                      & "remote" & "remove" & Writname);
          end;
@@ -482,14 +525,19 @@ package body Alire.VCSs.Git is
          --  Retrieve revisions from remote branch tip up to our local HEAD. If
          --  not empty, we are locally ahead.
          declare
+            Branch : constant String := This.Branch (Repo);
             Remote : constant String := This.Remote (Repo, Checked => False);
          begin
             if Remote = "" then
                return No_Remote;
+            elsif (for all B of Branches (Repo, Local => False) =>
+                     B /= Remote & "/" & Branch)
+            then -- The branch doesn't even exist remotely
+               return Ahead;
             elsif Run_Git_And_Capture
               (Empty_Vector
                & "rev-list"
-               & String'(Remote & "/" & This.Branch (Repo)
+               & String'(Remote & "/" & Branch
                  &  "..HEAD")).Is_Empty
             then
                return Clean;

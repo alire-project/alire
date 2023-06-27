@@ -4,7 +4,7 @@ private package Alire.Publish.Automate is
 
    procedure Fork (Context : in out Data);
 
-   procedure Clone (Unused_Context : in out Data);
+   procedure Clone (Context : in out Data);
 
    procedure Push (Context : in out Data);
 
