@@ -5,7 +5,6 @@ with "ajunitgen";
 with "ansiada";
 with "clic";
 with "gnatcoll";
-with "json";
 with "minirest";
 with "optional";
 with "semantic_versioning";

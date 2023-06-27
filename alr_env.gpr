@@ -15,8 +15,6 @@ aggregate project Alr_Env is
                          "deps/ansi",
                          "deps/clic",
                          "deps/gnatcoll-slim",
-                         "deps/json/json",
-                         "deps/json_config",
                          "deps/minirest",
                          "deps/optional",
                          "deps/semantic_versioning",

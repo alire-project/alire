@@ -857,6 +857,7 @@ package body Alire.Publish is
       Step_Check_Build,
       Step_Show_And_Confirm,
       Step_Generate_Index_Manifest,
+      Step_Check_Exists,
       Step_Fork,
       Step_Clone,
       Step_Push,
@@ -874,6 +875,7 @@ package body Alire.Publish is
         Step_Check_Build             => Check_Build'Access,
         Step_Show_And_Confirm        => Show_And_Confirm'Access,
         Step_Generate_Index_Manifest => Generate_Index_Manifest'Access,
+        Step_Check_Exists            => Automate.Exists'Access,
         Step_Fork                    => Automate.Fork'Access,
         Step_Clone                   => Automate.Clone'Access,
         Step_Push                    => Automate.Push'Access,
@@ -889,13 +891,15 @@ package body Alire.Publish is
           when Step_Check_Build             => "Build release",
           when Step_Show_And_Confirm        => "User review",
           when Step_Generate_Index_Manifest => "Generate index manifest",
+          when Step_Check_Exists            => "Check existing PR",
           when Step_Fork                    => "Fork community index",
           when Step_Clone                   => "Clone community index",
           when Step_Push                    => "Upload manifest",
           when Step_Submit                  => "Submit manifest for review");
 
    Submit_Steps : constant Step_Array :=
-                    (Step_Fork,
+                    (Step_Check_Exists,
+                     Step_Fork,
                      Step_Clone,
                      Step_Push,
                      Step_Submit);

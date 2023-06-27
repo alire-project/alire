@@ -1,10 +1,14 @@
 with Alire.Directories;
+with Alire.Errors;
 with Alire.GitHub;
 with Alire.Index;
 with Alire.OS_Lib;
 with Alire.Paths;
 with Alire.Platforms.Folders;
+with Alire.Publish.States;
 with Alire.TOML_Index;
+with Alire.URI;
+with Alire.Utils.TTY;
 with Alire.Utils.User_Input.Query_Config;
 with Alire.VCSs.Git;
 with Alire.Version;
@@ -16,7 +20,7 @@ package body Alire.Publish.Automate is
 
    package User_Info renames Utils.User_Input.Query_Config;
 
-   use Directories.Operators;
+   use URI.Operators;
 
    subtype Vector is AAA.Strings.Vector;
 
@@ -71,6 +75,34 @@ package body Alire.Publish.Automate is
                  Validation => Validate'Unrestricted_Access));
    end Ask_For_Token;
 
+   ------------
+   -- Exists --
+   ------------
+
+   procedure Exists (Context : in out Data) is
+   begin
+      --  Detect root we are going to need
+
+      Context.Root := Roots.Optional.Search_Root (Directories.Current);
+      if not Context.Root.Is_Valid then
+         Raise_Checked_Error ("Cannot continue outside of a workspace");
+      end if;
+
+      declare
+         Status : constant States.PR_Status
+           := States.Find_Pull_Request (Context.Root.Value.Release.Milestone);
+      begin
+         if Status.Is_Open then
+            Raise_Checked_Error
+              (Errors.New_Wrapper
+               .Wrap ("There is already an open pull request for "
+                 & Utils.TTY.Name (Context.Root.Value.Name))
+               .Wrap ("Visit " & Status.Webpage & " for details")
+               .Get);
+         end if;
+      end;
+   end Exists;
+
    ---------------
    -- Fork_Repo --
    ---------------
@@ -79,12 +111,6 @@ package body Alire.Publish.Automate is
       use all type CLIC.User_Input.Answer_Kind;
       use all type GitHub.Async_Result;
    begin
-      --  Detect root we are going to need
-
-      Context.Root := Roots.Optional.Search_Root (Directories.Current);
-      if not Context.Root.Is_Valid then
-         Raise_Checked_Error ("Cannot continue outside of a workspace");
-      end if;
 
       --  Verify manifest to publish was generated at expected place
 
@@ -299,14 +325,20 @@ package body Alire.Publish.Automate is
          Raise_Checked_Error ("Cancelled");
       end if;
 
-      GitHub.Create_Pull_Request
-        (Token       => +Context.Token,
-         Head_Branch => Context.Branch_Name,
-         Title       => Context.PR_Name,
-         Message     =>
-           "Created via `alr publish` with `alr " & Version.Current & "`");
-
-      Put_Success ("Pull request created successfully");
+      declare
+         Number : constant Natural
+           := GitHub.Create_Pull_Request
+             (Token       => +Context.Token,
+              Head_Branch => Context.Branch_Name,
+              Title       => Context.PR_Name,
+              Message     =>
+                "Created via `alr publish` with `alr "
+                & Version.Current & "`");
+      begin
+         Put_Success ("Pull request created successfully");
+         Put_Info ("Visit " & TTY.URL (States.Webpage (Number))
+                   & " for details");
+      end;
    end Submit;
 
 end Alire.Publish.Automate;

@@ -22,7 +22,7 @@ package Alire.GitHub is
       return Boolean;
    --  Check that a branch exists in a user's repository
 
-   procedure Create_Pull_Request
+   function Create_Pull_Request
      (User                  : String  := User_Info.User_GitHub_Login;
       Base                  : String  := Index.Community_Organization;
       Repo                  : String  := Index.Community_Repo_Name;
@@ -33,7 +33,8 @@ package Alire.GitHub is
       Token                 : String;
       Title                 : String;
       Message               : String  -- What goes in the body of the PR
-     );
+     ) return Natural;
+   --  Returns the number of the PR just created
 
    function Fork
      (User    : String := User_Info.User_GitHub_Login;

@@ -3,20 +3,19 @@ with Ada.Exceptions;
 
 with Alire.Errors;
 with Alire.OS_Lib;
+with Alire.URI;
 with Alire.Utils.TTY;
+
+with GNATCOLL.JSON;
 
 with Minirest;
 
 package body Alire.GitHub is
 
+   use URI.Operators;
+
    Base_URL    : constant URL    := "https://api.github.com";
    Header_Rate : constant String := "X-Ratelimit-Remaining";
-
-   ---------
-   -- "/" --
-   ---------
-
-   function "/" (L, R : String) return String is (L & "/" & R);
 
    --------------
    -- API_Call --
@@ -112,7 +111,7 @@ package body Alire.GitHub is
    -- Create_Pull_Request --
    -------------------------
 
-   procedure Create_Pull_Request
+   function Create_Pull_Request
      (User                  : String  := User_Info.User_GitHub_Login;
       Base                  : String  := Index.Community_Organization;
       Repo                  : String  := Index.Community_Repo_Name;
@@ -124,6 +123,7 @@ package body Alire.GitHub is
       Title                 : String;
       Message               : String  -- What goes in the body of the PR
      )
+      return Natural
    is
       use all type Minirest.Parameters;
       Response : constant Minirest.Response
@@ -145,6 +145,13 @@ package body Alire.GitHub is
             & Response.Status_Line & " with body "
             & Response.Content.Flatten (" "));
       end if;
+
+      declare
+         use GNATCOLL.JSON;
+         Result : constant JSON_Value := Read (Response.Content.Flatten (""));
+      begin
+         return Result.Get ("number").Get;
+      end;
    end Create_Pull_Request;
 
    ----------

@@ -49,4 +49,15 @@ package body Alire.URI is
             Unknown);
    end Scheme;
 
+   package body Operators is
+
+      ---------
+      -- "/" --
+      ---------
+
+      function "/" (L, R : String) return String
+      is (L & "/" & R);
+
+   end Operators;
+
 end Alire.URI;
