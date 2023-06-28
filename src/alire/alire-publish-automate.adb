@@ -24,11 +24,16 @@ package body Alire.Publish.Automate is
 
    subtype Vector is AAA.Strings.Vector;
 
+   --  Remote names used through
+   Origin        : constant String := "origin";
+   Upstream      : constant String := "upstream";
+   Upstream_Base : constant String := Upstream / Index.Community_Branch;
+
    ----------------
    -- Remote_URL --
    ----------------
 
-   function Remote_URL return String
+   function User_Remote_URL return String
    --  Must be a function so the user is not prematurely queried for the login
    is (Index.Community_Host
        / User_Info.User_GitHub_Login
@@ -97,10 +102,12 @@ package body Alire.Publish.Automate is
               (Errors.New_Wrapper
                .Wrap ("There is already an open pull request for "
                  & Utils.TTY.Name (Context.Root.Value.Name))
-               .Wrap ("Visit " & Status.Webpage & " for details")
+               .Wrap ("Visit " & TTY.URL (Status.Webpage) & " for details")
                .Get);
          end if;
       end;
+
+      Put_Success ("No conflicting pull request found");
    end Exists;
 
    ---------------
@@ -164,27 +171,26 @@ package body Alire.Publish.Automate is
       ----------
 
       procedure Pull is
-         Remote : constant String := VCSs.Git.Handler.Remote (Local_Repo_Path);
       begin
-         --  Fetch all remote changes
+         --  Fetch any upstream remote changes
 
-         VCSs.Git.Handler.Update (Local_Repo_Path,
-                                  Branch => Index.Community_Branch).Assert;
+         VCSs.Git.Command (Local_Repo_Path,
+                           To_Vector ("fetch") & Upstream).Discard_Output;
 
          --  Force-checkout the branch we want
 
          VCSs.Git.Command (Local_Repo_Path,
                            To_Vector ("checkout")
-                           & String'(Remote / Index.Community_Branch)
+                           & Upstream_Base
                            & "-B" & Context.Branch_Name).Discard_Output;
 
-         --  And ensure the situation is pristine to add or new manifest
+         --  And ensure the situation is pristine to add our new manifest
 
          VCSs.Git.Command (Repo => Local_Repo_Path,
                            Args =>
                              To_Vector ("reset")
                            & "--hard"
-                           & (Remote / Index.Community_Branch)).Discard_Output;
+                           & Upstream_Base).Discard_Output;
          --  Discard any local changes
 
          VCSs.Git.Command (Repo => Local_Repo_Path,
@@ -197,7 +203,8 @@ package body Alire.Publish.Automate is
    begin
       if Directories.Is_Directory (Local_Repo_Path)
         and then VCSs.Git.Handler.Is_Repository (Local_Repo_Path)
-        and then VCSs.Git.Handler.Remote_URL (Local_Repo_Path) = Remote_URL
+        and then VCSs.Git.Handler.Remote_URL (Local_Repo_Path) =
+                 User_Remote_URL
       then
          --  It's enough to refresh the local repo
          Pull;
@@ -211,14 +218,17 @@ package body Alire.Publish.Automate is
         (From   => Index.Community_Host
          / User_Info.User_GitHub_Login
          / Index.Community_Repo_Name,
-         Into   => Local_Repo_Path,
-         Branch => Index.Community_Branch).Assert;
+         Into   => Local_Repo_Path).Assert;
 
-      --  Switch to a branch exclusive of this releas
-      VCSs.Git.Command
-        (Local_Repo_Path,
-         To_Vector ("checkout") & "-B" & Context.Branch_Name).Discard_Output;
+      --  Set up the upstream remote
+      VCSs.Git.Add_Remote (Local_Repo_Path,
+                           Name => Upstream,
+                           URL  => Index.Community_Host
+                                   / Index.Community_Organization
+                                   / Index.Community_Repo_Name);
 
+      --  We can reuse the pull logic now to set up the local branch
+      Pull;
       Put_Success ("Community index cloned succesfully");
    end Clone;
 
@@ -290,8 +300,9 @@ package body Alire.Publish.Automate is
       procedure Upload is
       begin
          VCSs.Git.Push (Local_Repo_Path,
-                        Token => +Context.Token,
-                        Force => True,
+                        Remote => Origin,
+                        Token  => +Context.Token,
+                        Force  => True,
                         Create => True).Assert;
          Put_Success ("Manifest pushed into remote index");
       end Upload;

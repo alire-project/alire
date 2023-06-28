@@ -3,10 +3,9 @@ with Ada.Exceptions;
 
 with Alire.Errors;
 with Alire.OS_Lib;
+with Alire.Publish;
 with Alire.URI;
 with Alire.Utils.TTY;
-
-with GNATCOLL.JSON;
 
 with Minirest;
 
@@ -153,6 +152,38 @@ package body Alire.GitHub is
          return Result.Get ("number").Get;
       end;
    end Create_Pull_Request;
+
+   -----------------------
+   -- Find_Pull_Request --
+   -----------------------
+
+   function Find_Pull_Request (M : Milestones.Milestone)
+                               return GNATCOLL.JSON.JSON_Value
+   is
+      use all type Minirest.Parameters;
+
+      Response : constant Minirest.Response
+        := API_Call ("repos"
+                     / Index.Community_Organization
+                     / Index.Community_Repo_Name
+                     / "pulls",
+                     Kind => GET,
+                     Args =>
+                       "state" = "all"
+                     and "head" = User_Info.User_GitHub_Login & ":"
+                                & Publish.Branch_Name (M));
+   begin
+      if Response.Succeeded then
+         return GNATCOLL.JSON.Read (Response.Content.Flatten (""));
+      else
+         Raise_Checked_Error
+           ("Could not get list of pull requests."
+            & " GitHub REST API failed with code:"
+            & Response.Status_Code'Image
+            & " and status: "
+            & Response.Status_Line & Response.Content.Flatten (ASCII.LF));
+      end if;
+   end Find_Pull_Request;
 
    ----------
    -- Fork --

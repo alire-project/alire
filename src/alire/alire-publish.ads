@@ -1,4 +1,5 @@
 private with Alire.Directories;
+with Alire.Milestones;
 private with Alire.Origins;
 with Alire.Roots.Optional;
 with Alire.URI;
@@ -37,6 +38,11 @@ package Alire.Publish is
    --  inside a repository with the actual location of a nested crate. Produces
    --  a file `crate-version.toml` in the current directory or raises
    --  Checked_Error with the appropriate error message set.
+
+   function Branch_Name (M : Milestones.Milestone) return String
+   is ("release/"
+       & M.Crate.As_String & "-"
+       & M.Version.Image);
 
    procedure Print_Trusted_Sites;
    --  Print our list of allowed sites to host git releases
@@ -92,9 +98,7 @@ private
    -----------------
 
    function Branch_Name (This : Data) return String
-   is ("release/"
-       & This.Root.Value.Name.As_String & "-"
-       & This.Root.Value.Release.Version.Image);
+   is (Branch_Name (This.Root.Value.Release.Milestone));
 
    -------------
    -- PR_Name --

@@ -1,5 +1,8 @@
 with Alire.Index;
+with Alire.Milestones;
 with Alire.Utils.User_Input.Query_Config;
+
+with GNATCOLL.JSON;
 
 package Alire.GitHub is
 
@@ -35,6 +38,12 @@ package Alire.GitHub is
       Message               : String  -- What goes in the body of the PR
      ) return Natural;
    --  Returns the number of the PR just created
+
+   function Find_Pull_Request (M : Milestones.Milestone)
+                               return GNATCOLL.JSON.JSON_Value;
+   --  Find a pull request that matches the user and branch, and return the raw
+   --  JSON info. It will return the unique open PR, or the most recent closed
+   --  one.
 
    function Fork
      (User    : String := User_Info.User_GitHub_Login;

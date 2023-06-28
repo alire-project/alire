@@ -23,6 +23,10 @@ package Alire.VCSs.Git is
 
    function Handler return VCS;
 
+   procedure Add_Remote (Repo : Directory_Path;
+                         Name : String;
+                         URL  : String);
+
    not overriding
    function Branch (This : VCS;
                     Path : Directory_Path)
@@ -72,13 +76,14 @@ package Alire.VCSs.Git is
    --  user email stored in our config.
 
    function Push (Repo   : Directory_Path;
+                  Remote : String;
                   Force  : Boolean := False;
                   Create : Boolean := False;
                   Token  : String  := "") return Outcome;
-   --  Push to the remote. If Create, use "-u origin <branch>". If an Auth
-   --  Token is given, a temporary remote that includes the token will be
-   --  created and removed for the push; the local branch will be set to
-   --  track the original remote afterwards.
+   --  Push to the remote. If Create, use "-u <Remote> <current branch>". If an
+   --  Auth Token is given, a temporary remote that includes the token will be
+   --  created and removed for the push; the local branch will be set to track
+   --  the original remote afterwards.
 
    not overriding
    function Remote_Commit (This : VCS;

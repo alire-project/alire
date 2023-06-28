@@ -59,6 +59,19 @@ package body Alire.VCSs.Git is
          Err_To_Out          => True);
    end Unchecked_Run_Git_And_Capture;
 
+   ----------------
+   -- Add_Remote --
+   ----------------
+
+   procedure Add_Remote (Repo : Directory_Path;
+                         Name : String;
+                         URL  : String)
+   is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      Run_Git (To_Vector ("remote") & "add" & Name & URL);
+   end Add_Remote;
+
    ------------
    -- Branch --
    ------------
@@ -216,20 +229,24 @@ package body Alire.VCSs.Git is
    ----------
 
    function Push (Repo   : Directory_Path;
+                  Remote : String;
                   Force  : Boolean := False;
                   Create : Boolean := False;
-                  Token  : String := "") return Outcome
+                  Token  : String  := "") return Outcome
    is
       Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+
       Writname : constant String := "writable";
+
       Force_Flags : constant Vector :=
                       (if Force then To_Vector ("-f") else Empty_Vector);
+
       Create_Flags : constant Vector :=
                        (if Create
                         then To_Vector ("-u")
                              & (if Token /= ""
                                 then Writname
-                                else Handler.Remote (Repo))
+                                else Remote)
                              & Handler.Branch (Repo)
                         else Empty_Vector);
    begin

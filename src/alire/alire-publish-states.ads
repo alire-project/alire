@@ -5,6 +5,7 @@ package Alire.Publish.States is
    type Check_States is (Pending, Running, Failed, Succeeded);
 
    type Life_States is (Open, Merged, Changes_Requested, Rejected);
+   --  Those are specific to our publishing needs, and cooked from github data
 
    type PR_Status (Exists : Boolean) is tagged record
       case Exists is
