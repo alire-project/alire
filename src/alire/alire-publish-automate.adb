@@ -94,6 +94,10 @@ package body Alire.Publish.Automate is
       end if;
 
       declare
+         Busy : constant Trace.Ongoing :=
+                  Trace.Activity ("Looking up pull requests")
+                  with Unreferenced;
+
          Status : constant States.PR_Status
            := States.Find_Pull_Request (Context.Root.Value.Release.Milestone);
       begin
@@ -325,9 +329,8 @@ package body Alire.Publish.Automate is
          & TTY.URL
            (Index.Community_Host
             / Index.Community_Organization
-            / Index.Community_Repo_Name)
-         & New_Line
-         & "and the Alire developers will be notified to review it."
+            / Index.Community_Repo_Name
+            / "pulls")
          & New_Line
          & "Do you want to continue?",
          Valid   => (No | Yes => True, others => False),
@@ -337,9 +340,14 @@ package body Alire.Publish.Automate is
       end if;
 
       declare
+         Busy : constant Trace.Ongoing :=
+                  Trace.Activity ("Opening pull request")
+                  with Unreferenced;
+
          Number : constant Natural
            := GitHub.Create_Pull_Request
-             (Token       => +Context.Token,
+             (Draft       => True,
+              Token       => +Context.Token,
               Head_Branch => Context.Branch_Name,
               Title       => Context.PR_Name,
               Message     =>
@@ -349,6 +357,10 @@ package body Alire.Publish.Automate is
          Put_Success ("Pull request created successfully");
          Put_Info ("Visit " & TTY.URL (States.Webpage (Number))
                    & " for details");
+         Put_Warning ("The submission is in " & TTY.Emph ("draft mode") & ". "
+                      & "Please visit the given URL and request a review once "
+                      & "automated checks have succeeded.",
+                      Trace.Info);
       end;
    end Submit;
 
