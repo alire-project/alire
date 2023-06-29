@@ -193,7 +193,6 @@ package body Alire.VCSs.Git is
                      Quiet : Boolean := False)
                      return Output
    is
-      use all type AAA.Strings.Vector;
       Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
    begin
       return
