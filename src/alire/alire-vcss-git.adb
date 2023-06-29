@@ -446,6 +446,22 @@ package body Alire.VCSs.Git is
       return "";
    end Remote_URL;
 
+   -------------
+   -- Remotes --
+   -------------
+
+   function Remotes (Repo : Directory_Path) return AAA.Strings.Set is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : constant AAA.Strings.Vector :=
+                 Run_Git_And_Capture (To_Vector ("remote"));
+   begin
+      return Result : AAA.Strings.Set do
+         for Line of Output loop
+            Result.Include (Line);
+         end loop;
+      end return;
+   end Remotes;
+
    -------------------
    -- Remote_Commit --
    -------------------

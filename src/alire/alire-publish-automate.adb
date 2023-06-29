@@ -28,6 +28,9 @@ package body Alire.Publish.Automate is
    Origin        : constant String := "origin";
    Upstream      : constant String := "upstream";
    Upstream_Base : constant String := Upstream / Index.Community_Branch;
+   Upstream_Repo : constant URL    := Index.Community_Host
+                                      / Index.Community_Organization
+                                      / Index.Community_Repo_Name;
 
    ----------------
    -- Remote_URL --
@@ -170,12 +173,35 @@ package body Alire.Publish.Automate is
 
       use all type Vector;
 
+      ----------------------
+      -- Prepare_Upstream --
+      ----------------------
+
+      procedure Prepare_Upstream is
+      begin
+         --  Ensure upstream is proper by removing/readding it
+         if VCSs.Git.Remotes (Local_Repo_Path).Contains (Upstream) then
+            VCSs.Git.Command
+              (Local_Repo_Path,
+               To_Vector ("remote") & "remove" & Upstream).Discard_Output;
+         end if;
+
+         --  Set up the upstream remote
+         VCSs.Git.Add_Remote (Local_Repo_Path,
+                              Name => Upstream,
+                              URL  => Upstream_Repo);
+      end Prepare_Upstream;
+
       ----------
       -- Pull --
       ----------
 
       procedure Pull is
       begin
+         --  Start by preparing the base upstream remote
+
+         Prepare_Upstream;
+
          --  Fetch any upstream remote changes
 
          VCSs.Git.Command (Local_Repo_Path,
@@ -223,13 +249,6 @@ package body Alire.Publish.Automate is
          / User_Info.User_GitHub_Login
          / Index.Community_Repo_Name,
          Into   => Local_Repo_Path).Assert;
-
-      --  Set up the upstream remote
-      VCSs.Git.Add_Remote (Local_Repo_Path,
-                           Name => Upstream,
-                           URL  => Index.Community_Host
-                                   / Index.Community_Organization
-                                   / Index.Community_Repo_Name);
 
       --  We can reuse the pull logic now to set up the local branch
       Pull;
@@ -326,11 +345,7 @@ package body Alire.Publish.Automate is
    begin
       if CLIC.User_Input.Query
         ("A pull request is about to be created on "
-         & TTY.URL
-           (Index.Community_Host
-            / Index.Community_Organization
-            / Index.Community_Repo_Name
-            / "pulls")
+         & TTY.URL (Upstream_Repo / "pulls")
          & New_Line
          & "Do you want to continue?",
          Valid   => (No | Yes => True, others => False),

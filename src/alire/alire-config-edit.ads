@@ -137,6 +137,21 @@ private
            " character. The token ${GPR_FILE} is replaced by" &
            " a path to the project file to open.")),
 
+      (+Keys.Index_Host,
+       Cfg_String,
+       +("URL of the community index host, defaults to "
+         & Defaults.Index_Host)),
+
+      (+Keys.Index_Owner,
+       Cfg_String,
+       +("Owner of the index repository (GitHub user/org), defaults to "
+         & Defaults.Index_Owner)),
+
+      (+Keys.Index_Repo_Name,
+       Cfg_String,
+       +("Name of the index repository, defaults to "
+         & Defaults.Index_Repo_Name)),
+
       (+Keys.Msys2_Do_Not_Install,
        Cfg_Bool,
        +("If true, Alire will not try to automatically" &

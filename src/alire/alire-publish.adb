@@ -501,7 +501,9 @@ package body Alire.Publish is
          --  Show the upload URL in normal circumstances, or a more generic
          --  message otherwise (when lacking a github login).
 
-         if Config.DB.Defined (Config.Keys.User_Github_Login) then
+         if Context.Options.Submit then
+            null; -- Do not give instructions that may mislead the user
+         elsif Config.DB.Defined (Config.Keys.User_Github_Login) then
             Put_Info
               ("Please upload this file to "
                & TTY.URL

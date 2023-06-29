@@ -126,6 +126,9 @@ package Alire.VCSs.Git is
    --  Returns the URL for the given remote, or "" if unset. Assumes both fetch
    --  and push remotes are the same.
 
+   function Remotes (Repo : Directory_Path) return AAA.Strings.Set;
+   --  Return all the remote names defined in the repository
+
    overriding
    function Update (This : VCS;
                     Repo : Directory_Path)
