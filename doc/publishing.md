@@ -5,6 +5,22 @@ command. The steps to take are described after some introductory concepts (jump
 to these steps directly [here](#detailed-steps); you can also ask for help on
 the [gitter channel](https://gitter.im/ada-lang/Alire) of the project.
 
+## Automated publishing (TL;DR.)
+
+The simplest publishing experience, provided you have a GitHub account and
+Personal Access Token, consist on issuing
+```
+alr publish --submit
+```
+at the root of your workspace, when said workspace is an up-to-date clone of a
+git repository.
+
+The publishing assistant will review your submission, point out any necessary
+fixes or additional information required, and provide you with a tracking URL.
+
+Read on for the details underlying these automated steps, or in case you need
+to perform further tweaking.
+
 ## General concepts
 
 The community index is a collection of
