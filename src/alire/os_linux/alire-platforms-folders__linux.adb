@@ -1,3 +1,5 @@
+with Ada.Directories;
+
 with Alire.Platforms.Common;
 
 package body Alire.Platforms.Folders is
@@ -26,6 +28,7 @@ package body Alire.Platforms.Folders is
    -- Temp --
    ----------
 
-   function Temp return Absolute_Path is (Common.Unix_Temp_Folder);
+   function Temp return Absolute_Path
+   is (Ada.Directories.Full_Name (Common.Unix_Temp_Folder));
 
 end Alire.Platforms.Folders;
