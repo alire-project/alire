@@ -210,18 +210,26 @@ package body Alire.Directories is
    procedure Ensure_Deletable (Path : Any_Path) is
       use Ada.Directories;
    begin
-      if Exists (Path) and then
-        Kind (Path) = Directory and then
-        Platforms.Current.Operating_System in Platforms.Windows
+      if Platforms.Current.Operating_System in Platforms.Windows
+        and then Exists (Path)
       then
-         Trace.Debug ("Forcing writability of dir " & Path);
-         OS_Lib.Subprocess.Checked_Spawn
-           ("attrib",
-            AAA.Strings.Empty_Vector
-            .Append ("-R") -- Remove read-only
-            .Append ("/D") -- On dirs
-            .Append ("/S") -- Recursively
-            .Append (Path & "\*"));
+         if Kind (Path) = Directory then
+            Trace.Debug ("Forcing writability of dir " & Path);
+            OS_Lib.Subprocess.Checked_Spawn
+              ("attrib",
+               AAA.Strings.Empty_Vector
+               .Append ("-R") -- Remove read-only
+               .Append ("/D") -- On dirs
+               .Append ("/S") -- Recursively
+               .Append (Path & "\*"));
+         elsif Kind (Path) = Ordinary_File then
+            Trace.Debug ("Forcing writability of dir " & Path);
+            OS_Lib.Subprocess.Checked_Spawn
+              ("attrib",
+               AAA.Strings.Empty_Vector
+               .Append ("-R") -- Remove read-only
+               .Append (Path));
+         end if;
       end if;
    end Ensure_Deletable;
 
