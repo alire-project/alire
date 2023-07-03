@@ -244,7 +244,7 @@ package body Alr.Commands.Toolchain is
          --  And perform the actual installation
 
          if Cmd.Install_Dir.all /= "" then
-            if Rel.Origin.Is_Regular then
+            if Rel.Origin.Is_Index_Provided then
                Shared.Share (Rel, Cmd.Install_Dir.all);
             else
                Reportaise_Command_Failed
@@ -253,7 +253,7 @@ package body Alr.Commands.Toolchain is
                   & Rel.Milestone.TTY_Image & " is: " & Rel.Origin.Kind'Image);
             end if;
          else
-            if Rel.Origin.Is_Regular then
+            if Rel.Origin.Is_Index_Provided then
                Shared.Share (Rel);
             elsif Rel.Origin.Is_System then
                Origins.Deployers.Deploy (Rel).Assert;

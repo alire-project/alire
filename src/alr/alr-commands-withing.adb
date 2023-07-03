@@ -228,6 +228,10 @@ package body Alr.Commands.Withing is
    is
       Flags : Natural := 0;
 
+      -----------
+      -- Check --
+      -----------
+
       procedure Check (Flag : Boolean) is
       begin
          if Flag then
