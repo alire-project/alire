@@ -113,6 +113,12 @@ package body Alr.Commands.Publish is
 
       Define_Switch
         (Config,
+         Cmd.Skip_Build'Access,
+         "", "--skip-build",
+         "Skip the build check step");
+
+      Define_Switch
+        (Config,
          Cmd.Skip_Submit'Access,
          "", "--skip-submit",
          "Do not create the online pull request onto the community index");
@@ -129,12 +135,6 @@ package body Alr.Commands.Publish is
          Cmd.Print_Trusted'Access,
          "", "--trusted-sites",
          "Print a list of trusted git repository sites");
-
-      Define_Switch
-        (Config,
-         Cmd.Skip_Build'Access,
-         "", "--skip-build",
-         "Skip the build check step");
    end Setup_Switches;
 
 end Alr.Commands.Publish;
