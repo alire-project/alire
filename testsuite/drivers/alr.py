@@ -458,7 +458,7 @@ def add_action(type, command, name="", directory=""):
             manifest.write(f"directory = '{directory}'\n")
 
 
-def alr_submit(manifest, index_path):
+def alr_copy_to_index(manifest, index_path):
     """
     Move a manifest with origin into its proper location in an index
     """
@@ -483,18 +483,25 @@ def alr_submit(manifest, index_path):
 
 def alr_publish(name,
                 version="0.0.0",
-                submit=True,
+                copy_to_index=True,
+                create_pr=False,
                 index_path=os.path.join("..", "my_index"),
                 quiet=True):
     """
     Run `alr publish` at the current location and optionally move the produced
     manifest to its intended location in a local index.
     """
-    p = run_alr("publish", force=True, quiet=quiet)
+
+    args = ["publish"]
+    if not create_pr:
+        args.append("--skip-submit")
+
+    p = run_alr(*args, force=True, quiet=quiet)
     # Force due to missing optional crate info by `alr init`
 
-    if submit:
-        alr_submit(os.path.join("alire", "releases", f"{name}-{version}.toml"),
-                   index_path)
+    if copy_to_index:
+        alr_copy_to_index(
+            os.path.join("alire", "releases", f"{name}-{version}.toml"),
+            index_path)
 
     return p

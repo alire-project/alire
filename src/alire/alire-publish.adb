@@ -5,6 +5,7 @@ with AAA.Strings;
 
 with Alire.Config;
 with Alire.Crates;
+with Alire.Environment;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
@@ -508,6 +509,13 @@ package body Alire.Publish is
          --  more generic message otherwise (when lacking a github login).
 
          if not Context.Options.Skip_Submit then
+            --  Safeguard to avoid tests creating a live pull request
+            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset" then
+               raise Program_Error
+                 with "Attempting to go online to create a PR during tests";
+            end if;
+
+            --  Go ahead?
             if CLIC.User_Input.Query
               ("Do you want to continue onto submission to the online "
                & "community index?",
