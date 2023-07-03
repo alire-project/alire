@@ -16,7 +16,7 @@ with Alire.VFS;
 
 with CLIC.User_Input;
 
-package body Alire.Publish.Automate is
+package body Alire.Publish.Submit is
 
    package User_Info renames Utils.User_Input.Query_Config;
 
@@ -336,11 +336,11 @@ package body Alire.Publish.Automate is
       Upload;
    end Push;
 
-   ------------
-   -- Submit --
-   ------------
+   ------------------
+   -- Request_Pull --
+   ------------------
 
-   procedure Submit (Context : in out Data) is
+   procedure Request_Pull (Context : in out Data) is
       use all type CLIC.User_Input.Answer_Kind;
    begin
       if CLIC.User_Input.Query
@@ -377,6 +377,6 @@ package body Alire.Publish.Automate is
                       & "automated checks have succeeded.",
                       Trace.Info);
       end;
-   end Submit;
+   end Request_Pull;
 
-end Alire.Publish.Automate;
+end Alire.Publish.Submit;

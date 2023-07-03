@@ -16,7 +16,7 @@ with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Properties.From_TOML;
-with Alire.Publish.Automate;
+with Alire.Publish.Submit;
 with Alire.Releases;
 with Alire.Root;
 with Alire.TOML_Adapters;
@@ -877,11 +877,11 @@ package body Alire.Publish is
         Step_Check_Build             => Check_Build'Access,
         Step_Show_And_Confirm        => Show_And_Confirm'Access,
         Step_Generate_Index_Manifest => Generate_Index_Manifest'Access,
-        Step_Check_Exists            => Automate.Exists'Access,
-        Step_Fork                    => Automate.Fork'Access,
-        Step_Clone                   => Automate.Clone'Access,
-        Step_Push                    => Automate.Push'Access,
-        Step_Submit                  => Automate.Submit'Access);
+        Step_Check_Exists            => Submit.Exists'Access,
+        Step_Fork                    => Submit.Fork'Access,
+        Step_Clone                   => Submit.Clone'Access,
+        Step_Push                    => Submit.Push'Access,
+        Step_Submit                  => Submit.Request_Pull'Access);
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
