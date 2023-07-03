@@ -18,4 +18,8 @@ package Alire.Platforms.Folders is
    function Home return Absolute_Path;
    --  $HOME (Linux/macOS) or $UserProfile (Windows)
 
+   function Temp return Absolute_Path;
+   --  $XDG_RUNTIME_DIR or else $TMPDIR or else . on Linux,
+   --  $TEMP or $TMP or . on Windows
+
 end Alire.Platforms.Folders;

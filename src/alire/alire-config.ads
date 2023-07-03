@@ -36,6 +36,12 @@ package Alire.Config with Preelaborate is
       --  When unset (default) or true, add the community index if no other
       --  index is already configured.
 
+      Index_Host      : constant Config_Key := "index.host";
+      Index_Owner     : constant Config_Key := "index.owner";
+      Index_Repo_Name : constant Config_Key := "index.repository_name";
+      --  These three conform the URL where the community index is hosted,
+      --  allowing to override the default.
+
       Solver_Autonarrow : constant Config_Key := "solver.autonarrow";
       --  When true, `alr with` will substitute "any" dependencies by the
       --  appropriate caret/tilde.
@@ -83,6 +89,10 @@ package Alire.Config with Preelaborate is
    package Defaults is
 
       Warning_Old_Index : constant Boolean := True;
+
+      Index_Host        : constant String := "https://github.com";
+      Index_Owner       : constant String := "alire-project";
+      Index_Repo_Name   : constant String := "alire-index";
 
    end Defaults;
 

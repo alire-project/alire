@@ -4,10 +4,10 @@ with Ada.Exceptions;
 with Ada.Numerics.Discrete_Random;
 with Ada.Unchecked_Deallocation;
 
-with Alire.Errors;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Platforms.Current;
+with Alire.Platforms.Folders;
 with Alire.VFS;
 
 with GNATCOLL.VFS;
@@ -15,8 +15,6 @@ with GNATCOLL.VFS;
 with SI_Units.Binary;
 
 package body Alire.Directories is
-
-   package Adirs renames Ada.Directories;
 
    -------------------
    -- Temp_Registry --
@@ -212,18 +210,26 @@ package body Alire.Directories is
    procedure Ensure_Deletable (Path : Any_Path) is
       use Ada.Directories;
    begin
-      if Exists (Path) and then
-        Kind (Path) = Directory and then
-        Platforms.Current.Operating_System in Platforms.Windows
+      if Platforms.Current.Operating_System in Platforms.Windows
+        and then Exists (Path)
       then
-         Trace.Debug ("Forcing writability of dir " & Path);
-         OS_Lib.Subprocess.Checked_Spawn
-           ("attrib",
-            AAA.Strings.Empty_Vector
-            .Append ("-R") -- Remove read-only
-            .Append ("/D") -- On dirs
-            .Append ("/S") -- Recursively
-            .Append (Path & "\*"));
+         if Kind (Path) = Directory then
+            Trace.Debug ("Forcing writability of dir " & Path);
+            OS_Lib.Subprocess.Checked_Spawn
+              ("attrib",
+               AAA.Strings.Empty_Vector
+               .Append ("-R") -- Remove read-only
+               .Append ("/D") -- On dirs
+               .Append ("/S") -- Recursively
+               .Append (Path & "\*"));
+         elsif Kind (Path) = Ordinary_File then
+            Trace.Debug ("Forcing writability of dir " & Path);
+            OS_Lib.Subprocess.Checked_Spawn
+              ("attrib",
+               AAA.Strings.Empty_Vector
+               .Append ("-R") -- Remove read-only
+               .Append (Path));
+         end if;
       end if;
    end Ensure_Deletable;
 
@@ -407,6 +413,13 @@ package body Alire.Directories is
    function Is_Directory (Path : Any_Path) return Boolean
    is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Directory);
 
+   -------------
+   -- Is_File --
+   -------------
+
+   function Is_File (Path : Any_Path) return Boolean
+   is (Adirs.Exists (Path) and then Adirs.Kind (Path) in Adirs.Ordinary_File);
+
    ----------------
    -- TEMP FILES --
    ----------------
@@ -461,12 +474,31 @@ package body Alire.Directories is
 
       else
 
-         This.Name := +Ada.Directories.Full_Name (Simple_Name);
+         --  Default to the system temp folder. Note that spawns that capture
+         --  output may fail if the temp folder is unset (e.g., git commands
+         --  that clean the current repository).
+
+         This.Name := +Ada.Directories.Full_Name (Platforms.Folders.Temp
+                                                  / Simple_Name);
 
       end if;
 
       Temp_Registry.Add (+This.Name);
    end Initialize;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create (This : in out Temp_File) return GNAT.OS_Lib.File_Descriptor
+   is
+   begin
+      if This.FD in GNAT.OS_Lib.Invalid_FD then
+         This.FD := GNAT.OS_Lib.Create_Output_Text_File (This.Filename);
+      end if;
+
+      return This.FD;
+   end Create;
 
    --------------
    -- Filename --
@@ -499,6 +531,11 @@ package body Alire.Directories is
 
       --  We are deleting it here, so remove from "live" temp files registry
       Temp_Registry.Del (+This.Name);
+
+      --  Close it first, if created and opened by us
+      if This.FD not in GNAT.OS_Lib.Invalid_FD then
+         GNAT.OS_Lib.Close (This.FD);
+      end if;
 
       --  Force writability of folder when in Windows, as some tools (e.g. git)
       --  that create read-only files will cause a Use_Error
@@ -909,6 +946,7 @@ package body Alire.Directories is
       return Temp : constant Temp_File :=
         (Temp_File'(Ada.Finalization.Limited_Controlled with
                     Keep => <>,
+                    FD   => <>,
                     Name => +Adirs.Full_Name (Name)))
       do
          Temp_Registry.Add (+Temp.Name);

@@ -1,6 +1,7 @@
 private with Alire_Early_Elaboration;
 pragma Unreferenced (Alire_Early_Elaboration);
 
+with Alire.Config; pragma Unreferenced (Alire.Config);
 with Alire.Crates.Containers;
 with Alire.Dependencies;
 with Alire.Origins;
@@ -13,11 +14,15 @@ with Semantic_Versioning.Extended;
 
 package Alire.Index is
 
-   Community_Host : constant String := "https://github.com";
+   Community_Host : constant String
+     := Config.DB.Get (Config.Keys.Index_Host, Config.Defaults.Index_Host);
 
-   Community_Organization : constant String := "alire-project";
+   Community_Organization : constant String
+     := Config.DB.Get (Config.Keys.Index_Owner, Config.Defaults.Index_Owner);
 
-   Community_Repo_Name : constant String := "alire-index";
+   Community_Repo_Name : constant String
+     := Config.DB.Get (Config.Keys.Index_Repo_Name,
+                       Config.Defaults.Index_Repo_Name);
 
    Community_Repo : constant URL :=
                       "git+" & Community_Host

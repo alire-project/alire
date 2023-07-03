@@ -33,20 +33,20 @@ assert run(["git", "config", "user.email", "alr@testing.com"]).returncode == 0
 assert run(["git", "config", "user.name", "Alire Testsuite"]).returncode == 0
 
 # Tests with different default arguments that must all succeed
-run_alr("--force", "publish", "--manifest", "xxx.toml")
+run_alr("--force", "publish", "--skip-submit", "--manifest", "xxx.toml")
 verify_manifest()
 
-run_alr("--force", "publish", ".", "--manifest", "xxx.toml")
+run_alr("--force", "publish", "--skip-submit", ".", "--manifest", "xxx.toml")
 verify_manifest()
 
-run_alr("--force", "publish", ".", "master", "--manifest", "xxx.toml")
+run_alr("--force", "publish", "--skip-submit", ".", "master", "--manifest", "xxx.toml")
 verify_manifest()
 
-run_alr("--force", "publish", ".", "HEAD", "--manifest", "xxx.toml")
+run_alr("--force", "publish", "--skip-submit", ".", "HEAD", "--manifest", "xxx.toml")
 verify_manifest()
 
 # Test that not setting the custom manifest results in failure
-p = run_alr("--force", "publish", complain_on_error=False)
+p = run_alr("--force", "publish", "--skip-submit", complain_on_error=False)
 assert_match(".*No Alire workspace found.*", p.out)
 
 print('SUCCESS')

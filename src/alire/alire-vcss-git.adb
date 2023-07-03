@@ -4,11 +4,14 @@ with Alire.Directories;
 with Alire.OS_Lib.Subprocess;
 with Alire.Errors;
 with Alire.Utils.Tools;
+with Alire.Utils.User_Input.Query_Config;
 with Alire.VFS;
 
 with GNAT.Source_Info;
 
 package body Alire.VCSs.Git is
+
+   package User_Info renames Utils.User_Input.Query_Config;
 
    -------------
    -- Run_Git --
@@ -56,6 +59,19 @@ package body Alire.VCSs.Git is
          Err_To_Out          => True);
    end Unchecked_Run_Git_And_Capture;
 
+   ----------------
+   -- Add_Remote --
+   ----------------
+
+   procedure Add_Remote (Repo : Directory_Path;
+                         Name : String;
+                         URL  : String)
+   is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      Run_Git (To_Vector ("remote") & "add" & Name & URL);
+   end Add_Remote;
+
    ------------
    -- Branch --
    ------------
@@ -79,6 +95,30 @@ package body Alire.VCSs.Git is
         ("Unexpected output from 'git branch: "
          & Output.Flatten ("\n "));
    end Branch;
+
+   --------------
+   -- Branches --
+   --------------
+
+   function Branches (Repo   : Directory_Path;
+                      Local  : Boolean := True;
+                      Remote : Boolean := True)
+                      return AAA.Strings.Vector
+   is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : constant AAA.Strings.Vector :=
+                 Run_Git_And_Capture
+                   (Empty_Vector
+                    & "branch" & "--format=%(refname:short)"
+                    & (if Local and then Remote then
+                         To_Vector ("-a")
+                      elsif Remote then
+                         To_Vector ("-r")
+                      else
+                         Empty_Vector));
+   begin
+      return Output;
+   end Branches;
 
    -----------
    -- Clone --
@@ -143,6 +183,111 @@ package body Alire.VCSs.Git is
       when E : others =>
          return Alire.Errors.Get (E);
    end Clone;
+
+   -------------
+   -- Command --
+   -------------
+
+   function Command (Repo  : Directory_Path;
+                     Args  : AAA.Strings.Vector;
+                     Quiet : Boolean := False)
+                     return Output
+   is
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      return
+        (Run_Git_And_Capture
+           (Arguments =>
+              (if Quiet then To_Vector ("-q") else Empty_Vector) & Args)
+         with null record);
+   end Command;
+
+   ----------------
+   -- Commit_All --
+   ----------------
+
+   function Commit_All (Repo : Directory_Path;
+                        Msg  : String := "Automatic by alr") return Outcome
+   is
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+   begin
+      Run_Git (Empty_Vector & "add" & ".");
+      Run_Git (Empty_Vector
+               & "-c"
+               & String'("user.email=" & User_Info.User_Email)
+               & "commit"
+               & "-m" & Msg);
+      return Outcome_Success;
+   exception
+      when E : others =>
+         return Alire.Errors.Get (E);
+   end Commit_All;
+
+   ----------
+   -- Push --
+   ----------
+
+   function Push (Repo   : Directory_Path;
+                  Remote : String;
+                  Force  : Boolean := False;
+                  Create : Boolean := False;
+                  Token  : String  := "") return Outcome
+   is
+      Guard : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+
+      Writname : constant String := "writable";
+
+      Force_Flags : constant Vector :=
+                      (if Force then To_Vector ("-f") else Empty_Vector);
+
+      Create_Flags : constant Vector :=
+                       (if Create
+                        then To_Vector ("-u")
+                             & (if Token /= ""
+                                then Writname
+                                else Remote)
+                             & Handler.Branch (Repo)
+                        else Empty_Vector);
+   begin
+      if Token = "" then
+         Run_Git (Empty_Vector
+                  & "push"
+                  & Force_Flags
+                  & Create_Flags);
+      else
+         --  Create a temporary remote with our credentials and use it to push
+         declare
+            Old : constant URL :=
+                    Handler.Remote_URL (Repo, Handler.Remote (Repo));
+            Writurl  : constant URL :=
+                         Replace (Old, "//", "//"
+                                  & User_Info.User_GitHub_Login
+                                  & ":" & Token & "@");
+         begin
+            Run_Git (Empty_Vector
+                     & "remote" & "add" & Writname & Writurl);
+            Run_Git (Empty_Vector
+                     & "push"
+                     & Force_Flags
+                     & (if Create
+                        then Create_Flags
+                        else To_Vector (Writname)));
+            Run_Git (Empty_Vector
+                     & "remote" & "remove" & Writname);
+         end;
+      end if;
+
+      return Outcome_Success;
+   exception
+      when E : others =>
+         --  Ensure token is not left behind even in case of push failure
+         if Handler.Remote_URL (Repo, Writname) /= "" then
+            Run_Git (Empty_Vector
+                     & "remote" & "remove" & Writname);
+         end if;
+
+         return Alire.Errors.Get (E);
+   end Push;
 
    ---------------------
    -- Revision_Commit --
@@ -272,6 +417,50 @@ package body Alire.VCSs.Git is
       end if;
    end Remote;
 
+   ----------------
+   -- Remote_URL --
+   ----------------
+
+   not overriding
+   function Remote_URL (This    : VCS;
+                        Path    : Directory_Path;
+                        Remote  : String := "origin")
+                        return String
+   is
+      pragma Unreferenced (This);
+      Guard  : Directories.Guard (Directories.Enter (Path)) with Unreferenced;
+      Output : constant AAA.Strings.Vector :=
+                 Run_Git_And_Capture (Empty_Vector & "remote" & "-v");
+   begin
+      for Line of Output loop
+         declare
+            Cols : constant Vector := Split (Line, ASCII.HT, Trim => True);
+         begin
+            if Cols (1) = Remote then
+               return AAA.Strings.Split (Cols (2), ' ').First_Element;
+            end if;
+         end;
+      end loop;
+
+      return "";
+   end Remote_URL;
+
+   -------------
+   -- Remotes --
+   -------------
+
+   function Remotes (Repo : Directory_Path) return AAA.Strings.Set is
+      Guard  : Directories.Guard (Directories.Enter (Repo)) with Unreferenced;
+      Output : constant AAA.Strings.Vector :=
+                 Run_Git_And_Capture (To_Vector ("remote"));
+   begin
+      return Result : AAA.Strings.Set do
+         for Line of Output loop
+            Result.Include (Line);
+         end loop;
+      end return;
+   end Remotes;
+
    -------------------
    -- Remote_Commit --
    -------------------
@@ -368,14 +557,19 @@ package body Alire.VCSs.Git is
          --  Retrieve revisions from remote branch tip up to our local HEAD. If
          --  not empty, we are locally ahead.
          declare
+            Branch : constant String := This.Branch (Repo);
             Remote : constant String := This.Remote (Repo, Checked => False);
          begin
             if Remote = "" then
                return No_Remote;
+            elsif (for all B of Branches (Repo, Local => False) =>
+                     B /= Remote & "/" & Branch)
+            then -- The branch doesn't even exist remotely
+               return Ahead;
             elsif Run_Git_And_Capture
               (Empty_Vector
                & "rev-list"
-               & String'(Remote & "/" & This.Branch (Repo)
+               & String'(Remote & "/" & Branch
                  &  "..HEAD")).Is_Empty
             then
                return Clean;

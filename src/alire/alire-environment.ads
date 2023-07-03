@@ -15,6 +15,9 @@ package Alire.Environment is
    Config : constant String := "ALR_CONFIG";
    --  Folder where current alr will look for configuration
 
+   Testsuite : constant String := "ALR_TESTSUITE";
+   --  If defined, we are running under the testsuite harness
+
    type Context is tagged limited private;
 
    procedure Set (This : in out Context; Name, Value, Origin : String);

@@ -23,11 +23,21 @@ package Alire.VCSs.Git is
 
    function Handler return VCS;
 
+   procedure Add_Remote (Repo : Directory_Path;
+                         Name : String;
+                         URL  : String);
+
    not overriding
    function Branch (This : VCS;
                     Path : Directory_Path)
                     return String;
    --  Returns the branch name of the repo checked out at Path.
+
+   function Branches (Repo   : Directory_Path;
+                      Local  : Boolean := True;
+                      Remote : Boolean := True)
+                      return AAA.Strings.Vector;
+   --  List all known branches (without going on-line)
 
    overriding
    function Clone (This : VCS;
@@ -45,6 +55,35 @@ package Alire.VCSs.Git is
    --  Specify a branch to check out after cloning. Branch may be "" for the
    --  default remote branch. For any Depth /= 0, apply --depth <Depth>. A
    --  commit may be specified as From#Commit_Id
+
+   type Output is new AAA.Strings.Vector with null record;
+
+   procedure Discard_Output (This : Output) is null;
+   --  Allows running a git command and ignoring its output
+
+   function Command (Repo  : Directory_Path;
+                     Args  : AAA.Strings.Vector;
+                     Quiet : Boolean := False)
+                     return Output;
+
+   --  Run any command directly. "git" is implicit. "-q" appended when Quiet.
+   --  Will raise on exit code /= 0
+
+   function Commit_All (Repo : Directory_Path;
+                        Msg  : String := "Automatic by alr")
+                        return Outcome;
+   --  Add and commit all changes in a given repo; commiter will be set to the
+   --  user email stored in our config.
+
+   function Push (Repo   : Directory_Path;
+                  Remote : String;
+                  Force  : Boolean := False;
+                  Create : Boolean := False;
+                  Token  : String  := "") return Outcome;
+   --  Push to the remote. If Create, use "-u <Remote> <current branch>". If an
+   --  Auth Token is given, a temporary remote that includes the token will be
+   --  created and removed for the push; the local branch will be set to track
+   --  the original remote afterwards.
 
    not overriding
    function Remote_Commit (This : VCS;
@@ -79,6 +118,17 @@ package Alire.VCSs.Git is
    --  Retrieve current remote name (usually "origin"). If checked, raise
    --  Checked_Error when no remote configured. Otherwise, return "";
 
+   not overriding
+   function Remote_URL (This    : VCS;
+                        Path    : Directory_Path;
+                        Remote  : String := "origin")
+                        return String;
+   --  Returns the URL for the given remote, or "" if unset. Assumes both fetch
+   --  and push remotes are the same.
+
+   function Remotes (Repo : Directory_Path) return AAA.Strings.Set;
+   --  Return all the remote names defined in the repository
+
    overriding
    function Update (This : VCS;
                     Repo : Directory_Path)
@@ -101,6 +151,7 @@ package Alire.VCSs.Git is
    function Status (This : VCS;
                     Repo : Directory_Path)
                     return States;
+   --  Note that untracked files don't cause a Dirty result!
 
    not overriding
    function Fetch_URL (This   : VCS;

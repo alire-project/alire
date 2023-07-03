@@ -6,6 +6,8 @@ with Alire.Utils.TTY;
 
 with GNAT.IO;
 
+with GNATCOLL.OS.Constants;
+
 package body Alire is
 
    ---------
@@ -288,5 +290,20 @@ package body Alire is
          Raise_Checked_Error (Msg & Info);
       end if;
    end Recoverable_Error;
+
+   --------------
+   -- New_Line --
+   --------------
+
+   function New_Line return String
+   is
+      use all type GNATCOLL.OS.OS_Type;
+   begin
+      case GNATCOLL.OS.Constants.OS is
+         when Unix | MacOS => return (1 .. 1 => Character'Val (16#0A#));
+         when Windows      => return (Character'Val (16#0D#),
+                                      Character'Val (16#0A#));
+      end case;
+   end New_Line;
 
 end Alire;

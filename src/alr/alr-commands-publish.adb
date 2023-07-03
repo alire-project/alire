@@ -21,11 +21,12 @@ package body Alr.Commands.Publish is
 
       Options : constant Alire.Publish.All_Options :=
                   Alire.Publish.New_Options
-                    (Manifest   =>
+                    (Manifest    =>
                        (if Cmd.Manifest.all /= ""
                         then Cmd.Manifest.all
                         else Alire.Roots.Crate_File_Name),
-                     Skip_Build => Cmd.Skip_Build);
+                     Skip_Build  => Cmd.Skip_Build,
+                     Skip_Submit => Cmd.Skip_Submit);
 
    begin
       if Alire.Utils.Count_True ((Cmd.Tar, Cmd.Print_Trusted)) > 1 or else
@@ -109,6 +110,12 @@ package body Alr.Commands.Publish is
          Cmd.Manifest'Access,
          "", "--manifest=",
          "Selects a manifest file other than ./alire.toml");
+
+      Define_Switch
+        (Config,
+         Cmd.Skip_Submit'Access,
+         "", "--skip-submit",
+         "Do not create the online pull request onto the community index");
 
       Define_Switch
         (Config,

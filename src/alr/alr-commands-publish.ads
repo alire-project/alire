@@ -51,7 +51,8 @@ package Alr.Commands.Publish is
 
    overriding
    function Usage_Custom_Parameters (Cmd : Command) return String
-   is ("[--skip-build] [--tar] [--manifest <file>] [<URL> [commit]]]");
+   is ("[--skip-build] [--skip-submit] [--tar] "
+       & "[--manifest <file>] [<URL> [commit]]]");
 
 private
 
@@ -63,6 +64,9 @@ private
 
       Skip_Build : aliased Boolean := False;
       --  Skip the build check
+
+      Skip_Submit : aliased Boolean := False;
+      --  Stop after generation instead of asking the user to continue
 
       Tar        : aliased Boolean := False;
       --  Start the assistant from a local folder to be tar'ed and uploaded

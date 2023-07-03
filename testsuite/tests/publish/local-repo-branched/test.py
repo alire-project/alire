@@ -29,6 +29,6 @@ assert run(["git", "commit", "-m", "commit-msg"]).returncode == 0
 assert run(["git", "push", "-u", "origin", "devel"]).returncode == 0
 
 # Check that the publishing assistant completes without complaining
-run_alr("--force", "publish")
+run_alr("--force", "publish", "--skip-submit")
 
 print('SUCCESS')

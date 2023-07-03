@@ -5,7 +5,7 @@ with AAA.Strings;
 
 with Alire.Config;
 with Alire.Crates;
-with Alire.Directories;
+with Alire.Environment;
 with Alire.Errors;
 with Alire.Index_On_Disk.Loading;
 with Alire.GitHub;
@@ -17,9 +17,9 @@ with Alire.Origins.Deployers;
 with Alire.OS_Lib.Subprocess;
 with Alire.Paths;
 with Alire.Properties.From_TOML;
+with Alire.Publish.Submit;
 with Alire.Releases;
 with Alire.Root;
-with Alire.Roots.Optional;
 with Alire.TOML_Adapters;
 with Alire.TOML_Index;
 with Alire.TOML_Keys;
@@ -57,24 +57,10 @@ package body Alire.Publish is
                        .Append ("savannah.nongnu.org")
                        .Append ("sf.net");
 
-   type Data is limited record
-      Options : All_Options;
-
-      Origin : Origins.Origin := Origins.New_External ("undefined");
-      --  We use external as "undefined" until a proper origin is provided.
-
-      Path : UString := +".";
-      --  Where to find the local workspace
-
-      Subdir : Unbounded_Relative_Path;
-      --  Subdir inside the root repo, for monorepo crates
-
-      Revision : UString := +"HEAD";
-      --  A particular revision for publishing from a git repo
-
-      Tmp_Deploy_Dir : Directories.Temp_File;
-      --  Place to check the sources
-   end record;
+   Early_Stop : exception;
+   --  Raise this exception from a step to terminate prematurely but without
+   --  generating an error. E.g., if the user doesn't want to submit online
+   --  after successful manifest generation.
 
    ---------------
    -- Base_Path --
@@ -114,15 +100,35 @@ package body Alire.Publish is
    function Packaged_Manifest (This : Data) return Any_Path
    is (Deploy_Path (This) / Roots.Crate_File_Name);
 
+   ------------------------
+   -- Generated_Filename --
+   ------------------------
+
+   function Generated_Filename (This : Data) return String
+   is (TOML_Index.Manifest_File
+       (This.Root.Value.Name,
+          This.Root.Value.Release.Version));
+
+   ------------------------
+   -- Generated_Manifest --
+   ------------------------
+
+   function Generated_Manifest (This : Data) return Absolute_Path
+   is (This.Root.Value.Working_Folder
+       / Paths.Release_Folder_Inside_Working_Folder
+       / This.Generated_Filename);
+
    -----------------
    -- New_Options --
    -----------------
 
-   function New_Options (Skip_Build : Boolean := False;
-                         Manifest   : String  := Roots.Crate_File_Name)
+   function New_Options (Skip_Build  : Boolean := False;
+                         Skip_Submit : Boolean := False;
+                         Manifest    : String  := Roots.Crate_File_Name)
                          return All_Options
    is (Manifest_File => +Manifest,
-       Skip_Build    => Skip_Build);
+       Skip_Build    => Skip_Build,
+       Skip_Submit   => Skip_Submit);
 
    ---------------
    -- Git_Error --
@@ -448,6 +454,7 @@ package body Alire.Publish is
 
       declare
          use Ada.Text_IO;
+         use all type CLIC.User_Input.Answer_Kind;
          use TOML;
          TOML_Manifest  : constant TOML_Value :=
                             TOML_Load.Load_File (User_Manifest);
@@ -462,7 +469,7 @@ package body Alire.Publish is
                             (if Workspace.Is_Valid
                              then Workspace.Value.Working_Folder
                              else "." / Paths.Working_Folder_Inside_Root)
-                            / "releases"
+                            / Paths.Release_Folder_Inside_Working_Folder
                             / TOML_Index.Manifest_File (Name, Version);
          Index_File     : File_Type;
       begin
@@ -498,10 +505,26 @@ package body Alire.Publish is
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
 
-         --  Show the upload URL in normal circumstances, or a more generic
-         --  message otherwise (when lacking a github login).
+         --  Ask to submit, or show the upload URL if submission skipped, or a
+         --  more generic message otherwise (when lacking a github login).
 
-         if Config.DB.Defined (Config.Keys.User_Github_Login) then
+         if not Context.Options.Skip_Submit then
+            --  Safeguard to avoid tests creating a live pull request
+            if OS_Lib.Getenv (Environment.Testsuite, "unset") /= "unset" then
+               raise Program_Error
+                 with "Attempting to go online to create a PR during tests";
+            end if;
+
+            --  Go ahead?
+            if CLIC.User_Input.Query
+              ("Do you want to continue onto submission to the online "
+               & "community index?",
+               Valid => (Yes | No => True, others => False),
+               Default => Yes) = No
+            then
+               raise Early_Stop;
+            end if;
+         elsif Config.DB.Defined (Config.Keys.User_Github_Login) then
             Put_Info
               ("Please upload this file to "
                & TTY.URL
@@ -856,7 +879,12 @@ package body Alire.Publish is
       Step_Deploy_Sources,
       Step_Check_Build,
       Step_Show_And_Confirm,
-      Step_Generate_Index_Manifest);
+      Step_Generate_Index_Manifest,
+      Step_Check_Exists,
+      Step_Fork,
+      Step_Clone,
+      Step_Push,
+      Step_Submit);
 
    type Step_Array is array (Positive range <>) of Step_Names;
 
@@ -869,7 +897,12 @@ package body Alire.Publish is
         Step_Deploy_Sources          => Deploy_Sources'Access,
         Step_Check_Build             => Check_Build'Access,
         Step_Show_And_Confirm        => Show_And_Confirm'Access,
-        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access);
+        Step_Generate_Index_Manifest => Generate_Index_Manifest'Access,
+        Step_Check_Exists            => Submit.Exists'Access,
+        Step_Fork                    => Submit.Fork'Access,
+        Step_Clone                   => Submit.Clone'Access,
+        Step_Push                    => Submit.Push'Access,
+        Step_Submit                  => Submit.Request_Pull'Access);
 
    function Step_Description (Step : Step_Names) return String
    is (case Step is
@@ -880,7 +913,21 @@ package body Alire.Publish is
           when Step_Deploy_Sources          => "Deploy sources",
           when Step_Check_Build             => "Build release",
           when Step_Show_And_Confirm        => "User review",
-          when Step_Generate_Index_Manifest => "Generate index manifest");
+          when Step_Generate_Index_Manifest => "Generate index manifest",
+          when Step_Check_Exists            => "Check existing PR",
+          when Step_Fork                    => "Fork community index",
+          when Step_Clone                   => "Clone community index",
+          when Step_Push                    => "Upload manifest",
+          when Step_Submit                  => "Submit manifest for review");
+
+   Submit_Steps : constant Step_Array :=
+                    (Step_Check_Exists,
+                     Step_Fork,
+                     Step_Clone,
+                     Step_Push,
+                     Step_Submit);
+
+   No_Steps : constant Step_Array (1 .. 0) := (others => <>);
 
    ---------------
    -- Run_Steps --
@@ -901,6 +948,9 @@ package body Alire.Publish is
 
          Step_Calls (Steps (Current)) (Context);
       end loop;
+   exception
+      when Early_Stop =>
+         Trace.Info ("Publishing assistant stopped");
    end Run_Steps;
 
    -------------------
@@ -917,7 +967,9 @@ package body Alire.Publish is
                    Path           => +Path,
                    Subdir         => <>,
                    Revision       => +Revision,
-                   Tmp_Deploy_Dir => <>);
+                   Tmp_Deploy_Dir => <>,
+                   Root           => <>,
+                   Token          => <>);
 
       Guard   : Directories.Guard (Directories.Enter (Base_Path (Context)))
         with Unreferenced;
@@ -930,7 +982,11 @@ package body Alire.Publish is
                   Step_Deploy_Sources,
                   Step_Check_Build,
                   Step_Show_And_Confirm,
-                  Step_Generate_Index_Manifest));
+                  Step_Generate_Index_Manifest)
+                 &
+                 (if not Options.Skip_Submit
+                    then Submit_Steps
+                    else No_Steps));
    end Directory_Tar;
 
    ----------------
@@ -1173,7 +1229,9 @@ package body Alire.Publish is
 
                       Revision       => +Commit,
 
-                      Tmp_Deploy_Dir => <>);
+                      Tmp_Deploy_Dir => <>,
+                      Root           => <>,
+                      Token          => <>);
       begin
          Run_Steps (Context,
                     (Step_Verify_Origin,
@@ -1181,7 +1239,11 @@ package body Alire.Publish is
                      Step_Deploy_Sources,
                      Step_Check_Build,
                      Step_Show_And_Confirm,
-                     Step_Generate_Index_Manifest));
+                     Step_Generate_Index_Manifest)
+                    &
+                    (if not Options.Skip_Submit
+                       then Submit_Steps
+                       else No_Steps));
       end;
    exception
       when E : Checked_Error | Origins.Unknown_Source_Archive_Format_Error =>

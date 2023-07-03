@@ -6,6 +6,24 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Automatic release submission during `alr publish`
+
+PR [#1398](https://github.com/alire-project/alire/pull/1398)
+
+`alr publish` will now prompt to continue after manifest creation into a series
+of steps culminating on the creation of a draft pull request on the community
+index repository.
+
+The new steps will perform all necessary actions: forking of the community
+repository into the user account, cloning, committing of the new manifest, and
+pull request creation.
+
+For `alr` to be able to do these steps on the user's behalf, the user has to
+provide a 'Personal Access Token (PAT)' with 'repo' permissions.
+
+The old behavior, ending the assistant after manifest creation, can be achieved
+with the new `--skip-submit` flag.
+
 ### Removal of `alr test --docker`
 
 PR [#1366](https://github.com/alire-project/alire/pull/1366)
@@ -58,7 +76,7 @@ manually move the contents to avoid redownloading toolchains.
 
 ### Installation of indexed crates
 
-PR [#1322](https://github.com/alire-project/alire/pull/1335)
+PR [#1335](https://github.com/alire-project/alire/pull/1335)
 
 It is now possible to install an indexed crate directly:
 ```
