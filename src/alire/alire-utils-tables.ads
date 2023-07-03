@@ -6,6 +6,10 @@ package Alire.Utils.Tables with Preelaborate is
 
    procedure Header (T : in out Table; Cell : String);
 
+   function Header (T    : aliased in out Table;
+                    Cell : String)
+                    return access Table;
+
    procedure Print (T         : Table;
                     Level     : Trace.Levels            := Info;
                     Separator : String                  := " ";
