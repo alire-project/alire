@@ -56,6 +56,11 @@ package body Alire.Publish is
                        .Append ("savannah.nongnu.org")
                        .Append ("sf.net");
 
+   Early_Stop : exception;
+   --  Raise this exception from a step to terminate prematurely but without
+   --  generating an error. E.g., if the user doesn't want to submit online
+   --  after successful manifest generation.
+
    ---------------
    -- Base_Path --
    ---------------
@@ -116,13 +121,13 @@ package body Alire.Publish is
    -- New_Options --
    -----------------
 
-   function New_Options (Skip_Build : Boolean := False;
-                         Manifest   : String  := Roots.Crate_File_Name;
-                         Submit     : Boolean := False)
+   function New_Options (Skip_Build  : Boolean := False;
+                         Skip_Submit : Boolean := False;
+                         Manifest    : String  := Roots.Crate_File_Name)
                          return All_Options
    is (Manifest_File => +Manifest,
        Skip_Build    => Skip_Build,
-       Submit        => Submit);
+       Skip_Submit   => Skip_Submit);
 
    ---------------
    -- Git_Error --
@@ -448,6 +453,7 @@ package body Alire.Publish is
 
       declare
          use Ada.Text_IO;
+         use all type CLIC.User_Input.Answer_Kind;
          use TOML;
          TOML_Manifest  : constant TOML_Value :=
                             TOML_Load.Load_File (User_Manifest);
@@ -498,11 +504,18 @@ package body Alire.Publish is
            ("Your index manifest file has been generated at "
             & TTY.URL (Index_Manifest));
 
-         --  Show the upload URL in normal circumstances, or a more generic
-         --  message otherwise (when lacking a github login).
+         --  Ask to submit, or show the upload URL if submission skipped, or a
+         --  more generic message otherwise (when lacking a github login).
 
-         if Context.Options.Submit then
-            null; -- Do not give instructions that may mislead the user
+         if not Context.Options.Skip_Submit then
+            if CLIC.User_Input.Query
+              ("Do you want to continue onto submission to the online "
+               & "community index?",
+               Valid => (Yes | No => True, others => False),
+               Default => Yes) = No
+            then
+               raise Early_Stop;
+            end if;
          elsif Config.DB.Defined (Config.Keys.User_Github_Login) then
             Put_Info
               ("Please upload this file to "
@@ -927,6 +940,9 @@ package body Alire.Publish is
 
          Step_Calls (Steps (Current)) (Context);
       end loop;
+   exception
+      when Early_Stop =>
+         Trace.Info ("Publishing assistant stopped");
    end Run_Steps;
 
    -------------------
@@ -960,7 +976,7 @@ package body Alire.Publish is
                   Step_Show_And_Confirm,
                   Step_Generate_Index_Manifest)
                  &
-                 (if Options.Submit
+                 (if not Options.Skip_Submit
                     then Submit_Steps
                     else No_Steps));
    end Directory_Tar;
@@ -1217,7 +1233,7 @@ package body Alire.Publish is
                      Step_Show_And_Confirm,
                      Step_Generate_Index_Manifest)
                     &
-                    (if Options.Submit
+                    (if not Options.Skip_Submit
                        then Submit_Steps
                        else No_Steps));
       end;
