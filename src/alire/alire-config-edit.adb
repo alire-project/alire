@@ -17,10 +17,6 @@ package body Alire.Config.Edit is
    type String_Access is access String;
    Config_Path : String_Access;
 
-   --  Separately loaded configs to be able to ascertain where a config value
-   --  is coming from.
-   Level_DB : array (Level) of CLIC.Config.Instance;
-
    -----------------
    -- Set_Locally --
    -----------------
@@ -78,12 +74,8 @@ package body Alire.Config.Edit is
    procedure Unset (Level : Config.Level;
                     Key   : CLIC.Config.Config_Key)
    is
-      Existed : constant Boolean := Level_DB (Level).Defined (Key);
    begin
-      if Existed then
-         Assert (CLIC.Config.Edit.Unset (Filepath (Level), Key),
-                 "Key unexpectedly missing from config DB "
-                 & Filepath (Level));
+      if CLIC.Config.Edit.Unset (Filepath (Level), Key, Quiet => True) then
          Trace.Debug ("Config key " & Key & " unset from " & Level'Image
                       & "configuration at " & Filepath (Level));
          Load_Config;
@@ -173,12 +165,6 @@ package body Alire.Config.Edit is
       for Lvl in Level loop
          if Lvl /= Local or else Directories.Detect_Root_Path /= "" then
             CLIC.Config.Load.From_TOML (C      => DB,
-                                        Origin => Lvl'Img,
-                                        Path   => Filepath (Lvl),
-                                        Check  => Valid_Builtin'Access);
-
-            Level_DB (Lvl).Clear;
-            CLIC.Config.Load.From_TOML (C      => Level_DB (Lvl),
                                         Origin => Lvl'Img,
                                         Path   => Filepath (Lvl),
                                         Check  => Valid_Builtin'Access);
