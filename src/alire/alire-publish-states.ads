@@ -28,7 +28,7 @@ package Alire.Publish.States is
    type Status_Array is array (Positive range <>) of Existing_PR_Status;
 
    function Is_Open (PR : PR_Status) return Boolean
-   is (PR.Exists and then PR.Status in Open | Changes_Requested);
+   is (PR.Exists and then PR.Status in Open_States);
 
    function Find_Pull_Request (M : Milestones.Milestone) return PR_Status;
    --  Find the status of a PR. Only one can be open, that will be returned in
@@ -37,7 +37,7 @@ package Alire.Publish.States is
    function Find_Pull_Requests return Status_Array
      with Post => (for all PR of Find_Pull_Requests'Result =>
                      PR.Status in Open_States);
-   --  Find all open pull requests for Crate
+   --  Find all open pull requests created by the user
 
    procedure Print_Status;
 

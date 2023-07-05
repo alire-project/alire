@@ -46,7 +46,7 @@ package Alire.GitHub is
    --  one.
 
    function Find_Pull_Requests return GNATCOLL.JSON.JSON_Value;
-   --  Return open pull requests for the user
+   --  Return open pull requests created by the user
 
    function Fork
      (User    : String := User_Info.User_GitHub_Login;
