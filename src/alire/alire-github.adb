@@ -8,6 +8,9 @@ with Alire.URI;
 with Alire.Utils.TTY;
 with Alire.Version;
 
+with GNATCOLL.JSON.Utility;
+with GNATCOLL.Strings;
+
 with Minirest;
 
 package body Alire.GitHub is
@@ -17,6 +20,18 @@ package body Alire.GitHub is
 
    Base_URL    : constant URL    := "https://api.github.com";
    Header_Rate : constant String := "X-Ratelimit-Remaining";
+
+   -----------------
+   -- JSON_Escape --
+   -----------------
+
+   function JSON_Escape (S : String) return String
+   is
+      use GNATCOLL;
+      X : constant Strings.XString := Strings.To_XString (S);
+   begin
+      return +GNATCOLL.JSON.Utility.Escape_String (X);
+   end JSON_Escape;
 
    --------------
    -- API_Call --
@@ -45,9 +60,9 @@ package body Alire.GitHub is
       Trace.Debug
         ("GitHub API call " & Kind'Image & " to " & Full_URL);
       Trace.Debug
-        ("Headers: " & Minirest.Image (Headers));
+        ("Headers: " & Minirest.Image (Headers, JSON_Escape'Access));
       Trace.Debug
-        ("Parameters: " & Minirest.Image (Args));
+        ("Parameters: " & Minirest.Image (Args, JSON_Escape'Access));
 
       return This : constant Response :=
         (case Kind is
@@ -61,6 +76,7 @@ package body Alire.GitHub is
                 (Full_URL,
                  Data    => Args,
                  Headers => Headers,
+                 Escape  => JSON_Escape'Access,
                  Kind    => Minirest.Request_Kinds (Kind)))
       do
          Trace.Debug
@@ -98,18 +114,22 @@ package body Alire.GitHub is
                Ada.Exceptions.Exception_Message (E)));
    end API_Call;
 
-   function API_Call (Proc  : String;
-                      Args  : Minirest.Parameters := Minirest.No_Arguments;
-                      Kind  : Kinds := GET;
-                      Token : String := OS_Lib.Getenv (Env_GH_Token, "");
-                      Error : String := "GitHub API call failed")
+   --------------
+   -- API_Call --
+   --------------
+
+   function API_Call (Proc   : String;
+                      Args   : Minirest.Parameters := Minirest.No_Arguments;
+                      Kind   : Kinds := GET;
+                      Token  : String := OS_Lib.Getenv (Env_GH_Token, "");
+                      Error  : String := "GitHub API call failed")
                       return GNATCOLL.JSON.JSON_Value
    is
       Response : constant Minirest.Response
-        := API_Call (Proc  => Proc,
-                     Args  => Args,
-                     Kind  => Kind,
-                     Token => Token);
+        := API_Call (Proc   => Proc,
+                     Args   => Args,
+                     Kind   => Kind,
+                     Token  => Token);
    begin
       if Response.Succeeded then
          return GNATCOLL.JSON.Read (Response.Content.Flatten (""));

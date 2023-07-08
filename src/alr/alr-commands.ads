@@ -147,7 +147,6 @@ private
       TTY_Emph            => Alire.TTY.Emph);
 
    Unset : constant String := "unset";
-   --  Canary for text switches that can be both ungiven, given without value,
-   --  and given with value.
+   --  Canary for when a string switch is given without value
 
 end Alr.Commands;

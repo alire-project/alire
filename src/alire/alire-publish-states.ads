@@ -14,6 +14,7 @@ package Alire.Publish.States is
          when True  =>
             Branch  : UString; -- In truth, it's `user:branch`
             Number  : Natural      := 0;
+            Title   : UString;
             Status  : Life_States  := Open;
             Checks  : Check_States := Pending;
       end case;
