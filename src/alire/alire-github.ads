@@ -45,8 +45,19 @@ package Alire.GitHub is
    --  JSON info. It will return the unique open PR, or the most recent closed
    --  one.
 
+   function Find_Pull_Request (Number : Natural)
+                               return GNATCOLL.JSON.JSON_Value;
+   --  Find the PR with the given number, in any state
+
    function Find_Pull_Requests return GNATCOLL.JSON.JSON_Value;
    --  Return open pull requests created by the user
+
+   procedure Comment (Number : Natural; Text : String);
+   --  Add a comment to an issue/pull request. Use plain text or markdown.
+
+   procedure Close (Number : Natural; Reason : String);
+   --  Close an issue/pull request and add a comment giving the reason. The
+   --  comment is added after the closure.
 
    function Fork
      (User    : String := User_Info.User_GitHub_Login;

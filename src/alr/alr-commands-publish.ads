@@ -68,6 +68,12 @@ private
       Skip_Submit : aliased Boolean := False;
       --  Stop after generation instead of asking the user to continue
 
+      Cancel     : aliased GNAT.Strings.String_Access;
+      --  Number of a PR to prematurely close
+
+      Reason     : aliased GNAT.Strings.String_Access;
+      --  Reason to give when closing the PR
+
       Status     : aliased Boolean := False;
       --  Retrieve the status of PRs opened by the user
 

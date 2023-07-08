@@ -41,4 +41,6 @@ package Alire.Publish.States is
 
    procedure Print_Status;
 
+   procedure Cancel (PR : Natural; Reason : String);
+
 end Alire.Publish.States;

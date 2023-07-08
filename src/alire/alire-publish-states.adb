@@ -50,6 +50,10 @@ package body Alire.Publish.States is
    function To_Status (Info : GNATCOLL.JSON.JSON_Value) return PR_Status
    is
    begin
+      if Info.Is_Empty then
+         return (Exists => False);
+      end if;
+
       return
         (Exists  => True,
          Branch  => +Info.Get (Key.Head).Get (Key.Label),
@@ -157,5 +161,38 @@ package body Alire.Publish.States is
 
       Table.Print (Always);
    end Print_Status;
+
+   ------------
+   -- Cancel --
+   ------------
+
+   procedure Cancel (PR : Natural; Reason : String) is
+      Status : constant PR_Status
+        := To_Status (GitHub.Find_Pull_Request (PR));
+
+      ---------------
+      -- Fail_With --
+      ---------------
+
+      procedure Fail_With (Reason : String) is
+      begin
+         Raise_Checked_Error
+           ("Requested pull request" & TTY.Emph (PR'Image) & " " & Reason);
+      end Fail_With;
+
+   begin
+      if not Status.Exists then
+         Fail_With ("does not exist");
+      end if;
+
+      if not Status.Is_Open then
+         Fail_With ("is already closed");
+      end if;
+
+      GitHub.Close (PR, Reason);
+
+      Put_Success ("Pull request" & TTY.Emph (PR'Image)
+                   & " closed successfully");
+   end Cancel;
 
 end Alire.Publish.States;
