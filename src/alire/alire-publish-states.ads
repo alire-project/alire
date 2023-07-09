@@ -2,21 +2,33 @@ with Alire.Milestones;
 
 package Alire.Publish.States is
 
-   type Check_States is (Pending, Running, Failed, Succeeded);
+   type Lifecycle_States is
+     (Checks_Pending,    -- Waiting for checks to complete, draft or not
+      Checks_Failed,     -- Some automated check failed
+      Checks_Passed,     -- Checks successful, still in draft mode
+      Under_Review,      -- Checks successful, no longer a draft, devs notified
+      Changes_Requested, -- Open with changes requested by some reviewer
+      Merged,            -- Closed with merge
+      Rejected           -- Closed without merge
+     );
+   --  These states correspond to our desired workflow and not exactly to GH
+   --  states. See explanations for each state. It uses a combo of PR status,
+   --  checks, and reviews.
 
-   type Life_States is (Open, Changes_Requested, Merged, Rejected);
+   subtype Check_States
+     is Lifecycle_States range Checks_Pending .. Checks_Passed;
 
-   subtype Open_States is Life_States range Open .. Changes_Requested;
+   subtype Open_States
+     is Lifecycle_States range Checks_Pending .. Changes_Requested;
 
    type PR_Status (Exists : Boolean) is tagged record
       case Exists is
          when False => null;
          when True  =>
             Branch  : UString; -- In truth, it's `user:branch`
-            Number  : Natural      := 0;
+            Number  : Natural           := 0;
             Title   : UString;
-            Status  : Life_States  := Open;
-            Checks  : Check_States := Pending;
+            Status  : Lifecycle_States  := Checks_Pending;
       end case;
    end record;
 

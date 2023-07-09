@@ -1,3 +1,5 @@
+with AAA.Enum_Tools;
+
 with Alire.GitHub;
 with Alire.Index;
 with Alire.URI;
@@ -11,6 +13,17 @@ with GNATCOLL.JSON;
 package body Alire.Publish.States is
 
    use URI.Operators;
+
+   -------------
+   -- Matches --
+   -------------
+   --  The API isn't fully consistent on the case of returned enums
+   function Matches (S : String; Target : String) return Boolean
+   is
+      use AAA.Strings;
+   begin
+      return To_Lower_Case (S) = To_Lower_Case (Target);
+   end Matches;
 
    -------------
    -- Webpage --
@@ -35,15 +48,22 @@ package body Alire.Publish.States is
    ---------
 
    package Key is
-      Head   : constant String := "head";
-      Label  : constant String := "label";
-      Number : constant String := "number";
-      State  : constant String := "state";
+      Conclusion : constant String := "conclusion";
+      Draft      : constant String := "draft";
+      Head       : constant String := "head";
+      Label      : constant String := "label";
+      Merged     : constant String := "merged";
+      Number     : constant String := "number";
+      SHA        : constant String := "sha";
+      State      : constant String := "state";
       Title  : constant String := "title";
    end Key;
 
    package Val is
-      Open   : constant String := "open";
+      --  Case will be dealt with by Matches
+      Changes_Requested : constant String := "CHANGES_REQUESTED";
+      Closed            : constant String := "closed";
+      Open              : constant String := "open";
    end Val;
 
    ---------------
@@ -57,16 +77,117 @@ package body Alire.Publish.States is
          return (Exists => False);
       end if;
 
-      return
-        (Exists  => True,
-         Branch  => +Info.Get (Key.Head).Get (Key.Label),
-         Title   => +Info.Get (Key.Title),
-         Number  => Info.Get (Key.Number),
-         Status  => (if Info.Get (Key.State) = Val.Open
-                     then Open
-                     else Rejected), -- TODO: be more precise in the future
-         Checks  => <> -- TODO: extract info about checks
-        );
+      declare
+         Number  : constant Natural := Info.Get (Key.Number);
+
+         -------------------
+         -- Needs_Changes --
+         -------------------
+
+         function Needs_Changes return Boolean is
+            Busy    : Simple_Logging.Ongoing :=
+                        Simple_Logging.Activity
+                          ("Retrieving reviews for PR" & Number'Image)
+                          with Unreferenced;
+            use GNATCOLL.JSON;
+            Reviews : constant JSON_Array := GitHub.Reviews (Number).Get;
+         begin
+            for I in 1 .. Length (Reviews) loop
+               if Matches (Get (Reviews, I).Get (Key.State),
+                           Val.Changes_Requested)
+               then
+                  return True;
+               end if;
+            end loop;
+
+            return False;
+         end Needs_Changes;
+
+         -------------------
+         -- Checks_Status --
+         -------------------
+
+         function Checks_Status (SHA : String) return Check_States is
+            type Conclusions is (Success, Failure, Neutral, Cancelled,
+                                 Skipped, Timed_Out, Action_Required,
+                                 Pending, Unknown);
+
+            function Is_Valid is new AAA.Enum_Tools.Is_Valid (Conclusions);
+
+            Busy    : Simple_Logging.Ongoing :=
+                        Simple_Logging.Activity
+                          ("Retrieving checks for PR" & Number'Image)
+                          with Unreferenced;
+            use GNATCOLL.JSON;
+            Checks : constant JSON_Array
+              := GitHub.Checks (SHA).Get ("workflow_runs");
+
+            Some_Incomplete : Boolean := False;
+         begin
+            if Length (Checks) = 0 then
+               return Checks_Pending;
+            end if;
+
+            for I in 1 .. Length (Checks) loop
+               declare
+                  Check      : constant JSON_Value := Get (Checks, I);
+                  Conclusion : constant Conclusions
+                    := (if not Check.Has_Field (Key.Conclusion)
+                           or else Check.Get (Key.Conclusion).Is_Empty
+                        then
+                           Pending
+                        elsif not Is_Valid (Check.Get (Key.Conclusion)) then
+                           Unknown
+                        else
+                           Conclusions'Value (Check.Get (Key.Conclusion)));
+               begin
+                  case Conclusion is
+                     when Failure | Cancelled | Timed_Out =>
+                        return Checks_Failed;
+                     when Success | Skipped | Neutral =>
+                        null;
+                     when others =>
+                        Some_Incomplete := True;
+                  end case;
+               end;
+            end loop;
+
+            if Some_Incomplete then
+               return Checks_Pending;
+            else
+               return Checks_Passed;
+            end if;
+         end Checks_Status;
+
+      begin
+         return
+           (Exists  => True,
+            Branch  => +Info.Get (Key.Head).Get (Key.Label),
+            Number  => Number,
+            Title   => +Info.Get (Key.Title),
+            Status  => (if Info.Has_Field (Key.Merged) and then
+                           Info.Get (Key.Merged)
+                        then
+                           Merged
+                        elsif Matches (Info.Get (Key.State), Val.Closed) then
+                           Rejected
+                        elsif Needs_Changes then
+                           Changes_Requested
+                        else
+                          (case Checks_Status (Info.Get (Key.Head)
+                                                   .Get (Key.SHA))
+                           is
+                              when Checks_Pending =>
+                                Checks_Pending,
+                              when Checks_Failed  =>
+                                Checks_Failed,
+                              when Checks_Passed =>
+                               (if Info.Get (Key.Draft) then
+                                   Checks_Passed
+                                else
+                                   Under_Review)))
+           );
+      end;
    end To_Status;
 
    -----------------------
@@ -85,7 +206,7 @@ package body Alire.Publish.States is
             Obj : constant JSON_Value := Get (List, I);
          begin
             --  Keep the first one we see
-            if Obj.Get (Key.State).Get = Val.Open then
+            if Matches (Obj.Get (Key.State).Get, Val.Open) then
                Target := Obj;
                exit;
 
@@ -115,6 +236,8 @@ package body Alire.Publish.States is
    function Find_Pull_Requests return Status_Array is
       use AAA.Strings;
       use GNATCOLL.JSON;
+      Busy : constant Simple_Logging.Ongoing
+        := Simple_Logging.Activity ("Retrieving user's PRs") with Unreferenced;
       List : constant JSON_Array := GitHub.Find_Pull_Requests.Get;
       Result : Status_Array (1 .. Length (List));
       I      : Natural := Result'First;
@@ -123,13 +246,15 @@ package body Alire.Publish.States is
       --  surprisingly not by author only. Hence we have to filter here.
       for J in 1 .. Length (List) loop
          declare
-            Status : constant PR_Status := To_Status (Get (List, J));
+            Branch : constant String
+              := +Get (List, J).Get (Key.Head).Get (Key.Label);
+            --  Do this first so we don't retrieve unneeded reviews
          begin
             if Has_Prefix
-              (+Status.Branch,
+              (Branch,
                Utils.User_Input.Query_Config.User_GitHub_Login & ":")
             then
-               Result (I) := Status;
+               Result (I) := To_Status (Get (List, J));
                I := I + 1;
             end if;
          end;

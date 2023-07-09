@@ -21,6 +21,18 @@ package body Alire.GitHub is
    Base_URL    : constant URL    := "https://api.github.com";
    Header_Rate : constant String := "X-Ratelimit-Remaining";
 
+   Repos       : constant String := "repos";
+   Pulls       : constant String := "pulls";
+
+   -------------------
+   -- Community_API --
+   -------------------
+
+   function Community_API return String
+   is (Repos
+       / Index.Community_Organization
+       / Index.Community_Repo_Name);
+
    -----------------
    -- JSON_Escape --
    -----------------
@@ -322,6 +334,32 @@ package body Alire.GitHub is
 
       return Pending;
    end Fork;
+
+   ------------
+   -- Checks --
+   ------------
+
+   function Checks (SHA : String) return JSON_Value
+   is (API_Call
+       (Community_API
+          / "actions"
+          / "runs",
+          Args =>
+             "per_page" = 100
+         and "head_sha" = SHA));
+
+   -------------
+   -- Reviews --
+   -------------
+
+   function Reviews (PR : Natural) return JSON_Value
+   is (API_Call
+       (Repos
+          / Index.Community_Organization
+          / Index.Community_Repo_Name
+          / Pulls
+          / AAA.Strings.Trim (PR'Image)
+          / "reviews"));
 
    -----------------
    -- Repo_Exists --
