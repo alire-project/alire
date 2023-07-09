@@ -3,7 +3,7 @@ with Alire.Milestones;
 package Alire.Publish.States is
 
    type Lifecycle_States is
-     (Checks_Pending,    -- Waiting for checks to complete, draft or not
+     (Checks_Ongoing,    -- Waiting for checks to complete, draft or not
       Checks_Failed,     -- Some automated check failed
       Checks_Passed,     -- Checks successful, still in draft mode
       Under_Review,      -- Checks successful, no longer a draft, devs notified
@@ -16,10 +16,10 @@ package Alire.Publish.States is
    --  checks, and reviews.
 
    subtype Check_States
-     is Lifecycle_States range Checks_Pending .. Checks_Passed;
+     is Lifecycle_States range Checks_Ongoing .. Checks_Passed;
 
    subtype Open_States
-     is Lifecycle_States range Checks_Pending .. Changes_Requested;
+     is Lifecycle_States range Checks_Ongoing .. Changes_Requested;
 
    type PR_Status (Exists : Boolean) is tagged record
       case Exists is
@@ -28,7 +28,7 @@ package Alire.Publish.States is
             Branch  : UString; -- In truth, it's `user:branch`
             Number  : Natural           := 0;
             Title   : UString;
-            Status  : Lifecycle_States  := Checks_Pending;
+            Status  : Lifecycle_States  := Checks_Ongoing;
       end case;
    end record;
 

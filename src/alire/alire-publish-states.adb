@@ -54,11 +54,13 @@ package body Alire.Publish.States is
       Draft      : constant String := "draft";
       Head       : constant String := "head";
       Label      : constant String := "label";
+      Login      : constant String := "login";
       Merged     : constant String := "merged";
       Number     : constant String := "number";
       SHA        : constant String := "sha";
       State      : constant String := "state";
-      Title  : constant String := "title";
+      Title      : constant String := "title";
+      User       : constant String := "user";
    end Key;
 
    package Val is
@@ -93,14 +95,23 @@ package body Alire.Publish.States is
                           with Unreferenced;
             use GNATCOLL.JSON;
             Reviews : constant JSON_Array := GitHub.Reviews (Number).Get;
+
+            --  Reviews pile up and only the last one of each reviewer is
+            --  important, so we have to keep track of reviewers seen.
+            Reviewers : AAA.Strings.Map;
+
          begin
             for I in 1 .. Length (Reviews) loop
-               if Matches (Get (Reviews, I).Get (Key.State),
-                           Val.Changes_Requested)
-               then
-                  return True;
-               end if;
+               Reviewers.Include
+                 (Get (Reviews, I).Get (Key.User).Get (Key.Login),
+                  Get (Reviews, I).Get (Key.State));
             end loop;
+
+            if (for some Review of Reviewers =>
+                  Matches (Review, Val.Changes_Requested))
+            then
+               return True;
+            end if;
 
             return False;
          end Needs_Changes;
@@ -127,7 +138,7 @@ package body Alire.Publish.States is
             Some_Incomplete : Boolean := False;
          begin
             if Length (Checks) = 0 then
-               return Checks_Pending;
+               return Checks_Ongoing;
             end if;
 
             for I in 1 .. Length (Checks) loop
@@ -155,7 +166,7 @@ package body Alire.Publish.States is
             end loop;
 
             if Some_Incomplete then
-               return Checks_Pending;
+               return Checks_Ongoing;
             else
                return Checks_Passed;
             end if;
@@ -179,8 +190,8 @@ package body Alire.Publish.States is
                           (case Checks_Status (Info.Get (Key.Head)
                                                    .Get (Key.SHA))
                            is
-                              when Checks_Pending =>
-                                Checks_Pending,
+                              when Checks_Ongoing =>
+                                Checks_Ongoing,
                               when Checks_Failed  =>
                                 Checks_Failed,
                               when Checks_Passed =>
@@ -287,7 +298,7 @@ package body Alire.Publish.States is
                 Foreground (Light_Red),
              when Checks_Passed | Merged   =>
                 Foreground (Light_Green),
-             when Checks_Pending | Under_Review | Changes_Requested =>
+             when Checks_Ongoing | Under_Review | Changes_Requested =>
                 Foreground (Light_Yellow));
 
    begin
