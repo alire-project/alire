@@ -6,6 +6,8 @@ with Alire.URI;
 with Alire.Utils.Tables;
 with Alire.Utils.User_Input.Query_Config;
 
+with AnsiAda;
+
 with CLIC.User_Input;
 
 with GNATCOLL.JSON;
@@ -268,8 +270,26 @@ package body Alire.Publish.States is
    ------------------
 
    procedure Print_Status is
+
+      use AAA.Strings;
+      use AnsiAda;
+
       States : constant Status_Array := Find_Pull_Requests;
       Table  : Utils.Tables.Table;
+
+      -----------
+      -- Color --
+      -----------
+
+      function Color (Status : Lifecycle_States) return String
+      is (case Status is
+             when Checks_Failed | Rejected =>
+                Foreground (Light_Red),
+             when Checks_Passed | Merged   =>
+                Foreground (Light_Green),
+             when Checks_Pending | Under_Review | Changes_Requested =>
+                Foreground (Light_Yellow));
+
    begin
       if States'Length = 0 then
          Trace.Always ("No pending submissions found.");
@@ -283,7 +303,8 @@ package body Alire.Publish.States is
          Table
            .Append (TTY.Emph (AAA.Strings.Trim (PR.Number'Image)))
            .Append (+PR.Branch)
-           .Append (AAA.Strings.To_Mixed_Case (PR.Status'Image))
+           .Append (Color_Wrap (To_Mixed_Case (PR.Status'Image),
+                                Color (PR.Status)))
            .Append (TTY.URL (Webpage (PR)))
            .New_Row;
       end loop;
