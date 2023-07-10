@@ -1,5 +1,6 @@
 with AAA.Enum_Tools;
 
+with Alire.Errors;
 with Alire.GitHub;
 with Alire.Index;
 with Alire.URI;
@@ -56,6 +57,7 @@ package body Alire.Publish.States is
       Label      : constant String := "label";
       Login      : constant String := "login";
       Merged     : constant String := "merged";
+      Node_ID    : constant String := "node_id";
       Number     : constant String := "number";
       SHA        : constant String := "sha";
       State      : constant String := "state";
@@ -177,6 +179,7 @@ package body Alire.Publish.States is
            (Exists  => True,
             Branch  => +Info.Get (Key.Head).Get (Key.Label),
             Number  => Number,
+            Node_ID => +Info.Get (Key.Node_ID),
             Title   => +Info.Get (Key.Title),
             Status  => (if Info.Has_Field (Key.Merged) and then
                            Info.Get (Key.Merged)
@@ -242,6 +245,13 @@ package body Alire.Publish.States is
       end if;
    end Find_Pull_Request;
 
+   -----------------------
+   -- Find_Pull_Request --
+   -----------------------
+
+   function Find_Pull_Request (PR : Natural) return PR_Status
+   is (To_Status (GitHub.Find_Pull_Request (PR)));
+
    ------------------------
    -- Find_Pull_Requests --
    ------------------------
@@ -276,6 +286,24 @@ package body Alire.Publish.States is
       return Result (Result'First .. I - 1);
    end Find_Pull_Requests;
 
+   -----------
+   -- Color --
+   -----------
+
+   function Color (Status : Lifecycle_States) return String
+   is
+      use AnsiAda;
+   begin
+      return
+        (case Status is
+            when Checks_Failed | Rejected                          =>
+              Foreground (Light_Red),
+            when Checks_Passed | Merged                            =>
+              Foreground (Light_Green),
+            when Checks_Ongoing | Under_Review | Changes_Requested =>
+              Foreground (Light_Yellow));
+   end Color;
+
    ------------------
    -- Print_Status --
    ------------------
@@ -287,19 +315,6 @@ package body Alire.Publish.States is
 
       States : constant Status_Array := Find_Pull_Requests;
       Table  : Utils.Tables.Table;
-
-      -----------
-      -- Color --
-      -----------
-
-      function Color (Status : Lifecycle_States) return String
-      is (case Status is
-             when Checks_Failed | Rejected =>
-                Foreground (Light_Red),
-             when Checks_Passed | Merged   =>
-                Foreground (Light_Green),
-             when Checks_Ongoing | Under_Review | Changes_Requested =>
-                Foreground (Light_Yellow));
 
    begin
       if States'Length = 0 then
@@ -372,5 +387,43 @@ package body Alire.Publish.States is
          Put_Warning ("Operation abandoned", Info);
       end if;
    end Cancel;
+
+   --------------------
+   -- Request_Review --
+   --------------------
+
+   procedure Request_Review (PR : Natural) is
+      use AnsiAda;
+      use AAA.Strings;
+      St : constant PR_Status := Find_Pull_Request (PR);
+   begin
+      if not St.Exists then
+         Raise_Checked_Error ("Requested pull request not found");
+      end if;
+
+      if St.Status /= Checks_Passed then
+         Raise_Checked_Error
+           (Errors.New_Wrapper
+            .Wrap
+              ("Reviews can only be requested for pull requests with status "
+               & Color_Wrap (To_Mixed_Case (Checks_Passed'Image),
+                             Color (Checks_Passed)))
+            .Wrap
+              ("PR" & TTY.Emph (PR'Image) & " has status "
+               & Color_Wrap (To_Mixed_Case (St.Status'Image), Color (St.Status)
+                ))
+            .Get);
+      end if;
+
+      declare
+         use Simple_Logging;
+         Busy : constant Ongoing := Activity ("Removing draft flag")
+           with Unreferenced;
+      begin
+         GitHub.Request_Review (PR, +St.Node_ID);
+      end;
+
+      Put_Success ("Review requested successfully");
+   end Request_Review;
 
 end Alire.Publish.States;

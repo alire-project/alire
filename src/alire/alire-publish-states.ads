@@ -27,6 +27,7 @@ package Alire.Publish.States is
          when True  =>
             Branch  : UString; -- In truth, it's `user:branch`
             Number  : Natural           := 0;
+            Node_ID : UString;
             Title   : UString;
             Status  : Lifecycle_States  := Checks_Ongoing;
       end case;
@@ -47,6 +48,8 @@ package Alire.Publish.States is
    --  Find the status of a PR. Only one can be open, that will be returned in
    --  preference. Otherwise, the one closed more recently will be returned.
 
+   function Find_Pull_Request (PR : Natural) return PR_Status;
+
    function Find_Pull_Requests return Status_Array
      with Post => (for all PR of Find_Pull_Requests'Result =>
                      PR.Status in Open_States);
@@ -55,5 +58,8 @@ package Alire.Publish.States is
    procedure Print_Status;
 
    procedure Cancel (PR : Natural; Reason : String);
+
+   procedure Request_Review (PR : Natural);
+   --  Remove Draft flag from PR and request review from Alire developers team
 
 end Alire.Publish.States;

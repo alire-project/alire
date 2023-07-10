@@ -74,6 +74,9 @@ private
       Reason     : aliased GNAT.Strings.String_Access := new String'(Unset);
       --  Reason to give when closing the PR
 
+      Review     : aliased GNAT.Strings.String_Access := new String'(Unset);
+      --  True when requesting a review for a PR
+
       Status     : aliased Boolean := False;
       --  Retrieve the status of PRs opened by the user
 

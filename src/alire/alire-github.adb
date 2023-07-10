@@ -54,9 +54,13 @@ package body Alire.GitHub is
    function API_Call (Proc  : String;
                       Args  : Minirest.Parameters := Minirest.No_Arguments;
                       Kind  : Kinds := GET;
-                      Token : String := OS_Lib.Getenv (Env_GH_Token, ""))
+                      Token : String := OS_Lib.Getenv (Env_GH_Token, "");
+                      Raw   : String := "")
                       return Minirest.Response
    is
+      --  We receive either Args or a Raw body to send
+      pragma Assert (Raw = "" or else Args = Minirest.No_Arguments);
+
       Full_URL : constant String :=
                    Base_URL
                    & (if Proc (Proc'First) /= '/' then "/" else "")
@@ -75,6 +79,9 @@ package body Alire.GitHub is
         ("Headers: " & Minirest.Image (Headers, JSON_Escape'Access));
       Trace.Debug
         ("Parameters: " & Minirest.Image (Args, JSON_Escape'Access));
+      if Raw /= "" then
+         Trace.Debug ("Raw body: " & Raw);
+      end if;
 
       return This : constant Response :=
         (case Kind is
@@ -84,12 +91,20 @@ package body Alire.GitHub is
                 Arguments => Args,
                 Headers   => Headers),
             when POST | PATCH =>
-              Minirest.Post
-                (Full_URL,
-                 Data    => Args,
-                 Headers => Headers,
-                 Escape  => JSON_Escape'Access,
-                 Kind    => Minirest.Request_Kinds (Kind)))
+           (if Raw = "" then
+               Minirest.Post
+              (Full_URL,
+               Data    => Args,
+               Headers => Headers,
+               Escape  => JSON_Escape'Access,
+               Kind    => Minirest.Request_Kinds (Kind))
+            else
+               Minirest.Post
+              (Full_URL,
+               Data    => Raw,
+               Headers => Headers,
+               Kind    => Minirest.Request_Kinds (Kind))
+           ))
       do
          Trace.Debug
            ("GitHub API response: " & This.Status_Line);
@@ -236,14 +251,31 @@ package body Alire.GitHub is
 
    function Find_Pull_Request (Number : Natural)
                                return GNATCOLL.JSON.JSON_Value
-   is (API_Call
-         ("repos"
-          / Index.Community_Organization
-          / Index.Community_Repo_Name
-          / "pulls"
-          / AAA.Strings.Trim (Number'Image),
-          Error => "Could not retrieve pull request information",
-          Kind  => GET));
+   is
+      Response : constant Minirest.Response
+        := API_Call
+          ("repos"
+           / Index.Community_Organization
+           / Index.Community_Repo_Name
+           / "pulls"
+           / AAA.Strings.Trim (Number'Image),
+           Kind  => GET);
+   begin
+      if Response.Succeeded then
+         return GNATCOLL.JSON.Read (Response.Content.Flatten (""));
+      elsif Response.Status_Code = 404 then
+         Raise_Checked_Error ("Pull request" & TTY.Emph (Number'Image)
+                              & " does not exist");
+      else
+         Raise_Checked_Error
+           (Errors.New_Wrapper
+            .Wrap ("Error retrieving PR using GitHub REST API")
+            .Wrap ("Status line: " & Response.Status_Line)
+            .Wrap ("Response body:")
+            .Wrap (Response.Content.Flatten (ASCII.LF))
+            .Get);
+      end if;
+   end Find_Pull_Request;
 
    ------------------------
    -- Find_Pull_Requests --
@@ -379,5 +411,62 @@ package body Alire.GitHub is
      (User : String := User_Info.User_GitHub_Login)
       return Boolean
    is (API_Call ("users" / User).Succeeded);
+
+   --------------------
+   -- Request_Review --
+   --------------------
+
+   procedure Request_Review (Number  : Natural;
+                             Node_ID : String)
+   is
+      pragma Unreferenced (Number);
+      use AAA.Strings;
+
+      --  Unfortunately, removing the draft flag isn't available through REST.
+      --  We must resort to teh GraphQL API, much more powerful but also more
+      --  complex. To get this out of the way, this query is hardcoded here.
+
+      --  mutation {
+      --    markPullRequestReadyForReview
+      --      (input:
+      --        {
+      --          clientMutationId: "alire",
+      --          pullRequestId: "PR_kwDOC8Oy585VBe2c"
+      --        }
+      --      ) {
+      --      clientMutationId
+      --    }
+      --  }
+
+      Mutation : constant String
+        := "mutation { markPullRequestReadyForReview (input: { "
+         & "clientMutationId: ""alr-" & Version.Current & """, "
+         & "pullRequestId: ""PRID"" }) {clientMutationId}}";
+
+      Response : constant Minirest.Response
+        := API_Call ("graphql",
+                     Kind  => POST,
+                     Raw   =>
+                       "{""query"":"
+                       & JSON_Escape (Replace (Mutation, "PRID", Node_ID))
+                       & "}");
+
+      use GNATCOLL.JSON;
+   begin
+      if not Response.Succeeded or else
+        Read (Response.Content.Flatten ("")).Has_Field ("errors")
+      then
+         Raise_Checked_Error
+           (Errors.New_Wrapper
+            .Wrap ("Error updating PR using GitHub GraphQL API")
+            .Wrap ("Status line: " & Response.Status_Line)
+            .Wrap ("Response body:")
+            .Wrap (Response.Content.Flatten (ASCII.LF))
+            .Get);
+      end if;
+
+      --  TODO: do we need to additionally request a review, or simply by
+      --  removing the draft status we'll get a notification?
+   end Request_Review;
 
 end Alire.GitHub;

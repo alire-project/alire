@@ -73,6 +73,11 @@ package Alire.GitHub is
    --  elapses without succeeding, it will return Pending. It'll only raise if
    --  the initial request is denied.
 
+   procedure Request_Review (Number  : Natural;
+                             Node_ID : String);
+   --  The Node_ID is the "node_id" returned by the REST API, which is the "id"
+   --  needed by the GraphQL API.
+
    function Checks (SHA : String) return JSON_Value;
    --  Get the workflow run results on a commit
 
