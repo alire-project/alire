@@ -38,6 +38,7 @@ Path('src/empty.adb').touch()
 p = run_alr('build', complain_on_error=False)
 assert_match(".*compilation of empty.adb failed.*", p.out)
 
+# Post fetch shouldn't be here because fetch already happened and was deleted
 # Post build shouldn't be here because of build failure
 check_not_expected('./test_post_fetch')
 check_expected('./test_pre_build')

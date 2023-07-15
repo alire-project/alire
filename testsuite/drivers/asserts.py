@@ -49,7 +49,7 @@ def assert_contents(dir: str, expected, regex: str = ""):
     """
     real = contents(dir, regex)
     assert real == expected, \
-        f"Wanted contents: {expected}\nBut got: {real}\n"
+        f"Wanted contents:\n{expected}\nBut got:\n{real}\n"
 
 
 def assert_match(expected_re, actual, label=None, flags=re.S):

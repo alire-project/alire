@@ -113,6 +113,11 @@ package Alire.Origins is
    --  an index, instead of coming from locally detected executables or system
    --  packages.
 
+   function Requires_Build (This : Origin) return Boolean
+   is (case This.Kind is
+          when Binary_Archive | External  | System     => False,
+          when Source_Archive | VCS_Kinds | Filesystem => True);
+
    function Short_Unique_Id (This : Origin) return String with
      Pre => This.Kind in Git | Hg | Archive_Kinds;
 

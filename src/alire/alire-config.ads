@@ -23,7 +23,7 @@ package Alire.Config with Preelaborate is
       --  A few predefined keys that are used in several places. This list is
       --  not exhaustive.
 
-      Dependencies_Dir : constant Config_Key := "dependencies.dir";
+      Dependencies_Shared : constant Config_Key := "dependencies.shared";
 
       Editor_Cmd  : constant Config_Key := "editor.cmd";
 
@@ -88,11 +88,14 @@ package Alire.Config with Preelaborate is
 
    package Defaults is
 
-      Warning_Old_Index : constant Boolean := True;
+      Dependencies_Shared : constant Boolean := False;
+      --  TODO: enable it when hashing is complete
 
       Index_Host        : constant String := "https://github.com";
       Index_Owner       : constant String := "alire-project";
       Index_Repo_Name   : constant String := "alire-index";
+
+      Warning_Old_Index : constant Boolean := True;
 
    end Defaults;
 

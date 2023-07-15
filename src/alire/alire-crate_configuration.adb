@@ -551,9 +551,7 @@ package body Alire.Crate_Configuration is
    is
       use type Profile_Maps.Map;
    begin
-      return
-         Config.DB.Get (Config.Keys.Dependencies_Dir, "") /= "" or else
-         This.Profile_Map /= Last_Build_Profiles;
+      return This.Profile_Map /= Last_Build_Profiles;
    end Must_Regenerate;
 
    ---------------------------

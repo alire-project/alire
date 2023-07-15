@@ -1,7 +1,15 @@
 package Alire.Utils.Tools is
 
    type Tool_Kind is
-     (Easy_Graph, Git, Tar, Unzip, Curl, Mercurial, Subversion);
+     (Curl,       -- For downloads
+      Easy_Graph, -- For `--graph`
+      Git,        -- Release origin
+      Mercurial,  -- Release origin
+      Rsync,      -- For shared builds
+      Subversion, -- Release origin
+      Tar,        -- For source archive origins
+      Unzip       -- For source archive origins
+     );
 
    function Available (Tool : Tool_Kind) return Boolean;
    --  Say if tool is already available (attempts detection for the tool, but

@@ -6,6 +6,35 @@ stay on top of `alr` new features.
 
 ## Release `2.0-dev`
 
+### Deprecation of `dependencies.dir` in favor of `dependencies.shared`
+
+PR [#](https://github.com/alire-project/alire/pull/)
+
+A new system of shared sources and builds is being implemented, which will
+ensure full consistency and reuse of builds.
+
+In the new system (still disabled; enable it by setting `alr config --set
+dependencies.shared true`), dependencies will no longer be stored under
+`<workspace>/alire/cache/dependencies`. Instead, three new directories are
+introduced:
+
+- `$HOME/.cache/alire/releases`: contains sources for read-only purposes and
+  binary releases (except toolchains, see below).
+- `$HOME/.cache/alire/builds`: contains source builds for a unique combination
+  of build profile, GPR externals and environment variables.
+- `$HOME/.cache/alire/toolchains`: contains downloaded toolchains.
+
+The previous `$HOME/.cache/alire/dependencies` that contained both toolchains
+and binary releases is no longer in use.
+
+Users wanting to modify dependencies in tandem within a workspace are
+encouraged to use the pin system.
+
+If these default locations for shared dependencies must be relocated, this can
+be achieved by using a new configuration path (`ALR_CONFIG` or `-c` global
+switch). In that case, the aforementioned paths will be found under
+`/path/to/config/cache`.
+
 ### Request review of an index submission with `alr publish --request-review`
 
 PR [#1409](https://github.com/alire-project/alire/pull/1409)

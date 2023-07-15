@@ -16,7 +16,6 @@ with Alire.Lockfiles;
 with Alire.Paths;
 with Alire.Platforms.Current;
 with Alire.Root;
-with Alire.Shared;
 with Alire.Solutions;
 with Alire.Toolchains;
 
@@ -486,7 +485,6 @@ package body Alr.Commands is
               := Ada.Directories.Full_Name (Command_Line_Config_Path.all);
          begin
             Alire.Config.Edit.Set_Path (Config_Path);
-            Alire.Shared.Set_Path (Config_Path);
          end;
       end if;
 

@@ -6,8 +6,9 @@ with CLIC.User_Input;
 
 package Alire.Shared is
 
-   --  Stuff about shared/binary crates that are deployed not in the local
-   --  workspace but in the shared configuration folder.
+   --  Since the new shared builds infrastructure, this applies exclusively
+   --  to releases that belong to a toolchain. TODO: migrate it to either
+   --  Alire.Toolchains or Alire.Toolchains.Shared.
 
    function Available (Detect_Externals : Boolean := True)
                        return Releases.Containers.Release_Set;
@@ -20,13 +21,8 @@ package Alire.Shared is
    --  Constraint_Error if not among Available.
 
    function Path return Any_Path;
-   --  Returns the base folder in which all shared releases live:
-   --  * <config>/cache/dependencies if set with --config/-c
-   --  * <config>/cache/dependencies if set through ALR_CONFIG
-   --  * ~/.cache/alire/dependencies by default
-
-   procedure Set_Path (Path : Absolute_Path);
-   --  Override the location of the global cache location
+   --  Returns the base folder in which all shared releases live, defaults to
+   --  <cache>/toolchains
 
    procedure Share (Release  : Releases.Release;
                     Location : Any_Path := Path);

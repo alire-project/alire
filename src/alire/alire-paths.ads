@@ -5,6 +5,8 @@ package Alire.Paths with Preelaborate is
    Crate_File_Name : constant String := "alire.toml";
    --  Name of the manifest file in a regular workspace
 
+   Build_Folder_Inside_Working_Folder : constant Relative_Path := "builds";
+
    Cache_Folder_Inside_Working_Folder : constant Relative_Path := "cache";
 
    Deps_Folder_Inside_Cache_Folder : constant Relative_Path := "dependencies";
@@ -15,10 +17,13 @@ package Alire.Paths with Preelaborate is
 
    Working_Folder_Inside_Root : constant Relative_Path := "alire";
    --  Folder within a workspace that will contain metadata/build files,
-   --  dependency releases, etc.
+   --  dependency releases, etc.e
 
    Scripts_Graph_Easy            : constant String := "graph-easy";
    --  Script for ASCII graphs
+
+   Complete_Flag : constant String := "complete_copy";
+   --  We use <root>/alire/complete to mark that a file operation was completed
 
 private
 

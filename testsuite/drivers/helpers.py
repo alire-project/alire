@@ -45,7 +45,7 @@ def lines_of(filename):
 
 # Assert two values are equal or format the differences
 def compare(found, wanted):
-    assert found == wanted, 'Got:    {}\nWanted: {}'.format(found, wanted)
+    assert found == wanted, '\nGot:\n{}\nWanted:\n{}'.format(found, wanted)
 
 
 # Check line appears in file

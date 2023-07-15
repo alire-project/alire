@@ -1065,4 +1065,38 @@ package body Alire.Directories is
       end if;
    end Touch;
 
+   ----------
+   -- File --
+   ----------
+
+   function File (This : Completion) return Absolute_File
+   is (This.Path
+       / Paths.Working_Folder_Inside_Root
+       / Paths.Complete_Flag);
+
+   -----------------
+   -- Is_Complete --
+   -----------------
+
+   function Is_Complete (This : Completion) return Boolean
+   is (Is_File (This.File));
+
+   ----------
+   -- Mark --
+   ----------
+
+   procedure Mark (This     : in out Completion;
+                   Complete : Boolean)
+   is
+   begin
+      if Complete then
+         Create_Tree (Parent (This.File));
+         Touch (This.File);
+      else
+         if This.Is_Complete then
+            Delete_Tree (This.File);
+         end if;
+      end if;
+   end Mark;
+
 end Alire.Directories;

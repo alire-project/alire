@@ -40,6 +40,7 @@ package body Alire.Utils.Tools is
           when Unzip      => "unzip",
           when Curl       => "curl",
           when Mercurial  => "hg",
+          when Rsync      => "rsync",
           when Subversion => "svn");
 
    -----------------------------
@@ -60,15 +61,13 @@ package body Alire.Utils.Tools is
            | Homebrew | Macports =>
             return (case Tool is
                        when Easy_Graph =>
-                      (if Distribution = Centos or else
-                          Distribution = Fedora or else
-                          Distribution = Rhel or else
-                          Distribution = Suse
-                       then "perl-Graph-Easy"
-                       elsif Distribution /= Msys2 and Distribution /= Arch
-                       then "libgraph-easy-perl"
-                       else ""),
-                       when Git | Tar | Unzip | Curl => Exec_For_Tool (Tool),
+                         (if Distribution in Centos | Fedora | Rhel | Suse
+                          then "perl-Graph-Easy"
+                          elsif Distribution /= Msys2 and Distribution /= Arch
+                          then "libgraph-easy-perl"
+                          else ""),
+                       when Git | Tar | Unzip | Curl | Rsync =>
+                          Exec_For_Tool (Tool),
                        when Mercurial  => "mercurial",
                        when Subversion => "subversion");
       end case;

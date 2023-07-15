@@ -55,6 +55,7 @@ package Alire.Directories is
    --  Calls Ensure_Deletable and then uses GNATCOLL.VFS deletion
 
    procedure Delete_Tree (Path : Any_Path) renames Force_Delete;
+   --  Delete Path, and anythin below if it was a dir
 
    function Find_Files_Under (Folder    : String;
                               Name      : String;
@@ -102,9 +103,10 @@ package Alire.Directories is
    --  Remove softlinks only (not their targets) at Path and subdirs when
    --  Recursive.
 
-   procedure Touch (File : File_Path);
-   --  If the file exists, update last edition time; otherwise create it. If
-   --  File denotes anything else than a regular file, raise.
+   procedure Touch (File : File_Path)
+     with Pre => Is_Directory (Parent (File));
+   --  If the file exists, update last edition time; otherwise create it.
+   --  If File denotes anything else than a regular file, raise.
 
    Traverse_Tree_Prune_Dir : exception;
    --  In Traverse_Tree, the Doing procedure can raise this exception to
@@ -220,6 +222,23 @@ package Alire.Directories is
    --  called, on going out of scope the Replacer will remove the temporary and
    --  the original file remains untouched.
 
+   --  To ensure that certain download/copy/sync operations are complete, we
+   --  use this RAII type that will delete/create an ~/path/alire/complete
+   --  canary file
+
+   type Completion (<>) is tagged limited private;
+
+   function New_Completion (Path : Directory_Path) return Completion;
+
+   function Is_Complete (This : Completion) return Boolean;
+   --  Say if the operation at This path was already complete in which case
+   --  nothing should be done.
+
+   procedure Mark (This     : in out Completion;
+                   Complete : Boolean)
+     with Post => This.Is_Complete = Complete;
+   --  Set/remove the canary flag of the operation on path being complete
+
 private
 
    ------------
@@ -266,5 +285,26 @@ private
 
    function Find_Relative_Path_To (Path : Any_Path) return Any_Path
    is (Find_Relative_Path (Current, Path));
+
+   ----------------
+   -- Completion --
+   ----------------
+
+   type Completion (Length : Natural) is
+     new Ada.Finalization.Limited_Controlled with
+      record
+         Path : Absolute_Path (1 .. Length);
+      end record;
+
+   function File (This : Completion) return Absolute_File;
+
+   --------------------
+   -- New_Completion --
+   --------------------
+
+   function New_Completion (Path : Directory_Path) return Completion
+   is (Ada.Finalization.Limited_Controlled with
+       Length => Full_Name (Path)'Length,
+       Path   => Full_Name (Path));
 
 end Alire.Directories;
